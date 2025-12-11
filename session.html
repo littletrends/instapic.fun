@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>I already have a code — Instapic</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
   <header class="site-header">
@@ -18,10 +18,57 @@
 
   <main class="site-main">
     <section class="enter-code">
-      <h1>Coming soon</h1>
+      <h1>View your photos</h1>
       <p class="hero-text">
-        Here you’ll be able to type your Instapic code and view your photos online.
-        For now, please see the host if you need help with your code.
+        Type your 6-digit Instapic code from the mirror. Online viewing is
+        rolling out soon — for now this is just a preview of the keypad.
+      </p>
+
+      <form id="session-form" class="code-card">
+        <label for="ticket_code" class="code-label">Instapic code</label>
+        <div class="code-input-row">
+          <input
+            type="text"
+            id="ticket_code"
+            name="ticket_code"
+            maxlength="6"
+            pattern="\d{6}"
+            placeholder="123456"
+            required
+          >
+          <button type="submit" class="portal-button small">
+            <span class="portal-label">Check code</span>
+          </button>
+        </div>
+        <p class="code-hint">Numbers only, no spaces.</p>
+
+        <div class="keypad" data-input-id="ticket_code">
+          <div class="keypad-row">
+            <button type="button" class="keypad-key" data-key="1">1</button>
+            <button type="button" class="keypad-key" data-key="2">2</button>
+            <button type="button" class="keypad-key" data-key="3">3</button>
+          </div>
+          <div class="keypad-row">
+            <button type="button" class="keypad-key" data-key="4">4</button>
+            <button type="button" class="keypad-key" data-key="5">5</button>
+            <button type="button" class="keypad-key" data-key="6">6</button>
+          </div>
+          <div class="keypad-row">
+            <button type="button" class="keypad-key" data-key="7">7</button>
+            <button type="button" class="keypad-key" data-key="8">8</button>
+            <button type="button" class="keypad-key" data-key="9">9</button>
+          </div>
+          <div class="keypad-row">
+            <button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button>
+            <button type="button" class="keypad-key" data-key="0">0</button>
+            <button type="button" class="keypad-key keypad-key-back" data-action="back">←</button>
+          </div>
+        </div>
+      </form>
+
+      <p id="session-message" class="hero-text">
+        Online viewing is coming soon. For now, use this page just to practice entering your code
+        or show your code to the Instapic host at the booth.
       </p>
 
       <div class="hero-links">
@@ -35,5 +82,31 @@
   <footer class="site-footer">
     <small>&copy; Instapic by Little Trends — Have fun, be silly, love the photos ✨</small>
   </footer>
+
+  <!-- Keypad + timeout behaviour -->
+  <script src="/assets/main.js"></script>
+  <script>
+    // For now, just show a friendly message on submit (no real backend yet)
+    (function () {
+      var form = document.getElementById("session-form");
+      if (!form) return;
+
+      var input = document.getElementById("ticket_code");
+      var message = document.getElementById("session-message");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var code = (input.value || "").trim();
+
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+          message.textContent = "Please enter a 6-digit code from the mirror.";
+          return;
+        }
+
+        message.textContent =
+          "Online gallery is coming soon. For now, show this code to your Instapic host at the booth: " + code;
+      });
+    })();
+  </script>
 </body>
 </html>
