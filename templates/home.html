@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <img
+    src="{{ url_for('static', filename='img/instapic_logo.png') }}"
+    alt="Instapic logo"
+    class="hero-logo"
+  >
+
+  <h1>Scan or tap to start</h1>
+  <p class="hero-text">
+    Get your Instapic code here before you jump in the booth.
+  </p>
+
+  <div class="hero-row">
+    <div class="hero-cell">
+      <a href="{{ url_for('prepay') }}" class="portal-orb">
+        <div class="portal-orb-inner">
+          <span class="portal-orb-main">Prepay here</span>
+          <span class="portal-orb-sub">Tap on this tablet or scan with your phone</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="hero-cell">
+      <img
+        src="{{ url_for('static', filename='img/instapic_fun_qr.png') }}"
+        alt="Scan to open this page on your phone"
+        class="hero-qr"
+      >
+    </div>
+  </div>
+
+  <div class="steps steps-chips">
+    <div class="step-chip">
+      <span class="step-number">1</span>
+      <span class="step-word">Pay</span>
+    </div>
+    <div class="step-chip">
+      <span class="step-number">2</span>
+      <span class="step-word">Code</span>
+    </div>
+    <div class="step-chip">
+      <span class="step-number">3</span>
+      <span class="step-word">Mirror</span>
+    </div>
+  </div>
+
+  <div class="hero-links">
+    <a href="{{ url_for('enter_code') }}" class="secondary-link">
+      I already have a code
+    </a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="prepay">
+  <h1>Recent Instapic tickets</h1>
+  <p class="hero-text">
+    Latest {{ limit }} tickets generated on this device.
+  </p>
+
+  {% if tickets %}
+    <div class="tickets-table-wrap">
+      <table class="tickets-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Package</th>
+            <th>Amount</th>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+            <tr>
+              <td><code>{{ t.ticket_code }}</code></td>
+              <td>{{ t.package_name }}</td>
+              <td>{{ "%.2f"|format(t.amount_dollars) }} AUD</td>
+              <td>{{ t.event_code }}</td>
+              <td>{{ t.status }}</td>
+              <td>{{ t.created_at }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hero-text">No tickets yet.</p>
+  {% endif %}
+
+  <div class="hero-links">
+    <a href="{{ url_for('home') }}" class="secondary-link">
+      ⟵ Back to start
+    </a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="error">
+  <h1>{{ title or "Oops!" }}</h1>
+  <p class="hero-text">{{ message or "Something went wrong." }}</p>
+  <div class="hero-links">
+    <a href="{{ url_for('home') }}" class="secondary-link">Back to start</a>
+  </div>
+</section>
+{% endblock %}

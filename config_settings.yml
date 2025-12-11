@@ -1,0 +1,9 @@
+SITE_NAME: "Instapic by Little Trends"
+DEFAULT_EVENT_CODE: "GLOBAL_EVENT"
+SECRET_KEY: "change-me-to-something-random"
+
+# For now these are placeholders. Later, Square-AI can fill real URLs.
+SQUARE_CHECKOUT_URLS:
+  P1_STRIP: ""
+  P2_STRIP_GIF: ""
+  P3_STRIP_GIF: ""
