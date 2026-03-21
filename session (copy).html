@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic — View your photos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="site-title">
+        <span class="brand-main">insta<span class="brand-accent">pic</span></span>
+        <span class="brand-sub">by Little Trends — Darwin NT</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <section class="enter-code">
+      <h1>View your photos</h1>
+      <p class="hero-text">Type your 6-digit Instapic code from the mirror or your receipt.</p>
+
+      <form id="session-form" class="code-card">
+        <label for="ticket_code" class="code-label">Instapic code</label>
+        <div class="code-input-row">
+          <input type="text" id="ticket_code" name="ticket_code" maxlength="6" pattern="\d{6}" placeholder="123456" required>
+          <button type="submit" class="portal-button small"><span class="portal-label">Show my photos</span></button>
+        </div>
+        <p class="code-hint">Numbers only, no spaces.</p>
+
+        <div class="keypad" data-input-id="ticket_code">
+          <div class="keypad-row"><button type="button" class="keypad-key" data-key="1">1</button><button type="button" class="keypad-key" data-key="2">2</button><button type="button" class="keypad-key" data-key="3">3</button></div>
+          <div class="keypad-row"><button type="button" class="keypad-key" data-key="4">4</button><button type="button" class="keypad-key" data-key="5">5</button><button type="button" class="keypad-key" data-key="6">6</button></div>
+          <div class="keypad-row"><button type="button" class="keypad-key" data-key="7">7</button><button type="button" class="keypad-key" data-key="8">8</button><button type="button" class="keypad-key" data-key="9">9</button></div>
+          <div class="keypad-row"><button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button><button type="button" class="keypad-key" data-key="0">0</button><button type="button" class="keypad-key keypad-key-back" data-action="back">←</button></div>
+        </div>
+      </form>
+
+      <div id="flash" class="flash-container" hidden></div>
+
+      <div id="code-result" class="code-result" hidden>
+        <div class="code-summary">
+          <div class="code-pill">Code: <strong id="result-code"></strong></div>
+          <div class="code-status">Status: <span id="result-status" class="status-tag status-issued">Ready</span></div>
+        </div>
+        <div id="bonus-area"></div>
+      </div>
+
+      <div class="hero-links">
+        <a href="index.html" class="secondary-link">⟵ Back to start</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; Instapic — Have fun, be silly, love the photos ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script>
+    window.INSTAPIC_API_BASE = window.INSTAPIC_API_BASE || "https://motherpc.taild1a44c.ts.net";
+
+    (function () {
+      const form = document.getElementById("session-form");
+      const input = document.getElementById("ticket_code");
+      const flash = document.getElementById("flash");
+      const result = document.getElementById("code-result");
+      const resultCode = document.getElementById("result-code");
+      const resultStatus = document.getElementById("result-status");
+      const bonusArea = document.getElementById("bonus-area");
+
+      function showMessage(kind, text) {
+        flash.hidden = false;
+        flash.innerHTML = '<div class="flash flash-' + kind + '">' + text + '</div>';
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        flash.hidden = true;
+        result.hidden = true;
+        bonusArea.innerHTML = "";
+
+        const code = (input.value || "").trim();
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showMessage("error", "Please enter a 6-digit code.");
+          return;
+        }
+
+        try {
+          const response = await fetch(window.INSTAPIC_API_BASE + "/api/get-bonus/" + code);
+          const data = await response.json();
+
+          if (!response.ok || !data.ok) {
+            showMessage("error", (data && data.error) || "We can't find that code. Check it and try again.");
+            return;
+          }
+
+          resultCode.textContent = code;
+          resultStatus.textContent = data.status || "Ready";
+          resultStatus.className = "status-tag " + ((data.status === "USED") ? "status-used" : "status-issued");
+
+          const files = Array.isArray(data.bonus_files) ? data.bonus_files : [];
+          if (files.length) {
+            const heading = document.createElement("h2");
+            heading.textContent = "Your bonus files";
+            bonusArea.appendChild(heading);
+
+            files.forEach((file) => {
+              const wrap = document.createElement("div");
+              wrap.className = "gallery";
+
+              if (/\.(png|jpg|jpeg|webp|gif)$/i.test(file)) {
+                const img = document.createElement("img");
+                img.src = window.INSTAPIC_API_BASE + file;
+                img.alt = "Instapic bonus file";
+                wrap.appendChild(img);
+              }
+
+              const p = document.createElement("p");
+              const a = document.createElement("a");
+              a.href = window.INSTAPIC_API_BASE + file;
+              a.textContent = "Open file";
+              a.target = "_blank";
+              p.appendChild(a);
+              wrap.appendChild(p);
+              bonusArea.appendChild(wrap);
+            });
+          } else {
+            const p = document.createElement("p");
+            p.className = "hero-text";
+            p.textContent = "Your code is valid. Once the mirror has finished your session and uploaded your strip, your photos will appear here.";
+            bonusArea.appendChild(p);
+          }
+
+          result.hidden = false;
+        } catch (err) {
+          showMessage("error", "Error connecting to server. Try again later.");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

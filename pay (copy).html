@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic — Choose your session</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-wrap">
+      <div class="site-title">
+        <span class="brand-main">insta<span class="brand-accent">pic</span></span>
+        <span class="brand-sub">by Little Trends — Darwin NT</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <section class="prepay">
+      <h1>Choose your session</h1>
+      <p class="hero-text">
+        Skip the slow part at the screen. Choose your package, pay once on your phone,
+        then show your Instapic code to unlock the mirror.
+      </p>
+
+      <div id="flash" class="flash-container" hidden></div>
+
+      <div class="package-grid">
+        <form class="package-card" data-package-id="P1_STRIP" data-amount-cents="700">
+          <h2 class="pkg-name">$7 Quick &amp; Simple</h2>
+          <p class="pkg-desc">Perfect for a quick keepsake. 2 strips, digital copy.</p>
+          <div class="pkg-price">7.00 AUD</div>
+          <button type="submit" class="portal-button small"><span class="portal-label">Prepay now</span></button>
+        </form>
+
+        <form class="package-card" data-package-id="P2_STRIP_GIF" data-amount-cents="1300">
+          <h2 class="pkg-name">$13 Most Popular</h2>
+          <p class="pkg-desc">Best for couples &amp; friends. 4 strips, GIF/boomerang, digital.</p>
+          <div class="pkg-price">13.00 AUD</div>
+          <button type="submit" class="portal-button small"><span class="portal-label">Prepay now</span></button>
+        </form>
+
+        <form class="package-card" data-package-id="P3_STRIP_GIF" data-amount-cents="1800">
+          <h2 class="pkg-name">$18 Best for Groups</h2>
+          <p class="pkg-desc">Loads of prints for the whole crew. 6 strips, GIF/boomerang, digital.</p>
+          <div class="pkg-price">18.00 AUD</div>
+          <button type="submit" class="portal-button small"><span class="portal-label">Prepay now</span></button>
+        </form>
+      </div>
+
+      <p class="dev-note">
+        This page should call MotherPC create-ticket after payment approval.
+      </p>
+
+      <div id="ticket-result" class="ticket" hidden>
+        <h2>You’re all set!</h2>
+        <p class="hero-text">Show this code to the Magic Mirror when it’s your turn in the queue.</p>
+        <div id="ticket-code" class="ticket-code"></div>
+        <p class="ticket-help">Tip: take a screenshot so you don’t lose it.</p>
+      </div>
+
+      <div class="hero-links">
+        <a href="index.html" class="secondary-link">⟵ Back to start</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; Instapic — Have fun, be silly, love the photos ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script>
+    window.INSTAPIC_API_BASE = window.INSTAPIC_API_BASE || "https://motherpc.taild1a44c.ts.net";
+
+    (function () {
+      const flash = document.getElementById("flash");
+      const result = document.getElementById("ticket-result");
+      const codeEl = document.getElementById("ticket-code");
+
+      function showMessage(kind, text) {
+        flash.hidden = false;
+        flash.innerHTML = '<div class="flash flash-' + kind + '">' + text + '</div>';
+      }
+
+      async function createTicket(packageId, amountCents) {
+        const response = await fetch(window.INSTAPIC_API_BASE + "/api/create-ticket", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            package_id: packageId,
+            amount_cents: amountCents,
+            source: "website_prepay_public",
+            reference_id: "public-prepay-" + packageId + "-" + Date.now(),
+            event_code: ""
+          })
+        });
+        return response.json();
+      }
+
+      document.querySelectorAll(".package-card").forEach((form) => {
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          flash.hidden = true;
+          result.hidden = true;
+
+          try {
+            const packageId = form.getAttribute("data-package-id");
+            const amountCents = Number(form.getAttribute("data-amount-cents") || 0);
+            const data = await createTicket(packageId, amountCents);
+
+            if (!data || !data.ok || !data.ticket_code) {
+              showMessage("error", (data && data.error) || "Could not create ticket.");
+              return;
+            }
+
+            codeEl.textContent = data.ticket_code;
+            result.hidden = false;
+            result.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (err) {
+            showMessage("error", "Could not connect to Instapic server.");
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
