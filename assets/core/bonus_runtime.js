@@ -3,29 +3,37 @@
     return `${window.InstapicCore.BASE}${path}`;
   }
 
-  function setImage(el, src, alt) {
-    if (!el || !src) return;
-    el.outerHTML = `<img id="${el.id}" src="${src}" alt="${alt}" class="bonus-media">`;
-  }
-
-  function setVideo(el, src) {
-    if (!el || !src) return;
-    el.outerHTML = `<video id="${el.id}" src="${src}" autoplay loop muted playsinline class="bonus-media"></video>`;
-  }
-
   function looksLikeVideo(url) {
-    return /\.mp4($|\?)/i.test(url) || /\.webm($|\?)/i.test(url) || /\.gif($|\?)/i.test(url);
+    return /\.(mp4|webm|gif)($|\?)/i.test(url);
   }
 
-  function mapFiles(files) {
-    const full = files.map(asFullUrl);
+  function createMediaCard(url, index) {
+    const card = document.createElement("div");
+    card.className = "bonus-card";
 
-    const strip = full[0] || "";
-    const collage = full[1] || "";
-    const gif = full[2] || "";
-    const boomerang = full[3] || "";
+    const label = document.createElement("div");
+    label.className = "hero-label";
+    label.textContent = `Bonus ${index + 1}`;
 
-    return { strip, collage, gif, boomerang, all: full };
+    if (looksLikeVideo(url)) {
+      const video = document.createElement("video");
+      video.src = url;
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.className = "bonus-media";
+      card.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = `Bonus ${index + 1}`;
+      img.className = "bonus-media";
+      card.appendChild(img);
+    }
+
+    card.appendChild(label);
+    return card;
   }
 
   async function initBonusPage() {
@@ -34,48 +42,75 @@
 
     const code = core.getCodeFromUrl();
     if (!code) {
-      alert("Missing code.");
+      core.showFlash("Missing code.", "error");
       return;
     }
 
-    const stripEl = core.qs("#bonus-strip");
-    const collageEl = core.qs("#bonus-collage");
-    const gifEl = core.qs("#bonus-gif");
-    const boomerangEl = core.qs("#bonus-boomerang");
+    const heroEl = core.qs("#bonus-hero");
+    const heroLabel = core.qs("#bonus-hero-label");
+    const gridEl = core.qs("#bonus-grid");
     const downloadBtn = core.qs("#download-all");
     const shareBtn = core.qs("#share-magic");
+    const statusGif = core.qs("#status-gif");
+    const statusCollage = core.qs("#status-collage");
 
     try {
       const data = await core.getBonus(code);
       const files = Array.isArray(data.bonus_files) ? data.bonus_files : [];
+      const full = files.map(asFullUrl);
 
-      if (!files.length) {
-        alert("Your bonus page is unlocked, but files are not ready yet.");
+      if (!full.length) {
+        core.showFlash("Your bonus page is unlocked, but files are not ready yet.", "error");
         return;
       }
 
-      const mapped = mapFiles(files);
-
-      if (mapped.strip) stripEl.src = mapped.strip;
-
-      if (mapped.collage) {
-        if (looksLikeVideo(mapped.collage)) setVideo(collageEl, mapped.collage);
-        else setImage(collageEl, mapped.collage, "Bonus Still 2");
+      // hero = first available file
+      if (heroEl && full[0]) {
+        if (looksLikeVideo(full[0])) {
+          const video = document.createElement("video");
+          video.id = "bonus-hero";
+          video.src = full[0];
+          video.autoplay = true;
+          video.loop = true;
+          video.muted = true;
+          video.playsInline = true;
+          video.className = "hero-strip";
+          heroEl.replaceWith(video);
+        } else {
+          heroEl.src = full[0];
+        }
       }
 
-      if (mapped.gif) {
-        if (looksLikeVideo(mapped.gif)) setVideo(gifEl, mapped.gif);
-        else setImage(gifEl, mapped.gif, "Bonus Still 3");
+      if (heroLabel) {
+        heroLabel.textContent = `Featured Bonus • ${data.bg_id || "Instapic"}`;
       }
 
-      if (mapped.boomerang) {
-        if (looksLikeVideo(mapped.boomerang)) setVideo(boomerangEl, mapped.boomerang);
-        else setImage(boomerangEl, mapped.boomerang, "Bonus Still 4");
+      // gallery = all returned files
+      if (gridEl) {
+        gridEl.innerHTML = "";
+        full.forEach((url, idx) => {
+          gridEl.appendChild(createMediaCard(url, idx));
+        });
+      }
+
+      // keep the status cards, but make them more truthful
+      if (statusGif) {
+        const hasMotion = full.some(looksLikeVideo);
+        statusGif.querySelector("p").textContent = hasMotion
+          ? "Motion media is now available in this session."
+          : "Video/GIF style media will appear here when recording is connected.";
+      }
+
+      if (statusCollage) {
+        const extraBonus = full.some((u) => /\/bonus\//.test(u));
+        statusCollage.querySelector("p").textContent = extraBonus
+          ? "Background-set bonus files are connected for this session."
+          : "Enhanced freeze bonuses are live now. Template media can be added next.";
       }
 
       if (downloadBtn) {
         downloadBtn.addEventListener("click", () => {
-          mapped.all.forEach((url, idx) => {
+          full.forEach((url, idx) => {
             const a = document.createElement("a");
             a.href = url;
             a.download = `instapic_bonus_${code}_${idx + 1}`;
@@ -98,7 +133,7 @@
       }
     } catch (err) {
       console.error("bonus load failed", err);
-      alert(`Could not load your bonus files: ${err.message}`);
+      core.showFlash(`Could not load your bonus files: ${err.message}`, "error");
     }
   }
 
