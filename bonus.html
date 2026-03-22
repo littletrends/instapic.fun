@@ -1,12 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Instapic — Bonus content</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/assets/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instapic • Your Bonuses</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body data-timeout-redirect="index.html">
+
+  <div class="cosmic-bg"></div>
+
   <header class="site-header">
     <div class="logo-wrap">
       <div class="site-title">
@@ -16,18 +19,70 @@
     </div>
   </header>
 
-  <main class="site-main">
-    <section class="enter-code">
-      <h1>Bonus content</h1>
-      <p class="hero-text">Use the session page to enter your code and view bonus files.</p>
-      <div class="hero-links">
-        <a href="session.html" class="secondary-link">Go to code entry</a>
+  <main class="bonus-page">
+    <h1>Your Magic Has Arrived ✨🦘</h1>
+    <p class="hero-text">The mirror captured the moment.<br>Now enjoy the treasures forever.</p>
+
+    <!-- Hero Strip -->
+    <div class="bonus-hero">
+      <img id="bonus-strip" src="" alt="Your Photostrip" class="hero-strip">
+      <div class="hero-label">Your Instapic Strip</div>
+    </div>
+
+    <!-- Animated Trio -->
+    <div class="bonus-grid">
+      <!-- Collage -->
+      <div class="bonus-card">
+        <video id="bonus-collage" src="" autoplay loop muted playsinline class="bonus-media"></video>
+        <div class="card-label">Collage Magic</div>
       </div>
-    </section>
+
+      <!-- GIF -->
+      <div class="bonus-card">
+        <img id="bonus-gif" src="" alt="GIF Loop" class="bonus-media">
+        <div class="card-label">Forever Loop</div>
+      </div>
+
+      <!-- Boomerang -->
+      <div class="bonus-card">
+        <video id="bonus-boomerang" src="" autoplay loop muted playsinline class="bonus-media"></video>
+        <div class="card-label">Boomerang Bounce 🪃</div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-bar">
+      <button class="portal-button" id="download-all">Download All Treasures</button>
+      <button class="portal-button secondary" id="share-magic">Share Your Sparkle</button>
+    </div>
   </main>
 
   <footer class="site-footer">
-    <small>&copy; Instapic — Have fun, be silly, love the photos ✨</small>
+    <small>© Instapic — Have fun, be silly, love the photos forever ✨</small>
   </footer>
+
+  <script src="assets/main.js"></script>
+  <script>
+    // Read code from URL and load the real themed files from MotherPC
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || 'demo';
+
+    const base = "https://motherpc.taild1a44c.ts.net";
+
+    document.getElementById('bonus-strip').src     = `${base}/assets/${code}/bonuses/${code}_strip_web.png`;
+    document.getElementById('bonus-collage').src   = `${base}/assets/${code}/bonuses/${code}_collage.mp4`;
+    document.getElementById('bonus-gif').src       = `${base}/assets/${code}/bonuses/${code}_gif.gif`;
+    document.getElementById('bonus-boomerang').src = `${base}/assets/${code}/bonuses/${code}_boomerang.mp4`;
+
+    // Download All button (placeholder - can be expanded later)
+    document.getElementById('download-all').addEventListener('click', () => {
+      alert('Downloading all your treasures as a zip... (this would trigger real zip in production)');
+    });
+
+    // Share button (placeholder)
+    document.getElementById('share-magic').addEventListener('click', () => {
+      alert('Sharing your magic to Stories / TikTok... (Web Share API ready)');
+    });
+  </script>
 </body>
 </html>

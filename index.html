@@ -1,12 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Instapic — Start</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instapic • Magic Starts Here</title>
   <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body data-timeout-redirect="index.html">
+
+  <div class="cosmic-bg"></div>
+
   <header class="site-header">
     <div class="logo-wrap">
       <div class="site-title">
@@ -16,44 +19,31 @@
     </div>
   </header>
 
-  <main class="site-main">
-    <section class="hero">
-      <img src="assets/img/instapic_logo.png" alt="Instapic logo" class="hero-logo">
+  <main class="hero">
+    <h1>Step Into the Mirror ✨</h1>
+    <p class="hero-text">Silly moments. Glowing memories. Yours forever.</p>
 
-      <h1>Scan or tap to begin</h1>
-      <p class="hero-text">
-        Grab your Instapic code here before stepping into the mirror.
-      </p>
-
-      <div class="hero-row">
-        <div class="hero-cell">
-          <a href="pay.html" class="portal-orb">
-            <div class="portal-orb-inner">
-              <span class="portal-orb-main">Prepay here</span>
-              <span class="portal-orb-sub">Tap this screen or scan with phone</span>
-            </div>
-          </a>
+    <div class="portal-row">
+      <!-- Path 1: New Guest -->
+      <a href="pay.html" class="portal-orb primary" style="touch-action: manipulation;">
+        <div class="portal-orb-inner">
+          <span class="portal-orb-main">Prepay & Get Code</span>
+          <span class="portal-orb-sub">Skip the line • Start your session</span>
         </div>
+      </a>
 
-        <div class="hero-cell">
-          <img src="assets/img/instapic_fun_qr.png" alt="QR code to open this page on your phone" class="hero-qr">
+      <!-- Path 2: Already Have Code -->
+      <a href="session.html" class="portal-orb secondary" style="touch-action: manipulation;">
+        <div class="portal-orb-inner">
+          <span class="portal-orb-main">I already have a code</span>
+          <span class="portal-orb-sub">Unlock your GIFs • Boomerangs • Bonuses</span>
         </div>
-      </div>
-
-      <div class="steps steps-chips">
-        <div class="step-chip"><span class="step-number">1</span><span class="step-word">Pay</span></div>
-        <div class="step-chip"><span class="step-number">2</span><span class="step-word">Code</span></div>
-        <div class="step-chip"><span class="step-number">3</span><span class="step-word">Mirror</span></div>
-      </div>
-
-      <div class="hero-links">
-        <a href="session.html" class="secondary-link">I already have a code →</a>
-      </div>
-    </section>
+      </a>
+    </div>
   </main>
 
   <footer class="site-footer">
-    <small>© Instapic — Have fun, be silly, love the photos ✨</small>
+    <small>© Instapic — Have fun, be silly, love the photos forever 🦘</small>
   </footer>
 
   <script src="assets/main.js"></script>

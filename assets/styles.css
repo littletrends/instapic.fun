@@ -1,284 +1,122 @@
-/* assets/styles.css — Instapic Website | Mirror-inspired Coquette/Magic Aesthetic */
-/* Reference: mirror branding.css — colors, portals, Cinzel font, glows, breath */
+/* Instapic Unified Styles – updated for full flow (prepay + bonus reveal) */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap');
 
 :root {
-  --instapic-pink: #ff5fa2;
-  --instapic-pink-deep: #ff2f6c;
-  --instapic-gold: #ffbf5f;
-  --instapic-charcoal: #171320;
-  --instapic-cream: #fff9f5;
-
-  --portal-hi: rgba(255,255,255,0.92);
-  --portal-pink: rgba(255,180,230,0.88);
-  --portal-magenta: rgba(255,110,170,0.82);
-  --portal-orange: rgba(255,120,60,0.82);
-  --portal-violet: rgba(140,0,90,0.88);
-  --portal-deep: rgba(10,0,14,0.96);
-
+  --pink: #ff5fa2;
+  --pink-deep: #ff2f6c;
+  --gold: #ffbf5f;
+  --charcoal: #171320;
+  --cream: #fff9f5;
   --glow-pink: 0 0 28px rgba(255,95,162,0.55);
   --glow-gold: 0 0 32px rgba(255,191,95,0.45);
-  --glow-cyan: 0 0 24px rgba(120,255,240,0.5); /* subtle cyan accent like mirror highlights */
-  --radius-pill: 999px;
+  --glow-cyan: 0 0 24px rgba(120,255,240,0.5);
   --radius-portal: 50%;
+  --breath: 5.8s ease-in-out infinite;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   font-family: 'Cinzel', serif;
   background: radial-gradient(circle at top, #252038 0%, #080611 55%, #030207 100%);
-  color: #f4f4f8;
+  color: var(--cream);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
 .site-header {
-  padding: 1.5rem 1rem;
+  padding: 1.5rem;
   text-align: center;
 }
 
-.brand-main {
-  font-size: 3.5rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--instapic-cream);
-  text-shadow: 0 0 18px rgba(255,191,95,0.4);
-}
+.brand-main { font-size: 3.2rem; font-weight:700; }
+.brand-accent { color: var(--pink); text-shadow: 0 0 20px var(--pink); }
+.brand-sub { font-size:1.1rem; opacity:0.8; display:block; margin-top:0.3rem; font-family:'Poppins',sans-serif; }
 
-.brand-accent {
-  color: var(--instapic-pink);
-  text-shadow: 0 0 22px var(--instapic-pink);
-}
+.site-main { padding: 2rem 1rem; max-width: 900px; margin: 0 auto; text-align: center; }
 
-.brand-sub {
-  font-size: 1.15rem;
-  opacity: 0.8;
-  display: block;
-  margin-top: 0.4rem;
-  font-family: 'Poppins', sans-serif;
-  letter-spacing: 0.06em;
-}
-
-.site-main {
-  padding: 1rem 1.5rem 4rem;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-h1 {
-  font-size: 2.6rem;
-  text-align: center;
-  margin: 1.8rem 0 1rem;
-  color: var(--instapic-cream);
-  text-shadow: var(--glow-pink);
-}
-
-.hero-text, .pkg-desc, .ticket-help, .code-hint {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem;
-  text-align: center;
-  line-height: 1.5;
-  opacity: 0.9;
-  max-width: 720px;
-  margin: 1rem auto;
-}
+h1 { font-size: 2.6rem; margin-bottom: 1.5rem; text-shadow: var(--glow-pink); }
 
 .portal-orb, .portal-button {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 260px;
-  height: 260px;
-  border-radius: var(--radius-portal);
-  background: linear-gradient(135deg, var(--portal-pink) 0%, var(--portal-magenta) 30%, var(--portal-violet) 60%, var(--portal-deep) 100%);
-  border: none;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,180,230,0.88), rgba(255,110,170,0.82), rgba(140,0,90,0.88));
   color: white;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 600;
   text-align: center;
-  text-decoration: none;
   cursor: pointer;
-  box-shadow: var(--glow-pink), inset 0 0 48px rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px) saturate(1.2);
-  transition: all 0.3s ease;
-  animation: portalBreath 5.6s ease-in-out infinite;
-  position: relative;
-  overflow: visible;
-  padding: 1.2rem;
-  line-height: 1.15;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.4);
+  box-shadow: var(--glow-pink), inset 0 0 40px rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s;
+  animation: breath var(--breath);
+  margin: 2rem auto;
+  text-decoration: none;
+  border: none;
 }
 
 .portal-orb:hover, .portal-button:hover {
-  transform: scale(1.07);
-  box-shadow: 0 0 48px rgba(255,95,162,0.7), 0 0 120px rgba(255,120,60,0.4);
+  transform: scale(1.08);
+  box-shadow: 0 0 60px rgba(255,95,162,0.7);
 }
 
-.portal-orb-inner .portal-orb-main {
-  font-size: 1.9rem;
+@keyframes breath {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.05); }
 }
 
-.portal-orb-inner .portal-orb-sub {
-  font-size: 1rem;
-  opacity: 0.88;
-  margin-top: 0.5rem;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* Breathing animation (mirror-inspired) */
-@keyframes portalBreath {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50%      { transform: scale(1.06); filter: brightness(1.08); }
-}
-
-/* Ripple effect on main portal (like attract screen) */
-.portal-orb::before {
-  content: "";
-  position: absolute;
-  inset: -80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,170,230,0.22) 10%, transparent 70%);
-  opacity: 0.7;
-  animation: portalRipple 4s ease-out infinite;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes portalRipple {
-  0%   { transform: scale(0.9); opacity: 0.6; }
-  60%  { transform: scale(1.25); opacity: 0.1; }
-  100% { transform: scale(1.25); opacity: 0; }
-}
-
-/* Package cards (pill-like with glow) */
-.package-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin: 3rem auto;
-}
-
-.package-card {
-  background: rgba(23,19,32,0.65);
-  border: 1px solid rgba(255,95,162,0.3);
-  border-radius: 1.8rem;
-  padding: 2.2rem 1.6rem;
-  text-align: center;
-  backdrop-filter: blur(12px);
-  transition: all 0.35s ease;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-}
-
-.package-card:hover {
-  transform: translateY(-12px);
-  border-color: var(--instapic-gold);
-  box-shadow: var(--glow-gold), 0 20px 60px rgba(0,0,0,0.7);
-}
-
-.pkg-name {
-  font-size: 1.8rem;
-  color: var(--instapic-pink);
-  margin-bottom: 0.8rem;
-}
-
-.pkg-price {
-  font-size: 3rem;
-  font-weight: 700;
-  color: var(--instapic-gold);
-  text-shadow: var(--glow-gold);
-  margin: 1.2rem 0;
-}
-
-.pkg-desc {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-/* Ticket code display */
-.ticket-code, #ticket-code {
+.ticket-code {
   font-family: 'Poppins', monospace;
   font-size: 5rem;
   letter-spacing: 0.8rem;
-  text-align: center;
-  margin: 2.5rem 0;
-  color: var(--instapic-gold);
-  text-shadow: 0 0 36px rgba(255,191,95,0.6);
+  color: var(--gold);
+  text-shadow: var(--glow-gold);
   background: rgba(0,0,0,0.4);
-  padding: 1.5rem 1rem;
+  padding: 1.5rem;
   border-radius: 1.5rem;
-  border: 2px dashed var(--instapic-pink);
+  border: 2px dashed var(--pink);
+  margin: 2rem auto;
+  max-width: 600px;
 }
 
-/* Status tags */
-.status-tag {
-  padding: 0.6rem 1.4rem;
-  border-radius: 2rem;
-  font-weight: 500;
-  font-family: 'Poppins', sans-serif;
-}
-
-.status-issued { background: rgba(76,175,80,0.7); }
-.status-used   { background: rgba(244,67,54,0.7); }
-
-/* Gallery */
-.gallery img {
-  max-width: 100%;
-  border-radius: 1.4rem;
-  box-shadow: var(--glow-pink);
-  margin: 1.5rem 0;
-}
-
-/* Flash messages */
-.flash {
-  padding: 1.2rem;
-  border-radius: 1.2rem;
-  margin: 1.5rem auto;
-  max-width: 640px;
-  text-align: center;
-  font-family: 'Poppins', sans-serif;
-}
-
-.flash-error   { background: rgba(244,67,54,0.75); color: white; }
-.flash-success { background: rgba(76,175,80,0.75); color: white; }
-
-/* Footer */
-.site-footer {
-  text-align: center;
-  padding: 2.5rem 1rem;
-  opacity: 0.75;
-  font-size: 1rem;
-}
-
-/* Keypad (from session.html) */
 .keypad {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3,1fr);
   gap: 1rem;
-  max-width: 380px;
+  max-width: 360px;
   margin: 2rem auto;
 }
 
 .keypad-key {
   aspect-ratio: 1;
-  font-size: 2.2rem;
+  font-size: 2rem;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,95,162,0.4);
-  border-radius: 1.4rem;
+  border-radius: 1.2rem;
   color: white;
   cursor: pointer;
   transition: all 0.25s;
-  font-family: 'Cinzel', serif;
 }
 
-.keypad-key:hover {
-  background: rgba(255,95,162,0.35);
-  transform: scale(1.08);
-  box-shadow: var(--glow-pink);
+.keypad-key:hover { background: rgba(255,95,162,0.35); transform: scale(1.08); box-shadow: var(--glow-pink); }
+
+.flash {
+  padding: 1rem;
+  border-radius: 1rem;
+  margin: 1rem auto;
+  max-width: 600px;
+}
+
+.flash-error { background: rgba(255,64,129,0.8); color: white; }
+
+.site-footer {
+  text-align: center;
+  padding: 3rem 1rem;
+  opacity: 0.7;
+  font-size: 1rem;
 }

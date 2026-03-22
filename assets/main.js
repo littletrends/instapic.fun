@@ -1,60 +1,40 @@
-// instapic.fun main JS
+// Instapic main.js – shared across all pages
 
-// -------- Global idle timeout (20 seconds) --------
+// Idle timeout (20 seconds → back to index.html)
 (function () {
-  var body = document.body;
-  if (!body) return;
+  const redirect = 'index.html';
+  const timeout = 20000;
+  let timer;
 
-  var redirectPath = body.getAttribute("data-timeout-redirect");
-  if (!redirectPath) return;
-
-  var IDLE_TIMEOUT = 20000; // 20 seconds
-  var idleTimer;
-
-  function resetIdleTimer() {
-    if (idleTimer) {
-      clearTimeout(idleTimer);
-    }
-    idleTimer = setTimeout(function () {
-      window.location.href = redirectPath;
-    }, IDLE_TIMEOUT);
+  function reset() {
+    clearTimeout(timer);
+    timer = setTimeout(() => location.href = redirect, timeout);
   }
 
-  ["click", "mousemove", "keydown", "touchstart", "touchmove"].forEach(function (evt) {
-    document.addEventListener(evt, resetIdleTimer, { passive: true });
-  });
+  ['click','mousemove','keydown','touchstart','touchmove'].forEach(e => 
+    document.addEventListener(e, reset, {passive:true})
+  );
 
-  // start immediately
-  resetIdleTimer();
+  reset();
 })();
 
-// -------- On-screen keypad for code entry --------
+// Keypad handler for session.html
 (function () {
-  var keypads = document.querySelectorAll(".keypad");
-  if (!keypads.length) return;
-
-  keypads.forEach(function (kp) {
-    var inputId = kp.getAttribute("data-input-id");
-    var input = document.getElementById(inputId);
+  document.querySelectorAll('.keypad').forEach(kp => {
+    const input = document.getElementById(kp.dataset.inputId);
     if (!input) return;
 
-    kp.addEventListener("click", function (e) {
-      var btn = e.target.closest(".keypad-key");
+    kp.addEventListener('click', e => {
+      const btn = e.target.closest('.keypad-key');
       if (!btn) return;
 
-      var key = btn.getAttribute("data-key");
-      var action = btn.getAttribute("data-action");
-      var value = input.value || "";
+      const key = btn.dataset.key;
+      const act = btn.dataset.action;
+      let val = input.value || '';
 
-      if (key) {
-        if (value.length < 6) {
-          input.value = value + key;
-        }
-      } else if (action === "back") {
-        input.value = value.slice(0, -1);
-      } else if (action === "clear") {
-        input.value = "";
-      }
+      if (key && val.length < 6) input.value += key;
+      else if (act === 'back') input.value = val.slice(0,-1);
+      else if (act === 'clear') input.value = '';
 
       input.focus();
     });
