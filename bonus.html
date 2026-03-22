@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instapic • Your Bonuses</title>
+  <title>Instapic • Your Bonus Content</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body class="branding-live" data-timeout-redirect="index.html" data-page="bonus">
-
+<body class="branding-live" data-page="bonus" data-timeout-redirect="index.html">
   <div class="cosmic-bg"></div>
 
   <header class="site-header">
     <div class="logo-wrap">
+      <img src="static/img/instapic_logo.png" alt="Instapic logo" class="site-logo">
       <div class="site-title">
         <span class="brand-main">insta<span class="brand-accent">pic</span></span>
         <span class="brand-sub">by Little Trends — Darwin NT</span>
@@ -21,35 +21,38 @@
   </header>
 
   <main class="bonus-page">
-    <h1>Your Magic Has Arrived ✨🦘</h1>
-    <p class="hero-text">The mirror captured the moment.<br>Now enjoy the treasures forever.</p>
+    <section class="hero-card">
+      <p class="hero-kicker">Bonus Content</p>
+      <h1>Your Magic Has Arrived ✨</h1>
+      <p class="hero-text">
+        Here are your enhanced session memories from MotherPC.
+      </p>
 
-    <section class="bonus-hero">
-      <img id="bonus-hero" src="" alt="Featured Bonus" class="hero-strip">
-      <div class="hero-label" id="bonus-hero-label">Your Featured Bonus</div>
-    </section>
+      <div id="flash" class="flash" hidden></div>
 
-    <section class="bonus-gallery-wrap">
-      <div class="bonus-grid" id="bonus-grid"></div>
-    </section>
-
-    <section class="bonus-status-grid">
-      <div class="bonus-status-card" id="status-gif">
-        <h3>GIF / Boomerang</h3>
-        <p>Coming online as soon as session video generation is finished.</p>
+      <div class="hero-strip-wrap">
+        <img id="bonus-hero" class="hero-strip" src="" alt="Featured bonus image">
+        <div id="bonus-hero-label" class="hero-label">Featured Bonus</div>
       </div>
-      <div class="bonus-status-card" id="status-collage">
-        <h3>Collage / Templates</h3>
-        <p>Template media will appear here as your background sets are connected.</p>
+
+      <div id="bonus-grid" class="bonus-grid"></div>
+
+      <div class="status-grid">
+        <div id="status-gif" class="status-card">
+          <h3>Motion Media</h3>
+          <p>Video/GIF style media will appear here when recording is connected.</p>
+        </div>
+        <div id="status-collage" class="status-card">
+          <h3>Template Bonus</h3>
+          <p>Enhanced freeze bonuses are live now. Template media can be added next.</p>
+        </div>
+      </div>
+
+      <div class="portal-actions">
+        <button id="download-all" class="portal-button primary" type="button">Download All</button>
+        <button id="share-magic" class="portal-button" type="button">Share</button>
       </div>
     </section>
-
-    <div class="action-bar">
-      <button class="portal-button" id="download-all">Download All Treasures</button>
-      <button class="portal-button secondary" id="share-magic">Share Your Sparkle</button>
-    </div>
-
-    <div id="flash" class="flash" hidden></div>
   </main>
 
   <footer class="site-footer">
