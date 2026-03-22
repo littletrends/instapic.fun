@@ -26,7 +26,6 @@
     <div id="flash" class="flash" hidden></div>
 
     <div class="package-grid">
-      <!-- Quick & Simple -->
       <button class="package-portal" data-package-id="P1_STRIP" data-amount-cents="700" style="touch-action: manipulation;">
         <div class="portal-orb-inner">
           <span class="package-name">Quick &amp; Simple</span>
@@ -36,7 +35,6 @@
         <div class="portal-glow"></div>
       </button>
 
-      <!-- Most Popular -->
       <button class="package-portal popular" data-package-id="P2_STRIP_GIF" data-amount-cents="1300" style="touch-action: manipulation;">
         <div class="portal-orb-inner">
           <span class="package-name">Most Popular ✨</span>
@@ -46,7 +44,6 @@
         <div class="portal-glow"></div>
       </button>
 
-      <!-- Best for Groups -->
       <button class="package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800" style="touch-action: manipulation;">
         <div class="portal-orb-inner">
           <span class="package-name">Best for Groups</span>
@@ -57,7 +54,6 @@
       </button>
     </div>
 
-    <!-- Success state (shown after Square approval + MotherPC code) -->
     <div id="ticket-result" class="result-box" hidden>
       <h2>Your Code is Ready! 🦘</h2>
       <div id="ticket-code" class="big-code"></div>
@@ -71,19 +67,67 @@
 
   <script src="assets/main.js"></script>
   <script>
-    // === PLACEHOLDER: Replace with your real Square + MotherPC logic ===
-    document.querySelectorAll('.package-portal').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const packageId = btn.dataset.packageId;
-        const amount = btn.dataset.amountCents;
+    const MOTHERPC_BASE = "https://motherpc.taild1a44c.ts.net";
 
-        // Simulate Square success → MotherPC call
-        setTimeout(() => {
-          const mockCode = Math.floor(100000 + Math.random() * 900000).toString();
-          document.getElementById('ticket-code').textContent = mockCode;
-          document.getElementById('ticket-result').hidden = false;
-          document.getElementById('flash').hidden = true;
-        }, 800);
+    const flash = document.getElementById('flash');
+    const ticketResult = document.getElementById('ticket-result');
+    const ticketCode = document.getElementById('ticket-code');
+
+    function showError(message) {
+      flash.innerHTML = `<div class="flash-error">${message}</div>`;
+      flash.hidden = false;
+    }
+
+    document.querySelectorAll('.package-portal').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        flash.hidden = true;
+        ticketResult.hidden = true;
+
+        const packageId = btn.dataset.packageId;
+        const amountCents = Number(btn.dataset.amountCents || "0");
+
+        const oldDisabled = btn.disabled;
+        btn.disabled = true;
+        btn.style.opacity = "0.7";
+
+        try {
+          const res = await fetch(`${MOTHERPC_BASE}/api/create-ticket`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              package_id: packageId,
+              amount_cents: amountCents,
+              source: "website_test_bypass"
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || `Server error (${res.status})`);
+          }
+
+          const code = data.ticket_code || data.code || data.ticket || "";
+
+          if (!code) {
+            throw new Error("MotherPC did not return a ticket code");
+          }
+
+          ticketCode.textContent = code;
+          ticketResult.hidden = false;
+
+          setTimeout(() => {
+            window.location.href = `ticket.html?code=${encodeURIComponent(code)}`;
+          }, 1200);
+
+        } catch (err) {
+          showError(`Could not create code: ${err.message}`);
+        } finally {
+          btn.disabled = oldDisabled;
+          btn.style.opacity = "1";
+        }
       });
     });
   </script>
