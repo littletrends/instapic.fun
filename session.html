@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instapic • Unlock Your Bonuses</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body data-timeout-redirect="index.html">
+<body class="branding-live" data-page="session" class="branding-live" data-timeout-redirect="index.html" data-page="session">
 
   <div class="cosmic-bg"></div>
 
@@ -24,19 +26,10 @@
     <p class="hero-text">Type the 6-digit code from the mirror to unlock your bonuses.</p>
 
     <form id="session-form">
-      <input 
-        type="text" 
-        id="ticket_code" 
-        maxlength="6" 
-        placeholder="123456" 
-        inputmode="numeric" 
-        required 
-        autocomplete="off"
-      >
+      <input type="text" id="ticket_code" maxlength="6" placeholder="123456" inputmode="numeric" required autocomplete="off">
       <button type="submit" class="portal-button">Reveal the Magic</button>
     </form>
 
-    <!-- Touch-friendly keypad (main.js controls it) -->
     <div class="keypad" data-input-id="ticket_code">
       <div class="row"><button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button></div>
       <div class="row"><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button></div>
@@ -45,9 +38,7 @@
     </div>
 
     <div id="flash" class="flash" hidden></div>
-    <div id="processing" class="processing-state" hidden>
-      ✨ Fetching your treasures from the mirror… 🦘
-    </div>
+    <div id="processing" class="processing-state" hidden>✨ Fetching your treasures from the mirror… 🦘</div>
   </main>
 
   <footer class="site-footer">
@@ -55,44 +46,11 @@
   </footer>
 
   <script src="assets/main.js"></script>
-  <script>
-    // Full session logic — calls MotherPC and moves to bonus reveal
-    const form = document.getElementById('session-form');
-    const input = document.getElementById('ticket_code');
-    const flash = document.getElementById('flash');
-    const processing = document.getElementById('processing');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      flash.hidden = true;
-      processing.hidden = false;
-
-      const code = input.value.trim();
-
-      if (code.length !== 6 || !/^\d{6}$/.test(code)) {
-        flash.innerHTML = `<div class="flash-error">Please enter a valid 6-digit code</div>`;
-        flash.hidden = false;
-        processing.hidden = true;
-        return;
-      }
-
-      try {
-        // Real call to MotherPC
-        const res = await fetch(`https://motherpc.taild1a44c.ts.net/api/get-bonus/${code}`);
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || 'Code not found');
-        }
-
-        // Success — go to bonus reveal
-        window.location.href = `bonus.html?code=${code}`;
-      } catch (err) {
-        flash.innerHTML = `<div class="flash-error">${err.message}</div>`;
-        flash.hidden = false;
-        processing.hidden = true;
-      }
-    });
-  </script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/session_runtime.js"></script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/session_runtime.js"></script>
 </body>
 </html>

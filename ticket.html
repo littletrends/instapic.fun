@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instapic • Your Code</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body data-timeout-redirect="index.html">
+<body class="branding-live" data-page="ticket" class="branding-live" data-timeout-redirect="index.html" data-page="ticket">
 
   <div class="cosmic-bg"></div>
 
@@ -22,12 +24,9 @@
   <main class="ticket-page">
     <h1>Your Magic Code ✨</h1>
     <p class="hero-text">Show this to the mirror when it’s your turn in the queue.</p>
-
-    <!-- BIG GLOWING CODE DISPLAY -->
     <div class="code-display">
       <span id="code-display">------</span>
     </div>
-
     <p class="hint">Take a screenshot — the adventure is waiting 🦘</p>
   </main>
 
@@ -36,11 +35,11 @@
   </footer>
 
   <script src="assets/main.js"></script>
-  <script>
-    // Read code from URL (e.g. ticket.html?code=912600)
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code') || '------';
-    document.getElementById('code-display').textContent = code;
-  </script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/ticket_runtime.js"></script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/ticket_runtime.js"></script>
 </body>
 </html>

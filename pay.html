@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instapic • Choose Your Magic</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
+  <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body data-timeout-redirect="index.html">
+<body class="branding-live" data-page="pay" class="branding-live" data-timeout-redirect="index.html" data-page="pay">
 
   <div class="cosmic-bg"></div>
 
@@ -66,70 +68,11 @@
   </footer>
 
   <script src="assets/main.js"></script>
-  <script>
-    const MOTHERPC_BASE = "https://motherpc.taild1a44c.ts.net";
-
-    const flash = document.getElementById('flash');
-    const ticketResult = document.getElementById('ticket-result');
-    const ticketCode = document.getElementById('ticket-code');
-
-    function showError(message) {
-      flash.innerHTML = `<div class="flash-error">${message}</div>`;
-      flash.hidden = false;
-    }
-
-    document.querySelectorAll('.package-portal').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        flash.hidden = true;
-        ticketResult.hidden = true;
-
-        const packageId = btn.dataset.packageId;
-        const amountCents = Number(btn.dataset.amountCents || "0");
-
-        const oldDisabled = btn.disabled;
-        btn.disabled = true;
-        btn.style.opacity = "0.7";
-
-        try {
-          const res = await fetch(`${MOTHERPC_BASE}/api/create-ticket`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              package_id: packageId,
-              amount_cents: amountCents,
-              source: "website_test_bypass"
-            })
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            throw new Error(data.error || `Server error (${res.status})`);
-          }
-
-          const code = data.ticket_code || data.code || data.ticket || "";
-
-          if (!code) {
-            throw new Error("MotherPC did not return a ticket code");
-          }
-
-          ticketCode.textContent = code;
-          ticketResult.hidden = false;
-
-          setTimeout(() => {
-            window.location.href = `ticket.html?code=${encodeURIComponent(code)}`;
-          }, 1200);
-
-        } catch (err) {
-          showError(`Could not create code: ${err.message}`);
-        } finally {
-          btn.disabled = oldDisabled;
-          btn.style.opacity = "1";
-        }
-      });
-    });
-  </script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/pay_runtime.js"></script>
+  <script src="assets/branding/branding.js"></script>
+  <script src="assets/core/site_core.js"></script>
+  <script src="assets/core/pay_runtime.js"></script>
 </body>
 </html>
