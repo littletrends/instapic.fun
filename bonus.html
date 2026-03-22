@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body class="branding-live" data-timeout-redirect="index.html" data-page="bonus">
+<body class="branding-live" data-timeout-redirect="index.html">
 
   <div class="cosmic-bg"></div>
 
@@ -24,32 +24,38 @@
     <h1>Your Magic Has Arrived ✨🦘</h1>
     <p class="hero-text">The mirror captured the moment.<br>Now enjoy the treasures forever.</p>
 
-    <section class="bonus-hero">
-      <img id="bonus-hero" src="" alt="Featured Bonus" class="hero-strip">
-      <div class="hero-label" id="bonus-hero-label">Your Featured Bonus</div>
-    </section>
+    <!-- Hero Strip -->
+    <div class="bonus-hero">
+      <img id="bonus-strip" src="" alt="Your Photostrip" class="hero-strip">
+      <div class="hero-label">Your Instapic Strip</div>
+    </div>
 
-    <section class="bonus-gallery-wrap">
-      <div class="bonus-grid" id="bonus-grid"></div>
-    </section>
-
-    <section class="bonus-status-grid">
-      <div class="bonus-status-card" id="status-gif">
-        <h3>GIF / Boomerang</h3>
-        <p>Coming online as soon as session video generation is finished.</p>
+    <!-- Animated Trio -->
+    <div class="bonus-grid">
+      <!-- Collage -->
+      <div class="bonus-card">
+        <video id="bonus-collage" src="" autoplay loop muted playsinline class="bonus-media"></video>
+        <div class="card-label">Collage Magic</div>
       </div>
-      <div class="bonus-status-card" id="status-collage">
-        <h3>Collage / Templates</h3>
-        <p>Template media will appear here as your background sets are connected.</p>
-      </div>
-    </section>
 
+      <!-- GIF -->
+      <div class="bonus-card">
+        <img id="bonus-gif" src="" alt="GIF Loop" class="bonus-media">
+        <div class="card-label">Forever Loop</div>
+      </div>
+
+      <!-- Boomerang -->
+      <div class="bonus-card">
+        <video id="bonus-boomerang" src="" autoplay loop muted playsinline class="bonus-media"></video>
+        <div class="card-label">Boomerang Bounce 🪃</div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
     <div class="action-bar">
       <button class="portal-button" id="download-all">Download All Treasures</button>
       <button class="portal-button secondary" id="share-magic">Share Your Sparkle</button>
     </div>
-
-    <div id="flash" class="flash" hidden></div>
   </main>
 
   <footer class="site-footer">
@@ -58,10 +64,68 @@
 
   <script src="assets/main.js"></script>
   <script src="assets/branding/branding.js"></script>
-  <script src="assets/core/site_core.js"></script>
-  <script src="assets/core/bonus_runtime.js"></script>
-  <script src="assets/branding/branding.js"></script>
-  <script src="assets/core/site_core.js"></script>
-  <script src="assets/core/bonus_runtime.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || '';
+    const base = "https://motherpc.taild1a44c.ts.net";
+
+    const stripEl = document.getElementById('bonus-strip');
+    const collageEl = document.getElementById('bonus-collage');
+    const gifEl = document.getElementById('bonus-gif');
+    const boomerangEl = document.getElementById('bonus-boomerang');
+
+    function showMediaFiles(files) {
+      const full = files.map(f => `${base}${f}`);
+
+      // Temporary layout:
+      // use returned enhanced freezes in the existing slots until
+      // real collage/gif/boomerang files are being generated.
+      if (full[0]) stripEl.src = full[0];
+      if (full[1]) {
+        collageEl.outerHTML = `<img id="bonus-collage" src="${full[1]}" alt="Bonus Still 2" class="bonus-media">`;
+      }
+      if (full[2]) gifEl.src = full[2];
+      if (full[3]) {
+        boomerangEl.outerHTML = `<img id="bonus-boomerang" src="${full[3]}" alt="Bonus Still 4" class="bonus-media">`;
+      }
+    }
+
+    async function loadBonus() {
+      if (!code) {
+        alert("Missing code.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${base}/api/get-bonus/${encodeURIComponent(code)}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `Server error (${res.status})`);
+        }
+
+        const files = Array.isArray(data.bonus_files) ? data.bonus_files : [];
+        if (!files.length) {
+          alert("Your bonus page is unlocked, but files are not ready yet.");
+          return;
+        }
+
+        showMediaFiles(files);
+      } catch (err) {
+        console.error("bonus load failed", err);
+        alert(`Could not load your bonus files: ${err.message}`);
+      }
+    }
+
+    document.getElementById('download-all').addEventListener('click', () => {
+      alert('Download bundle coming next.');
+    });
+
+    document.getElementById('share-magic').addEventListener('click', () => {
+      alert('Share flow coming next.');
+    });
+
+    loadBonus();
+  </script>
 </body>
 </html>

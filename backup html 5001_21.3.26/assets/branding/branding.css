@@ -1,13 +1,7 @@
 /* --------------------------------------------------
    Instapic branding playground
-   Safe place for visual tweaks and experiments
+   Safe visual-only edits live here
    -------------------------------------------------- */
-
-:root {
-  --insta-brand-pink: #ff2f86;
-  --insta-brand-dark: #17111f;
-  --insta-brand-soft: #fff7fb;
-}
 
 body.branding-live {
   background-size: cover;
@@ -17,3 +11,5 @@ body.branding-live {
 .branding-note {
   display: none;
 }
+
+/* Optional future overrides go here */

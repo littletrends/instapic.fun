@@ -1,0 +1,15 @@
+# local-only scratch
+_local_backups/
+_local_notes/
+
+# logs
+*.log
+
+# temp backups / zips / tarballs
+*.zip
+*.tar.gz
+*.BACKUP_*
+*~ 
+
+# accidental copies
+assets/styles (copy).css

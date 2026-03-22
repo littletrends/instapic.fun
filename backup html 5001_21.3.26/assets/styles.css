@@ -1,0 +1,122 @@
+/* Instapic Unified Styles – updated for full flow (prepay + bonus reveal) */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap');
+
+:root {
+  --pink: #ff5fa2;
+  --pink-deep: #ff2f6c;
+  --gold: #ffbf5f;
+  --charcoal: #171320;
+  --cream: #fff9f5;
+  --glow-pink: 0 0 28px rgba(255,95,162,0.55);
+  --glow-gold: 0 0 32px rgba(255,191,95,0.45);
+  --glow-cyan: 0 0 24px rgba(120,255,240,0.5);
+  --radius-portal: 50%;
+  --breath: 5.8s ease-in-out infinite;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Cinzel', serif;
+  background: radial-gradient(circle at top, #252038 0%, #080611 55%, #030207 100%);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.site-header {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.brand-main { font-size: 3.2rem; font-weight:700; }
+.brand-accent { color: var(--pink); text-shadow: 0 0 20px var(--pink); }
+.brand-sub { font-size:1.1rem; opacity:0.8; display:block; margin-top:0.3rem; font-family:'Poppins',sans-serif; }
+
+.site-main { padding: 2rem 1rem; max-width: 900px; margin: 0 auto; text-align: center; }
+
+h1 { font-size: 2.6rem; margin-bottom: 1.5rem; text-shadow: var(--glow-pink); }
+
+.portal-orb, .portal-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,180,230,0.88), rgba(255,110,170,0.82), rgba(140,0,90,0.88));
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--glow-pink), inset 0 0 40px rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s;
+  animation: breath var(--breath);
+  margin: 2rem auto;
+  text-decoration: none;
+  border: none;
+}
+
+.portal-orb:hover, .portal-button:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 60px rgba(255,95,162,0.7);
+}
+
+@keyframes breath {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.05); }
+}
+
+.ticket-code {
+  font-family: 'Poppins', monospace;
+  font-size: 5rem;
+  letter-spacing: 0.8rem;
+  color: var(--gold);
+  text-shadow: var(--glow-gold);
+  background: rgba(0,0,0,0.4);
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 2px dashed var(--pink);
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1rem;
+  max-width: 360px;
+  margin: 2rem auto;
+}
+
+.keypad-key {
+  aspect-ratio: 1;
+  font-size: 2rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,95,162,0.4);
+  border-radius: 1.2rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.keypad-key:hover { background: rgba(255,95,162,0.35); transform: scale(1.08); box-shadow: var(--glow-pink); }
+
+.flash {
+  padding: 1rem;
+  border-radius: 1rem;
+  margin: 1rem auto;
+  max-width: 600px;
+}
+
+.flash-error { background: rgba(255,64,129,0.8); color: white; }
+
+.site-footer {
+  text-align: center;
+  padding: 3rem 1rem;
+  opacity: 0.7;
+  font-size: 1rem;
+}
