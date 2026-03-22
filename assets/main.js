@@ -25,7 +25,7 @@
     if (!input) return;
 
     kp.addEventListener('click', e => {
-      const btn = e.target.closest('.keypad-key');
+      const btn = e.target.closest('button[data-key], button[data-action]');
       if (!btn) return;
 
       const key = btn.dataset.key;
