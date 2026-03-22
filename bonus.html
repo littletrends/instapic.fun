@@ -63,26 +63,67 @@
 
   <script src="assets/main.js"></script>
   <script>
-    // Read code from URL and load the real themed files from MotherPC
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code') || 'demo';
-
+    const code = params.get('code') || '';
     const base = "https://motherpc.taild1a44c.ts.net";
 
-    document.getElementById('bonus-strip').src     = `${base}/assets/${code}/bonuses/${code}_strip_web.png`;
-    document.getElementById('bonus-collage').src   = `${base}/assets/${code}/bonuses/${code}_collage.mp4`;
-    document.getElementById('bonus-gif').src       = `${base}/assets/${code}/bonuses/${code}_gif.gif`;
-    document.getElementById('bonus-boomerang').src = `${base}/assets/${code}/bonuses/${code}_boomerang.mp4`;
+    const stripEl = document.getElementById('bonus-strip');
+    const collageEl = document.getElementById('bonus-collage');
+    const gifEl = document.getElementById('bonus-gif');
+    const boomerangEl = document.getElementById('bonus-boomerang');
 
-    // Download All button (placeholder - can be expanded later)
+    function showMediaFiles(files) {
+      const full = files.map(f => `${base}${f}`);
+
+      // Temporary layout:
+      // use returned enhanced freezes in the existing slots until
+      // real collage/gif/boomerang files are being generated.
+      if (full[0]) stripEl.src = full[0];
+      if (full[1]) {
+        collageEl.outerHTML = `<img id="bonus-collage" src="${full[1]}" alt="Bonus Still 2" class="bonus-media">`;
+      }
+      if (full[2]) gifEl.src = full[2];
+      if (full[3]) {
+        boomerangEl.outerHTML = `<img id="bonus-boomerang" src="${full[3]}" alt="Bonus Still 4" class="bonus-media">`;
+      }
+    }
+
+    async function loadBonus() {
+      if (!code) {
+        alert("Missing code.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${base}/api/get-bonus/${encodeURIComponent(code)}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `Server error (${res.status})`);
+        }
+
+        const files = Array.isArray(data.bonus_files) ? data.bonus_files : [];
+        if (!files.length) {
+          alert("Your bonus page is unlocked, but files are not ready yet.");
+          return;
+        }
+
+        showMediaFiles(files);
+      } catch (err) {
+        console.error("bonus load failed", err);
+        alert(`Could not load your bonus files: ${err.message}`);
+      }
+    }
+
     document.getElementById('download-all').addEventListener('click', () => {
-      alert('Downloading all your treasures as a zip... (this would trigger real zip in production)');
+      alert('Download bundle coming next.');
     });
 
-    // Share button (placeholder)
     document.getElementById('share-magic').addEventListener('click', () => {
-      alert('Sharing your magic to Stories / TikTok... (Web Share API ready)');
+      alert('Share flow coming next.');
     });
+
+    loadBonus();
   </script>
 </body>
 </html>
