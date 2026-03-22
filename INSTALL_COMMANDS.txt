@@ -1,0 +1,18 @@
+cd ~/Desktop/instapic/magic_mirror_v1/instapic_fun || exit 1
+
+mkdir -p assets/core assets/branding
+
+cp -v /PATH/TO/site_core.js assets/core/site_core.js
+cp -v /PATH/TO/pay_runtime.js assets/core/pay_runtime.js
+cp -v /PATH/TO/ticket_runtime.js assets/core/ticket_runtime.js
+cp -v /PATH/TO/session_runtime.js assets/core/session_runtime.js
+cp -v /PATH/TO/bonus_runtime.js assets/core/bonus_runtime.js
+cp -v /PATH/TO/branding.css assets/branding/branding.css
+cp -v /PATH/TO/branding.js assets/branding/branding.js
+cp -v /PATH/TO/README_CORE.txt assets/core/README_CORE.txt
+
+cp -v /PATH/TO/index.html index.html
+cp -v /PATH/TO/pay.html pay.html
+cp -v /PATH/TO/ticket.html ticket.html
+cp -v /PATH/TO/session.html session.html
+cp -v /PATH/TO/bonus.html bonus.html
