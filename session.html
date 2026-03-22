@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instapic • Unlock Your Bonuses</title>
+  <title>Instapic • Enter Your Code</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body class="branding-live" data-page="session" class="branding-live" data-timeout-redirect="index.html" data-page="session">
-
+<body class="branding-live" data-page="session" data-timeout-redirect="index.html">
   <div class="cosmic-bg"></div>
 
   <header class="site-header">
     <div class="logo-wrap">
+      <img src="static/img/instapic_logo.png" alt="Instapic logo" class="site-logo">
       <div class="site-title">
         <span class="brand-main">insta<span class="brand-accent">pic</span></span>
         <span class="brand-sub">by Little Trends — Darwin NT</span>
@@ -21,23 +21,49 @@
   </header>
 
   <main class="session-page">
-    <h1>Enter Your Code</h1>
-    <p class="hero-text">Type the 6-digit code from the mirror to unlock your bonuses.</p>
+    <section class="hero-card">
+      <p class="hero-kicker">Bonus Access</p>
+      <h1>Enter Your 6-Digit Code</h1>
+      <p class="hero-text">
+        Enter the code from your booth session to unlock your bonus content.
+      </p>
 
-    <form id="session-form">
-      <input type="text" id="ticket_code" maxlength="6" placeholder="123456" inputmode="numeric" required autocomplete="off">
-      <button type="submit" class="portal-button">Reveal the Magic</button>
-    </form>
+      <div id="flash" class="flash" hidden></div>
 
-    <div class="keypad" data-input-id="ticket_code">
-      <div class="row"><button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button></div>
-      <div class="row"><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button></div>
-      <div class="row"><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button></div>
-      <div class="row"><button type="button" data-action="clear">Clear</button><button type="button" data-key="0">0</button><button type="button" data-action="back">←</button></div>
-    </div>
+      <form id="session-form" class="session-form">
+        <input
+          id="ticket_code"
+          name="ticket_code"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="------"
+          class="code-input"
+        />
 
-    <div id="flash" class="flash" hidden></div>
-    <div id="processing" class="processing-state" hidden>✨ Fetching your treasures from the mirror… 🦘</div>
+        <div class="keypad">
+          <button type="button" data-key="1">1</button>
+          <button type="button" data-key="2">2</button>
+          <button type="button" data-key="3">3</button>
+          <button type="button" data-key="4">4</button>
+          <button type="button" data-key="5">5</button>
+          <button type="button" data-key="6">6</button>
+          <button type="button" data-key="7">7</button>
+          <button type="button" data-key="8">8</button>
+          <button type="button" data-key="9">9</button>
+          <button type="button" data-action="clear">Clear</button>
+          <button type="button" data-key="0">0</button>
+          <button type="button" data-action="back">←</button>
+        </div>
+
+        <div class="portal-actions">
+          <button class="portal-button primary" type="submit">Unlock My Bonus</button>
+        </div>
+      </form>
+
+      <p id="processing" class="hint" hidden>Checking your code…</p>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -45,12 +71,6 @@
   </footer>
 
   <script src="assets/main.js"></script>
-  <script src="assets/branding/branding.js"></script>
-  <script src="assets/core/site_core.js"></script>
-  <script src="assets/core/session_runtime.js"></script>
-  <script src="assets/branding/branding.js"></script>
-  <script src="assets/core/site_core.js"></script>
-  <script src="assets/core/session_runtime.js"></script>
   <script src="assets/branding/branding.js"></script>
   <script src="assets/core/site_core.js"></script>
   <script src="assets/core/session_runtime.js"></script>
