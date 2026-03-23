@@ -1,5 +1,5 @@
 (function () {
-  const BASE = "https://motherpc.taild1a44c.ts.net";
+  const API_BASE = "https://motherpc.taild1a44c.ts.net";
 
   function qs(sel, root = document) {
     return root.querySelector(sel);
@@ -9,91 +9,81 @@
     return Array.from(root.querySelectorAll(sel));
   }
 
-  function getCodeFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("code") || "";
+  function dataPage() {
+    return document.body?.dataset?.page || "";
   }
 
-  function showFlash(message, type = "error") {
-    const flash = qs("#flash");
-    if (!flash) return;
-    flash.innerHTML = `<div class="flash-${type}">${message}</div>`;
-    flash.hidden = false;
+  function showFlash(message, level = "error") {
+    const el = qs("#flash");
+    if (!el) {
+      console.warn("[InstapicCore flash]", level, message);
+      return;
+    }
+    el.hidden = false;
+    el.textContent = message;
+    el.className = `flash flash-${level}`;
   }
 
-  function hideFlash() {
-    const flash = qs("#flash");
-    if (!flash) return;
-    flash.hidden = true;
-    flash.innerHTML = "";
-  }
-
-  async function postJSON(path, payload) {
-    const res = await fetch(`${BASE}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload || {})
-    });
-
-    let data = {};
+  async function readJson(res) {
+    const text = await res.text();
     try {
-      data = await res.json();
-    } catch (_) {}
-
-    return { res, data };
-  }
-
-  async function getJSON(path) {
-    const res = await fetch(`${BASE}${path}`);
-    let data = {};
-    try {
-      data = await res.json();
-    } catch (_) {}
-    return { res, data };
+      return text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`Invalid server response (${res.status})`);
+    }
   }
 
   async function createTicket(packageId, amountCents, source = "website_test_bypass") {
-    const { res, data } = await postJSON("/api/create-ticket", {
-      package_id: packageId,
-      amount_cents: amountCents,
-      source
+    const res = await fetch(`${API_BASE}/api/create-ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        package_id: packageId,
+        amount_cents: amountCents,
+        source: source
+      })
     });
 
-    if (!res.ok) {
-      throw new Error(data.error || `Server error (${res.status})`);
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
     }
 
-    const code = data.ticket_code || data.code || "";
+    const code = data.ticket_code || data.code || data.ticketCode;
     if (!code) {
-      throw new Error("MotherPC did not return a ticket code");
+      throw new Error("No code returned from MotherPC");
     }
 
-    return { code, raw: data };
+    return {
+      ok: true,
+      code: String(code)
+    };
   }
 
   async function getBonus(code) {
-    const { res, data } = await getJSON(`/api/get-bonus/${encodeURIComponent(code)}`);
-    if (!res.ok || !data.ok) {
-      throw new Error(data.error || `Server error (${res.status})`);
+    const clean = String(code || "").trim();
+    if (!/^\d{6}$/.test(clean)) {
+      throw new Error("Enter a valid 6-digit code");
     }
+
+    const res = await fetch(`${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}`);
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
+    }
+
     return data;
   }
 
-  function dataPage() {
-    return document.body.getAttribute("data-page") || "";
-  }
-
   window.InstapicCore = {
-    BASE,
+    API_BASE,
     qs,
     qsa,
-    getCodeFromUrl,
+    dataPage,
     showFlash,
-    hideFlash,
     createTicket,
-    getBonus,
-    dataPage
+    getBonus
   };
-
-  console.log("[core] site_core.js loaded");
 })();
