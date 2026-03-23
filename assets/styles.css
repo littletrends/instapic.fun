@@ -1,0 +1,487 @@
+:root {
+  --bg: #05040a;
+  --card: #10101a;
+  --accent: #ff3370;
+  --accent-soft: #ff7a7a;
+  --teal: #20c6c8;
+  --text: #ffffff;
+  --muted: #b0b0c0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1b1024, #05040a 60%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header,
+.site-footer {
+  padding: 1rem 1.5rem;
+}
+
+.site-main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-main {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.brand-accent {
+  color: var(--accent);
+}
+
+.brand-sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.site-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.hero,
+.prepay,
+.ticket,
+.enter-code,
+.error {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.hero {
+  max-width: 540px;
+  margin: 1.5rem auto 0;
+}
+
+.hero-logo {
+  width: 200px;
+  max-width: 60vw;
+  height: auto;
+  margin-bottom: 0.75rem;
+}
+
+.hero-text {
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0.5rem auto 1.5rem;
+}
+
+.hero-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.hero-qr {
+  width: 200px;
+  max-width: 40vw;
+  background: #ffffff;
+  padding: 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+
+.hero-links {
+  margin-top: 1.5rem;
+}
+
+.secondary-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.secondary-link:hover {
+  text-decoration: underline;
+}
+
+/* Generic pill button */
+
+.portal-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 0 18px rgba(255, 64, 129, 0.6);
+}
+
+.portal-button.small {
+  padding: 0.55rem 1.3rem;
+  font-size: 0.9rem;
+  box-shadow: 0 0 14px rgba(255, 64, 129, 0.6);
+}
+
+.portal-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Big orb on homepage */
+
+.portal-orb {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  text-decoration: none;
+  position: relative;
+  margin-top: 1.5rem;
+}
+
+.portal-orb::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 0, rgba(255, 51, 112, 0.9), rgba(32, 198, 200, 0.4));
+  filter: blur(8px);
+  opacity: 0.8;
+}
+
+.portal-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 0, #ff5b9b, #ff3370 60%, #ff9f6b 95%);
+}
+
+.portal-orb-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 1.5rem;
+  color: #fff;
+}
+
+.portal-orb-main {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.portal-orb-sub {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #ffe7f0;
+}
+
+.portal-orb:hover {
+  transform: translateY(-2px);
+}
+
+.portal-orb:hover::before {
+  opacity: 1;
+}
+
+/* Steps chips */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.steps-chips {
+  margin-bottom: 0.5rem;
+}
+
+.step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.8rem;
+}
+
+.step-number {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.step-word {
+  font-weight: 600;
+}
+
+/* Prepay packages */
+
+.package-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.package-card {
+  background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.15), rgba(0,0,0,0.9) 60%);
+  border-radius: 999px;
+  width: 220px;
+  height: 220px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 34px rgba(0, 255, 255, 0.18);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pkg-name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pkg-desc {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.pkg-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.dev-note {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Ticket */
+
+.ticket-code {
+  font-size: 2.2rem;
+  letter-spacing: 0.18em;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  background: var(--card);
+  display: inline-block;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.ticket-help {
+  color: var(--muted);
+}
+
+/* Code page */
+
+.code-card {
+  max-width: 500px;
+  margin: 1.2rem auto 0;
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+  text-align: left;
+}
+
+.code-label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.code-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.code-input-row input {
+  flex: 1;
+  padding: 0.65rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.code-input-row input::placeholder {
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.code-hint {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.code-result {
+  max-width: 600px;
+  margin: 1.5rem auto 0;
+  text-align: center;
+}
+
+.code-summary {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.code-pill {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.3rem;
+}
+
+.code-package {
+  margin-bottom: 0.3rem;
+}
+
+.code-status {
+  margin-bottom: 0.3rem;
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-issued {
+  background: rgba(32, 198, 200, 0.25);
+  border: 1px solid rgba(32, 198, 200, 0.8);
+}
+
+.status-used {
+  background: rgba(255, 51, 112, 0.25);
+  border: 1px solid rgba(255, 51, 112, 0.8);
+}
+
+.gallery img {
+  max-width: 100%;
+  border-radius: 18px;
+  margin-top: 1rem;
+}
+
+/* On-screen keypad */
+
+.keypad {
+  margin-top: 0.75rem;
+}
+
+.keypad-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.keypad-key {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.keypad-key-clear,
+.keypad-key-back {
+  font-size: 0.8rem;
+}
+
+/* Debug tickets table */
+
+.tickets-table-wrap {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.tickets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tickets-table th,
+.tickets-table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.tickets-table thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tickets-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tickets-table code {
+  font-family: monospace;
+  letter-spacing: 0.1em;
+}
