@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Enter Code</title>
+  <title>Instapic Fun — View Your Photos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
@@ -12,27 +12,36 @@
     <div id="flash" hidden></div>
 
     <h1>View your photos</h1>
-    <p class="muted">Type your 6-digit Instapic code from the booth or your receipt.</p>
+    <p class="muted">
+      Type your 6-digit Instapic code from the mirror or your receipt.
+    </p>
 
-    <form id="session-form" class="code-card" novalidate>
+    <form id="session-form" class="code-card" novalidate autocomplete="off">
       <label for="ticket_code">Instapic code</label>
+
       <div class="code-input-row">
         <input
           type="text"
           id="ticket_code"
           name="ticket_code"
           maxlength="6"
-          pattern="\d{6}"
+          pattern="[0-9]{6}"
           inputmode="numeric"
           placeholder="123456"
           required
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          enterkeyhint="done"
         >
         <button type="submit" class="btn">Show my photos</button>
       </div>
 
       <p id="processing" class="muted" hidden>Checking your code…</p>
+      <p class="muted">Numbers only, no spaces.</p>
 
-      <div class="keypad" data-input-id="ticket_code">
+      <div class="keypad">
         <div class="keypad-row">
           <button type="button" class="keypad-key" data-key="1">1</button>
           <button type="button" class="keypad-key" data-key="2">2</button>
