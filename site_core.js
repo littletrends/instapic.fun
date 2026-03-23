@@ -13,6 +13,12 @@
     return document.body?.dataset?.page || "";
   }
 
+  function getCodeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get("code") || "").trim();
+    return code;
+  }
+
   function showFlash(message, level = "error") {
     const el = qs("#flash");
     if (!el) {
@@ -82,6 +88,7 @@
     qs,
     qsa,
     dataPage,
+    getCodeFromUrl,
     showFlash,
     createTicket,
     getBonus
