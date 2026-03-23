@@ -25,8 +25,9 @@
 
         try {
           const result = await core.createTicket(packageId, amountCents, "website_test_bypass");
-          ticketCode.textContent = result.code;
-          ticketResult.hidden = false;
+
+          if (ticketCode) ticketCode.textContent = result.code;
+          if (ticketResult) ticketResult.hidden = false;
 
           setTimeout(() => {
             window.location.href = `ticket.html?code=${encodeURIComponent(result.code)}`;
