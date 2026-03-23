@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Bonus Content</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="bonus" data-timeout-redirect="index.html">
+  <main class="card">
+    <div id="flash" hidden></div>
+
+    <h1>Bonus Content</h1>
+    <p class="muted">Your Instapic session extras live here.</p>
+
+    <p>
+      <button type="button" id="download-all" class="btn">Download all</button>
+      <button type="button" id="share-magic" class="btn">Copy page link</button>
+    </p>
+
+    <div class="preview">
+      <div id="bonus-hero-label" class="muted">Featured Bonus • Instapic</div>
+      <img
+        id="bonus-hero"
+        src="assets/img/instapic_logo.png"
+        alt="Featured Instapic bonus"
+        style="max-width:100%; border-radius:14px;"
+      >
+    </div>
+
+    <div class="status-grid">
+      <div id="status-gif" class="card">
+        <h2>Motion</h2>
+        <p>Checking for motion media…</p>
+      </div>
+
+      <div id="status-collage" class="card">
+        <h2>Background Set Bonus</h2>
+        <p>Checking for enhanced bonus files…</p>
+      </div>
+    </div>
+
+    <h2>Your session files</h2>
+    <div id="bonus-grid" class="bonus-grid"></div>
+
+    <p class="muted">Save this page or your 6-digit code so you can come back later.</p>
+    <p><a class="btn" href="index.html">Back to start</a></p>
+  </main>
+
+  <script src="assets/main.js"></script>
+  <script src="site_core.js"></script>
+  <script src="branding.js"></script>
+  <script src="bonus_runtime.js"></script>
+</body>
+</html>

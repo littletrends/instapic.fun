@@ -2,76 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Choose your session — Instapic</title>
+  <title>Instapic Fun — Prepay</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
 </head>
-<body>
-  <header class="site-header">
-    <div class="logo-wrap">
-      <div class="site-title">
-        <span class="brand-main">insta<span class="brand-accent">pic</span></span>
-        <span class="brand-sub">by Little Trends — Darwin NT</span>
-      </div>
+<body class="page" data-page="pay" data-timeout-redirect="index.html">
+  <main class="card">
+    <div id="flash" hidden></div>
+
+    <h1>Choose your session</h1>
+    <p class="muted">
+      Bridge mode: request your Instapic code from MotherPC, then use that code at the booth.
+    </p>
+
+    <div class="package-grid">
+      <button type="button" class="package-card package-portal" data-package-id="P1_STRIP" data-amount-cents="700">
+        <h2>Strip</h2>
+        <p>Classic Instapic print strip.</p>
+        <div class="pkg-price">$7.00</div>
+        <div class="btn">Get my code</div>
+      </button>
+
+      <button type="button" class="package-card package-portal" data-package-id="P2_STRIP_GIF" data-amount-cents="1300">
+        <h2>Strip + GIF</h2>
+        <p>Photo strip plus motion bonus.</p>
+        <div class="pkg-price">$13.00</div>
+        <div class="btn">Get my code</div>
+      </button>
+
+      <button type="button" class="package-card package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800">
+        <h2>Strip + GIF Premium</h2>
+        <p>Photo strip and expanded digital bonus set.</p>
+        <div class="pkg-price">$18.00</div>
+        <div class="btn">Get my code</div>
+      </button>
     </div>
-  </header>
 
-  <main class="site-main">
-    <section class="prepay">
-      <h1>Choose your session</h1>
-      <p class="hero-text">
-        Pay once here, then use your Instapic code to unlock the Magic Mirror.
-      </p>
+    <p class="muted">
+      Website Square checkout is not live yet. This page only asks MotherPC to issue a code.
+    </p>
 
-      <div class="package-grid">
-        <div class="package-card">
-          <h2 class="pkg-name">$7 Quick & Simple</h2>
-          <p class="pkg-desc">
-            Perfect for a quick keepsake. 2 strips, digital copy.
-          </p>
-          <div class="pkg-price">$7.00 AUD</div>
-          <a href="#" class="portal-button small">
-            <span class="portal-label">Pay (coming soon)</span>
-          </a>
-        </div>
-
-        <div class="package-card">
-          <h2 class="pkg-name">$13 Most Popular</h2>
-          <p class="pkg-desc">
-            Best for couples & friends. 4 strips, GIF/boomerang, digital.
-          </p>
-          <div class="pkg-price">$13.00 AUD</div>
-          <a href="#" class="portal-button small">
-            <span class="portal-label">Pay (coming soon)</span>
-          </a>
-        </div>
-
-        <div class="package-card">
-          <h2 class="pkg-name">$18 Best for Groups</h2>
-          <p class="pkg-desc">
-            Loads of prints for the whole crew. 6 strips, GIF/boomerang, digital.
-          </p>
-          <div class="pkg-price">$18.00 AUD</div>
-          <a href="#" class="portal-button small">
-            <span class="portal-label">Pay (coming soon)</span>
-          </a>
-        </div>
-      </div>
-
-      <p class="dev-note">
-        Online payments coming soon. For now, please pay at the mirror.
-      </p>
-
-      <div class="hero-links">
-        <a href="index.html" class="secondary-link">
-          ⟵ Back to start
-        </a>
-      </div>
-    </section>
+    <p><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
-  <footer class="site-footer">
-    <small>&copy; Instapic by Little Trends — Have fun, be silly, love the photos ✨</small>
-  </footer>
+  <script src="assets/main.js"></script>
+  <script src="site_core.js"></script>
+  <script src="branding.js"></script>
+  <script src="pay_runtime.js"></script>
 </body>
 </html>
