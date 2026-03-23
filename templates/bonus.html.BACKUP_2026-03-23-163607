@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Bonus Content</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="page">
+
+  <div class="card">
+    <h1>Bonus Content</h1>
+    <p class="muted">Code: <strong>{{ ticket.ticket_code }}</strong></p>
+
+    <div class="preview">
+      {% if assets.strip_ready %}
+        <img src="{{ assets.strip_url }}" alt="Photo strip" style="max-width:100%; border-radius:14px;">
+        <p><a class="btn" href="{{ assets.strip_url }}" download>Download Strip</a></p>
+      {% else %}
+        <p class="muted">Strip is uploading…</p>
+      {% endif %}
+    </div>
+
+    {% if extras.gif %}
+      <hr/>
+      <h2>GIF</h2>
+      {% if assets.gif_ready %}
+        <p><a class="btn" href="{{ assets.gif_url }}" download>Download GIF</a></p>
+      {% else %}
+        <p class="muted">Preparing GIF…</p>
+      {% endif %}
+    {% endif %}
+
+    {% if extras.boomerang %}
+      <hr/>
+      <h2>Boomerang</h2>
+      {% if assets.boomerang_ready %}
+        <p><a class="btn" href="{{ assets.boomerang_url }}" download>Download Boomerang</a></p>
+      {% else %}
+        <p class="muted">Preparing Boomerang…</p>
+      {% endif %}
+    {% endif %}
+
+    <hr/>
+    <p class="muted">Tip: Save this code to come back later.</p>
+  </div>
+
+  <script>
+    const code = "{{ ticket.ticket_code }}";
+    let tries = 0;
+    const maxTries = 15;
+
+    async function poll() {
+      tries++;
+      if (tries > maxTries) return;
+
+      const res = await fetch("/api/bonus-status", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ticket_code: code})
+      });
+      const data = await res.json();
+      if (data && data.ok) {
+        if (data.strip_ready || data.gif_ready || data.boomerang_ready) {
+          window.location.reload();
+        }
+      }
+      setTimeout(poll, 2000);
+    }
+    poll();
+  </script>
+
+</body>
+</html>
+

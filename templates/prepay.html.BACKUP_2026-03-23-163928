@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="prepay">
+  <h1>Choose your session</h1>
+  <p class="hero-text">
+    Skip the slow part at the screen. Choose your package, pay once on your phone,
+    then show your Instapic code to unlock the mirror.
+  </p>
+
+  <div class="package-grid">
+    {% for pkg in packages %}
+      <form method="post"
+            action="{{ url_for('payment_dev_complete') }}"
+            class="package-card">
+        <input type="hidden" name="package_id" value="{{ pkg.id }}">
+        <h2 class="pkg-name">{{ pkg.name }}</h2>
+        <p class="pkg-desc">{{ pkg.description }}</p>
+        <div class="pkg-price">
+          {{ (pkg.amount_cents / 100) | round(2) }} AUD
+        </div>
+        <button type="submit" class="portal-button small">
+          <span class="portal-label">Prepay now</span>
+        </button>
+      </form>
+    {% endfor %}
+  </div>
+
+  <p class="dev-note">
+    This is a test flow using the built-in dev payment route.
+    Later, this button will send you to a real Square checkout page.
+  </p>
+
+  <div class="hero-links">
+    <a href="{{ url_for('home') }}" class="secondary-link">
+      ⟵ Back to start
+    </a>
+  </div>
+</section>
+{% endblock %}

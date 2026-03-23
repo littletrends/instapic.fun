@@ -6,8 +6,8 @@
     Show this code to the Magic Mirror when it’s your turn in the queue.
   </p>
 
-  <div id="code-display" class="ticket-code">
-    ------
+  <div class="ticket-code">
+    {{ ticket.ticket_code }}
   </div>
 
   <p class="ticket-help">
@@ -18,9 +18,4 @@
     <a href="{{ url_for('home') }}" class="secondary-link">Back to start</a>
   </div>
 </section>
-
-<script>
-  document.body.dataset.page = "ticket";
-</script>
-<script src="{{ url_for('static', filename='js/ticket_runtime.js') }}"></script>
 {% endblock %}

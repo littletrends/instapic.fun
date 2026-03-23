@@ -1,33 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="prepay">
+  <div id="flash" hidden></div>
+
   <h1>Choose your session</h1>
   <p class="hero-text">
-    Skip the slow part at the screen. Choose your package, pay once on your phone,
-    then show your Instapic code to unlock the mirror.
+    Skip the slow part at the screen. Choose your package, and this bridge version
+    will request your Instapic code from MotherPC.
   </p>
 
   <div class="package-grid">
     {% for pkg in packages %}
-      <form method="post"
-            action="{{ url_for('payment_dev_complete') }}"
-            class="package-card">
-        <input type="hidden" name="package_id" value="{{ pkg.id }}">
+      <button
+        type="button"
+        class="package-card package-portal"
+        data-package-id="{{ pkg.id }}"
+        data-amount-cents="{{ pkg.amount_cents }}"
+      >
         <h2 class="pkg-name">{{ pkg.name }}</h2>
         <p class="pkg-desc">{{ pkg.description }}</p>
         <div class="pkg-price">
           {{ (pkg.amount_cents / 100) | round(2) }} AUD
         </div>
-        <button type="submit" class="portal-button small">
-          <span class="portal-label">Prepay now</span>
-        </button>
-      </form>
+        <div class="portal-button small">
+          <span class="portal-label">Get my code</span>
+        </div>
+      </button>
     {% endfor %}
   </div>
 
   <p class="dev-note">
-    This is a test flow using the built-in dev payment route.
-    Later, this button will send you to a real Square checkout page.
+    Bridge mode only: this is not real Square checkout yet. Real website payments come later.
   </p>
 
   <div class="hero-links">
@@ -36,4 +39,9 @@
     </a>
   </div>
 </section>
+
+<script>
+  document.body.dataset.page = "pay";
+</script>
+<script src="{{ url_for('static', filename='js/pay_runtime.js') }}"></script>
 {% endblock %}

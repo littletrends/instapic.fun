@@ -158,10 +158,23 @@ def create_app() -> Flask:
 
     @app.route("/api/session-complete", methods=["POST"])
     def api_session_complete():
-        return jsonify({
-            "ok": False,
-            "reason": "local_session_complete_disabled_use_motherpc"
-        }), 410
+        """
+        Mirror calls this after a session is finished and photos are ready.
+        """
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("ticket_code", "")).strip()
+        session_id = data.get("session_id")
+        image_url = data.get("image_url")
+
+        if not code:
+            return {"ok": False, "reason": "missing_code"}, 400
+
+        ticket = models.get_ticket_by_code(code)
+        if not ticket:
+            return {"ok": False, "reason": "unknown_code"}, 404
+
+        models.mark_ticket_used(code, session_id=session_id, image_url=image_url)
+        return {"ok": True, "status": "USED"}
 
     # ----------------- Debug -----------------
 
@@ -214,18 +227,56 @@ def create_app() -> Flask:
     @app.route("/bonus/<ticket_code>")
     def bonus(ticket_code: str):
         ticket_code = str(ticket_code).strip()
-        return redirect(url_for("bonus_page", code=ticket_code))
+        ticket = models.get_ticket_by_code(ticket_code)
+        if not ticket:
+            return render_template(
+                "error.html",
+                title="Code not found",
+                message="We couldn't find that code.",
+            ), 404
 
-    @app.route("/bonus")
-    def bonus_page():
-        return render_template("bonus.html")
+        pkg = pkgmap.get(ticket.get("package_id"), {}) or {}
+        extras = {
+            "gif": bool(pkg.get("gif")),
+            "boomerang": bool(pkg.get("boomerang")),
+            "digital_access": bool(pkg.get("digital_access")),
+        }
+
+        paths = bonus_paths(ticket_code)
+        assets = {
+            "strip_ready": os.path.exists(paths["strip_fs"]),
+            "gif_ready": os.path.exists(paths["gif_fs"]),
+            "boomerang_ready": os.path.exists(paths["boomerang_fs"]),
+            "strip_url": paths["strip_url"],
+            "gif_url": paths["gif_url"],
+            "boomerang_url": paths["boomerang_url"],
+        }
+
+        # This lets your template show "Online gallery coming soon" safely
+        # until the booth/mother starts dropping bonus files.
+        return render_template("bonus.html", ticket=ticket, extras=extras, assets=assets)
 
     @app.post("/api/bonus-status")
     def api_bonus_status():
+        data = request.get_json(silent=True) or {}
+        code = str(data.get("ticket_code", "")).strip()
+        if not code:
+            return jsonify({"ok": False, "error": "missing_code"}), 400
+
+        ticket = models.get_ticket_by_code(code)
+        if not ticket:
+            return jsonify({"ok": False, "error": "unknown_code"}), 404
+
+        paths = bonus_paths(code)
         return jsonify({
-            "ok": False,
-            "error": "local_bonus_status_disabled_use_motherpc"
-        }), 410
+            "ok": True,
+            "strip_ready": os.path.exists(paths["strip_fs"]),
+            "gif_ready": os.path.exists(paths["gif_fs"]),
+            "boomerang_ready": os.path.exists(paths["boomerang_fs"]),
+            "strip_url": paths["strip_url"],
+            "gif_url": paths["gif_url"],
+            "boomerang_url": paths["boomerang_url"],
+        })
 
     return app
 
