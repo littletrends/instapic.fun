@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="enter-code">
+  <h1>View your photos</h1>
+  <p class="hero-text">
+    Type your 6-digit Instapic code from the mirror or your receipt.
+  </p>
+
+  <form method="post" class="code-card">
+    <label for="ticket_code" class="code-label">Instapic code</label>
+    <div class="code-input-row">
+      <input
+        type="text"
+        id="ticket_code"
+        name="ticket_code"
+        maxlength="6"
+        pattern="\d{6}"
+        placeholder="123456"
+        required
+      >
+      <button type="submit" class="portal-button small">
+        <span class="portal-label">Show my photos</span>
+      </button>
+    </div>
+    <p class="code-hint">Numbers only, no spaces.</p>
+
+    <div class="keypad" data-input-id="ticket_code">
+      <div class="keypad-row">
+        <button type="button" class="keypad-key" data-key="1">1</button>
+        <button type="button" class="keypad-key" data-key="2">2</button>
+        <button type="button" class="keypad-key" data-key="3">3</button>
+      </div>
+      <div class="keypad-row">
+        <button type="button" class="keypad-key" data-key="4">4</button>
+        <button type="button" class="keypad-key" data-key="5">5</button>
+        <button type="button" class="keypad-key" data-key="6">6</button>
+      </div>
+      <div class="keypad-row">
+        <button type="button" class="keypad-key" data-key="7">7</button>
+        <button type="button" class="keypad-key" data-key="8">8</button>
+        <button type="button" class="keypad-key" data-key="9">9</button>
+      </div>
+      <div class="keypad-row">
+        <button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button>
+        <button type="button" class="keypad-key" data-key="0">0</button>
+        <button type="button" class="keypad-key keypad-key-back" data-action="back">←</button>
+      </div>
+    </div>
+  </form>
+
+  {% if ticket %}
+    <div class="code-result">
+      <div class="code-summary">
+        <div class="code-pill">
+          Code: <strong>{{ ticket.ticket_code }}</strong>
+        </div>
+        {% if package %}
+          <div class="code-package">
+            Package: <strong>{{ package.name }}</strong>
+          </div>
+        {% endif %}
+        <div class="code-status">
+          Status:
+          {% if ticket.status == "USED" %}
+            <span class="status-tag status-used">Used</span>
+          {% else %}
+            <span class="status-tag status-issued">Ready</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if image_url %}
+        <div class="gallery">
+          <h2>Your Instapic strip</h2>
+          <img src="{{ image_url }}" alt="Your Instapic photo strip">
+          <p class="hero-text">
+            Tap and hold to save, or screenshot to keep it on your phone.
+          </p>
+        </div>
+      {% else %}
+        <p class="hero-text">
+          Your code is valid. Once the mirror has finished your session and uploaded
+          your strip, your photos will appear here.
+        </p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="hero-links">
+    <a href="{{ url_for('home') }}" class="secondary-link">
+      ⟵ Back to start
+    </a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+
+:root {
+  --instapic-ui-font: 'Cinzel', serif;
+  --instapic-pink: #ff5fa2;
+  --instapic-pink-deep: #ff2f6c;
+  --instapic-gold: #ffbf5f;
+  --instapic-charcoal: #171320;
+  --instapic-cream: #fff9f5;
+  --portal-hi: rgba(255,255,255,0.95);
+  --portal-pink: rgba(255,180,230,0.90);
+  --portal-magenta: rgba(255,110,170,0.85);
+  --portal-orange: rgba(255,120,60,0.85);
+  --portal-violet: rgba(140,0,90,0.90);
+  --portal-deep: rgba(10,0,14,0.98);
+  --portal-letter: 0.12em;
+}
+
+body {
+  background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
+  color: #f4f4f8;
+  font-family: var(--instapic-ui-font);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.screen-content {
+  max-width: 1200px;
+  width: 100%;
+  text-align: center;
+}
+
+.brand-logo img {
+  max-width: 420px;
+  filter: drop-shadow(0 12px 30px rgba(0,0,0,0.6));
+}
+
+.title-main {
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--instapic-cream);
+}
+
+.subtitle {
+  opacity: 0.85;
+  font-size: 1.2rem;
+}
+
+.output-layout {
+  display: flex;
+  gap: 40px;
+  margin: 40px 0;
+}
+
+.preview-gallery {
+  flex: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.preview-item {
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255,120,200,0.3);
+}
+
+.preview-img, .preview-video {
+  max-width: 100%;
+  border-radius: 12px;
+}
+
+.loading-placeholder {
+  height: 300px;
+  background: rgba(255,255,255,0.1);
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  color: var(--instapic-gold);
+}
+
+.output-options {
+  flex: 1;
+}
+
+.qr-img {
+  max-width: 256px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255,120,200,0.3);
+}
+
+.session-code-display {
+  font-size: 2rem;
+  color: var(--instapic-gold);
+  letter-spacing: 0.2em;
+}
+
+.button-row {
+  margin-top: 20px;
+}
+
+.portal-button {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: radial-gradient(circle at 30% 28%, var(--portal-hi) 0%, var(--portal-pink) 14%, var(--portal-magenta) 28%, var(--portal-orange) 48%, var(--portal-violet) 72%, var(--portal-deep) 100%);
+  box-shadow: 0 0 22px rgba(255,120,200,0.80), 0 0 70px rgba(255,110,170,0.45), inset 0 0 28px rgba(255,255,255,0.50);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: var(--portal-letter);
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  animation: instapicPortalPulse 3.9s ease-in-out infinite;
+}
+
+@keyframes instapicPortalPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* Add ::before for swirl if wanted from branding */
+.portal-button::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255,140,70,0.98), rgba(255,60,170,0.98), rgba(255,215,120,0.98), rgba(170,70,255,0.98), rgba(255,140,70,0.98));
+  filter: blur(10px) saturate(1.25);
+  opacity: 0.95;
+  animation: instapicPortalSpin 4.6s linear infinite;
+}
+
+@keyframes instapicPortalSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.btn.btn-secondary.portal-button {
+  width: auto;
+  height: auto;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #f4f4f8;
+  font-weight: 500;
+  box-shadow: none;
+  animation: none;
+}

@@ -1,0 +1,27 @@
+PACKAGES:
+  - id: P1_STRIP
+    name: "$7 Quick & Simple"
+    description: "Perfect for a quick keepsake. 2 strips, digital copy."
+    amount_cents: 700
+    prints: 2
+    gif: false
+    boomerang: false
+    digital_access: true
+
+  - id: P2_STRIP_GIF
+    name: "$13 Most Popular"
+    description: "Best for couples & friends. 4 strips, GIF/boomerang, digital."
+    amount_cents: 1300
+    prints: 4
+    gif: true
+    boomerang: true
+    digital_access: true
+
+  - id: P3_STRIP_GIF
+    name: "$18 Best for Groups"
+    description: "Loads of prints for the whole crew. 6 strips, GIF/boomerang, digital."
+    amount_cents: 1800
+    prints: 6
+    gif: true
+    boomerang: true
+    digital_access: true

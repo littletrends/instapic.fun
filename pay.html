@@ -1,18 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instapic • Choose Your Session</title>
+  <meta charset="utf-8">
+  <title>Choose your session — Instapic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
-  <link rel="stylesheet" href="assets/branding/branding.css">
 </head>
-<body class="branding-live" data-page="pay" data-timeout-redirect="index.html">
-  <div class="cosmic-bg"></div>
-
+<body>
   <header class="site-header">
     <div class="logo-wrap">
-      <img src="assets/img/instapic_logo.png" alt="Instapic logo" class="site-logo">
       <div class="site-title">
         <span class="brand-main">insta<span class="brand-accent">pic</span></span>
         <span class="brand-sub">by Little Trends — Darwin NT</span>
@@ -20,58 +16,62 @@
     </div>
   </header>
 
-  <main class="package-page">
-    <h1>Choose Your Session ✨</h1>
-    <p class="hero-text">Prepay now • Get your code instantly • Walk straight to the mirror</p>
-
-    <div id="flash" class="flash" hidden></div>
-
-    <div class="package-grid">
-      <button class="package-portal" data-package-id="P1_STRIP" data-amount-cents="700" type="button">
-        <div class="portal-orb-inner">
-          <span class="package-name">Quick &amp; Simple</span>
-          <span class="package-price">$7.00</span>
-          <span class="package-desc">2 strips + digital copy</span>
-        </div>
-        <div class="portal-glow"></div>
-      </button>
-
-      <button class="package-portal popular" data-package-id="P2_STRIP_GIF" data-amount-cents="1300" type="button">
-        <div class="portal-orb-inner">
-          <span class="package-name">Most Popular ✨</span>
-          <span class="package-price">$13.00</span>
-          <span class="package-desc">4 strips + GIF / boomerang + digital</span>
-        </div>
-        <div class="portal-glow"></div>
-      </button>
-
-      <button class="package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800" type="button">
-        <div class="portal-orb-inner">
-          <span class="package-name">Best for Groups</span>
-          <span class="package-price">$18.00</span>
-          <span class="package-desc">6 strips + GIF / boomerang + digital</span>
-        </div>
-        <div class="portal-glow"></div>
-      </button>
-    </div>
-
-    <section id="ticket-result" class="result-box" hidden>
-      <h2>Your Code is Ready! 🦘</h2>
-      <div id="ticket-code" class="big-code"></div>
-      <p class="hint">
-        Show this to the mirror when it’s your turn.<br>
-        Take a screenshot!
+  <main class="site-main">
+    <section class="prepay">
+      <h1>Choose your session</h1>
+      <p class="hero-text">
+        Pay once here, then use your Instapic code to unlock the Magic Mirror.
       </p>
+
+      <div class="package-grid">
+        <div class="package-card">
+          <h2 class="pkg-name">$7 Quick & Simple</h2>
+          <p class="pkg-desc">
+            Perfect for a quick keepsake. 2 strips, digital copy.
+          </p>
+          <div class="pkg-price">$7.00 AUD</div>
+          <a href="#" class="portal-button small">
+            <span class="portal-label">Pay (coming soon)</span>
+          </a>
+        </div>
+
+        <div class="package-card">
+          <h2 class="pkg-name">$13 Most Popular</h2>
+          <p class="pkg-desc">
+            Best for couples & friends. 4 strips, GIF/boomerang, digital.
+          </p>
+          <div class="pkg-price">$13.00 AUD</div>
+          <a href="#" class="portal-button small">
+            <span class="portal-label">Pay (coming soon)</span>
+          </a>
+        </div>
+
+        <div class="package-card">
+          <h2 class="pkg-name">$18 Best for Groups</h2>
+          <p class="pkg-desc">
+            Loads of prints for the whole crew. 6 strips, GIF/boomerang, digital.
+          </p>
+          <div class="pkg-price">$18.00 AUD</div>
+          <a href="#" class="portal-button small">
+            <span class="portal-label">Pay (coming soon)</span>
+          </a>
+        </div>
+      </div>
+
+      <p class="dev-note">
+        Online payments coming soon. For now, please pay at the mirror.
+      </p>
+
+      <div class="hero-links">
+        <a href="index.html" class="secondary-link">
+          ⟵ Back to start
+        </a>
+      </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <small>© Instapic — Have fun, be silly, love the photos forever ✨</small>
+    <small>&copy; Instapic by Little Trends — Have fun, be silly, love the photos ✨</small>
   </footer>
-
-  <script src="assets/main.js"></script>
-  <script src="assets/branding/branding.js"></script>
-  <script src="assets/core/site_core.js"></script>
-  <script src="assets/core/pay_runtime.js"></script>
 </body>
 </html>
