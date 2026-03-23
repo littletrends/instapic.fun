@@ -1,6 +1,6 @@
 (function () {
   function asFullUrl(path) {
-    return `${window.InstapicCore.BASE}${path}`;
+    return `${window.InstapicCore.API_BASE}${path}`;
   }
 
   function looksLikeVideo(url) {
