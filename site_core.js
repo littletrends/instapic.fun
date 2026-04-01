@@ -108,6 +108,7 @@
   }
 
   window.InstapicCore = {
+    API_BASE,
     qs,
     qsa,
     dataPage,
