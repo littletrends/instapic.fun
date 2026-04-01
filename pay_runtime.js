@@ -45,7 +45,7 @@
       btn.style.webkitAppearance = "-apple-pay-button";
       btn.style.setProperty("-webkit-appearance", "-apple-pay-button");
       btn.style.setProperty("-apple-pay-button-type", "buy");
-      btn.style.setProperty("-apple-pay-button-style", "black");
+      btn.style.setProperty("-apple-pay-button-style", "white-outline");
 
       btn.style.appearance = "none";
       btn.style.width = "100%";
