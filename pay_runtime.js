@@ -42,25 +42,27 @@
       btn.hidden = true;
       btn.style.display = "none";
 
-      btn.style.webkitAppearance = "-apple-pay-button";
-      btn.style.setProperty("-webkit-appearance", "-apple-pay-button");
-      btn.style.setProperty("-apple-pay-button-type", "buy");
-      btn.style.setProperty("-apple-pay-button-style", "white-outline");
-
+      btn.style.webkitAppearance = "none";
+      btn.style.setProperty("-webkit-appearance", "none");
       btn.style.appearance = "none";
+
       btn.style.width = "100%";
       btn.style.maxWidth = "320px";
-      btn.style.minHeight = "48px";
-      btn.style.border = "0";
-      btn.style.borderRadius = "12px";
-      btn.style.margin = "0 0 16px 0";
+      btn.style.minHeight = "52px";
+      btn.style.border = "1px solid rgba(255,255,255,0.18)";
+      btn.style.borderRadius = "14px";
+      btn.style.margin = "0";
       btn.style.cursor = "pointer";
-      btn.style.padding = "0";
-      btn.style.background = "transparent";
-      btn.style.backgroundColor = "transparent";
-      btn.style.color = "transparent";
-      btn.style.fontSize = "0";
-      btn.textContent = "Apple Pay";
+      btn.style.padding = "0 18px";
+      btn.style.background = "linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))";
+      btn.style.backgroundColor = "rgba(255,255,255,0.06)";
+      btn.style.color = "#ffffff";
+      btn.style.fontSize = "1rem";
+      btn.style.fontWeight = "700";
+      btn.style.letterSpacing = "0.04em";
+      btn.style.textTransform = "none";
+      btn.style.boxShadow = "inset 0 0 12px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.28)";
+      btn.textContent = " Pay";
       btn.setAttribute("aria-label", "Apple Pay");
       return btn;
     }
