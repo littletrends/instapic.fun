@@ -56,7 +56,12 @@
       btn.style.margin = "0 0 16px 0";
       btn.style.cursor = "pointer";
       btn.style.padding = "0";
-      btn.style.backgroundColor = "black";
+      btn.style.background = "transparent";
+      btn.style.backgroundColor = "transparent";
+      btn.style.color = "transparent";
+      btn.style.fontSize = "0";
+      btn.textContent = "Apple Pay";
+      btn.setAttribute("aria-label", "Apple Pay");
       return btn;
     }
 
