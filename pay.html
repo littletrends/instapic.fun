@@ -11,37 +11,64 @@
   <main class="card">
     <div id="flash" hidden></div>
 
-    <h1>Choose your session</h1>
-    <p class="muted">
-      Skip the slow part at the screen. Tap a package below to get your Instapic code,
-      then enter it at the booth when it’s your turn.
-    </p>
+    <section class="page-intro">
+      <h1>Choose your Instapic package</h1>
+      <p class="hero-text hero-text-wide">
+        Pay online now, receive your booth code instantly, and enter it at the mirror when it’s your turn.
+      </p>
+      <p class="muted">
+        Your booth code will appear right after payment. Make sure you save it before leaving the page.
+      </p>
+    </section>
 
     <div class="package-grid">
       <button type="button" class="package-card package-portal" data-package-id="P1_STRIP" data-amount-cents="700">
+        <div class="package-badge">Instapic Package</div>
         <h2 class="pkg-name">$7 Strip</h2>
         <p class="pkg-desc">Classic Instapic print strip.</p>
         <div class="pkg-price">1 Strip</div>
-        <div class="btn">Get my code</div>
+        <div class="btn">Choose this</div>
       </button>
 
       <button type="button" class="package-card package-portal" data-package-id="P2_STRIP_GIF" data-amount-cents="1300">
+        <div class="package-badge">Instapic Package</div>
         <h2 class="pkg-name">$13 Strip + GIF</h2>
         <p class="pkg-desc">Photo strip plus motion bonus.</p>
         <div class="pkg-price">Digital extra</div>
-        <div class="btn">Get my code</div>
+        <div class="btn">Choose this</div>
       </button>
 
       <button type="button" class="package-card package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800">
+        <div class="package-badge">Instapic Package</div>
         <h2 class="pkg-name">$18 Premium</h2>
         <p class="pkg-desc">Photo strip and expanded digital bonus set.</p>
         <div class="pkg-price">Full bonus</div>
-        <div class="btn">Get my code</div>
+        <div class="btn">Choose this</div>
       </button>
     </div>
 
+    <section
+      id="payment-panel"
+      hidden
+      style="margin-top:2rem;"
+      data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
+      data-square-location-id="9ZKNKQJ29QF50"
+    >
+      <h2>Secure payment</h2>
+      <p id="selected-package-label" class="muted">No package selected yet.</p>
+
+      <div id="payment-status" class="muted" style="margin-bottom:1rem;"></div>
+      <div id="card-container" style="margin:1rem 0;"></div>
+
+      <button id="card-pay-button" type="button" class="btn">Pay now</button>
+
+      <p class="muted" style="margin-top:14px;">
+        Apple Pay will appear automatically on supported Apple devices and browsers.
+      </p>
+    </section>
+
     <div id="ticket-result" hidden>
-      <h2>Your code</h2>
+      <h2>Your booth code</h2>
       <div id="ticket-code" class="ticket-code">------</div>
       <p class="muted">Redirecting to your ticket page…</p>
     </div>
@@ -53,6 +80,7 @@
     <p><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="assets/main.js"></script>
   <script src="site_core.js"></script>
   <script src="branding.js"></script>

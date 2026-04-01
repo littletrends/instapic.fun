@@ -15,8 +15,7 @@
 
   function getCodeFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const code = (params.get("code") || "").trim();
-    return code;
+    return (params.get("code") || "").trim();
   }
 
   function showFlash(message, level = "error") {
@@ -67,6 +66,31 @@
     };
   }
 
+  async function payAndCreateTicket(payload) {
+    const res = await fetch(`/api/pay-and-create-ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {})
+    });
+
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
+    }
+
+    const code = data.ticket_code || data.code || data.ticketCode;
+    if (!code) {
+      throw new Error("No code returned from website backend");
+    }
+
+    return {
+      ok: true,
+      code: String(code),
+      payment_id: data.payment_id || null
+    };
+  }
+
   async function getBonus(code) {
     const clean = String(code || "").trim();
     if (!/^\d{6}$/.test(clean)) {
@@ -84,13 +108,13 @@
   }
 
   window.InstapicCore = {
-    API_BASE,
     qs,
     qsa,
     dataPage,
     getCodeFromUrl,
     showFlash,
     createTicket,
-    getBonus
+    payAndCreateTicket,
+    getBonus,
   };
 })();
