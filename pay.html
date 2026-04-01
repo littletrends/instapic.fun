@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="branding.css">
 </head>
 <body class="page" data-page="pay" data-timeout-redirect="index.html">
-  <main class="card">
+  <main class="card pay-page">
     <div id="flash" hidden></div>
 
     <section class="page-intro">
@@ -17,11 +17,11 @@
         Pay online now, receive your booth code instantly, and enter it at the mirror when it’s your turn.
       </p>
       <p class="muted">
-        Your booth code will appear right after payment. Make sure you save it before leaving the page.
+        Your booth code will appear right after payment. Make sure you save it before leaving this page.
       </p>
     </section>
 
-    <div class="package-grid">
+    <div class="package-grid package-grid-pay">
       <button type="button" class="package-card package-portal" data-package-id="P1_STRIP" data-amount-cents="700">
         <div class="package-badge">Instapic Package</div>
         <h2 class="pkg-name">$7 Strip</h2>
@@ -49,21 +49,25 @@
 
     <section
       id="payment-panel"
+      class="payment-shell"
       hidden
-      style="margin-top:2rem;"
       data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
       data-square-location-id="9ZKNKQJ29QF50"
     >
       <h2>Secure payment</h2>
       <p id="selected-package-label" class="muted">No package selected yet.</p>
 
-      <div id="payment-status" class="muted" style="margin-bottom:1rem;"></div>
-      <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
-      <div id="card-container" style="margin:1rem 0;"></div>
+      <div id="payment-status" class="muted payment-status"></div>
+
+      <div class="apple-pay-wrap">
+        <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
+      </div>
+
+      <div id="card-container" class="card-container"></div>
 
       <button id="card-pay-button" type="button" class="btn">Pay now</button>
 
-      <p class="muted" style="margin-top:14px;">
+      <p class="muted payment-note">
         Apple Pay will appear automatically on supported Apple devices and browsers.
       </p>
     </section>
