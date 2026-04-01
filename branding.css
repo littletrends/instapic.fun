@@ -1,6 +1,6 @@
 /* --------------------------------------------------
-   Instapic branding playground
-   Safe visual-only edits live here
+   Website-only visual overrides
+   Inspired by Instapic kiosk branding
    -------------------------------------------------- */
 
 body.branding-live {
@@ -11,5 +11,3 @@ body.branding-live {
 .branding-note {
   display: none;
 }
-
-/* Optional future overrides go here */
