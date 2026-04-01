@@ -8,59 +8,67 @@
   <link rel="stylesheet" href="branding.css">
 </head>
 <body class="page" data-page="bonus">
-  <main class="card bonus-page">
+  <main class="card bonus-page bonus-page-glow">
     <div id="flash" hidden></div>
 
-    <section class="page-intro">
-      <h1>Your Instapic bonus content</h1>
+    <section class="page-intro bonus-intro">
+      <div class="bonus-kicker">Your session is ready ✨</div>
+      <h1>Your Instapic Bonus Content</h1>
       <p class="hero-text hero-text-wide">
-        Your session extras live here. Save this page or keep your 6-digit code so you can return later.
+        Here’s the fun part. Your Instapic extras live here — save them now, share them later, and come back anytime with your code.
       </p>
     </section>
 
-    <div class="ticket-actions" style="margin-top:1rem;">
+    <div class="ticket-actions bonus-actions-top" style="margin-top:1rem;">
       <button type="button" id="download-all" class="btn">Download All</button>
       <button type="button" id="share-magic" class="btn">Copy Page Link</button>
     </div>
 
-    <div class="preview">
-      <div id="bonus-hero-label" class="muted">Featured Bonus • Instapic</div>
-      <img
-        id="bonus-hero"
-        src="assets/img/instapic_logo.png"
-        alt="Featured Instapic bonus"
-      >
-    </div>
-
-    <div class="status-grid" style="margin-top:1.5rem;">
-      <div id="status-gif" class="status-card">
-        <h2>Motion Bonus</h2>
-        <p>Checking for GIFs and motion media…</p>
+    <section class="bonus-hero-shell">
+      <div id="bonus-hero-label" class="bonus-hero-label">Featured Bonus • Instapic</div>
+      <div class="bonus-hero-frame">
+        <img
+          id="bonus-hero"
+          src="assets/img/instapic_logo.png"
+          alt="Featured Instapic bonus"
+        >
       </div>
+    </section>
 
-      <div id="status-collage" class="status-card">
-        <h2>Background Set Bonus</h2>
-        <p>Checking for collage and enhanced bonus files…</p>
+    <section class="bonus-status-shell">
+      <div class="status-grid" style="margin-top:1.5rem;">
+        <div id="status-gif" class="status-card bonus-status-card">
+          <h2>Motion Bonus</h2>
+          <p>Checking for GIFs and motion media…</p>
+        </div>
+
+        <div id="status-collage" class="status-card bonus-status-card">
+          <h2>Enhanced Bonus Set</h2>
+          <p>Checking for your session extras…</p>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="bonus-gallery" style="margin-top:2rem;">
-      <h2>Your session files</h2>
+    <section class="bonus-gallery-shell" style="margin-top:2rem;">
+      <div class="bonus-section-head">
+        <h2>Your session files</h2>
+        <p class="muted">
+          Tap any file to save it to your device.
+        </p>
+      </div>
       <div id="bonus-grid" class="bonus-grid"></div>
-    </div>
+    </section>
 
-    <div class="info-callout" style="margin-top:2rem;">
-      <h2>Come back anytime</h2>
+    <div class="info-callout bonus-callout" style="margin-top:2rem;">
+      <h2>Keep your code safe</h2>
       <p>
-        Keep this page link or your 6-digit Instapic code so you can return and open your session again later.
+        Your 6-digit Instapic code can bring you back here later. Save this page link or keep your code in a safe place.
       </p>
     </div>
 
     <div class="hero-links" style="margin-top:2rem; text-align:center;">
       <a href="session.html" class="secondary-link">Enter another code</a>
-    </div>
-
-    <div class="hero-links hero-links-compact" style="text-align:center;">
+      ·
       <a href="my-instapic.html" class="secondary-link">Guest Area</a>
       ·
       <a href="how-it-works.html" class="secondary-link">How it works</a>

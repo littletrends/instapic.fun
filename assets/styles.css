@@ -1105,3 +1105,110 @@ input[type="email"] {
     inset 0 0 12px rgba(255,255,255,0.08),
     0 10px 22px rgba(0,0,0,0.34) !important;
 }
+
+/* --------------------------------------------------
+   Bonus page glow-up
+   -------------------------------------------------- */
+
+.bonus-page-glow {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bonus-kicker {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-intro {
+  margin-bottom: 1.75rem;
+}
+
+.bonus-actions-top {
+  margin-bottom: 1.5rem;
+}
+
+.bonus-hero-shell {
+  margin-top: 1rem;
+}
+
+.bonus-hero-label {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-hero-frame {
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.bonus-hero-frame img,
+.bonus-hero-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
+.bonus-status-card {
+  min-height: 140px;
+}
+
+.bonus-gallery-shell {
+  margin-top: 2rem;
+}
+
+.bonus-section-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bonus-callout {
+  text-align: center;
+}
+
+.bonus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bonus-card {
+  padding: 0.8rem;
+  border-radius: 24px;
+}
+
+.bonus-card .hero-label {
+  text-align: center;
+  margin-top: 0.7rem;
+  color: rgba(255,255,255,0.84);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
