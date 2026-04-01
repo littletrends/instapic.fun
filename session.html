@@ -2,24 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — View Your Photos</title>
+  <title>Instapic Fun — Enter Your Code</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
 </head>
 <body class="page" data-page="session" data-timeout-redirect="index.html">
-  <main class="card">
+  <main class="card enter-code-redesign">
     <div id="flash" hidden></div>
 
-    <h1>View your photos</h1>
-    <p class="muted">
-      Type your 6-digit Instapic code from the mirror or your receipt.
-    </p>
+    <section class="page-intro">
+      <h1>Enter your 6-digit Instapic code</h1>
+      <p class="hero-text hero-text-wide">
+        Use the code from your payment page or kiosk session to open your Instapic bonus content.
+      </p>
+    </section>
 
-    <form id="session-form" class="code-card" novalidate autocomplete="off">
-      <label for="ticket_code">Instapic code</label>
+    <form id="session-form" class="code-card code-card-center" novalidate autocomplete="off">
+      <label for="ticket_code" class="code-label">Instapic code</label>
 
-      <div class="code-input-row">
+      <div class="code-input-row code-input-row-stack">
         <input
           type="text"
           id="ticket_code"
@@ -35,11 +37,11 @@
           spellcheck="false"
           enterkeyhint="done"
         >
-        <button type="submit" class="btn">Show my photos</button>
+        <button type="submit" class="btn">Open My Session</button>
       </div>
 
       <p id="processing" class="muted" hidden>Checking your code…</p>
-      <p class="muted">Numbers only, no spaces.</p>
+      <p class="code-hint">Numbers only, no spaces.</p>
 
       <div class="keypad">
         <div class="keypad-row">
@@ -58,14 +60,29 @@
           <button type="button" class="keypad-key" data-key="9">9</button>
         </div>
         <div class="keypad-row">
-          <button type="button" class="keypad-key" data-action="clear">Clear</button>
+          <button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button>
           <button type="button" class="keypad-key" data-key="0">0</button>
-          <button type="button" class="keypad-key" data-action="back">←</button>
+          <button type="button" class="keypad-key keypad-key-back" data-action="back">←</button>
         </div>
       </div>
     </form>
 
-    <p><a class="btn" href="index.html">Back to start</a></p>
+    <div class="info-callout" style="margin-top:1.5rem;">
+      <h2>Need help?</h2>
+      <p>
+        Your 6-digit Instapic code is the one shown after payment or saved from your kiosk session. Keep it safe so you can come back later.
+      </p>
+    </div>
+
+    <div class="hero-links hero-links-compact" style="text-align:center;">
+      <a href="save.html" class="secondary-link">Guest Area</a>
+      ·
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      ·
+      <a href="pay.html" class="secondary-link">Buy a Booth Code</a>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
   <script src="assets/main.js"></script>

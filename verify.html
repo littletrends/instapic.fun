@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Verify Your Phone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="verify" data-timeout-redirect="index.html">
+  <main class="card save-flow-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <h1>Verify your phone</h1>
+      <p class="hero-text hero-text-wide">
+        Enter the verification code sent to your mobile number to open your Instapic guest area.
+      </p>
+    </section>
+
+    <form id="verify-form" class="form-shell" novalidate autocomplete="off">
+      <label for="verify_code" class="code-label">Verification code</label>
+
+      <div class="code-input-row code-input-row-stack">
+        <input
+          type="text"
+          id="verify_code"
+          name="verify_code"
+          maxlength="6"
+          inputmode="numeric"
+          placeholder="123456"
+          required
+          autocomplete="one-time-code"
+        >
+        <button type="submit" class="btn">Verify & Continue</button>
+      </div>
+
+      <p class="code-hint">
+        This is your phone verification code, not your Instapic booth code.
+      </p>
+    </form>
+
+    <div class="info-callout" style="margin-top:1.5rem;">
+      <h2>After verification</h2>
+      <p>
+        You’ll enter your Instapic guest area, where your saved sessions and tickets will live.
+      </p>
+    </div>
+
+    <div class="hero-links hero-links-compact" style="text-align:center;">
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      ·
+      <a href="index.html" class="secondary-link">Back to start</a>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a class="btn" href="save.html">Back</a></p>
+  </main>
+
+  <script src="assets/main.js"></script>
+  <script src="branding.js"></script>
+  <script src="guest_identity.js"></script>
+  <script src="verify_runtime.js"></script>
+</body>
+</html>

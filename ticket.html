@@ -2,21 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Your Code</title>
+  <title>Instapic Fun — Your Booth Code</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
 </head>
 <body class="page" data-page="ticket" data-timeout-redirect="index.html">
-  <main class="card">
-    <h1>You’re all set!</h1>
-    <p class="muted">Show this code to the Magic Mirror when it’s your turn.</p>
+  <main class="card ticket-redesign">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <h1>Your Instapic code is ready</h1>
+      <p class="hero-text hero-text-wide">
+        This is your official 6-digit booth code. You need it at the kiosk, and you may need it later to open your session again.
+      </p>
+    </section>
 
     <div id="code-display" class="ticket-code">------</div>
 
-    <p class="muted">Tip: take a screenshot so you don’t lose it.</p>
+    <div class="info-callout" style="margin-top:1rem;">
+      <h2>Important</h2>
+      <p>
+        Keep this code safe. Take a screenshot, copy it, or share it with yourself before leaving this page.
+      </p>
+    </div>
 
-    <p><a class="btn" href="index.html">Back to start</a></p>
+    <div class="ticket-actions" style="margin-top:1.5rem;">
+      <button type="button" id="copy-code" class="btn">Copy Code</button>
+      <button type="button" id="share-code" class="btn">Share Code</button>
+      <button type="button" id="download-code" class="btn">Download Code</button>
+    </div>
+
+    <p class="muted" style="margin-top:1rem;">
+      Next step: take this code to the Instapic kiosk and enter it when you're ready to start.
+    </p>
+
+    <div class="hero-links" style="margin-top:2rem; text-align:center;">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+    </div>
+
+    <div class="hero-links hero-links-compact" style="text-align:center;">
+      <a href="save.html" class="secondary-link">Guest Area</a>
+      ·
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
   <script src="assets/main.js"></script>

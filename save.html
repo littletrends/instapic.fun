@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Guest Sign In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="save" data-timeout-redirect="index.html">
+  <main class="card save-flow-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <h1>Enter your mobile number</h1>
+      <p class="hero-text hero-text-wide">
+        Use your phone number to open your guest area and keep your Instapic sessions together in one place.
+      </p>
+    </section>
+
+    <form id="save-form" class="form-shell" novalidate autocomplete="off">
+      <label for="guest_phone" class="code-label">Mobile number</label>
+
+      <div class="code-input-row code-input-row-stack">
+        <input
+          type="tel"
+          id="guest_phone"
+          name="guest_phone"
+          inputmode="tel"
+          placeholder="04xx xxx xxx"
+          required
+          autocomplete="tel"
+        >
+        <button type="submit" class="btn">Send Verification Code</button>
+      </div>
+
+      <p class="code-hint">
+        We’ll send a separate verification code to your phone. This is not your Instapic booth code.
+      </p>
+    </form>
+
+    <div class="info-callout" style="margin-top:1.5rem;">
+      <h2>Important</h2>
+      <p>
+        Your phone verification code and your 6-digit Instapic booth code are different things.
+      </p>
+    </div>
+
+    <div class="hero-links hero-links-compact" style="text-align:center;">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+      ·
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      ·
+      <a href="pay.html" class="secondary-link">Buy a Booth Code</a>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
+  </main>
+
+  <script src="assets/main.js"></script>
+  <script src="branding.js"></script>
+  <script src="guest_identity.js"></script>
+  <script src="save_runtime.js"></script>
+</body>
+</html>
