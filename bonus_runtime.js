@@ -7,7 +7,31 @@
     return /\.(mp4|webm|gif)($|\?)/i.test(url);
   }
 
-  function createMediaCard(url, index) {
+  function guessExtension(url) {
+    const m = String(url).match(/\.([a-zA-Z0-9]+)($|\?)/);
+    return m ? m[1] : "jpg";
+  }
+
+  async function forceDownload(url, filename) {
+    const res = await fetch(url, { mode: "cors" });
+    if (!res.ok) {
+      throw new Error(`Download failed (${res.status})`);
+    }
+
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename || "instapic_file";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+  }
+
+  function createMediaCard(url, index, code) {
     const card = document.createElement("div");
     card.className = "bonus-card";
 
@@ -33,6 +57,26 @@
     }
 
     card.appendChild(label);
+
+    const actions = document.createElement("div");
+    actions.className = "bonus-card-actions";
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.type = "button";
+    downloadBtn.className = "btn bonus-download-btn";
+    downloadBtn.textContent = "Download";
+    downloadBtn.addEventListener("click", async () => {
+      try {
+        const ext = guessExtension(url);
+        await forceDownload(url, `instapic_bonus_${code}_${index + 1}.${ext}`);
+      } catch (err) {
+        alert(`Could not download this file: ${err.message}`);
+      }
+    });
+
+    actions.appendChild(downloadBtn);
+    card.appendChild(actions);
+
     return card;
   }
 
@@ -64,7 +108,6 @@
         return;
       }
 
-      // hero = first available file
       if (heroEl && full[0]) {
         if (looksLikeVideo(full[0])) {
           const video = document.createElement("video");
@@ -85,15 +128,13 @@
         heroLabel.textContent = `Featured Bonus • ${data.bg_id || "Instapic"}`;
       }
 
-      // gallery = all returned files
       if (gridEl) {
         gridEl.innerHTML = "";
         full.forEach((url, idx) => {
-          gridEl.appendChild(createMediaCard(url, idx));
+          gridEl.appendChild(createMediaCard(url, idx, code));
         });
       }
 
-      // keep the status cards, but make them more truthful
       if (statusGif) {
         const hasMotion = full.some(looksLikeVideo);
         statusGif.querySelector("p").textContent = hasMotion
@@ -109,15 +150,16 @@
       }
 
       if (downloadBtn) {
-        downloadBtn.addEventListener("click", () => {
-          full.forEach((url, idx) => {
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `instapic_bonus_${code}_${idx + 1}`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-          });
+        downloadBtn.addEventListener("click", async () => {
+          try {
+            for (let idx = 0; idx < full.length; idx += 1) {
+              const url = full[idx];
+              const ext = guessExtension(url);
+              await forceDownload(url, `instapic_bonus_${code}_${idx + 1}.${ext}`);
+            }
+          } catch (err) {
+            alert(`Could not download all files: ${err.message}`);
+          }
         });
       }
 
