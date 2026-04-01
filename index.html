@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <title>Instapic by Little Trends</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
 </head>
 <body>
   <header class="site-header">
@@ -17,36 +18,17 @@
   </header>
 
   <main class="site-main">
-    <section class="hero">
+    <section class="hero hero-home">
       <img
         src="assets/img/instapic_logo.png"
         alt="Instapic logo"
         class="hero-logo"
       >
 
-      <h1>Scan or tap to start</h1>
-      <p class="hero-text">
-        Get your Instapic code here before you jump in the booth.
+      <h1>Start your Instapic session</h1>
+      <p class="hero-text hero-text-wide">
+        Buy your booth code online, keep it safe, use it at the kiosk, then come back later for your bonus content.
       </p>
-
-      <div class="hero-row">
-        <div class="hero-cell">
-          <a href="pay.html" class="portal-orb">
-            <div class="portal-orb-inner">
-              <span class="portal-orb-main">Prepay here</span>
-              <span class="portal-orb-sub">Tap on this device or scan with your phone</span>
-            </div>
-          </a>
-        </div>
-
-        <div class="hero-cell">
-          <img
-            src="assets/img/instapic_fun_qr.png"
-            alt="Scan to open this page on your phone"
-            class="hero-qr"
-          >
-        </div>
-      </div>
 
       <div class="steps steps-chips">
         <div class="step-chip">
@@ -59,14 +41,55 @@
         </div>
         <div class="step-chip">
           <span class="step-number">3</span>
-          <span class="step-word">Mirror</span>
+          <span class="step-word">Kiosk</span>
+        </div>
+        <div class="step-chip">
+          <span class="step-number">4</span>
+          <span class="step-word">Bonus</span>
         </div>
       </div>
 
-      <div class="hero-links">
-        <a href="session.html" class="secondary-link">
-          I already have a code
+      <div class="portal-stack portal-stack-main">
+        <a href="pay.html" class="portal-orb portal-orb-primary">
+          <div class="portal-orb-inner">
+            <span class="portal-orb-main">Buy a Booth Code</span>
+            <span class="portal-orb-sub">Pay online now and get your 6-digit code instantly</span>
+          </div>
         </a>
+
+        <a href="save.html" class="portal-orb portal-orb-secondary">
+          <div class="portal-orb-inner">
+            <span class="portal-orb-main">Guest Area</span>
+            <span class="portal-orb-sub">Open saved tickets and jump back into your Instapic sessions</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="hero-qr-block">
+        <div class="hero-cell">
+          <img
+            src="assets/img/session_generic.png"
+            alt="Scan to open the Instapic code entry page"
+            class="hero-qr"
+          >
+        </div>
+
+        <div class="hero-qr-copy">
+          <h2>I already have a code</h2>
+          <p class="hero-text">
+            Enter your existing 6-digit Instapic code to open your session and bonus content.
+          </p>
+          <p>
+            <a href="session.html" class="portal-button">
+              <span class="portal-label">Enter My Code</span>
+            </a>
+          </p>
+          <div class="hero-links hero-links-compact">
+            <a href="how-it-works.html" class="secondary-link">
+              How it works
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   </main>

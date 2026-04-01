@@ -485,3 +485,265 @@ body {
   font-family: monospace;
   letter-spacing: 0.1em;
 }
+
+/* --------------------------------------------------
+   Homepage portal expansion
+   -------------------------------------------------- */
+
+.hero-home {
+  max-width: 980px;
+}
+
+.hero-text-wide {
+  max-width: 720px;
+}
+
+.portal-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.portal-stack-main {
+  margin-bottom: 2rem;
+}
+
+.portal-orb-primary::after {
+  background: radial-gradient(circle at 30% 0, #ff5b9b, #ff3370 60%, #ff9f6b 95%);
+}
+
+.portal-orb-secondary::after {
+  background: radial-gradient(circle at 30% 0, #33d6ff, #20c6c8 60%, #7af7ff 95%);
+}
+
+.hero-qr-block {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.hero-qr-copy {
+  max-width: 360px;
+  text-align: left;
+}
+
+.hero-links-compact {
+  margin-top: 1rem;
+}
+
+@media (max-width: 700px) {
+  .portal-orb {
+    width: 220px;
+    height: 220px;
+  }
+
+  .hero-qr-copy {
+    text-align: center;
+  }
+}
+EOF
+
+/* --------------------------------------------------
+   Info / explainer pages
+   -------------------------------------------------- */
+
+.page-intro {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.info-page,
+.bonus-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.info-grid,
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-card,
+.info-callout,
+.status-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.info-card h2,
+.info-callout h2,
+.status-card h2 {
+  margin-top: 0;
+}
+
+.step-number-large {
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+/* --------------------------------------------------
+   Ticket handoff page
+   -------------------------------------------------- */
+
+.ticket-redesign .ticket-code {
+  font-size: 2.6rem;
+  margin: 1rem auto 0.75rem;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ticket-actions .btn,
+.ticket-actions .portal-button {
+  min-width: 180px;
+}
+
+@media (max-width: 700px) {
+  .ticket-actions .btn,
+  .ticket-actions .portal-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* --------------------------------------------------
+   Session entry redesign
+   -------------------------------------------------- */
+
+.enter-code-redesign {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.code-card-center {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.code-input-row-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.code-input-row-stack input {
+  flex: 1 1 260px;
+}
+
+.code-input-row-stack button,
+.code-input-row-stack .btn {
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------
+   Bonus finale page
+   -------------------------------------------------- */
+
+.preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.preview img {
+  max-width: 100%;
+  border-radius: 14px;
+}
+
+.bonus-gallery h2 {
+  margin-bottom: 1rem;
+}
+
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* --------------------------------------------------
+   Guest / dashboard page
+   -------------------------------------------------- */
+
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------
+   Guest sign-in / verify / dashboard pages
+   -------------------------------------------------- */
+
+.save-flow-page,
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.form-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.form-shell h2 {
+  margin-top: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
