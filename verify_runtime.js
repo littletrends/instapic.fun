@@ -22,12 +22,12 @@
       const email = String(current.email || "").trim();
 
       if (!email) {
-        showFlash("Email missing. Start again.");
+        showFlash("Email missing. Start again from the email page.");
         return;
       }
 
       if (!/^\d{4,6}$/.test(code)) {
-        showFlash("Enter a valid verification code.");
+        showFlash("Enter your 4-digit email sign-in code.");
         return;
       }
 

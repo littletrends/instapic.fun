@@ -20,7 +20,7 @@
       const email = String(emailInput?.value || "").trim();
 
       if (!email) {
-        showFlash("Enter your email first.");
+        showFlash("Enter your email address first.");
         return;
       }
 

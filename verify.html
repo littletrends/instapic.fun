@@ -13,30 +13,30 @@
 
     <section class="page-intro">
       <div class="bonus-kicker">Guest Area</div>
-      <h1>Verify your email</h1>
+      <h1>Enter your email sign-in code</h1>
       <p class="hero-text hero-text-wide">
-        Enter the verification code sent to your email to continue into your Instapic guest area.
+        Enter the 4-digit sign-in code sent to your email to continue into your Instapic guest area.
       </p>
       <p class="muted">
-        This email verification code is for guest sign-in only. It is not your 6-digit booth code.
+        This 4-digit email sign-in code is for guest sign-in only. It is not your 6-digit Instapic booth code.
       </p>
     </section>
 
     <form id="verify-form" class="form-shell" novalidate autocomplete="off">
-      <label for="verify_code" class="code-label">Verification code</label>
+      <label for="verify_code" class="code-label">Email sign-in code</label>
 
       <div class="code-input-row code-input-row-stack">
         <input
           type="text"
           id="verify_code"
           name="verify_code"
-          maxlength="6"
+          maxlength="4"
           inputmode="numeric"
-          placeholder="123456"
+          placeholder="1234"
           required
           autocomplete="one-time-code"
         >
-        <button type="submit" class="btn">Verify & Continue</button>
+        <button type="submit" class="btn">Sign In & Continue</button>
       </div>
 
       <p class="code-hint">
