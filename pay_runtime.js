@@ -251,8 +251,35 @@
     }
 
     setStatus("Processing Apple Pay...");
+    appendDebug("DBG before tokenize");
+    appendDebug("DBG origin=" + window.location.origin);
+    appendDebug("DBG href=" + window.location.href);
+    appendDebug("DBG ua=" + navigator.userAgent);
+    appendDebug("DBG ApplePaySession=" + (!!window.ApplePaySession));
+    try {
+      if (window.ApplePaySession && typeof window.ApplePaySession.canMakePayments === "function") {
+        appendDebug("DBG canMakePayments=" + window.ApplePaySession.canMakePayments());
+      }
+    } catch (e) {
+      appendDebug("DBG canMakePayments err=" + (e?.message || String(e)));
+    }
 
-    const tokenResult = await applePay.tokenize();
+    let tokenResult;
+    try {
+      tokenResult = await applePay.tokenize();
+    } catch (err) {
+      appendDebug("DBG tokenize threw");
+      appendDebug("DBG tokenize err name=" + (err?.name || "none"));
+      appendDebug("DBG tokenize err msg=" + (err?.message || String(err)));
+      appendDebug("DBG tokenize err code=" + (err?.code || "none"));
+      try {
+        appendDebug("DBG tokenize err json=" + JSON.stringify(err));
+      } catch (_) {
+        appendDebug("DBG tokenize err json=unserializable");
+      }
+      throw err;
+    }
+
     console.log("Apple Pay tokenize result", tokenResult);
     appendDebug(`DBG tokenize status=${tokenResult?.status || "unknown"}`);
     appendDebug(`DBG tokenize token=${tokenResult?.token ? "yes" : "no"}`);
