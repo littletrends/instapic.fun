@@ -1319,3 +1319,44 @@ input[type="email"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* --------------------------------------------------
+   Template-set deliverables bonus layout
+   -------------------------------------------------- */
+
+.bonus-deliverables-shell {
+  margin-top: 2rem;
+}
+
+.deliverable-block {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(16,16,26,0.62);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+}
+
+.deliverable-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.deliverable-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deliverable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 700px) {
+  .deliverable-grid {
+    grid-template-columns: 1fr;
+  }
+}

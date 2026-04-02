@@ -15,11 +15,11 @@
       <div class="bonus-kicker">Your session is ready ✨</div>
       <h1>Your Instapic Bonus Content</h1>
       <p class="hero-text hero-text-wide">
-        Here’s the fun part. Your Instapic extras live here — save them now, share them later, and come back anytime with your code.
+        Your Instapic set is ready. Save your strip, GIF, collage, boomerang, and bonus stills here.
       </p>
     </section>
 
-    <div class="ticket-actions bonus-actions-top" style="margin-top:1rem;">
+    <div class="ticket-actions bonus-actions-top">
       <button type="button" id="download-all" class="btn">Download All</button>
       <button type="button" id="share-magic" class="btn">Copy Page Link</button>
     </div>
@@ -39,24 +39,63 @@
       <div class="status-grid" style="margin-top:1.5rem;">
         <div id="status-gif" class="status-card bonus-status-card">
           <h2>Motion Bonus</h2>
-          <p>Checking for GIFs and motion media…</p>
+          <p>Checking your GIF and motion content…</p>
         </div>
 
         <div id="status-collage" class="status-card bonus-status-card">
-          <h2>Enhanced Bonus Set</h2>
-          <p>Checking for your session extras…</p>
+          <h2>Template Set Bonus</h2>
+          <p>Checking your strip, collage, and enhanced set files…</p>
         </div>
       </div>
     </section>
 
-    <section class="bonus-gallery-shell" style="margin-top:2rem;">
+    <section class="bonus-deliverables-shell" style="margin-top:2rem;">
       <div class="bonus-section-head">
-        <h2>Your session files</h2>
+        <h2>Your Instapic files</h2>
         <p class="muted">
-          Tap any file to save it to your device.
+          Each deliverable is grouped below so guests can save exactly what they want.
         </p>
       </div>
-      <div id="bonus-grid" class="bonus-grid"></div>
+
+      <div id="deliverable-strip" class="deliverable-block" hidden>
+        <div class="deliverable-head">
+          <h3>Photo Strip</h3>
+          <p class="muted">Your Instapic print strip.</p>
+        </div>
+        <div class="deliverable-grid" id="deliverable-strip-grid"></div>
+      </div>
+
+      <div id="deliverable-gif" class="deliverable-block" hidden>
+        <div class="deliverable-head">
+          <h3>GIF</h3>
+          <p class="muted">Animated bonus created from your session.</p>
+        </div>
+        <div class="deliverable-grid" id="deliverable-gif-grid"></div>
+      </div>
+
+      <div id="deliverable-collage" class="deliverable-block" hidden>
+        <div class="deliverable-head">
+          <h3>Collage</h3>
+          <p class="muted">Template set collage artwork for your session.</p>
+        </div>
+        <div class="deliverable-grid" id="deliverable-collage-grid"></div>
+      </div>
+
+      <div id="deliverable-boomerang" class="deliverable-block" hidden>
+        <div class="deliverable-head">
+          <h3>Boomerang / Video</h3>
+          <p class="muted">Motion clips and boomerang-style extras.</p>
+        </div>
+        <div class="deliverable-grid" id="deliverable-boomerang-grid"></div>
+      </div>
+
+      <div id="deliverable-freezes" class="deliverable-block" hidden>
+        <div class="deliverable-head">
+          <h3>Bonus Stills</h3>
+          <p class="muted">Enhanced stills and freeze-frame extras from your session.</p>
+        </div>
+        <div class="deliverable-grid" id="deliverable-freezes-grid"></div>
+      </div>
     </section>
 
     <div class="info-callout bonus-callout" style="margin-top:2rem;">
