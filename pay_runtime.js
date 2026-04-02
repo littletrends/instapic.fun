@@ -1,39 +1,17 @@
 (function () {
-  let selectedPackageId = null;
-  let selectedAmountCents = 0;
-  let selectedLabel = "";
+  const core = window.InstapicCore;
   let payments = null;
   let card = null;
   let applePay = null;
-  let cardMounted = false;
+  let selectedPackage = null;
 
   function qs(sel) {
     return document.querySelector(sel);
   }
 
-  function qsa(sel) {
-    return Array.from(document.querySelectorAll(sel));
-  }
-
   function setStatus(message) {
     const el = qs("#payment-status");
     if (el) el.textContent = message || "";
-  }
-
-  function packageLabel(packageId, amountCents) {
-    const dollars = `$${(Number(amountCents || 0) / 100).toFixed(2).replace(/\.00$/, "")}`;
-    const labels = {
-      P1_STRIP: `${dollars} Strip`,
-      P2_STRIP_GIF: `${dollars} Strip + GIF`,
-      P3_STRIP_GIF: `${dollars} Premium`,
-    };
-    return labels[packageId] || `${packageId} — ${dollars}`;
-  }
-
-  function explainTokenizeFailure(result, label) {
-    const errors = (result && result.errors) || [];
-    const msg = errors.map((e) => e.message).filter(Boolean).join(" | ");
-    return msg || `${label} tokenization failed`;
   }
 
   function ensureApplePayButton() {
@@ -62,7 +40,7 @@
       btn.style.letterSpacing = "0.04em";
       btn.style.textTransform = "none";
       btn.style.boxShadow = "inset 0 0 12px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.28)";
-      btn.textContent = " Pay";
+      btn.textContent = "Apple Pay";
       btn.setAttribute("aria-label", "Apple Pay");
       return btn;
     }
@@ -70,63 +48,100 @@
     let btn = qs("#apple-pay-button");
     if (btn) return styleApplePayButton(btn);
 
-    const paymentPanel = qs("#payment-panel");
     const cardContainer = qs("#card-container");
-    if (!paymentPanel || !cardContainer || !cardContainer.parentNode) return null;
+    if (!cardContainer || !cardContainer.parentNode) return null;
 
     btn = document.createElement("button");
     btn.id = "apple-pay-button";
-
-    styleApplePayButton(btn);
     cardContainer.parentNode.insertBefore(btn, cardContainer);
-    return btn;
+    return styleApplePayButton(btn);
   }
 
-  function buildPaymentRequest() {
-    if (!payments || !selectedAmountCents) return null;
+  async function attachTicketIfGuestVerified(ticketCode) {
+    try {
+      const guest = window.InstapicGuestIdentity?.read?.() || {};
+      const email = String(guest.email || "").trim();
+      const verified = !!guest.verified;
 
-    return payments.paymentRequest({
-      countryCode: "AU",
-      currencyCode: "AUD",
-      total: {
-        amount: (selectedAmountCents / 100).toFixed(2),
-        label: selectedLabel || "Instapic session"
+      if (!email || !verified || !ticketCode) return;
+
+      const apiBase = window.InstapicGuestIdentity.API_BASE;
+      const res = await fetch(`${apiBase}/api/guest/attach-ticket`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, ticket_code: ticketCode })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        window.InstapicGuestIdentity.write({
+          ...guest,
+          email: data.email || email,
+          verified: true,
+          guest_profile: data.guest_profile || guest.guest_profile || {}
+        });
       }
-    });
+    } catch (err) {
+      console.warn("attach ticket failed", err);
+    }
   }
 
-  async function ensureSquareCard(panel) {
-    if (cardMounted && card) return card;
+  async function showTicketAndRedirect(data) {
+    const code = data.ticket_code || data.code;
+    const ticketResult = qs("#ticket-result");
+    const ticketCode = qs("#ticket-code");
 
-    const appId = panel?.dataset?.squareApplicationId || "";
-    const locationId = panel?.dataset?.squareLocationId || "";
-
-    if (!window.Square) {
-      throw new Error("Square.js did not load");
+    if (!code) {
+      throw new Error("Missing booth code from payment response");
     }
-    if (!appId || !locationId) {
-      throw new Error("Square app ID or location ID missing from page");
+
+    if (ticketResult) ticketResult.hidden = false;
+    if (ticketCode) ticketCode.textContent = code;
+
+    await attachTicketIfGuestVerified(code);
+
+    window.location.href = `ticket.html?code=${encodeURIComponent(code)}`;
+  }
+
+  async function initSquare() {
+    const panel = qs("#payment-panel");
+    if (!panel) return;
+
+    const appId = panel.dataset.squareApplicationId;
+    const locationId = panel.dataset.squareLocationId;
+
+    if (!window.Square || !appId || !locationId) {
+      setStatus("Square is not configured.");
+      return;
     }
 
     payments = window.Square.payments(appId, locationId);
 
     card = await payments.card();
     await card.attach("#card-container");
-    cardMounted = true;
-    return card;
   }
 
-  async function setupApplePayForCurrentSelection() {
+  function moneyLabel(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  }
+
+  async function refreshApplePay() {
     const btn = ensureApplePayButton();
-    if (!btn || !payments || !selectedAmountCents) return;
+    if (!btn || !payments || !selectedPackage) return;
 
     btn.hidden = true;
     btn.style.display = "none";
     applePay = null;
 
     try {
-      const paymentRequest = buildPaymentRequest();
-      if (!paymentRequest) return;
+      const paymentRequest = payments.paymentRequest({
+        countryCode: "AU",
+        currencyCode: "AUD",
+        total: {
+          amount: moneyLabel(selectedPackage.amount_cents),
+          label: "Instapic"
+        }
+      });
 
       applePay = await payments.applePay(paymentRequest);
 
@@ -137,180 +152,104 @@
       setStatus("Apple Pay is available for this device/browser.");
     } catch (err) {
       applePay = null;
-      btn.hidden = true;
-      btn.style.display = "none";
-      const msg = err && err.message ? err.message : String(err);
-      setStatus("Apple Pay unavailable: " + msg);
-      console.error("[ApplePay] unavailable:", err);
+      setStatus("Apple Pay unavailable: " + (err?.message || err));
     }
   }
 
-  async function postPayment(sourceId, sourceType, verificationToken) {
-    const core = window.InstapicCore;
-    return core.payAndCreateTicket({
-      package_id: selectedPackageId,
-      amount_cents: selectedAmountCents,
-      source_id: sourceId,
-      source_type: sourceType || "card",
-      verification_token: verificationToken || null,
+  function selectPackage(pkg) {
+    selectedPackage = pkg;
+    const panel = qs("#payment-panel");
+    const label = qs("#selected-package-label");
+    if (panel) panel.hidden = false;
+    if (label) {
+      label.textContent = `${pkg.name} — ${moneyLabel(pkg.amount_cents)}`;
+    }
+    refreshApplePay();
+  }
+
+  async function payWithCard() {
+    if (!card || !selectedPackage) {
+      setStatus("Choose a package first.");
+      return;
+    }
+
+    setStatus("Processing card payment...");
+
+    const tokenResult = await card.tokenize();
+    if (tokenResult.status !== "OK") {
+      throw new Error("Card tokenization failed");
+    }
+
+    const result = await core.payAndCreateTicket({
+      package_id: selectedPackage.package_id,
+      amount_cents: selectedPackage.amount_cents,
+      source_id: tokenResult.token,
+      verification_token: tokenResult.verificationToken || null
     });
+
+    await showTicketAndRedirect(result);
   }
 
-  function showTicketAndRedirect(data) {
-    const ticketResult = qs("#ticket-result");
-    const ticketCode = qs("#ticket-code");
-
-    if (ticketCode) ticketCode.textContent = data.code;
-    if (ticketResult) ticketResult.hidden = false;
-
-    setStatus("Payment approved. Creating your booth code…");
-
-    setTimeout(() => {
-      window.location.href = `ticket.html?code=${encodeURIComponent(data.code)}`;
-    }, 1200);
-  }
-
-  async function payByCard(event) {
-    event.preventDefault();
-
-    const core = window.InstapicCore;
-    const paymentPanel = qs("#payment-panel");
-    const payButton = qs("#card-pay-button");
-
-    if (!selectedPackageId || !selectedAmountCents) {
-      core.showFlash("Choose a package first.", "error");
+  async function payByApplePay() {
+    if (!applePay || !selectedPackage) {
+      setStatus("Apple Pay is not ready.");
       return;
     }
 
-    try {
-      const activeCard = await ensureSquareCard(paymentPanel);
+    setStatus("Processing Apple Pay...");
 
-      if (payButton) {
-        payButton.disabled = true;
-        payButton.style.opacity = "0.7";
-      }
-      setStatus("Processing payment…");
-
-      const result = await activeCard.tokenize();
-
-      if (result.status !== "OK") {
-        throw new Error(explainTokenizeFailure(result, "Card"));
-      }
-
-      const data = await postPayment(
-        result.token,
-        "website_card",
-        result.verificationToken || null
-      );
-
-      showTicketAndRedirect(data);
-    } catch (err) {
-      setStatus("");
-      core.showFlash(`Payment failed: ${err.message}`, "error");
-    } finally {
-      if (payButton) {
-        payButton.disabled = false;
-        payButton.style.opacity = "1";
-      }
+    const result = await applePay.tokenize();
+    if (result.status !== "OK") {
+      throw new Error("Apple Pay tokenization failed");
     }
+
+    const payResult = await core.payAndCreateTicket({
+      package_id: selectedPackage.package_id,
+      amount_cents: selectedPackage.amount_cents,
+      source_id: result.token,
+      verification_token: result.verificationToken || null
+    });
+
+    await showTicketAndRedirect(payResult);
   }
 
-  async function payByApplePay(event) {
-    event.preventDefault();
+  async function initPayPage() {
+    const page = document.body?.dataset?.page || "";
+    if (page !== "pay") return;
 
-    const core = window.InstapicCore;
+    await initSquare();
 
-    if (!selectedPackageId || !selectedAmountCents) {
-      core.showFlash("Choose a package first.", "error");
-      return;
-    }
-    if (!applePay) {
-      core.showFlash("Apple Pay is not available on this device/browser.", "error");
-      return;
-    }
-
-    try {
-      setStatus("Processing Apple Pay…");
-
-      const result = await applePay.tokenize();
-
-      if (result.status !== "OK") {
-        throw new Error(explainTokenizeFailure(result, "Apple Pay"));
-      }
-
-      const data = await postPayment(
-        result.token,
-        "website_apple_pay",
-        result.verificationToken || null
-      );
-
-      showTicketAndRedirect(data);
-    } catch (err) {
-      setStatus("");
-      core.showFlash(`Apple Pay failed: ${err.message}`, "error");
-    }
-  }
-
-  async function selectPackage(btn) {
-    const core = window.InstapicCore;
-    const flash = qs("#flash");
-    const ticketResult = qs("#ticket-result");
-    const paymentPanel = qs("#payment-panel");
-    const selectedPackageLabel = qs("#selected-package-label");
-
-    if (flash) flash.hidden = true;
-    if (ticketResult) ticketResult.hidden = true;
-    setStatus("");
-
-    selectedPackageId = String(btn.dataset.packageId || "").trim();
-    selectedAmountCents = Number(btn.dataset.amountCents || "0");
-    selectedLabel = packageLabel(selectedPackageId, selectedAmountCents);
-
-    if (!selectedPackageId || !selectedAmountCents) {
-      core.showFlash("Package details are missing.", "error");
-      return;
-    }
-
-    if (paymentPanel) {
-      paymentPanel.hidden = false;
-      paymentPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    if (selectedPackageLabel) {
-      selectedPackageLabel.textContent = `Selected: ${selectedLabel}`;
-    }
-
-    try {
-      setStatus("Loading secure payment form…");
-      await ensureSquareCard(paymentPanel);
-      await setupApplePayForCurrentSelection();
-      if (!applePay) {
-        setStatus("Card payment is ready.");
-      }
-    } catch (err) {
-      setStatus("");
-      core.showFlash(`Could not load payment form: ${err.message}`, "error");
-    }
-  }
-
-  function initPayPage() {
-    const core = window.InstapicCore;
-    if (!core || core.dataPage() !== "pay") return;
-
-    qsa(".package-portal").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        selectPackage(btn);
+    const pkgButtons = Array.from(document.querySelectorAll(".package-card[data-package-id]"));
+    pkgButtons.forEach((btn) => {
+      btn.addEventListener("click", function () {
+        selectPackage({
+          package_id: btn.dataset.packageId,
+          amount_cents: Number(btn.dataset.amountCents || 0),
+          name: btn.querySelector(".pkg-name")?.textContent?.trim() || "Instapic Package"
+        });
       });
     });
 
-    const payButton = qs("#card-pay-button");
-    if (payButton) {
-      payButton.addEventListener("click", payByCard);
+    const cardBtn = qs("#card-pay-button");
+    if (cardBtn) {
+      cardBtn.addEventListener("click", async function () {
+        try {
+          await payWithCard();
+        } catch (err) {
+          setStatus("Card payment failed: " + (err?.message || err));
+        }
+      });
     }
 
     const appleBtn = ensureApplePayButton();
     if (appleBtn) {
-      appleBtn.addEventListener("click", payByApplePay);
+      appleBtn.addEventListener("click", async function () {
+        try {
+          await payByApplePay();
+        } catch (err) {
+          setStatus("Apple Pay failed: " + (err?.message || err));
+        }
+      });
     }
   }
 
