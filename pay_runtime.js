@@ -14,6 +14,18 @@
     if (el) el.textContent = message || "";
   }
 
+  function describeError(err) {
+    if (!err) return "Unknown error";
+    if (typeof err === "string") return err;
+    if (err.message) return err.message;
+    if (err.error) return err.error;
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return String(err);
+    }
+  }
+
   function ensureApplePayButton() {
     function styleApplePayButton(btn) {
       btn.type = "button";
@@ -73,14 +85,17 @@
       });
 
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.ok) {
-        window.InstapicGuestIdentity.write({
-          ...guest,
-          email: data.email || email,
-          verified: true,
-          guest_profile: data.guest_profile || guest.guest_profile || {}
-        });
+      if (!res.ok || !data.ok) {
+        console.warn("attach-ticket failed", { status: res.status, data });
+        return;
       }
+
+      window.InstapicGuestIdentity.write({
+        ...guest,
+        email: data.email || email,
+        verified: true,
+        guest_profile: data.guest_profile || guest.guest_profile || {}
+      });
     } catch (err) {
       console.warn("attach ticket failed", err);
     }
@@ -99,7 +114,6 @@
     if (ticketCode) ticketCode.textContent = code;
 
     await attachTicketIfGuestVerified(code);
-
     window.location.href = `ticket.html?code=${encodeURIComponent(code)}`;
   }
 
@@ -116,7 +130,6 @@
     }
 
     payments = window.Square.payments(appId, locationId);
-
     card = await payments.card();
     await card.attach("#card-container");
   }
@@ -144,7 +157,6 @@
       });
 
       applePay = await payments.applePay(paymentRequest);
-
       btn.hidden = false;
       btn.style.display = "block";
       btn.style.visibility = "visible";
@@ -152,7 +164,8 @@
       setStatus("Apple Pay is available for this device/browser.");
     } catch (err) {
       applePay = null;
-      setStatus("Apple Pay unavailable: " + (err?.message || err));
+      console.error("Apple Pay availability error", err);
+      setStatus("Apple Pay unavailable: " + describeError(err));
     }
   }
 
@@ -167,6 +180,14 @@
     refreshApplePay();
   }
 
+  async function payAndCreate(payload) {
+    const result = await core.payAndCreateTicket(payload);
+    if (!result || !result.ok) {
+      throw new Error(result?.error || "Payment bridge failed");
+    }
+    return result;
+  }
+
   async function payWithCard() {
     if (!card || !selectedPackage) {
       setStatus("Choose a package first.");
@@ -176,11 +197,17 @@
     setStatus("Processing card payment...");
 
     const tokenResult = await card.tokenize();
+    console.log("Card tokenize result", tokenResult);
+
     if (tokenResult.status !== "OK") {
-      throw new Error("Card tokenization failed");
+      const msg =
+        tokenResult.errors?.map(e => e.message).filter(Boolean).join("; ") ||
+        tokenResult.status ||
+        "Card tokenization failed";
+      throw new Error(msg);
     }
 
-    const result = await core.payAndCreateTicket({
+    const result = await payAndCreate({
       package_id: selectedPackage.package_id,
       amount_cents: selectedPackage.amount_cents,
       source_id: tokenResult.token,
@@ -198,16 +225,22 @@
 
     setStatus("Processing Apple Pay...");
 
-    const result = await applePay.tokenize();
-    if (result.status !== "OK") {
-      throw new Error("Apple Pay tokenization failed");
+    const tokenResult = await applePay.tokenize();
+    console.log("Apple Pay tokenize result", tokenResult);
+
+    if (tokenResult.status !== "OK") {
+      const msg =
+        tokenResult.errors?.map(e => e.message).filter(Boolean).join("; ") ||
+        tokenResult.status ||
+        "Apple Pay tokenization failed";
+      throw new Error(msg);
     }
 
-    const payResult = await core.payAndCreateTicket({
+    const payResult = await payAndCreate({
       package_id: selectedPackage.package_id,
       amount_cents: selectedPackage.amount_cents,
-      source_id: result.token,
-      verification_token: result.verificationToken || null
+      source_id: tokenResult.token,
+      verification_token: tokenResult.verificationToken || null
     });
 
     await showTicketAndRedirect(payResult);
@@ -236,7 +269,8 @@
         try {
           await payWithCard();
         } catch (err) {
-          setStatus("Card payment failed: " + (err?.message || err));
+          console.error("Card payment error", err);
+          setStatus("Card payment failed: " + describeError(err));
         }
       });
     }
@@ -247,7 +281,8 @@
         try {
           await payByApplePay();
         } catch (err) {
-          setStatus("Apple Pay failed: " + (err?.message || err));
+          console.error("Apple Pay error", err);
+          setStatus("Apple Pay failed: " + describeError(err));
         }
       });
     }
