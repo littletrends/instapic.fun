@@ -23,13 +23,22 @@
   function classifyFile(url) {
     const name = basename(url);
 
-    if (name.includes("strip_web")) return "strip";
-    if (name.includes("strip")) return "strip";
-    if (name.includes("gif")) return "gif";
-    if (name.includes("collage")) return "collage";
+    // Prefer explicit MotherPC template-set naming
+    if (name.includes("_strip_web")) return "strip_web";
+    if (name.includes("_strip")) return "strip";
+    if (name.includes("_gif")) return "gif";
+    if (name.includes("_boomerang")) return "boomerang";
+    if (name.includes("_collage")) return "collage";
+
+    // Current generated bonus/fallback names
     if (name.includes("boomerang")) return "boomerang";
-    if (name.includes("video")) return "boomerang";
-    if (name.includes("freeze")) return "freezes";
+    if (name.includes("collage")) return "collage";
+    if (name.includes("gif")) return "gif";
+    if (name.includes("strip")) return "strip";
+
+    // Session motion / freezes
+    if (name.includes("session_video")) return "boomerang";
+    if (name.includes("freeze_")) return "freezes";
 
     if (looksLikeGif(url)) return "gif";
     if (looksLikeVideo(url)) return "boomerang";
@@ -58,18 +67,14 @@
     const card = document.createElement("div");
     card.className = "bonus-card";
 
-    if (looksLikeVideo(url) || looksLikeGif(url)) {
-      const video = document.createElement(looksLikeGif(url) ? "img" : "video");
-      if (looksLikeGif(url)) {
-        video.src = url;
-        video.alt = label || `Bonus ${index + 1}`;
-      } else {
-        video.src = url;
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-      }
+    if (looksLikeVideo(url)) {
+      const video = document.createElement("video");
+      video.src = url;
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.controls = true;
       video.className = "bonus-media";
       card.appendChild(video);
     } else {
@@ -149,6 +154,7 @@
       }
 
       const grouped = {
+        strip_web: [],
         strip: [],
         gif: [],
         collage: [],
@@ -160,11 +166,19 @@
         grouped[classifyFile(url)].push(url);
       });
 
+      // Hero priority:
+      // 1. strip_web
+      // 2. gif
+      // 3. collage
+      // 4. boomerang
+      // 5. strip
+      // 6. freezes
       const heroChoice =
-        grouped.strip[0] ||
+        grouped.strip_web[0] ||
         grouped.gif[0] ||
         grouped.collage[0] ||
         grouped.boomerang[0] ||
+        grouped.strip[0] ||
         grouped.freezes[0];
 
       if (heroEl && heroChoice) {
@@ -176,6 +190,7 @@
           video.loop = true;
           video.muted = true;
           video.playsInline = true;
+          video.controls = true;
           video.className = "hero-strip";
           heroEl.replaceWith(video);
         } else {
@@ -187,21 +202,55 @@
         heroLabel.textContent = `Featured Bonus • ${data.bg_id || "Instapic Set"}`;
       }
 
-      renderDeliverable("strip", grouped.strip, code, grouped.strip.map(() => "Photo Strip"));
-      renderDeliverable("gif", grouped.gif, code, grouped.gif.map(() => "GIF"));
-      renderDeliverable("collage", grouped.collage, code, grouped.collage.map(() => "Collage"));
-      renderDeliverable("boomerang", grouped.boomerang, code, grouped.boomerang.map((u) => looksLikeVideo(u) ? "Boomerang / Video" : "Boomerang"));
-      renderDeliverable("freezes", grouped.freezes, code, grouped.freezes.map((_, i) => `Bonus Still ${i + 1}`));
+      renderDeliverable(
+        "strip",
+        [...grouped.strip_web, ...grouped.strip],
+        code,
+        [...grouped.strip_web.map(() => "Web Strip"), ...grouped.strip.map(() => "Photo Strip")]
+      );
+
+      renderDeliverable(
+        "gif",
+        grouped.gif,
+        code,
+        grouped.gif.map(() => "GIF")
+      );
+
+      renderDeliverable(
+        "collage",
+        grouped.collage,
+        code,
+        grouped.collage.map(() => "Collage")
+      );
+
+      renderDeliverable(
+        "boomerang",
+        grouped.boomerang,
+        code,
+        grouped.boomerang.map((u) => basename(u).includes("boomerang") ? "Boomerang" : "Session Video")
+      );
+
+      renderDeliverable(
+        "freezes",
+        grouped.freezes,
+        code,
+        grouped.freezes.map((_, i) => `Bonus Still ${i + 1}`)
+      );
 
       if (statusGif) {
         const hasMotion = grouped.gif.length || grouped.boomerang.length;
         statusGif.querySelector("p").textContent = hasMotion
-          ? "Your motion bonus files are ready."
+          ? "Your GIF and motion bonus files are ready."
           : "No motion bonus was found for this session.";
       }
 
       if (statusCollage) {
-        const hasSetFiles = grouped.strip.length || grouped.collage.length || grouped.freezes.length;
+        const hasSetFiles =
+          grouped.strip_web.length ||
+          grouped.strip.length ||
+          grouped.collage.length ||
+          grouped.freezes.length;
+
         statusCollage.querySelector("p").textContent = hasSetFiles
           ? "Your template set bonus files are ready."
           : "No template-set extras were found for this session.";
