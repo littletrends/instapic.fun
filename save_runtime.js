@@ -16,11 +16,11 @@
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
-      const phoneInput = document.getElementById("guest_phone");
-      const phone = String(phoneInput?.value || "").trim();
+      const emailInput = document.getElementById("guest_email");
+      const email = String(emailInput?.value || "").trim();
 
-      if (!phone) {
-        showFlash("Enter your mobile number first.");
+      if (!email) {
+        showFlash("Enter your email first.");
         return;
       }
 
@@ -29,7 +29,7 @@
         const res = await fetch(`${apiBase}/api/guest/start-verification`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone })
+          body: JSON.stringify({ email })
         });
 
         const data = await res.json();
@@ -39,7 +39,7 @@
         }
 
         window.InstapicGuestIdentity.write({
-          phone: data.phone,
+          email: data.email,
           verification_started: true
         });
 

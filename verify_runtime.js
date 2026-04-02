@@ -19,10 +19,10 @@
       const codeInput = document.getElementById("verify_code");
       const code = String(codeInput?.value || "").trim();
       const current = window.InstapicGuestIdentity.read();
-      const phone = String(current.phone || "").trim();
+      const email = String(current.email || "").trim();
 
-      if (!phone) {
-        showFlash("Phone number missing. Start again.");
+      if (!email) {
+        showFlash("Email missing. Start again.");
         return;
       }
 
@@ -36,7 +36,7 @@
         const res = await fetch(`${apiBase}/api/guest/verify-code`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, code })
+          body: JSON.stringify({ email, code })
         });
 
         const data = await res.json();
@@ -46,7 +46,7 @@
         }
 
         window.InstapicGuestIdentity.write({
-          phone: data.phone,
+          email: data.email,
           verified: true,
           guest_profile: data.guest_profile || {}
         });
