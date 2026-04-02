@@ -1,32 +1,52 @@
 (function () {
-  function initSavePage() {
+  function showFlash(message) {
+    const flash = document.getElementById("flash");
+    if (!flash) return;
+    flash.hidden = false;
+    flash.textContent = message;
+  }
+
+  async function initSavePage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
     const form = document.getElementById("save-form");
-    const flash = document.getElementById("flash");
     if (!form) return;
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const phoneInput = document.getElementById("guest_phone");
       const phone = String(phoneInput?.value || "").trim();
 
       if (!phone) {
-        if (flash) {
-          flash.hidden = false;
-          flash.textContent = "Enter your mobile number first.";
-        }
+        showFlash("Enter your mobile number first.");
         return;
       }
 
-      window.InstapicGuestIdentity.write({
-        phone: phone,
-        verified: false
-      });
+      try {
+        const apiBase = window.InstapicGuestIdentity.API_BASE;
+        const res = await fetch(`${apiBase}/api/guest/start-verification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone })
+        });
 
-      window.location.href = "verify.html";
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        window.InstapicGuestIdentity.write({
+          phone: data.phone,
+          verification_started: true
+        });
+
+        window.location.href = "verify.html";
+      } catch (err) {
+        showFlash(`Could not start verification: ${err.message}`);
+      }
     });
   }
 
