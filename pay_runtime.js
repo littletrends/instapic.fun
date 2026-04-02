@@ -4,32 +4,14 @@
   let card = null;
   let applePay = null;
   let selectedPackage = null;
-  let debugLines = [];
 
   function qs(sel) {
     return document.querySelector(sel);
   }
 
-  function renderStatus(message) {
-    const el = qs("#payment-status");
-    if (!el) return;
-    const lines = [];
-    if (message) lines.push(String(message));
-    if (debugLines.length) {
-      lines.push("");
-      lines.push("--- debug ---");
-      lines.push(...debugLines.slice(-12));
-    }
-    el.textContent = lines.join("\n");
-  }
-
   function setStatus(message) {
-    renderStatus(message || "");
-  }
-
-  function appendDebug(message) {
-    debugLines.push(String(message || ""));
-    renderStatus(qs("#payment-status")?.textContent?.split("\n\n--- debug ---\n")[0] || "");
+    const el = qs("#payment-status");
+    if (el) el.textContent = message || "";
   }
 
   function describeError(err) {
@@ -150,16 +132,10 @@
     payments = window.Square.payments(appId, locationId);
     card = await payments.card();
     await card.attach("#card-container");
-    appendDebug(`DBG initSquare ok appId=${appId ? "yes" : "no"} locationId=${locationId ? "yes" : "no"}`);
-  }
-
-  function moneyLabel(cents) {
-    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
   async function refreshApplePay() {
     const btn = ensureApplePayButton();
-    appendDebug(`DBG refreshApplePay start btn=${!!btn} payments=${!!payments} pkg=${selectedPackage ? selectedPackage.package_id : "none"}`);
     if (!btn || !payments || !selectedPackage) return;
 
     btn.hidden = true;
@@ -176,31 +152,26 @@
         }
       });
 
-      appendDebug(`DBG paymentRequest amount=${moneyLabel(selectedPackage.amount_cents)}`);
       applePay = await payments.applePay(paymentRequest);
-      appendDebug("DBG applePay object created");
       btn.hidden = false;
       btn.style.display = "block";
       btn.style.visibility = "visible";
       btn.style.opacity = "1";
       setStatus("Apple Pay is available for this device/browser.");
-      appendDebug("DBG apple button shown");
     } catch (err) {
       applePay = null;
       console.error("Apple Pay availability error", err);
       setStatus("Apple Pay unavailable: " + describeError(err));
-      appendDebug("DBG applePay create failed: " + describeError(err));
     }
   }
 
   function selectPackage(pkg) {
     selectedPackage = pkg;
-    appendDebug(`DBG package selected id=${pkg.package_id} cents=${pkg.amount_cents}`);
     const panel = qs("#payment-panel");
     const label = qs("#selected-package-label");
     if (panel) panel.hidden = false;
     if (label) {
-      label.textContent = `${pkg.name} — ${moneyLabel(pkg.amount_cents)}`;
+      label.textContent = `${pkg.name} — $${(Number(pkg.amount_cents || 0) / 100).toFixed(2)}`;
     }
     refreshApplePay();
   }
@@ -243,47 +214,15 @@
   }
 
   async function payByApplePay() {
-    appendDebug(`DBG payByApplePay enter applePay=${!!applePay} pkg=${selectedPackage ? selectedPackage.package_id : "none"}`);
     if (!applePay || !selectedPackage) {
       setStatus("Apple Pay is not ready.");
-      appendDebug("DBG payByApplePay early return");
       return;
     }
 
     setStatus("Processing Apple Pay...");
-    appendDebug("DBG before tokenize");
-    appendDebug("DBG origin=" + window.location.origin);
-    appendDebug("DBG href=" + window.location.href);
-    appendDebug("DBG ua=" + navigator.userAgent);
-    appendDebug("DBG ApplePaySession=" + (!!window.ApplePaySession));
-    try {
-      if (window.ApplePaySession && typeof window.ApplePaySession.canMakePayments === "function") {
-        appendDebug("DBG canMakePayments=" + window.ApplePaySession.canMakePayments());
-      }
-    } catch (e) {
-      appendDebug("DBG canMakePayments err=" + (e?.message || String(e)));
-    }
 
-    let tokenResult;
-    try {
-      tokenResult = await applePay.tokenize();
-    } catch (err) {
-      appendDebug("DBG tokenize threw");
-      appendDebug("DBG tokenize err name=" + (err?.name || "none"));
-      appendDebug("DBG tokenize err msg=" + (err?.message || String(err)));
-      appendDebug("DBG tokenize err code=" + (err?.code || "none"));
-      try {
-        appendDebug("DBG tokenize err json=" + JSON.stringify(err));
-      } catch (_) {
-        appendDebug("DBG tokenize err json=unserializable");
-      }
-      throw err;
-    }
-
+    const tokenResult = await applePay.tokenize();
     console.log("Apple Pay tokenize result", tokenResult);
-    appendDebug(`DBG tokenize status=${tokenResult?.status || "unknown"}`);
-    appendDebug(`DBG tokenize token=${tokenResult?.token ? "yes" : "no"}`);
-    appendDebug(`DBG tokenize errors=${tokenResult?.errors?.map(e => e.message).join(" | ") || "none"}`);
 
     if (tokenResult.status !== "OK") {
       const msg =
@@ -312,7 +251,6 @@
     const pkgButtons = Array.from(document.querySelectorAll(".package-card[data-package-id]"));
     pkgButtons.forEach((btn) => {
       btn.addEventListener("click", function () {
-        appendDebug(`DBG pkg button click dom=${btn.dataset.packageId}`);
         selectPackage({
           package_id: btn.dataset.packageId,
           amount_cents: Number(btn.dataset.amountCents || 0),
@@ -335,25 +273,14 @@
 
     const appleBtn = ensureApplePayButton();
     if (appleBtn) {
-      ["click","touchstart","pointerdown"].forEach((evt) => {
-        appleBtn.addEventListener(evt, function () {
-          appendDebug("DBG apple btn event=" + evt);
-        }, { passive: true });
-      });
-
       appleBtn.addEventListener("click", async function () {
-        appendDebug("DBG apple button click");
         try {
           await payByApplePay();
         } catch (err) {
           console.error("Apple Pay error", err);
           setStatus("Apple Pay failed: " + describeError(err));
-          appendDebug("DBG apple click catch: " + describeError(err));
         }
       });
-      appendDebug("DBG apple button listener attached");
-    } else {
-      appendDebug("DBG apple button missing at init");
     }
   }
 
