@@ -8,50 +8,76 @@
   <link rel="stylesheet" href="branding.css">
 </head>
 <body class="page" data-page="ticket">
-  <main class="card ticket-redesign">
+  <main class="card ticket-page ticket-page-glow">
     <div id="flash" hidden></div>
 
     <section class="page-intro">
-      <h1>Your Instapic code is ready</h1>
+      <div class="bonus-kicker">Save this before you leave</div>
+      <h1>Your Instapic Booth Code</h1>
       <p class="hero-text hero-text-wide">
-        This is your official 6-digit booth code. You need it at the kiosk, and you may need it later to open your session again.
+        This is your official 6-digit Instapic code. You’ll need it at the physical booth and later if you want to reopen your session or bonus content.
       </p>
     </section>
 
-    <div id="code-display" class="ticket-code">------</div>
-
-    <div class="info-callout" style="margin-top:1rem;">
-      <h2>Important</h2>
-      <p>
-        Keep this code safe. Take a screenshot, copy it, or share it with yourself before leaving this page.
+    <section class="ticket-code-shell">
+      <div class="ticket-code-label">Your 6-digit Instapic code</div>
+      <div id="ticket-code" class="ticket-code ticket-code-big">------</div>
+      <p class="muted ticket-help">
+        Do not confuse this with your email sign-in code. This is the one that unlocks your booth session.
       </p>
-    </div>
+    </section>
 
-    <div class="ticket-actions" style="margin-top:1.5rem;">
+    <div class="ticket-actions ticket-actions-main" style="margin-top:1.5rem;">
       <button type="button" id="copy-code" class="btn">Copy Code</button>
       <button type="button" id="share-code" class="btn">Share Code</button>
       <button type="button" id="download-code" class="btn">Download Code</button>
     </div>
 
-    <p class="muted" style="margin-top:1rem;">
-      Next step: take this code to the Instapic kiosk and enter it when you're ready to start.
-    </p>
-
-    <div class="hero-links" style="margin-top:2rem; text-align:center;">
-      <a href="session.html" class="secondary-link">I already have a code</a>
+    <div class="info-callout ticket-callout" style="margin-top:1.75rem;">
+      <h2>Best next step</h2>
+      <p>
+        Save this code to your phone now. You can also sign in to your guest area so future Instapic sessions can live in one place.
+      </p>
     </div>
 
-    <div class="hero-links hero-links-compact" style="text-align:center;">
-      <a href="save.html" class="secondary-link">Guest Area</a>
-      ·
+    <div class="dashboard-grid" style="margin-top:2rem;">
+      <div class="dashboard-card">
+        <h2>Go to Guest Area</h2>
+        <p>
+          Save your access and return to your sessions later.
+        </p>
+        <p style="margin-top:1rem;">
+          <a href="save.html" class="portal-button">
+            <span class="portal-label">Open Guest Area</span>
+          </a>
+        </p>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Open this code later</h2>
+        <p>
+          Already have your booth code saved? Use the session page any time.
+        </p>
+        <p style="margin-top:1rem;">
+          <a href="session.html" class="portal-button">
+            <span class="portal-label">Enter My Code</span>
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <div class="hero-links" style="margin-top:2rem; text-align:center;">
       <a href="how-it-works.html" class="secondary-link">How it works</a>
+      ·
+      <a href="pay.html" class="secondary-link">Buy another booth code</a>
+      ·
+      <a href="my-instapic.html" class="secondary-link">My Instapic</a>
     </div>
 
     <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
   <script src="assets/main.js"></script>
-  <script src="site_core.js"></script>
   <script src="branding.js"></script>
   <script src="ticket_runtime.js"></script>
 </body>
