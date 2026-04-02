@@ -4,21 +4,32 @@
   let card = null;
   let applePay = null;
   let selectedPackage = null;
+  let debugLines = [];
 
   function qs(sel) {
     return document.querySelector(sel);
   }
 
-  function setStatus(message) {
+  function renderStatus(message) {
     const el = qs("#payment-status");
-    if (el) el.textContent = message || "";
+    if (!el) return;
+    const lines = [];
+    if (message) lines.push(String(message));
+    if (debugLines.length) {
+      lines.push("");
+      lines.push("--- debug ---");
+      lines.push(...debugLines.slice(-12));
+    }
+    el.textContent = lines.join("\n");
+  }
+
+  function setStatus(message) {
+    renderStatus(message || "");
   }
 
   function appendDebug(message) {
-    const el = qs("#payment-status");
-    if (!el) return;
-    const prev = el.textContent ? el.textContent + "\n" : "";
-    el.textContent = prev + String(message || "");
+    debugLines.push(String(message || ""));
+    renderStatus(qs("#payment-status")?.textContent?.split("\n\n--- debug ---\n")[0] || "");
   }
 
   function describeError(err) {
@@ -244,6 +255,8 @@
     const tokenResult = await applePay.tokenize();
     console.log("Apple Pay tokenize result", tokenResult);
     appendDebug(`DBG tokenize status=${tokenResult?.status || "unknown"}`);
+    appendDebug(`DBG tokenize token=${tokenResult?.token ? "yes" : "no"}`);
+    appendDebug(`DBG tokenize errors=${tokenResult?.errors?.map(e => e.message).join(" | ") || "none"}`);
 
     if (tokenResult.status !== "OK") {
       const msg =
