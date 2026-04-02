@@ -10,6 +10,11 @@
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
+    if (window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
+      window.location.href = "my-instapic.html";
+      return;
+    }
+
     const form = document.getElementById("save-form");
     if (!form) return;
 
@@ -40,7 +45,8 @@
 
         window.InstapicGuestIdentity.write({
           email: data.email,
-          verification_started: true
+          verification_started: true,
+          verified: false
         });
 
         window.location.href = "verify.html";
