@@ -31,6 +31,36 @@
       </div>
 
       <div class="dashboard-card">
+        <h2>Store My Code</h2>
+        <p>
+          Already paid for a booth session? Enter your 6-digit Instapic code here to save it to your guest area.
+        </p>
+
+        <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+          <label for="store_ticket_code" class="code-label">6-digit booth code</label>
+
+          <div class="code-input-row code-input-row-stack">
+            <input
+              type="text"
+              id="store_ticket_code"
+              name="store_ticket_code"
+              maxlength="6"
+              inputmode="numeric"
+              placeholder="123456"
+              required
+            >
+            <button type="submit" class="btn">Store My Code</button>
+          </div>
+
+          <p class="code-hint">
+            This saves your paid booth code to your guest area. It does not redeem or use the code.
+          </p>
+        </form>
+
+        <div id="store-code-status" class="muted" style="margin-top:1rem;"></div>
+      </div>
+
+      <div class="dashboard-card">
         <h2>Open a code now</h2>
         <p>
           Already have your Instapic booth code ready?
@@ -75,5 +105,6 @@
   <script src="branding.js"></script>
   <script src="guest_identity.js"></script>
   <script src="my_instapic_runtime.js"></script>
+  <script src="guest_store_code_runtime.js"></script>
 </body>
 </html>
