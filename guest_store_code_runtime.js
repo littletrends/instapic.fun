@@ -32,7 +32,7 @@
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok || !data.ok) {
-      throw new Error(data.error || `HTTP ${res.status}`);
+      throw new Error(data.message || data.error || `HTTP ${res.status}`);
     }
 
     return data;
