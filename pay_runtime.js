@@ -171,7 +171,7 @@
         countryCode: "AU",
         currencyCode: "AUD",
         total: {
-          amount: moneyLabel(selectedPackage.amount_cents),
+          amount: (Number(selectedPackage.amount_cents || 0) / 100).toFixed(2),
           label: "Instapic"
         }
       });
