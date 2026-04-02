@@ -1,8 +1,6 @@
 (function () {
   const KEY = "instapic_guest_identity";
-  const API_BASE = window.location.hostname === "localhost"
-    ? "http://localhost:5051"
-    : "https://motherpc.taild1a44c.ts.net:5051";
+  const API_BASE = "https://motherpc.taild1a44c.ts.net";
 
   function read() {
     try {
