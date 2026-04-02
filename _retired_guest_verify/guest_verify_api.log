@@ -1,0 +1,5 @@
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/home/magic_mirror1/Desktop/instapic/magic_mirror_v1/instapic_fun/guest_verify_api.py", line 9, in <module>
+    from flask_cors import CORS
+ModuleNotFoundError: No module named 'flask_cors'
