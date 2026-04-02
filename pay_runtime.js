@@ -308,6 +308,12 @@
 
     const appleBtn = ensureApplePayButton();
     if (appleBtn) {
+      ["click","touchstart","pointerdown"].forEach((evt) => {
+        appleBtn.addEventListener(evt, function () {
+          appendDebug("DBG apple btn event=" + evt);
+        }, { passive: true });
+      });
+
       appleBtn.addEventListener("click", async function () {
         appendDebug("DBG apple button click");
         try {
