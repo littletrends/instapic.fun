@@ -67,7 +67,7 @@
   }
 
   async function payAndCreateTicket(payload) {
-    const res = await fetch(`/api/pay-and-create-ticket`, {
+    const res = await fetch(`${API_BASE}/api/pay-and-create-ticket`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload || {})
