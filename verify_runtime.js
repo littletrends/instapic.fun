@@ -6,7 +6,6 @@
     flash.textContent = message;
   }
 
-  async 
   // === carry ticket_code forward ===
   const params = new URLSearchParams(window.location.search);
   const ticketCode = params.get("ticket_code");
