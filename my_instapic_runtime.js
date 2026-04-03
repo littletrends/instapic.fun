@@ -98,5 +98,19 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", initMyInstapic);
+  
+  // === prefill ticket_code from URL ===
+  const params = new URLSearchParams(window.location.search);
+  const ticketCode = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0,6);
+
+  if (ticketCode) {
+    const input = document.getElementById("store_ticket_code");
+    if (input) {
+      input.value = ticketCode;
+      input.focus();
+    }
+  }
+
+
+document.addEventListener("DOMContentLoaded", initMyInstapic);
 })();
