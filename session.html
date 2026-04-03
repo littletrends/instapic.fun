@@ -6,6 +6,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
+  <style>
+    body[data-page="session"] #flash {
+      position: sticky;
+      top: 0.75rem;
+      z-index: 50;
+      display: block;
+      margin: 0 0 1rem 0;
+      padding: 0.9rem 1rem;
+      border-radius: 18px;
+      background: rgba(18, 18, 30, 0.96);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+      font-size: 1rem;
+      line-height: 1.35;
+      color: #fff;
+      text-align: center;
+    }
+
+    body[data-page="session"] #flash[hidden] {
+      display: none !important;
+    }
+
+    body[data-page="session"] .page-intro {
+      margin-bottom: 1.4rem;
+    }
+
+    body[data-page="session"] .page-intro h1 {
+      line-height: 1.04;
+      letter-spacing: 0.01em;
+      text-wrap: balance;
+      margin-bottom: 1rem;
+      text-shadow: 0 3px 18px rgba(0,0,0,0.22);
+    }
+
+    body[data-page="session"] .hero-text,
+    body[data-page="session"] .muted,
+    body[data-page="session"] .code-hint,
+    body[data-page="session"] .info-callout p {
+      color: rgba(255,255,255,0.9);
+    }
+
+    body[data-page="session"] .hero-text,
+    body[data-page="session"] .info-callout p {
+      line-height: 1.34;
+      font-size: 1.06rem;
+    }
+
+    body[data-page="session"] .muted,
+    body[data-page="session"] .code-hint {
+      line-height: 1.3;
+      font-size: 0.98rem;
+    }
+
+    body[data-page="session"] .code-card,
+    body[data-page="session"] .info-callout {
+      background: rgba(8, 8, 24, 0.88);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.2);
+    }
+
+    body[data-page="session"] .code-label,
+    body[data-page="session"] .info-callout h2 {
+      color: #fff;
+    }
+
+    body[data-page="session"] #ticket_code {
+      font-size: 1.15rem;
+      letter-spacing: 0.22em;
+      text-align: center;
+      color: #fff;
+    }
+
+    body[data-page="session"] .keypad-key {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    body[data-page="session"] .hero-links {
+      line-height: 1.5;
+    }
+
+    body[data-page="session"] p > .btn,
+    body[data-page="session"] .hero-links + p .btn {
+      display: inline-block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
 </head>
 <body class="page" data-page="session">
   <main class="card enter-code-redesign">
