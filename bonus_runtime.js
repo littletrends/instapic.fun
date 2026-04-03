@@ -63,6 +63,10 @@
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   function createMediaCard(url, index, code, label) {
     const card = document.createElement("div");
     card.className = "bonus-card";
@@ -149,7 +153,7 @@
       const full = files.map(asFullUrl);
 
       if (!full.length) {
-        core.showFlash("Your bonus page is unlocked, but files are not ready yet.", "error");
+        core.showFlash("Your session is still being prepared. Check back in a moment — your bonus will appear here automatically.", "error");
         return;
       }
 
@@ -175,10 +179,10 @@
       // 6. freezes
       const heroChoice =
         grouped.strip_web[0] ||
+        grouped.strip[0] ||
         grouped.gif[0] ||
         grouped.collage[0] ||
         grouped.boomerang[0] ||
-        grouped.strip[0] ||
         grouped.freezes[0];
 
       if (heroEl && heroChoice) {
@@ -190,8 +194,11 @@
           video.loop = true;
           video.muted = true;
           video.playsInline = true;
-          video.controls = true;
+          video.controls = false;
           video.className = "hero-strip";
+          video.addEventListener("click", () => {
+            video.controls = true;
+          }, { once: true });
           heroEl.replaceWith(video);
         } else {
           heroEl.src = heroChoice;
@@ -201,6 +208,8 @@
       if (heroLabel) {
         heroLabel.textContent = `Featured Bonus • ${data.bg_id || "Instapic Set"}`;
       }
+
+      document.body.classList.add("bonus-loaded");
 
       renderDeliverable(
         "strip",
@@ -263,6 +272,7 @@
               const url = full[idx];
               const ext = guessExtension(url);
               await forceDownload(url, `instapic_bonus_${code}_${idx + 1}.${ext}`);
+              await sleep(250);
             }
           } catch (err) {
             alert(`Could not download all files: ${err.message}`);

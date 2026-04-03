@@ -6,6 +6,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
+  <style>
+    body[data-page="bonus"] .bonus-page {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    body[data-page="bonus"].bonus-loaded .bonus-page {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body[data-page="bonus"] .bonus-hero-frame img,
+    body[data-page="bonus"] .bonus-hero-frame video,
+    body[data-page="bonus"] .bonus-media {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 18px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    body[data-page="bonus"] .bonus-hero-label,
+    body[data-page="bonus"] .bonus-section-head,
+    body[data-page="bonus"] .deliverable-head,
+    body[data-page="bonus"] .bonus-callout,
+    body[data-page="bonus"] .bonus-status-card {
+      text-align: center;
+    }
+
+    body[data-page="bonus"] .bonus-card-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.9rem;
+    }
+
+    body[data-page="bonus"] .bonus-actions-top {
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    body[data-page="bonus"] .deliverable-grid {
+      align-items: start;
+    }
+
+    body[data-page="bonus"] .bonus-card {
+      text-align: center;
+    }
+
+    body[data-page="bonus"] .hero-label {
+      margin-top: 0.75rem;
+    }
+  </style>
 </head>
 <body class="page" data-page="bonus">
   <main class="card bonus-page bonus-page-glow">
