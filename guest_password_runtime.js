@@ -51,6 +51,11 @@
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
+    // === carry ticket_code forward ===
+    const params = new URLSearchParams(window.location.search);
+    const ticketCode = params.get("ticket_code");
+
+
     clearPasswordLoginFields();
     window.addEventListener("pageshow", clearPasswordLoginFields);
     setTimeout(clearPasswordLoginFields, 50);
@@ -78,7 +83,12 @@
       try {
         const data = await postJson("/api/guest/password-login", { email, password });
         writeVerifiedGuest(data.email, data.guest_profile);
-        window.location.href = "my-instapic.html";
+        
+const next = ticketCode
+  ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+  : "my-instapic.html";
+window.location.href = next;
+
       } catch (err) {
         showFlash(`Could not sign in with password: ${err.message}`);
       }
