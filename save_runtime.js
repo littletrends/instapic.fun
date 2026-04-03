@@ -10,10 +10,23 @@
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("logged_out") === "1") {
+      try { window.InstapicGuestIdentity?.clear?.(); } catch (_) {}
+    }
+
     if (window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
       window.location.href = "my-instapic.html";
       return;
     }
+
+    const emailInput = document.getElementById("guest_email");
+    const passwordEmailInput = document.getElementById("guest_email_password");
+    const passwordInput = document.getElementById("guest_password");
+
+    if (emailInput) emailInput.value = "";
+    if (passwordEmailInput) passwordEmailInput.value = "";
+    if (passwordInput) passwordInput.value = "";
 
     const form = document.getElementById("save-form");
     if (!form) return;

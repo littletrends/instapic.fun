@@ -38,6 +38,11 @@
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
+    const emailInput = qs("#guest_email_password");
+    const passwordInput = qs("#guest_password");
+    if (emailInput) emailInput.value = "";
+    if (passwordInput) passwordInput.value = "";
+
     const form = qs("#password-login-form");
     if (!form) return;
 
