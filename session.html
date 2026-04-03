@@ -37,7 +37,13 @@
       letter-spacing: 0.01em;
       text-wrap: balance;
       margin-bottom: 1rem;
+      text-align: center;
       text-shadow: 0 3px 18px rgba(0,0,0,0.22);
+      background: linear-gradient(90deg, #ff4fa0 0%, #ff6f8f 45%, #ffb35c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
     }
 
     body[data-page="session"] .hero-text,
@@ -84,6 +90,16 @@
 
     body[data-page="session"] .hero-links {
       line-height: 1.5;
+    }
+
+    body[data-page="session"] #session-form .btn,
+    body[data-page="session"] p > .btn,
+    body[data-page="session"] .hero-links + p .btn {
+      display: block;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
     }
 
     body[data-page="session"] p > .btn,
