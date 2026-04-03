@@ -6,6 +6,18 @@
     flash.textContent = message;
   }
 
+  function clearSaveFields() {
+    const ids = ["guest_email", "guest_email_password", "guest_password"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      try {
+        el.value = "";
+        el.setAttribute("value", "");
+      } catch (_) {}
+    });
+  }
+
   async function initSavePage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
@@ -20,13 +32,11 @@
       return;
     }
 
-    const emailInput = document.getElementById("guest_email");
-    const passwordEmailInput = document.getElementById("guest_email_password");
-    const passwordInput = document.getElementById("guest_password");
-
-    if (emailInput) emailInput.value = "";
-    if (passwordEmailInput) passwordEmailInput.value = "";
-    if (passwordInput) passwordInput.value = "";
+    clearSaveFields();
+    window.addEventListener("pageshow", clearSaveFields);
+    setTimeout(clearSaveFields, 50);
+    setTimeout(clearSaveFields, 250);
+    setTimeout(clearSaveFields, 750);
 
     const form = document.getElementById("save-form");
     if (!form) return;

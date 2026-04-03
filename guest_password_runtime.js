@@ -34,14 +34,28 @@
     });
   }
 
+  function clearPasswordLoginFields() {
+    const emailInput = qs("#guest_email_password");
+    const passwordInput = qs("#guest_password");
+    if (emailInput) {
+      emailInput.value = "";
+      emailInput.setAttribute("value", "");
+    }
+    if (passwordInput) {
+      passwordInput.value = "";
+      passwordInput.setAttribute("value", "");
+    }
+  }
+
   function initSavePasswordLogin() {
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
-    const emailInput = qs("#guest_email_password");
-    const passwordInput = qs("#guest_password");
-    if (emailInput) emailInput.value = "";
-    if (passwordInput) passwordInput.value = "";
+    clearPasswordLoginFields();
+    window.addEventListener("pageshow", clearPasswordLoginFields);
+    setTimeout(clearPasswordLoginFields, 50);
+    setTimeout(clearPasswordLoginFields, 250);
+    setTimeout(clearPasswordLoginFields, 750);
 
     const form = qs("#password-login-form");
     if (!form) return;
