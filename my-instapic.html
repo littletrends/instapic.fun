@@ -15,29 +15,22 @@
       <div class="bonus-kicker">Guest Area</div>
       <h1>My Instapic</h1>
       <p id="guest-summary" class="hero-text hero-text-wide">
-        Open your saved Instapic sessions, save new booth codes to your Guest Area, or jump back into bonus content any time.
+        Keep your Instapic booth codes together in one place so they’re easy to find when you arrive at the kiosk.
       </p>
     </section>
 
     <div class="dashboard-grid">
       <div class="dashboard-card">
-        <h2>Saved sessions</h2>
+        <h2>My Saved Sessions</h2>
         <p>
-          Your saved Instapic booth codes and past sessions appear here.
+          Your saved Instapic booth codes appear here.
         </p>
         <p class="muted">
-          Tap a saved ticket to reopen the same session, bonus content, and ticket details later.
-        </p>
-      </div>
-
-      <div class="dashboard-card">
-        <h2>Store My Code</h2>
-        <p>
-          Already paid for a booth session? Enter your 6-digit Instapic booth code here to save it to your Guest Area.
+          Save your code here so it is easy to open later or use when you arrive at the booth.
         </p>
 
-        <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
-          <label for="store_ticket_code" class="code-label">6-digit booth code</label>
+        <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem;">
+          <label for="store_ticket_code" class="code-label">Store a new 6-digit booth code</label>
 
           <div class="code-input-row code-input-row-stack">
             <input
@@ -53,42 +46,18 @@
           </div>
 
           <p class="code-hint">
-            This saves your paid booth code to your Guest Area. It does not redeem or use the code.
+            This saves your booth code to your Guest Area. It does not redeem or use the code.
           </p>
         </form>
 
         <div id="store-code-status" class="muted" style="margin-top:1rem;"></div>
       </div>
-
-      <div class="dashboard-card">
-        <h2>Open a code now</h2>
-        <p>
-          Already have your 6-digit Instapic booth code ready?
-        </p>
-        <p style="margin-top:1rem;">
-          <a href="session.html" class="portal-button">
-            <span class="portal-label">Enter My Code</span>
-          </a>
-        </p>
-      </div>
-
-      <div class="dashboard-card">
-        <h2>Buy another booth code</h2>
-        <p>
-          Ready for another Instapic session?
-        </p>
-        <p style="margin-top:1rem;">
-          <a href="pay.html" class="portal-button">
-            <span class="portal-label">Buy a Booth Code</span>
-          </a>
-        </p>
-      </div>
     </div>
 
     <div class="info-callout" style="margin-top:2rem;">
-      <h2>Create or update your password</h2>
+      <h2>Account Settings</h2>
       <p>
-        Want a faster sign-in next time? Create a simple Guest Area password here. You can still use your 4-digit email sign-in code whenever you want.
+        Want faster sign-in next time? Create or update your simple Guest Area password here.
       </p>
 
       <form id="guest-password-set-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
@@ -113,17 +82,10 @@
       </form>
     </div>
 
-    <div class="info-callout" style="margin-top:2rem;">
-      <h2>Keep your booth code safe</h2>
-      <p>
-        Your 6-digit Instapic booth code still matters. You can always use it later to reopen your session and bonus content.
-      </p>
-    </div>
-
     <div class="hero-links" style="margin-top:2rem; text-align:center;">
-      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      <a href="pay.html" class="secondary-link">Buy another booth code</a>
       ·
-      <a href="session.html" class="secondary-link">I already have a code</a>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
       ·
       <button type="button" id="guest-logout-btn" class="secondary-link" style="background:none;border:none;padding:0;cursor:pointer;">Log Out</button>
     </div>
