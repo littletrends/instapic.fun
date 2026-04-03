@@ -3,6 +3,22 @@
     return document.querySelector(sel);
   }
 
+  async function copyCode(code, btn) {
+    const text = String(code || "").trim();
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      if (btn) {
+        const old = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      }
+    } catch (_) {
+      // silent fallback
+    }
+  }
+
   function makeTicketCard(session) {
     const wrap = document.createElement("div");
     wrap.className = "dashboard-card";
@@ -13,7 +29,20 @@
     wrap.innerHTML = `
       <h2>${code}</h2>
       ${pkg ? `<p class="muted" style="margin-top:0.5rem;">${pkg}</p>` : ""}
+
+      <div class="ticket-actions ticket-actions-main" style="margin-top:1rem;">
+        <button type="button" class="btn copy-code-btn" data-code="${code}">Copy Code</button>
+        <a href="session.html?code=${encodeURIComponent(code)}" class="btn">Open Bonus Portal</a>
+      </div>
     `;
+
+    const copyBtn = wrap.querySelector(".copy-code-btn");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        copyCode(code, copyBtn);
+      });
+    }
+
     return wrap;
   }
 
