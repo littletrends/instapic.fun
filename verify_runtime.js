@@ -6,7 +6,13 @@
     flash.textContent = message;
   }
 
-  async function initVerifyPage() {
+  async 
+  // === carry ticket_code forward ===
+  const params = new URLSearchParams(window.location.search);
+  const ticketCode = params.get("ticket_code");
+
+
+function initVerifyPage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "verify") return;
 
@@ -51,7 +57,12 @@
           guest_profile: data.guest_profile || {}
         });
 
-        window.location.href = "my-instapic.html";
+        
+const next = ticketCode
+  ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+  : "my-instapic.html";
+window.location.href = next;
+
       } catch (err) {
         showFlash(`Could not verify code: ${err.message}`);
       }
