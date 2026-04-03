@@ -18,7 +18,13 @@
     });
   }
 
-  async function initSavePage() {
+  async 
+  // === carry ticket_code forward ===
+  const params = new URLSearchParams(window.location.search);
+  const ticketCode = params.get("ticket_code");
+
+
+function initSavePage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
@@ -72,7 +78,12 @@
           verified: false
         });
 
-        window.location.href = "verify.html";
+        
+const next = ticketCode
+  ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
+  : "verify.html";
+window.location.href = next;
+
       } catch (err) {
         showFlash(`Could not start verification: ${err.message}`);
       }
