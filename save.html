@@ -44,6 +44,47 @@
     </form>
 
     <div class="info-callout" style="margin-top:1.5rem;">
+      <h2>Sign in with password instead</h2>
+      <p>
+        Already created a guest-area password? Use your email and password here instead of waiting for a new 4-digit sign-in code.
+      </p>
+
+      <form id="password-login-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_email_password" class="code-label">Email address</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="email"
+            id="guest_email_password"
+            name="guest_email_password"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <label for="guest_password" class="code-label" style="margin-top:1rem;">Password</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="password"
+            id="guest_password"
+            name="guest_password"
+            minlength="6"
+            maxlength="8"
+            placeholder="6 to 8 characters"
+            required
+            autocomplete="current-password"
+          >
+          <button type="submit" class="btn">Sign In With Password</button>
+        </div>
+
+        <p class="code-hint">
+          Simple 6 to 8 character password. Use email sign-in code if you have not created one yet.
+        </p>
+      </form>
+    </div>
+
+    <div class="info-callout" style="margin-top:1.5rem;">
       <h2>Important</h2>
       <p>
         Your 4-digit email sign-in code and your 6-digit Instapic booth code are two different things.
@@ -65,5 +106,6 @@
   <script src="branding.js"></script>
   <script src="guest_identity.js"></script>
   <script src="save_runtime.js"></script>
+  <script src="guest_password_runtime.js"></script>
 </body>
 </html>
