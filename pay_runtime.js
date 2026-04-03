@@ -174,6 +174,12 @@
       label.textContent = `${pkg.name} — $${(Number(pkg.amount_cents || 0) / 100).toFixed(2)}`;
     }
     refreshApplePay();
+
+    if (panel) {
+      setTimeout(() => {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
   }
 
   async function payAndCreate(payload) {
