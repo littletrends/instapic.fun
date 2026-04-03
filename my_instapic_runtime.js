@@ -3,13 +3,6 @@
     return document.querySelector(sel);
   }
 
-  function showFlash(message) {
-    const flash = qs("#flash");
-    if (!flash) return;
-    flash.hidden = false;
-    flash.textContent = message;
-  }
-
   function makeTicketCard(session) {
     const wrap = document.createElement("div");
     wrap.className = "dashboard-card";
@@ -40,16 +33,17 @@
 
     const guest = window.InstapicGuestIdentity?.read?.() || {};
     const email = String(guest.email || "").trim();
+    const verified = !!guest.verified;
     const summary = qs("#guest-summary");
     const grid = qs(".dashboard-grid");
 
-    if (!email) {
-      showFlash("No guest email found. Sign in first.");
+    if (!email || !verified || !window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
+      window.location.href = "save.html";
       return;
     }
 
     if (summary) {
-      summary.textContent = `Signed in as ${email}. Open your saved tickets, jump back into bonus content, or enter a code manually.`;
+      summary.textContent = `Signed in as ${email}. Keep your saved booth codes together here so they are easy to find when you arrive at the kiosk.`;
     }
 
     try {
@@ -71,11 +65,6 @@
       const sessions = Array.isArray(data.guest_profile?.sessions) ? data.guest_profile.sessions : [];
 
       if (grid && sessions.length) {
-        const existingCards = Array.from(grid.querySelectorAll(".dashboard-card"));
-        existingCards.forEach((card, idx) => {
-          if (idx === 0) card.remove();
-        });
-
         const firstCard = grid.querySelector(".dashboard-card");
         sessions.forEach((session) => {
           const card = makeTicketCard(session);
@@ -87,7 +76,7 @@
         });
       }
     } catch (err) {
-      showFlash(`Could not load saved tickets: ${err.message}`);
+      window.location.href = "save.html";
     }
   }
 
