@@ -67,6 +67,18 @@
     if (page !== "ticket") return;
 
     const code = getCodeFromUrl();
+
+
+  // === Link Guest Area with this ticket code ===
+  try {
+    const guestLink = document.getElementById("guest-link");
+    if (guestLink && code) {
+      guestLink.href = `save.html?ticket_code=${encodeURIComponent(code)}`;
+    }
+  } catch (e) {
+    console.warn("guest link attach failed", e);
+  }
+
     const codeEl = qs("#ticket-code");
     const copyBtn = qs("#copy-code");
     const shareBtn = qs("#share-code");
