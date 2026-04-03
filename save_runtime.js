@@ -18,22 +18,22 @@
     });
   }
 
-  // === carry ticket_code forward ===
-  const params = new URLSearchParams(window.location.search);
-  const ticketCode = params.get("ticket_code");
-
-
-function initSavePage() {
+  function initSavePage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "save") return;
 
     const params = new URLSearchParams(window.location.search);
+    const ticketCode = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0, 6);
+
     if (params.get("logged_out") === "1") {
       try { window.InstapicGuestIdentity?.clear?.(); } catch (_) {}
     }
 
     if (window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
-      window.location.href = "my-instapic.html";
+      const next = ticketCode
+        ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+        : "my-instapic.html";
+      window.location.href = next;
       return;
     }
 
@@ -68,7 +68,7 @@ function initSavePage() {
         const data = await res.json();
 
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+          throw new Error(data.message || data.error || `HTTP ${res.status}`);
         }
 
         window.InstapicGuestIdentity.write({
@@ -77,12 +77,10 @@ function initSavePage() {
           verified: false
         });
 
-        
-const next = ticketCode
-  ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
-  : "verify.html";
-window.location.href = next;
-
+        const next = ticketCode
+          ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
+          : "verify.html";
+        window.location.href = next;
       } catch (err) {
         showFlash(`Could not start verification: ${err.message}`);
       }

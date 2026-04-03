@@ -6,14 +6,12 @@
     flash.textContent = message;
   }
 
-  // === carry ticket_code forward ===
-  const params = new URLSearchParams(window.location.search);
-  const ticketCode = params.get("ticket_code");
-
-
-function initVerifyPage() {
+  function initVerifyPage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "verify") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ticketCode = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0, 6);
 
     const form = document.getElementById("verify-form");
     if (!form) return;
@@ -31,7 +29,7 @@ function initVerifyPage() {
         return;
       }
 
-      if (!/^\d{4,6}$/.test(code)) {
+      if (!/^\d{4}$/.test(code)) {
         showFlash("Enter your 4-digit email sign-in code.");
         return;
       }
@@ -47,21 +45,20 @@ function initVerifyPage() {
         const data = await res.json();
 
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+          throw new Error(data.message || data.error || `HTTP ${res.status}`);
         }
 
         window.InstapicGuestIdentity.write({
           email: data.email,
           verified: true,
+          verification_started: false,
           guest_profile: data.guest_profile || {}
         });
 
-        
-const next = ticketCode
-  ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
-  : "my-instapic.html";
-window.location.href = next;
-
+        const next = ticketCode
+          ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+          : "my-instapic.html";
+        window.location.href = next;
       } catch (err) {
         showFlash(`Could not verify code: ${err.message}`);
       }
