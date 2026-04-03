@@ -14,7 +14,7 @@
       try {
         window.InstapicGuestIdentity?.clear?.();
       } catch (_) {}
-      window.location.href = "save.html?logged_out=1";
+      window.location.href = "save.html";
     });
   }
 
