@@ -7,22 +7,12 @@
     const wrap = document.createElement("div");
     wrap.className = "dashboard-card";
 
-    const code = String(session.ticket_code || "").trim();
-    const status = String(session.status || "").trim() || "ISSUED";
-    const pkg = String(session.package_id || "").trim() || "Instapic Package";
+    const code = String(session.ticket_code || "").trim() || "Pending code";
+    const pkg = String(session.package_id || "").trim();
 
     wrap.innerHTML = `
-      <h2>${code || "Pending code"}</h2>
-      <p><strong>Status:</strong> ${status}</p>
-      <p><strong>Package:</strong> ${pkg}</p>
-      <p style="margin-top:1rem;">
-        <a href="ticket.html?code=${encodeURIComponent(code)}" class="portal-button">
-          <span class="portal-label">Open Ticket</span>
-        </a>
-      </p>
-      <p style="margin-top:0.75rem;">
-        <a href="session.html" class="secondary-link">Use this code at booth / reopen later</a>
-      </p>
+      <h2>${code}</h2>
+      ${pkg ? `<p class="muted" style="margin-top:0.5rem;">${pkg}</p>` : ""}
     `;
     return wrap;
   }
@@ -35,7 +25,7 @@
     const email = String(guest.email || "").trim();
     const verified = !!guest.verified;
     const summary = qs("#guest-summary");
-    const grid = qs(".dashboard-grid");
+    const list = qs("#saved-sessions-list");
 
     if (!email || !verified || !window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
       window.location.href = "save.html";
@@ -43,7 +33,7 @@
     }
 
     if (summary) {
-      summary.textContent = `Signed in as ${email}. Keep your saved booth codes together here so they are easy to find when you arrive at the kiosk.`;
+      summary.textContent = `Signed in as ${email}. Keep your saved booth codes together here so they’re easy to find when you arrive at the kiosk.`;
     }
 
     try {
@@ -64,16 +54,15 @@
 
       const sessions = Array.isArray(data.guest_profile?.sessions) ? data.guest_profile.sessions : [];
 
-      if (grid && sessions.length) {
-        const firstCard = grid.querySelector(".dashboard-card");
-        sessions.forEach((session) => {
-          const card = makeTicketCard(session);
-          if (firstCard) {
-            grid.insertBefore(card, firstCard);
-          } else {
-            grid.appendChild(card);
-          }
-        });
+      if (list) {
+        list.innerHTML = "";
+        if (!sessions.length) {
+          list.innerHTML = '<p class="muted">No saved booth codes yet.</p>';
+        } else {
+          sessions.forEach((session) => {
+            list.appendChild(makeTicketCard(session));
+          });
+        }
       }
     } catch (err) {
       window.location.href = "save.html";

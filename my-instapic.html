@@ -19,39 +19,46 @@
       </p>
     </section>
 
-    <div class="dashboard-grid">
-      <div class="dashboard-card">
-        <h2>My Saved Sessions</h2>
-        <p>
-          Your saved Instapic booth codes appear here.
+    <div class="dashboard-card">
+      <h2>Store My Code</h2>
+      <p>
+        Paste your copied 6-digit Instapic booth code here to save it to your Guest Area.
+      </p>
+
+      <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem;">
+        <label for="store_ticket_code" class="code-label">Paste your 6-digit booth code</label>
+
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="text"
+            id="store_ticket_code"
+            name="store_ticket_code"
+            maxlength="6"
+            inputmode="numeric"
+            placeholder="123456"
+            required
+          >
+          <button type="submit" class="btn">Store My Code</button>
+        </div>
+
+        <p class="code-hint">
+          This saves your booth code to your Guest Area. It does not redeem or use the code.
         </p>
-        <p class="muted">
-          Save your code here so it is easy to open later or use when you arrive at the booth.
-        </p>
+      </form>
 
-        <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem;">
-          <label for="store_ticket_code" class="code-label">Store a new 6-digit booth code</label>
+      <div id="store-code-status" class="muted" style="margin-top:1rem;"></div>
+    </div>
 
-          <div class="code-input-row code-input-row-stack">
-            <input
-              type="text"
-              id="store_ticket_code"
-              name="store_ticket_code"
-              maxlength="6"
-              inputmode="numeric"
-              placeholder="123456"
-              required
-            >
-            <button type="submit" class="btn">Store My Code</button>
-          </div>
+    <div class="info-callout" style="margin-top:2rem;">
+      <h2>My Saved Sessions</h2>
+      <p>
+        Your saved Instapic booth codes appear here.
+      </p>
+      <p class="muted">
+        Use these codes at the booth, or keep them here to come back later.
+      </p>
 
-          <p class="code-hint">
-            This saves your booth code to your Guest Area. It does not redeem or use the code.
-          </p>
-        </form>
-
-        <div id="store-code-status" class="muted" style="margin-top:1rem;"></div>
-      </div>
+      <div id="saved-sessions-list" style="margin-top:1.25rem;"></div>
     </div>
 
     <div class="info-callout" style="margin-top:2rem;">
@@ -90,7 +97,9 @@
       <button type="button" id="guest-logout-btn" class="secondary-link" style="background:none;border:none;padding:0;cursor:pointer;">Log Out</button>
     </div>
 
-    <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
+    <p style="margin-top:1.5rem; text-align:center;">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
   </main>
 
   <script src="assets/main.js"></script>
