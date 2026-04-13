@@ -1,6 +1,8 @@
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
+import uuid
 
+import requests
 import yaml
 from flask import (
     Flask,
@@ -18,10 +20,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PACKAGES_PATH = os.path.join(BASE_DIR, "config_packages.yml")
 SETTINGS_PATH = os.path.join(BASE_DIR, "config_settings.yml")
 
-
-# ----------------------------
-# Config loaders (safe)
-# ----------------------------
 
 def _safe_load_yaml(path: str) -> Dict:
     if not os.path.exists(path):
@@ -43,10 +41,6 @@ def load_settings() -> Dict:
     return _safe_load_yaml(SETTINGS_PATH)
 
 
-# ----------------------------
-# Helpers
-# ----------------------------
-
 def _pkg_map(packages: List[Dict]) -> Dict[str, Dict]:
     out: Dict[str, Dict] = {}
     for p in packages or []:
@@ -57,7 +51,6 @@ def _pkg_map(packages: List[Dict]) -> Dict[str, Dict]:
 
 
 def _extras_from_package(pkg: Dict) -> Dict:
-    # Keep exactly the same semantics you already use
     return {
         "prints": pkg.get("prints"),
         "gif": bool(pkg.get("gif")),
@@ -66,9 +59,9 @@ def _extras_from_package(pkg: Dict) -> Dict:
     }
 
 
-# ----------------------------
-# App factory
-# ----------------------------
+def _setting(settings: Dict, name: str, default=None):
+    return os.environ.get(name) or settings.get(name) or default
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -84,13 +77,9 @@ def create_app() -> Flask:
     app.config["DEFAULT_EVENT_CODE"] = settings.get("DEFAULT_EVENT_CODE", "GLOBAL_EVENT")
     app.config["SITE_NAME"] = settings.get("SITE_NAME", "Instapic")
     app.config["PACKAGES"] = packages
-
-    # Bonus storage (files, not DB)
     app.config["BONUS_ROOT"] = os.path.join(BASE_DIR, "static", "bonus")
 
-    # Ensure DB exists
     db.init_db()
-
     pkgmap = _pkg_map(packages)
 
     @app.context_processor
@@ -99,8 +88,6 @@ def create_app() -> Flask:
             "SITE_NAME": app.config["SITE_NAME"],
             "PACKAGES": app.config["PACKAGES"],
         }
-
-    # ----------------- Pages -----------------
 
     @app.route("/")
     def home():
@@ -133,14 +120,113 @@ def create_app() -> Flask:
     def enter_code():
         return render_template("enter_code.html")
 
-    # ----------------- APIs used by the booth -----------------
-
     @app.post("/api/create-ticket")
     def api_create_ticket():
         return jsonify({
             "ok": False,
             "error": "local_create_ticket_disabled_use_motherpc"
         }), 410
+
+    @app.post("/api/pay-and-create-ticket")
+    def api_pay_and_create_ticket():
+        payload = request.get_json(silent=True) or {}
+
+        package_id = str(payload.get("package_id") or "").strip()
+        source_id = str(payload.get("source_id") or "").strip()
+        verification_token = payload.get("verification_token")
+        event_code = str(payload.get("event_code") or app.config["DEFAULT_EVENT_CODE"]).strip()
+        requested_amount = int(payload.get("amount_cents") or 0)
+
+        if not package_id:
+            return jsonify({"ok": False, "error": "missing_package_id"}), 400
+        if not source_id:
+            return jsonify({"ok": False, "error": "missing_source_id"}), 400
+
+        pkg = pkgmap.get(package_id)
+        if not pkg:
+            return jsonify({"ok": False, "error": "unknown_package_id"}), 400
+
+        configured_amount = int(pkg.get("price_cents") or pkg.get("amount_cents") or requested_amount or 0)
+        if configured_amount <= 0:
+            return jsonify({"ok": False, "error": "invalid_package_amount"}), 400
+
+        if requested_amount and requested_amount != configured_amount:
+            return jsonify({
+                "ok": False,
+                "error": "amount_mismatch",
+                "expected_amount_cents": configured_amount,
+                "received_amount_cents": requested_amount,
+            }), 400
+
+        pay_result = payments_square.create_payment(
+            source_id=source_id,
+            amount_cents=configured_amount,
+            idempotency_key=str(uuid.uuid4()),
+            verification_token=verification_token,
+            note=f"Instapic {package_id}",
+        )
+
+        if not pay_result.get("ok"):
+            return jsonify(pay_result), 402
+
+        motherpc_create_ticket_url = _setting(settings, "MOTHERPC_CREATE_TICKET_URL")
+        if not motherpc_create_ticket_url:
+            return jsonify({
+                "ok": False,
+                "error": "missing_motherpc_create_ticket_url",
+                "payment_id": pay_result.get("payment_id"),
+            }), 500
+
+        mother_payload = {
+            "package_id": package_id,
+            "amount_cents": configured_amount,
+            "source": "website_square",
+            "event_code": event_code,
+            "reference_id": pay_result.get("payment_id"),
+            "extras": _extras_from_package(pkg),
+        }
+
+        try:
+            mother_res = requests.post(
+                motherpc_create_ticket_url,
+                json=mother_payload,
+                timeout=30,
+            )
+        except Exception as e:
+            return jsonify({
+                "ok": False,
+                "error": f"motherpc_request_failed: {e}",
+                "payment_id": pay_result.get("payment_id"),
+            }), 502
+
+        try:
+            mother_data = mother_res.json()
+        except Exception:
+            mother_data = {"raw_text": mother_res.text}
+
+        if not mother_res.ok or mother_data.get("ok") is False:
+            return jsonify({
+                "ok": False,
+                "error": mother_data.get("error") or mother_data.get("reason") or f"motherpc_http_{mother_res.status_code}",
+                "payment_id": pay_result.get("payment_id"),
+                "motherpc": mother_data,
+            }), 502
+
+        ticket_code = mother_data.get("ticket_code") or mother_data.get("code")
+        if not ticket_code:
+            return jsonify({
+                "ok": False,
+                "error": "motherpc_missing_ticket_code",
+                "payment_id": pay_result.get("payment_id"),
+                "motherpc": mother_data,
+            }), 502
+
+        return jsonify({
+            "ok": True,
+            "ticket_code": str(ticket_code),
+            "payment_id": pay_result.get("payment_id"),
+            "order_id": pay_result.get("order_id"),
+        })
 
     @app.route("/api/validate", methods=["POST"])
     def api_validate():
@@ -163,13 +249,8 @@ def create_app() -> Flask:
             "reason": "local_session_complete_disabled_use_motherpc"
         }), 410
 
-    # ----------------- Debug -----------------
-
     @app.route("/debug/tickets")
     def debug_tickets():
-        """
-        Simple debug view to see recent tickets.
-        """
         try:
             limit = int(request.args.get("limit", 50))
         except ValueError:
@@ -195,8 +276,6 @@ def create_app() -> Flask:
             t["amount_dollars"] = (t.get("amount_cents") or 0) / 100.0
 
         return render_template("debug_tickets.html", tickets=tickets, limit=limit)
-
-    # ----------------- Bonus Hub (MVP) -----------------
 
     def bonus_paths(code: str) -> Dict[str, str]:
         root = app.config["BONUS_ROOT"]
@@ -230,6 +309,5 @@ def create_app() -> Flask:
     return app
 
 
-# Optional local run (systemd ignores this)
 if __name__ == "__main__":
     create_app().run(host="0.0.0.0", port=5001, debug=False)

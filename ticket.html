@@ -2,25 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Your Code</title>
+  <title>Instapic Fun — Your Booth Code</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
 </head>
-<body class="page" data-page="ticket" data-timeout-redirect="index.html">
-  <main class="card">
-    <h1>You’re all set!</h1>
-    <p class="muted">Show this code to the Magic Mirror when it’s your turn.</p>
+<body class="page" data-page="ticket">
+  <main class="card ticket-page ticket-page-glow">
+    <div id="flash" hidden></div>
 
-    <div id="code-display" class="ticket-code">------</div>
+    <section class="page-intro">
+      <div class="bonus-kicker">COPY|SHARE|DOWNLOAD -Save this code before you leave</div>
+      <h1>Your Instapic Booth Code</h1>
+      <p class="hero-text hero-text-wide">
+        Save this code now. You’ll need it at the booth and later to open your bonus content.
+      </p>
+    </section>
 
-    <p class="muted">Tip: take a screenshot so you don’t lose it.</p>
+    <section class="ticket-code-shell">
+      <div class="ticket-code-label">Your 6-digit booth code</div>
+      <div id="ticket-code" class="ticket-code ticket-code-big">------</div>
+      
+    </section>
 
-    <p><a class="btn" href="index.html">Back to start</a></p>
+    <div class="ticket-actions ticket-actions-main" style="margin-top:1.5rem;">
+      <button type="button" id="copy-code" class="btn">Copy Code</button>
+      <button type="button" id="share-code" class="btn">Share Code</button>
+      <button type="button" id="download-code" class="btn">Download Code</button>
+    </div>
+
+    <div class="info-callout ticket-callout" style="margin-top:1.75rem;">
+      <h2> ✨URGENT!✨ Save this code before leaving!</h2>
+      <p>
+        Copy it, share it, email it to yourself, or download it now.
+      </p>
+      <p class="muted" style="margin-top:0.5rem;">
+        Want extra backup? Save it to your Guest Area.
+      </p>
+    </div>
+
+    <div class="dashboard-grid" style="margin-top:2rem;">
+      <div class="dashboard-card">
+        <h2>Join Guest Area</h2>
+        <p>
+           Save this code to your email so you can always come back to your Instapic sessions later.  
+        </p>
+        <p style="margin-top:1rem;">
+          <a id="guest-link" href="save.html" class="portal-button">
+            <span class="portal-label">Join Guest Area & Save This Code</span>
+          </a>
+        </p>
+      </div>
+
+      
+    </div>
+
+    <div class="hero-links" style="margin-top:2rem; text-align:center;">
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      ·
+      <a href="pay.html" class="secondary-link">Buy another booth code</a>
+      ·
+      <a href="my-instapic.html" class="secondary-link">My Instapic</a>
+    </div>
+
+    <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
   <script src="assets/main.js"></script>
-  <script src="site_core.js"></script>
   <script src="branding.js"></script>
   <script src="ticket_runtime.js"></script>
 </body>

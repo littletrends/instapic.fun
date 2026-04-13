@@ -1,0 +1,91 @@
+(function () {
+  function showFlash(message) {
+    const flash = document.getElementById("flash");
+    if (!flash) return;
+    flash.hidden = false;
+    flash.textContent = message;
+  }
+
+  function clearSaveFields() {
+    const ids = ["guest_email", "guest_email_password", "guest_password"];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      try {
+        el.value = "";
+        el.setAttribute("value", "");
+      } catch (_) {}
+    });
+  }
+
+  function initSavePage() {
+    const page = document.body?.dataset?.page || "";
+    if (page !== "save") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ticketCode = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0, 6);
+
+    if (params.get("logged_out") === "1") {
+      try { window.InstapicGuestIdentity?.clear?.(); } catch (_) {}
+    }
+
+    if (window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
+      const next = ticketCode
+        ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+        : "my-instapic.html";
+      window.location.href = next;
+      return;
+    }
+
+    clearSaveFields();
+    window.addEventListener("pageshow", clearSaveFields);
+    setTimeout(clearSaveFields, 50);
+    setTimeout(clearSaveFields, 250);
+    setTimeout(clearSaveFields, 750);
+
+    const form = document.getElementById("save-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const emailInput = document.getElementById("guest_email");
+      const email = String(emailInput?.value || "").trim();
+
+      if (!email) {
+        showFlash("Enter your email address first.");
+        return;
+      }
+
+      try {
+        const apiBase = window.InstapicGuestIdentity.API_BASE;
+        const res = await fetch(`${apiBase}/api/guest/start-verification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.message || data.error || `HTTP ${res.status}`);
+        }
+
+        window.InstapicGuestIdentity.write({
+          email: data.email,
+          verification_started: true,
+          verified: false
+        });
+
+        const next = ticketCode
+          ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
+          : "verify.html";
+        window.location.href = next;
+      } catch (err) {
+        showFlash(`Could not start verification: ${err.message}`);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", initSavePage);
+})();

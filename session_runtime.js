@@ -45,6 +45,13 @@
       input.value = (input.value || "").replace(/\D+/g, "").slice(0, 6);
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const prefillCode = String(params.get("code") || "").replace(/\D+/g, "").slice(0, 6);
+    if (prefillCode) {
+      input.value = prefillCode;
+      normalizeInput();
+    }
+
     document.querySelectorAll(".keypad-key").forEach((btn) => {
       btn.addEventListener("mousedown", (e) => e.preventDefault());
       btn.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });

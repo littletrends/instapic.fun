@@ -7,41 +7,73 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
 </head>
-<body class="page" data-page="pay" data-timeout-redirect="index.html">
-  <main class="card">
+<body class="page" data-page="pay">
+  <main class="card pay-page">
     <div id="flash" hidden></div>
 
-    <h1>Choose your session</h1>
-    <p class="muted">
-      Skip the slow part at the screen. Tap a package below to get your Instapic code,
-      then enter it at the booth when it’s your turn.
-    </p>
+    <section class="page-intro">
+      <h1>Choose your Instapic package</h1>
+      <p class="hero-text hero-text-wide">
+        Pay online now, receive your booth code instantly, and enter it at the mirror when it’s your turn.
+      </p>
+      <p class="muted">
+        Your booth code will appear right after payment. Make sure you save it before leaving this page.
+      </p>
+    </section>
 
-    <div class="package-grid">
+    <div class="package-grid package-grid-pay">
       <button type="button" class="package-card package-portal" data-package-id="P1_STRIP" data-amount-cents="700">
-        <h2 class="pkg-name">$7 Strip</h2>
-        <p class="pkg-desc">Classic Instapic print strip.</p>
-        <div class="pkg-price">1 Strip</div>
-        <div class="btn">Get my code</div>
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$7.00 Quick &amp; Simple</h2>
+        <p class="pkg-desc">Classic booth print</p>
+        <div class="pkg-price">2 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
       </button>
 
       <button type="button" class="package-card package-portal" data-package-id="P2_STRIP_GIF" data-amount-cents="1300">
-        <h2 class="pkg-name">$13 Strip + GIF</h2>
-        <p class="pkg-desc">Photo strip plus motion bonus.</p>
-        <div class="pkg-price">Digital extra</div>
-        <div class="btn">Get my code</div>
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$13.00 Most Popular ✨</h2>
+        <p class="pkg-desc">Perfect for sharing</p>
+        <div class="pkg-price">4 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
       </button>
 
       <button type="button" class="package-card package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800">
-        <h2 class="pkg-name">$18 Premium</h2>
-        <p class="pkg-desc">Photo strip and expanded digital bonus set.</p>
-        <div class="pkg-price">Full bonus</div>
-        <div class="btn">Get my code</div>
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$18.00 Best for Groups</h2>
+        <p class="pkg-desc">Best value for the full crew</p>
+        <div class="pkg-price">6 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
       </button>
     </div>
 
+    <section
+      id="payment-panel"
+      class="payment-shell"
+      hidden
+      data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
+      data-square-location-id="9ZKNKQJ29QF50"
+    >
+      <h2>Secure payment</h2>
+      <p id="selected-package-label" class="muted">No package selected yet.</p>
+
+      <div id="payment-status" class="muted payment-status"></div>
+
+      <div class="apple-pay-wrap">
+        <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
+      </div>
+
+      <div id="card-container" class="card-container"></div>
+
+      <button id="card-pay-button" type="button" class="btn">Pay now</button>
+
+      <p class="muted payment-note">
+        Apple Pay will appear automatically on supported Apple devices and browsers.
+      </p>
+    </section>
+
     <div id="ticket-result" hidden>
-      <h2>Your code</h2>
+      <h2>Your booth code</h2>
       <div id="ticket-code" class="ticket-code">------</div>
       <p class="muted">Redirecting to your ticket page…</p>
     </div>
@@ -50,12 +82,21 @@
       Tip: take a screenshot of your code so you don’t lose it.
     </p>
 
+    <div class="hero-links hero-links-compact" style="text-align:center;">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+      ·
+      <a href="my-instapic.html" class="secondary-link">Back to Guest Area</a>
+      ·
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+    </div>
+
     <p><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="assets/main.js"></script>
-  <script src="site_core.js"></script>
+  <script src="site_core.js?v=20260402b"></script>
   <script src="branding.js"></script>
-  <script src="pay_runtime.js"></script>
+  <script src="pay_runtime.js?v=20260402c"></script>
 </body>
 </html>

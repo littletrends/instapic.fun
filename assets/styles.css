@@ -485,3 +485,941 @@ body {
   font-family: monospace;
   letter-spacing: 0.1em;
 }
+
+/* --------------------------------------------------
+   Homepage portal expansion
+   -------------------------------------------------- */
+
+.hero-home {
+  max-width: 980px;
+}
+
+.hero-text-wide {
+  max-width: 720px;
+}
+
+.portal-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.portal-stack-main {
+  margin-bottom: 2rem;
+}
+
+.portal-orb-primary::after {
+  background: radial-gradient(circle at 30% 0, #ff5b9b, #ff3370 60%, #ff9f6b 95%);
+}
+
+.portal-orb-secondary::after {
+  background: radial-gradient(circle at 30% 0, #33d6ff, #20c6c8 60%, #7af7ff 95%);
+}
+
+.hero-qr-block {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.hero-qr-copy {
+  max-width: 360px;
+  text-align: left;
+}
+
+.hero-links-compact {
+  margin-top: 1rem;
+}
+
+@media (max-width: 700px) {
+  .portal-orb {
+    width: 220px;
+    height: 220px;
+  }
+
+  .hero-qr-copy {
+    text-align: center;
+  }
+}
+EOF
+
+/* --------------------------------------------------
+   Info / explainer pages
+   -------------------------------------------------- */
+
+.page-intro {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.info-page,
+.bonus-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.info-grid,
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-card,
+.info-callout,
+.status-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.info-card h2,
+.info-callout h2,
+.status-card h2 {
+  margin-top: 0;
+}
+
+.step-number-large {
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+/* --------------------------------------------------
+   Ticket handoff page
+   -------------------------------------------------- */
+
+.ticket-redesign .ticket-code {
+  font-size: 2.6rem;
+  margin: 1rem auto 0.75rem;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ticket-actions .btn,
+.ticket-actions .portal-button {
+  min-width: 180px;
+}
+
+@media (max-width: 700px) {
+  .ticket-actions .btn,
+  .ticket-actions .portal-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* --------------------------------------------------
+   Session entry redesign
+   -------------------------------------------------- */
+
+.enter-code-redesign {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.code-card-center {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.code-input-row-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.code-input-row-stack input {
+  flex: 1 1 260px;
+}
+
+.code-input-row-stack button,
+.code-input-row-stack .btn {
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------
+   Bonus finale page
+   -------------------------------------------------- */
+
+.preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.preview img {
+  max-width: 100%;
+  border-radius: 14px;
+}
+
+.bonus-gallery h2 {
+  margin-bottom: 1rem;
+}
+
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* --------------------------------------------------
+   Guest / dashboard page
+   -------------------------------------------------- */
+
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------
+   Guest sign-in / verify / dashboard pages
+   -------------------------------------------------- */
+
+.save-flow-page,
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.form-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.form-shell h2 {
+  margin-top: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------
+   Pay page polish
+   -------------------------------------------------- */
+
+.pay-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.package-grid-pay {
+  margin-bottom: 2rem;
+}
+
+.package-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.payment-shell {
+  max-width: 760px;
+  margin: 0 auto 1.5rem;
+  padding: 1.25rem;
+  border-radius: 22px;
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.payment-status {
+  margin-bottom: 1rem;
+}
+
+.apple-pay-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem;
+  min-height: 54px;
+  background: rgba(255,255,255,0.06);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 0.5rem;
+}
+
+#apple-pay-button {
+  width: 100%;
+  max-width: 320px;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.card-container {
+  margin: 1rem 0;
+}
+
+.payment-note {
+  margin-top: 14px;
+}
+
+/* --------------------------------------------------
+   Bonus download buttons
+   -------------------------------------------------- */
+
+.bonus-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 0.8rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.bonus-media {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+}
+
+.bonus-card-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.bonus-download-btn {
+  min-width: 140px;
+}
+
+/* =========================================================
+   WEBSITE BRAND PASS — inspired by kiosk look
+   ========================================================= */
+
+:root{
+  --insta-pink: #ff5fa2;
+  --insta-pink-deep: #ff2f6c;
+  --insta-gold: #ffbf5f;
+  --insta-cream: #fff9f5;
+  --insta-night: #171320;
+  --insta-glow: rgba(255,120,200,0.35);
+  --insta-glow-soft: rgba(255,180,120,0.18);
+}
+
+/* Shared page shell polish */
+body {
+  background:
+    radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
+}
+
+.card,
+.payment-shell,
+.info-card,
+.info-callout,
+.status-card,
+.dashboard-card,
+.form-shell,
+.code-card,
+.bonus-card {
+  background: rgba(16, 16, 26, 0.94);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.38),
+    0 0 22px rgba(255,120,200,0.06);
+}
+
+/* Titles / headings */
+h1, h2, h3,
+.brand-main,
+.portal-orb-main,
+.pkg-name,
+.ticket-code {
+  letter-spacing: 0.06em;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  text-transform: uppercase;
+  color: var(--insta-cream);
+  text-shadow:
+    0 0 10px rgba(255,120,200,0.12),
+    0 0 22px rgba(255,180,120,0.07);
+}
+
+h2 {
+  color: var(--insta-cream);
+}
+
+/* Main website buttons */
+.btn,
+.portal-button {
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    linear-gradient(135deg,
+      var(--insta-pink),
+      var(--insta-pink-deep),
+      var(--insta-gold)
+    );
+  color: #130d16;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 18px rgba(255,95,162,0.32),
+    0 10px 24px rgba(0,0,0,0.45);
+}
+
+.btn:hover,
+.portal-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 26px rgba(255,95,162,0.46),
+    0 14px 28px rgba(0,0,0,0.52);
+}
+
+/* Secondary text links */
+.secondary-link {
+  color: #8ef0f2;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Portal orbs */
+.portal-orb {
+  box-shadow:
+    0 0 24px rgba(255,120,200,0.26),
+    0 0 64px rgba(255,180,120,0.10);
+}
+
+.portal-orb-main {
+  font-size: 1.25rem;
+}
+
+.portal-orb-sub {
+  color: rgba(255,245,250,0.88);
+}
+
+/* Pay page package cards — move away from dull circles */
+.package-grid-pay {
+  gap: 1.4rem;
+}
+
+.package-card {
+  width: 250px;
+  height: 250px;
+  border-radius: 30px;
+  padding: 1.15rem;
+  background:
+    radial-gradient(circle at 25% 18%,
+      rgba(255,255,255,0.20),
+      rgba(255,190,230,0.14) 18%,
+      rgba(255,110,170,0.18) 42%,
+      rgba(255,120,60,0.16) 64%,
+      rgba(20,8,28,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.22),
+    0 0 54px rgba(255,180,120,0.10),
+    inset 0 0 18px rgba(255,255,255,0.12);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.package-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 34px rgba(255,120,200,0.30),
+    0 0 72px rgba(255,180,120,0.14),
+    inset 0 0 18px rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.16);
+}
+
+.package-badge {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.82);
+  font-weight: 700;
+}
+
+.pkg-name {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  color: var(--insta-cream);
+  margin-top: 0.2rem;
+}
+
+.pkg-desc {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.pkg-price {
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #ffcf8f;
+  text-shadow:
+    0 0 10px rgba(255,190,120,0.30),
+    0 0 20px rgba(255,150,90,0.18);
+}
+
+/* Payment shell */
+.payment-shell {
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.38),
+    0 0 26px rgba(255,120,200,0.10);
+}
+
+#selected-package-label {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Apple Pay wrapper made visible */
+.apple-pay-wrap {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.10),
+      rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 14px rgba(255,255,255,0.05);
+}
+
+/* Card entry box */
+.card-container {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  padding: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Ticket code */
+.ticket-code {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.06),
+      rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--insta-cream);
+  text-shadow: 0 0 18px rgba(255,120,200,0.16);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="tel"],
+input[type="email"] {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* Keypad feel */
+.keypad-key {
+  background: rgba(255,255,255,0.10);
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,0.08),
+    0 0 12px rgba(255,120,200,0.08);
+}
+
+.keypad-key:active {
+  transform: scale(0.97);
+}
+
+/* Bonus hero and cards */
+.preview img,
+.bonus-media {
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+}
+
+/* Small responsive tidy */
+@media (max-width: 700px) {
+  .package-card {
+    width: min(100%, 320px);
+    height: auto;
+    min-height: 240px;
+  }
+
+  .pkg-price {
+    font-size: 1.65rem;
+  }
+}
+
+/* --------------------------------------------------
+   Apple Pay fallback text button polish
+   -------------------------------------------------- */
+
+.apple-pay-wrap #apple-pay-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,0.08),
+    0 10px 22px rgba(0,0,0,0.34) !important;
+}
+
+/* --------------------------------------------------
+   Bonus page glow-up
+   -------------------------------------------------- */
+
+.bonus-page-glow {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bonus-kicker {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-intro {
+  margin-bottom: 1.75rem;
+}
+
+.bonus-actions-top {
+  margin-bottom: 1.5rem;
+}
+
+.bonus-hero-shell {
+  margin-top: 1rem;
+}
+
+.bonus-hero-label {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-hero-frame {
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.bonus-hero-frame img,
+.bonus-hero-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
+.bonus-status-card {
+  min-height: 140px;
+}
+
+.bonus-gallery-shell {
+  margin-top: 2rem;
+}
+
+.bonus-section-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bonus-callout {
+  text-align: center;
+}
+
+.bonus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bonus-card {
+  padding: 0.8rem;
+  border-radius: 24px;
+}
+
+.bonus-card .hero-label {
+  text-align: center;
+  margin-top: 0.7rem;
+  color: rgba(255,255,255,0.84);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Bonus page glow-up
+   -------------------------------------------------- */
+
+.bonus-page-glow {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bonus-kicker {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-intro {
+  margin-bottom: 1.75rem;
+}
+
+.bonus-actions-top {
+  margin-bottom: 1.5rem;
+}
+
+.bonus-hero-shell {
+  margin-top: 1rem;
+}
+
+.bonus-hero-label {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-hero-frame {
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.bonus-hero-frame img,
+.bonus-hero-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
+.bonus-status-card {
+  min-height: 140px;
+}
+
+.bonus-gallery-shell {
+  margin-top: 2rem;
+}
+
+.bonus-section-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bonus-callout {
+  text-align: center;
+}
+
+.bonus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bonus-card {
+  padding: 0.8rem;
+  border-radius: 24px;
+}
+
+.bonus-card .hero-label {
+  text-align: center;
+  margin-top: 0.7rem;
+  color: rgba(255,255,255,0.84);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Template-set deliverables bonus layout
+   -------------------------------------------------- */
+
+.bonus-deliverables-shell {
+  margin-top: 2rem;
+}
+
+.deliverable-block {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(16,16,26,0.62);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+}
+
+.deliverable-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.deliverable-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deliverable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 700px) {
+  .deliverable-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Ticket handoff page polish
+   -------------------------------------------------- */
+
+.ticket-page-glow {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.ticket-code-shell {
+  text-align: center;
+  margin-top: 1.25rem;
+  padding: 1.5rem 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.ticket-code-label {
+  color: rgba(255,255,255,0.82);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.ticket-code-big {
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 1;
+  padding: 1.2rem 1rem;
+  margin: 0 auto;
+  max-width: 560px;
+}
+
+.ticket-help {
+  margin-top: 1rem;
+}
+
+.ticket-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.ticket-actions-main .btn {
+  min-width: 180px;
+}
+
+.ticket-callout {
+  text-align: center;
+}
