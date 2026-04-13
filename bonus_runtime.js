@@ -25,7 +25,10 @@
 
   function fileUrl(code, relPath) {
     const safeCode = encodeURIComponent(code);
-    return `/sessions/${safeCode}/${relPath}`;
+    const base = (window.InstapicCore && window.InstapicCore.API_BASE)
+      ? String(window.InstapicCore.API_BASE).replace(/\/$/, "")
+      : "";
+    return `${base}/sessions/${safeCode}/${relPath}`;
   }
 
   function createDownloadButton(url, filename, label) {
