@@ -142,8 +142,8 @@
 
     let data;
     try {
-      if (window.InstapicSiteCore && typeof window.InstapicSiteCore.getBonus === "function") {
-        data = await window.InstapicSiteCore.getBonus(code);
+      if (window.InstapicCore && typeof window.InstapicCore.getBonus === "function") {
+        data = await window.InstapicCore.getBonus(code);
       } else {
         const res = await fetch(`/api/get-bonus/${encodeURIComponent(code)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
