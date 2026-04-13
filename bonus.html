@@ -2,180 +2,277 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Your Bonus Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Instapic Bonus</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
   <style>
-    body[data-page="bonus"] .bonus-page {
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.45s ease, transform 0.45s ease;
+    :root {
+      --card-bg: rgba(255,255,255,0.9);
+      --card-border: rgba(0,0,0,0.08);
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 20px;
     }
-
-    body[data-page="bonus"].bonus-loaded .bonus-page {
-      opacity: 1;
-      transform: translateY(0);
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #fff8fb 0%, #fff 100%);
+      color: #1f1f1f;
+      font-family: Arial, sans-serif;
     }
-
-    body[data-page="bonus"] .bonus-hero-frame img,
-    body[data-page="bonus"] .bonus-hero-frame video,
-    body[data-page="bonus"] .bonus-media {
-      width: 100%;
-      max-height: 70vh;
-      object-fit: contain;
-      border-radius: 18px;
-      display: block;
+    .bonus-shell {
+      max-width: 1180px;
       margin: 0 auto;
+      padding: 24px 16px 48px;
     }
-
-    body[data-page="bonus"] .bonus-hero-label,
-    body[data-page="bonus"] .bonus-section-head,
-    body[data-page="bonus"] .deliverable-head,
-    body[data-page="bonus"] .bonus-callout,
-    body[data-page="bonus"] .bonus-status-card {
+    .bonus-head {
       text-align: center;
+      margin-bottom: 24px;
+    }
+    .bonus-head h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 46px);
+    }
+    .bonus-head p {
+      margin: 0;
+      color: #666;
+      font-size: 16px;
+    }
+    .status {
+      margin: 18px auto 0;
+      max-width: 760px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      color: #444;
+    }
+    .hidden { display: none !important; }
+
+    .hero-grid,
+    .motion-grid,
+    .extras-grid,
+    .stills-grid {
+      display: grid;
+      gap: 18px;
     }
 
-    body[data-page="bonus"] .bonus-card-actions {
-      display: flex;
-      justify-content: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-top: 0.9rem;
-    }
-
-    body[data-page="bonus"] .bonus-actions-top {
-      justify-content: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    body[data-page="bonus"] .deliverable-grid {
+    .hero-grid {
+      grid-template-columns: 1.5fr 0.9fr;
       align-items: start;
+      margin-bottom: 22px;
     }
 
-    body[data-page="bonus"] .bonus-card {
-      text-align: center;
+    .motion-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 22px;
     }
 
-    body[data-page="bonus"] .hero-label {
-      margin-top: 0.75rem;
+    .extras-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 22px;
+    }
+
+    .stills-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 16px 16px 8px;
+    }
+    .card-head h2, .card-head h3 {
+      margin: 0 0 6px;
+      line-height: 1.15;
+    }
+    .card-head p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .media-wrap {
+      padding: 0 16px 16px;
+    }
+
+    .media-frame {
+      width: 100%;
+      background: #f6f6f6;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 240px;
+    }
+
+    .media-frame.hero {
+      min-height: 620px;
+    }
+
+    .media-frame video,
+    .media-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: #111;
+    }
+
+    .btn.alt {
+      background: #6b7280;
+    }
+
+    .section-title {
+      margin: 30px 0 14px;
+      font-size: 24px;
+    }
+
+    .empty-note {
+      padding: 18px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .motion-grid,
+      .extras-grid {
+        grid-template-columns: 1fr;
+      }
+      .stills-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .media-frame.hero {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .stills-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .bonus-shell {
+        padding-inline: 12px;
+      }
     }
   </style>
 </head>
-<body class="page" data-page="bonus">
-  <main class="card bonus-page bonus-page-glow">
-    <div id="flash" hidden></div>
-
-    <section class="page-intro bonus-intro">
-      <div class="bonus-kicker">Your session is ready ✨</div>
-      <h1>Your Bonus Portal</h1>
-      <p class="hero-text hero-text-wide">
-        Your Instapic magic is ready. Save your favourites, download everything, and come back any time with your 6-digit code.
-      </p>
-    </section>
-
-    <div class="ticket-actions bonus-actions-top">
-      <button type="button" id="download-all" class="btn">Download Everything</button>
-      <button type="button" id="share-magic" class="btn">Copy Bonus Link</button>
+<body>
+  <div class="bonus-shell">
+    <div class="bonus-head">
+      <h1>Your Instapic Bonus</h1>
+      <p>Your photo strip, motion extras, session video, and stills.</p>
+      <div id="bonus-status" class="status">Loading your bonus files…</div>
     </div>
 
-    <section class="bonus-hero-shell">
-      <div id="bonus-hero-label" class="bonus-hero-label">Featured Magic ✨</div>
-      <div class="bonus-hero-frame">
-        <img
-          id="bonus-hero"
-          src="assets/img/instapic_logo.png"
-          alt="Featured Instapic bonus"
-        >
-      </div>
-    </section>
-
-    <section class="bonus-status-shell">
-      <div class="status-grid" style="margin-top:1.5rem;">
-        <div id="status-gif" class="status-card bonus-status-card">
-          <h2>Motion Magic</h2>
-          <p>Checking your GIF and motion bonus files…</p>
+    <div class="hero-grid">
+      <section class="card">
+        <div class="card-head">
+          <h2>Collage Video</h2>
+          <p>Your main bonus feature built from your session.</p>
         </div>
-
-        <div id="status-collage" class="status-card bonus-status-card">
-          <h2>Photo Set</h2>
-          <p>Checking your strip, collage, and enhanced bonus files…</p>
+        <div class="media-wrap">
+          <div class="media-frame hero" id="collage-frame">
+            <div class="empty-note">Collage video not ready yet.</div>
+          </div>
         </div>
-      </div>
-    </section>
+        <div class="actions" id="collage-actions"></div>
+      </section>
 
-    <section class="bonus-deliverables-shell" style="margin-top:2rem;">
-      <div class="bonus-section-head">
-        <h2>Your bonus collection</h2>
-        <p class="muted">
-          Everything from your Instapic session is grouped below so you can quickly save exactly what you want.
-        </p>
-      </div>
-
-      <div id="deliverable-strip" class="deliverable-block" hidden>
-        <div class="deliverable-head">
-          <h3>Your Photo Strip</h3>
-          <p class="muted">Your Instapic strip, ready to save and share.</p>
+      <section class="card">
+        <div class="card-head">
+          <h2>Photo Strip</h2>
+          <p>Your web-ready single strip.</p>
         </div>
-        <div class="deliverable-grid" id="deliverable-strip-grid"></div>
-      </div>
-
-      <div id="deliverable-gif" class="deliverable-block" hidden>
-        <div class="deliverable-head">
-          <h3>Your GIF</h3>
-          <p class="muted">Animated motion magic from your session.</p>
+        <div class="media-wrap">
+          <div class="media-frame hero" id="strip-frame">
+            <div class="empty-note">Photo strip not ready yet.</div>
+          </div>
         </div>
-        <div class="deliverable-grid" id="deliverable-gif-grid"></div>
-      </div>
-
-      <div id="deliverable-collage" class="deliverable-block" hidden>
-        <div class="deliverable-head">
-          <h3>Your Collage</h3>
-          <p class="muted">A styled bonus artwork set from your session.</p>
-        </div>
-        <div class="deliverable-grid" id="deliverable-collage-grid"></div>
-      </div>
-
-      <div id="deliverable-boomerang" class="deliverable-block" hidden>
-        <div class="deliverable-head">
-          <h3>Your Motion Clips</h3>
-          <p class="muted">Boomerangs, clips, and motion extras from your session.</p>
-        </div>
-        <div class="deliverable-grid" id="deliverable-boomerang-grid"></div>
-      </div>
-
-      <div id="deliverable-freezes" class="deliverable-block" hidden>
-        <div class="deliverable-head">
-          <h3>Your Bonus Moments</h3>
-          <p class="muted">Extra stills and freeze-frame highlights from your session.</p>
-        </div>
-        <div class="deliverable-grid" id="deliverable-freezes-grid"></div>
-      </div>
-    </section>
-
-    <div class="info-callout bonus-callout" style="margin-top:2rem;">
-      <h2>Keep your code safe</h2>
-      <p>
-        Your 6-digit Instapic code can bring you back here later. Save this page link, save your files now, or keep your code somewhere safe.
-      </p>
+        <div class="actions" id="strip-actions"></div>
+      </section>
     </div>
 
-    <div class="hero-links" style="margin-top:2rem; text-align:center;">
-      <a href="session.html" class="secondary-link">Enter another code</a>
-      ·
-      <a href="my-instapic.html" class="secondary-link">Guest Area</a>
-      ·
-      <a href="how-it-works.html" class="secondary-link">How it works</a>
+    <div class="motion-grid">
+      <section class="card">
+        <div class="card-head">
+          <h3>Boomerang</h3>
+          <p>A looping motion moment from your session.</p>
+        </div>
+        <div class="media-wrap">
+          <div class="media-frame" id="boomerang-frame">
+            <div class="empty-note">Boomerang not ready yet.</div>
+          </div>
+        </div>
+        <div class="actions" id="boomerang-actions"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>GIF</h3>
+          <p>A quick animated moment from your session.</p>
+        </div>
+        <div class="media-wrap">
+          <div class="media-frame" id="gif-frame">
+            <div class="empty-note">GIF not ready yet.</div>
+          </div>
+        </div>
+        <div class="actions" id="gif-actions"></div>
+      </section>
     </div>
 
-    <p style="margin-top:1.5rem; text-align:center;"><a class="btn" href="index.html">Back to start</a></p>
-  </main>
+    <h2 class="section-title">Session Video</h2>
+    <div class="extras-grid">
+      <section class="card">
+        <div class="card-head">
+          <h3>Full Session</h3>
+          <p>Your full captured session video.</p>
+        </div>
+        <div class="media-wrap">
+          <div class="media-frame" id="session-video-frame">
+            <div class="empty-note">Session video not ready yet.</div>
+          </div>
+        </div>
+        <div class="actions" id="session-video-actions"></div>
+      </section>
+    </div>
 
-  <script src="assets/main.js"></script>
+    <h2 class="section-title">Bonus Moments</h2>
+    <div class="stills-grid" id="stills-grid"></div>
+  </div>
+
   <script src="site_core.js"></script>
-  <script src="branding.js"></script>
   <script src="bonus_runtime.js"></script>
 </body>
 </html>
