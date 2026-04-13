@@ -2,156 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Enter Your Code</title>
+  <title>Instapic Fun — View Your Photos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
-  <style>
-    body[data-page="session"] #flash {
-      position: relative;
-      z-index: 20;
-      margin: 0 0 1rem 0;
-      padding: 0.85rem 1rem;
-      border-radius: 18px;
-      background: rgba(18, 18, 30, 0.96);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
-      font-size: 0.98rem;
-      line-height: 1.35;
-      color: #fff;
-      text-align: center;
-    }
-
-    body[data-page="session"] #flash[hidden] {
-      display: none !important;
-    }
-
-    body[data-page="session"] .page-intro {
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    body[data-page="session"] .bonus-kicker {
-      margin-bottom: 0.75rem;
-      text-align: center;
-    }
-
-    body[data-page="session"] .page-intro h1 {
-      font-size: clamp(2.3rem, 9vw, 4rem);
-      line-height: 1.02;
-      letter-spacing: 0.01em;
-      margin: 0 0 0.85rem 0;
-      text-align: center;
-      text-wrap: balance;
-      text-shadow: 0 3px 18px rgba(0,0,0,0.22);
-      background: linear-gradient(90deg, #ff4fa0 0%, #ff6f8f 45%, #ffb35c 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-    }
-
-    body[data-page="session"] .hero-text,
-    body[data-page="session"] .muted,
-    body[data-page="session"] .code-hint,
-    body[data-page="session"] .info-callout p {
-      color: rgba(255,255,255,0.9);
-      text-align: center;
-    }
-
-    body[data-page="session"] .hero-text,
-    body[data-page="session"] .info-callout p {
-      font-size: 1rem;
-      line-height: 1.32;
-    }
-
-    body[data-page="session"] .muted,
-    body[data-page="session"] .code-hint {
-      font-size: 0.96rem;
-      line-height: 1.28;
-    }
-
-    body[data-page="session"] .code-card,
-    body[data-page="session"] .info-callout {
-      background: rgba(8, 8, 24, 0.9);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.2);
-    }
-
-    body[data-page="session"] .code-label,
-    body[data-page="session"] .info-callout h2 {
-      color: #fff;
-      text-align: center;
-    }
-
-    body[data-page="session"] #ticket_code {
-      font-size: 1.15rem;
-      letter-spacing: 0.22em;
-      text-align: center;
-      color: #fff;
-    }
-
-    body[data-page="session"] .keypad {
-      margin-top: 1rem;
-    }
-
-    body[data-page="session"] .keypad-key {
-      font-size: 1.22rem;
-      font-weight: 600;
-    }
-
-    body[data-page="session"] .hero-links {
-      line-height: 1.55;
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-
-    body[data-page="session"] .session-bottom {
-      text-align: center;
-      margin-top: 1.4rem;
-    }
-
-    body[data-page="session"] .session-bottom .btn,
-    body[data-page="session"] #session-form .btn {
-      display: inline-block;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
-    }
-
-    @media (max-width: 640px) {
-      body[data-page="session"] .page-intro h1 {
-        font-size: 3.15rem;
-      }
-
-      body[data-page="session"] .hero-text {
-        font-size: 0.98rem;
-      }
-
-      body[data-page="session"] .hero-links {
-        font-size: 0.98rem;
-      }
-    }
-  </style>
 </head>
-<body class="page" data-page="session">
-  <main class="card enter-code-redesign">
+<body class="page" data-page="session" data-timeout-redirect="index.html">
+  <main class="card">
     <div id="flash" hidden></div>
 
-    <section class="page-intro">
-      <div class="bonus-kicker">Open your session</div>
-      <h1>Enter your 6-digit Instapic code</h1>
-      <p class="hero-text hero-text-wide">
-        To open your bonus session, view your photos, and access your bonus content, enter your 6-digit code.
-      </p>
-      <p class="muted">
-        This is different from your 4-digit email sign-in code.
-      </p>
-    </section>
+    <h1>View your photos</h1>
+    <p class="muted">
+      Type your 6-digit Instapic code from the mirror or your receipt.
+    </p>
 
-    <form id="session-form" class="code-card code-card-center" novalidate autocomplete="off">
-      <label for="ticket_code" class="code-label">6-digit booth code</label>
+    <form id="session-form" class="code-card" novalidate autocomplete="off">
+      <label for="ticket_code">Instapic code</label>
 
-      <div class="code-input-row code-input-row-stack">
+      <div class="code-input-row">
         <input
           type="text"
           id="ticket_code"
@@ -167,11 +35,11 @@
           spellcheck="false"
           enterkeyhint="done"
         >
-        <button type="submit" class="btn">Open My Session</button>
+        <button type="submit" class="btn">Show my photos</button>
       </div>
 
       <p id="processing" class="muted" hidden>Checking your code…</p>
-      <p class="code-hint">Numbers only. No spaces.</p>
+      <p class="muted">Numbers only, no spaces.</p>
 
       <div class="keypad">
         <div class="keypad-row">
@@ -190,34 +58,14 @@
           <button type="button" class="keypad-key" data-key="9">9</button>
         </div>
         <div class="keypad-row">
-          <button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button>
+          <button type="button" class="keypad-key" data-action="clear">Clear</button>
           <button type="button" class="keypad-key" data-key="0">0</button>
-          <button type="button" class="keypad-key keypad-key-back" data-action="back">←</button>
+          <button type="button" class="keypad-key" data-action="back">←</button>
         </div>
       </div>
     </form>
 
-    <div class="info-callout" style="margin-top:1.5rem;">
-      <h2>✨Where do I find my code?</h2>
-      <p>
-        Your 6-digit Instapic code is shown after website payment &/or on the screen after your photo session.</div> ✨Don't forget to copy|download|share it!</div> It may also be stored in your A VIP Guest Area if you chose to join.
-      </p>
-      <p>
-        Remember- Keep your code safe — it’s the key to reopening your session later.
-      </p>
-    </div>
-
-    <div class="hero-links hero-links-compact">
-      <a href="save.html" class="secondary-link">Guest Area</a>
-      ·
-      <a href="how-it-works.html" class="secondary-link">How it works</a>
-      ·
-      <a href="pay.html" class="secondary-link">Buy a Booth Code</a>
-    </div>
-
-    <p class="session-bottom">
-      <a class="btn" href="index.html">Back to start</a>
-    </p>
+    <p><a class="btn" href="index.html">Back to start</a></p>
   </main>
 
   <script src="assets/main.js"></script>
