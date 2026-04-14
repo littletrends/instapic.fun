@@ -3,32 +3,13 @@
     return document.getElementById(id);
   }
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
-  }
-
-  function getCodeFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const code = (params.get("code") || params.get("ticket") || "").trim();
-    return code;
-  }
-
   function setStatus(text) {
     const el = $("bonus-status");
     if (el) el.textContent = text;
   }
 
-  function fileUrl(code, relPath) {
-    const safeCode = encodeURIComponent(code);
-    const base = (window.InstapicCore && window.InstapicCore.API_BASE)
-      ? String(window.InstapicCore.API_BASE).replace(/\/$/, "")
-      : "";
-    return `${base}/sessions/${safeCode}/${relPath}`;
+  function looksLikeVideo(url) {
+    return /\.(mp4|webm|mov)($|\?)/i.test(url);
   }
 
   function createDownloadButton(url, filename, label) {
@@ -62,7 +43,7 @@
   function showVideo(frameId, actionsId, url, downloadName, label, opts) {
     const frame = $(frameId);
     const actions = $(actionsId);
-    if (!frame || !actions) return;
+    if (!frame || !actions || !url) return;
 
     frame.innerHTML = "";
     actions.innerHTML = "";
@@ -72,13 +53,14 @@
     video.controls = true;
     video.playsInline = true;
     video.preload = "metadata";
-    if (opts?.autoplay) {
+
+    if (opts && opts.autoplay) {
       video.autoplay = true;
       video.muted = true;
       video.loop = !!opts.loop;
     }
-    frame.appendChild(video);
 
+    frame.appendChild(video);
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
     actions.appendChild(createShareButton(url, `Instapic ${label}`));
   }
@@ -86,7 +68,7 @@
   function showImage(frameId, actionsId, url, downloadName, label) {
     const frame = $(frameId);
     const actions = $(actionsId);
-    if (!frame || !actions) return;
+    if (!frame || !actions || !url) return;
 
     frame.innerHTML = "";
     actions.innerHTML = "";
@@ -100,42 +82,60 @@
     actions.appendChild(createShareButton(url, `Instapic ${label}`));
   }
 
-  function showStills(code) {
-    const grid = $("stills-grid");
-    if (!grid) return;
+  function renderStillCard(grid, url, i) {
+    const card = document.createElement("section");
+    card.className = "card";
 
-    grid.innerHTML = "";
+    const head = document.createElement("div");
+    head.className = "card-head";
+    head.innerHTML = `
+      <h3>Photo ${i}</h3>
+      <p>Your captured freeze frame.</p>
+    `;
 
-    for (let i = 1; i <= 4; i += 1) {
-      const url = fileUrl(code, `assets/freezes/freeze_${i}.jpg`);
-      const card = document.createElement("section");
-      card.className = "card";
+    const wrap = document.createElement("div");
+    wrap.className = "media-wrap";
 
-      card.innerHTML = `
-        <div class="card-head">
-          <h3>Photo ${i}</h3>
-          <p>Your captured freeze frame.</p>
-        </div>
-        <div class="media-wrap">
-          <div class="media-frame">
-            <img src="${escapeHtml(url)}" alt="Freeze ${i}">
-          </div>
-        </div>
-      `;
+    const frame = document.createElement("div");
+    frame.className = "media-frame";
 
-      const actions = document.createElement("div");
-      actions.className = "actions";
-      actions.appendChild(createDownloadButton(url, `freeze_${i}.jpg`, `Download Photo ${i}`));
-      actions.appendChild(createShareButton(url, `Instapic Photo ${i}`));
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = `Freeze ${i}`;
 
-      card.appendChild(actions);
-      grid.appendChild(card);
-    }
+    frame.appendChild(img);
+    wrap.appendChild(frame);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.appendChild(createDownloadButton(url, `freeze_${i}.jpg`, `Download Photo ${i}`));
+    actions.appendChild(createShareButton(url, `Instapic Photo ${i}`));
+
+    card.appendChild(head);
+    card.appendChild(wrap);
+    card.appendChild(actions);
+    grid.appendChild(card);
+  }
+
+  function firstMatch(files, pattern) {
+    return files.find((p) => pattern.test(p)) || "";
+  }
+
+  function fullUrl(core, relPath) {
+    if (!relPath) return "";
+    if (/^https?:\/\//i.test(relPath)) return relPath;
+    return `${core.BASE}${relPath}`;
   }
 
   async function init() {
-    const code = getCodeFromUrl();
+    const core = window.InstapicCore;
+    if (!core) {
+      console.error("[bonus] InstapicCore missing");
+      setStatus("Bonus page core not loaded.");
+      return;
+    }
 
+    const code = (core.getCodeFromUrl() || "").trim();
     if (!code) {
       setStatus("No booth code found in the page URL.");
       return;
@@ -145,39 +145,88 @@
 
     let data;
     try {
-      if (window.InstapicCore && typeof window.InstapicCore.getBonus === "function") {
-        data = await window.InstapicCore.getBonus(code);
-      } else {
-        const res = await fetch(`/api/get-bonus/${encodeURIComponent(code)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json();
-      }
+      data = await core.getBonus(code);
     } catch (err) {
       console.error("[bonus] load failed", err);
-      setStatus("Could not load your bonus session.");
+      setStatus(`Could not load your bonus session: ${err.message}`);
+      if (core.showFlash) {
+        core.showFlash(`Could not load your bonus files: ${err.message}`, "error");
+      }
       return;
     }
 
-    const stripUrl = fileUrl(code, "bonus/strip_web.png");
-    const collageUrl = fileUrl(code, "bonus/collage.mp4");
-    const boomerangUrl = fileUrl(code, "bonus/boomerang.mp4");
-    const gifUrl = fileUrl(code, "bonus/gif.gif");
-    const sessionVideoUrl = fileUrl(code, "assets/video/session_video.mp4");
+    const rawFiles = [];
+    if (Array.isArray(data.bonus_files)) rawFiles.push(...data.bonus_files);
+    if (Array.isArray(data.files)) rawFiles.push(...data.files);
 
-    showVideo("collage-frame", "collage-actions", collageUrl, "collage.mp4", "Collage", { autoplay: true, loop: true });
-    showImage("strip-frame", "strip-actions", stripUrl, "strip_web.png", "Strip");
-    showVideo("boomerang-frame", "boomerang-actions", boomerangUrl, "boomerang.mp4", "Boomerang", { autoplay: true, loop: true });
-    showImage("gif-frame", "gif-actions", gifUrl, "gif.gif", "GIF");
-    showVideo("session-video-frame", "session-video-actions", sessionVideoUrl, "session_video.mp4", "Session Video", { autoplay: false, loop: false });
+    const uniqueFiles = [...new Set(rawFiles)].filter(Boolean);
 
-    showStills(code);
+    const stripPath = firstMatch(uniqueFiles, /strip_web\.(png|jpg|jpeg)$/i);
+    const collagePath = firstMatch(uniqueFiles, /collage\.(mp4|webm|mov)$/i);
+    const boomerangPath = firstMatch(uniqueFiles, /boomerang\.(mp4|webm|mov)$/i);
+    const gifPath = firstMatch(uniqueFiles, /gif\.(gif|mp4|webm)$/i);
+    const sessionVideoPath = firstMatch(uniqueFiles, /session_video\.(mp4|webm|mov)$/i);
 
-    const manifestReady = data && typeof data === "object";
-    if (manifestReady) {
-      setStatus(`Session ${code} loaded.`);
-    } else {
-      setStatus(`Session ${code} loaded.`);
+    const freezePaths = uniqueFiles.filter((p) => /freeze_[1-4]\.(jpg|jpeg|png)$/i.test(p));
+
+    const stripUrl = fullUrl(core, stripPath);
+    const collageUrl = fullUrl(core, collagePath);
+    const boomerangUrl = fullUrl(core, boomerangPath);
+    const gifUrl = fullUrl(core, gifPath);
+    const sessionVideoUrl = fullUrl(core, sessionVideoPath);
+
+    if (collageUrl) {
+      showVideo("collage-frame", "collage-actions", collageUrl, "collage.mp4", "Collage", {
+        autoplay: true,
+        loop: true
+      });
     }
+
+    if (stripUrl) {
+      showImage("strip-frame", "strip-actions", stripUrl, "strip_web.png", "Strip");
+    }
+
+    if (boomerangUrl) {
+      showVideo("boomerang-frame", "boomerang-actions", boomerangUrl, "boomerang.mp4", "Boomerang", {
+        autoplay: true,
+        loop: true
+      });
+    }
+
+    if (gifUrl) {
+      if (looksLikeVideo(gifUrl)) {
+        showVideo("gif-frame", "gif-actions", gifUrl, "gif.mp4", "GIF", {
+          autoplay: true,
+          loop: true
+        });
+      } else {
+        showImage("gif-frame", "gif-actions", gifUrl, "gif.gif", "GIF");
+      }
+    }
+
+    if (sessionVideoUrl) {
+      showVideo("session-video-frame", "session-video-actions", sessionVideoUrl, "session_video.mp4", "Session Video", {
+        autoplay: false,
+        loop: false
+      });
+    }
+
+    const stillsGrid = $("stills-grid");
+    if (stillsGrid) {
+      stillsGrid.innerHTML = "";
+      freezePaths
+        .sort()
+        .forEach((relPath, idx) => renderStillCard(stillsGrid, fullUrl(core, relPath), idx + 1));
+    }
+
+    const loadedAnything =
+      !!stripUrl || !!collageUrl || !!boomerangUrl || !!gifUrl || !!sessionVideoUrl || freezePaths.length > 0;
+
+    setStatus(
+      loadedAnything
+        ? `Session ${code} loaded.`
+        : `Session ${code} found, but no published bonus files were returned.`
+    );
   }
 
   document.addEventListener("DOMContentLoaded", init);
