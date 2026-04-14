@@ -10,7 +10,8 @@
     boomerangText: "A looping motion moment from your session.",
     gifTitle: "GIF",
     gifText: "A quick animated moment from your session.",
-    freezeSectionTitle: "Freeze Frames"
+    freezeSectionTitle: "Freeze Frames",
+    shuffleAll: "🔀 Shuffle All"
   };
 
   function qs(sel, root = document) {
@@ -100,8 +101,8 @@
 
   function refreshMediaInPlace(type) {
     const map = {
-      boomerang: { frameId: "boomerang-frame", isVideo: true },
-      gif: { frameId: "gif-frame", isVideo: null }
+      boomerang: { frameId: "boomerang-frame" },
+      gif: { frameId: "gif-frame" }
     };
 
     const item = map[type];
@@ -117,15 +118,104 @@
       const nextUrl = cacheBust(video.currentSrc || video.src);
       video.src = nextUrl;
       video.load();
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {});
-      }
+      const p = video.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
       return;
     }
 
     if (img) {
       img.src = cacheBust(img.currentSrc || img.src);
+    }
+  }
+
+  function getGuestShareUrl() {
+    const code = window.InstapicCore?.getCodeFromUrl?.() || "";
+    const u = new URL(window.location.href);
+    u.search = "";
+    u.hash = "";
+    u.pathname = u.pathname.replace(/\/[^/]*$/, "/bonus.html");
+    u.searchParams.set("code", code);
+    return u.toString();
+  }
+
+  function patchShareButtons() {
+    qsa(".actions").forEach((actions) => {
+      const buttons = qsa("button, a", actions);
+      buttons.forEach((el) => {
+        const txt = (el.textContent || "").trim().toLowerCase();
+        if (txt === "share") {
+          el.onclick = null;
+          el.addEventListener("click", async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const shareUrl = getGuestShareUrl();
+
+            try {
+              if (navigator.share) {
+                await navigator.share({
+                  title: "Instapic Bonus",
+                  url: shareUrl
+                });
+              } else {
+                await navigator.clipboard.writeText(shareUrl);
+                const old = el.textContent;
+                el.textContent = "Link Copied";
+                setTimeout(() => { el.textContent = old; }, 1400);
+              }
+            } catch (_) {}
+          }, { once: false });
+        }
+      });
+    });
+  }
+
+  async function runRegenerate(type, btn) {
+    const core = window.InstapicCore;
+    const code = core?.getCodeFromUrl?.();
+    if (!code || !core?.API_BASE) return false;
+
+    const oldLabel = btn ? btn.textContent : "";
+    if (btn) {
+      btn.textContent = "Regenerating...";
+      btn.disabled = true;
+    }
+
+    try {
+      const res = await fetch(
+        `${core.API_BASE}/api/regenerate/${encodeURIComponent(code)}?type=${encodeURIComponent(type)}`,
+        { method: "POST" }
+      );
+
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {}
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      refreshMediaInPlace(type);
+
+      if (btn) {
+        btn.textContent = "Done";
+        setTimeout(() => {
+          btn.textContent = oldLabel;
+          btn.disabled = false;
+        }, 1200);
+      }
+      return true;
+    } catch (err) {
+      console.error("regen failed", type, err);
+      if (btn) {
+        btn.textContent = "Failed";
+        setTimeout(() => {
+          btn.textContent = oldLabel;
+          btn.disabled = false;
+        }, 1500);
+      }
+      return false;
     }
   }
 
@@ -140,52 +230,57 @@
     btn.textContent = "🔁 Regenerate";
 
     btn.addEventListener("click", async () => {
-      const core = window.InstapicCore;
-      const code = core?.getCodeFromUrl?.();
-      if (!code || !core?.API_BASE) return;
-
-      const oldLabel = btn.textContent;
-      btn.textContent = "Regenerating...";
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(
-          `${core.API_BASE}/api/regenerate/${encodeURIComponent(code)}?type=${encodeURIComponent(type)}`,
-          { method: "POST" }
-        );
-
-        let data = {};
-        try {
-          data = await res.json();
-        } catch (_) {}
-
-        if (!res.ok || data.ok === false) {
-          throw new Error(data.error || `HTTP ${res.status}`);
-        }
-
-        refreshMediaInPlace(type);
-
-        btn.textContent = "Done";
-        setTimeout(() => {
-          btn.textContent = oldLabel;
-          btn.disabled = false;
-        }, 1200);
-      } catch (err) {
-        console.error("regen failed", err);
-        btn.textContent = "Failed";
-        setTimeout(() => {
-          btn.textContent = oldLabel;
-          btn.disabled = false;
-        }, 1500);
-      }
+      await runRegenerate(type, btn);
+      patchShareButtons();
     });
 
     actions.appendChild(btn);
   }
 
+  function addShuffleAllButton() {
+    const motionGrid = qs(".motion-grid");
+    if (!motionGrid || qs("#shuffle-all-btn")) return;
+
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.justifyContent = "center";
+    wrap.style.margin = "0 0 18px 0";
+
+    const btn = document.createElement("button");
+    btn.id = "shuffle-all-btn";
+    btn.className = "btn";
+    btn.type = "button";
+    btn.textContent = COPY.shuffleAll;
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = "Shuffling...";
+
+      const a = await runRegenerate("boomerang");
+      const b = await runRegenerate("gif");
+
+      if (a || b) {
+        patchShareButtons();
+        btn.textContent = "Done";
+      } else {
+        btn.textContent = "Failed";
+      }
+
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.disabled = false;
+      }, 1400);
+    });
+
+    wrap.appendChild(btn);
+    motionGrid.parentNode.insertBefore(wrap, motionGrid);
+  }
+
   function injectRegenerateButtons() {
     addRegenerateButton("boomerang-actions", "boomerang");
     addRegenerateButton("gif-actions", "gif");
+    addShuffleAllButton();
   }
 
   function initPatch() {
@@ -193,6 +288,7 @@
     applyCopy();
     tightenFreezeButtonsOnMobile();
     polishCards();
+    patchShareButtons();
   }
 
   document.addEventListener("DOMContentLoaded", initPatch);
@@ -200,4 +296,5 @@
   setTimeout(initPatch, 600);
   setTimeout(initPatch, 1600);
   setTimeout(injectRegenerateButtons, 1200);
+  setTimeout(patchShareButtons, 1800);
 })();
