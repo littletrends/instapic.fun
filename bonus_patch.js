@@ -35,17 +35,6 @@
     return qs(".card-head p", card);
   }
 
-  function actionsEmpty(actionsId) {
-    const el = document.getElementById(actionsId);
-    return !el || !el.children.length;
-  }
-
-  function frameStillEmpty(frameId) {
-    const el = document.getElementById(frameId);
-    if (!el) return true;
-    return !!qs(".empty-note", el);
-  }
-
   function removeSessionVideoSection() {
     const headings = qsa(".section-title");
     const sessionHeading = headings.find(el =>
@@ -87,30 +76,6 @@
       (el.textContent || "").trim().toLowerCase() === "freeze frames"
     );
     if (freezeHeading) freezeHeading.textContent = COPY.freezeSectionTitle;
-  }
-
-  function hideEmptyMediaCards() {
-    const rules = [
-      { frameId: "boomerang-frame", actionsId: "boomerang-actions" },
-      { frameId: "gif-frame", actionsId: "gif-actions" }
-    ];
-
-    rules.forEach(({ frameId, actionsId }) => {
-      const frame = document.getElementById(frameId);
-      if (!frame) return;
-      const card = frame.closest(".card");
-      if (!card) return;
-
-      if (frameStillEmpty(frameId) && actionsEmpty(actionsId)) {
-        card.style.display = "none";
-      }
-    });
-
-    const motionGrid = qs(".motion-grid");
-    if (motionGrid) {
-      const visibleCards = qsa(".card", motionGrid).filter(el => el.style.display !== "none");
-      if (!visibleCards.length) motionGrid.style.display = "none";
-    }
   }
 
   function tightenFreezeButtonsOnMobile() {
@@ -179,7 +144,6 @@
   function initPatch() {
     removeSessionVideoSection();
     applyCopy();
-    hideEmptyMediaCards();
     tightenFreezeButtonsOnMobile();
     polishCards();
   }
