@@ -146,6 +146,7 @@
     let data;
     try {
       data = await core.getBonus(code);
+      console.log("[bonus] getBonus data", data);
     } catch (err) {
       console.error("[bonus] load failed", err);
       setStatus(`Could not load your bonus session: ${err.message}`);
@@ -160,6 +161,7 @@
     if (Array.isArray(data.files)) rawFiles.push(...data.files);
 
     const uniqueFiles = [...new Set(rawFiles)].filter(Boolean);
+    console.log("[bonus] uniqueFiles", uniqueFiles);
 
     const stripPath = firstMatch(uniqueFiles, /strip_web\.(png|jpg|jpeg)$/i);
     const collagePath = firstMatch(uniqueFiles, /collage\.(mp4|webm|mov)$/i);
@@ -213,9 +215,9 @@
     const stillsGrid = $("stills-grid");
     if (stillsGrid) {
       stillsGrid.innerHTML = "";
-      freezePaths
-        .sort()
-        .forEach((relPath, idx) => renderStillCard(stillsGrid, fullUrl(core, relPath), idx + 1));
+      freezePaths.sort().forEach((relPath, idx) => {
+        renderStillCard(stillsGrid, fullUrl(core, relPath), idx + 1);
+      });
     }
 
     const loadedAnything =
