@@ -284,6 +284,33 @@
     });
   }
 
+  async function previewFreeze(index) {
+    const core = window.InstapicCore;
+    const code = core?.getCodeFromUrl?.();
+    if (!code || !core?.API_BASE) return;
+
+    const card = qsa("#stills-grid .card")[index];
+    if (!card) return;
+    const img = qs("img", card);
+    if (!img) return;
+
+    const offset = freezeOffsets[index] || 0;
+
+    try {
+      const res = await fetch(
+        `${core.API_BASE}/api/preview-freeze/${encodeURIComponent(code)}?index=${index + 1}&offset=${encodeURIComponent(offset)}`
+      );
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok || data.ok === false || !data.url) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      img.src = cacheBust(`${core.API_BASE}${data.url}`);
+    } catch (err) {
+      console.error("preview freeze failed", index + 1, err);
+    }
+  }
+
   function addFreezeAdjustControls() {
     const cards = qsa("#stills-grid .card");
     if (!cards.length) return;
@@ -320,14 +347,16 @@
       fwd.type = "button";
       fwd.textContent = "▶";
 
-      back.addEventListener("click", () => {
-        freezeOffsets[idx] = Math.max(-2.0, (freezeOffsets[idx] || 0) - 0.2);
+      back.addEventListener("click", async () => {
+        freezeOffsets[idx] = Math.max(-2.5, (freezeOffsets[idx] || 0) - 0.2);
         updateFreezeOffsetLabels();
+        await previewFreeze(idx);
       });
 
-      fwd.addEventListener("click", () => {
-        freezeOffsets[idx] = Math.min(2.0, (freezeOffsets[idx] || 0) + 0.2);
+      fwd.addEventListener("click", async () => {
+        freezeOffsets[idx] = Math.min(2.5, (freezeOffsets[idx] || 0) + 0.2);
         updateFreezeOffsetLabels();
+        await previewFreeze(idx);
       });
 
       row.appendChild(back);
