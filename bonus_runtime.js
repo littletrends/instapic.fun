@@ -54,7 +54,7 @@
     video.playsInline = true;
     video.preload = "metadata";
 
-    if (opts && opts.autoplay) {
+    if (opts?.autoplay) {
       video.autoplay = true;
       video.muted = true;
       video.loop = !!opts.loop;
@@ -117,14 +117,19 @@
     grid.appendChild(card);
   }
 
-  function firstMatch(files, pattern) {
-    return files.find((p) => pattern.test(p)) || "";
-  }
-
   function fullUrl(core, relPath) {
     if (!relPath) return "";
     if (/^https?:\/\//i.test(relPath)) return relPath;
-    return `${core.BASE}${relPath}`;
+    const base = core.API_BASE || core.BASE || "";
+    return `${base}${relPath}`;
+  }
+
+  function firstByRegex(paths, regex) {
+    return paths.find((p) => regex.test(p)) || "";
+  }
+
+  function preferMatch(paths, primary, secondary) {
+    return firstByRegex(paths, primary) || firstByRegex(paths, secondary || /$a/);
   }
 
   async function init() {
@@ -163,12 +168,39 @@
     const uniqueFiles = [...new Set(rawFiles)].filter(Boolean);
     console.log("[bonus] uniqueFiles", uniqueFiles);
 
-    const stripPath = firstMatch(uniqueFiles, /strip_web\.(png|jpg|jpeg)$/i);
-    const collagePath = firstMatch(uniqueFiles, /collage\.(mp4|webm|mov)$/i);
-    const boomerangPath = firstMatch(uniqueFiles, /boomerang\.(mp4|webm|mov)$/i);
-    const gifPath = firstMatch(uniqueFiles, /gif\.(gif|mp4|webm)$/i);
-    const sessionVideoPath = firstMatch(uniqueFiles, /session_video\.(mp4|webm|mov)$/i);
-    const freezePaths = uniqueFiles.filter((p) => /freeze_[1-4]\.(jpg|jpeg|png)$/i.test(p));
+    const stripPath = preferMatch(
+      uniqueFiles,
+      /strip_web\.(png|jpg|jpeg)$/i,
+      /strip\.(png|jpg|jpeg)$/i
+    );
+
+    const collagePath = preferMatch(
+      uniqueFiles,
+      /collage\.(mp4|webm|mov)$/i,
+      /\/bonus\/.*\.(mp4|webm|mov)$/i
+    );
+
+    const boomerangPath = preferMatch(
+      uniqueFiles,
+      /boomerang\.(mp4|webm|mov)$/i,
+      /boomerang.*\.(mp4|webm|mov)$/i
+    );
+
+    const gifPath = preferMatch(
+      uniqueFiles,
+      /gif\.(gif|mp4|webm)$/i,
+      /gif.*\.(gif|mp4|webm)$/i
+    );
+
+    const sessionVideoPath = preferMatch(
+      uniqueFiles,
+      /session_video\.(mp4|webm|mov)$/i,
+      /video\/.*\.(mp4|webm|mov)$/i
+    );
+
+    const freezePaths = uniqueFiles
+      .filter((p) => /freeze_[1-4]\.(jpg|jpeg|png)$/i.test(p))
+      .sort();
 
     const stripUrl = fullUrl(core, stripPath);
     const collageUrl = fullUrl(core, collagePath);
@@ -206,16 +238,20 @@
     }
 
     if (sessionVideoUrl) {
-      showVideo("session-video-frame", "session-video-actions", sessionVideoUrl, "session_video.mp4", "Session Video", {
-        autoplay: false,
-        loop: false
-      });
+      showVideo(
+        "session-video-frame",
+        "session-video-actions",
+        sessionVideoUrl,
+        "session_video.mp4",
+        "Session Video",
+        { autoplay: false, loop: false }
+      );
     }
 
     const stillsGrid = $("stills-grid");
     if (stillsGrid) {
       stillsGrid.innerHTML = "";
-      freezePaths.sort().forEach((relPath, idx) => {
+      freezePaths.forEach((relPath, idx) => {
         renderStillCard(stillsGrid, fullUrl(core, relPath), idx + 1);
       });
     }

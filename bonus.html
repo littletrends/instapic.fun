@@ -8,46 +8,62 @@
   <link rel="stylesheet" href="branding.css">
   <style>
     :root {
-      --card-bg: rgba(255,255,255,0.92);
-      --card-border: rgba(0,0,0,0.08);
-      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --page-bg: #111315;
+      --page-bg-2: #1a1d21;
+      --text: #f5f7fa;
+      --muted: #b7bec8;
+      --card-bg: rgba(255,255,255,0.06);
+      --card-border: rgba(255,255,255,0.10);
+      --shadow: 0 14px 38px rgba(0,0,0,0.28);
       --radius: 20px;
     }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      background: linear-gradient(180deg, #fff8fb 0%, #fff 100%);
-      color: #1f1f1f;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 34%),
+        linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg-2) 100%);
+      color: var(--text);
       font-family: Arial, sans-serif;
     }
+
     .bonus-shell {
       max-width: 1180px;
       margin: 0 auto;
-      padding: 24px 16px 48px;
+      padding: 28px 16px 56px;
     }
+
     .bonus-head {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 26px;
     }
+
     .bonus-head h1 {
       margin: 0 0 8px;
-      font-size: clamp(28px, 4vw, 46px);
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.05;
     }
+
     .bonus-head p {
       margin: 0;
-      color: #666;
+      color: var(--muted);
       font-size: 16px;
     }
+
     .status {
       margin: 18px auto 0;
       max-width: 760px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.08);
       border: 1px solid var(--card-border);
       border-radius: 14px;
       padding: 12px 14px;
       box-shadow: var(--shadow);
       font-size: 14px;
-      color: #444;
+      color: var(--muted);
     }
+
     .hero-grid,
     .motion-grid,
     .extras-grid,
@@ -55,70 +71,87 @@
       display: grid;
       gap: 18px;
     }
+
     .hero-grid {
       grid-template-columns: 1.5fr 0.9fr;
       align-items: start;
       margin-bottom: 22px;
     }
+
     .motion-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       margin-bottom: 22px;
     }
+
     .extras-grid {
-      grid-template-columns: repeat(1, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       margin-bottom: 22px;
     }
+
     .stills-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
+      backdrop-filter: blur(6px);
     }
+
     .card-head {
       padding: 16px 16px 8px;
     }
-    .card-head h2, .card-head h3 {
+
+    .card-head h2,
+    .card-head h3 {
       margin: 0 0 6px;
       line-height: 1.15;
+      color: var(--text);
     }
+
     .card-head p {
       margin: 0;
-      color: #666;
+      color: var(--muted);
       font-size: 14px;
     }
+
     .media-wrap {
       padding: 0 16px 16px;
     }
+
     .media-frame {
       width: 100%;
-      background: #f6f6f6;
+      background: rgba(255,255,255,0.04);
       border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(0,0,0,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 240px;
     }
+
     .media-frame.hero {
       min-height: 620px;
     }
+
     .media-frame video,
     .media-frame img {
       width: 100%;
       height: auto;
       display: block;
     }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       padding: 0 16px 16px;
     }
+
     .btn {
       appearance: none;
       border: 0;
@@ -131,38 +164,66 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      background: #111;
+      color: #101214;
+      background: #f5f7fa;
     }
+
     .btn.alt {
-      background: #6b7280;
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.14);
     }
+
     .section-title {
       margin: 30px 0 14px;
       font-size: 24px;
+      color: var(--text);
     }
+
     .empty-note {
       padding: 18px;
-      color: #666;
+      color: var(--muted);
       font-size: 14px;
+      text-align: center;
     }
+
+    .flash {
+      max-width: 760px;
+      margin: 0 auto 20px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+
+    .flash-error {
+      border-color: rgba(255,120,120,0.4);
+      background: rgba(120,20,20,0.25);
+    }
+
     @media (max-width: 980px) {
       .hero-grid,
       .motion-grid,
       .extras-grid {
         grid-template-columns: 1fr;
       }
+
       .stills-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
       .media-frame.hero {
         min-height: 420px;
       }
     }
+
     @media (max-width: 620px) {
       .stills-grid {
         grid-template-columns: 1fr 1fr;
       }
+
       .bonus-shell {
         padding-inline: 12px;
       }
@@ -170,12 +231,12 @@
   </style>
 </head>
 <body>
-  <div id="flash" hidden></div>
-
   <div class="bonus-shell">
+    <div id="flash" hidden></div>
+
     <div class="bonus-head">
       <h1>Your Instapic Bonus</h1>
-      <p>Your photo strip, motion extras, session video, and stills.</p>
+      <p>Your strip, collage, motion extras, session video, and freeze frames.</p>
       <div id="bonus-status" class="status">Loading your bonus files…</div>
     </div>
 
@@ -183,7 +244,7 @@
       <section class="card">
         <div class="card-head">
           <h2>Collage Video</h2>
-          <p>Your main bonus feature built from your session.</p>
+          <p>Your main bonus feature built from the session.</p>
         </div>
         <div class="media-wrap">
           <div class="media-frame hero" id="collage-frame">
@@ -251,7 +312,7 @@
       </section>
     </div>
 
-    <h2 class="section-title">Bonus Moments</h2>
+    <h2 class="section-title">Freeze Frames</h2>
     <div class="stills-grid" id="stills-grid"></div>
   </div>
 
