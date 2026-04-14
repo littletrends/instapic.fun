@@ -92,6 +92,43 @@
     });
   }
 
+  function cacheBust(url) {
+    const u = new URL(url, window.location.href);
+    u.searchParams.set("v", Date.now().toString());
+    return u.toString();
+  }
+
+  function refreshMediaInPlace(type) {
+    const map = {
+      boomerang: { frameId: "boomerang-frame", isVideo: true },
+      gif: { frameId: "gif-frame", isVideo: null }
+    };
+
+    const item = map[type];
+    if (!item) return;
+
+    const frame = document.getElementById(item.frameId);
+    if (!frame) return;
+
+    const video = frame.querySelector("video");
+    const img = frame.querySelector("img");
+
+    if (video) {
+      const nextUrl = cacheBust(video.currentSrc || video.src);
+      video.src = nextUrl;
+      video.load();
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+      return;
+    }
+
+    if (img) {
+      img.src = cacheBust(img.currentSrc || img.src);
+    }
+  }
+
   function addRegenerateButton(actionsId, type) {
     const actions = document.getElementById(actionsId);
     if (!actions) return;
@@ -107,6 +144,7 @@
       const code = core?.getCodeFromUrl?.();
       if (!code || !core?.API_BASE) return;
 
+      const oldLabel = btn.textContent;
       btn.textContent = "Regenerating...";
       btn.disabled = true;
 
@@ -116,18 +154,27 @@
           { method: "POST" }
         );
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {}
+
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || `HTTP ${res.status}`);
         }
 
+        refreshMediaInPlace(type);
+
+        btn.textContent = "Done";
         setTimeout(() => {
-          window.location.reload();
-        }, 900);
+          btn.textContent = oldLabel;
+          btn.disabled = false;
+        }, 1200);
       } catch (err) {
         console.error("regen failed", err);
         btn.textContent = "Failed";
         setTimeout(() => {
-          btn.textContent = "🔁 Regenerate";
+          btn.textContent = oldLabel;
           btn.disabled = false;
         }, 1500);
       }
