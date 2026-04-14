@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>Instapic Bonus</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
@@ -229,6 +229,89 @@
       }
     }
   </style>
+
+<!-- INSTAPIC_MOBILE_FIX_START -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+
+<style>
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    touch-action: pan-y;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* keep cards from spilling sideways on phones */
+  .freeze-card,
+  .freeze-card *,
+  .freeze-frame-card,
+  .freeze-frame-card * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .freeze-card,
+  .freeze-frame-card {
+    overflow: hidden;
+  }
+
+  /* try to catch the little arrow / best-nearby control rows */
+  .freeze-adjust-row,
+  .offset-controls,
+  .best-nearby-row,
+  .frame-adjust-row,
+  .nearby-controls,
+  .freeze-controls,
+  .photo-adjust-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* tame oversized action buttons on mobile */
+  .download-btn,
+  .share-btn,
+  a[download],
+  .freeze-card .btn,
+  .freeze-frame-card .btn {
+    width: 100% !important;
+    max-width: 260px !important;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+    border-radius: 18px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  @media (max-width: 700px) {
+    .download-btn,
+    .share-btn,
+    a[download],
+    .freeze-card .btn,
+    .freeze-frame-card .btn {
+      max-width: 240px !important;
+      padding: 11px 14px !important;
+      font-size: 0.9rem !important;
+    }
+  }
+</style>
+<!-- INSTAPIC_MOBILE_FIX_END -->
 </head>
 <body>
   <div class="bonus-shell">
@@ -320,5 +403,45 @@
   <script src="branding.js"></script>
   <script src="bonus_runtime.js"></script>
   <script src="bonus_patch.js"></script>
+
+<!-- INSTAPIC_TOUCH_FIX_START -->
+<script>
+(function () {
+  function stopTapBubble(root = document) {
+    const selectors = [
+      'button',
+      'a[download]',
+      '.download-btn',
+      '.share-btn',
+      '.arrow-btn',
+      '.best-nearby-btn',
+      '.freeze-card button',
+      '.freeze-frame-card button'
+    ].join(',');
+
+    root.querySelectorAll(selectors).forEach((el) => {
+      if (el.dataset.instapicTapFixed === '1') return;
+      el.dataset.instapicTapFixed = '1';
+
+      ['click', 'touchend', 'pointerup', 'dblclick'].forEach((evt) => {
+        el.addEventListener(evt, function (e) {
+          e.stopPropagation();
+        }, { passive: true });
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    stopTapBubble();
+
+    const mo = new MutationObserver(function () {
+      stopTapBubble();
+    });
+
+    mo.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>
+<!-- INSTAPIC_TOUCH_FIX_END -->
 </body>
 </html>
