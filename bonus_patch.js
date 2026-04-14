@@ -127,6 +127,55 @@
     });
   }
 
+  function addRegenerateButton(actionsId, type) {
+    const actions = document.getElementById(actionsId);
+    if (!actions) return;
+    if (actions.querySelector(".regen-btn")) return;
+
+    const btn = document.createElement("button");
+    btn.className = "btn alt regen-btn";
+    btn.type = "button";
+    btn.textContent = "🔁 Regenerate";
+
+    btn.addEventListener("click", async () => {
+      const core = window.InstapicCore;
+      const code = core?.getCodeFromUrl?.();
+      if (!code || !core?.API_BASE) return;
+
+      btn.textContent = "Regenerating...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(
+          `${core.API_BASE}/api/regenerate/${encodeURIComponent(code)}?type=${encodeURIComponent(type)}`,
+          { method: "POST" }
+        );
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 900);
+      } catch (err) {
+        console.error("regen failed", err);
+        btn.textContent = "Failed";
+        setTimeout(() => {
+          btn.textContent = "🔁 Regenerate";
+          btn.disabled = false;
+        }, 1500);
+      }
+    });
+
+    actions.appendChild(btn);
+  }
+
+  function injectRegenerateButtons() {
+    addRegenerateButton("boomerang-actions", "boomerang");
+    addRegenerateButton("gif-actions", "gif");
+  }
+
   function initPatch() {
     removeSessionVideoSection();
     applyCopy();
@@ -139,4 +188,5 @@
   window.addEventListener("load", initPatch);
   setTimeout(initPatch, 600);
   setTimeout(initPatch, 1600);
+  setTimeout(injectRegenerateButtons, 1200);
 })();
