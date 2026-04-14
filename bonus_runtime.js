@@ -166,7 +166,6 @@
     const boomerangPath = firstMatch(uniqueFiles, /boomerang\.(mp4|webm|mov)$/i);
     const gifPath = firstMatch(uniqueFiles, /gif\.(gif|mp4|webm)$/i);
     const sessionVideoPath = firstMatch(uniqueFiles, /session_video\.(mp4|webm|mov)$/i);
-
     const freezePaths = uniqueFiles.filter((p) => /freeze_[1-4]\.(jpg|jpeg|png)$/i.test(p));
 
     const stripUrl = fullUrl(core, stripPath);
