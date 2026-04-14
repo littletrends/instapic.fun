@@ -11,8 +11,11 @@
     gifTitle: "GIF",
     gifText: "A quick animated moment from your session.",
     freezeSectionTitle: "Freeze Frames",
-    shuffleAll: "🔀 Shuffle All"
+    shuffleAll: "🔀 Shuffle All",
+    applyFreezeChanges: "Apply Freeze Changes"
   };
+
+  let freezeOffsets = [0, 0, 0, 0];
 
   function qs(sel, root = document) {
     return root.querySelector(sel);
@@ -42,7 +45,6 @@
       (el.textContent || "").trim().toLowerCase() === "session video"
     );
     if (!sessionHeading) return;
-
     const next = sessionHeading.nextElementSibling;
     if (next) next.remove();
     sessionHeading.remove();
@@ -102,9 +104,10 @@
   function refreshMediaInPlace(type) {
     const map = {
       boomerang: { frameId: "boomerang-frame" },
-      gif: { frameId: "gif-frame" }
+      gif: { frameId: "gif-frame" },
+      collage: { frameId: "collage-frame" },
+      strip: { frameId: "strip-frame" }
     };
-
     const item = map[type];
     if (!item) return;
 
@@ -126,6 +129,12 @@
     if (img) {
       img.src = cacheBust(img.currentSrc || img.src);
     }
+  }
+
+  function refreshFreezeImages() {
+    qsa("#stills-grid img").forEach((img) => {
+      img.src = cacheBust(img.currentSrc || img.src);
+    });
   }
 
   function getGuestShareUrl() {
@@ -188,9 +197,7 @@
       );
 
       let data = {};
-      try {
-        data = await res.json();
-      } catch (_) {}
+      try { data = await res.json(); } catch (_) {}
 
       if (!res.ok || data.ok === false) {
         throw new Error(data.error || `HTTP ${res.status}`);
@@ -221,8 +228,7 @@
 
   function addRegenerateButton(actionsId, type) {
     const actions = document.getElementById(actionsId);
-    if (!actions) return;
-    if (actions.querySelector(".regen-btn")) return;
+    if (!actions || actions.querySelector(".regen-btn")) return;
 
     const btn = document.createElement("button");
     btn.className = "btn alt regen-btn";
@@ -260,13 +266,7 @@
       const a = await runRegenerate("boomerang");
       const b = await runRegenerate("gif");
 
-      if (a || b) {
-        patchShareButtons();
-        btn.textContent = "Done";
-      } else {
-        btn.textContent = "Failed";
-      }
-
+      btn.textContent = (a || b) ? "Done" : "Failed";
       setTimeout(() => {
         btn.textContent = old;
         btn.disabled = false;
@@ -277,10 +277,139 @@
     motionGrid.parentNode.insertBefore(wrap, motionGrid);
   }
 
-  function injectRegenerateButtons() {
+  function updateFreezeOffsetLabels() {
+    qsa(".freeze-adjust-readout").forEach((el, idx) => {
+      const v = freezeOffsets[idx] || 0;
+      el.textContent = `${v >= 0 ? "+" : ""}${v.toFixed(1)}s`;
+    });
+  }
+
+  function addFreezeAdjustControls() {
+    const cards = qsa("#stills-grid .card");
+    if (!cards.length) return;
+
+    cards.forEach((card, idx) => {
+      if (qs(".freeze-adjust-row", card)) return;
+
+      const actions = qs(".actions", card);
+      if (!actions) return;
+
+      const row = document.createElement("div");
+      row.className = "freeze-adjust-row";
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "center";
+      row.style.padding = "0 16px 12px 16px";
+
+      const back = document.createElement("button");
+      back.className = "btn alt";
+      back.type = "button";
+      back.textContent = "◀";
+
+      const label = document.createElement("div");
+      label.className = "freeze-adjust-readout";
+      label.style.minWidth = "56px";
+      label.style.textAlign = "center";
+      label.style.fontSize = "14px";
+      label.style.color = "rgba(255,255,255,0.86)";
+      label.textContent = "+0.0s";
+
+      const fwd = document.createElement("button");
+      fwd.className = "btn alt";
+      fwd.type = "button";
+      fwd.textContent = "▶";
+
+      back.addEventListener("click", () => {
+        freezeOffsets[idx] = Math.max(-2.0, (freezeOffsets[idx] || 0) - 0.2);
+        updateFreezeOffsetLabels();
+      });
+
+      fwd.addEventListener("click", () => {
+        freezeOffsets[idx] = Math.min(2.0, (freezeOffsets[idx] || 0) + 0.2);
+        updateFreezeOffsetLabels();
+      });
+
+      row.appendChild(back);
+      row.appendChild(label);
+      row.appendChild(fwd);
+
+      actions.parentNode.insertBefore(row, actions);
+    });
+
+    updateFreezeOffsetLabels();
+  }
+
+  function addApplyFreezeChangesButton() {
+    const grid = qs("#stills-grid");
+    if (!grid || qs("#apply-freeze-btn")) return;
+
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.justifyContent = "center";
+    wrap.style.margin = "18px 0 0 0";
+
+    const btn = document.createElement("button");
+    btn.id = "apply-freeze-btn";
+    btn.className = "btn";
+    btn.type = "button";
+    btn.textContent = COPY.applyFreezeChanges;
+
+    btn.addEventListener("click", async () => {
+      const core = window.InstapicCore;
+      const code = core?.getCodeFromUrl?.();
+      if (!code || !core?.API_BASE) return;
+
+      const old = btn.textContent;
+      btn.textContent = "Applying...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(
+          `${core.API_BASE}/api/update-freezes/${encodeURIComponent(code)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ offsets: freezeOffsets })
+          }
+        );
+
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        refreshMediaInPlace("strip");
+        refreshMediaInPlace("collage");
+        refreshFreezeImages();
+
+        btn.textContent = "Done";
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.disabled = false;
+        }, 1400);
+      } catch (err) {
+        console.error("freeze update failed", err);
+        btn.textContent = "Failed";
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.disabled = false;
+        }, 1600);
+      }
+    });
+
+    wrap.appendChild(btn);
+    grid.parentNode.appendChild(wrap);
+  }
+
+  function injectButtons() {
     addRegenerateButton("boomerang-actions", "boomerang");
     addRegenerateButton("gif-actions", "gif");
     addShuffleAllButton();
+    addFreezeAdjustControls();
+    addApplyFreezeChangesButton();
   }
 
   function initPatch() {
@@ -295,6 +424,6 @@
   window.addEventListener("load", initPatch);
   setTimeout(initPatch, 600);
   setTimeout(initPatch, 1600);
-  setTimeout(injectRegenerateButtons, 1200);
+  setTimeout(injectButtons, 1200);
   setTimeout(patchShareButtons, 1800);
 })();
