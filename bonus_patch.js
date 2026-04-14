@@ -311,6 +311,51 @@
     }
   }
 
+  async function bestNearbyFreeze(index, btn) {
+    const core = window.InstapicCore;
+    const code = core?.getCodeFromUrl?.();
+    if (!code || !core?.API_BASE) return;
+
+    const old = btn.textContent;
+    btn.textContent = "Finding...";
+    btn.disabled = true;
+
+    try {
+      const offset = freezeOffsets[index] || 0;
+      const res = await fetch(
+        `${core.API_BASE}/api/best-nearby-freeze/${encodeURIComponent(code)}?index=${index + 1}&offset=${encodeURIComponent(offset)}`
+      );
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+
+      if (!res.ok || data.ok === false || !data.url) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      freezeOffsets[index] = Number(data.offset || 0);
+      updateFreezeOffsetLabels();
+
+      const card = qsa("#stills-grid .card")[index];
+      const img = card ? qs("img", card) : null;
+      if (img) {
+        img.src = cacheBust(`${core.API_BASE}${data.url}`);
+      }
+
+      btn.textContent = "Done";
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.disabled = false;
+      }, 1200);
+    } catch (err) {
+      console.error("best nearby failed", index + 1, err);
+      btn.textContent = "Failed";
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.disabled = false;
+      }, 1400);
+    }
+  }
+
   function addFreezeAdjustControls() {
     const cards = qsa("#stills-grid .card");
     if (!cards.length) return;
@@ -328,6 +373,7 @@
       row.style.alignItems = "center";
       row.style.justifyContent = "center";
       row.style.padding = "0 16px 12px 16px";
+      row.style.flexWrap = "wrap";
 
       const back = document.createElement("button");
       back.className = "btn alt";
@@ -347,6 +393,11 @@
       fwd.type = "button";
       fwd.textContent = "▶";
 
+      const magic = document.createElement("button");
+      magic.className = "btn alt";
+      magic.type = "button";
+      magic.textContent = "✨ Best Nearby";
+
       back.addEventListener("click", async () => {
         freezeOffsets[idx] = Math.max(-2.5, (freezeOffsets[idx] || 0) - 0.2);
         updateFreezeOffsetLabels();
@@ -359,9 +410,14 @@
         await previewFreeze(idx);
       });
 
+      magic.addEventListener("click", async () => {
+        await bestNearbyFreeze(idx, magic);
+      });
+
       row.appendChild(back);
       row.appendChild(label);
       row.appendChild(fwd);
+      row.appendChild(magic);
 
       actions.parentNode.insertBefore(row, actions);
     });
