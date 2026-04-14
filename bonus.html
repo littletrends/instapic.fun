@@ -228,7 +228,22 @@
         padding-inline: 12px;
       }
     }
-  </style>
+  
+/* === INSTAPIC FINAL TOUCH FIX === */
+* {
+  touch-action: manipulation;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.freeze-adjust-row button {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+</style>
 
 <!-- INSTAPIC_MOBILE_FIX_START -->
 <style>
