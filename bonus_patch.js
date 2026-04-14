@@ -338,6 +338,8 @@
       const card = qsa("#stills-grid .card")[index];
       const img = card ? qs("img", card) : null;
       if (img) {
+        img.style.aspectRatio = "3 / 4";
+        img.style.objectFit = "cover";
         img.src = cacheBust(`${core.API_BASE}${data.url}`);
       }
 
@@ -369,11 +371,11 @@
       const row = document.createElement("div");
       row.className = "freeze-adjust-row";
       row.style.display = "flex";
-      row.style.gap = "8px";
+      row.style.gap = "6px";
       row.style.alignItems = "center";
-      row.style.justifyContent = "center";
+      row.style.justifyContent = "space-between";
       row.style.padding = "0 16px 12px 16px";
-      row.style.flexWrap = "wrap";
+      row.style.flexWrap = "nowrap";
 
       const back = document.createElement("button");
       back.className = "btn alt";
@@ -384,7 +386,7 @@
       label.className = "freeze-adjust-readout";
       label.style.minWidth = "56px";
       label.style.textAlign = "center";
-      label.style.fontSize = "14px";
+      label.style.fontSize = "13px";
       label.style.color = "rgba(255,255,255,0.86)";
       label.textContent = "+0.0s";
 
