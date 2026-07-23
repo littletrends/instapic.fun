@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Instapic Fun — Guest Sign In</title>
+  <title>Instapic — Guest Area Sign In</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
@@ -13,43 +13,20 @@
 
     <section class="page-intro">
       <div class="bonus-kicker">Guest Area</div>
-      <h1>✨Sign in to your VIP Guest Area✨</h1>
+      <h1>Sign in to your Guest Area ✨</h1>
       <p class="hero-text hero-text-wide">
         Keep your Instapic sessions, saved booth codes, and bonus content together in one place.
       </p>
       <p class="muted">
-        Your 4-digit email sign-in code is only for Guest Area access. Optional- Create a password once logged in.
+        Returning guests: use your password below. First time here? Email yourself a 4-digit sign-in code.
+        That code is only for Guest Area access — not your 6-digit booth code.
       </p>
     </section>
 
-    <form id="save-form" class="form-shell" novalidate autocomplete="off">
-      <label for="guest_email" class="code-label">Email address</label>
-
-      <div class="code-input-row code-input-row-stack">
-        <input
-          type="email"
-          id="guest_email"
-          name="guest_email"
-          inputmode="email"
-          placeholder="you@example.com"
-          required
-          autocomplete="off"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
-        >
-        <button type="submit" class="btn">Email Me a 4-Digit Sign-In Code</button>
-      </div>
-
-      <p class="code-hint">
-        We’ll send a 4-digit sign-in code to your email so you can enter your Guest Area.
-      </p>
-    </form>
-
-    <div class="info-callout" style="margin-top:1.5rem;">
-      <h2>Sign in with password instead</h2>
+    <div class="info-callout" id="password-sign-in-block">
+      <h2>Returning guests — password</h2>
       <p>
-        Already created a Guest Area password? Use your email and password here instead of waiting for a new 4-digit sign-in code.
+        If you already created a Guest Area password, sign in here.
       </p>
 
       <form id="password-login-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
@@ -62,7 +39,7 @@
             inputmode="email"
             placeholder="you@example.com"
             required
-            autocomplete="off"
+            autocomplete="username"
             autocapitalize="none"
             autocorrect="off"
             spellcheck="false"
@@ -79,33 +56,64 @@
             maxlength="8"
             placeholder="6 to 8 characters"
             required
-            autocomplete="new-password"
+            autocomplete="current-password"
             autocapitalize="none"
             autocorrect="off"
             spellcheck="false"
           >
-          <button type="submit" class="btn">Sign In With Password✨</button>
+          <button type="submit" class="btn">Sign in with password ✨</button>
         </div>
 
         <p class="code-hint">
-          Enter your password or use the 4-digit email sign-in code if you have not created one yet.
+          Password is 6 to 8 characters. Forgot it? Use the email code option below.
+        </p>
+      </form>
+    </div>
+
+    <div class="info-callout" style="margin-top:1.5rem;" id="email-sign-in-block">
+      <h2>First time / forgot password — email code</h2>
+      <p>
+        We’ll send a 4-digit sign-in code to your email so you can enter your Guest Area.
+      </p>
+
+      <form id="save-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_email" class="code-label">Email address</label>
+
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="email"
+            id="guest_email"
+            name="guest_email"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn" id="email-code-submit">Email me a 4-digit sign-in code</button>
+        </div>
+
+        <p class="code-hint">
+          If this email already has a password, we’ll remind you to sign in above first.
         </p>
       </form>
     </div>
 
     <div class="info-callout" style="margin-top:1.5rem;">
-      <h2>✨Important</h2>
+      <h2>Important</h2>
       <p>
-        Your 4-digit email sign-in code and your 6-digit Instapic booth code are two different things.
+        Your <strong>4-digit email sign-in code</strong> and your <strong>6-digit Instapic booth code</strong> are two different things.
       </p>
     </div>
 
     <div class="hero-links hero-links-compact" style="text-align:center;">
-      <a href="session.html" class="secondary-link">I already have a code</a>
+      <a href="session.html" class="secondary-link">I already have a booth code</a>
       ·
       <a href="how-it-works.html" class="secondary-link">How it works</a>
       ·
-      <a href="pay.html" class="secondary-link">Buy a Booth Code</a>
+      <a href="pay.html" class="secondary-link">Buy a booth code</a>
     </div>
 
     <p style="margin-top:1.5rem;"><a class="btn" href="index.html">Back to start</a></p>

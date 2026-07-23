@@ -40,6 +40,44 @@
       margin-bottom: 26px;
     }
 
+    .bonus-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      justify-content: center;
+      align-items: center;
+      margin: 0 0 18px;
+    }
+
+    .bonus-nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.95rem;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .bonus-nav a:hover,
+    .bonus-nav a:focus {
+      background: rgba(255,255,255,0.12);
+      outline: none;
+    }
+
+    .bonus-nav a.bonus-nav-primary {
+      background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+      border-color: rgba(255,255,255,0.28);
+      font-weight: 600;
+    }
+
+    .bonus-foot {
+      margin-top: 36px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      text-align: center;
+    }
+
     .bonus-head h1 {
       margin: 0 0 8px;
       font-size: clamp(30px, 4vw, 48px);
@@ -375,6 +413,12 @@ button {
   <div class="bonus-shell">
     <div id="flash" hidden></div>
 
+    <nav class="bonus-nav" aria-label="Bonus page navigation">
+      <a class="bonus-nav-primary" href="index.html">← Back to start</a>
+      <a href="session.html">Enter another code</a>
+      <a href="save.html">Guest Area</a>
+    </nav>
+
     <div class="bonus-head">
       <h1>Your Instapic Bonus</h1>
       <p>Your strip, collage, motion extras, session video, and freeze frames.</p>
@@ -455,6 +499,14 @@ button {
 
     <h2 class="section-title">Freeze Frames</h2>
     <div class="stills-grid" id="stills-grid"></div>
+
+    <div class="bonus-foot">
+      <nav class="bonus-nav" aria-label="Bonus page footer navigation">
+        <a class="bonus-nav-primary" href="index.html">← Back to start</a>
+        <a href="session.html">Enter another code</a>
+        <a href="save.html">Guest Area</a>
+      </nav>
+    </div>
   </div>
 
   <script src="site_core.js"></script>
