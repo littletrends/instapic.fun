@@ -488,7 +488,15 @@
     });
 
     wrap.appendChild(btn);
-    grid.parentNode.appendChild(wrap);
+    // Sit directly under freeze frames, above footer nav (if present)
+    const foot = qs(".bonus-foot");
+    if (foot && foot.parentNode === grid.parentNode) {
+      grid.parentNode.insertBefore(wrap, foot);
+    } else if (grid.nextSibling) {
+      grid.parentNode.insertBefore(wrap, grid.nextSibling);
+    } else {
+      grid.parentNode.appendChild(wrap);
+    }
   }
 
   function injectButtons() {
