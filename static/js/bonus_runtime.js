@@ -21,21 +21,182 @@
     return a;
   }
 
-  function createShareButton(url, title) {
+  function getGuestShareUrl() {
+    try {
+      const code = (window.InstapicCore && window.InstapicCore.getCodeFromUrl)
+        ? window.InstapicCore.getCodeFromUrl()
+        : "";
+      const u = new URL(window.location.href);
+      u.search = "";
+      u.hash = "";
+      u.pathname = u.pathname.replace(/\/[^/]*$/, "/bonus.html");
+      if (code) u.searchParams.set("code", code);
+      return u.toString();
+    } catch (_) {
+      return window.location.href;
+    }
+  }
+
+  function shareCaption(label) {
+    return `My Instapic ${label} ✨ Moments Made Magical — instapic.fun`;
+  }
+
+  async function tryNativeShare({ title, text, url, fileUrl }) {
+    if (!navigator.share) return false;
+    try {
+      // Prefer sharing the file when the browser allows (mobile Safari/Chrome)
+      if (fileUrl && navigator.canShare) {
+        try {
+          const res = await fetch(fileUrl, { mode: "cors" });
+          if (res.ok) {
+            const blob = await res.blob();
+            const name = (fileUrl.split("/").pop() || "instapic").split("?")[0];
+            const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ title, text, files: [file] });
+              return true;
+            }
+          }
+        } catch (_) {
+          // fall through to URL share
+        }
+      }
+      await navigator.share({ title, text, url });
+      return true;
+    } catch (err) {
+      // user cancel is fine
+      if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return true;
+      return false;
+    }
+  }
+
+  function openShareMenu(anchorBtn, { mediaUrl, label }) {
+    // remove existing menus
+    document.querySelectorAll(".share-menu").forEach((el) => el.remove());
+
+    const pageUrl = getGuestShareUrl();
+    const text = shareCaption(label);
+    const encUrl = encodeURIComponent(pageUrl);
+    const encText = encodeURIComponent(text);
+
+    const menu = document.createElement("div");
+    menu.className = "share-menu";
+    menu.setAttribute("role", "menu");
+
+    const items = [
+      {
+        id: "native",
+        label: "Share… (Instagram / Snapchat / Messages)",
+        hint: "Opens your phone share sheet — best for IG & Snap",
+        action: async () => {
+          const ok = await tryNativeShare({
+            title: `Instapic ${label}`,
+            text,
+            url: pageUrl,
+            fileUrl: mediaUrl,
+          });
+          if (!ok) {
+            await navigator.clipboard.writeText(`${text}\n${pageUrl}`);
+            flashMenu(menu, "Link copied — paste into the app");
+          } else {
+            menu.remove();
+          }
+        },
+      },
+      {
+        id: "x",
+        label: "X / Twitter",
+        action: () => {
+          window.open(
+            `https://twitter.com/intent/tweet?text=${encText}&url=${encUrl}`,
+            "_blank",
+            "noopener,noreferrer"
+          );
+          menu.remove();
+        },
+      },
+      {
+        id: "fb",
+        label: "Facebook",
+        action: () => {
+          window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encUrl}&quote=${encText}`,
+            "_blank",
+            "noopener,noreferrer"
+          );
+          menu.remove();
+        },
+      },
+      {
+        id: "copy",
+        label: "Copy link",
+        action: async () => {
+          try {
+            await navigator.clipboard.writeText(`${text}\n${pageUrl}`);
+            flashMenu(menu, "Copied!");
+          } catch (_) {
+            flashMenu(menu, "Could not copy");
+          }
+        },
+      },
+    ];
+
+    items.forEach((item) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "share-menu-item";
+      b.textContent = item.label;
+      if (item.hint) {
+        const hint = document.createElement("span");
+        hint.className = "share-menu-hint";
+        hint.textContent = item.hint;
+        b.appendChild(document.createElement("br"));
+        b.appendChild(hint);
+      }
+      b.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        item.action();
+      });
+      menu.appendChild(b);
+    });
+
+    // position under button
+    const wrap = anchorBtn.parentElement || document.body;
+    wrap.style.position = wrap.style.position || "relative";
+    menu.style.position = "absolute";
+    menu.style.zIndex = "40";
+    menu.style.left = "0";
+    menu.style.top = "100%";
+    menu.style.marginTop = "8px";
+    wrap.appendChild(menu);
+
+    const closer = (ev) => {
+      if (!menu.contains(ev.target) && ev.target !== anchorBtn) {
+        menu.remove();
+        document.removeEventListener("click", closer, true);
+      }
+    };
+    setTimeout(() => document.addEventListener("click", closer, true), 0);
+  }
+
+  function flashMenu(menu, msg) {
+    const note = document.createElement("div");
+    note.className = "share-menu-flash";
+    note.textContent = msg;
+    menu.appendChild(note);
+    setTimeout(() => menu.remove(), 1400);
+  }
+
+  function createShareButton(mediaUrl, label) {
     const btn = document.createElement("button");
-    btn.className = "btn alt";
+    btn.className = "btn alt share-btn";
     btn.type = "button";
     btn.textContent = "Share";
-    btn.addEventListener("click", async () => {
-      try {
-        if (navigator.share) {
-          await navigator.share({ title, url });
-        } else {
-          await navigator.clipboard.writeText(url);
-          btn.textContent = "Link Copied";
-          setTimeout(() => { btn.textContent = "Share"; }, 1500);
-        }
-      } catch (_) {}
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      openShareMenu(btn, { mediaUrl, label });
     });
     return btn;
   }
@@ -62,7 +223,7 @@
 
     frame.appendChild(video);
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
-    actions.appendChild(createShareButton(url, `Instapic ${label}`));
+    actions.appendChild(createShareButton(url, label));
   }
 
   function showImage(frameId, actionsId, url, downloadName, label) {
@@ -79,7 +240,7 @@
     frame.appendChild(img);
 
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
-    actions.appendChild(createShareButton(url, `Instapic ${label}`));
+    actions.appendChild(createShareButton(url, label));
   }
 
   function renderStillCard(grid, url, i) {
@@ -109,7 +270,7 @@
     const actions = document.createElement("div");
     actions.className = "actions";
     actions.appendChild(createDownloadButton(url, `freeze_${i}.jpg`, `Download Photo ${i}`));
-    actions.appendChild(createShareButton(url, `Instapic Photo ${i}`));
+    actions.appendChild(createShareButton(url, `Photo ${i}`));
 
     card.appendChild(head);
     card.appendChild(wrap);
@@ -193,12 +354,7 @@
       /(?:^|\/)gif\.gif$/i
     );
 
-    const sessionVideoPath = preferMatch(
-      uniqueFiles,
-      /session_video\.(mp4|webm|mov)$/i,
-      /video\/.*\.(mp4|webm|mov)$/i
-    );
-
+    // Raw session video intentionally not shown/downloadable (branded collage only).
     const freezePaths = uniqueFiles
       .filter((p) => /freeze_[1-4]\.(jpg|jpeg|png)$/i.test(p))
       .sort();
@@ -207,7 +363,6 @@
     const collageUrl = fullUrl(core, collagePath);
     const boomerangUrl = fullUrl(core, boomerangPath);
     const gifUrl = fullUrl(core, gifPath);
-    const sessionVideoUrl = fullUrl(core, sessionVideoPath);
 
     if (collageUrl) {
       showVideo("collage-frame", "collage-actions", collageUrl, "collage.mp4", "Collage", {
@@ -238,17 +393,6 @@
       }
     }
 
-    if (sessionVideoUrl) {
-      showVideo(
-        "session-video-frame",
-        "session-video-actions",
-        sessionVideoUrl,
-        "session_video.mp4",
-        "Session Video",
-        { autoplay: false, loop: false }
-      );
-    }
-
     const stillsGrid = $("stills-grid");
     if (stillsGrid) {
       stillsGrid.innerHTML = "";
@@ -258,7 +402,7 @@
     }
 
     const loadedAnything =
-      !!stripUrl || !!collageUrl || !!boomerangUrl || !!gifUrl || !!sessionVideoUrl || freezePaths.length > 0;
+      !!stripUrl || !!collageUrl || !!boomerangUrl || !!gifUrl || freezePaths.length > 0;
 
     setStatus(
       loadedAnything

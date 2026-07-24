@@ -148,35 +148,8 @@
   }
 
   function patchShareButtons() {
-    qsa(".actions").forEach((actions) => {
-      const buttons = qsa("button, a", actions);
-      buttons.forEach((el) => {
-        const txt = (el.textContent || "").trim().toLowerCase();
-        if (txt === "share") {
-          el.onclick = null;
-          el.addEventListener("click", async (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-
-            const shareUrl = getGuestShareUrl();
-
-            try {
-              if (navigator.share) {
-                await navigator.share({
-                  title: "Instapic Bonus",
-                  url: shareUrl
-                });
-              } else {
-                await navigator.clipboard.writeText(shareUrl);
-                const old = el.textContent;
-                el.textContent = "Link Copied";
-                setTimeout(() => { el.textContent = old; }, 1400);
-              }
-            } catch (_) {}
-          }, { once: false });
-        }
-      });
-    });
+    // Social share menu is owned by bonus_runtime.js (Share… / X / Facebook / Copy).
+    // Do not rebind .share-btn here — that would collapse the multi-target menu.
   }
 
   async function runRegenerate(type, btn) {

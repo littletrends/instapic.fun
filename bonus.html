@@ -233,6 +233,61 @@
       border: 1px solid rgba(255,255,255,0.14);
     }
 
+    .actions {
+      position: relative;
+    }
+
+    .share-menu {
+      min-width: 260px;
+      max-width: min(340px, 92vw);
+      background: #1c1f24;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .share-menu-item {
+      appearance: none;
+      border: 0;
+      text-align: left;
+      background: transparent;
+      color: #f5f7fa;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      line-height: 1.25;
+    }
+
+    .share-menu-item:hover,
+    .share-menu-item:focus {
+      background: rgba(255,255,255,0.10);
+      outline: none;
+    }
+
+    .share-menu-hint {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #b7bec8;
+    }
+
+    .share-menu-flash {
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      font-size: 13px;
+      text-align: center;
+    }
+
     .section-title {
       margin: 30px 0 14px;
       font-size: 24px;
@@ -510,21 +565,7 @@ button {
       </section>
     </div>
 
-    <h2 class="section-title">Session Video</h2>
-    <div class="extras-grid">
-      <section class="card">
-        <div class="card-head">
-          <h3>Full Session</h3>
-          <p>Your full captured session video.</p>
-        </div>
-        <div class="media-wrap">
-          <div class="media-frame" id="session-video-frame">
-            <div class="empty-note">Session video not ready yet.</div>
-          </div>
-        </div>
-        <div class="actions" id="session-video-actions"></div>
-      </section>
-    </div>
+    <!-- Raw session video intentionally hidden: full motion is only via branded collage. -->
 
     <h2 class="section-title">Freeze Frames</h2>
     <div class="stills-grid" id="stills-grid"></div>
