@@ -31,41 +31,60 @@
       btn.type = "button";
       btn.hidden = true;
       btn.style.display = "none";
+      btn.classList.add("apple-pay-button");
+      btn.setAttribute("lang", "en");
+      btn.setAttribute("aria-label", "Pay with Apple Pay");
 
-      btn.style.webkitAppearance = "none";
-      btn.style.setProperty("-webkit-appearance", "none");
-      btn.style.appearance = "none";
+      // Official Safari / WebKit Apple Pay button:
+      // type "pay" renders "Pay with Pay" (not plain text "Apple Pay")
+      btn.style.setProperty("-webkit-appearance", "-apple-pay-button");
+      btn.style.setProperty("-apple-pay-button-type", "pay");
+      // White button reads well on our dark pay page
+      btn.style.setProperty("-apple-pay-button-style", "white");
 
       btn.style.width = "100%";
       btn.style.maxWidth = "320px";
-      btn.style.minHeight = "52px";
-      btn.style.border = "1px solid rgba(255,255,255,0.18)";
-      btn.style.borderRadius = "14px";
+      btn.style.height = "48px";
+      btn.style.minHeight = "48px";
+      btn.style.border = "0";
+      btn.style.borderRadius = "12px";
       btn.style.margin = "0";
+      btn.style.padding = "0";
       btn.style.cursor = "pointer";
-      btn.style.padding = "0 18px";
-      btn.style.background = "linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))";
-      btn.style.backgroundColor = "rgba(255,255,255,0.06)";
-      btn.style.color = "#ffffff";
-      btn.style.fontSize = "1rem";
-      btn.style.fontWeight = "700";
-      btn.style.letterSpacing = "0.04em";
-      btn.style.textTransform = "none";
-      btn.style.boxShadow = "inset 0 0 12px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.28)";
-      btn.textContent = "Apple Pay";
-      btn.setAttribute("aria-label", "Apple Pay");
+      btn.style.overflow = "hidden";
+
+      // System button draws its own logo/label — clear any leftover plain text
+      btn.textContent = "";
+
+      // Fallback if the browser ignores -apple-pay-button appearance
+      // (real Apple Pay still only works on Apple devices / Safari)
+      if (!CSS.supports || !CSS.supports("-webkit-appearance", "-apple-pay-button")) {
+        btn.classList.add("apple-pay-button-fallback");
+        btn.innerHTML =
+          '<span class="apple-pay-fallback-label">' +
+          '<svg class="apple-pay-mark" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
+          '<path fill="currentColor" d="M16.365 12.23c-.03-2.22 1.81-3.29 1.89-3.34-1.03-1.51-2.64-1.72-3.21-1.74-1.37-.14-2.67.8-3.36.8-.7 0-1.77-.78-2.91-.76-1.5.02-2.88.87-3.65 2.21-1.56 2.7-.4 6.7 1.12 8.89.74 1.07 1.62 2.27 2.78 2.23 1.12-.05 1.54-.72 2.89-.72 1.34 0 1.72.72 2.9.7 1.2-.02 1.96-1.09 2.69-2.17.85-1.24 1.2-2.44 1.22-2.5-.03-.01-2.33-.89-2.36-3.6zm-2.2-6.5c.62-.75 1.04-1.79.92-2.83-.89.04-1.97.59-2.61 1.34-.57.66-1.07 1.72-.94 2.73 1 .08 2.02-.51 2.63-1.24z"/>' +
+          "</svg>" +
+          "Pay with&nbsp;<strong>Apple&nbsp;Pay</strong></span>";
+      }
+
       return btn;
     }
 
     let btn = qs("#apple-pay-button");
     if (btn) return styleApplePayButton(btn);
 
+    const wrap = qs(".apple-pay-wrap");
     const cardContainer = qs("#card-container");
-    if (!cardContainer || !cardContainer.parentNode) return null;
-
     btn = document.createElement("button");
     btn.id = "apple-pay-button";
-    cardContainer.parentNode.insertBefore(btn, cardContainer);
+    if (wrap) {
+      wrap.appendChild(btn);
+    } else if (cardContainer && cardContainer.parentNode) {
+      cardContainer.parentNode.insertBefore(btn, cardContainer);
+    } else {
+      return null;
+    }
     return styleApplePayButton(btn);
   }
 
@@ -154,7 +173,8 @@
 
       applePay = await payments.applePay(paymentRequest);
       btn.hidden = false;
-      btn.style.display = "block";
+      // Official system button uses block; fallback pill uses flex for centering
+      btn.style.display = btn.classList.contains("apple-pay-button-fallback") ? "flex" : "block";
       btn.style.visibility = "visible";
       btn.style.opacity = "1";
       setStatus("Apple Pay is available for this device/browser.");
