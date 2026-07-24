@@ -209,14 +209,16 @@
       flex-wrap: wrap;
       gap: 10px;
       padding: 0 16px 16px;
+      justify-content: center;
+      align-items: center;
     }
 
     .btn {
       appearance: none;
       border: 0;
       border-radius: 999px;
-      padding: 11px 16px;
-      font-size: 14px;
+      padding: 10px 18px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       text-decoration: none;
@@ -225,12 +227,25 @@
       justify-content: center;
       color: #101214;
       background: #f5f7fa;
+      min-width: 120px;
     }
 
     .btn.alt {
       background: rgba(255,255,255,0.14);
       color: #fff;
       border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    /* Keep Download + Share as a centred pair (or stacked cleanly on narrow screens) */
+    @media (max-width: 520px) {
+      .actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .actions .btn {
+        width: min(240px, 100%);
+        min-width: 0;
+      }
     }
 
     .share-sheet-backdrop {
@@ -385,10 +400,14 @@ button {
 }
 
 
-/* smaller action buttons */
+/* smaller action buttons — keep centred pair */
+.actions {
+  justify-content: center !important;
+}
 .actions .btn {
-  padding: 10px 14px !important;
-  font-size: 14px !important;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  min-width: 118px !important;
 }
 
 
