@@ -62,16 +62,25 @@
 
       <div id="payment-status" class="muted payment-status"></div>
 
-      <div class="apple-pay-wrap">
-        <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
+      <div class="wallet-stack">
+        <div class="apple-pay-wrap">
+          <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
+        </div>
+
+        <!-- Square injects the official Google Pay logo button here -->
+        <div class="google-pay-wrap" id="google-pay-wrap" hidden>
+          <div id="google-pay-button"></div>
+        </div>
       </div>
+
+      <p class="muted payment-or-divider" id="payment-or-divider" hidden>or pay by card</p>
 
       <div id="card-container" class="card-container"></div>
 
       <button id="card-pay-button" type="button" class="btn">Pay now</button>
 
       <p class="muted payment-note">
-        Apple Pay will appear automatically on supported Apple devices and browsers.
+        Apple Pay and Google Pay appear automatically on supported phones and browsers. Everyone can also pay by card.
       </p>
     </section>
 
@@ -104,6 +113,6 @@
   <script src="assets/main.js"></script>
   <script src="site_core.js?v=20260402b"></script>
   <script src="branding.js"></script>
-  <script src="pay_runtime.js?v=20260724-applepay"></script>
+  <script src="pay_runtime.js?v=20260725-googlepay"></script>
 </body>
 </html>

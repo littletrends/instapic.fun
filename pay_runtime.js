@@ -3,7 +3,9 @@
   let payments = null;
   let card = null;
   let applePay = null;
+  let googlePay = null;
   let selectedPackage = null;
+  let walletRefreshSeq = 0;
 
   function qs(sel) {
     return document.querySelector(sel);
@@ -23,6 +25,42 @@
       return JSON.stringify(err);
     } catch {
       return String(err);
+    }
+  }
+
+  function packageAmount() {
+    return (Number(selectedPackage?.amount_cents || 0) / 100).toFixed(2);
+  }
+
+  function buildPaymentRequest() {
+    return payments.paymentRequest({
+      countryCode: "AU",
+      currencyCode: "AUD",
+      total: {
+        amount: packageAmount(),
+        label: "Instapic"
+      }
+    });
+  }
+
+  function updateWalletChrome() {
+    const wrap = qs("#google-pay-wrap");
+    const divider = qs("#payment-or-divider");
+    const appleBtn = qs("#apple-pay-button");
+    const appleVisible = !!(appleBtn && !appleBtn.hidden && appleBtn.style.display !== "none");
+    const googleVisible = !!(wrap && !wrap.hidden);
+
+    if (divider) {
+      divider.hidden = !(appleVisible || googleVisible);
+    }
+
+    const parts = [];
+    if (appleVisible) parts.push("Apple Pay");
+    if (googleVisible) parts.push("Google Pay");
+    if (parts.length) {
+      setStatus(parts.join(" and ") + " available on this device.");
+    } else if (selectedPackage) {
+      setStatus("Pay securely by card below.");
     }
   }
 
@@ -86,6 +124,21 @@
       return null;
     }
     return styleApplePayButton(btn);
+  }
+
+  async function destroyGooglePay() {
+    const wrap = qs("#google-pay-wrap");
+    const mount = qs("#google-pay-button");
+    if (googlePay && typeof googlePay.destroy === "function") {
+      try {
+        await googlePay.destroy();
+      } catch (err) {
+        console.warn("Google Pay destroy failed", err);
+      }
+    }
+    googlePay = null;
+    if (mount) mount.innerHTML = "";
+    if (wrap) wrap.hidden = true;
   }
 
   async function attachTicketIfGuestVerified(ticketCode) {
@@ -155,34 +208,63 @@
 
   async function refreshApplePay() {
     const btn = ensureApplePayButton();
-    if (!btn || !payments || !selectedPackage) return;
+    if (!btn || !payments || !selectedPackage) return false;
 
     btn.hidden = true;
     btn.style.display = "none";
     applePay = null;
 
     try {
-      const paymentRequest = payments.paymentRequest({
-        countryCode: "AU",
-        currencyCode: "AUD",
-        total: {
-          amount: (Number(selectedPackage.amount_cents || 0) / 100).toFixed(2),
-          label: "Instapic"
-        }
-      });
-
-      applePay = await payments.applePay(paymentRequest);
+      applePay = await payments.applePay(buildPaymentRequest());
       btn.hidden = false;
       // Official system button uses block; fallback pill uses flex for centering
       btn.style.display = btn.classList.contains("apple-pay-button-fallback") ? "flex" : "block";
       btn.style.visibility = "visible";
       btn.style.opacity = "1";
-      setStatus("Apple Pay is available for this device/browser.");
+      return true;
     } catch (err) {
       applePay = null;
-      console.error("Apple Pay availability error", err);
-      setStatus("Apple Pay unavailable: " + describeError(err));
+      console.warn("Apple Pay availability error", err);
+      return false;
     }
+  }
+
+  async function refreshGooglePay() {
+    const wrap = qs("#google-pay-wrap");
+    const mount = qs("#google-pay-button");
+    if (!wrap || !mount || !payments || !selectedPackage) return false;
+
+    await destroyGooglePay();
+
+    try {
+      // Official Google Pay logo button via Square Web Payments SDK
+      googlePay = await payments.googlePay(buildPaymentRequest());
+      await googlePay.attach("#google-pay-button", {
+        buttonColor: "white",
+        buttonType: "long",
+        buttonSizeMode: "fill"
+      });
+      wrap.hidden = false;
+      return true;
+    } catch (err) {
+      googlePay = null;
+      wrap.hidden = true;
+      if (mount) mount.innerHTML = "";
+      console.warn("Google Pay availability error", err);
+      return false;
+    }
+  }
+
+  async function refreshDigitalWallets() {
+    if (!payments || !selectedPackage) return;
+    const seq = ++walletRefreshSeq;
+
+    setStatus("Checking wallet options…");
+    await refreshApplePay();
+    if (seq !== walletRefreshSeq) return;
+    await refreshGooglePay();
+    if (seq !== walletRefreshSeq) return;
+    updateWalletChrome();
   }
 
   function selectPackage(pkg) {
@@ -193,7 +275,7 @@
     if (label) {
       label.textContent = `${pkg.name} — $${(Number(pkg.amount_cents || 0) / 100).toFixed(2)}`;
     }
-    refreshApplePay();
+    refreshDigitalWallets();
 
     if (panel) {
       setTimeout(() => {
@@ -268,6 +350,35 @@
     await showTicketAndRedirect(payResult);
   }
 
+  async function payByGooglePay() {
+    if (!googlePay || !selectedPackage) {
+      setStatus("Google Pay is not ready.");
+      return;
+    }
+
+    setStatus("Processing Google Pay...");
+
+    const tokenResult = await googlePay.tokenize();
+    console.log("Google Pay tokenize result", tokenResult);
+
+    if (tokenResult.status !== "OK") {
+      const msg =
+        tokenResult.errors?.map(e => e.message).filter(Boolean).join("; ") ||
+        tokenResult.status ||
+        "Google Pay tokenization failed";
+      throw new Error(msg);
+    }
+
+    const payResult = await payAndCreate({
+      package_id: selectedPackage.package_id,
+      amount_cents: selectedPackage.amount_cents,
+      source_id: tokenResult.token,
+      verification_token: tokenResult.verificationToken || null
+    });
+
+    await showTicketAndRedirect(payResult);
+  }
+
   async function initPayPage() {
     const page = document.body?.dataset?.page || "";
     if (page !== "pay") return;
@@ -305,6 +416,22 @@
         } catch (err) {
           console.error("Apple Pay error", err);
           setStatus("Apple Pay failed: " + describeError(err));
+        }
+      });
+    }
+
+    // Google Pay button is injected by Square into #google-pay-button;
+    // listen on the mount for clicks (capture so we get the logo button).
+    const googleMount = qs("#google-pay-button");
+    if (googleMount) {
+      googleMount.addEventListener("click", async function (ev) {
+        if (!googlePay) return;
+        ev.preventDefault();
+        try {
+          await payByGooglePay();
+        } catch (err) {
+          console.error("Google Pay error", err);
+          setStatus("Google Pay failed: " + describeError(err));
         }
       });
     }
