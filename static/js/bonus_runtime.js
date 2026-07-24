@@ -12,15 +12,6 @@
     return /\.(mp4|webm|mov)($|\?)/i.test(url);
   }
 
-  function createDownloadButton(url, filename, label) {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename || "";
-    a.className = "btn";
-    a.textContent = label;
-    return a;
-  }
-
   function getGuestShareUrl() {
     try {
       const code = (window.InstapicCore && window.InstapicCore.getCodeFromUrl)
@@ -41,70 +32,172 @@
     return `My Instapic ${label} ✨ Moments Made Magical — instapic.fun`;
   }
 
+  function guessMime(filename, blobType) {
+    if (blobType && blobType !== "application/octet-stream") return blobType;
+    const n = (filename || "").toLowerCase();
+    if (n.endsWith(".mp4")) return "video/mp4";
+    if (n.endsWith(".webm")) return "video/webm";
+    if (n.endsWith(".gif")) return "image/gif";
+    if (n.endsWith(".png")) return "image/png";
+    if (n.endsWith(".jpg") || n.endsWith(".jpeg")) return "image/jpeg";
+    return blobType || "application/octet-stream";
+  }
+
+  async function fetchMediaFile(fileUrl) {
+    const res = await fetch(fileUrl, { mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const name = (fileUrl.split("/").pop() || "instapic_media").split("?")[0];
+    const type = guessMime(name, blob.type);
+    return new File([blob], name, { type });
+  }
+
+  async function downloadViaBlob(url, filename) {
+    // Cross-origin <a download> is ignored by mobile browsers — force blob download.
+    const file = await fetchMediaFile(url);
+    const objectUrl = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename || file.name || "instapic_download";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
+  }
+
+  function createDownloadButton(url, filename, label) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.textContent = label;
+    btn.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      try {
+        await downloadViaBlob(url, filename);
+        btn.textContent = "Saved";
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.disabled = false;
+        }, 1200);
+      } catch (err) {
+        console.error("[bonus] download failed", err);
+        // last resort: open media (user can long-press / share from player)
+        window.open(url, "_blank", "noopener,noreferrer");
+        btn.textContent = old;
+        btn.disabled = false;
+      }
+    });
+    return btn;
+  }
+
   async function tryNativeShare({ title, text, url, fileUrl }) {
-    if (!navigator.share) return false;
+    if (!navigator.share) return { ok: false, reason: "no_share_api" };
     try {
-      // Prefer sharing the file when the browser allows (mobile Safari/Chrome)
-      if (fileUrl && navigator.canShare) {
+      if (fileUrl) {
         try {
-          const res = await fetch(fileUrl, { mode: "cors" });
-          if (res.ok) {
-            const blob = await res.blob();
-            const name = (fileUrl.split("/").pop() || "instapic").split("?")[0];
-            const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
-            if (navigator.canShare({ files: [file] })) {
-              await navigator.share({ title, text, files: [file] });
-              return true;
-            }
+          const file = await fetchMediaFile(fileUrl);
+          const payload = { title, text, files: [file] };
+          if (!navigator.canShare || navigator.canShare(payload)) {
+            await navigator.share(payload);
+            return { ok: true, mode: "file" };
           }
-        } catch (_) {
-          // fall through to URL share
+        } catch (fileErr) {
+          console.warn("[bonus] file share failed, trying link", fileErr);
         }
       }
       await navigator.share({ title, text, url });
-      return true;
+      return { ok: true, mode: "link" };
     } catch (err) {
-      // user cancel is fine
-      if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return true;
-      return false;
+      if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) {
+        return { ok: true, mode: "cancelled" };
+      }
+      console.error("[bonus] share failed", err);
+      return { ok: false, reason: String(err && err.message || err) };
     }
   }
 
+  function closeShareSheet() {
+    document.querySelectorAll(".share-sheet, .share-sheet-backdrop").forEach((el) => el.remove());
+  }
+
   function openShareMenu(anchorBtn, { mediaUrl, label }) {
-    // remove existing menus
-    document.querySelectorAll(".share-menu").forEach((el) => el.remove());
+    closeShareSheet();
 
     const pageUrl = getGuestShareUrl();
     const text = shareCaption(label);
     const encUrl = encodeURIComponent(pageUrl);
     const encText = encodeURIComponent(text);
+    const isCollage = /collage/i.test(label);
 
-    const menu = document.createElement("div");
-    menu.className = "share-menu";
-    menu.setAttribute("role", "menu");
+    const backdrop = document.createElement("div");
+    backdrop.className = "share-sheet-backdrop";
+
+    const sheet = document.createElement("div");
+    sheet.className = "share-sheet";
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-label", `Share ${label}`);
+
+    const title = document.createElement("div");
+    title.className = "share-sheet-title";
+    title.textContent = isCollage
+      ? "Share your branded collage"
+      : `Share ${label}`;
+    sheet.appendChild(title);
+
+    const sub = document.createElement("div");
+    sub.className = "share-sheet-sub";
+    sub.textContent = isCollage
+      ? "Shares the collage video (with Instapic branding) — not the raw session video."
+      : "Share via your phone apps, or post a link to your bonus pack.";
+    sheet.appendChild(sub);
+
+    const status = document.createElement("div");
+    status.className = "share-sheet-status";
+    status.hidden = true;
+    sheet.appendChild(status);
+
+    function setStatus(msg) {
+      status.hidden = !msg;
+      status.textContent = msg || "";
+    }
 
     const items = [
       {
-        id: "native",
-        label: "Share… (Instagram / Snapchat / Messages)",
-        hint: "Opens your phone share sheet — best for IG & Snap",
+        label: isCollage ? "Share collage video…" : "Share file / to apps…",
+        hint: "Instagram, Snapchat, Messages, Camera Roll apps",
+        primary: true,
         action: async () => {
-          const ok = await tryNativeShare({
+          setStatus("Preparing…");
+          const res = await tryNativeShare({
             title: `Instapic ${label}`,
             text,
             url: pageUrl,
             fileUrl: mediaUrl,
           });
-          if (!ok) {
-            await navigator.clipboard.writeText(`${text}\n${pageUrl}`);
-            flashMenu(menu, "Link copied — paste into the app");
-          } else {
-            menu.remove();
+          if (res.ok && res.mode !== "cancelled") {
+            closeShareSheet();
+            return;
+          }
+          if (res.ok && res.mode === "cancelled") {
+            setStatus("");
+            return;
+          }
+          // Fallback: save file then prompt
+          try {
+            setStatus("Saving file so you can share from Photos…");
+            await downloadViaBlob(mediaUrl, (mediaUrl.split("/").pop() || "instapic").split("?")[0]);
+            setStatus("Saved. Open Photos / Files and share from there.");
+          } catch (_) {
+            setStatus("Could not prepare file. Try Download, then share from Photos.");
           }
         },
       },
       {
-        id: "x",
         label: "X / Twitter",
         action: () => {
           window.open(
@@ -112,11 +205,10 @@
             "_blank",
             "noopener,noreferrer"
           );
-          menu.remove();
+          closeShareSheet();
         },
       },
       {
-        id: "fb",
         label: "Facebook",
         action: () => {
           window.open(
@@ -124,27 +216,31 @@
             "_blank",
             "noopener,noreferrer"
           );
-          menu.remove();
+          closeShareSheet();
         },
       },
       {
-        id: "copy",
-        label: "Copy link",
+        label: "Copy bonus link",
         action: async () => {
           try {
             await navigator.clipboard.writeText(`${text}\n${pageUrl}`);
-            flashMenu(menu, "Copied!");
+            setStatus("Link copied!");
+            setTimeout(closeShareSheet, 900);
           } catch (_) {
-            flashMenu(menu, "Could not copy");
+            setStatus("Could not copy link");
           }
         },
+      },
+      {
+        label: "Cancel",
+        action: () => closeShareSheet(),
       },
     ];
 
     items.forEach((item) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "share-menu-item";
+      b.className = "share-sheet-item" + (item.primary ? " share-sheet-item-primary" : "");
       b.textContent = item.label;
       if (item.hint) {
         const hint = document.createElement("span");
@@ -158,34 +254,16 @@
         ev.stopPropagation();
         item.action();
       });
-      menu.appendChild(b);
+      sheet.appendChild(b);
     });
 
-    // position under button
-    const wrap = anchorBtn.parentElement || document.body;
-    wrap.style.position = wrap.style.position || "relative";
-    menu.style.position = "absolute";
-    menu.style.zIndex = "40";
-    menu.style.left = "0";
-    menu.style.top = "100%";
-    menu.style.marginTop = "8px";
-    wrap.appendChild(menu);
+    backdrop.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      closeShareSheet();
+    });
 
-    const closer = (ev) => {
-      if (!menu.contains(ev.target) && ev.target !== anchorBtn) {
-        menu.remove();
-        document.removeEventListener("click", closer, true);
-      }
-    };
-    setTimeout(() => document.addEventListener("click", closer, true), 0);
-  }
-
-  function flashMenu(menu, msg) {
-    const note = document.createElement("div");
-    note.className = "share-menu-flash";
-    note.textContent = msg;
-    menu.appendChild(note);
-    setTimeout(() => menu.remove(), 1400);
+    document.body.appendChild(backdrop);
+    document.body.appendChild(sheet);
   }
 
   function createShareButton(mediaUrl, label) {
@@ -196,6 +274,7 @@
     btn.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
+      if (typeof ev.stopImmediatePropagation === "function") ev.stopImmediatePropagation();
       openShareMenu(btn, { mediaUrl, label });
     });
     return btn;
