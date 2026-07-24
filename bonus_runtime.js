@@ -186,10 +186,11 @@
       /boomerang.*\.(mp4|webm|mov)$/i
     );
 
+    // Prefer gif.mp4 for reliable browser playback; large animated GIFs often fail to decode.
     const gifPath = preferMatch(
       uniqueFiles,
-      /gif\.(gif|mp4|webm)$/i,
-      /gif.*\.(gif|mp4|webm)$/i
+      /(?:^|\/)gif\.(mp4|webm)$/i,
+      /(?:^|\/)gif\.gif$/i
     );
 
     const sessionVideoPath = preferMatch(

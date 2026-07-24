@@ -35,6 +35,24 @@
       padding: 28px 16px 56px;
     }
 
+    /* Same logo treatment as homepage hero */
+    .bonus-brand-top {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 4px 0 14px;
+      padding: 4px 12px 0;
+    }
+
+    .bonus-brand-top .hero-logo {
+      width: min(280px, 70vw);
+      max-width: 70vw;
+      height: auto;
+      margin: 0;
+      display: block;
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+    }
+
     .bonus-head {
       text-align: center;
       margin-bottom: 26px;
@@ -412,6 +430,14 @@ button {
 <body>
   <div class="bonus-shell">
     <div id="flash" hidden></div>
+
+    <div class="bonus-brand-top">
+      <img
+        class="hero-logo"
+        src="assets/img/instapic_logo.png"
+        alt="Instapic logo"
+      >
+    </div>
 
     <nav class="bonus-nav" aria-label="Bonus page navigation">
       <a class="bonus-nav-primary" href="index.html">← Back to start</a>
