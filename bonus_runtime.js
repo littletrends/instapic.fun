@@ -372,6 +372,22 @@
     return firstByRegex(paths, primary) || firstByRegex(paths, secondary || /$a/);
   }
 
+  function wireEventPortalReturn() {
+    // Host arrived from event.html?code=…&from=event&pin=…
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("from") !== "event") return;
+      const pin = (params.get("pin") || "").trim();
+      const href = pin
+        ? `event.html?pin=${encodeURIComponent(pin)}`
+        : "event.html";
+      document.querySelectorAll("#bonus-back-event, .bonus-back-event-foot").forEach((a) => {
+        a.hidden = false;
+        a.href = href;
+      });
+    } catch (_) {}
+  }
+
   async function init() {
     const core = window.InstapicCore;
     if (!core) {
@@ -379,6 +395,8 @@
       setStatus("Bonus page core not loaded.");
       return;
     }
+
+    wireEventPortalReturn();
 
     const code = (core.getCodeFromUrl() || "").trim();
     if (!code) {

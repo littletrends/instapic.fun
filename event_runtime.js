@@ -652,7 +652,14 @@
     if (openBonus) {
       openBonus.disabled = !session.ticket_code;
       openBonus.onclick = () => {
-        window.open(`bonus.html?code=${encodeURIComponent(session.ticket_code)}`, "_blank");
+        // Same session folder the guest uses — pass pin so bonus page can return here
+        const pin = portalState?.pin || "";
+        const q = new URLSearchParams({
+          code: session.ticket_code,
+          from: "event",
+        });
+        if (pin) q.set("pin", pin);
+        window.location.href = `bonus.html?${q.toString()}`;
       };
     }
   }
