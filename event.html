@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Private Event Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+  <style>
+    body[data-page="event"] {
+      min-height: 100vh;
+    }
+
+    body[data-page="event"] .event-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+
+    body[data-page="event"] .event-gate,
+    body[data-page="event"] .event-portal {
+      background: rgba(10, 10, 20, 0.88);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 22px;
+      padding: 1.35rem 1.25rem 1.5rem;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.35);
+    }
+
+    body[data-page="event"] .event-brand-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    body[data-page="event"] .event-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
+      line-height: 1.05;
+      background: linear-gradient(90deg, #ff4fa0 0%, #ff6f8f 45%, #ffb35c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+    }
+
+    body[data-page="event"] .event-meta {
+      color: rgba(255,255,255,0.75);
+      font-size: 0.95rem;
+      margin: 0.35rem 0 0;
+    }
+
+    body[data-page="event"] .template-thumb {
+      width: min(140px, 32vw);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      display: block;
+      background: #0b1220;
+    }
+
+    body[data-page="event"] .event-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 800px) {
+      body[data-page="event"] .event-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body[data-page="event"] .strip-roll-panel,
+    body[data-page="event"] .session-side-panel,
+    body[data-page="event"] .collage-drop-panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      padding: 0.9rem;
+    }
+
+    body[data-page="event"] .panel-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin: 0 0 0.65rem;
+    }
+
+    body[data-page="event"] .strip-roll {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding: 0.35rem 0.15rem 0.6rem;
+      scroll-snap-type: x mandatory;
+      min-height: 220px;
+      align-items: stretch;
+    }
+
+    body[data-page="event"] .strip-card {
+      flex: 0 0 auto;
+      width: 120px;
+      scroll-snap-align: start;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.25);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    body[data-page="event"] .strip-card:hover,
+    body[data-page="event"] .strip-card.is-selected {
+      border-color: rgba(255, 120, 200, 0.7);
+      transform: translateY(-2px);
+    }
+
+    body[data-page="event"] .strip-card img {
+      display: block;
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: repeating-conic-gradient(#222 0% 25%, #1a1a1a 0% 50%) 50% / 16px 16px;
+    }
+
+    body[data-page="event"] .strip-card .strip-code {
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 0.4rem 0.25rem;
+      color: #fff;
+      letter-spacing: 0.06em;
+    }
+
+    body[data-page="event"] .strip-card .strip-star {
+      color: #ffb35c;
+      font-size: 0.7rem;
+    }
+
+    body[data-page="event"] .strip-empty {
+      color: rgba(255,255,255,0.55);
+      padding: 2rem 1rem;
+      text-align: center;
+      width: 100%;
+    }
+
+    body[data-page="event"] .session-side-panel select,
+    body[data-page="event"] .event-gate input {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      padding: 0.75rem 0.85rem;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
+    body[data-page="event"] .session-side-panel select {
+      letter-spacing: 0.04em;
+      text-align: left;
+      margin-bottom: 0.75rem;
+    }
+
+    body[data-page="event"] .session-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    body[data-page="event"] .session-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.55rem 0.45rem;
+      border-radius: 10px;
+      cursor: grab;
+      border: 1px solid transparent;
+      color: rgba(255,255,255,0.9);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.08em;
+    }
+
+    body[data-page="event"] .session-list li:hover,
+    body[data-page="event"] .session-list li.is-selected {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    body[data-page="event"] .session-list li.dragging {
+      opacity: 0.55;
+    }
+
+    body[data-page="event"] .collage-drop-panel {
+      margin-top: 1rem;
+      min-height: 160px;
+    }
+
+    body[data-page="event"] .drop-zone {
+      border: 1.5px dashed rgba(255,255,255,0.22);
+      border-radius: 16px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: rgba(255,255,255,0.65);
+      padding: 1rem;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    body[data-page="event"] .drop-zone.is-over {
+      border-color: rgba(255, 120, 200, 0.75);
+      background: rgba(255, 80, 150, 0.08);
+    }
+
+    body[data-page="event"] .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    body[data-page="event"] .viewer-media {
+      width: 100%;
+      border-radius: 14px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,0.1);
+      max-height: 420px;
+      object-fit: contain;
+    }
+
+    body[data-page="event"] .motion-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 640px) {
+      body[data-page="event"] .motion-pair {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body[data-page="event"] .viewer-placeholder {
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      padding: 1.5rem 0.5rem;
+    }
+
+    body[data-page="event"] .gate-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      align-items: center;
+    }
+
+    body[data-page="event"] .gate-actions .btn {
+      min-width: 200px;
+    }
+
+    body[data-page="event"] .host-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    body[data-page="event"] .host-tools .btn {
+      font-size: 0.9rem;
+      padding: 0.55rem 0.9rem;
+    }
+
+    body[data-page="event"] #event-status {
+      margin-top: 0.75rem;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body class="page" data-page="event">
+  <main class="event-shell">
+    <div id="flash" hidden></div>
+
+    <!-- PIN GATE -->
+    <section id="event-gate" class="event-gate">
+      <div class="bonus-kicker">Private Event Portal</div>
+      <h1 class="event-title">Host unlock</h1>
+      <p class="hero-text hero-text-wide">
+        Enter your event PIN to open the full gallery for this private event.
+        Guests with a 6-digit session code should use <a href="session.html" class="secondary-link">session entry</a> instead.
+      </p>
+
+      <form id="event-pin-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem; max-width:360px; margin-left:auto; margin-right:auto;">
+        <label for="event_pin" class="code-label">Event host PIN</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="text"
+            id="event_pin"
+            name="event_pin"
+            inputmode="numeric"
+            pattern="[0-9]{4,6}"
+            maxlength="6"
+            placeholder="4–6 digit PIN"
+            required
+            autocomplete="one-time-code"
+          >
+          <button type="submit" class="btn">Open event portal ✨</button>
+        </div>
+        <p class="code-hint">This is the host PIN (not a guest 6-digit session code).</p>
+      </form>
+
+      <p id="event-status" class="muted" style="text-align:center;"></p>
+
+      <div class="hero-links hero-links-compact" style="text-align:center; margin-top:1.25rem;">
+        <a href="session.html" class="secondary-link">I have a session code</a>
+        ·
+        <a href="index.html" class="secondary-link">Back to start</a>
+      </div>
+    </section>
+
+    <!-- PORTAL (after PIN) -->
+    <section id="event-portal" class="event-portal" hidden>
+      <div class="event-brand-row">
+        <div>
+          <div class="bonus-kicker">Private Event</div>
+          <h1 id="event-name" class="event-title">Event</h1>
+          <p id="event-meta" class="event-meta"></p>
+        </div>
+        <div>
+          <img
+            id="event-template-thumb"
+            class="template-thumb"
+            src="assets/img/event_templates/dual_4up_scifi_plate.jpg"
+            alt="Event strip plate template"
+          >
+        </div>
+      </div>
+
+      <div class="event-layout">
+        <div class="strip-roll-panel">
+          <p class="panel-label">Photostrip roll · stills only</p>
+          <div id="strip-roll" class="strip-roll" aria-live="polite">
+            <div class="strip-empty">No sessions yet — strips appear here as they finish.</div>
+          </div>
+          <div class="host-tools">
+            <button type="button" id="btn-refresh" class="btn">Refresh sessions</button>
+            <button type="button" id="btn-lock" class="btn" style="background:rgba(255,255,255,0.12);color:#fff;">Lock portal</button>
+          </div>
+        </div>
+
+        <aside class="session-side-panel">
+          <p class="panel-label">Session codes</p>
+          <select id="session-select" aria-label="Choose a session code">
+            <option value="">Select a session…</option>
+          </select>
+          <ul id="session-list" class="session-list"></ul>
+          <p class="muted" style="font-size:0.85rem; margin:0.75rem 0 0;">
+            Tap a code or drag it into the collage box. One session at a time.
+          </p>
+        </aside>
+      </div>
+
+      <div class="collage-drop-panel">
+        <p class="panel-label">Collage viewer · drop or select one session</p>
+        <div id="drop-zone" class="drop-zone">
+          Drop a session code here — or pick from the list
+        </div>
+
+        <div class="viewer-grid">
+          <div>
+            <p class="panel-label">Collage <span class="muted">(Instapic brand + event watermark later)</span></p>
+            <div id="collage-slot">
+              <div class="viewer-placeholder">No session selected</div>
+            </div>
+          </div>
+          <div class="motion-pair">
+            <div>
+              <p class="panel-label">GIF</p>
+              <div id="gif-slot">
+                <div class="viewer-placeholder">—</div>
+              </div>
+            </div>
+            <div>
+              <p class="panel-label">Boomerang</p>
+              <div id="boomerang-slot">
+                <div class="viewer-placeholder">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p id="portal-status" class="muted" style="margin-top:1rem; text-align:center;"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="site_core.js?v=20260725-event"></script>
+  <script src="branding.js"></script>
+  <script src="event_runtime.js?v=20260725-p0"></script>
+</body>
+</html>
