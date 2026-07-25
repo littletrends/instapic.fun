@@ -546,7 +546,38 @@ body {
     text-align: center;
   }
 }
-EOF
+
+/* --------------------------------------------------
+   Shared site chrome (uniform bottom nav + back)
+   -------------------------------------------------- */
+
+.site-bottom-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.55rem;
+  text-align: center;
+  margin: 2rem auto 0.5rem;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.site-bottom-nav .nav-dot {
+  opacity: 0.45;
+  user-select: none;
+}
+
+.page-back,
+.session-bottom {
+  text-align: center;
+  margin: 0.9rem auto 0.25rem;
+}
+
+.page-back .btn,
+.session-bottom .btn {
+  display: inline-flex;
+}
 
 /* --------------------------------------------------
    Info / explainer pages
