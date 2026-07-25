@@ -301,7 +301,6 @@
     setStatus("Processing card payment...");
 
     const tokenResult = await card.tokenize();
-    console.log("Card tokenize result", tokenResult);
 
     if (tokenResult.status !== "OK") {
       const msg =
@@ -330,7 +329,6 @@
     setStatus("Processing Apple Pay...");
 
     const tokenResult = await applePay.tokenize();
-    console.log("Apple Pay tokenize result", tokenResult);
 
     if (tokenResult.status !== "OK") {
       const msg =
@@ -359,7 +357,6 @@
     setStatus("Processing Google Pay...");
 
     const tokenResult = await googlePay.tokenize();
-    console.log("Google Pay tokenize result", tokenResult);
 
     if (tokenResult.status !== "OK") {
       const msg =
