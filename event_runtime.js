@@ -116,14 +116,19 @@
     const el = qs("#event-countdown");
     if (!el) return;
     const t = portalTimer || {};
-    if (t.state === "finished" || (t.ends_at_unix && Date.now() / 1000 >= t.ends_at_unix)) {
+    const ends = t.ends_at_unix;
+    const started = t.started_at_unix;
+
+    if (t.state === "finished") {
       el.textContent = "Event finished";
       el.classList.add("is-finished");
       stopCountdown();
       return;
     }
-    if (t.state === "running" && t.ends_at_unix) {
-      const left = Math.max(0, t.ends_at_unix - Date.now() / 1000);
+
+    // Only tick when booth Activate wrote a real running window (not a website-only demo)
+    if (t.state === "running" && ends && started && ends > started) {
+      const left = Math.max(0, ends - Date.now() / 1000);
       el.classList.remove("is-finished");
       if (left <= 0) {
         el.textContent = "Event finished";
@@ -131,20 +136,31 @@
         stopCountdown();
         return;
       }
-      el.textContent = formatCountdown(left);
+      el.textContent = "Live on booth · " + formatCountdown(left);
       return;
     }
-    // Not started on booth yet — show planned duration from admin/MotherPC
-    const mins = t.duration_minutes || portalState?.event?.duration_minutes || portalState?.event?.hours * 60;
+
+    // Kiosk still in regular session mode
+    const mins =
+      t.duration_minutes ||
+      portalState?.event?.duration_minutes ||
+      (portalState?.event?.hours ? portalState.event.hours * 60 : null);
     el.classList.remove("is-finished");
-    if (mins) el.textContent = `${mins} min planned · start event on booth to countdown`;
-    else el.textContent = "Timer starts when event is Activated on the booth";
+    if (mins) {
+      el.textContent =
+        mins + " min planned · booth not in event mode — Activate in admin to start countdown";
+    } else {
+      el.textContent = "Timer starts when you Activate this event on the booth";
+    }
   }
 
   function startCountdown() {
     stopCountdown();
     paintCountdown();
-    timerHandle = window.setInterval(paintCountdown, 1000);
+    // Only poll every second while the booth event is actually running
+    if (portalTimer && portalTimer.state === "running") {
+      timerHandle = window.setInterval(paintCountdown, 1000);
+    }
   }
 
   function renderHeader(event) {
