@@ -568,6 +568,16 @@ body {
   user-select: none;
 }
 
+.site-bottom-note {
+  text-align: center;
+  margin: 0.4rem auto 0;
+  max-width: 28rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* Uniform “Back to start” under page nav (and under primary actions where used) */
 .page-back,
 .session-bottom {
   text-align: center;
@@ -575,8 +585,15 @@ body {
 }
 
 .page-back .btn,
-.session-bottom .btn {
+.session-bottom .btn,
+a.page-back-btn.btn {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  text-decoration: none;
 }
 
 /* --------------------------------------------------

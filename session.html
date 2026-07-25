@@ -102,23 +102,56 @@
       font-weight: 600;
     }
 
-    body[data-page="session"] .hero-links {
-      line-height: 1.55;
-      text-align: center;
-      margin-top: 1.5rem;
+    body[data-page="session"] .session-code-row {
+      justify-content: center;
+      max-width: 360px;
+      margin: 0 auto;
     }
 
-    body[data-page="session"] .session-bottom {
+    body[data-page="session"] .session-code-row input {
+      flex: 1 1 100%;
+      width: 100%;
       text-align: center;
-      margin-top: 1.4rem;
     }
 
-    body[data-page="session"] .session-bottom .btn,
-    body[data-page="session"] #session-form .btn {
-      display: inline-block;
-      margin-left: auto;
-      margin-right: auto;
+    body[data-page="session"] .session-primary-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin: 1rem auto 0.35rem;
+      width: 100%;
+    }
+
+    body[data-page="session"] .session-primary-actions .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 200px;
       text-align: center;
+      margin: 0;
+    }
+
+    body[data-page="session"] .session-primary-actions .page-back-btn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    body[data-page="session"] .site-bottom-nav,
+    body[data-page="session"] .site-bottom-note,
+    body[data-page="session"] .code-hint,
+    body[data-page="session"] .code-label {
+      text-align: center;
+    }
+
+    body[data-page="session"] .site-bottom-note {
+      display: block;
+      margin: 0.45rem auto 0;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.72);
+      max-width: 28rem;
+      line-height: 1.35;
     }
 
     @media (max-width: 640px) {
@@ -127,10 +160,6 @@
       }
 
       body[data-page="session"] .hero-text {
-        font-size: 0.98rem;
-      }
-
-      body[data-page="session"] .hero-links {
         font-size: 0.98rem;
       }
     }
@@ -154,7 +183,7 @@
     <form id="session-form" class="code-card code-card-center" novalidate autocomplete="off">
       <label for="ticket_code" class="code-label">6-digit booth code</label>
 
-      <div class="code-input-row code-input-row-stack">
+      <div class="code-input-row code-input-row-stack session-code-row">
         <input
           type="text"
           id="ticket_code"
@@ -170,7 +199,11 @@
           spellcheck="false"
           enterkeyhint="done"
         >
+      </div>
+
+      <div class="session-primary-actions">
         <button type="submit" class="btn">Open My Session</button>
+        <a class="btn page-back-btn" href="index.html">Back to start</a>
       </div>
 
       <p id="processing" class="muted" hidden>Checking your code…</p>
@@ -220,11 +253,8 @@
       <span class="nav-dot" aria-hidden="true">·</span>
       <a href="event.html" class="secondary-link">Private event</a>
     </nav>
-    <p class="muted" style="text-align:center;margin:0.35rem 0 0;font-size:0.9rem;">
+    <p class="site-bottom-note">
       Hosts: use Private event above to unlock with your event PIN
-    </p>
-    <p class="page-back">
-      <a class="btn" href="index.html">Back to start</a>
     </p>
   </main>
 
