@@ -1,0 +1,32 @@
+# Local Python environments and generated caches
+venv/
+.venv/
+__pycache__/
+*.py
+*.py[cod]
+
+# Local databases, runtime logs, and guest records
+*.db
+*.sqlite
+*.sqlite3
+*.log
+data/
+
+# Local server/configuration material not required by GitHub Pages
+*.csr
+config_settings.yml
+config_packages.yml
+
+# Retired server-side website copies
+_retired_guest_verify/
+templates_old_flask_shell/
+LEGACY_static_site/
+README_BRIDGE_STATUS_*.txt
+
+# Stray local diagnostic output files
+/os
+/yaml
+
+# Local operating-system metadata
+.DS_Store
+._*
