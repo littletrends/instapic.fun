@@ -372,19 +372,49 @@
     return firstByRegex(paths, primary) || firstByRegex(paths, secondary || /$a/);
   }
 
+  const EVENT_HOST_STORAGE_KEY = "instapic_event_portal_v1";
+
+  function loadHostPortalSession() {
+    try {
+      const raw = sessionStorage.getItem(EVENT_HOST_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function isHostLoggedIn(pin) {
+    const clean = String(pin || "").replace(/\D/g, "");
+    if (!/^\d{3,6}$/.test(clean)) return false;
+    const saved = loadHostPortalSession();
+    if (!saved || !saved.pin) return false;
+    return String(saved.pin).replace(/\D/g, "") === clean;
+  }
+
   function wireEventPortalReturn() {
-    // Host arrived from event.html?code=…&from=event&pin=…
+    // Back to event portal: hosts only, and only while still logged in
+    // (sessionStorage set by event.html unlock; cleared on Lock / log out).
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get("from") !== "event") return;
-      const pin = (params.get("pin") || "").trim();
-      const href = pin
-        ? `event.html?pin=${encodeURIComponent(pin)}`
-        : "event.html";
+      const pin = (params.get("pin") || "").replace(/\D/g, "");
+      if (!pin || !isHostLoggedIn(pin)) {
+        document.querySelectorAll("#bonus-back-event, .bonus-back-event-foot").forEach((a) => {
+          a.hidden = true;
+        });
+        return;
+      }
+      const href = `event.html?pin=${encodeURIComponent(pin)}`;
       document.querySelectorAll("#bonus-back-event, .bonus-back-event-foot").forEach((a) => {
         a.hidden = false;
         a.href = href;
       });
+      // Expose for host edit-lock tools on bonus_patch.js
+      window.__instapicHostContext = {
+        fromEvent: true,
+        pin,
+        loggedIn: true,
+      };
     } catch (_) {}
   }
 
@@ -410,6 +440,16 @@
     try {
       data = await core.getBonus(code);
       console.log("[bonus] getBonus data", data);
+      // Surface lock/event flags for host tools (bonus_patch.js)
+      window.__instapicBonusMeta = {
+        ticket_code: data.ticket_code || code,
+        event_code: data.event_code || "",
+        is_event: !!data.is_event,
+        guest_edits_locked: !!data.guest_edits_locked,
+      };
+      try {
+        document.dispatchEvent(new CustomEvent("instapic:bonus-meta", { detail: window.__instapicBonusMeta }));
+      } catch (_) {}
     } catch (err) {
       console.error("[bonus] load failed", err);
       setStatus(`Could not load your bonus session: ${err.message}`);

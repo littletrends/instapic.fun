@@ -140,17 +140,22 @@
       return;
     }
 
-    // Kiosk still in regular session mode
+    // Kiosk not activated — no live countdown (do not tick a fake timer)
+    // Duration is booked in MINUTES (admin field). 240 = 4 hours.
     const mins =
       t.duration_minutes ||
       portalState?.event?.duration_minutes ||
       (portalState?.event?.hours ? portalState.event.hours * 60 : null);
     el.classList.remove("is-finished");
     if (mins) {
+      const m = Math.max(0, Math.floor(Number(mins) || 0));
+      const h = Math.floor(m / 60);
+      const r = m % 60;
+      const booked = h > 0 ? (r ? `${h}h ${r}m` : `${h}h`) : `${m} min`;
       el.textContent =
-        mins + " min planned · booth not in event mode — Activate in admin to start countdown";
+        "Not live · " + booked + " booked · Activate on booth to start the live countdown";
     } else {
-      el.textContent = "Timer starts when you Activate this event on the booth";
+      el.textContent = "Not live · Activate this event on the booth to start the timer";
     }
   }
 
@@ -382,24 +387,42 @@
 
     mediaHost.innerHTML = "";
     const kind = opts.kind || "image";
+    const label = opts.label || "";
+    const isStrip = !!opts.isStrip || /strip/i.test(label);
+
+    if (inner) {
+      // Portrait products only — is-wide forces a fat box and squashes on iPhone/Safari
+      inner.classList.remove("is-wide");
+      inner.classList.toggle("is-strip", isStrip);
+    }
+
     if (kind === "video") {
-      if (inner) inner.classList.add("is-wide");
       const v = document.createElement("video");
       v.src = opts.src;
       v.controls = true;
       v.playsInline = true;
+      v.setAttribute("playsinline", "");
+      v.setAttribute("webkit-playsinline", "");
+      v.preload = "metadata";
       v.autoplay = true;
       v.loop = !!opts.loop;
       v.muted = opts.muted !== false;
+      // Inline styles as belt-and-braces against cached CSS
+      v.style.cssText =
+        "width:auto!important;height:auto!important;max-width:100%!important;" +
+        "max-height:min(78vh,88dvh)!important;object-fit:contain!important;transform:none!important;";
       mediaHost.appendChild(v);
     } else {
-      if (inner) inner.classList.remove("is-wide");
       const img = document.createElement("img");
       img.src = opts.src;
-      img.alt = opts.label || "Media";
+      img.alt = label || "Media";
+      img.decoding = "async";
+      img.style.cssText =
+        "width:auto!important;height:auto!important;max-width:100%!important;" +
+        "max-height:min(78vh,88dvh)!important;object-fit:contain!important;transform:none!important;";
       mediaHost.appendChild(img);
     }
-    if (code) code.textContent = opts.label || "";
+    if (code) code.textContent = label;
     box.hidden = false;
   }
 
@@ -409,6 +432,7 @@
       kind: "image",
       src: mediaUrl(session.strip_url),
       label: "Strip " + session.ticket_code + (session.starred ? " ★" : ""),
+      isStrip: true,
     });
   }
 
@@ -474,9 +498,12 @@
     v.className = "viewer-media";
     v.src = url;
     v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("webkit-playsinline", "");
     v.muted = true;
     v.loop = !!loop;
-    v.preload = "metadata";
+    // metadata-only until play — autoplay of 3 videos was killing iPhone load
+    v.preload = autoplay ? "auto" : "metadata";
     // no native controls on the picture — bar sits underneath
     v.controls = false;
     fresh.appendChild(v);
@@ -578,7 +605,7 @@
       drop.classList.add("is-selected");
     }
 
-    // Full-width stack, auto-start muted
+    // Only collage autoplays. GIF + boomerang wait for Play — 3× autoplay was slow on phone/desktop.
     if (session.collage_url) {
       mountVideo(
         "#collage-slot",
@@ -601,7 +628,7 @@
           const url = mediaUrl(session.gif_url);
           const fresh = slot.cloneNode(false);
           slot.parentNode.replaceChild(fresh, slot);
-          fresh.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}">`;
+          fresh.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}" loading="lazy">`;
           fresh.addEventListener("click", () => openMediaLightbox({
             kind: "image",
             src: url,
@@ -628,7 +655,7 @@
           mediaUrl(session.gif_url),
           "GIF " + session.ticket_code,
           true,
-          true
+          false
         );
       }
     } else {
@@ -642,7 +669,7 @@
         mediaUrl(session.boomerang_url),
         "Boomerang " + session.ticket_code,
         true,
-        true
+        false
       );
     } else {
       setSlot("#boomerang-slot", '<div class="viewer-placeholder">Boomerang not ready</div>');

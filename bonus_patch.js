@@ -16,6 +16,9 @@
   };
 
   let freezeOffsets = [0, 0, 0, 0];
+  let guestEditsLocked = false;
+  let hostCanManageLock = false;
+  let hostPin = "";
 
   function qs(sel, root = document) {
     return root.querySelector(sel);
@@ -153,6 +156,10 @@
   }
 
   async function runRegenerate(type, btn) {
+    if (guestEditsLocked) {
+      notifyLocked();
+      return false;
+    }
     const core = window.InstapicCore;
     const code = core?.getCodeFromUrl?.();
     if (!code || !core?.API_BASE) return false;
@@ -173,6 +180,11 @@
       try { data = await res.json(); } catch (_) {}
 
       if (!res.ok || data.ok === false) {
+        if (data.error === "guest_edits_locked") {
+          guestEditsLocked = true;
+          applyEditLockUi();
+          notifyLocked();
+        }
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
@@ -183,6 +195,7 @@
         setTimeout(() => {
           btn.textContent = oldLabel;
           btn.disabled = false;
+          applyEditLockUi();
         }, 1200);
       }
       return true;
@@ -193,6 +206,7 @@
         setTimeout(() => {
           btn.textContent = oldLabel;
           btn.disabled = false;
+          applyEditLockUi();
         }, 1500);
       }
       return false;
@@ -257,7 +271,151 @@
     });
   }
 
+  function notifyLocked() {
+    const msg = "Host has locked this session — edits are off until they unlock.";
+    if (window.InstapicCore?.showFlash) {
+      window.InstapicCore.showFlash(msg, "error");
+    } else {
+      console.warn(msg);
+    }
+  }
+
+  function applyEditLockUi() {
+    const locked = !!guestEditsLocked;
+    document.body.classList.toggle("bonus-edits-locked", locked);
+
+    qsa(".freeze-adjust-row button, #apply-freeze-btn, .regen-btn, #shuffle-all-btn").forEach((btn) => {
+      if (!btn) return;
+      btn.disabled = locked;
+      btn.style.opacity = locked ? "0.45" : "";
+      btn.title = locked ? "Edits locked by host" : "";
+    });
+
+    const banner = qs("#bonus-edit-lock-banner");
+    if (banner) {
+      banner.hidden = !locked;
+      banner.textContent = locked
+        ? "🔒 Host locked edits — view & download only until unlocked."
+        : "";
+    }
+
+    const hostBtn = qs("#host-edit-lock-btn");
+    if (hostBtn) {
+      hostBtn.hidden = !hostCanManageLock;
+      hostBtn.textContent = locked ? "🔓 Unlock guest edits" : "🔒 Lock guest edits";
+    }
+  }
+
+  function refreshHostLockContext() {
+    const host = window.__instapicHostContext || {};
+    const meta = window.__instapicBonusMeta || {};
+    hostPin = String(host.pin || "").replace(/\D/g, "");
+    hostCanManageLock = !!(host.loggedIn && hostPin && meta.is_event);
+    guestEditsLocked = !!meta.guest_edits_locked;
+    applyEditLockUi();
+  }
+
+  async function setGuestEditLock(locked) {
+    const core = window.InstapicCore;
+    const code = core?.getCodeFromUrl?.();
+    if (!code || !core?.API_BASE || !hostPin) return false;
+
+    const res = await fetch(
+      `${core.API_BASE}/api/session-edit-lock/${encodeURIComponent(code)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locked: !!locked, pin: hostPin }),
+      }
+    );
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.message || data.error || `HTTP ${res.status}`);
+    }
+    guestEditsLocked = !!data.guest_edits_locked;
+    if (window.__instapicBonusMeta) {
+      window.__instapicBonusMeta.guest_edits_locked = guestEditsLocked;
+    }
+    applyEditLockUi();
+    return true;
+  }
+
+  function ensureHostLockControls() {
+    if (qs("#host-edit-lock-wrap")) {
+      refreshHostLockContext();
+      return;
+    }
+
+    const head = qs(".bonus-head");
+    if (!head) return;
+
+    const wrap = document.createElement("div");
+    wrap.id = "host-edit-lock-wrap";
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "center";
+    wrap.style.gap = "8px";
+    wrap.style.marginTop = "12px";
+
+    const banner = document.createElement("div");
+    banner.id = "bonus-edit-lock-banner";
+    banner.hidden = true;
+    banner.style.padding = "8px 12px";
+    banner.style.borderRadius = "10px";
+    banner.style.background = "rgba(255,80,120,0.18)";
+    banner.style.border = "1px solid rgba(255,120,160,0.35)";
+    banner.style.color = "#ffd0e0";
+    banner.style.fontSize = "0.9rem";
+    banner.style.textAlign = "center";
+    banner.style.maxWidth = "28rem";
+
+    const btn = document.createElement("button");
+    btn.id = "host-edit-lock-btn";
+    btn.type = "button";
+    btn.className = "btn alt";
+    btn.hidden = true;
+    btn.style.minWidth = "180px";
+    btn.addEventListener("click", async () => {
+      const next = !guestEditsLocked;
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = next ? "Locking…" : "Unlocking…";
+      try {
+        await setGuestEditLock(next);
+        if (window.InstapicCore?.showFlash) {
+          window.InstapicCore.showFlash(
+            next ? "Guest edits locked for this session." : "Guest edits unlocked.",
+            "ok"
+          );
+        }
+      } catch (err) {
+        console.error("edit lock failed", err);
+        btn.textContent = "Failed";
+        if (window.InstapicCore?.showFlash) {
+          window.InstapicCore.showFlash(err.message || "Could not change lock", "error");
+        }
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.disabled = false;
+          applyEditLockUi();
+        }, 1400);
+        return;
+      }
+      btn.disabled = false;
+    });
+
+    wrap.appendChild(banner);
+    wrap.appendChild(btn);
+    head.appendChild(wrap);
+    refreshHostLockContext();
+  }
+
   async function previewFreeze(index) {
+    if (guestEditsLocked) {
+      notifyLocked();
+      return;
+    }
     const core = window.InstapicCore;
     const code = core?.getCodeFromUrl?.();
     if (!code || !core?.API_BASE) return;
@@ -276,8 +434,16 @@
       let data = {};
       try { data = await res.json(); } catch (_) {}
       if (!res.ok || data.ok === false || !data.url) {
+        if (data.error === "guest_edits_locked") {
+          guestEditsLocked = true;
+          applyEditLockUi();
+          notifyLocked();
+          return;
+        }
         throw new Error(data.error || `HTTP ${res.status}`);
       }
+      // Keep orientation as returned — never CSS flip/rotate portrait freezes
+      img.style.transform = "none";
       img.src = cacheBust(`${core.API_BASE}${data.url}`);
     } catch (err) {
       console.error("preview freeze failed", index + 1, err);
@@ -285,6 +451,10 @@
   }
 
   async function bestNearbyFreeze(index, btn) {
+    if (guestEditsLocked) {
+      notifyLocked();
+      return;
+    }
     const core = window.InstapicCore;
     const code = core?.getCodeFromUrl?.();
     if (!code || !core?.API_BASE) return;
@@ -302,6 +472,12 @@
       try { data = await res.json(); } catch (_) {}
 
       if (!res.ok || data.ok === false || !data.url) {
+        if (data.error === "guest_edits_locked") {
+          guestEditsLocked = true;
+          applyEditLockUi();
+          notifyLocked();
+          throw new Error("guest_edits_locked");
+        }
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
@@ -311,6 +487,8 @@
       const card = qsa("#stills-grid .card")[index];
       const img = card ? qs("img", card) : null;
       if (img) {
+        // Portrait camera is permanent — never flip/rotate on replace
+        img.style.transform = "none";
         img.style.aspectRatio = "3 / 4";
         img.style.objectFit = "cover";
         img.src = cacheBust(`${core.API_BASE}${data.url}`);
@@ -320,13 +498,15 @@
       setTimeout(() => {
         btn.textContent = old;
         btn.disabled = false;
+        applyEditLockUi();
       }, 1200);
     } catch (err) {
       console.error("best nearby failed", index + 1, err);
-      btn.textContent = "Failed";
+      btn.textContent = err && err.message === "guest_edits_locked" ? "Locked" : "Failed";
       setTimeout(() => {
         btn.textContent = old;
         btn.disabled = false;
+        applyEditLockUi();
       }, 1400);
     }
   }
@@ -374,18 +554,21 @@
       magic.textContent = "✨ Best Nearby";
 
       back.addEventListener("click", async () => {
+        if (guestEditsLocked) { notifyLocked(); return; }
         freezeOffsets[idx] = Math.max(-2.5, (freezeOffsets[idx] || 0) - 0.2);
         updateFreezeOffsetLabels();
         await previewFreeze(idx);
       });
 
       fwd.addEventListener("click", async () => {
+        if (guestEditsLocked) { notifyLocked(); return; }
         freezeOffsets[idx] = Math.min(2.5, (freezeOffsets[idx] || 0) + 0.2);
         updateFreezeOffsetLabels();
         await previewFreeze(idx);
       });
 
       magic.addEventListener("click", async () => {
+        if (guestEditsLocked) { notifyLocked(); return; }
         await bestNearbyFreeze(idx, magic);
       });
 
@@ -416,6 +599,10 @@
     btn.textContent = COPY.applyFreezeChanges;
 
     btn.addEventListener("click", async () => {
+      if (guestEditsLocked) {
+        notifyLocked();
+        return;
+      }
       const core = window.InstapicCore;
       const code = core?.getCodeFromUrl?.();
       if (!code || !core?.API_BASE) return;
@@ -438,6 +625,11 @@
         try { data = await res.json(); } catch (_) {}
 
         if (!res.ok || data.ok === false) {
+          if (data.error === "guest_edits_locked") {
+            guestEditsLocked = true;
+            applyEditLockUi();
+            notifyLocked();
+          }
           throw new Error(data.error || `HTTP ${res.status}`);
         }
 
@@ -449,6 +641,7 @@
         setTimeout(() => {
           btn.textContent = old;
           btn.disabled = false;
+          applyEditLockUi();
         }, 1400);
       } catch (err) {
         console.error("freeze update failed", err);
@@ -456,6 +649,7 @@
         setTimeout(() => {
           btn.textContent = old;
           btn.disabled = false;
+          applyEditLockUi();
         }, 1600);
       }
     });
@@ -478,6 +672,8 @@
     addShuffleAllButton();
     addFreezeAdjustControls();
     addApplyFreezeChangesButton();
+    ensureHostLockControls();
+    applyEditLockUi();
   }
 
   function initPatch() {
@@ -486,7 +682,14 @@
     tightenFreezeButtonsOnMobile();
     polishCards();
     patchShareButtons();
+    ensureHostLockControls();
+    refreshHostLockContext();
   }
+
+  document.addEventListener("instapic:bonus-meta", () => {
+    ensureHostLockControls();
+    refreshHostLockContext();
+  });
 
   document.addEventListener("DOMContentLoaded", initPatch);
   window.addEventListener("load", initPatch);
@@ -494,4 +697,5 @@
   setTimeout(initPatch, 1600);
   setTimeout(injectButtons, 1200);
   setTimeout(patchShareButtons, 1800);
+  setTimeout(refreshHostLockContext, 2000);
 })();

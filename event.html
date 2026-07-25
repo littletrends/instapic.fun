@@ -358,28 +358,53 @@
 
     body[data-page="event"] .strip-lightbox-inner {
       position: relative;
-      max-width: min(520px, 94vw);
+      /* Default narrow so tall photostrips aren't forced wide (iOS squash) */
+      max-width: min(420px, 94vw);
       max-height: 92vh;
+      width: auto;
       background: #12121c;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.14);
       box-shadow: 0 24px 60px rgba(0,0,0,0.55);
       overflow: auto;
       padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
     }
 
     body[data-page="event"] .strip-lightbox-inner.is-wide {
       max-width: min(720px, 96vw);
     }
 
+    body[data-page="event"] .strip-lightbox-inner.is-strip {
+      max-width: min(380px, 92vw);
+    }
+
+    body[data-page="event"] #strip-lightbox-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0;
+    }
+
+    /* CRITICAL: never set width:100% + max-height on portrait media.
+       Safari/iOS will squash strips/videos (flat / "sideways" look). */
     body[data-page="event"] .strip-lightbox-inner img,
     body[data-page="event"] .strip-lightbox-inner video {
       display: block;
-      width: 100%;
-      height: auto;
-      max-height: 78vh;
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: min(78vh, 88dvh) !important;
+      object-fit: contain !important;
       border-radius: 12px;
       background: #000;
+      margin: 0 auto;
+      transform: none !important;
+      -webkit-transform: none !important;
     }
 
     body[data-page="event"] .strip-lightbox-code {
@@ -525,14 +550,19 @@
     }
 
     body[data-page="event"] .viewer-media {
-      width: 100%;
-      max-height: min(620px, 72vh);
-      object-fit: contain;
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: min(560px, 68vh) !important;
+      object-fit: contain !important;
       display: block;
+      margin: 0 auto;
       border: 0;
       border-radius: 12px;
       background: #000;
       pointer-events: none;
+      transform: none !important;
+      -webkit-transform: none !important;
     }
 
     body[data-page="event"] .media-controls {

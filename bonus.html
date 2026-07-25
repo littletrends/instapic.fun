@@ -200,11 +200,30 @@
       min-height: 620px;
     }
 
+    /* Preserve portrait aspect — NEVER width:100% + max-height together
+       (iOS Safari squashes strip/video → flat / "sideways" look). */
     .media-frame video,
     .media-frame img {
-      width: 100%;
-      height: auto;
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: min(70vh, 720px) !important;
+      object-fit: contain !important;
       display: block;
+      margin: 0 auto;
+      transform: none !important;
+      -webkit-transform: none !important;
+    }
+
+    .media-frame.hero video,
+    .media-frame.hero img {
+      max-height: min(78vh, 820px) !important;
+    }
+
+    /* Photostrip is tall/narrow — don't stretch it to the full card width */
+    #strip-frame img {
+      max-width: min(100%, 360px) !important;
+      max-height: min(78vh, 900px) !important;
     }
 
     .actions {
@@ -635,8 +654,8 @@ button {
 
   <script src="site_core.js"></script>
   <script src="branding.js"></script>
-  <script src="bonus_runtime.js?v=20260725-event-return"></script>
-  <script src="bonus_patch.js"></script>
+  <script src="bonus_runtime.js?v=20260725-host-lock"></script>
+  <script src="bonus_patch.js?v=20260725-host-lock"></script>
 
 <!-- INSTAPIC_TOUCH_FIX_START -->
 <script>
