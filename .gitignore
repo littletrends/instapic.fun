@@ -21,6 +21,7 @@ config_packages.yml
 _retired_guest_verify/
 templates_old_flask_shell/
 LEGACY_static_site/
+static/
 README_BRIDGE_STATUS_*.txt
 
 # Stray local diagnostic output files
