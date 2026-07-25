@@ -275,21 +275,127 @@
     }
   }
 
+  function openMediaLightbox(opts) {
+    const box = qs("#strip-lightbox");
+    const mediaHost = qs("#strip-lightbox-media");
+    const code = qs("#strip-lightbox-code");
+    const inner = qs("#strip-lightbox-inner");
+    if (!box || !mediaHost || !opts || !opts.src) return;
+
+    mediaHost.innerHTML = "";
+    const kind = opts.kind || "image";
+    if (kind === "video") {
+      if (inner) inner.classList.add("is-wide");
+      const v = document.createElement("video");
+      v.src = opts.src;
+      v.controls = true;
+      v.playsInline = true;
+      v.autoplay = true;
+      v.loop = !!opts.loop;
+      v.muted = opts.muted !== false;
+      mediaHost.appendChild(v);
+    } else {
+      if (inner) inner.classList.remove("is-wide");
+      const img = document.createElement("img");
+      img.src = opts.src;
+      img.alt = opts.label || "Media";
+      mediaHost.appendChild(img);
+    }
+    if (code) code.textContent = opts.label || "";
+    box.hidden = false;
+  }
+
   function openStripLightbox(session) {
     if (!session || !session.strip_url) return;
-    const box = qs("#strip-lightbox");
-    const img = qs("#strip-lightbox-img");
-    const code = qs("#strip-lightbox-code");
-    if (!box || !img) return;
-    img.src = mediaUrl(session.strip_url);
-    img.alt = "Photostrip " + session.ticket_code;
-    if (code) code.textContent = session.ticket_code + (session.starred ? " ★" : "");
-    box.hidden = false;
+    openMediaLightbox({
+      kind: "image",
+      src: mediaUrl(session.strip_url),
+      label: "Strip " + session.ticket_code + (session.starred ? " ★" : ""),
+    });
   }
 
   function closeStripLightbox() {
     const box = qs("#strip-lightbox");
+    const mediaHost = qs("#strip-lightbox-media");
+    if (mediaHost) {
+      mediaHost.querySelectorAll("video").forEach((v) => {
+        try { v.pause(); } catch (_) {}
+      });
+      mediaHost.innerHTML = "";
+    }
     if (box) box.hidden = true;
+  }
+
+  function wireMediaControls(videoEl, controlsEl, openOpts) {
+    if (!videoEl || !controlsEl) return;
+    controlsEl.hidden = false;
+    controlsEl.innerHTML = "";
+
+    const playBtn = document.createElement("button");
+    playBtn.type = "button";
+    playBtn.textContent = "Play";
+    playBtn.addEventListener("click", () => {
+      if (videoEl.paused) {
+        videoEl.play().catch(() => {});
+        playBtn.textContent = "Pause";
+      } else {
+        videoEl.pause();
+        playBtn.textContent = "Play";
+      }
+    });
+    videoEl.addEventListener("play", () => { playBtn.textContent = "Pause"; });
+    videoEl.addEventListener("pause", () => { playBtn.textContent = "Play"; });
+
+    const muteBtn = document.createElement("button");
+    muteBtn.type = "button";
+    muteBtn.textContent = videoEl.muted ? "Unmute" : "Mute";
+    muteBtn.addEventListener("click", () => {
+      videoEl.muted = !videoEl.muted;
+      muteBtn.textContent = videoEl.muted ? "Unmute" : "Mute";
+    });
+
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.textContent = "Open large";
+    openBtn.addEventListener("click", () => openMediaLightbox(openOpts));
+
+    controlsEl.appendChild(playBtn);
+    controlsEl.appendChild(muteBtn);
+    controlsEl.appendChild(openBtn);
+  }
+
+  function mountVideo(slotSel, controlsSel, url, openLabel, loop) {
+    const slot = qs(slotSel);
+    const controls = qs(controlsSel);
+    if (!slot) return null;
+    slot.innerHTML = "";
+    const v = document.createElement("video");
+    v.className = "viewer-media";
+    v.src = url;
+    v.playsInline = true;
+    v.muted = true;
+    v.loop = !!loop;
+    v.preload = "metadata";
+    // no native controls on the picture — bar sits underneath
+    v.controls = false;
+    slot.appendChild(v);
+    slot.addEventListener("click", () => {
+      openMediaLightbox({
+        kind: "video",
+        src: url,
+        label: openLabel,
+        loop: !!loop,
+        muted: true,
+      });
+    });
+    wireMediaControls(v, controls, {
+      kind: "video",
+      src: url,
+      label: openLabel,
+      loop: !!loop,
+      muted: false,
+    });
+    return v;
   }
 
   function wireCarouselControls() {
@@ -344,21 +450,38 @@
 
   function renderViewer(session) {
     const drop = qs("#drop-zone");
+    ["#collage-controls", "#gif-controls", "#boomerang-controls"].forEach((id) => {
+      const c = qs(id);
+      if (c) {
+        c.hidden = true;
+        c.innerHTML = "";
+      }
+    });
+
     if (!session) {
-      if (drop) drop.textContent = "Drop a session code here — or pick from the list";
+      if (drop) {
+        drop.textContent = "Drop a session code here — or pick from the list";
+        drop.classList.remove("is-selected");
+      }
       setSlot("#collage-slot", '<div class="viewer-placeholder">No session selected</div>');
       setSlot("#gif-slot", '<div class="viewer-placeholder">—</div>');
       setSlot("#boomerang-slot", '<div class="viewer-placeholder">—</div>');
       return;
     }
 
-    if (drop) drop.textContent = `Session ${session.ticket_code} selected`;
+    if (drop) {
+      drop.textContent = "Session " + session.ticket_code;
+      drop.classList.add("is-selected");
+    }
 
-    // Collage: one video, muted by default (party / mobile friendly)
+    // Collage — larger, controls under, click opens large
     if (session.collage_url) {
-      setSlot(
+      mountVideo(
         "#collage-slot",
-        `<video class="viewer-media" src="${mediaUrl(session.collage_url)}" controls playsinline muted loop preload="metadata"></video>`
+        "#collage-controls",
+        mediaUrl(session.collage_url),
+        "Collage " + session.ticket_code,
+        true
       );
     } else {
       setSlot("#collage-slot", '<div class="viewer-placeholder">Collage not ready yet</div>');
@@ -367,11 +490,37 @@
     if (session.gif_url) {
       const g = session.gif_url.toLowerCase();
       if (g.endsWith(".gif")) {
-        setSlot("#gif-slot", `<img class="viewer-media" src="${mediaUrl(session.gif_url)}" alt="GIF">`);
+        const slot = qs("#gif-slot");
+        const controls = qs("#gif-controls");
+        if (slot) {
+          const url = mediaUrl(session.gif_url);
+          slot.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}">`;
+          slot.onclick = () => openMediaLightbox({
+            kind: "image",
+            src: url,
+            label: "GIF " + session.ticket_code,
+          });
+        }
+        if (controls) {
+          controls.hidden = false;
+          controls.innerHTML = "";
+          const openBtn = document.createElement("button");
+          openBtn.type = "button";
+          openBtn.textContent = "Open large";
+          openBtn.addEventListener("click", () => openMediaLightbox({
+            kind: "image",
+            src: mediaUrl(session.gif_url),
+            label: "GIF " + session.ticket_code,
+          }));
+          controls.appendChild(openBtn);
+        }
       } else {
-        setSlot(
+        mountVideo(
           "#gif-slot",
-          `<video class="viewer-media" src="${mediaUrl(session.gif_url)}" controls playsinline muted loop preload="metadata"></video>`
+          "#gif-controls",
+          mediaUrl(session.gif_url),
+          "GIF " + session.ticket_code,
+          true
         );
       }
     } else {
@@ -379,9 +528,12 @@
     }
 
     if (session.boomerang_url) {
-      setSlot(
+      mountVideo(
         "#boomerang-slot",
-        `<video class="viewer-media" src="${mediaUrl(session.boomerang_url)}" controls playsinline muted loop preload="metadata"></video>`
+        "#boomerang-controls",
+        mediaUrl(session.boomerang_url),
+        "Boomerang " + session.ticket_code,
+        true
       );
     } else {
       setSlot("#boomerang-slot", '<div class="viewer-placeholder">Boomerang not ready</div>');

@@ -256,8 +256,8 @@
 
     body[data-page="event"] .strip-lightbox-inner {
       position: relative;
-      max-width: min(420px, 94vw);
-      max-height: 90vh;
+      max-width: min(520px, 94vw);
+      max-height: 92vh;
       background: #12121c;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.14);
@@ -266,11 +266,18 @@
       padding: 0.75rem;
     }
 
-    body[data-page="event"] .strip-lightbox-inner img {
+    body[data-page="event"] .strip-lightbox-inner.is-wide {
+      max-width: min(720px, 96vw);
+    }
+
+    body[data-page="event"] .strip-lightbox-inner img,
+    body[data-page="event"] .strip-lightbox-inner video {
       display: block;
       width: 100%;
       height: auto;
+      max-height: 78vh;
       border-radius: 12px;
+      background: #000;
     }
 
     body[data-page="event"] .strip-lightbox-code {
@@ -357,20 +364,22 @@
 
     body[data-page="event"] .collage-drop-panel {
       margin-top: 1rem;
-      min-height: 160px;
     }
 
     body[data-page="event"] .drop-zone {
       border: 1.5px dashed rgba(255,255,255,0.22);
-      border-radius: 16px;
-      min-height: 120px;
+      border-radius: 999px;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      color: rgba(255,255,255,0.65);
-      padding: 1rem;
+      color: rgba(255,255,255,0.7);
+      padding: 0.55rem 1rem;
+      font-size: 0.92rem;
       transition: border-color 0.15s ease, background 0.15s ease;
+      max-width: 420px;
+      margin: 0 auto 0.85rem;
     }
 
     body[data-page="event"] .drop-zone.is-over {
@@ -378,38 +387,101 @@
       background: rgba(255, 80, 150, 0.08);
     }
 
+    body[data-page="event"] .drop-zone.is-selected {
+      border-style: solid;
+      border-color: rgba(255, 160, 200, 0.45);
+      background: rgba(255,255,255,0.05);
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: #fff;
+    }
+
     body[data-page="event"] .viewer-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.85rem;
-      margin-top: 1rem;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      body[data-page="event"] .viewer-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body[data-page="event"] .media-tile {
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 0.55rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    body[data-page="event"] .media-tile:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(255, 160, 210, 0.45);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+    }
+
+    body[data-page="event"] .media-frame {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      cursor: pointer;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     body[data-page="event"] .viewer-media {
       width: 100%;
-      border-radius: 14px;
-      background: #000;
-      border: 1px solid rgba(255,255,255,0.1);
-      max-height: 420px;
+      max-height: min(560px, 70vh);
       object-fit: contain;
+      display: block;
+      border: 0;
+      border-radius: 12px;
+      background: #000;
+      /* hide native control chrome on the picture — we put controls under */
+      pointer-events: none;
+    }
+
+    body[data-page="event"] .media-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      justify-content: center;
+      margin-top: 0.55rem;
+    }
+
+    body[data-page="event"] .media-controls button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    body[data-page="event"] .media-controls button:hover {
+      background: rgba(255,255,255,0.14);
     }
 
     body[data-page="event"] .motion-pair {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    @media (max-width: 640px) {
-      body[data-page="event"] .motion-pair {
-        grid-template-columns: 1fr;
-      }
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
     }
 
     body[data-page="event"] .viewer-placeholder {
       color: rgba(255,255,255,0.5);
       text-align: center;
-      padding: 1.5rem 0.5rem;
+      padding: 2rem 0.5rem;
     }
 
     body[data-page="event"] .gate-actions {
@@ -520,7 +592,7 @@
           </div>
           <div class="host-tools">
             <button type="button" id="btn-refresh" class="btn">Refresh sessions</button>
-            <button type="button" id="btn-lock" class="btn" style="background:rgba(255,255,255,0.12);color:#fff;">Lock portal</button>
+            <button type="button" id="btn-lock" class="btn" style="background:rgba(255,255,255,0.12);color:#fff;" title="Clear host PIN from this browser and return to unlock screen">Lock host (log out)</button>
             <a class="btn" id="btn-exit" href="index.html" style="background:rgba(255,255,255,0.12);color:#fff;text-decoration:none;">Exit</a>
           </div>
         </div>
@@ -538,30 +610,33 @@
       </div>
 
       <div class="collage-drop-panel">
-        <p class="panel-label">Collage viewer · drop or select one session</p>
+        <p class="panel-label">Session media · drop / select one · click media to open large</p>
         <div id="drop-zone" class="drop-zone">
           Drop a session code here — or pick from the list
         </div>
 
         <div class="viewer-grid">
-          <div>
-            <p class="panel-label">Collage <span class="muted">(Instapic brand + event watermark later)</span></p>
-            <div id="collage-slot">
+          <div class="media-tile" id="collage-tile">
+            <p class="panel-label">Collage</p>
+            <div id="collage-slot" class="media-frame">
               <div class="viewer-placeholder">No session selected</div>
             </div>
+            <div id="collage-controls" class="media-controls" hidden></div>
           </div>
           <div class="motion-pair">
-            <div>
+            <div class="media-tile" id="gif-tile">
               <p class="panel-label">GIF</p>
-              <div id="gif-slot">
+              <div id="gif-slot" class="media-frame">
                 <div class="viewer-placeholder">—</div>
               </div>
+              <div id="gif-controls" class="media-controls" hidden></div>
             </div>
-            <div>
+            <div class="media-tile" id="boomerang-tile">
               <p class="panel-label">Boomerang</p>
-              <div id="boomerang-slot">
+              <div id="boomerang-slot" class="media-frame">
                 <div class="viewer-placeholder">—</div>
               </div>
+              <div id="boomerang-controls" class="media-controls" hidden></div>
             </div>
           </div>
         </div>
@@ -572,9 +647,9 @@
 
     <!-- Full-size strip lightbox -->
     <div id="strip-lightbox" class="strip-lightbox" hidden>
-      <div class="strip-lightbox-inner">
+      <div class="strip-lightbox-inner" id="strip-lightbox-inner">
         <button type="button" class="strip-lightbox-close" id="strip-lightbox-close" aria-label="Close">×</button>
-        <img id="strip-lightbox-img" src="" alt="Photostrip">
+        <div id="strip-lightbox-media"></div>
         <div class="strip-lightbox-code" id="strip-lightbox-code"></div>
       </div>
     </div>
@@ -586,6 +661,6 @@
 
   <script src="site_core.js?v=20260725-event"></script>
   <script src="branding.js"></script>
-  <script src="event_runtime.js?v=20260725-carousel"></script>
+  <script src="event_runtime.js?v=20260725-media-ui"></script>
 </body>
 </html>
