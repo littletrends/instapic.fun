@@ -12,6 +12,9 @@
   let carouselItems = []; // sessions with strips
   let carouselIndex = 0;
   let carouselWired = false;
+  let timerHandle = null;
+  let portalTimer = null; // { ends_at_unix, started_at_unix, state, ... }
+  let portalExtras = { background_previews: [] };
 
   function qs(sel, root) {
     return (root || document).querySelector(sel);
@@ -67,6 +70,7 @@
     if (gate) gate.hidden = false;
     if (portal) portal.hidden = true;
     stopRoll();
+    stopCountdown();
   }
 
   function showPortal() {
@@ -90,70 +94,148 @@
     return data;
   }
 
+  function formatCountdown(totalSec) {
+    if (totalSec == null || totalSec < 0) return "—";
+    const s = Math.floor(totalSec);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const r = s % 60;
+    if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m ${String(r).padStart(2, "0")}s left`;
+    if (m > 0) return `${m}m ${String(r).padStart(2, "0")}s left`;
+    return `${r}s left`;
+  }
+
+  function stopCountdown() {
+    if (timerHandle) {
+      clearInterval(timerHandle);
+      timerHandle = null;
+    }
+  }
+
+  function paintCountdown() {
+    const el = qs("#event-countdown");
+    if (!el) return;
+    const t = portalTimer || {};
+    if (t.state === "finished" || (t.ends_at_unix && Date.now() / 1000 >= t.ends_at_unix)) {
+      el.textContent = "Event finished";
+      el.classList.add("is-finished");
+      stopCountdown();
+      return;
+    }
+    if (t.state === "running" && t.ends_at_unix) {
+      const left = Math.max(0, t.ends_at_unix - Date.now() / 1000);
+      el.classList.remove("is-finished");
+      if (left <= 0) {
+        el.textContent = "Event finished";
+        el.classList.add("is-finished");
+        stopCountdown();
+        return;
+      }
+      el.textContent = formatCountdown(left);
+      return;
+    }
+    // Not started on booth yet — show planned duration from admin/MotherPC
+    const mins = t.duration_minutes || portalState?.event?.duration_minutes || portalState?.event?.hours * 60;
+    el.classList.remove("is-finished");
+    if (mins) el.textContent = `${mins} min planned · start event on booth to countdown`;
+    else el.textContent = "Timer starts when event is Activated on the booth";
+  }
+
+  function startCountdown() {
+    stopCountdown();
+    paintCountdown();
+    timerHandle = window.setInterval(paintCountdown, 1000);
+  }
+
   function renderHeader(event) {
     const nameEl = qs("#event-name");
     const metaEl = qs("#event-meta");
-    if (nameEl) nameEl.textContent = event.event_name || "Private Event";
+    // Single display name from admin → MotherPC event_name (not brand twice)
+    const displayName = event.event_name || event.event_portal_title || "Private Event";
+    if (nameEl) nameEl.textContent = displayName;
+
     const bits = [];
-    if (event.brand_label) bits.push(`Brand: ${event.brand_label}`);
-    if (event.duration_minutes) bits.push(`${event.duration_minutes} min`);
-    else if (event.hours) bits.push(`${event.hours}h`);
     if (event.host_name) bits.push(`Host: ${event.host_name}`);
     const bgs = event.allowed_backgrounds || [];
-    if (bgs.length) bits.push(`BG: ${bgs.join(", ")}`);
+    if (bgs.length) bits.push(`Backgrounds: ${bgs.join(", ")}`);
     bits.push(`${(portalState?.sessions || []).length} session(s)`);
+    // Only show brand if different from the display name
+    const brand = String(event.brand_label || "").trim();
+    if (brand && brand.toLowerCase() !== String(displayName).toLowerCase()) {
+      bits.unshift(`Strip brand: ${brand}`);
+    }
     if (metaEl) metaEl.textContent = bits.join(" · ");
 
-    const thumb = qs("#event-template-thumb");
-    if (thumb) {
-      // Site-local plate preview (pipeline uses MotherPC copy later)
-      thumb.src = "assets/img/event_templates/dual_4up_scifi_plate.jpg";
-      thumb.alt = `${event.event_name || "Event"} strip plate template`;
+    // Real background previews (from admin allowed_backgrounds via MotherPC)
+    const row = qs("#bg-preview-row");
+    if (row) {
+      row.innerHTML = "";
+      const previews = portalExtras.background_previews || [];
+      if (!previews.length && bgs.length) {
+        bgs.forEach((id) => {
+          previews.push({ id, url: `/api/background-preview/${id}` });
+        });
+      }
+      previews.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "bg-preview-card";
+        card.innerHTML = `
+          <img src="${mediaUrl(p.url)}" alt="${p.id}" loading="lazy"
+            onerror="this.style.opacity=0.25;this.alt='missing';">
+          <div class="bg-id">${p.id}</div>
+        `;
+        row.appendChild(card);
+      });
+      if (!previews.length) {
+        row.innerHTML = '<p class="muted" style="margin:0;font-size:0.9rem;">No backgrounds locked on this event yet (set them in admin).</p>';
+      }
     }
   }
 
   function renderSessionSide(sessions) {
+    const chips = qs("#session-chips");
     const select = qs("#session-select");
-    const list = qs("#session-list");
-    if (!select || !list) return;
-
-    select.innerHTML = '<option value="">Select a session…</option>';
-    list.innerHTML = "";
+    if (chips) chips.innerHTML = "";
+    if (select) {
+      select.innerHTML = '<option value="">Select…</option>';
+    }
 
     if (!sessions.length) {
-      const li = document.createElement("li");
-      li.textContent = "No sessions yet";
-      li.style.cursor = "default";
-      li.style.letterSpacing = "0";
-      list.appendChild(li);
+      if (chips) {
+        const empty = document.createElement("span");
+        empty.className = "muted";
+        empty.style.fontSize = "0.85rem";
+        empty.textContent = "No sessions yet";
+        chips.appendChild(empty);
+      }
       return;
     }
 
     sessions.forEach((s) => {
       const code = s.ticket_code;
-      const opt = document.createElement("option");
-      opt.value = code;
-      opt.textContent = `${s.starred ? "★ " : ""}${code}${s.bonus_ready ? "" : " (processing)"}`;
-      select.appendChild(opt);
-
-      const li = document.createElement("li");
-      li.draggable = true;
-      li.dataset.code = code;
-      li.className = code === selectedCode ? "is-selected" : "";
-      li.innerHTML = `<span>${s.starred ? "★ " : ""}${code}</span><span class="muted" style="letter-spacing:0;font-size:0.75rem;">${s.bonus_ready ? "ready" : "…"}</span>`;
-
-      li.addEventListener("click", () => selectSession(code));
-      li.addEventListener("dragstart", (ev) => {
-        li.classList.add("dragging");
-        ev.dataTransfer.setData("text/plain", code);
-        ev.dataTransfer.effectAllowed = "copy";
-      });
-      li.addEventListener("dragend", () => li.classList.remove("dragging"));
-
-      list.appendChild(li);
+      if (select) {
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = (s.starred ? "★ " : "") + code;
+        select.appendChild(opt);
+      }
+      if (chips) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "session-chip" + (code === selectedCode ? " is-selected" : "");
+        btn.dataset.code = code;
+        btn.draggable = true;
+        btn.textContent = (s.starred ? "★ " : "") + code;
+        btn.title = s.bonus_ready ? "Ready" : "Processing";
+        btn.addEventListener("click", () => selectSession(code));
+        btn.addEventListener("dragstart", (ev) => {
+          ev.dataTransfer.setData("text/plain", code);
+          ev.dataTransfer.effectAllowed = "copy";
+        });
+        chips.appendChild(btn);
+      }
     });
-
-    if (selectedCode) select.value = selectedCode;
+    if (select && selectedCode) select.value = selectedCode;
   }
 
   function renderStripRoll(sessions) {
@@ -364,11 +446,14 @@
     controlsEl.appendChild(openBtn);
   }
 
-  function mountVideo(slotSel, controlsSel, url, openLabel, loop) {
+  function mountVideo(slotSel, controlsSel, url, openLabel, loop, autoplay) {
     const slot = qs(slotSel);
     const controls = qs(controlsSel);
     if (!slot) return null;
     slot.innerHTML = "";
+    // clone node to drop old click handlers
+    const fresh = slot.cloneNode(false);
+    slot.parentNode.replaceChild(fresh, slot);
     const v = document.createElement("video");
     v.className = "viewer-media";
     v.src = url;
@@ -378,8 +463,8 @@
     v.preload = "metadata";
     // no native controls on the picture — bar sits underneath
     v.controls = false;
-    slot.appendChild(v);
-    slot.addEventListener("click", () => {
+    fresh.appendChild(v);
+    fresh.addEventListener("click", () => {
       openMediaLightbox({
         kind: "video",
         src: url,
@@ -395,6 +480,9 @@
       loop: !!loop,
       muted: false,
     });
+    if (autoplay) {
+      v.play().catch(() => {});
+    }
     return v;
   }
 
@@ -474,13 +562,14 @@
       drop.classList.add("is-selected");
     }
 
-    // Collage — larger, controls under, click opens large
+    // Full-width stack, auto-start muted
     if (session.collage_url) {
       mountVideo(
         "#collage-slot",
         "#collage-controls",
         mediaUrl(session.collage_url),
         "Collage " + session.ticket_code,
+        true,
         true
       );
     } else {
@@ -494,12 +583,14 @@
         const controls = qs("#gif-controls");
         if (slot) {
           const url = mediaUrl(session.gif_url);
-          slot.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}">`;
-          slot.onclick = () => openMediaLightbox({
+          const fresh = slot.cloneNode(false);
+          slot.parentNode.replaceChild(fresh, slot);
+          fresh.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}">`;
+          fresh.addEventListener("click", () => openMediaLightbox({
             kind: "image",
             src: url,
             label: "GIF " + session.ticket_code,
-          });
+          }));
         }
         if (controls) {
           controls.hidden = false;
@@ -520,6 +611,7 @@
           "#gif-controls",
           mediaUrl(session.gif_url),
           "GIF " + session.ticket_code,
+          true,
           true
         );
       }
@@ -533,10 +625,19 @@
         "#boomerang-controls",
         mediaUrl(session.boomerang_url),
         "Boomerang " + session.ticket_code,
+        true,
         true
       );
     } else {
       setSlot("#boomerang-slot", '<div class="viewer-placeholder">Boomerang not ready</div>');
+    }
+
+    const openBonus = qs("#btn-open-bonus");
+    if (openBonus) {
+      openBonus.disabled = !session.ticket_code;
+      openBonus.onclick = () => {
+        window.open(`bonus.html?code=${encodeURIComponent(session.ticket_code)}`, "_blank");
+      };
     }
   }
 
@@ -548,8 +649,8 @@
     const select = qs("#session-select");
     if (select) select.value = selectedCode || "";
 
-    qs("#session-list")?.querySelectorAll("li").forEach((li) => {
-      li.classList.toggle("is-selected", li.dataset.code === selectedCode);
+    qs("#session-chips")?.querySelectorAll(".session-chip").forEach((chip) => {
+      chip.classList.toggle("is-selected", chip.dataset.code === selectedCode);
     });
     const carIdx = carouselItems.findIndex((s) => s.ticket_code === selectedCode);
     if (carIdx >= 0) {
@@ -576,22 +677,40 @@
       event: data.event || {},
       sessions: Array.isArray(data.sessions) ? data.sessions : [],
     };
+    portalExtras = {
+      background_previews: Array.isArray(data.background_previews) ? data.background_previews : [],
+    };
+    portalTimer = data.timer || null;
+    // Prefer live server remaining if present
+    if (portalTimer && portalTimer.ends_at_unix && portalTimer.server_now_unix) {
+      const skew = Date.now() / 1000 - portalTimer.server_now_unix;
+      // keep ends_at as absolute unix; paint uses client clock ≈ ok
+      void skew;
+    }
+
     saveSession(pin, portalState.event.event_code);
     renderHeader(portalState.event);
     renderSessionSide(portalState.sessions);
     renderStripRoll(portalState.sessions);
+    startCountdown();
     showPortal();
 
     if (selectedCode && portalState.sessions.some((s) => s.ticket_code === selectedCode)) {
       selectSession(selectedCode);
+    } else if (portalState.sessions.length) {
+      // Auto-select first ready session so media auto-starts
+      const first = portalState.sessions.find((s) => s.collage_url || s.strip_url) || portalState.sessions[0];
+      selectSession(first.ticket_code);
     } else {
       selectedCode = "";
       renderViewer(null);
+      const openBonus = qs("#btn-open-bonus");
+      if (openBonus) openBonus.disabled = true;
     }
 
     setPortalStatus(
       portalState.sessions.length
-        ? `${portalState.sessions.length} session(s) · pick one for collage / GIF / boomerang`
+        ? `${portalState.sessions.length} session(s) · carousel or chips to switch · media auto-plays muted`
         : "Portal open — waiting for the first session to finish"
     );
   }

@@ -29,17 +29,41 @@
       box-shadow: 0 14px 36px rgba(0,0,0,0.35);
     }
 
-    body[data-page="event"] .event-brand-row {
+    body[data-page="event"] .portal-topbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
+      gap: 1rem 1.5rem;
       justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 1rem;
     }
 
+    body[data-page="event"] .portal-top-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.65rem;
+      min-width: min(280px, 100%);
+    }
+
+    body[data-page="event"] .host-tools-top {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    body[data-page="event"] .btn-ghost {
+      background: rgba(255,255,255,0.1) !important;
+      color: #fff !important;
+      text-decoration: none;
+      font-size: 0.88rem !important;
+      padding: 0.5rem 0.85rem !important;
+      min-width: 0 !important;
+    }
+
     body[data-page="event"] .event-title {
-      margin: 0;
+      margin: 0.15rem 0 0.35rem;
       font-size: clamp(1.8rem, 6vw, 2.8rem);
       line-height: 1.05;
       background: linear-gradient(90deg, #ff4fa0 0%, #ff6f8f 45%, #ffb35c 100%);
@@ -49,41 +73,119 @@
       -webkit-text-fill-color: transparent;
     }
 
+    body[data-page="event"] .event-countdown {
+      margin: 0.2rem 0 0.35rem;
+      font-size: clamp(1.15rem, 3.5vw, 1.55rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #ffd0e8;
+      text-shadow: 0 0 18px rgba(255,120,200,0.35);
+    }
+
+    body[data-page="event"] .event-countdown.is-finished {
+      color: #ffb0b0;
+    }
+
     body[data-page="event"] .event-meta {
       color: rgba(255,255,255,0.75);
-      font-size: 0.95rem;
-      margin: 0.35rem 0 0;
+      font-size: 0.92rem;
+      margin: 0.2rem 0 0;
+      max-width: 42rem;
     }
 
-    body[data-page="event"] .template-thumb {
-      width: min(140px, 32vw);
+    body[data-page="event"] .bg-preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin: 0 0 1rem;
+    }
+
+    body[data-page="event"] .bg-preview-card {
+      width: 88px;
       border-radius: 12px;
+      overflow: hidden;
       border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-      display: block;
       background: #0b1220;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
     }
 
-    body[data-page="event"] .event-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
-      gap: 1rem;
-      margin-top: 1rem;
+    body[data-page="event"] .bg-preview-card img {
+      display: block;
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
     }
 
-    @media (max-width: 800px) {
-      body[data-page="event"] .event-layout {
-        grid-template-columns: 1fr;
-      }
+    body[data-page="event"] .bg-preview-card .bg-id {
+      font-size: 0.72rem;
+      text-align: center;
+      padding: 0.3rem;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.04em;
+    }
+
+    body[data-page="event"] .session-chips-wrap {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    body[data-page="event"] .session-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: flex-end;
+      max-height: 7.5rem;
+      overflow: auto;
+    }
+
+    body[data-page="event"] .session-chip {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+    }
+
+    body[data-page="event"] .session-chip.is-selected {
+      border-color: rgba(255,150,200,0.7);
+      background: rgba(255,120,180,0.22);
     }
 
     body[data-page="event"] .strip-roll-panel,
-    body[data-page="event"] .session-side-panel,
     body[data-page="event"] .collage-drop-panel {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.10);
       border-radius: 18px;
       padding: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    body[data-page="event"] .carousel-center-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.75rem;
+    }
+
+    body[data-page="event"] .viewer-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    body[data-page="event"] .bonus-tools-panel {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    body[data-page="event"] .bonus-tools-note {
+      font-size: 0.88rem;
+      margin: 0 0 0.65rem;
+      line-height: 1.4;
     }
 
     body[data-page="event"] .panel-label {
@@ -396,20 +498,6 @@
       color: #fff;
     }
 
-    body[data-page="event"] .viewer-grid {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 1rem;
-      margin-top: 0.5rem;
-      align-items: start;
-    }
-
-    @media (max-width: 860px) {
-      body[data-page="event"] .viewer-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
     body[data-page="event"] .media-tile {
       background: rgba(0,0,0,0.28);
       border: 1px solid rgba(255,255,255,0.10);
@@ -419,7 +507,7 @@
     }
 
     body[data-page="event"] .media-tile:hover {
-      transform: translateY(-4px) scale(1.01);
+      transform: translateY(-3px);
       border-color: rgba(255, 160, 210, 0.45);
       box-shadow: 0 16px 36px rgba(0,0,0,0.4);
     }
@@ -430,7 +518,7 @@
       overflow: hidden;
       background: #000;
       cursor: pointer;
-      min-height: 220px;
+      min-height: 240px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -438,13 +526,12 @@
 
     body[data-page="event"] .viewer-media {
       width: 100%;
-      max-height: min(560px, 70vh);
+      max-height: min(620px, 72vh);
       object-fit: contain;
       display: block;
       border: 0;
       border-radius: 12px;
       background: #000;
-      /* hide native control chrome on the picture — we put controls under */
       pointer-events: none;
     }
 
@@ -472,12 +559,6 @@
       background: rgba(255,255,255,0.14);
     }
 
-    body[data-page="event"] .motion-pair {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.85rem;
-    }
-
     body[data-page="event"] .viewer-placeholder {
       color: rgba(255,255,255,0.5);
       text-align: center;
@@ -496,21 +577,20 @@
       min-width: 200px;
     }
 
-    body[data-page="event"] .host-tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    body[data-page="event"] .host-tools .btn {
-      font-size: 0.9rem;
-      padding: 0.55rem 0.9rem;
-    }
-
     body[data-page="event"] #event-status {
       margin-top: 0.75rem;
       min-height: 1.2em;
+    }
+
+    @media (max-width: 720px) {
+      body[data-page="event"] .portal-top-right {
+        align-items: stretch;
+        width: 100%;
+      }
+      body[data-page="event"] .session-chips,
+      body[data-page="event"] .host-tools-top {
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -561,61 +641,51 @@
 
     <!-- PORTAL (after PIN) -->
     <section id="event-portal" class="event-portal" hidden>
-      <div class="event-brand-row">
-        <div>
+      <div class="portal-topbar">
+        <div class="portal-top-left">
           <div class="bonus-kicker">Private Event</div>
           <h1 id="event-name" class="event-title">Event</h1>
+          <p id="event-countdown" class="event-countdown">—</p>
           <p id="event-meta" class="event-meta"></p>
         </div>
-        <div>
-          <img
-            id="event-template-thumb"
-            class="template-thumb"
-            src="assets/img/event_templates/dual_4up_scifi_plate.jpg"
-            alt="Event strip plate template"
-          >
+        <div class="portal-top-right">
+          <div class="host-tools-top">
+            <button type="button" id="btn-lock" class="btn btn-ghost" title="Clear host PIN from this browser and return to unlock screen">Lock host</button>
+            <a class="btn btn-ghost" id="btn-exit" href="index.html">Exit</a>
+          </div>
+          <div class="session-chips-wrap">
+            <p class="panel-label">Sessions</p>
+            <div id="session-chips" class="session-chips"></div>
+            <select id="session-select" class="session-select-compact" aria-label="Choose a session code" hidden>
+              <option value="">Select…</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="event-layout">
-        <div class="strip-roll-panel">
-          <p class="panel-label">Photostrip carousel · stills only · hover to pop · click to open</p>
-          <div id="carousel-wrap" class="carousel-wrap" aria-live="polite">
-            <div id="carousel-stage" class="carousel-stage">
-              <div class="strip-empty">No sessions yet — strips appear here as they finish.</div>
-            </div>
-          </div>
-          <div class="carousel-nav">
-            <button type="button" id="carousel-prev" aria-label="Previous strip">‹ Prev</button>
-            <div id="carousel-dots" class="carousel-dots"></div>
-            <button type="button" id="carousel-next" aria-label="Next strip">Next ›</button>
-          </div>
-          <div class="host-tools">
-            <button type="button" id="btn-refresh" class="btn">Refresh sessions</button>
-            <button type="button" id="btn-lock" class="btn" style="background:rgba(255,255,255,0.12);color:#fff;" title="Clear host PIN from this browser and return to unlock screen">Lock host (log out)</button>
-            <a class="btn" id="btn-exit" href="index.html" style="background:rgba(255,255,255,0.12);color:#fff;text-decoration:none;">Exit</a>
+      <div id="bg-preview-row" class="bg-preview-row" aria-label="Event backgrounds"></div>
+
+      <div class="strip-roll-panel">
+        <p class="panel-label">Photostrip carousel · hover to pop · click to open</p>
+        <div id="carousel-wrap" class="carousel-wrap" aria-live="polite">
+          <div id="carousel-stage" class="carousel-stage">
+            <div class="strip-empty">No sessions yet — strips appear here as they finish.</div>
           </div>
         </div>
-
-        <aside class="session-side-panel">
-          <p class="panel-label">Session codes</p>
-          <select id="session-select" aria-label="Choose a session code">
-            <option value="">Select a session…</option>
-          </select>
-          <ul id="session-list" class="session-list"></ul>
-          <p class="muted" style="font-size:0.85rem; margin:0.75rem 0 0;">
-            Tap a code or drag it into the collage box. One session at a time.
-          </p>
-        </aside>
+        <div class="carousel-nav">
+          <button type="button" id="carousel-prev" aria-label="Previous strip">‹ Prev</button>
+          <div id="carousel-dots" class="carousel-dots"></div>
+          <button type="button" id="carousel-next" aria-label="Next strip">Next ›</button>
+        </div>
+        <div class="carousel-center-actions">
+          <button type="button" id="btn-refresh" class="btn">Refresh sessions</button>
+        </div>
       </div>
 
       <div class="collage-drop-panel">
-        <p class="panel-label">Session media · drop / select one · click media to open large</p>
-        <div id="drop-zone" class="drop-zone">
-          Drop a session code here — or pick from the list
-        </div>
+        <div id="drop-zone" class="drop-zone">Drop a code here — or tap a strip / session chip</div>
 
-        <div class="viewer-grid">
+        <div class="viewer-stack">
           <div class="media-tile" id="collage-tile">
             <p class="panel-label">Collage</p>
             <div id="collage-slot" class="media-frame">
@@ -623,21 +693,29 @@
             </div>
             <div id="collage-controls" class="media-controls" hidden></div>
           </div>
-          <div class="motion-pair">
-            <div class="media-tile" id="gif-tile">
-              <p class="panel-label">GIF</p>
-              <div id="gif-slot" class="media-frame">
-                <div class="viewer-placeholder">—</div>
-              </div>
-              <div id="gif-controls" class="media-controls" hidden></div>
+          <div class="media-tile" id="gif-tile">
+            <p class="panel-label">GIF</p>
+            <div id="gif-slot" class="media-frame">
+              <div class="viewer-placeholder">—</div>
             </div>
-            <div class="media-tile" id="boomerang-tile">
-              <p class="panel-label">Boomerang</p>
-              <div id="boomerang-slot" class="media-frame">
-                <div class="viewer-placeholder">—</div>
-              </div>
-              <div id="boomerang-controls" class="media-controls" hidden></div>
+            <div id="gif-controls" class="media-controls" hidden></div>
+          </div>
+          <div class="media-tile" id="boomerang-tile">
+            <p class="panel-label">Boomerang</p>
+            <div id="boomerang-slot" class="media-frame">
+              <div class="viewer-placeholder">—</div>
             </div>
+            <div id="boomerang-controls" class="media-controls" hidden></div>
+          </div>
+        </div>
+
+        <div class="bonus-tools-panel">
+          <p class="panel-label">Bonus tools (from guest bonus page)</p>
+          <p class="muted bonus-tools-note">
+            Coming next for host event: freeze re-pick / regenerate GIF &amp; boomerang, strip frame adjust, and optional AI extras — same pipeline as <a class="secondary-link" href="bonus.html">bonus.html</a> once a session is selected.
+          </p>
+          <div class="media-controls" id="bonus-tool-buttons">
+            <button type="button" id="btn-open-bonus" class="btn" disabled>Open this session on bonus page</button>
           </div>
         </div>
       </div>
@@ -661,6 +739,6 @@
 
   <script src="site_core.js?v=20260725-event"></script>
   <script src="branding.js"></script>
-  <script src="event_runtime.js?v=20260725-media-ui"></script>
+  <script src="event_runtime.js?v=20260725-layout2"></script>
 </body>
 </html>
