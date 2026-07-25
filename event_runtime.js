@@ -9,6 +9,9 @@
   let portalState = null; // { pin, event, sessions }
   let selectedCode = "";
   let rollTimer = null;
+  let carouselItems = []; // sessions with strips
+  let carouselIndex = 0;
+  let carouselWired = false;
 
   function qs(sel, root) {
     return (root || document).querySelector(sel);
@@ -154,48 +157,115 @@
   }
 
   function renderStripRoll(sessions) {
-    const roll = qs("#strip-roll");
-    if (!roll) return;
-    roll.innerHTML = "";
+    const stage = qs("#carousel-stage");
+    const dots = qs("#carousel-dots");
+    if (!stage) return;
 
-    const withStrip = sessions.filter((s) => s.strip_url);
-    if (!withStrip.length) {
-      roll.innerHTML = '<div class="strip-empty">No photostrips yet — they appear here as sessions finish.</div>';
+    carouselItems = sessions.filter((s) => s.strip_url);
+    stage.innerHTML = "";
+    if (dots) dots.innerHTML = "";
+
+    if (!carouselItems.length) {
+      stage.innerHTML = '<div class="strip-empty">No photostrips yet — strips appear here as sessions finish.</div>';
+      stopRoll();
       return;
     }
 
-    withStrip.forEach((s) => {
+    // Prefer selected session as centre when possible
+    if (selectedCode) {
+      const idx = carouselItems.findIndex((s) => s.ticket_code === selectedCode);
+      if (idx >= 0) carouselIndex = idx;
+    }
+    carouselIndex = ((carouselIndex % carouselItems.length) + carouselItems.length) % carouselItems.length;
+
+    carouselItems.forEach((s, i) => {
       const card = document.createElement("button");
       card.type = "button";
-      card.className = "strip-card" + (s.ticket_code === selectedCode ? " is-selected" : "");
+      card.className = "carousel-card";
       card.dataset.code = s.ticket_code;
+      card.dataset.index = String(i);
       card.innerHTML = `
-        <img src="${mediaUrl(s.strip_url)}" alt="Strip ${s.ticket_code}" loading="lazy">
-        <div class="strip-code">${s.starred ? '<span class="strip-star">★</span> ' : ""}${s.ticket_code}</div>
+        <div class="carousel-card-inner">
+          <img src="${mediaUrl(s.strip_url)}" alt="Strip ${s.ticket_code}" loading="lazy" draggable="false">
+          <div class="strip-code">${s.starred ? '<span class="strip-star">★</span> ' : ""}${s.ticket_code}</div>
+        </div>
       `;
-      card.addEventListener("click", () => selectSession(s.ticket_code));
-      roll.appendChild(card);
+      card.addEventListener("click", () => {
+        carouselIndex = i;
+        layoutCarousel();
+        selectSession(s.ticket_code);
+        openStripLightbox(s);
+      });
+      stage.appendChild(card);
+
+      if (dots) {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.setAttribute("aria-label", "Go to strip " + s.ticket_code);
+        dot.addEventListener("click", () => {
+          carouselIndex = i;
+          layoutCarousel();
+          selectSession(s.ticket_code);
+        });
+        dots.appendChild(dot);
+      }
     });
 
+    layoutCarousel();
     startRoll();
+  }
+
+  function layoutCarousel() {
+    const n = carouselItems.length;
+    if (!n) return;
+    carouselIndex = ((carouselIndex % n) + n) % n;
+
+    const cards = qs("#carousel-stage")?.querySelectorAll(".carousel-card") || [];
+    const dots = qs("#carousel-dots")?.querySelectorAll("button") || [];
+    const radius = Math.min(210, 42 + n * 12);
+
+    cards.forEach((card) => {
+      const i = Number(card.dataset.index || 0);
+      let offset = i - carouselIndex;
+      // shortest path around ring for nicer spacing when many items
+      if (offset > n / 2) offset -= n;
+      if (offset < -n / 2) offset += n;
+
+      const angle = offset * (Math.PI / 7); // ~25.7° steps
+      const x = Math.sin(angle) * radius;
+      const z = Math.cos(angle) * radius - radius;
+      const rotY = offset * -18;
+      const scale = Math.max(0.62, 1 - Math.abs(offset) * 0.1);
+      const opacity = Math.max(0.28, 1 - Math.abs(offset) * 0.18);
+      const zIndex = 100 - Math.abs(offset);
+
+      card.style.transform =
+        `translate(-50%, -50%) translateX(${x}px) translateZ(${z}px) rotateY(${rotY}deg) scale(${scale})`;
+      card.style.left = "50%";
+      card.style.top = "50%";
+      card.style.opacity = String(opacity);
+      card.style.zIndex = String(zIndex);
+      card.style.filter = Math.abs(offset) > 2 ? "brightness(0.72)" : "none";
+      card.classList.toggle("is-center", offset === 0);
+      card.classList.toggle("is-selected", card.dataset.code === selectedCode);
+      // Hide cards far behind for cleanliness
+      card.style.visibility = Math.abs(offset) > 4 ? "hidden" : "visible";
+    });
+
+    dots.forEach((dot, i) => {
+      dot.classList.toggle("is-active", i === carouselIndex);
+    });
   }
 
   function startRoll() {
     stopRoll();
-    const roll = qs("#strip-roll");
-    if (!roll || roll.scrollWidth <= roll.clientWidth + 8) return;
-
+    if (carouselItems.length < 2) return;
     rollTimer = window.setInterval(() => {
-      if (!roll || roll.matches(":hover")) return;
-      const max = roll.scrollWidth - roll.clientWidth;
-      if (max <= 0) return;
-      const next = roll.scrollLeft + 130;
-      if (next >= max - 4) {
-        roll.scrollTo({ left: 0, behavior: "smooth" });
-      } else {
-        roll.scrollTo({ left: next, behavior: "smooth" });
-      }
-    }, 3200);
+      const wrap = qs("#carousel-wrap");
+      if (wrap && (wrap.matches(":hover") || wrap.matches(":focus-within"))) return;
+      carouselIndex = (carouselIndex + 1) % carouselItems.length;
+      layoutCarousel();
+    }, 3400);
   }
 
   function stopRoll() {
@@ -203,6 +273,68 @@
       clearInterval(rollTimer);
       rollTimer = null;
     }
+  }
+
+  function openStripLightbox(session) {
+    if (!session || !session.strip_url) return;
+    const box = qs("#strip-lightbox");
+    const img = qs("#strip-lightbox-img");
+    const code = qs("#strip-lightbox-code");
+    if (!box || !img) return;
+    img.src = mediaUrl(session.strip_url);
+    img.alt = "Photostrip " + session.ticket_code;
+    if (code) code.textContent = session.ticket_code + (session.starred ? " ★" : "");
+    box.hidden = false;
+  }
+
+  function closeStripLightbox() {
+    const box = qs("#strip-lightbox");
+    if (box) box.hidden = true;
+  }
+
+  function wireCarouselControls() {
+    if (carouselWired) return;
+    carouselWired = true;
+    qs("#carousel-prev")?.addEventListener("click", () => {
+      if (!carouselItems.length) return;
+      carouselIndex = (carouselIndex - 1 + carouselItems.length) % carouselItems.length;
+      layoutCarousel();
+      const s = carouselItems[carouselIndex];
+      if (s) selectSession(s.ticket_code);
+    });
+    qs("#carousel-next")?.addEventListener("click", () => {
+      if (!carouselItems.length) return;
+      carouselIndex = (carouselIndex + 1) % carouselItems.length;
+      layoutCarousel();
+      const s = carouselItems[carouselIndex];
+      if (s) selectSession(s.ticket_code);
+    });
+
+    // Swipe on carousel
+    const wrap = qs("#carousel-wrap");
+    if (wrap) {
+      let startX = 0;
+      wrap.addEventListener("pointerdown", (ev) => {
+        startX = ev.clientX;
+      });
+      wrap.addEventListener("pointerup", (ev) => {
+        const dx = ev.clientX - startX;
+        if (Math.abs(dx) < 40 || !carouselItems.length) return;
+        if (dx < 0) carouselIndex = (carouselIndex + 1) % carouselItems.length;
+        else carouselIndex = (carouselIndex - 1 + carouselItems.length) % carouselItems.length;
+        layoutCarousel();
+        const s = carouselItems[carouselIndex];
+        if (s) selectSession(s.ticket_code);
+      });
+    }
+
+    qs("#strip-lightbox-close")?.addEventListener("click", closeStripLightbox);
+    qs("#strip-lightbox")?.addEventListener("click", (ev) => {
+      if (ev.target && ev.target.id === "strip-lightbox") closeStripLightbox();
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") closeStripLightbox();
+    });
   }
 
   function setSlot(id, html) {
@@ -267,9 +399,15 @@
     qs("#session-list")?.querySelectorAll("li").forEach((li) => {
       li.classList.toggle("is-selected", li.dataset.code === selectedCode);
     });
-    qs("#strip-roll")?.querySelectorAll(".strip-card").forEach((card) => {
-      card.classList.toggle("is-selected", card.dataset.code === selectedCode);
-    });
+    const carIdx = carouselItems.findIndex((s) => s.ticket_code === selectedCode);
+    if (carIdx >= 0) {
+      carouselIndex = carIdx;
+      layoutCarousel();
+    } else {
+      qs("#carousel-stage")?.querySelectorAll(".carousel-card").forEach((card) => {
+        card.classList.toggle("is-selected", card.dataset.code === selectedCode);
+      });
+    }
 
     renderViewer(session);
     if (session) {
@@ -329,6 +467,7 @@
   }
 
   function wireDropZone() {
+    wireCarouselControls();
     const zone = qs("#drop-zone");
     if (!zone) return;
 
