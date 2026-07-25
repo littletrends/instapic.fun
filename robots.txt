@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /bonus.html
+Disallow: /event.html
+Disallow: /my-instapic.html
+Disallow: /save.html
+Disallow: /session.html
+Disallow: /ticket.html
+Disallow: /verify.html
+
+Sitemap: https://instapic.fun/sitemap.xml
