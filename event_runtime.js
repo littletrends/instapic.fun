@@ -605,7 +605,7 @@
       drop.classList.add("is-selected");
     }
 
-    // Only collage autoplays. GIF + boomerang wait for Play — 3× autoplay was slow on phone/desktop.
+    // When a photostrip/session is selected, autoplay collage + GIF + boomerang (muted).
     if (session.collage_url) {
       mountVideo(
         "#collage-slot",
@@ -628,7 +628,7 @@
           const url = mediaUrl(session.gif_url);
           const fresh = slot.cloneNode(false);
           slot.parentNode.replaceChild(fresh, slot);
-          fresh.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}" loading="lazy">`;
+          fresh.innerHTML = `<img class="viewer-media" src="${url}" alt="GIF ${session.ticket_code}">`;
           fresh.addEventListener("click", () => openMediaLightbox({
             kind: "image",
             src: url,
@@ -655,7 +655,7 @@
           mediaUrl(session.gif_url),
           "GIF " + session.ticket_code,
           true,
-          false
+          true
         );
       }
     } else {
@@ -669,7 +669,7 @@
         mediaUrl(session.boomerang_url),
         "Boomerang " + session.ticket_code,
         true,
-        false
+        true
       );
     } else {
       setSlot("#boomerang-slot", '<div class="viewer-placeholder">Boomerang not ready</div>');
