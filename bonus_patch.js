@@ -310,9 +310,23 @@
     const host = window.__instapicHostContext || {};
     const meta = window.__instapicBonusMeta || {};
     hostPin = String(host.pin || "").replace(/\D/g, "");
-    hostCanManageLock = !!(host.loggedIn && hostPin && meta.is_event);
+    // Host lock only for real private-event sessions while host is logged in
+    // (from event portal). Regular / main sessions never get the button.
+    hostCanManageLock = !!(
+      host.loggedIn &&
+      host.fromEvent &&
+      hostPin &&
+      meta.is_event &&
+      meta.event_code
+    );
     guestEditsLocked = !!meta.guest_edits_locked;
     applyEditLockUi();
+    // Hide whole wrap when neither host tools nor locked banner needed
+    const wrap = qs("#host-edit-lock-wrap");
+    if (wrap) {
+      wrap.hidden = !(hostCanManageLock || guestEditsLocked);
+      wrap.style.display = wrap.hidden ? "none" : "flex";
+    }
   }
 
   async function setGuestEditLock(locked) {
@@ -352,7 +366,8 @@
 
     const wrap = document.createElement("div");
     wrap.id = "host-edit-lock-wrap";
-    wrap.style.display = "flex";
+    wrap.hidden = true;
+    wrap.style.display = "none";
     wrap.style.flexDirection = "column";
     wrap.style.alignItems = "center";
     wrap.style.gap = "8px";

@@ -346,14 +346,9 @@
     frame.appendChild(img);
     wrap.appendChild(frame);
 
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    actions.appendChild(createDownloadButton(url, `freeze_${i}.jpg`, `Download Photo ${i}`));
-    actions.appendChild(createShareButton(url, `Photo ${i}`));
-
+    // No download/share on freezes — guests download strip/collage/GIF/boom products only.
     card.appendChild(head);
     card.appendChild(wrap);
-    card.appendChild(actions);
     grid.appendChild(card);
   }
 
@@ -361,7 +356,16 @@
     if (!relPath) return "";
     if (/^https?:\/\//i.test(relPath)) return relPath;
     const base = core.API_BASE || core.BASE || "";
-    return `${base}${relPath}`;
+    // Cache-bust so phone/desktop don't keep old sideways GIF/boom after rebuild.
+    // Prefer server pack stamp when present; else one stamp per page load.
+    const meta = window.__instapicBonusMeta || {};
+    const stamp =
+      meta.bonus_stamp ||
+      meta.updated_at ||
+      window.__instapicBonusStamp ||
+      (window.__instapicBonusStamp = String(Date.now()));
+    const joiner = String(relPath).indexOf("?") >= 0 ? "&" : "?";
+    return `${base}${relPath}${joiner}v=${encodeURIComponent(stamp)}`;
   }
 
   function firstByRegex(paths, regex) {
@@ -446,7 +450,9 @@
         event_code: data.event_code || "",
         is_event: !!data.is_event,
         guest_edits_locked: !!data.guest_edits_locked,
+        bonus_stamp: data.bonus_stamp || String(Date.now()),
       };
+      window.__instapicBonusStamp = window.__instapicBonusMeta.bonus_stamp;
       try {
         document.dispatchEvent(new CustomEvent("instapic:bonus-meta", { detail: window.__instapicBonusMeta }));
       } catch (_) {}
