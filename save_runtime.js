@@ -25,6 +25,7 @@
     const passEmail = document.getElementById("guest_email_password");
     const passField = document.getElementById("guest_password");
     const block = document.getElementById("password-sign-in-block");
+    showAuthPanel("password-sign-in-block");
     if (passEmail && email) {
       passEmail.value = email;
     }
@@ -38,6 +39,27 @@
         try { passField.focus(); } catch (_) {}
       }, 150);
     }
+  }
+
+  function showAuthPanel(panelId) {
+    ["password-sign-in-block", "email-sign-in-block"].forEach((id) => {
+      const panel = document.getElementById(id);
+      if (panel) panel.hidden = id !== panelId;
+    });
+    document.querySelectorAll(".guest-auth-tab").forEach((tab) => {
+      const active = tab.dataset.guestPanel === panelId;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+    });
+  }
+
+  function initAuthSwitch() {
+    document.querySelectorAll(".guest-auth-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        showAuthPanel(tab.dataset.guestPanel || "password-sign-in-block");
+      });
+    });
+    showAuthPanel("password-sign-in-block");
   }
 
   async function profileLookup(apiBase, email) {
@@ -80,6 +102,7 @@
     }
 
     clearSaveFields();
+    initAuthSwitch();
     window.addEventListener("pageshow", clearSaveFields);
     setTimeout(clearSaveFields, 50);
     setTimeout(clearSaveFields, 250);

@@ -16,21 +16,20 @@
 
     <section class="page-intro">
       <div class="bonus-kicker">Guest Area</div>
-      <h1>Sign in to your Guest Area ✨</h1>
+      <h1>Your Guest Area ✨</h1>
       <p class="hero-text hero-text-wide">
-        Keep your Instapic sessions, saved booth codes, and bonus content together in one place.
-      </p>
-      <p class="muted">
-        Returning guests: use your password below. First time here? Email yourself a 4-digit sign-in code.
-        That code is only for Guest Area access — not your 6-digit booth code.
+        Keep your sessions, booth codes and bonus content together.
       </p>
     </section>
 
+    <div class="guest-auth-switch" role="tablist" aria-label="Guest Area access">
+      <button type="button" class="guest-auth-tab is-active" data-guest-panel="password-sign-in-block" role="tab" aria-selected="true">Sign in</button>
+      <button type="button" class="guest-auth-tab" data-guest-panel="email-sign-in-block" role="tab" aria-selected="false">Join / email code</button>
+    </div>
+
     <div class="info-callout" id="password-sign-in-block">
-      <h2>Returning guests — password</h2>
-      <p>
-        If you already created a Guest Area password, sign in here.
-      </p>
+      <h2>Welcome back</h2>
+      <p>Sign in with your Guest Area password.</p>
 
       <form id="password-login-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
         <label for="guest_email_password" class="code-label">Email address</label>
@@ -73,11 +72,9 @@
       </form>
     </div>
 
-    <div class="info-callout" style="margin-top:1.5rem;" id="email-sign-in-block">
-      <h2>First time / forgot password — email code</h2>
-      <p>
-        We’ll send a 4-digit sign-in code to your email so you can enter your Guest Area.
-      </p>
+    <div class="info-callout" id="email-sign-in-block" hidden>
+      <h2>Join or sign in by email</h2>
+      <p>We’ll email you a 4-digit Guest Area sign-in code.</p>
 
       <form id="save-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
         <label for="guest_email" class="code-label">Email address</label>
@@ -95,21 +92,14 @@
             autocorrect="off"
             spellcheck="false"
           >
-          <button type="submit" class="btn" id="email-code-submit">Email me a 4-digit sign-in code</button>
+          <button type="submit" class="btn" id="email-code-submit">Email my sign-in code</button>
         </div>
 
-        <p class="code-hint">
-          If this email already has a password, we’ll remind you to sign in above first.
-        </p>
+        <p class="code-hint">New here, forgot your password, or prefer an email code? Use this option.</p>
       </form>
     </div>
 
-    <div class="info-callout" style="margin-top:1.5rem;">
-      <h2>Important</h2>
-      <p>
-        Your <strong>4-digit email sign-in code</strong> and your <strong>6-digit Instapic booth code</strong> are two different things.
-      </p>
-    </div>
+    <p class="guest-code-note">The 4-digit email sign-in code is different from your 6-digit booth code.</p>
 
     <nav class="site-bottom-nav" aria-label="Site pages">
       <a href="session.html" class="secondary-link">I already have a code</a>
