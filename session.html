@@ -40,7 +40,7 @@
     }
 
     body[data-page="session"] .page-intro h1 {
-      font-size: clamp(2.3rem, 9vw, 4rem);
+      font-size: clamp(2.15rem, 7vw, 3.35rem);
       line-height: 1.02;
       letter-spacing: 0.01em;
       margin: 0 0 0.85rem 0;
@@ -133,9 +133,24 @@
       margin: 0;
     }
 
-    body[data-page="session"] .session-primary-actions .page-back-btn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
+    body[data-page="session"] .session-help {
+      margin-top: 1rem;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    body[data-page="session"] .session-help summary {
+      padding: 1rem 1.15rem;
+      color: #fff;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    body[data-page="session"] .session-help p {
+      margin: 0;
+      padding: 0 1.15rem 1rem;
     }
 
     body[data-page="session"] .site-bottom-nav,
@@ -156,7 +171,7 @@
 
     @media (max-width: 640px) {
       body[data-page="session"] .page-intro h1 {
-        font-size: 3.15rem;
+        font-size: 2.45rem;
       }
 
       body[data-page="session"] .hero-text {
@@ -171,17 +186,14 @@
 
     <section class="page-intro">
       <div class="bonus-kicker">Guest Area</div>
-      <h1>Enter your 6-digit Instapic code</h1>
+      <h1>Open your session</h1>
       <p class="hero-text hero-text-wide">
-        To open your bonus session, view your photos, and access your bonus content, enter your 6-digit code.
-      </p>
-      <p class="muted">
-        This is different from your 4-digit email sign-in code.
+        Enter your 6-digit booth code to view your photos and bonus content.
       </p>
     </section>
 
     <form id="session-form" class="code-card code-card-center" novalidate autocomplete="off">
-      <label for="ticket_code" class="code-label">6-digit booth code</label>
+      <label for="ticket_code" class="code-label">Your 6-digit booth code</label>
 
       <div class="code-input-row code-input-row-stack session-code-row">
         <input
@@ -203,11 +215,10 @@
 
       <div class="session-primary-actions">
         <button type="submit" class="btn">Open My Session</button>
-        <a class="btn page-back-btn" href="index.html">Back to start</a>
       </div>
 
       <p id="processing" class="muted" hidden>Checking your code…</p>
-      <p class="code-hint">Numbers only. No spaces.</p>
+      <p class="code-hint">Use the keypad or your keyboard.</p>
 
       <div class="keypad">
         <div class="keypad-row">
@@ -233,16 +244,12 @@
       </div>
     </form>
 
-    <div class="info-callout" style="margin-top:1.5rem;">
-      <h2>Where do I find my code?</h2>
+    <details class="info-callout session-help">
+      <summary>Where do I find my code?</summary>
       <p>
-        Your 6-digit Instapic code is shown after website payment and/or on the screen after your photo session.
-        Copy, download, or share it so you don’t lose it. It may also be stored in your VIP Guest Area if you signed in.
+        It appears after website payment and after your booth session. It may also be saved in your VIP Guest Area.
       </p>
-      <p>
-        Keep your code safe — it’s the key to reopening your session later.
-      </p>
-    </div>
+    </details>
 
     <nav class="site-bottom-nav" aria-label="Site pages">
       <a href="save.html" class="secondary-link">VIP Guest Area</a>
@@ -255,6 +262,9 @@
     </nav>
     <p class="site-bottom-note">
       Hosts: use Private event above to unlock with your event PIN
+    </p>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
     </p>
   </main>
 
