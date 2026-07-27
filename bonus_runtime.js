@@ -288,22 +288,32 @@
     frame.innerHTML = "";
     actions.innerHTML = "";
 
-    // Keep yesterday's light load behaviour (preload metadata only).
-    // Today's crossOrigin + preload=auto made bonus pages feel laggy on the same Wi‑Fi.
-    const video = document.createElement("video");
-    video.src = url;
-    video.controls = true;
-    video.playsInline = true;
-    video.setAttribute("playsinline", "");
-    video.preload = "metadata";
-
-    if (opts?.autoplay) {
+    // Do not contact MotherPC for video data until the guest asks for it.
+    // Multiple autoplay players made the bonus page compete for bandwidth and
+    // video decoding on phones. The photo strip still loads immediately.
+    const loadButton = document.createElement("button");
+    loadButton.className = "btn";
+    loadButton.type = "button";
+    loadButton.textContent = `Tap to load ${label}`;
+    loadButton.addEventListener("click", () => {
+      const video = document.createElement("video");
+      video.src = url;
+      video.controls = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.preload = "metadata";
       video.autoplay = true;
       video.muted = true;
-      video.loop = !!opts.loop;
-    }
+      video.loop = !!opts?.loop;
 
-    frame.appendChild(video);
+      frame.replaceChildren(video);
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    });
+
+    frame.appendChild(loadButton);
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
     actions.appendChild(createShareButton(url, label));
   }
