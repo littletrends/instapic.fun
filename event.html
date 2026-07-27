@@ -666,6 +666,30 @@
       background: rgba(255,255,255,.055);
     }
 
+    #event-wallet-options {
+      display: grid;
+      gap: .55rem;
+      margin: .85rem 0 .35rem;
+    }
+
+    #event-google-pay,
+    #event-apple-pay {
+      width: 100%;
+      min-height: 44px;
+    }
+
+    .apple-pay-button {
+      -webkit-appearance: -apple-pay-button;
+      -apple-pay-button-type: plain;
+      border: 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .apple-pay-button-black {
+      -apple-pay-button-style: black;
+    }
+
     #event-card-container {
       max-width: 520px;
       margin: .85rem auto;
@@ -808,6 +832,19 @@
             <input type="checkbox" id="event-terms-accepted">
             <span>I accept the event hire, security bond, collection and monitoring terms.</span>
           </label>
+          <div id="event-wallet-options">
+            <div id="event-google-pay"></div>
+            <button
+              type="button"
+              id="event-apple-pay"
+              class="apple-pay-button apple-pay-button-black"
+              aria-label="Pay with Apple Pay"
+              hidden
+            ></button>
+          </div>
+          <p id="event-card-label" class="muted" style="text-align:center;margin:.65rem 0 .35rem;">
+            Or use a card
+          </p>
           <div id="event-card-container"></div>
           <button type="button" class="btn" id="event-authorise-bond" hidden>Authorise security bond</button>
           <button type="button" class="btn" id="event-pay-hire" hidden>Pay event hire balance</button>

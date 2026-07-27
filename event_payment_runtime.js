@@ -3,6 +3,9 @@
   const core = window.InstapicCore;
   let payments = null;
   let card = null;
+  let googlePay = null;
+  let applePay = null;
+  let walletActionKey = "";
   let state = null;
   let busy = false;
 
@@ -40,6 +43,71 @@
     payments = window.Square.payments(appId, locationId);
     card = await payments.card();
     await card.attach("#event-card-container");
+  }
+
+  function nextPayment() {
+    const bond = state?.security_bond || {};
+    const hire = state?.hire_payment || {};
+    const bondSatisfied =
+      bond.required === false ||
+      ["WAIVED", "HELD", "CAPTURED", "CAPTURED_PENDING_RETURN", "PARTIALLY_REFUNDED"].includes(bond.status);
+    const hireSatisfied = ["COMPLETED", "NOT_REQUIRED", "WAIVED"].includes(hire.status);
+    if (!bondSatisfied) return { action: "bond", amountCents: Number(bond.amount_cents || 0) };
+    if (!hireSatisfied) return { action: "hire", amountCents: Number(hire.amount_cents || 0) };
+    return null;
+  }
+
+  async function initWallets() {
+    await initSquare();
+    const due = nextPayment();
+    const googleTarget = qs("#event-google-pay");
+    const appleButton = qs("#event-apple-pay");
+    const options = qs("#event-wallet-options");
+    if (!due || due.amountCents <= 0) {
+      if (options) options.hidden = true;
+      return;
+    }
+    if (options) options.hidden = false;
+    const key = `${due.action}:${due.amountCents}`;
+    if (walletActionKey === key) return;
+
+    if (googlePay) {
+      try { await googlePay.destroy(); } catch (_) {}
+      googlePay = null;
+    }
+    applePay = null;
+    if (googleTarget) googleTarget.replaceChildren();
+    if (appleButton) appleButton.hidden = true;
+
+    const request = payments.paymentRequest({
+      countryCode: "AU",
+      currencyCode: "AUD",
+      total: {
+        amount: (due.amountCents / 100).toFixed(2),
+        label: due.action === "bond" ? "Instapic security bond" : "Instapic event hire",
+      },
+    });
+
+    try {
+      googlePay = await payments.googlePay(request);
+      await googlePay.attach("#event-google-pay", {
+        buttonColor: "black",
+        buttonSizeMode: "fill",
+        buttonType: "long",
+      });
+    } catch (err) {
+      googlePay = null;
+      console.info("Google Pay is unavailable on this device", err);
+    }
+
+    try {
+      applePay = await payments.applePay(request);
+      if (appleButton) appleButton.hidden = false;
+    } catch (err) {
+      applePay = null;
+      console.info("Apple Pay is unavailable on this device", err);
+    }
+    walletActionKey = key;
   }
 
   function render() {
@@ -100,6 +168,7 @@
     } else {
       status("The security bond must be authorised before the hire payment.");
     }
+    initWallets().catch((err) => console.info("Digital wallets unavailable", err));
   }
 
   async function refresh() {
@@ -115,9 +184,9 @@
     render();
   }
 
-  async function tokenize() {
+  async function tokenize(method = card) {
     await initSquare();
-    const result = await card.tokenize();
+    const result = await method.tokenize();
     if (result.status !== "OK" || !result.token) {
       const message = result.errors?.map((e) => e.message).filter(Boolean).join("; ");
       throw new Error(message || result.status || "Card tokenisation failed");
@@ -131,12 +200,12 @@
     return false;
   }
 
-  async function authoriseBond() {
+  async function authoriseBond(method = card) {
     if (busy || !termsAccepted()) return;
     busy = true;
     try {
       status("Authorising the security bond…");
-      const token = await tokenize();
+      const token = await tokenize(method);
       await readJson(await fetch(`${core.API_BASE}/api/event-bond/authorise-online`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -157,7 +226,7 @@
     }
   }
 
-  async function payHire() {
+  async function payHire(method = card) {
     if (busy || !termsAccepted()) return;
     busy = true;
     try {
@@ -166,7 +235,7 @@
         throw new Error("Security bond must be held first");
       }
       status("Processing the event hire payment…");
-      const token = await tokenize();
+      const token = await tokenize(method);
       await readJson(await fetch(`${core.API_BASE}/api/event-hire/pay-online`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -208,7 +277,19 @@
   });
 
   document.addEventListener("DOMContentLoaded", () => {
-    qs("#event-authorise-bond")?.addEventListener("click", authoriseBond);
-    qs("#event-pay-hire")?.addEventListener("click", payHire);
+    qs("#event-authorise-bond")?.addEventListener("click", () => authoriseBond(card));
+    qs("#event-pay-hire")?.addEventListener("click", () => payHire(card));
+    qs("#event-google-pay")?.addEventListener("click", () => {
+      const due = nextPayment();
+      if (!googlePay || !due) return;
+      if (due.action === "bond") authoriseBond(googlePay);
+      else payHire(googlePay);
+    });
+    qs("#event-apple-pay")?.addEventListener("click", () => {
+      const due = nextPayment();
+      if (!applePay || !due) return;
+      if (due.action === "bond") authoriseBond(applePay);
+      else payHire(applePay);
+    });
   });
 })();
