@@ -288,45 +288,20 @@
     frame.innerHTML = "";
     actions.innerHTML = "";
 
+    // Keep yesterday's light load behaviour (preload metadata only).
+    // Today's crossOrigin + preload=auto made bonus pages feel laggy on the same Wi‑Fi.
     const video = document.createElement("video");
-    // Cross-origin MotherPC media — needed for reliable mobile/desktop playback + Range
-    video.crossOrigin = "anonymous";
     video.src = url;
     video.controls = true;
     video.playsInline = true;
     video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
-    video.preload = "auto";
-    video.style.width = "100%";
-    video.style.height = "100%";
-    video.style.objectFit = "contain";
-    video.style.background = "#000";
+    video.preload = "metadata";
 
     if (opts?.autoplay) {
       video.autoplay = true;
       video.muted = true;
       video.loop = !!opts.loop;
-      // Autoplay policies: try play after canplay
-      video.addEventListener(
-        "canplay",
-        () => {
-          video.play().catch(() => {});
-        },
-        { once: true }
-      );
     }
-
-    video.addEventListener("error", () => {
-      const err = video.error;
-      console.error("[bonus] video error", label, url, err && err.code, err);
-      const note = document.createElement("div");
-      note.className = "media-error";
-      note.style.cssText =
-        "padding:12px;color:#f8d7da;font-size:13px;text-align:center;";
-      note.textContent =
-        "Video couldn’t play in this browser. Use Download, then open the file.";
-      frame.appendChild(note);
-    });
 
     frame.appendChild(video);
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
