@@ -59,7 +59,7 @@
         showAuthPanel(tab.dataset.guestPanel || "password-sign-in-block");
       });
     });
-    showAuthPanel("password-sign-in-block");
+    showAuthPanel("email-sign-in-block");
   }
 
   async function profileLookup(apiBase, email) {

@@ -23,11 +23,38 @@
     </section>
 
     <div class="guest-auth-switch" role="tablist" aria-label="Guest Area access">
-      <button type="button" class="guest-auth-tab is-active" data-guest-panel="password-sign-in-block" role="tab" aria-selected="true">Sign in</button>
-      <button type="button" class="guest-auth-tab" data-guest-panel="email-sign-in-block" role="tab" aria-selected="false">Join / email code</button>
+      <button type="button" class="guest-auth-tab is-active" data-guest-panel="email-sign-in-block" role="tab" aria-selected="true">Join / email code</button>
+      <button type="button" class="guest-auth-tab" data-guest-panel="password-sign-in-block" role="tab" aria-selected="false">Sign in</button>
     </div>
 
-    <div class="info-callout" id="password-sign-in-block">
+    <div class="info-callout" id="email-sign-in-block">
+      <h2>Join or sign in by email</h2>
+      <p>We’ll email you a 4-digit Guest Area sign-in code.</p>
+
+      <form id="save-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_email" class="code-label">Email address</label>
+
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="email"
+            id="guest_email"
+            name="guest_email"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn" id="email-code-submit">Email my sign-in code</button>
+        </div>
+
+        <p class="code-hint">New here, forgot your password, or prefer an email code? Use this option.</p>
+      </form>
+    </div>
+
+    <div class="info-callout" id="password-sign-in-block" hidden>
       <h2>Welcome back</h2>
       <p>Sign in with your Guest Area password.</p>
 
@@ -69,33 +96,6 @@
         <p class="code-hint">
           Password is 6 to 8 characters. Forgot it? Use the email code option below.
         </p>
-      </form>
-    </div>
-
-    <div class="info-callout" id="email-sign-in-block" hidden>
-      <h2>Join or sign in by email</h2>
-      <p>We’ll email you a 4-digit Guest Area sign-in code.</p>
-
-      <form id="save-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
-        <label for="guest_email" class="code-label">Email address</label>
-
-        <div class="code-input-row code-input-row-stack">
-          <input
-            type="email"
-            id="guest_email"
-            name="guest_email"
-            inputmode="email"
-            placeholder="you@example.com"
-            required
-            autocomplete="email"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
-          >
-          <button type="submit" class="btn" id="email-code-submit">Email my sign-in code</button>
-        </div>
-
-        <p class="code-hint">New here, forgot your password, or prefer an email code? Use this option.</p>
       </form>
     </div>
 
