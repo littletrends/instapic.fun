@@ -60,7 +60,7 @@
       const ticketCode = normalizeTicketCode(input.value);
 
       if (!email || !verified) {
-        setStoreStatus("Please sign in to your guest area first.", true);
+        setStoreStatus("Please sign in to your VIP Guest Area first.", true);
         return;
       }
 
@@ -73,7 +73,7 @@
 
       try {
         await storeCodeToGuest(email, ticketCode);
-        setStoreStatus("Code saved to your guest area.", false);
+        setStoreStatus("Code saved to your VIP Guest Area.", false);
         input.value = "";
         window.location.reload();
       } catch (err) {

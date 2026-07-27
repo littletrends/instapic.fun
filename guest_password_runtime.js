@@ -107,7 +107,7 @@
       const password = String(qs("#guest_new_password")?.value || "").trim();
 
       if (!email || !guest.verified) {
-        showFlash("Please sign in to your guest area first.");
+        showFlash("Please sign in to your VIP Guest Area first.");
         return;
       }
       if (!password) {

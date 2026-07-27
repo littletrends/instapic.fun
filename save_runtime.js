@@ -132,7 +132,7 @@
           const lookup = await profileLookup(apiBase, email);
           if (lookup.exists && lookup.has_password) {
             showFlash(
-              "This email already has a Guest Area password. Sign in with your password above — or submit the email form again to get a new 4-digit code anyway."
+              "This email already has a VIP Guest Area password. Sign in with your password above — or submit the email form again to get a new 4-digit code anyway."
             );
             focusPasswordSignIn(lookup.email || email);
             forceEmailCode = true;
