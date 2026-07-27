@@ -533,8 +533,9 @@
     cards.forEach((card, idx) => {
       if (qs(".freeze-adjust-row", card)) return;
 
-      const actions = qs(".actions", card);
-      if (!actions) return;
+      // Freeze cards no longer always have .actions (download/share removed).
+      // Mount controls after the media wrap, or at end of the card.
+      const mountAfter = qs(".media-wrap", card) || qs(".actions", card);
 
       const row = document.createElement("div");
       row.className = "freeze-adjust-row";
@@ -592,7 +593,15 @@
       row.appendChild(fwd);
       row.appendChild(magic);
 
-      actions.parentNode.insertBefore(row, actions);
+      if (mountAfter && mountAfter.parentNode === card) {
+        if (mountAfter.nextSibling) {
+          card.insertBefore(row, mountAfter.nextSibling);
+        } else {
+          card.appendChild(row);
+        }
+      } else {
+        card.appendChild(row);
+      }
     });
 
     updateFreezeOffsetLabels();
@@ -706,11 +715,32 @@
     refreshHostLockContext();
   });
 
-  document.addEventListener("DOMContentLoaded", initPatch);
-  window.addEventListener("load", initPatch);
+  // Freeze cards are rendered async after get-bonus — re-inject when grid fills.
+  function watchStillsGrid() {
+    const grid = qs("#stills-grid");
+    if (!grid || grid.__instapicFreezeWatch) return;
+    grid.__instapicFreezeWatch = true;
+    const mo = new MutationObserver(() => {
+      injectButtons();
+    });
+    mo.observe(grid, { childList: true, subtree: true });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initPatch();
+    watchStillsGrid();
+  });
+  window.addEventListener("load", () => {
+    initPatch();
+    injectButtons();
+    watchStillsGrid();
+  });
   setTimeout(initPatch, 600);
   setTimeout(initPatch, 1600);
   setTimeout(injectButtons, 1200);
+  setTimeout(injectButtons, 2500);
+  setTimeout(injectButtons, 4500);
   setTimeout(patchShareButtons, 1800);
   setTimeout(refreshHostLockContext, 2000);
+  setTimeout(watchStillsGrid, 400);
 })();
