@@ -744,6 +744,15 @@
     renderStripRoll(portalState.sessions);
     startCountdown();
     showPortal();
+    document.dispatchEvent(new CustomEvent("instapic:event-portal-loaded", {
+      detail: {
+        pin,
+        event: portalState.event,
+        security_bond: data.security_bond || portalState.event.security_bond || {},
+        hire_payment: data.hire_payment || portalState.event.hire_payment || {},
+        payment_ready: !!data.payment_ready,
+      },
+    }));
 
     if (selectedCode && portalState.sessions.some((s) => s.ticket_code === selectedCode)) {
       selectSession(selectedCode);

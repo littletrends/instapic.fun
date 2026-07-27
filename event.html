@@ -645,6 +645,32 @@
       min-height: 1.2em;
     }
 
+    .event-payment-panel {
+      margin: 1rem 0 1.25rem;
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      background: rgba(12,12,24,.92);
+    }
+
+    .event-payment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+
+    .event-payment-state {
+      padding: .85rem;
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+    }
+
+    #event-card-container {
+      max-width: 520px;
+      margin: .85rem auto;
+    }
+
     body[data-page="event"] #event-pin-form .btn {
       align-self: center;
       margin-left: auto;
@@ -760,6 +786,35 @@
         </div>
       </div>
 
+      <section
+        id="event-payment-panel"
+        class="event-payment-panel"
+        data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
+        data-square-location-id="9ZKNKQJ29QF50"
+      >
+        <p class="panel-label">Event payment &amp; security</p>
+        <div class="event-payment-grid">
+          <div class="event-payment-state">
+            <strong>Security bond</strong>
+            <div id="event-bond-summary">Checking…</div>
+          </div>
+          <div class="event-payment-state">
+            <strong>Hire payment</strong>
+            <div id="event-hire-summary">Checking…</div>
+          </div>
+        </div>
+        <div id="event-payment-form" hidden>
+          <label class="check-row">
+            <input type="checkbox" id="event-terms-accepted">
+            <span>I accept the event hire, security bond, collection and monitoring terms.</span>
+          </label>
+          <div id="event-card-container"></div>
+          <button type="button" class="btn" id="event-authorise-bond" hidden>Authorise security bond</button>
+          <button type="button" class="btn" id="event-pay-hire" hidden>Pay event hire balance</button>
+        </div>
+        <p id="event-payment-status" class="muted" style="text-align:center;margin:.75rem 0 0;"></p>
+      </section>
+
       <div id="bg-preview-row" class="bg-preview-row" aria-label="Event backgrounds"></div>
 
       <div class="strip-roll-panel">
@@ -843,8 +898,10 @@
     <small>Instapic by Little Trends — Moments Made Magical ✨</small>
   </footer>
 
-  <script src="site_core.js?v=20260725-event"></script>
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+  <script src="site_core.js?v=20260727-event-payments"></script>
   <script src="branding.js"></script>
-  <script src="event_runtime.js?v=20260725-timer-sync"></script>
+  <script src="event_runtime.js?v=20260727-event-payments"></script>
+  <script src="event_payment_runtime.js?v=20260727-event-payments"></script>
 </body>
 </html>
