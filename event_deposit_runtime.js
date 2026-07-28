@@ -40,6 +40,10 @@
       status.innerHTML=`<strong>Deposit already received — your event is booked.</strong><br>Host portal PIN: <strong>${config.host_pin||"being prepared"}</strong>`;
       return;
     }
+    // The proven photo-strip checkout exposes its payment panel before
+    // initializing digital wallets. Safari can then see the real Apple Pay
+    // button in the rendered document.
+    content.hidden=false;
     const payments=window.Square.payments(config.square_application_id,config.square_location_id);
     const paymentRequest=payments.paymentRequest({
       countryCode:"AU",currencyCode:"AUD",
@@ -53,10 +57,19 @@
       document.getElementById("google-pay-button").addEventListener("click",()=>complete(googlePay));
     }catch(_error){document.getElementById("google-pay-button").hidden=true;}
     try{
+      const appleButton=document.getElementById("apple-pay-button");
+      appleButton.classList.add("apple-pay-button");
+      appleButton.setAttribute("lang","en");
+      appleButton.setAttribute("aria-label","Pay with Apple Pay");
+      appleButton.style.setProperty("-webkit-appearance","-apple-pay-button");
+      appleButton.style.setProperty("-apple-pay-button-type","pay");
+      appleButton.style.setProperty("-apple-pay-button-style","white");
       const applePay=await payments.applePay(paymentRequest);
-      const holder=document.getElementById("apple-pay-button");
-      holder.innerHTML='<button class="wallet-button apple-pay-button" aria-label="Pay with Apple Pay"></button>';
-      holder.querySelector("button").addEventListener("click",()=>complete(applePay));
+      appleButton.hidden=false;
+      appleButton.style.display="block";
+      appleButton.style.visibility="visible";
+      appleButton.style.opacity="1";
+      appleButton.addEventListener("click",()=>complete(applePay));
     }catch(error){
       document.getElementById("apple-pay-button").hidden=true;
       appleStatus.hidden=false;
@@ -68,7 +81,7 @@
         appleStatus.textContent=`Apple Pay could not start: ${error?.message||error?.name||"Square rejected Apple Pay initialization"}.`;
       }
     }
-    content.hidden=false;status.textContent="";
+    status.textContent="";
   }
   load().catch(error=>{status.textContent=error.message||"Secure payment could not be loaded.";});
 })();
