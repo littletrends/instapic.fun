@@ -4,7 +4,26 @@
   const submit = document.getElementById("submit-enquiry");
   const locationButton = document.getElementById("use-location");
   const locationResult = document.getElementById("location-result");
+  const mirror = document.getElementById("preferred-mirror");
+  const frame = document.getElementById("frame-preference");
   if (!form) return;
+
+  function updateFrames() {
+    const selected = mirror?.value || "";
+    const choices = selected === "mirror1"
+      ? [["bauble", "Black frame with bauble lights"]]
+      : selected === "mirror2"
+        ? [["", "Choose gold or white…"], ["gold", "Gold frame with LED lights"], ["white", "White frame with LED lights"]]
+        : selected === "either"
+          ? [["unsure", "Either frame — recommend the best fit"]]
+          : [["unsure", "Choose a mirror first…"]];
+    frame.replaceChildren(...choices.map(([value, label]) => {
+      const option = document.createElement("option");
+      option.value = value; option.textContent = label; return option;
+    }));
+  }
+  mirror?.addEventListener("change", updateFrames);
+  updateFrames();
 
   function setStatus(message, isError) {
     status.textContent = message || "";
@@ -55,6 +74,7 @@
         throw new Error(result.message || result.error || `HTTP ${response.status}`);
       }
       form.reset();
+      updateFrames();
       setStatus(
         `Thank you — your enquiry ${result.enquiry_id} has been received. We’ll review availability and prepare your quote.`,
         false
