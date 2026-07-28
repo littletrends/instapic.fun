@@ -52,26 +52,20 @@
     if (!list) return;
     list.replaceChildren();
     const messages = data.messages || [];
-    // Host with PIN gets message URLs even while locked (host preview)
-    if (!messages.length) {
-      if (locked && count > 0) {
+    // Locked: count + Unlock only — no video players until host/admin unlocks
+    if (locked) {
+      if (count > 0) {
         const p = document.createElement("p");
         p.className = "muted";
         p.style.textAlign = "center";
         p.textContent =
-          "Messages are locked. Use Unlock messages, or re-enter host PIN and Refresh to preview.";
+          "Messages are locked. Press Unlock messages when you are ready to watch them.";
         list.appendChild(p);
       }
       return;
     }
-    if (locked && data.host_preview) {
-      const note = document.createElement("p");
-      note.className = "muted";
-      note.style.textAlign = "center";
-      note.style.fontSize = "0.9rem";
-      note.textContent =
-        "Host preview — guests still cannot open these until you Unlock messages.";
-      list.appendChild(note);
+    if (!messages.length) {
+      return;
     }
     messages.forEach((m) => {
       const card = document.createElement("div");
