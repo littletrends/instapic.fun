@@ -11,6 +11,7 @@
   const status=document.getElementById("host-setup-status");
   const preview=document.getElementById("host-setup-preview");
   let eventCode="",pin="",objectUrl="";
+  let loadedFont="";
   async function json(response){
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data.ok===false)throw new Error(data.message||data.error||`HTTP ${response.status}`);
@@ -20,9 +21,14 @@
     document.getElementById("host-setup-preview-line1").textContent=line1.value;
     document.getElementById("host-setup-preview-line2").textContent=line2.value;
     document.getElementById("host-setup-preview-line3").textContent=line3.value;
-    preview.style.fontFamily=font.value==="Piazzolla-Bold.otf"
-      ?"Georgia,serif":font.value==="IndieFlower.ttf"
-        ?"Comic Sans MS,cursive":"Impact,Arial Black,sans-serif";
+    if(font.value&&font.value!==loadedFont){
+      loadedFont=font.value;
+      const family=`HostPreview_${font.value.replace(/[^a-z0-9]/gi,"_")}`;
+      const url=`${core.API_BASE}/api/event-host-setup/${encodeURIComponent(eventCode)}/font/${encodeURIComponent(font.value)}?pin=${encodeURIComponent(pin)}`;
+      new FontFace(family,`url("${url}")`).load().then(face=>{
+        document.fonts.add(face);preview.style.fontFamily=`"${family}",sans-serif`;
+      }).catch(()=>{preview.style.fontFamily="sans-serif";});
+    }
   }
   function showImage(url){
     imagePreview.hidden=!url;
@@ -37,10 +43,21 @@
         {cache:"no-store"}
       ));
       const setup=result.setup||{};
+      const selected=setup.brand_label_font||"Concrete.ttf";
+      font.replaceChildren();
+      for(const item of setup.fonts||[]){
+        const option=document.createElement("option");
+        option.value=item.file;option.textContent=item.label||item.file;
+        option.selected=item.file===selected;font.appendChild(option);
+      }
+      if(!font.options.length){
+        const option=document.createElement("option");
+        option.value="Concrete.ttf";option.textContent="Bold modern";font.appendChild(option);
+      }
       line1.value=setup.brand_line1||"";
       line2.value=setup.brand_line2||"";
       line3.value=setup.brand_line3||"";
-      font.value=setup.brand_label_font||"Concrete.ttf";
+      font.value=selected;loadedFont="";
       showImage(setup.image_url?`${core.API_BASE}${setup.image_url}&v=${Date.now()}`:"");
       paint();
       status.textContent=setup.status==="HOST_SAVED"?"Your saved setup is loaded.":"Choose your image and wording, then save.";
