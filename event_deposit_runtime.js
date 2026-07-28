@@ -8,6 +8,11 @@
   let busy=false;
 
   const money=(c)=>new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD"}).format(Number(c||0)/100);
+  function showBooked(pin,already){
+    const cleanPin=String(pin||"").replace(/\D/g,"").slice(0,6);
+    content.hidden=true;
+    status.innerHTML=`<section class="booking-confirmation"><h2>${already?"Deposit already received":"Deposit received"} ✅</h2><p><strong>Your event is now booked and secured.</strong></p><p class="booking-pin">Host portal number: <strong>${cleanPin||"being prepared"}</strong></p>${cleanPin?`<a class="btn" href="event.html?pin=${encodeURIComponent(cleanPin)}">Open your event host portal</a>`:""}</section>`;
+  }
   async function request(url,options){
     const response=await fetch(url,options),data=await response.json().catch(()=>({}));
     if(!response.ok||data.ok===false)throw new Error(data.message||data.error||`HTTP ${response.status}`);
@@ -22,8 +27,7 @@
       const result=await request(`${api}/api/booking/deposits/${encodeURIComponent(token)}/pay`,{
         method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source_id:tokenResult.token})
       });
-      content.hidden=true;
-      status.innerHTML=`<strong>Deposit received — your event is booked.</strong><br>Host portal PIN: <strong>${result.host_pin||"being prepared"}</strong>`;
+      showBooked(result.host_pin,false);
     }catch(error){
       status.textContent=`Payment was not completed: ${error.message}`;
       busy=false;cardButton.disabled=false;
@@ -36,8 +40,7 @@
     document.getElementById("event-name").textContent=config.event_name||"Your event";
     document.getElementById("deposit-total").textContent=money(config.amount_cents);
     if(config.payment_status==="COMPLETED"){
-      content.hidden=true;
-      status.innerHTML=`<strong>Deposit already received — your event is booked.</strong><br>Host portal PIN: <strong>${config.host_pin||"being prepared"}</strong>`;
+      showBooked(config.host_pin,true);
       return;
     }
     // The proven photo-strip checkout exposes its payment panel before

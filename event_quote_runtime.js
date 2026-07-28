@@ -90,7 +90,7 @@
         <h2>Before you accept</h2>
         <p>Accepting this quote moves the enquiry to the event-hire agreement stage. <strong>Your date and mirror are not booked or reserved until the agreement is accepted and the booking deposit is successfully paid.</strong></p>
         <p>Availability is checked again immediately before payment. If the quoted mirror becomes unavailable before the deposit is paid, no payment will be taken and this quote may be withdrawn or revised.</p>
-        <p>This quote is subject to the <a href="terms.html" target="_blank" rel="noopener">Instapic Event Hire Terms</a>. The agreement will repeat the key conditions before payment.</p>
+        <p>This quote is subject to the <a href="terms.html">Instapic Event Hire Terms</a>. The agreement will repeat the key conditions before payment.</p>
         <textarea id="quote-change-message" class="quote-message" placeholder="If you need changes, tell us what you would like adjusted."></textarea>
         <div class="quote-actions"><button class="btn" id="accept-quote">Accept quote</button><button class="secondary-link" id="request-changes">Request changes</button></div>
       </section>`;

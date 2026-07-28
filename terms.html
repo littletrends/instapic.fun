@@ -38,7 +38,7 @@
       </div>
 
       <div class="info-callout">
-        <h2>Your booth code</h2>
+        <h2>Booth-code details</h2>
         <p>
           After a successful online payment, Instapic issues a unique 6-digit code for the package selected.
           An unused paid booth code has no expiry date and can be entered at a participating Instapic photo
@@ -51,7 +51,7 @@
       </div>
 
       <div class="info-callout" style="margin-top:1.25rem;">
-        <h2>Sessions and digital content</h2>
+        <h2>Bonus-content details</h2>
         <p>
           Each code provides the prints and digital features shown for the selected package. Once a code has
           been used to begin a booth session, it cannot be used to start another paid session unless Little
@@ -82,6 +82,36 @@
         <p>
           Do not attempt to guess, copy, sell, interfere with or misuse another guest’s code, session or
           private-event content. Access may be restricted where necessary to protect guests or the service.
+        </p>
+      </div>
+
+      <div class="info-callout" style="margin-top:1.25rem;">
+        <h2>Event booth-code details</h2>
+        <p>
+          A private event has a 6-digit host portal number for the event hirer. This is separate from a
+          guest’s paid or printed session code. The host number may provide access to event information,
+          payment status, event controls and the combined event gallery, so the hirer must keep it private
+          and share it only with an authorised person.
+        </p>
+        <p>
+          Individual event sessions may also issue or print a 6-digit booth/session code above the strip QR
+          code. That session code allows the guest to retrieve content from their own session; it does not
+          grant access to the host’s complete event portal.
+        </p>
+      </div>
+
+      <div class="info-callout" style="margin-top:1.25rem;">
+        <h2>Event bonus-content details</h2>
+        <p>
+          Event photos, strips and available bonus content may be uploaded to the private event portal
+          during the event. Upload timing depends on the booth, internet connection and successful
+          processing, so content may not appear instantly.
+        </p>
+        <p>
+          The event hirer and guests should download and safely store the content they wish to keep.
+          Instapic event access is a delivery and viewing service and is not a promise of permanent cloud
+          storage. Any special event inclusions, delayed releases or longer retention arrangements must be
+          stated in the accepted quote or agreed in writing.
         </p>
       </div>
 
@@ -194,7 +224,8 @@
         <span class="nav-dot" aria-hidden="true">·</span>
         <a href="privacy.html" class="secondary-link">Privacy</a>
       </nav>
-      <p class="page-back">
+      <p class="page-back" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+        <button class="secondary-link" type="button" id="terms-history-back">Back</button>
         <a class="btn" href="index.html">Back to start</a>
       </p>
     </section>
@@ -203,5 +234,11 @@
   <footer class="site-footer">
     <small>Instapic by Little Trends — Moments Made Magical ✨</small>
   </footer>
+  <script>
+    document.getElementById("terms-history-back").addEventListener("click", function () {
+      if (history.length > 1) history.back();
+      else location.href = "index.html";
+    });
+  </script>
 </body>
 </html>
