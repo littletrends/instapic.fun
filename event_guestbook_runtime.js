@@ -1,5 +1,7 @@
 /**
- * Host portal: guest video guestbook count + unlock (messages stay locked until host unlocks).
+ * Host portal: guest video guestbook.
+ * Locked until Instapic admin unlocks OR 24h after the event ends (auto).
+ * Host PIN cannot unlock early.
  */
 (function () {
   const core = window.InstapicCore;
@@ -12,8 +14,7 @@
 
   let eventCode = "";
   let pin = "";
-
-  function moneyless() {}
+  let countdownTimer = null;
 
   async function readJson(response) {
     const data = await response.json().catch(() => ({}));
@@ -30,43 +31,108 @@
     return `${base}${path.startsWith("/") ? path : `/${path}`}`;
   }
 
+  function formatDuration(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+
+  function formatWhen(unix) {
+    if (!unix) return "";
+    try {
+      return new Date(Number(unix) * 1000).toLocaleString();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function stopCountdown() {
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }
+
   function render(data) {
     if (!panel) return;
     panel.hidden = false;
     const count = Number(data.count || 0);
     const locked = data.locked !== false;
+    const autoAt = data.auto_unlock_at_unix || null;
+    let secs = data.seconds_until_auto_unlock;
+    if (secs == null && autoAt) {
+      secs = Math.max(0, Math.floor(autoAt - Date.now() / 1000));
+    }
+
+    // Host never gets an early-unlock button — admin only (or auto 24h)
+    if (unlockBtn) {
+      unlockBtn.hidden = true;
+      unlockBtn.disabled = true;
+    }
+
     if (summary) {
       if (count === 0) {
         summary.textContent =
           "No guest video messages yet. Guests use the slim button on the Magic Mirror event portal.";
       } else if (locked) {
-        summary.textContent = `${count} guest message${count === 1 ? "" : "s"} waiting. Locked until you unlock (usually next day).`;
+        const when = formatWhen(autoAt);
+        summary.textContent =
+          `${count} guest message${count === 1 ? "" : "s"} waiting. ` +
+          `Locked for now — they open for you automatically 24 hours after the event ends` +
+          (when ? ` (${when})` : "") +
+          `. Instapic can unlock earlier if needed.`;
       } else {
-        summary.textContent = `${count} guest message${count === 1 ? "" : "s"} unlocked for this event.`;
+        const by = data.unlocked_by === "admin" ? " (unlocked by Instapic)" : "";
+        summary.textContent = `${count} guest message${count === 1 ? "" : "s"} ready to watch${by}.`;
       }
     }
-    if (unlockBtn) {
-      unlockBtn.hidden = !locked || count === 0;
-      unlockBtn.disabled = false;
-    }
+
     if (!list) return;
     list.replaceChildren();
-    const messages = data.messages || [];
-    // Locked: count + Unlock only — no video players until host/admin unlocks
+    stopCountdown();
+
     if (locked) {
       if (count > 0) {
         const p = document.createElement("p");
         p.className = "muted";
         p.style.textAlign = "center";
-        p.textContent =
-          "Messages are locked. Press Unlock messages when you are ready to watch them.";
-        list.appendChild(p);
+        p.id = "event-guestbook-countdown";
+        if (autoAt || secs != null) {
+          p.textContent = `Unlocks in ${formatDuration(secs)}`;
+          list.appendChild(p);
+          countdownTimer = setInterval(() => {
+            const left = autoAt
+              ? Math.max(0, Math.floor(autoAt - Date.now() / 1000))
+              : 0;
+            const el = document.getElementById("event-guestbook-countdown");
+            if (!el) {
+              stopCountdown();
+              return;
+            }
+            if (left <= 0) {
+              stopCountdown();
+              el.textContent = "Unlocking…";
+              refresh();
+              return;
+            }
+            el.textContent = `Unlocks in ${formatDuration(left)}`;
+          }, 30000);
+        } else {
+          p.textContent =
+            "Messages stay locked until 24 hours after the event ends (or Instapic unlocks them).";
+          list.appendChild(p);
+        }
       }
       return;
     }
-    if (!messages.length) {
-      return;
-    }
+
+    const messages = data.messages || [];
+    if (!messages.length) return;
+
     messages.forEach((m) => {
       const card = document.createElement("div");
       card.style.cssText =
@@ -89,7 +155,8 @@
         video.playsInline = true;
         video.preload = "metadata";
         video.src = mediaUrl(m.url);
-        video.style.cssText = "width:100%;max-height:360px;border-radius:12px;background:#000";
+        video.style.cssText =
+          "width:100%;max-height:360px;border-radius:12px;background:#000";
         card.appendChild(video);
       }
       list.appendChild(card);
@@ -100,7 +167,6 @@
     if (!eventCode || !core) return;
     try {
       if (status) status.textContent = "";
-      // Prefer payload from portal load if present
       const res = await fetch(
         `${core.API_BASE}/api/event-guestbook/${encodeURIComponent(eventCode)}?pin=${encodeURIComponent(pin)}`,
         { cache: "no-store" }
@@ -112,37 +178,14 @@
     }
   }
 
-  async function unlock() {
-    if (!eventCode || !pin || !core) return;
-    if (!confirm("Unlock guest video messages for this event?")) return;
-    unlockBtn.disabled = true;
-    try {
-      const res = await fetch(
-        `${core.API_BASE}/api/event-guestbook/${encodeURIComponent(eventCode)}/unlock`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pin }),
-        }
-      );
-      await readJson(res);
-      if (status) status.textContent = "Messages unlocked.";
-      await refresh();
-    } catch (err) {
-      if (status) status.textContent = `Unlock failed: ${err.message || err}`;
-      unlockBtn.disabled = false;
-    }
-  }
-
   document.addEventListener("instapic:event-portal-loaded", (event) => {
     eventCode = event.detail?.event?.event_code || "";
     pin = event.detail?.pin || "";
-    // Use guestbook from payload if included
     const gb = event.detail?.guestbook || event.detail?.portal?.guestbook;
     if (gb) render(gb);
     refresh();
   });
 
   refreshBtn?.addEventListener("click", refresh);
-  unlockBtn?.addEventListener("click", unlock);
+  // Unlock button intentionally not wired for hosts
 })();

@@ -912,9 +912,11 @@
       <section id="event-guestbook-panel" class="host-chat-panel" data-event-tab-panel="messages" hidden>
         <p class="panel-label">Guest video messages</p>
         <p id="event-guestbook-summary" class="muted" style="text-align:center;">
-          Guests can leave a short video from the Magic Mirror event portal. Messages stay locked until you unlock them.
+          Guests can leave a short video from the Magic Mirror event portal.
+          Messages open for you automatically 24 hours after the event ends (Instapic can unlock earlier).
         </p>
         <div class="event-guestbook-actions" style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin:.75rem 0;">
+          <!-- Host cannot early-unlock — admin only / 24h auto -->
           <button type="button" class="btn" id="event-guestbook-unlock" hidden>Unlock messages</button>
           <button type="button" class="btn btn-ghost" id="event-guestbook-refresh">Refresh</button>
         </div>
@@ -1081,7 +1083,7 @@
   <script src="event_runtime.js?v=20260728-gallery-default"></script>
   <script src="event_payment_runtime.js?v=20260728-host-agreement"></script>
   <script src="event_chat_runtime.js?v=20260728-gallery-default"></script>
-  <script src="event_guestbook_runtime.js?v=20260728-guestbook-locked"></script>
+  <script src="event_guestbook_runtime.js?v=20260728-guestbook-admin24h"></script>
   <script src="event_setup_runtime.js?v=20260728-admin-lock"></script>
 </body>
 </html>
