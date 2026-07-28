@@ -5,7 +5,7 @@
   const body=document.getElementById("host-chat-body");
   const send=document.getElementById("host-chat-send");
   const status=document.getElementById("host-chat-status");
-  let eventCode="",pin="",timer=null,lastSignature="",activeTab="overview";
+  let eventCode="",pin="",timer=null,lastSignature="",activeTab="gallery";
   const tabs=[...document.querySelectorAll("[data-event-tab]")];
   const tabPanels=[...document.querySelectorAll("[data-event-tab-panel]")];
   function openTab(name){
@@ -51,6 +51,13 @@
   }
   document.addEventListener("instapic:event-portal-loaded",(event)=>{
     eventCode=event.detail?.event?.event_code||"";pin=event.detail?.pin||"";
+    const eventState=String(event.detail?.event?.status||"").toUpperCase();
+    const activation=document.getElementById("event-activation-summary");
+    if(activation){
+      activation.textContent=["ACTIVE","LIVE"].includes(eventState)
+        ?"Your event is active. New sessions will appear in the Gallery as they finish."
+        :"This event has not been activated on a Magic Mirror yet. The Gallery will begin filling once the event is active and sessions are completed.";
+    }
     openTab(activeTab);refresh();if(timer)clearInterval(timer);timer=setInterval(refresh,30000);
   });
   send?.addEventListener("click",sendMessage);
