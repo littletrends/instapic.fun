@@ -5,7 +5,15 @@
   const body=document.getElementById("host-chat-body");
   const send=document.getElementById("host-chat-send");
   const status=document.getElementById("host-chat-status");
-  let eventCode="",pin="",timer=null,lastSignature="";
+  let eventCode="",pin="",timer=null,lastSignature="",activeTab="overview";
+  const tabs=[...document.querySelectorAll("[data-event-tab]")];
+  const tabPanels=[...document.querySelectorAll("[data-event-tab-panel]")];
+  function openTab(name){
+    activeTab=name;
+    tabs.forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.eventTab===name)));
+    tabPanels.forEach(item=>{item.hidden=item.dataset.eventTabPanel!==name;});
+    if(name==="messages")refresh();
+  }
   async function readJson(response){
     const data=await response.json().catch(()=>({}));
     if(!response.ok||data.ok===false)throw new Error(data.message||data.error||`HTTP ${response.status}`);
@@ -29,7 +37,7 @@
     if(!eventCode||!pin)return;
     try{
       const data=await readJson(await fetch(`${core.API_BASE}/api/booking/host-conversation/${encodeURIComponent(eventCode)}?pin=${encodeURIComponent(pin)}`,{cache:"no-store"}));
-      panel.hidden=false;render(data.messages||[]);status.textContent="";
+      panel.hidden=activeTab!=="messages";render(data.messages||[]);status.textContent="";
     }catch(error){status.textContent="Messages are temporarily unavailable.";}
   }
   async function sendMessage(){
@@ -43,7 +51,11 @@
   }
   document.addEventListener("instapic:event-portal-loaded",(event)=>{
     eventCode=event.detail?.event?.event_code||"";pin=event.detail?.pin||"";
-    refresh();if(timer)clearInterval(timer);timer=setInterval(refresh,30000);
+    openTab(activeTab);refresh();if(timer)clearInterval(timer);timer=setInterval(refresh,30000);
   });
   send?.addEventListener("click",sendMessage);
+  body?.addEventListener("keydown",(event)=>{
+    if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();sendMessage();}
+  });
+  tabs.forEach(tab=>tab.addEventListener("click",()=>openTab(tab.dataset.eventTab)));
 })();

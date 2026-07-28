@@ -42,6 +42,11 @@
       margin-bottom: 1rem;
       text-align: center;
     }
+    .event-portal-tabs{display:flex;gap:8px;overflow-x:auto;margin:18px 0 12px;padding:5px;border-radius:16px;background:rgba(255,255,255,.055)}
+    .event-portal-tab{flex:1;min-width:max-content;padding:10px 14px;border:0;border-radius:12px;background:transparent;color:inherit;font-weight:800;cursor:pointer}
+    .event-portal-tab[aria-selected="true"]{background:linear-gradient(135deg,#ff77c8,#9b7cff);color:#160e24}
+    [data-event-tab-panel][hidden]{display:none!important}
+    .event-overview-panel{padding:18px;border-radius:18px;background:rgba(255,255,255,.055);text-align:center}
 
     body[data-page="event"] .portal-top-left,
     body[data-page="event"] .portal-top-right {
@@ -832,9 +837,24 @@
         </div>
       </div>
 
+      <nav class="event-portal-tabs" aria-label="Event portal sections">
+        <button type="button" class="event-portal-tab" data-event-tab="overview" aria-selected="true">Overview</button>
+        <button type="button" class="event-portal-tab" data-event-tab="payments" aria-selected="false">Payments</button>
+        <button type="button" class="event-portal-tab" data-event-tab="messages" aria-selected="false">Messages</button>
+        <button type="button" class="event-portal-tab" data-event-tab="setup" aria-selected="false">Event Setup</button>
+        <button type="button" class="event-portal-tab" data-event-tab="gallery" aria-selected="false">Gallery</button>
+      </nav>
+      <section class="event-overview-panel" data-event-tab-panel="overview">
+        <p class="panel-label">Your event at a glance</p>
+        <p>Use the tabs above to manage payments, message Instapic, review your event setup and open completed sessions.</p>
+        <p class="muted">Important payment or event actions will remain clearly marked in their relevant section.</p>
+      </section>
+
       <section
         id="event-payment-panel"
         class="event-payment-panel"
+        data-event-tab-panel="payments"
+        hidden
         data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
         data-square-location-id="9ZKNKQJ29QF50"
       >
@@ -875,7 +895,7 @@
         <p id="event-payment-status" class="muted" style="text-align:center;margin:.75rem 0 0;"></p>
       </section>
 
-      <section id="event-host-chat" class="host-chat-panel" hidden>
+      <section id="event-host-chat" class="host-chat-panel" data-event-tab-panel="messages" hidden>
         <p class="panel-label">Message Instapic</p>
         <p class="muted" style="text-align:center;">Continue your booking conversation here. Replies also remain available by email.</p>
         <div id="host-chat-messages" class="host-chat-messages" aria-live="polite"></div>
@@ -886,9 +906,9 @@
         <p id="host-chat-status" class="muted" style="text-align:center;"></p>
       </section>
 
-      <div id="bg-preview-row" class="bg-preview-row" aria-label="Event backgrounds"></div>
+      <div id="bg-preview-row" class="bg-preview-row" data-event-tab-panel="setup" aria-label="Event backgrounds" hidden></div>
 
-      <div class="strip-roll-panel">
+      <div class="strip-roll-panel" data-event-tab-panel="gallery" hidden>
         <p class="panel-label">Photostrip carousel · hover to pop · click to open</p>
         <div id="carousel-wrap" class="carousel-wrap" aria-live="polite">
           <div id="carousel-stage" class="carousel-stage">
@@ -905,7 +925,7 @@
         </div>
       </div>
 
-      <div class="collage-drop-panel">
+      <div class="collage-drop-panel" data-event-tab-panel="gallery" hidden>
         <div id="drop-zone" class="drop-zone">Drop a code here — or tap a strip / session chip</div>
 
         <div class="viewer-stack">
@@ -974,6 +994,6 @@
   <script src="branding.js"></script>
   <script src="event_runtime.js?v=20260728-host-agreement"></script>
   <script src="event_payment_runtime.js?v=20260728-host-agreement"></script>
-  <script src="event_chat_runtime.js?v=20260728-host-chat"></script>
+  <script src="event_chat_runtime.js?v=20260728-host-tabs"></script>
 </body>
 </html>
