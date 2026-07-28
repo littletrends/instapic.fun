@@ -4,6 +4,7 @@
   const status=document.getElementById("deposit-status");
   const content=document.getElementById("deposit-content");
   const cardButton=document.getElementById("card-button");
+  const appleStatus=document.getElementById("apple-pay-status");
   let busy=false;
 
   const money=(c)=>new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD"}).format(Number(c||0)/100);
@@ -56,7 +57,17 @@
       const holder=document.getElementById("apple-pay-button");
       holder.innerHTML='<button class="wallet-button apple-pay-button" aria-label="Pay with Apple Pay"></button>';
       holder.querySelector("button").addEventListener("click",()=>complete(applePay));
-    }catch(_error){document.getElementById("apple-pay-button").hidden=true;}
+    }catch(error){
+      document.getElementById("apple-pay-button").hidden=true;
+      appleStatus.hidden=false;
+      if(!window.ApplePaySession){
+        appleStatus.textContent="Apple Pay is not available in this browser window. On iPhone, open this payment page directly in Safari.";
+      }else if(typeof window.ApplePaySession.canMakePayments==="function"&&!window.ApplePaySession.canMakePayments()){
+        appleStatus.textContent="Apple Pay is available on this iPhone, but Wallet does not currently report an eligible payment card.";
+      }else{
+        appleStatus.textContent=`Apple Pay could not start: ${error?.message||error?.name||"Square rejected Apple Pay initialization"}.`;
+      }
+    }
     content.hidden=false;status.textContent="";
   }
   load().catch(error=>{status.textContent=error.message||"Secure payment could not be loaded.";});

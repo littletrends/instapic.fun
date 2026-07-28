@@ -11,6 +11,7 @@
     .wallet-button{width:100%;height:48px;border:0;border-radius:6px;cursor:pointer}
     .apple-pay-button{display:inline-block;-webkit-appearance:-apple-pay-button;-apple-pay-button-type:plain;-apple-pay-button-style:white;width:100%;height:48px}
     .pay-divider{text-align:center;opacity:.75;margin:18px 0}
+    .wallet-status{margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);font-size:.9rem}
   </style>
 </head>
 <body class="page">
@@ -22,6 +23,7 @@
       <div class="deposit-total"><span>Deposit due now</span><strong id="deposit-total"></strong></div>
       <div id="google-pay-button"></div>
       <div id="apple-pay-button"></div>
+      <div id="apple-pay-status" class="wallet-status" hidden></div>
       <div class="pay-divider">or pay by card</div>
       <div id="card-container"></div>
       <button class="btn" id="card-button">Pay deposit securely</button>
@@ -30,7 +32,7 @@
   </main>
   <footer class="site-footer"><small>Instapic by Little Trends — Moments Made Magical ✨</small></footer>
   <script src="https://web.squarecdn.com/v1/square.js"></script>
-  <script src="site_core.js?v=20260728-deposit"></script>
-  <script src="event_deposit_runtime.js?v=20260728-deposit"></script>
+  <script src="site_core.js?v=20260728-apple-diagnostic"></script>
+  <script src="event_deposit_runtime.js?v=20260728-apple-diagnostic"></script>
 </body>
 </html>
