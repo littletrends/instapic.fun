@@ -3,101 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Event Enquiry | Instapic</title>
-  <meta name="description" content="Tell Instapic about your Darwin and surrounds Magic Mirror event and request an availability check and fixed quote.">
+  <title>Event Cost &amp; Availability | Instapic</title>
+  <meta name="description" content="See an upfront Magic Mirror event-hire estimate and check availability before sharing your contact details.">
   <link rel="canonical" href="https://instapic.fun/event-enquiry.html">
   <link rel="stylesheet" href="assets/styles.css">
   <style>
-    .enquiry-page { max-width: 900px; }
-    .enquiry-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px; }
-    .enquiry-section { margin-top:18px;padding:18px;border-radius:18px;background:rgba(255,255,255,.055); }
-    .enquiry-section h2 { margin:0 0 14px; }
-    .enquiry-field { display:flex;flex-direction:column;gap:6px; }
-    .enquiry-field.full { grid-column:1/-1; }
-    .enquiry-field label,.enquiry-legend { font-weight:700;font-size:.94rem; }
-    .enquiry-field input,.enquiry-field select,.enquiry-field textarea {
-      box-sizing:border-box;width:100%;padding:12px;border:1px solid rgba(255,255,255,.2);
-      border-radius:12px;background:rgba(0,0,0,.2);color:inherit;font:inherit;
-    }
-    .enquiry-field textarea { min-height:100px;resize:vertical; }
-    .enquiry-help { font-size:.85rem;opacity:.75; }
-    .enquiry-actions { display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px; }
-    .enquiry-status { min-height:1.5em;font-weight:700; }
-    .enquiry-honeypot { position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important; }
-    @media (max-width:680px) { .enquiry-grid { grid-template-columns:1fr; } .enquiry-field.full { grid-column:auto; } }
+    .enquiry-page{max-width:920px}.enquiry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .enquiry-section{margin-top:18px;padding:18px;border-radius:18px;background:rgba(255,255,255,.055)}
+    .enquiry-section h2{margin:0 0 8px}.enquiry-section>p{margin:0 0 16px;opacity:.85}
+    .enquiry-field{display:flex;flex-direction:column;gap:6px;position:relative}.enquiry-field.full{grid-column:1/-1}
+    .enquiry-field label,.enquiry-legend{font-weight:700;font-size:.94rem}
+    .enquiry-field input,.enquiry-field select,.enquiry-field textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(0,0,0,.2);color:inherit;font:inherit}
+    .enquiry-field textarea{min-height:90px;resize:vertical}.enquiry-help{font-size:.85rem;opacity:.78}
+    .package-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.package-card{display:block;cursor:pointer}
+    .package-card input{position:absolute;opacity:0}.package-card span{display:block;padding:15px 8px;text-align:center;border:2px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.15)}
+    .package-card input:checked+span{border-color:#ffb54a;background:rgba(255,181,74,.13)}.package-card strong{display:block;font-size:1.08rem}.package-card small{opacity:.8}
+    .location-suggestions{position:absolute;z-index:20;left:0;right:0;top:100%;border-radius:12px;overflow:hidden;background:#211d2b;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+    .location-suggestions button{display:block;width:100%;padding:11px 12px;text-align:left;border:0;border-bottom:1px solid rgba(255,255,255,.1);background:transparent;color:inherit;cursor:pointer}
+    .estimate-box{border:2px solid rgba(255,181,74,.55);background:rgba(255,181,74,.08)}.estimate-row{display:flex;justify-content:space-between;gap:18px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+    .estimate-row.total{font-size:1.18rem;font-weight:800;border-bottom:0}.estimate-note{padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.18);margin:10px 0}
+    .estimate-available{color:#a9ffc7}.estimate-review{color:#ffe0a1}.estimate-conflict{color:#ffb2b2}
+    .enquiry-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}.enquiry-status{min-height:1.5em;font-weight:700}
+    .enquiry-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+    [hidden]{display:none!important}
+    @media(max-width:680px){.enquiry-grid{grid-template-columns:1fr}.enquiry-field.full{grid-column:auto}.package-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body class="page" data-page="event-enquiry">
   <main class="card enquiry-page">
     <header class="page-intro">
       <p class="eyebrow">Magic Mirror event hire</p>
-      <h1>Tell us about your event</h1>
-      <p>This starts an availability check and fixed quote. It does not reserve equipment or take payment.</p>
+      <h1>See your price before you enquire</h1>
+      <p>Choose the event details first. We will check timing and show an itemised estimate without asking for your name, email or phone number.</p>
     </header>
 
     <form id="event-enquiry-form">
       <section class="enquiry-section">
-        <h2>Your details</h2>
-        <div class="enquiry-grid">
-          <div class="enquiry-field"><label for="contact-name">Your name</label><input id="contact-name" name="contact_name" required autocomplete="name"></div>
-          <div class="enquiry-field"><label for="contact-email">Email</label><input id="contact-email" name="email" type="email" required autocomplete="email"></div>
-          <div class="enquiry-field"><label for="contact-mobile">Mobile</label><input id="contact-mobile" name="mobile" type="tel" autocomplete="tel"></div>
-          <div class="enquiry-field"><label for="preferred-contact">Preferred contact</label><select id="preferred-contact" name="preferred_contact"><option value="email">Email</option><option value="phone">Phone/text</option></select></div>
+        <h2>1. Choose your hire package</h2>
+        <p>Simple upfront pricing for self-service hire within 30 km of Humpty Doo.</p>
+        <div class="package-grid">
+          <label class="package-card"><input type="radio" name="package_hours" value="3" required><span><strong>3 hours</strong><small>$500</small></span></label>
+          <label class="package-card"><input type="radio" name="package_hours" value="4"><span><strong>4 hours</strong><small>$650</small></span></label>
+          <label class="package-card"><input type="radio" name="package_hours" value="5"><span><strong>5 hours</strong><small>$800</small></span></label>
+          <label class="package-card"><input type="radio" name="package_hours" value="6"><span><strong>6 hours</strong><small>$950</small></span></label>
         </div>
       </section>
 
       <section class="enquiry-section">
-        <h2>Event details</h2>
+        <h2>2. Date, time and mirror</h2>
         <div class="enquiry-grid">
-          <div class="enquiry-field"><label for="event-name">Main event name</label><input id="event-name" name="event_name" required placeholder="e.g. Sarah &amp; Tom's Wedding"></div>
-          <div class="enquiry-field"><label for="occasion">Occasion</label><select id="occasion" name="occasion" required><option value="">Choose…</option><option>Wedding</option><option>Birthday</option><option>Corporate event</option><option>School event</option><option>Community event</option><option>Christmas party</option><option>Other</option></select></div>
-          <div class="enquiry-field"><label for="event-date">Date</label><input id="event-date" name="event_date" type="date" required></div>
-          <div class="enquiry-field"><label for="guest-count">Estimated guests</label><input id="guest-count" name="guest_count" type="number" min="0" max="10000"></div>
+          <div class="enquiry-field"><label for="event-date">Event date</label><input id="event-date" name="event_date" type="date" required></div>
           <div class="enquiry-field"><label for="start-time">Mirror start time</label><input id="start-time" name="start_time" type="time" required></div>
-          <div class="enquiry-field"><label for="finish-time">Mirror finish time</label><input id="finish-time" name="finish_time" type="time" required></div>
+          <div class="enquiry-field"><label for="preferred-mirror">Preferred mirror</label><select id="preferred-mirror" name="preferred_mirror" required><option value="">Choose…</option><option value="mirror1">Mirror 1 — black frame with bauble lights</option><option value="mirror2">Mirror 2 — gold or white frame with LED lights</option><option value="either">Either — show what is available</option></select></div>
+          <div class="enquiry-field"><label for="frame-preference">Frame choice</label><select id="frame-preference" name="frame_preference" required><option value="unsure">Choose a mirror first…</option></select></div>
         </div>
       </section>
 
       <section class="enquiry-section">
-        <h2>Venue</h2>
+        <h2>3. Location and service</h2>
         <div class="enquiry-grid">
-          <div class="enquiry-field"><label for="venue-name">Venue name</label><input id="venue-name" name="venue_name" autocomplete="organization"></div>
-          <div class="enquiry-field full"><label for="venue-address">Venue address</label><input id="venue-address" name="venue_address" required autocomplete="street-address" placeholder="Full venue address"></div>
-          <div class="enquiry-field full">
-            <span class="enquiry-legend">Exact location pin</span>
-            <button class="secondary-link" type="button" id="use-location">Use my current location</button>
-            <span id="location-result" class="enquiry-help">Optional for now. Exact venue map selection will be added to the availability stage.</span>
-          </div>
-          <div class="enquiry-field full"><label for="access-notes">Access and setup notes</label><textarea id="access-notes" name="access_notes" placeholder="Loading access, stairs, gates, collection restrictions or venue contact details"></textarea></div>
+          <div class="enquiry-field full"><label for="venue-address">Venue address</label><input id="venue-address" name="venue_address" required autocomplete="off" placeholder="Start typing the event address"><div id="venue-suggestions" class="location-suggestions" hidden></div><span class="enquiry-help" id="location-result">Choose an address suggestion so travel can be calculated accurately.</span></div>
+          <div class="enquiry-field"><label for="attendance">Service preference</label><select id="attendance" name="attendance" required><option value="">Choose…</option><option value="unattended">Unattended/self-service</option><option value="attended">Attended — add $75/hour</option><option value="unsure">Unsure — show the minimum</option></select></div>
+          <div class="enquiry-field"><label for="extras-interest">Optional extras</label><select id="extras-interest" name="extras_interest"><option value="no">No extras</option><option value="yes">Yes — discuss options</option><option value="unsure">Unsure</option></select><span class="enquiry-help">Extras can be added to the final quote after we know what you would like.</span></div>
         </div>
+        <p class="enquiry-help">More than 30 km from Humpty Doo: $1/km for the full return trip and attended service is required. Distances over 80 km are still estimated here, then route and timing are confirmed personally.</p>
       </section>
-
-      <section class="enquiry-section">
-        <h2>Mirror preference</h2>
-        <div class="enquiry-grid">
-          <div class="enquiry-field"><label for="preferred-mirror">Preferred mirror</label><select id="preferred-mirror" name="preferred_mirror" required><option value="">Choose…</option><option value="mirror1">Mirror 1 — black frame with bauble lights</option><option value="mirror2">Mirror 2 — gold or white frame with LED lights</option><option value="either">Either — recommend the best fit</option></select></div>
-          <div class="enquiry-field"><label for="frame-preference">Frame choice</label><select id="frame-preference" name="frame_preference" required><option value="unsure">Choose a mirror first…</option></select><span class="enquiry-help" id="frame-help">Mirror 1 has its fixed black bauble-light frame. Mirror 2 offers gold or white LED frames.</span></div>
-          <div class="enquiry-field"><label for="attendance">Service preference</label><select id="attendance" name="attendance" required><option value="">Choose…</option><option value="unattended">Unattended/self-service</option><option value="attended">Attended</option><option value="unsure">Please recommend</option></select></div>
-          <div class="enquiry-field full"><label for="notes">Anything else?</label><textarea id="notes" name="notes" placeholder="Theme, special requests, questions or optional extras"></textarea></div>
-        </div>
-      </section>
-
-      <div class="enquiry-honeypot" aria-hidden="true"><label>Company website<input name="company_website" tabindex="-1" autocomplete="off"></label></div>
-      <input type="hidden" name="latitude">
-      <input type="hidden" name="longitude">
-      <input type="hidden" name="place_id">
 
       <div class="enquiry-actions">
-        <button class="btn" type="submit" id="submit-enquiry">Send event enquiry</button>
+        <button class="btn" type="button" id="calculate-estimate">Check availability &amp; calculate price</button>
         <a class="secondary-link" href="events.html">Back to event pricing</a>
       </div>
-      <p id="enquiry-status" class="enquiry-status" role="status" aria-live="polite"></p>
-      <p class="enquiry-help">By submitting, you agree that Instapic may contact you about this enquiry. See our <a href="privacy.html">Privacy Policy</a>.</p>
+      <p id="estimate-status" class="enquiry-status" role="status" aria-live="polite"></p>
+
+      <section class="enquiry-section estimate-box" id="estimate-result" hidden>
+        <h2>Your estimated event cost</h2>
+        <div id="estimate-lines"></div>
+        <div id="availability-result" class="estimate-note"></div>
+        <div id="estimate-notes"></div>
+        <p class="enquiry-help"><strong>Important:</strong> This estimate does not reserve a mirror. A $150 deposit secures the booking after Instapic confirms the final quote. Unattended events also require a refundable $500 card authorisation on event day before the mirror unlocks. See the <a href="terms.html">full terms</a>.</p>
+        <button class="btn" type="button" id="continue-enquiry">Continue with this estimate</button>
+      </section>
+
+      <section class="enquiry-section" id="enquiry-contact-stage" hidden>
+        <h2>4. Send this estimate for confirmation</h2>
+        <p>Now add your details. Nothing is booked until the final quote is accepted and the $150 deposit is paid.</p>
+        <div class="enquiry-grid">
+          <div class="enquiry-field"><label for="contact-name">Your name</label><input id="contact-name" name="contact_name" required disabled autocomplete="name"></div>
+          <div class="enquiry-field"><label for="contact-email">Email</label><input id="contact-email" name="email" type="email" required disabled autocomplete="email"></div>
+          <div class="enquiry-field"><label for="contact-mobile">Mobile</label><input id="contact-mobile" name="mobile" type="tel" disabled autocomplete="tel"></div>
+          <div class="enquiry-field"><label for="preferred-contact">Preferred contact</label><select id="preferred-contact" name="preferred_contact" disabled><option value="email">Email</option><option value="phone">Phone/text</option></select></div>
+          <div class="enquiry-field"><label for="event-name">Main event name</label><input id="event-name" name="event_name" required disabled placeholder="e.g. Sarah &amp; Tom's Wedding"></div>
+          <div class="enquiry-field"><label for="occasion">Occasion</label><select id="occasion" name="occasion" required disabled><option value="">Choose…</option><option>Wedding</option><option>Birthday</option><option>Corporate event</option><option>School event</option><option>Community event</option><option>Christmas party</option><option>Other</option></select></div>
+          <div class="enquiry-field"><label for="guest-count">Estimated guests</label><input id="guest-count" name="guest_count" type="number" min="0" max="10000" disabled></div>
+          <div class="enquiry-field"><label for="venue-name">Venue name</label><input id="venue-name" name="venue_name" disabled autocomplete="organization"></div>
+          <div class="enquiry-field full"><label for="access-notes">Access and setup notes</label><textarea id="access-notes" name="access_notes" disabled placeholder="Loading access, stairs, gates or collection restrictions"></textarea></div>
+          <div class="enquiry-field full"><label for="notes">Questions, theme or extras</label><textarea id="notes" name="notes" disabled></textarea></div>
+        </div>
+        <div class="enquiry-honeypot" aria-hidden="true"><label>Company website<input name="company_website" tabindex="-1" autocomplete="off"></label></div>
+        <input type="hidden" name="finish_time"><input type="hidden" name="latitude"><input type="hidden" name="longitude"><input type="hidden" name="place_id">
+        <div class="enquiry-actions"><button class="btn" type="submit" id="submit-enquiry">Send estimate to Instapic</button></div>
+        <p id="enquiry-status" class="enquiry-status" role="status" aria-live="polite"></p>
+        <p class="enquiry-help">By submitting, you agree that Instapic may contact you about this event. See our <a href="privacy.html">Privacy Policy</a>.</p>
+      </section>
     </form>
   </main>
   <footer class="site-footer"><small>Instapic by Little Trends — Moments Made Magical ✨</small></footer>
-  <script src="site_core.js?v=20260727-bookings"></script>
-  <script src="event_enquiry_runtime.js?v=20260727-bookings"></script>
+  <script src="site_core.js?v=20260728-estimator"></script>
+  <script src="event_enquiry_runtime.js?v=20260728-estimator"></script>
   <script src="branding.js"></script>
 </body>
 </html>
