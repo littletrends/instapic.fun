@@ -8,11 +8,14 @@
   let eventCode="",pin="",timer=null,lastSignature="",activeTab="gallery";
   const tabs=[...document.querySelectorAll("[data-event-tab]")];
   const tabPanels=[...document.querySelectorAll("[data-event-tab-panel]")];
+  function scrollNewest(){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{list.scrollTop=list.scrollHeight;}));
+  }
   function openTab(name){
     activeTab=name;
     tabs.forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.eventTab===name)));
     tabPanels.forEach(item=>{item.hidden=item.dataset.eventTabPanel!==name;});
-    if(name==="messages")refresh();
+    if(name==="messages"){refresh();scrollNewest();}
   }
   async function readJson(response){
     const data=await response.json().catch(()=>({}));
@@ -31,7 +34,7 @@
       meta.textContent=`${message.direction==="INBOUND"?"You":"Instapic"} · ${message.created_at?new Date(message.created_at).toLocaleString():""}`;
       bubble.append(text,meta);list.appendChild(bubble);
     }
-    list.scrollTop=list.scrollHeight;
+    scrollNewest();
   }
   async function refresh(){
     if(!eventCode||!pin)return;

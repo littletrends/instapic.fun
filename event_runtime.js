@@ -849,6 +849,11 @@
       const pinInput = qs("#event_pin");
       if (pinInput) pinInput.value = "";
     });
+    qs("#btn-exit")?.addEventListener("click", () => {
+      portalState = null;
+      selectedCode = "";
+      clearSaved();
+    });
 
     wireDropZone();
   }

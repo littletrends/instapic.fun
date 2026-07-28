@@ -824,8 +824,8 @@
         </div>
         <div class="portal-top-right">
           <div class="host-tools-top">
-            <button type="button" id="btn-lock" class="btn btn-ghost" title="Clear host PIN from this browser and return to unlock screen">Lock host</button>
-            <a class="btn btn-ghost" id="btn-exit" href="index.html">Exit</a>
+            <button type="button" id="btn-lock" class="btn btn-ghost" title="Clear the host PIN and return to the portal unlock screen">Lock portal</button>
+            <a class="btn btn-ghost" id="btn-exit" href="index.html" title="Clear the host PIN and leave the event portal">Exit &amp; log out</a>
           </div>
           <div class="session-chips-wrap">
             <p class="panel-label">Sessions</p>
@@ -906,7 +906,7 @@
 
       <div id="bg-preview-row" class="bg-preview-row" data-event-tab-panel="setup" aria-label="Event backgrounds" hidden></div>
 
-      <div class="strip-roll-panel" data-event-tab-panel="gallery" hidden>
+      <div class="strip-roll-panel" data-event-tab-panel="gallery">
         <p class="panel-label">Photostrip carousel · hover to pop · click to open</p>
         <div id="carousel-wrap" class="carousel-wrap" aria-live="polite">
           <div id="carousel-stage" class="carousel-stage">
@@ -923,7 +923,7 @@
         </div>
       </div>
 
-      <div class="collage-drop-panel" data-event-tab-panel="gallery" hidden>
+      <div class="collage-drop-panel" data-event-tab-panel="gallery">
         <div id="drop-zone" class="drop-zone">Drop a code here — or tap a strip / session chip</div>
 
         <div class="viewer-stack">
@@ -990,8 +990,8 @@
   <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="site_core.js?v=20260728-host-agreement"></script>
   <script src="branding.js"></script>
-  <script src="event_runtime.js?v=20260728-host-agreement"></script>
+  <script src="event_runtime.js?v=20260728-gallery-default"></script>
   <script src="event_payment_runtime.js?v=20260728-host-agreement"></script>
-  <script src="event_chat_runtime.js?v=20260728-host-tabs"></script>
+  <script src="event_chat_runtime.js?v=20260728-gallery-default"></script>
 </body>
 </html>
