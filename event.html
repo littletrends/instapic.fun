@@ -47,6 +47,14 @@
     .event-portal-tab[aria-selected="true"]{background:linear-gradient(135deg,#ff77c8,#9b7cff);color:#160e24}
     [data-event-tab-panel][hidden]{display:none!important}
     .event-overview-panel{padding:18px;border-radius:18px;background:rgba(255,255,255,.055);text-align:center}
+    .event-setup-panel{padding:18px;border-radius:18px;background:rgba(255,255,255,.055)}
+    .event-setup-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.75fr);gap:18px;align-items:start}
+    .event-setup-fields{display:grid;gap:10px}.event-setup-fields label{display:grid;gap:5px;font-weight:800}
+    .event-setup-fields input,.event-setup-fields select{box-sizing:border-box;width:100%;padding:11px;border-radius:11px}
+    .strip-setup-preview{width:min(100%,280px);aspect-ratio:2/6;margin:auto;padding:18px;box-sizing:border-box;border-radius:12px;background:linear-gradient(160deg,#fff8fc,#eee5ff);color:#24152b;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;box-shadow:0 12px 34px rgba(0,0,0,.3)}
+    .strip-setup-preview img{max-width:85%;max-height:34%;object-fit:contain;margin-bottom:auto}
+    .strip-setup-preview span{display:block;width:100%;overflow-wrap:anywhere;font-weight:900;line-height:1.12}
+    @media(max-width:700px){.event-setup-grid{grid-template-columns:1fr}.strip-setup-preview{width:230px}}
 
     body[data-page="event"] .portal-top-left,
     body[data-page="event"] .portal-top-right {
@@ -904,7 +912,43 @@
         <p id="host-chat-status" class="muted" style="text-align:center;"></p>
       </section>
 
-      <div id="bg-preview-row" class="bg-preview-row" data-event-tab-panel="setup" aria-label="Event backgrounds" hidden></div>
+      <section id="event-host-setup-panel" class="event-setup-panel" data-event-tab-panel="setup" hidden>
+        <p class="panel-label">Design your printed photostrip</p>
+        <p class="muted" style="text-align:center;">Add one image and choose the wording printed on your event strips. Instapic keeps the print layout safely locked.</p>
+        <div class="event-setup-grid">
+          <div class="event-setup-fields">
+            <label>Image or logo
+              <input id="host-setup-image" type="file" accept="image/png,image/jpeg,image/webp">
+            </label>
+            <label>Photostrip line 1
+              <input id="host-setup-line1" maxlength="60" placeholder="e.g. Sarah & Tom">
+            </label>
+            <label>Photostrip line 2
+              <input id="host-setup-line2" maxlength="60" placeholder="e.g. Our Wedding">
+            </label>
+            <label>Photostrip line 3
+              <input id="host-setup-line3" maxlength="60" placeholder="e.g. 12 October 2026">
+            </label>
+            <label>Text style
+              <select id="host-setup-font">
+                <option value="Concrete.ttf">Bold modern</option>
+                <option value="IndieFlower.ttf">Handwritten</option>
+                <option value="Piazzolla-Bold.otf">Formal serif</option>
+              </select>
+            </label>
+            <button type="button" class="btn" id="host-setup-save">Save event setup</button>
+            <p id="host-setup-status" class="muted" role="status"></p>
+          </div>
+          <div class="strip-setup-preview" id="host-setup-preview" aria-label="Approximate photostrip branding preview">
+            <img id="host-setup-preview-image" alt="" hidden>
+            <span id="host-setup-preview-line1"></span>
+            <span id="host-setup-preview-line2"></span>
+            <span id="host-setup-preview-line3"></span>
+          </div>
+        </div>
+        <p class="muted" style="text-align:center;margin-top:12px;">Preview is approximate. Instapic will fit your choices into the fixed print-ready template.</p>
+        <div id="bg-preview-row" class="bg-preview-row" aria-label="Event backgrounds"></div>
+      </section>
 
       <div class="strip-roll-panel" data-event-tab-panel="gallery">
         <p class="panel-label">Photostrip carousel · hover to pop · click to open</p>
@@ -993,5 +1037,6 @@
   <script src="event_runtime.js?v=20260728-gallery-default"></script>
   <script src="event_payment_runtime.js?v=20260728-host-agreement"></script>
   <script src="event_chat_runtime.js?v=20260728-gallery-default"></script>
+  <script src="event_setup_runtime.js?v=20260728-host-setup"></script>
 </body>
 </html>
