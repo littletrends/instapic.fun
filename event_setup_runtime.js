@@ -3,6 +3,7 @@
   const panel=document.getElementById("event-host-setup-panel");
   const imageInput=document.getElementById("host-setup-image");
   const imagePreview=document.getElementById("host-setup-preview-image");
+  const templatePreview=document.getElementById("host-setup-template");
   const line1=document.getElementById("host-setup-line1");
   const line2=document.getElementById("host-setup-line2");
   const line3=document.getElementById("host-setup-line3");
@@ -59,6 +60,12 @@
       line3.value=setup.brand_line3||"";
       font.value=selected;loadedFont="";
       showImage(setup.image_url?`${core.API_BASE}${setup.image_url}&v=${Date.now()}`:"");
+      if(setup.template_url){
+        templatePreview.src=`${core.API_BASE}${setup.template_url}&v=${Date.now()}`;
+      }else{
+        templatePreview.removeAttribute("src");
+        templatePreview.alt="Selected strip preview is not available";
+      }
       paint();
       status.textContent=setup.status==="HOST_SAVED"?"Your saved setup is loaded.":"Choose your image and wording, then save.";
     }catch(error){status.textContent="Event setup is temporarily unavailable.";}
