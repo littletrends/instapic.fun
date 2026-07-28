@@ -15,6 +15,7 @@
   const status=document.getElementById("host-setup-status");
   const preview=document.getElementById("host-setup-preview");
   let eventCode="",pin="",objectUrl="";
+  let setupLocked=false;
   let loadedFont="";
   const offsets={text:{x:0,y:0},image:{x:0,y:0}};
   async function json(response){
@@ -72,6 +73,7 @@
       font.value=selected;loadedFont="";
       textSize.value=setup.brand_label_size||16;
       imageScale.value=setup.host_mark_scale||100;
+      setupLocked=!!setup.locked;
       offsets.text.x=Number(setup.plaque_text_offset_x||0);
       offsets.text.y=Number(setup.plaque_text_offset_y||0);
       offsets.image.x=Number(setup.host_mark_offset_x||0);
@@ -84,7 +86,15 @@
         templatePreview.alt="Selected strip preview is not available";
       }
       paint();
-      status.textContent=setup.status==="HOST_SAVED"?"Your saved setup is loaded.":"Choose your image and wording, then save.";
+      [imageInput,line1,line2,line3,font,textSize,imageScale,save].forEach(control=>{
+        if(control)control.disabled=setupLocked;
+      });
+      document.querySelectorAll("[data-setup-nudge]").forEach(button=>{
+        button.disabled=setupLocked;
+      });
+      status.textContent=setupLocked
+        ?"Your event design has been approved and locked by Instapic."
+        :(setup.status==="HOST_SAVED"?"Your saved setup is loaded.":"Choose your image and wording, then save.");
     }catch(error){status.textContent="Event setup is temporarily unavailable.";}
   }
   imageInput?.addEventListener("change",()=>{
@@ -105,7 +115,7 @@
     });
   });
   save?.addEventListener("click",async()=>{
-    if(!eventCode||!pin)return;
+    if(!eventCode||!pin||setupLocked)return;
     save.disabled=true;status.textContent="Saving…";
     try{
       await json(await fetch(`${core.API_BASE}/api/event-host-setup/${encodeURIComponent(eventCode)}`,{
