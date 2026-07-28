@@ -80,6 +80,13 @@
         <p>The bond and remaining hire balance must be approved before the Magic Mirror is activated for use at the event. The bond is normally released after collection and inspection, less any permitted documented charge under the Terms.</p>
       </section>` : ""}
       <section class="quote-box">
+        <h2>Cancellation and rescheduling summary</h2>
+        <p><strong>30+ days:</strong> request one transfer to another available date within 12 months, or receive a refund less reasonable documented work and non-recoverable costs already incurred.</p>
+        <p><strong>14–29 days:</strong> the booking deposit may be retained; other payments are refunded less any additional reasonable documented non-recoverable costs.</p>
+        <p><strong>Fewer than 14 days:</strong> the deposit may be retained and reasonable documented late-cancellation costs or losses may be deducted. Any amount recovered by rebooking the date reduces the cancellation charge.</p>
+        <p><strong>If Little Trends cannot provide the agreed hire:</strong> choose a full refund or transfer to another mutually agreed available date. Consumer-law rights always apply.</p>
+      </section>
+      <section class="quote-box">
         <h2>Before you accept</h2>
         <p>Accepting this quote moves the enquiry to the event-hire agreement stage. <strong>Your date and mirror are not booked or reserved until the agreement is accepted and the booking deposit is successfully paid.</strong></p>
         <p>Availability is checked again immediately before payment. If the quoted mirror becomes unavailable before the deposit is paid, no payment will be taken and this quote may be withdrawn or revised.</p>
