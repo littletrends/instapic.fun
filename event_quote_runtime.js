@@ -34,7 +34,9 @@
         body: JSON.stringify({action, message}),
       });
       status.textContent = result.status === "ACCEPTED"
-        ? "Thank you — your quote has been accepted. Instapic will prepare your contract and deposit request."
+        ? result.contract_sent
+          ? "Thank you — your quote has been accepted. Your event-hire agreement has been sent to your email. Please check your inbox and spam/junk folder; allow up to 10 minutes for delivery."
+          : "Thank you — your quote has been accepted. We could not confirm email delivery, so Instapic will contact you with your event-hire agreement."
         : "Your requested changes have been sent to Instapic.";
       content.hidden = true;
     } catch (error) {
