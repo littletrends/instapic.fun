@@ -6,6 +6,8 @@
   let googlePay = null;
   let applePay = null;
   let walletActionKey = "";
+  let squareInitPromise = null;
+  let walletInitPromise = null;
   let state = null;
   let busy = false;
 
@@ -34,15 +36,24 @@
 
   async function initSquare() {
     if (payments && card) return;
-    const panel = qs("#event-payment-panel");
-    const appId = panel?.dataset.squareApplicationId;
-    const locationId = panel?.dataset.squareLocationId;
-    if (!window.Square || !appId || !locationId) {
-      throw new Error("Square is not configured");
+    if (squareInitPromise) return squareInitPromise;
+    squareInitPromise = (async () => {
+      const panel = qs("#event-payment-panel");
+      const appId = panel?.dataset.squareApplicationId;
+      const locationId = panel?.dataset.squareLocationId;
+      if (!window.Square || !appId || !locationId) {
+        throw new Error("Square is not configured");
+      }
+      payments = window.Square.payments(appId, locationId);
+      card = await payments.card();
+      await card.attach("#event-card-container");
+    })();
+    try {
+      await squareInitPromise;
+    } catch (err) {
+      squareInitPromise = null;
+      throw err;
     }
-    payments = window.Square.payments(appId, locationId);
-    card = await payments.card();
-    await card.attach("#event-card-container");
   }
 
   function nextPayment() {
@@ -58,6 +69,16 @@
   }
 
   async function initWallets() {
+    if (walletInitPromise) return walletInitPromise;
+    walletInitPromise = initWalletsOnce();
+    try {
+      await walletInitPromise;
+    } finally {
+      walletInitPromise = null;
+    }
+  }
+
+  async function initWalletsOnce() {
     await initSquare();
     const due = nextPayment();
     const googleTarget = qs("#event-google-pay");
@@ -102,7 +123,11 @@
 
     try {
       applePay = await payments.applePay(request);
-      if (appleButton) appleButton.hidden = false;
+      if (appleButton) {
+        appleButton.hidden = false;
+        appleButton.style.display = "block";
+        appleButton.style.visibility = "visible";
+      }
     } catch (err) {
       applePay = null;
       console.info("Apple Pay is unavailable on this device", err);
@@ -119,11 +144,20 @@
     const form = qs("#event-payment-form");
     const bondButton = qs("#event-authorise-bond");
     const hireButton = qs("#event-pay-hire");
+    const agreementLink = qs("#event-view-agreement");
 
     const bondSatisfied =
       bond.required === false ||
       ["WAIVED", "HELD", "CAPTURED", "CAPTURED_PENDING_RETURN", "PARTIALLY_REFUNDED"].includes(bond.status);
     const hireSatisfied = ["COMPLETED", "NOT_REQUIRED", "WAIVED"].includes(hire.status);
+    if (agreementLink) {
+      const agreementUrl = String(state.agreementUrl || "");
+      const validAgreement = agreementUrl.startsWith(
+        "https://instapic.fun/event-contract.html?token="
+      );
+      agreementLink.hidden = !validAgreement;
+      if (validAgreement) agreementLink.href = agreementUrl;
+    }
 
     if (bondSummary) {
       if (bond.status === "HELD") {
@@ -194,14 +228,8 @@
     return result;
   }
 
-  function termsAccepted() {
-    if (qs("#event-terms-accepted")?.checked) return true;
-    status("Please accept the event hire and security terms first.");
-    return false;
-  }
-
   async function authoriseBond(method = card) {
-    if (busy || !termsAccepted()) return;
+    if (busy) return;
     busy = true;
     try {
       status("Authorising the security bond…");
@@ -227,7 +255,7 @@
   }
 
   async function payHire(method = card) {
-    if (busy || !termsAccepted()) return;
+    if (busy) return;
     busy = true;
     try {
       await refresh();
@@ -266,6 +294,7 @@
       security_bond: detail.security_bond || {},
       hire_payment: detail.hire_payment || {},
       payment_ready: !!detail.payment_ready,
+      agreementUrl: detail.event?.booking_agreement_url || "",
     };
     render();
     try {

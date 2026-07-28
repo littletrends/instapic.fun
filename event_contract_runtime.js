@@ -2,6 +2,7 @@
   const status = document.getElementById("contract-status"), content = document.getElementById("contract-content");
   const token = new URLSearchParams(location.search).get("token") || "", api = window.InstapicCore?.API_BASE || "";
   const money = (c) => new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD"}).format(Number(c||0)/100);
+  const esc=(value)=>String(value||"").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const row = (a,b) => `<div class="contract-row"><span>${a}</span><strong>${b}</strong></div>`;
   const mirrorLabel=(x)=>x.preferred_mirror==="mirror1"?"Mirror 1 — black frame with bauble lights":x.preferred_mirror==="mirror2"?`Mirror 2 — ${x.frame_preference==="white"?"white":"gold"} frame with LED lights`:"Either Magic Mirror — final machine to be confirmed";
   let unattended=false,pendingAcceptance=null;
@@ -36,7 +37,8 @@
     <section class="contract-box" id="accept-agreement-section"><h2>Accept agreement</h2><label class="contract-check"><input id="ack-quote" type="checkbox"><span>I confirm the event details and accepted quote version ${c.quote_version} are correct.</span></label><label class="contract-check"><input id="ack-terms" type="checkbox"><span>I have read and agree to the complete Instapic event-hire terms.</span></label><label class="contract-check"><input id="ack-authority" type="checkbox"><span>I am authorised to enter this agreement for the event hirer.</span></label><label>Full name<input id="accepted-name" class="contract-name" autocomplete="name"></label><button class="btn" id="accept-contract" style="margin-top:16px">Accept agreement</button></section>`;
     content.hidden=false;
     if(c.status==="ACCEPTED"){
-      status.innerHTML=`This agreement has already been accepted. <a class="btn" href="event-deposit.html?token=${encodeURIComponent(token)}">Pay secure booking deposit</a>`;
+      const acceptedWhen=c.accepted_at?new Date(c.accepted_at).toLocaleString():"";
+      status.innerHTML=`<strong>Signed agreement</strong><br>Accepted by ${esc(c.accepted_name||"the event hirer")}${acceptedWhen?` on ${esc(acceptedWhen)}`:""}. <a class="btn" href="event-deposit.html?token=${encodeURIComponent(token)}">Open booking payment</a>`;
       content.querySelector("#accept-agreement-section").hidden=true;
     } else status.textContent="";
     document.getElementById("accept-contract").addEventListener("click",accept);

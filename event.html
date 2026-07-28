@@ -665,6 +665,16 @@
       border-radius: 14px;
       background: rgba(255,255,255,.055);
     }
+    .event-payment-state strong { display:block;margin-bottom:.35rem; }
+    .event-payment-explainer {
+      max-width: 680px;
+      margin: 0 auto 1rem;
+      padding: .9rem 1rem;
+      text-align: center;
+      border-radius: 14px;
+      background: rgba(255,190,76,.09);
+      border: 1px solid rgba(255,190,76,.5);
+    }
 
     #event-wallet-options {
       display: grid;
@@ -680,14 +690,19 @@
 
     .apple-pay-button {
       -webkit-appearance: -apple-pay-button;
-      -apple-pay-button-type: plain;
+      -apple-pay-button-type: pay;
+      -apple-pay-button-style: white;
+      display: block;
+      max-width: 430px;
+      height: 48px;
+      margin: 0 auto;
       border: 0;
-      border-radius: 4px;
+      border-radius: 12px;
       cursor: pointer;
     }
 
     .apple-pay-button-black {
-      -apple-pay-button-style: black;
+      -apple-pay-button-style: white;
     }
 
     #event-card-container {
@@ -817,21 +832,22 @@
         data-square-location-id="9ZKNKQJ29QF50"
       >
         <p class="panel-label">Event payment &amp; security</p>
+        <div class="event-payment-explainer">
+          <strong>Complete these steps in order to unlock the Magic Mirror</strong>
+          <p>First authorise the refundable $500 security bond. Then pay the remaining event-hire balance. The mirror stays locked until both are approved.</p>
+          <a id="event-view-agreement" class="secondary-link" href="terms.html" hidden>View signed event-hire agreement</a>
+        </div>
         <div class="event-payment-grid">
           <div class="event-payment-state">
-            <strong>Security bond</strong>
+            <strong>Step 1 · Security bond authorisation</strong>
             <div id="event-bond-summary">Checking…</div>
           </div>
           <div class="event-payment-state">
-            <strong>Hire payment</strong>
+            <strong>Step 2 · Remaining hire balance</strong>
             <div id="event-hire-summary">Checking…</div>
           </div>
         </div>
         <div id="event-payment-form" hidden>
-          <label class="check-row">
-            <input type="checkbox" id="event-terms-accepted">
-            <span>I accept the event hire, security bond, collection and monitoring terms.</span>
-          </label>
           <div id="event-wallet-options">
             <div id="event-google-pay"></div>
             <button
@@ -936,9 +952,9 @@
   </footer>
 
   <script src="https://web.squarecdn.com/v1/square.js"></script>
-  <script src="site_core.js?v=20260727-event-payments"></script>
+  <script src="site_core.js?v=20260728-host-agreement"></script>
   <script src="branding.js"></script>
-  <script src="event_runtime.js?v=20260727-event-payments"></script>
-  <script src="event_payment_runtime.js?v=20260727-wallets"></script>
+  <script src="event_runtime.js?v=20260728-host-agreement"></script>
+  <script src="event_payment_runtime.js?v=20260728-host-agreement"></script>
 </body>
 </html>
