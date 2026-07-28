@@ -9,12 +9,25 @@
     .contract-row{display:flex;justify-content:space-between;gap:15px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1)}
     .contract-check{display:flex;gap:10px;align-items:flex-start;margin:12px 0}.contract-check input{margin-top:4px}
     .contract-name{box-sizing:border-box;width:100%;padding:12px;border-radius:12px;background:rgba(0,0,0,.2);color:inherit}
+    .bond-dialog{max-width:560px;border:2px solid #ffbe4c;border-radius:18px;padding:22px;background:#19151f;color:#fff;box-shadow:0 20px 80px rgba(0,0,0,.75)}
+    .bond-dialog::backdrop{background:rgba(0,0,0,.78)}.bond-dialog h2{color:#ffcf73}.bond-dialog-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
   </style>
 </head>
 <body class="page">
   <main class="card contract-page">
     <header class="page-intro"><p class="eyebrow">Instapic event hire</p><h1>Event-hire agreement</h1></header>
     <div id="contract-status">Loading your agreement…</div><div id="contract-content" hidden></div>
+    <dialog id="bond-acknowledgement" class="bond-dialog">
+      <h2>$500 card authorisation required</h2>
+      <p>This unattended booking requires a <strong>$500 refundable security-bond authorisation hold</strong> before the Magic Mirror can be unlocked and activated at the event.</p>
+      <p>You must have at least $500 available on the card. The authorisation may appear as a pending amount, but it is not an additional hire fee. It is normally released after collection and inspection.</p>
+      <p>The hold may be captured only where permitted by the Event Hire Terms, including certain loss, damage, misuse or collection issues.</p>
+      <p><strong>If the $500 authorisation and remaining hire balance are not approved, the Magic Mirror will not unlock for event use.</strong></p>
+      <div class="bond-dialog-actions">
+        <button class="btn" id="accept-bond-acknowledgement">I understand and accept</button>
+        <button class="secondary-link" id="cancel-bond-acknowledgement">Go back</button>
+      </div>
+    </dialog>
   </main>
   <footer class="site-footer"><small>Instapic by Little Trends — Moments Made Magical ✨</small></footer>
   <script src="site_core.js?v=20260728-contracts"></script>
