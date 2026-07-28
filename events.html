@@ -12,167 +12,25 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
   <style>
-    .events-page {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .events-page .page-intro {
-      text-align: center;
-    }
-
-    .events-page .page-intro h1 {
-      font-size: clamp(2.35rem, 7vw, 4.4rem);
-      line-height: 1;
-      margin-bottom: 0.8rem;
-    }
-
-    .events-pricing-grid,
-    .mirror-options-grid,
-    .events-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-top: 1.25rem;
-    }
-
-    .events-price-card,
-    .mirror-option,
-    .events-detail-card {
-      padding: 1.25rem;
-      border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 22px;
-      background: rgba(13,13,26,0.9);
-      text-align: center;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    }
-
-    .events-price-card strong {
-      display: block;
-      margin-top: 0.35rem;
-      font-size: 2rem;
-      color: #ff79b0;
-    }
-
-    .events-price-card span {
-      color: var(--muted);
-    }
-
-    .events-section {
-      margin-top: 1.5rem;
-    }
-
-    .events-section h2,
-    .mirror-option h3,
-    .events-detail-card h3 {
-      color: #fff;
-    }
-
-    .events-inclusions {
-      max-width: 720px;
-      margin: 1rem auto 0;
-      padding-left: 1.4rem;
-      line-height: 1.65;
-    }
-
-    .events-inclusions li {
-      margin-bottom: 0.35rem;
-    }
-
-    .events-note {
-      max-width: 760px;
-      margin: 1.25rem auto 0;
-      text-align: center;
-    }
-
-    .events-cta {
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-
-    .events-hero-actions,
-    .events-chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.65rem;
-      margin-top: 1.1rem;
-    }
-
-    .events-chip {
-      padding: 0.55rem 0.8rem;
-      border: 1px solid rgba(255,255,255,0.13);
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .events-feature {
-      position: relative;
-      overflow: hidden;
-      padding: clamp(1.3rem, 4vw, 2rem);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 26px;
-      background:
-        radial-gradient(circle at 90% 0%, rgba(255,121,176,0.19), transparent 38%),
-        rgba(13,13,26,0.92);
-    }
-
-    .events-feature h2 {
-      margin-top: 0;
-    }
-
-    .events-feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-    }
-
-    .events-journey {
-      counter-reset: event-step;
-    }
-
-    .events-journey .events-detail-card {
-      position: relative;
-      padding-top: 3.6rem;
-    }
-
-    .events-journey .events-detail-card::before {
-      counter-increment: event-step;
-      content: counter(event-step);
-      position: absolute;
-      top: 1rem;
-      left: 50%;
-      width: 2rem;
-      height: 2rem;
-      display: grid;
-      place-items: center;
-      transform: translateX(-50%);
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff79b0, #9d7bff);
-      color: #160d20;
-      font-weight: 900;
-    }
-
-    .events-price-card.featured {
-      border-color: rgba(255,121,176,0.55);
-      transform: translateY(-3px);
-    }
-
-    .events-eyebrow {
-      color: #ffb3d2;
-      font-size: 0.82rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    @media (max-width: 600px) {
-      .events-page .page-intro h1 {
-        font-size: 2.55rem;
-      }
-    }
+    .events-page{max-width:900px;margin:0 auto}.events-page .page-intro{text-align:center}
+    .events-page .page-intro h1{font-size:clamp(2.2rem,7vw,4rem);line-height:1;margin:.45rem 0 .7rem}
+    .events-hero-actions{display:flex;justify-content:center;margin:1.15rem 0 .25rem}
+    .events-section{margin-top:1.1rem}.events-section h2{margin-top:0;color:#fff}
+    .events-pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem;margin-top:1rem}
+    .events-price-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68px;padding:.6rem .35rem;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(13,13,26,.72);text-align:center}
+    .events-price-card strong{font-size:1.28rem;color:#ff79b0;line-height:1.15}.events-price-card span{font-size:.82rem;color:var(--muted)}
+    .events-price-card.featured{border-color:rgba(255,121,176,.55);background:rgba(255,121,176,.08)}
+    .events-note{max-width:760px;margin:.85rem auto 0;text-align:center;color:var(--muted)}
+    .events-inclusions{columns:2;column-gap:2rem;max-width:760px;margin:.8rem auto 0;padding-left:1.4rem;line-height:1.5}
+    .events-inclusions li{break-inside:avoid;margin-bottom:.35rem}
+    .events-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-top:.85rem}
+    .events-fact{padding:1rem;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
+    .events-fact h3{margin:0 0 .45rem;color:#fff;font-size:1rem}.events-fact p{margin:.3rem 0;font-size:.92rem}
+    .mirror-options-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-top:.8rem}
+    .mirror-option{min-height:82px;padding:.9rem 1rem;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
+    .mirror-option h3{margin:0 0 .35rem;color:#fff;font-size:1rem}.mirror-option p{margin:0;color:var(--muted);font-size:.9rem}
+    .events-mini-cta{text-align:center;margin-top:1rem}.events-terms{text-align:center;font-size:.85rem;color:var(--muted);margin-top:.85rem}
+    @media(max-width:620px){.events-page .page-intro h1{font-size:2.45rem}.events-pricing-grid{grid-template-columns:repeat(2,1fr)}.events-facts,.mirror-options-grid{grid-template-columns:1fr}.events-inclusions{columns:1}}
   </style>
 </head>
 <body class="page" data-page="events">
@@ -181,64 +39,23 @@
       <div class="bonus-kicker">Darwin &amp; surrounds</div>
       <h1>Magic Mirror Event Hire ✨</h1>
       <p class="hero-text hero-text-wide">
-        More than a photo booth: a personalised Magic Mirror experience, private host portal and a second surprise waiting after the celebration.
+        Instant prints, a personalised photo-strip design, private event gallery and guest video messages.
       </p>
-      <div class="events-chip-row" aria-label="Event experience highlights">
-        <span class="events-chip">Instant prints</span>
-        <span class="events-chip">Custom strip design</span>
-        <span class="events-chip">Private event gallery</span>
-        <span class="events-chip">Guest video messages</span>
-      </div>
       <div class="events-hero-actions">
-        <a class="btn" href="event-enquiry.html">Check your event</a>
-        <a class="secondary-link" href="#event-pricing">See upfront pricing</a>
-      </div>
-    </section>
-
-    <section class="events-feature events-section">
-      <div class="events-eyebrow">The Instapic experience</div>
-      <h2>The memories don’t end when the event does</h2>
-      <div class="events-feature-grid">
-        <article>
-          <h3>During the celebration</h3>
-          <p>Guests create printed photo strips while the event’s private gallery grows. Your chosen wording, font and image make every strip part of your event—not a generic booth print.</p>
-        </article>
-        <article>
-          <h3>One more surprise</h3>
-          <p>Guests can leave short video messages for the host. The videos remain securely locked, then become a next-day collection of congratulations, laughter and moments you may have missed.</p>
-        </article>
+        <a class="btn" href="event-enquiry.html">Check availability &amp; get an estimate</a>
       </div>
     </section>
 
     <section class="info-callout events-section" id="event-pricing">
       <h2>Event hire pricing</h2>
-      <p class="events-note">Clear unattended, self-service pricing—no enquiry required just to discover the cost.</p>
+      <p class="events-note">Upfront unattended, self-service pricing within 30 km of Humpty Doo.</p>
       <div class="events-pricing-grid">
         <div class="events-price-card"><span>3 hours</span><strong>$500</strong></div>
         <div class="events-price-card featured"><span>4 hours</span><strong>$650</strong></div>
         <div class="events-price-card"><span>5 hours</span><strong>$800</strong></div>
         <div class="events-price-card"><span>6 hours</span><strong>$950</strong></div>
       </div>
-      <p class="events-note">
-        Additional hire time is $150 per hour, up to a firm maximum hire of 6 hours.
-      </p>
-    </section>
-
-    <section class="info-callout events-section">
-      <h2>Choose your Magic Mirror</h2>
-      <div class="mirror-options-grid">
-        <article class="mirror-option">
-          <h3>Mirror 1 — Black Bauble-Light Frame</h3>
-          <p>A full-length interactive Magic Mirror with its fixed black frame and classic glowing bauble lights.</p>
-        </article>
-        <article class="mirror-option">
-          <h3>Mirror 2 — Gold or White LED Frame</h3>
-          <p>Choose either the gold frame with LED lights or the white frame with LED lights to suit your event style.</p>
-        </article>
-      </div>
-      <p class="events-note">
-        Magic Mirrors are currently our event-hire offering. The separate Instapic photo booth is intended for a permanent venue installation and is not advertised for mobile hire.
-      </p>
+      <p class="events-note">Maximum hire is 6 hours. Add an attendant for $75 per booked hour.</p>
     </section>
 
     <section class="info-callout events-section">
@@ -254,65 +71,47 @@
         <li>Digital bonus content and downloadable memories</li>
         <li>Travel within 30 km of Humpty Doo</li>
       </ul>
-      <p class="events-note">
-        Prefer a hosted experience? Add an attendant for $75 per booked hour. Final inclusions are confirmed with your booking.
-      </p>
     </section>
 
     <section class="info-callout events-section">
-      <h2>From enquiry to event day</h2>
-      <div class="events-detail-grid events-journey">
-        <article class="events-detail-card">
-          <h3>Tell us about it</h3>
-          <p>Choose your date, times, venue, mirror and attended or self-service hire. We check real travel and fleet availability.</p>
-        </article>
-        <article class="events-detail-card">
-          <h3>Review your quote</h3>
-          <p>Receive a clear quote with hire, travel and inclusions shown before you commit. Questions and changes stay connected to your booking.</p>
-        </article>
-        <article class="events-detail-card">
-          <h3>Secure the date</h3>
-          <p>Approve the agreement and pay the $150 deposit online. Your booking and private host portal are then created.</p>
-        </article>
-        <article class="events-detail-card">
-          <h3>Make it yours</h3>
-          <p>Use the host portal to choose your wording, font and image while previewing the real strip. Instapic reviews and locks the approved design.</p>
-        </article>
-        <article class="events-detail-card">
-          <h3>Event-day approval</h3>
-          <p>The refundable security bond and outstanding hire balance are approved before an unattended mirror is unlocked for use.</p>
-        </article>
-        <article class="events-detail-card">
-          <h3>Relive it tomorrow</h3>
-          <p>Return to the host portal for your event gallery and the guest video messages collected especially for you.</p>
-        </article>
+      <h2>Good to know</h2>
+      <div class="events-facts">
+       <article class="events-fact">
+        <h3>Travel</h3>
+        <p><strong>Within 30 km of Humpty Doo:</strong> travel is included and unattended hire is available.</p>
+        <p><strong>Over 30 km:</strong> $1/km for the return journey and attended hire is required. Longer trips are subject to confirmation.</p>
+      </article>
+      <article class="events-fact">
+        <h3>Booking</h3>
+        <p>A $150 booking deposit secures your date and is deducted from the final hire price.</p>
+        <p>Unattended hire requires a separate refundable $500 security-bond authorisation on event day.</p>
+      </article>
+      <article class="events-fact">
+        <h3>Make it yours</h3>
+        <p>After booking, use your host portal to choose photo-strip wording, font and an approved image.</p>
+      </article>
+      <article class="events-fact">
+        <h3>Viewing</h3>
+        <p>Want to see the mirrors before deciding? Viewing is available by appointment only in Humpty Doo.</p>
+      </article>
       </div>
     </section>
 
-    <section class="events-detail-grid">
-      <article class="events-detail-card">
-        <h3>Service area &amp; travel</h3>
-        <p><strong>Within 30 km of Humpty Doo:</strong> travel is included and unattended hire is available.</p>
-        <p><strong>31–80 km:</strong> regional travel is calculated on the return journey and attended hire is required.</p>
-        <p><strong>Beyond 80 km:</strong> locations such as Katherine or Jabiru may be considered by individual quote and availability.</p>
-      </article>
-      <article class="events-detail-card">
-        <h3>Booking essentials</h3>
-        <p>A $150 booking deposit secures your date and is deducted from the final hire price.</p>
-        <p>Unattended hire requires a separate $500 refundable security-bond authorisation on event day. It is not part of the hire charge and is released after return and inspection, subject to the agreement.</p>
-      </article>
-      <article class="events-detail-card">
-        <h3>View by appointment</h3>
-        <p>Want to see the mirrors before deciding? Viewing is available by appointment only in Humpty Doo.</p>
-      </article>
+    <section class="info-callout events-section">
+      <h2>Magic Mirror choices</h2>
+      <div class="mirror-options-grid">
+        <article class="mirror-option">
+          <h3>Mirror 1 — Black frame</h3>
+          <p>Full-length mirror with classic glowing bauble lights.</p>
+        </article>
+        <article class="mirror-option">
+          <h3>Mirror 2 — Gold or white frame</h3>
+          <p>Choose a gold or white frame, both with LED lights.</p>
+        </article>
+      </div>
+      <p class="events-mini-cta"><a class="btn" href="event-enquiry.html">Check your date &amp; price</a></p>
     </section>
-
-    <section class="info-callout events-section events-cta">
-      <h2>Planning an event?</h2>
-      <p>Check your date, venue, preferred mirror and hire time. You’ll see an estimate first; we confirm availability and send a fixed quote before anything is booked.</p>
-      <p><a class="btn" href="event-enquiry.html">Check availability &amp; get an estimate</a></p>
-      <p class="events-note">Bookings are subject to the full <a href="terms.html">Instapic Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
-    </section>
+    <p class="events-terms">Nothing is booked until availability is confirmed and the deposit is paid. See the <a href="terms.html">Instapic Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
 
     <nav class="site-bottom-nav" aria-label="Site pages">
       <a href="session.html" class="secondary-link">Guest Area</a>
