@@ -751,6 +751,7 @@
         security_bond: data.security_bond || portalState.event.security_bond || {},
         hire_payment: data.hire_payment || portalState.event.hire_payment || {},
         payment_ready: !!data.payment_ready,
+        guestbook: data.guestbook || null,
       },
     }));
 

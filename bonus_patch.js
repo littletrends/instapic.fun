@@ -715,12 +715,25 @@
     refreshHostLockContext();
   });
 
+  // Freeze cards are rendered async after get-bonus — re-inject when grid fills.
+  function watchStillsGrid() {
+    const grid = qs("#stills-grid");
+    if (!grid || grid.__instapicFreezeWatch) return;
+    grid.__instapicFreezeWatch = true;
+    const mo = new MutationObserver(() => {
+      injectButtons();
+    });
+    mo.observe(grid, { childList: true, subtree: true });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initPatch();
+    watchStillsGrid();
   });
   window.addEventListener("load", () => {
     initPatch();
     injectButtons();
+    watchStillsGrid();
   });
   setTimeout(initPatch, 600);
   setTimeout(initPatch, 1600);
@@ -729,4 +742,5 @@
   setTimeout(injectButtons, 4500);
   setTimeout(patchShareButtons, 1800);
   setTimeout(refreshHostLockContext, 2000);
+  setTimeout(watchStillsGrid, 400);
 })();
