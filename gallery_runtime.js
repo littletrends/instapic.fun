@@ -54,12 +54,13 @@
     article.append(media(item));
     const copy = node("div", "public-gallery-copy");
     copy.append(node("h3", "", item.title || "Instapic moment"));
+    let continueButton = null;
     if (item.caption) {
       const caption = node("p", "public-gallery-caption", item.caption);
       const needsExpansion = item.caption.length > 360;
       if (needsExpansion) {
         caption.classList.add("collapsed");
-        const continueButton = node(
+        continueButton = node(
           "button",
           "public-gallery-continue",
           "Continue reading"
@@ -72,18 +73,25 @@
           caption.classList.toggle("collapsed", expanded);
           continueButton.textContent = expanded ? "Continue reading" : "Show less";
         };
-        copy.append(caption, continueButton);
+        copy.append(caption);
       } else {
         copy.append(caption);
       }
     }
     const social = validSocialUrl(item.social_url);
+    let socialLink = null;
     if (social) {
-      const link = node("a", "public-gallery-social-link", "View original post ↗");
-      link.href = social;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      copy.append(link);
+      socialLink = node("a", "public-gallery-social-link", "View original post ↗");
+      socialLink.href = social;
+      socialLink.target = "_blank";
+      socialLink.rel = "noopener noreferrer";
+    }
+    if (continueButton || socialLink) {
+      const actions = node("div", "public-gallery-actions");
+      if (continueButton) actions.append(continueButton);
+      else actions.append(node("span", "public-gallery-action-spacer"));
+      if (socialLink) actions.append(socialLink);
+      copy.append(actions);
     }
     article.append(copy);
     return article;

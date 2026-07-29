@@ -722,7 +722,6 @@ body {
 
 .public-gallery-continue {
   display: inline-block;
-  margin-top: 0.55rem;
   padding: 0;
   border: 0;
   background: transparent;
@@ -739,14 +738,38 @@ body {
 
 .public-gallery-social-link {
   display: inline-block;
-  margin-top: 0.75rem;
   color: var(--teal);
   font-weight: 700;
   text-decoration: none;
+  text-align: right;
 }
 
 .public-gallery-social-link:hover {
   text-decoration: underline;
+}
+
+.public-gallery-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.public-gallery-actions > * {
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .public-gallery-actions {
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .public-gallery-social-link,
+  .public-gallery-continue {
+    font-size: 0.8rem;
+  }
 }
 
 .public-gallery-empty,
