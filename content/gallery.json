@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-07-29T21:28:27+0930",
+  "published_at": "2026-07-29T21:31:48+0930",
   "items": [
     {
       "id": "7164ee7084f3",
@@ -115,20 +115,6 @@
       "order": 7
     },
     {
-      "id": "c637d0fb7199",
-      "type": "boomerang",
-      "title": "Gemma \u2014 Boomerang",
-      "caption": "Boomerang loop from Gemma\u2019s session.",
-      "alt": "Gemma \u2014 Boomerang",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/c637d0fb7199.mp4",
-      "uploaded_at": "2026-07-29T21:11:24+0930",
-      "published_at": "2026-07-29T21:11:24+0930",
-      "featured": false,
-      "order": 8
-    },
-    {
       "id": "ed33427def2c",
       "type": "strip",
       "title": "Katie & Lorie \u2014 Mirror Fun Strip",
@@ -155,34 +141,6 @@
       "published_at": "2026-07-29T21:21:35+0930",
       "featured": false,
       "order": 25
-    },
-    {
-      "id": "ef482a9fde17",
-      "type": "gif",
-      "title": "Katie & Lorie \u2014 Mirror Fun GIF",
-      "caption": "GIF motion from the same session.",
-      "alt": "Katie & Lorie \u2014 Mirror Fun GIF",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/ef482a9fde17.mp4",
-      "uploaded_at": "2026-07-29T21:21:35+0930",
-      "published_at": "2026-07-29T21:21:35+0930",
-      "featured": false,
-      "order": 26
-    },
-    {
-      "id": "d419bd685aad",
-      "type": "boomerang",
-      "title": "Katie & Lorie \u2014 Mirror Fun Boomerang",
-      "caption": "Boomerang from Katie and Lorie\u2019s session.",
-      "alt": "Katie & Lorie \u2014 Mirror Fun Boomerang",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/d419bd685aad.mp4",
-      "uploaded_at": "2026-07-29T21:21:35+0930",
-      "published_at": "2026-07-29T21:21:35+0930",
-      "featured": false,
-      "order": 27
     },
     {
       "id": "fceb11d8a883",
