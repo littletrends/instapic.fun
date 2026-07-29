@@ -6,6 +6,14 @@
   <title>Event Cost &amp; Availability | Instapic</title>
   <meta name="description" content="See an upfront Magic Mirror event-hire estimate and check availability before sharing your contact details.">
   <link rel="canonical" href="https://instapic.fun/event-enquiry.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Instapic Fun">
+  <meta property="og:title" content="Check Magic Mirror Availability &amp; Price">
+  <meta property="og:description" content="Build an upfront Instapic Magic Mirror estimate and check event availability before sharing your contact details.">
+  <meta property="og:url" content="https://instapic.fun/event-enquiry.html">
+  <meta property="og:image" content="https://instapic.fun/assets/img/instapic_logo.png">
+  <meta property="og:image:alt" content="Instapic by Little Trends">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="assets/styles.css">
   <style>
     .enquiry-page{max-width:920px}.enquiry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -15,9 +23,9 @@
     .enquiry-field label,.enquiry-legend{font-weight:700;font-size:.94rem}
     .enquiry-field input,.enquiry-field select,.enquiry-field textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(0,0,0,.2);color:inherit;font:inherit}
     .enquiry-field textarea{min-height:90px;resize:vertical}.enquiry-help{font-size:.85rem;opacity:.78}
-    .package-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.package-card{display:block;cursor:pointer}
-    .package-card input{position:absolute;opacity:0}.package-card span{display:block;padding:15px 8px;text-align:center;border:2px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.15)}
-    .package-card input:checked+span{border-color:#ffb54a;background:rgba(255,181,74,.13)}.package-card strong{display:block;font-size:1.08rem}.package-card small{opacity:.8}
+    .package-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hire-package-card{display:block;cursor:pointer;min-width:0}
+    .hire-package-card input{position:absolute;opacity:0}.hire-package-card span{display:block;padding:15px 8px;text-align:center;border:2px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.15)}
+    .hire-package-card input:checked+span{border-color:#ffb54a;background:rgba(255,181,74,.13)}.hire-package-card strong{display:block;font-size:1.08rem}.hire-package-card small{opacity:.8}
     .location-suggestions{position:absolute;z-index:20;left:0;right:0;top:100%;border-radius:12px;overflow:hidden;background:#211d2b;box-shadow:0 12px 30px rgba(0,0,0,.45)}
     .location-suggestions button{display:block;width:100%;padding:11px 12px;text-align:left;border:0;border-bottom:1px solid rgba(255,255,255,.1);background:transparent;color:inherit;cursor:pointer}
     .estimate-box{border:2px solid rgba(255,181,74,.55);background:rgba(255,181,74,.08)}.estimate-row{display:flex;justify-content:space-between;gap:18px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1)}
@@ -42,10 +50,10 @@
         <h2>1. Choose your hire package</h2>
         <p>Simple upfront pricing for self-service hire within 30 km of Humpty Doo.</p>
         <div class="package-grid">
-          <label class="package-card"><input type="radio" name="package_hours" value="3" required><span><strong>3 hours</strong><small>$500</small></span></label>
-          <label class="package-card"><input type="radio" name="package_hours" value="4"><span><strong>4 hours</strong><small>$650</small></span></label>
-          <label class="package-card"><input type="radio" name="package_hours" value="5"><span><strong>5 hours</strong><small>$800</small></span></label>
-          <label class="package-card"><input type="radio" name="package_hours" value="6"><span><strong>6 hours</strong><small>$950</small></span></label>
+          <label class="hire-package-card"><input type="radio" name="package_hours" value="3" required><span><strong>3 hours</strong><small>$500</small></span></label>
+          <label class="hire-package-card"><input type="radio" name="package_hours" value="4"><span><strong>4 hours</strong><small>$650</small></span></label>
+          <label class="hire-package-card"><input type="radio" name="package_hours" value="5"><span><strong>5 hours</strong><small>$800</small></span></label>
+          <label class="hire-package-card"><input type="radio" name="package_hours" value="6"><span><strong>6 hours</strong><small>$950</small></span></label>
         </div>
       </section>
 

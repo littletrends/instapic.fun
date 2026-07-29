@@ -2,37 +2,49 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://instapic.fun/</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://instapic.fun/pay.html</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://instapic.fun/events.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://instapic.fun/event-enquiry.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://instapic.fun/guest-contact.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://instapic.fun/how-it-works.html</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://instapic.fun/terms.html</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://instapic.fun/privacy.html</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
