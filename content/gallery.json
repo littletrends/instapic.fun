@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-07-29T19:29:04+0930",
+  "published_at": "2026-07-29T20:00:05+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -15,6 +15,104 @@
       "published_at": "2026-07-29T19:10:01+0930",
       "featured": false,
       "order": 0
+    },
+    {
+      "id": "fceb11d8a883",
+      "type": "strip",
+      "title": "Girls Just Wanna Have Fun \u2014 Photo Strip",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Four girls having fun together in an Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/fceb11d8a883.jpg",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 100
+    },
+    {
+      "id": "68b3be58b60a",
+      "type": "collage",
+      "title": "Girls Just Wanna Have Fun \u2014 Collage",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Animated collage created from a group Magic Mirror session.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/68b3be58b60a.mp4",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 101
+    },
+    {
+      "id": "e612fb52705c",
+      "type": "gif",
+      "title": "Girls Just Wanna Have Fun \u2014 GIF",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Animated GIF of four girls posing together at the Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e612fb52705c.gif",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 102
+    },
+    {
+      "id": "f4e2c7f2ced2",
+      "type": "boomerang",
+      "title": "Girls Just Wanna Have Fun \u2014 Boomerang",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Boomerang moment from a group of girls at the Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/f4e2c7f2ced2.mp4",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 103
+    },
+    {
+      "id": "d55e68c5f088",
+      "type": "photo",
+      "title": "All Smiles",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Four girls smiling together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d55e68c5f088.jpg",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 104
+    },
+    {
+      "id": "4c1718075569",
+      "type": "photo",
+      "title": "Mirror Moment",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "A playful group pose captured at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/4c1718075569.jpg",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 105
+    },
+    {
+      "id": "e20fe4f461ad",
+      "type": "photo",
+      "title": "One More Pose",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Four friends sharing one more fun Magic Mirror pose.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e20fe4f461ad.jpg",
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 106
     }
   ]
 }
