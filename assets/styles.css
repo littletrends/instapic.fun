@@ -704,10 +704,18 @@ body {
 
 .public-gallery-date {
   display: block;
-  margin-top: 0.28rem;
+  margin: 0;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 650;
+}
+
+/* First line of each gallery post */
+.public-gallery-date-top {
+  padding: 0.85rem 1rem 0;
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
 }
 
 .public-gallery-copy p {

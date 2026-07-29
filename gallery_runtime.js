@@ -18,13 +18,26 @@
     }
   }
 
-  function displayUploadedDate(value) {
-    const parsed = new Date(value || "");
-    if (Number.isNaN(parsed.getTime())) return "";
+  function parseStamp(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    // Python often emits +0930; JS Date wants +09:30
+    const normalized = raw.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+    let parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function displayPostedDate(value) {
+    const parsed = parseStamp(value);
+    if (!parsed) return "";
     return new Intl.DateTimeFormat("en-AU", {
       day: "numeric",
       month: "long",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
       timeZone: "Australia/Darwin"
     }).format(parsed);
   }
@@ -62,15 +75,17 @@
   function card(item) {
     const article = node("article", "public-gallery-card");
     article.dataset.category = item.category || "All";
+    // Date is the first line of the post (above media + title).
+    const stampIso = item.published_at || item.uploaded_at || "";
+    const postedDate = displayPostedDate(stampIso);
+    if (postedDate) {
+      const date = node("time", "public-gallery-date public-gallery-date-top", postedDate);
+      date.dateTime = stampIso;
+      article.append(date);
+    }
     article.append(media(item));
     const copy = node("div", "public-gallery-copy");
     copy.append(node("h3", "", item.title || "Instapic moment"));
-    const uploadedDate = displayUploadedDate(item.uploaded_at);
-    if (uploadedDate) {
-      const date = node("time", "public-gallery-date", uploadedDate);
-      date.dateTime = item.uploaded_at;
-      copy.append(date);
-    }
     let continueButton = null;
     if (item.caption) {
       const caption = node("p", "public-gallery-caption", item.caption);
@@ -169,7 +184,7 @@
 
   async function load() {
     try {
-      const response = await fetch(`${MANIFEST}?v=20260729-gallery`, {cache: "no-store"});
+      const response = await fetch(`${MANIFEST}?v=20260729-gallery-date-top`, {cache: "no-store"});
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];
