@@ -593,16 +593,21 @@ body {
   max-width: 680px;
   margin: 1.2rem auto 1.5rem;
   text-align: center;
+  padding: 0 0.25rem;
 }
 
 .gallery-hero h1 {
   margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.55rem, 6.5vw, 2.4rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .gallery-hero p {
   margin: 0 auto;
   color: var(--muted);
   line-height: 1.55;
+  max-width: 36rem;
 }
 
 .gallery-kicker {
@@ -637,10 +642,133 @@ body {
   background: rgba(32, 198, 200, 0.16);
 }
 
+/* Legacy flat grid (kept for any older markup) */
 .public-gallery-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  align-items: start;
+}
+
+/* Product sections: one carousel row per type */
+.public-gallery-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.public-gallery-section {
+  min-width: 0;
+  padding: 0.85rem 0 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.public-gallery-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.public-gallery-section[hidden] {
+  display: none;
+}
+
+.public-gallery-section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem 0.85rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
+  padding: 0 0.15rem;
+}
+
+.public-gallery-section-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.public-gallery-section-blurb {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.public-gallery-section-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.public-gallery-section-nav {
+  display: flex;
+  gap: 0.4rem;
+  align-self: center;
+}
+
+.public-gallery-scroll {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.public-gallery-scroll:hover {
+  border-color: rgba(32, 198, 200, 0.7);
+  background: rgba(32, 198, 200, 0.16);
+}
+
+.public-gallery-track {
+  display: flex;
+  gap: 0.9rem;
+  overflow-x: auto;
+  /* Do not clip tall portrait cards on iOS (overflow-y:hidden was cutting them) */
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 0.15rem 0.15rem 0.85rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  align-items: flex-start;
+}
+
+.public-gallery-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.public-gallery-track::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+/*
+  Booth products are portrait. Cards stay phone-narrow on desktop;
+  on phones they go nearly full width (same idea as bonus.html).
+*/
+.public-gallery-track .public-gallery-card {
+  flex: 0 0 min(78vw, 300px);
+  scroll-snap-align: start;
+  max-width: min(78vw, 300px);
+}
+
+.public-gallery-section.is-collage .public-gallery-card,
+.public-gallery-section.is-strip .public-gallery-card,
+.public-gallery-section.is-motion .public-gallery-card {
+  flex-basis: min(72vw, 280px);
+  max-width: min(72vw, 280px);
+}
+
+.public-gallery-section.is-photo .public-gallery-card,
+.public-gallery-section.is-social .public-gallery-card {
+  flex-basis: min(82vw, 320px);
+  max-width: min(82vw, 320px);
 }
 
 .public-gallery-card {
@@ -649,29 +777,74 @@ body {
   border-radius: 18px;
   background: rgba(16, 16, 26, 0.92);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-  overflow: hidden;
+  /* visible so portrait media is never half-clipped by the card shell */
+  overflow: visible;
 }
 
 .public-gallery-card[hidden] {
   display: none;
 }
 
+/*
+  Same portrait rules as bonus.html media-frame:
+  - NEVER width:100% + max-height together (iOS Safari squashes / crops)
+  - width/height auto, max-width + max-height only
+  - no forced aspect-ratio box that clips the video
+*/
 .public-gallery-media {
   position: relative;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  padding: 0.55rem;
   background:
     radial-gradient(circle at 22% 18%, rgba(255, 51, 112, 0.22), transparent 42%),
     #08070d;
-  overflow: hidden;
+  border-radius: 0;
+  overflow: visible;
 }
 
 .public-gallery-media img,
 .public-gallery-media video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: min(70vh, 720px) !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* Photostrip is extra tall/narrow — same treatment as #strip-frame on bonus */
+.public-gallery-media.is-strip img,
+.public-gallery-media.is-strip video {
+  max-width: min(100%, 360px) !important;
+  max-height: min(78vh, 900px) !important;
+}
+
+/* Collage / motion — hero-ish on gallery, still full portrait */
+.public-gallery-media.is-collage img,
+.public-gallery-media.is-collage video,
+.public-gallery-media.is-gif img,
+.public-gallery-media.is-gif video,
+.public-gallery-media.is-boomerang video,
+.public-gallery-media.is-video video,
+.public-gallery-media.is-portrait img,
+.public-gallery-media.is-portrait video {
+  max-width: min(100%, 420px) !important;
+  max-height: min(78vh, 820px) !important;
+}
+
+/* Soft stills (photo / social) — still never force a crop box */
+.public-gallery-media.is-photo img,
+.public-gallery-media.is-social img {
+  max-width: 100% !important;
+  max-height: min(70vh, 720px) !important;
 }
 
 .public-gallery-type {
@@ -821,9 +994,144 @@ body {
   color: var(--muted);
 }
 
+/*
+  PHONE LAYOUT — do not use horizontal carousels for tall portrait booth media.
+  Stack full-width cards vertically, same sizing rules as bonus.html media-frame.
+*/
 @media (max-width: 700px) {
+  .site-main.gallery-page {
+    padding: 1rem 0.75rem 1.5rem;
+    max-width: 100%;
+    width: 100%;
+  }
+
   .public-gallery-grid {
     grid-template-columns: 1fr;
+  }
+
+  .public-gallery-filters {
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    padding: 0 0.15rem;
+  }
+
+  .public-gallery-filter {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.88rem;
+  }
+
+  .public-gallery-section {
+    padding-top: 0.55rem;
+  }
+
+  .public-gallery-section-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+    padding: 0 0.15rem;
+  }
+
+  .public-gallery-section-count,
+  .public-gallery-section-nav {
+    display: none;
+  }
+
+  .public-gallery-section-title {
+    font-size: 1.12rem;
+  }
+
+  .public-gallery-section-blurb {
+    font-size: 0.84rem;
+  }
+
+  /* Vertical stack — no side-swipe, no half-peek cards */
+  .public-gallery-track {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .public-gallery-track .public-gallery-card,
+  .public-gallery-section.is-collage .public-gallery-card,
+  .public-gallery-section.is-strip .public-gallery-card,
+  .public-gallery-section.is-motion .public-gallery-card,
+  .public-gallery-section.is-photo .public-gallery-card,
+  .public-gallery-section.is-social .public-gallery-card {
+    flex: none;
+    flex-basis: auto;
+    width: 100%;
+    max-width: 100%;
+    scroll-snap-align: none;
+  }
+
+  .public-gallery-card {
+    overflow: hidden; /* rounded corners only — media sizes itself inside */
+    border-radius: 16px;
+  }
+
+  /* Match bonus.html .media-frame exactly on phone */
+  .public-gallery-media {
+    width: 100%;
+    min-height: 240px;
+    padding: 12px 12px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0;
+    overflow: visible;
+  }
+
+  .public-gallery-media img,
+  .public-gallery-media video {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: min(70vh, 720px) !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+
+  /* Strips are taller/narrower — same as bonus #strip-frame */
+  .public-gallery-media.is-strip img,
+  .public-gallery-media.is-strip video {
+    max-width: min(100%, 360px) !important;
+    max-height: min(78vh, 900px) !important;
+  }
+
+  /* Collage + motion — hero-ish, still full portrait, never cropped */
+  .public-gallery-media.is-collage img,
+  .public-gallery-media.is-collage video,
+  .public-gallery-media.is-gif img,
+  .public-gallery-media.is-gif video,
+  .public-gallery-media.is-boomerang video,
+  .public-gallery-media.is-video video,
+  .public-gallery-media.is-portrait img,
+  .public-gallery-media.is-portrait video {
+    max-width: min(100%, 420px) !important;
+    max-height: min(78vh, 820px) !important;
+  }
+
+  .public-gallery-copy {
+    padding: 0.75rem 0.9rem 1rem;
+  }
+
+  .public-gallery-copy h3 {
+    font-size: 1rem;
+  }
+
+  .public-gallery-date-top {
+    padding: 0.7rem 0.9rem 0;
+    font-size: 0.78rem;
+  }
+
+  .public-gallery-type {
+    top: 0.55rem;
+    right: 0.55rem;
   }
 }
 
