@@ -1,8 +1,14 @@
 (function () {
   const MANIFEST = "content/gallery.json";
 
-  // Product-first section order. Empty sections are hidden.
+  // Section order. Socials always first (when present). Empty sections are hidden.
   const SECTION_DEFS = [
+    {
+      id: "social",
+      title: "From Instagram & X",
+      blurb: "Stories and posts from the build and booth life.",
+      types: ["social"],
+    },
     {
       id: "featured",
       title: "Featured",
@@ -40,21 +46,15 @@
       blurb: "Stills from the mirror.",
       types: ["photo"],
     },
-    {
-      id: "social",
-      title: "From Instagram & X",
-      blurb: "Stories and posts from the build and booth life.",
-      types: ["social"],
-    },
   ];
 
   const TYPE_FILTERS = [
     { id: "all", label: "All" },
+    { id: "social", label: "Social" },
     { id: "strip", label: "Strips" },
     { id: "collage", label: "Collages" },
     { id: "motion", label: "Motion" },
     { id: "photo", label: "Photos" },
-    { id: "social", label: "Social" },
   ];
 
   function node(tag, className, text) {
@@ -418,7 +418,7 @@
 
   async function load() {
     try {
-      const response = await fetch(`${MANIFEST}?v=20260729-gallery-bonus-media`, { cache: "no-store" });
+      const response = await fetch(`${MANIFEST}?v=20260729-gallery-social-first`, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];
