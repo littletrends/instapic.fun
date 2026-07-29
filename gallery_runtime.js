@@ -54,7 +54,29 @@
     article.append(media(item));
     const copy = node("div", "public-gallery-copy");
     copy.append(node("h3", "", item.title || "Instapic moment"));
-    if (item.caption) copy.append(node("p", "", item.caption));
+    if (item.caption) {
+      const caption = node("p", "public-gallery-caption", item.caption);
+      const needsExpansion = item.caption.length > 360;
+      if (needsExpansion) {
+        caption.classList.add("collapsed");
+        const continueButton = node(
+          "button",
+          "public-gallery-continue",
+          "Continue reading"
+        );
+        continueButton.type = "button";
+        continueButton.setAttribute("aria-expanded", "false");
+        continueButton.onclick = () => {
+          const expanded = continueButton.getAttribute("aria-expanded") === "true";
+          continueButton.setAttribute("aria-expanded", String(!expanded));
+          caption.classList.toggle("collapsed", expanded);
+          continueButton.textContent = expanded ? "Continue reading" : "Show less";
+        };
+        copy.append(caption, continueButton);
+      } else {
+        copy.append(caption);
+      }
+    }
     const social = validSocialUrl(item.social_url);
     if (social) {
       const link = node("a", "public-gallery-social-link", "View original post ↗");

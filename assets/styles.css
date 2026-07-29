@@ -709,6 +709,34 @@ body {
   line-height: 1.45;
 }
 
+.public-gallery-caption {
+  white-space: pre-line;
+}
+
+.public-gallery-caption.collapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 7;
+}
+
+.public-gallery-continue {
+  display: inline-block;
+  margin-top: 0.55rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.public-gallery-continue:hover {
+  text-decoration: underline;
+}
+
 .public-gallery-social-link {
   display: inline-block;
   margin-top: 0.75rem;
