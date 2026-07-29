@@ -30,9 +30,12 @@
         throw new Error(result.message || result.error || `HTTP ${response.status}`);
       }
       form.reset();
+      const emailNote = result.confirmation_email === "SENT"
+        ? " We’ve emailed you a confirmation; reply to that email if you need to add anything."
+        : " Instapic has your message and will reply to your email.";
       show(
-        `Thanks—your message has been received. Your reference is ${result.enquiry_id}. ` +
-        "We’ve emailed you a confirmation; reply to that email if you need to add anything.",
+        `Thanks—your message has been received. Your reference is ${result.enquiry_id}.` +
+        emailNote,
         false
       );
       submit.textContent = "Message sent";
