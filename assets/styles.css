@@ -750,9 +750,9 @@ body {
 
 .public-gallery-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
   margin-top: 0.75rem;
 }
 
@@ -760,10 +760,19 @@ body {
   min-width: 0;
 }
 
+.public-gallery-continue {
+  align-self: flex-start;
+  text-align: left;
+}
+
+.public-gallery-social-link {
+  align-self: flex-end;
+  text-align: right;
+}
+
 @media (max-width: 420px) {
   .public-gallery-actions {
-    align-items: flex-start;
-    gap: 0.65rem;
+    gap: 0.5rem;
   }
 
   .public-gallery-social-link,
