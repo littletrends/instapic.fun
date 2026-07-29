@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-07-29T21:26:50+0930",
+  "published_at": "2026-07-29T21:28:27+0930",
   "items": [
     {
       "id": "7164ee7084f3",
@@ -127,20 +127,6 @@
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
       "order": 8
-    },
-    {
-      "id": "7fb9740676ad",
-      "type": "collage",
-      "title": "Katie & Lorie \u2014 Collage",
-      "caption": "Branded collage video from Katie and Lorie\u2019s session.",
-      "alt": "Katie & Lorie \u2014 Collage",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/7fb9740676ad.mp4",
-      "uploaded_at": "2026-07-29T21:21:35+0930",
-      "published_at": "2026-07-29T21:21:35+0930",
-      "featured": false,
-      "order": 21
     },
     {
       "id": "ed33427def2c",
