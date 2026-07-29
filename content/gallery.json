@@ -1,7 +1,35 @@
 {
   "version": 1,
-  "published_at": "2026-07-29T20:42:42+0930",
+  "published_at": "2026-07-29T20:51:47+0930",
   "items": [
+    {
+      "id": "86d5aee4d9c1",
+      "type": "collage",
+      "title": "205172 SAMPLE",
+      "caption": "",
+      "alt": "Mum & Katie Test PB1",
+      "category": "",
+      "social_url": "",
+      "media_url": "assets/gallery/86d5aee4d9c1.mp4",
+      "uploaded_at": "2026-07-29T20:27:46+0930",
+      "published_at": "2026-07-29T20:45:49+0930",
+      "featured": false,
+      "order": 0
+    },
+    {
+      "id": "cccd3dcdd69d",
+      "type": "collage",
+      "title": "488189 SAMPLE",
+      "caption": "",
+      "alt": "Mum & Katie testing Photo Booth 1",
+      "category": "",
+      "social_url": "",
+      "media_url": "assets/gallery/cccd3dcdd69d.mp4",
+      "uploaded_at": "2026-07-29T20:28:14+0930",
+      "published_at": "2026-07-29T20:45:41+0930",
+      "featured": false,
+      "order": 0
+    },
     {
       "id": "1b70512edae9",
       "type": "social",
@@ -71,48 +99,6 @@
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
       "order": 103
-    },
-    {
-      "id": "d55e68c5f088",
-      "type": "photo",
-      "title": "All Smiles",
-      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
-      "alt": "Four girls smiling together at the Instapic Magic Mirror.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/d55e68c5f088.jpg",
-      "uploaded_at": "2026-07-29T19:58:31+0930",
-      "published_at": "2026-07-29T19:58:31+0930",
-      "featured": false,
-      "order": 104
-    },
-    {
-      "id": "4c1718075569",
-      "type": "photo",
-      "title": "Mirror Moment",
-      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
-      "alt": "A playful group pose captured at the Instapic Magic Mirror.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/4c1718075569.jpg",
-      "uploaded_at": "2026-07-29T19:58:31+0930",
-      "published_at": "2026-07-29T19:58:31+0930",
-      "featured": false,
-      "order": 105
-    },
-    {
-      "id": "e20fe4f461ad",
-      "type": "photo",
-      "title": "One More Pose",
-      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
-      "alt": "Four friends sharing one more fun Magic Mirror pose.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/e20fe4f461ad.jpg",
-      "uploaded_at": "2026-07-29T19:58:31+0930",
-      "published_at": "2026-07-29T19:58:31+0930",
-      "featured": false,
-      "order": 106
     }
   ]
 }
