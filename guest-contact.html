@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact Instapic | Guest Enquiries</title>
+  <meta name="description" content="Send a private guest support message to Instapic by Little Trends.">
+  <link rel="canonical" href="https://instapic.fun/guest-contact.html">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+  <style>
+    .guest-contact{max-width:760px}.contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .contact-field{display:flex;flex-direction:column;gap:6px}.contact-field.full{grid-column:1/-1}
+    .contact-field label{font-weight:700;font-size:.94rem}.contact-field input,.contact-field select,.contact-field textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(0,0,0,.2);color:inherit;font:inherit}
+    .contact-field textarea{min-height:150px;resize:vertical}.contact-help{font-size:.85rem;opacity:.76}
+    .contact-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}.contact-status{min-height:1.5em;font-weight:700}
+    .contact-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+    @media(max-width:620px){.contact-grid{grid-template-columns:1fr}.contact-field.full{grid-column:auto}}
+  </style>
+</head>
+<body class="page" data-page="guest-contact">
+  <main class="card guest-contact">
+    <header class="page-intro">
+      <p class="eyebrow">Guest enquiries</p>
+      <h1>Message Instapic</h1>
+      <p>Send your question here. We’ll reply to your email, and you can continue the conversation by replying normally.</p>
+    </header>
+    <form id="guest-contact-form">
+      <section class="info-callout">
+        <div class="contact-grid">
+          <div class="contact-field"><label for="guest-name">Your name</label><input id="guest-name" name="name" required autocomplete="name"></div>
+          <div class="contact-field"><label for="guest-email">Email</label><input id="guest-email" name="email" type="email" required autocomplete="email"></div>
+          <div class="contact-field"><label for="guest-mobile">Mobile <span class="contact-help">(optional)</span></label><input id="guest-mobile" name="mobile" type="tel" autocomplete="tel"></div>
+          <div class="contact-field"><label for="guest-topic">What can we help with?</label><select id="guest-topic" name="topic" required><option value="">Choose…</option><option>Booth code or session</option><option>Photos or bonus content</option><option>VIP Guest Area</option><option>Event hire</option><option>Privacy request</option><option>Something else</option></select></div>
+          <div class="contact-field full"><label for="session-code">Booth or session code <span class="contact-help">(if relevant)</span></label><input id="session-code" name="session_code" inputmode="numeric" autocomplete="off"></div>
+          <div class="contact-field full"><label for="guest-message">Your message</label><textarea id="guest-message" name="message" required placeholder="Tell us what happened or what you need help with"></textarea></div>
+        </div>
+      </section>
+      <div class="contact-honeypot" aria-hidden="true"><label>Company website<input name="company_website" tabindex="-1" autocomplete="off"></label></div>
+      <div class="contact-actions">
+        <button class="btn" type="submit" id="send-guest-message">Send message</button>
+        <a class="secondary-link" href="privacy.html">Back to Privacy</a>
+      </div>
+      <p id="guest-contact-status" class="contact-status" role="status" aria-live="polite"></p>
+      <p class="contact-help">Your details are used to answer this enquiry. See our <a href="privacy.html">Privacy Policy</a>.</p>
+    </form>
+  </main>
+  <footer class="site-footer"><small>Instapic by Little Trends — Moments Made Magical ✨</small></footer>
+  <script src="site_core.js?v=20260729-guest-email"></script>
+  <script src="guest_contact_runtime.js?v=20260729-guest-email"></script>
+  <script src="branding.js"></script>
+</body>
+</html>
