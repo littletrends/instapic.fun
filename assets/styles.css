@@ -702,6 +702,14 @@ body {
   font-size: 1.05rem;
 }
 
+.public-gallery-date {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
 .public-gallery-copy p {
   margin: 0.45rem 0 0;
   color: var(--muted);

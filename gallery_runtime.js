@@ -18,6 +18,17 @@
     }
   }
 
+  function displayUploadedDate(value) {
+    const parsed = new Date(value || "");
+    if (Number.isNaN(parsed.getTime())) return "";
+    return new Intl.DateTimeFormat("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Australia/Darwin"
+    }).format(parsed);
+  }
+
   function media(item) {
     const frame = node("div", "public-gallery-media");
     const url = String(item.media_url || "");
@@ -54,6 +65,12 @@
     article.append(media(item));
     const copy = node("div", "public-gallery-copy");
     copy.append(node("h3", "", item.title || "Instapic moment"));
+    const uploadedDate = displayUploadedDate(item.uploaded_at);
+    if (uploadedDate) {
+      const date = node("time", "public-gallery-date", uploadedDate);
+      date.dateTime = item.uploaded_at;
+      copy.append(date);
+    }
     let continueButton = null;
     if (item.caption) {
       const caption = node("p", "public-gallery-caption", item.caption);
