@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "published_at": "2026-07-29T00:00:00+0930",
+  "items": [
+    {
+      "id": "welcome-strip",
+      "type": "strip",
+      "title": "Your Instapic photo strip",
+      "caption": "Printed memories on the day, with digital bonus content ready to enjoy afterwards.",
+      "alt": "Example Instapic photo strip presentation",
+      "category": "Photo strips",
+      "social_url": "",
+      "media_url": "assets/img/event_templates/dual_4up_scifi_plate.jpg",
+      "featured": true,
+      "order": 10
+    },
+    {
+      "id": "instapic-magic",
+      "type": "photo",
+      "title": "Moments made magical",
+      "caption": "Magic Mirror experiences for weddings, birthdays, celebrations and corporate events.",
+      "alt": "Instapic by Little Trends character artwork",
+      "category": "Magic Mirror",
+      "social_url": "",
+      "media_url": "assets/img/instapic_girl.png",
+      "featured": true,
+      "order": 20
+    }
+  ]
+}
