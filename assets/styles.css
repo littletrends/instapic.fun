@@ -820,6 +820,52 @@ body {
   -webkit-transform: none !important;
 }
 
+.public-gallery-media-slides,
+.public-gallery-media-slide {
+  width: 100%;
+}
+
+.public-gallery-media-slide[hidden] {
+  display: none;
+}
+
+.public-gallery-media-nav {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(8, 7, 13, 0.82);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.public-gallery-media-nav.is-prev {
+  left: 0.8rem;
+}
+
+.public-gallery-media-nav.is-next {
+  right: 0.8rem;
+}
+
+.public-gallery-media-count {
+  position: absolute;
+  z-index: 3;
+  top: 0.85rem;
+  right: 0.85rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(8, 7, 13, 0.82);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 /* Photostrip is extra tall/narrow — same treatment as #strip-frame on bonus */
 .public-gallery-media.is-strip img,
 .public-gallery-media.is-strip video {

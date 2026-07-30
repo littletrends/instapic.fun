@@ -103,17 +103,22 @@
     }).format(parsed);
   }
 
-  function mediaExtension(item) {
-    const url = String(item.media_url || item.media_file || "");
+  function mediaExtension(value) {
+    const url =
+      typeof value === "string"
+        ? value
+        : String(value.media_url || value.media_file || "");
     return url.split(".").pop().toLowerCase().split("?")[0] || "";
   }
 
-  function isVideoMedia(item) {
-    // Collages / boomerangs / motion products are MP4s — never render as <img>.
-    const ext = mediaExtension(item);
-    if (["mp4", "webm", "mov"].includes(ext)) return true;
-    const type = String(item.type || "").toLowerCase();
-    return ["collage", "boomerang", "video"].includes(type);
+  function isVideoMedia(value) {
+    return ["mp4", "webm", "mov"].includes(mediaExtension(value));
+  }
+
+  function mediaUrls(item) {
+    const urls = Array.isArray(item.media_urls) ? item.media_urls.filter(Boolean) : [];
+    if (!urls.length && item.media_url) urls.push(item.media_url);
+    return [...new Set(urls.map(String))];
   }
 
   function mediaShapeClass(type) {
@@ -140,31 +145,73 @@
   function media(item) {
     const type = String(item.type || "photo");
     const frame = node("div", `public-gallery-media ${mediaShapeClass(type)}`);
-    const url = String(item.media_url || "");
-    if (url && isVideoMedia(item)) {
-      const video = node("video");
-      video.controls = true;
-      video.preload = "metadata";
-      video.playsInline = true;
-      video.muted = true;
-      video.loop = type === "collage" || type === "boomerang" || type === "gif";
-      video.poster = item.poster_url || "";
-      video.setAttribute("aria-label", item.alt || item.title || "Gallery video");
-      // Do NOT set HTML width/height attributes — on iOS that fights CSS and
-      // half-crops portrait booth videos (bonus.html avoids this too).
-      const source = node("source");
-      source.src = url;
-      // type helps mobile browsers pick the right decoder early
-      if (mediaExtension(item) === "mp4") source.type = "video/mp4";
-      video.append(source);
-      frame.append(video);
-    } else if (url) {
-      const image = node("img");
-      image.src = url;
-      image.alt = item.alt || item.title || "Instapic gallery example";
-      image.loading = "lazy";
-      image.decoding = "async";
-      frame.append(image);
+    const urls = mediaUrls(item);
+    if (urls.length) {
+      const slides = node("div", "public-gallery-media-slides");
+      const slideNodes = [];
+      urls.forEach((url, index) => {
+        const slide = node("div", "public-gallery-media-slide");
+        slide.hidden = index !== 0;
+        if (isVideoMedia(url)) {
+          const video = node("video");
+          video.controls = true;
+          video.preload = "metadata";
+          video.playsInline = true;
+          video.muted = true;
+          video.loop = type === "collage" || type === "boomerang" || type === "gif";
+          video.poster = item.poster_url || "";
+          video.setAttribute("aria-label", item.alt || item.title || "Gallery video");
+          const source = node("source");
+          source.src = url;
+          if (mediaExtension(url) === "mp4") source.type = "video/mp4";
+          if (mediaExtension(url) === "webm") source.type = "video/webm";
+          video.append(source);
+          slide.append(video);
+        } else {
+          const image = node("img");
+          image.src = url;
+          image.alt = item.alt || item.title || "Instapic gallery example";
+          image.loading = index === 0 ? "eager" : "lazy";
+          image.decoding = "async";
+          slide.append(image);
+        }
+        slideNodes.push(slide);
+        slides.append(slide);
+      });
+      frame.append(slides);
+
+      if (slideNodes.length > 1) {
+        let active = 0;
+        const previous = node("button", "public-gallery-media-nav is-prev", "‹");
+        const next = node("button", "public-gallery-media-nav is-next", "›");
+        const count = node(
+          "span",
+          "public-gallery-media-count",
+          `1 / ${slideNodes.length}`
+        );
+        previous.type = "button";
+        next.type = "button";
+        previous.setAttribute("aria-label", "Previous media");
+        next.setAttribute("aria-label", "Next media");
+        const show = (index) => {
+          const currentVideo = slideNodes[active].querySelector("video");
+          if (currentVideo) currentVideo.pause();
+          active = (index + slideNodes.length) % slideNodes.length;
+          slideNodes.forEach((slide, position) => {
+            slide.hidden = position !== active;
+          });
+          count.textContent = `${active + 1} / ${slideNodes.length}`;
+        };
+        previous.onclick = (event) => {
+          event.stopPropagation();
+          show(active - 1);
+        };
+        next.onclick = (event) => {
+          event.stopPropagation();
+          show(active + 1);
+        };
+        frame.append(previous, next, count);
+      }
     } else {
       frame.append(node("div", "public-gallery-social-placeholder", "Social highlight"));
     }
