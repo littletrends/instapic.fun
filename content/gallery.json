@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-07-30T17:57:11+0930",
+  "published_at": "2026-07-30T18:57:52+0930",
   "items": [
     {
       "id": "7164ee7084f3",
@@ -145,7 +145,7 @@
       "caption": "I walked into my office this morning with absolutely no intention of building anything new.\n\nI already had a list.\n\nA sensible list.\n\nThings to test.\nThings to tidy.\nThings I had already started.\n\nThen I noticed one small thing missing from the Instapic website:\n\nA gallery.\n\nThat should have been simple.\n\nJust make a page, add a few photos and call it done\u2026 right?\n\nExcept a website gallery wasn\u2019t enough.\n\nBecause I didn\u2019t want to open website files, resize and move media, edit data by hand, remember which posts were drafts, then run Git commands every single time I wanted to add something new.\n\nI wanted the gallery to work the way the rest of Instapic works:\n\nFrom one place.\nUnder my control.\nAnd connected properly to everything behind it.\n\nSo I built the public gallery.\n\nIt can display photo strips, individual photos, collages, GIFs, Boomerangs, videos and social posts. It sorts them into sections, keeps the portrait media looking like phone stories and lets visitors move through the moments without cluttering the homepage.\n\nThen, naturally, I built the system behind the gallery too.\n\nInside my Instapic MotherPC Admin area, I can now:\n\n\u2022 Upload media\n\u2022 Create titles and captions\n\u2022 Add image descriptions\n\u2022 Choose content types and categories\n\u2022 Arrange the display order\n\u2022 Save unfinished ideas as private drafts\n\u2022 Edit or delete posts\n\u2022 Approve exactly what is allowed to appear publicly\n\u2022 Publish the finished gallery directly to the live website\n\nAnd because apparently even that wasn\u2019t enough, pressing Publish does more than update a page.\n\nIt gathers only the approved content, prepares the website gallery, copies the correct media, records the change in Git and pushes a fresh backup to GitHub before it goes live.\n\nThe screenshot on the left is what everyone sees.\n\nThe screenshot on the right is the part I decided I also needed to build so I could create and publish it myself.\n\nI didn\u2019t just add a gallery to a website.\n\nI built the content system that runs it.\n\nI had absolutely no plan to do any of this when I walked into the office this morning.\n\nI just thought:\n\n\u201cWe\u2019re probably missing a gallery.\u201d\n\nThis keeps happening.\n\nI notice one small thing.\n\nThen I wonder if it could work a little better.\n\nOne idea becomes another.\n\nThen another.\n\nThen apparently I\u2019ve built an entire gallery, content-management system and direct publishing pipeline before I\u2019ve even had time to reconsider the original idea.\n\nSo yes\u2014I accidentally built something else today.\n\nI just didn\u2019t know I was going to when I arrived.\n\n\u2764\ufe0f Lorie x",
       "alt": "Side-by-side screenshots showing the live Instapic gallery and the MotherPC Gallery and Content publishing workspace used to manage it.",
       "category": "Behind the build",
-      "social_url": "",
+      "social_url": "https://www.instagram.com/p/DbaVzQZkXoc/",
       "media_url": "assets/gallery/8ce33891aa53_1.png",
       "media_urls": [
         "assets/gallery/8ce33891aa53_1.png",
