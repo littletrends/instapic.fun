@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-07-30T17:08:12+0930",
+  "published_at": "2026-07-30T17:57:11+0930",
   "items": [
     {
       "id": "7164ee7084f3",
@@ -11,6 +11,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/7164ee7084f3.jpg",
+      "media_urls": [
+        "assets/gallery/7164ee7084f3.jpg"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -25,6 +28,9 @@
       "category": "Instagram post",
       "social_url": "https://www.instagram.com/reel/DbV3eGNy8iW/",
       "media_url": "assets/gallery/1b70512edae9.jpeg",
+      "media_urls": [
+        "assets/gallery/1b70512edae9.jpeg"
+      ],
       "uploaded_at": "2026-07-29T13:22:06+0930",
       "published_at": "2026-07-29T19:10:01+0930",
       "featured": false,
@@ -39,6 +45,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/5c6b4746d2f8.mp4",
+      "media_urls": [
+        "assets/gallery/5c6b4746d2f8.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -53,6 +62,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/a511deaee02b.mp4",
+      "media_urls": [
+        "assets/gallery/a511deaee02b.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -67,6 +79,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/a27ef16661c0.mp4",
+      "media_urls": [
+        "assets/gallery/a27ef16661c0.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -81,6 +96,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/834150523421.jpg",
+      "media_urls": [
+        "assets/gallery/834150523421.jpg"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -95,6 +113,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/f2a0820e949e.mp4",
+      "media_urls": [
+        "assets/gallery/f2a0820e949e.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -109,6 +130,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/34e11bbcbd5f.mp4",
+      "media_urls": [
+        "assets/gallery/34e11bbcbd5f.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:11:24+0930",
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
@@ -122,7 +146,11 @@
       "alt": "Side-by-side screenshots showing the live Instapic gallery and the MotherPC Gallery and Content publishing workspace used to manage it.",
       "category": "Behind the build",
       "social_url": "",
-      "media_url": "assets/gallery/8ce33891aa53.jpg",
+      "media_url": "assets/gallery/8ce33891aa53_1.png",
+      "media_urls": [
+        "assets/gallery/8ce33891aa53_1.png",
+        "assets/gallery/8ce33891aa53_2.png"
+      ],
       "uploaded_at": "2026-07-30T17:04:34+0930",
       "published_at": "2026-07-30T17:07:56+0930",
       "featured": false,
@@ -137,6 +165,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/ed33427def2c.jpg",
+      "media_urls": [
+        "assets/gallery/ed33427def2c.jpg"
+      ],
       "uploaded_at": "2026-07-29T21:21:35+0930",
       "published_at": "2026-07-29T21:21:35+0930",
       "featured": false,
@@ -151,6 +182,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/d01f6b2d38f0.mp4",
+      "media_urls": [
+        "assets/gallery/d01f6b2d38f0.mp4"
+      ],
       "uploaded_at": "2026-07-29T21:21:35+0930",
       "published_at": "2026-07-29T21:21:35+0930",
       "featured": false,
@@ -165,6 +199,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/fceb11d8a883.jpg",
+      "media_urls": [
+        "assets/gallery/fceb11d8a883.jpg"
+      ],
       "uploaded_at": "2026-07-29T19:58:31+0930",
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
@@ -179,6 +216,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/68b3be58b60a.mp4",
+      "media_urls": [
+        "assets/gallery/68b3be58b60a.mp4"
+      ],
       "uploaded_at": "2026-07-29T19:58:31+0930",
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
@@ -193,6 +233,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/e612fb52705c.gif",
+      "media_urls": [
+        "assets/gallery/e612fb52705c.gif"
+      ],
       "uploaded_at": "2026-07-29T19:58:31+0930",
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
@@ -207,6 +250,9 @@
       "category": "Magic Mirror moments",
       "social_url": "",
       "media_url": "assets/gallery/f4e2c7f2ced2.mp4",
+      "media_urls": [
+        "assets/gallery/f4e2c7f2ced2.mp4"
+      ],
       "uploaded_at": "2026-07-29T19:58:31+0930",
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
