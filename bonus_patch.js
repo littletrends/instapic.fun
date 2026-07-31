@@ -215,6 +215,26 @@
     }
   }
 
+  function addRegenerateButton(actionsId, type) {
+    const actions = document.getElementById(actionsId);
+    if (!actions || actions.querySelector(".regen-btn")) return;
+
+    const btn = document.createElement("button");
+    btn.className = "btn alt regen-btn";
+    btn.type = "button";
+    btn.textContent = "🔁 Regenerate";
+
+    btn.addEventListener("click", async () => {
+      const changed = await runRegenerate(type, btn);
+      if (changed) {
+        // Reload with MotherPC's new media timestamp instead of reusing cache.
+        setTimeout(() => window.location.reload(), 500);
+      }
+    });
+
+    actions.appendChild(btn);
+  }
+
   function addShuffleAllButton() {
     const motionGrid = qs(".motion-grid");
     if (!motionGrid || qs("#shuffle-all-btn")) return;
@@ -269,7 +289,7 @@
     const locked = !!guestEditsLocked;
     document.body.classList.toggle("bonus-edits-locked", locked);
 
-    qsa(".freeze-adjust-row button, #apply-freeze-btn, #shuffle-all-btn, .motion-choice input").forEach((btn) => {
+    qsa(".freeze-adjust-row button, #apply-freeze-btn, .regen-btn, #shuffle-all-btn, .motion-choice input").forEach((btn) => {
       if (!btn) return;
       btn.disabled = locked;
       btn.style.opacity = locked ? "0.45" : "";
@@ -721,6 +741,8 @@
   }
 
   function injectButtons() {
+    addRegenerateButton("boomerang-actions", "boomerang");
+    addRegenerateButton("gif-actions", "gif");
     addShuffleAllButton();
     addMotionChoice("boomerang", "boomerang-frame");
     addMotionChoice("gif", "gif-frame");
