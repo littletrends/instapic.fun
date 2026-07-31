@@ -569,7 +569,6 @@
     if (type === "gif") gifStart = selected;
     if (type === "boomerang") boomerangStart = selected;
 
-    window.clearTimeout(ui.stopTimer);
     ui.playRequest += 1;
     const playRequest = ui.playRequest;
 
@@ -582,45 +581,28 @@
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.preload = "metadata";
-      video.controls = true;
+      video.controls = false;
       video.style.width = "100%";
       video.style.height = "100%";
       video.style.objectFit = "cover";
       ui.frame.replaceChildren(video);
       video.load();
-      video.addEventListener("timeupdate", () => {
-        if (Number.isFinite(ui.stopAt) && video.currentTime >= ui.stopAt) {
-          video.pause();
-          window.clearTimeout(ui.stopTimer);
-        }
-      });
     }
 
     const start = Math.max(0, selected);
-    // The Boomerang generator turns four seconds forward into eight seconds
-    // (four forward + the same four reversed). The direct preview shows the
-    // four source seconds without asking MotherPC to render while sliding.
-    const clipLength = type === "boomerang" ? 4.0 : 5.5;
-    ui.stopAt = start + clipLength;
-    const startPlayback = () => {
+    const showSelectedFrame = () => {
       if (playRequest !== ui.playRequest) return;
+      video.pause();
       try { video.currentTime = start; } catch (_) {}
-      const playSelectedClip = () => {
+      const holdFrame = () => {
         if (playRequest !== ui.playRequest) return;
-        const promise = video.play();
-        if (promise && typeof promise.catch === "function") {
-          promise.catch(() => {});
-        }
-        window.clearTimeout(ui.stopTimer);
-        ui.stopTimer = window.setTimeout(() => {
-          if (playRequest === ui.playRequest) video.pause();
-        }, (clipLength * 1000) + 180);
+        video.pause();
       };
-      if (Math.abs(video.currentTime - start) < 0.08) playSelectedClip();
-      else video.addEventListener("seeked", playSelectedClip, { once: true });
+      if (Math.abs(video.currentTime - start) < 0.08) holdFrame();
+      else video.addEventListener("seeked", holdFrame, { once: true });
     };
-    if (video.readyState >= 1) startPlayback();
-    else video.addEventListener("loadedmetadata", startPlayback, { once: true });
+    if (video.readyState >= 1) showSelectedFrame();
+    else video.addEventListener("loadedmetadata", showSelectedFrame, { once: true });
   }
 
   function addMotionChoice(type, frameId) {
@@ -665,7 +647,7 @@
     readout.textContent = "Loading…";
 
     const hint = document.createElement("div");
-    hint.textContent = `Slide to choose where the ${type === "gif" ? "GIF" : "Boomerang"} starts. A short preview will play automatically.`;
+    hint.textContent = `Slide to choose where the ${type === "gif" ? "GIF" : "Boomerang"} starts. The selected frame stays still until you create the new bonus set.`;
     hint.style.fontSize = "12px";
     hint.style.opacity = "0.78";
     hint.style.marginTop = "6px";
@@ -685,9 +667,7 @@
       readout,
       frame,
       videoUrl: "",
-      stopAt: Number.NaN,
       previewTimer: 0,
-      stopTimer: 0,
       playRequest: 0
     };
     slider.addEventListener("input", () => {
