@@ -583,6 +583,7 @@
       video.style.height = "100%";
       video.style.objectFit = "cover";
       ui.frame.replaceChildren(video);
+      video.load();
       video.addEventListener("timeupdate", () => {
         if (Number.isFinite(ui.stopAt) && video.currentTime >= ui.stopAt) {
           video.pause();
