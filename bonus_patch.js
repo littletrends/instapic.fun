@@ -12,10 +12,12 @@
     gifText: "A quick animated moment from your session.",
     freezeSectionTitle: "Freeze Frames",
     shuffleAll: "🔀 Shuffle All",
-    applyFreezeChanges: "Apply Freeze Changes"
+    applyFreezeChanges: "Create My New Bonus Set"
   };
 
   let freezeOffsets = [0, 0, 0, 0];
+  let gifStart = 0;
+  let boomerangStart = 0;
   let guestEditsLocked = false;
   let hostCanManageLock = false;
   let hostPin = "";
@@ -213,23 +215,6 @@
     }
   }
 
-  function addRegenerateButton(actionsId, type) {
-    const actions = document.getElementById(actionsId);
-    if (!actions || actions.querySelector(".regen-btn")) return;
-
-    const btn = document.createElement("button");
-    btn.className = "btn alt regen-btn";
-    btn.type = "button";
-    btn.textContent = "🔁 Regenerate";
-
-    btn.addEventListener("click", async () => {
-      await runRegenerate(type, btn);
-      patchShareButtons();
-    });
-
-    actions.appendChild(btn);
-  }
-
   function addShuffleAllButton() {
     const motionGrid = qs(".motion-grid");
     if (!motionGrid || qs("#shuffle-all-btn")) return;
@@ -284,7 +269,7 @@
     const locked = !!guestEditsLocked;
     document.body.classList.toggle("bonus-edits-locked", locked);
 
-    qsa(".freeze-adjust-row button, #apply-freeze-btn, .regen-btn, #shuffle-all-btn").forEach((btn) => {
+    qsa(".freeze-adjust-row button, #apply-freeze-btn, #shuffle-all-btn, .motion-choice input").forEach((btn) => {
       if (!btn) return;
       btn.disabled = locked;
       btn.style.opacity = locked ? "0.45" : "";
@@ -465,67 +450,6 @@
     }
   }
 
-  async function bestNearbyFreeze(index, btn) {
-    if (guestEditsLocked) {
-      notifyLocked();
-      return;
-    }
-    const core = window.InstapicCore;
-    const code = core?.getCodeFromUrl?.();
-    if (!code || !core?.API_BASE) return;
-
-    const old = btn.textContent;
-    btn.textContent = "Finding...";
-    btn.disabled = true;
-
-    try {
-      const offset = freezeOffsets[index] || 0;
-      const res = await fetch(
-        `${core.API_BASE}/api/best-nearby-freeze/${encodeURIComponent(code)}?index=${index + 1}&offset=${encodeURIComponent(offset)}`
-      );
-      let data = {};
-      try { data = await res.json(); } catch (_) {}
-
-      if (!res.ok || data.ok === false || !data.url) {
-        if (data.error === "guest_edits_locked") {
-          guestEditsLocked = true;
-          applyEditLockUi();
-          notifyLocked();
-          throw new Error("guest_edits_locked");
-        }
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-
-      freezeOffsets[index] = Number(data.offset || 0);
-      updateFreezeOffsetLabels();
-
-      const card = qsa("#stills-grid .card")[index];
-      const img = card ? qs("img", card) : null;
-      if (img) {
-        // Portrait camera is permanent — never flip/rotate on replace
-        img.style.transform = "none";
-        img.style.aspectRatio = "3 / 4";
-        img.style.objectFit = "cover";
-        img.src = cacheBust(`${core.API_BASE}${data.url}`);
-      }
-
-      btn.textContent = "Done";
-      setTimeout(() => {
-        btn.textContent = old;
-        btn.disabled = false;
-        applyEditLockUi();
-      }, 1200);
-    } catch (err) {
-      console.error("best nearby failed", index + 1, err);
-      btn.textContent = err && err.message === "guest_edits_locked" ? "Locked" : "Failed";
-      setTimeout(() => {
-        btn.textContent = old;
-        btn.disabled = false;
-        applyEditLockUi();
-      }, 1400);
-    }
-  }
-
   function addFreezeAdjustControls() {
     const cards = qsa("#stills-grid .card");
     if (!cards.length) return;
@@ -564,11 +488,6 @@
       fwd.type = "button";
       fwd.textContent = "▶";
 
-      const magic = document.createElement("button");
-      magic.className = "btn alt";
-      magic.type = "button";
-      magic.textContent = "✨ Best Nearby";
-
       back.addEventListener("click", async () => {
         if (guestEditsLocked) { notifyLocked(); return; }
         freezeOffsets[idx] = Math.max(-2.5, (freezeOffsets[idx] || 0) - 0.2);
@@ -583,15 +502,9 @@
         await previewFreeze(idx);
       });
 
-      magic.addEventListener("click", async () => {
-        if (guestEditsLocked) { notifyLocked(); return; }
-        await bestNearbyFreeze(idx, magic);
-      });
-
       row.appendChild(back);
       row.appendChild(label);
       row.appendChild(fwd);
-      row.appendChild(magic);
 
       if (mountAfter && mountAfter.parentNode === card) {
         if (mountAfter.nextSibling) {
@@ -605,6 +518,116 @@
     });
 
     updateFreezeOffsetLabels();
+  }
+
+  async function updateMotionPreview(type, position, ui) {
+    if (guestEditsLocked) {
+      notifyLocked();
+      return;
+    }
+    const core = window.InstapicCore;
+    const code = core?.getCodeFromUrl?.();
+    if (!code || !core?.API_BASE) return;
+
+    ui.readout.textContent = "Loading preview…";
+    try {
+      const query = new URLSearchParams({ kind: type });
+      if (Number.isFinite(position)) query.set("position", String(position));
+      const res = await fetch(
+        `${core.API_BASE}/api/preview-motion/${encodeURIComponent(code)}?${query}`
+      );
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok || data.ok === false || !data.url) {
+        if (data.error === "guest_edits_locked") {
+          guestEditsLocked = true;
+          applyEditLockUi();
+          notifyLocked();
+        }
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      const selected = Number(data.position || 0);
+      ui.slider.max = String(Number(data.max_start || 0));
+      ui.slider.value = String(selected);
+      ui.readout.textContent = `${selected.toFixed(1)}s`;
+      ui.preview.src = cacheBust(`${core.API_BASE}${data.url}`);
+      if (type === "gif") gifStart = selected;
+      if (type === "boomerang") boomerangStart = selected;
+    } catch (err) {
+      console.error("motion preview failed", type, err);
+      ui.readout.textContent = "Preview failed";
+    }
+  }
+
+  function addMotionChoice(type, frameId) {
+    const frame = qs(`#${frameId}`);
+    const card = frame?.closest(".card");
+    if (!card || qs(`.motion-choice[data-type="${type}"]`, card)) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "motion-choice";
+    wrap.dataset.type = type;
+    wrap.style.padding = "0 16px 14px";
+
+    const title = document.createElement("div");
+    title.textContent = `Choose ${type === "gif" ? "GIF" : "Boomerang"} moment`;
+    title.style.fontWeight = "700";
+    title.style.marginBottom = "8px";
+
+    const preview = document.createElement("img");
+    preview.alt = `${type} selected moment preview`;
+    preview.style.width = "100%";
+    preview.style.maxHeight = "220px";
+    preview.style.objectFit = "cover";
+    preview.style.borderRadius = "12px";
+    preview.style.background = "rgba(255,255,255,0.06)";
+
+    const controls = document.createElement("div");
+    controls.style.display = "grid";
+    controls.style.gridTemplateColumns = "1fr 52px";
+    controls.style.alignItems = "center";
+    controls.style.gap = "10px";
+    controls.style.marginTop = "9px";
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "30";
+    slider.step = "0.2";
+    slider.value = "0";
+    slider.setAttribute("aria-label", `Choose ${type} moment`);
+
+    const readout = document.createElement("div");
+    readout.style.textAlign = "right";
+    readout.style.fontVariantNumeric = "tabular-nums";
+    readout.textContent = "Loading…";
+
+    const hint = document.createElement("div");
+    hint.textContent = "Slide smoothly through the session. Rendering waits until you press Create My New Bonus Set.";
+    hint.style.fontSize = "12px";
+    hint.style.opacity = "0.78";
+    hint.style.marginTop = "6px";
+
+    controls.appendChild(slider);
+    controls.appendChild(readout);
+    wrap.appendChild(title);
+    wrap.appendChild(preview);
+    wrap.appendChild(controls);
+    wrap.appendChild(hint);
+
+    const actions = qs(".actions", card);
+    if (actions) card.insertBefore(wrap, actions);
+    else card.appendChild(wrap);
+
+    const ui = { slider, readout, preview };
+    slider.addEventListener("input", () => {
+      readout.textContent = `${Number(slider.value).toFixed(1)}s`;
+    });
+    slider.addEventListener("change", () => {
+      updateMotionPreview(type, Number(slider.value), ui);
+    });
+    updateMotionPreview(type, Number.NaN, ui);
   }
 
   function addApplyFreezeChangesButton() {
@@ -637,11 +660,15 @@
 
       try {
         const res = await fetch(
-          `${core.API_BASE}/api/update-freezes/${encodeURIComponent(code)}`,
+          `${core.API_BASE}/api/update-bonus-choices/${encodeURIComponent(code)}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ offsets: freezeOffsets })
+            body: JSON.stringify({
+              offsets: freezeOffsets,
+              gif_start: gifStart,
+              boomerang_start: boomerangStart
+            })
           }
         );
 
@@ -657,16 +684,10 @@
           throw new Error(data.error || `HTTP ${res.status}`);
         }
 
-        refreshMediaInPlace("strip");
-        refreshMediaInPlace("collage");
-        refreshFreezeImages();
-
         btn.textContent = "Done";
         setTimeout(() => {
-          btn.textContent = old;
-          btn.disabled = false;
-          applyEditLockUi();
-        }, 1400);
+          window.location.reload();
+        }, 800);
       } catch (err) {
         console.error("freeze update failed", err);
         btn.textContent = "Failed";
@@ -691,9 +712,9 @@
   }
 
   function injectButtons() {
-    addRegenerateButton("boomerang-actions", "boomerang");
-    addRegenerateButton("gif-actions", "gif");
     addShuffleAllButton();
+    addMotionChoice("boomerang", "boomerang-frame");
+    addMotionChoice("gif", "gif-frame");
     addFreezeAdjustControls();
     addApplyFreezeChangesButton();
     ensureHostLockControls();
