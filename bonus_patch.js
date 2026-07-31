@@ -559,6 +559,30 @@
     }
   }
 
+  function setMotionLoading(ui, visible) {
+    if (!ui.loadingEl || !ui.loadingEl.isConnected) {
+      const banner = document.createElement("div");
+      banner.className = "motion-loading-banner";
+      banner.textContent = "Loading your chosen moment…";
+      banner.style.position = "absolute";
+      banner.style.inset = "0";
+      banner.style.display = "none";
+      banner.style.alignItems = "center";
+      banner.style.justifyContent = "center";
+      banner.style.padding = "18px";
+      banner.style.textAlign = "center";
+      banner.style.fontWeight = "800";
+      banner.style.color = "white";
+      banner.style.background = "rgba(35, 20, 30, 0.62)";
+      banner.style.backdropFilter = "blur(2px)";
+      banner.style.zIndex = "4";
+      banner.style.pointerEvents = "none";
+      ui.frame.appendChild(banner);
+      ui.loadingEl = banner;
+    }
+    ui.loadingEl.style.display = visible ? "flex" : "none";
+  }
+
   function playMotionPreview(type, ui) {
     if (guestEditsLocked) {
       notifyLocked();
@@ -599,6 +623,7 @@
       ui.frame.replaceChildren(video);
       video.load();
     }
+    setMotionLoading(ui, true);
 
     const start = Math.max(0, selected);
     const showSelectedFrame = () => {
@@ -639,14 +664,18 @@
     const stopExcerpt = () => {
       if (playRequest !== ui.playRequest) return;
       video.pause();
+      setMotionLoading(ui, false);
       window.clearTimeout(ui.stopTimer);
       window.clearInterval(ui.stopWatcher);
       try { video.currentTime = chosen; } catch (_) {}
     };
     const beginExcerpt = () => {
       if (playRequest !== ui.playRequest) return;
+      video.addEventListener("playing", () => setMotionLoading(ui, false), { once: true });
       const promise = video.play();
-      if (promise && typeof promise.catch === "function") promise.catch(() => {});
+      if (promise && typeof promise.catch === "function") {
+        promise.catch(() => setMotionLoading(ui, false));
+      }
       ui.stopWatcher = window.setInterval(() => {
         if (video.currentTime >= end || video.currentTime < start - 0.1) {
           stopExcerpt();
@@ -681,6 +710,7 @@
     frame.style.aspectRatio = "752 / 1376";
     frame.style.height = "auto";
     frame.style.overflow = "hidden";
+    frame.style.position = "relative";
 
     const controls = document.createElement("div");
     controls.style.display = "flex";
@@ -743,7 +773,8 @@
       stopTimer: 0,
       stopWatcher: 0,
       playRequest: 0,
-      duration: 0
+      duration: 0,
+      loadingEl: null
     };
 
     const moveMoment = (amount) => {
