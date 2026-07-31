@@ -520,7 +520,7 @@
     updateFreezeOffsetLabels();
   }
 
-  async function updateMotionPreview(type, position, ui) {
+  async function updateMotionPreview(type, position, ui, showPreview = true) {
     if (guestEditsLocked) {
       notifyLocked();
       return;
@@ -552,7 +552,16 @@
       ui.slider.value = String(selected);
       const sliderSelected = Number(ui.slider.value);
       ui.readout.textContent = `${sliderSelected.toFixed(1)}s`;
-      ui.preview.src = cacheBust(`${core.API_BASE}${data.url}`);
+      if (showPreview) {
+        const preview = document.createElement("img");
+        preview.alt = `${type} selected moment preview`;
+        preview.src = cacheBust(`${core.API_BASE}${data.url}`);
+        preview.style.width = "100%";
+        preview.style.height = "100%";
+        preview.style.objectFit = "cover";
+        preview.style.display = "block";
+        ui.frame.replaceChildren(preview);
+      }
       if (type === "gif") gifStart = sliderSelected;
       if (type === "boomerang") boomerangStart = sliderSelected;
     } catch (err) {
@@ -576,13 +585,11 @@
     title.style.fontWeight = "700";
     title.style.marginBottom = "8px";
 
-    const preview = document.createElement("img");
-    preview.alt = `${type} selected moment preview`;
-    preview.style.width = "100%";
-    preview.style.maxHeight = "220px";
-    preview.style.objectFit = "cover";
-    preview.style.borderRadius = "12px";
-    preview.style.background = "rgba(255,255,255,0.06)";
+    // The generated motion and selected still share one portrait viewer.
+    // This avoids showing GIF/Boomerang twice on the same card.
+    frame.style.aspectRatio = "752 / 1376";
+    frame.style.height = "auto";
+    frame.style.overflow = "hidden";
 
     const controls = document.createElement("div");
     controls.style.display = "grid";
@@ -613,7 +620,6 @@
     controls.appendChild(slider);
     controls.appendChild(readout);
     wrap.appendChild(title);
-    wrap.appendChild(preview);
     wrap.appendChild(controls);
     wrap.appendChild(hint);
 
@@ -621,14 +627,16 @@
     if (actions) card.insertBefore(wrap, actions);
     else card.appendChild(wrap);
 
-    const ui = { slider, readout, preview };
+    const ui = { slider, readout, frame };
     slider.addEventListener("input", () => {
       readout.textContent = `${Number(slider.value).toFixed(1)}s`;
     });
     slider.addEventListener("change", () => {
       updateMotionPreview(type, Number(slider.value), ui);
     });
-    updateMotionPreview(type, Number.NaN, ui);
+    // Initialise duration and cursor position without replacing the current
+    // tap-to-load motion. The shared viewer changes only after the guest moves.
+    updateMotionPreview(type, Number.NaN, ui, false);
   }
 
   function addApplyFreezeChangesButton() {
