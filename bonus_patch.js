@@ -597,7 +597,10 @@
     }
 
     const start = Math.max(0, selected);
-    const clipLength = 5.5;
+    // The Boomerang generator turns four seconds forward into eight seconds
+    // (four forward + the same four reversed). The direct preview shows the
+    // four source seconds without asking MotherPC to render while sliding.
+    const clipLength = type === "boomerang" ? 4.0 : 5.5;
     ui.stopAt = start + clipLength;
     const startPlayback = () => {
       if (playRequest !== ui.playRequest) return;
