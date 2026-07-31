@@ -597,7 +597,7 @@
     }
 
     const start = Math.max(0, selected);
-    const clipLength = type === "boomerang" ? 2.2 : 3.4;
+    const clipLength = 5.5;
     ui.stopAt = start + clipLength;
     const startPlayback = () => {
       if (playRequest !== ui.playRequest) return;
