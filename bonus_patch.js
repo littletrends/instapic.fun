@@ -550,10 +550,11 @@
       const selected = Number(data.position || 0);
       ui.slider.max = String(Number(data.max_start || 0));
       ui.slider.value = String(selected);
-      ui.readout.textContent = `${selected.toFixed(1)}s`;
+      const sliderSelected = Number(ui.slider.value);
+      ui.readout.textContent = `${sliderSelected.toFixed(1)}s`;
       ui.preview.src = cacheBust(`${core.API_BASE}${data.url}`);
-      if (type === "gif") gifStart = selected;
-      if (type === "boomerang") boomerangStart = selected;
+      if (type === "gif") gifStart = sliderSelected;
+      if (type === "boomerang") boomerangStart = sliderSelected;
     } catch (err) {
       console.error("motion preview failed", type, err);
       ui.readout.textContent = "Preview failed";
