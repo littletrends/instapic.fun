@@ -569,6 +569,10 @@
     if (type === "gif") gifStart = selected;
     if (type === "boomerang") boomerangStart = selected;
 
+    window.clearTimeout(ui.stopTimer);
+    ui.playRequest += 1;
+    const playRequest = ui.playRequest;
+
     let video = ui.frame.querySelector("video.motion-source-preview");
     if (!video) {
       video = document.createElement("video");
@@ -587,6 +591,7 @@
       video.addEventListener("timeupdate", () => {
         if (Number.isFinite(ui.stopAt) && video.currentTime >= ui.stopAt) {
           video.pause();
+          window.clearTimeout(ui.stopTimer);
         }
       });
     }
@@ -595,11 +600,21 @@
     const clipLength = type === "boomerang" ? 2.2 : 3.4;
     ui.stopAt = start + clipLength;
     const startPlayback = () => {
+      if (playRequest !== ui.playRequest) return;
       try { video.currentTime = start; } catch (_) {}
-      const promise = video.play();
-      if (promise && typeof promise.catch === "function") {
-        promise.catch(() => {});
-      }
+      const playSelectedClip = () => {
+        if (playRequest !== ui.playRequest) return;
+        const promise = video.play();
+        if (promise && typeof promise.catch === "function") {
+          promise.catch(() => {});
+        }
+        window.clearTimeout(ui.stopTimer);
+        ui.stopTimer = window.setTimeout(() => {
+          if (playRequest === ui.playRequest) video.pause();
+        }, (clipLength * 1000) + 180);
+      };
+      if (Math.abs(video.currentTime - start) < 0.08) playSelectedClip();
+      else video.addEventListener("seeked", playSelectedClip, { once: true });
     };
     if (video.readyState >= 1) startPlayback();
     else video.addEventListener("loadedmetadata", startPlayback, { once: true });
@@ -647,7 +662,7 @@
     readout.textContent = "Loading…";
 
     const hint = document.createElement("div");
-    hint.textContent = "Slide smoothly through the session. Rendering waits until you press Create My New Bonus Set.";
+    hint.textContent = `Slide to choose where the ${type === "gif" ? "GIF" : "Boomerang"} starts. A short preview will play automatically.`;
     hint.style.fontSize = "12px";
     hint.style.opacity = "0.78";
     hint.style.marginTop = "6px";
@@ -662,7 +677,16 @@
     if (actions) card.insertBefore(wrap, actions);
     else card.appendChild(wrap);
 
-    const ui = { slider, readout, frame, videoUrl: "", stopAt: Number.NaN, previewTimer: 0 };
+    const ui = {
+      slider,
+      readout,
+      frame,
+      videoUrl: "",
+      stopAt: Number.NaN,
+      previewTimer: 0,
+      stopTimer: 0,
+      playRequest: 0
+    };
     slider.addEventListener("input", () => {
       readout.textContent = `${Number(slider.value).toFixed(1)}s`;
       window.clearTimeout(ui.previewTimer);
