@@ -545,13 +545,14 @@
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      ui.slider.max = String(Number(data.max_start || 0));
-      ui.slider.value = String(Number(data.max_start || 0) / 2);
+      ui.slider.max = String(Number(data.duration || 0));
+      ui.slider.value = String(Number(data.duration || 0) / 2);
       const sliderSelected = Number(ui.slider.value);
+      ui.duration = Number(data.duration || 0);
       ui.readout.textContent = `${sliderSelected.toFixed(1)}s`;
       ui.videoUrl = `${core.API_BASE}${data.url}`;
-      if (type === "gif") gifStart = sliderSelected;
-      if (type === "boomerang") boomerangStart = sliderSelected;
+      if (type === "gif") gifStart = Math.max(0, sliderSelected - 2.75);
+      if (type === "boomerang") boomerangStart = Math.max(0, sliderSelected - 2.0);
     } catch (err) {
       console.error("motion preview info failed", type, err);
       ui.readout.textContent = "Preview failed";
@@ -566,9 +567,19 @@
     if (!ui.videoUrl) return;
 
     const selected = Number(ui.slider.value);
-    if (type === "gif") gifStart = selected;
-    if (type === "boomerang") boomerangStart = selected;
+    if (type === "gif") {
+      gifStart = Math.max(
+        0, Math.min(selected - 2.75, Math.max(0, Number(ui.duration || 0) - 5.5))
+      );
+    }
+    if (type === "boomerang") {
+      boomerangStart = Math.max(
+        0, Math.min(selected - 2.0, Math.max(0, Number(ui.duration || 0) - 4.0))
+      );
+    }
 
+    window.clearTimeout(ui.stopTimer);
+    window.clearInterval(ui.stopWatcher);
     ui.playRequest += 1;
     const playRequest = ui.playRequest;
 
@@ -605,6 +616,51 @@
     else video.addEventListener("loadedmetadata", showSelectedFrame, { once: true });
   }
 
+  function playMotionExcerpt(type, ui) {
+    if (guestEditsLocked || !ui.videoUrl) return;
+    const video = ui.frame.querySelector("video.motion-source-preview");
+    if (!video) return;
+
+    window.clearTimeout(ui.stopTimer);
+    window.clearInterval(ui.stopWatcher);
+    ui.playRequest += 1;
+    const playRequest = ui.playRequest;
+    const chosen = Number(ui.slider.value);
+    const sourceLength = type === "gif" ? 5.5 : 4.0;
+    const start = Math.max(0, Math.min(
+      chosen - (sourceLength / 2),
+      Math.max(0, Number(ui.duration || 0) - sourceLength)
+    ));
+    const end = start + sourceLength;
+
+    if (type === "gif") gifStart = start;
+    if (type === "boomerang") boomerangStart = start;
+
+    const stopExcerpt = () => {
+      if (playRequest !== ui.playRequest) return;
+      video.pause();
+      window.clearTimeout(ui.stopTimer);
+      window.clearInterval(ui.stopWatcher);
+      try { video.currentTime = chosen; } catch (_) {}
+    };
+    const beginExcerpt = () => {
+      if (playRequest !== ui.playRequest) return;
+      const promise = video.play();
+      if (promise && typeof promise.catch === "function") promise.catch(() => {});
+      ui.stopWatcher = window.setInterval(() => {
+        if (video.currentTime >= end || video.currentTime < start - 0.1) {
+          stopExcerpt();
+        }
+      }, 50);
+      ui.stopTimer = window.setTimeout(stopExcerpt, (sourceLength * 1000) + 250);
+    };
+
+    video.pause();
+    try { video.currentTime = start; } catch (_) {}
+    if (Math.abs(video.currentTime - start) < 0.08) beginExcerpt();
+    else video.addEventListener("seeked", beginExcerpt, { once: true });
+  }
+
   function addMotionChoice(type, frameId) {
     const frame = qs(`#${frameId}`);
     const card = frame?.closest(".card");
@@ -627,10 +683,10 @@
     frame.style.overflow = "hidden";
 
     const controls = document.createElement("div");
-    controls.style.display = "grid";
-    controls.style.gridTemplateColumns = "1fr 52px";
+    controls.style.display = "flex";
     controls.style.alignItems = "center";
-    controls.style.gap = "10px";
+    controls.style.justifyContent = "space-between";
+    controls.style.gap = "6px";
     controls.style.marginTop = "9px";
 
     const slider = document.createElement("input");
@@ -639,21 +695,37 @@
     slider.max = "30";
     slider.step = "0.2";
     slider.value = "0";
+    slider.hidden = true;
     slider.setAttribute("aria-label", `Choose ${type} moment`);
 
+    const back = document.createElement("button");
+    back.className = "btn alt";
+    back.type = "button";
+    back.textContent = "◀";
+
     const readout = document.createElement("div");
-    readout.style.textAlign = "right";
+    readout.style.minWidth = "56px";
+    readout.style.textAlign = "center";
     readout.style.fontVariantNumeric = "tabular-nums";
     readout.textContent = "Loading…";
 
+    const fwd = document.createElement("button");
+    fwd.className = "btn alt";
+    fwd.type = "button";
+    fwd.textContent = "▶";
+
     const hint = document.createElement("div");
-    hint.textContent = `Slide to choose where the ${type === "gif" ? "GIF" : "Boomerang"} starts. The selected frame stays still until you create the new bonus set.`;
+    hint.textContent = type === "gif"
+      ? "Tap through the recording. When you stop, the 5.5-second moment around your chosen frame will play."
+      : "Tap through the recording. When you stop, the chosen four seconds will play; the finished Boomerang reverses them for eight seconds.";
     hint.style.fontSize = "12px";
     hint.style.opacity = "0.78";
     hint.style.marginTop = "6px";
 
-    controls.appendChild(slider);
+    controls.appendChild(back);
     controls.appendChild(readout);
+    controls.appendChild(fwd);
+    controls.appendChild(slider);
     wrap.appendChild(title);
     wrap.appendChild(controls);
     wrap.appendChild(hint);
@@ -668,19 +740,29 @@
       frame,
       videoUrl: "",
       previewTimer: 0,
-      playRequest: 0
+      stopTimer: 0,
+      stopWatcher: 0,
+      playRequest: 0,
+      duration: 0
     };
-    slider.addEventListener("input", () => {
+
+    const moveMoment = (amount) => {
+      if (guestEditsLocked) { notifyLocked(); return; }
+      const next = Math.max(
+        0,
+        Math.min(Number(slider.max || 0), Number(slider.value || 0) + amount)
+      );
+      slider.value = String(next);
       readout.textContent = `${Number(slider.value).toFixed(1)}s`;
       window.clearTimeout(ui.previewTimer);
-      ui.previewTimer = window.setTimeout(() => playMotionPreview(type, ui), 140);
-    });
-    slider.addEventListener("change", () => {
-      window.clearTimeout(ui.previewTimer);
       playMotionPreview(type, ui);
-    });
+      ui.previewTimer = window.setTimeout(() => playMotionExcerpt(type, ui), 650);
+    };
+    back.addEventListener("click", () => moveMoment(-0.5));
+    fwd.addEventListener("click", () => moveMoment(0.5));
+
     // Initialise the cursor without replacing the current generated motion.
-    // Moving it seeks and autoplays directly from the existing session video.
+    // Arrow taps seek to a still; playback starts only after tapping stops.
     loadMotionPreviewInfo(type, ui);
   }
 
