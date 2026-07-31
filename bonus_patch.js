@@ -215,26 +215,6 @@
     }
   }
 
-  function addRegenerateButton(actionsId, type) {
-    const actions = document.getElementById(actionsId);
-    if (!actions || actions.querySelector(".regen-btn")) return;
-
-    const btn = document.createElement("button");
-    btn.className = "btn alt regen-btn";
-    btn.type = "button";
-    btn.textContent = "🔁 Regenerate";
-
-    btn.addEventListener("click", async () => {
-      const changed = await runRegenerate(type, btn);
-      if (changed) {
-        // Reload with MotherPC's new media timestamp instead of reusing cache.
-        setTimeout(() => window.location.reload(), 500);
-      }
-    });
-
-    actions.appendChild(btn);
-  }
-
   function addShuffleAllButton() {
     const motionGrid = qs(".motion-grid");
     if (!motionGrid || qs("#shuffle-all-btn")) return;
@@ -289,7 +269,7 @@
     const locked = !!guestEditsLocked;
     document.body.classList.toggle("bonus-edits-locked", locked);
 
-    qsa(".freeze-adjust-row button, #apply-freeze-btn, .regen-btn, #shuffle-all-btn, .motion-choice input").forEach((btn) => {
+    qsa(".freeze-adjust-row button, #apply-freeze-btn, #shuffle-all-btn, .motion-choice input").forEach((btn) => {
       if (!btn) return;
       btn.disabled = locked;
       btn.style.opacity = locked ? "0.45" : "";
@@ -540,7 +520,7 @@
     updateFreezeOffsetLabels();
   }
 
-  async function updateMotionPreview(type, position, ui, showPreview = true) {
+  async function loadMotionPreviewInfo(type, ui) {
     if (guestEditsLocked) {
       notifyLocked();
       return;
@@ -549,12 +529,10 @@
     const code = core?.getCodeFromUrl?.();
     if (!code || !core?.API_BASE) return;
 
-    ui.readout.textContent = "Loading preview…";
+    ui.readout.textContent = "Loading…";
     try {
-      const query = new URLSearchParams({ kind: type });
-      if (Number.isFinite(position)) query.set("position", String(position));
       const res = await fetch(
-        `${core.API_BASE}/api/preview-motion/${encodeURIComponent(code)}?${query}`
+        `${core.API_BASE}/api/motion-preview-info/${encodeURIComponent(code)}`
       );
       let data = {};
       try { data = await res.json(); } catch (_) {}
@@ -567,27 +545,63 @@
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      const selected = Number(data.position || 0);
       ui.slider.max = String(Number(data.max_start || 0));
-      ui.slider.value = String(selected);
+      ui.slider.value = String(Number(data.max_start || 0) / 2);
       const sliderSelected = Number(ui.slider.value);
       ui.readout.textContent = `${sliderSelected.toFixed(1)}s`;
-      if (showPreview) {
-        const preview = document.createElement("img");
-        preview.alt = `${type} selected moment preview`;
-        preview.src = cacheBust(`${core.API_BASE}${data.url}`);
-        preview.style.width = "100%";
-        preview.style.height = "100%";
-        preview.style.objectFit = "cover";
-        preview.style.display = "block";
-        ui.frame.replaceChildren(preview);
-      }
+      ui.videoUrl = `${core.API_BASE}${data.url}`;
       if (type === "gif") gifStart = sliderSelected;
       if (type === "boomerang") boomerangStart = sliderSelected;
     } catch (err) {
-      console.error("motion preview failed", type, err);
+      console.error("motion preview info failed", type, err);
       ui.readout.textContent = "Preview failed";
     }
+  }
+
+  function playMotionPreview(type, ui) {
+    if (guestEditsLocked) {
+      notifyLocked();
+      return;
+    }
+    if (!ui.videoUrl) return;
+
+    const selected = Number(ui.slider.value);
+    if (type === "gif") gifStart = selected;
+    if (type === "boomerang") boomerangStart = selected;
+
+    let video = ui.frame.querySelector("video.motion-source-preview");
+    if (!video) {
+      video = document.createElement("video");
+      video.className = "motion-source-preview";
+      video.src = ui.videoUrl;
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.preload = "metadata";
+      video.controls = true;
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.objectFit = "cover";
+      ui.frame.replaceChildren(video);
+      video.addEventListener("timeupdate", () => {
+        if (Number.isFinite(ui.stopAt) && video.currentTime >= ui.stopAt) {
+          video.pause();
+        }
+      });
+    }
+
+    const start = Math.max(0, selected);
+    const clipLength = type === "boomerang" ? 2.2 : 3.4;
+    ui.stopAt = start + clipLength;
+    const startPlayback = () => {
+      try { video.currentTime = start; } catch (_) {}
+      const promise = video.play();
+      if (promise && typeof promise.catch === "function") {
+        promise.catch(() => {});
+      }
+    };
+    if (video.readyState >= 1) startPlayback();
+    else video.addEventListener("loadedmetadata", startPlayback, { once: true });
   }
 
   function addMotionChoice(type, frameId) {
@@ -647,16 +661,19 @@
     if (actions) card.insertBefore(wrap, actions);
     else card.appendChild(wrap);
 
-    const ui = { slider, readout, frame };
+    const ui = { slider, readout, frame, videoUrl: "", stopAt: Number.NaN, previewTimer: 0 };
     slider.addEventListener("input", () => {
       readout.textContent = `${Number(slider.value).toFixed(1)}s`;
+      window.clearTimeout(ui.previewTimer);
+      ui.previewTimer = window.setTimeout(() => playMotionPreview(type, ui), 140);
     });
     slider.addEventListener("change", () => {
-      updateMotionPreview(type, Number(slider.value), ui);
+      window.clearTimeout(ui.previewTimer);
+      playMotionPreview(type, ui);
     });
-    // Initialise duration and cursor position without replacing the current
-    // tap-to-load motion. The shared viewer changes only after the guest moves.
-    updateMotionPreview(type, Number.NaN, ui, false);
+    // Initialise the cursor without replacing the current generated motion.
+    // Moving it seeks and autoplays directly from the existing session video.
+    loadMotionPreviewInfo(type, ui);
   }
 
   function addApplyFreezeChangesButton() {
@@ -741,8 +758,6 @@
   }
 
   function injectButtons() {
-    addRegenerateButton("boomerang-actions", "boomerang");
-    addRegenerateButton("gif-actions", "gif");
     addShuffleAllButton();
     addMotionChoice("boomerang", "boomerang-frame");
     addMotionChoice("gif", "gif-frame");
