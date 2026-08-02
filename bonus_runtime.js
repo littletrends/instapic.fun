@@ -292,7 +292,7 @@
       ev.stopPropagation();
       if (typeof ev.stopImmediatePropagation === "function") ev.stopImmediatePropagation();
       track("share_menu_opened", label, "");
-      // Social-safe derivative is 4:5 (strip) or 9:16 (motion). If an older
+      // Every social-safe derivative is 4:5. If an older
       // session has not been backfilled yet, retain the original as fallback.
       openShareMenu(btn, { mediaUrl: shareUrl || mediaUrl, label });
     });

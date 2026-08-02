@@ -117,7 +117,7 @@
 
   function mediaUrls(item) {
     // Public Gallery displays the social-safe export when available. This also
-    // means long-press Save/Share on a phone receives a 4:5 or 9:16 file rather
+    // means long-press Save/Share on a phone receives a 4:5 file rather
     // than an Instagram-cropped template. Older posts retain their originals.
     const social = Array.isArray(item.share_media_urls)
       ? item.share_media_urls.filter(Boolean)
