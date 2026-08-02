@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-02T20:40:10+0930",
+  "published_at": "2026-08-02T20:48:42+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -293,6 +293,210 @@
       "published_at": "2026-08-02T20:38:57+0930",
       "featured": false,
       "order": 110
+    },
+    {
+      "id": "13d3c168452a",
+      "type": "strip",
+      "title": "Friday Night Fun 1 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/13d3c168452a_1.jpg",
+      "media_urls": [
+        "assets/gallery/13d3c168452a_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 111
+    },
+    {
+      "id": "4df539d30c2f",
+      "type": "strip",
+      "title": "Friday Night Fun 2 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/4df539d30c2f_1.jpg",
+      "media_urls": [
+        "assets/gallery/4df539d30c2f_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 112
+    },
+    {
+      "id": "7f95306b83c0",
+      "type": "strip",
+      "title": "Friday Night Fun 3 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/7f95306b83c0_1.jpg",
+      "media_urls": [
+        "assets/gallery/7f95306b83c0_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 113
+    },
+    {
+      "id": "83757e097530",
+      "type": "strip",
+      "title": "Friday Night Fun 4 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/83757e097530_1.jpg",
+      "media_urls": [
+        "assets/gallery/83757e097530_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 114
+    },
+    {
+      "id": "a067ada55202",
+      "type": "strip",
+      "title": "Friday Night Fun 5 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/a067ada55202_1.jpg",
+      "media_urls": [
+        "assets/gallery/a067ada55202_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 115
+    },
+    {
+      "id": "d976759e3d38",
+      "type": "strip",
+      "title": "Friday Night Fun 6 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d976759e3d38_1.jpg",
+      "media_urls": [
+        "assets/gallery/d976759e3d38_1.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 116
+    },
+    {
+      "id": "2f748b9261df",
+      "type": "collage",
+      "title": "Friday Night Fun 1 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/2f748b9261df_1.mp4",
+      "media_urls": [
+        "assets/gallery/2f748b9261df_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 121
+    },
+    {
+      "id": "d10cd1f23fa8",
+      "type": "collage",
+      "title": "Friday Night Fun 2 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d10cd1f23fa8_1.mp4",
+      "media_urls": [
+        "assets/gallery/d10cd1f23fa8_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 122
+    },
+    {
+      "id": "e7770396783f",
+      "type": "collage",
+      "title": "Friday Night Fun 3 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e7770396783f_1.mp4",
+      "media_urls": [
+        "assets/gallery/e7770396783f_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 123
+    },
+    {
+      "id": "9bd5e6ea7600",
+      "type": "collage",
+      "title": "Friday Night Fun 4 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/9bd5e6ea7600_1.mp4",
+      "media_urls": [
+        "assets/gallery/9bd5e6ea7600_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 124
+    },
+    {
+      "id": "b532cc933e82",
+      "type": "collage",
+      "title": "Friday Night Fun 5 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/b532cc933e82_1.mp4",
+      "media_urls": [
+        "assets/gallery/b532cc933e82_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 125
+    },
+    {
+      "id": "bfe0b48fb287",
+      "type": "collage",
+      "title": "Friday Night Fun 6 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/bfe0b48fb287_1.mp4",
+      "media_urls": [
+        "assets/gallery/bfe0b48fb287_1.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 126
     }
   ]
 }
