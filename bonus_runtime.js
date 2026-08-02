@@ -282,7 +282,7 @@
     document.body.appendChild(sheet);
   }
 
-  function createShareButton(mediaUrl, label) {
+  function createShareButton(mediaUrl, label, shareUrl) {
     const btn = document.createElement("button");
     btn.className = "btn alt share-btn";
     btn.type = "button";
@@ -292,7 +292,9 @@
       ev.stopPropagation();
       if (typeof ev.stopImmediatePropagation === "function") ev.stopImmediatePropagation();
       track("share_menu_opened", label, "");
-      openShareMenu(btn, { mediaUrl, label });
+      // Social-safe derivative is 4:5 (strip) or 9:16 (motion). If an older
+      // session has not been backfilled yet, retain the original as fallback.
+      openShareMenu(btn, { mediaUrl: shareUrl || mediaUrl, label });
     });
     return btn;
   }
@@ -332,10 +334,10 @@
 
     frame.appendChild(loadButton);
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
-    actions.appendChild(createShareButton(url, label));
+    actions.appendChild(createShareButton(url, label, opts?.shareUrl));
   }
 
-  function showImage(frameId, actionsId, url, downloadName, label) {
+  function showImage(frameId, actionsId, url, downloadName, label, opts) {
     const frame = $(frameId);
     const actions = $(actionsId);
     if (!frame || !actions || !url) return;
@@ -349,7 +351,7 @@
     frame.appendChild(img);
 
     actions.appendChild(createDownloadButton(url, downloadName, `Download ${label}`));
-    actions.appendChild(createShareButton(url, label));
+    actions.appendChild(createShareButton(url, label, opts?.shareUrl));
   }
 
   function renderStillCard(grid, url, i) {
@@ -538,22 +540,35 @@
     const collageUrl = fullUrl(core, collagePath);
     const boomerangUrl = fullUrl(core, boomerangPath);
     const gifUrl = fullUrl(core, gifPath);
+    const socialFiles = (data.social_files && typeof data.social_files === "object")
+      ? data.social_files
+      : {};
+    const socialUrls = {
+      strip: fullUrl(core, socialFiles.strip || ""),
+      collage: fullUrl(core, socialFiles.collage || ""),
+      gif: fullUrl(core, socialFiles.gif || ""),
+      boomerang: fullUrl(core, socialFiles.boomerang || ""),
+    };
 
     if (collageUrl) {
       showVideo("collage-frame", "collage-actions", collageUrl, "collage.mp4", "Collage", {
         autoplay: true,
-        loop: true
+        loop: true,
+        shareUrl: socialUrls.collage,
       });
     }
 
     if (stripUrl) {
-      showImage("strip-frame", "strip-actions", stripUrl, "strip_web.png", "Strip");
+      showImage("strip-frame", "strip-actions", stripUrl, "strip_web.png", "Strip", {
+        shareUrl: socialUrls.strip,
+      });
     }
 
     if (boomerangUrl) {
       showVideo("boomerang-frame", "boomerang-actions", boomerangUrl, "boomerang.mp4", "Boomerang", {
         autoplay: true,
-        loop: true
+        loop: true,
+        shareUrl: socialUrls.boomerang,
       });
     }
 
@@ -561,10 +576,13 @@
       if (looksLikeVideo(gifUrl)) {
         showVideo("gif-frame", "gif-actions", gifUrl, "gif.mp4", "GIF", {
           autoplay: true,
-          loop: true
+          loop: true,
+          shareUrl: socialUrls.gif,
         });
       } else {
-        showImage("gif-frame", "gif-actions", gifUrl, "gif.gif", "GIF");
+        showImage("gif-frame", "gif-actions", gifUrl, "gif.gif", "GIF", {
+          shareUrl: socialUrls.gif,
+        });
       }
     }
 
