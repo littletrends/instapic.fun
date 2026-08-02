@@ -1,7 +1,24 @@
 {
   "version": 1,
-  "published_at": "2026-07-30T18:57:52+0930",
+  "published_at": "2026-08-02T19:50:29+0930",
   "items": [
+    {
+      "id": "1b70512edae9",
+      "type": "social",
+      "title": "#1 The Day Mirror 1 Arrived!",
+      "caption": "It was 29 October 2025\n\nThis was the day my first Magic Mirror arrived.\n\nGemma and I unpacked it and couldn\u2019t wait to try it.\n\nThe mirror was exactly what I\u2019d hoped for\u2026\n\nThe software wasn\u2019t.\n\nIt wasn\u2019t terrible.\n\nIt just wasn\u2019t really\u2026 anything.\n\nAnd it definitely wasn\u2019t me.\n\nSo I did what anyone would do.\n\nI started searching online for another program.\n\nSurely someone had already built exactly what I wanted?\n\nI found lots of options.\n\nSome looked okay.\n\nBut every one of them wanted another monthly subscription, and none of them felt quite right.\n\nAt the time I wasn\u2019t thinking,\n\n\u201cI\u2019m going to build my own software.\u201d\n\nI was thinking,\n\n\u201cThere has to be something out there that does exactly what I want.\u201d\n\nI kept looking.\n\nAnd looking.\n\nEventually I realised\u2026\n\nI was describing a product that didn\u2019t seem to exist.\n\nAt some point I stopped searching for software\u2026\n\n\u2026and started making a list of everything I wished it could do.\n\nThen that list kept growing.\n\nNot just with the things I wanted\u2026\n\n\u2026but with ideas I didn\u2019t even know I wanted in a photo booth.\n\nI never planned to build software.\n\nI never planned to build a website.\n\nI definitely never planned to spend the next nine months learning things I\u2019d never even heard of.\n\nI just couldn\u2019t settle for \u201cgood enough.\u201d\n\nOne idea became another.\n\nThen another.\n\nThen another.\n\nUntil one day\u2026\n\nInstapic existed.\n\nToday, exactly nine months later\u2026\n\nI\u2019m proud.\n\nNot because it\u2019s finished\u2026\n\n(it probably never will be!)\n\nBut because an idea scribbled on a piece of paper somehow became something real.\n\nSomething that didn\u2019t exist before.\n\nAnd something that\u2019s unmistakably me.\n\n\u2764\ufe0f Lorie x",
+      "alt": "Gemma and I posing together in front of our first Magic Mirror on the day it arrived.",
+      "category": "Instagram post",
+      "social_url": "https://www.instagram.com/reel/DbV3eGNy8iW/",
+      "media_url": "assets/gallery/1b70512edae9.jpeg",
+      "media_urls": [
+        "assets/gallery/1b70512edae9.jpeg"
+      ],
+      "uploaded_at": "2026-07-29T13:22:06+0930",
+      "published_at": "2026-07-29T19:10:01+0930",
+      "featured": false,
+      "order": 1
+    },
     {
       "id": "7164ee7084f3",
       "type": "strip",
@@ -20,21 +37,22 @@
       "order": 1
     },
     {
-      "id": "1b70512edae9",
+      "id": "8ce33891aa53",
       "type": "social",
-      "title": "The Day Mirror 1 Arrived!",
-      "caption": "It was 29 October 2025\n\nThis was the day my first Magic Mirror arrived.\n\nGemma and I unpacked it and couldn\u2019t wait to try it.\n\nThe mirror was exactly what I\u2019d hoped for\u2026\n\nThe software wasn\u2019t.\n\nIt wasn\u2019t terrible.\n\nIt just wasn\u2019t really\u2026 anything.\n\nAnd it definitely wasn\u2019t me.\n\nSo I did what anyone would do.\n\nI started searching online for another program.\n\nSurely someone had already built exactly what I wanted?\n\nI found lots of options.\n\nSome looked okay.\n\nBut every one of them wanted another monthly subscription, and none of them felt quite right.\n\nAt the time I wasn\u2019t thinking,\n\n\u201cI\u2019m going to build my own software.\u201d\n\nI was thinking,\n\n\u201cThere has to be something out there that does exactly what I want.\u201d\n\nI kept looking.\n\nAnd looking.\n\nEventually I realised\u2026\n\nI was describing a product that didn\u2019t seem to exist.\n\nAt some point I stopped searching for software\u2026\n\n\u2026and started making a list of everything I wished it could do.\n\nThen that list kept growing.\n\nNot just with the things I wanted\u2026\n\n\u2026but with ideas I didn\u2019t even know I wanted in a photo booth.\n\nI never planned to build software.\n\nI never planned to build a website.\n\nI definitely never planned to spend the next nine months learning things I\u2019d never even heard of.\n\nI just couldn\u2019t settle for \u201cgood enough.\u201d\n\nOne idea became another.\n\nThen another.\n\nThen another.\n\nUntil one day\u2026\n\nInstapic existed.\n\nToday, exactly nine months later\u2026\n\nI\u2019m proud.\n\nNot because it\u2019s finished\u2026\n\n(it probably never will be!)\n\nBut because an idea scribbled on a piece of paper somehow became something real.\n\nSomething that didn\u2019t exist before.\n\nAnd something that\u2019s unmistakably me.\n\n\u2764\ufe0f Lorie x",
-      "alt": "Gemma and I posing together in front of our first Magic Mirror on the day it arrived.",
-      "category": "Instagram post",
-      "social_url": "https://www.instagram.com/reel/DbV3eGNy8iW/",
-      "media_url": "assets/gallery/1b70512edae9.jpeg",
+      "title": "#2 I Accidentally Built Something Else Today",
+      "caption": "I walked into my office this morning with absolutely no intention of building anything new.\n\nI already had a list.\n\nA sensible list.\n\nThings to test.\nThings to tidy.\nThings I had already started.\n\nThen I noticed one small thing missing from the Instapic website:\n\nA gallery.\n\nThat should have been simple.\n\nJust make a page, add a few photos and call it done\u2026 right?\n\nExcept a website gallery wasn\u2019t enough.\n\nBecause I didn\u2019t want to open website files, resize and move media, edit data by hand, remember which posts were drafts, then run Git commands every single time I wanted to add something new.\n\nI wanted the gallery to work the way the rest of Instapic works:\n\nFrom one place.\nUnder my control.\nAnd connected properly to everything behind it.\n\nSo I built the public gallery.\n\nIt can display photo strips, individual photos, collages, GIFs, Boomerangs, videos and social posts. It sorts them into sections, keeps the portrait media looking like phone stories and lets visitors move through the moments without cluttering the homepage.\n\nThen, naturally, I built the system behind the gallery too.\n\nInside my Instapic MotherPC Admin area, I can now:\n\n\u2022 Upload media\n\u2022 Create titles and captions\n\u2022 Add image descriptions\n\u2022 Choose content types and categories\n\u2022 Arrange the display order\n\u2022 Save unfinished ideas as private drafts\n\u2022 Edit or delete posts\n\u2022 Approve exactly what is allowed to appear publicly\n\u2022 Publish the finished gallery directly to the live website\n\nAnd because apparently even that wasn\u2019t enough, pressing Publish does more than update a page.\n\nIt gathers only the approved content, prepares the website gallery, copies the correct media, records the change in Git and pushes a fresh backup to GitHub before it goes live.\n\nThe screenshot on the left is what everyone sees.\n\nThe screenshot on the right is the part I decided I also needed to build so I could create and publish it myself.\n\nI didn\u2019t just add a gallery to a website.\n\nI built the content system that runs it.\n\nI had absolutely no plan to do any of this when I walked into the office this morning.\n\nI just thought:\n\n\u201cWe\u2019re probably missing a gallery.\u201d\n\nThis keeps happening.\n\nI notice one small thing.\n\nThen I wonder if it could work a little better.\n\nOne idea becomes another.\n\nThen another.\n\nThen apparently I\u2019ve built an entire gallery, content-management system and direct publishing pipeline before I\u2019ve even had time to reconsider the original idea.\n\nSo yes\u2014I accidentally built something else today.\n\nI just didn\u2019t know I was going to when I arrived.\n\n\u2764\ufe0f Lorie x",
+      "alt": "Side-by-side screenshots showing the live Instapic gallery and the MotherPC Gallery and Content publishing workspace used to manage it.",
+      "category": "Behind the build",
+      "social_url": "https://www.instagram.com/p/DbaVzQZkXoc/",
+      "media_url": "assets/gallery/8ce33891aa53_1.png",
       "media_urls": [
-        "assets/gallery/1b70512edae9.jpeg"
+        "assets/gallery/8ce33891aa53_1.png",
+        "assets/gallery/8ce33891aa53_2.png"
       ],
-      "uploaded_at": "2026-07-29T13:22:06+0930",
-      "published_at": "2026-07-29T19:10:01+0930",
+      "uploaded_at": "2026-07-30T17:04:34+0930",
+      "published_at": "2026-07-30T17:07:56+0930",
       "featured": false,
-      "order": 1
+      "order": 2
     },
     {
       "id": "5c6b4746d2f8",
@@ -52,6 +70,24 @@
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
       "order": 2
+    },
+    {
+      "id": "3da5879948cb",
+      "type": "social",
+      "title": "#3 I\u2019m Glad I Didn\u2019t Know AI Agents Existed",
+      "caption": "When I started building instapic, I didn\u2019t even know connected AI coding agents existed.\r\n\r\nI had ChatGPT & Grok.\r\n\r\nI would explain what I wanted to build, & they would give me Bash commands or blocks of code.\r\n\r\nThen I had to take those instructions to the terminal myself.\r\n\r\nOpen the terminal.\r\n\r\nType the command.\r\n\r\nFind the file.\r\n\r\nOpen it in nano.\r\n\r\nWork out where the new code belonged.\r\n\r\nPaste it.\r\n\r\nSave it.\r\n\r\nExit.\r\n\r\nRestart the program.\r\n\r\nTest it.\r\n\r\nThen go back & explain what worked, what broke & what happened next.\r\n\r\nAt the time, I had no idea there would eventually be AI agents that could open files, navigate the project & make changes directly.\r\n\r\nHonestly, I\u2019m glad I didn\u2019t know.\r\n\r\nIf I\u2019d had that from the beginning, I might never have learnt what I did.\r\n\r\nThe manual process forced me to understand where every file lived, what each section controlled & how every hook connected to the next part of the system.\r\n\r\nI had to know whether a change belonged in the booth, Mother PC, the website, a Python route, a JavaScript runtime, a service file or one of the growing collection of patches.\r\n\r\nWhen something broke, I could usually remember where we had been, what we had changed & why two pieces were probably conflicting.\r\n\r\nNot always immediately & definitely not without frustration.\r\n\r\nBut I wasn\u2019t pressing a button & waiting for software to appear.\r\n\r\nI was inside the build.\r\n\r\nI saw every command.\r\n\r\nI opened every file.\r\n\r\nI followed every path.\r\n\r\nI tested every connection.\r\n\r\nI learnt how the whole system fitted together because I had no other way to build it.\r\n\r\nToday, connected AI agents help me move faster. They inspect the project, trace problems & even work directly across the system.\r\n\r\nBut they\u2019re working inside an architecture I already understand\u2014because I built it the slow way first.\r\n\r\nWould I want to go back to copying every Bash command, opening nano & closing it again thousands of times?\r\n\r\nAbsolutely not \ud83d\ude02\r\n\r\nBut I wouldn\u2019t trade what that process taught me.\r\n\r\nAI helped me work out how to build Instapic.\r\n\r\nI was still the person at the terminal, making the decisions, performing the changes, testing every result & refusing to stop when it broke.\r\n\r\nAnd I\u2019m glad I learnt it that way.\r\n\r\n\u2764\ufe0f Lorie x",
+      "alt": "Behind the scenes during the development of Instapic. These terminal sessions capture the reality of building the system from scratch\u2014testing, debugging, fixing errors and learning Linux one command at a time.",
+      "category": "instagram post",
+      "social_url": "https://www.instagram.com/p/DbiK8qIkdUM/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "media_url": "assets/gallery/3da5879948cb_1.jpg",
+      "media_urls": [
+        "assets/gallery/3da5879948cb_1.jpg",
+        "assets/gallery/3da5879948cb_2.jpeg"
+      ],
+      "uploaded_at": "2026-08-02T19:46:24+0930",
+      "published_at": "2026-08-02T19:50:25+0930",
+      "featured": false,
+      "order": 3
     },
     {
       "id": "a511deaee02b",
@@ -137,24 +173,6 @@
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
       "order": 7
-    },
-    {
-      "id": "8ce33891aa53",
-      "type": "social",
-      "title": "I Accidentally Built Something Else Today",
-      "caption": "I walked into my office this morning with absolutely no intention of building anything new.\n\nI already had a list.\n\nA sensible list.\n\nThings to test.\nThings to tidy.\nThings I had already started.\n\nThen I noticed one small thing missing from the Instapic website:\n\nA gallery.\n\nThat should have been simple.\n\nJust make a page, add a few photos and call it done\u2026 right?\n\nExcept a website gallery wasn\u2019t enough.\n\nBecause I didn\u2019t want to open website files, resize and move media, edit data by hand, remember which posts were drafts, then run Git commands every single time I wanted to add something new.\n\nI wanted the gallery to work the way the rest of Instapic works:\n\nFrom one place.\nUnder my control.\nAnd connected properly to everything behind it.\n\nSo I built the public gallery.\n\nIt can display photo strips, individual photos, collages, GIFs, Boomerangs, videos and social posts. It sorts them into sections, keeps the portrait media looking like phone stories and lets visitors move through the moments without cluttering the homepage.\n\nThen, naturally, I built the system behind the gallery too.\n\nInside my Instapic MotherPC Admin area, I can now:\n\n\u2022 Upload media\n\u2022 Create titles and captions\n\u2022 Add image descriptions\n\u2022 Choose content types and categories\n\u2022 Arrange the display order\n\u2022 Save unfinished ideas as private drafts\n\u2022 Edit or delete posts\n\u2022 Approve exactly what is allowed to appear publicly\n\u2022 Publish the finished gallery directly to the live website\n\nAnd because apparently even that wasn\u2019t enough, pressing Publish does more than update a page.\n\nIt gathers only the approved content, prepares the website gallery, copies the correct media, records the change in Git and pushes a fresh backup to GitHub before it goes live.\n\nThe screenshot on the left is what everyone sees.\n\nThe screenshot on the right is the part I decided I also needed to build so I could create and publish it myself.\n\nI didn\u2019t just add a gallery to a website.\n\nI built the content system that runs it.\n\nI had absolutely no plan to do any of this when I walked into the office this morning.\n\nI just thought:\n\n\u201cWe\u2019re probably missing a gallery.\u201d\n\nThis keeps happening.\n\nI notice one small thing.\n\nThen I wonder if it could work a little better.\n\nOne idea becomes another.\n\nThen another.\n\nThen apparently I\u2019ve built an entire gallery, content-management system and direct publishing pipeline before I\u2019ve even had time to reconsider the original idea.\n\nSo yes\u2014I accidentally built something else today.\n\nI just didn\u2019t know I was going to when I arrived.\n\n\u2764\ufe0f Lorie x",
-      "alt": "Side-by-side screenshots showing the live Instapic gallery and the MotherPC Gallery and Content publishing workspace used to manage it.",
-      "category": "Behind the build",
-      "social_url": "https://www.instagram.com/p/DbaVzQZkXoc/",
-      "media_url": "assets/gallery/8ce33891aa53_1.png",
-      "media_urls": [
-        "assets/gallery/8ce33891aa53_1.png",
-        "assets/gallery/8ce33891aa53_2.png"
-      ],
-      "uploaded_at": "2026-07-30T17:04:34+0930",
-      "published_at": "2026-07-30T17:07:56+0930",
-      "featured": false,
-      "order": 10
     },
     {
       "id": "ed33427def2c",
