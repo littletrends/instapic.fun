@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-02T21:28:40+0930",
+  "published_at": "2026-08-02T21:31:11+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -428,23 +428,6 @@
       "published_at": "2026-08-02T21:28:36+0930",
       "featured": false,
       "order": 131
-    },
-    {
-      "id": "2dfea2d65ce9",
-      "type": "boomerang",
-      "title": "Friday Night Fun 3 \u2014 Boomerang",
-      "caption": "A short motion moment from Friday-night fun at the Instapic Magic Mirror.",
-      "alt": "Two girls having fun and posing together in an animated Instapic Magic Mirror moment.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/2dfea2d65ce9_1.mp4",
-      "media_urls": [
-        "assets/gallery/2dfea2d65ce9_1.mp4"
-      ],
-      "uploaded_at": "2026-08-02T21:18:43+0930",
-      "published_at": "2026-08-02T21:18:43+0930",
-      "featured": false,
-      "order": 132
     },
     {
       "id": "e06a7d2abf13",
