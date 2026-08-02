@@ -110,9 +110,10 @@
       visitorId = "";
     }
 
-    const res = await fetch(`${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}`, {
-      headers: visitorId ? { "X-Instapic-Visitor": visitorId } : {}
-    });
+    const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
+    const res = await fetch(
+      `${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}${visitorQuery}`
+    );
     const data = await readJson(res);
 
     if (!res.ok || data.ok === false) {
