@@ -30,6 +30,12 @@
     return Array.from(root.querySelectorAll(sel));
   }
 
+  function track(event, asset, detail) {
+    try {
+      window.InstapicCore?.trackBonusEvent?.(event, asset || "", detail || "");
+    } catch (_) {}
+  }
+
   function setText(selector, text) {
     const el = qs(selector);
     if (el && typeof text === "string") el.textContent = text;
@@ -234,11 +240,17 @@
       btn.disabled = true;
       const old = btn.textContent;
       btn.textContent = "Shuffling...";
+      track("shuffle_started", "GIF + Boomerang", "");
 
       const a = await runRegenerate("boomerang");
       const b = await runRegenerate("gif");
 
       btn.textContent = (a || b) ? "Done" : "Failed";
+      track(
+        (a || b) ? "shuffle_completed" : "shuffle_failed",
+        "GIF + Boomerang",
+        `boomerang=${a ? "ok" : "failed"}, gif=${b ? "ok" : "failed"}`
+      );
       setTimeout(() => {
         btn.textContent = old;
         btn.disabled = false;
@@ -492,6 +504,7 @@
         if (guestEditsLocked) { notifyLocked(); return; }
         freezeOffsets[idx] = Math.max(-2.5, (freezeOffsets[idx] || 0) - 0.2);
         updateFreezeOffsetLabels();
+        track("freeze_changed", `Freeze ${idx + 1}`, `${freezeOffsets[idx].toFixed(1)}s`);
         await previewFreeze(idx);
       });
 
@@ -499,6 +512,7 @@
         if (guestEditsLocked) { notifyLocked(); return; }
         freezeOffsets[idx] = Math.min(2.5, (freezeOffsets[idx] || 0) + 0.2);
         updateFreezeOffsetLabels();
+        track("freeze_changed", `Freeze ${idx + 1}`, `${freezeOffsets[idx].toFixed(1)}s`);
         await previewFreeze(idx);
       });
 
@@ -785,6 +799,7 @@
       );
       slider.value = String(next);
       readout.textContent = `${Number(slider.value).toFixed(1)}s`;
+      track("motion_changed", type === "gif" ? "GIF" : "Boomerang", readout.textContent);
       window.clearTimeout(ui.previewTimer);
       playMotionPreview(type, ui);
       ui.previewTimer = window.setTimeout(() => playMotionExcerpt(type, ui), 650);
@@ -824,6 +839,7 @@
       const old = btn.textContent;
       btn.textContent = "Applying...";
       btn.disabled = true;
+      track("bonus_create_started", "Bonus set", "");
 
       try {
         const res = await fetch(
@@ -852,11 +868,13 @@
         }
 
         btn.textContent = "Done";
+        track("bonus_create_completed", "Bonus set", "");
         setTimeout(() => {
           window.location.reload();
         }, 800);
       } catch (err) {
         console.error("freeze update failed", err);
+        track("bonus_create_failed", "Bonus set", String(err?.message || err));
         btn.textContent = "Failed";
         setTimeout(() => {
           btn.textContent = old;

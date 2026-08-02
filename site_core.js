@@ -91,12 +91,7 @@
     };
   }
 
-  async function getBonus(code) {
-    const clean = String(code || "").trim();
-    if (!/^\d{6}$/.test(clean)) {
-      throw new Error("Enter a valid 6-digit code");
-    }
-
+  function anonymousVisitorId() {
     let visitorId = "";
     try {
       visitorId = localStorage.getItem("instapic.anonymousVisitor.v1") || "";
@@ -110,6 +105,16 @@
       visitorId = "";
     }
 
+    return visitorId;
+  }
+
+  async function getBonus(code) {
+    const clean = String(code || "").trim();
+    if (!/^\d{6}$/.test(clean)) {
+      throw new Error("Enter a valid 6-digit code");
+    }
+
+    const visitorId = anonymousVisitorId();
     const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
     const res = await fetch(
       `${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}${visitorQuery}`
@@ -123,6 +128,22 @@
     return data;
   }
 
+  function trackBonusEvent(event, asset, detail) {
+    const code = getCodeFromUrl();
+    if (!/^\d{6}$/.test(code)) return Promise.resolve(false);
+    const visitorId = anonymousVisitorId();
+    const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
+    return fetch(
+      `${API_BASE}/api/bonus-analytics/${encodeURIComponent(code)}${visitorQuery}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event, asset: asset || "", detail: detail || "" }),
+        keepalive: true
+      }
+    ).then((res) => res.ok).catch(() => false);
+  }
+
   window.InstapicCore = {
     BASE: API_BASE,
     API_BASE,
@@ -134,5 +155,6 @@
     createTicket,
     payAndCreateTicket,
     getBonus,
+    trackBonusEvent,
   };
 })();

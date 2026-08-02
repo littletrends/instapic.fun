@@ -1,4 +1,10 @@
 (function () {
+  function track(event, asset, detail) {
+    try {
+      window.InstapicCore?.trackBonusEvent?.(event, asset || "", detail || "");
+    } catch (_) {}
+  }
+
   function $(id) {
     return document.getElementById(id);
   }
@@ -79,12 +85,14 @@
       btn.textContent = "Saving…";
       try {
         await downloadViaBlob(url, filename);
+        track("download_completed", label.replace(/^Download\s+/i, ""), filename);
         btn.textContent = "Saved";
         setTimeout(() => {
           btn.textContent = old;
           btn.disabled = false;
         }, 1200);
       } catch (err) {
+        track("download_failed", label.replace(/^Download\s+/i, ""), String(err?.message || err));
         console.error("[bonus] download failed", err);
         // last resort: open media (user can long-press / share from player)
         window.open(url, "_blank", "noopener,noreferrer");
@@ -180,10 +188,12 @@
             fileUrl: mediaUrl,
           });
           if (res.ok && res.mode !== "cancelled") {
+            track("share_completed", label, res.mode);
             closeShareSheet();
             return;
           }
           if (res.ok && res.mode === "cancelled") {
+            track("share_cancelled", label, "native");
             setStatus("");
             return;
           }
@@ -191,8 +201,10 @@
           try {
             setStatus("Saving file so you can share from Photos…");
             await downloadViaBlob(mediaUrl, (mediaUrl.split("/").pop() || "instapic").split("?")[0]);
+            track("download_completed", label, "share fallback");
             setStatus("Saved. Open Photos / Files and share from there.");
           } catch (_) {
+            track("share_failed", label, res.reason || "fallback failed");
             setStatus("Could not prepare file. Try Download, then share from Photos.");
           }
         },
@@ -200,6 +212,7 @@
       {
         label: "X / Twitter",
         action: () => {
+          track("share_x", label, "X / Twitter");
           window.open(
             `https://twitter.com/intent/tweet?text=${encText}&url=${encUrl}`,
             "_blank",
@@ -211,6 +224,7 @@
       {
         label: "Facebook",
         action: () => {
+          track("share_facebook", label, "Facebook");
           window.open(
             `https://www.facebook.com/sharer/sharer.php?u=${encUrl}&quote=${encText}`,
             "_blank",
@@ -224,9 +238,11 @@
         action: async () => {
           try {
             await navigator.clipboard.writeText(`${text}\n${pageUrl}`);
+            track("link_copied", label, "bonus link");
             setStatus("Link copied!");
             setTimeout(closeShareSheet, 900);
           } catch (_) {
+            track("copy_failed", label, "bonus link");
             setStatus("Could not copy link");
           }
         },
@@ -275,6 +291,7 @@
       ev.preventDefault();
       ev.stopPropagation();
       if (typeof ev.stopImmediatePropagation === "function") ev.stopImmediatePropagation();
+      track("share_menu_opened", label, "");
       openShareMenu(btn, { mediaUrl, label });
     });
     return btn;
@@ -471,6 +488,7 @@
       } catch (_) {}
     } catch (err) {
       console.error("[bonus] load failed", err);
+      track("bonus_load_failed", "Bonus page", String(err?.message || err));
       setStatus(`Could not load your bonus session: ${err.message}`);
       if (core.showFlash) {
         core.showFlash(`Could not load your bonus files: ${err.message}`, "error");
