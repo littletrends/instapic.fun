@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-02T21:18:55+0930",
+  "published_at": "2026-08-02T21:23:42+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -413,23 +413,6 @@
       "order": 125
     },
     {
-      "id": "9e77d13cf585",
-      "type": "gif",
-      "title": "Friday Night Fun 1 \u2014 GIF",
-      "caption": "A short motion moment from Friday-night fun at the Instapic Magic Mirror.",
-      "alt": "Two girls having fun and posing together in an animated Instapic Magic Mirror moment.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/9e77d13cf585_1.mp4",
-      "media_urls": [
-        "assets/gallery/9e77d13cf585_1.mp4"
-      ],
-      "uploaded_at": "2026-08-02T21:18:43+0930",
-      "published_at": "2026-08-02T21:18:43+0930",
-      "featured": false,
-      "order": 131
-    },
-    {
       "id": "2dfea2d65ce9",
       "type": "boomerang",
       "title": "Friday Night Fun 3 \u2014 Boomerang",
@@ -445,23 +428,6 @@
       "published_at": "2026-08-02T21:18:43+0930",
       "featured": false,
       "order": 132
-    },
-    {
-      "id": "247f7e316a72",
-      "type": "gif",
-      "title": "Friday Night Fun 4 \u2014 GIF",
-      "caption": "A short motion moment from Friday-night fun at the Instapic Magic Mirror.",
-      "alt": "Two girls having fun and posing together in an animated Instapic Magic Mirror moment.",
-      "category": "Magic Mirror moments",
-      "social_url": "",
-      "media_url": "assets/gallery/247f7e316a72_1.mp4",
-      "media_urls": [
-        "assets/gallery/247f7e316a72_1.mp4"
-      ],
-      "uploaded_at": "2026-08-02T21:18:43+0930",
-      "published_at": "2026-08-02T21:18:43+0930",
-      "featured": false,
-      "order": 133
     },
     {
       "id": "e06a7d2abf13",
