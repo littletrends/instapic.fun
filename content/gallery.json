@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-02T19:50:29+0930",
+  "published_at": "2026-08-02T20:40:10+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -275,6 +275,24 @@
       "published_at": "2026-07-29T19:58:31+0930",
       "featured": false,
       "order": 103
+    },
+    {
+      "id": "16424d2d59a3",
+      "type": "strip",
+      "title": "Friday Night Magic Mirror Moments",
+      "caption": "Friday-night fun at the Instapic Magic Mirror \u2014 two finished photo strips from the girls\u2019 sessions.",
+      "alt": "Two Instapic Magic Mirror photo strips showing the girls posing together in front of colourful fairy wings.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/16424d2d59a3_1.png",
+      "media_urls": [
+        "assets/gallery/16424d2d59a3_1.png",
+        "assets/gallery/16424d2d59a3_2.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:38:57+0930",
+      "published_at": "2026-08-02T20:38:57+0930",
+      "featured": false,
+      "order": 110
     }
   ]
 }
