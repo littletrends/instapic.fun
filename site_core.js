@@ -97,7 +97,22 @@
       throw new Error("Enter a valid 6-digit code");
     }
 
-    const res = await fetch(`${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}`);
+    let visitorId = "";
+    try {
+      visitorId = localStorage.getItem("instapic.anonymousVisitor.v1") || "";
+      if (!visitorId) {
+        visitorId = (window.crypto && typeof window.crypto.randomUUID === "function")
+          ? window.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem("instapic.anonymousVisitor.v1", visitorId);
+      }
+    } catch (_) {
+      visitorId = "";
+    }
+
+    const res = await fetch(`${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}`, {
+      headers: visitorId ? { "X-Instapic-Visitor": visitorId } : {}
+    });
     const data = await readJson(res);
 
     if (!res.ok || data.ok === false) {
