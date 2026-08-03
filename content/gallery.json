@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-02T22:16:12+0930",
+  "published_at": "2026-08-03T12:29:01+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -551,6 +551,27 @@
       "published_at": "2026-08-02T21:18:43+0930",
       "featured": false,
       "order": 134
+    },
+    {
+      "id": "ded616d2a1d2",
+      "type": "gif",
+      "title": "Magic Mirror Dev Test \u2014 GIF",
+      "caption": "A short animated moment from today\u2019s Instapic Magic Mirror test session.",
+      "alt": "Animated Instapic Magic Mirror test session.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/ded616d2a1d2_1.mp4",
+      "media_urls": [
+        "assets/gallery/ded616d2a1d2_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/ded616d2a1d2_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/ded616d2a1d2_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-03T12:28:48+0930",
+      "published_at": "2026-08-03T12:28:48+0930",
+      "featured": false,
+      "order": 135
     }
   ]
 }
