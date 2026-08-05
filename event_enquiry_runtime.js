@@ -176,6 +176,7 @@
       latestEstimate = result.estimate;
       form.elements.finish_time.value = latestEstimate.finish_time || finishTime(form.elements.start_time.value, form.elements.package_hours.value);
       renderEstimate(latestEstimate);
+      window.InstapicAnalytics?.track("estimate_generated", { detail: String(latestEstimate.availability?.status || "") });
       setStatus(estimateStatus, "", false);
     } catch (error) {
       setStatus(estimateStatus, `We could not calculate that yet: ${String(error.message || error)}`, true);
@@ -210,6 +211,7 @@
       if (!response.ok || result.ok === false) throw new Error(result.message || result.error || `HTTP ${response.status}`);
       setStatus($("enquiry-status"), `Thank you — estimate ${result.enquiry_id} is with Instapic for final confirmation. Nothing is booked until you accept the final quote and pay the deposit.`, false);
       submit.textContent = "Estimate sent";
+      window.InstapicAnalytics?.track("enquiry_submitted");
     } catch (error) {
       setStatus($("enquiry-status"), `Your estimate could not be sent: ${String(error.message || error)}`, true);
       submit.disabled = false;
