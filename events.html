@@ -25,9 +25,12 @@
     .events-hero-actions{display:flex;justify-content:center;margin:1.15rem 0 .25rem}
     .events-section{margin-top:1.1rem}.events-section h2{margin-top:0;color:#fff}
     .events-pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem;margin-top:1rem}
-    .events-price-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68px;padding:.6rem .35rem;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(13,13,26,.72);text-align:center}
+    .events-price-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68px;padding:.6rem .35rem;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(13,13,26,.72);color:#fff;text-align:center;cursor:pointer}
     .events-price-card strong{font-size:1.28rem;color:#ff79b0;line-height:1.15}.events-price-card span{font-size:.82rem;color:var(--muted)}
-    .events-price-card.featured{border-color:rgba(255,121,176,.55);background:rgba(255,121,176,.08)}
+    .events-price-card:hover,.events-price-card:focus-visible,.events-price-card.is-selected{border-color:#ff79b0;background:rgba(255,121,176,.14);outline:none;box-shadow:0 0 0 2px rgba(255,121,176,.16)}
+    .events-quick-estimate{max-width:650px;margin:1rem auto 0;padding:1rem;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(5,5,14,.42)}
+    .events-estimate-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;text-align:left}.events-estimate-fields label{display:grid;gap:.35rem;color:#fff;font-size:.88rem;font-weight:700}.events-estimate-fields select,.events-estimate-fields input{width:100%;box-sizing:border-box;padding:.72rem;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:#161522;color:#fff;font:inherit}
+    .events-estimate-total{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-top:.9rem;padding-top:.85rem;border-top:1px solid rgba(255,255,255,.1)}.events-estimate-total span{color:var(--muted)}.events-estimate-total strong{font-size:clamp(1.6rem,5vw,2.25rem);color:#ff79b0}.events-estimate-breakdown{margin:.5rem 0 0;text-align:right;color:var(--muted);font-size:.82rem}.events-estimate-warning{margin:.65rem 0 0;color:#ffd28a;font-size:.84rem;text-align:center}
     .events-note{max-width:760px;margin:.85rem auto 0;text-align:center;color:var(--muted)}
     .events-inclusions{columns:2;column-gap:2rem;max-width:760px;margin:.8rem auto 0;padding-left:1.4rem;line-height:1.5}
     .events-inclusions li{break-inside:avoid;margin-bottom:.35rem}
@@ -38,7 +41,7 @@
     .mirror-option{min-height:82px;padding:.9rem 1rem;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
     .mirror-option h3{margin:0 0 .35rem;color:#fff;font-size:1rem}.mirror-option p{margin:0;color:var(--muted);font-size:.9rem}
     .events-mini-cta{text-align:center;margin-top:1rem}.events-terms{text-align:center;font-size:.85rem;color:var(--muted);margin-top:.85rem}
-    @media(max-width:620px){.events-page .page-intro h1{font-size:2.45rem}.events-pricing-grid{grid-template-columns:repeat(2,1fr)}.events-facts,.mirror-options-grid{grid-template-columns:1fr}.events-inclusions{columns:1}}
+    @media(max-width:620px){.events-page .page-intro h1{font-size:2.45rem}.events-pricing-grid{grid-template-columns:repeat(2,1fr)}.events-facts,.mirror-options-grid,.events-estimate-fields{grid-template-columns:1fr}.events-inclusions{columns:1}}
   </style>
 </head>
 <body class="page" data-page="events">
@@ -50,7 +53,7 @@
         Instant prints, a personalised photo-strip design, private event gallery and guest video messages.
       </p>
       <div class="events-hero-actions">
-        <a class="btn" href="event-enquiry.html">Check availability &amp; get an estimate</a>
+        <a class="btn" href="#event-pricing">See pricing &amp; quick estimate</a>
       </div>
     </section>
 
@@ -58,12 +61,26 @@
       <h2>Event hire pricing</h2>
       <p class="events-note">Upfront unattended, self-service pricing within 30 km of Humpty Doo.</p>
       <div class="events-pricing-grid">
-        <div class="events-price-card"><span>3 hours</span><strong>$500</strong></div>
-        <div class="events-price-card featured"><span>4 hours</span><strong>$650</strong></div>
-        <div class="events-price-card"><span>5 hours</span><strong>$800</strong></div>
-        <div class="events-price-card"><span>6 hours</span><strong>$950</strong></div>
+        <button type="button" class="events-price-card is-selected" data-hours="3"><span>3 hours</span><strong>$500</strong></button>
+        <button type="button" class="events-price-card" data-hours="4"><span>4 hours</span><strong>$650</strong></button>
+        <button type="button" class="events-price-card" data-hours="5"><span>5 hours</span><strong>$800</strong></button>
+        <button type="button" class="events-price-card" data-hours="6"><span>6 hours</span><strong>$950</strong></button>
       </div>
-      <p class="events-note">Maximum hire is 6 hours. Add an attendant for $75 per booked hour.</p>
+      <div class="events-quick-estimate" aria-live="polite">
+        <div class="events-estimate-fields">
+          <label>Service
+            <select id="quick-attendance"><option value="unattended">Unattended / self-service</option><option value="attended">Attended (+$75 per hour)</option></select>
+          </label>
+          <label>Approx. km from Humpty Doo (one way)
+            <input id="quick-distance" type="number" inputmode="decimal" min="0" max="1000" step="1" value="0" aria-describedby="quick-distance-help">
+          </label>
+        </div>
+        <div class="events-estimate-total"><span>Approximate hire price</span><strong id="quick-estimate-total">$500</strong></div>
+        <p class="events-estimate-breakdown" id="quick-estimate-breakdown">3-hour hire $500 · travel included</p>
+        <p class="events-estimate-warning" id="quick-estimate-warning" hidden></p>
+      </div>
+      <p class="events-note" id="quick-distance-help">Travel is included within 30 km. Over 30 km is charged at $1/km for the return journey and requires attended hire. Maximum hire is 6 hours.</p>
+      <p class="events-mini-cta"><a class="btn" id="quick-check-date" href="event-enquiry.html?hours=3&amp;attendance=unattended">Now check your date &amp; availability</a></p>
     </section>
 
     <section class="info-callout events-section">
@@ -143,5 +160,6 @@
 
   <script src="assets/main.js"></script>
   <script src="branding.js"></script>
+  <script src="event_pricing_runtime.js?v=20260805-quick-estimate"></script>
 <script defer src="site_analytics.js?v=20260805-site-pages"></script></body>
 </html>

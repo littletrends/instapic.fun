@@ -59,6 +59,14 @@
 
   mirror.addEventListener("change", updateFrames);
   updateFrames();
+  const quickChoice = new URLSearchParams(location.search);
+  const quickHours = quickChoice.get("hours");
+  const quickAttendance = quickChoice.get("attendance");
+  if (["3", "4", "5", "6"].includes(quickHours)) {
+    const option = form.querySelector(`input[name="package_hours"][value="${quickHours}"]`);
+    if (option) option.checked = true;
+  }
+  if (["unattended", "attended"].includes(quickAttendance)) form.elements.attendance.value = quickAttendance;
   form.querySelectorAll("input[name=package_hours],#event-date,#start-time,#preferred-mirror,#frame-preference,#attendance,#extras-interest").forEach((field) => {
     field.addEventListener("change", invalidateEstimate);
   });
