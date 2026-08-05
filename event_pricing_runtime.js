@@ -18,12 +18,14 @@
     const regional = km > 30;
     if (regional && attendance.value !== "attended") attendance.value = "attended";
     const attendant = attendance.value === "attended" ? hours * 75 : 0;
-    const travel = regional ? km * 2 : 0;
+    const excessOneWayKm = Math.max(0, km - 30);
+    const chargeableReturnKm = excessOneWayKm * 2;
+    const travel = chargeableReturnKm;
     const price = basePrices[hours] + attendant + travel;
     total.textContent = dollars(price);
     const parts = [`${hours}-hour hire ${dollars(basePrices[hours])}`];
     if (attendant) parts.push(`${regional ? "required attended service" : "attended service"} (${hours} × $75) ${dollars(attendant)}`);
-    parts.push(regional ? `approx. return travel ${dollars(travel)}` : "travel included");
+    parts.push(regional ? `excess return travel (${chargeableReturnKm.toFixed(0)} km × $1) ${dollars(travel)}` : "travel included");
     breakdown.textContent = parts.join(" · ");
     bond.hidden = attendance.value !== "unattended";
     warning.hidden = false;

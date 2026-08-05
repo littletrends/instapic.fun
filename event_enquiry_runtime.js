@@ -112,7 +112,7 @@
     const lines = [
       [`${estimate.package_hours}-hour Magic Mirror hire`, estimate.hire_cents],
       ["Attended service", estimate.attendant_cents],
-      [`Travel (${estimate.return_km.toFixed(1)} km return)`, estimate.travel_cents],
+      [`Travel beyond included 30 km radius (${Number(estimate.travel_chargeable_return_km || 0).toFixed(1)} km return)`, estimate.travel_cents],
     ];
     $("estimate-lines").replaceChildren(
       ...lines.filter(([, cents], index) => index === 0 || cents > 0).map(([label, cents]) => {
