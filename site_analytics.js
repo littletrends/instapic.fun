@@ -2,7 +2,26 @@
   "use strict";
   const API = "https://motherpc.taild1a44c.ts.net/api/site-analytics";
   const STORAGE_KEY = "instapic.analytics.visitor.v1";
+  const EXCLUDE_KEY = "instapic.analytics.excluded.v1";
   const ROTATE_MS = 30 * 24 * 60 * 60 * 1000;
+
+  const controls = new URLSearchParams(location.search);
+  const analyticsControl = controls.get("instapic_analytics");
+  try {
+    if (analyticsControl === "exclude") localStorage.setItem(EXCLUDE_KEY, "true");
+    if (analyticsControl === "include") localStorage.removeItem(EXCLUDE_KEY);
+  } catch (_) {}
+  if (analyticsControl) {
+    controls.delete("instapic_analytics");
+    const cleanQuery = controls.toString();
+    history.replaceState(null, "", `${location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}${location.hash}`);
+  }
+  let excluded = false;
+  try { excluded = localStorage.getItem(EXCLUDE_KEY) === "true"; } catch (_) {}
+  if (excluded) {
+    window.InstapicAnalytics = { track: function () {} };
+    return;
+  }
 
   function visitorId() {
     const now = Date.now();
