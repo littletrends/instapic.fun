@@ -4,6 +4,7 @@
   const distance = document.getElementById("quick-distance");
   const total = document.getElementById("quick-estimate-total");
   const breakdown = document.getElementById("quick-estimate-breakdown");
+  const bond = document.getElementById("quick-estimate-bond");
   const warning = document.getElementById("quick-estimate-warning");
   const next = document.getElementById("quick-check-date");
   if (!cards.length || !attendance || !distance || !total) return;
@@ -24,11 +25,12 @@
     if (attendant) parts.push(`${regional ? "required attended service" : "attended service"} (${hours} × $75) ${dollars(attendant)}`);
     parts.push(regional ? `approx. return travel ${dollars(travel)}` : "travel included");
     breakdown.textContent = parts.join(" · ");
+    bond.hidden = attendance.value !== "unattended";
     warning.hidden = false;
     if (regional) {
       warning.textContent = "This venue is over 30 km from Humpty Doo, so attended hire is mandatory. The attendant and approximate return-travel charges are included above; exact distance and availability are confirmed next.";
     } else if (attendance.value === "unattended") {
-      warning.textContent = "Unattended hire requires a separate refundable $500 security-bond authorisation on event day. It is not included in the hire estimate above.";
+      warning.textContent = "Unattended hire is available only for venues within a 30 km radius of Humpty Doo.";
     } else {
       warning.textContent = "Attended service is included in the estimate above at $75 for each booked hour.";
     }
