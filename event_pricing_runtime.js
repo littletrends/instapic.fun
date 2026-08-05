@@ -21,11 +21,17 @@
     const price = basePrices[hours] + attendant + travel;
     total.textContent = dollars(price);
     const parts = [`${hours}-hour hire ${dollars(basePrices[hours])}`];
-    if (attendant) parts.push(`attendant ${dollars(attendant)}`);
+    if (attendant) parts.push(`${regional ? "required attended service" : "attended service"} (${hours} × $75) ${dollars(attendant)}`);
     parts.push(regional ? `approx. return travel ${dollars(travel)}` : "travel included");
     breakdown.textContent = parts.join(" · ");
-    warning.hidden = !regional;
-    warning.textContent = regional ? "Over 30 km requires attended hire. Exact distance and availability are confirmed in the next step." : "";
+    warning.hidden = false;
+    if (regional) {
+      warning.textContent = "This venue is over 30 km from Humpty Doo, so attended hire is mandatory. The attendant and approximate return-travel charges are included above; exact distance and availability are confirmed next.";
+    } else if (attendance.value === "unattended") {
+      warning.textContent = "Unattended hire requires a separate refundable $500 security-bond authorisation on event day. It is not included in the hire estimate above.";
+    } else {
+      warning.textContent = "Attended service is included in the estimate above at $75 for each booked hour.";
+    }
     next.href = `event-enquiry.html?hours=${hours}&attendance=${encodeURIComponent(attendance.value)}&approx_km=${encodeURIComponent(km)}`;
   }
 
