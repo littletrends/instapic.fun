@@ -48,7 +48,7 @@
     <form id="event-enquiry-form">
       <section class="enquiry-section">
         <h2>1. Choose your hire package</h2>
-        <p>Simple upfront pricing for self-service hire within 30 km of Humpty Doo.</p>
+        <p>Simple upfront pricing, with unattended self-service hire available up to 80 km subject to timing and collection access.</p>
         <div class="package-grid">
           <label class="hire-package-card"><input type="radio" name="package_hours" value="3" required><span><strong>3 hours</strong><small>$500</small></span></label>
           <label class="hire-package-card"><input type="radio" name="package_hours" value="4"><span><strong>4 hours</strong><small>$650</small></span></label>
@@ -71,10 +71,10 @@
         <h2>3. Location and service</h2>
         <div class="enquiry-grid">
           <div class="enquiry-field full"><label for="venue-address">Venue address</label><input id="venue-address" name="venue_address" required autocomplete="off" placeholder="Start typing the event address"><div id="venue-suggestions" class="location-suggestions" hidden></div><span class="enquiry-help" id="location-result">Choose an address suggestion so travel can be calculated accurately.</span></div>
-          <div class="enquiry-field"><label for="attendance">Service preference</label><select id="attendance" name="attendance" required><option value="">Choose…</option><option value="unattended">Unattended/self-service</option><option value="attended">Attended — add $75/hour</option><option value="unsure">Unsure — show the minimum</option></select></div>
+          <div class="enquiry-field"><label for="attendance">Service preference</label><select id="attendance" name="attendance" required><option value="">Choose…</option><option value="unattended">Unattended/self-service — available up to 80 km</option><option value="attended">Attended — add $75/hour</option><option value="unsure">Unsure — show the minimum</option></select></div>
           <div class="enquiry-field"><label for="extras-interest">Optional extras</label><select id="extras-interest" name="extras_interest"><option value="no">No extras</option><option value="yes">Yes — discuss options</option><option value="unsure">Unsure</option></select><span class="enquiry-help">Extras can be added to the final quote after we know what you would like.</span></div>
         </div>
-        <p class="enquiry-help">More than 30 km from Humpty Doo: attended service is required and only the distance beyond the included 30 km radius is charged at $1/km for the return journey. Distances over 80 km are still estimated here, then route and timing are confirmed personally.</p>
+        <p class="enquiry-help">Travel within 30 km is included. From 31–80 km, unattended hire may be available and only the excess distance is charged at $1/km for the return journey. Distances over 80 km are estimated here, then the route, timing and service arrangement are confirmed personally.</p>
       </section>
 
       <div class="enquiry-actions">
@@ -117,7 +117,7 @@
   </main>
   <footer class="site-footer"><small>Instapic by Little Trends — Moments Made Magical ✨</small></footer>
   <script src="site_core.js?v=20260728-estimator"></script>
-  <script src="event_enquiry_runtime.js?v=20260805-excess-distance-fix"></script>
+  <script src="event_enquiry_runtime.js?v=20260805-unattended-80km"></script>
   <script src="branding.js"></script>
 <script defer src="site_analytics.js?v=20260805-site-pages"></script></body>
 </html>

@@ -59,7 +59,7 @@
 
     <section class="info-callout events-section" id="event-pricing">
       <h2>Event hire pricing</h2>
-      <p class="events-note">Upfront unattended, self-service pricing within 30 km of Humpty Doo.</p>
+      <p class="events-note">Upfront self-service pricing, with unattended hire available up to 80 km from Humpty Doo subject to timing and collection access.</p>
       <div class="events-pricing-grid">
         <button type="button" class="events-price-card is-selected" data-hours="3"><span>3 hours</span><strong>$500</strong></button>
         <button type="button" class="events-price-card" data-hours="4"><span>4 hours</span><strong>$650</strong></button>
@@ -69,7 +69,7 @@
       <div class="events-quick-estimate" aria-live="polite">
         <div class="events-estimate-fields">
           <label>Service
-            <select id="quick-attendance"><option value="unattended">Unattended / self-service (within 30 km only)</option><option value="attended">Attended (+$75 per hour)</option></select>
+            <select id="quick-attendance"><option value="unattended">Unattended / self-service (up to 80 km)</option><option value="attended">Attended (+$75 per hour)</option></select>
           </label>
           <label>Approx. km from Humpty Doo (one way)
             <input id="quick-distance" type="number" inputmode="decimal" min="0" max="1000" step="1" value="0" aria-describedby="quick-distance-help">
@@ -80,7 +80,7 @@
         <p class="events-estimate-breakdown" id="quick-estimate-bond"><strong>Refundable security-bond authorisation: $500</strong> · required separately on event day · not included in the hire total</p>
         <p class="events-estimate-warning" id="quick-estimate-warning">Unattended hire requires a separate refundable $500 security-bond authorisation on event day. It is not included in the hire estimate.</p>
       </div>
-      <p class="events-note" id="quick-distance-help">Travel is included within 30 km. Beyond that radius, only the excess distance is charged at $1/km for the return journey and attended hire is required. Maximum hire is 6 hours.</p>
+      <p class="events-note" id="quick-distance-help">Travel is included within 30 km. Beyond that radius, only the excess distance is charged at $1/km for the return journey. Unattended hire may be available up to 80 km; longer trips are confirmed personally. Standard event packages are up to 6 hours.</p>
       <p class="events-mini-cta"><a class="btn" id="quick-check-date" href="event-enquiry.html?hours=3&amp;attendance=unattended">Now check your date &amp; availability</a></p>
     </section>
 
@@ -105,7 +105,8 @@
        <article class="events-fact">
         <h3>Travel</h3>
         <p><strong>Within 30 km of Humpty Doo:</strong> travel is included and unattended hire is available.</p>
-        <p><strong>Over 30 km:</strong> attended hire is required. Only the distance beyond the included 30 km radius is charged at $1/km for the return journey. Longer trips are subject to confirmation.</p>
+        <p><strong>31–80 km:</strong> unattended hire may be available subject to timing, safe setup and guaranteed collection access. Only distance beyond 30 km is charged at $1/km for the return journey.</p>
+        <p><strong>Over 80 km:</strong> individually confirmed; attended service may be required.</p>
       </article>
       <article class="events-fact">
         <h3>Booking</h3>
@@ -121,6 +122,14 @@
         <p>Want to see the mirrors before deciding? Viewing is available by appointment only in Humpty Doo.</p>
       </article>
       </div>
+    </section>
+
+    <section class="info-callout events-section">
+      <h2>Long-term hire &amp; venue partnerships</h2>
+      <p>Need something beyond a standard six-hour event? Day hire, weekly hire and permanent venue placements are available by negotiation.</p>
+      <p>Revenue-share partnerships may be available for suitable venues. A typical arrangement gives the venue <strong>30% of net completed photo-session revenue</strong>, while Instapic retains 70% and provides the system, consumables, monitoring, maintenance and support.</p>
+      <p>The venue provides a secure suitable location, reliable power and reasonable equipment access. Payment-processing fees, refunds and chargebacks are deducted before the revenue share is calculated. Final terms depend on the venue, expected use and installation requirements.</p>
+      <p class="events-mini-cta"><a class="btn" href="guest-contact.html">Discuss a venue partnership</a></p>
     </section>
 
     <section class="info-callout events-section">
@@ -161,6 +170,6 @@
 
   <script src="assets/main.js"></script>
   <script src="branding.js"></script>
-  <script src="event_pricing_runtime.js?v=20260805-excess-distance-fix"></script>
+  <script src="event_pricing_runtime.js?v=20260805-unattended-80km"></script>
 <script defer src="site_analytics.js?v=20260805-site-pages"></script></body>
 </html>
