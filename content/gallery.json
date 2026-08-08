@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "published_at": "2026-08-03T12:29:01+0930",
+  "published_at": "2026-08-08T19:44:04+0930",
   "items": [
     {
       "id": "1b70512edae9",
@@ -8,7 +8,7 @@
       "title": "#1 The Day Mirror 1 Arrived!",
       "caption": "It was 29 October 2025\n\nThis was the day my first Magic Mirror arrived.\n\nGemma and I unpacked it and couldn\u2019t wait to try it.\n\nThe mirror was exactly what I\u2019d hoped for\u2026\n\nThe software wasn\u2019t.\n\nIt wasn\u2019t terrible.\n\nIt just wasn\u2019t really\u2026 anything.\n\nAnd it definitely wasn\u2019t me.\n\nSo I did what anyone would do.\n\nI started searching online for another program.\n\nSurely someone had already built exactly what I wanted?\n\nI found lots of options.\n\nSome looked okay.\n\nBut every one of them wanted another monthly subscription, and none of them felt quite right.\n\nAt the time I wasn\u2019t thinking,\n\n\u201cI\u2019m going to build my own software.\u201d\n\nI was thinking,\n\n\u201cThere has to be something out there that does exactly what I want.\u201d\n\nI kept looking.\n\nAnd looking.\n\nEventually I realised\u2026\n\nI was describing a product that didn\u2019t seem to exist.\n\nAt some point I stopped searching for software\u2026\n\n\u2026and started making a list of everything I wished it could do.\n\nThen that list kept growing.\n\nNot just with the things I wanted\u2026\n\n\u2026but with ideas I didn\u2019t even know I wanted in a photo booth.\n\nI never planned to build software.\n\nI never planned to build a website.\n\nI definitely never planned to spend the next nine months learning things I\u2019d never even heard of.\n\nI just couldn\u2019t settle for \u201cgood enough.\u201d\n\nOne idea became another.\n\nThen another.\n\nThen another.\n\nUntil one day\u2026\n\nInstapic existed.\n\nToday, exactly nine months later\u2026\n\nI\u2019m proud.\n\nNot because it\u2019s finished\u2026\n\n(it probably never will be!)\n\nBut because an idea scribbled on a piece of paper somehow became something real.\n\nSomething that didn\u2019t exist before.\n\nAnd something that\u2019s unmistakably me.\n\n\u2764\ufe0f Lorie x",
       "alt": "Gemma and I posing together in front of our first Magic Mirror on the day it arrived.",
-      "category": "Instagram post",
+      "category": "Behind the build",
       "social_url": "https://www.instagram.com/reel/DbV3eGNy8iW/",
       "media_url": "assets/gallery/1b70512edae9.jpeg",
       "media_urls": [
@@ -92,9 +92,9 @@
       "id": "3da5879948cb",
       "type": "social",
       "title": "#3 I\u2019m Glad I Didn\u2019t Know AI Agents Existed",
-      "caption": "When I started building instapic, I didn\u2019t even know connected AI coding agents existed.\r\n\r\nI had ChatGPT & Grok.\r\n\r\nI would explain what I wanted to build, & they would give me Bash commands or blocks of code.\r\n\r\nThen I had to take those instructions to the terminal myself.\r\n\r\nOpen the terminal.\r\n\r\nType the command.\r\n\r\nFind the file.\r\n\r\nOpen it in nano.\r\n\r\nWork out where the new code belonged.\r\n\r\nPaste it.\r\n\r\nSave it.\r\n\r\nExit.\r\n\r\nRestart the program.\r\n\r\nTest it.\r\n\r\nThen go back & explain what worked, what broke & what happened next.\r\n\r\nAt the time, I had no idea there would eventually be AI agents that could open files, navigate the project & make changes directly.\r\n\r\nHonestly, I\u2019m glad I didn\u2019t know.\r\n\r\nIf I\u2019d had that from the beginning, I might never have learnt what I did.\r\n\r\nThe manual process forced me to understand where every file lived, what each section controlled & how every hook connected to the next part of the system.\r\n\r\nI had to know whether a change belonged in the booth, Mother PC, the website, a Python route, a JavaScript runtime, a service file or one of the growing collection of patches.\r\n\r\nWhen something broke, I could usually remember where we had been, what we had changed & why two pieces were probably conflicting.\r\n\r\nNot always immediately & definitely not without frustration.\r\n\r\nBut I wasn\u2019t pressing a button & waiting for software to appear.\r\n\r\nI was inside the build.\r\n\r\nI saw every command.\r\n\r\nI opened every file.\r\n\r\nI followed every path.\r\n\r\nI tested every connection.\r\n\r\nI learnt how the whole system fitted together because I had no other way to build it.\r\n\r\nToday, connected AI agents help me move faster. They inspect the project, trace problems & even work directly across the system.\r\n\r\nBut they\u2019re working inside an architecture I already understand\u2014because I built it the slow way first.\r\n\r\nWould I want to go back to copying every Bash command, opening nano & closing it again thousands of times?\r\n\r\nAbsolutely not \ud83d\ude02\r\n\r\nBut I wouldn\u2019t trade what that process taught me.\r\n\r\nAI helped me work out how to build Instapic.\r\n\r\nI was still the person at the terminal, making the decisions, performing the changes, testing every result & refusing to stop when it broke.\r\n\r\nAnd I\u2019m glad I learnt it that way.\r\n\r\n\u2764\ufe0f Lorie x",
+      "caption": "When I started building instapic, I didn\u2019t even know connected AI coding agents existed.\n\nI had ChatGPT & Grok.\n\nI would explain what I wanted to build, & they would give me Bash commands or blocks of code.\n\nThen I had to take those instructions to the terminal myself.\n\nOpen the terminal.\n\nType the command.\n\nFind the file.\n\nOpen it in nano.\n\nWork out where the new code belonged.\n\nPaste it.\n\nSave it.\n\nExit.\n\nRestart the program.\n\nTest it.\n\nThen go back & explain what worked, what broke & what happened next.\n\nAt the time, I had no idea there would eventually be AI agents that could open files, navigate the project & make changes directly.\n\nHonestly, I\u2019m glad I didn\u2019t know.\n\nIf I\u2019d had that from the beginning, I might never have learnt what I did.\n\nThe manual process forced me to understand where every file lived, what each section controlled & how every hook connected to the next part of the system.\n\nI had to know whether a change belonged in the booth, Mother PC, the website, a Python route, a JavaScript runtime, a service file or one of the growing collection of patches.\n\nWhen something broke, I could usually remember where we had been, what we had changed & why two pieces were probably conflicting.\n\nNot always immediately & definitely not without frustration.\n\nBut I wasn\u2019t pressing a button & waiting for software to appear.\n\nI was inside the build.\n\nI saw every command.\n\nI opened every file.\n\nI followed every path.\n\nI tested every connection.\n\nI learnt how the whole system fitted together because I had no other way to build it.\n\nToday, connected AI agents help me move faster. They inspect the project, trace problems & even work directly across the system.\n\nBut they\u2019re working inside an architecture I already understand\u2014because I built it the slow way first.\n\nWould I want to go back to copying every Bash command, opening nano & closing it again thousands of times?\n\nAbsolutely not \ud83d\ude02\n\nBut I wouldn\u2019t trade what that process taught me.\n\nAI helped me work out how to build Instapic.\n\nI was still the person at the terminal, making the decisions, performing the changes, testing every result & refusing to stop when it broke.\n\nAnd I\u2019m glad I learnt it that way.\n\n\u2764\ufe0f Lorie x",
       "alt": "Behind the scenes during the development of Instapic. These terminal sessions capture the reality of building the system from scratch\u2014testing, debugging, fixing errors and learning Linux one command at a time.",
-      "category": "instagram post",
+      "category": "Behind the build",
       "social_url": "https://www.instagram.com/p/DbiK8qIkdUM/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
       "media_url": "assets/gallery/3da5879948cb_1.jpg",
       "media_urls": [
@@ -131,6 +131,27 @@
       "published_at": "2026-07-29T21:11:24+0930",
       "featured": false,
       "order": 3
+    },
+    {
+      "id": "5292335c76b9",
+      "type": "social",
+      "title": "#4 8th Dec 2025, FUCK UP OF A DAY!!!",
+      "caption": "I\u2019ve been digging through the very sophisticated notebook I kept during the early instapic build.\n\nApparently, on the 8th of December 2025, things were going exceptionally well.\n\nAs you can see from my extremely detailed technical documentation:\n\nFUCK UP OF A DAY!!!\n\nIn red pen.\n\nReal helpful for future Lorie. \ud83d\ude02\n\nUnderneath it:\n\nBUTTONS / PORTALS\n\nAt this point I was still very early into rebuilding the software that ran the Magic Mirrors, and I was learning everything as I went.\n\nThe portals and buttons were driving me absolutely insane.\n\nI\u2019d change the styling and one button would change.\n\nGreat!\n\nExcept another one wouldn\u2019t.\n\nI\u2019d change something else.\n\nDifferent button changed.\n\nThe one I actually wanted to change didn\u2019t.\n\nSomewhere amongst all the files, I was trying to work out what controlled what.\n\nSo I did what seemed perfectly sensible at the time.\n\nI created a new CSS file.\n\nSurely if I cleaned everything up and started fresh, I\u2019d finally get control of the bloody thing.\n\nI apparently spent most of the day proving that theory completely wrong.\n\nAnd after all of that?\n\nFLOW \u2192 STILL NOT DONE.\n\n\ud83d\ude02\n\nBut my favourite part is the note I left myself for the following day:\n\n9th Dec: Delete new CSS & focus on flow.css.\n\nIn other words:\n\nTomorrow, delete everything you spent today doing and go back to where you started.\nLooking at that notebook entry now makes me laugh because there\u2019s virtually no explanation of what actually happened.\n\nNo carefully documented problem.\n\nNo list of things I\u2019d tried.\n\nNo technical analysis.\n\nJust:\n\nFUCK UP OF A DAY!!!\n\nAt the time, days like this felt like a complete waste.\n\nBut every rabbit hole taught me a little more.\n\nWhere things lived.\n\nWhich files controlled what.\n\nWhat happened when I changed something.\n\nAnd occasionally, when the best solution was simply:\n\nDelete today\u2019s brilliant idea and go back to yesterday\u2019s working one. \ud83d\ude02\n\nThere would be quite a few more days like this.\n\nSome considerably worse.\n\nJudging by the rest of this notebook, Past Lorie had a very sophisticated system for documenting particularly difficult technical problems.\n\nUsually involving a red pen.\n\nAnd swearing.\n\nLots of swearing.\n\n\u2764\ufe0f Lorie x",
+      "alt": "A sophisticated notebook entry I kept during the early instapic build of 8th Dec 2025.",
+      "category": "instagram post",
+      "social_url": "https://www.instagram.com/p/DbxnUPwkjmG/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "media_url": "assets/gallery/5292335c76b9_1.jpeg",
+      "media_urls": [
+        "assets/gallery/5292335c76b9_1.jpeg"
+      ],
+      "share_media_url": "assets/gallery/5292335c76b9_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/5292335c76b9_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-08T19:41:15+0930",
+      "published_at": "2026-08-08T19:43:55+0930",
+      "featured": false,
+      "order": 4
     },
     {
       "id": "a27ef16661c0",
@@ -555,10 +576,10 @@
     {
       "id": "ded616d2a1d2",
       "type": "gif",
-      "title": "Magic Mirror Dev Test \u2014 GIF",
-      "caption": "A short animated moment from today\u2019s Instapic Magic Mirror test session.",
-      "alt": "Animated Instapic Magic Mirror test session.",
-      "category": "Magic Mirror moments",
+      "title": "The Before Darwin Cup Shenanigans \u2014 GIF",
+      "caption": "The boys testing before leaving to Darwin Cup.",
+      "alt": "Instapic Magic Mirror 1 test session.",
+      "category": "Magic Mirror 1",
       "social_url": "",
       "media_url": "assets/gallery/ded616d2a1d2_1.mp4",
       "media_urls": [
