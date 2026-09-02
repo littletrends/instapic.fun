@@ -37,8 +37,10 @@
     .events-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-top:.85rem}
     .events-fact{padding:1rem;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
     .events-fact h3{margin:0 0 .45rem;color:#fff;font-size:1rem}.events-fact p{margin:.3rem 0;font-size:.92rem}
-    .mirror-options-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-top:.8rem}
-    .mirror-option{min-height:82px;padding:.9rem 1rem;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
+    .mirror-options-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin-top:.8rem}
+    .mirror-option{overflow:hidden;min-width:0;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(13,13,26,.7)}
+    .mirror-option img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#fff}
+    .mirror-option-copy{padding:.85rem .9rem 1rem}
     .mirror-option h3{margin:0 0 .35rem;color:#fff;font-size:1rem}.mirror-option p{margin:0;color:var(--muted);font-size:.9rem}
     .events-mini-cta{text-align:center;margin-top:1rem}.events-terms{text-align:center;font-size:.85rem;color:var(--muted);margin-top:.85rem}
     @media(max-width:620px){.events-page .page-intro h1{font-size:2.45rem}.events-pricing-grid{grid-template-columns:repeat(2,1fr)}.events-facts,.mirror-options-grid,.events-estimate-fields{grid-template-columns:1fr}.events-inclusions{columns:1}}
@@ -136,12 +138,25 @@
       <h2>Magic Mirror choices</h2>
       <div class="mirror-options-grid">
         <article class="mirror-option">
-          <h3>Mirror 1 — Black frame</h3>
-          <p>Full-length mirror with classic glowing bauble lights.</p>
+          <img src="assets/img/mirror-1-glamour-bauble.webp" alt="Instapic Mirror 1 with its black glamour frame and glowing bauble lights" width="900" height="1125" loading="lazy">
+          <div class="mirror-option-copy">
+            <h3>Mirror 1 — Glamour bauble frame</h3>
+            <p>Black full-length frame with classic glowing bauble lights.</p>
+          </div>
         </article>
         <article class="mirror-option">
-          <h3>Mirror 2 — Gold or white frame</h3>
-          <p>Choose a gold or white frame, both with LED lights.</p>
+          <img src="assets/img/mirror-2-gold.webp" alt="Instapic Mirror 2 with its ornate gold frame and colour LED lights" width="900" height="1125" loading="lazy">
+          <div class="mirror-option-copy">
+            <h3>Mirror 2 — Gold frame</h3>
+            <p>Ornate gold frame finished with colour LED lights.</p>
+          </div>
+        </article>
+        <article class="mirror-option">
+          <img src="assets/img/mirror-2-white-pearl.webp" alt="Instapic Mirror 2 with its white pearl frame and colour LED lights" width="900" height="1125" loading="lazy">
+          <div class="mirror-option-copy">
+            <h3>Mirror 2 — White pearl frame</h3>
+            <p>Elegant white pearl frame finished with colour LED lights.</p>
+          </div>
         </article>
       </div>
       <p class="events-mini-cta"><a class="btn" href="event-enquiry.html">Check your date &amp; price</a></p>
