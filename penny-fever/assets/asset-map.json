@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "note": "Codex may point src to prepared files; keep keys stable.",
+  "assets": {
+    "whisper_cabinet": {
+      "src": "assets/prepared/whisper-cabinet.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "whisperCard"
+    },
+    "love_thermometer_cabinet": {
+      "src": "assets/prepared/love-thermometer-cabinet.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "loveCard"
+    },
+    "fortune_mailbox": {
+      "src": "assets/prepared/fortune-mailbox.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "fortuneCard"
+    },
+    "door_beckon": {
+      "src": "assets/prepared/door-beckon.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "discoveryDoor"
+    },
+    "ticket_booth": {
+      "src": "assets/prepared/ticket-booth.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "foyer"
+    },
+    "snap_stage": {
+      "src": "assets/prepared/snap-stage.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "snapCard"
+    },
+    "showman_pass": {
+      "src": "assets/prepared/showmans-pass.webp",
+      "kind": "still",
+      "priority": "P3",
+      "location": "passCard"
+    },
+    "lookup_sky": {
+      "src": "assets/prepared/lookup-sky.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "lookupCard"
+    }
+  }
+}

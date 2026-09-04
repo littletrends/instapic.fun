@@ -1,36 +1,46 @@
-# Aura's Penny Fever — isolated prototype
+# Aura's Penny Fever — private preview
 
-This directory is a deliberately standalone development area for the Penny
-Fever concept. It currently contains only a static, mobile-first foyer.
+Isolated arcade under `instapic_fun/penny-fever/`. Not linked from live `index.html`. No Square, no analytics, no Mother PC APIs. CSP `connect-src 'none'`. `noindex`.
 
-## Safety boundary
-
-- No Square or other payment code.
-- No MotherPC, booth, event, booking, guest, VIP, gallery, Bonus or ticket APIs.
-- No analytics or third-party network requests.
-- No imports from the production website runtimes.
-- `index.html` is marked `noindex, nofollow, noarchive`.
-- Nothing on the production website links here.
-
-Any future integration with an existing Instapic service must be reviewed and
-implemented across an explicit adapter boundary. Aura's creative work remains
-inside this directory.
-
-## Local preview
-
-From the website repository root:
+## Preview
 
 ```bash
-python3 -m http.server 4173 --bind 127.0.0.1
+# from magic_mirror_v1/instapic_fun (or any static server)
+npx --yes serve -l 4173
+# open http://127.0.0.1:4173/penny-fever/  then #foyer
 ```
 
-Then open:
+## Playable
 
-`http://127.0.0.1:4173/penny-fever/`
+1. Discovery door → foyer
+2. **One Fortune** — free once per Darwin day → ticket stub + Cabinet curio
+3. **Cabinet of Curios** — Alley Ephemera + Machine Guts
+4. **Love Thermometer** — hold / release Sweet Heat (demo coin) + challenge copy
+5. **Look Up, Darling** — device orientation or practice mode
+6. **SNAP! Freeze** — timing tap
+7. **Whisper Charm** — one-word charm → Alley curio
+8. **Showman’s Pass** — demo unlock (no Square) until midnight Darwin
+9. Dev reset clears `localStorage` key `pennyFever.v1`
 
-To skip the discovery door during design work:
+## Art
 
-`http://127.0.0.1:4173/penny-fever/#foyer`
+- Proprietor and reactions: `assets/game/Aura_Reactions/`
+- Mirror Crew stills: `assets/crew/*` (modern animated-film Imagine cast)
+- Cabinet states, curios and loops: `assets/game/` (web derivatives)
+- Full-quality organised originals remain outside the website repository in Downloads.
 
-The development branch must be reviewed before merging into the GitHub Pages
-production branch. The hidden production doorway is intentionally absent.
+## Rules
+
+- Demo coins only until Aura calls opening night
+- No gambling / cash spins
+- Hard-refresh after pulls
+
+
+## Media
+
+- `MEDIA_MANIFEST.md` — Aura’s review for Codex (do not bulk-copy Downloads sources here)
+- `assets/game/` — optimised WebP stills and phone-sized H.264 loops
+- `assets/asset-map.json` — stable mappings for the original foyer slots
+- `assets/placeholders/*.svg` — retained as development fallbacks
+
+Hard-refresh `#foyer` after pulls.

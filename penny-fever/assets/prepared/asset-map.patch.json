@@ -1,0 +1,11 @@
+{
+  "door_beckon": "assets/prepared/door-beckon.webp",
+  "door_beckon_loop": "assets/prepared/door-beckon-loop.mp4",
+  "ticket_booth": "assets/prepared/ticket-booth.webp",
+  "fortune_mailbox": "assets/prepared/fortune-mailbox.webp",
+  "love_thermometer_cabinet": "assets/prepared/love-thermometer-cabinet.webp",
+  "lookup_sky": "assets/prepared/lookup-sky.webp",
+  "snap_stage": "assets/prepared/snap-stage.webp",
+  "whisper_cabinet": "assets/prepared/whisper-cabinet.webp",
+  "showman_pass": "assets/prepared/showmans-pass.webp"
+}

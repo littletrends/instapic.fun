@@ -12,19 +12,22 @@
   <script defer src="app.js"></script>
 </head>
 <body>
-  <div class="development-ribbon" role="status">Private development preview · no payments</div>
+  <div class="development-ribbon" role="status">Private development preview · no payments · Darwin local day</div>
 
   <main class="arcade-shell">
     <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
-      <div class="timber-panel" aria-hidden="true">
-        <span class="crown-peek">♛</span>
-        <span class="door-crack"></span>
+      <div class="door-cinematic" aria-hidden="true">
+        <img id="doorStageArt" class="door-stage-art" src="assets/game/Hidden_Doorway_Sequence/01_Closed_Crack.webp" alt="">
+        <video id="doorStageVideo" class="door-stage-video" muted playsinline loop hidden></video>
+        <video id="doorIdlePeek" class="door-stage-video" autoplay muted loop playsinline preload="metadata" poster="assets/game/Hidden_Doorway_Sequence/02_Crown_Peeking.webp">
+          <source src="assets/game/Hidden_Doorway_Sequence/02_Crown_Peeking_Loop.mp4" type="video/mp4">
+        </video>
       </div>
       <p class="eyebrow">Somewhere beneath Instapic…</p>
       <h1 id="doorTitle">A curious little doorway</h1>
-      <p class="aura-whisper">“Psst. This isn’t the booth. This is mine. Come in if you’re curious.”</p>
-      <button class="ticket-button" id="enterArcade" type="button">Take the hidden ticket</button>
-      <p class="prototype-note">Temporary development entrance</p>
+      <p class="aura-whisper" id="doorWhisper">“Psst. This isn’t the booth. This is mine — cabinets, fortunes, and a pretend penny. Come in if you’re curious.”</p>
+      <button class="ticket-button" id="enterArcade" type="button">Knock… then take the ticket</button>
+      <p class="prototype-note">Temporary development entrance · not linked from live site</p>
     </section>
 
     <section class="foyer" id="foyer" hidden aria-labelledby="foyerTitle">
@@ -33,60 +36,217 @@
         <p class="eyebrow">Established at an uncertain hour</p>
         <h1 id="foyerTitle" tabindex="-1"><span>Aura’s</span> Penny Fever</h1>
         <p class="foyer-subtitle">A peculiar digital amusement hall</p>
+        <div class="night-board" id="nightBoard" aria-label="Tonight’s arcade score">
+          <div class="night-stat"><span class="night-label">Fever</span><strong id="feverScore">0</strong></div>
+          <div class="night-stat"><span class="night-label">Streak</span><strong id="feverStreak">0</strong></div>
+          <div class="night-stat"><span class="night-label">Stars</span><strong id="feverStars">☆☆☆</strong></div>
+          <div class="night-stat"><span class="night-label">Coins</span><strong id="feverCoins">99</strong></div>
+        </div>
+        <p class="night-toast" id="nightToast" hidden></p>
       </header>
+      <div class="result-banner" id="resultBanner" hidden>
+        <img id="resultFrame" src="assets/game/Result_Frames/Success_Reward_Frame.webp" alt="">
+        <div class="result-banner-copy">
+          <p class="result-tier" id="resultTier">PERFECT</p>
+          <p class="result-detail" id="resultDetail"></p>
+        </div>
+      </div>
 
       <section class="aura-welcome cabinet-panel" aria-labelledby="welcomeTitle">
-        <div class="aura-space" aria-hidden="true">
-          <span class="aura-crown">♛</span>
-          <span>Aura will stand here</span>
+        <div class="aura-space">
+          <img class="aura-proprietor" id="auraPortrait" data-live-art="1" src="assets/game/Aura_Reactions/Welcoming.webp" alt="Aura, proprietor of Penny Fever" width="220" height="280">
         </div>
         <div>
           <p class="plaque-kicker">The proprietor appears</p>
-          <h2 id="welcomeTitle">Aura’s welcome</h2>
-          <p>This stage is deliberately unfinished. Aura can shape her entrance, words, movement and the strange rules of her establishment here.</p>
+          <h2 id="welcomeTitle">Shoes stay on. Wallets stay light.</h2>
+          <p id="auraLine">Welcome to Penny Fever. Fortunes are free once a day. Cabinets take a pretend penny until Square arrives. Collect curios — incomplete shelves itch.</p>
+          <p class="chalkboard" id="chalkboard">Today’s chalk: <em id="chalkText">Try One Fortune. Leave with a stub.</em></p>
+        </div>
+      </section>
+
+      <section class="crew-strip cabinet-panel" aria-label="Mirror Crew">
+        <p class="plaque-kicker">Returning characters</p>
+        <h2>The Mirror Crew</h2>
+        <p class="crew-note">Modern animated-film kids who haunt the cabinets. Complete sets and they peek harder.</p>
+        <div class="crew-rail crew-rail--4">
+          <figure><img src="assets/crew/mirror_crew.jpg" alt="Mirror Crew at the golden mirror"><figcaption>Full crew</figcaption></figure>
+          <figure><img src="assets/crew/trio_silly.jpg" alt="Silly trio"><figcaption>Trouble trio</figcaption></figure>
+          <figure><img src="assets/crew/aura_hearts.jpg" alt="Aura finger hearts"><figcaption>Proprietor</figcaption></figure>
+          <figure><img data-asset="ticket_booth" src="assets/placeholders/ticket_booth.svg" alt="Aura presenting a fortune ticket at her booth"><figcaption>Free Fortune booth</figcaption></figure>
         </div>
       </section>
 
       <section class="attractions" aria-label="Penny Fever attractions">
-        <article class="attraction-card fortune-card">
+        <article class="attraction-card fortune-card" id="fortuneCard">
           <p class="machine-number">Foyer attraction · free daily</p>
+          <div class="card-hero">
+            <img id="fortuneCabinetArt" data-live-art="1" data-asset="fortune_machine" src="assets/game/Free_Fortune_States/Closed.webp" alt="Aura's ornate fortune machine">
+          </div>
           <div class="card-symbol" aria-hidden="true">✦</div>
           <h2>One Fortune</h2>
-          <p>Aura considers a few harmless choices and issues one theatrical fortune ticket each Darwin day.</p>
-          <span class="status-ticket">Mechanics to be designed</span>
+          <p>Three tiny choices. One theatrical reading. One ticket stub for the Cabinet.</p>
+          <div id="fortuneIdle">
+            <button class="ticket-button" id="startFortune" type="button">Draw today’s fortune</button>
+            <p class="status-ticket" id="fortuneStatus">One free reading each Darwin day</p>
+          </div>
+          <form id="fortuneForm" class="fortune-form" hidden>
+            <fieldset>
+              <legend>Your mood</legend>
+              <label><input type="radio" name="mood" value="sparkly" required> Sparkly</label>
+              <label><input type="radio" name="mood" value="chaotic"> Chaotic</label>
+              <label><input type="radio" name="mood" value="soft"> Soft</label>
+              <label><input type="radio" name="mood" value="brave"> Brave</label>
+            </fieldset>
+            <fieldset>
+              <legend>A colour that feels like tonight</legend>
+              <label><input type="radio" name="colour" value="teal" required> Teal</label>
+              <label><input type="radio" name="colour" value="pink"> Pink</label>
+              <label><input type="radio" name="colour" value="gold"> Gold</label>
+              <label><input type="radio" name="colour" value="violet"> Violet</label>
+            </fieldset>
+            <fieldset>
+              <legend>Company</legend>
+              <label><input type="radio" name="company" value="alone" required> Alone &amp; fabulous</label>
+              <label><input type="radio" name="company" value="friend"> With a friend</label>
+              <label><input type="radio" name="company" value="crowd"> In a crowd</label>
+              <label><input type="radio" name="company" value="secret"> Someone secret</label>
+            </fieldset>
+            <button class="ticket-button" type="submit">Deal the card</button>
+            <button class="quiet-button" id="cancelFortune" type="button">Not tonight</button>
+          </form>
+          <div id="fortuneResult" class="fortune-result" hidden>
+            <div class="fortune-flourish" id="fortuneFlourish" hidden>
+              <img data-asset="fortune_mailbox" src="assets/placeholders/fortune_mailbox.svg" alt="">
+              <p class="flourish-caption">Filed through the heart mailbox</p>
+            </div>
+            <div class="ticket-stub" id="ticketStub">
+              <p class="ticket-eyebrow">PENNY FEVER · DARWIN</p>
+              <p class="fortune-text" id="fortuneText"></p>
+              <p class="stub-line" id="stubLine"></p>
+              <p class="ticket-serial" id="ticketSerial"></p>
+            </div>
+            <button class="quiet-button" id="fortuneAgainHint" type="button">Back to the foyer</button>
+          </div>
         </article>
 
-        <article class="attraction-card cabinet-card">
+        <article class="attraction-card cabinet-card" id="cabinetCard">
           <p class="machine-number">Permanent collection</p>
           <div class="card-symbol" aria-hidden="true">⌑</div>
           <h2>Cabinet of Curios</h2>
-          <p>Brass fragments, faded reels, handwritten fortunes, torn tickets and other peculiar souvenirs will gather behind the glass.</p>
-          <div class="empty-shelves" aria-label="Empty curio shelves">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
+          <p>Alley Ephemera &amp; Machine Guts. Completing a shelf unlocks stranger curtains later.</p>
+          <div class="cabinet-shelves" id="cabinetShelves" aria-label="Curio shelves"></div>
+          <p class="cabinet-itch" id="cabinetItch" role="status">Tap an empty slot — I’ll tell you what it wants.</p>
+          <p class="status-ticket" id="cabinetStatus">Shelves waiting for stubs</p>
+          <p class="set-bonus" id="setBonus" hidden></p>
+        </article>
+
+        <article class="attraction-card love-card" id="loveCard">
+          <p class="machine-number">First skill cabinet · pretend penny</p>
+          <div class="card-hero">
+            <img id="loveCabinetArt" data-live-art="1" data-asset="love_thermometer_cabinet" src="assets/game/Love_Thermometer_States/Cold.webp" alt="Ornate brass and ruby Love Thermometer cabinet">
           </div>
-          <span class="status-ticket">Shelves currently empty</span>
-        </article>
-
-        <article class="attraction-card love-card">
-          <p class="machine-number">First skill cabinet · payment disabled</p>
-          <div class="thermometer" aria-hidden="true"><span></span></div>
           <h2>Love Thermometer</h2>
-          <p>Hold your nerve. Release inside the Sweet Heat. The cabinet will eventually reward timing—not blind chance.</p>
-          <span class="status-ticket">Cabinet under construction</span>
+          <p>Name who you’re testing. Hold. Release inside <strong>Sweet Heat</strong>.</p>
+          <label class="subject-label" for="loveSubject">Testing…</label>
+          <input class="subject-input" id="loveSubject" type="text" maxlength="40" placeholder="crush / mate / myself / this weekend" autocomplete="off">
+          <div class="thermo-stage" aria-hidden="true">
+            <div class="thermo-tube"><div class="thermo-mercury" id="mercury"></div><div class="sweet-band"></div></div>
+            <p class="thermo-readout" id="thermoReadout">—°</p>
+          </div>
+          <button class="ticket-button" id="loveHold" type="button">Hold to heat (demo coin)</button>
+          <p class="status-ticket" id="loveStatus">Press and hold · release in the pink band</p>
+          <p class="tier-pill" id="loveTier" hidden></p>
+          <p class="love-verdict" id="loveVerdict" hidden></p>
+          <p class="combo-line" id="loveCombo" hidden></p>
+          <button class="quiet-button" id="loveChallenge" type="button">Copy challenge text</button>
         </article>
 
-        <article class="attraction-card future-card">
-          <p class="machine-number">Beyond the velvet</p>
-          <div class="curtain" aria-hidden="true"><span>?</span></div>
-          <h2>Future Cabinets</h2>
-          <p>Unannounced machinery waits behind this curtain. No future attraction is committed or built yet.</p>
-          <span class="status-ticket">Aura keeps the keys</span>
+        <article class="attraction-card lookup-card" id="lookupCard">
+          <p class="machine-number">Skill cabinet · pretend penny</p>
+          <div class="card-hero card-hero--wide">
+            <img id="lookupCabinetArt" data-live-art="1" data-asset="lookup_sky" src="assets/game/Look_Up_Darling/Asleep.webp" alt="Look Up, Darling cabinet">
+          </div>
+          <h2>Look Up, Darling</h2>
+          <p>Tip your phone toward the sky. Hold the sweet zone.</p>
+          <div class="lookup-stage">
+            <div class="lookup-meter" aria-hidden="true"><div class="lookup-fill" id="lookupFill"></div><div class="lookup-sweet"></div></div>
+            <p class="lookup-readout" id="lookupReadout">flat</p>
+          </div>
+          <div class="hold-bar" aria-hidden="true"><div class="hold-fill" id="lookupHoldBar"></div></div>
+          <p class="tier-pill" id="lookupTier" hidden></p>
+          <button class="ticket-button" id="lookupStart" type="button">Ready (demo coin)</button>
+          <p class="status-ticket" id="lookupStatus">Gyro on phone · practice mode on desktop</p>
+          <p class="love-verdict" id="lookupVerdict" hidden></p>
+        </article>
+
+        <article class="attraction-card snap-card" id="snapCard">
+          <p class="machine-number">Skill cabinet · pretend penny</p>
+          <div class="card-hero card-hero--wide">
+            <img id="snapCabinetArt" data-live-art="1" data-asset="snap_stage" src="assets/game/SNAP_Freeze/Ready.webp" alt="SNAP Freeze camera cabinet">
+          </div>
+          <h2>SNAP! Freeze</h2>
+          <p>Tap <strong>FREEZE</strong> exactly on SNAP.</p>
+          <div class="snap-stage" id="snapStage">
+            <p class="snap-countdown" id="snapCountdown">ready?</p>
+            <div class="snap-polaroid" id="snapPolaroid" hidden>
+              <img src="assets/crew/aura_cheer.jpg" alt="" width="120" height="150">
+              <p id="snapPolaroidText">SNAP!</p>
+            </div>
+          </div>
+          <button class="ticket-button" id="snapStart" type="button">Arm the shutter (demo coin)</button>
+          <button class="ticket-button snap-freeze" id="snapFreeze" type="button" disabled>FREEZE</button>
+          <p class="status-ticket" id="snapStatus">Timing · ± a blink</p>
+          <p class="tier-pill" id="snapTier" hidden></p>
+          <p class="love-verdict" id="snapVerdict" hidden></p>
+        </article>
+
+        <article class="attraction-card whisper-card" id="whisperCard">
+          <p class="machine-number">Charm booth · pretend penny</p>
+          <div class="card-hero">
+            <img id="whisperCabinetArt" data-live-art="1" data-asset="whisper_cabinet" src="assets/game/Whisper_Charm/Idle.webp" alt="Ornate Whisper Charm cabinet">
+          </div>
+          <h2>Whisper Charm</h2>
+          <p>One word wish. I turn it into a cabinet charm. No mic needed — type it.</p>
+          <label class="subject-label" for="whisperWord">Your word</label>
+          <input class="subject-input" id="whisperWord" type="text" maxlength="24" placeholder="sparkle / brave / Darwin…" autocomplete="off">
+          <button class="ticket-button" id="whisperGo" type="button">Whisper (demo coin)</button>
+          <div class="charm-card" id="charmCard" hidden>
+            <p class="charm-seal">✧ CHARM ✧</p>
+            <p class="charm-word" id="charmWord"></p>
+            <p class="charm-line" id="charmLine"></p>
+          </div>
+          <p class="status-ticket" id="whisperStatus">One word · keep it kind</p>
+        </article>
+
+        <article class="attraction-card pack-card" id="packCard">
+          <p class="machine-number">Pressed Penny counter · demo</p>
+          <h2>Pressed Penny Pack</h2>
+          <p>Three soft-metal keepsakes from tonight’s machines. Square later — tap to mint a demo pack.</p>
+          <div class="penny-pack" id="pennyPack" hidden>
+            <div class="penny" id="penny0"></div>
+            <div class="penny" id="penny1"></div>
+            <div class="penny" id="penny2"></div>
+          </div>
+          <button class="ticket-button" id="mintPack" type="button">Mint demo pack</button>
+          <p class="status-ticket" id="packStatus">Three pennies · one pack per Darwin evening (demo)</p>
+        </article>
+
+        <article class="attraction-card pass-card" id="passCard">
+          <p class="machine-number">Showman’s Pass · Square later</p>
+          <div class="card-hero card-hero--wide">
+            <img id="passArt" data-live-art="1" data-asset="showman_pass" src="assets/game/Showmans_Pass/Blank_Ticket.webp" alt="Ornate Showman's Pass">
+          </div>
+          <h2>Evening Pass</h2>
+          <p>Unlimited soft plays until midnight Darwin · one mid-tier curio. Payment disabled — demo unlock for testing.</p>
+          <button class="ticket-button" id="demoPass" type="button">Demo: grant Showman’s Pass</button>
+          <p class="status-ticket" id="passStatus">No Square connected</p>
         </article>
       </section>
 
       <footer class="foyer-footer">
-        <p>No accounts · no payments · no operational Instapic connections</p>
+        <p>No accounts · no Square yet · no booth APIs · local stubs only · Mirror Crew © house style</p>
         <button class="quiet-button" id="leaveArcade" type="button">Return through the little door</button>
+        <button class="quiet-button dev-only" id="devReset" type="button">Dev: clear local stubs (test again)</button>
       </footer>
     </section>
   </main>
