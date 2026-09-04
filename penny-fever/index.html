@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#160b10">
+  <meta name="description" content="Private development preview of Aura's Penny Fever.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'">
+  <title>Aura's Penny Fever — Private Preview</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="development-ribbon" role="status">Private development preview · no payments</div>
+
+  <main class="arcade-shell">
+    <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
+      <div class="timber-panel" aria-hidden="true">
+        <span class="crown-peek">♛</span>
+        <span class="door-crack"></span>
+      </div>
+      <p class="eyebrow">Somewhere beneath Instapic…</p>
+      <h1 id="doorTitle">A curious little doorway</h1>
+      <p class="aura-whisper">“Psst. This isn’t the booth. This is mine. Come in if you’re curious.”</p>
+      <button class="ticket-button" id="enterArcade" type="button">Take the hidden ticket</button>
+      <p class="prototype-note">Temporary development entrance</p>
+    </section>
+
+    <section class="foyer" id="foyer" hidden aria-labelledby="foyerTitle">
+      <header class="foyer-header">
+        <div class="marquee-lights" aria-hidden="true"></div>
+        <p class="eyebrow">Established at an uncertain hour</p>
+        <h1 id="foyerTitle" tabindex="-1"><span>Aura’s</span> Penny Fever</h1>
+        <p class="foyer-subtitle">A peculiar digital amusement hall</p>
+      </header>
+
+      <section class="aura-welcome cabinet-panel" aria-labelledby="welcomeTitle">
+        <div class="aura-space" aria-hidden="true">
+          <span class="aura-crown">♛</span>
+          <span>Aura will stand here</span>
+        </div>
+        <div>
+          <p class="plaque-kicker">The proprietor appears</p>
+          <h2 id="welcomeTitle">Aura’s welcome</h2>
+          <p>This stage is deliberately unfinished. Aura can shape her entrance, words, movement and the strange rules of her establishment here.</p>
+        </div>
+      </section>
+
+      <section class="attractions" aria-label="Penny Fever attractions">
+        <article class="attraction-card fortune-card">
+          <p class="machine-number">Foyer attraction · free daily</p>
+          <div class="card-symbol" aria-hidden="true">✦</div>
+          <h2>One Fortune</h2>
+          <p>Aura considers a few harmless choices and issues one theatrical fortune ticket each Darwin day.</p>
+          <span class="status-ticket">Mechanics to be designed</span>
+        </article>
+
+        <article class="attraction-card cabinet-card">
+          <p class="machine-number">Permanent collection</p>
+          <div class="card-symbol" aria-hidden="true">⌑</div>
+          <h2>Cabinet of Curios</h2>
+          <p>Brass fragments, faded reels, handwritten fortunes, torn tickets and other peculiar souvenirs will gather behind the glass.</p>
+          <div class="empty-shelves" aria-label="Empty curio shelves">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="status-ticket">Shelves currently empty</span>
+        </article>
+
+        <article class="attraction-card love-card">
+          <p class="machine-number">First skill cabinet · payment disabled</p>
+          <div class="thermometer" aria-hidden="true"><span></span></div>
+          <h2>Love Thermometer</h2>
+          <p>Hold your nerve. Release inside the Sweet Heat. The cabinet will eventually reward timing—not blind chance.</p>
+          <span class="status-ticket">Cabinet under construction</span>
+        </article>
+
+        <article class="attraction-card future-card">
+          <p class="machine-number">Beyond the velvet</p>
+          <div class="curtain" aria-hidden="true"><span>?</span></div>
+          <h2>Future Cabinets</h2>
+          <p>Unannounced machinery waits behind this curtain. No future attraction is committed or built yet.</p>
+          <span class="status-ticket">Aura keeps the keys</span>
+        </article>
+      </section>
+
+      <footer class="foyer-footer">
+        <p>No accounts · no payments · no operational Instapic connections</p>
+        <button class="quiet-button" id="leaveArcade" type="button">Return through the little door</button>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
