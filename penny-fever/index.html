@@ -70,7 +70,7 @@
         <p class="eyebrow">Established at an uncertain hour</p>
         <h1 id="foyerTitle" tabindex="-1"><span>Aura’s</span> Penny Fever</h1>
         <p class="foyer-subtitle">Walk the boardwalk. Choose a canvas flap. See how far the night lets you go.</p>
-        <div class="night-board" id="nightBoard" aria-label="Tonight’s arcade score">
+        <div class="night-board" id="nightBoard" aria-label="Tonight’s carnival score">
           <div class="night-stat"><span class="night-label">Fever</span><strong id="feverScore">0</strong></div>
           <div class="night-stat"><span class="night-label">Streak</span><strong id="feverStreak">0</strong></div>
           <div class="night-stat"><span class="night-label">Stars</span><strong id="feverStars">☆☆☆</strong></div>
@@ -129,6 +129,15 @@
             <strong id="alleyNearestTent">Aura’s ticket booth</strong>
             <button class="walk-deeper" id="alleyWalkDeeper" type="button">Walk deeper ↓</button>
           </div>
+          <nav class="alley-directory" aria-label="Jump along the sideshow alley">
+            <span>ALLEY MAP</span>
+            <button type="button" data-alley-jump="0">Gate</button>
+            <button type="button" data-alley-jump="5">Oddities</button>
+            <button type="button" data-alley-jump="10">Midway</button>
+            <button type="button" data-alley-jump="15">After Dark</button>
+            <button type="button" data-alley-jump="20">Deep Alley</button>
+            <button type="button" data-alley-jump="25">Backstage</button>
+          </nav>
           <div class="alley-dressing" aria-hidden="true">
             <span class="alley-floss">FAIRY FLOSS</span>
             <span class="alley-ticket">ADMIT ONE</span>
@@ -927,7 +936,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the toss-stall flap</p>
           <h1 id="cabinet-ball-toss-title">Barely-Fit Ball Toss</h1>
           <p class="interior-blurb">Eight authored racks — triangle, sway, oval, cluster, spin, decoy, keyhole. After Warp Keyhole, ENDLESS coda.</p>
@@ -979,7 +988,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the penny-ledge flap</p>
           <h1 id="cabinet-coin-pusher-title">Coin Pusher Shelf</h1>
           <p class="interior-blurb">Seven authored floors — nursery, seam, overhang, double sweep, V-mouth, trapdoor, avalanche. After Avalanche Gallery, ENDLESS coda.</p>
@@ -1040,7 +1049,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the backglass glow</p>
           <h1 id="cabinet-pinball-title">Pinball Alley</h1>
           <p class="interior-blurb">Eight authored tables — bumpers, spinner, sink, ramp, storm, twin-flip gate, thorns, backglass. After Backglass Fever, ENDLESS coda.</p>
@@ -1091,7 +1100,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the spray-lane flap</p>
           <h1 id="cabinet-water-gun-title">Water Gun Duel</h1>
           <p class="interior-blurb">Seven authored heats. Twin mouths, zigzag maps, fake-open, mirror lane — not a faster ghost.</p>
@@ -1152,7 +1161,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the bottle-pyramid flap</p>
           <h1 id="cabinet-milk-bottles-title">Weighted Milk Bottles</h1>
           <p class="interior-blurb">Seven authored pyramids. Glue corner, split stack, wind shelf — not heavier bottoms alone.</p>
@@ -1207,7 +1216,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the felt-counter flap</p>
           <h1 id="cabinet-cover-the-spot-title">Cover-the-Spot</h1>
           <p class="interior-blurb">Seven authored spots. Oval, twin, ring, blob — not a smaller circle.</p>
@@ -1271,7 +1280,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the peep-hood flap</p>
           <h1 id="cabinet-mutoscope-title">Mutoscope Hood</h1>
           <p class="interior-blurb">Stillness opens the iris. Fidget slams it shut. Longer reels go deeper.</p>
@@ -1326,7 +1335,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the dark-glass flap</p>
           <h1 id="cabinet-catoptromancy-title">Catoptromancy Mirror</h1>
           <p class="interior-blurb">The wait IS the game. Hold gaze. Keep, burn, or double.</p>
@@ -1387,7 +1396,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the strength-tower flap</p>
           <h1 id="cabinet-high-striker-title">High Striker Pegs</h1>
           <p class="interior-blurb">Ring it — then keep climbing. The bell is a checkpoint, not the ending.</p>
@@ -1446,7 +1455,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the crooked-peg flap</p>
           <h1 id="cabinet-bent-rings-title">Bent Ring Pegs</h1>
           <p class="interior-blurb">Ring a bent peg — if it stays bent. They lean after you throw.</p>
@@ -1503,7 +1512,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the pegboard flap</p>
           <h1 id="cabinet-plinko-title">Plinko Pegboard</h1>
           <p class="interior-blurb">Drop when the board breathes. High slots pay. Three chips a stage — miss them all and the house keeps the night.</p>
@@ -1561,7 +1570,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the sugar-tub flap</p>
           <h1 id="cabinet-fairy-floss-title">Fairy Floss Wheel</h1>
           <p class="interior-blurb">Eight authored stages — Twin Strand, Gust Stall, Reverse Wind, Fake Snap, Sag Trap, Pulse Tub, Fever Sugar Opera. Then ENDLESS.</p>
@@ -1613,7 +1622,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the kettle-counter flap</p>
           <h1 id="cabinet-popcorn-title">Popcorn Kettle</h1>
           <p class="interior-blurb">Eight authored batches — Double Burst, Steam Gallery, Silent Pop, Lid Bounce, Colour Call, Mirror Tap, Fever Kernel Opera. Then ENDLESS.</p>
@@ -1664,7 +1673,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the pond-flap</p>
           <h1 id="cabinet-duck-pond-title">Duck Pond Hook</h1>
           <p class="interior-blurb">Eight authored ponds — Cross Current, Painted Decoy, Diving Shelf, Twin Call, Whirlpool Ring, Hook Mirror, Fever Duck Opera. Then ENDLESS.</p>
@@ -1720,7 +1729,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the skee-lane flap</p>
           <h1 id="cabinet-skee-ball-title">Skee-Ball Alley</h1>
           <p class="interior-blurb">Five authored boards. Crown, wax sheen, oval fifty, drift — then ENDLESS. Nine balls.</p>
@@ -1774,7 +1783,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the cloth-counter flap</p>
           <h1 id="cabinet-penny-pitch-title">Penny Pitch Cloth</h1>
           <p class="interior-blurb">Five authored cloths. Fold, steal, double jerk — then ENDLESS. Five pennies.</p>
@@ -1826,7 +1835,7 @@
       <div class="interior-sky" aria-hidden="true"></div>
       <div class="interior-room">
         <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Arcade hall</button>
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the dunk-seat flap</p>
           <h1 id="cabinet-dunk-tank-title">Dunk the Barker</h1>
           <p class="interior-blurb">Four authored seats. Skip, hitch, bob, then ENDLESS figure-eight. Three balls a seat. Keep it cute.</p>

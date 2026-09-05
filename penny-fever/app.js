@@ -80,7 +80,7 @@
     },
     {
       when: () => true,
-      text: "The arcade keeps a seat warm for the curious.",
+      text: "The midway keeps a lantern warm for the curious.",
       stub: "Alley: a mirror shard catching Darwin dusk.",
       curio: "mirror_shard",
       shelf: "alley",
@@ -637,6 +637,17 @@
       resetCabinetArt();
       refreshNightBoard();
       renderCharmWall();
+      if (alleyReturnY > 0) {
+        const returnY = alleyReturnY;
+        requestAnimationFrame(() => window.scrollTo({ top: returnY, behavior: "auto" }));
+        const returnedDoor = alleyReturnTent
+          ? document.querySelector(`.cabinet-door[data-enter="${alleyReturnTent}"]`)
+          : null;
+        if (returnedDoor) {
+          returnedDoor.classList.add("alley-returned");
+          setTimeout(() => returnedDoor.classList.remove("alley-returned"), 1200);
+        }
+      }
       return "foyer";
     }
     const m = hash.match(/^cabinet\/([\w-]+)(?:\/(play|result))?$/);
@@ -680,6 +691,8 @@
   }
 
   let tentTransitionBusy = false;
+  let alleyReturnY = 0;
+  let alleyReturnTent = "";
   let carnivalAudio = null;
   let carnivalSoundOn = false;
   let carnivalChimeTimer = null;
@@ -740,6 +753,8 @@
     if (!button || tentTransitionBusy) return;
     const slug = button.getAttribute("data-enter");
     if (!slug) return;
+    alleyReturnY = window.scrollY;
+    alleyReturnTent = slug;
     const overlay = $("tentTransition");
     const title = button.querySelector(".door-plaque strong");
     const line = button.querySelector(".door-plaque em");
@@ -3301,6 +3316,7 @@
     const fill = $("alleyWalkFill");
     const nearest = $("alleyNearestTent");
     const deeper = $("alleyWalkDeeper");
+    const districtButtons = [...document.querySelectorAll("[data-alley-jump]")];
     if (!doors.length || !depth || !fill || !nearest || !deeper) return;
 
     let current = -1;
@@ -3316,6 +3332,13 @@
       fill.style.width = `${Math.round(progress * 100)}%`;
       nearest.textContent = title ? title.textContent : "Unknown canvas flap";
       deeper.textContent = current >= doors.length - 1 ? "Back to gate ↑" : "Walk deeper ↓";
+      districtButtons.forEach((button, i) => {
+        const start = Number(button.getAttribute("data-alley-jump"));
+        const next = districtButtons[i + 1];
+        const end = next ? Number(next.getAttribute("data-alley-jump")) : doors.length;
+        if (current >= start && current < end) button.setAttribute("aria-current", "location");
+        else button.removeAttribute("aria-current");
+      });
       const motion = $("alleyMotion");
       if (motion) {
         motion.style.objectPosition = `center ${Math.round(30 + progress * 48)}%`;
@@ -3348,6 +3371,14 @@
       button.addEventListener("click", goArcade);
     });
     setupAlleyWalk();
+    document.querySelectorAll("[data-alley-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const doors = Array.from(document.querySelectorAll(".hall-perspective > .cabinet-door"));
+        const index = Number(button.getAttribute("data-alley-jump"));
+        const target = doors[index];
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
     const soundButton = $("carnivalSound");
     if (soundButton) soundButton.addEventListener("click", toggleCarnivalSound);
     document.addEventListener("pointerdown", (event) => {

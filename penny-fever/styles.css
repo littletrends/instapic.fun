@@ -1349,7 +1349,7 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
 .alley-walk-hud {
   position: sticky;
   z-index: 12;
-  top: 0.45rem;
+  top: 2.35rem;
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-areas: "depth meter button" "tent tent button";
@@ -1573,6 +1573,57 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
   outline: none;
 }
 .cabinet-door:active .door-3d { filter: brightness(1.2); transform: scale(0.985); }
+.cabinet-door.alley-returned {
+  animation: returned-tent 1.15s ease both;
+}
+@keyframes returned-tent {
+  0%, 100% { filter: none; }
+  35% { filter: brightness(1.38) saturate(1.25); }
+}
+
+.alley-directory {
+  position: sticky;
+  top: 5.65rem;
+  z-index: 13;
+  display: flex;
+  gap: 0.36rem;
+  align-items: center;
+  width: calc(100% - 1rem);
+  margin: 0.55rem auto 1rem;
+  padding: 0.42rem 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 1px solid rgba(212,164,90,0.34);
+  border-radius: 999px;
+  background: rgba(20,8,14,0.88);
+  box-shadow: 0 7px 22px rgba(0,0,0,0.46);
+  backdrop-filter: blur(8px);
+}
+.alley-directory::-webkit-scrollbar { display: none; }
+.alley-directory span {
+  flex: 0 0 auto;
+  padding-left: 0.25rem;
+  color: #e8bd70;
+  font: 800 0.54rem/1 system-ui,sans-serif;
+  letter-spacing: 0.12em;
+}
+.alley-directory button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(232,160,184,0.28);
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  color: #f7e1c4;
+  background: rgba(89,27,48,0.5);
+  font: 700 0.61rem/1 system-ui,sans-serif;
+  cursor: pointer;
+}
+.alley-directory button:active { transform: translateY(1px); background: #8a2545; }
+.alley-directory button[aria-current="location"] {
+  color: #281018;
+  background: linear-gradient(180deg, #f1d59d, #d7a552);
+  border-color: #f4dda9;
+  box-shadow: 0 0 12px rgba(226,174,87,0.42);
+}
 .door-3d {
   display: block;
   position: relative;
