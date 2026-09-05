@@ -15,17 +15,20 @@ npx --yes serve -l 4173
 1. Discovery door → foyer
 2. **One Fortune** — free once per Darwin day → ticket stub + Cabinet curio
 3. **Cabinet of Curios** — Alley Ephemera + Machine Guts
-4. **Love Thermometer** — hold / release Sweet Heat (demo coin) + challenge copy
+4. **Love Thermometer** — Heat Run until DEATH (miss the pink band). Depth = Heat Stage. Optional Practice · 3 rounds (no depth stamp).
 5. **Look Up, Darling** — device orientation or practice mode
 6. **SNAP! Freeze** — timing tap
 7. **Whisper Charm** — one-word charm → Alley curio
 8. **Showman’s Pass** — demo unlock (no Square) until midnight Darwin
-9. Dev reset clears `localStorage` key `pennyFever.v1`
+9. **Barely-Fit Ball Toss** — lead moving holes; racks before a 3-miss streak
+10. **Coin Pusher Shelf** — drop pennies, walk away or get buried
+11. **Pinball Alley** — one-thumb flipper; balls + table chapter
+12. Dev reset clears `localStorage` key `pennyFever.v1`
 
 ## Art
 
 - Proprietor and reactions: `assets/game/Aura_Reactions/`
-- Mirror Crew stills: `assets/crew/*` (modern animated-film Imagine cast)
+- Solo proprietor artwork: `assets/prepared/welcome-proprietor.webp` and `assets/game/Aura_Reactions/`
 - Cabinet states, curios and loops: `assets/game/` (web derivatives)
 - Full-quality organised originals remain outside the website repository in Downloads.
 
@@ -33,6 +36,10 @@ npx --yes serve -l 4173
 
 - Demo coins only until Aura calls opening night
 - No gambling / cash spins
+- Existing attractions read as sideshow tents and stalls: prop first, barker voice, depth-run promise
+- Vendor batch 01 is live on the hall: Barely-Fit Toss, Coin Pusher Shelf, Pinball Alley
+- Remaining Goblin Alley cabinets in `ops/GOBLIN_ALLEY_CABINETS.md` stay backlog
+- The foyer and current attractions share one nighttime boardwalk—not a menu of nested apps
 - Hard-refresh after pulls
 
 

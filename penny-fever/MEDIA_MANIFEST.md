@@ -2,8 +2,49 @@
 
 **Author:** Aura  
 **Date:** 2026-09-04 (Australia/Darwin)  
-**Source folder:** `/home/magic_mirror1/Downloads/Aura's Penny Fever`  
+**Current keeper source:** `assets/workshop-from-windows/`
 **Install target (Codex):** `instapic_fun/penny-fever/assets/` (Codex prepares/optimises — Aura does not copy or convert sources)
+
+## Wired keeper pass — 2026-09-05
+
+All paths below are isolated beneath `penny-fever/assets/prepared/`. Stills are used for first paint; matching compressed H.264 loops are available beside them for deliberate motion states.
+
+| UI role | Live prepared still | Prepared loop |
+|---|---|---|
+| Foyer arcade hall | `arcade-hall-wide.webp` | `arcade-hall-wide-loop.mp4` |
+| Discovery door closed | `door-closed.webp` | `door-closed-loop.mp4` |
+| Discovery door ajar | `door-ajar.webp` | `door-ajar-loop.mp4` |
+| Discovery door open | `door-open.webp` | `door-open-loop.mp4` |
+| Doorway beckon | `doorway-beckon.webp` | `doorway-beckon-loop.mp4` |
+| Ticket booth lean | `ticket-booth-lean.webp` | `ticket-booth-lean-loop.mp4` |
+| Welcome proprietor | `welcome-proprietor.webp` | `welcome-proprietor-loop.mp4` |
+| Love Thermometer mid-heat | `love-thermometer-mid-heat.webp` | `love-thermometer-mid-heat-loop.mp4` |
+| Love Thermometer tease | `love-thermometer-tease.webp` | `love-thermometer-tease-loop.mp4` |
+| Look Up wonder | `lookup-wonder.webp` | `lookup-wonder-loop.mp4` |
+| SNAP Freeze flash | `snap-freeze-flash.webp` | `snap-freeze-flash-loop.mp4` |
+| Night exterior (future room) | `night-carnival-exterior.webp` | `night-carnival-exterior-loop.mp4` |
+| Back-room storeroom (future room) | `back-room-storeroom.webp` | `back-room-storeroom-loop.mp4` |
+
+Live now: Set 4 hall backdrop; Set 7 closed/ajar/beckon/open entrance; Set 1 ticket-booth tile; Set 3 welcome; Sets 8–9 Love states; Set 10 Look Up; Set 11 SNAP. Set 5 and Set 6 are promoted but intentionally unwired for Aura's future rooms.
+
+Still using earlier real game art: Fortune, Cabinet of Curios, Whisper Charm, Pressed Penny and Showman's Pass. There are no SVG placeholders remaining in the rendered foyer or current cabinet interiors.
+
+## Goblin Alley framing — 2026-09-05
+
+The current hall is presented as a walkable sideshow alley, with existing doors reframed as tent mouths or physical stalls. Each primary vestibule leads with a prop joke, a depth readout and an in-world verb rather than an app-style action. Lightweight fairy-floss, admit-one and waiting-crowd scenery joins the existing alley backdrop without introducing another vendor.
+
+### Vendor stalls batch 01 — live 2026-09-05
+
+Playable depth-run tents on the hall (demo-grade loops). Dedicated Imagine stills are not in yet; vestibule heroes reuse prepared/game art. SVG stand-ins live at `assets/placeholders/` keyed below for Codex swaps.
+
+| Stall | Hall / vestibule art | Placeholder key | Depth |
+|---|---|---|---|
+| Barely-Fit Ball Toss | `ball-toss-board.webp` | `ball_toss_board` | Racks cleared |
+| Coin Pusher Shelf | `coin-pusher-greed.webp` | `coin_pusher_shelf` | Shelf metres / coins rescued |
+| Pinball Alley | `pinball-neon-playfield.webp` | `pinball_backglass` | Balls survived + table chapter |
+| Mutoscope Hood | `Cabinet_of_Curios/Mutoscope_Reel.webp` | `mutoscope_hood` | Cards seen |
+
+Remaining alley cabinets in `ops/GOBLIN_ALLEY_CABINETS.md` stay backlog.
 
 ## Rules for Codex
 - Do **not** treat this as “install everything.” Prefer **P1** first.
@@ -13,7 +54,7 @@
 
 ## Style locks
 - **Machines / cabinets:** ornate dark wood, brass, hearts, film-prop carnival (confirmed).
-- **Characters (Aura + Mirror Crew):** modern animated-film Imagine cast (locked look).
+- **Character:** solo locked Aura only; no group cast in the current UI.
 - **Stills first** for doorway beckon / ticket-booth lean / thermometer tease; 6s loops only where motion earns it (esp. doorway).
 
 ## Review status key
@@ -296,7 +337,7 @@ Common: Imagine 720p portrait. Most `768×1168`; three `720×1280`. **Aura has n
 |--------|--------|
 | Original filename | `grok-fedf4875-4c6f-4417-bcb1-83fc96271ba3-720p.mp4` |
 | Review | meta_only · 6s · 768×1168 · ~8.0M (heaviest) |
-| Intended location | *provisional:* Mirror Crew / foyer hero motion |
+| Intended location | *provisional:* solo Aura foyer hero motion |
 | Purpose | TBD |
 | Loop / once | **loop** if ambient |
 | Desired crop | **9:16** |
@@ -325,11 +366,10 @@ Common: Imagine 720p portrait. Most `768×1168`; three `720×1280`. **Aura has n
 3. `grok-61e850db-…jpg` → Fortune / stub prop  
 4. After scrub: best doorway **still** among remaining JPGs + optional beckon **loop** from C01–C03  
 
-## Aura next (placeholders)
-Wire `assets/placeholders/` names matching `suggested_asset_id` for P1 while Codex pipelines media.  
+## Aura next
+Keeper paths are stable under `assets/prepared/`; use the table above for future motion flourishes.
 No Square · not linked from live site · local preview only.
 
 ## Open blockers
-- Mother PC ↔ Grok Bot link drops during multi-file reads; several stills + all clips need a visual pass to replace `provisional` rows.
-- Aura will revise this manifest after a clean review session.
-
+- The Mother PC ↔ Grok Bot bridge may still flicker, but the approved keeper set is now local and wired.
+- Remaining wardrobe items stay optional until Aura assigns a cabinet or room.

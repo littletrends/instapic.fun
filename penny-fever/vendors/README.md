@@ -14,12 +14,12 @@ Core hall + existing cabinets stay in `../app.js` + `../index.html` (Codex).
 - `vendors.css` — stall vestibule / playfield chrome
 
 ## Batch 04
-- `fairy-floss.js` — Fairy Floss Wheel (HoldBand tension; wind cone; snap limit; depth = stages)
-- `popcorn.js` — Popcorn Kettle (TimingTap; true pops vs steam fakes; 3 burns; depth = stages)
-- `duck-pond.js` — Duck Pond Hook (Custom; hook the call colour; depth = stages)
-- `skee-ball.js` — Skee-Ball Alley (SlingAim; 9 balls; wax lies; depth = stages)
-- `penny-pitch.js` — Penny Pitch Cloth (SlingAim drop; cloth jerks; depth = stages)
-- `dunk-tank.js` — Dunk the Barker (SlingAim; 3 balls/seat; depth = dunks; playful)
+- `fairy-floss.js` — Fairy Floss Wheel (HoldBand tension; 5 authored STAGES + ENDLESS coda; snap limit; depth = stages)
+- `popcorn.js` — Popcorn Kettle (TimingTap; 5 authored STAGES + ENDLESS coda; steam fakes; 3 burns; depth = stages)
+- `duck-pond.js` — Duck Pond Hook (Custom; 5 authored STAGES + ENDLESS rotating call; depth = stages)
+- `skee-ball.js` — Skee-Ball Alley (SlingAim; 9 balls; wax lies mid-stage; death under_target; depth = stages)
+- `penny-pitch.js` — Penny Pitch Cloth (SlingAim drop; tent-visible jerk after release; death short_points; depth = stages)
+- `dunk-tank.js` — Dunk the Barker (SlingAim; 3 balls/seat; dunk checkpoint; death miss_seat; depth = dunks; playful)
 
 ## Register hook
 Stalls call `window.PennyFever.registerVendor({ id, playKey, chalk, defaults, bind, onShow, onLeave, onReset, refreshDepth })`.

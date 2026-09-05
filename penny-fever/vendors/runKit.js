@@ -20,9 +20,11 @@
     milk: ["Three softballs. That bottom row is concrete, sugar.", "Pyramid still standing. The heavy ones laughed."],
     coverspot: ["Spot uncovered. Greed ate the felt.", "Disc bounced off the counter. Rude."],
     watergun: ["Ghost filled first. Mouth dodged you cold.", "Stream dry. Clown mouth wandered off."],
-    highstriker: ["The hammer slipped. Rhythm, not spam.", "You fell off the first peg. Twice.", "The bell is a checkpoint. You treated it like an ending."],
-    bentring: ["Out of rings. The pegs leaned. You saw it.", "They duck on purpose. Ghost sticks told you."],
-    plinko: ["Three chips, no prize slot. The board breathed without you.", "That peg ate your chip. That’s the house."],
+    highstriker: ["The hammer slipped. Rhythm, not spam.", "You fell off the first peg. Twice.", "The bell is a checkpoint. You treated it like an ending.", "Ghost gold isn’t a window. Pale is real.", "Marker ran backwards. You kept the old beat."],
+    bentring: ["Out of rings. The pegs leaned. You saw it.", "They duck on purpose. Ghost sticks told you.", "They traded places. You threw where they were.", "The wave ducked after you committed."],
+    plinko: ["Three chips, no prize slot. The board breathed without you.", "That peg ate your chip. That’s the house.", "The pendulum lied. You dropped with the decoy.", "The funnel fed the swallow. That’s the house."],
+    mutoscope: ["You blinked first. The reel only loves statues.", "Fidget slammed the iris.", "Crank lied. The stutter was poison."],
+    catoptromancy: ["You looked away. The glass noticed.", "Double is sweaty. The glass took the bet.", "Hazy isn’t a skip. KEEP was still legal."],
     default: ["Dead. Deeper next coin.", "The alley keeps your mark.", "One more? Night’s still warm."],
   };
 
@@ -179,10 +181,53 @@
     if (gameId === "milk") return `Beat my Milk Bottles pyramid ${n} on Penny Fever`;
     if (gameId === "watergun") return `Beat my Water Gun heat ${n} on Penny Fever`;
     if (gameId === "coverspot") return `Beat my Cover-the-Spot stage ${n} on Penny Fever`;
+    if (gameId === "balltoss") return `Beat my Ball Toss rack ${n} on Penny Fever`;
+    if (gameId === "coinpusher") return `Beat my Coin Pusher floor ${n} on Penny Fever`;
+    if (gameId === "pinball") return `Beat my Pinball chapter ${n} on Penny Fever`;
+    if (gameId === "fairyfloss") return `Beat my Fairy Floss stage ${n} on Penny Fever`;
+    if (gameId === "popcorn") return `Beat my Popcorn stage ${n} on Penny Fever`;
+    if (gameId === "duckpond") return `Beat my Duck Pond stage ${n} on Penny Fever`;
+    if (gameId === "skee") return `Beat my Skee-Ball stage ${n} on Penny Fever`;
+    if (gameId === "pennypitch") return `Beat my Penny Pitch stage ${n} on Penny Fever`;
+    if (gameId === "dunk") return `Beat my Dunk seats ${n} on Penny Fever`;
+    if (gameId === "highstriker") return `Beat my High Striker pegs ${n} on Penny Fever`;
+    if (gameId === "bentring") return `Beat my Bent Ring Pegs stage ${n} on Penny Fever`;
+    if (gameId === "plinko") return `Beat my Plinko stage ${n} on Penny Fever`;
+    if (gameId === "mutoscope") return `Beat my Mutoscope stage ${n} on Penny Fever`;
+    if (gameId === "catoptromancy") return `Beat my Catoptromancy room ${n} on Penny Fever`;
     return `Beat my ${name} ${n} on Penny Fever`;
   }
 
   function auraDeathLine(gameId, depth, reason) {
+    const d = depth | 0;
+    if (gameId === "fairyfloss") {
+      if (d >= 6) return `Stage ${d}. That sugar web trusts you — barely.`;
+      if (d > 0) return `FLOSS ${d}m snapped. Cloud wanted slower hands.`;
+      return "You got greedy with the spin.";
+    }
+    if (gameId === "popcorn") {
+      if (reason === "fake_tap") return "Steam fake. Kernel laughed.";
+      if (d >= 6) return `Stage ${d}. You're reading the kettle's lies.`;
+      if (d >= 5) return `BATCH ${d}. Burns ate the kettle run.`;
+      return "That was steam, sugar.";
+    }
+    if (gameId === "duckpond") {
+      if (d >= 6) return `Stage ${d}. Hook small, call rotating — still fishing.`;
+      return "Wrong colour. Lucky ducks aren't that one.";
+    }
+    if (gameId === "skee") {
+      if (d >= 6) return `Stage ${d}. You're arguing with the wax and winning.`;
+      if (d > 0) return `SKEE ${d}. Nine balls, board still hungry.`;
+      return "Wax got you.";
+    }
+    if (gameId === "pennypitch") {
+      if (d >= 6) return `Stage ${d}. You're pitching through mood swings.`;
+      return "Cloth jerked. Your pennies disagreed.";
+    }
+    if (gameId === "dunk") {
+      if (d >= 6) return `Dunks ${d}. Crown is dripping for you.`;
+      return "Three balls. Plate danced away.";
+    }
     const pool = DEATH_LINES[gameId] || DEATH_LINES.default;
     return `${pick(pool)} (${depth}${reason ? " · " + reason : ""})`;
   }
