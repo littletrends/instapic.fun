@@ -14,8 +14,10 @@
 - death bust: "Spot uncovered. Greed ate the felt."
 - death miss_table: "Disc bounced off the counter. Rude."
 - cash out: "Smart cover. Depth sticks — leave the rest."
-- stage clear: "Coverage locked. Spot gets smaller."
-- deep: "Stage {n}. You're covering lies with skill."
+- stage clear: "Coverage locked. Next felt tells a different lie."
+- souvenir (authored 7, coda off): "Seven spots. The felt ran out of authored lies."
+- coda unlock: "Authored ride’s over. ENDLESS — jitter keeps lying."
+- deep: "Spot {n}. You're covering lies with skill."
 
 ## watergun
 - death ghost_win: "Ghost filled first. Mouth dodged you cold."
@@ -26,6 +28,6 @@
 - deep: "Heat {n}. Lane B felt that spray."
 
 ## challenge templates
-- Beat my Milk pyramid {n} on Penny Fever
+- Beat my Milk Bottles pyramid {n} on Penny Fever
 - Beat my Cover-the-Spot stage {n} on Penny Fever
 - Beat my Water Gun heat {n} on Penny Fever

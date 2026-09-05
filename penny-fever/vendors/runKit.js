@@ -11,12 +11,18 @@
     love: ["Missed the pink. Dead heat.", "Band slipped. Deeper next coin."],
     balltoss: ["Three misses. Board wins.", "Warped hole laughed."],
     coinpusher: ["Greed ate the shelf.", "Should’ve cashed."],
+    fairyfloss: ["You got greedy with the spin.", "Cloud wanted slower hands."],
+    popcorn: ["That was steam, sugar.", "Steam fake. Kernel laughed."],
     duckpond: ["Wrong colour. Lucky ducks aren't that one."],
     skee: ["Wax got you.", "Nine balls, board still hungry."],
     pennypitch: ["Cloth jerked. Your pennies disagreed."],
     dunk: ["Three balls. Plate danced away."],
     milk: ["Three softballs. That bottom row is concrete, sugar.", "Pyramid still standing. The heavy ones laughed."],
+    coverspot: ["Spot uncovered. Greed ate the felt.", "Disc bounced off the counter. Rude."],
     watergun: ["Ghost filled first. Mouth dodged you cold.", "Stream dry. Clown mouth wandered off."],
+    highstriker: ["The hammer slipped. Rhythm, not spam.", "You fell off the first peg. Twice.", "The bell is a checkpoint. You treated it like an ending."],
+    bentring: ["Out of rings. The pegs leaned. You saw it.", "They duck on purpose. Ghost sticks told you."],
+    plinko: ["Three chips, no prize slot. The board breathed without you.", "That peg ate your chip. That’s the house."],
     default: ["Dead. Deeper next coin.", "The alley keeps your mark.", "One more? Night’s still warm."],
   };
 
@@ -88,13 +94,28 @@
     return runCtx;
   }
 
-  function reportDepth(runCtx, depth) {
+  function declaredOf(gameId) {
+    const kit = PF.runKit || {};
+    return (kit.declared && kit.declared[gameId])
+      || (kit.p0 && kit.p0[gameId])
+      || {};
+  }
+
+  function reportDepth(runCtx, depth, extra) {
     if (!runCtx || !runCtx.alive) return;
     runCtx.depth = depth | 0;
+    const info = declaredOf(runCtx.gameId);
+    const unit = String(info.depthUnit || "Stage").toUpperCase();
+    const name = extra && extra.name;
+    const coda = !!(extra && extra.coda);
     const hud = document.querySelector(`[data-runkit-hud="${runCtx.gameId}"]`) || document.querySelector(".depth-hud");
-    if (hud) hud.textContent = `STAGE ${runCtx.depth}`;
+    if (hud) {
+      hud.textContent = coda
+        ? `ENDLESS · ${unit} ${runCtx.depth}${name ? " · " + name : ""}`
+        : `${unit} ${runCtx.depth}${name ? " · " + name : ""}`;
+    }
     if (typeof PF.showBanner === "function" && runCtx.depth > 0 && runCtx.depth % 3 === 0) {
-      try { PF.showBanner(`Depth ${runCtx.depth}`); } catch (_) {}
+      try { PF.showBanner(`${unit} ${runCtx.depth}`); } catch (_) {}
     }
   }
 
@@ -153,8 +174,12 @@
     return finishRun(null, partial, { navigate: false });
   }
 
-  function challengeText(name, depth) {
-    return `Beat my ${name} ${depth} on Penny Fever`;
+  function challengeText(name, depth, gameId) {
+    const n = depth | 0;
+    if (gameId === "milk") return `Beat my Milk Bottles pyramid ${n} on Penny Fever`;
+    if (gameId === "watergun") return `Beat my Water Gun heat ${n} on Penny Fever`;
+    if (gameId === "coverspot") return `Beat my Cover-the-Spot stage ${n} on Penny Fever`;
+    return `Beat my ${name} ${n} on Penny Fever`;
   }
 
   function auraDeathLine(gameId, depth, reason) {
@@ -474,12 +499,21 @@
         onNodeDeath: typeof api?.onNodeDeath === "function" ? api.onNodeDeath : () => {},
       };
     },
-    declare(stallId, engineName) {
+    declare(stallId, spec) {
       const state = getState();
-      if (!state) return;
+      if (!state) return null;
       if (!state.kitsTonight.includes(stallId)) state.kitsTonight.push(stallId);
       persist();
-      return { stallId, engine: engineName };
+      const info = (spec && typeof spec === "object")
+        ? Object.assign({ stallId, engine: spec.engine || "Custom" }, spec)
+        : { stallId, engine: spec || "Custom" };
+      PF.runKit.declared = PF.runKit.declared || {};
+      PF.runKit.declared[stallId] = info;
+      PF.runKit.p0 = PF.runKit.p0 || {};
+      PF.runKit.p0[stallId] = Object.assign({}, PF.runKit.p0[stallId] || {}, info);
+      PF.runKit.mounted = PF.runKit.mounted || {};
+      PF.runKit.mounted[stallId] = true;
+      return info;
     },
     engines: {
       HoldBand: { mount: HoldBandMount, create: legacyWrap(HoldBandMount) },

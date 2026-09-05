@@ -18,17 +18,21 @@ startRun({ gameId, coinCost=1, feverNode=false, feverGate=null })
 // spends coin unless feverNode (coin already spent by route)
 // returns runCtx
 
-reportDepth(runCtx, depth)           // HUD + optional toast
+reportDepth(runCtx, depth, extra?)   // HUD uses declared depthUnit; extra = { name, coda }
 reportStrike(runCtx, reason)         // pips; may not kill
 finishRun(runCtx, {
   depth, score, deathReason, cashedOut=false, meta={}
 })
 // writes bestDepth[gameId], lastRun[gameId], awards fever/stars, navigates result
 
-challengeText(name, depth) → string
+challengeText(name, depth, gameId?) → string
 auraDeathLine(gameId, depth, reason) → string  // table or procedural
 
 getBestDepth(gameId) → number
+
+declare(stallId, spec|engineName)
+// spec object: { engine, depthUnit, codaEnabled, authoredCount, sheet }
+// stores runKit.declared[stallId] + runKit.p0[stallId]; string engineName still works
 ```
 
 ## runCtx shape
@@ -71,13 +75,15 @@ Fortune + Catoptromancy skins.
 ### Custom
 Pinball, Bumper, Log Roll, Ladder, Fever Run controller, Closing Time, Pack draft — declare Custom and keep RunResult compatible.
 
-### Authored rooms + codaEnabled (Milk PYRAMID · Water HEAT · P0 hybrid)
-Do **not** ship Milk / Water as a pure `stageParams(n)` number climb. Each stall owns an `authored[]` table (unique names, layouts, cheat beats) then optional coda:
+### Authored rooms + codaEnabled (Milk PYRAMID · Cover SPOT · Water HEAT · P0 hybrid)
+Do **not** ship Milk / Cover / Water as a pure `stageParams(n)` number climb. Each stall owns an `authored[]` table (unique names, layouts, cheat beats) then optional coda:
 
 ```js
 PF.runKit.declare("milk", { engine:"SlingAim", depthUnit:"Pyramid", codaEnabled:true, authoredCount:7, sheet:"GOBLIN_AUTHORED_LEVELS_P0.md" });
 // clear → next authored; after last → if (codaEnabled) codaParams(n) else souvenirClear
 // HUD: PYRAMID {n} · {name} ; coda labeled ENDLESS
+PF.runKit.declare("coverspot", { engine:"GreedFloor", depthUnit:"Spot", codaEnabled:true, authoredCount:7, cashOut:true, sheet:"GOBLIN_AUTHORED_LEVELS_P0.md" });
+// HUD: SPOT {n} · {name} ; coda labeled ENDLESS · cash out between spots
 PF.runKit.declare("watergun", { engine:"Custom", depthUnit:"Heat", codaEnabled:true, authoredCount:7, sheet:"GOBLIN_AUTHORED_LEVELS_P0.md" });
 // HUD: HEAT {n} · {name} ; coda labeled ENDLESS
 ```
@@ -95,13 +101,13 @@ PF.runKit.declare("watergun", { engine:"Custom", depthUnit:"Heat", codaEnabled:t
 | coinpusher | GreedFloor | Floor | BATCH01 |
 | pinball | Custom | Chapter | BATCH01 |
 | milk | SlingAim | Pyramid | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled |
-| coverspot | GreedFloor | Stage | BATCH02 |
+| coverspot | GreedFloor | Spot | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled · WIRED vendors/cover-the-spot.js |
 | watergun | Custom (hold-spray) | Heat | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled |
 | mutoscope | Custom (stillness) | Stage | BATCH03 |
 | catoptromancy | OracleRooms | Room | BATCH03 |
-| highstriker | TimingTap | Pegs | BATCH03 |
-| bentring | SlingAim | Stage | BATCH03 |
-| plinko | Custom | Stage | BATCH03 |
+| highstriker | TimingTap | Pegs | BATCH03 · WIRED vendors/high-striker.js |
+| bentring | SlingAim | Stage | BATCH03 · WIRED vendors/bent-rings.js |
+| plinko | Custom | Stage | BATCH03 · WIRED vendors/plinko.js |
 | fairyfloss | HoldBand (tension) | Stage | BATCH04 |
 | popcorn | TimingTap | Stage | BATCH04 |
 | duckpond | Custom | Stage | BATCH04 |
@@ -199,8 +205,14 @@ PF.runKit.declare("watergun", { engine:"Custom", depthUnit:"Heat", codaEnabled:t
 - [ ] pinball Custom still emits RunResult
 - [ ] Teaser delight removed for any gameId with a /play engine
 - [ ] Door tag `Depth run` only if engine mounted
-- [ ] milk SlingAim · 7 authored PYRAMID rooms (not pure stageParams) · codaEnabled
-- [ ] watergun Custom hold-spray · 7 authored HEAT maps (not pure stageParams) · codaEnabled
+- [x] BATCH03 highstriker TimingTap · vendors/high-striker.js · depth=pegs · bell checkpoint
+- [x] BATCH03 bentring SlingAim · vendors/bent-rings.js · mid-flight lean · ringsPerStage=max(3,need)
+- [x] BATCH03 plinko Custom · vendors/plinko.js · breath tilt · first paying slot clears
+
+PF only. Never booth/port 6000. Never Imagine. Leave mutoscope.js + catoptromancy.js to their desks.
+- [x] milk SlingAim · 7 authored PYRAMID rooms · vendors/milk-bottles.js · codaEnabled · not pure stageParams
+- [x] coverspot GreedFloor · 7 authored SPOT rooms (not pure stageParams) · codaEnabled · cashOut between spots · vendors/cover-the-spot.js
+- [x] watergun Custom hold-spray · 7 authored HEAT maps · vendors/water-gun-duel.js · codaEnabled · not pure stageParams
 
 ## Accept
 One afternoon: Love Heat Run feels endless; Ball Toss dies on 3rd miss; Pusher cash-out dilemma exists; result tickets share layout.

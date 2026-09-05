@@ -1,4 +1,5 @@
 # Batch 02 mount configs — drop-in for Desktop Grok (align to runKit)
+# LIVE 2026-09-05 — vendors/milk-bottles.js · water-gun-duel.js (Desktop Grok). Cover-the-spot.js is a sibling stall — leave it to its desk.
 # No ping needed — pull when wiring Milk / Cover-the-Spot / Water Gun.
 # engine declarations match GOBLIN_RUNKIT_API.md + GOBLIN_BATCH02_BUILD_SHEETS.md
 # Style twin of GOBLIN_P0_MOUNT_CONFIGS.md
@@ -49,37 +50,52 @@ function milkLevel(n) {
 ---
 
 ## coverspot — GreedFloor · Cover-the-Spot Cruel
+# Authored SPOT rooms (GOBLIN_AUTHORED_LEVELS_P0.md). NOT pure stageParams climb.
+# LIVE: vendors/cover-the-spot.js (Desktop Grok desk). Tight Felt is the one allowed ratio-bridge.
 ```js
 PF.runKit.declare("coverspot", {
   engine: "GreedFloor",
   displayName: "Cover-the-Spot Cruel",
-  depthUnit: "Stage",
-  sheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
+  depthUnit: "Spot",
+  sheet: "GOBLIN_AUTHORED_LEVELS_P0.md",
+  batchSheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
   cashOut: true, // between stages only (optional bank)
+  codaEnabled: true, // hybrid: 7 authored rooms then optional ENDLESS
+  authoredCount: 7,
 });
 
+const COVER_LEVELS = [
+  { id:1, name:"Red Circle Honest", kind:"circle", ratio:0.72, targetPct:70, maxDiscs:4, drift:"none" },
+  { id:2, name:"Tight Felt", kind:"circle", ratio:0.68, targetPct:75, maxDiscs:4, drift:"none" }, // ratio-bridge only
+  { id:3, name:"Oval Blush", kind:"oval", ovalW:1.3, ratio:0.70, targetPct:72, maxDiscs:5 },
+  { id:4, name:"Drifting Dot", kind:"drift", ratio:0.70, targetPct:74, maxDiscs:5, drift:"slow" },
+  { id:5, name:"Twin Spots", kind:"twin", ratio:0.72, targetPct:70, maxDiscs:5, twinSep:64, twinR:46 },
+  { id:6, name:"Ring Spot", kind:"ring", ratio:0.56, targetPct:72, maxDiscs:5, innerRatio:0.48 },
+  { id:7, name:"Jitter Stamp", kind:"blob", ratio:0.72, targetPct:85, maxDiscs:6, drift:"jitter" },
+];
+function coverspotCodaParams(n) {
+  const t = n - 7;
+  return { id:n, name:`Felt Greed ${n}`, kind:"blob", coda:true,
+    ratio: Math.max(0.42, 0.56 - 0.02 * t), targetPct: Math.min(94, 85 + t),
+    maxDiscs:6, drift:"jitter" };
+}
 function coverspotStageParams(n) {
-  const t = n - 1;
-  return {
-    id: n,
-    title: n === 1 ? "Almost Fits" : n < 4 ? "Felt Lie" : n < 6 ? "Drift Spot" : "Greedy 94",
-    // r/R — disc never covers alone at stage 1
-    ratio: n === 1 ? 0.72 : n === 2 ? 0.68 : n === 3 ? 0.64 : n === 4 ? 0.60 : n === 5 ? 0.56 : Math.max(0.42, 0.56 - 0.02 * t),
-    targetPct: n === 1 ? 70 : n === 2 ? 75 : n === 3 ? 78 : n === 4 ? 82 : n === 5 ? 85 : Math.min(94, 85 + t),
-    maxDiscs: n < 3 ? 4 : n < 6 ? 5 : 6,
-    spotDrift: n < 3 ? "none" : n < 4 ? "slow" : n < 6 ? "plus" : "jitter",
-    gridStamp: 64, // coverage approx
-    deathOnFailTarget: true, // fail targetPct within maxDiscs → DEATH
-  };
+  if (n <= 7) return COVER_LEVELS[n - 1];
+  if (!codaEnabled) return null; // souvenirClear
+  return coverspotCodaParams(n);
 }
 // Scoring: floor(coverage*100) per clear + 200*stage
-// Depth = stages cleared
-// Death: coverage < targetPct after maxDiscs
+// Depth = spots cleared (HUD: SPOT {n} · {name} ; coda labeled ENDLESS)
+// Death: coverage < targetPct after maxDiscs · 2 table misses
+// Twin: BOTH circles must hit targetPct (split attention — not average cheese)
+// Drift: discs stick in world space; live coverage can clear (lead the walk)
+// Ring: annulus only; center hole is a trap
 // Cash out between stages = cashedOut:true finishRun (depth kept)
-// finishRun({ gameId:"coverspot", depth, score, deathReason:"bust"|"miss_table", cashedOut })
-// bestDepth.coverspot = Stage
+// finishRun({ gameId:"coverspot", depth, score, deathReason:"bust"|"miss_table"|"souvenir", cashedOut })
+// bestDepth.coverspot = Spot
+// Challenge: Beat my Cover-the-Spot stage {n} on Penny Fever
 ```
-**Don’ts:** true RNG win on first disc · unreadable % meter
+**Don’ts:** true RNG win on first disc · unreadable % meter · same circle + smaller r/R as the *only* progression (Tight Felt is the one allowed bridge)
 
 ---
 
@@ -118,7 +134,7 @@ function waterLevel(n) {
 }
 // Scoring: +300 per heat win + leftover fill advantage
 // Depth = heats won
-// Death: ghost wins heat | stall (0 hit time) past stallLimitMs
+// Death: ghost wins heat | stall (no hit while ghost advances) past stallLimitMs
 // After authored 7: codaEnabled → ENDLESS Inferno Lane {n} else souvenir
 // finishRun({ gameId:"watergun", depth, score, deathReason:"ghost_win"|"stall"|"souvenir" })
 // bestDepth.watergun = Heat
@@ -137,5 +153,5 @@ Door tag: `Depth run` only if engine mounted.
 | gameId | depthUnit | typical deathReason |
 |--------|-----------|---------------------|
 | milk | Pyramid | throws, incomplete, souvenir |
-| coverspot | Stage | bust, miss_table |
+| coverspot | Spot | bust, miss_table, souvenir |
 | watergun | Heat | ghost_win, stall, souvenir |

@@ -1,6 +1,7 @@
 /* Weighted Milk Bottles — Desktop Grok owns this file. PF only. Never booth/port 6000.
  * Authored PYRAMID rooms (GOBLIN_AUTHORED_LEVELS_P0.md) + BATCH02 scoring.
- * Engine: SlingAim · depthUnit: Pyramid · gameId: milk · codaEnabled */
+ * Engine: SlingAim · depthUnit: Pyramid · gameId: milk · codaEnabled
+ * NOT a pure stageParams climb — 7 named rooms, then optional ENDLESS coda. */
 (() => {
   "use strict";
   const PF = window.PennyFever;
@@ -18,6 +19,7 @@
   const FALL_ROT = (50 * Math.PI) / 180;
   const GAME_ID = "milk";
   const CODA_ENABLED = true;
+  const AUTHORED_COUNT = 7;
   let run = null;
   let idleRaf = 0;
 
@@ -39,41 +41,49 @@
     punch: "Depth run — press START. No one-tap prize.",
   };
 
+  /* Authored PYRAMID rooms — unique layout / cheat / beat. Not “same 3–2–1, heavier bottoms.” */
   const MILK_LEVELS = [
     {
       id: 1, name: "Fairground Six", kind: "classic", layout: "3-2-1",
       topMass: 1, midMass: 1.4, bottomMass: 2.0, pinSpacing: "wide", gap: 34,
       windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      barker: "Classic six. Aim the base — the cream on top is a liar.",
     },
     {
       id: 2, name: "Heavy Heels", kind: "heavyHeels", layout: "3-2-1",
       topMass: 0.82, midMass: 1.15, bottomMass: 2.6, pinSpacing: "wide", gap: 34,
       windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      barker: "Same silhouette. Bottoms are concrete. Tops fly if you let them.",
     },
     {
       id: 3, name: "Wide Shoulders", kind: "wideShoulders", layout: "4-3-2-1",
-      topMass: 1, midMass: 1.7, bottomMass: 2.4, pinSpacing: "wide", gap: 26,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 32,
+      topMass: 1, midMass: 1.7, bottomMass: 2.4, pinSpacing: "wide", gap: 42,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 31,
+      barker: "Ten pins. New silhouette. Mid row fights back too.",
     },
     {
       id: 4, name: "Glue Corner", kind: "glueCorner", layout: "3-2-1",
       topMass: 1, midMass: 1.4, bottomMass: 2.4, pinSpacing: "normal", gap: 29.5,
       windDrift: 0, glueBottomCorner: true, stuckBottle: false, rise: 39,
+      barker: "One bottom corner is glued. Plan the second shot.",
     },
     {
-      id: 5, name: "Split Stack", kind: "splitStack", layout: "3+3",
-      topMass: 1, midMass: 1.35, bottomMass: 2.5, pinSpacing: "wide", gap: 36,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 42, stacks: 2,
+      id: 5, name: "Split Stack", kind: "splitStack", layout: "3+3", stacks: 2,
+      topMass: 1, midMass: 1.35, bottomMass: 2.5, pinSpacing: "wide", gap: 34,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 42,
+      barker: "Two boards. Both must fall. Center aisle is dead air.",
     },
     {
       id: 6, name: "Wind Shelf", kind: "windShelf", layout: "3-2-1",
       topMass: 1, midMass: 1.4, bottomMass: 2.6, pinSpacing: "tight", gap: 25.8,
       windDrift: 0.26, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      barker: "Lateral wind on the ball. Lead the throw into the gust.",
     },
     {
       id: 7, name: "Stuck Pin Atelier", kind: "stuckPin", layout: "3-2-1",
       topMass: 1, midMass: 1.45, bottomMass: 3.2, pinSpacing: "tight", gap: 25.2,
       windDrift: 0.08, glueBottomCorner: false, stuckBottle: true, rise: 39,
+      barker: "Dark pin is stuck. Scout it, then strike. Bottoms are lead.",
     },
   ];
 
@@ -84,7 +94,7 @@
     sheet: "GOBLIN_AUTHORED_LEVELS_P0.md",
     batchSheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
     codaEnabled: CODA_ENABLED,
-    authoredCount: MILK_LEVELS.length,
+    authoredCount: AUTHORED_COUNT,
   };
 
   function rk() {
@@ -92,8 +102,8 @@
   }
 
   function milkCodaParams(n) {
-    const stage = Math.max(MILK_LEVELS.length + 1, n | 0);
-    const t = stage - MILK_LEVELS.length;
+    const stage = Math.max(AUTHORED_COUNT + 1, n | 0);
+    const t = stage - AUTHORED_COUNT;
     return {
       id: stage,
       name: `Concrete Row ${stage}`,
@@ -114,12 +124,13 @@
       fallRotDeg: 50,
       missesToDeath: 3,
       stacks: 1,
+      barker: "ENDLESS — concrete keeps climbing.",
     };
   }
 
   function milkLevel(n) {
     const stage = Math.max(1, n | 0);
-    if (stage <= MILK_LEVELS.length) {
+    if (stage <= AUTHORED_COUNT) {
       const L = MILK_LEVELS[stage - 1];
       return Object.assign({
         throwsPerPyramid: 3,
@@ -133,14 +144,22 @@
     return milkCodaParams(stage);
   }
 
-  function milkStageParams(n) {
-    return milkLevel(n) || milkCodaParams(Math.max(MILK_LEVELS.length + 1, n | 0));
-  }
-
   function hudStageLine(spec, cleared) {
     if (!spec) return `PYRAMID ${cleared | 0}`;
     if (spec.coda) return `ENDLESS · PYRAMID ${spec.id} · ${spec.name}`;
     return `PYRAMID ${spec.id} · ${spec.name}`;
+  }
+
+  function roomTell(spec) {
+    if (!spec) return "BOTTOM ROW IS LEAD";
+    if (spec.kind === "splitStack") return "TWO BOARDS · BOTH MUST FALL";
+    if (spec.kind === "glueCorner") return "ONE CORNER IS GLUED";
+    if (spec.kind === "stuckPin") return "DARK PIN IS STUCK";
+    if (spec.kind === "windShelf") return "WIND ON THE BALL";
+    if (spec.kind === "wideShoulders") return "TEN PINS · WIDE BASE";
+    if (spec.kind === "heavyHeels") return "HEELS ARE CONCRETE";
+    if (spec.coda) return "ENDLESS · CONCRETE ROW";
+    return "BOTTOM ROW IS LEAD";
   }
 
   function declareP0() {
@@ -151,10 +170,12 @@
     }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = Object.assign({
-      stageParams: milkLevel,
-      levels: MILK_LEVELS,
+      authored: MILK_LEVELS,
+      authoredCount: AUTHORED_COUNT,
       codaEnabled: CODA_ENABLED,
       codaParams: milkCodaParams,
+      level: milkLevel,
+      stageParams: milkLevel,
     }, P0_MOUNT);
     kitRun.mounted = kitRun.mounted || {};
     kitRun.mounted[GAME_ID] = true;
@@ -226,7 +247,6 @@
       return engines.SlingAim.mount($("milkCanvas"), {
         gravity: GRAVITY,
         missesToDeath: 3,
-        stageParams: milkStageParams,
         onThrow() { kit.sfx("throw"); },
         hitTest() { return false; },
       }, ctx);
@@ -256,12 +276,12 @@
     }
     if (spec.kind === "splitStack" || spec.layout === "3+3") {
       return [
-        { col: -1.28, row: 0, stack: 0 },
-        { col: -1.78, row: 1, stack: 0 },
-        { col: -0.78, row: 1, stack: 0 },
-        { col: 1.28, row: 0, stack: 1 },
-        { col: 0.78, row: 1, stack: 1 },
-        { col: 1.78, row: 1, stack: 1 },
+        { col: -2.15, row: 0, stack: 0 },
+        { col: -2.65, row: 1, stack: 0 },
+        { col: -1.65, row: 1, stack: 0 },
+        { col: 2.15, row: 0, stack: 1 },
+        { col: 1.65, row: 1, stack: 1 },
+        { col: 2.65, row: 1, stack: 1 },
       ];
     }
     return [
@@ -284,11 +304,21 @@
     const slots = layoutSlots(spec);
     let bottomRow = 0;
     slots.forEach((s) => { if (s.row > bottomRow) bottomRow = s.row; });
-    const glueCorner = spec.glueBottomCorner ? (n % 2 === 0 ? -1 : 1) : null;
+    const bottomSlots = slots.filter((s) => s.row === bottomRow);
+    let gluePick = null;
+    if (spec.glueBottomCorner && bottomSlots.length) {
+      let left = bottomSlots[0];
+      let right = bottomSlots[0];
+      bottomSlots.forEach((s) => {
+        if (s.col < left.col) left = s;
+        if (s.col > right.col) right = s;
+      });
+      gluePick = Math.random() < 0.5 ? left : right;
+    }
     const stuckSlot = spec.stuckBottle ? ((Math.random() * slots.length) | 0) : -1;
     return slots.map((s, i) => {
       const heavy = s.row === bottomRow;
-      const glued = heavy && glueCorner != null && Math.sign(s.col || 0.0001) === glueCorner;
+      const glued = !!(gluePick && s === gluePick);
       const stuck = i === stuckSlot;
       let mass = spec.topMass;
       if (s.row > 0 && s.row < bottomRow) mass = spec.midMass;
@@ -301,7 +331,7 @@
         vy: 0,
         rot: 0,
         spin: 0,
-        r: spec.kind === "wideShoulders" ? BOTTLE_R * 0.92 : BOTTLE_R,
+        r: spec.kind === "wideShoulders" ? BOTTLE_R * 0.9 : BOTTLE_R,
         row: s.row,
         stack: s.stack || 0,
         heavy,
@@ -501,6 +531,19 @@
         ctx.fillStyle = "rgba(12,8,6,0.45)";
         ctx.fillRect(-bodyW + 1, -h / 2 + 12, bodyW * 2 - 2, h / 2);
       }
+      if (b.glued) {
+        ctx.fillStyle = "rgba(212,164,90,0.55)";
+        ctx.beginPath();
+        ctx.moveTo(-6, h / 2 - 2);
+        ctx.quadraticCurveTo(-2, h / 2 + 10, 4, h / 2 + 8);
+        ctx.quadraticCurveTo(0, h / 2 + 2, -6, h / 2 - 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = b.stuck ? "#e8a0b8" : "#f0d09a";
+      ctx.font = "8px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(b.stuck ? "STUCK" : "GLUE", 0, -h / 2 - 8);
+      ctx.textAlign = "left";
     }
     ctx.restore();
   }
@@ -519,13 +562,26 @@
     const wind = run && run.spec ? run.spec.windDrift : 0;
     for (let i = 0; i < 16; i += 1) {
       vy += GRAVITY;
-      vx += wind * 0.35;
+      vx += wind * 0.55;
       x += vx;
       y += vy;
       pts.push({ x, y });
       if (y > H - 8 || x < 0 || x > W) break;
     }
     return pts;
+  }
+
+  function drawRoomPlate(ctx, spec) {
+    if (!spec) return;
+    ctx.fillStyle = "rgba(12,6,9,0.72)";
+    ctx.fillRect(28, 52, W - 56, 26);
+    ctx.strokeStyle = spec.coda ? "rgba(196,30,58,0.85)" : "rgba(212,164,90,0.7)";
+    ctx.strokeRect(28.5, 52.5, W - 57, 25);
+    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#f0d09a";
+    ctx.font = "11px Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText(hudStageLine(spec, run ? run.pyramids : 0), W / 2, 70);
+    ctx.textAlign = "left";
   }
 
   function draw() {
@@ -565,9 +621,17 @@
     ctx.fillRect(SHELF_L - 10, SHELF_Y, SHELF_R - SHELF_L + 20, 3);
     ctx.fillStyle = "#1a0c10";
     ctx.fillRect(16, SHELF_Y + 14, W - 32, 10);
-    const room = run && run.spec ? run.spec : null;
+    const room = run && run.spec ? run.spec : milkLevel(1);
     if (room && room.kind === "splitStack") {
-      ctx.strokeStyle = "rgba(196,30,58,0.45)";
+      ctx.fillStyle = "rgba(12,6,9,0.45)";
+      ctx.fillRect(W / 2 - 18, 86, 36, SHELF_Y - 86);
+      ctx.fillStyle = "#4a3020";
+      ctx.fillRect(42, SHELF_Y - 5, 96, 12);
+      ctx.fillRect(W - 42 - 96, SHELF_Y - 5, 96, 12);
+      ctx.fillStyle = "#d4a45a";
+      ctx.fillRect(42, SHELF_Y - 5, 96, 3);
+      ctx.fillRect(W - 42 - 96, SHELF_Y - 5, 96, 3);
+      ctx.strokeStyle = "rgba(196,30,58,0.55)";
       ctx.setLineDash([4, 6]);
       ctx.beginPath();
       ctx.moveTo(W / 2, 58);
@@ -575,16 +639,22 @@
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    if (room && room.kind === "wideShoulders") {
+      ctx.fillStyle = "#4a3020";
+      ctx.fillRect(SHELF_L - 16, SHELF_Y, SHELF_R - SHELF_L + 32, 14);
+      ctx.fillStyle = "#d4a45a";
+      ctx.fillRect(SHELF_L - 16, SHELF_Y, SHELF_R - SHELF_L + 32, 3);
+    }
     if (room && (room.kind === "windShelf" || (room.coda && room.windDrift))) {
       const tWind = nowT();
-      ctx.strokeStyle = "rgba(240,208,154,0.38)";
+      ctx.strokeStyle = "rgba(240,208,154,0.42)";
       ctx.lineWidth = 1.2;
       for (let i = 0; i < 5; i += 1) {
         const y = 78 + i * 38 + Math.sin(tWind * 0.004 + i) * 6;
-        const x0 = 36 + ((tWind * 0.06 + i * 28) % 240);
+        const x0 = 36 + ((tWind * 0.08 + i * 28) % 240);
         ctx.beginPath();
         ctx.moveTo(x0, y);
-        ctx.lineTo(x0 + 28, y - 4);
+        ctx.lineTo(x0 + 34, y - 5);
         ctx.stroke();
       }
     }
@@ -592,19 +662,7 @@
       ctx.fillStyle = "rgba(240,208,154,0.72)";
       ctx.font = "9px Georgia, serif";
       ctx.textAlign = "center";
-      const specNow = run && run.spec ? run.spec : milkLevel(1);
-      const shelfTell = specNow && specNow.kind === "splitStack"
-        ? "TWO BOARDS · BOTH MUST FALL"
-        : specNow && specNow.kind === "glueCorner"
-          ? "ONE CORNER IS GLUED"
-          : specNow && specNow.kind === "stuckPin"
-            ? "DARK PIN IS STUCK"
-            : specNow && specNow.kind === "windShelf"
-              ? "WIND ON THE BALL"
-              : specNow && specNow.coda
-                ? "ENDLESS · CONCRETE ROW"
-                : "BOTTOM ROW IS LEAD";
-      ctx.fillText(shelfTell, W / 2, SHELF_Y + 22);
+      ctx.fillText(roomTell(room), W / 2, SHELF_Y + 22);
       ctx.textAlign = "left";
     }
 
@@ -617,6 +675,8 @@
     ctx.textAlign = "center";
     ctx.fillText("KNOCK ’EM ALL · 5¢", W / 2, 99);
     ctx.textAlign = "left";
+
+    drawRoomPlate(ctx, room);
 
     const t = nowT();
     const list = bottles();
@@ -798,14 +858,16 @@
       closedStamp: false,
       lastNote: "",
     };
-    if (rk() && typeof rk().reportDepth === "function") rk().reportDepth(kitRun, 0);
+    if (rk() && typeof rk().reportDepth === "function") {
+      rk().reportDepth(kitRun, 0, { name: spec.name, coda: !!spec.coda });
+    }
     $("milkStart").disabled = true;
     $("milkVerdict").hidden = true;
     kit.hideResult("milkResult");
     PF.setTier("milkTier", "", "");
     kit.setMode(card(), "play");
     stampDepthCopy();
-    $("milkStatus").textContent = `PYRAMID 1 · ${spec.name} — drag back. Bottom row is lead.`;
+    $("milkStatus").textContent = `PYRAMID 1 · ${spec.name} — ${spec.barker}`;
     PF.focusCard("milkCard", true);
     PF.setAura("think");
     const loop = (now) => {
@@ -977,7 +1039,10 @@
         ball.x += ball.vx * k;
         ball.y += ball.vy * k;
       }
-      if (run.spec.windDrift) ball.vx += run.spec.windDrift * k * Math.sin(run.t * 0.0024);
+      if (run.spec.windDrift) {
+        const gust = 1 + 0.35 * Math.sin(run.t * 0.004);
+        ball.vx += run.spec.windDrift * k * gust;
+      }
       ball.life += dt;
       if (ball.y < 28) {
         ball.y = 28;
@@ -1045,7 +1110,9 @@
     run.pyramids += 1;
     run.score += 400 + 80 * run.spec.id;
     saveLiveDepth();
-    if (rk() && typeof rk().reportDepth === "function") rk().reportDepth(run.kitRun, run.pyramids);
+    if (rk() && typeof rk().reportDepth === "function") {
+      rk().reportDepth(run.kitRun, run.pyramids, { name: next && next.name, coda: !!(next && next.coda) });
+    }
     kit.sfx("rack");
     const next = milkLevel(run.pyramids + 1);
     if (!next) {
@@ -1060,10 +1127,10 @@
     run.ball = null;
     run.aim = null;
     run.settle = 0;
-    if (next.coda && run.pyramids === MILK_LEVELS.length) {
+    if (next.coda && run.pyramids === AUTHORED_COUNT) {
       $("milkStatus").textContent = AURA.coda;
     } else {
-      $("milkStatus").textContent = `${hudStageLine(next, run.pyramids)} — ${AURA.clear}`;
+      $("milkStatus").textContent = `${hudStageLine(next, run.pyramids)} — ${next.barker || AURA.clear}`;
     }
     PF.setAura("celebrate");
     PF.refreshDepth();
@@ -1100,6 +1167,7 @@
         knocked,
         stage: run.spec && run.spec.id,
         room: run.spec && run.spec.name,
+        kind: run.spec && run.spec.kind,
         coda: !!(run.spec && run.spec.coda),
         lastNote: run.lastNote || "",
       },
@@ -1109,13 +1177,14 @@
     $("milkStart").textContent = "TOSS AGAIN · 1 demo coin";
     PF.focusCard("milkCard", false);
     kit.setMode(card(), "result");
-    const line = `PYRAMID ${pyramids} · SCORE ${score}`;
+    const roomName = (run.spec && run.spec.name) || "";
+    const line = `PYRAMID ${pyramids}${roomName ? " · " + roomName : ""} · SCORE ${score}`;
     const aura = auraLine(deathReason, pyramids);
     const challenge = challengeLine(pyramids);
     $("milkVerdict").hidden = false;
     $("milkVerdict").textContent = deathReason === "souvenir"
       ? `Souvenir clear. ${line} · authored ride done.`
-      : `${line} · ${aura}`;
+      : `${line} · ${deathReason} · ${aura}`;
     kit.fillResult({
       root: "milkResult",
       depth: "milkResultDepth",
@@ -1123,8 +1192,8 @@
       aura: "milkResultAura",
       copied: "milkCopied",
     }, {
-      depthLine: `PYRAMID ${pyramids}`,
-      scoreLine: `SCORE ${score}`,
+      depthLine: `PYRAMID ${pyramids}${roomName ? " · " + roomName : ""}`,
+      scoreLine: `SCORE ${score} · ${deathReason}`,
       auraLine: aura,
     });
     const ch = $("milkChallengeText");

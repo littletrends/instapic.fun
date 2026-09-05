@@ -15,6 +15,7 @@
   const RATE_MS = 0.02;
   const GAME_ID = "watergun";
   const CODA_ENABLED = true;
+  const AUTHORED_COUNT = 7;
   let run = null;
   let holding = false;
   let keys = { left: false, right: false };
@@ -44,42 +45,49 @@
       hitbox: "big", youR: 22, mouthSpeed: 0.4, yourRate: 1.0, ghostRate: 0.55,
       fillMax: 100, mouthFeints: false, fakeOpenChance: 0, twinMouths: false,
       mirrorAim: false, youAmp: 18, ghostAmp: 10, stallLimitMs: 2200,
+      barker: "Straight lane. Hold the mouth. Ghost is slow.",
     },
     {
       id: 2, name: "Sine Smile", kind: "sine", path: "sine",
       hitbox: "big", youR: 22, mouthSpeed: 0.55, yourRate: 1.0, ghostRate: 0.7,
       fillMax: 100, mouthFeints: false, fakeOpenChance: 0, twinMouths: false,
       mirrorAim: false, youAmp: 28, ghostAmp: 14, stallLimitMs: 2000,
+      barker: "The mouth rides a sine. Lead the wave.",
     },
     {
       id: 3, name: "Feint Clown", kind: "feint", path: "sine",
       hitbox: "mid", youR: 16.5, mouthSpeed: 0.7, yourRate: 1.0, ghostRate: 0.85,
       fillMax: 110, mouthFeints: true, fakeOpenChance: 0, twinMouths: false,
       mirrorAim: false, youAmp: 26, ghostAmp: 14, stallLimitMs: 1800,
+      barker: "It fakes a dodge. Don’t chase the feint.",
     },
     {
       id: 4, name: "Twin Mouth Map", kind: "twinMouth", path: "twin",
       hitbox: "mid", youR: 16.5, mouthSpeed: 0.72, yourRate: 1.0, ghostRate: 0.9,
       fillMax: 110, mouthFeints: false, fakeOpenChance: 0, twinMouths: true,
       mirrorAim: false, youAmp: 12, ghostAmp: 10, stallLimitMs: 1700, twinPeriodMs: 2100,
+      barker: "Two mouths. Only the live one fills.",
     },
     {
       id: 5, name: "Zigzag Duel", kind: "zigzag", path: "zigzag",
       hitbox: "small", youR: 12.2, mouthSpeed: 0.95, yourRate: 0.95, ghostRate: 0.95,
       fillMax: 120, mouthFeints: false, fakeOpenChance: 0, twinMouths: false,
       mirrorAim: false, youAmp: 34, ghostAmp: 18, zigAmp: 32, stallLimitMs: 1500,
+      barker: "Diagonal zigzag. Drag the stream onto the map.",
     },
     {
       id: 6, name: "Fake-Open Fair", kind: "fakeOpen", path: "sine",
       hitbox: "small", youR: 12.8, mouthSpeed: 1.0, yourRate: 0.9, ghostRate: 1.05,
       fillMax: 120, mouthFeints: false, fakeOpenChance: 0.2, twinMouths: false,
       mirrorAim: false, youAmp: 30, ghostAmp: 16, stallLimitMs: 1400,
+      barker: "Sometimes the mouth lies. Fake-open is no credit.",
     },
     {
       id: 7, name: "Mirror Lane", kind: "mirror", path: "sine",
       hitbox: "mid", youR: 15.5, mouthSpeed: 0.88, yourRate: 0.95, ghostRate: 1.0,
       fillMax: 120, mouthFeints: true, fakeOpenChance: 0, twinMouths: false,
       mirrorAim: true, youAmp: 28, ghostAmp: 16, stallLimitMs: 1300,
+      barker: "Your stream flips. Aim the other way.",
     },
   ];
 
@@ -90,7 +98,7 @@
     sheet: "GOBLIN_AUTHORED_LEVELS_P0.md",
     batchSheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
     codaEnabled: CODA_ENABLED,
-    authoredCount: WATER_LEVELS.length,
+    authoredCount: AUTHORED_COUNT,
   };
 
   function rk() {
@@ -102,8 +110,8 @@
   }
 
   function waterCodaParams(n) {
-    const heat = Math.max(WATER_LEVELS.length + 1, n | 0);
-    const t = heat - WATER_LEVELS.length;
+    const heat = Math.max(AUTHORED_COUNT + 1, n | 0);
+    const t = heat - AUTHORED_COUNT;
     const youR = Math.max(9.5, 12.2 - t * 0.35);
     return {
       id: heat,
@@ -130,12 +138,13 @@
       streamWeave: 3.4 + t * 0.4,
       ghostTrack: 0.0032 + t * 0.0004,
       ghostWobble: Math.max(4, 12 - t * 0.6),
+      barker: "ENDLESS — mouths keep lying.",
     };
   }
 
   function waterLevel(n) {
     const heat = Math.max(1, n | 0);
-    if (heat <= WATER_LEVELS.length) {
+    if (heat <= AUTHORED_COUNT) {
       const L = WATER_LEVELS[heat - 1];
       const youR = L.youR != null ? L.youR : hitboxR(L.hitbox);
       return Object.assign({
@@ -153,13 +162,26 @@
   }
 
   function watergunStageParams(n) {
-    return waterLevel(n) || waterCodaParams(Math.max(WATER_LEVELS.length + 1, n | 0));
+    return waterLevel(n) || waterCodaParams(Math.max(AUTHORED_COUNT + 1, n | 0));
   }
 
   function hudStageLine(spec, won) {
     if (!spec) return `HEAT ${won | 0}`;
     if (spec.coda) return `ENDLESS · HEAT ${spec.id} · ${spec.name}`;
     return `HEAT ${spec.id} · ${spec.name}`;
+  }
+
+  function roomTell(spec) {
+    if (!spec) return "FILL THE MOUTH";
+    if (spec.kind === "straight") return "STRAIGHT LANE · HOLD THE MOUTH";
+    if (spec.kind === "sine") return "SINE PATH · LEAD THE WAVE";
+    if (spec.kind === "feint") return "FEINT — DON’T CHASE THE FAKE";
+    if (spec.kind === "twinMouth") return "TWO MOUTHS · ONLY LIVE FILLS";
+    if (spec.kind === "zigzag") return "ZIGZAG MAP · DRAG THE STREAM";
+    if (spec.kind === "fakeOpen") return "FAKE-OPEN IS A LIE";
+    if (spec.kind === "mirror") return "MIRROR — STREAM FLIPS";
+    if (spec.coda) return "ENDLESS · MOUTHS KEEP LYING";
+    return "FILL THE MOUTH";
   }
 
   function declareP0() {
@@ -170,10 +192,12 @@
     }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = Object.assign({
-      stageParams: waterLevel,
-      levels: WATER_LEVELS,
+      authored: WATER_LEVELS,
+      authoredCount: AUTHORED_COUNT,
       codaEnabled: CODA_ENABLED,
       codaParams: waterCodaParams,
+      level: waterLevel,
+      stageParams: waterLevel,
     }, P0_MOUNT);
     kitRun.mounted = kitRun.mounted || {};
     kitRun.mounted[GAME_ID] = true;
@@ -364,15 +388,35 @@
     ctx.stroke();
   }
 
-  function drawGun(ctx, x, y, aimX, ghost) {
+  function drawGun(ctx, x, y, aimX, aimY, ghost) {
     ctx.save();
     ctx.translate(x, y);
-    const ang = Math.atan2(-118, aimX - x) - Math.PI / 2;
+    const ang = Math.atan2((aimY != null ? aimY : MOUTH_Y) - y, aimX - x) - Math.PI / 2;
     ctx.rotate(ang * 0.35);
     ctx.fillStyle = ghost ? "rgba(184,232,224,0.45)" : "#6a4a28";
     ctx.fillRect(-7, -6, 14, 18);
     ctx.fillStyle = ghost ? "rgba(184,232,224,0.7)" : "#d4a45a";
     ctx.fillRect(-3, -28, 6, 24);
+    ctx.restore();
+  }
+
+  function drawMouthPath(ctx, spec, laneX, ghost) {
+    if (!spec || spec.twinMouths) return;
+    ctx.save();
+    ctx.strokeStyle = ghost ? "rgba(184,232,224,0.22)" : "rgba(240,208,154,0.38)";
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    const amp = ghost ? spec.ghostAmp : spec.youAmp;
+    const phase = ghost ? 2.1 : 0.4;
+    for (let i = 0; i <= 28; i += 1) {
+      const t = (i / 28) * 4200;
+      const p = mouthPos(spec, laneX, t, { amp, phase });
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
     ctx.restore();
   }
 
@@ -432,17 +476,26 @@
     const ghostPos = mouthPos(tun, GHOST_X, t, { amp: tun.ghostAmp, phase: 2.1, feint: 0 });
     const youFill = run ? run.youFill / tun.fillMax : 0.12;
     const ghostFill = run ? run.ghostFill / tun.fillMax : 0.38;
-    const youAim = run ? run.youStream : YOU_X;
-    const ghostAim = run ? run.ghostShot : GHOST_X;
+    const youAim = run ? run.youStreamX : YOU_X;
+    const youAimY = run ? run.youStreamY : MOUTH_Y + 12;
+    const ghostAim = run ? run.ghostShotX : GHOST_X;
+    const ghostAimY = run ? run.ghostShotY : MOUTH_Y + 12;
     const youOn = run ? run.youOn : false;
     const ghostOn = run ? run.ghostOn : true;
     const spraying = run && !run.done && run.cd <= 0 && run.pause <= 0;
     const fake = !!(run && run.fakeOpen);
-    const youMouthY = tun.twinMouths ? MOUTH_Y : youPos.y;
-    const ghostMouthY = tun.twinMouths ? MOUTH_Y : ghostPos.y;
 
     drawTube(ctx, YOU_X, youFill, false);
     drawTube(ctx, GHOST_X, ghostFill, true);
+    drawMouthPath(ctx, tun, YOU_X, false);
+    drawMouthPath(ctx, tun, GHOST_X, true);
+    if (!run || !run.done) {
+      ctx.fillStyle = "rgba(240,208,154,0.78)";
+      ctx.font = "9px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(roomTell(tun), W / 2, H - 18);
+      ctx.textAlign = "left";
+    }
     if (tun.twinMouths) {
       twinPair(tun, YOU_X, t, false).forEach((m) => {
         ctx.save();
@@ -467,20 +520,20 @@
       drawClown(ctx, youPos.x, youPos.y, tun.youR, false, fake);
       drawClown(ctx, ghostPos.x, ghostPos.y, tun.ghostR, true, false);
     }
-    drawGun(ctx, YOU_X, GUN_Y, run ? run.youAim : YOU_X, false);
-    drawGun(ctx, GHOST_X, GUN_Y, ghostAim, true);
+    drawGun(ctx, YOU_X, GUN_Y, run ? run.youAimX : YOU_X, run ? run.youAimY : MOUTH_Y, false);
+    drawGun(ctx, GHOST_X, GUN_Y, ghostAim, ghostAimY, true);
 
     if (!run || spraying || (run && run.cd <= 0)) {
       if (!run || holding || spraying) {
-        drawStream(ctx, YOU_X, GUN_Y, youAim, youMouthY + 12, youOn && spraying, false);
+        drawStream(ctx, YOU_X, GUN_Y, youAim, youAimY, youOn && spraying, false);
       }
-      drawStream(ctx, GHOST_X, GUN_Y, ghostAim, ghostMouthY + 12, ghostOn && (!run || spraying), true);
+      drawStream(ctx, GHOST_X, GUN_Y, ghostAim, ghostAimY, ghostOn && (!run || spraying), true);
     }
     if (run && spraying && holding && !youOn) {
       ctx.fillStyle = "rgba(126,200,224,0.28)";
       for (let i = 0; i < 5; i += 1) {
         ctx.beginPath();
-        ctx.arc(youAim + (i - 2) * 5.5, youMouthY + 18 + (i % 2) * 4, 2.4, 0, Math.PI * 2);
+        ctx.arc(youAim + (i - 2) * 5.5, youAimY + 6 + (i % 2) * 4, 2.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -506,7 +559,7 @@
       ctx.fillStyle = "#e8a0b8";
       ctx.font = "18px Georgia, serif";
       ctx.textAlign = "center";
-      ctx.fillText(run.tun && run.tun.coda && run.won === WATER_LEVELS.length
+      ctx.fillText(run.tun && run.tun.coda && run.won === AUTHORED_COUNT
         ? "ENDLESS — ghost reloads"
         : "HEAT WON — ghost reloads", W / 2, 224);
       ctx.textAlign = "left";
@@ -517,7 +570,7 @@
     if (run && !run.done) {
       const youPct = Math.floor((run.youFill / tun.fillMax) * 100);
       const ghostPct = Math.floor((run.ghostFill / tun.fillMax) * 100);
-      const stallWarn = spraying && run.hitMs <= 0 && run.stallMs > tun.stallLimitMs * 0.4;
+      const stallWarn = spraying && !run.youOn && run.ghostOn && run.stallMs > tun.stallLimitMs * 0.4;
       kit.drawHud(ctx, W, [
         `${hudStageLine(tun, run.won)} · won ${run.won} · ${run.score}`,
         stallWarn
@@ -612,22 +665,27 @@
     run.ghostFill = 0;
     run.youOn = false;
     run.ghostOn = false;
-    run.youAim = YOU_X;
-    run.ghostAim = GHOST_X;
-    run.youStream = YOU_X;
-    run.ghostShot = GHOST_X;
+    run.youAimX = YOU_X;
+    run.youAimY = MOUTH_Y + 12;
+    run.ghostAimX = GHOST_X;
+    run.ghostAimY = MOUTH_Y + 12;
+    run.youStreamX = YOU_X;
+    run.youStreamY = MOUTH_Y + 12;
+    run.ghostShotX = GHOST_X;
+    run.ghostShotY = MOUTH_Y + 12;
     run.youFeint = 0;
-    run.feintMs = 0;
+    run.feintHold = 0;
+    run.feintMs = tun.mouthFeints ? 900 : 0;
     run.fakeOpen = false;
     run.fakeMs = 0;
     run.stallMs = 0;
     run.hitMs = 0;
     run.cd = 900;
     run.pause = 0;
-    if (tun.coda && heat === WATER_LEVELS.length + 1) {
+    if (tun.coda && heat === AUTHORED_COUNT + 1) {
       $("waterGunStatus").textContent = AURA.coda;
     } else {
-      $("waterGunStatus").textContent = `${hudStageLine(tun, run.won)} — hold to spray, lead the mouth.`;
+      $("waterGunStatus").textContent = `${hudStageLine(tun, run.won)} — ${tun.barker || "hold to spray, lead the mouth."}`;
     }
   }
 
@@ -652,13 +710,18 @@
       raf: 0,
       youFill: 0,
       ghostFill: 0,
-      youAim: YOU_X,
-      ghostAim: GHOST_X,
-      youStream: YOU_X,
-      ghostShot: GHOST_X,
+      youAimX: YOU_X,
+      youAimY: MOUTH_Y + 12,
+      ghostAimX: GHOST_X,
+      ghostAimY: MOUTH_Y + 12,
+      youStreamX: YOU_X,
+      youStreamY: MOUTH_Y + 12,
+      ghostShotX: GHOST_X,
+      ghostShotY: MOUTH_Y + 12,
       youOn: false,
       ghostOn: false,
       youFeint: 0,
+      feintHold: 0,
       feintMs: 0,
       fakeOpen: false,
       fakeMs: 0,
@@ -671,14 +734,16 @@
       deathNote: "",
     };
     holding = false;
-    if (rk() && typeof rk().reportDepth === "function") rk().reportDepth(kitRun, 0);
+    if (rk() && typeof rk().reportDepth === "function") {
+      rk().reportDepth(kitRun, 0, { name: tun.name, coda: !!tun.coda });
+    }
     $("waterGunStart").disabled = true;
     $("waterGunVerdict").hidden = true;
     kit.hideResult("waterGunResult");
     PF.setTier("waterGunTier", "", "");
     kit.setMode(card(), "play");
     stampDepthCopy();
-    $("waterGunStatus").textContent = `HEAT 1 · ${tun.name} — hold to spray, lead the mouth.`;
+    $("waterGunStatus").textContent = `HEAT 1 · ${tun.name} — ${tun.barker}`;
     PF.focusCard("waterGunCard", true);
     PF.setAura("think");
     const loop = (now) => {
@@ -697,17 +762,20 @@
 
   function step(dt) {
     const tun = run.tun;
-    if (keys.left) run.youAim -= 0.42 * dt;
-    if (keys.right) run.youAim += 0.42 * dt;
-    run.youAim = clamp(run.youAim, 28, 168);
+    if (keys.left) run.youAimX -= 0.42 * dt;
+    if (keys.right) run.youAimX += 0.42 * dt;
+    run.youAimX = clamp(run.youAimX, 28, 168);
+    run.youAimY = clamp(run.youAimY != null ? run.youAimY : MOUTH_Y + 12, 170, 360);
 
     if (tun.mouthFeints) {
       run.feintMs -= dt;
-      if (run.feintMs <= 0) {
-        run.youFeint = (Math.random() < 0.45 ? 1 : -1) * (10 + tun.id * 1.4);
-        run.feintMs = 520 + Math.random() * 680;
-      } else {
-        run.youFeint *= 0.92;
+      if (run.feintHold > 0) {
+        run.feintHold -= dt;
+        if (run.feintHold <= 0) run.youFeint = 0;
+      } else if (run.feintMs <= 0) {
+        run.youFeint = (Math.random() < 0.5 ? 1 : -1) * (16 + tun.id * 1.6);
+        run.feintHold = 280;
+        run.feintMs = 1400 + Math.random() * 900;
       }
     }
 
@@ -731,13 +799,17 @@
       ghostTarget = ghosts.find((m) => m.active) || ghosts[0];
     }
     const track = 1 - Math.exp(-tun.ghostTrack * dt);
-    run.ghostAim += (ghostTarget.x - run.ghostAim) * track;
-    run.ghostAim = clamp(run.ghostAim, 196, 332);
-    const rawStream = run.youAim + Math.sin(run.t * 0.01) * tun.streamWeave;
-    run.youStream = tun.mirrorAim
+    run.ghostAimX += (ghostTarget.x - run.ghostAimX) * track;
+    run.ghostAimY += ((ghostTarget.y || MOUTH_Y) - run.ghostAimY) * track * 0.85;
+    run.ghostAimX = clamp(run.ghostAimX, 196, 332);
+    run.ghostAimY = clamp(run.ghostAimY, 170, 360);
+    const rawStream = run.youAimX + Math.sin(run.t * 0.01) * tun.streamWeave;
+    run.youStreamX = tun.mirrorAim
       ? clamp(mirrorX(rawStream), 28, 168)
       : clamp(rawStream, 28, 168);
-    run.ghostShot = clamp(run.ghostAim + Math.sin(run.t * 0.0074) * tun.ghostWobble, 196, 332);
+    run.youStreamY = clamp(run.youAimY, 170, 360);
+    run.ghostShotX = clamp(run.ghostAimX + Math.sin(run.t * 0.0074) * tun.ghostWobble, 196, 332);
+    run.ghostShotY = clamp((ghostTarget.y || MOUTH_Y) + 12, 170, 360);
 
     if (run.pause > 0) {
       run.pause -= dt;
@@ -749,12 +821,16 @@
       return;
     }
 
-    const youDx = run.youStream - youTarget.x;
-    const youDy = (youTarget.y || MOUTH_Y) - MOUTH_Y;
-    const youDist = Math.hypot(youDx, youDy * 0.45);
-    const aimHit = holding && youDist <= tun.youR * 1.05;
+    const youDx = run.youStreamX - youTarget.x;
+    const youDy = run.youStreamY - ((youTarget.y || MOUTH_Y) + 12);
+    const youDist = Math.hypot(youDx, youDy);
+    const aimHit = holding && youDist <= tun.youR * 1.15;
     run.youOn = aimHit && !run.fakeOpen;
-    run.ghostOn = Math.abs(run.ghostShot - ghostTarget.x) <= tun.ghostR * 0.9;
+    const ghostDist = Math.hypot(
+      run.ghostShotX - ghostTarget.x,
+      run.ghostShotY - ((ghostTarget.y || MOUTH_Y) + 12)
+    );
+    run.ghostOn = ghostDist <= tun.ghostR * 0.95;
     if (run.youOn) {
       run.youFill = Math.min(tun.fillMax, run.youFill + tun.yourRate * RATE_MS * dt);
       run.hitMs += dt;
@@ -766,11 +842,13 @@
 
     if (!run.youOn && run.ghostOn) {
       run.stallMs += dt;
-      if (run.stallMs >= tun.stallLimitMs && run.hitMs <= 0) {
+      if (run.stallMs >= tun.stallLimitMs) {
         run.deathNote = "stall";
         finish("stall");
         return;
       }
+    } else if (run.youOn) {
+      run.stallMs = 0;
     }
 
     if (run.youFill >= tun.fillMax && run.youFill >= run.ghostFill) {
@@ -779,7 +857,9 @@
       run.score += 300 + leftover;
       run.youFill = tun.fillMax;
       saveLiveDepth();
-      if (rk() && typeof rk().reportDepth === "function") rk().reportDepth(run.kitRun, run.won);
+      if (rk() && typeof rk().reportDepth === "function") {
+        rk().reportDepth(run.kitRun, run.won, { name: tun.name, coda: !!tun.coda });
+      }
       kit.sfx("rack");
       PF.setAura("celebrate");
       const next = waterLevel(run.heat + 1);
@@ -788,7 +868,7 @@
         finish("souvenir");
         return;
       }
-      $("waterGunStatus").textContent = next.coda && run.won === WATER_LEVELS.length
+      $("waterGunStatus").textContent = next.coda && run.won === AUTHORED_COUNT
         ? AURA.coda
         : AURA.clear;
       run.pause = 780;
@@ -802,9 +882,10 @@
 
   function aimFromEvent(ev) {
     const canvas = $("waterGunCanvas");
-    if (!canvas) return;
+    if (!canvas || !run) return;
     const p = kit.canvasPos(canvas, ev, W, H);
-    run.youAim = clamp(p.x, 28, 168);
+    run.youAimX = clamp(p.x, 28, 168);
+    run.youAimY = clamp(p.y, 170, 360);
   }
 
   function auraLine(reason, won) {
@@ -849,7 +930,8 @@
     $("waterGunStart").textContent = "SPRAY AGAIN · 1 demo coin";
     PF.focusCard("waterGunCard", false);
     kit.setMode(card(), "result");
-    const line = `HEAT ${won} · SCORE ${score}`;
+    const roomName = (run.tun && run.tun.name) || "";
+    const line = `HEAT ${won}${roomName ? " · " + roomName : ""} · SCORE ${score}`;
     const aura = auraLine(deathReason, won);
     const challenge = challengeLine(won);
     $("waterGunVerdict").hidden = false;
@@ -858,8 +940,8 @@
       : deathReason === "leave"
         ? `Stepped off the lane · ${line}`
         : deathReason === "stall"
-          ? `Stream dry. ${line} · fell on heat ${heat}.`
-          : `Ghost filled first. ${line} · fell on heat ${heat}.`;
+          ? `Stream dry. ${line} · ${deathReason} · fell on heat ${heat}.`
+          : `Ghost filled first. ${line} · ${deathReason} · fell on heat ${heat}.`;
     kit.fillResult({
       root: "waterGunResult",
       depth: "waterGunResultDepth",
@@ -867,8 +949,8 @@
       aura: "waterGunResultAura",
       copied: "waterGunCopied",
     }, {
-      depthLine: `HEAT ${won}`,
-      scoreLine: `SCORE ${score}`,
+      depthLine: `HEAT ${won}${roomName ? " · " + roomName : ""}`,
+      scoreLine: `SCORE ${score} · ${deathReason}`,
       auraLine: aura,
     });
     const ch = $("waterGunChallengeText");

@@ -64,23 +64,25 @@ Shared: routes `#cabinet/{milk|coverspot|watergun}` vestibule/play/result · `be
 - Best: `Coverage {best%}` and `Discs survived {n}`
 
 ### Play
-- Top-down. Target circle radius R. Discs radius r = 0.72R at stage 1 (cannot cover in 1 disc — classic cheat).
+- Top-down. Target radius R. Discs radius r = 0.72R at SPOT 1 (cannot cover in 1 disc — classic cheat).
 - Tap to drop disc at pointer (with slight snap/latency). Discs stay.
 - Coverage = union area / target area (approx with grid stamp 64×64 OK)
-- After each disc: show %. Buttons: **CASH OUT** (end run, keep depth=discs, score from %) OR **DROP AGAIN**
-- **DEATH:** after a drop, if coverage < deathFloor% for that stage AND discsUsed >= minDiscs, optional soft — prefer: death if you choose DROP and the disc **bounces off** (miss table) 2 times, OR simpler v1: **no death until you bust** — bust = cashout below target% after locking. 
-- **v1 clearer:** Run is endless greed. Each stage has `targetPct`. Reach targetPct within `maxDiscs` → stage clear (depth++), clear discs, tighter spot. Fail to reach target in maxDiscs → DEATH.
-- Cash out only between stages (bank score, depth kept) — optional. **Primary path = clear stages until death.**
+- Reach `targetPct` within `maxDiscs` → SPOT clear (depth++). Fail → DEATH (`bust`). Two table misses → DEATH (`miss_table`).
+- Cash out only **between spots** after a clear (bank score, depth kept). **Primary path = clear authored spots until death.**
+- Twin: both circles must hit `targetPct`. Drift: discs stick, live coverage can clear. Ring: annulus only — center is a trap.
 
-### Stage table
-| Stage | r/R | targetPct | maxDiscs | Spot drift |
-|------:|----:|----------:|---------:|------------|
-| 1 | 0.72 | 70% | 4 | none |
-| 2 | 0.68 | 75% | 4 | none |
-| 3 | 0.64 | 78% | 5 | slow |
-| 4 | 0.60 | 82% | 5 | + |
-| 5 | 0.56 | 85% | 5 | + |
-| 6+ | max(0.42, 0.56-0.02*t) | min(94, 85+t) | 6 | jitter |
+### Authored SPOT rooms (GOBLIN_AUTHORED_LEVELS_P0.md) — NOT pure stageParams
+| # | Name | Spot shape / disc rules | Target beat | vs prior |
+|---|------|-------------------------|-------------|----------|
+| 1 | **Red Circle Honest** | Round spot; r/R=0.72; target 70%; max 4 | Learn union coverage | — |
+| 2 | **Tight Felt** | Same circle; r/R=0.68; target 75% | Classic cheat tighten | Ratio-bridge only |
+| 3 | **Oval Blush** | **Oval spot** (1.3× wide); discs still round | Shape mismatch | Spot shape change |
+| 4 | **Drifting Dot** | Round spot **slow drifts**; discs stick in world space | Lead the spot | Motion |
+| 5 | **Twin Spots** | **Two small circles**; both must hit target | Split attention | Dual targets |
+| 6 | **Ring Spot** | Annulus (donut); center hole doesn’t count | Cover the ring | Topology cheat |
+| 7 | **Jitter Stamp** | Irregular blob + jitter; maxDiscs 6; target 85% | Finale geometry | Blob + nerves |
+
+**Endless coda** (`codaEnabled:true`, hybrid default): smaller r/R, higher targetPct, jitter — after Spot 7. HUD labeled `ENDLESS`. Flip `codaEnabled:false` → souvenir clear after 7.
 
 ### Scoring
 - score += floor(coverage*100) per stage clear + 200×stage
@@ -108,10 +110,10 @@ Shared: routes `#cabinet/{milk|coverspot|watergun}` vestibule/play/result · `be
 
 ### Play (1P vs ghost v1)
 - Hold spray = stream on; release = stop
-- Mouth wanders on a path; stream hits only if aim (fixed center OR tilt with drag) overlaps mouth hitbox
+- Mouth wanders on a path; stream hits only if **drag aim (X+Y)** overlaps the mouth hitbox — zigzag is a map, not X-only
 - While hitting: your fill += rate. Ghost fill += ghostRate(stage)
-- First to fillMax wins heat → depth++ · brief reset · harder heat
-- **DEATH:** ghost wins the heat (you lost the race) OR your fill stalls (0 hit time) for stallLimitMs while ghost is advancing
+- First to fillMax wins heat → depth++ · brief reset · next authored map
+- **DEATH:** ghost wins the heat (you lost the race) OR stall (no hit while ghost advances) ≥ stallLimitMs
 
 ### Authored HEAT rooms (GOBLIN_AUTHORED_LEVELS_P0.md) — NOT pure stageParams
 | # | Name | Duel map / mouth path | Ghost / cheat | vs prior |
