@@ -1,0 +1,56 @@
+/* Love Tester polish — one physical gesture, phone first. */
+.love-tester-machine {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) 1fr;
+  grid-template-rows: 1fr auto auto;
+  gap: .7rem 1rem;
+  min-height: 34rem;
+  padding: 2.6rem 1rem 1rem;
+  background: radial-gradient(circle at 50% 20%, #7b1839, #250812 58%, #100508);
+  border: .7rem ridge #b78138;
+  box-shadow: inset 0 0 45px #000, 0 15px 35px #0008;
+}
+.love-glass {
+  position: relative;
+  grid-row: 1 / 4;
+  width: 6.2rem;
+  min-height: 28rem;
+  margin: auto;
+  overflow: hidden;
+  border: .45rem ridge #d7aa5e;
+  border-radius: 3rem 3rem 1.2rem 1.2rem;
+  background: linear-gradient(90deg,#14080d,#35101d 48%,#16070c);
+  box-shadow: inset 0 0 22px #000, 0 0 25px #bd325866;
+}
+.love-mercury { position:absolute; inset:auto 1.65rem 0; height:0%; border-radius:2rem 2rem .5rem .5rem; background:linear-gradient(90deg,#8d0d2c,#ff477d 52%,#b10f35); box-shadow:0 0 18px #ff477d; transition:height 40ms linear; }
+.love-needle { position:absolute; left:.55rem; right:.55rem; bottom:0%; height:2px; background:#fff3cf; box-shadow:0 0 10px #fff; transition:bottom 40ms linear; }
+.love-zone { position:absolute; z-index:2; left:.3rem; right:.3rem; bottom:55%; height:16%; border:2px solid #ff9fc5; border-radius:.65rem; background:#ff6aa829; box-shadow:inset 0 0 16px #ff6aa844,0 0 15px #ff6aa855; transition:bottom .35s ease,height .35s ease; }
+.love-zone span { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-90deg); color:#ffe4ef; font:800 .58rem/1 system-ui; letter-spacing:.1em; white-space:nowrap; }
+.love-scale { position:absolute; z-index:3; inset:.8rem .15rem; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; }
+.love-scale span { color:#f3c87b; font:700 .52rem/1 system-ui; letter-spacing:.08em; }
+.love-aura-window { align-self:end; justify-self:center; display:grid; place-items:center; width:6rem; height:6rem; border:4px ridge #d7aa5e; border-radius:50%; color:#f8cc5c; background:radial-gradient(circle,#6b1b36,#190910); font-size:2.8rem; box-shadow:0 0 24px #c52c5b66; transition:transform .22s ease,filter .22s ease; }
+.love-aura-window.is-cheering { transform:rotate(8deg) scale(1.12); filter:brightness(1.5); }
+.love-aura-window.is-laughing { animation:love-laugh .18s linear 4; }
+.love-tester-call { align-self:center; margin:0; color:#ffe8d0; font:italic 1.08rem/1.35 Georgia,serif; text-align:center; }
+.love-heart-lever { align-self:start; justify-self:center; width:9rem; min-height:6.2rem; border:4px ridge #d7aa5e; border-radius:48% 48% 42% 42%; color:#fff2de; background:radial-gradient(circle at 45% 30%,#ff729e,#b10f35 58%,#4a0c20); box-shadow:0 7px 0 #591024,0 12px 24px #0009,0 0 20px #ff477d55; touch-action:none; user-select:none; cursor:pointer; }
+.love-heart-lever span,.love-heart-lever b { display:block; }
+.love-heart-lever span { font-size:2.2rem; line-height:1; }
+.love-heart-lever b { margin-top:.25rem; font-size:.72rem; letter-spacing:.12em; }
+.love-heart-lever.is-held { transform:translateY(6px) scale(.98); box-shadow:0 1px 0 #591024,0 4px 10px #0009,0 0 35px #ff477d; }
+.love-heart-lever:disabled { opacity:.5; cursor:default; }
+.love-bulbs { position:absolute; top:.55rem; left:.7rem; right:.7rem; display:flex; justify-content:space-around; }
+.love-bulbs i { width:.65rem;height:.65rem;border-radius:50%;background:#f0bd5f;box-shadow:0 0 9px #ffd98a; }
+.love-tester-machine.is-boiling { animation:love-boil .12s linear 6; }
+@keyframes love-boil { 50% { transform:translateX(3px); filter:saturate(1.5); } }
+@keyframes love-laugh { 50% { transform:rotate(-7deg); } }
+@media (max-width:560px) {
+  .love3d-card { padding:.55rem; }
+  .love3d-card > .machine-number,.love3d-card > h2,.love3d-card > .tent-mouth-joke { text-align:center; }
+  .love-tester-machine { grid-template-columns:6.2rem 1fr; min-height:29rem; padding:.7rem; padding-top:2.2rem; }
+  .love-glass { width:5.5rem; min-height:24rem; }
+  .love-heart-lever { width:7.7rem; min-height:5.7rem; }
+  .love-tester-call { font-size:.92rem; }
+  .love-play-row { justify-content:center; }
+}
+@media (prefers-reduced-motion:reduce) { .love-tester-machine,.love-aura-window { animation:none!important; transition:none!important; } }

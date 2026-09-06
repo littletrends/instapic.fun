@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="vendors/duck-pond.css">
   <link rel="stylesheet" href="vendors/pinball.css">
   <link rel="stylesheet" href="vendors/love.css">
+  <link rel="stylesheet" href="vendors/love-tester.css">
   <link rel="stylesheet" href="vendors/mutoscope.css">
   <link rel="stylesheet" href="vendors/lookup.css">
   <link rel="stylesheet" href="vendors/catoptromancy.css">
@@ -65,10 +66,10 @@
   <link rel="stylesheet" href="vendors/pass.css">
   <script type="module" src="vendors/fortune.js"></script>
   <script type="module" src="vendors/pass.js"></script>
-  <script type="module" src="vendors/love.js"></script>
+  <script type="module" src="vendors/love-tester.js"></script>
   <script type="module" src="vendors/lookup.js"></script>
   <script type="module" src="vendors/snap.js"></script>
-  <script type="module" src="world/alley.js?v=aisle-doors-2"></script>
+  <script type="module" src="world/alley.js?v=aisle-both-4"></script>
 </head>
 <body>
   <div class="development-ribbon" role="status">Private development preview · no payments · Darwin local day</div>
@@ -815,54 +816,35 @@
           <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
           <p class="plaque-kicker">Beyond the Love Tester flap</p>
           <h1 id="cabinet-love-title">Love Tester Tent</h1>
-          <p class="interior-blurb">Heartline. Steer the ruby spark through every pink heart. Ice and gold shatter the glass.</p>
+          <p class="interior-blurb">Hold the brass heart. Release it inside Sweet Heat. Too cold disappoints Aura; too hot wakes the boiler.</p>
         </header>
         <div class="interior-stage">
           <article class="attraction-card love-card love3d-card is-vestibule" id="loveCard">
-            <p class="machine-number">3D Heartline · 8 authored Heat Stages · then ENDLESS · 1 demo coin</p>
-            <h2>Heartline</h2>
-            <p class="tent-mouth-joke">A ruby spark in a velvet palace. Steer. Pulse. Kiss the pink. Ice and gold shatter you.</p>
+            <p class="machine-number">The original Love Tester · three rising heats · 1 demo penny</p>
+            <h2>How hot do you dare?</h2>
+            <p class="tent-mouth-joke">Hold the heart while the mercury climbs. Let go in the glowing Sweet Heat band.</p>
             <div class="depth-readout" aria-label="Love Heat Run depth">
               <span><small>Now</small><strong id="loveStageDepth">Heat Stage —</strong></span>
               <span><small>Best</small><strong id="loveBestDepth">—</strong></span>
             </div>
-            <div class="love-stage-wrap" id="loveStage">
-              <canvas id="loveCanvas" width="960" height="760" aria-label="Love Tester Heartline. Drag to bank the spark. Fly through pink LOVE hearts. Gold hoops with an X are liars. Space to pulse."></canvas>
-              <div class="love-hud">
-                <div class="love-hud-top">
-                  <span class="love-hud-verb" id="loveHazard">HEARTLINE · FLY THE PINK</span>
-                  <span class="love-hud-heat" id="thermoReadout">♥ —</span>
-                </div>
-                <p class="love-hud-barker" id="loveBarker">STEER with mouse or WASD. Fly THROUGH the glowing pink heart. SPACE to pulse.</p>
-                <div class="love-hud-mid">
-                  <span class="love-toast" id="loveToast" hidden></span>
-                </div>
-                <div class="love-hud-bottom">
-                  <p class="love-warn" id="loveWarn"></p>
-                  <div class="love-controls" id="loveControls">
-                    <span><b>DRAG</b> to bank · <b>TILT</b> the phone</span>
-                    <span><b>WASD</b> · arrows</span>
-                    <span><b>PULSE</b> space · tap</span>
-                    <span><b>PINK LOVE</b> · <b>GOLD X = LIE</b></span>
-                  </div>
-                  <div class="love-tilt" id="loveTilt" hidden>
-                    <span class="love-tilt-label">DRAG / TILT</span>
-                    <i id="loveTiltKnub"></i>
-                  </div>
-                </div>
+            <div class="love-stage-wrap love-tester-machine" id="loveStage">
+              <div class="love-bulbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="love-glass" aria-label="Love Tester mercury gauge">
+                <div class="love-scale" aria-hidden="true"><span>BOIL</span><span>FEVER</span><span>FLUTTER</span><span>FROST</span></div>
+                <div class="love-zone" id="loveSweetZone"><span>SWEET HEAT</span></div>
+                <div class="love-mercury" id="loveMercury"></div>
+                <div class="love-needle" id="loveNeedle"></div>
               </div>
-              <button type="button" class="love-start-overlay" id="loveOverlay">
-                <strong>CLICK TO FLY</strong>
-                <span>1 demo coin · Heartline</span>
-                <em>DRAG to bank · pink LOVE only · gold X is a liar</em>
-              </button>
+              <div class="love-aura-window" id="loveAuraFace" aria-hidden="true">♛</div>
+              <p class="love-tester-call" id="loveBarker">Press and hold the heart. Release in Sweet Heat.</p>
+              <button type="button" class="love-heart-lever" id="loveLever" disabled><span>♥</span><b>HOLD ME</b></button>
             </div>
-            <p class="barker-call">DRAG TO BANK — PINK LOVE ONLY</p>
+            <p class="barker-call">HOLD THE HEART · RELEASE IN SWEET HEAT</p>
             <div class="love-play-row">
               <button class="ticket-button" id="loveGo" type="button">START · 1 demo coin</button>
-              <button class="ticket-button hold-btn love-squeeze" id="loveSqueeze" type="button" disabled>PULSE THE SPARK</button>
+              <button class="ticket-button hold-btn love-squeeze" id="loveSqueeze" type="button" disabled hidden>HOLD</button>
             </div>
-            <p class="status-ticket" id="loveStatus">One coin · DRAG to bank · pink LOVE · gold X is a liar</p>
+            <p class="status-ticket" id="loveStatus">One penny buys three heats. Your timing earns the result.</p>
             <p class="tier-pill" id="loveTier" hidden></p>
             <p class="love-verdict" id="loveVerdict" hidden></p>
             <p class="combo-line" id="loveCombo" hidden></p>
