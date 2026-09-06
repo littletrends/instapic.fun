@@ -1635,6 +1635,9 @@ function mountStall(PF) {
     const floor = run.floorSurvived;
     const banked = run.banked;
     const score = scoreFor(cashed);
+    if (cashed && banked > 0 && typeof PF.addDemoCoins === "function") {
+      PF.addDemoCoins(banked);
+    }
     const shot = { reason, cashed, floor, banked, score, aura: auraFor(reason, cashed) };
     persistDepth({
       depth: floor, score, banked,
