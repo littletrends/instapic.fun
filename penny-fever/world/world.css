@@ -136,7 +136,15 @@ body.is-in-world.is-world-map .foyer-header {
   z-index: 6;
   pointer-events: none;
 }
-.pf-world-hud > * { pointer-events: auto; }
+.pf-world-tools,
+.pf-world-prompt,
+.pf-world-pocket,
+.pf-joy { pointer-events: auto; }
+.pf-world-hud > .pf-world-loop-veil,
+.pf-world-brand,
+.pf-world-compass,
+.pf-world-speech,
+.pf-world-hint { pointer-events: none; }
 
 .pf-world-brand {
   position: absolute;
