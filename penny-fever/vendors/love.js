@@ -159,6 +159,9 @@ function mountLove(PF) {
   function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function rand(a, b) { return a + Math.random() * (b - a); }
+  function buzz(pattern) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) { /* optional phone feedback */ }
+  }
 
   function makeMat(color, extra) {
     return new THREE.MeshStandardMaterial(Object.assign({
@@ -1049,7 +1052,11 @@ function mountLove(PF) {
     if (on) {
       const again = run && run.finished;
       const strong = o.querySelector("strong");
-      if (strong) strong.textContent = again ? "CLICK TO FLY AGAIN" : "CLICK TO FLY";
+      const coin = o.querySelector("span");
+      const help = o.querySelector("em");
+      if (strong) strong.textContent = again ? "FLY AGAIN" : "FLY HEARTLINE";
+      if (coin) coin.textContent = "One penny · one flight";
+      if (help) help.textContent = "Drag to steer · tap to pulse · fly through pink";
     }
   }
 
@@ -1146,6 +1153,7 @@ function mountLove(PF) {
     }
 
     if (kit && kit.sfx) kit.sfx("drop");
+    buzz(24);
     if (run.clearedIndex >= neededCount(spec)) {
       clearStage();
       return;
@@ -1164,6 +1172,7 @@ function mountLove(PF) {
       toast("CAREFUL…");
       setText("loveWarn", "Missed — one more chance. Fly through the glowing heart.");
       world.shake = 0.2;
+      buzz([35, 35, 35]);
       ping(140, 0.12, "triangle");
       if (run.kitRun && PF.runKit && PF.runKit.reportStrike) PF.runKit.reportStrike(run.kitRun, "gate");
       parkAtLive();
@@ -1246,6 +1255,7 @@ function mountLove(PF) {
     run.coolT = 0.38;
     world.punch = Math.max(world.punch, 0.12);
     ping(520, 0.08, "sine");
+    buzz(12);
     const btn = el("loveSqueeze");
     if (btn) btn.classList.add("is-down");
     if (world && world.canvas) world.canvas.classList.add("is-holding");
@@ -1694,6 +1704,7 @@ function mountLove(PF) {
     run.active = false;
     run.holding = false;
     shatterAt(world.spark.position);
+    buzz([70, 35, 120]);
     world.spark.visible = false;
     if (typeof PF.setAura === "function") PF.setAura("badLuck");
     setText("loveWarn", auraLine(reason, run.depth));
@@ -1803,9 +1814,9 @@ function mountLove(PF) {
     ensureWorld();
     resize();
     paintBest();
-    setText("loveStatus", "One coin · DRAG to bank · fly pink LOVE · gold X is a liar");
+    setText("loveStatus", "Drag to steer · tap to pulse · pink hearts are safe");
     if (!(run && run.active)) {
-      setText("loveBarker", "DRAG the tent to bank the spark. Fly THROUGH the pink LOVE heart. Gold with an X is a lie.");
+      setText("loveBarker", "Drag to steer. Tap to pulse. Fly through pink hearts; avoid gold X.");
       overlayMode(true);
       if (kit && kit.setMode && !(run && run.finished)) kit.setMode(el("loveCard"), "vestibule");
     }

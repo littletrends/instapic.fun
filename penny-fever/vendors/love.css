@@ -350,29 +350,61 @@
 }
 
 @media (max-width: 640px) {
+  #cabinet-love .interior-header {
+    padding: 0.65rem 0.7rem;
+  }
+  #cabinet-love .interior-header .interior-blurb {
+    display: none;
+  }
+  .love3d-card > .machine-number,
+  .love3d-card > h2,
+  .love3d-card > .tent-mouth-joke,
+  .love3d-card > .barker-call,
+  .love3d-card > .love-play-row,
+  .love3d-card > .status-ticket {
+    display: none;
+  }
+  .love3d-card {
+    padding: 0.38rem;
+  }
   .love-tilt {
     width: 60px;
     height: 60px;
     bottom: 5.2rem;
   }
   .love-stage-wrap {
-    height: min(68vh, 580px);
-    min-height: 360px;
+    height: min(74svh, 650px);
+    min-height: 430px;
+    margin: 0;
   }
   .love-hud-verb {
     font-size: 0.64rem;
     max-width: 78%;
   }
   .love-start-overlay {
-    bottom: 5.6rem;
-    min-width: 90%;
-    padding: 0.7rem 0.8rem;
+    top: 50%;
+    bottom: auto;
+    min-width: 84%;
+    padding: 0.85rem 0.8rem;
+    transform: translate(-50%, -50%);
   }
   .love-start-overlay strong {
     font-size: 1.1rem;
   }
   .love-controls span {
     font-size: 0.64rem;
+  }
+  .love-controls span:nth-child(2),
+  .love-controls span:nth-child(3) {
+    display: none;
+  }
+  .love-hud-barker {
+    max-width: 88%;
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+  .love-hud {
+    padding: 0.5rem;
   }
 }
 
