@@ -767,6 +767,9 @@ function attachHud() {
         <b>Aura</b>
         <p id="pfWorldSpeechText"></p>
       </div>
+      <div class="pf-world-held-ticket" id="pfWorldHeldTicket" hidden aria-hidden="true">
+        <small>ADMIT ONE</small><strong>PENNY FEVER</strong>
+      </div>
       <div class="pf-world-prompt" id="pfWorldPrompt" hidden>
         <button type="button" id="pfWorldEnter">Step inside</button>
         <em id="pfWorldPromptLine"></em>
@@ -1169,10 +1172,20 @@ function handleGatePrompt() {
   const PF = window.PennyFever;
   if (!hasAdmitTicket()) {
     if (PF && typeof PF.takeAdmitTicket === "function") PF.takeAdmitTicket();
+    if (navigator.vibrate) navigator.vibrate(30);
     return true;
   }
+  const heldTicket = el("pfWorldHeldTicket");
+  const prompt = el("pfWorldPrompt");
+  if (heldTicket) heldTicket.classList.add("is-given");
+  if (prompt) prompt.classList.add("is-ticket-given");
   if (PF && typeof PF.passAdmitTicket === "function") PF.passAdmitTicket();
+  if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
   api.gateBump = false;
+  window.setTimeout(() => {
+    if (heldTicket) heldTicket.classList.remove("is-given");
+    if (prompt) prompt.classList.remove("is-ticket-given");
+  }, 620);
   return true;
 }
 
@@ -1245,6 +1258,7 @@ function findNearest() {
   const nearEl = el("pfWorldNearest");
   const speech = el("pfWorldSpeech");
   const speechText = el("pfWorldSpeechText");
+  const heldTicket = el("pfWorldHeldTicket");
   const z = player.position.z;
   if (z < GATE_Z - 1.8) api.gateBump = false;
   if (zone) {
@@ -1258,6 +1272,7 @@ function findNearest() {
   if (prompt && enter && line) {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
       prompt.hidden = false;
+      prompt.classList.add("is-ticket-handoff");
       if (!hasAdmitTicket()) {
         enter.textContent = "Take a ticket · free tonight";
         line.textContent = "She won’t step aside without a stub.";
@@ -1267,11 +1282,16 @@ function findNearest() {
       }
     } else if (best) {
       prompt.hidden = false;
+      prompt.classList.remove("is-ticket-handoff");
       enter.textContent = "Step inside · " + best.name;
       line.textContent = best.line;
     } else {
       prompt.hidden = true;
+      prompt.classList.remove("is-ticket-handoff");
     }
+  }
+  if (heldTicket) {
+    heldTicket.hidden = (!hasAdmitTicket() || ticketPassed()) && !heldTicket.classList.contains("is-given");
   }
   if (speech && speechText) {
     const dAura = player.position.distanceTo(aura.position);
