@@ -1,10 +1,11 @@
 # Batch 02 mount configs — drop-in for Desktop Grok (align to runKit)
-# LIVE 2026-09-05 — vendors/milk-bottles.js · water-gun-duel.js (Desktop Grok). Cover-the-spot.js is a sibling stall — leave it to its desk.
+# LIVE 2026-09-05 GOBLIN REVIEW REDO — vendors/milk-bottles.js · water-gun-duel.js · cover-the-spot.js (Desktop Grok).
 # No ping needed — pull when wiring Milk / Cover-the-Spot / Water Gun.
 # engine declarations match GOBLIN_RUNKIT_API.md + GOBLIN_BATCH02_BUILD_SHEETS.md
 # Style twin of GOBLIN_P0_MOUNT_CONFIGS.md
 
 ## milk — SlingAim (or Custom impulse) · Weighted Milk Bottles
+# LIVE: vendors/milk-bottles.js (Desktop Grok desk). Glue Corner is the left heel (two-hit plan).
 # Authored PYRAMID rooms (GOBLIN_AUTHORED_LEVELS_P0.md). NOT pure stageParams climb.
 ```js
 PF.runKit.declare("milk", {
@@ -51,7 +52,7 @@ function milkLevel(n) {
 
 ## coverspot — GreedFloor · Cover-the-Spot Cruel
 # Authored SPOT rooms (GOBLIN_AUTHORED_LEVELS_P0.md). NOT pure stageParams climb.
-# LIVE: vendors/cover-the-spot.js (Desktop Grok desk). Tight Felt is the one allowed ratio-bridge.
+# LIVE: vendors/cover-the-spot.js (Desktop Grok desk, GOBLIN REVIEW REDO 2026-09-05). Tight Felt is the one allowed ratio-bridge.
 ```js
 PF.runKit.declare("coverspot", {
   engine: "GreedFloor",
@@ -100,6 +101,7 @@ function coverspotStageParams(n) {
 ---
 
 ## watergun — Custom (hold-spray) / TimingTap cousin · Water Gun Duel
+# LIVE: vendors/water-gun-duel.js (Desktop Grok desk). Zigzag aim is 2D; stall counts while ghost advances.
 # Authored HEAT rooms (GOBLIN_AUTHORED_LEVELS_P0.md). NOT pure stageParams climb.
 ```js
 PF.runKit.declare("watergun", {

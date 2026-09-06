@@ -31,3 +31,10 @@ README_BRIDGE_STATUS_*.txt
 # Local operating-system metadata
 .DS_Store
 ._*
+
+# Penny Fever local workshop sources and transient agent handoffs
+penny-fever/assets/workshop-from-windows/
+penny-fever/ops/*.tgz
+penny-fever/ops/*.zip
+penny-fever/ops/.crew_check_state.json
+penny-fever/ops/_kill_status.txt

@@ -100,14 +100,14 @@ PF.runKit.declare("watergun", { engine:"Custom", depthUnit:"Heat", codaEnabled:t
 | balltoss | SlingAim | Rack | BATCH01 |
 | coinpusher | GreedFloor | Floor | BATCH01 |
 | pinball | Custom | Chapter | BATCH01 |
-| milk | SlingAim | Pyramid | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled |
+| milk | SlingAim | Pyramid | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled · WIRED vendors/milk-bottles.js |
 | coverspot | GreedFloor | Spot | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled · WIRED vendors/cover-the-spot.js |
-| watergun | Custom (hold-spray) | Heat | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled |
+| watergun | Custom (hold-spray) | Heat | AUTHORED_LEVELS_P0 + BATCH02 · 7 rooms · codaEnabled · WIRED vendors/water-gun-duel.js |
 | mutoscope | Custom (stillness) | Stage | BATCH03 |
 | catoptromancy | OracleRooms | Room | BATCH03 |
-| highstriker | TimingTap | Pegs | BATCH03 · WIRED vendors/high-striker.js |
-| bentring | SlingAim | Stage | BATCH03 · WIRED vendors/bent-rings.js |
-| plinko | Custom | Stage | BATCH03 · WIRED vendors/plinko.js |
+| highstriker | TimingTap | Pegs | BATCH03 |
+| bentring | SlingAim | Stage | BATCH03 |
+| plinko | Custom | Stage | BATCH03 |
 | fairyfloss | HoldBand (tension) | Stage | BATCH04 |
 | popcorn | TimingTap | Stage | BATCH04 |
 | duckpond | Custom | Stage | BATCH04 |
@@ -199,20 +199,17 @@ PF.runKit.declare("watergun", { engine:"Custom", depthUnit:"Heat", codaEnabled:t
 
 ## First merge checklist (Grok)
 - [ ] runKit.js + result chrome live
-- [ ] Love uses HoldBand + LOVE_HEAT_RUN numbers (no 3-round default)
-- [ ] balltoss SlingAim per BATCH01
-- [ ] coinpusher GreedFloor + cash out
-- [ ] pinball Custom still emits RunResult
+- [x] Love uses HoldBand + AUTHORED rooms (GOBLIN_AUTHORED_LEVELS_P0.md) + LOVE_HEAT_RUN · app.js · codaEnabled · unique kinds · not 3-round default · GOBLIN REVIEW REDO
+- [x] balltoss SlingAim · 8 authored RACK rooms · vendors/ball-toss.js · codaEnabled · not pure stageParams · GOBLIN REVIEW REDO
+- [x] coinpusher GreedFloor · 7 authored FLOOR rooms · vendors/coin-pusher.js · codaEnabled · cashOut · shelf geometry not hotter pusher · GOBLIN REVIEW REDO
+- [x] pinball Custom · 8 authored CHAPTER tables · vendors/pinball.js · codaEnabled · toys change, speed climb is coda-only · GOBLIN REVIEW REDO
 - [ ] Teaser delight removed for any gameId with a /play engine
 - [ ] Door tag `Depth run` only if engine mounted
-- [x] BATCH03 highstriker TimingTap · vendors/high-striker.js · depth=pegs · bell checkpoint
-- [x] BATCH03 bentring SlingAim · vendors/bent-rings.js · mid-flight lean · ringsPerStage=max(3,need)
-- [x] BATCH03 plinko Custom · vendors/plinko.js · breath tilt · first paying slot clears
 
-PF only. Never booth/port 6000. Never Imagine. Leave mutoscope.js + catoptromancy.js to their desks.
-- [x] milk SlingAim · 7 authored PYRAMID rooms · vendors/milk-bottles.js · codaEnabled · not pure stageParams
-- [x] coverspot GreedFloor · 7 authored SPOT rooms (not pure stageParams) · codaEnabled · cashOut between spots · vendors/cover-the-spot.js
-- [x] watergun Custom hold-spray · 7 authored HEAT maps · vendors/water-gun-duel.js · codaEnabled · not pure stageParams
+PF only. Never booth/port 6000. Never Imagine. Leave other vendors to their desks.
+- [x] milk SlingAim · 7 authored PYRAMID rooms · vendors/milk-bottles.js · codaEnabled · not pure stageParams · GOBLIN REVIEW REDO
+- [x] coverspot GreedFloor · 7 authored SPOT rooms (not pure stageParams) · codaEnabled · cashOut between spots · vendors/cover-the-spot.js · GOBLIN REVIEW REDO
+- [x] watergun Custom hold-spray · 7 authored HEAT maps · vendors/water-gun-duel.js · codaEnabled · not pure stageParams · GOBLIN REVIEW REDO
 
 ## Accept
 One afternoon: Love Heat Run feels endless; Ball Toss dies on 3rd miss; Pusher cash-out dilemma exists; result tickets share layout.
@@ -270,3 +267,24 @@ One afternoon: Love Heat Run feels endless; Ball Toss dies on 3rd miss; Pusher c
 | shellpush | GreedFloor | Shell | BATCH35 |
 | smokepick | OracleRooms | Smoke | BATCH35 |
 | screwroll | Custom | Screw | BATCH35 |
+
+| keytoss | SlingAim | Key | BATCH36 |
+| castanet | TimingTap | Click | BATCH36 |
+| rodhold | HoldBand | Rod | BATCH36 |
+| beadfall | GreedFloor | Fall | BATCH36 |
+| veilpick | OracleRooms | Veil | BATCH36 |
+| helixpath | Custom | Path | BATCH36 |
+
+| boltflip | SlingAim | Bolt | BATCH37 |
+| tambourine | TimingTap | Hit | BATCH37 |
+| staffhold | HoldBand | Staff | BATCH37 |
+| pebblepush | GreedFloor | Pebble | BATCH37 |
+| hazepick | OracleRooms | Haze | BATCH37 |
+| springroll | Custom | Spring | BATCH37 |
+
+| rivetflip | SlingAim | Rivet | BATCH38 |
+| maracatap | TimingTap | Shake | BATCH38 |
+| beamhold | HoldBand | Beam | BATCH38 |
+| nutpush | GreedFloor | Nut | BATCH38 |
+| gloompick | OracleRooms | Gloom | BATCH38 |
+| augerroll | Custom | Auger | BATCH38 |

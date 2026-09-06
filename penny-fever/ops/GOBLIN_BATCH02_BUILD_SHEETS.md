@@ -146,8 +146,8 @@ Shared: routes `#cabinet/{milk|coverspot|watergun}` vestibule/play/result · `be
 ---
 
 ## Implement order
-1. Milk (shares Ball Toss launcher)
-2. Water Gun (hold skill, Love cousin)
-3. Cover-the-Spot (grid math)
+1. Milk (shares Ball Toss launcher) — LIVE vendors/milk-bottles.js (Desktop Grok, GOBLIN REVIEW REDO 2026-09-05)
+2. Water Gun (hold skill, Love cousin) — LIVE vendors/water-gun-duel.js (Desktop Grok, GOBLIN REVIEW REDO 2026-09-05)
+3. Cover-the-Spot (grid math) — LIVE vendors/cover-the-spot.js (Desktop Grok, GOBLIN REVIEW REDO 2026-09-05)
 
-Art: Imagine sets already sketched in IMAGINE_VENDOR_BATCH02.md — wire when engines breathe.
+Art: Imagine sets already sketched in IMAGINE_VENDOR_BATCH02.md — wire when engines breathe. Never Imagine from this desk.

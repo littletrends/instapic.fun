@@ -1,0 +1,3 @@
+VENDOR AGENTS — Lorie hard update 2026-09-06
+Full interactive 3D game of YOUR design per doorway. Not a 2D polish.
+Clear on-screen how-to-play. Own vendors/{id}.js. No world/alley.js. No booth/6000.

@@ -9,7 +9,7 @@ P0 engines first: Love Heat Run + Batch 01 vendors. Rest queued.
 | GOBLIN_LOVE_HEAT_RUN.md | Love endless stageParams/death |
 | GOBLIN_ALLEY_3D_WALKTHROUGH_NOTES.md | Walkable alley aim |
 | GOBLIN_BATCH01_BUILD_SHEETS.md | Ball Toss · Coin Pusher · Pinball |
-| GOBLIN_AUTHORED_LEVELS_P0.md | Authored rooms (Milk PYRAMID 1–7 · Water HEAT 1–7) + codaEnabled hybrid |
+| GOBLIN_AUTHORED_LEVELS_P0.md | Authored rooms (Love HEAT 1–8 · Ball Toss RACK 1–8 · Pusher FLOOR 1–7 · Pinball CHAPTER 1–8 · Milk PYRAMID 1–7 · Cover SPOT 1–7 · Water HEAT 1–7) + codaEnabled hybrid |
 | GOBLIN_BATCH02_BUILD_SHEETS.md | Milk Bottles · Cover-the-Spot · Water Gun (Milk/Water rooms live in AUTHORED_LEVELS_P0) |
 | GOBLIN_BATCH03_BUILD_SHEETS.md | Mutoscope · Catoptromancy · High Striker · Bent Rings · Plinko |
 | GOBLIN_BATCH04_BUILD_SHEETS.md | Fairy Floss · Popcorn · Duck Pond · Skee · Penny Pitch · Dunk |
