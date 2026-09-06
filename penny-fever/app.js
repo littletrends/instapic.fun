@@ -719,7 +719,7 @@
         refreshNightBoard();
         renderCabinet();
         renderCharmWall();
-        if (slug === "love" && !vendorMods.some((item) => item.id === "love")) {
+        if (slug === "love") {
           if (leaf === "result") paintLoveResultFromState();
           else if (leaf === "play" && loveRun && (loveRun.active || loveRun.dying)) {
             loveSetMode("play");
@@ -1824,7 +1824,7 @@
     if (wasLive && !keepCrack) {
       focusCard("loveCard", false);
       loveSetMode("vestibule");
-      if (!vendorMods.some((v) => v.id === "love")) paintLoveMode();
+      paintLoveMode();
     }
   }
 
@@ -3532,14 +3532,12 @@
       refreshFortuneUi();
     });
 
-    const loveOwned = vendorMods.some((v) => v.id === "love");
-    if (!loveOwned) {
-      const holdBtn = $("loveHold") || $("holdBtn");
-      const holdZone = $("loveHoldZone") || $("holdBtn") || holdBtn;
-      declareLoveP0();
-      patchLoveRunKit();
-      setTimeout(() => { declareLoveP0(); patchLoveRunKit(); }, 0);
-      const beginHold = (e) => {
+    const holdBtn = $("loveHold") || $("holdBtn");
+    const holdZone = $("loveHoldZone") || $("holdBtn") || holdBtn;
+    declareLoveP0();
+    patchLoveRunKit();
+    setTimeout(() => { declareLoveP0(); patchLoveRunKit(); }, 0);
+    const beginHold = (e) => {
       if (!loveRun || !loveRun.active || loveRun.dying) return;
       if (holdBtn && holdBtn.disabled) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -3548,24 +3546,23 @@
       heating = true;
       loveRun.heldOnce = true;
       if (loveRun.holdBand && typeof loveRun.holdBand.hold === "function") loveRun.holdBand.hold(true);
-      };
-      const endHold = (e) => {
+    };
+    const endHold = (e) => {
       if (e) e.preventDefault();
       heating = false;
       if (loveRun && loveRun.holdBand && typeof loveRun.holdBand.hold === "function") loveRun.holdBand.hold(false);
-      };
-      $("loveStartRun").addEventListener("click", startLoveRun);
-      const practiceBox = $("lovePractice");
-      if (practiceBox) practiceBox.addEventListener("change", paintLoveMode);
-      paintLoveMode();
-      if (holdZone) {
-        holdZone.addEventListener("pointerdown", beginHold);
-        holdZone.addEventListener("pointerup", endHold);
-        holdZone.addEventListener("pointercancel", endHold);
-        holdZone.addEventListener("lostpointercapture", endHold);
-      }
-      $("loveChallenge").addEventListener("click", copyChallenge);
+    };
+    $("loveStartRun").addEventListener("click", startLoveRun);
+    const practiceBox = $("lovePractice");
+    if (practiceBox) practiceBox.addEventListener("change", paintLoveMode);
+    paintLoveMode();
+    if (holdZone) {
+      holdZone.addEventListener("pointerdown", beginHold);
+      holdZone.addEventListener("pointerup", endHold);
+      holdZone.addEventListener("pointercancel", endHold);
+      holdZone.addEventListener("lostpointercapture", endHold);
     }
+    $("loveChallenge").addEventListener("click", copyChallenge);
     if ($("marqueeStart")) $("marqueeStart").addEventListener("click", () => { startMarquee(); });
 
     const lookupOwned = vendorMods.some((v) => v.id === "lookup");
@@ -3681,7 +3678,7 @@
       setArt("snapCabinetArt", VISUALS.snap.idle);
       setArt("whisperCabinetArt", VISUALS.whisper.idle);
       setArt("passArt", VISUALS.pass.idle);
-      if (!vendorMods.some((v) => v.id === "love")) paintLoveMode();
+      paintLoveMode();
       refreshNightBoard();
     });
 
