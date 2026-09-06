@@ -699,9 +699,21 @@ function makeFireflies() {
     phase.push(Math.random() * Math.PI * 2);
   }
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const glowCanvas = document.createElement("canvas");
+  glowCanvas.width = glowCanvas.height = 64;
+  const glowCtx = glowCanvas.getContext("2d");
+  const glow = glowCtx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  glow.addColorStop(0, "rgba(255,255,225,1)");
+  glow.addColorStop(0.28, "rgba(255,214,112,.95)");
+  glow.addColorStop(1, "rgba(255,170,50,0)");
+  glowCtx.fillStyle = glow;
+  glowCtx.fillRect(0, 0, 64, 64);
+  const glowMap = new THREE.CanvasTexture(glowCanvas);
   const mat = new THREE.PointsMaterial({
     color: 0xffd080,
-    size: 0.16,
+    map: glowMap,
+    alphaTest: 0.02,
+    size: 0.22,
     transparent: true,
     opacity: 0.9,
     depthWrite: false,
@@ -710,6 +722,31 @@ function makeFireflies() {
   const pts = new THREE.Points(geo, mat);
   pts.userData.phase = phase;
   return pts;
+}
+
+function makeLooseCoins() {
+  const group = new THREE.Group();
+  const face = makeMat(0xe8b84a, { metalness: 0.72, roughness: 0.24, emissive: 0x6a3d00, emissiveIntensity: 0.55 });
+  const mark = makeMat(0x8a5418, { metalness: 0.75, roughness: 0.3 });
+  const count = 7;
+  for (let i = 0; i < count; i += 1) {
+    const coin = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.055, 24), face);
+    disc.rotation.z = Math.PI / 2;
+    coin.add(disc);
+    const stamp = new THREE.Mesh(new THREE.ExtrudeGeometry(heartShape(), { depth: 0.025, bevelEnabled: false }), mark);
+    stamp.scale.setScalar(0.09);
+    stamp.rotation.y = Math.PI / 2;
+    stamp.position.x = 0.04;
+    coin.add(stamp);
+    const segment = (hallLen - STALL_Z0 - 5) / count;
+    coin.position.set((Math.random() - 0.5) * 2.05, 0.55, STALL_Z0 + 2.5 + segment * (i + 0.35 + Math.random() * 0.35));
+    coin.userData.baseY = coin.position.y;
+    coin.userData.phase = Math.random() * Math.PI * 2;
+    coin.userData.collected = false;
+    group.add(coin);
+  }
+  return group;
 }
 
 const GATE_Z = -7.52;
@@ -744,7 +781,7 @@ const api = {
 window.PennyFeverWorld = api;
 
 let renderer, scene, camera, clock;
-let player, aura, barkers, guests, stalls, fireflies, lamps;
+let player, aura, barkers, guests, stalls, fireflies, lamps, looseCoins;
 let keys = {};
 let joy = { x: 0, y: 0, active: false };
 let camYaw = 0;
@@ -759,6 +796,9 @@ let loopTimer = 0;
 let loopOpenTimer = 0;
 let gatePromptActive = false;
 let chatPinned = false;
+let pendingTillCashIn = false;
+let tillMessage = "";
+let tillMessageUntil = 0;
 const hudAnchor = new THREE.Vector3();
 
 function el(id) {
@@ -788,7 +828,7 @@ function attachHud() {
         <em id="pfWorldPromptLine"></em>
       </div>
       <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
-        <button type="button" id="pfPocketTicket"><span>🎟</span>Ticket</button>
+        <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
         <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
         <button type="button" id="pfPocketChest"><span>🗝</span>Cabinet</button>
       </nav>
@@ -829,13 +869,9 @@ function bindHud() {
     });
   }
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
-    const prompt = el("pfWorldPrompt");
-    if (prompt && !prompt.hidden) enterNearest();
-    else {
-      pocketTicket.classList.remove("is-nudging");
-      void pocketTicket.offsetWidth;
-      pocketTicket.classList.add("is-nudging");
-    }
+    pocketTicket.classList.remove("is-nudging");
+    void pocketTicket.offsetWidth;
+    pocketTicket.classList.add("is-nudging");
   });
   if (pocketChat) pocketChat.addEventListener("click", () => {
     chatPinned = !chatPinned;
@@ -1064,6 +1100,8 @@ function buildWorld() {
 
   fireflies = makeFireflies();
   scene.add(fireflies);
+  looseCoins = makeLooseCoins();
+  scene.add(looseCoins);
   lamps = [];
   scene.traverse((o) => {
     if (o.isPointLight && o.userData.flicker) lamps.push(o);
@@ -1187,11 +1225,13 @@ function updatePlayer(dt) {
     if (veil) veil.classList.add("is-closing");
     loopTimer = window.setTimeout(() => {
       const fromZ = player.position.z;
-      const nextZ = 5.25;
+      const nextZ = 1.55;
       player.position.x = Math.max(-0.8, Math.min(0.8, player.position.x));
       player.position.z = nextZ;
       if (camera) camera.position.z += nextZ - fromZ;
       nearest = null;
+      promptTargetSlug = "";
+      pendingTillCashIn = true;
       if (veil) {
         veil.classList.remove("is-closing");
         veil.classList.add("is-opening");
@@ -1254,6 +1294,16 @@ function updateAura(dt) {
     aura.rotation.y = Math.atan2(lx, lz);
   }
   const nearPlayer = player.position.distanceTo(aura.position) < 2.4;
+  if (pendingTillCashIn && player.position.distanceTo(aura.position) < 2.85) {
+    const PF = window.PennyFever;
+    const paid = PF && typeof PF.cashInCompletedPlays === "function" ? PF.cashInCompletedPlays() : 0;
+    tillMessage = paid
+      ? `You brought me a proper night. ${paid} fresh ${paid === 1 ? "penny" : "pennies"} for another round.`
+      : "Nothing to cash yet, darling. Play a stall, then bring the night back around.";
+    tillMessageUntil = performance.now() + 5200;
+    pendingTillCashIn = false;
+    if (paid && navigator.vibrate) navigator.vibrate([28, 35, 28, 35, 60]);
+  }
   animatePerson(aura, dt, moving, nearPlayer && !moving);
 }
 
@@ -1329,7 +1379,7 @@ function findNearest() {
       promptTargetSlug = best.id;
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
-      enter.textContent = "Present a ticket · " + best.name;
+      enter.textContent = "1 penny to play · " + best.name;
       line.textContent = best.line;
     } else {
       gatePromptActive = false;
@@ -1340,7 +1390,10 @@ function findNearest() {
   }
   if (speech && speechText) {
     const dAura = player.position.distanceTo(aura.position);
-    if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
+    if (tillMessage && performance.now() < tillMessageUntil) {
+      speech.hidden = false;
+      speechText.textContent = tillMessage;
+    } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
       speech.hidden = false;
       speechText.textContent = hasAdmitTicket()
         ? "That’s far enough. Ticket, please."
@@ -1390,6 +1443,8 @@ function updateCamera() {
 }
 
 function updateFx(t) {
+  const pocketCount = el("pfPocketCoinCount");
+  if (pocketCount) pocketCount.textContent = String(Number(pfState().demoCoins) || 0);
   lamps.forEach((l) => {
     l.intensity = 1.05 + Math.sin(t * 3.1 * l.userData.flicker) * 0.18;
   });
@@ -1401,6 +1456,22 @@ function updateFx(t) {
     }
     pos.needsUpdate = true;
     fireflies.material.opacity = 0.55 + Math.sin(t * 2.2) * 0.25;
+  }
+  if (looseCoins && player) {
+    looseCoins.children.forEach((coin) => {
+      if (coin.userData.collected) return;
+      coin.rotation.y += 0.035;
+      coin.position.y = coin.userData.baseY + Math.sin(t * 2.5 + coin.userData.phase) * 0.12;
+      const dx = player.position.x - coin.position.x;
+      const dz = player.position.z - coin.position.z;
+      if (dx * dx + dz * dz < 0.58) {
+        coin.userData.collected = true;
+        coin.visible = false;
+        const PF = window.PennyFever;
+        if (PF && typeof PF.addDemoCoins === "function") PF.addDemoCoins(1);
+        if (navigator.vibrate) navigator.vibrate(24);
+      }
+    });
   }
   const warm = player.position.z > 0;
   scene.fog.color.set(warm ? 0x140c0c : 0x0b1018);

@@ -209,6 +209,12 @@
   }
 
   let state = loadState();
+  if (!state._coinEconomyV1) {
+    state.demoCoins = 3;
+    state._coinEconomyV1 = true;
+    state._cashedPlays = 0;
+    saveState(state);
+  }
 
   const $ = (id) => document.getElementById(id);
 
@@ -631,6 +637,26 @@
     saveState(state);
     refreshNightBoard();
     return true;
+  }
+
+  function addDemoCoins(amount) {
+    const added = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!added) return 0;
+    state.demoCoins = Math.max(0, Number(state.demoCoins) || 0) + added;
+    saveState(state);
+    refreshNightBoard();
+    return added;
+  }
+
+  function cashInCompletedPlays() {
+    const total = Object.values(state.plays || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    const previous = Number(state._cashedPlays) || 0;
+    const completed = Math.max(0, total - previous);
+    if (!completed) return 0;
+    const coins = Math.min(5, Math.max(1, Math.ceil(completed / 2)));
+    state._cashedPlays = total;
+    addDemoCoins(coins);
+    return coins;
   }
 
   function setChalk() {
@@ -3720,6 +3746,8 @@
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
     spendDemoCoin,
+    addDemoCoins,
+    cashInCompletedPlays,
     award,
     showBanner,
     setTier,

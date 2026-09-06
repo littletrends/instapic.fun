@@ -238,6 +238,7 @@ body.is-in-world.is-world-map .foyer-header {
   cursor: pointer;
 }
 .pf-world-pocket button span { display: block; margin-bottom: 0.2rem; font-size: 1rem; }
+.pf-world-pocket button b { color: #fff6ec; font-size: 0.72rem; }
 .pf-world-pocket button.is-active { color: #fff6ec; background: rgba(193, 68, 107, 0.32); }
 .pf-world-pocket button.is-nudging { animation: pf-pocket-nudge 0.35s ease; }
 @keyframes pf-pocket-nudge { 50% { transform: translateY(-5px); color: #fff6ec; } }
