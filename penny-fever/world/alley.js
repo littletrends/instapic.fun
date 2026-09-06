@@ -738,6 +738,7 @@ let joy = { x: 0, y: 0, active: false };
 let camYaw = 0;
 let lookDrag = false;
 let nearest = null;
+let promptTargetSlug = "";
 let raf = 0;
 let hintTimer = 0;
 let solids = [];
@@ -822,7 +823,7 @@ function onKey(e) {
   const k = e.key.toLowerCase();
   keys[k] = true;
   if (k === "e" || k === "enter") {
-    if (gatePromptActive || nearest) {
+    if (gatePromptActive || promptTargetSlug || nearest) {
       e.preventDefault();
       enterNearest();
     }
@@ -897,8 +898,8 @@ function bindJoy() {
 
 function enterNearest() {
   if (handleGatePrompt()) return;
-  if (!nearest) return;
-  const slug = nearest.id;
+  const slug = promptTargetSlug || (nearest && nearest.id);
+  if (!slug) return;
   const PF = window.PennyFever;
   if (PF && typeof PF.enterTent === "function") PF.enterTent(slug);
   else if (PF && typeof PF.enter === "function") PF.enter(slug);
@@ -1272,6 +1273,7 @@ function findNearest() {
   if (prompt && enter && line) {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
       gatePromptActive = true;
+      promptTargetSlug = "";
       prompt.hidden = false;
       prompt.classList.add("is-ticket-handoff");
       if (!hasAdmitTicket()) {
@@ -1283,12 +1285,14 @@ function findNearest() {
       }
     } else if (best) {
       gatePromptActive = false;
+      promptTargetSlug = best.id;
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
-      enter.textContent = "Step inside · " + best.name;
+      enter.textContent = "Present a ticket · " + best.name;
       line.textContent = best.line;
     } else {
       gatePromptActive = false;
+      promptTargetSlug = "";
       prompt.hidden = true;
       prompt.classList.remove("is-ticket-handoff");
     }

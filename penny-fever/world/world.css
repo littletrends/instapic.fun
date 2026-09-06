@@ -207,7 +207,7 @@ body.is-in-world.is-world-map .foyer-header {
   position: absolute;
   z-index: 8;
   left: 50%;
-  bottom: 4.6rem;
+  bottom: clamp(8.5rem, 20vh, 11.5rem);
   transform: translateX(-50%);
   min-width: min(88vw, 360px);
   text-align: center;
@@ -227,9 +227,12 @@ body.is-in-world.is-world-map .foyer-header {
   width: 100%;
   font: 700 1rem/1.2 "Palatino Linotype", Palatino, Georgia, serif;
   color: #160b10;
-  background: linear-gradient(180deg, #f0d09a, #d4a45a);
-  border: 0;
-  border-radius: 999px;
+  background:
+    radial-gradient(circle at 0 50%, transparent 0 7px, #efd297 8px),
+    radial-gradient(circle at 100% 50%, transparent 0 7px, #efd297 8px),
+    linear-gradient(180deg, #f5dda7, #d4a45a);
+  border: 2px dashed rgba(67, 29, 22, 0.62);
+  border-radius: 8px;
   padding: 0.85rem 1.1rem 0.75rem;
   box-shadow: 0 4px 0 #8a6230, 0 10px 24px rgba(0, 0, 0, 0.45);
   cursor: pointer;
@@ -314,8 +317,7 @@ body.is-in-world.is-world-map .foyer-header {
 @media (max-width: 640px) {
   .pf-joy { width: 118px; height: 118px; }
   .pf-world-speech { bottom: 8.1rem; }
-  .pf-world-prompt { bottom: 5.2rem; }
-  .pf-world-prompt.is-ticket-handoff { bottom: 12.2rem; }
-  .pf-world-held-ticket { bottom: 17.8rem; }
+  .pf-world-prompt { bottom: 9.5rem; }
+  .pf-world-prompt.is-ticket-handoff { bottom: 11.5rem; }
   .pf-world-hint { display: none; }
 }
