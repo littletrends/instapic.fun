@@ -215,6 +215,8 @@
   /* Thin vendor register — stall loops live in vendors/*.js */
   const vendorMods = [];
   let coreBound = false;
+  let activeVendorId = "";
+  const roomCleanups = new Map();
 
   function eachVendor(fn) {
     vendorMods.forEach((mod) => {
@@ -244,8 +246,45 @@
     if (coreBound && typeof mod.bind === "function") mod.bind();
     if (coreBound && typeof mod.onShow === "function") {
       const hash = (location.hash || "").replace(/^#/, "");
-      if (hash === "cabinet/" + mod.id) mod.onShow();
+      if (hash === "cabinet/" + mod.id || hash.startsWith("cabinet/" + mod.id + "/")) {
+        activeVendorId = mod.id;
+        mod.onShow();
+      }
     }
+  }
+
+  function addRoomCleanup(slug, cleanup) {
+    if (!slug || typeof cleanup !== "function") return () => {};
+    const set = roomCleanups.get(slug) || new Set();
+    set.add(cleanup);
+    roomCleanups.set(slug, set);
+    return () => set.delete(cleanup);
+  }
+
+  function closeActiveRoom(nextSlug = "") {
+    if (!activeVendorId || activeVendorId === nextSlug) return;
+    const closing = activeVendorId;
+    const room = $("cabinet-" + closing);
+    if (room) room.dispatchEvent(new CustomEvent("pennyfever:roomleave", { detail: { next: nextSlug } }));
+    const mod = vendorMods.find((item) => item.id === closing);
+    if (mod && typeof mod.onLeave === "function") {
+      try { mod.onLeave(); } catch (err) { console.warn("vendor close", closing, err); }
+    }
+    const cleanups = roomCleanups.get(closing);
+    if (cleanups) {
+      [...cleanups].forEach((cleanup) => {
+        try { cleanup(); } catch (err) { console.warn("room cleanup", closing, err); }
+      });
+      cleanups.clear();
+    }
+    if (room) {
+      room.querySelectorAll("audio, video").forEach((media) => {
+        try { media.pause(); } catch (_) { /* already stopped */ }
+      });
+      room.querySelectorAll("[data-room-overlay]").forEach((overlay) => overlay.remove());
+    }
+    activeVendorId = "";
+    document.body.removeAttribute("data-active-room");
   }
 
   const GAME_ASSET = "assets/game/";
@@ -606,13 +645,17 @@
     foyer: () => $("foyer"),
   };
 
-  function hideAllViews() {
-    eachVendor((mod) => { if (mod.onLeave) mod.onLeave(); });
+  function hideAllViews(nextSlug = "") {
+    closeActiveRoom(nextSlug);
     const door = $("discoveryDoor");
     const foyer = $("foyer");
-    if (door) door.hidden = true;
-    if (foyer) foyer.hidden = true;
-    document.querySelectorAll(".cabinet-interior").forEach((el) => { el.hidden = true; });
+    if (door) { door.hidden = true; door.inert = true; }
+    if (foyer) { foyer.hidden = true; foyer.inert = true; }
+    document.querySelectorAll(".cabinet-interior").forEach((el) => {
+      el.hidden = true;
+      el.inert = true;
+      el.setAttribute("aria-hidden", "true");
+    });
     if (window.PennyFeverWorld && typeof window.PennyFeverWorld.pause === "function") {
       window.PennyFeverWorld.pause();
     }
@@ -621,17 +664,19 @@
 
   function routeFromHash() {
     const hash = (location.hash || "").replace(/^#/, "");
+    const routeMatch = hash.match(/^cabinet\/([\w-]+)(?:\/(play|result))?$/);
+    const nextSlug = routeMatch ? routeMatch[1] : "";
     const onLove = hash === "cabinet/love" || hash === "cabinet/love/play" || hash === "cabinet/love/result";
     if (!onLove) abortLoveRun();
-    hideAllViews();
+    hideAllViews(nextSlug);
     if (!hash || hash === "door") {
       const door = $("discoveryDoor");
-      if (door) door.hidden = false;
+      if (door) { door.hidden = false; door.inert = false; }
       return "door";
     }
     if (hash === "foyer" || hash === "arcade" || hash === "alley") {
       const foyer = $("foyer");
-      if (foyer) foyer.hidden = false;
+      if (foyer) { foyer.hidden = false; foyer.inert = false; }
       const alleyMotion = $("alleyMotion");
       if (alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
       // ensure foyer init bits
@@ -659,13 +704,15 @@
       }
       return "foyer";
     }
-    const m = hash.match(/^cabinet\/([\w-]+)(?:\/(play|result))?$/);
+    const m = routeMatch;
     if (m) {
       const slug = m[1];
       const leaf = m[2] || "";
       const el = $("cabinet-" + slug);
       if (el) {
         el.hidden = false;
+        el.inert = false;
+        el.removeAttribute("aria-hidden");
         const title = el.querySelector("h1");
         if (title) title.focus();
         // keep shared systems warm
@@ -681,13 +728,19 @@
             paintLoveMode();
           }
         }
-        eachVendor((mod) => { if (mod.id === slug && mod.onShow) mod.onShow(); });
+        if (activeVendorId !== slug) {
+          activeVendorId = slug;
+          document.body.setAttribute("data-active-room", slug);
+          const mod = vendorMods.find((item) => item.id === slug);
+          if (mod && typeof mod.onShow === "function") mod.onShow();
+          el.dispatchEvent(new CustomEvent("pennyfever:roomenter", { detail: { slug } }));
+        }
         return "cabinet:" + slug + (leaf ? "/" + leaf : "");
       }
     }
     // fallback
     const foyer = $("foyer");
-    if (foyer) foyer.hidden = false;
+    if (foyer) { foyer.hidden = false; foyer.inert = false; }
     if (window.PennyFeverWorld && typeof window.PennyFeverWorld.start === "function") {
       window.PennyFeverWorld.start();
     }
@@ -799,6 +852,8 @@
   window.PennyFeverVendorRouter = Object.freeze({
     enter: enterCabinet,
     backToAlley: goArcade,
+    addCleanup: addRoomCleanup,
+    activeRoom: () => activeVendorId,
   });
 
 
@@ -809,6 +864,7 @@
     }
     hideAllViews();
     $("foyer").hidden = false;
+    $("foyer").inert = false;
     $("foyerTitle").focus();
     setChalk();
     renderCabinet();
@@ -3630,6 +3686,10 @@
     coreBound = true;
     applyAssetMap();
     window.addEventListener("hashchange", routeFromHash);
+    window.addEventListener("pagehide", () => closeActiveRoom(""));
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) routeFromHash();
+    });
     setAura("welcome");
     setArt("fortuneCabinetArt", VISUALS.fortune.idle);
     setArt("loveCabinetArt", VISUALS.love.cold);
@@ -3642,6 +3702,7 @@
 
   window.PennyFever = {
     registerVendor,
+    addRoomCleanup,
     enter: enterCabinet,
     enterTent,
     backToAlley: goArcade,

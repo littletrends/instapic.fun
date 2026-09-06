@@ -386,4 +386,31 @@
     height: 5.4rem;
     bottom: 6.2rem;
   }
+
+  /* The vestibule is an introduction, not a stack of HUDs over a game.
+     Give the 3D attract screen its own window and let the ticket copy flow
+     beneath it. Playing mode returns to the full-height stage above. */
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-viewport.vendor-stage {
+    height: auto;
+    min-height: 0;
+    padding-top: 11.75rem;
+    overflow: hidden;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule #ballTossCanvas {
+    bottom: auto;
+    height: 11.75rem !important;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-howto {
+    display: none;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-gate {
+    position: relative;
+    inset: auto;
+    margin: 0.5rem;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-gate [data-pf-depth-copy] {
+    margin: 0.45rem 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
 }
