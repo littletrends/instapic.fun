@@ -214,35 +214,13 @@ body.is-in-world.is-world-map .foyer-header {
 .pf-world-prompt.is-ticket-handoff {
   bottom: clamp(10rem, 28vh, 15rem);
 }
-.pf-world-held-ticket {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(15.6rem, 38vh, 20rem);
-  transform: translateX(-50%) rotate(-2deg);
-  width: min(58vw, 210px);
-  padding: 0.55rem 0.8rem;
-  text-align: center;
-  color: #2b1119;
-  background: linear-gradient(135deg, #f5dda7, #d8ad61);
+.pf-world-prompt.is-ticket-handoff button {
   border: 2px dashed rgba(67, 29, 22, 0.62);
-  border-radius: 7px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
-.pf-world-held-ticket[hidden] { display: none !important; }
-.pf-world-held-ticket small,
-.pf-world-held-ticket strong { display: block; }
-.pf-world-held-ticket small { font: 800 0.58rem/1 system-ui, sans-serif; letter-spacing: 0.2em; }
-.pf-world-held-ticket strong { margin-top: 0.2rem; font: 800 0.94rem/1.1 Georgia, serif; }
-.pf-world-held-ticket.is-given {
-  animation: pf-ticket-handover 0.58s ease-in forwards;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f5dda7, #d8ad61);
+  letter-spacing: 0.035em;
 }
 .pf-world-prompt.is-ticket-given { opacity: 0; transition: opacity 0.15s ease; }
-@keyframes pf-ticket-handover {
-  0% { opacity: 1; transform: translateX(-50%) translateY(0) rotate(-2deg) scale(1); }
-  62% { opacity: 1; transform: translateX(-50%) translateY(-16vh) rotate(5deg) scale(0.72); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-22vh) rotate(8deg) scale(0.35); }
-}
 .pf-world-prompt[hidden] { display: none !important; }
 .pf-world-prompt button {
   width: 100%;
