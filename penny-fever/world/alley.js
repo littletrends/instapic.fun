@@ -799,7 +799,12 @@ function bindHud() {
     });
   }
   if (leave) leave.addEventListener("click", () => { location.hash = "door"; });
-  if (enter) enter.addEventListener("click", enterNearest);
+  if (enter) {
+    enter.addEventListener("click", (event) => {
+      event.preventDefault();
+      enterNearest();
+    });
+  }
   if (failMap) {
     failMap.addEventListener("click", () => {
       document.body.classList.add("is-in-world", "is-world-map");
@@ -817,7 +822,7 @@ function onKey(e) {
   const k = e.key.toLowerCase();
   keys[k] = true;
   if (k === "e" || k === "enter") {
-    if (nearest) {
+    if (gatePromptActive || nearest) {
       e.preventDefault();
       enterNearest();
     }
@@ -1178,6 +1183,7 @@ function handleGatePrompt() {
   if (PF && typeof PF.passAdmitTicket === "function") PF.passAdmitTicket();
   if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
   api.gateBump = false;
+  gatePromptActive = false;
   window.setTimeout(() => {
     if (prompt) prompt.classList.remove("is-ticket-given");
   }, 620);
