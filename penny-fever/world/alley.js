@@ -42,29 +42,15 @@ const WOOD_DARK = 0x1a100c;
 const VELVET = 0x4a1a28;
 const BRASS = 0xd4a45a;
 
-/* Looping alley: a clear corridor bent into a ring. Stalls sit OFF the walk
- * on both sides, faces angled toward incoming walkers. Tap a door to enter.
- * Y=0 now; cylinder volume left for later fly (+Y) / dig (−Y). */
-const WORLD = {
-  cx: 0,
-  cz: 16,
-  pathR: 16,
-  pathHalf: 1.42,
-  innerStallR: 13.05,
-  outerStallR: 18.95,
-  innerWallR: 11.15,
-  outerWallR: 21.05,
-  radius: 24,
-  yFloor: 0,
-  ySky: 22,
-  yDig: -16,
-  wallH: 4.6,
-  alleyGap: 0.95,
-  secretA: Math.PI / 2,
-  secretGap: 0.22,
-  faceAngle: 0.58,
-  doorReach: 3.2,
-};
+/* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
+ * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
+const STALL_X = 2.95;
+const STALL_STEP = 3.55;
+const STALL_Z0 = 8;
+const AISLE = 1.62;
+const FACE_PULL = 1.7;
+const DOOR_REACH = 2.6;
+let hallLen = 0;
 
 const geoBox = new THREE.BoxGeometry(1, 1, 1);
 const geoSphere = new THREE.SphereGeometry(1, 14, 12);
@@ -452,7 +438,7 @@ function makeSign(text, accent) {
 function makeStall(spec, x, z, yaw) {
   const root = new THREE.Group();
   root.position.set(x, 0, z);
-  /* Local +Z is the pretty face. Yaw so that face looks at the walkers on the ring. */
+  /* Local +Z is the pretty face. Yaw so that face looks at walkers on the aisle. */
   root.rotation.y = yaw;
   const wood = makeMat(WOOD, { map: woodTex("#4a2e1c", "rgba(0,0,0,0.18)") });
   const dark = makeMat(WOOD_DARK);
@@ -631,32 +617,14 @@ function makePier(group) {
   group.add(foam);
 }
 
-function alleyTheta() {
-  const start = -Math.PI / 2 + WORLD.alleyGap / 2;
-  const length = Math.PI * 2 - WORLD.alleyGap;
-  return { start, length };
-}
-
-function makeMidway(group) {
-  const { start, length } = alleyTheta();
+function makeHall(group, len) {
   const floorT = woodTex("#4a3424", "rgba(20,10,0,0.2)");
-  const deck = new THREE.Mesh(
-    new THREE.RingGeometry(WORLD.innerWallR + 0.04, WORLD.outerWallR - 0.04, 56, 1, 0, Math.PI * 2),
-    makeMat(0x2a1c14, { map: floorT, roughness: 0.88 })
-  );
-  deck.rotation.x = -Math.PI / 2;
-  deck.position.set(WORLD.cx, WORLD.yFloor, WORLD.cz);
-  group.add(deck);
   const floor = new THREE.Mesh(
-    new THREE.RingGeometry(
-      WORLD.pathR - WORLD.pathHalf,
-      WORLD.pathR + WORLD.pathHalf,
-      56, 1, 0, Math.PI * 2
-    ),
-    makeMat(0x5a4030, { map: floorT, roughness: 0.72 })
+    new THREE.PlaneGeometry(8.6, len + 4),
+    makeMat(0x4a3424, { map: floorT, roughness: 0.78 })
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(WORLD.cx, WORLD.yFloor + 0.02, WORLD.cz);
+  floor.position.set(0, 0, len / 2);
   group.add(floor);
   const throat = meshBox(
     makeMat(0x4a3424, { map: floorT, roughness: 0.78 }),
@@ -664,194 +632,47 @@ function makeMidway(group) {
     0, 0.01, -3.6
   );
   group.add(throat);
-  const post = makeMat(0x3a2418);
-  [-1.2, 1.2].forEach((x) => {
-    group.add(meshCyl(post, 0.14, 0.16, 3.2, x, 1.6, -0.15));
-  });
-  const leftSign = makeSign("ALLEY →", BRASS);
-  leftSign.position.set(1.55, 2.35, 0.35);
-  leftSign.rotation.y = -0.4;
-  group.add(leftSign);
-  const rightSign = makeSign("← ALLEY", BRASS);
-  rightSign.position.set(-1.55, 2.35, 0.35);
-  rightSign.rotation.y = 0.4;
-  group.add(rightSign);
 
-  const wallMat = makeMat(0x2a1a12, {
-    map: woodTex("#2a1a12", "rgba(0,0,0,0.25)"),
-    roughness: 0.85,
-    side: THREE.DoubleSide,
+  const wallT = woodTex("#2a1a12", "rgba(0,0,0,0.25)");
+  const wallM = makeMat(0x2a1a12, { map: wallT, roughness: 0.85 });
+  [-1, 1].forEach((side) => {
+    group.add(meshBox(wallM, 0.28, 4.6, len, side * 4.25, 2.3, len / 2));
+    group.add(meshBox(makeMat(VELVET), 0.12, 1.4, len, side * 4.05, 3.6, len / 2));
   });
-  const velvet = makeMat(VELVET, { side: THREE.DoubleSide });
-  const g = WORLD.secretGap / 2;
-  const inner = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      WORLD.innerWallR, WORLD.innerWallR, WORLD.wallH, 40, 1, true,
-      WORLD.secretA + g, Math.PI * 2 - WORLD.secretGap
-    ),
-    wallMat
-  );
-  inner.position.set(WORLD.cx, WORLD.wallH / 2, WORLD.cz);
-  group.add(inner);
-  const vIn = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      WORLD.innerWallR + 0.04, WORLD.innerWallR + 0.04, 1.3, 40, 1, true,
-      WORLD.secretA + g, Math.PI * 2 - WORLD.secretGap
-    ),
-    velvet
-  );
-  vIn.position.set(WORLD.cx, 3.55, WORLD.cz);
-  group.add(vIn);
-  const outer = new THREE.Mesh(
-    new THREE.CylinderGeometry(WORLD.outerWallR, WORLD.outerWallR, WORLD.wallH, 40, 1, true, start, length),
-    wallMat
-  );
-  outer.position.set(WORLD.cx, WORLD.wallH / 2, WORLD.cz);
-  group.add(outer);
-  const vOut = new THREE.Mesh(
-    new THREE.CylinderGeometry(WORLD.outerWallR - 0.04, WORLD.outerWallR - 0.04, 1.3, 40, 1, true, start, length),
-    velvet
-  );
-  vOut.position.set(WORLD.cx, 3.55, WORLD.cz);
-  group.add(vOut);
-
-  const ceil = new THREE.Mesh(
-    new THREE.RingGeometry(WORLD.innerWallR, WORLD.outerWallR, 40, 1, start, length),
-    makeMat(0x1c120e)
-  );
-  ceil.rotation.x = Math.PI / 2;
-  ceil.position.set(WORLD.cx, WORLD.wallH, WORLD.cz);
-  group.add(ceil);
+  group.add(meshBox(makeMat(0x1c120e), 8.8, 0.2, len, 0, 4.7, len / 2));
+  group.add(meshBox(makeMat(WOOD_DARK), 8.6, 3.6, 0.4, 0, 1.8, len + 1.6));
 
   const lampMat = makeMat(0xffe2a8, { emissive: 0xffd08a, emissiveIntensity: 0.85 });
   const brass = makeMat(BRASS, { metalness: 0.7, roughness: 0.3 });
-  for (let i = 0; i < 12; i += 1) {
-    const a = start + ((i + 0.5) / 12) * length;
-    const lx = WORLD.cx + Math.cos(a) * WORLD.pathR;
-    const lz = WORLD.cz + Math.sin(a) * WORLD.pathR;
-    group.add(meshSphere(lampMat, 0.11, lx, 3.85, lz));
-    group.add(meshCyl(brass, 0.04, 0.04, 0.35, lx, 4.15, lz));
-    if (i % 2 === 0) {
-      const lamp = new THREE.PointLight(0xffd090, 1.15, 11, 2);
-      lamp.position.set(lx, 3.7, lz);
-      lamp.userData.flicker = 0.8 + Math.random();
-      group.add(lamp);
-    }
+  for (let z = 8; z < len - 2; z += 8) {
+    [-1, 1].forEach((side) => {
+      const lx = side * 3.55;
+      group.add(meshCyl(brass, 0.05, 0.05, 0.4, lx, 3.7, z));
+      group.add(meshSphere(lampMat, 0.12, lx, 3.45, z));
+    });
+    const lamp = new THREE.PointLight(0xffd090, 1.25, 14, 2);
+    lamp.position.set(0, 3.5, z);
+    lamp.userData.flicker = 0.8 + Math.random();
+    group.add(lamp);
   }
 
   const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.01, 10);
   const coinMat = makeMat(GOLD, { metalness: 0.8, roughness: 0.35, emissive: 0x3a2a08, emissiveIntensity: 0.15 });
-  const coins = new THREE.InstancedMesh(coinGeo, coinMat, 90);
+  const coins = new THREE.InstancedMesh(coinGeo, coinMat, 140);
   const dummy = new THREE.Object3D();
-  for (let i = 0; i < 90; i += 1) {
-    const a = start + Math.random() * length;
-    const r = WORLD.pathR - 1.1 + Math.random() * 2.2;
-    dummy.position.set(WORLD.cx + Math.cos(a) * r, 0.02, WORLD.cz + Math.sin(a) * r);
+  for (let i = 0; i < 140; i += 1) {
+    dummy.position.set((Math.random() - 0.5) * 2.4, 0.02, 4 + Math.random() * (len - 8));
     dummy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
     dummy.updateMatrix();
     coins.setMatrixAt(i, dummy.matrix);
   }
   group.add(coins);
-  makeSecretArena(group);
-}
-
-function angleDelta(a, b) {
-  let d = a - b;
-  while (d > Math.PI) d -= Math.PI * 2;
-  while (d < -Math.PI) d += Math.PI * 2;
-  return d;
-}
-
-function polarAngle(x, z) {
-  return Math.atan2(z - WORLD.cz, x - WORLD.cx);
-}
-
-function inSecretMouth(x, z) {
-  const r = carnivalR(x, z);
-  if (r > WORLD.pathR + 0.4 || r < 0.4) return false;
-  return Math.abs(angleDelta(polarAngle(x, z), WORLD.secretA)) < WORLD.secretGap / 2 + 0.04;
-}
-
-function inArena(x, z) {
-  return carnivalR(x, z) < WORLD.innerWallR - 0.05;
-}
-
-function makeSecretArena(group) {
-  const pit = new THREE.Mesh(
-    new THREE.CircleGeometry(WORLD.innerWallR - 0.2, 32),
-    makeMat(0x1a0c10, { roughness: 0.92 })
-  );
-  pit.rotation.x = -Math.PI / 2;
-  pit.position.set(WORLD.cx, 0.01, WORLD.cz);
-  group.add(pit);
-
-  const sand = new THREE.Mesh(
-    new THREE.CircleGeometry(5.4, 28),
-    makeMat(0x3a2a18, { roughness: 0.88 })
-  );
-  sand.rotation.x = -Math.PI / 2;
-  sand.position.set(WORLD.cx, 0.04, WORLD.cz);
-  group.add(sand);
-
-  const rail = new THREE.Mesh(
-    new THREE.TorusGeometry(5.6, 0.08, 8, 32),
-    makeMat(0x4a2018, { metalness: 0.25, roughness: 0.55 })
-  );
-  rail.rotation.x = Math.PI / 2;
-  rail.position.set(WORLD.cx, 0.55, WORLD.cz);
-  group.add(rail);
-
-  const posts = makeMat(0x2a1410);
-  for (let i = 0; i < 8; i += 1) {
-    const a = (i / 8) * Math.PI * 2;
-    group.add(meshCyl(posts, 0.07, 0.07, 0.7, WORLD.cx + Math.cos(a) * 5.6, 0.35, WORLD.cz + Math.sin(a) * 5.6));
-  }
-
-  const sx = WORLD.cx + Math.cos(WORLD.secretA) * WORLD.innerWallR;
-  const sz = WORLD.cz + Math.sin(WORLD.secretA) * WORLD.innerWallR;
-  const doorYaw = WORLD.secretA + Math.PI / 2;
-  group.add(meshBox(makeMat(0x14080a), 0.18, 2.6, 0.22, sx + Math.cos(WORLD.secretA) * 0.05, 1.3, sz + Math.sin(WORLD.secretA) * 0.05));
-  const jamb = makeMat(0x1a100c);
-  const side = 0.95;
-  [-1, 1].forEach((s) => {
-    const ox = Math.cos(doorYaw) * side;
-    const oz = Math.sin(doorYaw) * side;
-    group.add(meshBox(jamb, 0.16, 2.7, 0.2, sx + ox, 1.35, sz + oz));
-  });
-  const plaque = makeSign("256", 0x5a2030);
-  plaque.scale.set(0.55, 0.55, 0.55);
-  plaque.position.set(sx + Math.cos(WORLD.secretA) * 0.2, 2.55, sz + Math.sin(WORLD.secretA) * 0.2);
-  plaque.rotation.y = WORLD.secretA + Math.PI;
-  group.add(plaque);
-
-  const myth = makeSign("KILL SCREEN", 0x8a2030);
-  myth.position.set(WORLD.cx, 1.35, WORLD.cz);
-  group.add(myth);
-  group.add(meshBox(makeMat(0x12080c), 1.4, 1.1, 1.4, WORLD.cx, 0.55, WORLD.cz));
-
-  const glow = new THREE.PointLight(0x8a2018, 1.6, 12, 2);
-  glow.position.set(WORLD.cx, 2.4, WORLD.cz);
-  glow.userData.flicker = 1.4;
-  group.add(glow);
 }
 
 function makeSky() {
-  const stars = starTex();
-  const group = new THREE.Group();
-  const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(WORLD.radius + 8, WORLD.radius + 8, WORLD.ySky + 8, 32, 1, true),
-    new THREE.MeshBasicMaterial({ map: stars, side: THREE.BackSide })
-  );
-  wall.position.set(WORLD.cx, WORLD.ySky / 2, WORLD.cz);
-  group.add(wall);
-  const cap = new THREE.Mesh(
-    new THREE.CircleGeometry(WORLD.radius + 8, 24),
-    new THREE.MeshBasicMaterial({ map: stars, side: THREE.BackSide })
-  );
-  cap.rotation.x = Math.PI / 2;
-  cap.position.set(WORLD.cx, WORLD.ySky + 2, WORLD.cz);
-  group.add(cap);
-  return group;
+  const geo = new THREE.SphereGeometry(90, 24, 16);
+  const mat = new THREE.MeshBasicMaterial({ map: starTex(), side: THREE.BackSide });
+  return new THREE.Mesh(geo, mat);
 }
 
 function makeFireflies() {
@@ -860,11 +681,9 @@ function makeFireflies() {
   const pos = new Float32Array(n * 3);
   const phase = [];
   for (let i = 0; i < n; i += 1) {
-    const a = Math.random() * Math.PI * 2;
-    const r = 4 + Math.random() * (WORLD.radius - 2);
-    pos[i * 3] = WORLD.cx + Math.cos(a) * r;
+    pos[i * 3] = (Math.random() - 0.5) * 22;
     pos[i * 3 + 1] = 0.4 + Math.random() * 5.5;
-    pos[i * 3 + 2] = WORLD.cz + Math.sin(a) * r;
+    pos[i * 3 + 2] = -36 + Math.random() * (hallLen + 20);
     phase.push(Math.random() * Math.PI * 2);
   }
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -883,7 +702,7 @@ function makeFireflies() {
 
 const GATE_Z = -7.52;
 const AURA_DOOR = { x: 0.12, z: -7.72 };
-const AURA_TILL = { x: 2.55, z: 2.85 };
+const AURA_TILL = { x: 2.15, z: 3.1 };
 
 function pfState() {
   return (window.PennyFever && typeof window.PennyFever.getState === "function" && window.PennyFever.getState()) || {};
@@ -905,6 +724,9 @@ const api = {
   stop,
   pause,
   resume,
+  pose,
+  warp,
+  step,
 };
 
 window.PennyFeverWorld = api;
@@ -919,6 +741,9 @@ let nearest = null;
 let raf = 0;
 let hintTimer = 0;
 let solids = [];
+let loopingAlley = false;
+let loopTimer = 0;
+let loopOpenTimer = 0;
 
 function el(id) {
   return document.getElementById(id);
@@ -948,6 +773,7 @@ function attachHud() {
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the aisle · stalls left and right · tap a door to enter</p>
+      <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
     </div>
     <div class="pf-world-fail" id="pfWorldFail" hidden>
       <div>
@@ -1084,8 +910,8 @@ function buildWorld() {
   renderer.setClearColor(0x070b16, 1);
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0b1018, 0.011);
-  camera = new THREE.PerspectiveCamera(62, window.innerWidth / Math.max(1, window.innerHeight), 0.1, 140);
+  scene.fog = new THREE.FogExp2(0x0b1018, 0.026);
+  camera = new THREE.PerspectiveCamera(58, window.innerWidth / Math.max(1, window.innerHeight), 0.1, 140);
   clock = new THREE.Clock();
 
   scene.add(new THREE.AmbientLight(0x4a382c, 0.95));
@@ -1102,25 +928,18 @@ function buildWorld() {
   scene.add(makeSky());
   makePier(scene);
   makePalace(scene);
-  makeMidway(scene);
+  hallLen = STALL_Z0 + STALLS.length * STALL_STEP + 8;
+  makeHall(scene, hallLen);
 
   stalls = [];
   solids = [];
-  const { start, length } = alleyTheta();
-  const nPairs = Math.ceil(STALLS.length / 2);
   STALLS.forEach((spec, i) => {
-    const pair = Math.floor(i / 2);
-    const outer = i % 2 === 0;
-    const a = start + (pair + 0.5) * (length / nPairs);
-    const r = outer ? WORLD.outerStallR : WORLD.innerStallR;
-    const x = WORLD.cx + Math.cos(a) * r;
-    const z = WORLD.cz + Math.sin(a) * r;
-    const lookA = a - WORLD.faceAngle;
-    const lx = WORLD.cx + Math.cos(lookA) * WORLD.pathR;
-    const lz = WORLD.cz + Math.sin(lookA) * WORLD.pathR;
-    const yaw = Math.atan2(lx - x, lz - z);
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = side * STALL_X;
+    const z = STALL_Z0 + i * STALL_STEP;
+    const yaw = Math.atan2(-x, -FACE_PULL);
     const s = makeStall(spec, x, z, yaw);
-    s.userData.ring = outer ? "out" : "in";
+    s.userData.side = side;
     s.userData.doorX = x + Math.sin(yaw) * s.userData.faceOff;
     s.userData.doorZ = z + Math.cos(yaw) * s.userData.faceOff;
     scene.add(s);
@@ -1128,18 +947,23 @@ function buildWorld() {
     solids.push({ x, z, r: s.userData.hitR });
   });
 
+  const curtain = meshBox(makeMat(VELVET), 7.6, 3.8, 0.2, 0, 1.9, hallLen + 0.8);
+  scene.add(curtain);
+  const endSign = makeSign("ROUND AGAIN", 0x8a2030);
+  endSign.position.set(0, 3.4, hallLen + 0.6);
+  scene.add(endSign);
+
   const booth = new THREE.Group();
-  booth.position.set(2.55, 0, 2.85);
-  booth.rotation.y = Math.PI / 2;
-  booth.add(meshBox(makeMat(WOOD), 1.35, 1.15, 0.85, 0, 0.58, 0));
+  booth.position.set(2.15, 0, 3.1);
+  booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
   booth.add(makeSign("AURA’S TILL", GOLD));
-  booth.children[1].position.set(0, 1.42, 0.28);
+  booth.children[1].position.set(0, 1.35, 0.2);
   const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/prepared/welcome-proprietor.webp") }));
-  poster.scale.set(0.5, 0.68, 0.03);
-  poster.position.set(-0.42, 0.82, 0.44);
+  poster.scale.set(0.55, 0.72, 0.03);
+  poster.position.set(-0.35, 0.85, 0.42);
   booth.add(poster);
   scene.add(booth);
-  solids.push({ x: 2.55, z: 2.85, r: 0.95 });
+  solids.push({ x: 2.15, z: 3.1, r: 0.85 });
 
   const vendorNote = makeNoteBoard("VENDOR DESK", [
     "One Grok per doorway — go 3D in the tent.",
@@ -1149,10 +973,9 @@ function buildWorld() {
     "Own vendors/{id}.js + #cabinet/{id}",
     "Read ops/ATTN_VENDOR_AGENTS.md",
   ]);
-  vendorNote.position.set(-2.55, 1.45, 2.85);
-  vendorNote.rotation.y = -Math.PI / 2;
+  vendorNote.position.set(-2.45, 1.45, 4.2);
+  vendorNote.rotation.y = Math.PI / 2;
   scene.add(vendorNote);
-  solids.push({ x: -2.55, z: 2.85, r: 0.7 });
 
   player = makePerson({ kind: "guest", cloth: 0xb08a78, scale: 1.05 });
   player.position.set(0, 0, -16.2);
@@ -1184,14 +1007,9 @@ function buildWorld() {
     });
     g.userData.patrol = {
       dir: Math.random() > 0.5 ? 1 : -1,
-      speed: 0.55 + Math.random() * 0.35,
-      angle: (i / 4) * Math.PI * 2,
+      speed: 0.7 + Math.random() * 0.5,
     };
-    g.position.set(
-      WORLD.cx + Math.cos(g.userData.patrol.angle) * WORLD.pathR,
-      0,
-      WORLD.cz + Math.sin(g.userData.patrol.angle) * WORLD.pathR
-    );
+    g.position.set((Math.random() - 0.5) * 1.4, 0, 10 + i * 14);
     scene.add(g);
     guests.push(g);
   }
@@ -1215,8 +1033,42 @@ function onResize() {
   renderer.setSize(w, h, false);
 }
 
-function carnivalR(x, z) {
-  return Math.hypot(x - WORLD.cx, z - WORLD.cz);
+function pose() {
+  if (!player) return null;
+  const x = player.position.x;
+  const z = player.position.z;
+  return {
+    x, z,
+    yaw: camYaw,
+    nearest: nearest && nearest.id,
+    nearestDist: nearest && nearest.dist,
+    zone: z < -3 ? "pier" : "alley",
+  };
+}
+
+function warp(x, z, yaw) {
+  if (!player) return pose();
+  player.position.set(x, 0, z);
+  if (typeof yaw === "number") camYaw = yaw;
+  findNearest();
+  return pose();
+}
+
+function step(dt, input) {
+  if (input) {
+    keys.w = !!input.w;
+    keys.s = !!input.s;
+    keys.a = !!input.a;
+    keys.d = !!input.d;
+    keys.arrowup = false;
+    keys.arrowdown = false;
+    keys.arrowleft = false;
+    keys.arrowright = false;
+  }
+  updatePlayer(typeof dt === "number" ? dt : 1 / 60);
+  findNearest();
+  updateCamera();
+  return pose();
 }
 
 function hitsSolid(nx, nz) {
@@ -1239,11 +1091,8 @@ function blocked(nx, nz) {
   }
   if (hitsSolid(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
-  if (inArena(nx, nz) || inSecretMouth(nx, nz)) return false;
-  const r = carnivalR(nx, nz);
-  const minR = WORLD.pathR - WORLD.pathHalf;
-  const maxR = WORLD.pathR + WORLD.pathHalf;
-  return r < minR || r > maxR;
+  if (nz > hallLen + 1.2) return true;
+  return Math.abs(nx) > AISLE;
 }
 
 function tryMove(dx, dz) {
@@ -1283,16 +1132,30 @@ function updatePlayer(dt) {
     player.userData.heading = Math.atan2(dx, dz);
     player.rotation.y = player.userData.heading;
     moving = true;
-    if (!lookDrag && player.position.z > -1.2 && iy > 0.2) {
-      camYaw += angleDelta(player.userData.heading, camYaw) * Math.min(1, dt * 3.2);
-    }
+  }
+  if (!loopingAlley && ticketPassed() && player.position.z > hallLen - 0.15) {
+    loopingAlley = true;
+    const veil = el("pfWorldLoopVeil");
+    if (veil) veil.classList.add("is-closing");
+    loopTimer = window.setTimeout(() => {
+      const fromZ = player.position.z;
+      const nextZ = 5.25;
+      player.position.x = Math.max(-0.8, Math.min(0.8, player.position.x));
+      player.position.z = nextZ;
+      if (camera) camera.position.z += nextZ - fromZ;
+      nearest = null;
+      if (veil) {
+        veil.classList.remove("is-closing");
+        veil.classList.add("is-opening");
+      }
+      loopOpenTimer = window.setTimeout(() => {
+        if (veil) veil.classList.remove("is-opening");
+        loopingAlley = false;
+      }, 520);
+    }, 260);
+    moving = false;
   }
   animatePerson(player, dt, moving, false);
-  if (player.position.z < -8) api.facedAlley = false;
-  if (ticketPassed() && !api.facedAlley && player.position.z > -0.35) {
-    camYaw = Math.PI / 2;
-    api.facedAlley = true;
-  }
   return moving;
 }
 
@@ -1347,20 +1210,16 @@ function updateCrowd(dt) {
   });
   guests.forEach((g) => {
     const p = g.userData.patrol;
-    p.angle += p.dir * p.speed * dt / WORLD.pathR;
-    g.position.set(
-      WORLD.cx + Math.cos(p.angle) * WORLD.pathR,
-      0,
-      WORLD.cz + Math.sin(p.angle) * WORLD.pathR
-    );
-    g.rotation.y = p.angle + (p.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+    g.position.z += p.dir * p.speed * dt;
+    if (g.position.z > hallLen - 4 || g.position.z < 6) p.dir *= -1;
+    g.rotation.y = p.dir > 0 ? 0 : Math.PI;
     animatePerson(g, dt, true, false);
   });
 }
 
 function findNearest() {
   let best = null;
-  let bestD = WORLD.doorReach;
+  let bestD = DOOR_REACH;
   stalls.forEach((s) => {
     const spec = s.userData.stall;
     const dx = player.position.x - s.userData.doorX;
@@ -1389,14 +1248,12 @@ function findNearest() {
   const z = player.position.z;
   if (z < GATE_Z - 1.8) api.gateBump = false;
   if (zone) {
-    if (z < -3) zone.textContent = "PIER · HEART PALACE";
-    else if (inArena(player.position.x, player.position.z)) zone.textContent = "SECRET · ARENA";
-    else zone.textContent = "ALLEY · THE LOOP";
+    zone.textContent = z < -3 ? "PIER · HEART PALACE" : `HALL · ${Math.max(0, Math.round(z))} PACES`;
   }
   if (nearEl) {
     if (!ticketPassed() && z < 0) nearEl.textContent = "Aura holds the door";
-    else if (inArena(player.position.x, player.position.z)) nearEl.textContent = "Kill Screen 256";
-    else nearEl.textContent = best ? best.name : (z < -3 ? "Walk through the doorway" : "Alley · walk up to a door");
+    else if (z > hallLen - 6) nearEl.textContent = "The alley bends around";
+    else nearEl.textContent = best ? best.name : (z < -3 ? "Walk through the doorway" : "Walk up to a door");
   }
   if (prompt && enter && line) {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
@@ -1426,9 +1283,9 @@ function findNearest() {
     } else if (best && best.dist < 2.1) {
       speech.hidden = false;
       speechText.textContent = best.line;
-    } else if (inArena(player.position.x, player.position.z)) {
+    } else if (z > hallLen - 6) {
       speech.hidden = false;
-      speechText.textContent = "You’re not supposed to be in here. Cute.";
+      speechText.textContent = "Keep walking. My midway refuses to end neatly.";
     } else if (ticketPassed() && dAura < 2.4) {
       speech.hidden = false;
       speechText.textContent = "First fortune is free. Everything else is a pretend penny. Follow the lights.";
@@ -1439,26 +1296,14 @@ function findNearest() {
 }
 
 function updateCamera() {
-  const inAlley = player.position.z > -1.2 && !inArena(player.position.x, player.position.z);
-  const dist = inAlley ? 3.05 : 5.6;
-  const height = inAlley ? 2.12 : 2.35;
-  const lookY = 1.15;
+  const dist = player.position.z > -1 ? 4.6 : 5.6;
+  const height = 2.05;
+  const lookY = 0.95;
   const tx = player.position.x - Math.sin(camYaw) * dist;
   const tz = player.position.z - Math.cos(camYaw) * dist;
   camera.position.x += (tx - camera.position.x) * 0.12;
   camera.position.y += (player.position.y + height - camera.position.y) * 0.12;
   camera.position.z += (tz - camera.position.z) * 0.12;
-  if (inAlley && !inSecretMouth(camera.position.x, camera.position.z)) {
-    const r = carnivalR(camera.position.x, camera.position.z);
-    const minR = WORLD.pathR - WORLD.pathHalf + 0.22;
-    const maxR = WORLD.pathR + WORLD.pathHalf - 0.22;
-    if (r < minR || r > maxR) {
-      const a = polarAngle(camera.position.x, camera.position.z);
-      const cr = Math.min(maxR, Math.max(minR, r));
-      camera.position.x = WORLD.cx + Math.cos(a) * cr;
-      camera.position.z = WORLD.cz + Math.sin(a) * cr;
-    }
-  }
   camera.lookAt(player.position.x, player.position.y + lookY, player.position.z);
 }
 
@@ -1477,7 +1322,7 @@ function updateFx(t) {
   }
   const warm = player.position.z > 0;
   scene.fog.color.set(warm ? 0x140c0c : 0x0b1018);
-  scene.fog.density = warm ? 0.012 : 0.014;
+  scene.fog.density = warm ? 0.034 : 0.026;
 }
 
 function loop() {
@@ -1535,6 +1380,11 @@ function start() {
 function pause() {
   api.paused = true;
   cancelAnimationFrame(raf);
+  clearTimeout(loopTimer);
+  clearTimeout(loopOpenTimer);
+  loopingAlley = false;
+  const veil = el("pfWorldLoopVeil");
+  if (veil) veil.classList.remove("is-closing", "is-opening");
 }
 
 function resume() {
