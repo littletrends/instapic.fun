@@ -746,6 +746,8 @@ let loopingAlley = false;
 let loopTimer = 0;
 let loopOpenTimer = 0;
 let gatePromptActive = false;
+let chatPinned = false;
+const hudAnchor = new THREE.Vector3();
 
 function el(id) {
   return document.getElementById(id);
@@ -773,6 +775,11 @@ function attachHud() {
         <button type="button" id="pfWorldEnter">Step inside</button>
         <em id="pfWorldPromptLine"></em>
       </div>
+      <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
+        <button type="button" id="pfPocketTicket"><span>🎟</span>Ticket</button>
+        <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
+        <button type="button" id="pfPocketChest"><span>🗝</span>Cabinet</button>
+      </nav>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the aisle · stalls left and right · tap a door to enter</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
@@ -790,6 +797,9 @@ function bindHud() {
   const map = el("pfWorldMap");
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
+  const pocketTicket = el("pfPocketTicket");
+  const pocketChat = el("pfPocketChat");
+  const pocketChest = el("pfPocketChest");
   const failMap = el("pfWorldFailMap");
   if (map) {
     map.addEventListener("click", () => {
@@ -806,6 +816,25 @@ function bindHud() {
       enterNearest();
     });
   }
+  if (pocketTicket) pocketTicket.addEventListener("click", () => {
+    const prompt = el("pfWorldPrompt");
+    if (prompt && !prompt.hidden) enterNearest();
+    else {
+      pocketTicket.classList.remove("is-nudging");
+      void pocketTicket.offsetWidth;
+      pocketTicket.classList.add("is-nudging");
+    }
+  });
+  if (pocketChat) pocketChat.addEventListener("click", () => {
+    chatPinned = !chatPinned;
+    pocketChat.classList.toggle("is-active", chatPinned);
+    pocketChat.setAttribute("aria-pressed", String(chatPinned));
+  });
+  if (pocketChest) pocketChest.addEventListener("click", () => {
+    const PF = window.PennyFever;
+    if (PF && typeof PF.enterTent === "function") PF.enterTent("curios");
+    else if (PF && typeof PF.enter === "function") PF.enter("curios");
+  });
   if (failMap) {
     failMap.addEventListener("click", () => {
       document.body.classList.add("is-in-world", "is-world-map");
@@ -1313,10 +1342,27 @@ function findNearest() {
     } else if (ticketPassed() && dAura < 2.4) {
       speech.hidden = false;
       speechText.textContent = "First fortune is free. Everything else is a pretend penny. Follow the lights.";
+    } else if (chatPinned) {
+      speech.hidden = false;
+      speechText.textContent = "Ask me at any tent. I know which machines lie and which merely cheat.";
     } else {
       speech.hidden = true;
     }
   }
+}
+
+function updateHudAnchor() {
+  const prompt = el("pfWorldPrompt");
+  if (!prompt || prompt.hidden || !player || !camera || !renderer) return;
+  hudAnchor.copy(player.position);
+  hudAnchor.y += 2.15;
+  hudAnchor.project(camera);
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = Math.max(170, Math.min(rect.width - 170, (hudAnchor.x * 0.5 + 0.5) * rect.width));
+  const y = Math.max(145, Math.min(rect.height - 210, (-hudAnchor.y * 0.5 + 0.5) * rect.height - 12));
+  prompt.style.left = `${x}px`;
+  prompt.style.top = `${y}px`;
+  prompt.style.bottom = "auto";
 }
 
 function updateCamera() {
@@ -1359,6 +1405,7 @@ function loop() {
   updateCrowd(dt);
   findNearest();
   updateCamera();
+  updateHudAnchor();
   updateFx(t);
   hintTimer += dt;
   if (hintTimer > 8) {
