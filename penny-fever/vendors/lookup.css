@@ -1,0 +1,396 @@
+/* Star-Gazing Tent — 3D wish-lantern planetarium. PF only. Namespaced to #cabinet-lookup. */
+#cabinet-lookup.lookup-3d {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  max-width: none;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+#cabinet-lookup .lookup-sky {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(90, 140, 210, 0.22), transparent 48%),
+    radial-gradient(ellipse at 18% 88%, rgba(242, 199, 92, 0.1), transparent 42%),
+    linear-gradient(180deg, #070814 0%, #0b0c18 48%, #05040c 100%);
+}
+#cabinet-lookup.lookup-3d .interior-room,
+#cabinet-lookup.lookup-3d .lookup-stage-wrap,
+#cabinet-lookup.lookup-3d .lookup-card {
+  height: 100%;
+  min-height: 100%;
+}
+#cabinet-lookup.lookup-3d .interior-room::before,
+#cabinet-lookup.lookup-3d .interior-room::after {
+  display: none;
+}
+
+#cabinet-lookup .lookup-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  margin: 0;
+  padding: 0.65rem 1rem 1.4rem;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(6, 8, 18, 0.72) 0%, rgba(6, 8, 18, 0.12) 70%, transparent 100%);
+  box-shadow: none;
+  pointer-events: none;
+}
+#cabinet-lookup .lookup-header .interior-back {
+  pointer-events: auto;
+  margin-bottom: 0.2rem;
+}
+#cabinet-lookup.lookup-3d .lookup-header::before {
+  display: none;
+}
+#cabinet-lookup .lookup-header .plaque-kicker,
+#cabinet-lookup .lookup-header h1,
+#cabinet-lookup .lookup-header .interior-blurb {
+  display: none;
+}
+
+#cabinet-lookup .lookup-stage-wrap {
+  perspective: none;
+}
+#cabinet-lookup .lookup-card {
+  position: relative;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none !important;
+  animation: none;
+}
+#cabinet-lookup .lookup-card.has-focus::after {
+  display: none;
+}
+
+.lookup-world {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #05060e;
+}
+#lookupCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.lookup-card.is-playing #lookupCanvas { cursor: grab; }
+.lookup-card.is-playing #lookupCanvas.is-dragging { cursor: grabbing; }
+.lookup-card.is-playing #lookupCanvas.is-pulse { cursor: pointer; }
+
+.lookup-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(4, 6, 14, 0.38) 100%),
+    linear-gradient(180deg, rgba(6, 8, 18, 0.12), transparent 18%, transparent 78%, rgba(6, 8, 18, 0.62));
+  transition: background 180ms ease;
+}
+.lookup-card.is-pulse .lookup-vignette {
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(242, 199, 92, 0.16) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(6, 8, 18, 0.12), transparent 16%, transparent 74%, rgba(6, 8, 18, 0.7));
+}
+.lookup-card.is-thread .lookup-vignette {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 236, 170, 0.22) 0%, transparent 46%),
+    linear-gradient(180deg, rgba(6, 8, 18, 0.12), transparent 18%, transparent 72%, rgba(6, 8, 18, 0.72));
+}
+
+.lookup-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  padding: 3.4rem 0.95rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+}
+.lookup-hud-top,
+.lookup-hud-mid,
+.lookup-hud-bot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+.lookup-hud-mid {
+  margin: 0.15rem 0 0;
+  align-items: center;
+}
+#cabinet-lookup #lookupTier,
+#cabinet-lookup #lookupVerdict {
+  display: none !important;
+}
+.lookup-card.is-playing .lookup-hud-mid .status-ticket {
+  display: none;
+}
+.lookup-hud-bot {
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 0.55rem;
+}
+.lookup-hud .machine-number {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(196, 220, 255, 0.72);
+  text-shadow: 0 1px 8px #000;
+}
+.lookup-card .barker-call {
+  margin: 0;
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  color: #f2c75c;
+  text-shadow: 0 0 16px rgba(242, 199, 92, 0.45), 0 2px 10px #000;
+}
+.lookup-hud .tent-mouth-joke {
+  margin: 0;
+  max-width: 38rem;
+  color: rgba(220, 230, 255, 0.86);
+  text-shadow: 0 1px 8px #000;
+}
+.lookup-hud .depth-readout {
+  margin-top: 0.12rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.32rem;
+  max-width: 30rem;
+}
+.lookup-hud .depth-readout span {
+  padding: 0.28rem 0.4rem;
+  border-radius: 8px;
+  background: rgba(8, 10, 22, 0.62);
+  border: 1px solid rgba(150, 180, 230, 0.28);
+  backdrop-filter: blur(6px);
+}
+.lookup-rk-hud {
+  margin: 0;
+  min-height: 1.1em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: #c8dcff;
+  text-shadow: 0 1px 8px #000;
+}
+#lookupCard:not(.is-playing) .lookup-rk-hud,
+#lookupCard:not(.is-playing) .strike-pips,
+#lookupCard:not(.is-playing) .lookup-trace,
+#lookupCard:not(.is-playing) .lookup-timer,
+#lookupCard:not(.is-playing) .lookup-compass { display: none; }
+
+.lookup-trace {
+  display: flex;
+  gap: 0.28rem;
+  margin-top: 0.15rem;
+}
+.lookup-trace i {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: rgba(240, 208, 154, 0.18);
+  border: 1px solid rgba(242, 199, 92, 0.45);
+  box-shadow: 0 0 0 0 rgba(242, 199, 92, 0);
+}
+.lookup-trace i.on {
+  background: radial-gradient(circle at 35% 30%, #fff6d0, #f2c75c 55%, #8a6230);
+  box-shadow: 0 0 10px rgba(242, 199, 92, 0.7);
+}
+.lookup-trace i.miss {
+  background: #c41e3a;
+  border-color: #e07080;
+}
+
+.lookup-compass {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  color: #f2c75c;
+  text-shadow: 0 0 12px rgba(242, 199, 92, 0.55), 0 2px 8px #000;
+  min-height: 2.6rem;
+}
+.lookup-compass[hidden] { display: none !important; }
+#lookupCompassNeedle {
+  display: block;
+  font-size: 1.6rem;
+  line-height: 1;
+  transform-origin: 50% 60%;
+  filter: drop-shadow(0 0 8px rgba(242, 199, 92, 0.8));
+}
+.lookup-compass em {
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.lookup-phase {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.4rem, 4vw, 2.3rem);
+  letter-spacing: 0.22em;
+  color: #f2c75c;
+  text-shadow: 0 0 22px rgba(242, 199, 92, 0.55), 0 2px 12px #000;
+  pointer-events: none;
+  min-height: 1.2em;
+}
+.lookup-card.is-vestibule .lookup-phase { opacity: 0.85; }
+.lookup-card.is-playing .lookup-phase {
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+  min-height: 0;
+  margin-top: 0.1rem;
+}
+.lookup-card.is-playing .lookup-phase.is-fly {
+  color: #d8ecff;
+  text-shadow: 0 0 12px rgba(160, 200, 255, 0.45), 0 2px 8px #000;
+}
+.lookup-card.is-playing .lookup-phase.is-lift {
+  animation: lookup-pulse 1.1s ease-in-out infinite;
+}
+@keyframes lookup-pulse {
+  0%, 100% { opacity: 0.82; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+.lookup-hud .status-ticket {
+  margin: 0 auto 0.2rem;
+  max-width: 38rem;
+  text-align: center;
+  color: #e8dcc0;
+  text-shadow: 0 1px 8px #000;
+}
+
+.lookup-timer {
+  width: min(22rem, 72vw);
+  height: 0.38rem;
+  margin: 0.15rem auto 0;
+  border-radius: 99px;
+  background: rgba(8, 10, 22, 0.55);
+  border: 1px solid rgba(242, 199, 92, 0.35);
+  overflow: hidden;
+}
+.lookup-timer i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #f2c75c, #ffe9a8 60%, #c45a78);
+  box-shadow: 0 0 10px rgba(242, 199, 92, 0.55);
+}
+
+.lookup-controls {
+  pointer-events: none;
+  margin: 0.35rem auto 0;
+  padding: 0.42rem 0.75rem 0.48rem;
+  max-width: 42rem;
+  width: 100%;
+  border-radius: 12px;
+  background: rgba(6, 8, 18, 0.78);
+  border: 1px solid rgba(242, 199, 92, 0.38);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+.lookup-controls p {
+  margin: 0.12rem 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #e8f0ff;
+  text-shadow: 0 1px 6px #000;
+  text-align: center;
+}
+.lookup-controls kbd {
+  display: inline-block;
+  padding: 0.08rem 0.38rem;
+  margin: 0 0.08rem;
+  border-radius: 5px;
+  border: 1px solid rgba(242, 199, 92, 0.55);
+  background: rgba(242, 199, 92, 0.12);
+  color: #f2c75c;
+  font-family: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+.lookup-key {
+  display: inline-block;
+  padding: 0.04rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+.lookup-key--gold {
+  color: #1a1208;
+  background: linear-gradient(180deg, #fff1c0, #f2c75c);
+}
+.lookup-key--rose {
+  color: #fff;
+  background: linear-gradient(180deg, #ff6a90, #c41e3a);
+}
+.lookup-key--ice {
+  color: #082028;
+  background: linear-gradient(180deg, #f4fbff, #7ed7ff);
+}
+
+.lookup-actions {
+  pointer-events: auto;
+  justify-content: center;
+  margin-top: 0.2rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.lookup-card.is-playing #lookupStart { display: none; }
+.lookup-card.is-playing .vendor-vestibule-only,
+.lookup-card.is-result .vendor-vestibule-only { display: none; }
+.lookup-pulse {
+  min-width: 8.5rem;
+  box-shadow: 0 0 18px rgba(242, 199, 92, 0.35);
+}
+.lookup-card:not(.is-playing) #lookupPulse { display: none !important; }
+
+.lookup-hud .vendor-result {
+  pointer-events: auto;
+  margin: 0.4rem auto 0;
+  max-width: 26rem;
+  background: rgba(8, 10, 22, 0.82);
+  border: 1px solid rgba(242, 199, 92, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.lookup-card.is-dying .lookup-vignette {
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(196, 30, 58, 0.18) 20%, rgba(8, 4, 10, 0.72) 100%);
+}
+
+@media (max-width: 640px) {
+  .lookup-hud { padding: 3.2rem 0.7rem 0; }
+  .lookup-hud-mid { margin-bottom: 13.5rem; }
+  .lookup-hud .depth-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+  .lookup-phase { font-size: 1.25rem; letter-spacing: 0.14em; }
+  .lookup-controls p { font-size: 0.72rem; }
+}

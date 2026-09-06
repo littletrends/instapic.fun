@@ -1,38 +1,39 @@
-/* Pinball Alley — Desktop Grok owns this file. PF only. Never booth/port 6000.
- * GOBLIN HIT #3 FEEL 2026-09-05 — P1–P6 authored tables, not a faster-ball climb.
- * Plunger Parade ≠ Backglass Fever: open triangle + flat glass vs peaked fever deck + return spinner + sink well.
- * Twin Flip Gate opens from mini-flip CONTACT, not empty air. Thorns save-or-doom.
- * Custom · depthUnit: Chapter · codaEnabled hybrid ENDLESS after Backglass Fever (Aura-flippable).
- * Toys/walls change per chapter. Speed climb is coda-only (cap 1.7). Ramp miss = upper drain. */
-(() => {
-  "use strict";
+/* Pinball Alley — 3D parlor tent. PF only. Never booth/port 6000. Never Imagine.
+ * ONE THUMB. Hungry left lane. Table teaches itself. Not a two-flipper sim.
+ * Custom depth-run: one chrome ball, authored chapters, ENDLESS coda after Backglass Fever. */
+import * as THREE from "../world/lib/three.module.min.js";
+
+function boot() {
   const PF = window.PennyFever;
-  if (!PF || !PF.registerVendor) return;
+  if (!PF || !PF.registerVendor) {
+    requestAnimationFrame(boot);
+    return;
+  }
+  mountStall(PF);
+}
+boot();
+
+function mountStall(PF) {
+  "use strict";
   const { $, kit } = PF;
-  const W = 320;
-  const H = 520;
-  const STEP = 1000 / 60;
-  const BALL_R = 6.4;
+
   const GAME_ID = "pinball";
   const CODA_ENABLED = true;
   const AUTHORED_COUNT = 8;
-  let run = null;
-  let idleRaf = 0;
-  let idleRoom = 1;
-  let idleClock = 0;
-  const pointers = new Map();
-  const keys = { L: false, R: false };
-
-  const AURA = {
-    drain: "Aura: Outlane. The backglass felt that.",
-    upper: "Aura: Missed the return. The shelf dumped you.",
-    chapter: "Aura: Chapter up. New table. New toys.",
-    deep: (n) => `Aura: Chapter ${n}. You're living in my table.`,
-    drunk: "Aura: Those drunk flippers don’t wait.",
-    souvenir: "Aura: Backglass Fever survived. Souvenir — the table bowed.",
-    coda: "Aura: Authored chapters done. ENDLESS — toys stay, speed climbs.",
-    leave: "Aura: You pulled the plug mid-chapter.",
-  };
+  const STEP = 1000 / 240;
+  const BALL_R = 0.022;
+  const WALL_T = 0.014;
+  const G = 1.18;
+  const MAX_SPD = 2.35;
+  const FLIP_UP = 28;
+  const FLIP_DOWN = 16;
+  const DEATH_HOLD_MS = 780;
+  const SKIN = 0xf0c4a8;
+  const HAIR = 0x3d2418;
+  const DRESS = 0x1e6b3c;
+  const GOLD = 0xe8b84a;
+  const HEART = 0xd22b3a;
+  const BLOUSE = 0xf5f0ea;
 
   const P0_MOUNT = {
     engine: "Custom",
@@ -44,150 +45,185 @@
     authoredCount: AUTHORED_COUNT,
   };
 
-  const AUTHORED_CHAPTERS = [
+  const AUTHORED = [
     {
       id: 1, name: "Plunger Parade", kind: "parade", speed: 1, bumper: 120,
       mission: { id: "bumpers", label: "Hit each bumper once" },
-      toys: { spinner: false, sink: false, ramp: false, slings: false, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, upperShelf: false, posts: true },
+      toys: { spinner: false, sink: false, ramp: false, slings: false, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, posts: true },
       bumpers: [
-        { x: 96, y: 168, r: 24, hue: "#e8a0b8" },
-        { x: 208, y: 168, r: 24, hue: "#d4a45a" },
-        { x: 152, y: 252, r: 22, hue: "#3d8a8a" },
+        { x: 0.18, y: 0.74, r: 0.05, hue: "#e8a0b8" },
+        { x: 0.26, y: 0.56, r: 0.05, hue: "#d4a45a" },
+        { x: 0.10, y: 0.42, r: 0.048, hue: "#3d8a8a" },
       ],
-      spinner: null, sink: null, ramp: null, outPull: 0, drunk: false,
-      barker: "Open glass. Classic triangle. Kiss each bumper. No ramp. No sink. Not Fever.",
+      hunger: 0.7,
+      glow: 0xc45a6a,
+      barker: "One thumb. Kiss each bumper. The left lane is a mouth — stay right.",
     },
     {
       id: 2, name: "Spinner Alley", kind: "spinner", speed: 1, bumper: 120,
       mission: { id: "spinner", label: "3 spinner ticks" },
-      toys: { spinner: true, sink: false, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, upperShelf: false, posts: false },
+      toys: { spinner: true, sink: false, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, posts: false },
       bumpers: [
-        { x: 44, y: 312, r: 14, hue: "#e8a0b8" },
-        { x: 242, y: 312, r: 14, hue: "#d4a45a" },
+        { x: -0.34, y: 0.42, r: 0.038, hue: "#e8a0b8" },
+        { x: 0.34, y: 0.42, r: 0.038, hue: "#d4a45a" },
       ],
-      spinner: { x: 152, y: 102 }, sink: null, ramp: null, outPull: 0, drunk: false,
-      barker: "Center spinner lane. Slingshots live. Bumpers stepped aside.",
+      spinner: { x: 0.08, y: 0.72 },
+      hunger: 0.55,
+      glow: 0x3d8a8a,
+      barker: "Shoot the spinner. Left sling is a traitor — it feeds the mouth.",
     },
     {
       id: 3, name: "Sinkhole Circus", kind: "sink", speed: 1, bumper: 120,
       mission: { id: "sink", label: "Sink hole ×2" },
-      toys: { spinner: false, sink: true, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, upperShelf: false, posts: false },
+      toys: { spinner: false, sink: true, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, posts: false },
       bumpers: [
-        { x: 152, y: 168, r: 12, hue: "#e8a0b8" },
-        { x: 218, y: 236, r: 12, hue: "#d4a45a" },
-        { x: 152, y: 304, r: 12, hue: "#3d8a8a" },
-        { x: 86, y: 236, r: 12, hue: "#c41e3a" },
+        { x: 0.00, y: 0.70, r: 0.036, hue: "#e8a0b8" },
+        { x: 0.22, y: 0.54, r: 0.036, hue: "#d4a45a" },
+        { x: 0.00, y: 0.38, r: 0.036, hue: "#3d8a8a" },
+        { x: -0.22, y: 0.54, r: 0.036, hue: "#c41e3a" },
       ],
-      spinner: null, sink: { x: 152, y: 236 }, ramp: null, outPull: 0.03, drunk: false,
-      barker: "Ring around the sink. Drop it twice.",
+      sink: { x: 0.08, y: 0.54, r: 0.042 },
+      hunger: 0.62,
+      glow: 0x6b3a8a,
+      barker: "Drop the well twice. Don't let the kick spill left.",
     },
     {
       id: 4, name: "Ramp Carnival", kind: "ramp", speed: 1, bumper: 120,
       mission: { id: "ramp-sink", label: "Shoot ramp + sink once" },
-      toys: { spinner: false, sink: true, ramp: true, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, upperShelf: true, posts: false },
+      toys: { spinner: false, sink: true, ramp: true, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, posts: false, upperShelf: true },
       bumpers: [
-        { x: 72, y: 92, r: 15, hue: "#e8a0b8" },
-        { x: 86, y: 286, r: 16, hue: "#d4a45a" },
-        { x: 232, y: 286, r: 16, hue: "#3d8a8a" },
+        { x: -0.28, y: 0.78, r: 0.04, hue: "#e8a0b8" },
+        { x: -0.28, y: 0.38, r: 0.04, hue: "#d4a45a" },
+        { x: 0.30, y: 0.38, r: 0.04, hue: "#3d8a8a" },
       ],
-      spinner: null, sink: { x: 214, y: 348 }, ramp: { x0: 18, y0: 58, x1: 142, y1: 142 }, outPull: 0.02, drunk: false,
-      barker: "Wire ramp to the UPPER SHELF. Second floor. Miss the return, you drain.",
+      sink: { x: 0.22, y: 0.30, r: 0.04 },
+      ramp: true,
+      hunger: 0.7,
+      glow: 0xd4a45a,
+      barker: "Ramp to the shelf. Miss the return and the mouth is waiting.",
     },
     {
       id: 5, name: "Bumper Storm", kind: "storm", speed: 1, bumper: 120,
       mission: { id: "combo", label: "Bumper combo ×5" },
-      toys: { spinner: false, sink: false, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, upperShelf: false, posts: false, tightIn: true },
+      toys: { spinner: false, sink: false, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: false, posts: false, tightIn: true },
       bumpers: [
-        { x: 118, y: 142, r: 16, hue: "#e8a0b8" },
-        { x: 186, y: 142, r: 16, hue: "#d4a45a" },
-        { x: 152, y: 184, r: 18, hue: "#3d8a8a" },
-        { x: 110, y: 228, r: 15, hue: "#c41e3a" },
-        { x: 194, y: 228, r: 15, hue: "#f0d09a" },
+        { x: -0.14, y: 0.70, r: 0.042, hue: "#e8a0b8" },
+        { x: 0.14, y: 0.70, r: 0.042, hue: "#d4a45a" },
+        { x: 0.00, y: 0.56, r: 0.048, hue: "#3d8a8a" },
+        { x: -0.18, y: 0.42, r: 0.04, hue: "#c41e3a" },
+        { x: 0.18, y: 0.42, r: 0.04, hue: "#f0d09a" },
       ],
-      spinner: null, sink: null, ramp: null, outPull: 0.02, drunk: false,
-      barker: "Five bumpers dense. No ramp. Combo is the sport.",
+      hunger: 0.78,
+      glow: 0xc41e3a,
+      barker: "Five bumpers. Chaos kicks left. One thumb saves the storm.",
     },
     {
       id: 6, name: "Twin Flip Gate", kind: "gate", speed: 1, bumper: 120,
       mission: { id: "gate", label: "Open gate + 2 bonus lane hits" },
-      toys: { spinner: false, sink: false, ramp: false, slings: true, upperFlip: true, gate: true, bonus: true, thorns: false, rollovers: false, upperShelf: false, posts: false },
+      toys: { spinner: false, sink: false, ramp: false, slings: true, upperFlip: true, gate: true, bonus: true, thorns: false, rollovers: false, posts: false },
       bumpers: [
-        { x: 108, y: 268, r: 14, hue: "#e8a0b8" },
-        { x: 196, y: 268, r: 14, hue: "#d4a45a" },
+        { x: -0.16, y: 0.44, r: 0.04, hue: "#e8a0b8" },
+        { x: 0.16, y: 0.44, r: 0.04, hue: "#d4a45a" },
       ],
-      spinner: null, sink: null, ramp: null, outPull: 0.02, drunk: false,
-      barker: "Tap both to pulse the mini-flip. Gate opens the bonus lane.",
+      hunger: 0.82,
+      glow: 0x4aaa6a,
+      barker: "Upper gate pulses itself. One thumb downstairs. Feed the bonus, not the mouth.",
     },
     {
       id: 7, name: "Outlane Thorns", kind: "thorns", speed: 1, bumper: 120,
       mission: { id: "alt", label: "Spinner, then sink" },
-      toys: { spinner: true, sink: true, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: true, rollovers: false, upperShelf: false, posts: true },
+      toys: { spinner: true, sink: true, ramp: false, slings: true, upperFlip: false, gate: false, bonus: false, thorns: true, rollovers: false, posts: true },
       bumpers: [
-        { x: 122, y: 168, r: 14, hue: "#e8a0b8" },
-        { x: 182, y: 168, r: 14, hue: "#d4a45a" },
-        { x: 152, y: 220, r: 13, hue: "#3d8a8a" },
+        { x: -0.12, y: 0.62, r: 0.04, hue: "#e8a0b8" },
+        { x: 0.12, y: 0.62, r: 0.04, hue: "#d4a45a" },
+        { x: 0.00, y: 0.48, r: 0.038, hue: "#3d8a8a" },
       ],
-      spinner: { x: 52, y: 118 }, sink: { x: 152, y: 298 }, ramp: null, outPull: 0.015, drunk: false,
-      barker: "Thorn posts by the outlanes. They save. They doom.",
+      spinner: { x: 0.18, y: 0.78 },
+      sink: { x: 0.08, y: 0.36, r: 0.04 },
+      hunger: 0.95,
+      glow: 0x8a3030,
+      barker: "Thorns by the mouth. They save right. They doom left.",
     },
     {
       id: 8, name: "Backglass Fever", kind: "fever", speed: 1, bumper: 120,
       mission: { id: "chain", label: "Ramp → spinner → sink" },
-      toys: { spinner: true, sink: true, ramp: true, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: true, upperShelf: true, posts: false },
+      toys: { spinner: true, sink: true, ramp: true, slings: true, upperFlip: false, gate: false, bonus: false, thorns: false, rollovers: true, posts: false, upperShelf: true },
       bumpers: [
-        { x: 96, y: 108, r: 13, hue: "#e8a0b8" },
-        { x: 52, y: 214, r: 14, hue: "#d4a45a" },
-        { x: 248, y: 196, r: 14, hue: "#3d8a8a" },
-        { x: 152, y: 278, r: 15, hue: "#c41e3a" },
+        { x: -0.18, y: 0.78, r: 0.038, hue: "#e8a0b8" },
+        { x: -0.32, y: 0.52, r: 0.04, hue: "#d4a45a" },
+        { x: 0.32, y: 0.56, r: 0.04, hue: "#3d8a8a" },
+        { x: 0.00, y: 0.40, r: 0.042, hue: "#c41e3a" },
       ],
-      spinner: { x: 228, y: 214 }, sink: { x: 152, y: 342 }, ramp: { x0: 18, y0: 48, x1: 196, y1: 154 }, outPull: 0.04, drunk: false,
-      barker: "Combo table: peaked fever deck, return spinner, sink well, four bumpers. Rollovers rearrange. Not Parade.",
+      spinner: { x: 0.22, y: 0.52 },
+      sink: { x: 0.08, y: 0.28, r: 0.04 },
+      ramp: true,
+      hunger: 1.05,
+      glow: 0xe8b84a,
+      barker: "Fever deck. Ramp → spinner → sink. The mouth is wide awake.",
     },
   ];
-  const PINBALL_LEVELS = AUTHORED_CHAPTERS;
 
   const CODA_MISSIONS = [
     { id: "chain", label: "Ramp → spinner → sink" },
     { id: "combo", label: "Bumper combo ×5" },
-    { id: "spinner", label: "3 spinner ticks" },
     { id: "sink", label: "Sink hole ×2" },
-    { id: "ramp-sink", label: "Ramp + sink" },
+    { id: "spinner", label: "3 spinner ticks" },
   ];
 
-  const DEPTH_COPY = {
-    tag: "DEPTH RUN · 8 authored CHAPTERS · ENDLESS coda · one ball",
-    body: "Authored tables, not a faster ball: Plunger Parade → Spinner Alley → Sinkhole Circus → Ramp Carnival → Bumper Storm → Twin Flip Gate → Outlane Thorns → Backglass Fever. After 8, ENDLESS coda (flaggable). Drain ends the coin.",
-    status: "Depth run · START · 1 demo coin · 8 authored CHAPTERS then ENDLESS",
-    machine: "One-ball table · 1 demo coin · authored CHAPTERS",
-    idleHud: ["Authored CHAPTERS — toys change, not speed", "L/R halves · one ball · START"],
-    punch: "Depth run — press START. No one-tap prize.",
+  const AURA_LINE = {
+    drain: "Aura: Outlane. The backglass felt that.",
+    hungry: "Aura: The left lane ate you. One thumb. Stay right.",
+    upper: "Aura: Missed the return. The shelf dumped you into the mouth.",
+    chapter: "Aura: Chapter up. New table. Same hungry left.",
+    deep: (n) => `Aura: Chapter ${n}. You're living in my table.`,
+    souvenir: "Aura: Backglass Fever survived. Souvenir — the table bowed.",
+    coda: "Aura: Authored chapters done. ENDLESS — the mouth stays hungry.",
+    leave: "Aura: You pulled the plug mid-chapter.",
   };
 
-  function rk() {
-    return PF.runKit || null;
-  }
+  const DEPTH_COPY = {
+    status: "One thumb · hold to plunge · tap to flip · left lane is hungry",
+    punch: "One thumb. The left lane is hungry. Press START.",
+  };
+
+  let run = null;
+  let gl = null;
+  let raf = 0;
+  let lastTs = 0;
+  let idleT = 0;
+  let visible = false;
+  const pointers = new Map();
+  const keys = { flip: false, P: false };
+  const LIVE = { px: 0.24, py: 0.12, len: 0.20 };
+  const REST_ANG = Math.PI + 0.48;
+  const UP_ANG = Math.PI - 0.55;
+
+  function card() { return $("pinballCard"); }
+  function rk() { return PF.runKit; }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function hexCol(h) { return new THREE.Color(h); }
+  function sfx(name) { try { kit.sfx(name); } catch (_) { /* ignore */ } }
 
   function codaOn() {
-    const kitRun = rk();
-    const row = kitRun && ((kitRun.declared && kitRun.declared[GAME_ID]) || (kitRun.p0 && kitRun.p0[GAME_ID]));
-    if (row && typeof row.codaEnabled === "boolean") return !!row.codaEnabled;
-    return !!P0_MOUNT.codaEnabled;
+    const row = rk() && ((rk().declared && rk().declared[GAME_ID]) || (rk().p0 && rk().p0[GAME_ID]));
+    if (row && row.codaEnabled === false) return false;
+    return CODA_ENABLED;
   }
 
   function declareP0() {
     const kitRun = rk();
     if (!kitRun) return;
     const spec = Object.assign({
-      authored: AUTHORED_CHAPTERS,
+      authored: AUTHORED,
       authoredCount: AUTHORED_COUNT,
       codaEnabled: CODA_ENABLED,
       codaParams: codaChapter,
       level: chapterSpec,
       stageParams: chapterSpec,
-      PINBALL_LEVELS,
     }, P0_MOUNT);
     if (typeof kitRun.declare === "function") {
-      try { kitRun.declare(GAME_ID, spec); } catch (_) { /* already declared */ }
+      try { kitRun.declare(GAME_ID, spec); } catch (_) { /* already */ }
     }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = spec;
@@ -197,30 +233,107 @@
     kitRun.mounted[GAME_ID] = true;
   }
 
-  function closeKitRun(partial) {
-    const ctx = run && (run.kitRun || run.ctx);
-    if (ctx && rk() && typeof rk().finishRun === "function") {
-      try {
-        return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
-      } catch (_) { /* fall through */ }
+  function codaChapter(n) {
+    const t = Math.max(0, n - AUTHORED_COUNT - 1);
+    const base = AUTHORED[AUTHORED_COUNT - 1];
+    return Object.assign({}, base, {
+      id: n, ch: n, name: `Fever Coda ${n}`, kind: "coda",
+      speed: Math.min(1.7, 1.16 + t * 0.06),
+      bumper: 120 + t * 18,
+      mission: CODA_MISSIONS[t % CODA_MISSIONS.length],
+      coda: true, glow: 0xff6a9a, hunger: Math.min(1.4, 1.05 + t * 0.08),
+      barker: "ENDLESS — same mouth, faster glass, rotated mission.",
+    });
+  }
+
+  function chapterSpec(n) {
+    const ch = Math.max(1, n | 0);
+    if (ch <= AUTHORED_COUNT) {
+      const row = AUTHORED[ch - 1];
+      return Object.assign({ ch, coda: false, title: row.name }, row);
     }
-    kit.persistRun(PF.getState(), GAME_ID, partial);
-    return null;
+    if (!codaOn()) return null;
+    return codaChapter(ch);
   }
 
-  function isLive() {
-    const ctx = run && (run.kitRun || run.ctx);
-    return !!(run && !run.done && ctx && ctx.alive !== false);
+  function hudChapter(spec) {
+    if (!spec) return "CHAPTER";
+    if (spec.coda) return `ENDLESS · CHAPTER ${spec.ch} · ${spec.name}`;
+    return `CHAPTER ${spec.ch} · ${spec.name}`;
   }
 
-  function punchStart() {
-    stampDepthCopy();
+  function missionReset(spec) {
+    const id = spec.mission && spec.mission.id;
+    if (id === "bumpers") return { id, hits: spec.bumpers.map(() => false) };
+    if (id === "spinner") return { id, ticks: 0, need: 3 };
+    if (id === "sink") return { id, n: 0, need: 2 };
+    if (id === "ramp-sink") return { id, ramp: false, sink: 0 };
+    if (id === "combo") return { id, n: 0, need: 5, window: 0 };
+    if (id === "gate") return { id, open: false, bonus: 0, need: 2 };
+    if (id === "alt") return { id, phase: "spin" };
+    if (id === "chain") return { id, phase: "ramp" };
+    return { id: id || "bumpers", hits: (spec.bumpers || []).map(() => false) };
+  }
+
+  function missionDone(m) {
+    if (!m) return false;
+    if (m.id === "bumpers") return m.hits.every(Boolean);
+    if (m.id === "spinner") return m.ticks >= m.need;
+    if (m.id === "sink") return m.n >= m.need;
+    if (m.id === "ramp-sink") return m.ramp && m.sink > 0;
+    if (m.id === "combo") return m.n >= m.need;
+    if (m.id === "gate") return m.open && m.bonus >= m.need;
+    if (m.id === "alt") return m.phase === "done";
+    if (m.id === "chain") return m.phase === "done";
+    return false;
+  }
+
+  function missionText(m, spec) {
+    if (!m) return spec && spec.mission ? spec.mission.label : "";
+    if (m.id === "bumpers") return `Bumpers ${m.hits.filter(Boolean).length}/${m.hits.length}`;
+    if (m.id === "spinner") return `Spinner ${m.ticks}/${m.need}`;
+    if (m.id === "sink") return `Sink ${m.n}/${m.need}`;
+    if (m.id === "ramp-sink") return `Ramp ${m.ramp ? "✓" : "·"}  Sink ${m.sink ? "✓" : "·"}`;
+    if (m.id === "combo") return `Combo ${m.n}/${m.need}`;
+    if (m.id === "gate") return `Gate ${m.open ? "OPEN" : "shut"} · bonus ${m.bonus}/${m.need}`;
+    if (m.id === "alt") return m.phase === "spin" ? "Spinner first" : m.phase === "sink" ? "Now the sink" : "Clear";
+    if (m.id === "chain") {
+      if (m.phase === "ramp") return "Ramp first";
+      if (m.phase === "spin") return "Now spinner";
+      if (m.phase === "sink") return "Now sink";
+      return "Fever chain clear";
+    }
+    return spec.mission.label;
+  }
+
+  function stampDepthCopy() {
     const el = $("pinballStatus");
-    if (el) el.textContent = DEPTH_COPY.punch;
-    const btn = $("pinballStart");
-    if (btn && !btn.hidden) {
-      try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (el && (!run || run.done)) el.textContent = DEPTH_COPY.status;
+    const tag = card() && card().querySelector("[data-pf-depth-tag]");
+    if (tag) tag.textContent = "DEPTH RUN · chapters until DRAIN · one thumb · hungry left lane";
+  }
+
+  function paintHud() {
+    const spec = run && run.spec;
+    const hud = card() && card().querySelector(".pinball-rk-hud");
+    if (hud) hud.textContent = run && !run.done && spec ? hudChapter(spec) : "";
+    const live = $("pinballLiveScore");
+    if (live) live.textContent = run && !run.done ? String(run.score | 0) : "0";
+    const mis = $("pinballMission");
+    if (mis) mis.textContent = run && !run.done ? missionText(run.mission, spec) : "";
+    const chg = $("pinballChargeFill");
+    if (chg) chg.style.height = `${Math.round((run && run.charge ? run.charge : 0) * 100)}%`;
+    const host = card();
+    const plunging = !!(run && !run.done && run.ball && run.ball.mode === "plunger");
+    if (host) host.classList.toggle("is-plunging", plunging);
+    const plunge = $("pinballPlunge");
+    if (plunge) plunge.hidden = !plunging;
+    const thumb = $("pinballThumb");
+    if (thumb) {
+      thumb.textContent = plunging
+        ? (run.charge > 0.08 ? "LET GO!" : "HOLD TO PLUNGE")
+        : "FLIP";
+      thumb.classList.toggle("is-down", !!(run && (plunging ? run.wantP : run.wantFlip)));
     }
   }
 
@@ -240,7 +353,10 @@
       state.bestPinballScore = Math.max(state.bestPinballScore || 0, payload.score);
       state.bestPinballBalls = Math.max(state.bestPinballBalls || 0, payload.depth);
     }
-    closeKitRun(payload);
+    const ctx = run && (run.kitRun || run.ctx);
+    if (ctx && rk() && typeof rk().finishRun === "function") {
+      try { rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, payload), { navigate: false }); } catch (_) { /* */ }
+    }
     kit.persistRun(state, GAME_ID, payload);
     if (typeof PF.saveState === "function") PF.saveState();
   }
@@ -249,825 +365,1449 @@
     return `Beat my Pinball chapter ${n | 0} on Penny Fever`;
   }
 
-  function codaChapter(n) {
-    const t = Math.max(0, n - AUTHORED_COUNT - 1);
-    const base = AUTHORED_CHAPTERS[AUTHORED_COUNT - 1];
-    const mission = CODA_MISSIONS[t % CODA_MISSIONS.length];
-    return Object.assign({}, base, {
-      id: n,
-      ch: n,
-      name: `Fever Coda ${n}`,
-      kind: "coda",
-      speed: Math.min(1.7, 1.16 + t * 0.06),
-      bumper: 120 + t * 18,
-      mission,
-      coda: true,
-      drunk: n >= 11,
-      outPull: Math.min(0.08, 0.035 + t * 0.008),
-      barker: "ENDLESS — Backglass toys, rotated mission, speed climbs.",
+  function auraFor(reason) {
+    if (reason === "leave") return AURA_LINE.leave;
+    if (reason === "souvenir") return AURA_LINE.souvenir;
+    if (reason === "upper") return AURA_LINE.upper;
+    if (reason === "hungry") return AURA_LINE.hungry;
+    const n = run ? run.cleared : 0;
+    if (n >= 6) return AURA_LINE.deep(n);
+    return AURA_LINE.hungry;
+  }
+
+  /* ───────── 3D world ───────── */
+  function canGL() {
+    try {
+      const c = document.createElement("canvas");
+      return !!(c.getContext("webgl2") || c.getContext("webgl"));
+    } catch (_) { return false; }
+  }
+
+  function canvasTex(w, h, draw) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"));
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    t.needsUpdate = true;
+    return t;
+  }
+
+  function mat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color, roughness: 0.62, metalness: 0.12,
+    }, extra || {}));
+  }
+
+  function box(m, w, h, d, x, y, z) {
+    const mesh = new THREE.Mesh(gl.geo.box, m);
+    mesh.scale.set(w, h, d);
+    mesh.position.set(x, y, z);
+    return mesh;
+  }
+
+  function sphere(m, r, x, y, z, geo) {
+    const mesh = new THREE.Mesh(geo || gl.geo.sphere, m);
+    mesh.scale.setScalar(r);
+    mesh.position.set(x, y, z);
+    return mesh;
+  }
+
+  function cyl(m, r, h, x, y, z, segs) {
+    const mesh = new THREE.Mesh(segs ? new THREE.CylinderGeometry(1, 1, 1, segs) : gl.geo.cyl, m);
+    mesh.scale.set(r, h, r);
+    mesh.position.set(x, y, z);
+    return mesh;
+  }
+
+  function makeAura() {
+    const g = new THREE.Group();
+    const skin = mat(SKIN, { roughness: 0.48, emissive: 0x3a2018, emissiveIntensity: 0.1 });
+    const blouse = mat(BLOUSE, { roughness: 0.55, emissive: 0x3a3028, emissiveIntensity: 0.16 });
+    const pinafore = mat(DRESS, { roughness: 0.5, emissive: 0x0a2010, emissiveIntensity: 0.28 });
+    const hairM = mat(HAIR, { roughness: 0.7, emissive: 0x1a0c08, emissiveIntensity: 0.12 });
+    const shoe = mat(0x111111, { roughness: 0.22, metalness: 0.55 });
+    const gold = mat(GOLD, { metalness: 0.72, roughness: 0.26, emissive: 0x6a4808, emissiveIntensity: 0.55 });
+    const heart = mat(HEART, { emissive: HEART, emissiveIntensity: 0.7, roughness: 0.35 });
+
+    const hip = new THREE.Group();
+    hip.position.y = 0.42;
+    g.add(hip);
+    hip.add(cyl(blouse, 0.13, 0.28, 0, 0.28, 0));
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.13, 0.34, 14), pinafore);
+    skirt.position.y = 0.06;
+    hip.add(skirt);
+    const bib = box(pinafore, 0.18, 0.16, 0.04, 0, 0.34, 0.12);
+    hip.add(bib);
+    const gem = box(heart, 0.08, 0.08, 0.035, 0, 0.24, 0.155);
+    gem.rotation.z = Math.PI / 4;
+    hip.add(gem);
+
+    const head = new THREE.Group();
+    head.position.y = 0.62;
+    hip.add(head);
+    head.add(sphere(skin, 0.175, 0, 0.02, 0));
+    const eyeW = mat(0xf7f2ea);
+    const eyeD = mat(0x2a1810);
+    [-1, 1].forEach((s) => {
+      const w = sphere(eyeW, 0.038, s * 0.055, 0.03, 0.15);
+      w.scale.set(0.038, 0.044, 0.02);
+      head.add(w);
+      head.add(sphere(eyeD, 0.02, s * 0.055, 0.03, 0.168));
+      head.add(sphere(mat(0xffffff), 0.01, s * 0.048, 0.045, 0.18));
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 10, Math.PI), mat(0xc45a6a));
+    smile.position.set(0, -0.05, 0.16);
+    smile.rotation.x = 2.6;
+    head.add(smile);
+    head.add(sphere(hairM, 0.23, 0, 0.06, -0.02));
+    head.add(box(hairM, 0.28, 0.07, 0.1, 0, 0.14, 0.16));
+    [-1, 1].forEach((s) => {
+      head.add(sphere(hairM, 0.11, s * 0.2, -0.04, 0.04));
+      head.add(sphere(heart, 0.045, s * 0.2, 0.06, 0.06));
+    });
+    const crown = new THREE.Group();
+    crown.position.y = 0.24;
+    head.add(crown);
+    crown.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold));
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const h = i === 1 ? 0.14 : 0.09;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, h, 6), gold);
+      spike.position.set(x, h * 0.45, 0);
+      crown.add(spike);
+    });
+    const jewel = box(heart, 0.055, 0.055, 0.025, 0, 0.02, 0.11);
+    jewel.rotation.z = Math.PI / 4;
+    crown.add(jewel);
+
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.16 : 0.07), arm ? 0.36 : 0.0, 0);
+      const len = arm ? 0.28 : 0.34;
+      const bone = cyl(arm ? skin : pinafore, arm ? 0.035 : 0.042, len, 0, -len / 2, 0);
+      pivot.add(bone);
+      if (arm) pivot.add(sphere(skin, 0.04, 0, -len, 0));
+      else pivot.add(box(shoe, 0.08, 0.05, 0.12, 0, -len - 0.02, 0.03));
+      hip.add(pivot);
+      return pivot;
+    }
+    const armL = limb(-1, true);
+    const armR = limb(1, true);
+    const legL = limb(-1, false);
+    const legR = limb(1, false);
+    g.userData = { hip, head, armL, armR, legL, legR, t: 0, mood: "idle" };
+    g.scale.setScalar(1.12);
+    return g;
+  }
+
+  function tickAura(dt) {
+    if (!gl || !gl.aura) return;
+    const u = gl.aura.userData;
+    u.t += dt;
+    const mood = (run && !run.done && run.juice > 0.4) ? "cheer"
+      : (run && run.draining) ? "sad"
+        : (run && !run.done && run.ball && run.ball.y < 0.18 && run.ball.mode === "play") ? "gasp"
+          : "idle";
+    u.mood = mood;
+    const bob = Math.sin(u.t * (mood === "cheer" ? 10 : 2.2)) * (mood === "cheer" ? 0.05 : 0.012);
+    u.hip.position.y = 0.42 + bob;
+    if (mood === "cheer") {
+      u.armL.rotation.z = 0.9 + Math.sin(u.t * 8) * 0.25;
+      u.armR.rotation.z = -0.9 + Math.sin(u.t * 8 + 1) * 0.25;
+      u.armL.rotation.x = -0.4;
+      u.armR.rotation.x = -0.4;
+    } else if (mood === "gasp") {
+      u.armL.rotation.z = 0.7;
+      u.armR.rotation.z = -0.7;
+      u.armL.rotation.x = -0.9;
+      u.armR.rotation.x = -0.9;
+      u.head.rotation.x = -0.12;
+    } else if (mood === "sad") {
+      u.head.rotation.x = 0.35;
+      u.armL.rotation.x = 0.4;
+      u.armR.rotation.x = 0.4;
+      u.armL.rotation.z = 0.15;
+      u.armR.rotation.z = -0.15;
+    } else {
+      u.head.rotation.x = 0;
+      const swing = Math.sin(u.t * 2.1) * 0.12;
+      u.armL.rotation.x = swing;
+      u.armR.rotation.x = -swing;
+      u.armR.rotation.z = -0.85 + Math.sin(u.t * 2.6) * 0.4;
+      u.armL.rotation.z = 0.08;
+    }
+  }
+
+  function tentStripe() {
+    return canvasTex(128, 256, (ctx) => {
+      for (let i = 0; i < 8; i += 1) {
+        ctx.fillStyle = i % 2 ? "#6b1c32" : "#f0d4b0";
+        ctx.fillRect(i * 16, 0, 16, 256);
+      }
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      for (let y = 0; y < 256; y += 18) ctx.fillRect(0, y, 128, 2);
     });
   }
 
-  function chapterSpec(n) {
-    const ch = Math.max(1, n | 0);
-    if (ch <= AUTHORED_COUNT) {
-      const row = AUTHORED_CHAPTERS[ch - 1];
-      return Object.assign({ ch, coda: false, title: row.name }, row);
-    }
-    if (!codaOn()) return null;
-    return codaChapter(ch);
-  }
-
-  function hudChapter(spec) {
-    if (!spec) return "CHAPTER";
-    if (spec.coda) return `ENDLESS · CHAPTER ${spec.ch} · ${spec.name}`;
-    return `CHAPTER ${spec.ch} · ${spec.name}`;
-  }
-
-  function paintKitHud(spec) {
-    const host = card();
-    if (!host) return;
-    const hud = host.querySelector(".pinball-rk-hud");
-    if (!hud) return;
-    if (!spec || !run || run.done) {
-      hud.textContent = "";
-      return;
-    }
-    hud.textContent = hudChapter(spec);
-  }
-
-  function roomTell(spec) {
-    if (!spec) return "ONE BALL — HOW MANY CHAPTERS?";
-    const id = spec.mission && spec.mission.id;
-    if (spec.kind === "parade" || id === "bumpers") return "HIT EACH BUMPER ONCE";
-    if (spec.kind === "spinner" || id === "spinner") return "SHOOT THE CENTER LANE";
-    if (spec.kind === "sink" || id === "sink") return "DROP THE HOLE ×2";
-    if (spec.kind === "ramp" || id === "ramp-sink") return "RAMP TO THE UPPER SHELF";
-    if (spec.kind === "storm" || id === "combo") return "COMBO FIVE BUMPERS";
-    if (spec.kind === "gate" || id === "gate") return "TAP BOTH · OPEN THE GATE";
-    if (spec.kind === "thorns" || id === "alt") return "POSTS SAVE OR DOOM";
-    if (spec.coda) return "ENDLESS · ROTATED MISSION";
-    if (spec.kind === "fever" || id === "chain") return "FEVER DECK · RAMP → SPIN → SINK";
-    return spec.mission ? spec.mission.label : "ONE BALL";
-  }
-
-  function isFeverTable(spec) {
-    const kind = spec && spec.kind;
-    return kind === "fever" || kind === "coda";
-  }
-
-  function shelfGeom(spec) {
-    if (isFeverTable(spec)) {
-      return {
-        x0: 16, x1: 214, yTop: 44, yFloor: 154,
-        retX0: 214, retY0: 154, retX1: 262, retY1: 208,
-        label: "FEVER DECK",
-      };
-    }
-    if (spec && spec.toys && spec.toys.upperShelf) {
-      return {
-        x0: 20, x1: 158, yTop: 62, yFloor: 132,
-        retX0: 158, retY0: 132, retX1: 228, retY1: 182,
-        label: "UPPER SHELF",
-      };
-    }
-    return null;
-  }
-
-  function tableWalls(spec) {
-    const toys = (spec && spec.toys) || {};
-    const kind = (spec && spec.kind) || "parade";
-    const fever = isFeverTable(spec);
-    /* Outlane flare is a layout verb: parade gentle, spinner wide, storm pinched, fever drunk. */
-    const out = kind === "spinner" ? 34 : kind === "storm" ? -28 : kind === "thorns" ? 18 : kind === "ramp" ? 10 : kind === "gate" ? 8 : kind === "parade" ? -22 : fever ? 28 : 4;
-    const leftX = kind === "storm" ? 52 : kind === "spinner" ? 18 : kind === "parade" ? 36 : fever ? 14 : 20;
-    const rightX = kind === "storm" ? 234 : kind === "spinner" ? 266 : kind === "parade" ? 248 : fever ? 270 : 266;
-    const topY = fever ? 48 : 68;
-    const walls = fever
-      ? [
-          { a: { x: leftX, y: 68 }, b: { x: 88, y: 42 } },
-          { a: { x: 88, y: 42 }, b: { x: 168, y: 36 } },
-          { a: { x: 168, y: 36 }, b: { x: rightX, y: 68 } },
-          { a: { x: leftX, y: 68 }, b: { x: leftX, y: 352 } },
-          { a: { x: rightX, y: 68 }, b: { x: rightX, y: 352 } },
-          { a: { x: leftX, y: 352 }, b: { x: 54 + out, y: 508 } },
-          { a: { x: rightX, y: 352 }, b: { x: 232 - out, y: 508 } },
-          { a: { x: 266, y: 118 }, b: { x: 266, y: 428 } },
-          { a: { x: 266, y: 118 }, b: { x: 304, y: 78 } },
-          { a: { x: 304, y: 78 }, b: { x: 304, y: 428 } },
-          { a: { x: 266, y: 428 }, b: { x: 304, y: 428 } },
-        ]
-      : [
-          { a: { x: leftX, y: topY }, b: { x: rightX, y: topY } },
-          { a: { x: leftX, y: topY }, b: { x: leftX, y: 352 } },
-          { a: { x: rightX, y: topY }, b: { x: rightX, y: 352 } },
-          { a: { x: leftX, y: 352 }, b: { x: 54 + out, y: 508 } },
-          { a: { x: rightX, y: 352 }, b: { x: 232 - out, y: 508 } },
-          { a: { x: 266, y: 118 }, b: { x: 266, y: 428 } },
-          { a: { x: 266, y: 118 }, b: { x: 304, y: 78 } },
-          { a: { x: 304, y: 78 }, b: { x: 304, y: 428 } },
-          { a: { x: 266, y: 428 }, b: { x: 304, y: 428 } },
-        ];
-    const tight = toys.tightIn ? 32 : 0;
-    walls.push(
-      { a: { x: 48 + tight, y: 338 }, b: { x: 78 + tight, y: 424 } },
-      { a: { x: 238 - tight, y: 338 }, b: { x: 208 - tight, y: 424 } }
-    );
-    if (kind === "spinner") {
-      /* Forced center chute — the spinner is a lane, not a sticker. */
-      walls.push(
-        { a: { x: 124, y: 68 }, b: { x: 124, y: 176 } },
-        { a: { x: 180, y: 68 }, b: { x: 180, y: 176 } },
-        { a: { x: 124, y: 176 }, b: { x: 136, y: 204 } },
-        { a: { x: 180, y: 176 }, b: { x: 168, y: 204 } }
-      );
-    }
-    if (kind === "sink") {
-      walls.push(
-        { a: { x: 48, y: 128 }, b: { x: 118, y: 208 } },
-        { a: { x: 236, y: 128 }, b: { x: 186, y: 208 } },
-        { a: { x: 48, y: 344 }, b: { x: 118, y: 264 } },
-        { a: { x: 236, y: 344 }, b: { x: 186, y: 264 } }
-      );
-    }
-    if (kind === "storm") {
-      /* Bumper cage — the storm is a different sport, not five stickers on parade glass. */
-      walls.push(
-        { a: { x: 88, y: 118 }, b: { x: 112, y: 138 } },
-        { a: { x: 216, y: 118 }, b: { x: 192, y: 138 } },
-        { a: { x: 96, y: 258 }, b: { x: 118, y: 278 } },
-        { a: { x: 208, y: 258 }, b: { x: 186, y: 278 } }
-      );
-    }
-    if (kind === "ramp") {
-      /* Ramp Carnival left shelf — second floor. Not Fever's wide deck. */
-      const sh = shelfGeom(spec);
-      if (sh) {
-        walls.push(
-          { a: { x: sh.x0, y: sh.yFloor }, b: { x: sh.x1, y: sh.yFloor } },
-          { a: { x: sh.x1, y: sh.yFloor }, b: { x: sh.x1, y: sh.yFloor - 22 } },
-          { a: { x: sh.x1, y: sh.yFloor - 22 }, b: { x: sh.x0, y: sh.yFloor - 22 } },
-          { a: { x: sh.retX0, y: sh.retY0 }, b: { x: sh.retX1, y: sh.retY1 } }
-        );
+  function sawdustTex() {
+    return canvasTex(512, 512, (ctx) => {
+      ctx.fillStyle = "#2a1c12";
+      ctx.fillRect(0, 0, 512, 512);
+      for (let y = 0; y < 512; y += 36) {
+        ctx.fillStyle = y % 72 ? "#3a2818" : "#322214";
+        ctx.fillRect(0, y, 512, 32);
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.fillRect(0, y + 32, 512, 2);
       }
-    }
-    if (toys.bonus) {
-      walls.push(
-        { a: { x: 196, y: 70 }, b: { x: 262, y: 70 } },
-        { a: { x: 262, y: 70 }, b: { x: 262, y: 168 } },
-        { a: { x: 196, y: 168 }, b: { x: 262, y: 168 } },
-        { a: { x: 196, y: 70 }, b: { x: 196, y: 108 } }
-      );
-    }
-    if (kind === "gate") {
-      /* Upper mini-flip terrace — a new control surface, not the same glass. Low gap is the entry. */
-      walls.push(
-        { a: { x: 72, y: 188 }, b: { x: 196, y: 188 } },
-        { a: { x: 72, y: 188 }, b: { x: 72, y: 112 } },
-        { a: { x: 72, y: 112 }, b: { x: 196, y: 112 } },
-        { a: { x: 72, y: 188 }, b: { x: 46, y: 252 } }
-      );
-    }
-    if (kind === "thorns") {
-      walls.push(
-        { a: { x: 28, y: 400 }, b: { x: 48, y: 448 } },
-        { a: { x: 258, y: 400 }, b: { x: 238, y: 448 } }
-      );
-    }
-    if (fever) {
-      /* Combo mesh: peaked fever deck + return-pocket spinner + sink well. Not Parade open triangle. */
-      const sh = shelfGeom(spec);
-      if (sh) {
-        walls.push(
-          { a: { x: sh.x0, y: sh.yFloor }, b: { x: sh.x1, y: sh.yFloor } },
-          { a: { x: sh.x1, y: sh.yFloor }, b: { x: sh.x1, y: sh.yFloor - 22 } },
-          { a: { x: sh.x1, y: sh.yFloor - 22 }, b: { x: sh.x0, y: sh.yFloor - 22 } },
-          { a: { x: sh.retX0, y: sh.retY0 }, b: { x: sh.retX1, y: sh.retY1 } }
-        );
+      for (let i = 0; i < 80; i += 1) {
+        ctx.fillStyle = `rgba(212,164,90,${0.05 + Math.random() * 0.08})`;
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 10 + Math.random() * 24, 2);
       }
-      walls.push(
-        { a: { x: 208, y: 176 }, b: { x: 208, y: 244 } },
-        { a: { x: 254, y: 184 }, b: { x: 254, y: 244 } },
-        { a: { x: 208, y: 244 }, b: { x: 220, y: 262 } },
-        { a: { x: 254, y: 244 }, b: { x: 242, y: 262 } },
-        { a: { x: 88, y: 308 }, b: { x: 132, y: 342 } },
-        { a: { x: 216, y: 308 }, b: { x: 172, y: 342 } },
-        { a: { x: 118, y: 248 }, b: { x: 138, y: 268 } },
-        { a: { x: 186, y: 248 }, b: { x: 166, y: 268 } }
-      );
-    }
-    return walls;
-  }
-
-  function attractSpec() {
-    return chapterSpec(((idleRoom - 1) % AUTHORED_COUNT) + 1) || AUTHORED_CHAPTERS[0];
-  }
-
-  function walls() {
-    return tableWalls(run && run.spec ? run.spec : attractSpec());
-  }
-
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive()) return;
-    stopIdle();
-    idleClock = 0;
-    let last = 0;
-    const tick = (now) => {
-      if (run && !run.done) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      idleClock += Math.min(32, now - last);
-      last = now;
-      if (idleClock > 3800) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-      }
-      draw();
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
-  }
-
-  function makeBumpers(spec) {
-    return (spec.bumpers || []).map((b, i) => ({
-      x: b.x, y: b.y, r: b.r, hue: b.hue,
-      flash: 0, lock: 0, hit: false, id: i,
-    }));
-  }
-
-  function makeRollovers(spec) {
-    if (spec && (spec.kind === "fever" || spec.coda)) {
-      return [
-        { x: 72, y: 372, r: 7, on: false },
-        { x: 152, y: 358, r: 7, on: false },
-        { x: 216, y: 372, r: 7, on: false },
-      ];
-    }
-    return [
-      { x: 90, y: 132, r: 7, on: false },
-      { x: 152, y: 122, r: 7, on: false },
-      { x: 214, y: 132, r: 7, on: false },
-    ];
-  }
-
-  function circleSeg(cx, cy, r, x1, y1, x2, y2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len2 = dx * dx + dy * dy || 1;
-    let t = ((cx - x1) * dx + (cy - y1) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    const px = x1 + t * dx;
-    const py = y1 + t * dy;
-    const nx = cx - px;
-    const ny = cy - py;
-    const d = Math.hypot(nx, ny) || 0.0001;
-    return { hit: d < r, d, nx: nx / d, ny: ny / d, px, py, t };
-  }
-
-  function bounce(ball, nx, ny, rest, extra) {
-    const vn = ball.vx * nx + ball.vy * ny;
-    if (vn < 0) {
-      ball.vx -= (1 + rest) * vn * nx;
-      ball.vy -= (1 + rest) * vn * ny;
-    }
-    if (extra) {
-      ball.vx += nx * extra;
-      ball.vy += ny * extra;
-    }
-    const cap = 13.6 * (run ? run.spec.speed : 1);
-    const sp = Math.hypot(ball.vx, ball.vy);
-    if (sp > cap) {
-      ball.vx = (ball.vx / sp) * cap;
-      ball.vy = (ball.vy / sp) * cap;
-    }
-  }
-
-  function flipperGeom(side, angle) {
-    if (side === "L") {
-      const pivot = { x: 76, y: 450 };
-      const len = 66;
-      return {
-        pivot,
-        tip: { x: pivot.x + Math.cos(angle) * len, y: pivot.y + Math.sin(angle) * len },
-      };
-    }
-    const pivot = { x: 210, y: 450 };
-    const len = 66;
-    return {
-      pivot,
-      tip: { x: pivot.x + Math.cos(angle) * len, y: pivot.y + Math.sin(angle) * len },
-    };
-  }
-
-  function missionReset(spec) {
-    const n = (spec.bumpers || []).length;
-    return {
-      bumpers: Array.from({ length: n }, () => false),
-      spinner: 0,
-      sink: 0,
-      combo: 0,
-      ramp: false,
-      gateOpen: false,
-      bonus: 0,
-      phase: spec.mission.id === "alt" || spec.mission.id === "chain" ? spec.mission.id === "alt" ? "spinner" : "ramp" : "",
-      need: spec.mission.id,
-    };
-  }
-
-  function missionText(m, spec) {
-    const id = spec.mission.id;
-    if (id === "bumpers") return `Bumpers ${m.bumpers.filter(Boolean).length}/${m.bumpers.length}`;
-    if (id === "spinner") return `Spinner ${m.spinner}/3`;
-    if (id === "sink") return `Sink ${m.sink}/2`;
-    if (id === "combo") return `Combo ${m.combo}/5`;
-    if (id === "gate") return `Gate ${m.gateOpen ? "OPEN" : "shut"} · bonus ${m.bonus}/2`;
-    if (id === "alt") return m.phase === "sink" ? "Sink next" : "Spinner first";
-    if (id === "chain") {
-      if (m.phase === "ramp") return "Chain: ramp";
-      if (m.phase === "spinner") return "Chain: spinner";
-      return "Chain: sink";
-    }
-    return `Ramp ${m.ramp ? "✓" : "·"}  Sink ${m.sink}/1`;
-  }
-
-  function missionDone(m, spec) {
-    const id = spec.mission.id;
-    if (id === "bumpers") return m.bumpers.length > 0 && m.bumpers.every(Boolean);
-    if (id === "spinner") return m.spinner >= 3;
-    if (id === "sink") return m.sink >= 2;
-    if (id === "combo") return m.combo >= 5;
-    if (id === "gate") return m.gateOpen && m.bonus >= 2;
-    if (id === "alt") return m.phase === "done";
-    if (id === "chain") return m.phase === "done";
-    return m.ramp && m.sink >= 1;
-  }
-
-  function card() {
-    return $("pinballCard");
-  }
-
-  function stampDepthCopy() {
-    const host = card();
-    if (!host) return;
-    const num = host.querySelector(".machine-number");
-    if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "pf-depth-tag vendor-vestibule-only";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    let copy = host.querySelector("[data-pf-depth-copy]");
-    if (!copy) {
-      copy = document.createElement("p");
-      copy.className = "vendor-vestibule-only";
-      copy.dataset.pfDepthCopy = "1";
-      if (tag.parentNode) tag.parentNode.insertBefore(copy, tag.nextSibling);
-      else host.appendChild(copy);
-    }
-    copy.textContent = DEPTH_COPY.body;
-    const readout = host.querySelector(".depth-readout");
-    if (readout && readout.getAttribute("data-runkit-hud") === GAME_ID) {
-      readout.removeAttribute("data-runkit-hud");
-    }
-    let rkHud = host.querySelector(".pinball-rk-hud");
-    if (!rkHud) {
-      rkHud = document.createElement("p");
-      rkHud.className = "pinball-rk-hud";
-      rkHud.setAttribute("aria-live", "polite");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(rkHud, readout.nextSibling);
-      else host.appendChild(rkHud);
-    }
-    rkHud.setAttribute("data-runkit-hud", GAME_ID);
-    paintKitHud(run && run.spec);
-    const canvas = $("pinballCanvas");
-    if (canvas) {
-      canvas.style.pointerEvents = "auto";
-      canvas.classList.toggle("is-locked", !isLive());
-    }
-    if ((!run || run.done) && host.classList.contains("is-vestibule") && $("pinballStatus")) {
-      $("pinballStatus").textContent = DEPTH_COPY.status;
-    }
-  }
-
-  function wantedFlip() {
-    const L = keys.L || [...pointers.values()].includes("L");
-    const R = keys.R || [...pointers.values()].includes("R");
-    return { L, R };
-  }
-
-  function draw() {
-    const canvas = $("pinballCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#241028");
-    g.addColorStop(0.35, "#160b14");
-    g.addColorStop(1, "#0a0608");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = "#1a1024";
-    ctx.fillRect(16, 8, 288, 64);
-    ctx.strokeStyle = "#d4a45a";
-    ctx.strokeRect(16.5, 8.5, 287, 63);
-    const ch = run ? run.spec.ch : idleRoom;
-    const depth = run ? run.cleared : 0;
-    const juice = run ? (run.juice || 0) : 0;
-    const blink = 0.45 + Math.sin(performance.now() / 220) * 0.45;
-    const lamps = Math.min(12, Math.max(8, ch));
-    for (let i = 0; i < lamps; i += 1) {
-      ctx.beginPath();
-      ctx.arc(36 + i * 18, 22, juice > 0 && i < ch ? 6.2 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = i < ch ? (juice > 0 ? "#fff6ec" : "#e8a0b8") : "#3a2430";
-      ctx.globalAlpha = i < ch ? 0.4 + blink * 0.6 : 0.35;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-    if (juice > 0) {
-      ctx.fillStyle = `rgba(232,160,184,${Math.min(0.28, juice / 2400)})`;
-      ctx.fillRect(16, 8, 288, 56);
-    }
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "12px Georgia, serif";
-    ctx.fillText(run ? hudChapter(run.spec) : hudChapter(attractSpec()), 24, 50);
-    ctx.font = "10px Georgia, serif";
-    ctx.fillStyle = "#e8a0b8";
-    ctx.fillText(run ? roomTell(run.spec) : roomTell(attractSpec()), 24, 62);
-
-    ctx.strokeStyle = "rgba(212,164,90,0.6)";
-    ctx.lineWidth = 3;
-    walls().forEach((w) => {
-      ctx.beginPath();
-      ctx.moveTo(w.a.x, w.a.y);
-      ctx.lineTo(w.b.x, w.b.y);
-      ctx.stroke();
     });
+  }
 
-    const flareKind = (run && run.spec && run.spec.kind) || attractSpec().kind;
-    const flareFever = flareKind === "fever" || flareKind === "coda";
-    const flareOut = flareKind === "spinner" ? 34 : flareKind === "storm" ? -28 : flareKind === "thorns" ? 18 : flareKind === "ramp" ? 10 : flareKind === "gate" ? 8 : flareKind === "parade" ? -22 : flareFever ? 28 : 4;
-    const flareL = flareKind === "storm" ? 52 : flareKind === "spinner" ? 18 : flareKind === "parade" ? 36 : flareFever ? 14 : 20;
-    const flareR = flareKind === "storm" ? 234 : flareKind === "spinner" ? 266 : flareKind === "parade" ? 248 : flareFever ? 270 : 266;
-    ctx.fillStyle = "rgba(196,30,58,0.22)";
-    ctx.beginPath();
-    ctx.moveTo(flareL, 352);
-    ctx.lineTo(54 + flareOut, 508);
-    ctx.lineTo(flareL, 508);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(flareR, 352);
-    ctx.lineTo(232 - flareOut, 508);
-    ctx.lineTo(flareR, 508);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#e8a0b8";
-    ctx.font = "10px Georgia, serif";
-    ctx.fillText("out", flareL + 4, 430);
-    ctx.fillText("out", Math.min(246, flareR - 20), 430);
-    const toys = (run && run.spec && run.spec.toys) || attractSpec().toys;
-    if (toys.posts || toys.thorns) {
-      ctx.fillStyle = toys.thorns ? "#c41e3a" : "#d4a45a";
-      ctx.beginPath();
-      ctx.arc(58, 398, toys.thorns ? 9 : 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(228, 398, toys.thorns ? 9 : 8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (toys.thorns) {
-      ctx.fillStyle = "#8a2030";
-      [{ x: 38, y: 448 }, { x: 248, y: 448 }, { x: 62, y: 412 }, { x: 224, y: 412 }].forEach((p) => {
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y - 12);
-        ctx.lineTo(p.x + 7, p.y + 9);
-        ctx.lineTo(p.x - 7, p.y + 9);
-        ctx.closePath();
-        ctx.fill();
-      });
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "8px Georgia, serif";
-      ctx.fillText("SAVE/DOOM", 22, 392);
-      ctx.fillText("SAVE/DOOM", 232, 392);
-    }
-
-    if (toys.slings) {
-      const tight = toys.tightIn ? 16 : 0;
-      ctx.strokeStyle = "#c41e3a";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(40 + tight, 348);
-      ctx.lineTo(72 + tight, 418);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(246 - tight, 348);
-      ctx.lineTo(214 - tight, 418);
-      ctx.stroke();
-    }
-
-    const specNow = (run && run.spec) || attractSpec();
-    if (toys.upperShelf) {
-      const sh = shelfGeom(specNow);
-      if (sh) {
-        ctx.fillStyle = isFeverTable(specNow) ? "rgba(232,160,184,0.22)" : "rgba(212,164,90,0.22)";
-        ctx.fillRect(sh.x0, sh.yTop, sh.x1 - sh.x0, sh.yFloor - sh.yTop);
-        ctx.strokeStyle = isFeverTable(specNow) ? "#e8a0b8" : "#d4a45a";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(sh.x0, sh.yFloor);
-        ctx.lineTo(sh.x1, sh.yFloor);
-        ctx.stroke();
-        ctx.fillStyle = isFeverTable(specNow) ? "rgba(232,160,184,0.5)" : "rgba(212,164,90,0.5)";
-        ctx.fillRect(sh.x0, sh.yFloor - 12, sh.x1 - sh.x0, 12);
-        ctx.strokeStyle = "rgba(184,232,224,0.7)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(sh.retX0, sh.retY0);
-        ctx.lineTo(sh.retX1, sh.retY1);
-        ctx.stroke();
-        ctx.fillStyle = "#f0d09a";
-        ctx.font = "9px Georgia, serif";
-        ctx.fillText(sh.label, sh.x0 + 8, sh.yTop + 16);
-        ctx.fillText("RETURN", sh.retX0 + 8, sh.retY0 + 28);
-      }
-    }
-
-    if (specNow.kind === "parade") {
-      ctx.fillStyle = "rgba(240,208,154,0.1)";
-      ctx.fillRect(44, 78, 196, 86);
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("OPEN GLASS · TRIANGLE ONLY · NOT FEVER", 40, 98);
-      ctx.strokeStyle = "rgba(240,208,154,0.5)";
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 7; i += 1) {
-        ctx.beginPath();
-        ctx.ellipse(285, 398 - i * 10, 7.5 - i * 0.25, 3.6, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.fillStyle = "#f0d09a";
-      ctx.fillText("PLUNGER", 266, 322);
-    }
-    if (specNow.kind === "spinner") {
-      ctx.fillStyle = "rgba(240,208,154,0.16)";
-      ctx.fillRect(124, 68, 56, 108);
-      ctx.strokeStyle = "rgba(240,208,154,0.75)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(124, 68, 56, 108);
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("SPIN LANE", 128, 84);
-    }
-    if (isFeverTable(specNow)) {
-      ctx.fillStyle = "rgba(196,30,58,0.08)";
-      ctx.fillRect(14, 68, 256, 360);
-      ctx.fillStyle = "rgba(232,160,184,0.16)";
-      ctx.fillRect(208, 176, 46, 68);
-      ctx.strokeStyle = "rgba(232,160,184,0.85)";
-      ctx.lineWidth = 1.6;
-      ctx.strokeRect(208, 176, 46, 68);
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("FEVER · RETURN SPIN", 196, 170);
-      ctx.fillText("SINK WELL", 124, 300);
-    }
-    if (specNow.kind === "storm") {
-      ctx.strokeStyle = "rgba(196,30,58,0.45)";
-      ctx.lineWidth = 1.4;
-      ctx.strokeRect(100, 126, 104, 122);
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("STORM CAGE", 122, 122);
-    }
-
-    if (toys.ramp) {
-      const rp = specNow.ramp || { x0: 20, y0: 62, x1: 128, y1: 136 };
-      ctx.strokeStyle = "rgba(184,232,224,0.8)";
+  function playfieldTex(spec) {
+    return canvasTex(512, 1024, (ctx) => {
+      const g = ctx.createLinearGradient(0, 0, 0, 1024);
+      g.addColorStop(0, "#14322c");
+      g.addColorStop(0.5, "#0e241f");
+      g.addColorStop(1, "#0a1614");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 512, 1024);
+      ctx.strokeStyle = "rgba(240,208,154,0.22)";
+      ctx.lineWidth = 6;
+      ctx.strokeRect(18, 18, 476, 988);
+      ctx.strokeStyle = "rgba(180,232,224,0.35)";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(rp.x0 + 10, rp.y1 - 6);
-      ctx.quadraticCurveTo(rp.x0 + 18, rp.y0 - 4, rp.x1 - 18, rp.y0 + 22);
+      ctx.moveTo(40, 900);
+      ctx.quadraticCurveTo(256, 820, 472, 900);
       ctx.stroke();
-      ctx.fillStyle = "rgba(184,232,224,0.85)";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("RAMP", rp.x0 + 16, rp.y0 + 10);
-    }
-
-    if (toys.spinner && (specNow.spinner || (run && run.spec && run.spec.spinner))) {
-      const spin = specNow.spinner || { x: 152, y: 156 };
-      const spinA = run ? run.spinAngle : 0;
-      ctx.save();
-      ctx.translate(spin.x, spin.y);
-      ctx.rotate(spinA);
-      ctx.strokeStyle = "#f0d09a";
-      ctx.lineWidth = 2;
+      ctx.fillStyle = "rgba(196,30,58,0.42)";
       ctx.beginPath();
-      ctx.moveTo(-12, 0);
-      ctx.lineTo(12, 0);
-      ctx.moveTo(0, -12);
-      ctx.lineTo(0, 12);
-      ctx.stroke();
-      ctx.restore();
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("SPIN", spin.x - 12, spin.y - 16);
-    }
-
-    if (toys.sink) {
-      const sink = specNow.sink || { x: 152, y: 236 };
-      ctx.beginPath();
-      ctx.arc(sink.x, sink.y, 12, 0, Math.PI * 2);
-      ctx.fillStyle = run && run.sinkFlash > 0 ? "#fff6ec" : "#0a0508";
+      ctx.moveTo(18, 1020);
+      ctx.lineTo(210, 1020);
+      ctx.lineTo(70, 780);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = "#b8e8e0";
-      ctx.stroke();
-      ctx.fillStyle = "#b8e8e0";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("SINK", sink.x - 12, sink.y + 24);
-    }
-
-    if (toys.gate) {
-      const open = run && run.mission && run.mission.gateOpen;
-      ctx.strokeStyle = open ? "rgba(184,232,224,0.35)" : "#e8a0b8";
-      ctx.lineWidth = open ? 1.5 : 5;
-      ctx.beginPath();
-      ctx.moveTo(196, 108);
-      ctx.lineTo(196, open ? 124 : 148);
-      ctx.stroke();
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText(open ? "GATE OPEN" : "GATE · MINI-FLIP OPENS", 178, 102);
-    }
-
-    if (toys.bonus) {
-      ctx.strokeStyle = "rgba(232,160,184,0.7)";
-      ctx.strokeRect(198, 72, 62, 88);
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("BONUS", 210, 88);
-    }
-
-    if (toys.upperFlip) {
-      const ang = run ? run.angleU : 0.2;
-      const pivot = { x: 152, y: 156 };
-      const tip = { x: pivot.x + Math.cos(ang) * 42, y: pivot.y + Math.sin(ang) * 42 };
-      ctx.fillStyle = "rgba(184,232,224,0.12)";
-      ctx.fillRect(72, 112, 124, 76);
-      ctx.fillStyle = "#b8e8e0";
-      ctx.font = "8px Georgia, serif";
-      ctx.fillText("MINI-FLIP · TAP BOTH", 78, 124);
-      ctx.strokeStyle = "#b8e8e0";
-      ctx.lineWidth = 7;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(pivot.x, pivot.y);
-      ctx.lineTo(tip.x, tip.y);
-      ctx.stroke();
-    }
-
-    if (toys.rollovers) {
-      const rolls = run && run.rollovers ? run.rollovers : makeRollovers(specNow);
-      rolls.forEach((r) => {
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-        ctx.fillStyle = r.on ? "#fff6ec" : "rgba(184,232,224,0.35)";
-        ctx.fill();
-        ctx.strokeStyle = "#b8e8e0";
-        ctx.stroke();
-      });
-    }
-
-    const bumps = run ? run.bumpers : makeBumpers(attractSpec());
-    bumps.forEach((b) => {
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-      ctx.fillStyle = b.flash > 0 ? "#fff6ec" : b.hue;
-      ctx.globalAlpha = b.flash > 0 ? 0.95 : 0.78;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = b.hit ? "#fff6ec" : "rgba(255,246,236,0.45)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-    });
-
-    const lAng = run ? run.angleL : 0.4;
-    const rAng = run ? run.angleR : Math.PI - 0.4;
-    [["L", lAng], ["R", rAng]].forEach(([side, ang]) => {
-      const f = flipperGeom(side, ang);
-      ctx.strokeStyle = "#f0d09a";
-      ctx.lineWidth = 9;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(f.pivot.x, f.pivot.y);
-      ctx.lineTo(f.tip.x, f.tip.y);
-      ctx.stroke();
-      ctx.fillStyle = "#d4a45a";
-      ctx.beginPath();
-      ctx.arc(f.pivot.x, f.pivot.y, 6, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    if (run && run.ball) {
-      const b = run.ball;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-      ctx.fillStyle = "#fff6ec";
-      ctx.fill();
-      ctx.strokeStyle = "#d4a45a";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    if (run && run.juice > 0) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(0.92, run.juice / 380);
-      ctx.fillStyle = "#fff6ec";
-      ctx.font = "bold 22px Georgia, serif";
+      ctx.fillStyle = "#c41e3a";
+      ctx.font = "700 34px Georgia, serif";
       ctx.textAlign = "center";
-      ctx.fillText(`CHAPTER ${depth}`, W / 2, 248);
-      ctx.font = "12px Georgia, serif";
+      ctx.fillText("HUNGRY", 110, 940);
+      ctx.fillStyle = "rgba(180,232,224,0.28)";
+      ctx.beginPath();
+      ctx.moveTo(250, 980);
+      ctx.lineTo(420, 860);
+      ctx.lineTo(420, 1008);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#b8e8e0";
+      ctx.font = "700 28px Georgia, serif";
+      ctx.fillText("THUMB", 360, 960);
+      ctx.fillStyle = "rgba(232,160,184,0.18)";
+      ctx.beginPath(); ctx.arc(220, 380, 48, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(340, 380, 48, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(280, 520, 44, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#f0d09a";
-      ctx.fillText(depth >= 4 ? AURA.deep(depth) : AURA.chapter, W / 2, 272);
+      ctx.font = "700 42px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(spec && spec.name ? spec.name.toUpperCase() : "PINBALL ALLEY", 256, 80);
+      ctx.font = "22px Georgia, serif";
+      ctx.fillStyle = "#b8e8e0";
+      ctx.fillText(spec && spec.mission ? spec.mission.label : "ONE THUMB", 256, 118);
+      ctx.fillStyle = "rgba(212,164,90,0.45)";
+      ctx.fillRect(430, 140, 50, 760);
+      ctx.fillStyle = "#1a0c10";
+      ctx.font = "700 16px Georgia, serif";
+      ctx.save();
+      ctx.translate(455, 520);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("PLUNGER", 0, 0);
       ctx.restore();
-    }
+    });
+  }
 
-    if (run && run.done && (run.deathNote === "drain" || run.deathNote === "outlane")) {
-      kit.stampClosed(ctx, W, H, "DRAIN");
-    }
-
-    if (run && !run.done) {
-      ctx.fillStyle = "rgba(12,6,9,0.72)";
-      ctx.fillRect(8, H - 52, W - 16, 44);
-      ctx.strokeStyle = "rgba(212,164,90,0.55)";
-      ctx.strokeRect(8.5, H - 51.5, W - 17, 43);
-      ctx.fillStyle = "#ffe6a6";
-      ctx.font = "bold 15px Georgia, serif";
-      ctx.fillText(hudChapter(run.spec), 16, H - 32);
+  function backglassTex(score, chapter, name) {
+    return canvasTex(512, 640, (ctx) => {
+      const g = ctx.createLinearGradient(0, 0, 0, 640);
+      g.addColorStop(0, "#3a1020");
+      g.addColorStop(0.45, "#1a0c18");
+      g.addColorStop(1, "#0c0810");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 512, 640);
+      ctx.strokeStyle = "#d4a45a";
+      ctx.lineWidth = 14;
+      ctx.strokeRect(16, 16, 480, 608);
       ctx.fillStyle = "#f0d09a";
-      ctx.font = "11px Georgia, serif";
-      ctx.fillText(`${roomTell(run.spec)} · ${run.score} · ${missionText(run.mission, run.spec)}`, 16, H - 16);
-      const m = run.mission;
-      const pipN = run.spec.mission.id === "bumpers" ? (m.bumpers || []).length
-        : run.spec.mission.id === "spinner" ? 3
-        : run.spec.mission.id === "sink" ? 2
-        : run.spec.mission.id === "combo" ? 5
-        : run.spec.mission.id === "gate" ? 3
-        : run.spec.mission.id === "alt" || run.spec.mission.id === "chain" ? 3
-        : 2;
-      const pipOn = (i) => {
-        const id = run.spec.mission.id;
-        if (id === "bumpers") return !!(m.bumpers && m.bumpers[i]);
-        if (id === "spinner") return m.spinner > i;
-        if (id === "sink") return m.sink > i;
-        if (id === "combo") return m.combo > i;
-        if (id === "gate") return i === 0 ? m.gateOpen : m.bonus > i - 1;
-        if (id === "alt") return (m.phase === "sink" && i === 0) || m.phase === "done";
-        if (id === "chain") {
-          if (i === 0) return m.phase !== "ramp";
-          if (i === 1) return m.phase === "sink" || m.phase === "done";
-          return m.phase === "done";
-        }
-        return i === 0 ? m.ramp : m.sink > 0;
-      };
-      for (let i = 0; i < pipN; i += 1) {
-        ctx.beginPath();
-        ctx.arc(W - 18 - (pipN - 1 - i) * 12, H - 34, 4, 0, Math.PI * 2);
-        ctx.fillStyle = pipOn(i) ? "#b8e8e0" : "rgba(240,208,154,0.2)";
-        ctx.fill();
-      }
-    } else if (!run || !run.done) {
-      kit.drawHud(ctx, W, DEPTH_COPY.idleHud);
+      ctx.font = "700 48px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("PINBALL ALLEY", 256, 78);
+      ctx.fillStyle = "#b8e8e0";
+      ctx.font = "22px Georgia, serif";
+      ctx.fillText(name || "THE PARLOR TABLE", 256, 112);
+      ctx.fillStyle = "#f0c4a8";
+      ctx.beginPath(); ctx.arc(256, 280, 78, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#3d2418";
+      ctx.beginPath(); ctx.arc(256, 250, 82, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.arc(200, 310, 28, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(312, 310, 28, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#e8b84a";
+      ctx.beginPath(); ctx.moveTo(256, 168); ctx.lineTo(228, 214); ctx.lineTo(284, 214); ctx.fill();
+      ctx.fillStyle = "#d22b3a";
+      ctx.beginPath();
+      ctx.moveTo(256, 200);
+      ctx.bezierCurveTo(236, 188, 232, 214, 256, 226);
+      ctx.bezierCurveTo(280, 214, 276, 188, 256, 200);
+      ctx.fill();
+      ctx.fillStyle = "#1e6b3c";
+      ctx.fillRect(196, 355, 120, 70);
+      ctx.fillStyle = "#111";
+      ctx.fillRect(214, 424, 28, 18);
+      ctx.fillRect(270, 424, 28, 18);
+      ctx.fillStyle = "#ffe6a6";
+      ctx.font = "700 56px Georgia, serif";
+      ctx.fillText(String(score | 0).padStart(6, "0"), 256, 530);
+      ctx.font = "20px Georgia, serif";
+      ctx.fillStyle = "#e8a0b8";
+      ctx.fillText(chapter || "CHAPTER 0", 256, 572);
+    });
+  }
+
+  function pfLocal(x, y, h) {
+    return new THREE.Vector3(x * 0.95, (h || 0) + BALL_R, y * 1.18);
+  }
+
+  const _pw = new THREE.Vector3();
+  function pfWorld(x, y, h) {
+    _pw.set(x * 0.95, (h || 0) + BALL_R, y * 1.18);
+    if (gl && gl.pfRoot) {
+      gl.pfRoot.updateWorldMatrix(true, false);
+      gl.pfRoot.localToWorld(_pw);
+    }
+    return _pw;
+  }
+
+  function ensureGL() {
+    if (gl) return gl;
+    const canvas = $("pinballCanvas");
+    if (!canvas || !canGL()) return null;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if (THREE.ACESFilmicToneMapping) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+    }
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a060c);
+    scene.fog = new THREE.FogExp2(0x12080c, 0.028);
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.08, 40);
+    camera.position.set(0.55, 1.52, -2.15);
+    camera.lookAt(0, 1.08, 0.5);
+    gl = {
+      renderer, scene, camera, canvas,
+      geo: {
+        box: new THREE.BoxGeometry(1, 1, 1),
+        sphere: new THREE.SphereGeometry(1, 16, 12),
+        sphereHi: new THREE.SphereGeometry(1, 22, 16),
+        cyl: new THREE.CylinderGeometry(1, 1, 1, 12),
+      },
+      toys: new THREE.Group(),
+      sparks: [],
+      trail: [],
+      cam: { mode: "vestibule", yaw: 0.55, shake: 0 },
+      glowCol: new THREE.Color(0xc45a6a),
+    };
+
+    scene.add(new THREE.HemisphereLight(0xffd8b0, 0x1a0c14, 0.92));
+    scene.add(new THREE.AmbientLight(0x3a2430, 0.48));
+    const spot = new THREE.SpotLight(0xffe6c0, 3.4, 14, 0.7, 0.4, 1.1);
+    spot.position.set(0.15, 3.6, -1.4);
+    spot.target.position.set(0, 0.95, 0.45);
+    scene.add(spot);
+    scene.add(spot.target);
+    gl.playSpot = new THREE.SpotLight(0xb8e8e0, 2.2, 7, 0.55, 0.35, 1);
+    gl.playSpot.position.set(0, 2.4, -0.6);
+    gl.playSpot.target.position.set(0, 0.95, 0.55);
+    scene.add(gl.playSpot);
+    scene.add(gl.playSpot.target);
+    gl.neon = new THREE.PointLight(0xc45a6a, 1.6, 5, 1.4);
+    gl.neon.position.set(0, 0.4, 0.3);
+    scene.add(gl.neon);
+    gl.glassLight = new THREE.PointLight(0xf0d09a, 1.1, 4, 1.6);
+    gl.glassLight.position.set(0, 1.55, 1.35);
+    scene.add(gl.glassLight);
+
+    const floorMat = mat(0x2a1c12, { map: sawdustTex(), roughness: 0.9 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const stripe = tentStripe();
+    stripe.wrapS = stripe.wrapT = THREE.RepeatWrapping;
+    stripe.repeat.set(4, 2);
+    const wallM = mat(0xffffff, { map: stripe, roughness: 0.85 });
+    const wallH = 3.4;
+    [[0, wallH / 2, -4.2, 0], [0, wallH / 2, 4.4, Math.PI], [4.4, wallH / 2, 0.1, -Math.PI / 2], [-4.4, wallH / 2, 0.1, Math.PI / 2]].forEach((w) => {
+      const m = box(wallM, 9, wallH, 0.08, w[0], w[1], w[2]);
+      m.rotation.y = w[3];
+      scene.add(m);
+    });
+    const ceil = box(mat(0x1a0c10, { roughness: 0.9 }), 9, 0.08, 9, 0, wallH, 0.1);
+    scene.add(ceil);
+
+    const lights = new THREE.Group();
+    for (let i = 0; i < 18; i += 1) {
+      const t = i / 17;
+      const bulb = sphere(mat(0xffe6a6, { emissive: 0xffc878, emissiveIntensity: 1.4 }), 0.045, (t - 0.5) * 6.4, 2.85, -1.1 + Math.sin(t * 6) * 0.15);
+      lights.add(bulb);
+      const bulb2 = sphere(mat(0xffb0c8, { emissive: 0xff6a9a, emissiveIntensity: 1.1 }), 0.04, (t - 0.5) * 6.2, 2.7, 2.6);
+      lights.add(bulb2);
+    }
+    scene.add(lights);
+    gl.bulbs = lights;
+
+    const poleM = mat(0x3a2418, { roughness: 0.7 });
+    [-3.6, 3.6].forEach((x) => {
+      scene.add(cyl(poleM, 0.08, 3.2, x, 1.6, -3.9));
+      scene.add(cyl(poleM, 0.08, 3.2, x, 1.6, 3.9));
+    });
+
+    const signTex = canvasTex(1024, 256, (ctx) => {
+      ctx.fillStyle = "#1a0c10";
+      ctx.fillRect(0, 0, 1024, 256);
+      ctx.strokeStyle = "#d4a45a";
+      ctx.lineWidth = 16;
+      ctx.strokeRect(12, 12, 1000, 232);
+      ctx.fillStyle = "#ffe6a6";
+      ctx.font = "700 92px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("PINBALL ALLEY", 512, 120);
+      ctx.font = "32px Georgia, serif";
+      ctx.fillStyle = "#e8a0b8";
+      ctx.fillText("ONE BALL · HOW MANY CHAPTERS?", 512, 188);
+    });
+    const sign = new THREE.Mesh(gl.geo.box, new THREE.MeshStandardMaterial({
+      map: signTex, emissive: 0x3a2418, emissiveIntensity: 0.35, roughness: 0.45,
+    }));
+    sign.scale.set(2.6, 0.62, 0.06);
+    sign.position.set(0, 2.55, -3.95);
+    scene.add(sign);
+
+    gl.cabinet = buildCabinet();
+    scene.add(gl.cabinet);
+
+    gl.aura = makeAura();
+    gl.aura.position.set(-1.22, 0, -0.35);
+    gl.aura.rotation.y = Math.PI + 0.42;
+    scene.add(gl.aura);
+
+    const stool = cyl(mat(0x3a2418), 0.16, 0.08, 1.25, 0.42, -0.15);
+    scene.add(stool);
+    scene.add(cyl(mat(0x2a1810), 0.04, 0.42, 1.25, 0.21, -0.15));
+
+    gl.ballMesh = sphere(mat(0xcfd8e0, { metalness: 0.95, roughness: 0.18, envMapIntensity: 1 }), 1, 0, 0, 0, gl.geo.sphereHi);
+    gl.ballMesh.scale.setScalar(BALL_R);
+    gl.pfRoot.add(gl.ballMesh);
+    gl.shadowDisc = new THREE.Mesh(
+      new THREE.CircleGeometry(BALL_R * 1.6, 12),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false })
+    );
+    gl.shadowDisc.rotation.x = -Math.PI / 2;
+    gl.pfRoot.add(gl.shadowDisc);
+
+    for (let i = 0; i < 8; i += 1) {
+      const ghost = sphere(new THREE.MeshBasicMaterial({
+        color: 0xe8f0ff, transparent: true, opacity: 0.12, depthWrite: false,
+      }), BALL_R * 0.85, 0, -4, 0);
+      gl.pfRoot.add(ghost);
+      gl.trail.push(ghost);
+    }
+    for (let i = 0; i < 36; i += 1) {
+      const p = sphere(new THREE.MeshBasicMaterial({
+        color: 0xffe6a6, transparent: true, opacity: 0, depthWrite: false,
+      }), 0.012, 0, -8, 0);
+      gl.pfRoot.add(p);
+      gl.sparks.push({ mesh: p, life: 0, vx: 0, vy: 0, vz: 0 });
+    }
+
+    gl.plungerRod = cyl(mat(0xc0c8d0, { metalness: 0.85, roughness: 0.25 }), 0.012, 0.42, 0.55, BALL_R, 0.18);
+    gl.plungerRod.rotation.x = Math.PI / 2;
+    gl.pfRoot.add(gl.plungerRod);
+
+    rebuildToys(chapterSpec(1));
+    resizeGL();
+    return gl;
+  }
+
+  function buildCabinet() {
+    const g = new THREE.Group();
+    const wood = mat(0x3a1c14, { roughness: 0.55, metalness: 0.08 });
+    const dark = mat(0x1a0c0c, { roughness: 0.6 });
+    const chrome = mat(0xc0c8d0, { metalness: 0.9, roughness: 0.22 });
+    const brass = mat(GOLD, { metalness: 0.7, roughness: 0.3, emissive: 0x4a3010, emissiveIntensity: 0.25 });
+
+    g.add(box(wood, 1.18, 0.55, 1.42, 0, 0.55, 0.52));
+    g.add(box(dark, 1.22, 0.06, 1.46, 0, 0.84, 0.52));
+    [[-0.48, -0.05], [0.48, -0.05], [-0.48, 1.08], [0.48, 1.08]].forEach((p) => {
+      g.add(cyl(dark, 0.045, 0.55, p[0], 0.28, p[1]));
+    });
+    g.add(box(wood, 1.05, 0.82, 0.16, 0, 1.28, 1.28));
+    g.add(box(brass, 1.08, 0.04, 0.18, 0, 1.70, 1.28));
+
+    gl.backglassMesh = new THREE.Mesh(gl.geo.box, new THREE.MeshStandardMaterial({
+      roughness: 0.35, metalness: 0.1, emissive: 0x221018, emissiveIntensity: 0.55,
+    }));
+    gl.backglassMesh.scale.set(0.92, 0.7, 0.03);
+    gl.backglassMesh.position.set(0, 1.28, 1.20);
+    g.add(gl.backglassMesh);
+    stampBackglass(0, "CHAPTER 0", "THE PARLOR TABLE");
+
+    const coin = box(brass, 0.22, 0.16, 0.04, 0, 0.48, -0.18);
+    g.add(coin);
+    gl.coinDoor = coin;
+    g.add(box(chrome, 0.08, 0.08, 0.03, 0, 0.48, -0.21));
+
+    gl.pfRoot = new THREE.Group();
+    gl.pfRoot.position.set(0, 0.90, -0.12);
+    gl.pfRoot.rotation.x = -0.21;
+    g.add(gl.pfRoot);
+
+    gl.pfMat = new THREE.MeshStandardMaterial({
+      roughness: 0.72, metalness: 0.08, map: playfieldTex(null),
+    });
+    const pf = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.18), gl.pfMat);
+    pf.rotation.x = -Math.PI / 2;
+    pf.position.set(0, 0, 0.59);
+    gl.pfRoot.add(pf);
+    gl.pfMesh = pf;
+
+    const railM = chrome;
+    gl.pfRoot.add(box(railM, 0.03, 0.05, 1.16, -0.47, 0.03, 0.58));
+    gl.pfRoot.add(box(railM, 0.03, 0.05, 1.16, 0.47, 0.03, 0.46));
+    gl.pfRoot.add(box(railM, 0.03, 0.05, 1.10, 0.60, 0.03, 0.52));
+    gl.pfRoot.add(box(railM, 0.96, 0.05, 0.03, 0, 0.03, 1.16));
+
+    gl.hungryMaw = makeHungryMaw();
+    gl.pfRoot.add(gl.hungryMaw);
+    gl.flipR = makeFlipper(1);
+    gl.pfRoot.add(gl.flipR.group);
+
+    gl.miniFlip = makeFlipper(0);
+    gl.miniFlip.group.scale.setScalar(0.62);
+    gl.miniFlip.group.visible = false;
+    gl.pfRoot.add(gl.miniFlip.group);
+
+    gl.underglow = new THREE.PointLight(0xc45a6a, 1.8, 3.2, 1.6);
+    gl.underglow.position.set(0, 0.22, 0.5);
+    g.add(gl.underglow);
+
+    gl.pfRoot.add(gl.toys);
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.92, 1.14),
+      new THREE.MeshStandardMaterial({
+        color: 0xb8d8f0,
+        transparent: true,
+        opacity: 0.07,
+        roughness: 0.12,
+        metalness: 0.35,
+        depthWrite: false,
+      })
+    );
+    glass.rotation.x = -Math.PI / 2;
+    glass.position.set(0, 0.055, 0.58);
+    gl.pfRoot.add(glass);
+    g.scale.setScalar(1.16);
+    g.position.y = 0.02;
+    return g;
+  }
+
+  function makeFlipper(side) {
+    const group = new THREE.Group();
+    const chrome = mat(0xe8eef4, { metalness: 0.88, roughness: 0.22 });
+    const rubber = mat(0xc41e3a, { roughness: 0.55, emissive: 0x400810, emissiveIntensity: 0.2 });
+    const live = side > 0;
+    const len = live ? LIVE.len : 0.12;
+    const body = box(chrome, len, 0.018, live ? 0.042 : 0.032, len / 2, 0.012, 0);
+    const tip = box(rubber, 0.055, 0.022, 0.044, len - 0.02, 0.012, 0);
+    group.add(body);
+    group.add(tip);
+    const px = side === 0 ? 0.0 : LIVE.px;
+    const py = side === 0 ? 0.62 : LIVE.py;
+    const loc = pfLocal(px, py, 0);
+    group.position.copy(loc);
+    group.position.y = 0.01;
+    return { group, side, px, py, len };
+  }
+
+  function makeHungryMaw() {
+    const g = new THREE.Group();
+    const flesh = mat(0x5a1020, { emissive: 0xc41e3a, emissiveIntensity: 0.55, roughness: 0.55 });
+    const dark = mat(0x120608, { roughness: 0.7 });
+    const loc = pfLocal(-0.30, 0.08, 0);
+    g.position.copy(loc);
+    g.position.y = 0.01;
+    const pit = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), dark);
+    pit.rotation.x = -Math.PI / 2;
+    g.add(pit);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.014, 8, 18), flesh);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.01;
+    g.add(ring);
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * Math.PI + 0.2;
+      const tooth = box(mat(0xf0d09a, { roughness: 0.35 }), 0.018, 0.028, 0.012, Math.cos(a) * 0.09, 0.018, Math.sin(a) * 0.07);
+      g.add(tooth);
+    }
+    const dead = box(mat(0x2a1014, { roughness: 0.8, metalness: 0.15 }), 0.11, 0.014, 0.028, 0.08, 0.012, 0.04);
+    dead.rotation.y = 0.7;
+    g.add(dead);
+    const glow = new THREE.PointLight(0xc41e3a, 1.4, 0.7, 2);
+    glow.position.set(0, 0.06, 0);
+    g.add(glow);
+    gl.hungryLight = glow;
+    return g;
+  }
+
+  function stampBackglass(score, chapter, name) {
+    if (!gl || !gl.backglassMesh) return;
+    const tex = backglassTex(score, chapter, name);
+    const m = gl.backglassMesh.material;
+    if (m.map) m.map.dispose();
+    m.map = tex;
+    m.needsUpdate = true;
+  }
+
+  function clearToys() {
+    if (!gl) return;
+    while (gl.toys.children.length) {
+      const ch = gl.toys.children[0];
+      gl.toys.remove(ch);
     }
   }
 
-  function launch(fromPlunger) {
-    const speed = -10.6 * (0.9 + 0.1 * run.spec.speed);
-    run.ball = {
-      x: fromPlunger ? 284 : 152,
-      y: fromPlunger ? 390 : 140,
-      vx: fromPlunger ? -0.05 : (Math.random() * 0.5 - 0.25),
-      vy: speed,
-      r: BALL_R,
-    };
-    run.safe = 900;
-    run.born = performance.now();
-    run.rampLock = 400;
+  function addBumperMesh(b) {
+    const g = new THREE.Group();
+    const col = hexCol(b.hue || "#e8a0b8");
+    const body = mat(col, { emissive: col, emissiveIntensity: 0.25, roughness: 0.4 });
+    const cap = mat(0xf7f2ea, { emissive: col, emissiveIntensity: 0.55, roughness: 0.3 });
+    const c = cyl(body, b.r * 0.95, 0.028, 0, 0.016, 0, 14);
+    g.add(c);
+    g.add(sphere(cap, b.r * 0.72, 0, 0.034, 0));
+    g.add(new THREE.Mesh(new THREE.TorusGeometry(b.r * 0.85, 0.006, 6, 16), mat(0xf0d09a, { metalness: 0.6, roughness: 0.3 })));
+    const loc = pfLocal(b.x, b.y, 0);
+    g.position.copy(loc);
+    g.position.y = 0;
+    const light = new THREE.PointLight(col, 0, 0.55, 2);
+    light.position.set(0, 0.06, 0);
+    g.add(light);
+    gl.toys.add(g);
+    b.mesh = g;
+    b.light = light;
+    b.cap = g.children[1];
+    b.flash = 0;
+  }
+
+  function rebuildToys(spec) {
+    if (!gl) return;
+    clearToys();
+    const toys = spec.toys || {};
+    gl.bumpers = (spec.bumpers || []).map((src, i) => {
+      const b = Object.assign({ i }, src);
+      addBumperMesh(b);
+      return b;
+    });
+    gl.posts = [];
+    if (toys.posts) {
+      const spots = [[-0.22, 0.30, 0.02], [0.22, 0.30, 0.02], [0, 0.86, 0.018]];
+      spots.forEach((s) => {
+        const p = { x: s[0], y: s[1], r: s[2] };
+        const m = cyl(mat(0xd4a45a, { metalness: 0.7, roughness: 0.28 }), p.r, 0.04, 0, 0.02, 0);
+        const loc = pfLocal(p.x, p.y, 0);
+        m.position.copy(loc);
+        m.position.y = 0.02;
+        gl.toys.add(m);
+        gl.posts.push(p);
+      });
+    }
+    gl.thorns = [];
+    if (toys.thorns) {
+      [[-0.40, 0.20], [0.40, 0.20]].forEach((s) => {
+        const p = { x: s[0], y: s[1], r: 0.022 };
+        const m = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 6), mat(0x8a3030, { emissive: 0x400810, emissiveIntensity: 0.4 }));
+        const loc = pfLocal(p.x, p.y, 0);
+        m.position.copy(loc);
+        m.position.y = 0.035;
+        gl.toys.add(m);
+        gl.thorns.push(p);
+      });
+    }
+    gl.spinner = null;
+    if (toys.spinner && spec.spinner) {
+      const s = spec.spinner;
+      const g = new THREE.Group();
+      const gate = box(mat(0xf0d09a, { metalness: 0.5, emissive: 0x6a4808, emissiveIntensity: 0.4 }), 0.12, 0.04, 0.012, 0, 0.03, 0);
+      g.add(gate);
+      const loc = pfLocal(s.x, s.y, 0);
+      g.position.copy(loc);
+      gl.toys.add(g);
+      gl.spinner = { x: s.x, y: s.y, mesh: g, ang: 0, vel: 0, lock: 0 };
+    }
+    gl.sink = null;
+    if (toys.sink && spec.sink) {
+      const s = spec.sink;
+      const hole = new THREE.Mesh(
+        new THREE.CircleGeometry(s.r, 16),
+        new THREE.MeshStandardMaterial({ color: 0x040208, emissive: 0x3a1040, emissiveIntensity: 0.45, roughness: 0.8 })
+      );
+      hole.rotation.x = -Math.PI / 2;
+      const loc = pfLocal(s.x, s.y, 0);
+      hole.position.set(loc.x, 0.002, loc.z);
+      gl.toys.add(hole);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(s.r * 1.05, 0.006, 6, 18), mat(0xe8a0b8, { emissive: 0x6a2038, emissiveIntensity: 0.5 }));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(loc.x, 0.006, loc.z);
+      gl.toys.add(ring);
+      gl.sink = { x: s.x, y: s.y, r: s.r, mesh: hole, flash: 0 };
+    }
+    gl.ramp = null;
+    if (toys.ramp) {
+      const rampM = mat(0xc0c8d0, { metalness: 0.8, roughness: 0.25 });
+      const rail = box(rampM, 0.08, 0.04, 0.42, 0, 0.05, 0);
+      const loc = pfLocal(-0.38, 0.62, 0);
+      rail.position.copy(loc);
+      rail.position.y = 0.04;
+      rail.rotation.y = 0.4;
+      rail.rotation.x = -0.35;
+      gl.toys.add(rail);
+      gl.ramp = { mouthX: -0.40, mouthY: 0.48, mouthR: 0.055, mesh: rail };
+    }
+    gl.gate = null;
+    if (toys.gate) {
+      const door = box(mat(0xf0d09a, { metalness: 0.4, emissive: 0x4a3010, emissiveIntensity: 0.3 }), 0.12, 0.05, 0.02, 0, 0.03, 0);
+      const loc = pfLocal(0.34, 0.58, 0);
+      door.position.copy(loc);
+      gl.toys.add(door);
+      gl.gate = { x: 0.34, y: 0.58, open: false, mesh: door };
+    }
+    gl.bonus = [];
+    if (toys.bonus) {
+      [0.38, 0.42].forEach((y, i) => {
+        const p = { x: 0.42, y, r: 0.028, i };
+        const m = cyl(mat(0x4aaa6a, { emissive: 0x145028, emissiveIntensity: 0.4 }), p.r, 0.02, 0, 0.012, 0);
+        const loc = pfLocal(p.x, p.y, 0);
+        m.position.copy(loc);
+        gl.toys.add(m);
+        gl.bonus.push(p);
+      });
+    }
+    gl.rollovers = [];
+    if (toys.rollovers) {
+      [-0.16, 0, 0.16].forEach((x, i) => {
+        const p = { x, y: 0.90, r: 0.03, i, on: false };
+        const m = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.006, 6, 12), mat(0xb8e8e0, { emissive: 0x1a4040, emissiveIntensity: 0.4 }));
+        m.rotation.x = Math.PI / 2;
+        const loc = pfLocal(p.x, p.y, 0);
+        m.position.set(loc.x, 0.004, loc.z);
+        gl.toys.add(m);
+        p.mesh = m;
+        gl.rollovers.push(p);
+      });
+    }
+    gl.slings = !!toys.slings;
+    if (gl.slings) {
+      const rub = mat(0xc41e3a, { roughness: 0.5, emissive: 0x400810, emissiveIntensity: 0.25 });
+      const l = box(rub, 0.16, 0.03, 0.02, 0, 0.02, 0);
+      l.position.copy(pfLocal(-0.30, 0.24, 0));
+      l.rotation.y = 0.7;
+      gl.toys.add(l);
+      const r = box(rub, 0.16, 0.03, 0.02, 0, 0.02, 0);
+      r.position.copy(pfLocal(0.30, 0.24, 0));
+      r.rotation.y = -0.7;
+      gl.toys.add(r);
+    }
+    if (gl.miniFlip) gl.miniFlip.group.visible = !!toys.upperFlip;
+    if (gl.pfMat) {
+      if (gl.pfMat.map) gl.pfMat.map.dispose();
+      gl.pfMat.map = playfieldTex(spec);
+      gl.pfMat.needsUpdate = true;
+    }
+    const glow = spec.glow || 0xc45a6a;
+    gl.glowCol.set(glow);
+    if (gl.underglow) gl.underglow.color.copy(gl.glowCol);
+    if (gl.neon) gl.neon.color.copy(gl.glowCol);
+  }
+
+  function spawnSparks(x, y, n, color) {
+    if (!gl) return;
+    let spawned = 0;
+    for (let i = 0; i < gl.sparks.length && spawned < n; i += 1) {
+      const s = gl.sparks[i];
+      if (s.life > 0) continue;
+      s.life = 0.35 + Math.random() * 0.25;
+      const loc = pfLocal(x, y, 0.02);
+      s.mesh.position.copy(loc);
+      s.mesh.material.color.set(color || 0xffe6a6);
+      s.mesh.material.opacity = 0.9;
+      s.vx = (Math.random() - 0.5) * 0.9;
+      s.vy = 0.4 + Math.random() * 0.6;
+      s.vz = (Math.random() - 0.5) * 0.9;
+      spawned += 1;
+    }
+  }
+
+  function tickSparks(dt) {
+    if (!gl) return;
+    gl.sparks.forEach((s) => {
+      if (s.life <= 0) {
+        s.mesh.material.opacity = 0;
+        return;
+      }
+      s.life -= dt;
+      s.vy -= 1.8 * dt;
+      s.mesh.position.x += s.vx * dt;
+      s.mesh.position.y += s.vy * dt;
+      s.mesh.position.z += s.vz * dt;
+      s.mesh.material.opacity = Math.max(0, s.life * 2.2);
+    });
+  }
+
+  /* ───────── physics ───────── */
+  function baseWalls() {
+    const w = [];
+    const add = (ax, ay, bx, by) => w.push({ ax, ay, bx, by });
+    add(-0.48, 0.34, -0.48, 0.84);
+    add(-0.48, 0.84, -0.34, 0.97);
+    add(-0.34, 0.97, -0.10, 1.03);
+    add(-0.10, 1.03, 0.16, 1.03);
+    add(0.16, 1.03, 0.36, 0.97);
+    add(0.36, 0.97, 0.48, 0.86);
+    add(0.48, 0.22, 0.48, 0.86);
+    add(0.48, 0.90, 0.62, 0.90);
+    add(0.62, 0.08, 0.62, 0.90);
+    add(0.62, 0.90, 0.52, 1.02);
+    add(0.52, 1.02, 0.28, 1.05);
+    add(-0.48, 0.34, -0.26, 0.10);
+    add(0.40, 0.0, 0.48, 0.14);
+    add(LIVE.px, LIVE.py, 0.38, 0.28);
+    add(0.34, 0.0, 0.40, 0.0);
+    if (gl && gl.slings) {
+      add(-0.42, 0.36, -0.22, 0.28);
+      add(0.42, 0.32, 0.26, 0.32);
+      add(0.26, 0.32, LIVE.px + 0.02, 0.18);
+    }
+    if (gl && gl.gate && !gl.gate.open) add(0.28, 0.54, 0.40, 0.62);
+    return w;
+  }
+
+  function hitSeg(b, ax, ay, bx, by, thick) {
+    const abx = bx - ax;
+    const aby = by - ay;
+    const apx = b.x - ax;
+    const apy = b.y - ay;
+    const ab2 = abx * abx + aby * aby;
+    let t = ab2 > 0 ? (apx * abx + apy * aby) / ab2 : 0;
+    t = clamp(t, 0, 1);
+    const cx = ax + abx * t;
+    const cy = ay + aby * t;
+    const dx = b.x - cx;
+    const dy = b.y - cy;
+    const d = Math.hypot(dx, dy);
+    const rad = b.r + (thick || WALL_T);
+    if (d >= rad || d < 1e-8) return false;
+    const nx = dx / d;
+    const ny = dy / d;
+    const o = rad - d;
+    b.x += nx * o;
+    b.y += ny * o;
+    const vn = b.vx * nx + b.vy * ny;
+    if (vn < 0) {
+      b.vx -= 1.38 * vn * nx;
+      b.vy -= 1.38 * vn * ny;
+      const tx = -ny;
+      const ty = nx;
+      const vt = b.vx * tx + b.vy * ty;
+      b.vx -= vt * tx * 0.16;
+      b.vy -= vt * ty * 0.16;
+    }
+    return true;
+  }
+
+  function hitCirc(b, cx, cy, r, kick, bounce) {
+    const dx = b.x - cx;
+    const dy = b.y - cy;
+    const d = Math.hypot(dx, dy);
+    const rad = b.r + r;
+    if (d >= rad || d < 1e-8) return false;
+    const nx = dx / d;
+    const ny = dy / d;
+    b.x = cx + nx * rad;
+    b.y = cy + ny * rad;
+    const vn = b.vx * nx + b.vy * ny;
+    if (vn < 0) {
+      const e = bounce == null ? 0.55 : bounce;
+      b.vx -= (1 + e) * vn * nx;
+      b.vy -= (1 + e) * vn * ny;
+      if (kick) {
+        b.vx += nx * kick;
+        b.vy += ny * kick;
+      }
+    }
+    return vn < 0;
+  }
+
+  function flipAngles(side, raised) {
+    if (side <= 0) return raised ? 0.55 : -0.4;
+    return raised ? UP_ANG : REST_ANG;
+  }
+
+  function collideFlipper(b, flip) {
+    const c = Math.cos(flip.angle);
+    const s = Math.sin(flip.angle);
+    const tipX = flip.px + c * flip.len;
+    const tipY = flip.py + s * flip.len;
+    const dx = tipX - flip.px;
+    const dy = tipY - flip.py;
+    const len2 = flip.len * flip.len;
+    let t = ((b.x - flip.px) * dx + (b.y - flip.py) * dy) / Math.max(1e-8, len2);
+    t = clamp(t, 0, 1);
+    const cx = flip.px + dx * t;
+    const cy = flip.py + dy * t;
+    const ox = b.x - cx;
+    const oy = b.y - cy;
+    const d = Math.hypot(ox, oy);
+    const rad = b.r + 0.02;
+    if (d >= rad || d < 1e-8) return false;
+    const nx = ox / d;
+    const ny = oy / d;
+    b.x += nx * (rad - d);
+    b.y += ny * (rad - d);
+    const rx = cx - flip.px;
+    const ry = cy - flip.py;
+    const svelX = -flip.omega * ry;
+    const svelY = flip.omega * rx;
+    const relVx = b.vx - svelX;
+    const relVy = b.vy - svelY;
+    const vn = relVx * nx + relVy * ny;
+    if (vn < 0) {
+      b.vx -= 1.45 * vn * nx;
+      b.vy -= 1.45 * vn * ny;
+      b.vx += svelX * 0.92;
+      b.vy += svelY * 0.92;
+      const popping = flip.side > 0 && flip.omega < -5;
+      if (popping) {
+        b.vx += nx * 0.18 + 0.22;
+        b.vy += ny * 0.9 + 0.48;
+        sfx("flip");
+      } else if (Math.abs(flip.omega) < 3 && flip.angle < REST_ANG - 0.25) {
+        b.vx *= 0.78;
+        b.vy *= 0.62;
+      }
+    }
+    return true;
+  }
+
+  function capSpeed(b, spec) {
+    const max = MAX_SPD * ((spec && spec.speed) || 1);
+    const sp = Math.hypot(b.vx, b.vy);
+    if (sp > max) {
+      b.vx *= max / sp;
+      b.vy *= max / sp;
+    }
+  }
+
+  function addScore(n, why) {
+    if (!run || run.done) return;
+    run.score += n | 0;
+    run.juice = Math.min(1, run.juice + 0.18);
+    if (gl) gl.cam.shake = Math.min(0.12, gl.cam.shake + 0.03);
+    if (why && $("pinballStatus")) $("pinballStatus").textContent = why;
+    paintHud();
+  }
+
+  function noteStatus(text) {
+    const el = $("pinballStatus");
+    if (el) el.textContent = text;
+  }
+
+  function onBumper(i) {
+    if (!run || !gl || !gl.bumpers[i]) return;
+    const b = gl.bumpers[i];
+    b.flash = 1;
+    spawnSparks(b.x, b.y, 8, b.hue);
+    sfx("bumper");
+    addScore(run.spec.bumper || 120, `Bumper +${run.spec.bumper || 120}`);
+    const m = run.mission;
+    if (m.id === "bumpers" && m.hits[i] === false) {
+      m.hits[i] = true;
+      noteStatus(missionText(m, run.spec));
+    }
+    if (m.id === "combo") {
+      m.window = 900;
+      m.n += 1;
+      noteStatus(missionText(m, run.spec));
+    }
+    maybeClear();
+  }
+
+  function maybeClear() {
+    if (!run || run.done || !missionDone(run.mission) || run.wantChapter) return;
+    run.wantChapter = true;
+    run.fanfare = 900;
+    addScore(1000 * (run.spec.ch || 1), `${hudChapter(run.spec)} CLEAR`);
+    sfx("chapter");
+    PF.setAura("celebrate");
+    noteStatus(`${hudChapter(run.spec)} CLEAR · Plunge onward.`);
+  }
+
+  function advanceChapter() {
+    if (!run || run.done) return;
+    run.cleared = run.spec.ch || run.cleared + 1;
+    const next = chapterSpec(run.cleared + 1);
+    if (!next) {
+      finish("souvenir");
+      return;
+    }
+    run.spec = next;
+    run.mission = missionReset(next);
+    run.wantChapter = false;
+    run.fanfare = 0;
+    rebuildToys(next);
+    stampBackglass(run.score, hudChapter(next), next.name);
+    if (rk() && run.kitRun && typeof rk().reportDepth === "function") {
+      rk().reportDepth(run.kitRun, next.ch || next.id, { name: next.name, coda: !!next.coda });
+    }
+    if (run.ball && run.ball.mode === "play") {
+      run.ball.x = 0.56;
+      run.ball.y = 0.16;
+      run.ball.vx = 0;
+      run.ball.vy = 0;
+      run.ball.mode = "plunger";
+      run.ball.h = 0;
+      run.safe = 700;
+    }
+    noteStatus(`${hudChapter(next)} — ${next.barker}`);
+    paintHud();
+    if (typeof PF.refreshDepth === "function") PF.refreshDepth();
+  }
+
+  function physics(ms) {
+    if (!run || run.done || !run.ball) return;
+    const dt = ms / 1000;
+    const spec = run.spec;
+    const b = run.ball;
+    const speed = spec.speed || 1;
+
+    run.juice = Math.max(0, run.juice - dt * 0.55);
+    if (run.mission && run.mission.window > 0) {
+      run.mission.window -= ms;
+      if (run.mission.window <= 0 && run.mission.id === "combo") run.mission.n = 0;
+    }
+    run.safe = Math.max(0, run.safe - ms);
+    run.sinkLock = Math.max(0, (run.sinkLock || 0) - ms);
+    run.rampLock = Math.max(0, (run.rampLock || 0) - ms);
+    run.slingLock = Math.max(0, (run.slingLock || 0) - ms);
+    if (run.fanfare > 0) {
+      run.fanfare -= ms;
+      if (run.fanfare <= 0 && run.wantChapter) advanceChapter();
+    }
+
+    const targetR = flipAngles(1, run.wantFlip);
+    const prevR = run.angleR;
+    const maxR = (run.wantFlip ? FLIP_UP : FLIP_DOWN) * dt;
+    run.angleR += clamp(targetR - run.angleR, -maxR, maxR);
+    run.omegaR = (run.angleR - prevR) / dt;
+    if (run.spec.toys && run.spec.toys.upperFlip) {
+      const near = Math.hypot(b.x, b.y - 0.62) < 0.16;
+      const tU = near ? 0.55 : -0.4;
+      const prevU = run.angleU || -0.4;
+      run.angleU = lerp(prevU, tU, clamp(18 * dt, 0, 1));
+      run.omegaU = (run.angleU - prevU) / dt;
+    }
+
+    if (b.mode === "plunger") {
+      const holding = !!(run.wantP);
+      if (holding) run.charge = clamp((run.charge || 0) + dt * 1.15, 0, 1);
+      if (!holding && run.charge > 0.04) {
+        const power = Math.max(run.charge, 0.42);
+        b.mode = "play";
+        b.vy = 0.85 + power * 1.55;
+        b.vx = -0.02;
+        b.y = 0.22;
+        b.x = 0.55;
+        run.safe = 650;
+        sfx("shove");
+        run.charge = 0;
+      }
+      if (!holding) run.charge = Math.max(0, (run.charge || 0) - dt * 0.4);
+      b.x = 0.55;
+      b.y = 0.14 + (run.charge || 0) * 0.04;
+      b.vx = 0;
+      b.vy = 0;
+      return;
+    }
+
+    if (b.mode === "ramp") {
+      b.rampT = (b.rampT || 0) + dt / 0.72;
+      const t = clamp(b.rampT, 0, 1);
+      b.x = lerp(-0.40, 0.08, t);
+      b.y = lerp(0.50, 0.90, t) + Math.sin(t * Math.PI) * 0.08;
+      b.h = Math.sin(t * Math.PI) * 0.12;
+      if (t >= 1) {
+        b.mode = "play";
+        b.h = 0;
+        b.vx = 0.28;
+        b.vy = -0.08;
+        b.x = 0.24;
+        b.y = 0.88;
+        run.rampLock = 400;
+        const m = run.mission;
+        if (m.id === "ramp-sink") m.ramp = true;
+        if (m.id === "chain" && m.phase === "ramp") m.phase = "spin";
+        addScore(400, "Ramp!");
+        sfx("rack");
+        maybeClear();
+      }
+      return;
+    }
+
+    if (b.mode === "sink") {
+      b.sinkT = (b.sinkT || 0) + dt;
+      b.h = -0.02;
+      if (b.sinkT > 0.55) {
+        b.mode = "play";
+        b.h = 0;
+        b.x = 0;
+        b.y = 0.42;
+        b.vx = 0.18 + Math.random() * 0.28;
+        b.vy = 0.55;
+        run.sinkLock = 500;
+      }
+      return;
+    }
+
+    b.vy -= G * speed * dt;
+    const hunger = spec.hunger == null ? 0.7 : spec.hunger;
+    if (b.x < -0.14 && b.y < 0.40) {
+      const pull = hunger * (0.7 + Math.max(0, 0.40 - b.y) * 1.6);
+      b.vx -= pull * dt;
+      b.vy -= pull * 0.85 * dt;
+      if (!run.taughtHungry) {
+        run.taughtHungry = true;
+        noteStatus("LEFT LANE IS HUNGRY — one thumb, stay right.");
+      }
+    }
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+
+    if (b.mode === "play" && b.x > 0.46 && b.y > 0.84) {
+      b.x = 0.16;
+      b.y = 0.46;
+      b.vx = 0.04;
+      b.vy = 0.02;
+    }
+
+    baseWalls().forEach((w) => hitSeg(b, w.ax, w.ay, w.bx, w.by, WALL_T));
+
+    collideFlipper(b, { px: LIVE.px, py: LIVE.py, len: LIVE.len, angle: run.angleR, omega: run.omegaR, side: 1 });
+    if (spec.toys && spec.toys.upperFlip) {
+      collideFlipper(b, { px: 0, py: 0.62, len: 0.12, angle: run.angleU || -0.4, omega: run.omegaU || 0, side: 0 });
+      if (gl.gate && !gl.gate.open && Math.hypot(b.x, b.y - 0.62) < 0.12) {
+        gl.gate.open = true;
+        if (run.mission.id === "gate") run.mission.open = true;
+        noteStatus("Gate pulsed itself — bonus lane live.");
+        sfx("chapter");
+        maybeClear();
+      }
+    }
+
+    if (gl.bumpers) {
+      gl.bumpers.forEach((bm, i) => {
+        if (hitCirc(b, bm.x, bm.y, bm.r, 0.58, 0.55)) {
+          b.vx += 0.07;
+          onBumper(i);
+        }
+      });
+    }
+    if (gl.posts) gl.posts.forEach((p) => hitCirc(b, p.x, p.y, p.r, 0, 0.4));
+    if (gl.thorns) {
+      gl.thorns.forEach((p) => {
+        if (hitCirc(b, p.x, p.y, p.r, 0.15, 0.5)) {
+          const inward = (p.x < 0 && b.x > p.x) || (p.x > 0 && b.x < p.x);
+          if (inward) {
+            b.vy += 0.35;
+            noteStatus("Thorn SAVE — bounced in.");
+          } else {
+            b.vy -= 0.45;
+            b.vx += p.x < 0 ? -0.2 : 0.2;
+            noteStatus("Thorn DOOM — toward the outlane.");
+          }
+        }
+      });
+    }
+    if (gl.slings && run.slingLock <= 0) {
+      if (b.y > 0.16 && b.y < 0.38 && b.x < -0.16 && b.vy < 0.25) {
+        b.vx -= 0.38;
+        b.vy -= 0.22;
+        run.slingLock = 180;
+        sfx("sling");
+        addScore(30, "Left sling fed the mouth.");
+      }
+      if (b.y > 0.16 && b.y < 0.34 && b.x > 0.18 && b.vy < 0.2) {
+        b.vx -= 0.15;
+        b.vy += 0.78;
+        run.slingLock = 180;
+        sfx("sling");
+        addScore(30);
+      }
+    }
+    if (gl.spinner && gl.spinner.lock <= 0) {
+      const dx = b.x - gl.spinner.x;
+      const dy = b.y - gl.spinner.y;
+      if (dx * dx + dy * dy < 0.01) {
+        const ticks = 1 + ((Math.hypot(b.vx, b.vy) * 2) | 0);
+        gl.spinner.vel += ticks * 8;
+        gl.spinner.lock = 220;
+        sfx("spinner");
+        addScore(50 * ticks, `Spinner · ${missionText(run.mission, spec)}`);
+        const m = run.mission;
+        if (m.id === "spinner") m.ticks += ticks;
+        if (m.id === "alt" && m.phase === "spin") m.phase = "sink";
+        if (m.id === "chain" && m.phase === "spin") m.phase = "sink";
+        maybeClear();
+      }
+    }
+    if (gl.sink && run.sinkLock <= 0 && Math.hypot(b.x - gl.sink.x, b.y - gl.sink.y) < gl.sink.r && Math.hypot(b.vx, b.vy) < 1.15) {
+      b.mode = "sink";
+      b.sinkT = 0;
+      b.vx = 0;
+      b.vy = 0;
+      gl.sink.flash = 1;
+      sfx("sinkhole");
+      addScore(350, `Sink · ${missionText(run.mission, spec)}`);
+      const m = run.mission;
+      if (m.id === "sink") m.n += 1;
+      if (m.id === "ramp-sink") m.sink += 1;
+      if (m.id === "alt" && m.phase === "sink") m.phase = "done";
+      if (m.id === "chain" && m.phase === "sink") m.phase = "done";
+      maybeClear();
+    }
+    if (gl.ramp && run.rampLock <= 0 && b.mode === "play") {
+      if (Math.hypot(b.x - gl.ramp.mouthX, b.y - gl.ramp.mouthY) < gl.ramp.mouthR && b.vy > 0.15) {
+        b.mode = "ramp";
+        b.rampT = 0;
+      }
+    }
+    if (gl.bonus) {
+      gl.bonus.forEach((p) => {
+        if (Math.hypot(b.x - p.x, b.y - p.y) < p.r + b.r) {
+          if (run.bonusLock > 0) return;
+          run.bonusLock = 280;
+          addScore(200, `Bonus lane · ${missionText(run.mission, spec)}`);
+          if (run.mission.id === "gate") run.mission.bonus += 1;
+          maybeClear();
+        }
+      });
+    }
+    run.bonusLock = Math.max(0, (run.bonusLock || 0) - ms);
+    if (gl.rollovers) {
+      gl.rollovers.forEach((p) => {
+        const on = Math.hypot(b.x - p.x, b.y - p.y) < p.r + b.r;
+        if (on && !p.on) {
+          p.on = true;
+          addScore(80, "Rollover");
+        }
+        if (!on) p.on = false;
+      });
+    }
+
+    capSpeed(b, spec);
+
+    if (run.safe <= 0 && b.mode === "play" && b.x < -0.10 && b.y < 0.12) {
+      beginDrain("hungry");
+    }
+    if (run.safe <= 0 && b.mode === "play" && b.y < 0.018 && b.x < LIVE.px - 0.02) {
+      beginDrain(b.x < 0.04 ? "hungry" : "drain");
+    }
+    if (run.safe <= 0 && b.mode === "play" && b.y < -0.02) beginDrain(b.x < 0.05 ? "hungry" : "drain");
+  }
+
+  function beginDrain(reason) {
+    if (!run || run.done || run.draining) return;
+    run.draining = true;
+    run.deathNote = reason;
+    if (run.ball) run.ball.mode = "dead";
+    sfx("drain");
+    PF.setAura("badLuck");
+    noteStatus("Drain. One ball, one night.");
+    if (gl) gl.cam.mode = "drain";
+    setTimeout(() => finish(reason), DEATH_HOLD_MS);
+  }
+
+  /* ───────── camera / draw ───────── */
+  function resizeGL() {
+    if (!gl) return;
+    const canvas = gl.canvas;
+    const host = canvas.parentElement || canvas;
+    const w = Math.max(2, host.clientWidth || window.innerWidth);
+    const h = Math.max(2, host.clientHeight || window.innerHeight);
+    gl.renderer.setSize(w, h, false);
+    gl.camera.aspect = w / h;
+    gl.camera.updateProjectionMatrix();
+  }
+
+  function syncFlipMeshes() {
+    if (!gl || !run) return;
+    if (gl.flipR) gl.flipR.group.rotation.y = -run.angleR;
+    if (gl.miniFlip && gl.miniFlip.group.visible) gl.miniFlip.group.rotation.y = -(run.angleU || -0.4);
+    if (gl.hungryLight) gl.hungryLight.intensity = 1.1 + Math.sin(idleT * 6) * 0.45;
+  }
+
+  function syncBall() {
+    if (!gl || !gl.ballMesh) return;
+    const b = run && run.ball;
+    if (!b || run.done) {
+      gl.ballMesh.visible = !run || !!run.draining;
+      return;
+    }
+    gl.ballMesh.visible = true;
+    const loc = pfLocal(b.x, b.y, b.h || 0);
+    gl.ballMesh.position.copy(loc);
+    gl.shadowDisc.position.set(loc.x, 0.001, loc.z);
+    gl.shadowDisc.material.opacity = b.mode === "ramp" ? 0.12 : 0.35;
+    if (gl.plungerRod) {
+      gl.plungerRod.position.set(0.55 * 0.95, BALL_R, (0.10 - (run.charge || 0) * 0.12) * 1.18);
+    }
+    gl.trail.forEach((g, i) => {
+      const t = (i + 1) / (gl.trail.length + 1);
+      g.position.lerp(loc, 0.25 + t * 0.15);
+      g.material.opacity = b.mode === "play" ? 0.16 * (1 - t) : 0;
+    });
+    if (gl.bumpers) {
+      gl.bumpers.forEach((bm) => {
+        if (bm.flash > 0) bm.flash *= 0.86;
+        if (bm.light) bm.light.intensity = bm.flash * 3.2;
+        if (bm.cap && bm.cap.material) bm.cap.material.emissiveIntensity = 0.4 + bm.flash * 1.8;
+        if (bm.mesh) bm.mesh.scale.setScalar(1 + bm.flash * 0.12);
+      });
+    }
+    if (gl.spinner) {
+      gl.spinner.ang += gl.spinner.vel * 0.016;
+      gl.spinner.vel *= 0.96;
+      gl.spinner.lock = Math.max(0, gl.spinner.lock - 16);
+      gl.spinner.mesh.rotation.y = gl.spinner.ang;
+    }
+    if (gl.gate && gl.gate.mesh) {
+      gl.gate.mesh.rotation.y = gl.gate.open ? 1.2 : 0;
+    }
+  }
+
+  function aimCamera(dt) {
+    if (!gl) return;
+    const cam = gl.camera;
+    const mode = (run && !run.done) ? (run.ball && run.ball.mode === "plunger" ? "plunger" : run.draining ? "drain" : "play") : (run && run.done ? "result" : "vestibule");
+    gl.cam.mode = mode;
+    gl.cam.shake = Math.max(0, gl.cam.shake - dt * 1.8);
+    let tx = 0;
+    let ty = 1.35;
+    let tz = 2.15;
+    let lx = 0;
+    let ly = 1.05;
+    let lz = 0.35;
+    let wantFov = 42;
+    if (mode === "vestibule" || mode === "result") {
+      gl.cam.yaw += dt * 0.16;
+      const a = gl.cam.yaw;
+      tx = Math.sin(a) * 1.7;
+      ty = 1.58;
+      tz = -2.25 - Math.cos(a) * 0.32;
+      lx = -0.12;
+      ly = 1.18;
+      lz = 0.48;
+      wantFov = 44;
+    } else if (mode === "plunger") {
+      const eye = pfWorld(0.42, -0.22, 0.38);
+      tx = eye.x; ty = eye.y; tz = eye.z;
+      const look = pfWorld(0.22, 0.55, 0.04);
+      lx = look.x; ly = look.y; lz = look.z;
+      wantFov = 32;
+    } else if (mode === "play") {
+      const b = run.ball;
+      const eye = pfWorld((b ? b.x * 0.12 : 0), -0.26, 0.46);
+      tx = eye.x; ty = eye.y; tz = eye.z;
+      const look = pfWorld(b ? b.x * 0.38 : 0, 0.52 + (b ? b.y * 0.18 : 0), 0.03);
+      lx = look.x; ly = look.y; lz = look.z;
+      wantFov = 34;
+    } else if (mode === "drain") {
+      const eye = pfWorld(0.08, -0.18, 0.32);
+      tx = eye.x; ty = eye.y; tz = eye.z;
+      const look = pfWorld(0, 0.08, 0.02);
+      lx = look.x; ly = look.y; lz = look.z;
+      wantFov = 36;
+    }
+    const k = 1 - Math.pow(0.0018, dt);
+    cam.position.x = lerp(cam.position.x, tx, k);
+    cam.position.y = lerp(cam.position.y, ty, k);
+    cam.position.z = lerp(cam.position.z, tz, k);
+    cam.fov = lerp(cam.fov, wantFov, k);
+    cam.updateProjectionMatrix();
+    if (gl.cam.shake) {
+      cam.position.x += (Math.random() - 0.5) * gl.cam.shake;
+      cam.position.y += (Math.random() - 0.5) * gl.cam.shake;
+    }
+    cam.lookAt(lx, ly, lz);
+  }
+
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    if (!visible || !gl) return;
+    const dt = Math.min(0.05, (now - (lastTs || now)) / 1000);
+    lastTs = now;
+    idleT += dt;
+    if (run && !run.done) {
+      run.acc = (run.acc || 0) + dt * 1000;
+      while (run.acc >= STEP) {
+        physics(STEP);
+        run.acc -= STEP;
+      }
+      syncFlipMeshes();
+      syncBall();
+      paintHud();
+      if (typeof PF.refreshDepth === "function") PF.refreshDepth();
+    } else {
+      if (gl.bumpers) {
+        gl.bumpers.forEach((bm, i) => {
+          bm.flash = 0.25 + 0.25 * Math.sin(idleT * 3 + i);
+          if (bm.light) bm.light.intensity = bm.flash * 1.4;
+        });
+      }
+      if (gl.aura) gl.aura.rotation.y = Math.PI + 0.42 + Math.sin(idleT * 0.6) * 0.08;
+    }
+    tickAura(dt);
+    tickSparks(dt);
+    if (gl.bulbs) gl.bulbs.rotation.y = Math.sin(idleT * 0.4) * 0.01;
+    if (gl.underglow) gl.underglow.intensity = 1.4 + Math.sin(idleT * 3.2) * 0.35;
+    aimCamera(dt);
+    gl.renderer.render(gl.scene, gl.camera);
+  }
+
+  function startLoop() {
+    if (raf) return;
+    lastTs = 0;
+    raf = requestAnimationFrame(frame);
+  }
+
+  function stopLoop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+
+  /* ───────── run lifecycle ───────── */
+  function isLive() {
+    const ctx = run && (run.kitRun || run.ctx);
+    return !!(run && !run.done && ctx && ctx.alive !== false);
   }
 
   function beginKitRun() {
@@ -1078,18 +1818,9 @@
       try {
         const ctx = PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1, feverNode: true });
         if (ctx) return ctx;
-      } catch (_) { /* fall through to local ctx */ }
+      } catch (_) { /* */ }
     }
-    return {
-      gameId: GAME_ID,
-      startedAt: Date.now(),
-      feverNode: true,
-      feverGate: null,
-      depth: 0,
-      score: 0,
-      strikes: 0,
-      alive: true,
-    };
+    return { gameId: GAME_ID, startedAt: Date.now(), feverNode: true, feverGate: null, depth: 0, score: 0, strikes: 0, alive: true };
   }
 
   function qaStartAt() {
@@ -1101,583 +1832,53 @@
 
   function start() {
     if (run && !run.done) return;
-    stopIdle();
     declareP0();
+    ensureGL();
     const kitRun = beginKitRun();
     if (!kitRun) {
-      $("pinballStatus").textContent = "Out of demo coins · grant a pass";
+      if ($("pinballStatus")) $("pinballStatus").textContent = "Out of demo coins · grant a pass";
       PF.refreshNightBoard();
       stampDepthCopy();
-      startIdle();
       return;
     }
     const spec = chapterSpec(qaStartAt());
     if (!spec) {
       stampDepthCopy();
-      startIdle();
       return;
     }
     run = {
-      done: false,
-      ctx: kitRun,
-      kitRun,
-      spec,
-      score: 0,
-      cleared: 0,
-      bumpers: makeBumpers(spec),
-      rollovers: spec.toys && spec.toys.rollovers ? makeRollovers(spec) : [],
-      mission: missionReset(spec),
-      angleU: 0.2,
-      prevU: 0.2,
-      wantU: false,
-      rollT: 0,
-      bonusLock: 0,
-      ball: null,
-      angleL: 0.4,
-      angleR: Math.PI - 0.4,
-      prevL: 0.4,
-      prevR: Math.PI - 0.4,
-      wantL: false,
-      wantR: false,
-      last: 0,
-      acc: 0,
-      raf: 0,
-      shake: 0,
-      spinAngle: 0,
-      sinkFlash: 0,
-      sinkLock: 0,
-      rampLock: 0,
-      liveAcc: 0,
-      liveBonus: 0,
+      done: false, draining: false, ctx: kitRun, kitRun, spec,
+      score: 0, cleared: 0, mission: missionReset(spec),
+      angleR: REST_ANG, angleU: -0.4,
+      omegaR: 0, omegaU: 0, wantFlip: false, wantP: false, taughtHungry: false,
+      charge: 0, acc: 0, juice: 0, fanfare: 0, wantChapter: false,
+      safe: 800, sinkLock: 0, rampLock: 0, slingLock: 0, bonusLock: 0,
       deathNote: "",
-      safe: 0,
-      fanfare: 0,
-      pendingFlip: [],
-      wantChapter: false,
-      slingLock: 0,
-      flipGrace: 0,
-      juice: 0,
-      laneBias: 0,
-      onShelf: false,
+      ball: { x: 0.55, y: 0.14, vx: 0, vy: 0, r: BALL_R, h: 0, mode: "plunger" },
     };
     pointers.clear();
+    rebuildToys(spec);
+    stampBackglass(0, hudChapter(spec), spec.name);
     $("pinballStart").disabled = true;
     $("pinballStart").hidden = true;
-    $("pinballVerdict").hidden = true;
+    if ($("pinballVerdict")) $("pinballVerdict").hidden = true;
     kit.hideResult("pinballResult");
     PF.setTier("pinballTier", "", "");
     kit.setMode(card(), "play");
     stampDepthCopy();
-    $("pinballStatus").textContent = `${hudChapter(spec)} — ${spec.barker}`;
-    paintKitHud(spec);
+    noteStatus(`${hudChapter(spec)} — ${spec.barker}`);
+    paintHud();
     PF.focusCard("pinballCard", true);
     PF.setAura("think");
     if (rk() && typeof rk().reportDepth === "function") {
       rk().reportDepth(kitRun, spec.ch || spec.id, { name: spec.name, coda: !!spec.coda });
     }
-    launch(true);
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.acc += dt;
-      while (run.acc >= STEP) {
-        physics(STEP);
-        run.acc -= STEP;
-      }
-      draw();
-      PF.refreshDepth();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function queueFlip(side, down) {
-    if (!run || run.done) return;
-    const delay = run.spec.drunk ? 30 : 0;
-    if (!delay) {
-      run[side === "L" ? "wantL" : "wantR"] = down;
-      return;
-    }
-    setTimeout(() => {
-      if (!run || run.done) return;
-      run[side === "L" ? "wantL" : "wantR"] = down;
-    }, delay);
-  }
-
-  function syncWanted() {
-    const w = wantedFlip();
-    if (!run.spec.drunk) {
-      run.wantL = w.L;
-      run.wantR = w.R;
-    }
-  }
-
-  function addScore(n) {
-    run.score += n;
-    const ctx = run.kitRun || run.ctx;
-    if (ctx) ctx.score = run.score;
-  }
-
-  function juiceChapter(n) {
-    run.fanfare = 520;
-    run.juice = 680;
-    run.shake = Math.min(16, 8 + n);
-    run.safe = Math.max(run.safe || 0, 1100);
-    const ctx = run.kitRun || run.ctx;
-    if (ctx && rk() && typeof rk().reportDepth === "function") {
-      rk().reportDepth(ctx, run.spec.ch || run.spec.id, { name: run.spec.name, coda: !!run.spec.coda });
-    }
-    kit.sfx("chapter");
-    PF.setAura("celebrate");
-    const line = n >= 4 ? AURA.deep(n) : AURA.chapter;
-    $("pinballStatus").textContent = `${hudChapter(run.spec)} CLEAR · +${1000 * n}. ${line} Plunge.`;
-    if (typeof PF.showBanner === "function") {
-      PF.showBanner(true, `CHAPTER ${n}`, line);
-    }
-  }
-
-  function onBumper(b) {
-    if (b.lock > 0) return;
-    addScore(run.spec.bumper);
-    b.flash = 140;
-    b.lock = 160;
-    b.hit = true;
-    run.mission.bumpers[b.id] = true;
-    run.mission.combo += 1;
-    kit.sfx("bumper");
-    run.shake = 3;
-    $("pinballStatus").textContent = `Bumper +${run.spec.bumper} · ${missionText(run.mission, run.spec)}`;
-    checkChapter();
-  }
-
-  function onSpinner() {
-    run.mission.spinner += 1;
-    run.mission.combo = 0;
-    addScore(40);
-    kit.sfx("spinner");
-    if (run.mission.need === "alt" && run.mission.phase === "spinner") run.mission.phase = "sink";
-    if (run.mission.need === "chain" && run.mission.phase === "spinner") run.mission.phase = "sink";
-    $("pinballStatus").textContent = `Spinner · ${missionText(run.mission, run.spec)}`;
-    checkChapter();
-  }
-
-  function onSink() {
-    const sink = run.spec.sink || { x: 152, y: 298 };
-    run.mission.sink += 1;
-    run.mission.combo = 0;
-    addScore(250);
-    run.sinkFlash = 220;
-    kit.sfx("sinkhole");
-    if (run.mission.need === "alt" && run.mission.phase === "sink") run.mission.phase = "done";
-    if (run.mission.need === "chain" && run.mission.phase === "sink") run.mission.phase = "done";
-    $("pinballStatus").textContent = `Sink · ${missionText(run.mission, run.spec)}`;
-    if (run.ball) {
-      run.ball.x = sink.x;
-      run.ball.y = sink.y;
-      run.ball.vx = 0;
-      run.ball.vy = 0;
-      run.sinkLock = 320;
-    }
-    checkChapter();
-  }
-
-  function onRamp() {
-    run.mission.ramp = true;
-    run.mission.combo = 0;
-    addScore(350);
-    kit.sfx("chapter");
-    run.rampLock = 360;
-    if (run.mission.need === "chain" && run.mission.phase === "ramp") run.mission.phase = "spinner";
-    if (run.ball) {
-      const sh = shelfGeom(run.spec);
-      if (sh) {
-        run.ball.x = (sh.x0 + sh.x1) * 0.42;
-        run.ball.y = sh.yFloor - 26;
-        run.ball.vx = isFeverTable(run.spec) ? 3.8 : 3.2;
-        run.ball.vy = 1.15;
-        run.onShelf = true;
-      } else {
-        run.ball.x = 118;
-        run.ball.y = 110;
-        run.ball.vx = 3.2;
-        run.ball.vy = 2.2;
-      }
-    }
-    $("pinballStatus").textContent = `Ramp · ${missionText(run.mission, run.spec)}`;
-    checkChapter();
-  }
-
-  function checkChapter() {
-    if (!run || run.done) return;
-    if (!missionDone(run.mission, run.spec)) return;
-    run.wantChapter = true;
-  }
-
-  function clearChapter() {
-    if (!run || run.done) return;
-    const bonus = 1000 * run.spec.ch;
-    addScore(bonus);
-    run.cleared += 1;
-    if (run.spec.ch >= AUTHORED_COUNT && !run.spec.coda && !codaOn()) {
-      juiceChapter(run.cleared);
-      finish("souvenir");
-      return;
-    }
-    const next = chapterSpec(run.spec.ch + 1);
-    if (!next) {
-      juiceChapter(run.cleared);
-      finish("souvenir");
-      return;
-    }
-    run.spec = next;
-    run.mission = missionReset(next);
-    run.bumpers = makeBumpers(next);
-    run.rollovers = next.toys && next.toys.rollovers ? makeRollovers(next) : [];
-    run.onShelf = false;
-    juiceChapter(run.cleared);
-    paintKitHud(run.spec);
-    launch(true);
-  }
-
-  function collideFlipper(ball, side, angle, omega, want) {
-    const f = flipperGeom(side, angle);
-    const hit = circleSeg(ball.x, ball.y, ball.r + 5.5, f.pivot.x, f.pivot.y, f.tip.x, f.tip.y);
-    if (!hit.hit) return false;
-    ball.x = hit.px + hit.nx * (ball.r + 5.8);
-    ball.y = hit.py + hit.ny * (ball.r + 5.8);
-    const rising = side === "L" ? Math.max(0, -omega) : Math.max(0, omega);
-    const extra = (want ? rising * 16 : 0) + (want ? 1.35 : 0.15);
-    bounce(ball, hit.nx, hit.ny, 0.52, extra);
-    if (want && extra > 1.4) kit.sfx("flip");
-    run.flipGrace = 90;
-    return true;
-  }
-
-  function physics(dt) {
-    const k = dt / 16;
-    syncWanted();
-    run.prevL = run.angleL;
-    run.prevR = run.angleR;
-    const tL = run.wantL ? -0.66 : 0.4;
-    const tR = run.wantR ? Math.PI + 0.66 : Math.PI - 0.4;
-    run.angleL += (tL - run.angleL) * Math.min(1, 0.5 * k);
-    run.angleR += (tR - run.angleR) * Math.min(1, 0.5 * k);
-    const omegaL = (run.angleL - run.prevL) / Math.max(0.001, k);
-    const omegaR = (run.angleR - run.prevR) / Math.max(0.001, k);
-    run.bumpers.forEach((b) => {
-      b.flash = Math.max(0, b.flash - dt);
-      b.lock = Math.max(0, b.lock - dt);
-    });
-    run.sinkFlash = Math.max(0, run.sinkFlash - dt);
-    run.sinkLock = Math.max(0, run.sinkLock - dt);
-    run.rampLock = Math.max(0, run.rampLock - dt);
-    run.safe = Math.max(0, run.safe - dt);
-    run.fanfare = Math.max(0, run.fanfare - dt);
-    run.juice = Math.max(0, (run.juice || 0) - dt);
-    run.flipGrace = Math.max(0, run.flipGrace - dt);
-    run.slingLock = Math.max(0, (run.slingLock || 0) - dt);
-    run.bonusLock = Math.max(0, (run.bonusLock || 0) - dt);
-
-    const ball = run.ball;
-    if (!ball) return;
-    if (run.sinkLock > 0) {
-      if (run.sinkLock < 40) {
-        ball.vy = -7.4;
-        ball.vx = (Math.random() - 0.5) * 2.6;
-      }
-      return;
-    }
-
-    const g = 0.155 * run.spec.speed;
-    ball.vy += g * k;
-    ball.vx *= Math.pow(0.9991, k);
-    ball.vy *= Math.pow(0.9991, k);
-    ball.x += ball.vx * k;
-    ball.y += ball.vy * k;
-
-    run.liveAcc += dt;
-    if (run.liveAcc >= 10000) {
-      run.liveAcc -= 10000;
-      run.liveBonus += 1;
-      addScore(50);
-    }
-
-    walls().forEach((w) => {
-      const hit = circleSeg(ball.x, ball.y, ball.r + 2.2, w.a.x, w.a.y, w.b.x, w.b.y);
-      if (hit.hit) {
-        ball.x = hit.px + hit.nx * (ball.r + 2.4);
-        ball.y = hit.py + hit.ny * (ball.r + 2.4);
-        bounce(ball, hit.nx, hit.ny, 0.62, 0);
-      }
-    });
-
-    const toys = run.spec.toys || {};
-    if (toys.slings) {
-      const tight = toys.tightIn ? 16 : 0;
-      [[40 + tight, 348, 72 + tight, 418], [246 - tight, 348, 214 - tight, 418]].forEach((s) => {
-        const hit = circleSeg(ball.x, ball.y, ball.r + 4, s[0], s[1], s[2], s[3]);
-        if (hit.hit) {
-          ball.x = hit.px + hit.nx * (ball.r + 4.4);
-          ball.y = hit.py + hit.ny * (ball.r + 4.4);
-          bounce(ball, hit.nx, hit.ny, 0.92, 3.2);
-          if (run.slingLock === 0) {
-            run.mission.combo = 0;
-            kit.sfx("sling");
-            addScore(25);
-            run.slingLock = 90;
-          }
-        }
-      });
-    }
-
-    const posts = [];
-    if (toys.posts) posts.push({ x: 58, y: 398, r: 9, thorn: false }, { x: 228, y: 398, r: 9, thorn: false });
-    if (toys.thorns) posts.push(
-      { x: 38, y: 448, r: 11, thorn: true },
-      { x: 248, y: 448, r: 11, thorn: true },
-      { x: 62, y: 412, r: 10, thorn: true },
-      { x: 224, y: 412, r: 10, thorn: true }
-    );
-    posts.forEach((p) => {
-      const dx = ball.x - p.x;
-      const dy = ball.y - p.y;
-      const d = Math.hypot(dx, dy) || 0.0001;
-      const min = ball.r + p.r;
-      if (d < min) {
-        const nx = dx / d;
-        const ny = dy / d;
-        ball.x = p.x + nx * (min + 0.5);
-        ball.y = p.y + ny * (min + 0.5);
-        if (p.thorn) {
-          const fromInside = p.x < W / 2 ? ball.x > p.x : ball.x < p.x;
-          if (fromInside) {
-            bounce(ball, nx, ny, 1.05, 2.8);
-            ball.vx += (p.x < W / 2 ? 2.2 : -2.2);
-            ball.vy -= 1.1;
-            $("pinballStatus").textContent = "Thorn SAVE — bounced in.";
-          } else {
-            bounce(ball, nx, ny, 0.42, 0.2);
-            ball.vx += (p.x < W / 2 ? -2.4 : 2.4);
-            ball.vy += 0.8;
-            $("pinballStatus").textContent = "Thorn DOOM — toward the outlane.";
-          }
-        } else {
-          bounce(ball, nx, ny, 0.85, 0.9);
-        }
-      }
-    });
-
-    if (toys.upperShelf) {
-      const sh = shelfGeom(run.spec);
-      if (sh) {
-        const hit = circleSeg(ball.x, ball.y, ball.r + 2.2, sh.x0, sh.yFloor, sh.x1, sh.yFloor);
-        if (hit.hit) {
-          ball.x = hit.px + hit.nx * (ball.r + 2.4);
-          ball.y = hit.py + hit.ny * (ball.r + 2.4);
-          bounce(ball, hit.nx, hit.ny, 0.55, 0);
-        }
-        if (ball.x > sh.x0 + 2 && ball.x < sh.x1 && ball.y > sh.yTop && ball.y < sh.yFloor) {
-          run.onShelf = true;
-          if (ball.vy > 0 && ball.y > sh.yFloor - 14) {
-            ball.y = sh.yFloor - 14 - ball.r;
-            ball.vy = -Math.abs(ball.vy) * 0.28;
-            ball.vx *= 0.84;
-          }
-        }
-        if (ball.y < sh.yFloor + 12 && ball.x > sh.retX0 && ball.x < sh.retX1 + 8 && ball.vy > 0.08) {
-          run.onShelf = false;
-          ball.vx += 0.85 * k;
-          ball.vy += 0.18 * k;
-        } else if (run.onShelf && ball.x > sh.x0 + 2 && ball.x < sh.x1 - 12 && ball.y > sh.yFloor + 10 && ball.y < sh.yFloor + 130 && ball.vy > 0.2) {
-          run.onShelf = false;
-          run.deathNote = "upper_drain";
-          $("pinballStatus").textContent = "Missed the return — upper drain.";
-          drain();
-          return;
-        }
-      }
-    }
-
-    if (toys.gate && run.mission && !run.mission.gateOpen) {
-      const hit = circleSeg(ball.x, ball.y, ball.r + 2.4, 196, 108, 196, 148);
-      if (hit.hit) {
-        ball.x = hit.px + hit.nx * (ball.r + 2.6);
-        ball.y = hit.py + hit.ny * (ball.r + 2.6);
-        bounce(ball, hit.nx, hit.ny, 0.7, 0);
-      }
-    }
-
-    if (toys.bonus && run.mission && run.mission.gateOpen && run.bonusLock === 0) {
-      const fromFlip = toys.upperFlip && run.wantU;
-      if (ball.x > 198 && ball.x < 260 && ball.y > 74 && ball.y < 158 && (fromFlip || ball.vx > 1.4)) {
-        run.mission.bonus += 1;
-        run.bonusLock = 420;
-        addScore(200);
-        kit.sfx("chapter");
-        $("pinballStatus").textContent = `Bonus lane · ${missionText(run.mission, run.spec)}`;
-        checkChapter();
-      }
-    }
-
-    run.bumpers.forEach((b) => {
-      const dx = ball.x - b.x;
-      const dy = ball.y - b.y;
-      const d = Math.hypot(dx, dy) || 0.0001;
-      const min = ball.r + b.r;
-      if (d < min) {
-        const nx = dx / d;
-        const ny = dy / d;
-        ball.x = b.x + nx * (min + 0.7);
-        ball.y = b.y + ny * (min + 0.7);
-        bounce(ball, nx, ny, 1.12, 2.05);
-        onBumper(b);
-      }
-    });
-
-    if (toys.spinner && run.spec.spinner) {
-      const sp = run.spec.spinner;
-      const near = Math.hypot(ball.x - sp.x, ball.y - sp.y) < 22;
-      const rushing = isFeverTable(run.spec)
-        ? Math.hypot(ball.vx, ball.vy) > 1.35
-        : Math.abs(ball.vy) > 1.1;
-      if (near && rushing) {
-        run.spinAngle += (isFeverTable(run.spec) ? ball.vx : ball.vy) * 0.25;
-        if (!run._spinGate) {
-          run._spinGate = true;
-          onSpinner();
-        }
-      } else {
-        run._spinGate = false;
-      }
-    }
-
-    if (toys.sink && run.spec.sink) {
-      const sink = run.spec.sink;
-      const sinkD = Math.hypot(ball.x - sink.x, ball.y - sink.y);
-      if (sinkD < 12 && Math.hypot(ball.vx, ball.vy) < 6.2 && run.sinkLock === 0) {
-        onSink();
-      }
-    }
-
-    if (toys.ramp && run.spec.ramp && run.rampLock === 0) {
-      const rp = run.spec.ramp;
-      const x1 = rp.x1 != null ? rp.x1 : rp.x0 + 52;
-      if (ball.x > rp.x0 && ball.x < x1 - 8 && ball.y > rp.y0 && ball.y < rp.y1 && ball.vy < -1.15) {
-        onRamp();
-      }
-    }
-
-    if (toys.rollovers && run.rollovers) {
-      run.rollT = (run.rollT || 0) + dt;
-      if (run.rollT > 2500) {
-        run.rollT = 0;
-        const xs = run.rollovers.map((r) => r.x);
-        run.rollovers.forEach((r, i) => {
-          r.x = xs[(i + 1) % xs.length];
-          r.on = false;
-        });
-        run.laneBias = (run.laneBias || 0) === 1 ? -1 : 1;
-        $("pinballStatus").textContent = run.laneBias < 0 ? "Rollovers shuffled — left outlane hungry." : "Rollovers shuffled — right outlane hungry.";
-      }
-      run.rollovers.forEach((r) => {
-        if (r.on) return;
-        if (Math.hypot(ball.x - r.x, ball.y - r.y) < r.r + ball.r) {
-          r.on = true;
-          addScore(30);
-        }
-      });
-    }
-
-    if (toys.upperFlip) {
-      run.wantU = !!(run.wantL && run.wantR);
-      run.prevU = run.angleU || 0.2;
-      const tU = run.wantU ? -0.7 : 0.35;
-      run.angleU += (tU - run.angleU) * Math.min(1, 0.5 * k);
-      const uf = { x: 152, y: 156 };
-      const tip = { x: uf.x + Math.cos(run.angleU) * 42, y: uf.y + Math.sin(run.angleU) * 42 };
-      const hit = circleSeg(ball.x, ball.y, ball.r + 5, uf.x, uf.y, tip.x, tip.y);
-      if (hit.hit) {
-        ball.x = hit.px + hit.nx * (ball.r + 5.2);
-        ball.y = hit.py + hit.ny * (ball.r + 5.2);
-        bounce(ball, hit.nx, hit.ny, 0.5, run.wantU ? 2.6 : 0.2);
-        if (toys.gate && run.mission && !run.mission.gateOpen && run.wantU) {
-          run.mission.gateOpen = true;
-          kit.sfx("chapter");
-          $("pinballStatus").textContent = "MINI-FLIP opened the gate — bonus lane live.";
-          checkChapter();
-        }
-      }
-    }
-
-    collideFlipper(ball, "L", run.angleL, omegaL, run.wantL);
-    collideFlipper(ball, "R", run.angleR, omegaR, run.wantR);
-
-    if (ball.x > 266 && ball.y < 150) {
-      if (ball.y < 128 || ball.vy < -3.5) {
-        ball.x = 198;
-        ball.y = Math.min(ball.y, 118);
-        ball.vx = -3.4 * (0.9 + 0.1 * run.spec.speed);
-        ball.vy = 2.2;
-      }
-    }
-
-    const pull = (run.spec.outPull || 0) + (run.laneBias ? 0.02 : 0);
-    if (pull) {
-      const leftHungry = !run.laneBias || run.laneBias < 0;
-      const rightHungry = !run.laneBias || run.laneBias > 0;
-      if (leftHungry && ball.x < 62 && ball.y > 360) ball.vx -= pull * k * 6;
-      if (rightHungry && ball.x > 224 && ball.x < 266 && ball.y > 360) ball.vx += pull * k * 6;
-    }
-
-    if (ball.x < 8) { ball.x = 8; ball.vx = Math.abs(ball.vx) * 0.7; }
-    if (ball.x > W - 8) { ball.x = W - 8; ball.vx = -Math.abs(ball.vx) * 0.7; }
-    const roof = isFeverTable(run.spec) ? 38 : 64;
-    if (ball.y < roof) { ball.y = roof; ball.vy = Math.abs(ball.vy) * 0.7; }
-
-    if (run.wantChapter) {
-      run.wantChapter = false;
-      clearChapter();
-      return;
-    }
-    if (run.safe > 0 || run.flipGrace > 0) return;
-    const inOutL = ball.x < 66 && ball.y > 438;
-    const inOutR = ball.x > 220 && ball.x < 266 && ball.y > 438;
-    if (inOutL || inOutR) {
-      run.deathNote = "outlane";
-      drain();
-      return;
-    }
-    if (ball.y > H - 6 || (ball.y > 478 && ball.x > 84 && ball.x < 202)) {
-      run.deathNote = "drain";
-      drain();
-    }
-  }
-
-  function drain() {
-    if (!run || run.done) return;
-    kit.sfx("drain");
-    run.shake = 9;
-    finish("drain");
-  }
-
-  function auraFor(reason) {
-    if (reason === "leave") return AURA.leave;
-    if (reason === "souvenir") return AURA.souvenir;
-    if (run.deathNote === "upper_drain") return AURA.upper;
-    if (run.spec && run.spec.coda) return AURA.coda;
-    if (run.spec.drunk) return AURA.drunk;
-    const n = run.cleared;
-    if (n >= 4) return AURA.deep(n);
-    return AURA.drain;
+    if (gl) gl.cam.mode = "plunger";
+    startLoop();
   }
 
   function revealResult(shot) {
-    const reason = shot.reason;
-    const chapter = shot.chapter;
-    const score = shot.score;
-    const aura = shot.aura;
+    const { reason, chapter, score, aura } = shot;
     $("pinballStart").disabled = false;
     $("pinballStart").hidden = false;
     $("pinballStart").textContent = "PLAY AGAIN · 1 demo coin";
@@ -1704,11 +1905,7 @@
     const chEl = $("pinballChallengeText");
     if (chEl) chEl.textContent = challengeLine(chapter);
     PF.setTier("pinballTier", chapter > 0 ? `CHAPTER ${chapter}` : "DRAIN", chapter > 0 ? "perfect" : "miss");
-    $("pinballStatus").textContent = reason === "leave"
-      ? "Left the table."
-      : reason === "souvenir"
-        ? "Authored table over."
-        : "Drain. One ball, one night.";
+    $("pinballStatus").textContent = reason === "leave" ? "Left the table." : reason === "souvenir" ? "Authored table over." : "Drain. One ball, one night.";
     const ok = chapter > 0 || score >= 300;
     if (ok) {
       PF.award(Math.max(10, Math.floor(score / 20)), true, "Pinball");
@@ -1721,22 +1918,16 @@
     }
     PF.refreshNightBoard();
     stampDepthCopy();
-    draw();
+    if (gl) gl.cam.mode = "result";
   }
 
   function finish(reason) {
     if (!run || run.done) return;
     run.done = true;
-    if (run.raf) cancelAnimationFrame(run.raf);
     pointers.clear();
     const chapter = run.cleared;
     const score = run.score;
-    const shot = {
-      reason,
-      chapter,
-      score,
-      aura: auraFor(reason),
-    };
+    const shot = { reason, chapter, score, aura: auraFor(reason) };
     persistDepth({
       depth: chapter,
       score,
@@ -1745,32 +1936,62 @@
       meta: { note: run.deathNote || reason, room: run.spec && run.spec.name, coda: !!(run.spec && run.spec.coda) },
     });
     stampDepthCopy();
-    draw();
     if (reason === "leave" || reason === "souvenir") {
       revealResult(shot);
       return;
     }
-    setTimeout(() => revealResult(shot), 720);
+    setTimeout(() => revealResult(shot), 220);
   }
 
-  function pointerSide(canvas, ev) {
-    const p = kit.canvasPos(canvas, ev, W, H);
-    return p.x < W / 2 ? "L" : "R";
+  function applyHold() {
+    if (!run || run.done) return;
+    let held = keys.flip || keys.P;
+    pointers.forEach(() => { held = true; });
+    if (run.ball && run.ball.mode === "plunger") {
+      run.wantP = held;
+      run.wantFlip = false;
+    } else {
+      run.wantP = false;
+      run.wantFlip = held;
+    }
+  }
+
+  function punchStart() {
+    stampDepthCopy();
+    const el = $("pinballStatus");
+    if (el) el.textContent = DEPTH_COPY.punch;
+    const btn = $("pinballStart");
+    if (btn && !btn.hidden) {
+      try { btn.focus(); } catch (_) { /* */ }
+    }
   }
 
   PF.registerVendor({
     id: "pinball",
     playKey: "pinball",
-    chalk: "One ball. How many chapters?",
+    chalk: "One thumb. The left lane is hungry.",
     defaults: { bestPinballBalls: 0, bestPinballCh: 0, bestPinballScore: 0 },
-    onLeave() { if (run && !run.done) finish("leave"); },
-    onShow() { declareP0(); stampDepthCopy(); startIdle(); },
+    onLeave() {
+      visible = false;
+      if (run && !run.done) finish("leave");
+      stopLoop();
+    },
+    onShow() {
+      visible = true;
+      declareP0();
+      stampDepthCopy();
+      if (!ensureGL()) {
+        if ($("pinballStatus")) $("pinballStatus").textContent = "This parlor wants WebGL.";
+        return;
+      }
+      startLoop();
+      requestAnimationFrame(() => resizeGL());
+    },
     onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
+      if (run && !run.done) finish("leave");
       run = null;
       pointers.clear();
-      keys.L = false;
-      keys.R = false;
+      keys.flip = keys.P = false;
       if ($("pinballVerdict")) $("pinballVerdict").hidden = true;
       kit.hideResult("pinballResult");
       if ($("pinballStart")) {
@@ -1780,7 +2001,7 @@
       }
       kit.setMode(card(), "vestibule");
       stampDepthCopy();
-      startIdle();
+      if (gl) gl.cam.mode = "vestibule";
     },
     refreshDepth(state) {
       const b = $("depthPinballBalls");
@@ -1797,6 +2018,28 @@
       declareP0();
       const startBtn = $("pinballStart");
       if (startBtn) startBtn.addEventListener("click", start);
+      function holdThumb(on) {
+        if (!isLive()) {
+          if (on) punchStart();
+          return;
+        }
+        keys.flip = on;
+        keys.P = on;
+        applyHold();
+      }
+      const thumb = $("pinballThumb");
+      if (thumb) {
+        thumb.addEventListener("pointerdown", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          try { thumb.setPointerCapture(ev.pointerId); } catch (_) { /* */ }
+          holdThumb(true);
+        });
+        const up = () => holdThumb(false);
+        thumb.addEventListener("pointerup", up);
+        thumb.addEventListener("pointercancel", up);
+        thumb.addEventListener("lostpointercapture", up);
+      }
       const canvas = $("pinballCanvas");
       if (canvas) {
         canvas.addEventListener("pointerdown", (ev) => {
@@ -1805,15 +2048,13 @@
             return;
           }
           ev.preventDefault();
-          try { canvas.setPointerCapture(ev.pointerId); } catch { /* ignore */ }
-          const side = pointerSide(canvas, ev);
-          pointers.set(ev.pointerId, side);
-          queueFlip(side, true);
+          try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* */ }
+          pointers.set(ev.pointerId, "thumb");
+          applyHold();
         });
         const release = (ev) => {
-          const side = pointers.get(ev.pointerId);
           pointers.delete(ev.pointerId);
-          if (side) queueFlip(side, false);
+          applyHold();
         };
         canvas.addEventListener("pointerup", release);
         canvas.addEventListener("pointercancel", release);
@@ -1821,46 +2062,26 @@
       window.addEventListener("keydown", (ev) => {
         if (!isLive()) return;
         if (ev.repeat) return;
-        if (ev.code === "ArrowLeft" || ev.code === "KeyA" || ev.code === "KeyZ") {
+        if (ev.code === "Space" || ev.code === "ArrowLeft" || ev.code === "ArrowRight" || ev.code === "KeyA" || ev.code === "KeyD" || ev.code === "KeyZ") {
           ev.preventDefault();
-          keys.L = true;
-          queueFlip("L", true);
-        }
-        if (ev.code === "ArrowRight" || ev.code === "KeyL" || ev.code === "KeyD" || ev.code === "Slash") {
-          ev.preventDefault();
-          keys.R = true;
-          queueFlip("R", true);
-        }
-        if (ev.code === "Space") {
-          ev.preventDefault();
-          keys.L = true;
-          keys.R = true;
-          queueFlip("L", true);
-          queueFlip("R", true);
+          keys.flip = true;
+          keys.P = true;
+          applyHold();
         }
       });
       window.addEventListener("keyup", (ev) => {
-        if (ev.code === "ArrowLeft" || ev.code === "KeyA" || ev.code === "KeyZ") {
-          keys.L = false;
-          queueFlip("L", false);
+        if (ev.code === "Space" || ev.code === "ArrowLeft" || ev.code === "ArrowRight" || ev.code === "KeyA" || ev.code === "KeyD" || ev.code === "KeyZ") {
+          keys.flip = false;
+          keys.P = false;
         }
-        if (ev.code === "ArrowRight" || ev.code === "KeyL" || ev.code === "KeyD" || ev.code === "Slash") {
-          keys.R = false;
-          queueFlip("R", false);
-        }
-        if (ev.code === "Space") {
-          keys.L = false;
-          keys.R = false;
-          queueFlip("L", false);
-          queueFlip("R", false);
-        }
+        applyHold();
       });
+      window.addEventListener("resize", () => { if (visible) resizeGL(); });
       const copyBtn = $("pinballChallenge");
       if (copyBtn) {
         copyBtn.addEventListener("click", () => {
-          const n = (PF.getState().lastRun && PF.getState().lastRun.game === GAME_ID)
-            ? PF.getState().lastRun.depth
-            : (PF.getState().bestPinballCh || 0);
+          const st = PF.getState();
+          const n = (st.lastRun && st.lastRun.game === GAME_ID) ? st.lastRun.depth : (st.bestPinballCh || 0);
           const text = challengeLine(n);
           kit.copyText(text, () => {
             const el = $("pinballCopied");
@@ -1872,7 +2093,6 @@
         });
       }
       stampDepthCopy();
-      startIdle();
     },
   });
-})();
+}

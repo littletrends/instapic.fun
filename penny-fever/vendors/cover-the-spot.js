@@ -1,112 +1,146 @@
-/* Cover-the-Spot Cruel — Desktop Grok owns this file. PF only. Never booth/port 6000.
- * GOBLIN REVIEW HIT #2 FEEL — named rooms = verb/layout change, not a title sticker.
- * Latest: GOBLIN_P0_AUTHORED_ACCEPT_FEEL.md + GOBLIN_AUTHORED_LEVELS_P0.md +
- * GOBLIN_BATCH02_MOUNT_CONFIGS.md + GOBLIN_BATCH02_BUILD_SHEETS.md + GOBLIN_RUNKIT_API.md.
- * Engine: GreedFloor · depthUnit: Spot · gameId: coverspot · codaEnabled · cashOut between spots.
- * Tight Felt is the one allowed ratio-bridge. Oval / Twin / Ring / Drift / Blob change the felt.
- * S1 Oval ≠ round. S2 Twin: BOTH hit targetPct (not average cheese). S3 Ring: center is a trap.
- * S4 Drift: discs stick; lead the walk. S5 Blob silhouette is stable; jitter STAMPS (not a sine).
- * S6 Vestibule cheat matches the current named SPOT. twinSep is center-to-center. */
-(() => {
-  "use strict";
+/* Cover-the-Spot — 3D gilding table. Desktop Grok owns this doorway.
+ * PF only. Never booth/port 6000. Never Imagine downloads.
+ * Native Three.js tent: round felt, falling brass, authored SPOTs then ENDLESS.
+ * One coin = one run. Family-safe carnival. No casino. No Mirror Crew.
+ * Aura lock: pigtails, yellow crown + heart, green pinafore, black shoes. */
+import * as THREE from "../world/lib/three.module.min.js";
+
+function boot() {
   const PF = window.PennyFever;
-  if (!PF || !PF.registerVendor) return;
+  if (!PF || !PF.registerVendor || !PF.kit) {
+    requestAnimationFrame(boot);
+    return;
+  }
+  mountStall(PF);
+}
+boot();
+
+function mountStall(PF) {
+  "use strict";
   const { $, kit } = PF;
 
-  const W = 340;
-  const H = 440;
   const GAME_ID = "coverspot";
-  const FELT = { x: 22, y: 62, w: 296, h: 312 };
-  const SPOT_HOME = { x: 170, y: 218 };
-  const BASE_R = 78;
-  const HONEST_RATIO = 0.72;
-  const MISS_DEATH = 2;
-  const CODA_ENABLED = true;
   const AUTHORED_COUNT = 7;
-  const GRID = 64;
-  const SNAP = 5.2;
-  const LATENCY = 90;
+  const CODA_ENABLED = true;
+  const MISS_DEATH = 2;
+  const TABLE_R = 1.10;
+  const FELT_Y = 0.96;
+  const SAMPLES = 168;
+  const SETTLE_MS = 1600;
   const STAMP_MS = 720;
-  const SETTLE_MS = 3800;
-  const DRIFT_DWELL = 420;
-  const JITTER_DWELL = 220;
-  const STAMP_HOLD = 0.76;
-  const TRAP_FLASH_MS = 980;
-  const IDLE_ROOM_MS = 3600;
+  const DEATH_HOLD_MS = 820;
+  const REDUCE = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  const SKIN = 0xf0c4a8;
+  const HAIR = 0x3d2418;
+  const DRESS = 0x1e6b3c;
+  const GOLD = 0xe8b84a;
+  const HEART = 0xd22b3a;
+  const BLOUSE = 0xf5f0ea;
+  const WOOD = 0x3a2418;
+  const WOOD_DARK = 0x1a100c;
+  const BRASS = 0xd4a45a;
+  const CARNIVAL_RED = 0xc41e3a;
+  const FELT = 0x16351f;
+
+  const geoBox = new THREE.BoxGeometry(1, 1, 1);
+  const geoSphere = new THREE.SphereGeometry(1, 16, 12);
+  const geoCyl = new THREE.CylinderGeometry(1, 1, 1, 20);
+  const geoCylLoose = new THREE.CylinderGeometry(1, 1, 1, 12);
+  const geoCone = new THREE.ConeGeometry(1, 1, 8);
+  const geoTorus = new THREE.TorusGeometry(1, 0.08, 8, 28);
+  const geoPlane = new THREE.PlaneGeometry(1, 1);
+  const geoDisc = new THREE.CylinderGeometry(1, 1, 0.055, 28);
+  const _hit = new THREE.Vector3();
+  const _ndc = new THREE.Vector2();
 
   let run = null;
-  let pointer = { x: SPOT_HOME.x, y: SPOT_HOME.y, on: false };
-  let idleRaf = 0;
-  let idleRoom = 1;
+  let world = null;
+  let loopRaf = 0;
   let idleClock = 0;
+  let idleRoom = 1;
+  let pointer = { x: 0, z: 0, on: false };
+  let camPunch = 0;
+  let camShake = 0;
+  let lookX = 0;
+  let lookZ = 0;
+  let auraMood = "idle";
+  let auraMoodUntil = 0;
 
-  /* BATCH02 Aura VO — solo Aura, playful. Exact GOBLIN_BATCH02_AURA_LINES.md. */
   const AURA = {
     bust: "Aura: Spot uncovered. Greed ate the felt.",
-    miss_table: "Aura: Disc bounced off the counter. Rude.",
+    miss_table: "Aura: Disc bounced off the table. Rude.",
+    well: "Aura: The well swallowed your brass. Cover the ring, sugar.",
+    tug: "Aura: Cloth tugged. The red peeked. That’s the cheat.",
     cash: "Aura: Smart cover. Depth sticks — leave the rest.",
     clear: "Aura: Coverage locked. Next felt tells a different lie.",
     souvenir: "Aura: Seven spots. The felt ran out of authored lies.",
-    coda: "Aura: Authored ride’s over. ENDLESS — jitter keeps lying.",
+    coda: "Aura: Authored ride’s over. ENDLESS — the table keeps lying.",
     deep: (n) => `Aura: Spot ${n}. You're covering lies with skill.`,
-    leave: "Aura: Left the counter. The red circle stays.",
+    leave: "Aura: Left the table. The red circle stays.",
+    bounce: "Aura: Ghost is the rest. They bounce — trust it.",
   };
 
-  const DEPTH_COPY = {
-    tag: "DEPTH RUN · 7 authored SPOTs · cash out between spots · ENDLESS coda after Jitter Stamp",
-    body: "Authored rooms, not a smaller circle: Red Circle Honest → Tight Felt → Oval Blush → Drifting Dot → Twin Spots → Ring Spot → Jitter Stamp. Tap to drop. Hit the target or bust. Cash out only after a clear.",
-    status: "Depth run · START · 1 demo coin · 7 authored spots, then ENDLESS",
-    machine: "Felt counter · 1 demo coin · authored SPOTs",
-    idleHud: ["Authored SPOTs — oval / twin / ring / blob", "START · 1 demo coin — cash out or get greedy"],
-    punch: "Depth run — press START. No one-tap prize.",
-  };
-
-  /* Authored SPOT rooms — unique shape / cheat / beat. Tight Felt is the one allowed ratio-bridge.
-   * twinSep is CENTER-TO-CENTER. HIT #2: twinSep > 2*twinR so a mid dump cannot Venn-cheese both. */
-  const COVER_LEVELS = [
+  const AUTHORED = [
     {
-      id: 1, name: "Red Circle Honest", kind: "circle",
-      ratio: 0.72, targetPct: 70, maxDiscs: 4, drift: "none", R: 78,
-      barker: "Red Circle Honest. Tap the felt. One disc never covers — that’s the joke.",
+      id: 1, name: "Honest Circle", kind: "circle",
+      ratio: 0.72, targetPct: 70, maxDiscs: 4, drift: "none",
+      spotR: 0.42, bounce: 1, scatter: 0, dropH: 1.18,
+      clothJerk: 0.07, clothDelay: 80, clothCap: 0.055,
+      barker: "Honest Circle. Drop on the red. After you let go, the cloth tugs — watch the peek. Cover 70%. Then cash out, or drop again.",
     },
     {
-      id: 2, name: "Tight Felt", kind: "circle", tight: true,
-      ratio: 0.68, targetPct: 75, maxDiscs: 4, drift: "none", R: 78,
-      barker: "Tight Felt. Same circle, meaner fit. Cover 75%.",
+      id: 2, name: "Bounce Rest", kind: "circle",
+      ratio: 0.70, targetPct: 72, maxDiscs: 4, drift: "none",
+      spotR: 0.42, bounce: 2, scatter: 0.12, dropH: 1.48,
+      clothJerk: 0.08, clothDelay: 90, clothCap: 0.06,
+      barker: "Bounce Rest. Ghost is the rest. After release the cloth still tugs. Cover 72%.",
     },
     {
-      id: 3, name: "Oval Blush", kind: "oval", ovalW: 1.3, ovalH: 0.72, ovalRot: 0.4,
-      ratio: 0.70, targetPct: 72, maxDiscs: 5, drift: "none", R: 66,
-      barker: "Oval Blush. Round discs, oval spot. The ears stay red — that’s the joke.",
+      id: 3, name: "Oval Blush", kind: "oval",
+      ratio: 0.70, targetPct: 72, maxDiscs: 5, drift: "none",
+      spotR: 0.36, ovalW: 1.38, ovalH: 0.70, ovalRot: 0.42,
+      bounce: 1, scatter: 0, dropH: 1.18,
+      clothJerk: 0.085, clothDelay: 80, clothCap: 0.07,
+      barker: "Oval Blush. Round plates, oval spot. Cloth tugs after the drop. Cover the ears.",
     },
     {
-      id: 4, name: "Drifting Dot", kind: "drift",
-      ratio: 0.70, targetPct: 74, maxDiscs: 5, drift: "slow", R: 70,
-      driftRad: 38, driftPeriod: 5400,
-      barker: "Drifting Dot. The red walks. Discs stick. Lead it.",
+      id: 4, name: "Walking Blush", kind: "drift",
+      ratio: 0.70, targetPct: 74, maxDiscs: 5, drift: "slow",
+      spotR: 0.38, driftRad: 0.28, driftPeriod: 5400,
+      bounce: 1, scatter: 0, dropH: 1.18,
+      clothJerk: 0.055, clothDelay: 80, clothCap: 0.05,
+      barker: "Walking Blush. The red strolls. Discs stay. Cloth tugs on release. Hold the cover.",
     },
     {
-      id: 5, name: "Twin Spots", kind: "twin",
-      ratio: 0.72, targetPct: 70, maxDiscs: 5, drift: "none", R: 78,
-      twinSep: 88, twinR: 36,
-      barker: "Twin Spots. Two circles. Cover both — each must hit the mark. A center dump is a lie.",
+      id: 5, name: "Twin Lanterns", kind: "twin",
+      ratio: 0.72, targetPct: 70, maxDiscs: 5, drift: "none",
+      spotR: 0.42, twinSep: 0.62, twinR: 0.22,
+      bounce: 1, scatter: 0, dropH: 1.18,
+      clothJerk: 0.065, clothDelay: 80, clothCap: 0.055,
+      barker: "Twin Lanterns. Two reds — each must hit 70%. The % is honest. Middle dump is a lie.",
     },
     {
-      id: 6, name: "Ring Spot", kind: "ring",
-      ratio: 0.56, targetPct: 72, maxDiscs: 5, drift: "none", R: 86, innerRatio: 0.48,
-      barker: "Ring Spot. Donut felt. Center is a trap — cover the ring.",
+      id: 6, name: "The Well", kind: "ring",
+      ratio: 0.56, targetPct: 72, maxDiscs: 5, drift: "none",
+      spotR: 0.48, innerRatio: 0.46,
+      bounce: 1, scatter: 0, dropH: 1.22,
+      clothJerk: 0.05, clothDelay: 80, clothCap: 0.05,
+      barker: "The Well. Cover the RING. Center eats brass. Cloth still tugs after you drop.",
     },
     {
-      id: 7, name: "Jitter Stamp", kind: "blob",
-      ratio: 0.72, targetPct: 85, maxDiscs: 6, drift: "jitter", R: 68,
-      blobA: 0.34, blobB: 0.22, blobPhase: 0.6, stampAmp: 20, stampMs: 500,
-      barker: "Jitter Stamp. Blob + nerves. Cover the lumps, lock on the HOLD, then it stamps.",
+      id: 7, name: "Stamp Night", kind: "blob",
+      ratio: 0.72, targetPct: 85, maxDiscs: 6, drift: "jitter",
+      spotR: 0.36, blobA: 0.34, blobB: 0.22, blobPhase: 0.6,
+      stampAmp: 0.14, stampMs: 520, bounce: 1, scatter: 0.04, dropH: 1.22,
+      clothJerk: 0.1, clothDelay: 70, clothCap: 0.08,
+      barker: "Stamp Night. Cloth tugs, then the blob hops, then the table slams. Keep the cover.",
     },
   ];
 
   const P0_MOUNT = {
     engine: "GreedFloor",
-    displayName: "Cover-the-Spot Cruel",
+    displayName: "Cover-the-Spot",
     depthUnit: "Spot",
     sheet: "GOBLIN_AUTHORED_LEVELS_P0.md",
     batchSheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
@@ -115,75 +149,106 @@
     authoredCount: AUTHORED_COUNT,
   };
 
-  function rk() {
-    return PF.runKit || null;
+  const DEPTH_COPY = {
+    tag: "DEPTH RUN · 7 authored SPOTs · cash out between spots · ENDLESS after Stamp Night",
+    body: "Round gilding table: Honest Circle → Bounce Rest → Oval Blush → Walking Blush → Twin Lanterns → The Well → Stamp Night. Drop brass. After release the cloth tugs — the % is honest. Cover, then CASH OUT or DROP AGAIN.",
+    status: "Tap START or the table · 1 demo coin · move to aim · tap / Space to drop",
+    machine: "Gilding table · 1 demo coin · authored SPOTs",
+    punch: "Depth run — tap START or the table. One coin. Cover the red.",
+  };
+
+  function rk() { return PF.runKit || null; }
+  function card() { return $("coverSpotCard"); }
+  function setStatus(text) {
+    const el = $("coverSpotStatus");
+    if (el) el.textContent = text;
+  }
+  function setText(id, text) {
+    const el = $(id);
+    if (el) el.textContent = text;
+  }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function cabinetOn() {
+    const node = document.getElementById("cabinet-cover-the-spot");
+    return !!(node && !node.hidden);
+  }
+  function isLive() {
+    return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
+  }
+  function pokeDepth() {
+    if (typeof PF.refreshDepth === "function") {
+      try { PF.refreshDepth(); } catch (_) { /* ignore */ }
+    }
   }
 
-  function coverspotCodaParams(n) {
+  function coverspotCoda(n) {
     const stage = Math.max(AUTHORED_COUNT + 1, n | 0);
     const t = stage - AUTHORED_COUNT;
     return {
       id: stage,
       name: `Felt Greed ${stage}`,
-      title: `Felt Greed ${stage}`,
       kind: "blob",
       coda: true,
       ratio: Math.max(0.42, 0.56 - 0.02 * t),
       targetPct: Math.min(94, 85 + t),
       maxDiscs: 6,
       drift: "jitter",
-      R: Math.max(48, BASE_R - t * 2.2),
+      spotR: Math.max(0.26, 0.36 - t * 0.012),
       blobA: 0.28,
       blobB: 0.16,
       blobPhase: 0.35 + stage * 0.17,
-      stampAmp: Math.min(28, 18 + t * 1.4),
+      stampAmp: Math.min(0.22, 0.12 + t * 0.012),
       stampMs: Math.max(320, 500 - t * 14),
-      barker: `ENDLESS · Felt Greed ${stage}. Authored ride ended. Smaller discs. Jitter stays.`,
+      bounce: 1,
+      scatter: Math.min(0.1, 0.03 + t * 0.008),
+      dropH: 1.22,
+      clothJerk: Math.min(0.12, 0.09 + t * 0.008),
+      clothDelay: Math.max(60, 80 - t * 3),
+      clothCap: Math.min(0.1, 0.06 + t * 0.006),
+      barker: `ENDLESS · Felt Greed ${stage}. Authored ride ended. Smaller plates. Cloth still tugs.`,
     };
   }
 
   function hydrate(level) {
-    const spec = Object.assign({ coda: false }, level);
-    spec.R = spec.R || BASE_R;
+    const spec = Object.assign({ coda: false, bounce: 1, scatter: 0, dropH: 1.18 }, level);
+    spec.spotR = spec.spotR || 0.42;
     spec.ovalW = spec.ovalW || 1.3;
     spec.ovalH = spec.ovalH == null ? 1 : spec.ovalH;
     spec.ovalRot = spec.ovalRot || 0;
-    spec.innerRatio = spec.innerRatio == null ? 0.48 : spec.innerRatio;
-    spec.twinSep = spec.twinSep == null ? 88 : spec.twinSep;
-    spec.twinR = spec.twinR == null ? spec.R * 0.46 : spec.twinR;
+    spec.innerRatio = spec.innerRatio == null ? 0.46 : spec.innerRatio;
+    spec.twinSep = spec.twinSep == null ? 0.62 : spec.twinSep;
+    spec.twinR = spec.twinR == null ? spec.spotR * 0.52 : spec.twinR;
     spec.blobA = spec.blobA == null ? 0 : spec.blobA;
     spec.blobB = spec.blobB == null ? 0 : spec.blobB;
     spec.blobPhase = spec.blobPhase == null ? 0 : spec.blobPhase;
-    spec.driftRad = spec.driftRad == null ? 34 : spec.driftRad;
+    spec.driftRad = spec.driftRad == null ? 0.26 : spec.driftRad;
     spec.driftPeriod = spec.driftPeriod == null ? 5200 : spec.driftPeriod;
-    spec.stampAmp = spec.stampAmp == null ? 20 : spec.stampAmp;
+    spec.stampAmp = spec.stampAmp == null ? 0.12 : spec.stampAmp;
     spec.stampMs = spec.stampMs == null ? 500 : spec.stampMs;
-    spec.gridStamp = spec.gridStamp || GRID;
-    spec.deathOnFailTarget = true;
-    const discBase = spec.kind === "twin" ? spec.twinR : spec.R;
-    spec.r = spec.ratio * discBase;
-    spec.honestR = HONEST_RATIO * spec.R;
-    spec.latency = LATENCY;
-    spec.snap = SNAP;
+    spec.r = spec.ratio * (spec.kind === "twin" ? spec.twinR : spec.spotR);
+    spec.clothJerk = spec.clothJerk == null ? 0.07 : spec.clothJerk;
+    spec.clothDelay = spec.clothDelay == null ? 80 : spec.clothDelay;
+    spec.clothCap = spec.clothCap == null ? 0.06 : spec.clothCap;
     spec.title = spec.coda ? `ENDLESS · ${spec.name}` : spec.name;
-    spec.enter = spec.barker || spec.enter || spec.name;
-    spec.spotDrift = spec.drift;
-    spec.tight = !!(spec.tight || (spec.id === 2 && spec.kind === "circle"));
+    spec.enter = spec.barker || spec.name;
     return spec;
   }
 
   function coverspotStageParams(n) {
     const stage = Math.max(1, n | 0);
-    if (stage <= AUTHORED_COUNT) return hydrate(COVER_LEVELS[stage - 1]);
+    if (stage <= AUTHORED_COUNT) return hydrate(AUTHORED[stage - 1]);
     if (!CODA_ENABLED) return null;
-    return hydrate(coverspotCodaParams(stage));
+    return hydrate(coverspotCoda(stage));
   }
 
-  function nextLevelId(currentId) {
-    const next = (currentId | 0) + 1;
-    if (next <= AUTHORED_COUNT) return next;
-    if (CODA_ENABLED) return next;
-    return 0;
+  function attractSpec() {
+    return coverspotStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
+  }
+
+  function liveSpec() {
+    if (run && run.spec) return run.spec;
+    return attractSpec();
   }
 
   function hudStageLine(spec) {
@@ -192,111 +257,1642 @@
     return `SPOT ${spec.id} · ${spec.name}`;
   }
 
-  function roomTell(spec) {
-    if (!spec) return "ONE DISC NEVER COVERS";
-    if (spec.kind === "oval") return "ROUND DISCS · OVAL SPOT";
-    if (spec.kind === "drift") return "THE RED WALKS · DISCS STICK";
-    if (spec.kind === "twin") return "TWO CIRCLES · COVER BOTH";
-    if (spec.kind === "ring") return "DONUT · CENTER IS A TRAP";
-    if (spec.kind === "blob") return spec.coda ? "ENDLESS · BLOB + STAMP" : "BLOB + STAMP · LOCK THE HOLD";
-    if (spec.tight || spec.id === 2) return "SAME CIRCLE · MEANER FIT";
-    return "ONE DISC NEVER COVERS";
-  }
-
-  function paintRoomChrome(spec, force) {
-    const host = card();
-    if (!host || !spec) return;
-    /* Result card keeps the death-room cheat; idle cycle must not steal it. */
-    if (!force && host.classList.contains("is-result")) return;
-    host.dataset.coverKind = spec.kind || "circle";
-    host.dataset.coverId = String(spec.id || "");
-    host.dataset.coverName = spec.name || "";
-    host.dataset.coverTight = (spec.tight || spec.id === 2) ? "1" : "0";
-    host.dataset.coverCoda = spec.coda ? "1" : "0";
-    host.dataset.coverDrift = spec.drift || "none";
-    const prop = host.querySelector(".signature-prop--coverspot");
-    if (prop) {
-      prop.dataset.kind = spec.kind || "circle";
-      prop.dataset.drift = spec.drift || "none";
-    }
-    const barker = host.querySelector(".barker-call");
-    if (barker) {
-      barker.textContent = spec.coda
-        ? `ENDLESS · ${spec.name.toUpperCase()} — ${roomTell(spec)}`
-        : `${spec.name.toUpperCase()} — ${roomTell(spec)}`;
-    }
-    const joke = host.querySelector(".tent-mouth-joke");
-    if (joke) joke.textContent = spec.barker || spec.enter;
-    const now = $("depthCoverNow");
-    if (now) now.textContent = hudStageLine(spec);
-  }
-
-  function isLiveDrift(spec) {
-    if (!spec) return false;
-    return spec.kind === "drift" || spec.drift === "slow" || spec.drift === "jitter" || spec.kind === "blob";
-  }
-
-  function dwellNeed(spec) {
-    if (!spec || !isLiveDrift(spec)) return 0;
-    if (spec.drift === "jitter" || spec.kind === "blob") return JITTER_DWELL;
-    return DRIFT_DWELL;
-  }
-
   function declareP0() {
     const kitRun = rk();
-    if (!kitRun) return;
-    const spec = Object.assign({
-      authored: COVER_LEVELS,
-      authoredCount: AUTHORED_COUNT,
-      cashOut: true,
-      codaEnabled: CODA_ENABLED,
-      codaParams: coverspotCodaParams,
-      level: coverspotStageParams,
-      stageParams: coverspotStageParams,
-      coverspotStageParams,
-    }, P0_MOUNT);
-    if (typeof kitRun.declare === "function") {
-      try { kitRun.declare(GAME_ID, spec); } catch (_) { /* already declared */ }
-    }
+    if (!kitRun || typeof kitRun.declare !== "function") return;
+    try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already */ }
     kitRun.p0 = kitRun.p0 || {};
-    kitRun.p0[GAME_ID] = spec;
-    kitRun.declared = kitRun.declared || {};
-    kitRun.declared[GAME_ID] = spec;
+    kitRun.p0[GAME_ID] = Object.assign({
+      stageParams: coverspotStageParams,
+      codaParams: coverspotCoda,
+      authored: AUTHORED,
+      codaEnabled: CODA_ENABLED,
+      authoredCount: AUTHORED_COUNT,
+    }, P0_MOUNT);
     kitRun.mounted = kitRun.mounted || {};
     kitRun.mounted[GAME_ID] = true;
   }
 
-  function card() {
-    return $("coverSpotCard");
+  function mat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color,
+      roughness: 0.72,
+      metalness: 0.08,
+    }, extra || {}));
   }
 
-  function statusEl() {
-    return $("coverSpotStatus");
+  function srgb(tex) {
+    if (tex && THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
   }
 
-  function setStatus(text) {
-    const el = statusEl();
-    if (el) el.textContent = text;
+  function canvasTex(w, h, draw, repeatX, repeatY) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"));
+    const t = new THREE.CanvasTexture(c);
+    srgb(t);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeatX || 1, repeatY || 1);
+    t.anisotropy = 4;
+    return t;
   }
 
-  function clamp(n, a, b) {
-    return Math.max(a, Math.min(b, n));
+  function feltTex() {
+    return canvasTex(256, 256, (ctx) => {
+      ctx.fillStyle = "#14321c";
+      ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 1400; i += 1) {
+        ctx.fillStyle = i % 5 === 0 ? "rgba(30,80,42,0.55)" : "rgba(10,24,14,0.35)";
+        ctx.fillRect((Math.random() * 256) | 0, (Math.random() * 256) | 0, 2, 2);
+      }
+      ctx.strokeStyle = "rgba(212,164,90,0.08)";
+      ctx.beginPath();
+      ctx.arc(128, 128, 110, 0, Math.PI * 2);
+      ctx.stroke();
+    }, 1, 1);
   }
 
-  function isLive() {
-    return !!(run && !run.done && run.kitRun && run.kitRun.alive !== false);
+  function woodTex() {
+    return canvasTex(128, 128, (ctx) => {
+      ctx.fillStyle = "#3a2418";
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = "rgba(212,164,90,0.12)";
+      for (let i = 0; i < 10; i += 1) ctx.fillRect(i * 13, 0, 3, 128);
+    }, 2, 2);
   }
 
-  function pokeDepth() {
-    if (typeof PF.refreshDepth === "function") {
-      try { PF.refreshDepth(); } catch (_) { /* ignore */ }
+  function stripeTex() {
+    return canvasTex(64, 64, (ctx) => {
+      ctx.fillStyle = "#c41e3a";
+      ctx.fillRect(0, 0, 64, 64);
+      ctx.fillStyle = "#f0d09a";
+      ctx.fillRect(0, 0, 32, 64);
+    }, 6, 1);
+  }
+
+  function signTex(title, sub) {
+    return canvasTex(512, 160, (ctx) => {
+      ctx.fillStyle = "#2a140e";
+      ctx.fillRect(0, 0, 512, 160);
+      ctx.strokeStyle = "#d4a45a";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(10, 10, 492, 140);
+      ctx.fillStyle = "#f0d09a";
+      ctx.font = "bold 42px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText(title, 256, 72);
+      ctx.font = "22px Georgia, serif";
+      ctx.fillStyle = "#e8c48a";
+      ctx.fillText(sub, 256, 118);
+    }, 1, 1);
+  }
+
+  function stampTex(label) {
+    return canvasTex(256, 128, (ctx) => {
+      ctx.clearRect(0, 0, 256, 128);
+      ctx.translate(128, 64);
+      ctx.rotate(-0.16);
+      ctx.strokeStyle = "rgba(196,30,58,0.95)";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(-110, -42, 220, 84);
+      ctx.fillStyle = "rgba(196,30,58,0.92)";
+      ctx.font = "bold 48px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label || "BUST", 0, 2);
+    }, 1, 1);
+  }
+
+  function addMesh(parent, geo, material, x, y, z, sx, sy, sz) {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x || 0, y || 0, z || 0);
+    if (sx != null) m.scale.set(sx, sy == null ? sx : sy, sz == null ? sx : sz);
+    parent.add(m);
+    return m;
+  }
+
+  function makeAura() {
+    const g = new THREE.Group();
+    const skin = mat(SKIN, { emissive: 0x3a2018, emissiveIntensity: 0.12 });
+    const blouse = mat(BLOUSE, { emissive: 0x3a3028, emissiveIntensity: 0.2 });
+    const dress = mat(DRESS, { emissive: 0x0a2010, emissiveIntensity: 0.25 });
+    const dark = mat(0x111111, { roughness: 0.45 });
+    const hip = new THREE.Group();
+    hip.position.y = 0.42;
+    g.add(hip);
+    addMesh(hip, geoCylLoose, blouse, 0, 0.28, 0, 0.13, 0.28, 0.13);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.12, 0.32, 12), dress);
+    skirt.position.y = 0.06;
+    hip.add(skirt);
+    const heart = addMesh(hip, geoBox, mat(HEART, { emissive: HEART, emissiveIntensity: 0.55 }), 0, 0.22, 0.16, 0.09, 0.09, 0.04);
+    heart.rotation.z = Math.PI / 4;
+    const head = new THREE.Group();
+    head.position.y = 0.58;
+    hip.add(head);
+    addMesh(head, geoSphere, skin, 0, 0.02, 0, 0.175);
+    const eyeW = mat(0xf7f2ea);
+    const eyeD = mat(0x2a1810);
+    [-1, 1].forEach((side) => {
+      const white = addMesh(head, geoSphere, eyeW, side * 0.055, 0.03, 0.15, 0.038);
+      white.scale.set(0.038, 0.044, 0.02);
+      addMesh(head, geoSphere, eyeD, side * 0.055, 0.03, 0.168, 0.02);
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 10, Math.PI), mat(0xc45a6a));
+    smile.position.set(0, -0.05, 0.16);
+    smile.rotation.x = 2.6;
+    head.add(smile);
+    const hairM = mat(HAIR, { emissive: 0x1a0c08, emissiveIntensity: 0.15 });
+    addMesh(head, geoSphere, hairM, 0, 0.06, -0.02, 0.23);
+    [-1, 1].forEach((side) => {
+      addMesh(head, geoSphere, hairM, side * 0.2, -0.04, 0.04, 0.11);
+      addMesh(head, geoSphere, mat(HEART, { emissive: HEART, emissiveIntensity: 0.6 }), side * 0.2, 0.06, 0.06, 0.045);
+    });
+    addMesh(head, geoBox, hairM, 0, 0.14, 0.16, 0.28, 0.07, 0.1);
+    const crown = new THREE.Group();
+    crown.position.y = 0.24;
+    head.add(crown);
+    const gold = mat(GOLD, { metalness: 0.65, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.55 });
+    crown.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold));
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const h = i === 1 ? 0.14 : 0.09;
+      addMesh(crown, geoCone, gold, x, h * 0.45, 0, 0.035, h, 0.035);
+    });
+    const gem = addMesh(crown, geoBox, mat(HEART, { emissive: HEART, emissiveIntensity: 0.7 }), 0, 0.02, 0.11, 0.055, 0.055, 0.025);
+    gem.rotation.z = Math.PI / 4;
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.16 : 0.07), arm ? 0.36 : 0.0, 0);
+      const len = arm ? 0.28 : 0.34;
+      const rad = arm ? 0.035 : 0.042;
+      addMesh(pivot, geoCylLoose, arm ? skin : dress, 0, -len / 2, 0, rad, len, rad);
+      if (!arm) addMesh(pivot, geoBox, dark, 0, -len - 0.02, 0.03, 0.08, 0.05, 0.12);
+      else addMesh(pivot, geoSphere, skin, 0, -len, 0, 0.04);
+      hip.add(pivot);
+      return pivot;
+    }
+    g.userData = {
+      kind: "aura", t: 0, hip, head, crown,
+      armL: limb(-1, true), armR: limb(1, true),
+      legL: limb(-1, false), legR: limb(1, false),
+    };
+    return g;
+  }
+
+  function makeDiscMesh(ghost) {
+    const g = new THREE.Group();
+    const brass = ghost
+      ? new THREE.MeshStandardMaterial({
+        color: GOLD, metalness: 0.55, roughness: 0.35, transparent: true, opacity: 0.58,
+        emissive: 0x6a4808, emissiveIntensity: 0.45, depthWrite: false,
+      })
+      : mat(BRASS, { metalness: 0.72, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.42 });
+    const body = new THREE.Mesh(geoDisc, brass);
+    g.add(body);
+    const rim = new THREE.Mesh(geoTorus, brass);
+    rim.scale.set(1, 1, 0.55);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = 0.01;
+    g.add(rim);
+    if (!ghost) {
+      const face = new THREE.Mesh(
+        geoPlane,
+        new THREE.MeshBasicMaterial({ color: 0xf0d09a, transparent: true, opacity: 0.18 })
+      );
+      face.rotation.x = -Math.PI / 2;
+      face.position.y = 0.03;
+      face.scale.set(1.6, 1.6, 1);
+      g.add(face);
+    }
+    g.userData.brass = brass;
+    return g;
+  }
+
+  function blobRadius(spec, ang) {
+    return spec.spotR * (1
+      + spec.blobA * Math.sin(ang * 3 + spec.blobPhase)
+      + spec.blobB * Math.cos(ang * 5 + spec.blobPhase * 1.7));
+  }
+
+  function bakeSamples(spec) {
+    const out = [];
+    function gridDisk(cx, cz, r, part, inner) {
+      const step = Math.max(0.015, r / 18);
+      const r2 = r * r;
+      const inner2 = inner ? inner * inner : 0;
+      for (let x = cx - r; x <= cx + r + 1e-6; x += step) {
+        for (let z = cz - r; z <= cz + r + 1e-6; z += step) {
+          const dx = x - cx;
+          const dz = z - cz;
+          const d2 = dx * dx + dz * dz;
+          if (d2 > r2) continue;
+          if (inner2 && d2 < inner2) continue;
+          out.push({ x, z, part });
+        }
+      }
+    }
+    if (spec.kind === "twin") {
+      gridDisk(-spec.twinSep * 0.5, 0, spec.twinR, 0, 0);
+      gridDisk(spec.twinSep * 0.5, 0, spec.twinR, 1, 0);
+    } else if (spec.kind === "oval") {
+      const rx = spec.spotR * spec.ovalW;
+      const rz = spec.spotR * spec.ovalH;
+      const step = Math.max(0.015, spec.spotR / 18);
+      const c = Math.cos(spec.ovalRot);
+      const s = Math.sin(spec.ovalRot);
+      const reach = Math.max(rx, rz);
+      for (let x = -reach; x <= reach + 1e-6; x += step) {
+        for (let z = -reach; z <= reach + 1e-6; z += step) {
+          const lx = x * c + z * s;
+          const lz = -x * s + z * c;
+          if ((lx * lx) / (rx * rx) + (lz * lz) / (rz * rz) <= 1) out.push({ x, z, part: 0 });
+        }
+      }
+    } else if (spec.kind === "ring") {
+      gridDisk(0, 0, spec.spotR, 0, spec.spotR * spec.innerRatio);
+    } else if (spec.kind === "blob") {
+      const reach = spec.spotR * 1.42;
+      const step = Math.max(0.015, spec.spotR / 18);
+      for (let x = -reach; x <= reach + 1e-6; x += step) {
+        for (let z = -reach; z <= reach + 1e-6; z += step) {
+          if (Math.hypot(x, z) <= blobRadius(spec, Math.atan2(z, x))) out.push({ x, z, part: 0 });
+        }
+      }
+    } else {
+      gridDisk(0, 0, spec.spotR, 0, 0);
+    }
+    return out;
+  }
+
+  function originAt(spec, t) {
+    const o = { x: 0, z: 0 };
+    if (!spec) return o;
+    if (spec.drift === "slow" || spec.kind === "drift") {
+      const a = (t / spec.driftPeriod) * Math.PI * 2;
+      o.x = Math.cos(a) * spec.driftRad;
+      o.z = Math.sin(a * 0.85) * spec.driftRad * 0.72;
+    } else if (spec.drift === "jitter") {
+      const phase = stampPhase(spec, t);
+      if (phase.hopping) {
+        const u = (t % (spec.stampMs + 900)) / spec.stampMs;
+        o.x = Math.sin(u * 17.2) * spec.stampAmp;
+        o.z = Math.cos(u * 13.7) * spec.stampAmp * 0.8;
+      }
+    }
+    return o;
+  }
+
+  function stampPhase(spec, t) {
+    if (!spec || spec.drift !== "jitter") return { hopping: false, hold: false, slam: false };
+    const hold = 720;
+    const slam = 380;
+    const period = spec.stampMs + hold + slam;
+    const cycle = t % period;
+    if (cycle < spec.stampMs) return { hopping: true, hold: false, slam: false };
+    if (cycle < spec.stampMs + hold) return { hopping: false, hold: true, slam: false };
+    return { hopping: false, hold: false, slam: true };
+  }
+
+  function settleOf(x, z, spec) {
+    if (!spec || !spec.scatter) return { x, z };
+    const n = Math.sin(x * 19.19 + z * 47.13) * 43758.5453;
+    const f = n - Math.floor(n);
+    const a = f * Math.PI * 2;
+    const n2 = Math.sin(z * 12.3 + x * 4.7) * 23421.1;
+    const m = spec.scatter * (0.55 + (n2 - Math.floor(n2)) * 0.45);
+    return { x: x + Math.cos(a) * m, z: z + Math.sin(a) * m };
+  }
+
+  function inWell(x, z, spec, origin) {
+    if (!spec || spec.kind !== "ring") return false;
+    const inner = spec.spotR * spec.innerRatio;
+    return Math.hypot(x - origin.x, z - origin.z) < inner * 0.92;
+  }
+
+  function onTable(x, z, r) {
+    return Math.hypot(x, z) <= TABLE_R - (r || 0) * 0.25;
+  }
+
+  function clothOrigin() {
+    const o = (run && run.origin) || { x: 0, z: 0 };
+    return {
+      x: o.x + ((run && run.clothX) || 0),
+      z: o.z + ((run && run.clothZ) || 0),
+    };
+  }
+
+  function coverageNow() {
+    if (!run || !run.samples) return { pct: 0, parts: [0], peek: [] };
+    const discs = run.discs.filter((d) => !d.trapped && (d.alt || 0) < 0.05);
+    const origin = clothOrigin();
+    const partsHit = [0, 0];
+    const partsTot = [0, 0];
+    const peek = [];
+    let hit = 0;
+    for (let i = 0; i < run.samples.length; i += 1) {
+      const s = run.samples[i];
+      const wx = origin.x + s.x;
+      const wz = origin.z + s.z;
+      partsTot[s.part] += 1;
+      let covered = false;
+      for (let d = 0; d < discs.length; d += 1) {
+        const rr = discs[d].r;
+        const dx = wx - discs[d].x;
+        const dz = wz - discs[d].z;
+        if (dx * dx + dz * dz <= rr * rr) {
+          covered = true;
+          break;
+        }
+      }
+      if (covered) {
+        hit += 1;
+        partsHit[s.part] += 1;
+      } else if (peek.length < 90) {
+        peek.push(wx, FELT_Y + 0.035, wz);
+      }
+    }
+    const parts = [];
+    if (partsTot[0]) parts.push(partsHit[0] / partsTot[0]);
+    if (partsTot[1]) parts.push(partsHit[1] / partsTot[1]);
+    const pct = specKindTwin()
+      ? (parts.length ? Math.min.apply(null, parts) : 0)
+      : (run.samples.length ? hit / run.samples.length : 0);
+    return { pct, parts, peek, hit, total: run.samples.length };
+  }
+
+  function specKindTwin() {
+    return !!(run && run.spec && run.spec.kind === "twin");
+  }
+
+  function hitTarget(spec, cover) {
+    if (!spec || !cover) return false;
+    const need = spec.targetPct / 100;
+    if (spec.kind === "twin") {
+      return cover.parts.length >= 2 && cover.parts.every((p) => p >= need);
+    }
+    return cover.pct >= need;
+  }
+
+  function makeSpotShapes(spec, origin) {
+    if (spec.kind === "twin") {
+      return [
+        { kind: "circle", x: origin.x - spec.twinSep * 0.5, z: origin.z, r: spec.twinR },
+        { kind: "circle", x: origin.x + spec.twinSep * 0.5, z: origin.z, r: spec.twinR },
+      ];
+    }
+    if (spec.kind === "oval") {
+      return [{ kind: "oval", x: origin.x, z: origin.z, rx: spec.spotR * spec.ovalW, rz: spec.spotR * spec.ovalH, rot: spec.ovalRot }];
+    }
+    if (spec.kind === "ring") {
+      return [{ kind: "ring", x: origin.x, z: origin.z, r: spec.spotR, inner: spec.spotR * spec.innerRatio }];
+    }
+    if (spec.kind === "blob") {
+      return [{ kind: "blob", x: origin.x, z: origin.z, r: spec.spotR, a: spec.blobA, b: spec.blobB, phase: spec.blobPhase }];
+    }
+    return [{ kind: "circle", x: origin.x, z: origin.z, r: spec.spotR }];
+  }
+
+  function rebuildSpots(spec, shapes) {
+    if (!world) return;
+    const g = world.spots;
+    while (g.children.length) g.remove(g.children[0]);
+    const red = mat(CARNIVAL_RED, {
+      emissive: CARNIVAL_RED, emissiveIntensity: 0.7, roughness: 0.45, metalness: 0.08,
+      transparent: true, opacity: 0.92,
+    });
+    world.spotMat = red;
+    shapes.forEach((shape) => {
+      const node = new THREE.Group();
+      if (shape.kind === "ring") {
+        const torus = new THREE.Mesh(new THREE.TorusGeometry(shape.r * 0.74, (shape.r - shape.inner) * 0.42, 10, 36), red);
+        torus.rotation.x = Math.PI / 2;
+        node.add(torus);
+        const well = new THREE.Mesh(
+          new THREE.CylinderGeometry(shape.inner, shape.inner * 0.7, 0.85, 20, 1, true),
+          mat(0x080204, { roughness: 1, side: THREE.DoubleSide })
+        );
+        well.position.y = -0.4;
+        node.add(well);
+        const pit = new THREE.PointLight(0xc41e3a, 1.4, 1.8, 2);
+        pit.position.y = -0.35;
+        node.add(pit);
+        world.well = well;
+      } else if (shape.kind === "blob") {
+        addMesh(node, geoCyl, red, 0, 0.012, 0, shape.r, 0.02, shape.r);
+        for (let i = 0; i < 5; i += 1) {
+          const bump = addMesh(node, geoSphere, red, 0, 0.02, 0, shape.r * 0.28);
+          bump.userData.i = i;
+          node.add(bump);
+        }
+      } else if (shape.kind === "oval") {
+        const m = addMesh(node, geoCyl, red, 0, 0.012, 0, 1, 0.02, 1);
+        m.scale.set(shape.rx, 0.02, shape.rz);
+        m.rotation.y = shape.rot || 0;
+      } else {
+        addMesh(node, geoCyl, red, 0, 0.012, 0, shape.r, 0.02, shape.r);
+      }
+      node.position.set(shape.x, FELT_Y + 0.02, shape.z);
+      g.add(node);
+    });
+    g.userData.kind = spec.kind;
+    world.wellOn = spec.kind === "ring";
+    if (world.wellCover) world.wellCover.visible = spec.kind === "ring";
+  }
+
+  function syncSpots(spec, t) {
+    if (!world || !spec) return;
+    const origin = run && isLive() ? clothOrigin() : originAt(spec, t);
+    const shapes = makeSpotShapes(spec, origin);
+    if (world.spots.userData.kind !== spec.kind || world.spots.children.length !== shapes.length) {
+      rebuildSpots(spec, shapes);
+    }
+    world.spots.children.forEach((node, i) => {
+      const shape = shapes[i];
+      if (!shape) return;
+      node.position.set(shape.x, FELT_Y + 0.02, shape.z);
+      if (shape.kind === "blob") {
+        node.children.forEach((ch) => {
+          if (ch.userData && ch.userData.i != null) {
+            const a = t * 0.004 + ch.userData.i * 1.26 + spec.blobPhase;
+            const rad = blobRadius(spec, a) * 0.72;
+            ch.position.set(Math.cos(a) * rad, 0.03, Math.sin(a) * rad);
+          }
+        });
+      }
+    });
+    if (world.spotMat) {
+      const cov = run && isLive() ? run.coverage : 0;
+      const hot = hitTarget(spec, run && run.cover);
+      world.spotMat.emissiveIntensity = 0.45 + cov * 0.9;
+      world.spotMat.color.setHex(hot ? 0xd4a45a : CARNIVAL_RED);
+      world.spotMat.emissive.setHex(hot ? GOLD : CARNIVAL_RED);
+    }
+    if (world.coverRing) {
+      const cov = run && isLive() ? run.coverage : 0;
+      world.coverRing.material.color.setHex(cov >= (spec.targetPct / 100) ? 0x7ad0a0 : CARNIVAL_RED);
+      world.coverRing.scale.set(1, 1, 1);
+      world.coverFill.visible = false;
     }
   }
 
-  function resetPips() {
-    const pips = document.querySelector('[data-runkit-strikes="' + GAME_ID + '"]');
-    if (!pips) return;
-    pips.querySelectorAll("i").forEach((el) => el.classList.remove("on"));
+  function syncDiscs(spec) {
+    if (!world) return;
+    const discs = (run && run.discs) || [];
+    world.discPool.forEach((m, i) => {
+      const d = discs[i];
+      if (!d) { m.visible = false; return; }
+      m.visible = true;
+      m.position.set(d.x, FELT_Y + 0.04 + (d.alt || 0), d.z);
+      m.scale.setScalar(d.r);
+      m.rotation.y = d.spin || 0;
+      m.rotation.x = d.falling ? 0.22 : 0;
+      m.rotation.z = d.trapped ? 0.4 : 0;
+    });
+    const ghost = world.ghost;
+    const aiming = isLive() && !run.awaiting && !run.dying && pointer.on;
+    ghost.visible = !!aiming;
+    if (aiming && spec) {
+      const rest = settleOf(pointer.x, pointer.z, spec);
+      ghost.position.set(rest.x, FELT_Y + 0.08, rest.z);
+      ghost.scale.setScalar(spec.r);
+      const ok = onTable(rest.x, rest.z, spec.r) && !inWell(rest.x, rest.z, spec, clothOrigin());
+      ghost.userData.brass.color.setHex(ok ? GOLD : CARNIVAL_RED);
+      ghost.userData.brass.opacity = run.busy ? 0.28 : (ok ? 0.62 : 0.7);
+    }
+    const left = spec && run && isLive() ? Math.max(0, spec.maxDiscs - run.discs.length) : (spec ? spec.maxDiscs : 4);
+    world.rackDiscs.forEach((m, i) => { m.visible = i < left; });
+  }
+
+  function burstSparks(x, z, color) {
+    if (!world || !world.sparks) return;
+    world.sparks.userData.bursts.push({ x, y: FELT_Y + 0.12, z, t: 0, color: color || 0xf0d09a });
+  }
+
+  function resizeWorld() {
+    if (!world) return;
+    const wrap = $("coverSpotWorld") || $("coverSpotCanvas");
+    if (!wrap) return;
+    const w = Math.max(16, wrap.clientWidth || wrap.offsetWidth || 960);
+    const h = Math.max(16, wrap.clientHeight || wrap.offsetHeight || 720);
+    world.camera.aspect = w / h;
+    world.camera.updateProjectionMatrix();
+    world.renderer.setSize(w, h, false);
+    world.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  }
+
+  function buildWorld(canvas) {
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0a0608, 0.048);
+    scene.background = new THREE.Color(0x0a0608);
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.08, 40);
+    camera.position.set(0, 3.62, 1.58);
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: (window.devicePixelRatio || 1) < 1.7,
+      alpha: false,
+      powerPreference: "high-performance",
+    });
+    renderer.setClearColor(0x0a0608, 1);
+    if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if (THREE.ACESFilmicToneMapping) renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    const shadows = window.innerWidth > 720 && !REDUCE;
+    if (shadows) {
+      renderer.shadowMap.enabled = true;
+      if (THREE.PCFSoftShadowMap) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+
+    scene.add(new THREE.AmbientLight(0x4a382c, 0.74));
+    scene.add(new THREE.HemisphereLight(0xc4a070, 0x1a100c, 0.58));
+    const key = new THREE.SpotLight(0xffd090, 7.4, 14, 0.58, 0.45, 1.2);
+    key.position.set(0.15, 4.3, 2.0);
+    key.target.position.set(0, FELT_Y, 0);
+    scene.add(key);
+    scene.add(key.target);
+    if (shadows) {
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+    }
+    const fill = new THREE.DirectionalLight(0x8aa4cc, 0.3);
+    fill.position.set(-3, 4, -2);
+    scene.add(fill);
+
+    const wood = mat(WOOD, { map: woodTex(), roughness: 0.82 });
+    const canvasM = mat(0xc45a6a, { map: stripeTex(), roughness: 0.88, side: THREE.DoubleSide });
+    const feltM = mat(FELT, { map: feltTex(), roughness: 0.94 });
+    const brass = mat(GOLD, { metalness: 0.7, roughness: 0.32, emissive: 0x4a3008, emissiveIntensity: 0.2 });
+
+    const floor = new THREE.Mesh(geoPlane, mat(0x1a100c, { roughness: 0.95 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.scale.set(16, 16, 1);
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const tent = new THREE.Group();
+    scene.add(tent);
+    for (let i = 0; i < 6; i += 1) {
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 4.4), canvasM);
+      const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+      wall.position.set(Math.sin(a) * 4.15, 2.15, Math.cos(a) * 4.15);
+      wall.lookAt(0, 2.15, 0);
+      tent.add(wall);
+    }
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(5.1, 2.1, 6), canvasM);
+    roof.position.y = 5.15;
+    tent.add(roof);
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+      addMesh(tent, geoCylLoose, wood, Math.sin(a) * 3.85, 2.1, Math.cos(a) * 3.85, 0.07, 4.2, 0.07);
+    }
+
+    const table = new THREE.Group();
+    scene.add(table);
+    addMesh(table, geoCyl, wood, 0, 0.46, 0, 0.22, 0.88, 0.22);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(1.22, 1.22, 0.12, 36), wood);
+    top.position.y = 0.88;
+    top.castShadow = true;
+    top.receiveShadow = true;
+    table.add(top);
+    const cloth = new THREE.Group();
+    cloth.position.y = FELT_Y;
+    table.add(cloth);
+    const felt = new THREE.Mesh(new THREE.CylinderGeometry(TABLE_R, TABLE_R, 0.03, 40), feltM);
+    felt.receiveShadow = true;
+    cloth.add(felt);
+    const rippleGeo = new THREE.CircleGeometry(TABLE_R * 0.98, 28);
+    const rippleBase = Float32Array.from(rippleGeo.attributes.position.array);
+    const ripple = new THREE.Mesh(rippleGeo, feltM);
+    ripple.rotation.x = -Math.PI / 2;
+    ripple.position.y = 0.018;
+    ripple.receiveShadow = true;
+    cloth.add(ripple);
+    const rail = new THREE.Mesh(new THREE.TorusGeometry(TABLE_R + 0.04, 0.035, 8, 40), brass);
+    rail.rotation.x = Math.PI / 2;
+    rail.position.y = FELT_Y + 0.01;
+    table.add(rail);
+    const tugCord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 0.55, 8),
+      mat(0x5a3a18, { roughness: 0.7 })
+    );
+    tugCord.position.set(TABLE_R + 0.12, FELT_Y + 0.04, 0);
+    tugCord.rotation.z = Math.PI / 2;
+    tugCord.visible = false;
+    scene.add(tugCord);
+    const tugBanner = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.35, 0.38),
+      new THREE.MeshBasicMaterial({ map: stampTex("CLOTH TUG"), transparent: true, depthWrite: false })
+    );
+    tugBanner.position.set(0, FELT_Y + 0.55, 0.2);
+    tugBanner.rotation.x = -0.35;
+    tugBanner.visible = false;
+    scene.add(tugBanner);
+
+    const wellCover = new THREE.Mesh(
+      new THREE.CircleGeometry(0.22, 20),
+      new THREE.MeshBasicMaterial({ color: 0x080204 })
+    );
+    wellCover.rotation.x = -Math.PI / 2;
+    wellCover.position.y = FELT_Y + 0.018;
+    wellCover.visible = false;
+    scene.add(wellCover);
+
+    const coverRing = new THREE.Mesh(new THREE.TorusGeometry(TABLE_R + 0.08, 0.018, 8, 40), new THREE.MeshBasicMaterial({ color: CARNIVAL_RED }));
+    coverRing.rotation.x = Math.PI / 2;
+    coverRing.position.y = FELT_Y + 0.03;
+    scene.add(coverRing);
+    const coverFill = new THREE.Mesh(
+      new THREE.CircleGeometry(TABLE_R * 0.92, 32),
+      new THREE.MeshBasicMaterial({ color: 0xc41e3a, transparent: true, opacity: 0.12, depthWrite: false })
+    );
+    coverFill.rotation.x = -Math.PI / 2;
+    coverFill.position.y = FELT_Y + 0.016;
+    scene.add(coverFill);
+
+    const lanterns = [];
+    [[-1.45, 2.58, 0.15], [1.4, 2.64, -0.35], [0.08, 2.9, -1.25]].forEach((p, i) => {
+      const lamp = new THREE.Group();
+      lamp.position.set(p[0], p[1], p[2]);
+      addMesh(lamp, geoSphere, new THREE.MeshBasicMaterial({ color: 0xffe2a0 }), 0, 0, 0, 0.09);
+      addMesh(lamp, geoCylLoose, brass, 0, 0, 0, 0.11, 0.16, 0.1);
+      const light = new THREE.PointLight(0xffd090, 1.65, 6.5, 2);
+      lamp.add(light);
+      scene.add(lamp);
+      lanterns.push({ lamp, light, phase: i * 1.7 });
+    });
+
+    for (let i = 0; i < 18; i += 1) {
+      const u = i / 17;
+      const bulb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.035, 8, 6),
+        new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xc41e3a : i % 3 === 1 ? 0xf0d09a : 0x3d8a6a })
+      );
+      bulb.position.set((u - 0.5) * 4.4, 3.15 + Math.sin(u * Math.PI) * 0.18, -2.35);
+      scene.add(bulb);
+    }
+
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.35, 0.58),
+      new THREE.MeshBasicMaterial({ map: signTex("COVER THE SPOT", "MOVE · TAP / SPACE TO DROP") })
+    );
+    sign.position.set(0, 2.58, -2.08);
+    scene.add(sign);
+
+    const how = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.35, 0.72),
+      new THREE.MeshBasicMaterial({ map: signTex("ONE DISC", "NEVER COVERS") })
+    );
+    how.position.set(-2.15, 1.55, -0.35);
+    how.rotation.y = 0.7;
+    scene.add(how);
+
+    const poster = new THREE.Mesh(geoPlane, new THREE.MeshBasicMaterial({ color: 0x3a2418 }));
+    poster.position.set(-2.35, 1.72, -1.55);
+    poster.scale.set(1.55, 1.12, 1);
+    poster.rotation.y = 0.55;
+    scene.add(poster);
+    try {
+      new THREE.TextureLoader().load("assets/prepared/cover-the-spot.webp", (tex) => {
+        srgb(tex);
+        poster.material.map = tex;
+        poster.material.needsUpdate = true;
+      });
+    } catch (_) { /* optional art */ }
+
+    const shelf = new THREE.Group();
+    shelf.position.set(1.95, 1.12, -1.62);
+    shelf.rotation.y = -0.5;
+    scene.add(shelf);
+    addMesh(shelf, geoBox, wood, 0, 0, 0, 1.2, 0.06, 0.34);
+    addMesh(shelf, geoBox, wood, 0, 0.42, 0, 1.2, 0.06, 0.34);
+    const bear = new THREE.Group();
+    addMesh(bear, geoSphere, mat(0x8a6230), 0, 0.22, 0, 0.12);
+    addMesh(bear, geoSphere, mat(0x8a6230), 0, 0.36, 0.02, 0.09);
+    bear.position.set(-0.28, 0.06, 0);
+    shelf.add(bear);
+    addMesh(shelf, geoCyl, brass, 0.22, 0.14, 0, 0.07, 0.16, 0.07);
+    addMesh(shelf, geoSphere, mat(CARNIVAL_RED, { emissive: 0x4a0810, emissiveIntensity: 0.3 }), 0.48, 0.16, 0.02, 0.08);
+
+    const aura = makeAura();
+    aura.position.set(1.22, 0, -1.28);
+    aura.rotation.y = Math.PI * 0.14;
+    scene.add(aura);
+
+    const rack = new THREE.Group();
+    rack.position.set(-1.38, 0.92, 0.55);
+    rack.rotation.y = 0.55;
+    scene.add(rack);
+    addMesh(rack, geoBox, wood, 0, 0, 0, 0.72, 0.05, 0.28);
+    const rackDiscs = [];
+    for (let i = 0; i < 6; i += 1) {
+      const d = makeDiscMesh(false);
+      d.scale.setScalar(0.16);
+      d.position.set(-0.22 + i * 0.09, 0.05, 0);
+      rack.add(d);
+      rackDiscs.push(d);
+    }
+
+    const spots = new THREE.Group();
+    scene.add(spots);
+    const discPool = [];
+    for (let i = 0; i < 8; i += 1) {
+      const d = makeDiscMesh(false);
+      d.visible = false;
+      scene.add(d);
+      discPool.push(d);
+    }
+    const ghost = makeDiscMesh(true);
+    ghost.visible = false;
+    scene.add(ghost);
+
+    const stamp = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.58),
+      new THREE.MeshBasicMaterial({ map: stampTex("BUST"), transparent: true, depthWrite: false })
+    );
+    stamp.position.set(0, FELT_Y + 0.28, 0.12);
+    stamp.rotation.x = -0.55;
+    stamp.visible = false;
+    scene.add(stamp);
+
+    const dustGeo = new THREE.BufferGeometry();
+    const dustN = 70;
+    const dustPos = new Float32Array(dustN * 3);
+    for (let i = 0; i < dustN; i += 1) {
+      dustPos[i * 3] = (Math.random() - 0.5) * 6;
+      dustPos[i * 3 + 1] = 0.4 + Math.random() * 3.4;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 6;
+    }
+    dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+    const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+      color: 0xf0d09a, size: 0.025, transparent: true, opacity: 0.35, depthWrite: false,
+    }));
+    scene.add(dust);
+
+    const sparkGeo = new THREE.BufferGeometry();
+    sparkGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(36 * 3), 3));
+    const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({
+      color: 0xf7e2b0, size: 0.048, transparent: true, opacity: 0.9, depthWrite: false,
+    }));
+    sparks.userData.bursts = [];
+    scene.add(sparks);
+
+    const peekGeo = new THREE.BufferGeometry();
+    peekGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(90 * 3), 3));
+    const peek = new THREE.Points(peekGeo, new THREE.PointsMaterial({
+      color: 0xff3a4a, size: 0.042, transparent: true, opacity: 0, depthWrite: false,
+    }));
+    scene.add(peek);
+
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -FELT_Y);
+
+    world = {
+      renderer, scene, camera, felt, cloth, spots, discPool, ghost, stamp, aura,
+      lanterns, sign, dust, sparks, key, rackDiscs, wellCover, coverRing, coverFill,
+      ripple, rippleBase, tugCord, tugBanner, peek,
+      raycaster: new THREE.Raycaster(), plane,
+      clock: 0, shadows, clothFlash: 0, tugBannerT: 0,
+    };
+    resizeWorld();
+    const wrap = $("coverSpotWorld");
+    if (typeof ResizeObserver === "function" && wrap) {
+      world.ro = new ResizeObserver(() => resizeWorld());
+      world.ro.observe(wrap);
+    }
+    window.addEventListener("resize", resizeWorld);
+    rebuildSpots(attractSpec(), makeSpotShapes(attractSpec(), { x: 0, z: 0 }));
+  }
+
+  function bootWorld() {
+    const canvas = $("coverSpotCanvas");
+    const fail = $("coverSpotGlFail");
+    if (!canvas) return false;
+    try {
+      if (!world) buildWorld(canvas);
+      if (fail) fail.hidden = true;
+      resizeWorld();
+      return true;
+    } catch (err) {
+      if (fail) fail.hidden = false;
+      setStatus("This tent wants WebGL.");
+      return false;
+    }
+  }
+
+  function eventToFelt(ev) {
+    if (!world) return null;
+    const canvas = world.renderer.domElement;
+    const r = canvas.getBoundingClientRect();
+    const t = (ev.touches && ev.touches[0]) || (ev.changedTouches && ev.changedTouches[0]) || ev;
+    _ndc.set(
+      ((t.clientX - r.left) / Math.max(1, r.width)) * 2 - 1,
+      -((t.clientY - r.top) / Math.max(1, r.height)) * 2 + 1
+    );
+    world.raycaster.setFromCamera(_ndc, world.camera);
+    lookX = _ndc.x;
+    lookZ = _ndc.y;
+    if (world.raycaster.ray.intersectPlane(world.plane, _hit)) {
+      return { x: _hit.x, z: _hit.z };
+    }
+    return null;
+  }
+
+  function setAuraMood(mood, ms) {
+    auraMood = mood || "idle";
+    auraMoodUntil = (world ? world.clock : 0) + (ms || 1400);
+  }
+
+  function animateAura(dt) {
+    if (!world || !world.aura) return;
+    const a = world.aura.userData;
+    a.t += dt * 0.001;
+    const t = a.t;
+    const live = isLive();
+    if (world.clock > auraMoodUntil && auraMood !== "idle") auraMood = live ? "watch" : "idle";
+    const sway = REDUCE ? 0 : Math.sin(t * 1.4) * 0.03;
+    a.hip.rotation.y = sway;
+    a.head.rotation.y = sway * 0.8 - 0.08 + lookX * 0.12;
+    a.head.rotation.x = auraMood === "think" ? 0.12 : auraMood === "point" ? -0.08 : 0.02;
+    if (auraMood === "celebrate") {
+      a.armL.rotation.z = 2.2 + Math.sin(t * 8) * 0.15;
+      a.armR.rotation.z = -2.2 + Math.cos(t * 8) * 0.15;
+    } else if (auraMood === "point") {
+      a.armR.rotation.x = -1.15;
+      a.armR.rotation.z = -0.2;
+      a.armL.rotation.z = 0.35;
+    } else if (auraMood === "bad") {
+      a.head.rotation.y = Math.sin(t * 10) * 0.2;
+      a.armL.rotation.z = 0.4;
+      a.armR.rotation.z = -0.4;
+    } else {
+      a.armL.rotation.z = 0.55;
+      a.armL.rotation.x = -0.7;
+      a.armR.rotation.z = -0.15 + Math.sin(t * 2.2) * 0.08;
+      a.armR.rotation.x = live ? -0.35 : Math.sin(t * 2.2) * 0.12;
+    }
+    world.aura.position.y = 0.02 + Math.sin(t * 1.7) * 0.012;
+  }
+
+  function animateSparks(dt) {
+    if (!world || !world.sparks) return;
+    const bursts = world.sparks.userData.bursts;
+    const pos = world.sparks.geometry.attributes.position.array;
+    pos.fill(0);
+    let k = 0;
+    for (let i = bursts.length - 1; i >= 0; i -= 1) {
+      const b = bursts[i];
+      b.t += dt;
+      if (b.t > 520) { bursts.splice(i, 1); continue; }
+      const u = b.t / 520;
+      for (let j = 0; j < 6 && k < 36; j += 1) {
+        const a = j * 1.047;
+        pos[k * 3] = b.x + Math.cos(a) * u * 0.28;
+        pos[k * 3 + 1] = b.y + u * 0.22 + Math.sin(j) * 0.04;
+        pos[k * 3 + 2] = b.z + Math.sin(a) * u * 0.28;
+        k += 1;
+      }
+    }
+    world.sparks.geometry.attributes.position.needsUpdate = true;
+    world.sparks.material.opacity = bursts.length ? 0.9 : 0;
+  }
+
+  function cameraTick(dt) {
+    if (!world) return;
+    world.clock += dt;
+    const t = world.clock;
+    const live = isLive();
+    const punch = camPunch;
+    camPunch *= 0.86;
+    camShake *= 0.84;
+    const sx = camShake ? (Math.random() - 0.5) * camShake * 0.06 : 0;
+    const sy = camShake ? (Math.random() - 0.5) * camShake * 0.04 : 0;
+    const idle = REDUCE ? 0 : Math.sin(t * 0.0007) * (live ? 0.06 : 0.16);
+    const hx = 0 + lookX * 0.1 + idle + sx;
+    const hy = 3.62 - punch * 0.12 + sy;
+    const hz = 1.58 - punch * 0.16 - (live ? 0.06 : 0);
+    world.camera.position.x += (hx - world.camera.position.x) * 0.08;
+    world.camera.position.y += (hy - world.camera.position.y) * 0.08;
+    world.camera.position.z += (hz - world.camera.position.z) * 0.08;
+    world.camera.lookAt(lookX * 0.08, FELT_Y, lookZ * 0.04);
+    world.lanterns.forEach((L) => {
+      L.light.intensity = 1.35 + Math.sin(t * 0.003 + L.phase) * 0.35;
+    });
+    if (world.dust) world.dust.rotation.y += dt * 0.00004;
+    const slamY = (run && run.slamT)
+      ? Math.sin(clamp(run.slamT / 280, 0, 1) * Math.PI) * -0.06
+      : 0;
+    const cx = (run && run.clothX) || 0;
+    const cz = (run && run.clothZ) || 0;
+    if (world.cloth) {
+      world.cloth.position.x = cx;
+      world.cloth.position.z = cz;
+      world.cloth.position.y = FELT_Y + slamY;
+    }
+    if (world.spots) world.spots.position.y = slamY;
+    if (world.coverRing) world.coverRing.position.y = FELT_Y + 0.03 + slamY;
+    if (world.coverFill) {
+      world.coverFill.position.y = FELT_Y + 0.016 + slamY;
+      world.coverFill.material.opacity = 0.04;
+    }
+    if (world.ripple) {
+      const wave = (run && run.clothWave) || 0;
+      world.ripple.position.y = 0.018 + wave * 0.02;
+    }
+    if (world.clothFlash > 0) {
+      world.clothFlash = Math.max(0, world.clothFlash - dt * 0.0022);
+      if (world.felt) world.felt.material.emissive = world.felt.material.emissive || { r: 0, g: 0, b: 0 };
+    }
+    if (world.tugBannerT > 0) {
+      world.tugBannerT -= dt;
+      if (world.tugBanner) {
+        world.tugBanner.visible = world.tugBannerT > 0;
+        world.tugBanner.position.set(cx, FELT_Y + 0.58 + Math.sin(t * 0.012) * 0.04, cz + 0.15);
+      }
+      if (world.tugCord) {
+        world.tugCord.visible = world.tugBannerT > 80;
+        const ang = (run && run.clothAng) || 0;
+        world.tugCord.position.set(Math.cos(ang) * (TABLE_R + 0.08) + cx, FELT_Y + 0.05, Math.sin(ang) * (TABLE_R + 0.08) + cz);
+        world.tugCord.rotation.y = -ang;
+        world.tugCord.rotation.z = Math.PI / 2;
+      }
+    } else if (world.tugBanner) {
+      world.tugBanner.visible = false;
+      if (world.tugCord) world.tugCord.visible = false;
+    }
+  }
+
+  function paintPips(spec, left) {
+    const host = $("coverSpotPips");
+    if (!host) return;
+    const max = spec ? spec.maxDiscs : 4;
+    if (host.childElementCount !== max) {
+      host.innerHTML = new Array(max).fill("<i></i>").join("");
+    }
+    host.querySelectorAll("i").forEach((n, i) => n.classList.toggle("on", i < left));
+  }
+
+  function paintMeter(spec, cover) {
+    const el = $("coverSpotMeter");
+    const fill = $("coverSpotMeterFill");
+    const need = $("coverSpotMeterNeed");
+    const label = $("coverSpotMeterLabel");
+    if (!el) return;
+    if (!isLive()) { el.hidden = true; return; }
+    el.hidden = false;
+    const pct = cover && cover.pct != null ? cover.pct : (typeof cover === "number" ? cover : 0);
+    const shown = Math.floor(pct * 100 + 1e-6);
+    if (fill) fill.style.width = `${clamp(shown, 0, 100)}%`;
+    if (need && spec) need.style.left = `${spec.targetPct}%`;
+    let text = `${shown}% / ${spec.targetPct}%`;
+    if (spec && spec.kind === "twin" && cover && cover.parts && cover.parts.length >= 2) {
+      text = `${Math.floor(cover.parts[0] * 100)}% · ${Math.floor(cover.parts[1] * 100)}% / ${spec.targetPct}%`;
+    }
+    if (label) label.textContent = text;
+    el.classList.toggle("is-hot", shown >= (spec ? spec.targetPct : 100));
+  }
+
+  function setGreed(on) {
+    const el = $("coverSpotGreed");
+    if (el) el.hidden = !on;
+    const cash = $("coverSpotCash");
+    if (cash) {
+      cash.hidden = !on;
+      cash.disabled = !on;
+      cash.classList.toggle("cash-scream", !!on);
+    }
+    const drop = $("coverSpotDrop");
+    if (drop) {
+      drop.hidden = !!on || !isLive();
+      drop.disabled = !!on;
+    }
+    const again = $("coverSpotDropAgain");
+    if (again) again.classList.toggle("cash-scream", !!on);
+    const host = card();
+    if (host) host.classList.toggle("is-greed", !!on);
+    if (on) {
+      const k1 = document.querySelector("#coverSpotHelp .coverspot-keys");
+      if (k1) {
+        /* keys stay; hint updates below */
+      }
+      const hint = $("coverSpotHelpHint");
+      if (hint) hint.textContent = "CASH OUT banks this spot. DROP AGAIN risks the next felt. Enter cashes. Space greed-drops.";
+    }
+  }
+
+  function paintHelp(spec) {
+    const joke = $("coverSpotJoke");
+    const hint = $("coverSpotHelpHint");
+    const barker = $("coverSpotBarker");
+    if (barker) barker.textContent = spec ? spec.name.toUpperCase() : "COVER THE RED — ONE DISC NEVER COVERS";
+    const line = spec
+      ? spec.barker
+      : "Move to aim. Tap the table or press Space to drop. Cover the mark, then cash out or go deeper.";
+    if (joke) joke.textContent = line;
+    if (hint) {
+      hint.textContent = spec && spec.kind === "ring"
+        ? "Cover the RING. Center is a trap. After you drop, the cloth tugs — the % is honest."
+        : spec && spec.kind === "twin"
+          ? "Both reds must hit the mark. The meter shows both percents, honest."
+          : "After you drop, the cloth tugs and the red peeks. The % is honest. Cover, then CASH OUT or DROP AGAIN.";
+    }
+  }
+
+  function paintRoomChrome(spec) {
+    paintHelp(spec);
+    paintPips(spec, spec ? spec.maxDiscs : 4);
+    if (run && isLive()) {
+      paintPips(spec, Math.max(0, spec.maxDiscs - run.discs.length));
+      paintMeter(spec, run.cover);
+    } else {
+      paintMeter(null, 0);
+    }
+  }
+
+  function stampDepthCopy() {
+    const tag = document.querySelector("#cabinet-cover-the-spot [data-pf-depth-tag]");
+    const body = document.querySelector("#cabinet-cover-the-spot [data-pf-depth-copy]");
+    if (tag) tag.textContent = DEPTH_COPY.tag;
+    if (body) body.textContent = DEPTH_COPY.body;
+  }
+
+  function paintKitHud(spec) {
+    const hud = document.querySelector('[data-runkit-hud="coverspot"]');
+    if (!hud) return;
+    if (!run || !isLive()) { hud.textContent = ""; return; }
+    const n = spec && spec.id ? spec.id : (run.stagesCleared + 1);
+    hud.textContent = spec && spec.coda
+      ? `ENDLESS · SPOT ${n} · ${spec.name}`
+      : `SPOT ${n} · ${spec ? spec.name : ""}`;
+  }
+
+  function tellDepth() {
+    if (!run || !run.kitRun || !rk() || typeof rk().reportDepth !== "function") return;
+    try {
+      rk().reportDepth(run.kitRun, run.stagesCleared | 0, {
+        name: run.spec && run.spec.name,
+        coda: !!(run.spec && run.spec.coda),
+      });
+    } catch (_) { /* hud */ }
+    paintKitHud(run.spec);
+  }
+
+  function setPlaying(on) {
+    const host = card();
+    const section = $("cabinet-cover-the-spot");
+    if (section) section.classList.toggle("is-playing", !!on);
+    if (host) host.classList.toggle("is-playing", !!on);
+  }
+
+  function setStamp(on, label) {
+    if (!world || !world.stamp) return;
+    world.stamp.visible = !!on;
+    if (on && label) {
+      world.stamp.material.map = stampTex(label);
+      world.stamp.material.needsUpdate = true;
+    }
+  }
+
+  function liveCoverage() {
+    if (!run) return;
+    const cover = coverageNow();
+    run.cover = cover;
+    run.coverage = cover.pct;
+    run.coverParts = cover.parts;
+    if (cover.pct > (run.bestPct || 0)) run.bestPct = cover.pct;
+    paintMeter(run.spec, cover);
+    const shown = Math.floor(cover.pct * 100 + 1e-6);
+    if (run.spec && run.spec.kind === "twin" && cover.parts.length >= 2) {
+      setText("depthCoverPct", `${Math.floor(cover.parts[0] * 100)}% · ${Math.floor(cover.parts[1] * 100)}%`);
+    } else {
+      setText("depthCoverPct", `${shown}%`);
+    }
+    syncPeek(cover.peek);
+  }
+
+  function syncPeek(peek) {
+    if (!world || !world.peek) return;
+    const pos = world.peek.geometry.attributes.position.array;
+    pos.fill(0);
+    const n = peek ? peek.length / 3 : 0;
+    for (let i = 0; i < n && i < 90; i += 1) {
+      pos[i * 3] = peek[i * 3];
+      pos[i * 3 + 1] = peek[i * 3 + 1];
+      pos[i * 3 + 2] = peek[i * 3 + 2];
+    }
+    world.peek.geometry.setDrawRange(0, n);
+    world.peek.geometry.attributes.position.needsUpdate = true;
+    world.peek.material.opacity = n ? 0.95 : 0;
+  }
+
+  function enterSpot(spec) {
+    run.spec = spec;
+    run.discs = [];
+    run.origin = originAt(spec, 0);
+    run.samples = bakeSamples(spec);
+    run.awaiting = false;
+    run.clearedAwait = false;
+    run.souvenir = false;
+    run.settling = false;
+    run.settleUntil = 0;
+    run.coverage = 0;
+    run.cover = { pct: 0, parts: [0] };
+    run.coverParts = [];
+    run.hitMs = 0;
+    run.busy = false;
+    run.slamT = 0;
+    run.clothX = 0;
+    run.clothZ = 0;
+    run.clothTug = null;
+    run.clothWave = 0;
+    run.clothAng = 0;
+    if (world) {
+      world.tugBannerT = 0;
+      if (world.tugBanner) world.tugBanner.visible = false;
+      if (world.tugCord) world.tugCord.visible = false;
+    }
+    hideToast();
+    setGreed(false);
+    liveCoverage();
+    paintRoomChrome(spec);
+    paintPips(spec, spec.maxDiscs);
+    setStatus(spec.enter);
+    if (run.kitRun) {
+      run.kitRun.depth = run.stagesCleared | 0;
+      run.kitRun.score = run.score | 0;
+    }
+    paintKitHud(spec);
+    pokeDepth();
+    PF.setAura("think");
+    setAuraMood("think", 1600);
+    camPunch = 0.45;
+    if (world) rebuildSpots(spec, makeSpotShapes(spec, run.origin));
+  }
+
+  function beginKitRun() {
+    if (PF.runKit && typeof PF.runKit.startRun === "function") {
+      const ctx = PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1 });
+      if (ctx) return ctx;
+    }
+    if (typeof PF.spendDemoCoin === "function" && !PF.spendDemoCoin(GAME_ID)) return null;
+    return { gameId: GAME_ID, alive: true, depth: 0, score: 0, strikes: 0 };
+  }
+
+  function start() {
+    if (isLive()) return;
+    declareP0();
+    const kitRun = beginKitRun();
+    if (!kitRun) {
+      setStatus("Out of demo coins · grant a pass");
+      PF.refreshNightBoard();
+      return;
+    }
+    const spec = coverspotStageParams(1);
+    run = {
+      done: false,
+      dying: false,
+      kitRun,
+      spec,
+      origin: { x: 0, z: 0 },
+      samples: bakeSamples(spec),
+      discs: [],
+      coverage: 0,
+      cover: { pct: 0, parts: [0] },
+      coverParts: [],
+      bestPct: 0,
+      stagesCleared: 0,
+      discsPlaced: 0,
+      tableMisses: 0,
+      score: 0,
+      awaiting: false,
+      clearedAwait: false,
+      souvenir: false,
+      settling: false,
+      settleUntil: 0,
+      busy: false,
+      t: 0,
+      last: 0,
+      hitMs: 0,
+      slamT: 0,
+      clothX: 0,
+      clothZ: 0,
+      clothTug: null,
+      clothWave: 0,
+      clothAng: 0,
+      deathHold: 0,
+      deathNote: "bust",
+      closedStamp: false,
+    };
+    const startBtn = $("coverSpotStart");
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.hidden = true;
+    }
+    if ($("coverSpotVerdict")) $("coverSpotVerdict").hidden = true;
+    kit.hideResult("coverSpotResult");
+    PF.setTier("coverSpotTier", "", "");
+    kit.setMode(card(), "play");
+    setPlaying(true);
+    setStamp(false);
+    stampDepthCopy();
+    enterSpot(spec);
+    if ($("coverSpotDrop")) $("coverSpotDrop").hidden = false;
+    if ($("coverSpotCash")) {
+      $("coverSpotCash").hidden = true;
+      $("coverSpotCash").disabled = true;
+      $("coverSpotCash").textContent = "CASH OUT";
+    }
+    PF.focusCard("coverSpotCard", true);
+    bootWorld();
+    startLoop();
+    resizeWorld();
+  }
+
+  let toastTimer = 0;
+
+  function showToast(text) {
+    const el = $("coverSpotToast");
+    if (el) {
+      el.hidden = false;
+      el.textContent = text;
+    }
+    toastTimer = 1300;
+  }
+
+  function hideToast() {
+    const el = $("coverSpotToast");
+    if (el) el.hidden = true;
+    toastTimer = 0;
+  }
+
+  function coachStatus() {
+    if (!run || !run.spec || run.awaiting || run.dying) return;
+    const spec = run.spec;
+    const pct = Math.floor((run.coverage || 0) * 100 + 1e-6);
+    const left = Math.max(0, spec.maxDiscs - run.discs.length);
+    const need = spec.targetPct;
+    if (run.clothTug && run.clothTug.flashed) return;
+    if (!run.discs.length) {
+      setStatus(spec.enter);
+      return;
+    }
+    if (pct >= need) {
+      setStatus(`${pct}% honest · mark hit. Hold…`);
+      return;
+    }
+    if (run.discs.length === 1) {
+      setStatus(`${pct}% honest · one disc never covers. Spread the next plates around the rim. ${left} brass left.`);
+      return;
+    }
+    setStatus(`${pct}% honest · need ${need}% · ${left} brass left. Stacking the middle won’t cover.`);
+  }
+
+  function tugCloth(disc) {
+    if (!run || !run.spec) return;
+    const yank = run.spec.clothJerk || 0;
+    if (yank <= 0) return;
+    const cap = run.spec.clothCap || 0.06;
+    const residual = yank * 0.42;
+    const origin = clothOrigin();
+    let ang = Math.atan2(disc.z - origin.z, disc.x - origin.x);
+    if (!ang && ang !== 0) ang = Math.random() * Math.PI * 2;
+    if (Math.hypot(disc.x - origin.x, disc.z - origin.z) < 0.04) {
+      ang = (run.discs.length * 1.7) % (Math.PI * 2);
+    }
+    run.clothAng = ang;
+    const fromX = run.clothX || 0;
+    const fromZ = run.clothZ || 0;
+    const restX = clamp(fromX + Math.cos(ang) * residual, -cap, cap);
+    const restZ = clamp(fromZ + Math.sin(ang) * residual, -cap, cap);
+    const yankX = clamp(fromX + Math.cos(ang) * yank, -cap * 1.35, cap * 1.35);
+    const yankZ = clamp(fromZ + Math.sin(ang) * yank, -cap * 1.35, cap * 1.35);
+    run.clothTug = {
+      delay: run.spec.clothDelay || 80,
+      yankDur: 160,
+      settleDur: 200,
+      t: 0,
+      fromX, fromZ, yankX, yankZ, restX, restZ,
+      flashed: false,
+    };
+    run.clothWave = 1;
+    if (world) world.clothDirty = true;
+  }
+
+  function stepCloth(dt) {
+    if (!run) return;
+    if (toastTimer > 0) {
+      toastTimer -= dt;
+      if (toastTimer <= 0) {
+        hideToast();
+        coachStatus();
+      }
+    }
+    if (run.clothWave > 0) run.clothWave = Math.max(0, run.clothWave - dt * 0.003);
+    const tug = run.clothTug;
+    if (!tug) return;
+    tug.t += dt;
+    if (tug.t < tug.delay) return;
+    const tYank = tug.t - tug.delay;
+    let x;
+    let z;
+    if (tYank < tug.yankDur) {
+      const u = clamp(tYank / tug.yankDur, 0, 1);
+      const e = 1 - (1 - u) * (1 - u);
+      x = lerp(tug.fromX, tug.yankX, e);
+      z = lerp(tug.fromZ, tug.yankZ, e);
+    } else {
+      const u = clamp((tYank - tug.yankDur) / tug.settleDur, 0, 1);
+      const e = u * u * (3 - 2 * u);
+      x = lerp(tug.yankX, tug.restX, e);
+      z = lerp(tug.yankZ, tug.restZ, e);
+    }
+    run.clothX = x;
+    run.clothZ = z;
+    if (!tug.flashed) {
+      tug.flashed = true;
+      showToast("CLOTH TUG — the red peeked. That’s the cheat.");
+      kit.sfx("shove");
+      camShake = 0.9;
+      setAuraMood("point", 1100);
+      PF.setAura("point");
+      if (world) {
+        world.tugBannerT = 780;
+        world.clothFlash = 1;
+      }
+    }
+    liveCoverage();
+    if (tYank >= tug.yankDur + tug.settleDur) {
+      run.clothX = tug.restX;
+      run.clothZ = tug.restZ;
+      run.clothTug = null;
+      liveCoverage();
+      coachStatus();
+    }
+  }
+
+  function dropAt(x, z) {
+    if (!isLive() || !run.spec) return;
+    if (run.awaiting || run.settling || run.busy || run.dying) return;
+    const spec = run.spec;
+    if (run.discs.length >= spec.maxDiscs) {
+      setStatus("No brass left. Watch the cover — or bust.");
+      return;
+    }
+    const rest = settleOf(x, z, spec);
+    if (!onTable(x, z, spec.r) && !onTable(rest.x, rest.z, spec.r)) {
+      run.tableMisses += 1;
+      camShake = 1.3;
+      kit.sfx("miss");
+      setAuraMood("bad", 900);
+      PF.setAura("point");
+      if (rk() && typeof rk().reportStrike === "function") rk().reportStrike(run.kitRun, "table_miss");
+      setStatus(run.tableMisses >= MISS_DEATH
+        ? "Second bounce off the table."
+        : "Off the felt. Two table misses and the run is done.");
+      if (run.tableMisses >= MISS_DEATH) finish("miss_table");
+      return;
+    }
+    const disc = {
+      x, z,
+      x0: x,
+      z0: z,
+      restX: rest.x,
+      restZ: rest.z,
+      r: spec.r,
+      alt: spec.dropH || 1.18,
+      spin: Math.random() * Math.PI,
+      falling: true,
+      trapped: false,
+      bounce: spec.bounce > 1,
+      life: 0,
+      fallMs: spec.scatter ? 480 : 300,
+    };
+    run.discs.push(disc);
+    run.discsPlaced += 1;
+    run.busy = true;
+    camPunch = 0.55;
+    kit.sfx("drop");
+    tugCloth(disc);
+    paintPips(spec, Math.max(0, spec.maxDiscs - run.discs.length));
+    setAuraMood("watch", 700);
+  }
+
+  function dropFromButton() {
+    if (!isLive()) return;
+    dropAt(pointer.on ? pointer.x : 0, pointer.on ? pointer.z : 0);
+  }
+
+  function landDisc(d) {
+    if (!run || run.done) return;
+    const spec = run.spec;
+    const ox = clothOrigin();
+    if (inWell(d.x, d.z, spec, ox)) {
+      d.trapped = true;
+      d.falling = true;
+      d.vy = -1.6;
+      kit.sfx("pit");
+      camShake = 1.1;
+      setAuraMood("bad", 1000);
+      setStatus(AURA.well);
+      burstSparks(d.x, d.z, 0xc41e3a);
+      return;
+    }
+    if (!onTable(d.x, d.z, d.r * 0.4)) {
+      d.falling = false;
+      d.trapped = true;
+      d.alt = 0;
+      run.tableMisses += 1;
+      kit.sfx("miss");
+      camShake = 1.1;
+      if (rk() && typeof rk().reportStrike === "function") rk().reportStrike(run.kitRun, "table_miss");
+      if (run.tableMisses >= MISS_DEATH) {
+        finish("miss_table");
+        return;
+      }
+      setStatus("It kissed the rail and fell off. Two of those end the night.");
+      return;
+    }
+    d.falling = false;
+    d.alt = 0;
+    d.x = d.restX;
+    d.z = d.restZ;
+    kit.sfx("tray");
+    burstSparks(d.x, d.z, 0xf0d09a);
+    camPunch = 0.28;
+    liveCoverage();
+    coachStatus();
+  }
+
+  function stepDiscs(dt) {
+    if (!run) return;
+    let falling = false;
+    run.discs.forEach((d) => {
+      if (!d.falling) return;
+      falling = true;
+      d.life += dt;
+      d.spin += dt * 0.012;
+      if (d.trapped) {
+        d.alt -= dt * 0.0022;
+        if (d.alt < -0.9) d.falling = false;
+        return;
+      }
+      const dur = d.fallMs || 300;
+      const u = clamp(d.life / dur, 0, 1);
+      const hopAt = d.bounce ? 0.58 : 0.82;
+      if (u >= 1) {
+        landDisc(d);
+        return;
+      }
+      if (u < hopAt) {
+        const t = u / hopAt;
+        d.alt = (run.spec.dropH || 1.18) * (1 - t * t);
+        d.x = d.x0;
+        d.z = d.z0;
+      } else {
+        const t = (u - hopAt) / (1 - hopAt);
+        d.x = lerp(d.x0, d.restX, t);
+        d.z = lerp(d.z0, d.restZ, t);
+        d.alt = (run.spec.dropH || 1.18) * 0.16 * Math.sin(t * Math.PI);
+      }
+    });
+    run.busy = falling;
+  }
+
+  function maybeClear(dt) {
+    if (!run || run.done || run.busy || run.awaiting || run.dying) return;
+    if (run.clothTug) return;
+    const spec = run.spec;
+    liveCoverage();
+    if (spec.drift === "jitter") {
+      const phase = stampPhase(spec, run.t);
+      if (phase.slam) {
+        run.slamT = Math.min(280, (run.slamT || 0) + dt);
+      } else {
+        run.slamT = 0;
+      }
+      if (phase.hopping) {
+        run.hitMs = 0;
+        return;
+      }
+      if (!hitTarget(spec, run.cover)) {
+        if (!phase.slam) run.hitMs = 0;
+        if (phase.slam && run.discs.length >= spec.maxDiscs && !run.settling) {
+          run.settling = true;
+          run.settleUntil = run.t + 420;
+        }
+        return;
+      }
+      run.hitMs += dt;
+      if (run.hitMs > 220) clearStage();
+      return;
+    }
+    if (!hitTarget(spec, run.cover)) {
+      run.hitMs = 0;
+      if (run.discs.length >= spec.maxDiscs && !run.busy && !run.settling) {
+        run.settling = true;
+        run.settleUntil = run.t + (spec.drift === "none" ? 780 : SETTLE_MS);
+        setStatus(`${Math.floor(run.coverage * 100)}% · needed ${spec.targetPct}%. Last plate is down.`);
+      }
+      return;
+    }
+    const landed = run.discs.filter((d) => !d.falling && !d.trapped).length;
+    if (landed < 1) return;
+    const need = spec.drift === "slow" ? 420 : 180;
+    run.hitMs += dt;
+    if (run.hitMs >= need) clearStage();
+  }
+
+  function clearStage() {
+    if (!run || run.awaiting) return;
+    const spec = run.spec;
+    const pct = Math.floor(run.coverage * 100);
+    run.stagesCleared += 1;
+    run.score += 200 * run.stagesCleared + pct;
+    run.awaiting = true;
+    run.clearedAwait = true;
+    run.settling = false;
+    run.hitMs = 0;
+    if (run.kitRun) {
+      run.kitRun.depth = run.stagesCleared;
+      run.kitRun.score = run.score;
+    }
+    tellDepth();
+    pokeDepth();
+    kit.sfx("rack");
+    camPunch = 0.7;
+    setAuraMood("celebrate", 1400);
+    PF.setAura("celebrate");
+    setGreed(true);
+    const next = coverspotStageParams(run.stagesCleared + 1);
+    const lastAuthored = run.stagesCleared >= AUTHORED_COUNT && !spec.coda;
+    if (!next) {
+      run.souvenir = true;
+      setText("coverSpotGreedPct", `${pct}%`);
+      setText("coverSpotGreedHint", "Authored felts done. CASH OUT for the souvenir — or that’s the ride.");
+      setText("coverSpotDropAgain", "SOUVENIR");
+      setStatus(`SPOT ${run.stagesCleared} locked · ${pct}% honest. CASH OUT or SOUVENIR.`);
+    } else if (lastAuthored) {
+      setText("coverSpotGreedPct", `${pct}%`);
+      setText("coverSpotGreedHint", "Seven spots gilded. CASH OUT and walk — or DROP AGAIN into ENDLESS.");
+      setText("coverSpotDropAgain", "DROP AGAIN · ENDLESS");
+      setStatus(`SPOT ${run.stagesCleared} locked · ${pct}% honest. Cash out, or greed-drop ENDLESS.`);
+    } else {
+      setText("coverSpotGreedPct", `${pct}%`);
+      setText("coverSpotGreedHint", next.coda
+        ? "CASH OUT and bank it — or DROP AGAIN into ENDLESS."
+        : "CASH OUT and bank this spot — or DROP AGAIN on the next felt.");
+      setText("coverSpotDropAgain", next.coda ? "DROP AGAIN · ENDLESS" : "DROP AGAIN");
+      setStatus(`${hudStageLine(spec)} covered · ${pct}% honest. Cash out, or greed-drop the next felt.`);
+    }
+    const cash = $("coverSpotCash");
+    if (cash) {
+      cash.hidden = false;
+      cash.disabled = false;
+      cash.classList.add("cash-scream");
+    }
+    burstSparks(run.origin.x, run.origin.z, GOLD);
+  }
+
+  function advanceStage() {
+    if (!run || run.done || !run.clearedAwait) return;
+    if (run.souvenir) {
+      finish("souvenir");
+      return;
+    }
+    const next = coverspotStageParams(run.stagesCleared + 1);
+    if (!next) {
+      finish("souvenir");
+      return;
+    }
+    kit.sfx("flip");
+    enterSpot(next);
+  }
+
+  function cashOut() {
+    if (!run || run.done || !run.clearedAwait) return;
+    finish(run.souvenir ? "souvenir" : "cash");
+  }
+
+  function challengeLine(depth) {
+    if (rk() && typeof rk().challengeText === "function") {
+      return rk().challengeText("Cover-the-Spot stage", depth, GAME_ID);
+    }
+    return `Beat my Cover-the-Spot stage ${depth} on Penny Fever`;
+  }
+
+  function deathReasonOf(reason) {
+    if (reason === "cash" || reason === "souvenir") return "cashed_out";
+    if (reason === "leave") return "leave";
+    if (reason === "miss_table") return "miss_table";
+    return "bust";
+  }
+
+  function auraLine(reason, cashed, depth) {
+    if (reason === "leave") return AURA.leave;
+    if (reason === "souvenir") return AURA.souvenir;
+    if (cashed) return depth >= 6 ? AURA.deep(depth) : AURA.cash;
+    if (reason === "miss_table") return AURA.miss_table;
+    if (depth >= 6) return AURA.deep(depth);
+    return AURA.bust;
   }
 
   function closeKitRun(partial) {
@@ -304,14 +1900,13 @@
     if (ctx && rk() && typeof rk().finishRun === "function") {
       try {
         return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
-      } catch (_) { /* fall through */ }
+      } catch (_) { /* fall */ }
     }
-    return kit.persistRun(PF.getState(), GAME_ID, partial);
+    kit.persistRun(PF.getState(), GAME_ID, partial);
+    return null;
   }
 
   function persistDepth(partial) {
-    if (run && run.persisted) return;
-    if (run) run.persisted = true;
     const state = PF.getState();
     const payload = {
       depth: partial.depth | 0,
@@ -328,1503 +1923,37 @@
       state.bestDepth[GAME_ID] = Math.max(state.bestDepth[GAME_ID] || 0, payload.depth);
     }
     closeKitRun(payload);
+    kit.persistRun(state, GAME_ID, payload);
     if (typeof PF.saveState === "function") PF.saveState();
-  }
-
-  function saveLiveDepth() {
-    if (!run) return;
-    const state = PF.getState();
-    if (!state) return;
-    const depth = run.stagesCleared | 0;
-    const score = run.score | 0;
-    const pct = Math.floor((run.bestPct || 0) * 100);
-    state.bestCoverStages = Math.max(state.bestCoverStages || 0, depth);
-    state.bestCoverPct = Math.max(state.bestCoverPct || 0, pct);
-    state.bestCoverDiscs = Math.max(state.bestCoverDiscs || 0, run.discsPlaced | 0);
-    state.bestDepth = state.bestDepth || {};
-    state.bestDepth[GAME_ID] = Math.max(state.bestDepth[GAME_ID] || 0, depth);
-    if (run.kitRun) {
-      run.kitRun.depth = depth;
-      run.kitRun.score = score;
-    }
-    if (typeof PF.saveState === "function") PF.saveState();
-    pokeDepth();
-  }
-
-  function beginKitRun() {
-    let feverNode = false;
-    if (typeof PF.spendDemoCoin === "function") {
-      if (!PF.spendDemoCoin(GAME_ID)) return null;
-      feverNode = true;
-    }
-    if (PF.runKit && typeof PF.runKit.startRun === "function") {
-      try {
-        const ctx = PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1, feverNode });
-        if (ctx) return ctx;
-      } catch (_) { /* local ctx */ }
-    }
-    return {
-      gameId: GAME_ID,
-      startedAt: Date.now(),
-      feverNode,
-      feverGate: null,
-      depth: 0,
-      score: 0,
-      strikes: 0,
-      alive: true,
-    };
-  }
-
-  function mountGreed(runCtx) {
-    const engines = rk() && rk().engines;
-    if (!engines || !engines.GreedFloor || typeof engines.GreedFloor.mount !== "function" || !runCtx) {
-      return {
-        id: "GreedFloor",
-        cashOut() { finish("cash"); },
-        action() {},
-        get floor() { return run ? run.spec.id : 1; },
-      };
-    }
-    try {
-      /* Chrome only. Stall owns disc drops, coverage, bust / miss_table.
-       * deathRule always false so GreedFloor.action cannot steal the run.
-       * Buttons call stall cashOut() — never engine.cashOut() — so depth = spots cleared. */
-      const mounted = engines.GreedFloor.mount(card(), {
-        cashOut: true,
-        stageParams: coverspotStageParams,
-        doAction() {},
-        evaluate() {
-          if (!run) return { coverage: 0, gain: 0, risk: 0 };
-          return {
-            coverage: run.coverage,
-            discsUsed: run.discs.length,
-            targetPct: run.spec.targetPct,
-            gain: 0,
-            risk: 0,
-          };
-        },
-        canCashOut() { return canBank(); },
-        deathRule() { return false; },
-      }, runCtx);
-      if (runCtx) {
-        runCtx.depth = 0;
-        runCtx.score = 0;
-      }
-      return mounted;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function maxExtent(spec) {
-    if (!spec) return BASE_R;
-    if (spec.kind === "oval") {
-      const rx = spec.R * (spec.ovalW || 1.3);
-      const ry = spec.R * (spec.ovalH == null ? 1 : spec.ovalH);
-      const rot = spec.ovalRot || 0;
-      const c = Math.cos(rot);
-      const s = Math.sin(rot);
-      const hx = Math.sqrt(rx * rx * c * c + ry * ry * s * s);
-      const hy = Math.sqrt(rx * rx * s * s + ry * ry * c * c);
-      return Math.max(hx, hy);
-    }
-    if (spec.kind === "twin") return twinHalf(spec) + (spec.twinR || spec.R * 0.46);
-    if (spec.kind === "blob") {
-      return spec.R * (1 + (spec.blobA || 0) + (spec.blobB || 0) + 0.1) + (spec.stampAmp || 20);
-    }
-    const walk = spec.drift === "slow" || spec.kind === "drift"
-      ? (spec.driftRad || 34)
-      : spec.drift === "jitter" || spec.kind === "blob"
-        ? (spec.stampAmp || 20)
-        : 0;
-    return spec.R + walk * 0.25;
-  }
-
-  function twinHalf(spec) {
-    return (spec && spec.twinSep != null ? spec.twinSep : 88) * 0.5;
-  }
-
-  /* Blob silhouette is authored and stable. Jitter is a stamp, not a morphing lottery. */
-  function blobRadius(theta, spec) {
-    const R = spec.R || BASE_R;
-    const phase = spec.blobPhase || 0;
-    return R * (1
-      + (spec.blobA || 0) * Math.sin(3 * theta + phase)
-      + (spec.blobB || 0) * Math.sin(5 * theta + phase * 1.7)
-      + 0.05 * Math.sin(2 * theta + phase * 0.6));
-  }
-
-  function stampPhase(spec, t) {
-    const period = (spec && spec.stampMs) || 500;
-    const amp = (spec && spec.stampAmp) || 20;
-    const hop = Math.floor((t || 0) / period);
-    const k = ((t || 0) % period) / Math.max(1, period);
-    const holding = k < STAMP_HOLD;
-    return {
-      period,
-      amp,
-      hop,
-      k,
-      holding,
-      hopping: !holding,
-      telegraph: holding && k >= STAMP_HOLD - 0.18,
-    };
-  }
-
-  function stampPos(hop, amp) {
-    const a = hop * 2.399;
-    return { x: Math.sin(a) * amp, y: Math.cos(a * 1.37) * amp * 0.72 };
-  }
-
-  /* S4: slow figure-8 walk you can lead. S5: jitter is a hold-then-hop STAMP, not the same sine. */
-  function spotOffset(spec, t) {
-    const kind = spec && spec.drift;
-    if (kind === "slow" || (spec && spec.kind === "drift")) {
-      const rad = spec.driftRad || 34;
-      const period = spec.driftPeriod || 5200;
-      const ang = ((t || 0) / period) * Math.PI * 2;
-      return { x: Math.cos(ang) * rad, y: Math.sin(ang * 2) * rad * 0.46 };
-    }
-    if (kind === "jitter" || (spec && spec.kind === "blob")) {
-      const ph = stampPhase(spec, t);
-      const p0 = stampPos(ph.hop, ph.amp);
-      if (ph.holding) return p0;
-      const p1 = stampPos(ph.hop + 1, ph.amp);
-      const u = (ph.k - STAMP_HOLD) / Math.max(0.001, 1 - STAMP_HOLD);
-      const e = u * u * (3 - 2 * u);
-      return { x: p0.x + (p1.x - p0.x) * e, y: p0.y + (p1.y - p0.y) * e };
-    }
-    return { x: 0, y: 0 };
-  }
-
-  function makeSpots(spec, origin, t) {
-    const home = origin || SPOT_HOME;
-    const off = spotOffset(spec, t || 0);
-    const pad = maxExtent(spec) + 8;
-    const ox = clamp(home.x + off.x, FELT.x + pad, FELT.x + FELT.w - pad);
-    const oy = clamp(home.y + off.y, FELT.y + pad, FELT.y + FELT.h - pad);
-    const kind = spec.kind || "circle";
-    if (kind === "oval") {
-      return [{
-        kind: "oval",
-        x: ox,
-        y: oy,
-        rx: spec.R * (spec.ovalW || 1.3),
-        ry: spec.R * (spec.ovalH == null ? 1 : spec.ovalH),
-        rot: spec.ovalRot || 0,
-      }];
-    }
-    if (kind === "twin") {
-      const sep = twinHalf(spec);
-      const r = spec.twinR;
-      return [
-        { kind: "circle", x: ox - sep, y: oy, r, tag: "L" },
-        { kind: "circle", x: ox + sep, y: oy, r, tag: "R" },
-      ];
-    }
-    if (kind === "ring") {
-      return [{ kind: "ring", x: ox, y: oy, r: spec.R, inner: spec.R * spec.innerRatio }];
-    }
-    if (kind === "blob") {
-      return [{ kind: "blob", x: ox, y: oy, r: spec.R, spec }];
-    }
-    return [{ kind: "circle", x: ox, y: oy, r: spec.R }];
-  }
-
-  function inSpot(shape, x, y) {
-    const dx = x - shape.x;
-    const dy = y - shape.y;
-    if (shape.kind === "oval") {
-      const rot = shape.rot || 0;
-      const c = Math.cos(rot);
-      const s = Math.sin(rot);
-      const lx = dx * c + dy * s;
-      const ly = -dx * s + dy * c;
-      const rx = shape.rx || 1;
-      const ry = shape.ry || 1;
-      return (lx * lx) / (rx * rx) + (ly * ly) / (ry * ry) <= 1;
-    }
-    if (shape.kind === "ring") {
-      const d2 = dx * dx + dy * dy;
-      return d2 <= shape.r * shape.r && d2 >= shape.inner * shape.inner;
-    }
-    if (shape.kind === "blob") {
-      const rr = blobRadius(Math.atan2(dy, dx), shape.spec);
-      return dx * dx + dy * dy <= rr * rr;
-    }
-    const r = shape.r || 0;
-    return dx * dx + dy * dy <= r * r;
-  }
-
-  function shapeBounds(shape) {
-    if (shape.kind === "oval") {
-      const rx = shape.rx || 1;
-      const ry = shape.ry || 1;
-      const rot = shape.rot || 0;
-      const c = Math.cos(rot);
-      const s = Math.sin(rot);
-      const hx = Math.sqrt(rx * rx * c * c + ry * ry * s * s);
-      const hy = Math.sqrt(rx * rx * s * s + ry * ry * c * c);
-      return { x: shape.x - hx, y: shape.y - hy, w: hx * 2, h: hy * 2 };
-    }
-    const r = shape.kind === "blob" ? (shape.r || BASE_R) * 1.5 : (shape.r || BASE_R);
-    return { x: shape.x - r, y: shape.y - r, w: r * 2, h: r * 2 };
-  }
-
-  function coverageOfShape(shape, discs, grid) {
-    if (!shape) return 0;
-    const b = shapeBounds(shape);
-    const n = grid || GRID;
-    const stepX = b.w / n;
-    const stepY = b.h / n;
-    let total = 0;
-    let covered = 0;
-    const landed = discs.filter((d) => !d.falling);
-    for (let i = 0; i < n; i += 1) {
-      const x = b.x + (i + 0.5) * stepX;
-      for (let j = 0; j < n; j += 1) {
-        const y = b.y + (j + 0.5) * stepY;
-        if (!inSpot(shape, x, y)) continue;
-        total += 1;
-        for (let k = 0; k < landed.length; k += 1) {
-          const d = landed[k];
-          const ddx = x - d.x;
-          const ddy = y - d.y;
-          if (ddx * ddx + ddy * ddy <= d.r * d.r) {
-            covered += 1;
-            break;
-          }
-        }
-      }
-    }
-    return total ? covered / total : 0;
-  }
-
-  function coverageReport(shapes, discs, grid) {
-    const parts = (shapes || []).map((s) => coverageOfShape(s, discs, grid));
-    const avg = parts.length ? parts.reduce((a, b) => a + b, 0) / parts.length : 0;
-    return { avg, parts };
-  }
-
-  /* Twin: BOTH circles must hit targetPct — split attention, not average cheese. */
-  function hitTarget(spec, coverage, parts) {
-    if (!spec) return false;
-    if (spec.kind === "twin" && parts && parts.length === 2) {
-      return parts[0] * 100 + 1e-6 >= spec.targetPct && parts[1] * 100 + 1e-6 >= spec.targetPct;
-    }
-    return coverage * 100 + 1e-6 >= spec.targetPct;
-  }
-
-  function discWastedInHole(spec, x, y, shapes) {
-    if (!spec || spec.kind !== "ring") return false;
-    const s0 = (shapes && shapes[0]) || null;
-    if (!s0) return false;
-    const inner = s0.inner != null ? s0.inner : spec.R * spec.innerRatio;
-    const dx = x - s0.x;
-    const dy = y - s0.y;
-    return dx * dx + dy * dy <= inner * inner;
-  }
-
-  function twinMidDump(spec, x, y, shapes) {
-    if (!spec || spec.kind !== "twin" || !shapes || shapes.length < 2) return false;
-    const mx = (shapes[0].x + shapes[1].x) * 0.5;
-    const my = (shapes[0].y + shapes[1].y) * 0.5;
-    const dx = x - mx;
-    const dy = y - my;
-    return dx * dx + dy * dy <= spec.r * spec.r;
-  }
-
-  function idleDiscs(spec, shapes) {
-    const r = spec.r;
-    const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y };
-    if (spec.kind === "twin" && shapes[1]) {
-      return [
-        { x: shapes[0].x + 4, y: shapes[0].y - 3, r, falling: false },
-        { x: shapes[1].x - 5, y: shapes[1].y + 4, r, falling: false },
-      ];
-    }
-    if (spec.kind === "ring") {
-      const mid = ((s0.r || spec.R) + (s0.inner || spec.R * spec.innerRatio)) * 0.55;
-      return [
-        { x: s0.x, y: s0.y - mid, r, falling: false },
-        { x: s0.x + mid * 0.86, y: s0.y + mid * 0.5, r, falling: false },
-      ];
-    }
-    if (spec.kind === "oval") {
-      /* Stack the rounds in the middle so the blush ears stay uncovered. */
-      const rot = s0.rot || spec.ovalRot || 0;
-      const c = Math.cos(rot);
-      const s = Math.sin(rot);
-      return [
-        { x: s0.x - c * 6 + s * 7, y: s0.y - s * 6 - c * 7, r, falling: false },
-        { x: s0.x + c * 7 - s * 5, y: s0.y + s * 7 + c * 5, r, falling: false },
-      ];
-    }
-    if (spec.kind === "blob") {
-      return [
-        { x: s0.x - 10, y: s0.y - 6, r, falling: false },
-        { x: s0.x + 14, y: s0.y + 8, r, falling: false },
-      ];
-    }
-    return [
-      { x: s0.x - 12, y: s0.y - 9, r, falling: false },
-      { x: s0.x + 18, y: s0.y + 8, r, falling: false },
-    ];
-  }
-
-  function onFelt(x, y, r) {
-    const pad = Math.max(8, (r || 20) * 0.22);
-    return x > FELT.x + pad && x < FELT.x + FELT.w - pad && y > FELT.y + pad && y < FELT.y + FELT.h - pad;
-  }
-
-  function stampDepthCopy() {
-    const host = card();
-    if (!host) return;
-    const num = host.querySelector(".machine-number");
-    if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "vendor-vestibule-only coverspot-hud-tag";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    const body = host.querySelector("[data-pf-depth-copy]")
-      || host.querySelector(".vendor-vestibule-only:not([data-pf-depth-tag]):not(.card-hero):not(.signature-prop)");
-    if (body && body.tagName === "P") body.textContent = DEPTH_COPY.body;
-    const canvas = $("coverSpotCanvas");
-    if (canvas) {
-      canvas.style.pointerEvents = "auto";
-      canvas.classList.toggle("is-locked", !isLive());
-    }
-    if ((!run || run.done) && statusEl() && !host.classList.contains("is-result")) {
-      statusEl().textContent = DEPTH_COPY.status;
-    }
-    if ((!run || run.done) && !host.classList.contains("is-result") && !host.classList.contains("is-playing")) {
-      paintRoomChrome(attractSpec());
-    }
-  }
-
-  function punchStart() {
-    stampDepthCopy();
-    setStatus(DEPTH_COPY.punch);
-    const btn = $("coverSpotStart");
-    if (btn && !btn.hidden) {
-      try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-  }
-
-  function canBank() {
-    return !!(run && !run.done && run.awaiting && run.clearedAwait);
-  }
-
-  function greedHint() {
-    if (!run) return "Cash out, or drop again?";
-    if (run.souvenir) return "Authored ride complete. Bank the souvenir.";
-    const nid = nextLevelId(run.spec.id);
-    if (!nid) return "Authored ride over. Bank the souvenir.";
-    const next = coverspotStageParams(nid);
-    if (!next) return "Authored ride over. Bank the souvenir.";
-    if (next.coda) return "Authored ride ended. ENDLESS coda — or bank it?";
-    return `Clear. Next SPOT: ${next.name}`;
-  }
-
-  function setGreed(on, pct) {
-    const el = $("coverSpotGreed");
-    if (!el) return;
-    const show = !!(on && canBank());
-    el.hidden = !show;
-    const n = $("coverSpotGreedPct");
-    if (n) n.textContent = `${Math.floor((pct || 0) * 100)}%`;
-    const hint = $("coverSpotGreedHint");
-    if (hint) hint.textContent = greedHint();
-    const cash = $("coverSpotCash");
-    if (cash) {
-      cash.disabled = !show;
-      cash.classList.toggle("cash-scream", show);
-      cash.hidden = !show;
-      cash.textContent = run && run.souvenir ? "SOUVENIR" : "CASH OUT";
-    }
-    const drop = $("coverSpotDrop");
-    if (drop) {
-      drop.disabled = !run || run.done || run.busy || show || !!(run && run.settling);
-      drop.hidden = !run || run.done;
-    }
-    const again = $("coverSpotDropAgain");
-    if (again) {
-      const allowAgain = show && !run.souvenir;
-      again.disabled = !allowAgain;
-      again.hidden = !show;
-      again.classList.toggle("cash-scream", allowAgain);
-      if (run && run.spec && !run.souvenir) {
-        const nid = nextLevelId(run.spec.id);
-        const next = nid ? coverspotStageParams(nid) : null;
-        again.textContent = next && next.coda ? "ENDLESS" : "DROP AGAIN";
-      } else {
-        again.textContent = "DROP AGAIN";
-      }
-    }
-    const greedCash = $("coverSpotGreedCash");
-    if (greedCash) {
-      greedCash.disabled = !show;
-      greedCash.textContent = run && run.souvenir ? "SOUVENIR" : "CASH OUT";
-      greedCash.classList.toggle("cash-scream", show);
-    }
-  }
-
-  function paintKitHud(spec) {
-    const host = card();
-    if (!host) return;
-    const hud = host.querySelector("[data-runkit-hud='" + GAME_ID + "']") || host.querySelector(".coverspot-rk-hud");
-    if (!hud) return;
-    if (!spec || !run || run.done) {
-      hud.textContent = "";
-      return;
-    }
-    if (run.awaiting && run.clearedAwait) {
-      hud.textContent = run.souvenir
-        ? `SOUVENIR · ${hudStageLine(spec)}`
-        : `CLEAR · ${hudStageLine(spec)}`;
-      return;
-    }
-    hud.textContent = hudStageLine(spec);
-  }
-
-  function drawDisc(ctx, d, ghost) {
-    ctx.save();
-    ctx.globalAlpha = ghost ? 0.38 : (d.trapped ? 0.52 : (d.falling ? 0.88 : 1));
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-    const g = ctx.createRadialGradient(d.x - d.r * 0.28, d.y - d.r * 0.32, d.r * 0.1, d.x, d.y, d.r);
-    g.addColorStop(0, ghost ? "#fff6ec" : d.trapped ? "#c8b080" : "#f7e2b0");
-    g.addColorStop(0.55, d.trapped ? "#8a6230" : "#d4a45a");
-    g.addColorStop(1, "#5a3a18");
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.strokeStyle = ghost ? "rgba(240,208,154,0.55)" : "#5a3a18";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r * 0.42, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(90,58,20,0.45)";
-    ctx.stroke();
-    if (d.trapped) {
-      ctx.globalAlpha = 0.95;
-      ctx.strokeStyle = "#f0d09a";
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.moveTo(d.x - d.r * 0.46, d.y - d.r * 0.46);
-      ctx.lineTo(d.x + d.r * 0.46, d.y + d.r * 0.46);
-      ctx.moveTo(d.x + d.r * 0.46, d.y - d.r * 0.46);
-      ctx.lineTo(d.x - d.r * 0.46, d.y + d.r * 0.46);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function drawShape(ctx, shape, spec) {
-    ctx.save();
-    if (shape.kind === "oval") {
-      ctx.translate(shape.x, shape.y);
-      ctx.rotate(shape.rot || 0);
-      ctx.fillStyle = "#e24a6a";
-      ctx.strokeStyle = "#7a1018";
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, shape.rx, shape.ry, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      /* Honest round vs blush ears — S1 mismatch. */
-      ctx.strokeStyle = "rgba(240,208,154,0.55)";
-      ctx.setLineDash([4, 3]);
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.arc(0, 0, spec && spec.R ? spec.R : Math.min(shape.rx, shape.ry), 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "rgba(240,208,154,0.86)";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(-shape.rx, 0);
-      ctx.lineTo(shape.rx, 0);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,230,166,0.95)";
-      ctx.beginPath();
-      ctx.arc(shape.rx, 0, 3.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(-shape.rx, 0, 3.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(240,208,154,0.95)";
-      ctx.font = "10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("OVAL", 0, -shape.ry - 8);
-      ctx.fillText("EAR", shape.rx, 12);
-      ctx.fillText("EAR", -shape.rx, 12);
-      ctx.textAlign = "start";
-    } else if (shape.kind === "ring") {
-      ctx.fillStyle = "#c41e3a";
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.r, 0, Math.PI * 2);
-      ctx.arc(shape.x, shape.y, shape.inner, 0, Math.PI * 2, true);
-      ctx.fill("evenodd");
-      ctx.strokeStyle = "#7a1018";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.r, 0, Math.PI * 2);
-      ctx.stroke();
-      const well = ctx.createRadialGradient(shape.x, shape.y, 2, shape.x, shape.y, shape.inner);
-      well.addColorStop(0, "#0a140c");
-      well.addColorStop(0.72, "#16351f");
-      well.addColorStop(1, "#0c1c10");
-      ctx.fillStyle = well;
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.inner - 1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(240,208,154,0.7)";
-      ctx.setLineDash([3, 4]);
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.inner, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.strokeStyle = "rgba(196,30,58,0.85)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(shape.x - 9, shape.y - 9);
-      ctx.lineTo(shape.x + 9, shape.y + 9);
-      ctx.moveTo(shape.x + 9, shape.y - 9);
-      ctx.lineTo(shape.x - 9, shape.y + 9);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(240,208,154,0.95)";
-      ctx.font = "10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("HOLE", shape.x, shape.y - 6);
-      ctx.fillText("TRAP", shape.x, shape.y + 18);
-      ctx.textAlign = "start";
-    } else if (shape.kind === "blob") {
-      ctx.fillStyle = spec && spec.coda ? "#b01832" : "#c41e3a";
-      ctx.strokeStyle = "#7a1018";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      const steps = 64;
-      for (let i = 0; i <= steps; i += 1) {
-        const th = (i / steps) * Math.PI * 2;
-        const rr = blobRadius(th, shape.spec);
-        const px = shape.x + Math.cos(th) * rr;
-        const py = shape.y + Math.sin(th) * rr;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "rgba(240,208,154,0.92)";
-      ctx.font = "10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(spec && spec.coda ? "ENDLESS" : "BLOB", shape.x, shape.y - (shape.r || (spec && spec.R) || BASE_R) * 0.2);
-      ctx.textAlign = "start";
-    } else {
-      ctx.fillStyle = "#c41e3a";
-      ctx.strokeStyle = "#7a1018";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(shape.x, shape.y, shape.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      if (spec && spec.id === 2) {
-        ctx.strokeStyle = "rgba(240,208,154,0.45)";
-        ctx.setLineDash([4, 3]);
-        ctx.beginPath();
-        ctx.arc(shape.x, shape.y, spec.honestR || spec.R * HONEST_RATIO, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      if (shape.tag) {
-        ctx.fillStyle = "rgba(240,208,154,0.92)";
-        ctx.font = "11px Georgia, serif";
-        ctx.textAlign = "center";
-        ctx.fillText(shape.tag, shape.x, shape.y + 4);
-        ctx.textAlign = "start";
-      }
-    }
-    ctx.restore();
-  }
-
-  function drawDiscGhostHint(ctx, spec, shapes) {
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,230,166,0.42)";
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1.2;
-    if (spec.kind === "twin") {
-      shapes.forEach((s) => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, spec.r, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-      /* Mid dump is the lie — ghost it as a forbidden well, not a hint. */
-      const midX = shapes[0] && shapes[1] ? (shapes[0].x + shapes[1].x) * 0.5 : SPOT_HOME.x;
-      const midY = shapes[0] && shapes[1] ? (shapes[0].y + shapes[1].y) * 0.5 : SPOT_HOME.y;
-      ctx.setLineDash([2, 5]);
-      ctx.strokeStyle = "rgba(196,30,58,0.55)";
-      ctx.beginPath();
-      ctx.arc(midX, midY, spec.r * 0.7, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (spec.kind === "ring") {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y, r: spec.R, inner: spec.R * spec.innerRatio };
-      const mid = ((s0.r || spec.R) + (s0.inner || spec.R * spec.innerRatio)) * 0.5;
-      ctx.beginPath();
-      ctx.arc(s0.x, s0.y, mid, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([2, 6]);
-      ctx.strokeStyle = "rgba(196,30,58,0.55)";
-      ctx.beginPath();
-      ctx.arc(s0.x, s0.y, spec.r * 0.45, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (spec.kind === "oval") {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y, rot: 0, rx: spec.R };
-      const rot = s0.rot || spec.ovalRot || 0;
-      const along = (s0.rx || spec.R * 1.3) - spec.r * 0.55;
-      ctx.beginPath();
-      ctx.arc(s0.x + Math.cos(rot) * along, s0.y + Math.sin(rot) * along, spec.r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(s0.x - Math.cos(rot) * along, s0.y - Math.sin(rot) * along, spec.r, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (spec.kind === "drift" || spec.drift === "slow") {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y };
-      const tNow = run ? run.t : idleClock;
-      const nowOff = spotOffset(spec, tNow);
-      const ahead = spotOffset(spec, tNow + 520);
-      ctx.beginPath();
-      ctx.arc(s0.x, s0.y, spec.r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(255,230,166,0.32)";
-      ctx.beginPath();
-      ctx.arc(s0.x + (ahead.x - nowOff.x), s0.y + (ahead.y - nowOff.y), spec.r, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y };
-      ctx.beginPath();
-      ctx.arc(s0.x, s0.y, spec.r, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    ctx.restore();
-  }
-
-  function drawFeltTell(ctx, spec, shapes, t) {
-    ctx.save();
-    ctx.fillStyle = "rgba(240,208,154,0.92)";
-    ctx.font = "10px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText(roomTell(spec), W / 2, FELT.y + 16);
-    if (spec.kind === "twin" && shapes[0] && shapes[1]) {
-      ctx.strokeStyle = "rgba(12,6,9,0.5)";
-      ctx.setLineDash([4, 5]);
-      ctx.beginPath();
-      ctx.moveTo(W / 2, FELT.y + 24);
-      ctx.lineTo(W / 2, FELT.y + FELT.h - 12);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(240,208,154,0.82)";
-      ctx.fillText("LEFT", shapes[0].x, shapes[0].y + shapes[0].r + 14);
-      ctx.fillText("RIGHT", shapes[1].x, shapes[1].y + shapes[1].r + 14);
-      ctx.fillText("BOTH", W / 2, FELT.y + FELT.h - 10);
-    }
-    if (spec.kind === "drift" || spec.drift === "slow") {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y };
-      const nowOff = spotOffset(spec, t || 0);
-      ctx.strokeStyle = "rgba(240,208,154,0.28)";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      for (let i = 0; i <= 10; i += 1) {
-        const off = spotOffset(spec, (t || 0) + i * 180);
-        const px = s0.x + (off.x - nowOff.x);
-        const py = s0.y + (off.y - nowOff.y);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-      const later = spotOffset(spec, (t || 0) + 480);
-      const dx = later.x - nowOff.x;
-      const dy = later.y - nowOff.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
-      const rad = (s0.r || spec.R) + 14;
-      const ax = s0.x + ux * rad;
-      const ay = s0.y + uy * rad;
-      ctx.strokeStyle = "rgba(240,208,154,0.85)";
-      ctx.fillStyle = "rgba(240,208,154,0.85)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(s0.x + ux * (s0.r || spec.R) * 0.35, s0.y + uy * (s0.r || spec.R) * 0.35);
-      ctx.lineTo(ax, ay);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(ax - ux * 8 - uy * 5, ay - uy * 8 + ux * 5);
-      ctx.lineTo(ax - ux * 8 + uy * 5, ay - uy * 8 - ux * 5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.font = "9px Georgia, serif";
-      ctx.fillText("LEAD", ax + ux * 12, ay + uy * 12);
-    }
-    if (spec.drift === "jitter" || spec.kind === "blob") {
-      const s0 = shapes[0] || { x: SPOT_HOME.x, y: SPOT_HOME.y };
-      const ph = stampPhase(spec, t || 0);
-      ctx.strokeStyle = ph.telegraph ? "rgba(240,208,154,0.9)" : "rgba(240,208,154,0.28)";
-      ctx.setLineDash(ph.holding ? [3, 4] : []);
-      ctx.lineWidth = ph.telegraph ? 2.4 : 1.4;
-      ctx.beginPath();
-      ctx.arc(s0.x, s0.y, ph.telegraph ? 20 + (ph.k - (STAMP_HOLD - 0.18)) * 40 : 16, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(240,208,154,0.92)";
-      ctx.font = "10px Georgia, serif";
-      ctx.fillText(ph.telegraph ? "STAMP" : ph.hopping ? "HOP" : "HOLD", s0.x, s0.y - (s0.r || spec.R) - 8);
-    }
-    ctx.textAlign = "start";
-    ctx.restore();
-  }
-
-  function drawMeter(ctx, spec, coverage, parts) {
-    const x = 28;
-    const y = H - 36;
-    const w = W - 56;
-    const need = spec.targetPct / 100;
-    const twin = spec.kind === "twin" && parts && parts.length === 2;
-    const shown = twin ? Math.min(parts[0], parts[1]) : coverage;
-    ctx.fillStyle = "rgba(12,6,9,0.78)";
-    ctx.fillRect(x, y - (twin ? 10 : 0), w, twin ? 26 : 16);
-    ctx.strokeStyle = "rgba(212,164,90,0.55)";
-    ctx.strokeRect(x + 0.5, y - (twin ? 10 : 0) + 0.5, w - 1, (twin ? 26 : 16) - 1);
-    if (twin) {
-      const hBar = 10;
-      [parts[0], parts[1]].forEach((p, i) => {
-        const yy = y - 8 + i * 12;
-        ctx.fillStyle = p * 100 + 1e-6 >= spec.targetPct ? "#3d8a8a" : "#c41e3a";
-        ctx.fillRect(x + 1, yy, Math.max(0, (w - 2) * clamp(p, 0, 1)), hBar);
-      });
-    } else {
-      const fillW = w * clamp(shown, 0, 1);
-      ctx.fillStyle = hitTarget(spec, coverage, parts) ? "#3d8a8a" : "#c41e3a";
-      ctx.fillRect(x + 1, y + 1, Math.max(0, fillW - 2), 14);
-    }
-    const notch = x + w * need;
-    ctx.strokeStyle = "#f0d09a";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(notch, y - (twin ? 13 : 3));
-    ctx.lineTo(notch, y + (twin ? 18 : 19));
-    ctx.stroke();
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "10px Georgia, serif";
-    ctx.fillText(`need ${spec.targetPct}%`, clamp(notch + 4, x, x + w - 64), y - (twin ? 14 : 5));
-    if (twin) {
-      ctx.fillText(`L ${Math.floor(parts[0] * 100)}%  R ${Math.floor(parts[1] * 100)}%  both`, x + 4, y + 14);
-    } else {
-      ctx.fillText(`${Math.floor(coverage * 100)}%`, x + 4, y + 12);
-    }
-  }
-
-  function drawDiscPips(ctx, spec, left) {
-    const x0 = FELT.x + FELT.w - 12 - spec.maxDiscs * 14;
-    const y = FELT.y + 28;
-    ctx.fillStyle = "#d4a45a";
-    ctx.font = "10px Georgia, serif";
-    ctx.textAlign = "right";
-    ctx.fillText("DISCS", x0 - 8, y + 4);
-    ctx.textAlign = "start";
-    for (let i = 0; i < spec.maxDiscs; i += 1) {
-      ctx.beginPath();
-      ctx.arc(x0 + i * 14, y, 5.2, 0, Math.PI * 2);
-      ctx.fillStyle = i < left ? "#d4a45a" : "#3a2418";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(90,58,20,0.55)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
-
-  function attractSpec() {
-    return coverspotStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
-  }
-
-  function draw() {
-    const canvas = $("coverSpotCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, "#1a1020");
-    bg.addColorStop(1, "#0c080c");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    kit.fillWood(ctx, 10, 20, W - 20, H - 36);
-
-    ctx.fillStyle = "#16351f";
-    ctx.fillRect(FELT.x, FELT.y, FELT.w, FELT.h);
-    ctx.fillStyle = "rgba(12,40,18,0.35)";
-    for (let i = 0; i < FELT.w; i += 14) ctx.fillRect(FELT.x + i, FELT.y, 2, FELT.h);
-    ctx.strokeStyle = "#d4a45a";
-    ctx.strokeRect(FELT.x + 0.5, FELT.y + 0.5, FELT.w - 1, FELT.h - 1);
-
-    const spec = run ? run.spec : attractSpec();
-    const t = run ? run.t : idleClock;
-    const shapes = run ? run.shapes : makeSpots(spec, SPOT_HOME, t);
-    const discs = run ? run.discs : idleDiscs(spec, shapes);
-    const report = run
-      ? { avg: run.coverage, parts: run.coverParts || [] }
-      : coverageReport(shapes, discs, spec.gridStamp);
-    const coverage = report.avg;
-
-    shapes.forEach((s) => drawShape(ctx, s, spec));
-    drawFeltTell(ctx, spec, shapes, t);
-    drawDiscGhostHint(ctx, spec, shapes);
-    discs.forEach((d) => drawDisc(ctx, d, false));
-    if (run && run.trapMarks && run.trapMarks.length) {
-      ctx.save();
-      run.trapMarks.forEach((m) => {
-        if (t > m.until) return;
-        const a = 1 - clamp((t - (m.until - TRAP_FLASH_MS)) / TRAP_FLASH_MS, 0, 1);
-        ctx.globalAlpha = 0.45 + a * 0.55;
-        ctx.strokeStyle = "#f0d09a";
-        ctx.lineWidth = 2.6;
-        ctx.beginPath();
-        ctx.moveTo(m.x - 11, m.y - 11);
-        ctx.lineTo(m.x + 11, m.y + 11);
-        ctx.moveTo(m.x + 11, m.y - 11);
-        ctx.lineTo(m.x - 11, m.y + 11);
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
-
-    if (run && !run.done && !run.awaiting && !run.busy && !run.settling && pointer.on) {
-      drawDisc(ctx, { x: pointer.x, y: pointer.y, r: spec.r, falling: true }, true);
-    }
-
-    const used = run ? run.discs.length : 0;
-    const left = run ? Math.max(0, spec.maxDiscs - used) : spec.maxDiscs;
-    drawDiscPips(ctx, spec, left);
-    drawMeter(ctx, spec, coverage, report.parts);
-
-    if (run && run.closedStamp) {
-      kit.stampClosed(ctx, W, H, run.stampLabel || "BUST");
-    }
-
-    if (run && !run.done) {
-      const beat = spec.kind === "twin"
-        ? `both ≥ ${spec.targetPct}%`
-        : spec.kind === "ring"
-          ? `ring ${Math.floor(coverage * 100)}% · hole is a trap`
-          : spec.kind === "drift"
-            ? `lead the walk · ${Math.floor(coverage * 100)}% · need ${spec.targetPct}%`
-            : spec.kind === "oval"
-              ? `oval ${Math.floor(coverage * 100)}% · round discs mismatch`
-              : spec.kind === "blob"
-                ? `blob ${Math.floor(coverage * 100)}% · ${stampPhase(spec, run.t).holding ? "HOLD" : "STAMP"}`
-                : `${Math.floor(coverage * 100)}% · need ${spec.targetPct}%`;
-      const nid = nextLevelId(spec.id);
-      const next = nid ? coverspotStageParams(nid) : null;
-      kit.drawHud(ctx, W, [
-        hudStageLine(spec),
-        run.awaiting && run.clearedAwait
-          ? (run.souvenir ? "SOUVENIR — authored ride complete" : (next && next.coda ? "CASH OUT or ENDLESS coda" : "CASH OUT or DROP AGAIN — next felt lies differently"))
-          : run.settling
-            ? `Spot still walking · ${Math.floor(coverage * 100)}% · need ${spec.targetPct}%`
-            : `${roomTell(spec)} · ${left} left · ${beat}`,
-      ]);
-    } else if (!run || !run.closedStamp) {
-      kit.drawHud(ctx, W, [hudStageLine(spec), roomTell(spec)]);
-    }
-  }
-
-  function liveCoverage(force) {
-    if (!run) return 0;
-    const drifting = isLiveDrift(run.spec);
-    if (!(run.awaiting && run.clearedAwait) && (drifting || force || run.coverDirty)) {
-      run.shapes = makeSpots(run.spec, run.origin, run.t);
-      const s0 = run.shapes[0];
-      run.spot = { x: s0.x, y: s0.y, r: s0.r || s0.rx || run.spec.R };
-    }
-    if (!force && !run.coverDirty && !drifting) return run.coverage;
-    const landed = run.discs.filter((d) => !d.falling);
-    const report = coverageReport(run.shapes, landed, run.spec.gridStamp);
-    const prev = Math.floor((run.coverage || 0) * 100);
-    run.coverage = report.avg;
-    run.coverParts = report.parts;
-    run.bestPct = Math.max(run.bestPct, run.coverage);
-    run.coverDirty = false;
-    if (Math.floor(run.coverage * 100) !== prev) pokeDepth();
-    return run.coverage;
-  }
-
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive()) return;
-    stopIdle();
-    paintRoomChrome(attractSpec());
-    let last = 0;
-    const tick = (now) => {
-      if (run && !run.done) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      const dt = Math.min(32, now - last);
-      last = now;
-      idleClock += dt;
-      if (idleClock > IDLE_ROOM_MS) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-        paintRoomChrome(attractSpec());
-      }
-      draw();
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
-  }
-
-  function reportHud(spec) {
-    paintKitHud(spec);
-    if (!run || !run.kitRun) return;
-    run.kitRun.depth = run.stagesCleared | 0;
-    run.kitRun.score = run.score | 0;
-    if (run.stagesCleared > 0 && rk() && typeof rk().reportDepth === "function") {
-      rk().reportDepth(run.kitRun, run.stagesCleared, {
-        name: spec && spec.name,
-        coda: !!(spec && spec.coda),
-      });
-      run.kitRun.depth = run.stagesCleared | 0;
-    }
-    paintKitHud(spec);
-  }
-
-  function enterSpot(spec) {
-    run.spec = spec;
-    run.discs = [];
-    run.origin = { x: SPOT_HOME.x, y: SPOT_HOME.y };
-    if (spec.drift === "slow" || spec.drift === "jitter" || spec.kind === "drift") {
-      run.origin.x += (Math.random() - 0.5) * 10;
-      run.origin.y += (Math.random() - 0.5) * 8;
-    }
-    run.awaiting = false;
-    run.clearedAwait = false;
-    run.souvenir = false;
-    run.settling = false;
-    run.settleUntil = 0;
-    run.coverage = 0;
-    run.coverParts = [];
-    run.coverDirty = true;
-    run.hitMs = 0;
-    run.dropGen = (run.dropGen | 0) + 1;
-    run.pending = null;
-    run.busy = false;
-    run.shapes = makeSpots(spec, run.origin, run.t || 0);
-    const s0 = run.shapes[0];
-    run.spot = { x: s0.x, y: s0.y, r: s0.r || s0.rx || spec.R };
-    run.trapMarks = [];
-    setGreed(false);
-    liveCoverage(true);
-    paintRoomChrome(spec);
-    setStatus(spec.enter || `${hudStageLine(spec)}. Cover the felt.`);
-    if (run.kitRun) {
-      run.kitRun.depth = run.stagesCleared | 0;
-      run.kitRun.score = run.score | 0;
-    }
-    paintKitHud(spec);
-    pokeDepth();
-    PF.setAura("think");
-  }
-
-  function start() {
-    if (run && !run.done) return;
-    declareP0();
-    const kitRun = beginKitRun();
-    if (!kitRun) {
-      setStatus("Out of demo coins · grant a pass");
-      PF.refreshNightBoard();
-      return;
-    }
-    stopIdle();
-    resetPips();
-    const spec = coverspotStageParams(1);
-    run = {
-      done: false,
-      persisted: false,
-      kitRun,
-      floor: null,
-      spec,
-      origin: { x: SPOT_HOME.x, y: SPOT_HOME.y },
-      shapes: makeSpots(spec, SPOT_HOME, 0),
-      spot: { x: SPOT_HOME.x, y: SPOT_HOME.y, r: spec.R },
-      discs: [],
-      coverage: 0,
-      coverParts: [],
-      coverDirty: true,
-      hitMs: 0,
-      bestPct: 0,
-      stagesCleared: 0,
-      discsPlaced: 0,
-      tableMisses: 0,
-      score: 0,
-      awaiting: false,
-      clearedAwait: false,
-      souvenir: false,
-      settling: false,
-      settleUntil: 0,
-      busy: false,
-      pending: null,
-      last: 0,
-      t: 0,
-      raf: 0,
-      shake: 0,
-      dropGen: 0,
-      closedStamp: false,
-      stampLabel: "",
-      revealTimer: 0,
-      trapMarks: [],
-    };
-    run.floor = mountGreed(kitRun);
-    if (run.kitRun) {
-      run.kitRun.depth = 0;
-      run.kitRun.score = 0;
-    }
-    const startBtn = $("coverSpotStart");
-    if (startBtn) {
-      startBtn.disabled = true;
-      startBtn.hidden = true;
-    }
-    if ($("coverSpotVerdict")) $("coverSpotVerdict").hidden = true;
-    kit.hideResult("coverSpotResult");
-    PF.setTier("coverSpotTier", "", "");
-    kit.setMode(card(), "play");
-    stampDepthCopy();
-    enterSpot(spec);
-    if ($("coverSpotDrop")) $("coverSpotDrop").hidden = false;
-    if ($("coverSpotCash")) {
-      $("coverSpotCash").hidden = true;
-      $("coverSpotCash").disabled = true;
-      $("coverSpotCash").textContent = "CASH OUT";
-    }
-    PF.focusCard("coverSpotCard", true);
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.t += dt;
-      step(dt);
-      draw();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function maybeClearFromLive(dt) {
-    if (!run || run.done || run.busy || run.awaiting) return false;
-    const spec = run.spec;
-    if (!spec) return false;
-    const landed = run.discs.filter((d) => !d.falling).length;
-    if (landed < 2) {
-      run.hitMs = 0;
-      return false;
-    }
-    if (!hitTarget(spec, run.coverage, run.coverParts)) {
-      run.hitMs = 0;
-      return false;
-    }
-    /* Jitter: lock on the HOLD. A hop pauses the meter; coverage drop still resets. */
-    if ((spec.drift === "jitter" || spec.kind === "blob") && stampPhase(spec, run.t).hopping) {
-      return false;
-    }
-    const need = dwellNeed(spec);
-    run.hitMs = (run.hitMs || 0) + (dt || 16);
-    if (run.hitMs < need) return false;
-    clearStage(run.coverage);
-    return true;
-  }
-
-  function step(dt) {
-    if (!run || run.done) return;
-    liveCoverage(false);
-
-    if (run.pending) {
-      run.pending.wait -= dt;
-      if (run.pending.wait <= 0) {
-        landDisc(run.pending);
-        run.pending = null;
-      }
-    }
-
-    let falling = false;
-    run.discs.forEach((d) => {
-      if (!d.falling) return;
-      falling = true;
-      d.life = (d.life || 0) + dt;
-      const k = Math.min(1, d.life / 160);
-      d.y = d.fromY + (d.restY - d.fromY) * k;
-      if (k >= 1) {
-        d.y = d.restY;
-        d.falling = false;
-        run.coverDirty = true;
-      }
-    });
-    run.busy = !!(run.pending || falling);
-
-    const cash = $("coverSpotCash");
-    const drop = $("coverSpotDrop");
-    if (run.awaiting && run.clearedAwait) {
-      if (cash) cash.disabled = false;
-      if (drop) drop.disabled = true;
-      return;
-    }
-    if (cash) cash.disabled = true;
-    if (drop) drop.disabled = !!run.busy || !!run.settling;
-
-    /* Drift + jitter: discs stick in world space; live coverage can clear. */
-    if (!run.busy && isLiveDrift(run.spec)) {
-      if (maybeClearFromLive(dt)) return;
-      if (run.settling && run.t >= run.settleUntil) {
-        const pct = Math.floor(run.coverage * 100);
-        setStatus(`${pct}% · needed ${run.spec.targetPct}%. Bust. ${run.spec.name} kept a peek.`);
-        finish("bust");
-      }
-    }
-  }
-
-  function landDisc(pending) {
-    if (!run || run.done) return;
-    const spec = run.spec;
-    const x = pending.x;
-    const y = pending.y;
-    if (!onFelt(x, y, spec.r)) {
-      run.tableMisses += 1;
-      run.shake = 7;
-      kit.sfx("miss");
-      setStatus(run.tableMisses >= MISS_DEATH
-        ? "Second bounce off the table."
-        : "Bounced off the felt. Two misses and you’re done.");
-      PF.setAura("point");
-      if (rk() && typeof rk().reportStrike === "function") rk().reportStrike(run.kitRun, "table_miss");
-      if (run.tableMisses >= MISS_DEATH) {
-        finish("miss_table");
-        return;
-      }
-      run.busy = false;
-      return;
-    }
-    const disc = {
-      x,
-      y,
-      r: spec.r,
-      falling: true,
-      fromY: y - 26,
-      restY: y,
-      life: 0,
-      trapped: false,
-    };
-    run.discs.push(disc);
-    run.discsPlaced += 1;
-    run.coverDirty = true;
-    kit.sfx("drop");
-    const gen = run.dropGen;
-    window.setTimeout(() => {
-      if (!run || run.done || run.dropGen !== gen) return;
-      resolveDrop();
-    }, 170);
-  }
-
-  function resolveDrop() {
-    if (!run || run.done) return;
-    run.discs.forEach((d) => {
-      d.falling = false;
-      if (d.restY != null) d.y = d.restY;
-    });
-    run.coverDirty = true;
-    const coverage = liveCoverage(true);
-    const spec = run.spec;
-    const pct = Math.floor(coverage * 100);
-    let hit = hitTarget(spec, coverage, run.coverParts);
-    /* One disc never covers — classic cheat. Grid rounding must not gift a first-drop win. */
-    if (hit && run.discs.length < 2) hit = false;
-
-    if (hit && !isLiveDrift(spec)) {
-      clearStage(coverage);
-      return;
-    }
-
-    if (run.discs.length >= spec.maxDiscs) {
-      if (isLiveDrift(spec)) {
-        run.settling = true;
-        run.settleUntil = run.t + SETTLE_MS;
-        run.awaiting = false;
-        run.clearedAwait = false;
-        setGreed(false);
-        setStatus(spec.kind === "blob" || spec.drift === "jitter"
-          ? `${pct}% · blob still stamps. Lock the HOLD at ${spec.targetPct}%.`
-          : `${pct}% · spot still walking. Lead it to ${spec.targetPct}%.`);
-        PF.setAura("point");
-        return;
-      }
-      setStatus(`${pct}% · needed ${spec.targetPct}%. Bust. ${spec.name} kept a peek.`);
-      finish("bust");
-      return;
-    }
-
-    run.awaiting = false;
-    run.clearedAwait = false;
-    setGreed(false);
-    const last = run.discs[run.discs.length - 1];
-    const trapped = last && discWastedInHole(spec, last.x, last.y, run.shapes);
-    if (trapped && last) {
-      last.trapped = true;
-      run.trapMarks = run.trapMarks || [];
-      run.trapMarks.push({ x: last.x, y: last.y, until: run.t + TRAP_FLASH_MS });
-      run.shake = Math.max(run.shake || 0, 6);
-    }
-    const left = spec.maxDiscs - run.discs.length;
-    let detail = `${pct}% covered. Target ${spec.targetPct}%. ${left} left.`;
-    if (run.discs.length === 1 && spec.id === 1) {
-      detail = `${pct}% · one disc never covers — that’s the joke. ${left} left.`;
-    } else if (spec.kind === "twin" && run.coverParts && run.coverParts.length === 2) {
-      const lOk = run.coverParts[0] * 100 + 1e-6 >= spec.targetPct;
-      const rOk = run.coverParts[1] * 100 + 1e-6 >= spec.targetPct;
-      const mid = last && twinMidDump(spec, last.x, last.y, run.shapes);
-      if (mid) {
-        detail = `Center dump is a lie. Cover LEFT and RIGHT. Both need ${spec.targetPct}%. ${left} left.`;
-      } else if (lOk && !rOk) {
-        detail = `LEFT locked. RIGHT still hungry. Both need ${spec.targetPct}%. ${left} left.`;
-      } else if (rOk && !lOk) {
-        detail = `RIGHT locked. LEFT still hungry. Both need ${spec.targetPct}%. ${left} left.`;
-      } else {
-        detail = `L ${Math.floor(run.coverParts[0] * 100)}% · R ${Math.floor(run.coverParts[1] * 100)}% · both need ${spec.targetPct}%. ${left} left.`;
-      }
-    } else if (spec.kind === "ring") {
-      detail = trapped
-        ? `Center is a trap. ${pct}% of the ring. Need ${spec.targetPct}%. ${left} left.`
-        : `${pct}% of the ring. Center doesn’t count. Need ${spec.targetPct}%. ${left} left.`;
-    } else if (spec.kind === "drift") {
-      detail = `${pct}% on a walking spot. Lead it. Need ${spec.targetPct}%. ${left} left.`;
-    } else if (spec.kind === "oval") {
-      detail = `${pct}% of the oval. Round discs don’t match. Need ${spec.targetPct}%. ${left} left.`;
-    } else if (spec.kind === "blob") {
-      detail = `${pct}% of the blob. It stamps. Need ${spec.targetPct}%. ${left} left.`;
-    }
-    setStatus(detail);
-    PF.setAura("point");
-    kit.sfx(trapped ? "miss" : "tray");
-  }
-
-  function clearStage(coverage) {
-    if (!run || run.done || run.clearedAwait) return;
-    const spec = run.spec;
-    const gained = Math.floor(coverage * 100) + 200 * spec.id;
-    run.score += gained;
-    run.stagesCleared += 1;
-    run.bestPct = Math.max(run.bestPct, coverage);
-    run.settling = false;
-    run.settleUntil = 0;
-    run.hitMs = 0;
-    if (run.kitRun) {
-      run.kitRun.score = run.score;
-      run.kitRun.depth = run.stagesCleared;
-    }
-    const nid = nextLevelId(spec.id);
-    run.awaiting = true;
-    run.clearedAwait = true;
-    run.souvenir = !nid;
-    reportHud(spec);
-    saveLiveDepth();
-    setGreed(true, coverage);
-    const pct = Math.floor(coverage * 100);
-    if (run.souvenir) {
-      setStatus(`${AURA.souvenir} ${hudStageLine(spec)} · ${pct}%. Bank the souvenir.`);
-    } else {
-      const next = coverspotStageParams(nid);
-      if (next && next.coda) {
-        setStatus(`${AURA.coda} ${hudStageLine(spec)} · ${pct}%. ENDLESS coda, or bank it?`);
-      } else {
-        setStatus(`${AURA.clear} ${hudStageLine(spec)} · ${pct}%. Next: ${next.name}. Bank it, or greed?`);
-      }
-    }
-    PF.setAura("celebrate");
-    kit.sfx("cash");
-    run.shake = 4;
-    pokeDepth();
-  }
-
-  function advanceStage() {
-    if (!run || run.done) return;
-    if (run.souvenir) {
-      finish("souvenir");
-      return;
-    }
-    const next = nextLevelId(run.spec.id);
-    if (!next) {
-      finish("souvenir");
-      return;
-    }
-    const spec = coverspotStageParams(next);
-    if (!spec) {
-      finish("souvenir");
-      return;
-    }
-    enterSpot(spec);
-  }
-
-  function dropAt(x, y) {
-    if (!isLive() || run.busy || run.awaiting || run.settling) return;
-    const spec = run.spec;
-    if (run.discs.length >= spec.maxDiscs) return;
-    const snap = spec.snap;
-    const nx = clamp(x + (Math.random() - 0.5) * snap, 8, W - 8);
-    const ny = clamp(y + (Math.random() - 0.5) * snap, 8, H - 8);
-    run.busy = true;
-    run.dropGen = (run.dropGen | 0) + 1;
-    run.pending = { x: nx, y: ny, wait: spec.latency };
-    setStatus("Disc dropping…");
-  }
-
-  function challengeLine(n) {
-    const kitRun = rk();
-    if (kitRun && typeof kitRun.challengeText === "function") {
-      try { return kitRun.challengeText("Cover-the-Spot", n | 0, GAME_ID); } catch (_) { /* local */ }
-    }
-    return `Beat my Cover-the-Spot stage ${n | 0} on Penny Fever`;
-  }
-
-  function auraLine(reason, cashed, depth) {
-    if (reason === "leave") return AURA.leave;
-    if (reason === "souvenir") return AURA.souvenir;
-    if (cashed) return AURA.cash;
-    if (depth >= 6) return AURA.deep(depth);
-    if (reason === "miss_table") return AURA.miss_table;
-    if (reason === "bust") return AURA.bust;
-    const kitRun = rk();
-    if (kitRun && typeof kitRun.auraDeathLine === "function") {
-      try { return `Aura: ${kitRun.auraDeathLine(GAME_ID, depth, reason)}`; } catch (_) { /* local */ }
-    }
-    return AURA.bust;
-  }
-
-  function deathReasonOf(reason) {
-    if (reason === "souvenir") return "souvenir";
-    if (reason === "cash") return "cashed_out";
-    if (reason === "leave") return "leave";
-    if (reason === "miss_table") return "miss_table";
-    return "bust";
-  }
-
-  function revealResult(reason) {
-    if (!run) return;
-    const cashed = reason === "cash" || reason === "souvenir";
-    const deathReason = deathReasonOf(reason);
-    const depth = run.stagesCleared;
-    const pct = Math.floor(run.bestPct * 100);
-    const discs = run.discsPlaced;
-    const score = run.score;
-    const spec = run.spec;
-    kit.setMode(card(), "result");
-    paintRoomChrome(spec, true);
-    stampDepthCopy();
-    const startBtn = $("coverSpotStart");
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.hidden = false;
-      startBtn.textContent = "DROP AGAIN · 1 demo coin";
-    }
-    if ($("coverSpotDrop")) $("coverSpotDrop").hidden = true;
-    if ($("coverSpotCash")) {
-      $("coverSpotCash").hidden = true;
-      $("coverSpotCash").disabled = true;
-      $("coverSpotCash").classList.remove("cash-scream");
-      $("coverSpotCash").textContent = "CASH OUT";
-    }
-    PF.focusCard("coverSpotCard", false);
-    paintKitHud(null);
-    const nameBit = spec.coda ? `ENDLESS ${depth} · ${spec.name}` : `SPOT ${depth} · ${spec.name}`;
-    const reasonTag = cashed
-      ? (reason === "souvenir" ? "SOUVENIR" : "WALKED")
-      : reason === "leave"
-        ? "LEFT"
-        : reason === "miss_table"
-          ? "MISS TABLE"
-          : "BUST";
-    const line = `${nameBit} · ${pct}% BEST · SCORE ${score}`;
-    const aura = auraLine(reason, cashed, depth);
-    if ($("coverSpotVerdict")) {
-      $("coverSpotVerdict").hidden = false;
-      $("coverSpotVerdict").textContent = cashed
-        ? (reason === "souvenir" ? `Souvenir. ${line}.` : `Walked away. ${line}.`)
-        : reason === "leave"
-          ? `Left the counter · ${line}`
-          : reason === "miss_table"
-            ? `Off the felt. ${line}.`
-            : `Bust. ${line}.`;
-    }
-    kit.fillResult({
-      root: "coverSpotResult",
-      depth: "coverSpotResultDepth",
-      score: "coverSpotResultScore",
-      aura: "coverSpotResultAura",
-      copied: "coverSpotCopied",
-    }, {
-      depthLine: `${nameBit} · ${reasonTag}`,
-      scoreLine: `SCORE ${score} · ${pct}% · ${discs} discs · ${deathReason}`,
-      auraLine: aura,
-    });
-    const ch = $("coverSpotChallengeText");
-    if (ch) ch.textContent = challengeLine(depth);
-    PF.setTier("coverSpotTier", reasonTag, cashed ? "perfect" : "miss");
-    setStatus(cashed
-      ? (reason === "souvenir" ? "Authored ride stamped." : "Cashed the felt.")
-      : "The red kept a peek.");
-    const ok = cashed || depth > 0;
-    if (ok) {
-      PF.award(Math.max(cashed ? 12 : 8, Math.floor(score / 8)), true, cashed ? "Cover cash-out" : "Cover-the-Spot");
-      PF.setAura(cashed ? "celebrate" : "laugh");
-      if (reason !== "leave") PF.showBanner(cashed, reasonTag, `${pct}% · ${aura}`);
-    } else {
-      PF.award(0, false, "Cover-the-Spot miss");
-      PF.setAura("badLuck");
-      if (reason !== "leave") PF.showBanner(false, reasonTag, aura);
-    }
-    PF.refreshNightBoard();
-    pokeDepth();
-    draw();
-    startIdle();
   }
 
   function finish(reason) {
     if (!run || run.done) return;
-    run.done = true;
-    if (run.raf) cancelAnimationFrame(run.raf);
+    if (reason === "leave" || reason === "cash" || reason === "souvenir") {
+      sealResult(reason);
+      return;
+    }
+    if (run.dying) return;
+    run.dying = true;
     run.awaiting = false;
-    run.settling = false;
+    setGreed(false);
+    run.deathNote = reason || "bust";
+    run.closedStamp = true;
+    run.deathHold = DEATH_HOLD_MS;
+    setStamp(true, reason === "miss_table" ? "MISS" : "BUST");
+    kit.sfx("stamp");
+    camShake = 1.4;
+    setAuraMood("bad", 1200);
+  }
+
+  function sealResult(reason) {
+    if (!run || run.done) return;
+    run.done = true;
+    run.dying = false;
     setGreed(false);
     const cashed = reason === "cash" || reason === "souvenir";
     const deathReason = deathReasonOf(reason);
     const spec = run.spec || {};
-    run.closedStamp = deathReason === "bust" || deathReason === "miss_table";
-    run.stampLabel = deathReason === "miss_table" ? "MISS" : "BUST";
     persistDepth({
       depth: run.stagesCleared | 0,
       score: run.score | 0,
@@ -1843,49 +1972,215 @@
         codaEnabled: CODA_ENABLED,
       },
     });
+    revealResult(reason);
+  }
+
+  function revealResult(reason) {
+    if (!run) return;
+    const cashed = reason === "cash" || reason === "souvenir";
+    const deathReason = deathReasonOf(reason);
+    const depth = run.stagesCleared;
+    const pct = Math.floor((run.bestPct || 0) * 100);
+    const discs = run.discsPlaced;
+    const score = run.score;
+    const spec = run.spec || {};
+    kit.setMode(card(), "result");
+    setPlaying(false);
+    stampDepthCopy();
+    const startBtn = $("coverSpotStart");
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.hidden = false;
+      startBtn.textContent = "DROP AGAIN · 1 demo coin";
+    }
+    if ($("coverSpotDrop")) $("coverSpotDrop").hidden = true;
+    if ($("coverSpotCash")) {
+      $("coverSpotCash").hidden = true;
+      $("coverSpotCash").disabled = true;
+      $("coverSpotCash").classList.remove("cash-scream");
+      $("coverSpotCash").textContent = "CASH OUT";
+    }
+    PF.focusCard("coverSpotCard", false);
+    paintKitHud(null);
+    const nameBit = spec.coda ? `ENDLESS ${depth} · ${spec.name}` : `SPOT ${depth} · ${spec.name || "Felt"}`;
+    const reasonTag = cashed
+      ? (reason === "souvenir" ? "SOUVENIR" : "WALKED")
+      : reason === "leave"
+        ? "LEFT"
+        : reason === "miss_table"
+          ? "MISS TABLE"
+          : "BUST";
+    const line = `${nameBit} · ${pct}% BEST · SCORE ${score}`;
+    const aura = auraLine(reason, cashed, depth);
+    if ($("coverSpotVerdict")) {
+      $("coverSpotVerdict").hidden = false;
+      $("coverSpotVerdict").textContent = cashed
+        ? (reason === "souvenir" ? `Souvenir. ${line}.` : `Walked away. ${line}.`)
+        : reason === "leave"
+          ? `Left the table · ${line}`
+          : reason === "miss_table"
+            ? `Off the felt. ${line}.`
+            : `Bust. ${line}.`;
+    }
+    kit.fillResult({
+      root: "coverSpotResult",
+      depth: "coverSpotResultDepth",
+      score: "coverSpotResultScore",
+      aura: "coverSpotResultAura",
+      copied: "coverSpotCopied",
+    }, {
+      depthLine: `${nameBit} · ${reasonTag}`,
+      scoreLine: `SCORE ${score} · ${pct}% · ${discs} discs · ${deathReason}`,
+      auraLine: aura,
+    });
+    setText("coverSpotChallengeText", challengeLine(depth));
+    PF.setTier("coverSpotTier", reasonTag, cashed ? "perfect" : "miss");
+    setStatus(cashed
+      ? (reason === "souvenir" ? "Authored ride stamped." : "Cashed the felt.")
+      : "The red kept a peek.");
+    const ok = cashed || depth > 0;
+    if (ok) {
+      PF.award(Math.max(cashed ? 12 : 8, Math.floor(score / 8)), true, cashed ? "Cover cash-out" : "Cover-the-Spot");
+      PF.setAura(cashed ? "celebrate" : "laugh");
+      setAuraMood(cashed ? "celebrate" : "idle", 2000);
+      if (reason !== "leave") PF.showBanner(cashed, reasonTag, `${pct}% · ${aura}`);
+    } else {
+      PF.award(0, false, "Cover-the-Spot miss");
+      PF.setAura("badLuck");
+      setAuraMood("bad", 1800);
+      if (reason !== "leave") PF.showBanner(false, reasonTag, aura);
+    }
+    PF.refreshNightBoard();
+    pokeDepth();
     if (cashed) kit.sfx("cash");
-    else if (run.closedStamp) kit.sfx("stamp");
     else if (reason !== "leave") kit.sfx("bury");
-    draw();
-    const wait = run.closedStamp && reason !== "leave" ? STAMP_MS : 0;
-    if (run.revealTimer) window.clearTimeout(run.revealTimer);
-    run.revealTimer = window.setTimeout(() => revealResult(reason), wait);
   }
 
-  function cashOut() {
-    if (!canBank()) return;
-    finish(run.souvenir ? "souvenir" : "cash");
-  }
-
-  function dropAgain() {
+  function step(dt) {
     if (!run || run.done) return;
-    if (run.souvenir) {
-      finish("souvenir");
+    if (run.dying) {
+      run.deathHold -= dt;
+      if (run.deathHold <= 0) sealResult(run.deathNote);
       return;
     }
-    if (run.clearedAwait) {
-      advanceStage();
+    run.origin = originAt(run.spec, run.t);
+    stepDiscs(dt);
+    stepCloth(dt);
+    if (run.clothTug) run.busy = true;
+    maybeClear(dt);
+    if (run.settling && !run.busy && run.t >= run.settleUntil && !run.awaiting) {
+      setStatus(`${Math.floor(run.coverage * 100)}% · needed ${run.spec.targetPct}%. Bust. ${run.spec.name} kept a peek.`);
+      finish("bust");
+    }
+    paintPips(run.spec, Math.max(0, run.spec.maxDiscs - run.discs.length));
+    const cash = $("coverSpotCash");
+    const drop = $("coverSpotDrop");
+    if (run.awaiting && run.clearedAwait) {
+      if (cash) cash.disabled = false;
+      if (drop) drop.disabled = true;
+    } else {
+      if (cash) cash.disabled = true;
+      if (drop) drop.disabled = !!run.busy || !!run.settling;
     }
   }
 
-  function dropFromButton() {
-    if (!isLive() || run.awaiting || run.busy || run.settling) return;
-    dropAt(pointer.x, pointer.y);
+  function tickWorld(dt) {
+    if (!world) return;
+    const spec = liveSpec();
+    syncSpots(spec, run ? run.t : world.clock);
+    syncDiscs(spec);
+    animateAura(dt);
+    animateSparks(dt);
+    cameraTick(dt);
+  }
+
+  function render() {
+    if (!world || !cabinetOn()) return;
+    try { world.renderer.render(world.scene, world.camera); } catch (_) { /* context */ }
+  }
+
+  function stopLoop() {
+    if (loopRaf) cancelAnimationFrame(loopRaf);
+    loopRaf = 0;
+  }
+
+  function startLoop() {
+    if (!cabinetOn()) return;
+    bootWorld();
+    if (loopRaf) return;
+    let last = 0;
+    const tick = (now) => {
+      if (!cabinetOn()) {
+        loopRaf = 0;
+        return;
+      }
+      if (!last) last = now;
+      const dt = Math.min(220, Math.max(16, now - last || 16));
+      last = now;
+      if (!isLive() && (!run || run.done)) {
+        idleClock += dt;
+        if (idleClock > 3200) {
+          idleClock = 0;
+          idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
+          if (world) rebuildSpots(attractSpec(), makeSpotShapes(attractSpec(), { x: 0, z: 0 }));
+          paintHelp(attractSpec());
+        }
+      }
+      if (run && !run.done) {
+        run.t += dt;
+        step(dt);
+        tickWorld(dt);
+        render();
+        pokeDepth();
+      } else {
+        tickWorld(dt);
+        render();
+      }
+      loopRaf = requestAnimationFrame(tick);
+    };
+    loopRaf = requestAnimationFrame(tick);
+  }
+
+  function onKey(ev) {
+    if (!cabinetOn()) return;
+    const k = ev.key;
+    if (k !== " " && k !== "Enter" && k !== "Spacebar") return;
+    const tag = (ev.target && ev.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON") {
+      if (k === " " && tag === "BUTTON") return;
+    }
+    ev.preventDefault();
+    if (!isLive()) {
+      if (!run || run.done) start();
+      return;
+    }
+    if (run.awaiting && run.clearedAwait) {
+      if (k === "Enter") cashOut();
+      else advanceStage();
+      return;
+    }
+    dropFromButton();
   }
 
   PF.registerVendor({
     id: "cover-the-spot",
     playKey: "coverspot",
-    chalk: "Cover the spot — or get greedy.",
+    chalk: "Cover the red — one disc never covers.",
     defaults: { bestCoverStages: 0, bestCoverPct: 0, bestCoverDiscs: 0 },
     onLeave() {
       if (run && !run.done) finish("leave");
-      stopIdle();
+      setPlaying(false);
+      stopLoop();
     },
-    onShow() { declareP0(); stampDepthCopy(); paintRoomChrome(attractSpec()); startIdle(); draw(); },
+    onShow() {
+      declareP0();
+      stampDepthCopy();
+      paintRoomChrome(attractSpec());
+      bootWorld();
+      startLoop();
+      resizeWorld();
+    },
     onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
-      if (run && run.revealTimer) window.clearTimeout(run.revealTimer);
       run = null;
       if ($("coverSpotVerdict")) $("coverSpotVerdict").hidden = true;
       kit.hideResult("coverSpotResult");
@@ -1902,20 +2197,22 @@
         $("coverSpotCash").textContent = "CASH OUT";
       }
       setGreed(false);
-      resetPips();
+      setStamp(false);
+      paintPips(attractSpec(), 4);
       kit.setMode(card(), "vestibule");
+      setPlaying(false);
       stampDepthCopy();
-      startIdle();
-      draw();
+      setStatus(DEPTH_COPY.status);
+      hideToast();
+      if (cabinetOn()) startLoop();
     },
     refreshDepth(state) {
-      const host = card();
-      const onResult = !!(host && host.classList.contains("is-result") && run);
       const now = $("depthCoverNow");
-      const liveSpec = (run && !run.done) || onResult ? run.spec : attractSpec();
-      if (now) now.textContent = hudStageLine(liveSpec);
+      const live = (run && !run.done) || (run && card() && card().classList.contains("is-result"));
+      const spec = live ? run.spec : attractSpec();
+      if (now) now.textContent = hudStageLine(spec);
       const pct = $("depthCoverPct");
-      if (pct) pct.textContent = run && (!run.done || onResult) ? `${Math.floor(run.coverage * 100)}%` : "0%";
+      if (pct) pct.textContent = run && live ? `${Math.floor(run.coverage * 100)}%` : "0%";
       const best = $("depthCoverBest");
       const bestN = Math.max(state.bestCoverStages || 0, (state.bestDepth && state.bestDepth.coverspot) || 0);
       if (best) best.textContent = bestN ? `SPOT ${bestN}` : "—";
@@ -1938,20 +2235,19 @@
       const drop = $("coverSpotDrop");
       if (drop) drop.addEventListener("click", dropFromButton);
       const again = $("coverSpotDropAgain");
-      if (again) again.addEventListener("click", dropAgain);
+      if (again) again.addEventListener("click", advanceStage);
       const greedCash = $("coverSpotGreedCash");
       if (greedCash) greedCash.addEventListener("click", cashOut);
       const canvas = $("coverSpotCanvas");
       if (canvas) {
         canvas.addEventListener("pointermove", (ev) => {
-          const p = kit.canvasPos(canvas, ev, W, H);
-          pointer = { x: p.x, y: p.y, on: true };
-          if (run && !run.done && !run.awaiting) draw();
+          const p = eventToFelt(ev);
+          if (p) pointer = { x: p.x, z: p.z, on: true };
         });
         canvas.addEventListener("pointerleave", () => { pointer.on = false; });
         canvas.addEventListener("pointerdown", (ev) => {
           if (!isLive()) {
-            punchStart();
+            if (!run || run.done) start();
             return;
           }
           if (run.awaiting || run.settling) return;
@@ -1959,11 +2255,12 @@
           if (canvas.setPointerCapture && ev.pointerId != null) {
             try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
           }
-          const p = kit.canvasPos(canvas, ev, W, H);
-          pointer = { x: p.x, y: p.y, on: true };
-          dropAt(p.x, p.y);
+          const p = eventToFelt(ev) || pointer;
+          pointer = { x: p.x, z: p.z, on: true };
+          dropAt(p.x, p.z);
         });
       }
+      window.addEventListener("keydown", onKey);
       const copyBtn = $("coverSpotChallenge");
       if (copyBtn) {
         copyBtn.addEventListener("click", () => {
@@ -1979,16 +2276,37 @@
               el.textContent = "Copied — send it";
             }
             setStatus("Copied — send it");
-          }, () => {
-            setStatus(text);
-          });
+          }, () => setStatus(text));
         });
       }
       if ($("coverSpotDrop")) $("coverSpotDrop").hidden = true;
       if ($("coverSpotCash")) $("coverSpotCash").hidden = true;
       stampDepthCopy();
-      startIdle();
-      draw();
+      PF._coverSpotQA = {
+        drop(x, z) { dropAt(x, z); },
+        state() {
+          if (!run) return null;
+          return {
+            coverage: run.coverage,
+            pct: Math.floor((run.coverage || 0) * 100 + 1e-6),
+            parts: run.coverParts,
+            discs: run.discs.length,
+            busy: !!run.busy,
+            awaiting: !!run.awaiting,
+            clothX: run.clothX,
+            clothZ: run.clothZ,
+            tugging: !!run.clothTug,
+            spec: run.spec && run.spec.name,
+            target: run.spec && run.spec.targetPct,
+            greed: !!run.clearedAwait,
+            stages: run.stagesCleared,
+            status: ($("coverSpotStatus") || {}).textContent,
+            toast: ($("coverSpotToast") || {}).hidden === false
+              ? ($("coverSpotToast") || {}).textContent
+              : "",
+          };
+        },
+      };
     },
   });
-})();
+}

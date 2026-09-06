@@ -1,40 +1,29 @@
-/* Weighted Milk Bottles — Desktop Grok owns this file. PF only. Never booth/port 6000.
- * GOBLIN REVIEW HIT #2 FEEL 2026-09-05 — named rooms = verb/layout change, not mass climb.
- * Polish: Wide Shoulders squat 4–3–2–1, Glue heel pinned, Split two crates,
- * Wind gust pulses, Stuck pin is never a heel, barker tracks the live room.
- * Latest: GOBLIN_P0_AUTHORED_ACCEPT_FEEL.md (M1–M6) + GOBLIN_AUTHORED_LEVELS_P0.md +
- * GOBLIN_BATCH02_BUILD_SHEETS.md + GOBLIN_BATCH02_MOUNT_CONFIGS.md +
- * GOBLIN_BATCH02_AURA_LINES.md + GOBLIN_RUNKIT_API.md.
- * Engine: SlingAim (launcher) · Custom impulse (pyramid) · depthUnit: Pyramid · gameId: milk
- * codaEnabled hybrid: 7 named rooms then ENDLESS Concrete Row {n}. NOT pure stageParams.
- * M1 Wide Shoulders = 4–3–2–1 squat silhouette. M2 Glue Corner = left heel two-hit plan.
- * M3 Split Stack = two mini pyramids, dual clear. M4 Wind Shelf = aim-compensate gust.
- * M5 Stuck Pin Atelier = darker scout pin + heavy heels. M6 layouts change the beat.
- * Glue/stuck stay pinned until the second hit — no support-collapse cheese.
- * Shares Ball Toss sling DNA (gravity, pull, throwSpeed). Stall owns pyramid death. */
+/* Weighted Bottles — 3D tent. PF only. Never booth/port 6000. Never Imagine downloads.
+ * One doorway: milk-bottles. Three.js tent, custom camera, stacked physics, juice.
+ * Inspiration: 7 authored pyramids then ENDLESS. Bottom row is lead. */
 (() => {
   "use strict";
   const PF = window.PennyFever;
   if (!PF || !PF.registerVendor) return;
   const { $, kit } = PF;
-  const W = 340;
-  const H = 430;
-  const SHELF_Y = 318;
-  const SHELF_L = 38;
-  const SHELF_R = 302;
-  const BALL_R = 7.5;
-  const BOTTLE_R = 13.4;
-  const TEE = { x: W / 2, y: H - 24 };
-  const GRAVITY = 0.165;
-  const FALL_ROT = (50 * Math.PI) / 180;
+
   const GAME_ID = "milk";
-  const CODA_ENABLED = true;
   const AUTHORED_COUNT = 7;
-  const STAMP_MS = 720;
-  let run = null;
-  let idleRaf = 0;
-  let idleRoom = 1;
-  let idleClock = 0;
+  const CODA_ENABLED = true;
+  const STAMP_MS = 780;
+  const TABLE_Y = 0.78;
+  const BALL_R = 0.052;
+  const BOTTLE_R = 0.068;
+  const BOTTLE_H = 0.36;
+  const GRAVITY = 11.6;
+  const HERE = (document.currentScript && document.currentScript.src) || "";
+
+  const SKIN = 0xf0c4a8;
+  const HAIR = 0x3d2418;
+  const DRESS = 0x1e6b3c;
+  const GOLD = 0xe8b84a;
+  const HEART = 0xd22b3a;
+  const BLOUSE = 0xf5f0ea;
 
   const AURA = {
     throws: "Aura: Three softballs. That bottom row is concrete, sugar.",
@@ -43,59 +32,50 @@
     souvenir: "Aura: Pyramid seven locked. Souvenir — the lead salutes.",
     coda: "Aura: Authored ride’s over. ENDLESS — concrete keeps climbing.",
     deep: (n) => `Aura: Pyramid ${n}. You're arguing with gravity and winning.`,
+    welcome: "Aura: Heels are lead. Cream on top is a liar. Three throws.",
   };
 
-  const DEPTH_COPY = {
-    tag: "DEPTH RUN · 7 authored PYRAMIDS · ENDLESS coda · not a one-tap prize",
-    body: "Authored rooms, not a thinner loop: Fairground Six → Heavy Heels → Wide Shoulders → Glue Corner → Split Stack → Wind Shelf → Stuck Pin Atelier. Three throws a pyramid. After 7, ENDLESS coda (flaggable). Fail to clear stamps LEAD.",
-    status: "Depth run · START · 1 demo coin · 7 authored PYRAMIDS then ENDLESS",
-    machine: "Spill-the-milk · 1 demo coin · authored PYRAMIDS",
-    idleHud: ["Authored PYRAMIDS — bottom row is lead", "Drag-aim · 3 throws a room · START"],
-    punch: "Depth run — press START. No one-tap prize.",
-  };
-
-  /* Authored PYRAMID rooms — unique layout / cheat / beat. Not “same 3–2–1, heavier bottoms.” */
   const MILK_LEVELS = [
     {
       id: 1, name: "Fairground Six", kind: "classic", layout: "3-2-1",
-      topMass: 1, midMass: 1.4, bottomMass: 2.0, pinSpacing: "wide", gap: 34,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      topMass: 0.78, midMass: 1.15, bottomMass: 3.05, gap: 0.155, rise: 0.33,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false,
       barker: "Classic six. Aim the base — the cream on top is a liar.",
     },
     {
       id: 2, name: "Heavy Heels", kind: "heavyHeels", layout: "3-2-1",
-      topMass: 0.82, midMass: 1.15, bottomMass: 2.6, pinSpacing: "wide", gap: 34,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      topMass: 0.62, midMass: 1.0, bottomMass: 3.65, gap: 0.155, rise: 0.33,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false,
       barker: "Same silhouette. Bottoms are concrete. Tops fly if you let them.",
     },
     {
       id: 3, name: "Wide Shoulders", kind: "wideShoulders", layout: "4-3-2-1",
-      topMass: 1, midMass: 1.7, bottomMass: 2.4, pinSpacing: "wide", gap: 50,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 22,
+      topMass: 0.8, midMass: 1.55, bottomMass: 3.2, gap: 0.162, rise: 0.322,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false,
       barker: "Ten pins. New silhouette. Mid row fights back too.",
     },
     {
       id: 4, name: "Glue Corner", kind: "glueCorner", layout: "3-2-1",
-      topMass: 1, midMass: 1.4, bottomMass: 2.4, pinSpacing: "normal", gap: 29.5,
-      windDrift: 0, glueBottomCorner: true, stuckBottle: false, rise: 39,
+      topMass: 0.8, midMass: 1.2, bottomMass: 3.15, gap: 0.15, rise: 0.33,
+      windDrift: 0, glueBottomCorner: true, stuckBottle: false,
       barker: "Left heel is glued. Plan the second shot.",
     },
     {
       id: 5, name: "Split Stack", kind: "splitStack", layout: "3+3", stacks: 2,
-      topMass: 1, midMass: 1.35, bottomMass: 2.5, pinSpacing: "wide", gap: 36,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: false, rise: 44,
+      topMass: 0.78, midMass: 1.15, bottomMass: 3.25, gap: 0.148, rise: 0.33,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: false,
       barker: "Two boards. Both must fall. Center aisle is dead air.",
     },
     {
       id: 6, name: "Wind Shelf", kind: "windShelf", layout: "3-2-1",
-      topMass: 1, midMass: 1.4, bottomMass: 2.6, pinSpacing: "tight", gap: 25.8,
-      windDrift: 0.26, glueBottomCorner: false, stuckBottle: false, rise: 39,
+      topMass: 0.75, midMass: 1.2, bottomMass: 3.4, gap: 0.148, rise: 0.33,
+      windDrift: 0.55, glueBottomCorner: false, stuckBottle: false,
       barker: "Lateral wind on the ball. Lead the throw into the gust.",
     },
     {
       id: 7, name: "Stuck Pin Atelier", kind: "stuckPin", layout: "3-2-1",
-      topMass: 1, midMass: 1.45, bottomMass: 3.2, pinSpacing: "tight", gap: 25.2,
-      windDrift: 0, glueBottomCorner: false, stuckBottle: true, rise: 39,
+      topMass: 0.72, midMass: 1.25, bottomMass: 3.9, gap: 0.145, rise: 0.33,
+      windDrift: 0, glueBottomCorner: false, stuckBottle: true,
       barker: "Dark pin is stuck. Scout it, then strike. Bottoms are lead.",
     },
   ];
@@ -105,13 +85,26 @@
     displayName: "Weighted Milk Bottles",
     depthUnit: "Pyramid",
     sheet: "GOBLIN_AUTHORED_LEVELS_P0.md",
-    batchSheet: "GOBLIN_BATCH02_BUILD_SHEETS.md",
     codaEnabled: CODA_ENABLED,
     authoredCount: AUTHORED_COUNT,
   };
 
+  let THREE = null;
+  let world = null;
+  let run = null;
+  let raf = 0;
+  let visible = false;
+  let idleRoom = 1;
+  let idleClock = 0;
+  let loadP = null;
+  let lastTs = 0;
+
   function rk() {
     return PF.runKit || null;
+  }
+
+  function card() {
+    return $("milkCard");
   }
 
   function milkCodaParams(n) {
@@ -123,19 +116,16 @@
       title: `Concrete Row ${stage}`,
       kind: "coda",
       coda: true,
-      layout: "3-2-1",
+      layout: t % 2 ? "4-3-2-1" : "3-2-1",
       throwsPerPyramid: 3,
-      topMass: 1,
-      midMass: 1.5,
-      bottomMass: Math.min(4.2, 3.2 + 0.15 * t),
-      pinSpacing: "tight",
-      gap: 25.2,
-      windDrift: Math.min(0.42, 0.18 + t * 0.04),
-      glueBottomCorner: false,
+      topMass: 0.7,
+      midMass: 1.35,
+      bottomMass: Math.min(4.8, 3.8 + 0.18 * t),
+      gap: 0.142,
+      windDrift: Math.min(0.85, 0.28 + t * 0.06),
+      glueBottomCorner: t % 3 === 0,
       stuckBottle: true,
-      rise: 39,
-      fallRotDeg: 50,
-      missesToDeath: 3,
+      rise: 0.328,
       stacks: 1,
       barker: "ENDLESS — concrete keeps climbing.",
     };
@@ -147,13 +137,11 @@
       const L = MILK_LEVELS[stage - 1];
       return Object.assign({
         throwsPerPyramid: 3,
-        fallRotDeg: 50,
-        missesToDeath: 3,
-        stacks: 1,
         coda: false,
+        stacks: 1,
       }, L, { id: stage, title: L.name, name: L.name });
     }
-    if (!P0_MOUNT.codaEnabled) return null;
+    if (!CODA_ENABLED) return null;
     return milkCodaParams(stage);
   }
 
@@ -161,18 +149,6 @@
     if (!spec) return `PYRAMID ${cleared | 0}`;
     if (spec.coda) return `ENDLESS · PYRAMID ${spec.id} · ${spec.name}`;
     return `PYRAMID ${spec.id} · ${spec.name}`;
-  }
-
-  function paintKitHud(spec) {
-    const host = card();
-    if (!host) return;
-    const hud = host.querySelector(".milk-rk-hud");
-    if (!hud) return;
-    if (!spec || !run || run.done) {
-      hud.textContent = "";
-      return;
-    }
-    hud.textContent = hudStageLine(spec, run.pyramids);
   }
 
   function roomTell(spec) {
@@ -187,23 +163,105 @@
     return "BOTTOM ROW IS LEAD";
   }
 
-  function paintVestibuleCheat(spec) {
-    const host = card();
-    if (!host) return;
-    if (!spec) {
-      spec = (run && !run.done && run.spec) ? run.spec : attractSpec();
+  function layoutSlots(spec) {
+    if (spec.kind === "wideShoulders" || spec.layout === "4-3-2-1") {
+      return [
+        { col: 0, row: 0 },
+        { col: -0.62, row: 1 }, { col: 0.62, row: 1 },
+        { col: -1.24, row: 2 }, { col: 0, row: 2 }, { col: 1.24, row: 2 },
+        { col: -1.92, row: 3 }, { col: -0.64, row: 3 }, { col: 0.64, row: 3 }, { col: 1.92, row: 3 },
+      ];
     }
-    const barker = host.querySelector(".barker-call");
-    if (barker) {
-      barker.textContent = spec && spec.barker
-        ? `${spec.name.toUpperCase()} — ${spec.barker}`
-        : "KNOCK ’EM ALL — THE BOTTOM ONES FIGHT BACK";
+    if (spec.kind === "splitStack" || spec.layout === "3+3") {
+      return [
+        { col: -3.15, row: 0, stack: 0 },
+        { col: -3.72, row: 1, stack: 0 },
+        { col: -2.58, row: 1, stack: 0 },
+        { col: 3.15, row: 0, stack: 1 },
+        { col: 2.58, row: 1, stack: 1 },
+        { col: 3.72, row: 1, stack: 1 },
+      ];
     }
-    if (run && !run.done) return;
-    const status = $("milkStatus");
-    if (status && spec) {
-      status.textContent = `${hudStageLine(spec, 0)} — ${spec.barker || DEPTH_COPY.status}`;
-    }
+    return [
+      { col: 0, row: 0 },
+      { col: -0.5, row: 1 }, { col: 0.5, row: 1 },
+      { col: -1, row: 2 }, { col: 0, row: 2 }, { col: 1, row: 2 },
+    ];
+  }
+
+  function clamp(n, a, b) {
+    return Math.max(a, Math.min(b, n));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function sfx(name) {
+    try { if (kit && kit.sfx) kit.sfx(name); } catch (_) {}
+  }
+
+  function isLive() {
+    return !!(run && !run.done && run.kitRun && run.kitRun.alive !== false);
+  }
+
+  function threeUrl() {
+    if (HERE) return new URL("../world/lib/three.module.min.js", HERE).href;
+    return new URL("world/lib/three.module.min.js", location.href).href;
+  }
+
+  function loadThree() {
+    if (loadP) return loadP;
+    loadP = import(threeUrl()).then((mod) => {
+      THREE = mod;
+      return mod;
+    }).catch((err) => {
+      console.warn("[milk-bottles] Three.js failed", err);
+      THREE = null;
+      return null;
+    });
+    return loadP;
+  }
+
+  function canvasTex(w, h, draw) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"));
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+    return t;
+  }
+
+  function mat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color,
+      roughness: 0.72,
+      metalness: 0.08,
+    }, extra || {}));
+  }
+
+  function meshBox(material, w, h, d, x, y, z) {
+    const m = new THREE.Mesh(world.geo.box, material);
+    m.scale.set(w, h, d);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
+  }
+
+  function meshSphere(material, r, x, y, z) {
+    const m = new THREE.Mesh(world.geo.sphere, material);
+    m.scale.setScalar(r);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
+  }
+
+  function meshCyl(material, rTop, rBot, h, x, y, z) {
+    const m = new THREE.Mesh(world.geo.cyl, material);
+    m.scale.set(rTop, h, rBot);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
   }
 
   function declareP0() {
@@ -219,7 +277,7 @@
       milkStageParams: milkLevel,
     }, P0_MOUNT);
     if (typeof kitRun.declare === "function") {
-      try { kitRun.declare(GAME_ID, spec); } catch (_) { /* already declared */ }
+      try { kitRun.declare(GAME_ID, spec); } catch (_) {}
     }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = spec;
@@ -229,29 +287,45 @@
     kitRun.mounted[GAME_ID] = true;
   }
 
-  function closeKitRun(partial) {
-    const ctx = run && run.kitRun;
-    if (ctx && rk() && typeof rk().finishRun === "function") {
-      try {
-        return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
-      } catch (_) { /* fall through */ }
+  function paintHud(spec) {
+    const host = card();
+    if (!host) return;
+    const hud = host.querySelector(".milk-rk-hud");
+    if (hud) {
+      if (!spec || !run || run.done) hud.textContent = "";
+      else hud.textContent = hudStageLine(spec, run.pyramids);
     }
-    return kit.persistRun(PF.getState(), GAME_ID, partial);
+    const barker = $("milkBarker") || host.querySelector(".barker-call");
+    if (barker) {
+      barker.textContent = spec && spec.barker
+        ? `${spec.name.toUpperCase()} — ${spec.barker}`
+        : "KNOCK ’EM ALL — THE BOTTOM ONES FIGHT BACK";
+    }
+    const throws = $("milkThrows");
+    if (throws) {
+      const left = run && !run.done ? run.balls : 3;
+      const pips = throws.querySelectorAll("i");
+      pips.forEach((el, i) => el.classList.toggle("is-spent", i >= left));
+    }
+    setPower(run && run.aim ? run.aim.power : 0, !!(run && run.aim));
   }
 
-  function isLive() {
-    return !!(run && !run.done && run.kitRun && run.kitRun.alive !== false);
+  function setPower(n, on) {
+    const bar = $("milkPower");
+    const fill = $("milkPowerFill");
+    if (!bar) return;
+    bar.hidden = !on;
+    if (fill) fill.style.width = `${Math.round(clamp(n, 0.08, 1) * 100)}%`;
   }
 
-  function punchStart() {
-    stampDepthCopy();
+  function setTaught(on) {
+    const host = card();
+    if (host) host.classList.toggle("is-taught", !!on);
+  }
+
+  function setStatus(text) {
     const el = $("milkStatus");
-    if (el) el.textContent = DEPTH_COPY.punch;
-    const btn = $("milkStart");
-    if (btn && !btn.hidden) {
-      try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
+    if (el) el.textContent = text;
   }
 
   function saveLiveDepth() {
@@ -274,6 +348,16 @@
     }
   }
 
+  function closeKitRun(partial) {
+    const ctx = run && run.kitRun;
+    if (ctx && rk() && typeof rk().finishRun === "function") {
+      try {
+        return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
+      } catch (_) {}
+    }
+    return kit.persistRun(PF.getState(), GAME_ID, partial);
+  }
+
   function persistDepth(partial) {
     const state = PF.getState();
     const payload = {
@@ -293,96 +377,653 @@
     if (typeof PF.saveState === "function") PF.saveState();
   }
 
-  function mountSling(ctx) {
-    const engines = rk() && rk().engines;
-    if (!engines || !engines.SlingAim || typeof engines.SlingAim.mount !== "function" || !ctx) return null;
+  /* ——— 3D world ——— */
+
+  function bootWorld() {
+    if (world || !THREE) return world;
+    const canvas = $("milkCanvas");
+    if (!canvas) return null;
+    let renderer;
     try {
-      /* Launcher only. Stall owns pyramid death (3 throws / incomplete).
-       * missesToDeath is huge so SlingAim.resolveHit cannot steal the run. */
-      return engines.SlingAim.mount(card(), {
-        gravity: GRAVITY,
-        missesToDeath: 99,
-        stageParams: milkLevel,
-        onThrow() {},
-        hitTest() { return false; },
-      }, ctx);
-    } catch (_) {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: (window.devicePixelRatio || 1) < 1.6,
+        powerPreference: "high-performance",
+        alpha: false,
+        failIfMajorPerformanceCaveat: false,
+      });
+    } catch (err) {
+      console.warn("[milk-bottles] WebGL unavailable", err);
+      setStatus("This tent wants a WebGL lantern.");
       return null;
     }
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 2.05;
+    renderer.setClearColor(0x14080c, 1);
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x1a0c12, 7.5, 16);
+    const camera = new THREE.PerspectiveCamera(46, 16 / 9, 0.08, 40);
+    camera.position.set(0, 1.42, 2.72);
+
+    world = {
+      scene,
+      camera,
+      renderer,
+      geo: {
+        box: new THREE.BoxGeometry(1, 1, 1),
+        sphere: new THREE.SphereGeometry(1, 14, 12),
+        cyl: new THREE.CylinderGeometry(1, 1, 1, 12),
+        cone: new THREE.ConeGeometry(1, 1, 8),
+      },
+      tex: {},
+      mats: {},
+      bottles: [],
+      leadTags: [],
+      particles: [],
+      traj: [],
+      stringLights: [],
+      flaps: [],
+      cam: {
+        mode: "enter",
+        t: 0,
+        shake: 0,
+        punch: 0,
+        yaw: 0,
+        pitch: 0,
+        pull: 0,
+      },
+      reduced: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches),
+      crateZ: -0.82,
+      time: 0,
+      fan: null,
+      aura: null,
+      handBall: null,
+      stamp: null,
+      gluePool: null,
+      nailRing: null,
+      banner: null,
+      crate: null,
+      crate2: null,
+      aisleMark: null,
+      lanterns: [],
+      windVec: new THREE.Vector3(),
+      tmp: new THREE.Vector3(),
+      tmp2: new THREE.Vector3(),
+      look: new THREE.Vector3(0, 0.96, -1.5),
+    };
+
+    buildTextures();
+    buildTent();
+    buildAura();
+    buildHand();
+    buildTrajectory();
+    buildStamp();
+    resize();
+    setRoomDress(milkLevel(1));
+    spawnPyramid(milkLevel(1), true);
+    return world;
   }
 
-  function wobbleAmp(pyramidNo, heavy) {
-    if (heavy) return 0;
-    return Math.max(0.28, 2.45 - pyramidNo * 0.22);
+  function buildTextures() {
+    world.tex.wood = canvasTex(256, 256, (ctx) => {
+      ctx.fillStyle = "#3a2418";
+      ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 22; i += 1) {
+        ctx.fillStyle = `rgba(0,0,0,${0.05 + (i % 3) * 0.03})`;
+        ctx.fillRect(i * 12 + 3, 0, 3, 256);
+        ctx.fillStyle = `rgba(212,164,90,${0.04 + (i % 4) * 0.02})`;
+        ctx.fillRect(i * 12 + 8, 0, 1, 256);
+      }
+    });
+    world.tex.wood.repeat.set(2, 2);
+
+    world.tex.floor = canvasTex(512, 512, (ctx) => {
+      ctx.fillStyle = "#2a1810";
+      ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 900; i += 1) {
+        ctx.fillStyle = `rgba(${90 + (i % 40)},${50 + (i % 30)},${20},0.${3 + (i % 4)})`;
+        ctx.fillRect((i * 47) % 512, (i * 91) % 512, 3 + (i % 5), 1);
+      }
+    });
+    world.tex.floor.repeat.set(6, 6);
+
+    world.tex.canvas = canvasTex(256, 256, (ctx) => {
+      ctx.fillStyle = "#7a2438";
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.fillStyle = "#f0d8b0";
+      for (let x = 0; x < 256; x += 32) ctx.fillRect(x, 0, 16, 256);
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      for (let y = 0; y < 256; y += 18) ctx.fillRect(0, y, 256, 2);
+    });
+    world.tex.canvas.repeat.set(4, 2);
+
+    world.tex.creamLabel = canvasTex(128, 128, (ctx) => {
+      ctx.fillStyle = "#f4ead4";
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = "#7b2743";
+      ctx.fillRect(8, 8, 112, 112);
+      ctx.fillStyle = "#ffe6a6";
+      ctx.font = "bold 28px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("MILK", 64, 58);
+      ctx.font = "15px Georgia, serif";
+      ctx.fillText("CREAM", 64, 86);
+    });
+    world.tex.creamLabel.wrapS = world.tex.creamLabel.wrapT = THREE.ClampToEdgeWrapping;
+    world.tex.leadLabel = canvasTex(128, 128, (ctx) => {
+      ctx.fillStyle = "#2a2c30";
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = "#6a6e74";
+      ctx.fillRect(8, 8, 112, 112);
+      ctx.strokeStyle = "#c8ccd0";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(12, 12, 104, 104);
+      ctx.fillStyle = "#e8eaee";
+      ctx.font = "bold 30px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("LEAD", 64, 62);
+      ctx.font = "14px Georgia, serif";
+      ctx.fillText("WEIGHTED", 64, 88);
+    });
+    world.tex.leadLabel.wrapS = world.tex.leadLabel.wrapT = THREE.ClampToEdgeWrapping;
+    world.tex.leadTag = canvasTex(256, 64, (ctx) => {
+      ctx.fillStyle = "#3a2418";
+      ctx.fillRect(0, 0, 256, 64);
+      ctx.fillStyle = "#d4a45a";
+      ctx.font = "bold 28px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("LEAD", 128, 42);
+    });
+    world.tex.leadTag.wrapS = world.tex.leadTag.wrapT = THREE.ClampToEdgeWrapping;
+
+    const bannerCanvas = document.createElement("canvas");
+    bannerCanvas.width = 512;
+    bannerCanvas.height = 128;
+    world.tex.bannerCanvas = bannerCanvas;
+    world.tex.banner = new THREE.CanvasTexture(bannerCanvas);
+    world.tex.banner.colorSpace = THREE.SRGBColorSpace;
+    world.tex.banner.wrapS = world.tex.banner.wrapT = THREE.ClampToEdgeWrapping;
+    paintBanner({ name: "WEIGHTED BOTTLES" });
+
+    world.mats.wood = mat(0xffffff, { map: world.tex.wood, roughness: 0.86 });
+    world.mats.floor = mat(0xffffff, { map: world.tex.floor, roughness: 0.95 });
+    world.mats.canvas = mat(0xffffff, {
+      map: world.tex.canvas,
+      roughness: 0.9,
+      side: THREE.DoubleSide,
+    });
+    world.mats.pole = mat(0x2a1810, { roughness: 0.7 });
+    world.mats.brass = mat(GOLD, { metalness: 0.65, roughness: 0.32, emissive: 0x4a3008, emissiveIntensity: 0.35 });
+    world.mats.glass = mat(0xf4f0e8, { roughness: 0.22, metalness: 0.12, transparent: true, opacity: 0.92 });
+    world.mats.milk = mat(0xf7f2e6, { roughness: 0.55, emissive: 0x3a3020, emissiveIntensity: 0.12 });
+    world.mats.cap = mat(0xb02030, { roughness: 0.4, metalness: 0.2 });
+    world.mats.lead = mat(0x6a6e74, { metalness: 0.8, roughness: 0.35, emissive: 0x222428, emissiveIntensity: 0.2 });
+    world.mats.leadGlass = mat(0x6e7278, { roughness: 0.28, metalness: 0.45, emissive: 0x2a2c30, emissiveIntensity: 0.18 });
+    world.mats.leadSlug = mat(0x4a4e54, { metalness: 0.92, roughness: 0.22, emissive: 0x3a3c40, emissiveIntensity: 0.35 });
+    world.mats.leadFill = mat(0x9aa0a8, { roughness: 0.5, metalness: 0.25 });
+    world.mats.darkGlass = mat(0x3a3034, { roughness: 0.3, metalness: 0.18 });
+    world.mats.softball = mat(0xf0e0c0, { roughness: 0.78 });
+    world.mats.stitch = mat(0xb02030, { roughness: 0.5 });
+    world.mats.shadow = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+    });
+    world.mats.glow = new THREE.MeshBasicMaterial({ color: 0xffe6a6 });
+    world.mats.glue = mat(0xd4a45a, { roughness: 0.4, transparent: true, opacity: 0.7, emissive: 0x6a4010, emissiveIntensity: 0.25 });
   }
 
-  function leadGlint(pyramidNo, mass, heavy) {
-    if (!heavy && !(mass >= 1.55)) return 0;
-    const massBit = Math.max(0, (mass || 1) - 1) * 0.22;
-    return Math.min(1, Math.max(0.16, 0.5 + massBit - pyramidNo * 0.05));
-  }
-
-  function layoutSlots(spec) {
-    if (spec.kind === "wideShoulders" || spec.layout === "4-3-2-1") {
-      /* Squat 4–3–2–1 — new silhouette from the tent mouth, not a stretched 3–2–1. */
-      return [
-        { col: 0, row: 0 },
-        { col: -0.62, row: 1 }, { col: 0.62, row: 1 },
-        { col: -1.24, row: 2 }, { col: 0, row: 2 }, { col: 1.24, row: 2 },
-        { col: -1.92, row: 3 }, { col: -0.64, row: 3 }, { col: 0.64, row: 3 }, { col: 1.92, row: 3 },
-      ];
-    }
-    if (spec.kind === "splitStack" || spec.layout === "3+3") {
-      /* Two mini 2–1 pyramids (3+3). Wide aisle is dead air — boards do not brace each other. */
-      return [
-        { col: -3.08, row: 0, stack: 0 },
-        { col: -3.64, row: 1, stack: 0 },
-        { col: -2.52, row: 1, stack: 0 },
-        { col: 3.08, row: 0, stack: 1 },
-        { col: 2.52, row: 1, stack: 1 },
-        { col: 3.64, row: 1, stack: 1 },
-      ];
-    }
-    return [
-      { col: 0, row: 0 },
-      { col: -0.5, row: 1 },
-      { col: 0.5, row: 1 },
-      { col: -1, row: 2 },
-      { col: 0, row: 2 },
-      { col: 1, row: 2 },
+  function bottleGeo() {
+    if (world.geo.bottle) return world.geo.bottle;
+    const pts = [
+      new THREE.Vector2(0.001, 0),
+      new THREE.Vector2(0.064, 0.0),
+      new THREE.Vector2(0.07, 0.022),
+      new THREE.Vector2(0.062, 0.13),
+      new THREE.Vector2(0.056, 0.22),
+      new THREE.Vector2(0.034, 0.27),
+      new THREE.Vector2(0.024, 0.318),
+      new THREE.Vector2(0.03, 0.35),
+      new THREE.Vector2(0.001, 0.36),
     ];
+    world.geo.bottle = new THREE.LatheGeometry(pts, 14);
+    return world.geo.bottle;
   }
 
-  function makePyramid(pyramidNo) {
-    const spec = milkLevel(pyramidNo) || milkCodaParams(pyramidNo);
-    const n = spec.id;
-    const gap = spec.gap;
-    const cx = W / 2;
-    const baseY = SHELF_Y - 22;
-    const rise = spec.rise || 39;
+  function buildTent() {
+    const { scene } = world;
+    const hem = new THREE.HemisphereLight(0xffd8b0, 0x1a080c, 0.55);
+    scene.add(hem);
+    const dir = new THREE.DirectionalLight(0xffe2c0, 0.55);
+    dir.position.set(2.2, 5.4, 3.2);
+    scene.add(dir);
+    const spot = new THREE.SpotLight(0xffe6c4, 2.4, 14, 0.55, 0.45, 1.1);
+    spot.position.set(0, 4.2, 1.4);
+    spot.target.position.set(0, TABLE_Y, world.crateZ);
+    scene.add(spot);
+    scene.add(spot.target);
+    world.spot = spot;
+
+    const lanternA = new THREE.PointLight(0xffb060, 1.15, 7, 1.6);
+    lanternA.position.set(-1.8, 2.4, 0.4);
+    scene.add(lanternA);
+    const lanternB = new THREE.PointLight(0xff8860, 0.85, 6, 1.6);
+    lanternB.position.set(1.9, 2.2, -0.6);
+    scene.add(lanternB);
+    world.lanterns = [lanternA, lanternB];
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), world.mats.floor);
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const walls = [
+      { pos: [0, 1.7, -4.2], rot: [0, 0, 0], scale: [9.2, 3.6, 1] },
+      { pos: [-4.5, 1.7, 0], rot: [0, Math.PI / 2, 0], scale: [8.6, 3.6, 1] },
+      { pos: [4.5, 1.7, 0], rot: [0, -Math.PI / 2, 0], scale: [8.6, 3.6, 1] },
+    ];
+    walls.forEach((w) => {
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), world.mats.canvas);
+      p.position.set(w.pos[0], w.pos[1], w.pos[2]);
+      p.rotation.set(w.rot[0], w.rot[1], w.rot[2]);
+      p.scale.set(w.scale[0], w.scale[1], w.scale[2]);
+      scene.add(p);
+    });
+
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(10.2, 9.2), world.mats.canvas);
+    roof.position.set(0, 3.55, -0.3);
+    roof.rotation.x = Math.PI / 2;
+    scene.add(roof);
+    const peakL = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 4.2), world.mats.canvas);
+    peakL.position.set(-1.8, 3.85, -1.4);
+    peakL.rotation.set(0.38, 0, 0.48);
+    scene.add(peakL);
+    const peakR = peakL.clone();
+    peakR.position.set(1.8, 3.85, -1.4);
+    peakR.rotation.set(0.38, 0, -0.48);
+    scene.add(peakR);
+
+    [-3.8, 3.8].forEach((x) => {
+      [-3.4, 2.6].forEach((z) => {
+        scene.add(meshCyl(world.mats.pole, 0.07, 0.08, 3.4, x, 1.7, z));
+      });
+    });
+
+    const counter = meshBox(world.mats.wood, 3.4, 0.72, 0.55, 0, 0.36, 2.08);
+    scene.add(counter);
+    scene.add(meshBox(world.mats.brass, 3.42, 0.03, 0.56, 0, 0.73, 2.08));
+
+    const crate = meshBox(world.mats.wood, 1.15, 0.16, 0.52, 0, TABLE_Y - 0.08, world.crateZ);
+    scene.add(crate);
+    world.crate = crate;
+    const crate2 = meshBox(world.mats.wood, 0.62, 0.16, 0.46, 0.72, TABLE_Y - 0.08, world.crateZ);
+    crate2.visible = false;
+    scene.add(crate2);
+    world.crate2 = crate2;
+
+    const aisle = meshBox(mat(0x1a0c10, { roughness: 0.9 }), 0.42, 0.02, 0.7, 0, 0.02, world.crateZ);
+    aisle.visible = false;
+    scene.add(aisle);
+    world.aisleMark = aisle;
+
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.52), new THREE.MeshBasicMaterial({
+      map: world.tex.banner,
+    }));
+    banner.position.set(0, 2.55, -3.95);
+    scene.add(banner);
+    world.banner = banner;
+
+    const chalk = canvasTex(512, 320, (ctx) => {
+      ctx.fillStyle = "#1b3a28";
+      ctx.fillRect(0, 0, 512, 320);
+      ctx.strokeStyle = "#d4a45a";
+      ctx.lineWidth = 10;
+      ctx.strokeRect(10, 10, 492, 300);
+      ctx.fillStyle = "#f0d09a";
+      ctx.font = "bold 32px Georgia, serif";
+      ctx.fillText("HOUSE RULES", 36, 64);
+      ctx.font = "22px Georgia, serif";
+      ctx.fillStyle = "#e8f0d8";
+      ["Three throws a pyramid.", "Heels are lead. Cream lies.", "Glue wants a second kiss.", "Wind will steal a lazy toss.", "Knock every bottle. No almost."].forEach((line, i) => {
+        ctx.fillText(line, 36, 112 + i * 36);
+      });
+    });
+    chalk.wrapS = chalk.wrapT = THREE.ClampToEdgeWrapping;
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(1.55, 0.96), new THREE.MeshBasicMaterial({ map: chalk }));
+    board.position.set(-3.95, 1.55, -1.1);
+    board.rotation.y = Math.PI / 2;
+    scene.add(board);
+
+    const prizeMat = mat(0xc45a3a, { roughness: 0.6 });
+    const shelf = meshBox(world.mats.wood, 2.2, 0.08, 0.28, 2.9, 1.55, -3.7);
+    scene.add(shelf);
+    [-0.7, 0, 0.7].forEach((x, i) => {
+      const bear = new THREE.Group();
+      bear.add(meshSphere(prizeMat, 0.09, 0, 0.16, 0));
+      bear.add(meshSphere(prizeMat, 0.07, 0, 0.28, 0.02));
+      bear.add(meshSphere(mat(GOLD), 0.03, 0, 0.22, 0.08));
+      bear.position.set(2.9 + x, 1.59, -3.7);
+      bear.rotation.y = i * 0.3;
+      scene.add(bear);
+    });
+
+    const basket = meshCyl(mat(0x4a3020), 0.22, 0.18, 0.16, -0.95, 0.86, 1.88);
+    scene.add(basket);
+    for (let i = 0; i < 4; i += 1) {
+      const b = makeSoftball();
+      b.position.set(-0.95 + (i % 2) * 0.1 - 0.05, 0.94 + (i > 1 ? 0.07 : 0), 1.88 + (i % 3) * 0.04);
+      scene.add(b);
+    }
+
+    const colors = [0xc4303a, 0xf0d09a, 0x2a6b3c, 0x3a6aaa];
+    for (let i = 0; i < 14; i += 1) {
+      const flag = meshBox(mat(colors[i % colors.length]), 0.16, 0.2, 0.01, -2.2 + i * 0.34, 2.85, -3.6);
+      flag.rotation.x = 0.2;
+      scene.add(flag);
+    }
+
+    for (let i = 0; i < 12; i += 1) {
+      const bulb = meshSphere(world.mats.glow, 0.035, -2.4 + i * 0.44, 3.05, -2.2 + (i % 3) * 0.4);
+      scene.add(bulb);
+      world.stringLights.push(bulb);
+    }
+
+    const fan = new THREE.Group();
+    fan.position.set(-2.6, 1.55, -1.2);
+    const hub = meshCyl(world.mats.lead, 0.05, 0.05, 0.08, 0, 0, 0);
+    hub.rotation.z = Math.PI / 2;
+    fan.add(hub);
+    for (let i = 0; i < 4; i += 1) {
+      const blade = meshBox(mat(0xc8d0d8, { metalness: 0.4, roughness: 0.35 }), 0.08, 0.42, 0.01, 0, 0.18, 0);
+      blade.rotation.z = (i * Math.PI) / 2;
+      fan.add(blade);
+    }
+    fan.visible = false;
+    scene.add(fan);
+    world.fan = fan;
+
+    for (let i = 0; i < 3; i += 1) {
+      const flap = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 1.6), world.mats.canvas);
+      flap.position.set(3.9, 1.4, -0.4 + i * 0.7);
+      flap.rotation.y = -Math.PI / 2;
+      scene.add(flap);
+      world.flaps.push(flap);
+    }
+
+    world.gluePool = meshCyl(world.mats.glue, 0.09, 0.11, 0.02, 0, TABLE_Y + 0.01, world.crateZ);
+    world.gluePool.visible = false;
+    scene.add(world.gluePool);
+
+    world.nailRing = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 8, 16), world.mats.lead);
+    world.nailRing.rotation.x = Math.PI / 2;
+    world.nailRing.visible = false;
+    scene.add(world.nailRing);
+
+    const night = new THREE.Mesh(
+      new THREE.SphereGeometry(18, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x14081c, side: THREE.BackSide })
+    );
+    night.position.y = -0.2;
+    scene.add(night);
+  }
+
+  function makeSoftball() {
+    const g = new THREE.Group();
+    g.add(meshSphere(world.mats.softball, BALL_R, 0, 0, 0));
+    const stitch = new THREE.Mesh(new THREE.TorusGeometry(BALL_R * 0.72, 0.004, 6, 16), world.mats.stitch);
+    stitch.rotation.y = 0.6;
+    g.add(stitch);
+    return g;
+  }
+
+  function makeBottleMesh(opts) {
+    const g = new THREE.Group();
+    const heavy = !!opts.heavy;
+    const bodyMat = opts.stuck ? world.mats.darkGlass : (heavy ? world.mats.leadGlass : world.mats.glass);
+    const body = new THREE.Mesh(bottleGeo(), bodyMat);
+    g.add(body);
+    const fill = meshCyl(
+      heavy ? world.mats.leadFill : world.mats.milk,
+      heavy ? 0.054 : 0.05,
+      heavy ? 0.06 : 0.054,
+      heavy ? 0.14 : 0.2,
+      0,
+      heavy ? 0.08 : 0.12,
+      0
+    );
+    g.add(fill);
+    const cap = meshCyl(heavy ? world.mats.lead : world.mats.cap, 0.03, 0.03, 0.034, 0, 0.35, 0);
+    g.add(cap);
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.1), new THREE.MeshBasicMaterial({
+      map: heavy ? world.tex.leadLabel : world.tex.creamLabel,
+    }));
+    label.position.set(0, heavy ? 0.2 : 0.16, 0.062);
+    g.add(label);
+    if (heavy) {
+      const slug = meshCyl(world.mats.leadSlug, 0.074, 0.076, 0.09, 0, 0.045, 0);
+      g.add(slug);
+      const belt = meshCyl(world.mats.lead, 0.078, 0.078, 0.028, 0, 0.09, 0);
+      g.add(belt);
+      g.userData.slug = slug;
+    }
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(heavy ? 0.09 : 0.068, 12), world.mats.shadow);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.002;
+    g.add(shadow);
+    g.userData.shadow = shadow;
+    g.userData.body = body;
+    g.userData.heavy = heavy;
+    return g;
+  }
+
+  function buildAura() {
+    const g = new THREE.Group();
+    const skin = mat(SKIN, { emissive: 0x3a2018, emissiveIntensity: 0.12 });
+    const blouse = mat(BLOUSE, { emissive: 0x3a3028, emissiveIntensity: 0.2 });
+    const dress = mat(DRESS, { emissive: 0x0a2010, emissiveIntensity: 0.25 });
+    const hairM = mat(HAIR, { emissive: 0x1a0c08, emissiveIntensity: 0.15 });
+    const gold = mat(GOLD, { metalness: 0.65, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.55 });
+    const heartM = mat(HEART, { emissive: HEART, emissiveIntensity: 0.65, roughness: 0.4 });
+    const shoeM = mat(0x111111, { roughness: 0.35, metalness: 0.15 });
+
+    const hip = new THREE.Group();
+    hip.position.y = 0.42;
+    g.add(hip);
+    hip.add(meshCyl(blouse, 0.13, 0.16, 0.28, 0, 0.28, 0));
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.12, 0.32, 12), dress);
+    skirt.position.y = 0.06;
+    hip.add(skirt);
+    const heart = meshBox(heartM, 0.09, 0.09, 0.04, 0, 0.22, 0.16);
+    heart.rotation.z = Math.PI / 4;
+    hip.add(heart);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), blouse);
+    collar.position.y = 0.44;
+    collar.rotation.x = Math.PI / 2;
+    hip.add(collar);
+
+    const head = new THREE.Group();
+    head.position.y = 0.58;
+    hip.add(head);
+    head.add(meshSphere(skin, 0.175, 0, 0.02, 0));
+    const eyeW = mat(0xf7f2ea);
+    const eyeD = mat(0x2a1810);
+    [-1, 1].forEach((side) => {
+      const white = meshSphere(eyeW, 0.038, side * 0.055, 0.03, 0.15);
+      white.scale.set(0.038, 0.044, 0.02);
+      head.add(white);
+      head.add(meshSphere(eyeD, 0.02, side * 0.055, 0.03, 0.168));
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 10, Math.PI), mat(0xc45a6a));
+    smile.position.set(0, -0.05, 0.16);
+    smile.rotation.x = 2.6;
+    head.add(smile);
+    head.add(meshSphere(hairM, 0.188, 0, 0.07, -0.08));
+    [-1, 1].forEach((side) => {
+      head.add(meshSphere(hairM, 0.1, side * 0.19, -0.05, 0.02));
+      head.add(meshSphere(heartM, 0.042, side * 0.19, 0.05, 0.05));
+    });
+    head.add(meshBox(hairM, 0.26, 0.06, 0.08, 0, 0.15, 0.12));
+    const crown = new THREE.Group();
+    crown.position.y = 0.24;
+    head.add(crown);
+    crown.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold));
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const h = i === 1 ? 0.14 : 0.09;
+      const spike = new THREE.Mesh(world.geo.cone, gold);
+      spike.scale.set(0.035, h, 0.035);
+      spike.position.set(x, h * 0.45, 0);
+      crown.add(spike);
+    });
+    const gem = meshBox(heartM, 0.055, 0.055, 0.025, 0, 0.02, 0.11);
+    gem.rotation.z = Math.PI / 4;
+    crown.add(gem);
+
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.16 : 0.07), arm ? 0.36 : 0.0, 0);
+      const len = arm ? 0.28 : 0.34;
+      const bone = meshCyl(arm ? skin : dress, arm ? 0.035 : 0.042, arm ? 0.035 : 0.042, len, 0, -len / 2, 0);
+      pivot.add(bone);
+      if (!arm) pivot.add(meshBox(shoeM, 0.08, 0.05, 0.12, 0, -len - 0.02, 0.03));
+      else pivot.add(meshSphere(skin, 0.04, 0, -len, 0));
+      hip.add(pivot);
+      return pivot;
+    }
+    const armL = limb(-1, true);
+    const armR = limb(1, true);
+    const legL = limb(-1, false);
+    const legR = limb(1, false);
+
+    g.position.set(1.05, 0, 0.15);
+    g.rotation.y = 0.18;
+    g.scale.setScalar(1.18);
+    g.userData = { hip, head, armL, armR, legL, legR, t: 0, mood: "wave" };
+    world.scene.add(g);
+    world.aura = g;
+  }
+
+  function buildHand() {
+    const ball = makeSoftball();
+    world.scene.add(ball);
+    world.handBall = ball;
+    const sling = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.01, 0.01, 1, 6),
+      new THREE.MeshBasicMaterial({ color: 0xc4303a })
+    );
+    sling.visible = false;
+    world.scene.add(sling);
+    world.sling = sling;
+  }
+
+  function buildTrajectory() {
+    const m = new THREE.MeshBasicMaterial({ color: 0xffe6a6, transparent: true, opacity: 0.7 });
+    for (let i = 0; i < 14; i += 1) {
+      const d = meshSphere(m, 0.018 - i * 0.0008, 0, 0, 0);
+      d.visible = false;
+      world.scene.add(d);
+      world.traj.push(d);
+    }
+  }
+
+  function buildStamp() {
+    const c = document.createElement("canvas");
+    c.width = 512;
+    c.height = 256;
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, 512, 256);
+    ctx.strokeStyle = "rgba(196,30,58,0.95)";
+    ctx.lineWidth = 14;
+    ctx.strokeRect(28, 28, 456, 200);
+    ctx.fillStyle = "rgba(196,30,58,0.18)";
+    ctx.fillRect(28, 28, 456, 200);
+    ctx.fillStyle = "rgba(196,30,58,0.96)";
+    ctx.font = "bold 92px Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText("LEAD", 256, 160);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.55), new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthTest: false,
+    }));
+    mesh.visible = false;
+    world.scene.add(mesh);
+    world.stamp = mesh;
+  }
+
+  function setRoomDress(spec) {
+    if (!world) return;
+    const split = spec && spec.kind === "splitStack";
+    const wind = spec && (spec.kind === "windShelf" || (spec.coda && spec.windDrift));
+    const wide = spec && spec.kind === "wideShoulders";
+    world.crate.scale.set(split ? 0.55 : wide ? 1.55 : 1, 1, 1);
+    world.crate.position.set(split ? -0.72 : 0, TABLE_Y - 0.08, world.crateZ);
+    world.crate2.visible = !!split;
+    world.crate2.position.set(0.72, TABLE_Y - 0.08, world.crateZ);
+    world.aisleMark.visible = !!split;
+    if (world.fan) world.fan.visible = !!wind;
+    const col = spec && spec.coda ? 0xff6688 : spec && spec.kind === "stuckPin" ? 0xffc0a0 : 0xffe6c4;
+    if (world.spot) world.spot.color.setHex(col);
+    paintBanner(spec);
+  }
+
+  function paintBanner(spec) {
+    if (!world || !world.tex.bannerCanvas) return;
+    const ctx = world.tex.bannerCanvas.getContext("2d");
+    ctx.fillStyle = spec && spec.coda ? "#4a1020" : "#5a1830";
+    ctx.fillRect(0, 0, 512, 128);
+    ctx.strokeStyle = "#d4a45a";
+    ctx.lineWidth = 8;
+    ctx.strokeRect(6, 6, 500, 116);
+    ctx.fillStyle = "#ffe6a6";
+    ctx.font = "bold 36px Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText((spec && spec.name || "WEIGHTED BOTTLES").toUpperCase(), 256, 58);
+    ctx.font = "20px Georgia, serif";
+    ctx.fillStyle = "#e8c48a";
+    ctx.fillText(roomTell(spec), 256, 96);
+    if (world.tex.banner) world.tex.banner.needsUpdate = true;
+  }
+
+  function clearBottles() {
+    if (!world) return;
+    world.bottles.forEach((b) => {
+      if (b.mesh && b.mesh.parent) b.mesh.parent.remove(b.mesh);
+    });
+    world.bottles = [];
+    (world.leadTags || []).forEach((t) => {
+      if (t.parent) t.parent.remove(t);
+    });
+    world.leadTags = [];
+    if (world.gluePool) world.gluePool.visible = false;
+    if (world.nailRing) world.nailRing.visible = false;
+  }
+
+  function spawnPyramid(spec, attract) {
+    if (!world) return;
+    clearBottles();
     const slots = layoutSlots(spec);
     let bottomRow = 0;
     slots.forEach((s) => { if (s.row > bottomRow) bottomRow = s.row; });
     const bottomSlots = slots.filter((s) => s.row === bottomRow);
     let gluePick = null;
     if (spec.glueBottomCorner && bottomSlots.length) {
-      /* Left heel is the glued corner — a planned second shot, not a coin-flip. */
-      let left = bottomSlots[0];
-      bottomSlots.forEach((s) => {
-        if (s.col < left.col) left = s;
-      });
-      gluePick = left;
+      gluePick = bottomSlots[0];
+      bottomSlots.forEach((s) => { if (s.col < gluePick.col) gluePick = s; });
     }
     let stuckSlot = -1;
     if (spec.stuckBottle) {
-      /* Scout-then-strike: never a heel — Glue Corner already owns the left-heel two-hit. */
       const midTop = [];
-      slots.forEach((s, i) => {
-        if (s.row !== bottomRow) midTop.push(i);
-      });
+      slots.forEach((s, i) => { if (s.row !== bottomRow) midTop.push(i); });
       stuckSlot = midTop.length ? midTop[(Math.random() * midTop.length) | 0] : 0;
     }
-    return slots.map((s, i) => {
+    const gap = spec.gap || 0.13;
+    const rise = spec.rise || 0.275;
+    slots.forEach((s, i) => {
       const heavy = s.row === bottomRow;
       const glued = !!(gluePick && s === gluePick);
       const stuck = i === stuckSlot;
@@ -390,735 +1031,56 @@
       if (s.row > 0 && s.row < bottomRow) mass = spec.midMass;
       if (heavy) mass = spec.bottomMass;
       if (stuck) mass += 0.85;
-      return {
-        x: cx + s.col * gap,
-        y: baseY - (bottomRow - s.row) * rise,
-        vx: 0,
-        vy: 0,
-        rot: 0,
-        spin: 0,
-        r: spec.kind === "wideShoulders" ? BOTTLE_R * 0.9 : BOTTLE_R,
-        row: s.row,
-        stack: s.stack || 0,
-        heavy,
-        glued,
-        stuck,
-        hits: 0,
-        needHits: glued || stuck ? 2 : 1,
+      const x = s.col * gap;
+      const y = TABLE_Y + (bottomRow - s.row) * rise;
+      const z = world.crateZ + (s.stack ? 0 : 0) + (s.row - bottomRow) * 0.01;
+      const mesh = makeBottleMesh({ heavy, stuck });
+      mesh.position.set(x, attract ? y + 0.35 : y, z);
+      world.scene.add(mesh);
+      const body = {
+        mesh,
+        x, y, z,
+        homeX: x, homeY: y, homeZ: z,
+        vx: 0, vy: 0, vz: 0,
+        tiltX: 0, tiltZ: 0, avx: 0, avz: 0, spinY: 0,
+        mass, r: BOTTLE_R, h: BOTTLE_H,
+        com: heavy ? 0.05 : 0.17,
         seated: true,
         fallen: false,
-        mass,
-        glueFlash: 0,
-        stuckPulse: stuck ? 1 : 0,
-        phase: i * 1.17 + n * 0.4,
-        wobble: (glued || stuck) ? 0 : wobbleAmp(n, heavy),
-        glint: leadGlint(n, mass, heavy),
+        glued, stuck, heavy,
+        hits: 0,
+        needHits: (glued || stuck) ? 2 : 1,
+        row: s.row,
+        stack: s.stack || 0,
+        bottomRow,
+        wobble: 0,
+        flash: 0,
+        spawn: attract ? 0.35 + i * 0.04 : 0,
       };
+      world.bottles.push(body);
+      if (heavy) {
+        const tag = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.11, 0.028),
+          new THREE.MeshBasicMaterial({ map: world.tex.leadTag })
+        );
+        tag.position.set(x, TABLE_Y + 0.014, z + 0.09);
+        tag.rotation.x = -0.55;
+        world.scene.add(tag);
+        world.leadTags.push(tag);
+      }
+      if (glued && world.gluePool) {
+        world.gluePool.visible = true;
+        world.gluePool.position.set(x, TABLE_Y + 0.012, z);
+      }
+      if (stuck && world.nailRing) {
+        world.nailRing.visible = true;
+        world.nailRing.position.set(x, y + 0.04, z);
+      }
     });
   }
 
-  function nowT() {
-    return run && !run.done ? run.t : performance.now();
-  }
-
-  function posOf(b, t) {
-    const flash = b.glueFlash || 0;
-    const jx = flash > 0 ? Math.sin(t * 0.08) * 2.4 : 0;
-    if (b.fallen || !b.seated || b.heavy) return { x: b.x + jx, y: b.y };
-    return { x: b.x + Math.sin(t * 0.0032 + b.phase) * b.wobble + jx, y: b.y };
-  }
-
-  function stackStanding(list, stack) {
-    let n = 0;
-    for (const b of list) {
-      if (!b.fallen && (b.stack || 0) === stack) n += 1;
-    }
-    return n;
-  }
-
-  function attractSpec() {
-    return milkLevel(((idleRoom - 1) % AUTHORED_COUNT) + 1);
-  }
-
-  let idleBottles = null;
   function bottles() {
-    if (run && run.bottles) return run.bottles;
-    if (!idleBottles) idleBottles = makePyramid(attractSpec().id);
-    return idleBottles;
-  }
-
-  function bottomRowOf(list) {
-    let m = 0;
-    for (const o of list) if ((o.row | 0) > m) m = o.row | 0;
-    return m;
-  }
-
-  function seatedBottomNeighbors(b, list) {
-    const bottom = bottomRowOf(list);
-    let n = 0;
-    for (const o of list) {
-      if (o === b || o.fallen || !o.seated) continue;
-      if (o.row === bottom && Math.abs(o.x - b.x) < 54) n += 1;
-    }
-    return n;
-  }
-
-  function unseatThreshold(b, list) {
-    /* Glue / stuck never leave on the first softball — planned second shot. */
-    if ((b.glued || b.stuck) && b.hits < (b.needHits || 2)) return 99;
-    if (!b.heavy) {
-      /* Mid-row mass (Wide Shoulders) fights; cream tops fly. */
-      return 0.58 + Math.max(0, (b.mass || 1) - 1) * 0.28;
-    }
-    const locked = seatedBottomNeighbors(b, list);
-    const massBump = Math.max(0, (b.mass || 2) - 2) * 0.42;
-    if (locked >= 2) return 4.05 + massBump;
-    if (locked === 1) return 0.92 + massBump;
-    return 0.7 + massBump;
-  }
-
-  function maybeUnseat(b, list) {
-    if (!b.seated || b.fallen) return false;
-    const twoHitDone = (b.glued || b.stuck) && b.hits >= (b.needHits || 2);
-    const sp = Math.hypot(b.vx, b.vy);
-    if (!twoHitDone && sp < unseatThreshold(b, list)) return false;
-    const p = posOf(b, nowT());
-    b.x = p.x;
-    b.y = p.y;
-    b.seated = false;
-    b.loose = 0;
-    if (twoHitDone && sp < 2.2) {
-      b.vx += (b.x < W / 2 ? -2.4 : 2.4);
-      b.vy -= 2.6;
-      b.spin += b.x < W / 2 ? -0.18 : 0.18;
-    }
-    collapseFrom(b, list);
-    if (!b.heavy && b.row === 2) {
-      for (const o of list) {
-        if (o === b || o.fallen || o.row !== 2) continue;
-        if (Math.abs(o.x - b.x) > 42) continue;
-        o.vx += o.x >= b.x ? 2.35 : -2.35;
-        o.vy -= 0.9;
-        o.spin += o.x >= b.x ? 0.12 : -0.12;
-        maybeUnseat(o, list);
-      }
-    }
-    return true;
-  }
-
-  function collapseFrom(b, list) {
-    const speed = Math.hypot(b.vx, b.vy);
-    if (speed < 0.75) return;
-    for (const o of list) {
-      if (o === b || o.fallen) continue;
-      const dx = o.x - b.x;
-      const dy = o.y - b.y;
-      const d = Math.hypot(dx, dy) || 1;
-      if (d > 64) continue;
-      const boost = (b.heavy ? 0.18 : 1.12) * (1 - d / 64);
-      o.vx += (dx / d) * boost * speed;
-      o.vy += (dy / d) * boost * speed * 0.4 - 0.45;
-      o.spin += dx > 0 ? 0.1 : -0.1;
-      maybeUnseat(o, list);
-    }
-  }
-
-  function impulse(a, b, nx, ny, rest) {
-    const rv = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-    if (rv > 0) return 0;
-    const invA = 1 / (a.mass || 0.9);
-    const mass = Math.max(0.7, b.mass || 1);
-    /* Seated invB scales with mass so Heavy Heels actually sits heavier than Fairground Six. */
-    const invB = b.seated ? 0.03 / mass : 1 / mass;
-    const j = -(1 + rest) * rv / (invA + invB);
-    a.vx += j * nx * invA;
-    a.vy += j * ny * invA;
-    const pinned = (b.glued || b.stuck) && b.hits < (b.needHits || 2);
-    if (pinned) return Math.abs(j);
-    if (!b.seated) {
-      b.vx -= j * nx * invB;
-      b.vy -= j * ny * invB;
-    } else if (b.heavy) {
-      const kick = 0.28 / mass;
-      b.vx -= j * nx * kick;
-      b.vy -= j * ny * kick * 0.82;
-    } else {
-      const kick = 0.64 / mass;
-      b.vx -= j * nx * kick;
-      b.vy -= j * ny * kick * 0.86;
-    }
-    return Math.abs(j);
-  }
-
-  function separate(ax, ay, ar, bx, by, br) {
-    const dx = bx - ax;
-    const dy = by - ay;
-    const dist = Math.hypot(dx, dy) || 0.0001;
-    const min = ar + br;
-    if (dist >= min) return null;
-    const nx = dx / dist;
-    const ny = dy / dist;
-    const overlap = min - dist;
-    return { nx, ny, overlap, dist };
-  }
-
-  function drawBottle(ctx, b, t) {
-    const p = posOf(b, t);
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(b.rot || 0);
-    const h = 46;
-    const bodyW = 14.5;
-    const neckW = 6.6;
-    if (b.seated) {
-      ctx.fillStyle = "rgba(0,0,0,0.28)";
-      ctx.beginPath();
-      ctx.ellipse(0, h / 2 + 2, 11, 3.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.beginPath();
-    ctx.moveTo(-bodyW, h / 2 - 5);
-    ctx.quadraticCurveTo(-bodyW, h / 2, -bodyW + 5, h / 2);
-    ctx.lineTo(bodyW - 5, h / 2);
-    ctx.quadraticCurveTo(bodyW, h / 2, bodyW, h / 2 - 5);
-    ctx.lineTo(bodyW - 1, -h / 2 + 16);
-    ctx.quadraticCurveTo(neckW + 1, -h / 2 + 12, neckW, -h / 2 + 10);
-    ctx.lineTo(neckW - 0.5, -h / 2 + 2);
-    ctx.quadraticCurveTo(0, -h / 2 - 2, -neckW + 0.5, -h / 2 + 2);
-    ctx.lineTo(-neckW, -h / 2 + 10);
-    ctx.quadraticCurveTo(-neckW - 1, -h / 2 + 12, -bodyW + 1, -h / 2 + 16);
-    ctx.closePath();
-    const glass = ctx.createLinearGradient(-bodyW, 0, bodyW, 0);
-    const midFight = !b.heavy && (b.mass || 1) >= 1.55;
-    if (b.heavy) {
-      glass.addColorStop(0, "#5a4a46");
-      glass.addColorStop(0.42, "#c4b4a4");
-      glass.addColorStop(1, "#3a2c2a");
-    } else if (midFight) {
-      glass.addColorStop(0, "#6a5a52");
-      glass.addColorStop(0.42, "#d8c8b4");
-      glass.addColorStop(1, "#4a3a36");
-    } else {
-      glass.addColorStop(0, "#7a96a0");
-      glass.addColorStop(0.4, "#eef4f6");
-      glass.addColorStop(1, "#5a7882");
-    }
-    ctx.fillStyle = glass;
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    ctx.fillStyle = b.heavy
-      ? "rgba(86,76,68,0.58)"
-      : (midFight ? "rgba(120,96,78,0.42)" : "rgba(255,252,244,0.74)");
-    ctx.fillRect(-bodyW, 0, bodyW * 2, h / 2);
-    if (b.heavy) {
-      const lead = Math.min(0.92, 0.42 + Math.max(0, (b.mass || 2) - 2) * 0.28 + b.glint * 0.2);
-      ctx.fillStyle = `rgba(22,16,12,${lead})`;
-      ctx.beginPath();
-      ctx.ellipse(0, h / 2 - 7, 10.5, 5.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = `rgba(212,164,90,${b.glint})`;
-      ctx.fillRect(-9.5, h / 2 - 12, 19, 2.1);
-    }
-    ctx.fillStyle = "rgba(255,255,255,0.28)";
-    ctx.fillRect(-bodyW + 3, -h / 2 + 14, 2.6, 18);
-    ctx.restore();
-    ctx.strokeStyle = b.heavy ? "#8a6a50" : "#f0d09a";
-    ctx.lineWidth = 1.25;
-    ctx.stroke();
-    ctx.fillStyle = b.glued || b.stuck ? "#8a6230" : "#c41e3a";
-    ctx.fillRect(-neckW - 1.2, -h / 2 - 3.2, neckW * 2 + 2.4, 6.2);
-    ctx.fillStyle = "#f0d09a";
-    ctx.fillRect(-neckW, -h / 2 - 1, neckW * 2, 2);
-    if (b.glued || b.stuck) {
-      if (b.stuck) {
-        const pulse = 0.45 + 0.35 * Math.abs(Math.sin((t || 0) * 0.006));
-        ctx.strokeStyle = `rgba(232,160,184,${pulse})`;
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.ellipse(0, 2, bodyW + 5, h / 2 + 6, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(12,8,6,0.62)";
-        ctx.fillRect(-bodyW + 1, -h / 2 + 10, bodyW * 2 - 2, h / 2 + 4);
-      }
-      ctx.fillStyle = b.stuck ? "rgba(28,16,12,0.88)" : "rgba(212,164,90,0.88)";
-      ctx.beginPath();
-      ctx.ellipse(5.2, h / 2 - 5, 3.1, 6.2, 0.18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = b.stuck ? "rgba(18,10,8,0.82)" : "rgba(90,48,18,0.7)";
-      ctx.fillRect(-4, h / 2 - 11, 8, 2);
-      if (b.glued) {
-        ctx.fillStyle = (b.hits | 0) > 0 ? "rgba(196,30,58,0.82)" : "rgba(212,164,90,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(-8, h / 2 - 2);
-        ctx.quadraticCurveTo(-2, h / 2 + 14, 7, h / 2 + 10);
-        ctx.quadraticCurveTo(0, h / 2 + 2, -8, h / 2 - 2);
-        ctx.fill();
-        ctx.fillStyle = "rgba(196,30,58,0.45)";
-        ctx.beginPath();
-        ctx.ellipse(0, h / 2 + 6, 11, 4.2, 0, 0, Math.PI * 2);
-        ctx.fill();
-        if ((b.hits | 0) > 0) {
-          ctx.strokeStyle = "rgba(240,208,154,0.95)";
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          ctx.moveTo(-7, h / 2 - 10);
-          ctx.lineTo(1, h / 2 + 4);
-          ctx.lineTo(8, h / 2 - 6);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-4, -h / 2 + 16);
-          ctx.lineTo(6, h / 2 - 8);
-          ctx.stroke();
-        }
-      }
-      ctx.fillStyle = b.stuck ? "#e8a0b8" : "#f0d09a";
-      ctx.font = "8px Georgia, serif";
-      ctx.textAlign = "center";
-      const tag = (b.hits | 0) > 0
-        ? `${b.hits}/${b.needHits || 2}`
-        : (b.stuck ? "DARK PIN" : "GLUE");
-      ctx.fillText(tag, 0, -h / 2 - 8);
-      ctx.textAlign = "left";
-    } else if (b.heavy && run && run.spec && run.spec.kind === "heavyHeels") {
-      ctx.fillStyle = "rgba(196,30,58,0.9)";
-      ctx.font = "7px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("LEAD", 0, h / 2 + 12);
-      ctx.textAlign = "left";
-    }
-    ctx.restore();
-  }
-
-  function throwSpeed(power) {
-    return 6.15 + power * 8.85;
-  }
-
-  function windGust(t) {
-    /* Punchy gusts so Wind Shelf is a timing room, not a constant shove. */
-    const wave = Math.sin(t * 0.0058);
-    return wave > 0.35 ? 1.7 : 0.42;
-  }
-
-  function windAccel(drift, t, k) {
-    if (!drift) return 0;
-    /* Sheet windDrift 0.26 is a lead-the-gust, not a vacuum. Same kick in preview + flight. */
-    return drift * 0.42 * (k == null ? 1 : k) * windGust(t);
-  }
-
-  function predictArc(power, ang) {
-    const speed = throwSpeed(power);
-    let x = TEE.x;
-    let y = TEE.y;
-    let vx = Math.cos(ang) * speed;
-    let vy = Math.sin(ang) * speed;
-    const pts = [];
-    const wind = run && run.spec ? run.spec.windDrift : 0;
-    const t0 = run ? run.t : 0;
-    for (let i = 0; i < 48; i += 1) {
-      vy += GRAVITY;
-      vx += windAccel(wind, t0 + i * 16, 1);
-      x += vx;
-      y += vy;
-      pts.push({ x, y });
-      if (y > H - 8 || x < 0 || x > W) break;
-    }
-    return pts;
-  }
-
-  function drawRoomPlate(ctx, spec) {
-    if (!spec) return;
-    ctx.fillStyle = "rgba(12,6,9,0.78)";
-    ctx.fillRect(22, 48, W - 44, 38);
-    ctx.strokeStyle = spec.coda ? "rgba(196,30,58,0.85)" : "rgba(212,164,90,0.7)";
-    ctx.strokeRect(22.5, 48.5, W - 45, 37);
-    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#f0d09a";
-    ctx.font = "11px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText(hudStageLine(spec, run ? run.pyramids : 0), W / 2, 64);
-    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#d4a45a";
-    ctx.font = "9px Georgia, serif";
-    ctx.fillText(roomTell(spec), W / 2, 78);
-    ctx.textAlign = "left";
-  }
-
-  function draw() {
-    const canvas = $("milkCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#2c1420");
-    g.addColorStop(0.55, "#1a0c12");
-    g.addColorStop(1, "#10080c");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(22, 48);
-    ctx.lineTo(318, 40);
-    ctx.lineTo(328, SHELF_Y + 8);
-    ctx.lineTo(12, SHELF_Y + 18);
-    ctx.closePath();
-    ctx.clip();
-    kit.fillWood(ctx, 8, 36, 324, SHELF_Y);
-    ctx.fillStyle = "rgba(80,24,36,0.18)";
-    for (let y = 52; y < SHELF_Y; y += 28) ctx.fillRect(12, y, 316, 10);
-    ctx.restore();
-
-    ctx.strokeStyle = "#d4a45a";
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(18.5, 46.5, 303, SHELF_Y - 40);
-
-    ctx.fillStyle = "#3a2418";
-    ctx.fillRect(SHELF_L - 10, SHELF_Y, SHELF_R - SHELF_L + 20, 14);
-    ctx.fillStyle = "#d4a45a";
-    ctx.fillRect(SHELF_L - 10, SHELF_Y, SHELF_R - SHELF_L + 20, 3);
-    ctx.fillStyle = "#1a0c10";
-    ctx.fillRect(16, SHELF_Y + 14, W - 32, 10);
-    const room = run && run.spec ? run.spec : attractSpec();
-    if (room && room.kind === "splitStack") {
-      ctx.fillStyle = "rgba(12,6,9,0.62)";
-      ctx.fillRect(W / 2 - 36, 90, 72, SHELF_Y - 90);
-      ctx.fillStyle = "#4a3020";
-      ctx.fillRect(18, SHELF_Y - 10, 118, 18);
-      ctx.fillRect(W - 18 - 118, SHELF_Y - 10, 118, 18);
-      ctx.fillStyle = "#2a1810";
-      ctx.fillRect(22, SHELF_Y - 28, 110, 18);
-      ctx.fillRect(W - 22 - 110, SHELF_Y - 28, 110, 18);
-      ctx.fillStyle = "#d4a45a";
-      ctx.fillRect(18, SHELF_Y - 10, 118, 3);
-      ctx.fillRect(W - 18 - 118, SHELF_Y - 10, 118, 3);
-      ctx.strokeStyle = "rgba(196,30,58,0.7)";
-      ctx.setLineDash([3, 5]);
-      ctx.beginPath();
-      ctx.moveTo(W / 2, 58);
-      ctx.lineTo(W / 2, SHELF_Y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      const listNow = bottles();
-      const leftN = stackStanding(listNow, 0);
-      const rightN = stackStanding(listNow, 1);
-      ctx.fillStyle = "rgba(240,208,154,0.88)";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("DEAD AIR", W / 2, 168);
-      ctx.fillText(`LEFT ${leftN}`, 82, SHELF_Y - 12);
-      ctx.fillText(`RIGHT ${rightN}`, W - 82, SHELF_Y - 12);
-      if (leftN === 0 && rightN > 0) ctx.fillText("RIGHT STILL UP", W / 2, 184);
-      else if (rightN === 0 && leftN > 0) ctx.fillText("LEFT STILL UP", W / 2, 184);
-      ctx.textAlign = "left";
-    }
-    if (room && room.kind === "glueCorner") {
-      const glued = bottles().find((b) => b.glued && !b.fallen);
-      const gx = glued ? posOf(glued, nowT()).x : (W / 2 - (room.gap || 29.5));
-      ctx.fillStyle = "rgba(212,164,90,0.7)";
-      ctx.beginPath();
-      ctx.ellipse(gx, SHELF_Y + 3, 22, 7, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(196,30,58,0.45)";
-      ctx.beginPath();
-      ctx.ellipse(gx + 6, SHELF_Y + 4, 10, 4, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = glued && (glued.hits | 0) > 0 ? "#e8a0b8" : "#f0d09a";
-      ctx.font = "8px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(glued && (glued.hits | 0) > 0 ? "ONE MORE" : "GLUE HEEL", gx, SHELF_Y - 8);
-      ctx.textAlign = "left";
-    }
-    if (room && room.kind === "wideShoulders") {
-      ctx.fillStyle = "#4a3020";
-      ctx.fillRect(SHELF_L - 28, SHELF_Y, SHELF_R - SHELF_L + 56, 16);
-      ctx.fillStyle = "#d4a45a";
-      ctx.fillRect(SHELF_L - 28, SHELF_Y, SHELF_R - SHELF_L + 56, 3);
-      ctx.strokeStyle = "rgba(232,160,184,0.7)";
-      ctx.setLineDash([4, 5]);
-      ctx.beginPath();
-      ctx.moveTo(SHELF_L - 20, SHELF_Y - 8);
-      ctx.lineTo(SHELF_R + 20, SHELF_Y - 8);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      const gap = room.gap || 50;
-      ctx.strokeStyle = "rgba(232,160,184,0.45)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(W / 2, SHELF_Y - 88);
-      ctx.lineTo(W / 2 - 0.62 * gap, SHELF_Y - 66);
-      ctx.lineTo(W / 2 - 1.24 * gap, SHELF_Y - 44);
-      ctx.lineTo(W / 2 - 1.92 * gap, SHELF_Y - 8);
-      ctx.moveTo(W / 2, SHELF_Y - 88);
-      ctx.lineTo(W / 2 + 0.62 * gap, SHELF_Y - 66);
-      ctx.lineTo(W / 2 + 1.24 * gap, SHELF_Y - 44);
-      ctx.lineTo(W / 2 + 1.92 * gap, SHELF_Y - 8);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(232,160,184,0.95)";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("4-WIDE BASE · 10 PINS · SQUAT", W / 2, 112);
-      ctx.textAlign = "left";
-    }
-    if (room && room.kind === "stuckPin") {
-      const dark = bottles().find((b) => b.stuck && !b.fallen);
-      if (dark) {
-        const dp = posOf(dark, nowT());
-        ctx.fillStyle = "rgba(12,6,9,0.28)";
-        ctx.beginPath();
-        ctx.ellipse(dp.x, SHELF_Y + 4, 26, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(232,160,184,0.7)";
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.arc(dp.x, dp.y, 24 + Math.sin(nowT() * 0.008) * 3, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = "#e8a0b8";
-        ctx.font = "8px Georgia, serif";
-        ctx.textAlign = "center";
-        ctx.fillText("SCOUT THE DARK PIN", dp.x, dp.y - 36);
-        ctx.textAlign = "left";
-      }
-    }
-    if (room && room.kind === "heavyHeels") {
-      ctx.fillStyle = "rgba(196,30,58,0.9)";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("HEELS ARE CONCRETE · TOPS FLY", W / 2, 112);
-      ctx.textAlign = "left";
-    }
-    if (room && (room.kind === "windShelf" || (room.coda && room.windDrift))) {
-      const tWind = nowT();
-      const gusty = windGust(tWind) > 1;
-      ctx.strokeStyle = gusty ? "rgba(126,200,224,0.95)" : "rgba(126,200,224,0.4)";
-      ctx.lineWidth = gusty ? 2.4 : 1.3;
-      for (let i = 0; i < 6; i += 1) {
-        const y = 72 + i * 36 + Math.sin(tWind * 0.004 + i) * 7;
-        const x0 = 28 + ((tWind * (gusty ? 0.22 : 0.09) + i * 32) % 260);
-        ctx.beginPath();
-        ctx.moveTo(x0, y);
-        ctx.quadraticCurveTo(x0 + 18, y - 8, x0 + 42, y - 4);
-        ctx.stroke();
-      }
-      ctx.fillStyle = gusty ? "#7ec8e0" : "rgba(126,200,224,0.45)";
-      ctx.beginPath();
-      ctx.moveTo(W - 48, 78);
-      ctx.lineTo(W - 18, 68 + Math.sin(tWind * 0.006) * (gusty ? 12 : 5));
-      ctx.lineTo(W - 18, 96 + Math.sin(tWind * 0.006) * (gusty ? 12 : 5));
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#d4a45a";
-      ctx.fillRect(W - 50, 76, 3, 28);
-      ctx.fillStyle = gusty ? "#7ec8e0" : "rgba(212,164,90,0.9)";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(gusty ? "GUST ON → LEAD INTO IT" : "GUST LULL · WAIT OR FIGHT", W / 2, 112);
-      ctx.textAlign = "left";
-    }
-    if (!run || !run.done) {
-      ctx.fillStyle = "rgba(240,208,154,0.72)";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(roomTell(room), W / 2, SHELF_Y + 22);
-      ctx.textAlign = "left";
-    }
-
-    drawRoomPlate(ctx, room);
-
-    const t = nowT();
-    const list = bottles();
-    list.forEach((b) => {
-      if (!b.fallen) drawBottle(ctx, b, t);
-    });
-
-    ctx.strokeStyle = "rgba(240,208,154,0.35)";
-    ctx.setLineDash([6, 6]);
-    ctx.beginPath();
-    ctx.moveTo(40, TEE.y);
-    ctx.lineTo(W - 40, TEE.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    if (run && run.aim) {
-      const a = run.aim;
-      const ang = Math.atan2(a.hy - TEE.y, a.hx - TEE.x);
-      ctx.strokeStyle = "rgba(240,208,154,0.85)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(TEE.x, TEE.y);
-      ctx.lineTo(a.hx, a.hy);
-      ctx.stroke();
-      const windy = !!(run.spec && (run.spec.kind === "windShelf" || run.spec.windDrift));
-      predictArc(a.power, ang).forEach((p, i, arc) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.6 + a.power * 1.4, 0, Math.PI * 2);
-        ctx.fillStyle = windy
-          ? (i === arc.length - 1 ? "rgba(126,200,224,0.85)" : "rgba(126,200,224,0.42)")
-          : (i === arc.length - 1 ? "rgba(196,30,58,0.55)" : "rgba(196,30,58,0.28)");
-        ctx.fill();
-      });
-    }
-
-    const ball = run && run.ball ? run.ball : { x: TEE.x, y: TEE.y, r: BALL_R };
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-    ctx.fillStyle = "#c41e3a";
-    ctx.fill();
-    ctx.strokeStyle = "#fff6ec";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.beginPath();
-    ctx.arc(ball.x - 2, ball.y - 2, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (run && !run.done) {
-      for (let i = 0; i < 3; i += 1) {
-        const on = i < run.balls;
-        ctx.beginPath();
-        ctx.arc(28 + i * 15, H - 14, 4.6, 0, Math.PI * 2);
-        ctx.fillStyle = on ? "#c41e3a" : "rgba(196,30,58,0.2)";
-        ctx.fill();
-        ctx.strokeStyle = on ? "#fff6ec" : "rgba(240,208,154,0.25)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    if (run && run.closedStamp) kit.stampClosed(ctx, W, H, "LEAD");
-
-    const standing = list.filter((b) => !b.fallen).length;
-    if (run && !run.done && run.pause > 0) {
-      ctx.fillStyle = "rgba(12,6,9,0.5)";
-      ctx.fillRect(0, 190, W, 52);
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "18px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(run.pendingNext && run.pendingNext.coda && run.pyramids === AUTHORED_COUNT
-        ? "ENDLESS — concrete climbs"
-        : "SPILL — next pyramid", W / 2, 224);
-      ctx.textAlign = "left";
-    }
-    if (run && !run.done) {
-      const splitNote = run.spec && run.spec.kind === "splitStack"
-        ? ` · L${stackStanding(list, 0)} R${stackStanding(list, 1)}`
-        : "";
-      kit.drawHud(ctx, W, [
-        `${hudStageLine(run.spec, run.pyramids)} · ${run.score}`,
-        run.pause > 0
-          ? (run.pendingNext ? `NEXT · ${run.pendingNext.name}` : "SOUVENIR")
-          : `Throws ${run.balls}${run.ball ? " in flight" : ""} · ${standing} up${splitNote}`,
-      ]);
-    } else if (!run || !run.closedStamp) {
-      kit.drawHud(ctx, W, [hudStageLine(room, 0), roomTell(room)]);
-    }
-  }
-
-  function card() {
-    return $("milkCard");
-  }
-
-  function stampDepthCopy() {
-    const host = card();
-    if (!host) return;
-    const num = host.querySelector(".machine-number");
-    if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "pf-depth-tag vendor-vestibule-only";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    let copy = host.querySelector("[data-pf-depth-copy]");
-    if (!copy) {
-      copy = document.createElement("p");
-      copy.className = "vendor-vestibule-only";
-      copy.dataset.pfDepthCopy = "1";
-      if (tag.parentNode) tag.parentNode.insertBefore(copy, tag.nextSibling);
-      else host.appendChild(copy);
-    }
-    copy.textContent = DEPTH_COPY.body;
-    const readout = host.querySelector(".depth-readout");
-    if (readout && readout.getAttribute("data-runkit-hud") === GAME_ID) {
-      readout.removeAttribute("data-runkit-hud");
-    }
-    let rkHud = host.querySelector(".milk-rk-hud");
-    if (!rkHud) {
-      rkHud = document.createElement("p");
-      rkHud.className = "milk-rk-hud";
-      rkHud.setAttribute("aria-live", "polite");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(rkHud, readout.nextSibling);
-      else host.appendChild(rkHud);
-    }
-    rkHud.setAttribute("data-runkit-hud", GAME_ID);
-    paintKitHud(run && run.spec);
-    const canvas = $("milkCanvas");
-    if (canvas) {
-      canvas.style.pointerEvents = "auto";
-      canvas.classList.toggle("is-locked", !isLive());
-    }
-    if ((!run || run.done) && $("milkStatus")) {
-      paintVestibuleCheat(attractSpec());
-    }
-  }
-
-  function beginKitRun() {
-    let feverNode = false;
-    if (typeof PF.spendDemoCoin === "function") {
-      if (!PF.spendDemoCoin(GAME_ID)) return null;
-      feverNode = true;
-    }
-    if (PF.runKit && typeof PF.runKit.startRun === "function") {
-      try {
-        const ctx = PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1, feverNode });
-        if (ctx) return ctx;
-      } catch (_) { /* local ctx */ }
-    }
-    return {
-      gameId: GAME_ID,
-      startedAt: Date.now(),
-      feverNode,
-      feverGate: null,
-      depth: 0,
-      score: 0,
-      strikes: 0,
-      alive: true,
-    };
-  }
-
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive()) return;
-    stopIdle();
-    idleClock = 0;
-    let last = 0;
-    const tick = (now) => {
-      if (run && !run.done) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      idleClock += Math.min(32, now - last);
-      last = now;
-      if (idleClock > 4200) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-        idleBottles = makePyramid(idleRoom);
-        paintVestibuleCheat(milkLevel(idleRoom));
-      }
-      draw();
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
+    return world ? world.bottles : [];
   }
 
   function standingCount(list) {
@@ -1126,361 +1088,511 @@
   }
 
   function hasSupport(b, list) {
-    const kin = list.filter((o) => (o.stack || 0) === (b.stack || 0));
-    if (b.row === bottomRowOf(kin)) return true;
-    const reach = ((run && run.spec && run.spec.gap) || 34) * 0.85;
-    for (const o of kin) {
+    if (b.row === b.bottomRow) return true;
+    const reach = ((run && run.spec && run.spec.gap) || 0.13) * 1.15;
+    for (let i = 0; i < list.length; i += 1) {
+      const o = list[i];
       if (o === b || o.fallen || !o.seated) continue;
-      if (o.row === b.row + 1 && Math.abs(o.x - b.x) < reach && o.y > b.y - 4) return true;
+      if ((o.stack || 0) !== (b.stack || 0)) continue;
+      if (o.row === b.row + 1 && Math.hypot(o.x - b.x, o.z - b.z) < reach) return true;
     }
     return false;
-  }
-
-  function start() {
-    if (run && !run.done) return;
-    const kitRun = beginKitRun();
-    if (!kitRun) {
-      $("milkStatus").textContent = "Out of demo coins · grant a pass";
-      PF.refreshNightBoard();
-      return;
-    }
-    stopIdle();
-    idleBottles = null;
-    const spec = milkLevel(1);
-    run = {
-      done: false,
-      kitRun,
-      sling: mountSling(kitRun),
-      t: 0,
-      last: 0,
-      pyramids: 0,
-      knocked: 0,
-      score: 0,
-      balls: spec.throwsPerPyramid,
-      spec,
-      bottles: makePyramid(1),
-      ball: null,
-      aim: null,
-      settle: 0,
-      pause: 0,
-      pendingNext: null,
-      raf: 0,
-      shake: 0,
-      closedStamp: false,
-      lastNote: "",
-      throwId: 0,
-    };
-    $("milkStart").disabled = true;
-    $("milkVerdict").hidden = true;
-    kit.hideResult("milkResult");
-    PF.setTier("milkTier", "", "");
-    kit.setMode(card(), "play");
-    stampDepthCopy();
-    paintKitHud(spec);
-    if (kitRun) {
-      kitRun.depth = 0;
-      kitRun.score = 0;
-    }
-    if (rk() && typeof rk().reportDepth === "function") {
-      rk().reportDepth(kitRun, spec.id, { name: spec.name, coda: !!spec.coda });
-    }
-    $("milkStatus").textContent = `PYRAMID 1 · ${spec.name} — ${spec.barker}`;
-    paintVestibuleCheat(spec);
-    PF.focusCard("milkCard", true);
-    PF.setAura("think");
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.t += dt;
-      step(dt);
-      draw();
-      PF.refreshDepth();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function beginAim(x, y) {
-    if (!isLive() || run.ball || run.pause > 0) return;
-    run.aim = { x, y, hx: TEE.x, hy: TEE.y, power: 0 };
-    if (run.sling && typeof run.sling.beginPull === "function") {
-      run.sling.beginPull(TEE.x, TEE.y);
-      if (typeof run.sling.movePull === "function") run.sling.movePull(x, y);
-    }
-    updateAim(x, y);
-  }
-
-  function updateAim(x, y) {
-    if (!run || !run.aim) return;
-    const dx = TEE.x - x;
-    const dy = TEE.y - y;
-    const dist = Math.hypot(dx, dy);
-    const pull = kit.clamp(dist, 0, 118);
-    const power = pull / 118;
-    const ang = Math.atan2(dy, dx);
-    const reach = 28 + power * 92;
-    run.aim.x = x;
-    run.aim.y = y;
-    run.aim.power = power;
-    run.aim.hx = TEE.x + Math.cos(ang) * reach;
-    run.aim.hy = TEE.y + Math.sin(ang) * reach;
-    if (run.sling && typeof run.sling.movePull === "function") run.sling.movePull(x, y);
-  }
-
-  function releaseAim() {
-    if (!run || !run.aim || run.done || run.ball) {
-      if (run) run.aim = null;
-      return;
-    }
-    const pull = run.aim.power;
-    if (pull < 0.12) {
-      run.aim = null;
-      if (run.sling && typeof run.sling.release === "function") run.sling.release();
-      $("milkStatus").textContent = "Pull back — that’s the throw.";
-      return;
-    }
-    const dx = run.aim.hx - TEE.x;
-    const dy = run.aim.hy - TEE.y;
-    const dist = Math.max(1, Math.hypot(dx, dy));
-    const speed = throwSpeed(pull);
-    const noise = 1 + (Math.random() * 0.04 - 0.02);
-    const vx = (dx / dist) * speed * noise;
-    const vy = (dy / dist) * speed * noise;
-    if (run.sling && typeof run.sling.release === "function") run.sling.release();
-    run.balls -= 1;
-    run.settle = 0;
-    run.throwId = (run.throwId | 0) + 1;
-    run.ball = {
-      x: TEE.x,
-      y: TEE.y,
-      r: BALL_R,
-      vx,
-      vy,
-      life: 0,
-      mass: 0.9,
-      throwId: run.throwId,
-    };
-    run.aim = null;
-    kit.sfx("throw");
-    $("milkStatus").textContent = "Ball’s up — find the cream.";
-  }
-
-  function killBall() {
-    run.ball = null;
-    run.settle = 720;
-  }
-
-  function collideBallBottles() {
-    const ball = run.ball;
-    if (!ball) return;
-    const list = run.bottles;
-    const t = run.t;
-    for (const b of list) {
-      if (b.fallen) continue;
-      const p = posOf(b, t);
-      const hit = separate(ball.x, ball.y, ball.r, p.x, p.y, b.r);
-      if (!hit) continue;
-      ball.x -= hit.nx * hit.overlap * 0.55;
-      ball.y -= hit.ny * hit.overlap * 0.55;
-      const j = impulse(ball, b, hit.nx, hit.ny, b.heavy ? 0.64 : 0.34);
-      b.spin += hit.nx * 0.12;
-      const glueish = !!(b.glued || b.stuck);
-      const throwId = ball.throwId || run.throwId || 0;
-      if (glueish) {
-        /* One softball = one hit. Glue Corner / stuck pin are a planned second shot. */
-        if (j > 0.12 && b.hitThrow !== throwId) {
-          b.hitThrow = throwId;
-          b.hits += 1;
-          b.glueFlash = 520;
-        }
-      } else if (j > 0.35) {
-        b.hits += 1;
-      }
-      if (b.heavy && j > 0.4) run.shake = Math.max(run.shake || 0, 6.2);
-      const did = maybeUnseat(b, list);
-      if (glueish && !did) {
-        run.lastNote = b.stuck ? "stuck" : "glue";
-        run.shake = Math.max(run.shake || 0, 6.8);
-        $("milkStatus").textContent = b.stuck
-          ? ((b.hits | 0) >= (b.needHits || 2) ? "Dark pin cracked — finish it." : "DARK PIN — scouted. Second throw.")
-          : ((b.hits | 0) >= (b.needHits || 2) ? "Glue cracked — one more." : "GLUED HEEL — plan the second shot.");
-        PF.setAura("laugh");
-      } else if (b.heavy && !did) {
-        run.lastNote = "lead";
-        $("milkStatus").textContent = "Lead. It barely blinked.";
-        PF.setAura("laugh");
-      } else if (!b.heavy && did) {
-        $("milkStatus").textContent = "Cream flies — the lead hates that.";
-        PF.setAura("point");
-        kit.sfx("sink");
-      }
-      if (j > 0.4 && ball.life > 40) return;
-    }
-  }
-
-  function collideBottles() {
-    const list = run.bottles;
-    for (let i = 0; i < list.length; i += 1) {
-      const a = list[i];
-      if (a.fallen) continue;
-      for (let j = i + 1; j < list.length; j += 1) {
-        const b = list[j];
-        if (b.fallen) continue;
-        if (a.seated && b.seated) continue;
-        const hit = separate(a.x, a.y, a.r, b.x, b.y, b.r);
-        if (!hit) continue;
-        const share = a.seated || b.seated ? 1 : 0.5;
-        if (!a.seated) {
-          a.x -= hit.nx * hit.overlap * share;
-          a.y -= hit.ny * hit.overlap * share;
-        }
-        if (!b.seated) {
-          b.x += hit.nx * hit.overlap * share;
-          b.y += hit.ny * hit.overlap * share;
-        }
-        const dummyA = a.seated ? { vx: 0, vy: 0, mass: 20, seated: true } : a;
-        impulse(a.seated ? dummyA : a, b, hit.nx, hit.ny, 0.22);
-        if (a.seated) b.vx *= 0.85;
-        maybeUnseat(a, list);
-        maybeUnseat(b, list);
-      }
-    }
   }
 
   function markFallen(b) {
     if (b.fallen) return;
     b.fallen = true;
     b.seated = false;
-    run.knocked += 1;
-    run.score += 50;
-    if (run.kitRun) run.kitRun.score = run.score;
+    b.flash = 0.28;
+    if (run && !run.done) {
+      run.knocked += 1;
+      run.score += Math.round(16 * b.mass + (b.heavy ? 24 : 10));
+      saveLiveDepth();
+    }
+    juiceKnock(b, b.heavy ? "leadDown" : "cream");
+    sfx(b.heavy ? "pit" : "spit");
   }
 
-  function step(dt) {
-    if (run.pause > 0) {
-      run.pause -= dt;
-      if (run.pause <= 0) applyNextPyramid();
-      return;
+  function burst(x, y, z, color, n, opt) {
+    if (!world) return;
+    const o = opt || {};
+    const useSphere = !!o.sphere;
+    const m = mat(color, { roughness: 0.35, emissive: color, emissiveIntensity: 0.55 });
+    const spread = o.spread || 2.4;
+    const up = o.up || 2.2;
+    for (let i = 0; i < n; i += 1) {
+      const p = useSphere
+        ? meshSphere(m, 0.018 + Math.random() * 0.012, x, y, z)
+        : meshBox(m, 0.028, 0.028, 0.028, x, y, z);
+      world.scene.add(p);
+      world.particles.push({
+        mesh: p,
+        vx: (Math.random() - 0.5) * spread,
+        vy: 1.1 + Math.random() * up,
+        vz: (Math.random() - 0.5) * spread,
+        life: 0.5 + Math.random() * 0.45,
+      });
     }
-    const k = dt / 16;
-    const list = run.bottles;
-    const ball = run.ball;
-    if (ball) {
-      if (run.sling && typeof run.sling.stepBall === "function") {
-        run.sling.stepBall(ball, k);
-      } else {
-        ball.vy += GRAVITY * k;
-        ball.x += ball.vx * k;
-        ball.y += ball.vy * k;
-      }
-      if (run.spec.windDrift) {
-        /* Same kick as predictArc — Wind Shelf ghost is the real gust. */
-        ball.vx += windAccel(run.spec.windDrift, run.t, k);
-      }
-      ball.life += dt;
-      if (ball.y < 28) {
-        ball.y = 28;
-        ball.vy = Math.abs(ball.vy) * 0.4;
-      }
-      if (ball.x < 22) {
-        ball.x = 22;
-        ball.vx = Math.abs(ball.vx) * 0.55;
-      }
-      if (ball.x > W - 22) {
-        ball.x = W - 22;
-        ball.vx = -Math.abs(ball.vx) * 0.55;
-      }
-      if (ball.y + ball.r > SHELF_Y && ball.x > SHELF_L && ball.x < SHELF_R && ball.vy > 0) {
-        ball.y = SHELF_Y - ball.r;
-        ball.vy *= -0.28;
-        ball.vx *= 0.84;
-      }
-      collideBallBottles();
-      if (run.spec && run.spec.kind === "splitStack" && ball.life > 90 && ball.y < SHELF_Y - 24) {
-        if (Math.abs(ball.x - W / 2) < 26) {
-          run.lastNote = "aisle";
-          $("milkStatus").textContent = "Dead air — both boards, sugar.";
+  }
+
+  function juiceKnock(b, kind) {
+    if (!world) return;
+    const x = b.x, y = b.y + 0.16, z = b.z;
+    if (kind === "cream") {
+      burst(x, y, z, 0xf7f2e6, 16, { sphere: true, spread: 3.1, up: 3.2 });
+      burst(x, y + 0.08, z, 0xffe6a6, 6, { sphere: true, spread: 2.2, up: 2.4 });
+      world.cam.shake = Math.max(world.cam.shake || 0, 0.16);
+      world.cam.punch = Math.max(world.cam.punch || 0, 0.12);
+    } else if (kind === "leadThud") {
+      burst(x, y * 0.4 + TABLE_Y, z, 0x9aa0a8, 7, { spread: 1.6, up: 1.1 });
+      world.cam.shake = Math.max(world.cam.shake || 0, 0.1);
+    } else {
+      burst(x, y, z, 0x9aa0a8, 14, { spread: 2.8, up: 2.0 });
+      burst(x, y, z, 0xd4a45a, 5, { spread: 1.8, up: 1.6 });
+      world.cam.shake = Math.max(world.cam.shake || 0, 0.28);
+      world.cam.punch = Math.max(world.cam.punch || 0, 0.18);
+    }
+    if (b.mesh) b.mesh.scale.setScalar(1.12);
+  }
+
+  function confetti() {
+    burst(0, 1.6, world.crateZ, 0xe8b84a, 10);
+    burst(-0.3, 1.4, world.crateZ, 0xd22b3a, 8);
+    burst(0.3, 1.5, world.crateZ, 0x1e6b3c, 8);
+  }
+
+  function windGust(t) {
+    const spec = run && run.spec;
+    const drift = spec && spec.windDrift;
+    if (!drift) return 0;
+    const wave = Math.sin(t * 1.7) * 0.55 + Math.sin(t * 4.1) * 0.25;
+    return drift * (wave > 0.2 ? 1.35 : 0.45);
+  }
+
+  function throwOrigin() {
+    return { x: 0, y: 1.18, z: 1.92 };
+  }
+
+  function aimVelocity(aim) {
+    const power = aim.power;
+    const yaw = aim.yaw;
+    const pitch = aim.pitch;
+    const speed = 6.4 + power * 7.8;
+    return {
+      vx: Math.sin(yaw) * Math.cos(pitch) * speed,
+      vy: Math.sin(pitch) * speed + 0.35,
+      vz: -Math.cos(yaw) * Math.cos(pitch) * speed,
+    };
+  }
+
+  function predict(aim) {
+    const o = throwOrigin();
+    const v = aimVelocity(aim);
+    const pts = [];
+    let x = o.x, y = o.y, z = o.z;
+    let vx = v.vx, vy = v.vy, vz = v.vz;
+    const dt = 0.032;
+    const t0 = world ? world.time : 0;
+    for (let i = 0; i < 28; i += 1) {
+      vy -= GRAVITY * dt;
+      vx += windGust(t0 + i * dt) * dt;
+      vx *= 0.997;
+      vz *= 0.997;
+      x += vx * dt;
+      y += vy * dt;
+      z += vz * dt;
+      pts.push({ x, y, z });
+      if (y < 0.05 || z < -4.4) break;
+    }
+    return pts;
+  }
+
+  function showTraj(aim) {
+    if (!world) return;
+    const pts = predict(aim);
+    world.traj.forEach((d, i) => {
+      if (pts[i]) {
+        d.visible = true;
+        d.position.set(pts[i].x, pts[i].y, pts[i].z);
+        d.material.opacity = 0.75 - i * 0.04;
+      } else d.visible = false;
+    });
+  }
+
+  function hideTraj() {
+    if (!world) return;
+    world.traj.forEach((d) => { d.visible = false; });
+  }
+
+  function launchBall(aim) {
+    if (!world || !run || run.ball) return;
+    const o = throwOrigin();
+    const v = aimVelocity(aim);
+    const mesh = makeSoftball();
+    mesh.position.set(o.x, o.y, o.z);
+    world.scene.add(mesh);
+    run.ball = {
+      mesh,
+      x: o.x, y: o.y, z: o.z,
+      vx: v.vx, vy: v.vy, vz: v.vz,
+      r: BALL_R,
+      mass: 0.2,
+      life: 0,
+      dead: false,
+    };
+    run.balls -= 1;
+    run.settle = 0.55;
+    paintHud(run.spec);
+    hideTraj();
+    setPower(0, false);
+    if (world.sling) world.sling.visible = false;
+    if (world.handBall) world.handBall.visible = false;
+    setTaught(true);
+    sfx("throw");
+    world.cam.shake = 0.08;
+    world.cam.mode = "throw";
+  }
+
+  function killBall() {
+    if (!run || !run.ball) return;
+    const b = run.ball;
+    if (b.mesh && b.mesh.parent) b.mesh.parent.remove(b.mesh);
+    run.ball = null;
+    if (world && world.handBall && run.balls > 0) world.handBall.visible = true;
+    world.cam.mode = isLive() ? "play" : world.cam.mode;
+  }
+
+  function hitBottle(ball, b) {
+    const cx = b.x;
+    const cy = b.y + b.h * 0.42;
+    const cz = b.z;
+    const dx = ball.x - cx;
+    const dy = ball.y - cy;
+    const dz = ball.z - cz;
+    const dist = Math.hypot(dx, dy, dz);
+    const min = ball.r + b.r + 0.01;
+    if (dist >= min || dist < 1e-4) return false;
+    const nx = dx / dist, ny = dy / dist, nz = dz / dist;
+    const rel = ball.vx * nx + ball.vy * ny + ball.vz * nz;
+    if (rel > 0) return false;
+    const inv = 1 / ball.mass + 1 / b.mass;
+    const j = -(1.18) * rel / inv;
+    ball.vx += (j / ball.mass) * nx;
+    ball.vy += (j / ball.mass) * ny;
+    ball.vz += (j / ball.mass) * nz;
+    let impulse = j * 0.9;
+    b.hits += 1;
+    b.flash = 0.22;
+    const locked = (b.glued || b.stuck) && b.hits < b.needHits && impulse < (b.stuck ? 0.72 : 0.55);
+    const leadNeed = b.heavy ? 0.48 : 0.07;
+    if (locked || (b.heavy && impulse < leadNeed)) {
+      b.wobble = b.heavy ? 0.08 : 0.35;
+      b.tiltX += (Math.random() - 0.5) * (b.heavy ? 0.03 : 0.08);
+      b.tiltZ += (Math.random() - 0.5) * (b.heavy ? 0.03 : 0.08);
+      ball.vx = -ball.vx * (b.heavy ? 0.62 : 0.28) + nx * 0.4;
+      ball.vy *= 0.45;
+      ball.vz = -ball.vz * (b.heavy ? 0.55 : 0.25);
+      juiceKnock(b, b.heavy ? "leadThud" : "cream");
+      sfx(b.heavy ? "miss" : "bumper");
+      if (b.heavy) setStatus("Lead laughed. Cream flies — heels don't.");
+      if (b.glued && b.hits < b.needHits) setStatus("Glue held. One more on the heel.");
+      if (b.stuck && b.hits < b.needHits) setStatus("Stuck pin laughed. Scout it, then strike.");
+      return true;
+    }
+    if (!b.heavy) impulse *= 1.65;
+    b.seated = false;
+    b.wobble = 0.7;
+    const fly = b.heavy ? 1.35 : 3.15;
+    b.vx -= (impulse / b.mass) * nx * fly;
+    b.vy -= (impulse / b.mass) * ny * (b.heavy ? 1.1 : 2.4);
+    b.vz -= (impulse / b.mass) * nz * fly;
+    if (!b.heavy) b.vy += 1.15;
+    const hitH = (ball.y - (b.y + b.com));
+    const tip = b.heavy ? 7 : 22;
+    b.avx += nz * impulse * hitH * tip / b.mass;
+    b.avz -= nx * impulse * hitH * tip / b.mass;
+    b.spinY += (Math.random() - 0.5) * (b.heavy ? 3 : 9);
+    if (b.glued && world.gluePool) world.gluePool.visible = false;
+    if (b.stuck && world.nailRing) world.nailRing.visible = false;
+    sfx(b.heavy ? "shove" : "bumper");
+    juiceKnock(b, b.heavy ? "leadDown" : "cream");
+    return true;
+  }
+
+  function collideBottles(list, dt) {
+    for (let i = 0; i < list.length; i += 1) {
+      const a = list[i];
+      if (a.fallen && a.y < 0.2) continue;
+      for (let k = i + 1; k < list.length; k += 1) {
+        const b = list[k];
+        const dx = b.x - a.x;
+        const dy = (b.y + b.h * 0.4) - (a.y + a.h * 0.4);
+        const dz = b.z - a.z;
+        const dist = Math.hypot(dx, dy, dz);
+        const min = a.r + b.r;
+        if (dist >= min || dist < 1e-4) continue;
+        const nx = dx / dist, ny = dy / dist, nz = dz / dist;
+        const overlap = min - dist;
+        const slop = overlap * 0.5;
+        if (!a.seated) { a.x -= nx * slop; a.y -= ny * slop; a.z -= nz * slop; }
+        if (!b.seated) { b.x += nx * slop; b.y += ny * slop; b.z += nz * slop; }
+        const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny + (b.vz - a.vz) * nz;
+        if (rel > 0) continue;
+        const j = -rel * 0.7;
+        const ma = 1 / a.mass, mb = 1 / b.mass;
+        a.vx -= nx * j * ma; a.vy -= ny * j * ma; a.vz -= nz * j * ma;
+        b.vx += nx * j * mb; b.vy += ny * j * mb; b.vz += nz * j * mb;
+        if (a.seated && !b.seated) {
+          const need = a.heavy ? 0.62 : 0.1;
+          if (j > need && !((a.glued || a.stuck) && a.hits < a.needHits) && !(a.heavy && !b.heavy)) {
+            a.seated = false;
+          }
+        }
+        if (b.seated && !a.seated) {
+          const need = b.heavy ? 0.62 : 0.1;
+          if (j > need && !((b.glued || b.stuck) && b.hits < b.needHits) && !(b.heavy && !a.heavy)) {
+            b.seated = false;
+          }
         }
       }
-      const slow = Math.hypot(ball.vx, ball.vy) < 1.35 && ball.life > 380;
-      const off = ball.y > H + 8 || ball.life > 1350 || (ball.y > SHELF_Y - 14 && slow);
-      if (off) killBall();
+    }
+  }
+
+  function stepPhysics(dt) {
+    if (!world) return;
+    const list = bottles();
+    const ball = run && run.ball;
+    if (ball && !ball.dead) {
+      ball.life += dt;
+      ball.vy -= GRAVITY * dt;
+      ball.vx += windGust(world.time) * dt;
+      ball.vx *= 0.996;
+      ball.vz *= 0.996;
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+      ball.z += ball.vz * dt;
+      if (ball.y < ball.r) {
+        ball.y = ball.r;
+        ball.vy *= -0.28;
+        ball.vx *= 0.72;
+        ball.vz *= 0.72;
+        sfx("drop");
+      }
+      const crateHalf = (run.spec && run.spec.kind === "wideShoulders") ? 0.9 : 0.58;
+      if (ball.y < TABLE_Y + ball.r + 0.02 && ball.y > TABLE_Y - 0.05
+        && Math.abs(ball.x) < crateHalf + (run.spec && run.spec.kind === "splitStack" ? 1.1 : 0)
+        && Math.abs(ball.z - world.crateZ) < 0.3) {
+        ball.y = TABLE_Y + ball.r + 0.01;
+        ball.vy *= -0.22;
+        ball.vx *= 0.8;
+        ball.vz *= 0.8;
+      }
+      list.forEach((b) => { if (!b.fallen || b.y > TABLE_Y - 0.2) hitBottle(ball, b); });
+      ball.mesh.position.set(ball.x, ball.y, ball.z);
+      ball.mesh.rotation.x += dt * 8;
+      const slow = Math.hypot(ball.vx, ball.vy, ball.vz) < 0.55 && ball.life > 0.7;
+      if (ball.y < 0.04 || ball.z < -5 || ball.z > 4.8 || Math.abs(ball.x) > 5 || ball.life > 2.9 || slow) {
+        killBall();
+      }
     }
 
-    for (const b of list) {
-      if (b.glueFlash > 0) b.glueFlash = Math.max(0, b.glueFlash - dt);
-      if (b.fallen || !b.seated) continue;
-      /* Glue heel / stuck pin stay seated until the second softball. Collapsing the
-       * neighbors is not a cheese skip of the two-hit plan. */
-      if ((b.glued || b.stuck) && b.hits < (b.needHits || 2)) continue;
-      if (!hasSupport(b, list)) {
+    list.forEach((b) => {
+      if (b.spawn > 0) {
+        b.spawn = Math.max(0, b.spawn - dt);
+        const t = 1 - b.spawn / 0.4;
+        b.mesh.position.set(b.x, lerp(b.homeY + 0.35, b.homeY, clamp(t, 0, 1)), b.z);
+        return;
+      }
+      if (b.flash > 0) b.flash -= dt;
+      if (b.fallen || !b.seated) {
+        /* falling */
+      } else if (!((b.glued || b.stuck) && b.hits < b.needHits) && !hasSupport(b, list)) {
         b.seated = false;
-        b.loose = 0;
-        b.vy += 0.7;
-        b.vx += (b.x < W / 2 ? -0.55 : 0.55);
+        b.vy += 0.4;
+        b.vx += (b.x < 0 ? -0.35 : 0.35);
       }
-    }
-    for (const b of list) {
-      if (b.fallen || b.seated) continue;
-      b.loose = (b.loose || 0) + dt;
-      b.vy += 0.36 * k;
-      b.x += b.vx * k;
-      b.y += b.vy * k;
-      b.rot += b.spin * k;
-      b.spin *= 0.992;
-      if (b.y + b.r > SHELF_Y && b.x > SHELF_L + 4 && b.x < SHELF_R - 4 && b.y < SHELF_Y + 18) {
-        b.y = SHELF_Y - b.r + 1;
-        b.vy *= -0.1;
-        b.vx *= 0.86;
-        if (Math.abs(b.vx) < 1.2) b.vx += (b.x < W / 2 ? -1.05 : 1.05) * k;
+      if (b.seated && !b.fallen) {
+        const idle = !b.heavy;
+        b.wobble *= 0.92;
+        const w = idle
+          ? Math.sin(world.time * 2.6 + b.x * 8) * 0.095
+          : (b.heavy ? 0 : b.wobble * Math.sin(world.time * 18) * 0.06);
+        b.mesh.position.set(b.x, b.y, b.z);
+        b.mesh.rotation.set(w, 0, -w * 0.65);
+        if (b.mesh.scale.x > 1.002) {
+          const s = lerp(b.mesh.scale.x, 1, 0.2);
+          b.mesh.scale.setScalar(s);
+        }
+        if (b.stuck && world.nailRing && world.nailRing.visible) {
+          world.nailRing.position.set(b.x, b.y + 0.04, b.z);
+        }
+        return;
       }
-      const dropped = b.y > SHELF_Y + 10 || b.y > H - 6;
-      const spun = Math.abs(b.rot) > FALL_ROT;
-      if (b.x < 10 || b.x > W - 10 || dropped || spun || b.loose > 520) markFallen(b);
-    }
-    collideBottles();
+      if (!b.fallen) {
+        b.avx += 1.1 * dt * (b.tiltX || (b.vx >= 0 ? 1 : -1));
+        b.avz += 0.9 * dt * (b.tiltZ || (b.vz >= 0 ? 1 : -1));
+      }
+      b.vy -= GRAVITY * dt * 0.92;
+      b.vx *= 0.985;
+      b.vz *= 0.985;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.z += b.vz * dt;
+      b.avx *= 0.992;
+      b.avz *= 0.992;
+      b.tiltX += b.avx * dt;
+      b.tiltZ += b.avz * dt;
+      const tilt = Math.hypot(b.tiltX, b.tiltZ);
+      if (tilt > 0.55) {
+        const extra = (tilt - 0.55) * 2.8 * dt;
+        b.tiltX += Math.sign(b.tiltX || 1) * extra;
+        b.tiltZ += Math.sign(b.tiltZ || 1) * extra;
+      }
+      if (b.y < 0.02) {
+        b.y = 0.02;
+        b.vy *= -0.15;
+        b.vx *= 0.8;
+        b.vz *= 0.8;
+      }
+      if (b.y < TABLE_Y + 0.02 && Math.abs(b.z - world.crateZ) < 0.32 && Math.abs(b.x) < 1.2 && b.vy < 0) {
+        b.y = TABLE_Y + 0.01;
+        b.vy *= -0.08;
+        b.vx *= 0.84;
+        b.vz *= 0.84;
+        if (Math.abs(b.vx) < 0.4) b.vx += (b.x < 0 ? -0.55 : 0.55);
+      }
+      b.mesh.position.set(b.x, b.y, b.z);
+      b.mesh.rotation.set(b.tiltX, b.spinY * 0.2, b.tiltZ);
+      if (b.mesh.scale.x > 1.002) {
+        b.mesh.scale.setScalar(lerp(b.mesh.scale.x, 1, 0.18));
+      }
+      if (!b.fallen && (tilt > 0.85 || b.y < 0.16 || Math.hypot(b.x - b.homeX, b.z - b.homeZ) > 0.2)) {
+        markFallen(b);
+      }
+    });
+    collideBottles(list, dt);
 
-    if (standingCount(list) === 0) {
+    for (let i = world.particles.length - 1; i >= 0; i -= 1) {
+      const p = world.particles[i];
+      p.life -= dt;
+      p.vy -= 9 * dt;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      p.mesh.rotation.x += dt * 6;
+      if (p.life <= 0) {
+        if (p.mesh.parent) p.mesh.parent.remove(p.mesh);
+        world.particles.splice(i, 1);
+      }
+    }
+  }
+
+  function animateAura(dt) {
+    const a = world && world.aura;
+    if (!a) return;
+    const u = a.userData;
+    u.t += dt * (u.mood === "cheer" ? 7 : 2.6);
+    const bob = Math.sin(u.t) * 0.012;
+    u.hip.position.y = 0.42 + bob;
+    if (u.mood === "cheer") {
+      u.armL.rotation.z = 0.9 + Math.sin(u.t * 2.2) * 0.35;
+      u.armR.rotation.z = -0.9 + Math.sin(u.t * 2.2 + 1) * 0.35;
+      u.armL.rotation.x = -0.4;
+      u.armR.rotation.x = -0.4;
+    } else if (u.mood === "laugh") {
+      u.head.rotation.z = Math.sin(u.t * 3) * 0.12;
+      u.armL.rotation.z = 0.2;
+      u.armR.rotation.z = -0.15;
+    } else {
+      u.armR.rotation.z = -0.85 + Math.sin(u.t * 2.4) * 0.4;
+      u.armR.rotation.x = -0.15;
+      u.armL.rotation.z = 0.12;
+      u.head.rotation.z = 0;
+    }
+  }
+
+  function updateCamera(dt) {
+    const cam = world.cam;
+    const camera = world.camera;
+    cam.t += dt;
+    let x = 0, y = 1.42, z = 2.72;
+    let lx = 0, ly = 0.9, lz = world.crateZ + 0.12;
+    if (cam.mode === "enter") {
+      const t = clamp(cam.t / 1.35, 0, 1);
+      const e = 1 - Math.pow(1 - t, 3);
+      x = lerp(0, 0, e);
+      y = lerp(1.22, 1.42, e);
+      z = lerp(4.8, 2.72, e);
+      if (t >= 1) cam.mode = isLive() ? "play" : "idle";
+    } else if (cam.mode === "idle") {
+      const sw = world.reduced ? 0 : Math.sin(cam.t * 0.32) * 0.32;
+      x = sw;
+      z = 2.82 + Math.cos(cam.t * 0.26) * 0.14;
+      y = 1.4 + Math.sin(cam.t * 0.4) * 0.03;
+    } else if (cam.mode === "aim" && run && run.aim) {
+      x = run.aim.yaw * 0.28;
+      y = 1.4 + run.aim.power * 0.06;
+      z = 2.78 + run.aim.power * 0.28;
+      lx = Math.sin(run.aim.yaw) * 0.45;
+      ly = 0.86 + run.aim.pitch * 0.22;
+    } else if (cam.mode === "throw" && run && run.ball) {
+      x = lerp(camera.position.x, run.ball.x * 0.2, 0.08);
+      y = lerp(camera.position.y, 1.32 + run.ball.y * 0.1, 0.08);
+      z = lerp(camera.position.z, 2.35, 0.06);
+      lx = run.ball.x * 0.3;
+      ly = run.ball.y;
+      lz = run.ball.z;
+    } else if (cam.mode === "clear") {
+      x = Math.sin(cam.t * 0.8) * 0.22;
+      y = 1.52;
+      z = 2.55;
+      ly = 1.02;
+    } else if (cam.mode === "dead") {
+      y = 1.28;
+      z = 2.45;
+      ly = 0.7;
+    } else {
+      x = 0;
+      y = 1.42;
+      z = 2.72;
+    }
+    if (cam.shake > 0.001) {
+      x += (Math.random() - 0.5) * cam.shake;
+      y += (Math.random() - 0.5) * cam.shake;
+      cam.shake *= 0.86;
+    }
+    if (cam.punch > 0.001) {
+      z -= cam.punch;
+      cam.punch *= 0.8;
+    }
+    camera.position.set(x, y, z);
+    camera.lookAt(lx, ly, lz);
+    if (world.stamp && world.stamp.visible) {
+      world.stamp.position.copy(camera.position);
+      world.tmp.set(0, 0, -1.35).applyQuaternion(camera.quaternion);
+      world.stamp.position.add(world.tmp);
+      world.stamp.quaternion.copy(camera.quaternion);
+    }
+  }
+
+  function stepGame(dt) {
+    if (!run || run.done) return;
+    if (run.pause > 0) {
+      run.pause -= dt;
+      if (run.pause <= 0 && run.pendingNext !== undefined) applyNextPyramid();
+      return;
+    }
+    const list = bottles();
+    if (standingCount(list) === 0 && list.length) {
       clearPyramid();
       return;
     }
-    if (!run.ball && run.balls <= 0) {
-      const inAir = list.some((b) => !b.fallen && !b.seated);
-      if (inAir) return;
+    if (!run.ball && run.balls <= 0 && !run.aim) {
+      const flying = list.some((b) => !b.fallen && !b.seated);
+      if (flying) return;
       run.settle -= dt;
       if (run.settle <= 0) finish("throws");
     }
-  }
-
-  function applyNextPyramid() {
-    const next = run.pendingNext;
-    run.pendingNext = null;
-    if (!next) {
-      $("milkStatus").textContent = AURA.souvenir;
-      PF.setAura("celebrate");
-      finish("souvenir");
-      return;
-    }
-    run.spec = next;
-    run.bottles = makePyramid(next.id);
-    run.balls = next.throwsPerPyramid;
-    run.ball = null;
-    run.aim = null;
-    run.settle = 0;
-    paintKitHud(next);
-    if (rk() && typeof rk().reportDepth === "function") {
-      rk().reportDepth(run.kitRun, next.id, { name: next.name, coda: !!next.coda });
-    }
-    if (next.coda && run.pyramids === AUTHORED_COUNT) {
-      $("milkStatus").textContent = AURA.coda;
-    } else {
-      $("milkStatus").textContent = `${hudStageLine(next, run.pyramids)} — ${next.barker || AURA.clear}`;
-    }
-    paintVestibuleCheat(next);
-    PF.setAura("celebrate");
-    PF.refreshDepth();
   }
 
   function clearPyramid() {
@@ -1495,20 +1607,49 @@
         coda: !!(shown && shown.coda),
       });
     }
-    kit.sfx("rack");
+    sfx("rack");
+    confetti();
+    if (world.aura) world.aura.userData.mood = "cheer";
+    world.cam.mode = "clear";
     const next = milkLevel(run.pyramids + 1);
     run.pendingNext = next;
-    run.pause = 780;
+    run.pause = 1.05;
     run.ball = null;
     run.aim = null;
+    hideTraj();
+    if (!next) setStatus(AURA.souvenir);
+    else if (next.coda && run.pyramids === AUTHORED_COUNT) setStatus(AURA.coda);
+    else setStatus(AURA.clear);
+    try { PF.setAura("celebrate"); } catch (_) {}
+    PF.refreshDepth();
+  }
+
+  function applyNextPyramid() {
+    const next = run.pendingNext;
+    run.pendingNext = undefined;
     if (!next) {
-      $("milkStatus").textContent = AURA.souvenir;
-    } else if (next.coda && run.pyramids === AUTHORED_COUNT) {
-      $("milkStatus").textContent = AURA.coda;
-    } else {
-      $("milkStatus").textContent = AURA.clear;
+      setStatus(AURA.souvenir);
+      try { PF.setAura("celebrate"); } catch (_) {}
+      finish("souvenir");
+      return;
     }
-    PF.setAura("celebrate");
+    run.spec = next;
+    setRoomDress(next);
+    spawnPyramid(next, true);
+    run.balls = next.throwsPerPyramid;
+    run.ball = null;
+    run.aim = null;
+    run.settle = 0;
+    if (world.handBall) world.handBall.visible = true;
+    world.cam.mode = "play";
+    if (world.aura) world.aura.userData.mood = "wave";
+    paintHud(next);
+    if (rk() && typeof rk().reportDepth === "function") {
+      rk().reportDepth(run.kitRun, next.id, { name: next.name, coda: !!next.coda });
+    }
+    if (next.coda && run.pyramids === AUTHORED_COUNT) setStatus(AURA.coda);
+    else setStatus(`${hudStageLine(next, run.pyramids)} — ${next.barker || AURA.clear}`);
+    try { PF.setAura("celebrate"); } catch (_) {}
     PF.refreshDepth();
   }
 
@@ -1532,65 +1673,46 @@
     return `Beat my Milk Bottles pyramid ${n | 0} on Penny Fever`;
   }
 
-  function revealMilkResult(deathReason) {
-    if (!run) return;
-    const pyramids = run.pyramids;
-    const knocked = run.knocked;
-    const score = run.score;
-    stampDepthCopy();
-    $("milkStart").disabled = false;
-    $("milkStart").textContent = "TOSS AGAIN · 1 demo coin";
-    PF.focusCard("milkCard", false);
+  function revealMilkResult(reason) {
     kit.setMode(card(), "result");
-    paintKitHud(null);
-    const roomName = (run.spec && run.spec.name) || "";
-    const line = `PYRAMID ${pyramids}${roomName ? " · " + roomName : ""} · SCORE ${score}`;
-    const aura = auraLine(deathReason, pyramids);
-    const challenge = challengeLine(pyramids);
-    $("milkVerdict").hidden = false;
-    $("milkVerdict").textContent = deathReason === "souvenir"
-      ? `Souvenir clear. ${line} · authored ride done.`
-      : `${line} · ${deathReason} · ${aura}`;
+    const n = run ? run.pyramids : 0;
+    const score = run ? run.score : 0;
     kit.fillResult({
       root: "milkResult",
       depth: "milkResultDepth",
       score: "milkResultScore",
       aura: "milkResultAura",
-      copied: "milkCopied",
     }, {
-      depthLine: `PYRAMID ${pyramids}${roomName ? " · " + roomName : ""}`,
-      scoreLine: `SCORE ${score} · ${deathReason}`,
-      auraLine: aura,
+      depthLine: `PYRAMID ${n}`,
+      scoreLine: `SCORE ${score}`,
+      auraLine: auraLine(reason, n),
     });
     const ch = $("milkChallengeText");
-    if (ch) ch.textContent = challenge;
-    PF.setTier("milkTier", pyramids > 0 ? `PYRAMID ${pyramids}` : "LEAD WINS", pyramids > 0 ? "perfect" : "miss");
-    $("milkStatus").textContent = deathReason === "souvenir"
-      ? "Souvenir — authored pyramids cleared."
-      : deathReason === "incomplete" ? "Stepped off the stall." : "Lead stamped the stack.";
-    const ok = pyramids > 0 || knocked > 0 || deathReason === "souvenir";
-    if (ok) {
-      PF.award(Math.max(8, Math.floor(score / 12)), true, "Milk bottles");
-      PF.setAura(pyramids >= 4 ? "celebrate" : "point");
-      if (deathReason !== "incomplete") PF.showBanner(true, `PYRAMID ${pyramids}`, `${score} · ${aura}`);
-    } else {
-      PF.award(0, false, "Milk bottles miss");
-      PF.setAura("badLuck");
-      if (deathReason !== "incomplete") PF.showBanner(false, "LEAD WINS", aura);
+    if (ch) ch.textContent = challengeLine(n);
+    const start = $("milkStart");
+    if (start) {
+      start.disabled = false;
+      start.textContent = "PLAY AGAIN · 1 demo coin";
+      start.style.display = "";
     }
-    PF.refreshNightBoard();
-    draw();
-    startIdle();
+    try { PF.refreshNightBoard(); } catch (_) {}
   }
 
   function finish(reason) {
     if (!run || run.done) return;
     run.done = true;
-    if (run.raf) cancelAnimationFrame(run.raf);
+    hideTraj();
+    if (run.ball) killBall();
     const deathReason = reason === "souvenir" ? "souvenir"
       : reason === "incomplete" ? "incomplete" : "throws";
     run.closedStamp = deathReason === "throws";
-    if (run.closedStamp) kit.sfx("stamp");
+    if (run.closedStamp) {
+      sfx("stamp");
+      if (world && world.stamp) world.stamp.visible = true;
+      world.cam.mode = "dead";
+      if (world.aura) world.aura.userData.mood = "laugh";
+      try { PF.setAura("laugh"); } catch (_) {}
+    }
     persistDepth({
       depth: run.pyramids,
       score: run.score,
@@ -1602,14 +1724,319 @@
         room: run.spec && run.spec.name,
         kind: run.spec && run.spec.kind,
         coda: !!(run.spec && run.spec.coda),
-        lastNote: run.lastNote || "",
       },
     });
-    draw();
-    if (run.closedStamp) {
-      setTimeout(() => revealMilkResult(deathReason), STAMP_MS);
-    } else {
-      revealMilkResult(deathReason);
+    PF.refreshNightBoard();
+    if (run.closedStamp) setTimeout(() => revealMilkResult(deathReason), STAMP_MS);
+    else revealMilkResult(deathReason);
+  }
+
+  function beginKitRun() {
+    let feverNode = false;
+    if (typeof PF.spendDemoCoin === "function") {
+      if (!PF.spendDemoCoin(GAME_ID)) return null;
+      feverNode = true;
+    }
+    if (PF.runKit && typeof PF.runKit.startRun === "function") {
+      try {
+        const ctx = PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1, feverNode });
+        if (ctx) return ctx;
+      } catch (_) {}
+    }
+    return {
+      gameId: GAME_ID,
+      startedAt: Date.now(),
+      feverNode,
+      depth: 0,
+      score: 0,
+      strikes: 0,
+      alive: true,
+    };
+  }
+
+  function start() {
+    if (run && !run.done) return;
+    if (!THREE || !world) {
+      setStatus("Lighting the tent…");
+      loadThree().then(() => {
+        try { ensureWorld(); } catch (err) {
+          console.warn("[milk-bottles] boot", err);
+        }
+        if (!THREE || !world) {
+          setStatus("This tent wants a WebGL lantern.");
+          return;
+        }
+        start();
+      }).catch((err) => {
+        console.warn("[milk-bottles] three", err);
+        setStatus("This tent wants a WebGL lantern.");
+      });
+      return;
+    }
+    const kitRun = beginKitRun();
+    if (!kitRun) {
+      setStatus("Out of demo coins · grant a pass");
+      PF.refreshNightBoard();
+      return;
+    }
+    ensureWorld();
+    const spec = milkLevel(1);
+    run = {
+      done: false,
+      kitRun,
+      pyramids: 0,
+      knocked: 0,
+      score: 0,
+      balls: spec.throwsPerPyramid,
+      spec,
+      ball: null,
+      aim: null,
+      settle: 0,
+      pause: 0,
+      pendingNext: undefined,
+      closedStamp: false,
+    };
+    const startBtn = $("milkStart");
+    if (startBtn) startBtn.disabled = true;
+    if ($("milkVerdict")) $("milkVerdict").hidden = true;
+    kit.hideResult("milkResult");
+    if (world && world.stamp) world.stamp.visible = false;
+    PF.setTier("milkTier", "", "");
+    kit.setMode(card(), "play");
+    setTaught(false);
+    setRoomDress(spec);
+    spawnPyramid(spec, true);
+    if (world.handBall) world.handBall.visible = true;
+    world.cam.mode = "play";
+    world.cam.t = 0;
+    if (world.aura) world.aura.userData.mood = "wave";
+    paintHud(spec);
+    if (kitRun) {
+      kitRun.depth = 0;
+      kitRun.score = 0;
+    }
+    if (rk() && typeof rk().reportDepth === "function") {
+      rk().reportDepth(kitRun, spec.id, { name: spec.name, coda: !!spec.coda });
+    }
+    setStatus(`PYRAMID 1 · ${spec.name} — ${spec.barker}`);
+    const hint = $("milkHint");
+    if (hint) hint.textContent = "DRAG to aim · PULL toward you · LET GO to throw";
+    try { PF.focusCard("milkCard", true); } catch (_) {}
+    try { PF.setAura("think"); } catch (_) {}
+    startLoop();
+  }
+
+  function pointerAim(ev) {
+    const canvas = $("milkCanvas");
+    if (!canvas) return { yaw: 0, pitch: 0.28, power: 0.45 };
+    const r = canvas.getBoundingClientRect();
+    const t = ev.touches ? ev.touches[0] || ev.changedTouches[0] : ev;
+    const nx = (t.clientX - r.left) / Math.max(1, r.width);
+    const ny = (t.clientY - r.top) / Math.max(1, r.height);
+    return { nx, ny };
+  }
+
+  function onPointerDown(ev) {
+    if (!isLive()) {
+      if (card() && (card().classList.contains("is-vestibule") || card().classList.contains("is-result"))) {
+        start();
+      }
+      if (!isLive()) return;
+    }
+    if (run.ball || run.pause > 0) return;
+    if (run.balls <= 0) return;
+    ev.preventDefault();
+    const p = pointerAim(ev);
+    run.aim = {
+      ox: p.nx,
+      oy: p.ny,
+      yaw: 0,
+      pitch: 0.28,
+      power: 0.35,
+    };
+    world.cam.mode = "aim";
+    try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (_) {}
+  }
+
+  function onPointerMove(ev) {
+    if (!isLive() || !run.aim) return;
+    const p = pointerAim(ev);
+    run.aim.yaw = clamp((p.nx - 0.5) * 1.25, -0.62, 0.62);
+    const pull = p.ny - run.aim.oy;
+    run.aim.power = clamp(0.22 + pull * 1.45, 0.16, 1);
+    run.aim.pitch = clamp(0.38 - pull * 0.55 + (0.5 - p.ny) * 0.15, 0.06, 0.72);
+    showTraj(run.aim);
+    setPower(run.aim.power, true);
+  }
+
+  function onPointerUp(ev) {
+    if (!isLive() || !run.aim) return;
+    ev.preventDefault();
+    const aim = run.aim;
+    run.aim = null;
+    setPower(0, false);
+    if (world && world.sling) world.sling.visible = false;
+    launchBall(aim);
+  }
+
+  function resize() {
+    if (!world) return;
+    const stage = $("milkStage") || $("milkCanvas");
+    const canvas = $("milkCanvas");
+    if (!stage || !canvas) return;
+    const w = Math.max(320, stage.clientWidth || canvas.clientWidth || 640);
+    const h = Math.max(320, stage.clientHeight || canvas.clientHeight || 480);
+    world.renderer.setSize(w, h, false);
+    world.camera.aspect = w / h;
+    world.camera.updateProjectionMatrix();
+  }
+
+  function tick(now) {
+    raf = 0;
+    if (!visible || !world) return;
+    if (!lastTs) lastTs = now;
+    const dt = Math.min(0.033, (now - lastTs) / 1000);
+    lastTs = now;
+    world.time += dt;
+
+    if ((!run || run.done) && visible) {
+      idleClock += dt;
+      if (idleClock > 4.4) {
+        idleClock = 0;
+        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
+        const spec = milkLevel(idleRoom);
+        setRoomDress(spec);
+        spawnPyramid(spec, true);
+        paintHud(null);
+        const barker = $("milkBarker");
+        if (barker && spec) barker.textContent = `${spec.name.toUpperCase()} — ${spec.barker}`;
+        setStatus(`${hudStageLine(spec, 0)} — ${spec.barker}`);
+      }
+    }
+
+    stepPhysics(dt);
+    stepGame(dt);
+    animateAura(dt);
+    updateCamera(dt);
+
+    if (world.mats.leadSlug) {
+      world.mats.leadSlug.emissiveIntensity = 0.28 + Math.sin(world.time * 3.4) * 0.22;
+    }
+    if (world.fan && world.fan.visible) world.fan.rotation.x += dt * 10;
+    world.flaps.forEach((f, i) => {
+      f.rotation.z = Math.sin(world.time * 3.2 + i) * 0.18;
+    });
+    world.stringLights.forEach((b, i) => {
+      const pulse = 0.65 + Math.sin(world.time * 3 + i * 0.7) * 0.35;
+      b.scale.setScalar(0.035 * (0.85 + pulse * 0.3));
+    });
+    world.lanterns.forEach((l, i) => {
+      l.intensity = 0.8 + Math.sin(world.time * 2.1 + i) * 0.18;
+    });
+    if (world.handBall && world.handBall.visible) {
+      const o = throwOrigin();
+      if (run && run.aim) {
+        world.handBall.position.set(
+          o.x + run.aim.yaw * 0.25,
+          o.y - run.aim.power * 0.18,
+          o.z + run.aim.power * 0.22
+        );
+        if (world.sling) {
+          const hx = world.handBall.position.x;
+          const hy = world.handBall.position.y;
+          const hz = world.handBall.position.z;
+          const dx = hx - o.x, dy = hy - o.y, dz = hz - o.z;
+          const len = Math.max(0.08, Math.hypot(dx, dy, dz));
+          world.sling.visible = true;
+          world.sling.position.set((o.x + hx) * 0.5, (o.y + hy) * 0.5, (o.z + hz) * 0.5);
+          world.sling.scale.set(1, len, 1);
+          world.sling.lookAt(hx, hy, hz);
+          world.sling.rotateX(Math.PI / 2);
+        }
+      } else {
+        world.handBall.position.set(o.x, o.y + Math.sin(world.time * 2) * 0.02, o.z);
+        if (world.sling) world.sling.visible = false;
+      }
+    }
+
+    world.renderer.render(world.scene, world.camera);
+    raf = requestAnimationFrame(tick);
+  }
+
+  function startLoop() {
+    visible = true;
+    if (!raf) {
+      lastTs = 0;
+      raf = requestAnimationFrame(tick);
+    }
+  }
+
+  function stopLoop() {
+    visible = false;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+
+  function ensureWorld() {
+    if (world) {
+      resize();
+      return world;
+    }
+    if (!THREE) return null;
+    bootWorld();
+    resize();
+    return world;
+  }
+
+  function onShow() {
+    visible = true;
+    idleClock = 0;
+    loadThree().then(() => {
+      try { ensureWorld(); } catch (err) {
+        console.warn("[milk-bottles] boot", err);
+        setStatus("This tent wants a WebGL lantern.");
+        return;
+      }
+      if (!run || run.done) {
+        if (world) {
+          world.cam.mode = "enter";
+          world.cam.t = 0;
+          if (world.stamp) world.stamp.visible = false;
+          const spec = milkLevel(idleRoom);
+          setRoomDress(spec);
+          spawnPyramid(spec, true);
+          const barker = $("milkBarker");
+          if (barker && spec) barker.textContent = `${spec.name.toUpperCase()} — ${spec.barker}`;
+          setStatus(AURA.welcome);
+        }
+        kit.setMode(card(), "vestibule");
+      }
+      startLoop();
+    });
+  }
+
+  function onLeave() {
+    if (run && !run.done) finish("incomplete");
+    stopLoop();
+  }
+
+  function onReset() {
+    if (run && !run.done) finish("incomplete");
+    run = null;
+    if ($("milkVerdict")) $("milkVerdict").hidden = true;
+    kit.hideResult("milkResult");
+    if (world && world.stamp) world.stamp.visible = false;
+    const startBtn = $("milkStart");
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.textContent = "PLAY · 1 demo coin";
+    }
+    kit.setMode(card(), "vestibule");
+    setTaught(false);
+    setPower(0, false);
+    if (world) {
+      world.cam.mode = "idle";
+      spawnPyramid(milkLevel(1), true);
     }
   }
 
@@ -1618,24 +2045,9 @@
     playKey: "milk",
     chalk: "Bottom row doesn’t dance. That’s lead.",
     defaults: { bestMilkPyramids: 0, bestMilkScore: 0 },
-    onLeave() {
-      if (run && !run.done) finish("incomplete");
-      stopIdle();
-    },
-    onShow() { stampDepthCopy(); startIdle(); },
-    onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
-      run = null;
-      if ($("milkVerdict")) $("milkVerdict").hidden = true;
-      kit.hideResult("milkResult");
-      if ($("milkStart")) {
-        $("milkStart").disabled = false;
-        $("milkStart").textContent = "START · 1 demo coin";
-      }
-      kit.setMode(card(), "vestibule");
-      stampDepthCopy();
-      startIdle();
-    },
+    onLeave,
+    onShow,
+    onReset,
     refreshDepth(state) {
       const now = $("depthMilkNow");
       if (now) now.textContent = run && !run.done ? String(run.pyramids) : "0";
@@ -1649,62 +2061,32 @@
     },
     bind() {
       declareP0();
+      loadThree();
       const startBtn = $("milkStart");
       if (startBtn) startBtn.addEventListener("click", start);
       const canvas = $("milkCanvas");
       if (canvas) {
-        canvas.addEventListener("pointerdown", (ev) => {
-          if (!isLive()) {
-            punchStart();
-            return;
-          }
-          ev.preventDefault();
-          try { canvas.setPointerCapture(ev.pointerId); } catch { /* ignore */ }
-          const p = kit.canvasPos(canvas, ev, W, H);
-          beginAim(p.x, p.y);
-        });
-        canvas.addEventListener("pointermove", (ev) => {
-          if (!run || !run.aim) return;
-          ev.preventDefault();
-          const p = kit.canvasPos(canvas, ev, W, H);
-          updateAim(p.x, p.y);
-        });
-        const up = (ev) => {
-          if (!run || !run.aim) return;
-          ev.preventDefault();
-          const p = kit.canvasPos(canvas, ev, W, H);
-          updateAim(p.x, p.y);
-          releaseAim();
-        };
-        canvas.addEventListener("pointerup", up);
-        canvas.addEventListener("pointercancel", () => { if (run) run.aim = null; });
+        canvas.addEventListener("pointerdown", onPointerDown);
+        canvas.addEventListener("pointermove", onPointerMove);
+        canvas.addEventListener("pointerup", onPointerUp);
+        canvas.addEventListener("pointercancel", onPointerUp);
+        canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
       }
-      const copyBtn = $("milkChallenge");
-      if (copyBtn) {
-        copyBtn.addEventListener("click", () => {
-          const state = PF.getState();
-          const last = state.lastRun || {};
-          const keyed = last[GAME_ID];
-          const n = keyed && keyed.depth != null
-            ? keyed.depth
-            : (last.game === GAME_ID || last.gameId === GAME_ID)
-              ? last.depth
-              : (state.bestMilkPyramids || (state.bestDepth && state.bestDepth.milk) || 0);
-          const text = challengeLine(n);
+      const ch = $("milkChallenge");
+      if (ch) {
+        ch.addEventListener("click", () => {
+          const text = ($("milkChallengeText") && $("milkChallengeText").textContent) || challengeLine(0);
           kit.copyText(text, () => {
-            const el = $("milkCopied");
-            if (el) {
-              el.hidden = false;
-              el.textContent = "Copied — send it";
-            }
-            $("milkStatus").textContent = "Copied — send it";
-          }, () => {
-            $("milkStatus").textContent = text;
+            const copied = $("milkCopied");
+            if (copied) copied.hidden = false;
           });
         });
       }
-      stampDepthCopy();
-      draw();
+      window.addEventListener("resize", resize);
+      const stage = $("milkStage");
+      if (stage && window.ResizeObserver) {
+        new ResizeObserver(() => resize()).observe(stage);
+      }
     },
   });
 })();

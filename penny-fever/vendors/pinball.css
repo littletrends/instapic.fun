@@ -1,0 +1,424 @@
+/* Pinball Alley — 3D parlor chrome. PF only. Never booth/port 6000. */
+#cabinet-pinball.pf-pin-root {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #08050a;
+}
+#cabinet-pinball .interior-sky,
+#cabinet-pinball .interior-room::before,
+#cabinet-pinball .interior-room::after {
+  display: none;
+}
+#cabinet-pinball .pf-pin-viewport {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(58, 138, 106, 0.18), transparent 46%),
+    #08050a;
+}
+#pinballCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  background: #08050a;
+}
+#cabinet-pinball .interior-stage {
+  perspective: none;
+  height: 100vh;
+  height: 100dvh;
+}
+#cabinet-pinball .interior-stage .attraction-card,
+#cabinet-pinball .pinball-card {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  animation: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+#cabinet-pinball .pinball-card.has-focus::after {
+  display: none;
+}
+#cabinet-pinball .pf-pin-dock,
+#cabinet-pinball .pf-pin-dock *,
+#cabinet-pinball .vendor-result,
+#cabinet-pinball #pinballStart,
+#cabinet-pinball #pinballChallenge,
+#cabinet-pinball .pf-pin-thumb,
+#cabinet-pinball .interior-back {
+  pointer-events: auto;
+}
+#cabinet-pinball .pf-pin-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at 50% 42%, transparent 42%, rgba(6, 2, 8, 0.55) 100%),
+    linear-gradient(180deg, rgba(8, 4, 10, 0.28), transparent 18%, transparent 72%, rgba(8, 4, 10, 0.55));
+}
+#cabinet-pinball .pf-pin-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 0.85rem 0.4rem;
+  pointer-events: none;
+  text-align: left;
+  margin: 0;
+  border: 0;
+  background: linear-gradient(180deg, rgba(8, 4, 10, 0.72), transparent);
+}
+#cabinet-pinball .pf-pin-header > * {
+  pointer-events: auto;
+}
+#cabinet-pinball .pf-pin-header .interior-back {
+  margin: 0;
+  flex: 0 0 auto;
+}
+#cabinet-pinball .pf-pin-titles {
+  text-align: right;
+}
+#cabinet-pinball .pf-pin-titles .plaque-kicker {
+  margin: 0;
+  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+  color: #f0d09a;
+  text-transform: uppercase;
+}
+#cabinet-pinball .pf-pin-titles h1 {
+  margin: 0.1rem 0 0;
+  font-size: clamp(1.15rem, 3.4vw, 1.85rem);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65);
+}
+#cabinet-pinball .pf-pin-blurb {
+  margin: 0.15rem 0 0;
+  max-width: 28rem;
+  margin-left: auto;
+  color: #e8c9a0;
+  font-style: italic;
+  font-size: 0.78rem;
+  text-shadow: 0 2px 10px #000;
+}
+#pinballCard.is-playing .pf-pin-blurb,
+#pinballCard.is-playing .pf-pin-titles .plaque-kicker {
+  display: none;
+}
+.pinball-rk-hud {
+  position: absolute;
+  top: calc(3.4rem + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  padding: 0.22rem 0.7rem;
+  min-height: 0;
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  border-radius: 999px;
+  background: rgba(10, 6, 10, 0.62);
+  color: #ffe6a6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#pinballCard:not(.is-playing) .pinball-rk-hud {
+  display: none;
+}
+.pf-pin-playhud {
+  position: absolute;
+  top: calc(5.1rem + env(safe-area-inset-top, 0px));
+  left: 0.7rem;
+  right: 0.7rem;
+  z-index: 6;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+#pinballCard.is-playing .pf-pin-playhud.vendor-play-only {
+  display: flex;
+}
+.pf-pin-score {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.4rem, 4vw, 2.1rem);
+  color: #fff4d6;
+  text-shadow: 0 0 18px rgba(232, 176, 80, 0.55), 0 2px 8px #000;
+  letter-spacing: 0.06em;
+}
+.pf-pin-mission {
+  margin: 0;
+  max-width: 16rem;
+  text-align: right;
+  color: #b8e8e0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+}
+.pf-pin-howto {
+  position: absolute;
+  top: calc(8.2rem + env(safe-area-inset-top, 0px));
+  left: 0.7rem;
+  z-index: 6;
+  display: none;
+  width: min(19rem, calc(100% - 1.4rem));
+  padding: 0.55rem 0.7rem 0.6rem;
+  border: 1px solid rgba(212, 164, 90, 0.42);
+  border-radius: 12px;
+  background: rgba(10, 6, 10, 0.72);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  color: #f0d09a;
+  text-align: left;
+}
+#pinballCard.is-playing .pf-pin-howto.vendor-play-only {
+  display: block;
+}
+.pf-pin-howto--dock {
+  position: static;
+  display: block;
+  width: auto;
+  margin: 0.45rem 0 0.35rem;
+  text-align: left;
+  pointer-events: none;
+}
+.pf-pin-howto-title {
+  margin: 0 0 0.28rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: #ffe6a6;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.pf-pin-howto ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pf-pin-howto li {
+  margin: 0.16rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  text-shadow: 0 1px 8px #000;
+}
+.pf-pin-howto b {
+  color: #b8e8e0;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+}
+.pf-pin-plunge {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translateX(-50%);
+  z-index: 7;
+  margin: 0;
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba(255, 230, 166, 0.55);
+  border-radius: 999px;
+  background: rgba(12, 6, 10, 0.78);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 24px rgba(232, 160, 80, 0.35);
+  animation: pf-pin-pulse 1.2s ease-in-out infinite;
+}
+#pinballCard.is-playing.is-plunging .pf-pin-plunge {
+  display: block;
+}
+#pinballCard:not(.is-plunging) .pf-pin-plunge {
+  display: none;
+}
+@keyframes pf-pin-pulse {
+  0%, 100% { opacity: 0.82; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.04); }
+}
+.pf-pin-thumb {
+  position: absolute;
+  left: 50%;
+  bottom: calc(1.05rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 8;
+  display: none;
+  min-width: min(22rem, calc(100% - 1.6rem));
+  padding: 1rem 1.4rem;
+  border: 1px solid rgba(255, 230, 166, 0.62);
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, #d4a45a, #8a4a18);
+  color: #1a0c10;
+  letter-spacing: 0.16em;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 0 24px rgba(232, 176, 80, 0.45);
+}
+#pinballCard.is-playing .pf-pin-thumb.vendor-play-only {
+  display: block;
+}
+#pinballCard.is-playing:not(.is-plunging) .pf-pin-thumb {
+  background: linear-gradient(180deg, rgba(90, 28, 40, 0.94), rgba(12, 6, 10, 0.94));
+  color: #ffe6a6;
+  border-color: rgba(212, 164, 90, 0.55);
+}
+.pf-pin-thumb.is-down,
+.pf-pin-thumb:active {
+  color: #fff4d6;
+  border-color: #f0d09a;
+  background: rgba(196, 30, 58, 0.62);
+  box-shadow: 0 0 20px rgba(232, 160, 80, 0.55);
+}
+.pf-pin-charge {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 22%;
+  width: 0.42rem;
+  height: 28%;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 208, 154, 0.45);
+  background: rgba(10, 6, 10, 0.5);
+  overflow: hidden;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.pf-pin-charge i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0%;
+  background: linear-gradient(180deg, #ffe6a6, #c41e3a);
+  box-shadow: 0 0 12px rgba(232, 160, 80, 0.8);
+}
+#pinballCard.is-playing.is-plunging .pf-pin-charge {
+  opacity: 1;
+}
+.pf-pin-flips {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  display: none;
+  justify-content: space-between;
+  padding: 0 1.1rem;
+  pointer-events: none;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  color: rgba(240, 208, 154, 0.55);
+}
+#pinballCard.is-playing .pf-pin-flips.vendor-play-only {
+  display: none;
+}
+#pinballCard.is-playing .pf-pin-flips span {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(212, 164, 90, 0.28);
+  border-radius: 999px;
+  background: rgba(8, 4, 10, 0.35);
+}
+#pinballCard.is-playing .pf-pin-flips span.is-down {
+  color: #fff4d6;
+  border-color: #f0d09a;
+  background: rgba(196, 30, 58, 0.35);
+  box-shadow: 0 0 16px rgba(232, 160, 80, 0.45);
+}
+.pf-pin-dock {
+  position: absolute;
+  left: 50%;
+  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(36rem, calc(100% - 1.2rem));
+  z-index: 7;
+  padding: 0.75rem 0.9rem 0.85rem;
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  border-radius: 1rem 1rem 0.45rem 0.45rem;
+  background:
+    linear-gradient(180deg, rgba(42, 18, 28, 0.88), rgba(10, 6, 10, 0.92));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 1px rgba(255, 235, 194, 0.12);
+  text-align: center;
+}
+#pinballCard.is-playing .pf-pin-dock {
+  display: none;
+}
+#pinballCard.is-result .pf-pin-dock {
+  display: block;
+}
+.pf-pin-dock .machine-number,
+.pf-pin-dock .tent-mouth-joke,
+.pf-pin-dock .pf-depth-tag,
+.pf-pin-dock .barker-call {
+  text-shadow: 0 2px 10px #000;
+}
+.pf-pin-dock .barker-call {
+  margin: 0.35rem 0 0.55rem;
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+}
+.pf-pin-dock .depth-readout {
+  margin: 0.45rem 0 0.55rem;
+  justify-content: center;
+}
+.pf-pin-dock #pinballStart {
+  width: min(22rem, 100%);
+}
+.pf-pin-dock .status-ticket {
+  margin: 0.45rem 0 0;
+}
+.pf-pin-dock .vendor-result {
+  margin-top: 0.45rem;
+  text-align: left;
+}
+#cabinet-pinball .pf-pin-art-keep {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  #cabinet-pinball .pf-pin-titles h1 { font-size: 1.15rem; }
+  #cabinet-pinball .pf-pin-blurb { display: none; }
+  .pf-pin-dock { padding: 0.6rem 0.7rem 0.75rem; }
+  .pf-pin-score { font-size: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cabinet-pinball .pf-pin-vignette { animation: none; }
+}

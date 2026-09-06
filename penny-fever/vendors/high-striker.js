@@ -1,360 +1,961 @@
-/* High Striker Pegs — Desktop Grok owns this file. PF only. Never booth/port 6000. Never Imagine.
- * GOBLIN B03 AUTHORED 2026-09-05 — 8 TOWER chapters, not a thinner zone climb.
- * GOBLIN_AUTHORED_LEVELS_B03.md + GOBLIN_BATCH03_MOUNT_CONFIGS.md + GOBLIN_RUNKIT_API.md
- * Engine: TimingTap · depthUnit: Tower · gameId: highstriker · codaEnabled hybrid
- * 8 named towers (layout / cheat / verb) then ENDLESS Sky Peg {n}. BandParams = coda only.
- * Soft Mallet → Bell Ladder → Side-Sway (2-axis) → Fake Bell Midway → Double-Tap
- * → Slip Cascade → Reverse Hammer → Fever Bell Run. Bell = checkpoint, not the ending.
- * HUD = TOWER {n} · {name} · glory still reports peak pegs · death = hammer slip | fell from zero
- * Don’t: mash-anywhere · hard end at first bell · same loop hotter numbers. Death hold ≥700ms. */
-(() => {
-  "use strict";
+/* High Striker — 3D smash tent. Desktop Grok owns this doorway.
+ * PF only. Never booth/port 6000. Never Imagine.
+ * HOLD to wind. RELEASE on the gold beat — timing is the joke, not hold-length.
+ * Bell = checkpoint, not the ending. 3 strikes stamp SLIP. Depth = towers.
+ * Family-safe carnival. No casino. No Mirror Crew.
+ * Aura lock: brunette pigtails, yellow crown + red heart, green pinafore, black shoes. */
+import * as THREE from "../world/lib/three.module.min.js";
+
+function boot() {
   const PF = window.PennyFever;
-  if (!PF || !PF.registerVendor) return;
+  if (!PF || !PF.registerVendor) {
+    requestAnimationFrame(boot);
+    return;
+  }
+  mountStall(PF);
+}
+boot();
+
+function mountStall(PF) {
+  "use strict";
   const { $, kit } = PF;
 
-  const W = 340;
-  const H = 480;
-  const TOWER = { x: 118, y: 58, w: 78, h: 360 };
   const GAME_ID = "highstriker";
-  const BELL_EVERY = 5;
-  const TAP_LOCK_MS = 140;
-  const MISS_LOCK_MS = 260;
-  const DOUBLE_TAP_MS = 280;
-  const DEATH_HOLD_MS = 760;
-  const TAU = Math.PI * 2;
+  const DEATH_HOLD_MS = 780;
   const AUTHORED_COUNT = 8;
   const CODA_ENABLED = true;
+  const TOWER_H = 8.2;
+  const TOWER_BASE = 0.5;
+  const RAIL_LIMIT = 0.34;
+  const GRAVITY = 16.4;
+  const STRIKES_TO_DEATH = 3;
+
+  const SKIN = 0xf0c4a8;
+  const HAIR = 0x3d2418;
+  const DRESS = 0x1e6b3c;
+  const GOLD = 0xe8b84a;
+  const HEART = 0xd22b3a;
+  const BLOUSE = 0xf5f0ea;
+  const WOOD = 0x3a2418;
+  const WOOD_DARK = 0x1a100c;
+  const BRASS = 0xd4a45a;
 
   let run = null;
-  let idleRaf = 0;
-  let idleRoom = 1;
+  let raf = 0;
   let idleClock = 0;
+  let world = null;
+  let reduceMotion = false;
+  let holdCanvas = false;
+  let holdBtn = false;
+  let holdSpace = false;
+  let pointerX = 0.5;
 
   const AURA = {
-    slip: "Aura: The hammer slipped. Rhythm, not spam.",
-    zero: "Aura: You fell off the first peg. Twice.",
-    shallow: "Aura: Not a single tower. The bell is laughing.",
-    mid: "Aura: Cute climb. The bell’s a checkpoint, sugar.",
+    late: "Aura: Paint sits early. True gold is late.",
+    fake: "Aura: That gold was a decoy. Follow the live band.",
+    reverse: "Aura: Needle ran backwards. You kept the old beat.",
+    second: "Aura: First gold is a liar pass. Release on the next.",
+    shrink: "Aura: Gold shrank. You swung the old size.",
+    miss: "Aura: Needle wasn’t in the gold. Timing, not mash.",
+    air: "Aura: You let go of air. Wait for the gold.",
+    shallow: "Aura: Not a single bell. The mallet is laughing.",
+    mid: "Aura: Cute bells. Checkpoint — keep climbing.",
     deep: "Aura: You rang it and kept climbing. Dangerous.",
-    fake: "Aura: You chased a fake ding. Real bell is on clear.",
-    reverse: "Aura: Marker ran backwards. You kept the old beat.",
-    double: "Aura: One tap is air. Double-tap is the verb.",
-    sway: "Aura: Gold drifted sideways. Height alone is a liar.",
-    cascade: "Aura: Miss dropped two and the next gold shrank.",
-    struck: "Aura: Window already struck. Wait the next pass.",
-    oldBeat: "Aura: You swung the old beat. Reverse runs the other way.",
-    coda: "Aura: Authored towers done. ENDLESS sky pegs. Don’t mash.",
-    leave: "Aura: Walking off mid-tower? Coward’s stamp.",
-    bell: "Aura: Bell’s a checkpoint. Keep climbing.",
-    souvenir: "Aura: Eight towers locked. Souvenir — the bell salutes.",
+    coda: "Aura: Authored towers done. ENDLESS sky. Don’t mash.",
+    leave: "Aura: Walking off mid-smash? Coward’s stamp.",
+    souvenir: "Aura: Eight towers locked. The bell salutes.",
+    slip: "Aura: Three late releases. The paint lied and you believed it.",
   };
 
-  /* Authored TOWER chapters — unique layout / cheat / verb. Not “same tower, thinner zone.”
-   * BandParams numeric climb is coda-only after Tower 8. */
   const AUTHORED = [
     {
-      id: 1, name: "Soft Mallet Lane", kind: "vertical", pegsToClear: 5,
-      zoneH: 0.18, speed: 0.5, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false,
-      bellEvery: 0, sway: false, doubleTap: false, reverse: false,
-      barker: "Tall gold. Tap when the marker is in it. Five pegs. Real bell on clear.",
+      id: 1, name: "Soft Gold", kind: "teach",
+      bell: 0.50, zoneH: 0.24, speed: 0.55, sweet: 0.55, lateLie: 0,
+      reverse: false, fakeAt: 0, secondPass: false, shrinkAfter: false,
+      barker: "HOLD to wind. RELEASE when the needle is in the gold. Bell is a checkpoint.",
+      tell: "RELEASE IN THE GOLD · BELL ISN’T THE END",
     },
     {
-      id: 2, name: "Bell Ladder", kind: "bellLadder", pegsToClear: 6,
-      zoneH: 0.14, speed: 0.65, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false,
-      bellEvery: 3, sway: false, doubleTap: false, reverse: false,
-      barker: "Bell every three pegs this tower. Two extra fanfares. Then keep climbing.",
+      id: 2, name: "Faster Pulse", kind: "fast",
+      bell: 0.58, zoneH: 0.18, speed: 0.68, sweet: 0.56, lateLie: 0,
+      reverse: false, fakeAt: 0, secondPass: false, shrinkAfter: false,
+      barker: "Same joke, quicker beat. Stay in the gold. Ding, then keep climbing.",
+      tell: "FASTER NEEDLE · STILL THE GOLD",
     },
     {
-      id: 3, name: "Side-Sway Tower", kind: "axis2d", pegsToClear: 6,
-      zoneH: 0.16, speed: 0.5, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false,
-      bellEvery: 0, sway: true, doubleTap: false, reverse: false,
-      barker: "Gold drifts sideways. Marker sways. Hit the 2-axis window — not just the height.",
+      id: 3, name: "Late Paint", kind: "late",
+      bell: 0.64, zoneH: 0.16, speed: 0.64, sweet: 0.44, lateLie: 0.20,
+      reverse: false, fakeAt: 0, secondPass: false, shrinkAfter: false,
+      barker: "The paint sits early. True clang is LATE. Don’t trust the pale mark.",
+      tell: "PAINT LIES EARLY · RELEASE LATE",
     },
     {
-      id: 4, name: "Fake Bell Midway", kind: "fakeBell", pegsToClear: 7,
-      zoneH: 0.13, speed: 0.7, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: true,
-      fakeBellAt: 3, bellEvery: 0, sway: false, doubleTap: false, reverse: false,
-      barker: "A ding at peg 3 is a liar. Real bell only when this tower clears.",
+      id: 4, name: "Fake Flash", kind: "fake",
+      bell: 0.68, zoneH: 0.15, speed: 0.66, sweet: 0.60, lateLie: 0,
+      reverse: false, fakeAt: 0.24, secondPass: false, shrinkAfter: false,
+      barker: "A decoy gold winks low. Live gold is the bright band. Ignore the ghost.",
+      tell: "DECOY GOLD IS A LIAR · HIT THE LIVE BAND",
     },
     {
-      id: 5, name: "Double-Tap Pegs", kind: "doubleTap", pegsToClear: 6,
-      zoneH: 0.16, speed: 0.55, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false,
-      bellEvery: 0, sway: false, doubleTap: true, doubleTapMs: DOUBLE_TAP_MS, reverse: false,
-      barker: "Two taps in the gold within 280ms. One tap is air.",
+      id: 5, name: "Reverse Beat", kind: "reverse",
+      bell: 0.72, zoneH: 0.15, speed: 0.70, sweet: 0.52, lateLie: 0,
+      reverse: true, fakeAt: 0, secondPass: false, shrinkAfter: false,
+      barker: "Needle runs the other way. Don’t keep the old beat.",
+      tell: "NEEDLE RUNS BACKWARDS",
     },
     {
-      id: 6, name: "Slip Cascade", kind: "cascade", pegsToClear: 7,
-      zoneH: 0.14, speed: 0.75, slipOnMiss: -2, shrinkAfterHit: true, shrinkOnce: true,
-      fakeBell: false, bellEvery: 0, sway: false, doubleTap: false, reverse: false,
-      barker: "Miss drops two. After a hit the next peg’s gold shrinks once, then resets.",
+      id: 6, name: "Shrink Gold", kind: "shrink",
+      bell: 0.74, zoneH: 0.16, speed: 0.68, sweet: 0.55, lateLie: 0,
+      reverse: false, fakeAt: 0, secondPass: false, shrinkAfter: true,
+      barker: "Miss, and the next gold shrinks. Don’t swing the old size.",
+      tell: "MISS SHRINKS THE GOLD",
     },
     {
-      id: 7, name: "Reverse Hammer", kind: "reverse", pegsToClear: 7,
-      zoneH: 0.13, speed: 0.7, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false,
-      bellEvery: 0, sway: false, doubleTap: false, reverse: true,
-      barker: "Marker runs the other way. Don’t keep the old beat.",
+      id: 7, name: "Second Pass", kind: "second",
+      bell: 0.76, zoneH: 0.16, speed: 0.62, sweet: 0.54, lateLie: 0,
+      reverse: false, fakeAt: 0, secondPass: true, shrinkAfter: false,
+      barker: "First gold pass is a liar. Hold through it. Release on the NEXT pass.",
+      tell: "SKIP THE FIRST GOLD · RELEASE ON THE NEXT",
     },
     {
-      id: 8, name: "Fever Bell Run", kind: "fever", pegsToClear: 8,
-      zoneH: 0.12, speed: 0.8, slipOnMiss: -1, shrinkAfterHit: true, fakeBell: true,
-      fakeBellAt: 4, bellEvery: 0, sway: true, doubleTap: false, reverse: false,
-      finaleDoubleBell: true,
-      barker: "Sway + fake ding + shrink. Eight pegs. Finale double-bell.",
+      id: 8, name: "Fever Night", kind: "fever",
+      bell: 0.80, zoneH: 0.13, speed: 0.76, sweet: 0.42, lateLie: 0.18,
+      reverse: true, fakeAt: 0.24, secondPass: false, shrinkAfter: true,
+      barker: "Late paint, reverse, decoy, shrink. True gold is late. Bell still isn’t the end.",
+      tell: "LATE · REVERSE · DECOY · KEEP CLIMBING",
     },
   ];
 
   const P0_MOUNT = {
     engine: "TimingTap",
-    displayName: "High Striker Pegs",
+    displayName: "High Striker",
     depthUnit: "Tower",
     sheet: "GOBLIN_AUTHORED_LEVELS_B03.md",
-    batchSheet: "GOBLIN_BATCH03_BUILD_SHEETS.md",
     codaEnabled: CODA_ENABLED,
     authoredCount: AUTHORED_COUNT,
   };
 
   const DEPTH_COPY = {
-    tag: "DEPTH RUN · 8 authored TOWERS then ENDLESS · bell is a checkpoint",
-    body: "Authored towers, not a thinner loop: Soft Mallet Lane (teach the window) → Bell Ladder (bell every 3 pegs) → Side-Sway Tower (2-axis gold) → Fake Bell Midway (ding at 3 is a liar) → Double-Tap Pegs (two taps / 280ms) → Slip Cascade (miss −2, next gold shrinks once) → Reverse Hammer (path invert) → Fever Bell Run (sway + fake ding + shrink, finale double-bell) → ENDLESS Sky Peg. Tap the gold. Miss slips. Three slips with no net gain, or falling from peg 0 twice, stamps the tower. The bell is a checkpoint, not the ending.",
-    status: "Depth run · START · 1 demo coin · 8 authored TOWERS then ENDLESS",
-    machine: "Strength tower · 1 demo coin · authored TOWERS",
-    idleHud: ["Authored TOWERS — each chapter is a different sport", "TAP the gold · bell is a checkpoint · START"],
-    punch: "Depth run — press START. No mash prize.",
+    tag: "RELEASE ON GOLD · paint can lie · bell is a checkpoint · 3 strikes",
+    body: "HOLD to wind the mallet. RELEASE when the needle is in the true gold — timing is the joke, not how long you hold. The paint can sit early. A decoy gold can wink. Bell is a checkpoint, not the ending. Three misses stamp SLIP.",
+    status: "Hold to wind · release on gold · 1 demo coin · 8 towers then ENDLESS",
+    machine: "Strength tower · 1 demo coin · release timing",
   };
 
-  function rk() {
-    return PF.runKit || null;
-  }
-
-  function el(id) {
-    return $(id);
-  }
-
+  function rk() { return PF.runKit || null; }
+  function el(id) { return $(id); }
   function setText(id, text) {
     const node = el(id);
     if (node) node.textContent = text;
   }
-
-  function highstrikerBandParams(peg) {
-    const p = Math.max(1, peg | 0);
-    if (p <= 5) {
-      return { pegBand: "1-5", zoneH: 0.18, speed: 0.5, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false };
-    }
-    if (p <= 10) {
-      return { pegBand: "6-10", zoneH: 0.14, speed: 0.7, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: false };
-    }
-    if (p <= 15) {
-      return { pegBand: "11-15", zoneH: 0.11, speed: 0.9, slipOnMiss: -1, shrinkAfterHit: false, fakeBell: true };
-    }
-    if (p <= 20) {
-      return { pegBand: "16-20", zoneH: 0.09, speed: 1.1, slipOnMiss: -2, shrinkAfterHit: false, fakeBell: false };
-    }
-    const t = p - 20;
-    return {
-      pegBand: "21+",
-      zoneH: Math.max(0.05, 0.09 - 0.002 * t),
-      speed: Math.min(2.0, 1.1 + 0.08 * t),
-      slipOnMiss: -2,
-      shrinkAfterHit: true,
-      fakeBell: t % 3 === 0,
-    };
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function card() { return el("highStrikerCard"); }
+  function cabinetOn() {
+    const node = document.getElementById("cabinet-high-striker");
+    return !!(node && !node.hidden);
   }
+  function isLive() {
+    return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
+  }
+  function holding() { return !!(holdCanvas || holdBtn || holdSpace); }
 
   function highstrikerCoda(n) {
     const stage = Math.max(AUTHORED_COUNT + 1, n | 0);
     const t = stage - AUTHORED_COUNT;
-    const peg = 21 + (t - 1) * 5;
-    const band = highstrikerBandParams(peg);
     return {
       id: stage,
       name: `Sky Peg ${stage}`,
-      title: `Sky Peg ${stage}`,
       kind: "sky",
       coda: true,
-      pegsToClear: 5,
-      zoneH: band.zoneH,
-      speed: band.speed,
-      slipOnMiss: band.slipOnMiss,
-      shrinkAfterHit: true,
-      fakeBell: !!band.fakeBell,
-      fakeBellAt: band.fakeBell ? 2 : 0,
-      bellEvery: BELL_EVERY,
-      sway: t % 2 === 0,
-      doubleTap: false,
+      bell: clamp(0.76 + t * 0.01, 0.76, 0.88),
+      zoneH: Math.max(0.10, 0.14 - t * 0.004),
+      speed: Math.min(1.05, 0.76 + t * 0.025),
+      sweet: 0.5,
+      lateLie: t % 2 === 0 ? 0.14 : 0.08,
       reverse: t % 3 === 0,
-      barker: "ENDLESS sky. Window shrinks after hits. Fake bells still lie.",
+      fakeAt: t % 2 === 0 ? 0.24 : 0,
+      secondPass: t % 4 === 0,
+      shrinkAfter: true,
+      barker: "ENDLESS sky. Gold gets thinner. Paint still lies late. Keep climbing.",
+      tell: "ENDLESS · RELEASE ON TRUE GOLD",
     };
   }
 
   function highstrikerStageParams(n) {
     const stage = Math.max(1, n | 0);
-    let spec;
-    if (stage <= AUTHORED_COUNT) {
-      spec = Object.assign({ coda: false }, AUTHORED[stage - 1]);
-    } else if (!CODA_ENABLED) {
-      return null;
-    } else {
-      spec = highstrikerCoda(stage);
-    }
+    if (stage <= AUTHORED_COUNT) return Object.assign({ coda: false, title: AUTHORED[stage - 1].name }, AUTHORED[stage - 1]);
+    if (!CODA_ENABLED) return null;
+    const spec = highstrikerCoda(stage);
     spec.title = spec.name;
-    spec.slipsWithoutNetGainToDeath = 3;
-    spec.fallFromZeroTwiceToDeath = true;
-    spec.bellEvery = spec.bellEvery || 0;
-    spec.pegsToClear = spec.pegsToClear || 5;
     return spec;
   }
 
-  function roomTell(spec) {
-    if (!spec) return "TAP THE GOLD";
-    if (spec.coda) return "ENDLESS · SKY PEG";
-    if (spec.kind === "axis2d" || spec.sway) return spec.kind === "fever"
-      ? "SWAY + FAKE DING + SHRINK · FINALE DOUBLE-BELL"
-      : "2-AXIS GOLD · HEIGHT ALONE IS A LIAR";
-    if (spec.kind === "fakeBell") return "DING AT 3 IS A LIAR · REAL BELL ON CLEAR";
-    if (spec.kind === "doubleTap") return "TWO TAPS IN GOLD · 280ms · ONE TAP IS AIR";
-    if (spec.kind === "cascade") return "MISS −2 · NEXT GOLD SHRINKS ONCE";
-    if (spec.kind === "reverse") return "MARKER RUNS THE OTHER WAY · DON’T KEEP THE OLD BEAT";
-    if (spec.kind === "bellLadder") return "BELL EVERY 3 PEGS · THEN KEEP CLIMBING";
-    if (spec.kind === "fever") return "SWAY + FAKE DING + SHRINK · FINALE DOUBLE-BELL";
-    if (spec.kind === "sky" || spec.coda) return "ENDLESS · SKY PEG";
-    return "TAP THE GOLD · BELL IS NOT THE END";
+  function liveSpec() {
+    const spec = (run && run.spec) ? Object.assign({}, run.spec) : highstrikerStageParams(1);
+    if (run && run.hitShrink) spec.zoneH = Math.max(0.10, (spec.zoneH || 0.14) * run.hitShrink);
+    return spec;
   }
 
-  function attractSpec() {
-    return highstrikerStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
+  function needlePos(t, spec) {
+    const rate = Math.max(0.2, spec && spec.speed != null ? spec.speed : 0.55);
+    const reverse = !!(spec && spec.reverse);
+    const u = ((t / 1000) * rate) % 2;
+    const tri = u < 1 ? u : 2 - u;
+    return reverse ? 1 - tri : tri;
   }
 
-  function hudStageLine(spec, towers, pegs) {
-    if (!spec) return `TOWER ${towers | 0}`;
-    const peak = pegs != null ? ` · PEGS ${pegs | 0}` : "";
-    if (spec.coda) return `ENDLESS · TOWER ${spec.id} · ${spec.name}${peak}`;
-    return `TOWER ${spec.id} · ${spec.name}${peak}`;
+  function trueWindow(spec) {
+    const h = spec.zoneH || 0.16;
+    const mid = clamp((spec.sweet || 0.55) + (spec.lateLie || 0), 0.16, 0.9);
+    return { lo: clamp(mid - h / 2, 0.04, 0.9), hi: clamp(mid + h / 2, 0.1, 0.98), mid };
   }
 
-  function drawRoomCard(ctx, spec, ms) {
-    if (!spec || !(ms > 0)) return;
-    const a = Math.min(1, ms / 220);
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = "rgba(12,6,9,0.92)";
-    ctx.fillRect(22, 148, W - 44, 100);
-    ctx.strokeStyle = spec.coda ? "#e8a0b8" : "#f0d09a";
-    ctx.lineWidth = 2.2;
-    ctx.strokeRect(22.5, 148.5, W - 45, 99);
-    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#d4a45a";
-    ctx.font = "bold 11px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText(spec.coda ? "ENDLESS SKY PEG" : "AUTHORED TOWER", W / 2, 170);
-    ctx.fillStyle = "#fff6ec";
-    ctx.font = "bold 20px Georgia, serif";
-    ctx.fillText(spec.name, W / 2, 198);
-    ctx.fillStyle = "#e8a0b8";
-    ctx.font = "11px Georgia, serif";
-    ctx.fillText(roomTell(spec), W / 2, 226);
-    ctx.restore();
+  function paintWindow(spec) {
+    const h = spec.zoneH || 0.16;
+    const mid = clamp(spec.sweet || 0.55, 0.16, 0.9);
+    return { lo: clamp(mid - h / 2, 0.04, 0.9), hi: clamp(mid + h / 2, 0.1, 0.98), mid };
+  }
+
+  function timingQuality(pos, spec) {
+    const w = trueWindow(spec);
+    if (pos < w.lo || pos > w.hi) return 0;
+    const half = Math.max(0.02, (w.hi - w.lo) / 2);
+    const dist = Math.abs(pos - w.mid) / half;
+    return clamp(1 - dist * 0.45, 0.55, 1);
+  }
+
+  function inFakeGold(pos, spec) {
+    if (!spec || !spec.fakeAt) return false;
+    const h = Math.max(0.08, (spec.zoneH || 0.14) * 0.9);
+    return pos >= spec.fakeAt - h / 2 && pos <= spec.fakeAt + h / 2;
   }
 
   function declareP0() {
     const kitRun = rk();
     if (!kitRun) return;
     if (typeof kitRun.declare === "function") {
-      try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already declared */ }
+      try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already */ }
     }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = Object.assign({
       stageParams: highstrikerStageParams,
-      bandParams: highstrikerBandParams,
+      codaParams: highstrikerCoda,
       authored: AUTHORED,
       codaEnabled: CODA_ENABLED,
-      codaParams: highstrikerCoda,
     }, P0_MOUNT);
     kitRun.mounted = kitRun.mounted || {};
     kitRun.mounted[GAME_ID] = true;
   }
 
-  function isLive() {
-    return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
+  function pegY(unit) {
+    return TOWER_BASE + 0.22 + clamp(unit, 0, 1.05) * (TOWER_H - 0.4);
   }
 
-  function cabinetOn() {
-    const node = document.getElementById("cabinet-high-striker");
-    return !!(node && !node.hidden);
+  function launchSpeed(quality, spec) {
+    const g = spec.gravity || GRAVITY;
+    const full = Math.sqrt(2 * g * TOWER_H * 1.02);
+    const q = clamp(quality, 0, 1);
+    return (0.48 + q * 0.58) * full;
   }
 
-  function punchStart() {
-    stampDepthCopy();
-    setText("highStrikerStatus", DEPTH_COPY.punch);
-    const btn = el("highStrikerStart");
-    if (btn && !btn.hidden) {
-      try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  function predictPeak(quality, spec) {
+    const g = spec.gravity || GRAVITY;
+    const vy = launchSpeed(quality, spec);
+    return clamp((vy * vy) / (2 * g) / TOWER_H, 0, 1.08);
+  }
+
+  /* ——— Three.js pavilion ——— */
+
+  function canvasTex(draw, w, h, repeat) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.needsUpdate = true;
+    if (repeat) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(repeat[0], repeat[1]);
     }
+    return t;
+  }
+
+  function mat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color, roughness: 0.72, metalness: 0.08,
+    }, extra || {}));
+  }
+
+  function meshBox(m, w, h, d, x, y, z) {
+    const mesh = new THREE.Mesh(world.geo.box, m);
+    mesh.scale.set(w, h, d);
+    mesh.position.set(x || 0, y || 0, z || 0);
+    return mesh;
+  }
+
+  function meshCyl(m, rt, rb, h, x, y, z, seg) {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 10), m);
+    mesh.position.set(x || 0, y || 0, z || 0);
+    return mesh;
+  }
+
+  function meshSphere(m, r, x, y, z, seg) {
+    const s = seg || 12;
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, s, Math.max(8, s - 2)), m);
+    mesh.position.set(x || 0, y || 0, z || 0);
+    return mesh;
+  }
+
+  function makePerson(opts) {
+    const g = new THREE.Group();
+    const chibi = !!opts.chibi;
+    const skin = mat(opts.skin || SKIN, { emissive: 0x3a2018, emissiveIntensity: 0.12 });
+    const cloth = mat(opts.cloth || 0x3a3040);
+    const dark = mat(opts.shoes || 0x1a1a1a, { roughness: 0.28, metalness: 0.35 });
+    g.scale.setScalar(opts.scale || 1);
+    const hip = new THREE.Group();
+    hip.position.y = 0.42;
+    g.add(hip);
+    hip.add(meshCyl(cloth, chibi ? 0.12 : 0.13, chibi ? 0.15 : 0.16, 0.28, 0, 0.28, 0));
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(chibi ? 0.26 : 0.22, 0.12, chibi ? 0.36 : 0.32, 12), cloth);
+    skirt.position.y = 0.06;
+    hip.add(skirt);
+    const head = new THREE.Group();
+    head.position.y = chibi ? 0.64 : 0.58;
+    hip.add(head);
+    head.add(meshSphere(skin, chibi ? 0.22 : 0.175, 0, 0.02, 0));
+    const eyeW = mat(0xf7f2ea);
+    const eyeD = mat(0x2a1810);
+    [-1, 1].forEach((side) => {
+      const white = meshSphere(eyeW, 0.038, side * (chibi ? 0.07 : 0.055), 0.03, chibi ? 0.19 : 0.15);
+      white.scale.set(chibi ? 0.05 : 0.038, chibi ? 0.058 : 0.044, 0.02);
+      head.add(white);
+      head.add(meshSphere(eyeD, chibi ? 0.026 : 0.02, side * (chibi ? 0.07 : 0.055), 0.03, chibi ? 0.21 : 0.168));
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 10, Math.PI), mat(0xc45a6a));
+    smile.position.set(0, -0.05, chibi ? 0.2 : 0.16);
+    smile.rotation.x = 2.6;
+    head.add(smile);
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.16 : 0.07), arm ? 0.36 : 0.0, 0);
+      const len = arm ? 0.28 : 0.34;
+      const rad = arm ? 0.035 : 0.042;
+      pivot.add(meshCyl(arm ? skin : cloth, rad, rad, len, 0, -len / 2, 0));
+      if (!arm) pivot.add(meshBox(dark, 0.08, 0.05, 0.12, 0, -len - 0.02, 0.03));
+      else pivot.add(meshSphere(skin, 0.04, 0, -len, 0));
+      hip.add(pivot);
+      return pivot;
+    }
+    g.userData = {
+      hip, head,
+      armL: limb(-1, true), armR: limb(1, true),
+      legL: limb(-1, false), legR: limb(1, false),
+      t: Math.random() * 10,
+    };
+    return g;
+  }
+
+  function dressAura(g) {
+    const hip = g.userData.hip;
+    const head = g.userData.head;
+    const blouse = mat(BLOUSE, { emissive: 0x3a3028, emissiveIntensity: 0.2 });
+    const dress = mat(DRESS, { emissive: 0x0a2010, emissiveIntensity: 0.25 });
+    hip.children[0].material = blouse;
+    hip.children[1].material = dress;
+    const heart = meshBox(mat(HEART, { emissive: HEART, emissiveIntensity: 0.55, roughness: 0.4 }), 0.09, 0.09, 0.04, 0, 0.22, 0.16);
+    heart.rotation.z = Math.PI / 4;
+    hip.add(heart);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), blouse);
+    collar.position.y = 0.44;
+    collar.rotation.x = Math.PI / 2;
+    hip.add(collar);
+    const hairM = mat(HAIR, { emissive: 0x1a0c08, emissiveIntensity: 0.15 });
+    head.add(meshSphere(hairM, 0.23, 0, 0.06, -0.02));
+    [-1, 1].forEach((side) => {
+      head.add(meshSphere(hairM, 0.11, side * 0.2, -0.04, 0.04));
+      head.add(meshSphere(mat(HEART, { emissive: HEART, emissiveIntensity: 0.6 }), 0.045, side * 0.2, 0.06, 0.06));
+    });
+    head.add(meshBox(hairM, 0.28, 0.07, 0.1, 0, 0.14, 0.16));
+    const crown = new THREE.Group();
+    crown.position.y = 0.24;
+    head.add(crown);
+    const gold = mat(GOLD, { metalness: 0.65, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.55 });
+    crown.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold));
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const h = i === 1 ? 0.14 : 0.09;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, h, 6), gold);
+      spike.position.set(x, h * 0.45, 0);
+      crown.add(spike);
+    });
+    const gem = meshBox(mat(HEART, { emissive: HEART, emissiveIntensity: 0.7 }), 0.055, 0.055, 0.025, 0, 0.02, 0.11);
+    gem.rotation.z = Math.PI / 4;
+    crown.add(gem);
+    g.userData.kind = "aura";
+  }
+
+  function dressBarker(g) {
+    const hip = g.userData.hip;
+    const head = g.userData.head;
+    hip.children[0].material = mat(0xf3e6d0);
+    hip.children[1].material = mat(0x8a2030);
+    hip.add(meshBox(mat(0xc41e3a), 0.22, 0.18, 0.04, 0, 0.28, 0.14));
+    head.add(meshCyl(mat(0x1a1010), 0.12, 0.16, 0.08, 0, 0.22, 0));
+    head.add(meshCyl(mat(0x1a1010), 0.22, 0.22, 0.02, 0, 0.17, 0));
+    head.add(meshBox(mat(GOLD, { emissive: GOLD, emissiveIntensity: 0.35 }), 0.08, 0.03, 0.06, 0, 0.16, 0.16));
+    g.userData.kind = "barker";
+  }
+
+  function buildWorld() {
+    const canvas = el("highStrikerCanvas");
+    if (!canvas || world) return world;
+    reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: (window.devicePixelRatio || 1) < 1.6,
+        powerPreference: "high-performance",
+        alpha: false,
+      });
+    } catch (_) {
+      setText("highStrikerStatus", "This tent wants WebGL. The alley still loves you.");
+      return null;
+    }
+    if (!renderer.getContext()) {
+      setText("highStrikerStatus", "This tent wants WebGL. The alley still loves you.");
+      return null;
+    }
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.setClearColor(0x08050c, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0b0812, 0.026);
+    const camera = new THREE.PerspectiveCamera(56, 1, 0.12, 80);
+    camera.position.set(5.4, 3.3, 8.1);
+
+    world = {
+      renderer, scene, camera,
+      geo: { box: new THREE.BoxGeometry(1, 1, 1) },
+      sparks: [],
+      camPos: new THREE.Vector3(5.4, 3.3, 8.1),
+      camLook: new THREE.Vector3(0, 3.1, 0),
+      shake: 0,
+      bellCam: 0,
+      built: true,
+    };
+
+    scene.add(new THREE.AmbientLight(0x4a382c, 0.88));
+    scene.add(new THREE.HemisphereLight(0x8aa4cc, 0x2a1810, 0.7));
+    const moon = new THREE.DirectionalLight(0xc0d4ff, 0.4);
+    moon.position.set(-6, 10, 4);
+    scene.add(moon);
+    const fill = new THREE.DirectionalLight(0xffc090, 0.58);
+    fill.position.set(4, 6, 8);
+    scene.add(fill);
+
+    const woodTex = canvasTex((ctx, w, h) => {
+      ctx.fillStyle = "#3a2418";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 18; i++) {
+        ctx.fillStyle = i % 2 ? "rgba(90,50,28,0.35)" : "rgba(212,164,90,0.08)";
+        ctx.fillRect(i * (w / 18), 0, 3, h);
+      }
+    }, 256, 256, [2, 4]);
+    const sawdustTex = canvasTex((ctx, w, h) => {
+      ctx.fillStyle = "#2a1a10";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 800; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? "#5a3a22" : "#3a2818";
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1);
+      }
+    }, 256, 256, [8, 8]);
+    const stripeTex = canvasTex((ctx, w, h) => {
+      for (let i = 0; i < 10; i++) {
+        ctx.fillStyle = i % 2 ? "#7a2038" : "#f0d09a";
+        ctx.fillRect(0, i * (h / 10), w, h / 10);
+      }
+    }, 64, 256, [1, 3]);
+
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), mat(0x2a1a12, { map: sawdustTex, roughness: 0.95 }));
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(36, 20, 14),
+      new THREE.MeshBasicMaterial({
+        map: canvasTex((ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, "#0a1020");
+          g.addColorStop(0.55, "#1a0c18");
+          g.addColorStop(1, "#120810");
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = "#fff6ec";
+          for (let i = 0; i < 110; i++) {
+            const s = Math.random() * 1.6;
+            ctx.globalAlpha = 0.35 + Math.random() * 0.65;
+            ctx.fillRect(Math.random() * w, Math.random() * h * 0.7, s, s);
+          }
+        }, 512, 256),
+        side: THREE.BackSide,
+      })
+    );
+    scene.add(sky);
+
+    const tent = new THREE.Group();
+    scene.add(tent);
+    world.tent = tent;
+    const canvasMat = mat(0xc45a6a, { map: stripeTex, roughness: 0.86, side: THREE.DoubleSide });
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.2), canvasMat);
+    back.position.set(0, 3.6, -4.4);
+    tent.add(back);
+    const left = new THREE.Mesh(new THREE.PlaneGeometry(9, 7.2), canvasMat);
+    left.position.set(-5.6, 3.6, 0);
+    left.rotation.y = Math.PI / 2.4;
+    tent.add(left);
+    const right = new THREE.Mesh(new THREE.PlaneGeometry(9, 7.2), canvasMat);
+    right.position.set(5.6, 3.6, 0);
+    right.rotation.y = -Math.PI / 2.4;
+    tent.add(right);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(7.4, 3.2, 4), canvasMat);
+    roof.position.y = 8.5;
+    roof.rotation.y = Math.PI / 4;
+    tent.add(roof);
+    world.tentRoof = roof;
+    tent.add(meshCyl(mat(WOOD, { map: woodTex }), 0.08, 0.09, 6.4, -4.6, 3.2, 3.2));
+    tent.add(meshCyl(mat(WOOD, { map: woodTex }), 0.08, 0.09, 6.4, 4.6, 3.2, 3.2));
+
+    const lanternMat = mat(0xffe2a0, { emissive: 0xffc878, emissiveIntensity: 0.9 });
+    world.lanterns = [];
+    [[-3.8, 5.6, 2.4], [3.8, 5.6, 2.4], [0, 7.1, -2.2]].forEach((p) => {
+      tent.add(meshSphere(lanternMat, 0.16, p[0], p[1], p[2], 10));
+      const light = new THREE.PointLight(0xffc878, 1.55, 9, 2);
+      light.position.set(p[0], p[1], p[2]);
+      scene.add(light);
+      world.lanterns.push(light);
+    });
+
+    const tower = new THREE.Group();
+    scene.add(tower);
+    world.tower = tower;
+    tower.add(meshBox(mat(WOOD_DARK, { map: woodTex }), 2.3, 0.4, 2.3, 0, 0.2, 0));
+    tower.add(meshBox(mat(WOOD, { map: woodTex, roughness: 0.78 }), 0.42, TOWER_H, 0.42, 0, TOWER_BASE + TOWER_H / 2, 0));
+    tower.add(meshBox(mat(BRASS, { metalness: 0.7, roughness: 0.32 }), 0.07, TOWER_H - 0.35, 0.07, 0, TOWER_BASE + TOWER_H / 2, 0.24));
+    for (let i = 0; i < 16; i++) {
+      const y = TOWER_BASE + 0.3 + (i / 15) * (TOWER_H - 0.9);
+      const peg = meshCyl(mat(BRASS, { metalness: 0.65, roughness: 0.35 }), 0.045, 0.045, 0.22, 0.28, y, 0.08, 8);
+      peg.rotation.z = Math.PI / 2;
+      tower.add(peg);
+    }
+
+    const thermo = meshBox(mat(0x1a1010), 0.16, TOWER_H - 0.6, 0.08, -0.62, TOWER_BASE + TOWER_H / 2, 0.12);
+    tower.add(thermo);
+    const fillBar = meshBox(mat(0xc41e3a, { emissive: 0xc41e3a, emissiveIntensity: 0.7 }), 0.12, 0.2, 0.09, -0.62, TOWER_BASE + 0.3, 0.16);
+    tower.add(fillBar);
+    world.thermoFill = fillBar;
+    const goldBand = new THREE.Mesh(
+      new THREE.TorusGeometry(0.28, 0.045, 8, 22),
+      mat(GOLD, { emissive: GOLD, emissiveIntensity: 1.7, metalness: 0.4, roughness: 0.28, transparent: true, opacity: 0.95 })
+    );
+    goldBand.rotation.x = Math.PI / 2;
+    goldBand.position.set(-0.62, pegY(0.55), 0.18);
+    tower.add(goldBand);
+    world.goldBand = goldBand;
+    const paintMark = new THREE.Mesh(
+      new THREE.TorusGeometry(0.3, 0.03, 8, 20),
+      mat(0xe8c8a0, { emissive: 0x6a4820, emissiveIntensity: 0.35, transparent: true, opacity: 0.45 })
+    );
+    paintMark.rotation.x = Math.PI / 2;
+    paintMark.position.set(-0.62, pegY(0.46), 0.16);
+    tower.add(paintMark);
+    world.paintMark = paintMark;
+    const fakeMark = new THREE.Mesh(
+      new THREE.TorusGeometry(0.26, 0.03, 8, 18),
+      mat(0xb8c8e0, { emissive: 0x6a88b0, emissiveIntensity: 0.6, transparent: true, opacity: 0.4 })
+    );
+    fakeMark.rotation.x = Math.PI / 2;
+    fakeMark.visible = false;
+    tower.add(fakeMark);
+    world.fakeMark = fakeMark;
+    const needle = meshSphere(mat(0xffe8a0, { emissive: 0xffc040, emissiveIntensity: 2.4 }), 0.1, -0.62, pegY(0.2), 0.28, 12);
+    tower.add(needle);
+    world.needle = needle;
+
+    const pad = new THREE.Group();
+    pad.position.set(0.55, 0.62, 1.15);
+    pad.add(meshBox(mat(WOOD, { map: woodTex }), 0.7, 0.12, 0.42, 0, 0, 0));
+    pad.add(meshBox(mat(0xc41e3a, { emissive: 0x5a1018, emissiveIntensity: 0.35 }), 0.55, 0.08, 0.28, 0, 0.08, 0.02));
+    tower.add(pad);
+    world.pad = pad;
+
+    const puck = meshCyl(mat(0xc41e3a, { metalness: 0.45, roughness: 0.32, emissive: 0x5a1018, emissiveIntensity: 0.4 }), 0.2, 0.2, 0.14, 0, pegY(0), 0.28, 14);
+    tower.add(puck);
+    world.puck = puck;
+
+    const ghost = meshCyl(mat(0xf0d09a, { transparent: true, opacity: 0.35, emissive: GOLD, emissiveIntensity: 0.4 }), 0.16, 0.16, 0.1, 0, pegY(0.4), 0.28, 10);
+    ghost.visible = false;
+    tower.add(ghost);
+    world.ghost = ghost;
+
+    const bell = new THREE.Group();
+    bell.position.set(0, TOWER_BASE + TOWER_H + 0.18, 0);
+    const brass = mat(GOLD, { metalness: 0.72, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.45 });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 12, 0, Math.PI * 2, 0, Math.PI / 1.6), brass);
+    dome.rotation.x = Math.PI;
+    bell.add(dome);
+    bell.add(new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 8, 18), brass));
+    bell.add(meshCyl(mat(0x2a1810, { metalness: 0.4 }), 0.03, 0.05, 0.28, 0, -0.22, 0, 8));
+    tower.add(bell);
+    world.bell = bell;
+    world.bellLight = new THREE.PointLight(0xffe08a, 0.45, 7, 1.8);
+    world.bellLight.position.set(0, TOWER_BASE + TOWER_H + 0.2, 0.4);
+    scene.add(world.bellLight);
+
+    const liarBell = new THREE.Group();
+    liarBell.position.set(0.55, pegY(0.52), 0.15);
+    liarBell.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8, 0, Math.PI * 2, 0, Math.PI / 1.6), mat(0xb0a090, { metalness: 0.5, roughness: 0.45 })));
+    liarBell.visible = false;
+    tower.add(liarBell);
+    world.liarBell = liarBell;
+
+    const mallet = new THREE.Group();
+    mallet.position.set(1.05, 1.02, 2.05);
+    mallet.add(meshCyl(mat(WOOD, { map: woodTex }), 0.035, 0.045, 1.35, 0, 0.2, 0, 8));
+    mallet.add(meshBox(mat(0x2a1810, { roughness: 0.55 }), 0.18, 0.18, 0.32, 0, 0.92, 0));
+    scene.add(mallet);
+    world.mallet = mallet;
+
+    const flag = new THREE.Group();
+    flag.position.set(-1.7, 2.4, 1.1);
+    flag.add(meshCyl(mat(WOOD), 0.025, 0.025, 2.2, 0, 1.1, 0, 6));
+    const cloth = meshBox(mat(0xf0d09a, { side: THREE.DoubleSide }), 0.7, 0.38, 0.02, 0.38, 1.85, 0);
+    flag.add(cloth);
+    scene.add(flag);
+    world.windFlag = cloth;
+
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.7, 0.72),
+      new THREE.MeshBasicMaterial({
+        map: canvasTex((ctx, w, h) => {
+          ctx.fillStyle = "#3a1810";
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = "#d4a45a";
+          ctx.lineWidth = 8;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+          ctx.fillStyle = "#f0d09a";
+          ctx.font = "bold 34px Georgia, serif";
+          ctx.textAlign = "center";
+          ctx.fillText("TEST YOUR STRENGTH", w / 2, 46);
+          ctx.font = "22px Georgia, serif";
+          ctx.fillStyle = "#e8a0b8";
+          ctx.fillText("HOLD · SMASH · KEEP CLIMBING", w / 2, 88);
+        }, 512, 128),
+      })
+    );
+    sign.position.set(0, 7.55, -2.2);
+    scene.add(sign);
+
+    const aura = makePerson({ chibi: true, scale: 1.05, cloth: DRESS });
+    dressAura(aura);
+    aura.position.set(2.5, 0, 1.55);
+    aura.rotation.y = -0.55;
+    scene.add(aura);
+    world.aura = aura;
+
+    const barker = makePerson({ chibi: false, scale: 1.08, cloth: 0x8a2030 });
+    dressBarker(barker);
+    barker.position.set(-2.55, 0, 1.7);
+    barker.rotation.y = 0.7;
+    scene.add(barker);
+    world.barker = barker;
+
+    world.hitLight = new THREE.PointLight(0xffc878, 0, 6.5, 2);
+    world.hitLight.position.set(0.5, 1.2, 1.4);
+    scene.add(world.hitLight);
+
+    for (let i = 0; i < 40; i++) {
+      const m = meshSphere(mat(0xffe08a, { emissive: 0xffc040, emissiveIntensity: 2, transparent: true, opacity: 1 }), 0.035, 0, 0, 0, 6);
+      m.visible = false;
+      scene.add(m);
+      world.sparks.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+
+    const moteGeo = new THREE.BufferGeometry();
+    const motePos = new Float32Array(160 * 3);
+    for (let i = 0; i < 160; i++) {
+      motePos[i * 3] = (Math.random() - 0.5) * 12;
+      motePos[i * 3 + 1] = Math.random() * 8;
+      motePos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+    world.motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({
+      color: 0xf0d09a, size: 0.045, transparent: true, opacity: 0.32, depthWrite: false,
+    }));
+    scene.add(world.motes);
+
+    resizeWorld();
+    return world;
+  }
+
+  function resizeWorld() {
+    if (!world) return;
+    const canvas = el("highStrikerCanvas");
+    const stage = el("highStrikerStage") || (canvas && canvas.parentElement);
+    if (!canvas || !stage) return;
+    const w = Math.max(1, stage.clientWidth || canvas.clientWidth || window.innerWidth || 320);
+    const h = Math.max(1, stage.clientHeight || canvas.clientHeight || window.innerHeight || 480);
+    world.renderer.setSize(w, h, false);
+    world.camera.aspect = w / h;
+    world.camera.updateProjectionMatrix();
+  }
+
+  function spawnSparks(x, y, z, n, color) {
+    if (!world) return;
+    let left = n;
+    world.sparks.forEach((s) => {
+      if (left <= 0 || s.life > 0) return;
+      s.life = 380 + Math.random() * 260;
+      s.vx = (Math.random() - 0.5) * 0.03;
+      s.vy = 0.01 + Math.random() * 0.03;
+      s.vz = (Math.random() - 0.5) * 0.03;
+      s.mesh.position.set(x, y, z);
+      s.mesh.visible = true;
+      if (color) s.mesh.material.color.set(color);
+      left -= 1;
+    });
+  }
+
+  function stepSparks(dt) {
+    if (!world) return;
+    world.sparks.forEach((s) => {
+      if (s.life <= 0) return;
+      s.life -= dt;
+      s.vy -= 0.00005 * dt;
+      s.mesh.position.x += s.vx * dt;
+      s.mesh.position.y += s.vy * dt;
+      s.mesh.position.z += s.vz * dt;
+      s.mesh.material.opacity = clamp(s.life / 380, 0, 1);
+      if (s.life <= 0) s.mesh.visible = false;
+    });
+  }
+
+  function posePerson(g, t, mode) {
+    if (!g) return;
+    const u = g.userData;
+    u.hip.position.y = 0.42 + Math.sin(t * 0.003 + u.t) * 0.03;
+    u.head.rotation.y = Math.sin(t * 0.0016 + u.t) * 0.18;
+    if (mode === "cheer") {
+      u.armL.rotation.x = -2.2 + Math.sin(t * 0.012) * 0.2;
+      u.armR.rotation.x = -2.3 + Math.sin(t * 0.013 + 1) * 0.2;
+      u.hip.position.y = 0.5 + Math.abs(Math.sin(t * 0.01)) * 0.08;
+    } else if (mode === "facepalm") {
+      u.armR.rotation.x = -1.6;
+      u.armL.rotation.x = -0.2;
+      u.head.rotation.x = 0.35;
+    } else {
+      u.armL.rotation.x = -0.4 + Math.sin(t * 0.004 + u.t) * 0.25;
+      u.armR.rotation.x = u.kind === "barker" ? -1.6 + Math.sin(t * 0.006) * 0.5 : -0.35 + Math.sin(t * 0.0045 + u.t + 1) * 0.35;
+      u.head.rotation.x = 0;
+    }
+  }
+
+  function paintPower(needle, spec) {
+    const bar = el("highStrikerPowerBar");
+    const lab = el("highStrikerPowerLabel");
+    const wrap = el("highStrikerPowerWrap");
+    const gold = el("highStrikerGoldZone");
+    const paint = el("highStrikerPaintZone");
+    const n = clamp(needle, 0, 1);
+    if (bar) {
+      bar.style.width = "0.42rem";
+      bar.style.left = (n * 100) + "%";
+    }
+    const tw = trueWindow(spec || liveSpec());
+    const pw = paintWindow(spec || liveSpec());
+    if (gold) {
+      gold.style.left = (tw.lo * 100) + "%";
+      gold.style.width = ((tw.hi - tw.lo) * 100) + "%";
+    }
+    if (paint) {
+      const late = !!(spec && spec.lateLie);
+      paint.hidden = !late;
+      paint.style.left = (pw.lo * 100) + "%";
+      paint.style.width = ((pw.hi - pw.lo) * 100) + "%";
+    }
+    const q = timingQuality(n, spec || liveSpec());
+    if (lab) lab.textContent = q > 0 ? "GOLD" : "WAIT";
+    if (wrap) wrap.hidden = !isLive();
+    const btn = el("highStrikerTap");
+    if (btn) btn.classList.toggle("is-holding", holding() && isLive());
+  }
+
+  function syncScene(dt, now) {
+    if (!world) return;
+    const spec = liveSpec();
+    const t = isLive() ? run.t : idleClock;
+    const needle = needlePos(t, spec);
+    const qNow = timingQuality(needle, spec);
+    const puckU = isLive() || (run && run.dying) ? (run.puckU || 0) : (0.08 + Math.abs(Math.sin(idleClock * 0.0008)) * 0.5);
+
+    world.puck.position.y = pegY(puckU);
+    world.puck.position.x = isLive() ? (run.puckX || 0) : 0;
+    world.puck.rotation.y += dt * 0.004;
+
+    const thermoH = Math.max(0.16, needle * (TOWER_H - 0.75));
+    world.thermoFill.scale.y = thermoH;
+    world.thermoFill.position.y = TOWER_BASE + 0.22 + thermoH / 2;
+    world.thermoFill.material.color.set(qNow > 0 ? 0xf0d09a : 0xc41e3a);
+    world.thermoFill.material.emissiveIntensity = qNow > 0 ? 1.1 : 0.45;
+
+    if (world.needle) world.needle.position.y = pegY(needle);
+    const tw = trueWindow(spec);
+    if (world.goldBand) {
+      world.goldBand.position.y = pegY(tw.mid);
+      const thick = clamp(spec.zoneH * 5.5, 0.7, 1.6);
+      world.goldBand.scale.set(1, 1, thick);
+      world.goldBand.material.emissiveIntensity = qNow > 0 ? 2.8 : 1.15;
+      world.goldBand.material.opacity = 0.95;
+    }
+    const pw = paintWindow(spec);
+    if (world.paintMark) {
+      const lie = !!(spec.lateLie);
+      world.paintMark.visible = lie;
+      world.paintMark.position.y = pegY(pw.mid);
+    }
+    if (world.fakeMark) {
+      world.fakeMark.visible = !!(spec.fakeAt);
+      if (spec.fakeAt) world.fakeMark.position.set(-0.62, pegY(spec.fakeAt), 0.18);
+    }
+
+    const peak = predictPeak(qNow, spec);
+    world.ghost.visible = !!(isLive() && qNow > 0 && (run.phase === "charging" || run.phase === "idle"));
+    if (world.ghost.visible) world.ghost.position.y = pegY(peak);
+
+    let malletX = -0.5;
+    if (isLive() && run.phase === "charging") malletX = -2.05;
+    else if (isLive() && run.phase === "swinging") malletX = lerp(-2.2, 0.85, 1 - (run.swingT || 0) / 90);
+    else malletX = -0.5 + Math.sin(t * 0.002) * 0.06;
+    world.mallet.rotation.x = malletX;
+    world.mallet.rotation.y = 0;
+    world.mallet.rotation.z = 0.05;
+
+    if (world.pad) {
+      const dip = (run && run.padDip) || 0;
+      world.pad.rotation.x = dip * 0.55;
+    }
+
+    const bellShake = (run && run.bellShake) || 0;
+    world.bell.rotation.z = Math.sin(t * 0.04) * (bellShake > 0 ? 0.35 : 0.04);
+    world.bell.scale.setScalar(bellShake > 0 ? 1.08 : 1);
+    world.bellLight.intensity = bellShake > 0 ? 3.4 : 0.45;
+    world.liarBell.visible = !!(spec.fakeAt);
+    world.liarBell.position.y = pegY(spec.fakeAt || 0.26);
+    if (run && run.liarFlash > 0) world.liarBell.rotation.z = Math.sin(t * 0.08) * 0.5;
+
+    world.tower.rotation.z = 0;
+    if (world.tentRoof) world.tentRoof.visible = !spec.coda;
+    if (world.windFlag) {
+      world.windFlag.rotation.y = Math.sin(t * 0.008) * 0.22;
+      world.windFlag.material.color.set(qNow > 0 ? 0xf0d09a : 0xc41e3a);
+    }
+    world.lanterns.forEach((L, i) => { L.intensity = 1.3 + Math.sin(t * 0.003 + i) * 0.3; });
+    if (world.motes) world.motes.rotation.y += dt * 0.00004;
+
+    const auraMode = (run && run.bellFlash > 0) ? "cheer" : (run && run.missFlash > 0) ? "facepalm" : "idle";
+    posePerson(world.aura, t, auraMode);
+    posePerson(world.barker, t, run && run.bellFlash > 0 ? "cheer" : "idle");
+    world.hitLight.intensity = Math.max(0, ((run && run.hitFlash) || 0) / 70);
+    stepSparks(dt);
+
+    let wantPos;
+    let wantLook;
+    if (world.bellCam > 0) {
+      wantPos = new THREE.Vector3(0.7, 8.2, 4.6);
+      wantLook = new THREE.Vector3(0, 8.0, 0);
+    } else if (isLive() && (run.phase === "flying" || run.phase === "swinging")) {
+      wantPos = new THREE.Vector3(2.6, 1.6 + puckU * 4.2, 6.6);
+      wantLook = new THREE.Vector3(run.puckX || 0, pegY(puckU), 0);
+    } else if (isLive()) {
+      wantPos = new THREE.Vector3(3.2, 2.9, 7.1);
+      wantLook = new THREE.Vector3(-0.25, 3.5, 0.15);
+    } else if (reduceMotion) {
+      wantPos = new THREE.Vector3(5.2, 3.5, 8.0);
+      wantLook = new THREE.Vector3(0, 3.3, 0);
+    } else {
+      const a = idleClock * 0.00022;
+      wantPos = new THREE.Vector3(Math.sin(a) * 8.2, 3.5, Math.cos(a) * 8.2);
+      wantLook = new THREE.Vector3(0, 3.3, 0);
+    }
+    const k = Math.min(1, dt * (world.bellCam > 0 ? 0.008 : 0.0048));
+    world.camPos.lerp(wantPos, k);
+    world.camLook.lerp(wantLook, k);
+    world.camera.position.copy(world.camPos);
+    if (world.shake > 0.05) {
+      world.camera.position.x += (Math.random() - 0.5) * world.shake * 0.04;
+      world.camera.position.y += (Math.random() - 0.5) * world.shake * 0.03;
+    }
+    world.camera.lookAt(world.camLook);
+    world.shake *= 0.86;
+    if (world.bellCam > 0) world.bellCam -= dt;
+    if (world.scene.fog) world.scene.fog.density = spec.coda ? 0.012 : 0.026;
+    world.renderer.render(world.scene, world.camera);
+  }
+
+  function toast(msg, ms) {
+    if (!run) return;
+    run.toast = msg;
+    run.toastMs = ms || 800;
+    const n = el("highStrikerToast");
+    if (n) { n.hidden = false; n.textContent = msg; }
+  }
+
+  function showRoomCard(spec) {
+    const cardEl = el("highStrikerRoomCard");
+    if (!cardEl || !spec) return;
+    setText("highStrikerRoomKind", spec.coda ? "ENDLESS SKY PEG" : "AUTHORED TOWER");
+    setText("highStrikerRoomName", spec.name);
+    setText("highStrikerRoomTell", spec.tell || "HOLD · RELEASE · SMASH");
+    cardEl.hidden = false;
+    if (run) run.roomCardMs = 1000;
   }
 
   function ensureHud() {
-    const host = card();
-    const stage = host && host.querySelector(".vendor-stage");
-    if (!stage) return null;
-    let hud = stage.querySelector(`[data-runkit-hud="${GAME_ID}"]`);
-    if (!hud) {
-      hud = document.createElement("p");
-      hud.className = "depth-hud";
-      hud.dataset.runkitHud = GAME_ID;
-      hud.setAttribute("aria-live", "polite");
-      stage.appendChild(hud);
-    }
-    if (isLive() || (run && run.dying)) {
-      const spec = run.spec || highstrikerStageParams(Math.max(1, (run.towers | 0) + 1));
-      hud.textContent = hudStageLine(spec, run.towers | 0, run.peak | 0);
-      hud.hidden = false;
-    } else {
-      hud.textContent = "TOWER 0";
-      hud.hidden = true;
-    }
-    paintPips();
-    return hud;
-  }
-
-  function ensurePips() {
-    const host = card();
-    const stage = host && host.querySelector(".vendor-stage");
-    if (!stage) return null;
-    let span = stage.querySelector(`[data-runkit-strikes="${GAME_ID}"]`);
-    if (!span) {
-      span = document.createElement("span");
-      span.className = "strike-pips";
-      span.dataset.runkitStrikes = GAME_ID;
-      span.setAttribute("aria-hidden", "true");
-      span.innerHTML = "<i></i><i></i><i></i>";
-      stage.appendChild(span);
-    }
-    return span;
+    const hud = document.querySelector(`[data-runkit-hud="${GAME_ID}"]`);
+    if (!hud) return;
+    const spec = (run && run.spec) || highstrikerStageParams(1);
+    const towers = (run && (run.towers | 0)) || 0;
+    hud.textContent = spec.coda
+      ? `ENDLESS · TOWER ${spec.id} · ${spec.name}`
+      : `TOWER ${towers} · ${spec.name}`;
   }
 
   function paintPips() {
-    const span = ensurePips();
+    const span = document.querySelector(`[data-runkit-strikes="${GAME_ID}"]`);
     if (!span) return;
-    const n = isLive() || (run && run.dying) ? (run.slips | 0) : 0;
+    const n = isLive() || (run && run.dying) ? (run.strikes | 0) : 0;
     span.querySelectorAll("i").forEach((node, i) => node.classList.toggle("on", i < n));
   }
 
   function challengeLine(n) {
     const kitRun = rk();
     if (kitRun && typeof kitRun.challengeText === "function") {
-      try { return kitRun.challengeText("High Striker tower", n | 0, GAME_ID); } catch (_) { /* authored */ }
+      try { return kitRun.challengeText("High Striker tower", n | 0, GAME_ID); } catch (_) { /* */ }
     }
-    return `Beat my High Striker tower ${n | 0} on Penny Fever`;
+    return `Beat my High Striker towers ${n | 0} on Penny Fever`;
   }
 
   function closeKitRun(partial) {
     const ctx = run && run.kitRun;
     if (ctx && rk() && typeof rk().finishRun === "function") {
-      try {
-        return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
-      } catch (_) { /* fall through */ }
+      try { return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false }); } catch (_) { /* */ }
     }
-    kit.persistRun(PF.getState(), GAME_ID, partial);
+    if (kit && typeof kit.persistRun === "function") kit.persistRun(PF.getState(), GAME_ID, partial);
     return null;
   }
 
@@ -363,7 +964,7 @@
     const payload = {
       depth: partial.depth | 0,
       score: partial.score | 0,
-      deathReason: partial.deathReason || "hammer slip",
+      deathReason: partial.deathReason || "weak swing",
       cashedOut: !!partial.cashedOut,
       meta: partial.meta || {},
     };
@@ -374,7 +975,7 @@
       state.bestHighStrikerScore = Math.max(state.bestHighStrikerScore || 0, payload.score);
     }
     closeKitRun(payload);
-    kit.persistRun(state, GAME_ID, payload);
+    if (kit && typeof kit.persistRun === "function") kit.persistRun(state, GAME_ID, payload);
     if (typeof PF.saveState === "function") PF.saveState();
   }
 
@@ -383,165 +984,23 @@
     if (run && run.kitRun) run.kitRun.depth = towers;
     const spec = (run && run.spec) || highstrikerStageParams(Math.max(1, towers));
     if (run && run.kitRun && rk() && typeof rk().reportDepth === "function") {
-      try {
-        rk().reportDepth(run.kitRun, towers, {
-          name: spec.name,
-          coda: !!spec.coda,
-          pegs: run.peak | 0,
-        });
-      } catch (_) { /* hud optional */ }
+      try { rk().reportDepth(run.kitRun, towers, { name: spec.name, coda: !!spec.coda }); } catch (_) { /* */ }
     }
     ensureHud();
   }
 
   function tellStrike(reason) {
     if (!run || !run.kitRun || !rk() || typeof rk().reportStrike !== "function") return;
-    try { rk().reportStrike(run.kitRun, reason); } catch (_) { /* pips */ }
+    try { rk().reportStrike(run.kitRun, reason); } catch (_) { /* */ }
     paintPips();
   }
 
-  function shadowCtx(ctx) {
-    return {
-      gameId: GAME_ID,
-      startedAt: (ctx && ctx.startedAt) || Date.now(),
-      feverNode: !!(ctx && ctx.feverNode),
-      feverGate: ctx && ctx.feverGate,
-      depth: 0,
-      score: 0,
-      strikes: 0,
-      alive: true,
-    };
-  }
-
-  function mountTap(ctx) {
-    const engines = rk() && rk().engines;
-    if (!engines || !engines.TimingTap || typeof engines.TimingTap.mount !== "function" || !ctx) return null;
-    try {
-      /* Launcher only. Stall owns peg climb, slips, zero-falls, bell checkpoints.
-       * TimingTap.tap uses performance.now + frozen windowMs — do not drive the mallet with it.
-       * Shadow ctx so reportDepth/finishRun cannot steal the coin run. */
-      return engines.TimingTap.mount(el("highStrikerCanvas") || card(), {
-        windowMs: 180,
-        strikesToDeath: 99,
-        clearCount: 999,
-        stageParams: highstrikerStageParams,
-        schedule(stage) {
-          const band = highstrikerBandParams(stage);
-          const now = (run && run.t) || 0;
-          const period = 1000 / Math.max(0.2, band.speed);
-          return [
-            { at: now + period * 0.62, fake: !!band.fakeBell },
-            { at: now + period * 1.62, fake: false },
-          ];
-        },
-        onHit() {},
-        onFake() { kit.sfx("spinner"); },
-      }, shadowCtx(ctx));
-    } catch (_) {
-      return null;
+  function beginKitRun() {
+    if (PF.runKit && typeof PF.runKit.startRun === "function") {
+      return PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1 });
     }
-  }
-
-  function card() {
-    return el("highStrikerCard");
-  }
-
-  function restMul(t) {
-    return (run && run.restUntil && t < run.restUntil) ? 0.52 : 1;
-  }
-
-  function liveSpec() {
-    const spec = run && run.spec ? run.spec : attractSpec();
-    let zoneH = Math.max(0.04, (spec.zoneH || 0.14) * (run && run.hitShrink ? run.hitShrink : 1));
-    if (run && spec.kind === "cascade" && run.pendingShrink) {
-      zoneH *= 0.62;
-    }
-    if (run && spec.shrinkAfterHit && !spec.shrinkOnce) {
-      zoneH = Math.max(0.04, zoneH);
-    }
-    const speed = (spec.speed || 0.5) * restMul(run ? run.t : 0);
-    return Object.assign({}, spec, { zoneH, speed });
-  }
-
-  function indicatorPos(t, spec) {
-    const speed = spec && spec.speed != null ? spec.speed : 0.5;
-    const reverse = !!(spec && (spec.reverse || spec.kind === "reverse"));
-    const rate = Math.max(0.15, speed);
-    const u = ((t / 1000) * rate) % 2;
-    const tri = u < 1 ? u : 2 - u;
-    return reverse ? 1 - tri : tri;
-  }
-
-  function indicatorDir(t, spec) {
-    const speed = spec && spec.speed != null ? spec.speed : 0.5;
-    const reverse = !!(spec && (spec.reverse || spec.kind === "reverse"));
-    const rate = Math.max(0.15, speed);
-    const u = ((t / 1000) * rate) % 2;
-    let rising = u < 1;
-    if (reverse) rising = !rising;
-    return rising ? 1 : -1;
-  }
-
-  function indicatorX(t, spec) {
-    if (!spec || !spec.sway) return 0.5;
-    return 0.5 + Math.sin(t * 0.00215) * 0.34;
-  }
-
-  function zoneMidX(t, spec) {
-    if (!spec || !spec.sway) return 0.5;
-    return 0.5 + Math.sin(t * 0.00128 + 1.1) * 0.3;
-  }
-
-  function ghostBeatPos(t, spec) {
-    const speed = spec && spec.speed != null ? spec.speed : 0.5;
-    const rate = Math.max(0.15, speed);
-    const u = ((t / 1000) * rate) % 2;
-    return u < 1 ? u : 2 - u;
-  }
-
-  function zoneWindows(t, spec) {
-    const kind = (spec && spec.kind) || "vertical";
-    let h = spec.zoneH || 0.14;
-    if (kind === "vertical") h *= 1.08;
-    const driftAmp = kind === "reverse" ? 0.1 : kind === "axis2d" || spec.sway ? 0.04 : 0.07;
-    const drift = Math.sin(t * 0.00115) * driftAmp;
-    let baseMid = 0.56;
-    if (kind === "reverse") baseMid = 0.4;
-    if (kind === "vertical") baseMid = 0.52;
-    if (kind === "cascade") baseMid = 0.58;
-    const mid = kit.clamp(baseMid + drift, 0.22, 0.88);
-    const zx = zoneMidX(t, spec);
-    const real = {
-      lo: kit.clamp(mid - h / 2, 0.04, 0.9),
-      hi: kit.clamp(mid + h / 2, 0.1, 0.96),
-      mid,
-      x: zx,
-      xHalf: spec && spec.sway ? 0.16 : 0.5,
-      real: true,
-    };
-    return [real];
-  }
-
-  function inSway(posX, win) {
-    if (!win || win.xHalf >= 0.45) return true;
-    return Math.abs((posX == null ? 0.5 : posX) - win.x) <= win.xHalf;
-  }
-
-  function inAnyReal(pos, wins, spec, dir, posX) {
-    return wins.some((w) => w.real && pos >= w.lo && pos <= w.hi && inSway(posX, w));
-  }
-
-  function splitHitAt(pos, wins) {
-    const hit = wins.find((w) => w.split && w.real && pos >= w.lo && pos <= w.hi);
-    return hit ? hit.split : "";
-  }
-
-  function inGhost(pos, wins) {
-    return wins.some((w) => !w.real && !w.liar && !w.camp && pos >= w.lo && pos <= w.hi);
-  }
-
-  function inLiarGold(pos, wins) {
-    return wins.some((w) => w.liar && pos >= w.lo && pos <= w.hi);
+    if (typeof PF.spendDemoCoin === "function" && PF.spendDemoCoin() === false) return null;
+    return { gameId: GAME_ID, startedAt: Date.now(), depth: 0, score: 0, strikes: 0, alive: true };
   }
 
   function stampDepthCopy() {
@@ -549,27 +1008,7 @@
     if (!host) return;
     const num = host.querySelector(".machine-number");
     if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "pf-depth-tag vendor-vestibule-only";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => {
-      p.textContent = DEPTH_COPY.body;
-    });
-    const canvas = el("highStrikerCanvas");
-    if (canvas) {
-      const live = isLive();
-      canvas.style.pointerEvents = live ? "auto" : "none";
-      canvas.style.touchAction = "none";
-      canvas.classList.toggle("is-locked", !live);
-    }
+    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => { p.textContent = DEPTH_COPY.body; });
     ensureHud();
     paintPips();
     if (!isLive() && el("highStrikerStatus") && (!run || run.done)) {
@@ -577,729 +1016,59 @@
     }
   }
 
-  function beginKitRun() {
-    if (PF.runKit && typeof PF.runKit.startRun === "function") {
-      return PF.runKit.startRun({ gameId: GAME_ID, coinCost: 1 });
-    }
-    return PF.spendDemoCoin("highstriker")
-      ? { gameId: GAME_ID, alive: true, depth: 0, score: 0, strikes: 0 }
-      : null;
-  }
-
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive()) return;
-    stopIdle();
-    idleClock = 0;
-    let last = 0;
-    const tick = (now) => {
-      if (isLive()) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      idleClock += Math.min(32, now - last);
-      last = now;
-      if (idleClock > 3600) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-      }
-      draw(now);
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
-  }
-
-  function spawnSparks(x, y, n, color) {
-    if (!run) return;
-    run.sparks = run.sparks || [];
-    for (let i = 0; i < n; i += 1) {
-      const a = Math.random() * TAU;
-      const s = 0.6 + Math.random() * 2.4;
-      run.sparks.push({
-        x, y,
-        vx: Math.cos(a) * s,
-        vy: Math.sin(a) * s - 0.6,
-        life: 280 + Math.random() * 220,
-        color: color || "#f0d09a",
-      });
+  function dingBell(heavy) {
+    if (kit) {
+      kit.sfx("rack");
+      if (heavy) kit.sfx("chapter");
     }
   }
 
-  function stepFx(dt) {
-    if (!run) return;
-    const k = dt / 16;
-    if (run.sparks) {
-      run.sparks = run.sparks.filter((s) => {
-        s.life -= dt;
-        s.x += s.vx * k;
-        s.y += s.vy * k;
-        s.vy += 0.08 * k;
-        return s.life > 0;
-      });
-    }
-    if (run.dust) {
-      run.dust = run.dust.filter((d) => {
-        d.life -= dt;
-        d.x += d.vx * k;
-        d.y += d.vy * k * 0.2;
-        d.r += 0.04 * k;
-        return d.life > 0;
-      });
-    }
-    run.malletSwing = Math.max(0, (run.malletSwing || 0) - dt * 0.0048);
-    run.bellShake = Math.max(0, (run.bellShake || 0) - dt);
-    run.shrinkFlash = Math.max(0, (run.shrinkFlash || 0) - dt);
-    run.stutterFlash = Math.max(0, (run.stutterFlash || 0) - dt);
-    run.hitchFlash = Math.max(0, (run.hitchFlash || 0) - dt);
-    run.hitFlash = Math.max(0, (run.hitFlash || 0) - dt);
-    run.missFlash = Math.max(0, (run.missFlash || 0) - dt);
-    run.toastMs = Math.max(0, (run.toastMs || 0) - dt);
-    run.roomCardMs = Math.max(0, (run.roomCardMs || 0) - dt);
-    run.puckVis = kit.lerp(run.puckVis == null ? run.pegs : run.puckVis, run.pegs, Math.min(1, dt * 0.012));
-  }
-
-  function drawSparks(ctx) {
-    if (!run || !run.sparks) return;
-    run.sparks.forEach((s) => {
-      ctx.globalAlpha = Math.max(0, s.life / 420);
-      ctx.fillStyle = s.color;
-      ctx.fillRect(s.x - 1.2, s.y - 1.2, 2.4, 2.4);
-    });
-    ctx.globalAlpha = 1;
-    if (run.dust) {
-      run.dust.forEach((d) => {
-        ctx.globalAlpha = Math.max(0, d.life / 420) * 0.45;
-        ctx.fillStyle = "#8a6230";
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, d.r, 0, TAU);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  function drawBell(ctx, x, y, lit, shake) {
-    ctx.save();
-    ctx.translate(x + (shake ? (Math.random() - 0.5) * 3.2 : 0), y);
-    if (shake) ctx.rotate((Math.random() - 0.5) * 0.12);
-    ctx.fillStyle = lit ? "#f0d09a" : "#8a6230";
-    ctx.beginPath();
-    ctx.moveTo(-16, 6);
-    ctx.quadraticCurveTo(-18, -10, 0, -16);
-    ctx.quadraticCurveTo(18, -10, 16, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#f0d09a";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.fillStyle = lit ? "#c41e3a" : "#3a2418";
-    ctx.beginPath();
-    ctx.arc(0, 10, 3.2, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawMallet(ctx, swing) {
-    const u = kit.clamp(swing || 0, 0, 1);
-    const ang = -0.55 + u * 1.35;
-    ctx.save();
-    ctx.translate(248, 428);
-    ctx.rotate(ang);
-    ctx.fillStyle = "#3a2418";
-    ctx.fillRect(-5, -62, 10, 62);
-    ctx.fillStyle = "#5a3a22";
-    ctx.fillRect(-4, -62, 3, 62);
-    ctx.fillStyle = "#c41e3a";
-    ctx.fillRect(-16, -78, 32, 20);
-    ctx.strokeStyle = "#f0d09a";
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(-15.5, -77.5, 31, 19);
-    ctx.fillStyle = "#8a6230";
-    ctx.fillRect(-18, -82, 36, 8);
-    ctx.restore();
-  }
-
-  function drawPips(ctx, x, y, filled, max, on, off) {
-    for (let i = 0; i < max; i += 1) {
-      ctx.beginPath();
-      ctx.arc(x + i * 13, y, 4.4, 0, TAU);
-      ctx.fillStyle = i < filled ? on : off;
-      ctx.fill();
-      ctx.strokeStyle = "rgba(240,208,154,0.45)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
-
-  function drawGlory(ctx, spec, towers, pegs) {
-    const name = spec.name || spec.title || "Tower";
-    ctx.save();
-    ctx.fillStyle = "rgba(12,6,9,0.9)";
-    ctx.fillRect(12, H - 64, W - 24, 56);
-    ctx.strokeStyle = "rgba(212,164,90,0.74)";
-    ctx.lineWidth = 1.8;
-    ctx.strokeRect(12.5, H - 63.5, W - 25, 55);
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "bold 30px Georgia, serif";
-    ctx.textAlign = "center";
-    const playing = spec.id || towers;
-    ctx.fillText(spec.coda ? `ENDLESS ${playing}` : `TOWER ${playing}`, W / 2, H - 32);
-    ctx.font = "11px Georgia, serif";
-    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#d4a45a";
-    ctx.fillText(`${name} · PEGS ${pegs | 0}`, W / 2, H - 14);
-    ctx.restore();
-  }
-
-  function draw(now) {
-    const canvas = el("highStrikerCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#241018");
-    g.addColorStop(0.55, "#160a0e");
-    g.addColorStop(1, "#0c0608");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    const specEarly = liveSpec();
-    if (specEarly.kind === "reverse") {
-      ctx.fillStyle = "rgba(61,138,138,0.1)";
-      ctx.fillRect(0, 0, W, H);
-    } else if (specEarly.kind === "fakeBell") {
-      ctx.fillStyle = "rgba(196,30,58,0.12)";
-      ctx.fillRect(0, 0, W, H * 0.28);
-    } else if (specEarly.kind === "axis2d" || specEarly.sway) {
-      ctx.fillStyle = "rgba(61,138,138,0.08)";
-      ctx.fillRect(0, 0, W, H);
-    } else if (specEarly.kind === "doubleTap") {
-      ctx.fillStyle = "rgba(240,208,154,0.07)";
-      ctx.fillRect(0, 0, W, H);
-    } else if (specEarly.kind === "cascade") {
-      ctx.fillStyle = "rgba(232,160,184,0.08)";
-      ctx.fillRect(0, 0, W, H);
-    } else if (specEarly.kind === "fever") {
-      ctx.fillStyle = "rgba(196,30,58,0.1)";
-      ctx.fillRect(0, 0, W, H);
-    } else if (specEarly.coda) {
-      ctx.fillStyle = "rgba(196,30,58,0.06)";
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    ctx.fillStyle = "rgba(240,208,154,0.06)";
-    for (let s = 0; s < 18; s += 1) {
-      ctx.fillRect(12 + (s * 47) % (W - 24), 12 + (s * 29) % 50, 2, 2);
-    }
-
-    ctx.fillStyle = "#1a0c10";
-    ctx.fillRect(28, 430, W - 56, 28);
-    ctx.fillStyle = "#3a2418";
-    ctx.fillRect(44, 418, W - 88, 16);
-    ctx.fillStyle = "rgba(90,58,24,0.55)";
-    ctx.fillRect(52, 420, W - 104, 4);
-
-    kit.fillWood(ctx, TOWER.x, TOWER.y, TOWER.w, TOWER.h);
-    ctx.strokeStyle = "#d4a45a";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(TOWER.x + 0.5, TOWER.y + 0.5, TOWER.w - 1, TOWER.h - 1);
-    ctx.fillStyle = "rgba(12,6,9,0.35)";
-    ctx.fillRect(TOWER.x + 28, TOWER.y + 8, 8, TOWER.h - 16);
-
-    const t = run ? run.t : (now || performance.now());
-    const spec = liveSpec();
-    const wins = zoneWindows(t, spec);
-    const pos = indicatorPos(t, spec);
-    const dir = indicatorDir(t, spec);
-    const pegs = run ? run.pegs : 0;
-    const peak = run ? run.peak : 0;
-    const visPegs = run && run.puckVis != null ? run.puckVis : pegs;
-    const tell = roomTell(spec);
-
-    const labels = ["WEAK", "STRONG", "BELL", "DANGER"];
-    labels.forEach((lab, i) => {
-      const y = TOWER.y + TOWER.h - 18 - (i / 3) * (TOWER.h - 36);
-      ctx.fillStyle = i === 2 ? "rgba(196,30,58,0.55)" : "rgba(240,208,154,0.28)";
-      ctx.font = "8px Georgia, serif";
-      ctx.textAlign = "right";
-      ctx.fillText(lab, TOWER.x - 22, y);
-    });
-
-    const posX = indicatorX(t, spec);
-    const hot = inAnyReal(pos, wins, spec, dir, posX);
-    wins.forEach((win) => {
-      const zoneY = TOWER.y + (1 - win.hi) * TOWER.h;
-      const zoneHpx = Math.max(4, (win.hi - win.lo) * TOWER.h);
-      const swayShift = spec.sway ? (win.x - 0.5) * (TOWER.w + 40) : 0;
-      const zoneW = spec.sway ? Math.max(28, TOWER.w * 0.58) : TOWER.w - 8;
-      const zoneX = TOWER.x + 4 + swayShift - (spec.sway ? (zoneW - (TOWER.w - 8)) / 2 : 0);
-      const hoveringY = pos >= win.lo && pos <= win.hi;
-      const hovering = hoveringY && inSway(posX, win);
-      const struck = !!(run && run.windowConsumed && win.real && hovering);
-      const thisHot = win.real && hovering && !struck;
-      ctx.fillStyle = thisHot ? "rgba(61,138,138,0.42)" : struck ? "rgba(12,6,9,0.55)" : "rgba(240,208,154,0.16)";
-      ctx.fillRect(zoneX, zoneY, zoneW, zoneHpx);
-      ctx.strokeStyle = thisHot ? "#b8e8e0" : struck ? "#8a6230" : "rgba(240,208,154,0.55)";
-      ctx.lineWidth = thisHot ? 2.2 : 1.5;
-      ctx.strokeRect(zoneX + 0.5, zoneY + 0.5, zoneW - 1, zoneHpx - 1);
-      if (spec.sway) {
-        ctx.fillStyle = hoveringY && !hovering ? "#e8a0b8" : "#b8e8e0";
-        ctx.font = "bold 8px Georgia, serif";
-        ctx.textAlign = "center";
-        ctx.fillText(hoveringY && !hovering ? "OFF AXIS" : "2-AXIS", zoneX + zoneW / 2, zoneY - 4);
-      }
-      if (struck) {
-        ctx.fillStyle = "#8a6230";
-        ctx.font = "bold 11px Georgia, serif";
-        ctx.textAlign = "center";
-        ctx.fillText("STRUCK", zoneX + zoneW / 2, zoneY + zoneHpx / 2 + 4);
-      } else if (thisHot) {
-        ctx.fillStyle = "rgba(184,232,224,0.18)";
-        ctx.fillRect(zoneX, zoneY, zoneW, zoneHpx);
-        if (isLive()) {
-          ctx.fillStyle = "#b8e8e0";
-          ctx.font = "bold 15px Georgia, serif";
-          ctx.textAlign = "center";
-          const nowTxt = spec.kind === "doubleTap"
-            ? (run && run.doubleArmed ? "AGAIN" : "TAP TAP")
-            : "NOW";
-          ctx.fillText(nowTxt, zoneX + zoneW / 2, zoneY + zoneHpx / 2 + 5);
-        }
-      }
-      if (run && run.shrinkFlash > 0 && win.real) {
-        ctx.strokeStyle = `rgba(196,30,58,${Math.min(0.85, run.shrinkFlash / 280)})`;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(zoneX - 2, zoneY - 3, zoneW + 4, zoneHpx + 6);
-      }
-    });
-
-    ctx.fillStyle = "rgba(12,6,9,0.78)";
-    const extraTell = spec.kind === "reverse" || spec.kind === "axis2d" || spec.sway || spec.kind === "doubleTap" || spec.kind === "fakeBell" || spec.kind === "cascade" || spec.kind === "fever";
-    ctx.fillRect(22, 8, W - 44, extraTell ? 38 : 22);
-    ctx.fillStyle = spec.kind === "fakeBell" || spec.kind === "fever" ? "#e8a0b8" : "#f0d09a";
-    ctx.font = "bold 10px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText(tell, W / 2, 23);
-    if (spec.kind === "reverse") {
-      ctx.fillStyle = "#b8e8e0";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("PINK GHOST = OLD BEAT — DON’T SWING IT", W / 2, 42);
-    } else if (spec.kind === "axis2d" || (spec.sway && spec.kind !== "fever")) {
-      ctx.fillStyle = "#b8e8e0";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("MARKER AND GOLD BOTH DRIFT — HIT BOTH AXES", W / 2, 42);
-    } else if (spec.kind === "doubleTap") {
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("TWO TAPS WHILE GOLD · 280ms", W / 2, 42);
-    } else if (spec.kind === "fakeBell") {
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("PEG 3 DING IS A LIAR · REAL BELL ON CLEAR", W / 2, 42);
-    } else if (spec.kind === "cascade") {
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("MISS −2 · NEXT PEG’S GOLD SHRINKS ONCE", W / 2, 42);
-    } else if (spec.kind === "fever") {
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("SWAY + FAKE DING + SHRINK · FINALE DOUBLE-BELL", W / 2, 42);
-    } else if (spec.kind === "bellLadder") {
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.fillText("BELL EVERY THREE PEGS THIS TOWER", W / 2, 42);
-    }
-
-    const vis = 12;
-    const base = Math.max(0, Math.floor(visPegs) - 4);
-    for (let i = 0; i <= vis; i += 1) {
-      const pegN = base + i;
-      const y = TOWER.y + TOWER.h - 10 - (i / vis) * (TOWER.h - 28);
-      ctx.fillStyle = pegN > 0 && pegN % BELL_EVERY === 0 ? "#c41e3a" : "#d4a45a";
-      ctx.fillRect(TOWER.x + TOWER.w - 2, y - 1, 14, 3);
-      if (pegN > 0 && (pegN % 5 === 0 || i === vis || pegN === Math.round(visPegs))) {
-        ctx.fillStyle = pegN > 0 && pegN % BELL_EVERY === 0 ? "#e8a0b8" : "#f0d09a";
-        ctx.font = "10px Georgia, serif";
-        ctx.textAlign = "left";
-        ctx.fillText(String(pegN), TOWER.x + TOWER.w + 16, y + 3);
-      }
-    }
-
-    const puckI = kit.clamp(visPegs - base, 0, vis);
-    const puckY = TOWER.y + TOWER.h - 10 - (puckI / vis) * (TOWER.h - 28);
-    ctx.fillStyle = "#c41e3a";
-    ctx.fillRect(TOWER.x + 10, puckY - 6, TOWER.w - 36, 12);
-    ctx.strokeStyle = "#fff6ec";
-    ctx.strokeRect(TOWER.x + 10.5, puckY - 5.5, TOWER.w - 37, 11);
-    ctx.fillStyle = "rgba(255,246,236,0.35)";
-    ctx.fillRect(TOWER.x + 14, puckY - 3, TOWER.w - 52, 3);
-
-    if (spec.kind === "reverse") {
-      const ghostPos = ghostBeatPos(t, spec);
-      const gY = TOWER.y + (1 - ghostPos) * TOWER.h;
-      ctx.save();
-      ctx.globalAlpha = 0.42;
-      ctx.fillStyle = "#e8a0b8";
-      ctx.beginPath();
-      ctx.moveTo(TOWER.x - 4, gY);
-      ctx.lineTo(TOWER.x - 16, gY - 6);
-      ctx.lineTo(TOWER.x - 16, gY + 6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillRect(TOWER.x + 8, gY - 1.5, TOWER.w - 24, 3);
-      ctx.restore();
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "bold 8px Georgia, serif";
-      ctx.textAlign = "right";
-      ctx.fillText("OLD", TOWER.x - 20, gY + 3);
-    }
-
-    const indY = TOWER.y + (1 - pos) * TOWER.h;
-    const indShift = spec.sway ? (posX - 0.5) * (TOWER.w + 36) : 0;
-    ctx.fillStyle = hot ? "#b8e8e0" : "#f0d09a";
-    ctx.beginPath();
-    ctx.moveTo(TOWER.x - 4 + indShift, indY);
-    ctx.lineTo(TOWER.x - 18 + indShift, indY - 7);
-    ctx.lineTo(TOWER.x - 18 + indShift, indY + 7);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillRect(TOWER.x + 6 + indShift, indY - 2, spec.sway ? TOWER.w * 0.46 : TOWER.w - 20, 4);
-    ctx.fillStyle = spec.kind === "reverse" ? "#e8a0b8" : "#f0d09a";
-    ctx.beginPath();
-    if (dir > 0) {
-      ctx.moveTo(TOWER.x - 26 + indShift, indY + 6);
-      ctx.lineTo(TOWER.x - 22 + indShift, indY - 6);
-      ctx.lineTo(TOWER.x - 18 + indShift, indY + 6);
-    } else {
-      ctx.moveTo(TOWER.x - 26 + indShift, indY - 6);
-      ctx.lineTo(TOWER.x - 22 + indShift, indY + 6);
-      ctx.lineTo(TOWER.x - 18 + indShift, indY - 6);
-    }
-    ctx.closePath();
-    ctx.fill();
-
-    const bells = Math.floor(peak / BELL_EVERY);
-    const bellLit = !!(run && (run.bellFlash > 0 || bells > 0));
-    drawBell(ctx, TOWER.x + TOWER.w / 2, TOWER.y - 6, bellLit, run && run.bellShake > 0);
-    if (run && run.fakeBellFlash > 0) {
-      const a = Math.min(0.7, run.fakeBellFlash / 280);
-      ctx.fillStyle = `rgba(196,30,58,${a})`;
-      ctx.font = "bold 13px Georgia, serif";
-      ctx.textAlign = "center";
-      const fakeLine = "FAKE DING — NOT A CHECKPOINT";
-      ctx.fillText(fakeLine, TOWER.x + TOWER.w / 2, TOWER.y + 22);
-      ctx.strokeStyle = `rgba(196,30,58,${a})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(TOWER.x + TOWER.w / 2, TOWER.y - 6, 22, 0, TAU);
-      ctx.stroke();
-    }
-    if (run && run.doubleArmed) {
-      ctx.fillStyle = "rgba(61,138,138,0.62)";
-      ctx.fillRect(TOWER.x + 4, TOWER.y + 4, TOWER.w - 8, 22);
-      ctx.fillStyle = "#fff6ec";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("AGAIN — 280ms", TOWER.x + TOWER.w / 2, TOWER.y + 20);
-    }
-
-    drawMallet(ctx, run ? run.malletSwing : 0.12 + Math.sin(t * 0.002) * 0.08);
-
-    if (isLive() || (run && run.dying)) {
-      drawGlory(ctx, spec, spec.id || run.towers, peak);
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "9px Georgia, serif";
-      ctx.textAlign = "left";
-      ctx.fillText("ZERO", 22, H - 48);
-      drawPips(ctx, 58, H - 52, run.fallsFromZero, 2, "#c41e3a", "rgba(240,208,154,0.18)");
-      if (spec.slipOnMiss <= -2) {
-        ctx.fillStyle = "#e8a0b8";
-        ctx.font = "bold 9px Georgia, serif";
-        ctx.textAlign = "left";
-        ctx.fillText("MISS −2", 22, H - 36);
-      }
-      ctx.textAlign = "right";
-      ctx.fillStyle = "#d4a45a";
-      ctx.fillText(`${run.score}`, W - 20, H - 48);
-    }
-
-    drawSparks(ctx);
-
-    if (run && run.hitFlash > 0) {
-      ctx.fillStyle = `rgba(184,232,224,${Math.min(0.28, run.hitFlash / 420)})`;
-      ctx.fillRect(0, 0, W, H);
-    } else if (run && run.missFlash > 0) {
-      ctx.fillStyle = `rgba(196,30,58,${Math.min(0.28, run.missFlash / 380)})`;
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    if (run && run.restUntil && run.t < run.restUntil) {
-      ctx.fillStyle = "rgba(12,6,9,0.72)";
-      ctx.fillRect(28, 34, W - 56, 22);
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "bold 12px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("CHECKPOINT — KEEP CLIMBING", W / 2, 50);
-    }
-
-    if (run && run.toastMs > 0 && run.toast && !(run.roomCardMs > 80)) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, run.toastMs / 180);
-      ctx.fillStyle = "rgba(12,6,9,0.82)";
-      ctx.fillRect(40, 210, W - 80, 28);
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "12px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(run.toast, W / 2, 228);
-      ctx.restore();
-    }
-
-    if (run && run.roomCardMs > 0) drawRoomCard(ctx, spec, run.roomCardMs);
-
-    if (run && run.closedStamp) kit.stampClosed(ctx, W, H, "SLIP");
-
-    if (!isLive() && (!run || (!run.closedStamp && !run.dying))) {
-      const shown = attractSpec();
-      kit.drawHud(ctx, W, [
-        `${shown.name} — ${roomTell(shown)}`,
-        DEPTH_COPY.idleHud[1],
-      ]);
-    }
-  }
-
-  function start() {
-    if (isLive()) return;
-    const kitRun = beginKitRun();
-    if (!kitRun) {
-      setText("highStrikerStatus", "Out of demo coins · grant a pass");
-      PF.refreshNightBoard();
-      stampDepthCopy();
-      return;
-    }
-    stopIdle();
-    const spec0 = highstrikerStageParams(1);
-    run = {
-      done: false,
-      dying: false,
-      kitRun,
-      tapper: null,
-      t: 0,
-      last: 0,
-      spec: spec0,
-      tower: 1,
-      towers: 0,
-      chapterPegs: 0,
-      pegs: 0,
-      peak: 0,
-      puckVis: 0,
-      score: 0,
-      slips: 0,
-      slipFloor: 0,
-      fallsFromZero: 0,
-      hitShrink: 1,
-      pendingShrink: false,
-      windowConsumed: false,
-      lastTapAt: 0,
-      tapLock: TAP_LOCK_MS,
-      doubleArmed: 0,
-      fakeBellDone: false,
-      bellFlash: 0,
-      fakeBellFlash: 0,
-      malletSwing: 0,
-      bellShake: 0,
-      shrinkFlash: 0,
-      sparks: [],
-      dust: [],
-      toast: "",
-      toastMs: 0,
-      raf: 0,
-      shake: 0,
-      closedStamp: false,
-      deathHold: 0,
-      deathReason: "",
-      lastNote: "",
-      lastHitAt: 0,
-      restUntil: 0,
-      hitFlash: 0,
-      missFlash: 0,
-      roomCardMs: 1280,
-    };
-    tellDepth(0);
-    run.tapper = mountTap(kitRun);
-    tellDepth(0);
-    paintPips();
-    const startBtn = el("highStrikerStart");
-    if (startBtn) startBtn.disabled = true;
-    const verdict = el("highStrikerVerdict");
-    if (verdict) verdict.hidden = true;
-    const tapBtn = el("highStrikerTap");
-    if (tapBtn) {
-      tapBtn.hidden = false;
-      tapBtn.textContent = "SWING";
-    }
-    kit.hideResult("highStrikerResult");
-    PF.setTier("highStrikerTier", "", "");
-    kit.setMode(card(), "play");
-    stampDepthCopy();
-    setText("highStrikerStatus", `${spec0.name} — ${spec0.barker}`);
-    PF.focusCard("highStrikerCard", true);
-    PF.setAura("think");
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.t += dt;
-      if (run.dying) {
-        run.bellFlash = Math.max(0, run.bellFlash - dt);
-        run.puckVis = kit.lerp(run.puckVis == null ? run.pegs : run.puckVis, 0, Math.min(1, dt * 0.008));
-        run.malletSwing = Math.max(0, (run.malletSwing || 0) - dt * 0.0012);
-        stepFx(dt);
-        draw(now);
-        run.deathHold -= dt;
-        if (run.deathHold <= 0) {
-          sealResult(run.deathReason);
-          return;
-        }
-        run.raf = requestAnimationFrame(loop);
-        return;
-      }
-      step(dt);
-      draw(now);
-      PF.refreshDepth();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function toast(msg, ms) {
-    run.toast = msg;
-    run.toastMs = ms || 720;
-  }
-
-  function step(dt) {
-    run.bellFlash = Math.max(0, run.bellFlash - dt);
-    run.fakeBellFlash = Math.max(0, run.fakeBellFlash - dt);
-    stepFx(dt);
-    const spec = liveSpec();
-    const wins = zoneWindows(run.t, spec);
-    const pos = indicatorPos(run.t, spec);
-    const dir = indicatorDir(run.t, spec);
-    const posX = indicatorX(run.t, spec);
-    const inside = inAnyReal(pos, wins, spec, dir, posX);
-    if (!inside) {
-      run.windowConsumed = false;
-      if (spec.kind === "cascade" && run.pendingShrink && run.chapterPegs > 0) {
-        /* shrink lasts until this next peg is played; reset after the pass leaves gold */
-      }
-    }
-    if (run.doubleArmed && run.t > run.doubleArmed) {
-      run.doubleArmed = 0;
-      toast("TOO LATE — two taps", 640);
-    }
-  }
-
-  function swing() {
-    if (!isLive()) return;
-    const now = run.t;
-    const lock = run.tapLock || TAP_LOCK_MS;
-    if (now - run.lastTapAt < lock) return;
-    run.lastTapAt = now;
-    run.malletSwing = 1;
-    const spec = liveSpec();
-    const wins = zoneWindows(run.t, spec);
-    const pos = indicatorPos(run.t, spec);
-    const dir = indicatorDir(run.t, spec);
-    const posX = indicatorX(run.t, spec);
-    if (run.windowConsumed) {
-      run.lastNote = "struck";
-      setText("highStrikerStatus", "Window already struck — wait for the next pass.");
-      toast("STRUCK — wait the next pass", 520);
-      return;
-    }
-    if (inAnyReal(pos, wins, spec, dir, posX)) {
-      run.tapLock = TAP_LOCK_MS;
-      run.lastNote = "";
-      if (spec.doubleTap || spec.kind === "doubleTap") {
-        const windowMs = spec.doubleTapMs || DOUBLE_TAP_MS;
-        if (!run.doubleArmed) {
-          run.doubleArmed = run.t + windowMs;
-          toast("AGAIN — 280ms", 520);
-          setText("highStrikerStatus", "First tap armed. Tap again in the gold.");
-          return;
-        }
-        run.doubleArmed = 0;
-      }
-      climb();
-      return;
-    }
-    if (spec.sway && wins.some((w) => pos >= w.lo && pos <= w.hi && !inSway(posX, w))) {
-      run.lastNote = "sway";
-      toast("OFF AXIS — hit the drifting gold", 900);
-      setText("highStrikerStatus", "Height is not enough. Catch the sideways gold.");
-    } else if (spec.kind === "reverse" && inAnyReal(ghostBeatPos(run.t, spec), wins, spec, dir, 0.5)) {
-      run.lastNote = "oldBeat";
-      toast("OLD BEAT — follow the live arrow", 900);
-      setText("highStrikerStatus", "That’s the old beat ghost. Follow the live arrow.");
-    } else if (spec.kind === "reverse") {
-      run.lastNote = "reverse";
-    } else if (spec.doubleTap || spec.kind === "doubleTap") {
-      run.lastNote = "double";
-      run.doubleArmed = 0;
-      toast("ONE TAP IS AIR", 720);
-    } else {
-      run.lastNote = "slip";
-      run.doubleArmed = 0;
-    }
-    run.tapLock = MISS_LOCK_MS;
-    slip();
-  }
-
-  function ringBell(label, extra) {
-    run.score += 200;
-    if (extra) run.score += 200;
+  function ringBell(label) {
+    run.score += 220;
     if (run.kitRun) run.kitRun.score = run.score;
-    run.bellFlash = extra ? 900 : 640;
-    run.bellShake = extra ? 560 : 420;
-    spawnSparks(TOWER.x + TOWER.w / 2, TOWER.y - 6, extra ? 22 : 16, "#f0d09a");
-    kit.sfx("rack");
-    run.restUntil = run.t + 560;
-    toast(label || "BELL — checkpoint. KEEP CLIMBING.", extra ? 1300 : 1100);
+    run.bellFlash = 820;
+    run.bellShake = 520;
+    if (world) {
+      world.bellCam = 780;
+      world.shake = 8;
+      spawnSparks(0, pegY(1), 0.2, 18, "#f0d09a");
+    }
+    dingBell(true);
+    toast(label || "BELL — checkpoint. KEEP CLIMBING.", 1200);
     PF.setAura("celebrate");
   }
 
   function enterTower(next) {
     run.spec = next;
-    run.tower = next.id;
-    run.chapterPegs = 0;
-    run.slips = 0;
-    run.slipFloor = 0;
+    run.puckU = 0;
+    run.puckX = 0;
+    run.puckVy = 0;
+    run.puckVx = 0;
+    run.phase = "idle";
+    run.charge = 0;
+    run.aim = 0;
+    run.rung = false;
+    run.liarDone = false;
+    run.boosted = false;
+    run.goldSeen = 0;
+    run.inGold = false;
     run.hitShrink = 1;
-    run.pendingShrink = false;
-    run.doubleArmed = 0;
-    run.fakeBellDone = false;
-    run.windowConsumed = false;
-    run.roomCardMs = 1180;
-    kit.sfx("chapter");
+    showRoomCard(next);
+    if (kit) kit.sfx("chapter");
     toast(next.coda ? `ENDLESS · ${next.name}` : next.name, 900);
     setText("highStrikerStatus", `${next.coda ? "ENDLESS · " : ""}${next.name} — ${next.barker}`);
+    setText("highStrikerBarker", next.barker);
     tellDepth(run.towers);
+    const howto = el("highStrikerHowTo");
+    if (howto) {
+      const extra = howto.querySelector(".hs-tower-hint");
+      if (extra) extra.textContent = next.tell;
+    }
   }
 
   function clearTower() {
     run.towers += 1;
-    const spec = run.spec;
-    if (spec.finaleDoubleBell) {
-      ringBell("FINALE DOUBLE-BELL — authored tower done", true);
-    } else {
-      ringBell(`${spec.name.toUpperCase()} CLEAR — keep climbing`);
-    }
+    ringBell(`${run.spec.name.toUpperCase()} CLEAR — keep climbing`);
     if (run.kitRun) run.kitRun.depth = run.towers;
     tellDepth(run.towers);
     paintPips();
@@ -1309,112 +1078,147 @@
       finish("souvenir");
       return;
     }
+    run.phase = "idle";
     enterTower(next);
   }
 
-  function climb() {
-    run.windowConsumed = true;
-    run.lastHitAt = run.t;
-    run.doubleArmed = 0;
-    const spec = liveSpec();
-    if (spec.kind === "cascade" && run.pendingShrink) {
-      run.pendingShrink = false;
-      run.hitShrink = 1;
+  function strike(reason) {
+    run.strikes += 1;
+    run.missFlash = 420;
+    if (world) {
+      world.shake = 6;
+      spawnSparks(0.5, 1.1, 1.3, 8, "#c41e3a");
     }
-    run.chapterPegs += 1;
-    run.pegs += 1;
-    run.peak = Math.max(run.peak, run.pegs);
-    run.score += 30;
-    run.slips = 0;
-    run.slipFloor = run.chapterPegs;
-    if (run.kitRun) run.kitRun.score = run.score;
+    tellStrike(reason);
     paintPips();
-    PF.refreshDepth();
-    run.hitFlash = 280;
-    const vis = 12;
-    const base = Math.max(0, run.pegs - 4);
-    const puckI = kit.clamp(run.pegs - base, 0, vis);
-    const puckY = TOWER.y + TOWER.h - 10 - (puckI / vis) * (TOWER.h - 28);
-    spawnSparks(TOWER.x + TOWER.w / 2, puckY, 8, "#f0d09a");
-    kit.sfx("sink");
-    if (spec.shrinkAfterHit) {
-      if (spec.shrinkOnce || spec.kind === "cascade") {
-        run.pendingShrink = true;
-        run.shrinkFlash = 420;
-        toast("NEXT GOLD SHRINKS ONCE", 640);
-      } else {
-        run.hitShrink = Math.max(0.55, run.hitShrink * 0.88);
-        run.shrinkFlash = 420;
-        toast("WINDOW SHRANK", 640);
-      }
+    if (kit) kit.sfx("miss");
+    PF.setAura("laugh");
+    const left = STRIKES_TO_DEATH - run.strikes;
+    setText("highStrikerStatus", `${reason.toUpperCase()} · ${run.strikes}/${STRIKES_TO_DEATH} · ${run.spec.name}`);
+    toast(`${reason} — ${left} left`, 900);
+    run.lastNote = reason;
+    if (run.strikes >= STRIKES_TO_DEATH) finish(reason);
+    else {
+      run.phase = "idle";
+      run.puckU = 0;
+      run.puckX = 0;
+      run.puckVy = 0;
+      run.puckVx = 0;
+      run.rung = false;
+      run.boosted = false;
+      run.goldSeen = 0;
+      run.inGold = false;
+      if (run.spec && run.spec.shrinkAfter) run.hitShrink = Math.max(0.72, (run.hitShrink || 1) * 0.86);
     }
-    if (spec.fakeBellAt && run.chapterPegs === spec.fakeBellAt && !run.fakeBellDone) {
-      run.fakeBellDone = true;
-      run.fakeBellFlash = 720;
-      kit.sfx("spinner");
-      toast("FAKE DING — not a checkpoint", 900);
-      setText("highStrikerStatus", "Fake ding. Real bell is on tower clear.");
-      run.lastNote = "fake";
-    } else if (spec.bellEvery > 0 && run.chapterPegs > 0 && run.chapterPegs % spec.bellEvery === 0
-      && run.chapterPegs < spec.pegsToClear) {
-      ringBell(`BELL ${Math.floor(run.chapterPegs / spec.bellEvery)} — checkpoint. KEEP CLIMBING.`);
-      setText("highStrikerStatus", `Bell ladder ding. ${run.chapterPegs}/${spec.pegsToClear} this tower.`);
-    } else {
-      setText("highStrikerStatus", `${spec.name} · ${run.chapterPegs}/${spec.pegsToClear} · peg ${run.pegs}`);
-      PF.setAura("point");
-    }
-    run.shake = 4;
-    if (run.chapterPegs >= spec.pegsToClear) clearTower();
-    else tellDepth(run.towers);
   }
 
-  function slip() {
+  function beginCharge() {
+    if (!isLive()) return;
+    if (run.phase !== "idle") return;
+    run.phase = "charging";
+    const spec0 = liveSpec();
+    run.inGold = timingQuality(needlePos(run.t, spec0), spec0) > 0;
+    run.goldSeen = run.inGold ? 1 : 0;
+    setText("highStrikerStatus", spec0.secondPass
+      ? "Wound. Skip the first gold. Release on the NEXT pass."
+      : "Wound. Release when the needle is in the gold.");
+  }
+
+  function releaseSmash() {
+    if (!isLive() || run.phase !== "charging") return;
     const spec = liveSpec();
-    const atZero = run.chapterPegs <= 0;
-    if (atZero) run.fallsFromZero += 1;
-    run.chapterPegs = Math.max(0, run.chapterPegs + spec.slipOnMiss);
-    run.pegs = Math.max(0, run.pegs + spec.slipOnMiss);
-    run.slips += 1;
-    run.windowConsumed = true;
-    run.doubleArmed = 0;
-    if (spec.kind === "cascade" && run.pendingShrink) {
-      run.pendingShrink = false;
-      run.hitShrink = 1;
+    const pos = needlePos(run.t, spec);
+    let quality = timingQuality(pos, spec);
+    let note = "";
+    if (spec.secondPass && quality > 0 && (run.goldSeen || 0) < 2) {
+      quality = 0;
+      note = "second";
+      toast("TOO EARLY — that’s the liar pass", 900);
+    } else if (quality <= 0 && inFakeGold(pos, spec)) {
+      note = "fake";
+      toast("DECOY GOLD — live band is brighter", 900);
+    } else if (quality <= 0 && spec.lateLie && pos >= paintWindow(spec).lo && pos <= paintWindow(spec).hi) {
+      note = "late";
+      toast("PAINT LIES EARLY — true gold is late", 900);
+    } else if (quality <= 0 && spec.reverse) {
+      note = "reverse";
     }
-    run.shake = 6;
-    run.dust = run.dust || [];
-    run.dust.push({ x: 248, y: 428, vx: -0.4, vy: -0.2, r: 4, life: 380 });
-    run.dust.push({ x: 256, y: 430, vx: 0.5, vy: -0.15, r: 3, life: 320 });
-    tellStrike(atZero ? "fell from zero" : "hammer slip");
-    paintPips();
-    run.missFlash = 320;
-    kit.sfx("miss");
-    spawnSparks(TOWER.x + 20, TOWER.y + TOWER.h - 12, 6, "#c41e3a");
-    setText("highStrikerStatus", atZero
-      ? `Fell from zero ${run.fallsFromZero}/2. Tap the window, not the air.`
-      : run.lastNote === "sway"
-        ? `OFF AXIS. SLIP ${run.slips}/3 · ${spec.name}.`
-        : run.lastNote === "double"
-          ? `ONE TAP IS AIR. SLIP ${run.slips}/3.`
-          : `SLIP ${run.slips}/3 · ${spec.slipOnMiss} peg · ${run.chapterPegs}/${spec.pegsToClear}.`);
-    PF.setAura("laugh");
-    if (run.fallsFromZero >= 2) {
-      finish("fell from zero");
+    run.phase = "swinging";
+    run.swingT = 90;
+    run.pendingQuality = quality;
+    run.lastNote = note;
+    if (kit) kit.sfx("sling");
+  }
+
+  function impact() {
+    const spec = liveSpec();
+    const quality = run.pendingQuality || 0;
+    run.padDip = 1;
+    run.hitFlash = 240;
+    if (world) {
+      world.shake = 4 + quality * 6;
+      spawnSparks(0.55, 0.8, 1.15, 8 + Math.floor(quality * 12), quality > 0 ? "#f0d09a" : "#c41e3a");
+    }
+    if (kit) kit.sfx("sink");
+    if (quality <= 0) {
+      run.phase = "idle";
+      strike(run.lastNote || "miss");
       return;
     }
-    if (run.slips >= 3 && run.chapterPegs <= run.slipFloor) finish("hammer slip");
+    run.phase = "flying";
+    run.puckU = 0.02;
+    run.puckX = 0;
+    run.puckVy = launchSpeed(quality, spec);
+    run.puckVx = 0;
+    run.rung = false;
+    run.liarDone = false;
+    run.peakThis = 0;
+    setText("highStrikerStatus", quality >= 0.85 ? "Clean gold. Watch the bell." : "Edge of gold. Might be short.");
+  }
+
+  function stepPuck(dt) {
+    const spec = liveSpec();
+    const sec = dt / 1000;
+    const g = spec.gravity || GRAVITY;
+    run.puckVy -= g * sec;
+    run.puckU += (run.puckVy / TOWER_H) * sec;
+    run.peakThis = Math.max(run.peakThis || 0, run.puckU);
+    run.peak = Math.max(run.peak || 0, run.puckU);
+
+    if (!run.rung && run.puckU >= spec.bell && run.puckVy > 0) {
+      run.rung = true;
+      run.score += 80;
+      if (run.kitRun) run.kitRun.score = run.score;
+    }
+
+    if (run.puckU >= 1.02) {
+      run.puckU = 1.02;
+      run.puckVy = Math.min(run.puckVy, 0);
+    }
+
+    if (run.puckU <= 0 && run.puckVy <= 0) {
+      run.puckU = 0;
+      run.puckVy = 0;
+      run.puckVx = 0;
+      if (run.rung) {
+        run.score += 40;
+        clearTower();
+      } else {
+        strike(run.lastNote || "miss");
+      }
+    }
   }
 
   function auraLine(reason, towers) {
     if (reason === "leave") return AURA.leave;
     if (reason === "souvenir") return AURA.souvenir;
-    if (reason === "fell from zero") return AURA.zero;
-    if (run && run.lastNote === "fake") return AURA.fake;
-    if (run && (run.lastNote === "reverse" || run.lastNote === "oldBeat")) return AURA.oldBeat;
-    if (run && run.lastNote === "sway") return AURA.sway;
-    if (run && run.lastNote === "double") return AURA.double;
-    if (run && run.lastNote === "struck") return AURA.struck;
-    if (run && run.spec && run.spec.kind === "cascade") return AURA.cascade;
+    if (reason === "late" || (run && run.lastNote === "late")) return AURA.late;
+    if (reason === "fake" || (run && run.lastNote === "fake")) return AURA.fake;
+    if (reason === "reverse" || (run && run.lastNote === "reverse")) return AURA.reverse;
+    if (reason === "second" || (run && run.lastNote === "second")) return AURA.second;
+    if (reason === "shrink" || (run && run.spec && run.spec.shrinkAfter && run.hitShrink < 1)) return AURA.shrink;
+    if (reason === "air") return AURA.air;
+    if (reason === "miss") return AURA.miss;
     if (towers <= 0) return AURA.shallow;
     if (run && run.spec && run.spec.coda) return AURA.coda;
     if (towers >= 8) return AURA.coda;
@@ -1431,80 +1235,66 @@
     }
     if (run.dying) return;
     run.dying = true;
-    run.deathReason = reason === "souvenir"
-      ? "souvenir"
-      : (reason === "fell from zero" ? "fell from zero" : "hammer slip");
-    run.closedStamp = reason !== "souvenir";
+    run.deathReason = reason === "souvenir" ? "souvenir" : (reason || "weak swing");
     run.deathHold = DEATH_HOLD_MS;
-    if (run.closedStamp) kit.sfx("stamp");
-    run.shake = 8;
+    if (reason !== "souvenir" && kit) kit.sfx("stamp");
+    if (world) world.shake = 8;
   }
 
   function sealResult(reason) {
     if (!run || run.done) return;
     run.done = true;
     run.dying = false;
-    if (run.raf) cancelAnimationFrame(run.raf);
-    run.closedStamp = reason !== "leave" && reason !== "souvenir";
+    holdCanvas = holdBtn = holdSpace = false;
     const towers = run.towers | 0;
-    const pegs = run.peak | 0;
     const score = run.score;
-    const death = reason === "leave"
-      ? "leave"
-      : (reason === "souvenir" ? "souvenir" : (reason === "fell from zero" ? "fell from zero" : "hammer slip"));
+    const death = reason === "leave" ? "leave" : (reason === "souvenir" ? "souvenir" : (reason || "weak swing"));
     persistDepth({
       depth: towers,
       score,
       deathReason: death,
       cashedOut: reason === "souvenir",
-      meta: {
-        lastPeg: run.pegs,
-        pegs,
-        tower: run.spec && run.spec.id,
-        room: run.spec && run.spec.name,
-        kind: run.spec && run.spec.kind,
-        fallsFromZero: run.fallsFromZero,
-        coda: !!(run.spec && run.spec.coda),
-      },
+      meta: { tower: run.spec && run.spec.id, room: run.spec && run.spec.name, kind: run.spec && run.spec.kind, coda: !!(run.spec && run.spec.coda) },
     });
     stampDepthCopy();
     const startBtn = el("highStrikerStart");
     if (startBtn) {
       startBtn.disabled = false;
-      startBtn.textContent = "SWING AGAIN · 1 demo coin";
+      startBtn.textContent = "SMASH AGAIN · 1 demo coin";
     }
     const tapBtn = el("highStrikerTap");
     if (tapBtn) tapBtn.hidden = true;
+    paintPower(0);
     PF.focusCard("highStrikerCard", false);
-    kit.setMode(card(), "result");
-    const line = `TOWER ${towers} · PEGS ${pegs} · SCORE ${score}`;
-    const aura = auraLine(reason, towers);
+    if (kit) kit.setMode(card(), "result");
+    const aura = auraLine(death, towers);
     const challenge = challengeLine(towers);
     const verdict = el("highStrikerVerdict");
     if (verdict) {
       verdict.hidden = false;
-      verdict.textContent = `${line} · ${death} · ${aura}`;
+      verdict.textContent = `TOWER ${towers} · SCORE ${score} · ${death} · ${aura}`;
     }
-    kit.fillResult({
-      root: "highStrikerResult",
-      depth: "highStrikerResultDepth",
-      score: "highStrikerResultScore",
-      aura: "highStrikerResultAura",
-      copied: "highStrikerCopied",
-    }, {
-      depthLine: `TOWER ${towers}${run.spec && run.spec.name ? " · " + run.spec.name : ""}`,
-      scoreLine: `SCORE ${score} · PEGS ${pegs} · ${death}`,
-      auraLine: aura,
-    });
+    if (kit) {
+      kit.fillResult({
+        root: "highStrikerResult",
+        depth: "highStrikerResultDepth",
+        score: "highStrikerResultScore",
+        aura: "highStrikerResultAura",
+        copied: "highStrikerCopied",
+      }, {
+        depthLine: `TOWER ${towers}${run.spec && run.spec.name ? " · " + run.spec.name : ""}`,
+        scoreLine: `SCORE ${score} · ${String(death).replace(/_/g, " ")}`,
+        auraLine: aura,
+      });
+    }
     const reasonNode = el("highStrikerResultReason");
     if (reasonNode) reasonNode.textContent = String(death).replace(/_/g, " ").toUpperCase();
     setText("highStrikerChallengeText", challenge);
     PF.setTier("highStrikerTier", towers > 0 ? `TOWER ${towers}` : "SLIP", towers > 0 ? "perfect" : "miss");
     setText("highStrikerStatus", reason === "leave" ? "Stepped off the stall." : reason === "souvenir" ? "Souvenir — authored towers cleared." : "Tower stamped SLIP.");
-    const ok = towers > 0 || pegs > 0;
-    if (ok) {
+    if (towers > 0) {
       PF.award(Math.max(8, Math.floor(score / 12)), true, "High striker");
-      PF.setAura(towers >= 5 ? "celebrate" : "point");
+      PF.setAura("celebrate");
       if (reason !== "leave") PF.showBanner(true, `TOWER ${towers}`, `${score} · ${aura}`);
     } else {
       PF.award(0, false, "High striker miss");
@@ -1512,26 +1302,165 @@
       if (reason !== "leave") PF.showBanner(false, "SLIP", aura);
     }
     PF.refreshNightBoard();
-    draw();
-    startIdle();
+  }
+
+  function tickFx(dt) {
+    if (!run) return;
+    run.bellFlash = Math.max(0, (run.bellFlash || 0) - dt);
+    run.bellShake = Math.max(0, (run.bellShake || 0) - dt);
+    run.liarFlash = Math.max(0, (run.liarFlash || 0) - dt);
+    run.hitFlash = Math.max(0, (run.hitFlash || 0) - dt);
+    run.missFlash = Math.max(0, (run.missFlash || 0) - dt);
+    run.padDip = Math.max(0, (run.padDip || 0) - dt * 0.006);
+    run.toastMs = Math.max(0, (run.toastMs || 0) - dt);
+    run.roomCardMs = Math.max(0, (run.roomCardMs || 0) - dt);
+    const toastEl = el("highStrikerToast");
+    if (toastEl) toastEl.hidden = !(run.toastMs > 0);
+    const room = el("highStrikerRoomCard");
+    if (room) room.hidden = !(run.roomCardMs > 80);
+  }
+
+  function step(dt) {
+    tickFx(dt);
+    const spec = liveSpec();
+    const pos = needlePos(run.t, spec);
+    const inGold = timingQuality(pos, spec) > 0;
+    if (run.phase === "charging") {
+      if (inGold && !run.inGold) run.goldSeen = (run.goldSeen || 0) + 1;
+      run.inGold = inGold;
+    }
+    if (run.phase === "charging") {
+      paintPower(pos, spec);
+      if (!holding()) releaseSmash();
+    } else {
+      paintPower(pos, spec);
+    }
+    if (run.phase === "swinging") {
+      run.swingT -= dt;
+      if (run.swingT <= 0) impact();
+    }
+    if (run.phase === "flying") stepPuck(dt);
+  }
+
+  function loop(now) {
+    if (!cabinetOn()) { raf = 0; return; }
+    if (!world) buildWorld();
+    const last = loop._last || now;
+    const dt = Math.min(32, now - last);
+    loop._last = now;
+    idleClock += dt;
+    if (isLive() || (run && run.dying)) {
+      if (!run.last) run.last = now;
+      run.t += dt;
+      if (run.dying) {
+        tickFx(dt);
+        syncScene(dt, now);
+        run.deathHold -= dt;
+        if (run.deathHold <= 0) sealResult(run.deathReason);
+      } else {
+        step(dt);
+        syncScene(dt, now);
+        PF.refreshDepth();
+      }
+    } else {
+      syncScene(dt, now);
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function startLoop() {
+    if (raf) return;
+    loop._last = 0;
+    raf = requestAnimationFrame(loop);
+  }
+  function stopLoop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+
+  function punchStart() {
+    stampDepthCopy();
+    setText("highStrikerStatus", "Press START. Then HOLD to wind — RELEASE to smash.");
+    const btn = el("highStrikerStart");
+    if (btn && !btn.hidden) {
+      try { btn.focus(); } catch (_) { /* */ }
+    }
+  }
+
+  function start() {
+    if (isLive()) return;
+    const kitRun = beginKitRun();
+    if (!kitRun) {
+      setText("highStrikerStatus", "Out of demo coins · grant a pass");
+      PF.refreshNightBoard();
+      stampDepthCopy();
+      return;
+    }
+    buildWorld();
+    const spec0 = highstrikerStageParams(1);
+    run = {
+      done: false, dying: false, kitRun, t: 0, last: 0,
+      spec: spec0, towers: 0, score: 0, strikes: 0, peak: 0,
+      phase: "idle", puckU: 0, puckX: 0, puckVy: 0, puckVx: 0,
+      swingT: 0, pendingQuality: 0, rung: false, liarDone: false,
+      goldSeen: 0, inGold: false, hitShrink: 1,
+      bellFlash: 0, bellShake: 0, hitFlash: 0, missFlash: 0, padDip: 0,
+      toast: "", toastMs: 0, roomCardMs: 1400, lastNote: "", deathHold: 0, deathReason: "",
+    };
+    tellDepth(0);
+    paintPips();
+    const startBtn = el("highStrikerStart");
+    if (startBtn) startBtn.disabled = true;
+    const verdict = el("highStrikerVerdict");
+    if (verdict) verdict.hidden = true;
+    const tapBtn = el("highStrikerTap");
+    if (tapBtn) {
+      tapBtn.hidden = false;
+      tapBtn.textContent = "HOLD · RELEASE ON GOLD";
+    }
+    if (kit) kit.hideResult("highStrikerResult");
+    PF.setTier("highStrikerTier", "", "");
+    if (kit) kit.setMode(card(), "play");
+    stampDepthCopy();
+    setText("highStrikerStatus", `${spec0.name} — ${spec0.barker}`);
+    setText("highStrikerBarker", spec0.barker);
+    showRoomCard(spec0);
+    paintPower(0);
+    PF.focusCard("highStrikerCard", true);
+    PF.setAura("think");
+    startLoop();
+  }
+
+  function pointerFrac(ev) {
+    const canvas = el("highStrikerCanvas");
+    if (!canvas) return 0.5;
+    const r = canvas.getBoundingClientRect();
+    const t = (ev.touches && ev.touches[0]) || ev;
+    return clamp((t.clientX - r.left) / Math.max(1, r.width), 0, 1);
   }
 
   PF.registerVendor({
     id: "high-striker",
     playKey: "highstriker",
-    chalk: "Ring it — then keep climbing. The bell is a checkpoint.",
+    chalk: "Hold to wind. Smash the pad. The bell is a checkpoint.",
     defaults: { bestHighStriker: 0, bestHighStrikerScore: 0 },
     onLeave() {
       if (isLive() || (run && run.dying && !run.done)) finish("leave");
-      stopIdle();
+      holdCanvas = holdBtn = holdSpace = false;
+      stopLoop();
     },
-    onShow() { stampDepthCopy(); startIdle(); },
+    onShow() {
+      stampDepthCopy();
+      buildWorld();
+      resizeWorld();
+      requestAnimationFrame(() => { resizeWorld(); startLoop(); });
+    },
     onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
       run = null;
+      holdCanvas = holdBtn = holdSpace = false;
       const verdict = el("highStrikerVerdict");
       if (verdict) verdict.hidden = true;
-      kit.hideResult("highStrikerResult");
+      if (kit) kit.hideResult("highStrikerResult");
       const startBtn = el("highStrikerStart");
       if (startBtn) {
         startBtn.disabled = false;
@@ -1539,9 +1468,10 @@
       }
       const tapBtn = el("highStrikerTap");
       if (tapBtn) tapBtn.hidden = true;
-      kit.setMode(card(), "vestibule");
+      paintPower(0);
+      if (kit) kit.setMode(card(), "vestibule");
       stampDepthCopy();
-      startIdle();
+      startLoop();
     },
     refreshDepth(state) {
       setText("depthStrikerNow", isLive() || (run && run.dying) ? String(run.towers) : "0");
@@ -1558,31 +1488,61 @@
       if (startBtn) startBtn.addEventListener("click", start);
       const tapBtn = el("highStrikerTap");
       if (tapBtn) {
-        tapBtn.addEventListener("click", (ev) => {
+        tapBtn.addEventListener("pointerdown", (ev) => {
           ev.preventDefault();
-          if (!isLive()) {
-            if (!run || run.done) punchStart();
-            return;
-          }
-          swing();
+          if (!isLive()) { if (!run || run.done) punchStart(); return; }
+          holdBtn = true;
+          beginCharge();
         });
+        tapBtn.addEventListener("pointerup", (ev) => {
+          ev.preventDefault();
+          holdBtn = false;
+          if (isLive()) releaseSmash();
+        });
+        tapBtn.addEventListener("pointerleave", () => {
+          if (holdBtn) { holdBtn = false; if (isLive()) releaseSmash(); }
+        });
+        tapBtn.addEventListener("click", (ev) => ev.preventDefault());
       }
       const canvas = el("highStrikerCanvas");
       if (canvas) {
         canvas.addEventListener("pointerdown", (ev) => {
-          if (!isLive()) {
-            if (!run || run.done) punchStart();
-            return;
-          }
+          if (!isLive()) { if (!run || run.done) punchStart(); return; }
           ev.preventDefault();
-          swing();
+          pointerX = pointerFrac(ev);
+          holdCanvas = true;
+          try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* */ }
+          beginCharge();
+        });
+        canvas.addEventListener("pointermove", (ev) => {
+          pointerX = pointerFrac(ev);
+        });
+        canvas.addEventListener("pointerup", (ev) => {
+          holdCanvas = false;
+          if (isLive()) releaseSmash();
+        });
+        canvas.addEventListener("pointercancel", () => {
+          holdCanvas = false;
+          if (isLive()) releaseSmash();
         });
       }
       window.addEventListener("keydown", (ev) => {
-        if (!isLive() || !cabinetOn()) return;
+        if (!cabinetOn()) return;
         if (ev.code === "Space" || ev.key === " ") {
           ev.preventDefault();
-          swing();
+          if (!isLive()) { if (!run || run.done) punchStart(); return; }
+          if (!holdSpace) {
+            holdSpace = true;
+            beginCharge();
+          }
+        }
+      });
+      window.addEventListener("keyup", (ev) => {
+        if (!cabinetOn()) return;
+        if (ev.code === "Space" || ev.key === " ") {
+          ev.preventDefault();
+          holdSpace = false;
+          if (isLive()) releaseSmash();
         }
       });
       const copyBtn = el("highStrikerChallenge");
@@ -1595,19 +1555,20 @@
           const text = challengeLine(n);
           kit.copyText(text, () => {
             const copied = el("highStrikerCopied");
-            if (copied) {
-              copied.hidden = false;
-              copied.textContent = "Copied — send it";
-            }
+            if (copied) { copied.hidden = false; copied.textContent = "Copied — send it"; }
             setText("highStrikerStatus", "Copied — send it");
-          }, () => {
-            setText("highStrikerStatus", text);
-          });
+          }, () => setText("highStrikerStatus", text));
         });
       }
+      window.addEventListener("resize", () => { if (cabinetOn()) resizeWorld(); });
+      if (typeof ResizeObserver !== "undefined") {
+        const stage = el("highStrikerStage");
+        if (stage) {
+          const ro = new ResizeObserver(() => { if (cabinetOn()) resizeWorld(); });
+          ro.observe(stage);
+        }
+      }
       stampDepthCopy();
-      draw();
-      startIdle();
     },
   });
-})();
+}

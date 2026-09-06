@@ -1,331 +1,281 @@
-/* Fairy Floss Wheel — Desktop Grok owns this file. PF only. Never booth/port 6000. Never Imagine.
- * GOBLIN B04 AUTHORED — GOBLIN_AUTHORED_LEVELS_B04.md · hybrid + codaEnabled.
- * 8 unique rooms (layout / cheat / verb), NOT thinner-band climb. Coda = BATCH04 mount Sugar Edge {n}.
- * HoldBand tension / wind-rate (not Love heat). Stall owns SNAP death; engine cannot steal the run.
- * Authored: Soft Cloud → Twin Strand → Gust Stall → Reverse Wind → Fake Snap Tent → Sag Trap Shelf → Pulse Tub → Fever Sugar Opera → ENDLESS Sugar Edge {n}
- * HUD = current STAGE (playing) · glory/best = stages cleared · death = snap
- * snapLimit PER STAGE (3 then 2) — snaps reset on clear. Pips = this-stage snaps.
- * Don’t: instant full cone. Death hold ≥700ms. Best: Metres {n} / Stage.
- * Vestibule: WIND IT TALL — DON’T SNAP THE CLOUD. coda off → souvenir after Fever Sugar Opera. */
-(() => {
-  "use strict";
+/* Fairy Floss Wheel — 3D sugar cyclone. Desktop Grok owns this file.
+ * PF only. Never booth/port 6000. Never Imagine downloads.
+ * Circle-to-wind on touch. Snap is death. Sugar height = depth.
+ * One coin = one run. Family-safe carnival. Aura locked look. */
+import * as THREE from "../world/lib/three.module.min.js";
+
+const GAME_ID = "fairyfloss";
+const TAU = Math.PI * 2;
+const DEATH_HOLD_MS = 760;
+const AUTHORED_COUNT = 8;
+const CODA_ENABLED = true;
+const SCORE_PER_TENTH = 20;
+const CLEAR_BONUS = 250;
+const RIBBON_N = 12;
+const PUFF_N = 10;
+const CLOUD_N = 48;
+const SPARK_N = 90;
+const REDUCE = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const TUB = { x: 0, y: 1.08, z: -0.12 };
+const HEAT_R = 0.46;
+const RING_R = 1.08;
+const SPEED_REF = 6.4;
+const PRESS_GRACE = 0.32;
+
+const AURA_LINES = {
+  snap: "Aura: You got greedy with the spin.",
+  snapDeep: (m) => `Aura: FLOSS ${m}m snapped. Cloud wanted slower hands.`,
+  clear: "Aura: Metres locked. Tub spins meaner.",
+  deep: (n) => `Aura: ${n}m. That sugar web trusts you — barely.`,
+  leave: "Aura: Walked off mid-cloud. The web sagged.",
+  shallow: "Aura: Not a metre. The cloud wanted a slower hand.",
+  souvenir: "Aura: Sugar Edge souvenir. The cloud let you walk.",
+  sag: "Aura: The cloud drooped. Keep the circle.",
+};
+
+const AUTHORED = [
+  {
+    id: 1, title: "Soft Cloud", kind: "teach",
+    metresNeeded: 3, bandH: 40, bandMid: 0.44,
+    tubRpm: 0.42, snapLimit: 1, metrePerSecInBand: 0.55,
+    catchR: 0.58, flyLife: 3.4, spawnMs: 1400, maxLive: 2, flySpin: 1.35, flyR: 1.22, flyH: 0.42,
+    snapMs: 520, sagNoGain: true,
+    barker: "Drag a circle around the wheel. Sugar grows taller. One snap and you’re done.",
+  },
+  {
+    id: 2, title: "Twin Strand", kind: "dualNeedle",
+    metresNeeded: 4, bandH: 30, bandMid: 0.46,
+    tubRpm: 0.52, snapLimit: 1, metrePerSecInBand: 0.5,
+    catchR: 0.5, flyLife: 3.1, spawnMs: 1100, maxLive: 3, flySpin: 1.5, flyR: 1.28, flyH: 0.48,
+    snapMs: 420, sagNoGain: true, dualNeedle: true,
+    barker: "Speed AND orbit radius must sit sweet. Stay on the glowing ring.",
+  },
+  {
+    id: 3, title: "Gust Stall", kind: "gust",
+    metresNeeded: 5, bandH: 24, bandMid: 0.47,
+    tubRpm: 0.64, snapLimit: 1, metrePerSecInBand: 0.42,
+    catchR: 0.46, flyLife: 2.8, spawnMs: 1000, maxLive: 3, flySpin: 1.7, flyR: 1.35, flyH: 0.55,
+    snapMs: 340, sagNoGain: true, gust: true, gustEveryMs: 2600, gustMs: 520, gustJump: 0.22,
+    barker: "Gusts shove the ribbons. Ride the jump or miss the catch.",
+  },
+  {
+    id: 4, title: "Reverse Wind", kind: "invertDrag",
+    metresNeeded: 5, bandH: 22, bandMid: 0.47,
+    tubRpm: 0.72, snapLimit: 1, metrePerSecInBand: 0.4,
+    catchR: 0.44, flyLife: 2.7, spawnMs: 980, maxLive: 3, flySpin: 1.85, flyR: 1.32, flyH: 0.5,
+    snapMs: 320, sagNoGain: true, invertDrag: true,
+    barker: "REVERSE — circle the other way. Muscle memory lies.",
+  },
+  {
+    id: 5, title: "Fake Snap Tent", kind: "fakeSnap",
+    metresNeeded: 6, bandH: 16, bandMid: 0.52,
+    tubRpm: 0.8, snapLimit: 1, metrePerSecInBand: 0.44,
+    catchR: 0.42, flyLife: 2.55, spawnMs: 920, maxLive: 3, flySpin: 2.0, flyR: 1.38, flyH: 0.52,
+    snapMs: 300, sagNoGain: true, fakeSnap: true, fakeSnapCount: 3,
+    barker: "Booth audio lies. Three fake snaps. Ignore them. Keep winding.",
+  },
+  {
+    id: 6, title: "Sag Trap Shelf", kind: "sagTrap",
+    metresNeeded: 6, bandH: 16, bandMid: 0.5,
+    tubRpm: 0.86, snapLimit: 1, metrePerSecInBand: 0.44,
+    catchR: 0.4, flyLife: 2.45, spawnMs: 880, maxLive: 3, flySpin: 2.1, flyR: 1.4, flyH: 0.5,
+    snapMs: 280, sagNoGain: true, sagEats: true, sagCatchMs: 520,
+    barker: "Stop circling and the cloud melts. Catch up after the droop.",
+  },
+  {
+    id: 7, title: "Pulse Tub", kind: "pulseTub",
+    metresNeeded: 7, bandH: 14, bandMid: 0.5,
+    tubRpm: 0.95, snapLimit: 1, metrePerSecInBand: 0.46,
+    catchR: 0.38, flyLife: 2.3, spawnMs: 820, maxLive: 4, flySpin: 2.2, flyR: 1.42, flyH: 0.58,
+    snapMs: 260, sagNoGain: true, pulse: true,
+    barker: "Tub pulses. Sync the wind to the sine.",
+  },
+  {
+    id: 8, title: "Fever Sugar Opera", kind: "comboFinale",
+    metresNeeded: 7, bandH: 12, bandMid: 0.5,
+    tubRpm: 1.05, snapLimit: 1, metrePerSecInBand: 0.46,
+    catchR: 0.36, flyLife: 2.2, spawnMs: 760, maxLive: 4, flySpin: 2.35, flyR: 1.46, flyH: 0.62,
+    snapMs: 250, sagNoGain: true, dualNeedle: true, gustOnce: true, fakeSnapOnce: true,
+    reversePulseMid: true, pulse: true, fakeSnapCount: 1, gustMs: 500, gustJump: 0.18,
+    barker: "Twin ring, one gust, one fake snap, reverse pulse. Gauntlet.",
+  },
+];
+
+const P0_MOUNT = {
+  engine: "Custom",
+  displayName: "Fairy Floss Wheel",
+  depthUnit: "Metres",
+  sheet: "GOBLIN_AUTHORED_LEVELS_B04.md",
+  codaEnabled: CODA_ENABLED,
+  authoredCount: AUTHORED_COUNT,
+};
+
+const DEPTH_COPY = {
+  tag: "DEPTH RUN · sugar HEIGHT is your depth · circle to wind · one SNAP kills",
+  body: "Drag a circle around the copper wheel with your finger. Sugar winds onto the cone and grows taller — that height is your depth. Soft Cloud → Twin Strand → Gust Stall → Reverse Wind → Fake Snap Tent → Sag Trap Shelf → Pulse Tub → Fever Sugar Opera → ENDLESS Sugar Edge. Too slow sags. Too fast SNAPS — and snap is death.",
+  status: "Depth run · START · 1 demo coin · circle to wind · height is depth",
+  machine: "Sugar stall · 1 demo coin · height = depth · SNAP = death",
+  punch: "Depth run — press START. Drag a circle around the wheel. One snap kills the cloud.",
+};
+
+const CAM_PLAY = new THREE.Vector3(0, 2.05, 3.85);
+const LOOK_PLAY = new THREE.Vector3(0, 1.08, -0.08);
+
+function applyBand(p) {
+  const mid = p.bandMid != null ? p.bandMid : 0.5;
+  const half = (p.bandH / 100) * 0.5;
+  p.lo = Math.max(0.1, Math.min(0.78, mid - half));
+  p.hi = Math.max(0.24, Math.min(0.94, mid + half));
+  return p;
+}
+
+function fairyflossMountParams(n) {
+  const t = n - 1;
+  if (n <= AUTHORED_COUNT) return Object.assign({}, AUTHORED[n - 1]);
+  return {
+    id: n, title: "Sugar Edge", metresNeeded: 7 + t, bandH: Math.max(6, 11 - 0.5 * t),
+    tubRpm: Math.min(2.2, 1.1 + 0.12 * t), snapLimit: 1,
+    metrePerSecInBand: Math.min(0.62, 0.46 + 0.02 * t),
+    catchR: Math.max(0.22, 0.36 - 0.01 * t), flyLife: Math.max(1.5, 2.1 - 0.04 * t),
+    spawnMs: Math.max(480, 720 - 18 * t), maxLive: 4, flySpin: Math.min(3.2, 2.4 + 0.08 * t),
+    flyR: 1.5, flyH: 0.64, sagNoGain: true,
+  };
+}
+
+function fairyflossCoda(n) {
+  const stage = Math.max(AUTHORED_COUNT + 1, n | 0);
+  const mount = fairyflossMountParams(stage);
+  return applyBand(Object.assign({}, mount, {
+    id: stage, title: `Sugar Edge ${stage}`, kind: "coda",
+    bandMid: 0.62, snapMs: Math.max(170, 250 - 8 * (stage - AUTHORED_COUNT)),
+    wander: true, pulse: true, coda: true,
+    barker: `ENDLESS — Sugar Edge ${stage}. Ring shrinks. Tub climbs.`,
+  }));
+}
+
+function fairyflossStageParams(n) {
+  const stage = Math.max(1, n | 0);
+  if (stage <= AUTHORED_COUNT) return applyBand(Object.assign({}, AUTHORED[stage - 1]));
+  if (!CODA_ENABLED) return null;
+  return fairyflossCoda(stage);
+}
+
+function boot() {
   const PF = window.PennyFever;
-  if (!PF || !PF.registerVendor) return;
+  if (!PF || !PF.registerVendor) {
+    requestAnimationFrame(boot);
+    return;
+  }
+  initVendor(PF);
+}
+boot();
+
+function initVendor(PF) {
   const { $, kit } = PF;
 
-  const W = 340;
-  const H = 480;
-  const GAME_ID = "fairyfloss";
-  const CONE = { x: 208, y: 198 };
-  const TALL_CONE = { x: 208, y: 158 };
-  const TUB = { x: 170, y: 392, rx: 78, ry: 28 };
-  const METER = { x: 22, y: 64, w: 28, h: 280 };
-  const SNAP_MS = 280;
-  const SCORE_PER_TENTH = 20;
-  const CLEAR_BONUS = 250;
-  const DEATH_HOLD_MS = 760;
-  const TAU = Math.PI * 2;
-  const AUTHORED_COUNT = 8;
-  const CODA_ENABLED = true;
-  const IDLE_ROOM_MS = 2800;
-  const ROOM_CARD_MS = 1180;
-
   let run = null;
-  let idleRaf = 0;
+  let world = null;
+  let raf = 0;
+  let lastT = 0;
   let idleRoom = 1;
   let idleClock = 0;
-  let idleT = 0;
+  let intro = 0;
+  let toastUntil = 0;
+  let bound = false;
+  let simT = 0;
 
-  const AURA = {
-    snap: "Aura: You got greedy with the spin.",
-    snapDeep: (m) => `Aura: FLOSS ${m}m snapped. Cloud wanted slower hands.`,
-    clear: "Aura: Metres locked. Tub spins meaner.",
-    deep: (n) => `Aura: Stage ${n}. That sugar web trusts you — barely.`,
-    leave: "Aura: Walked off mid-cloud. The web sagged.",
-    shallow: "Aura: Not a metre. The cloud wanted a slower hand.",
-    souvenir: "Aura: Sugar Edge souvenir. The cloud let you walk.",
+  const input = { x: TUB.x, z: TUB.z + RING_R, aimX: TUB.x, aimZ: TUB.z + RING_R, down: false, steer: false, ang: Math.PI / 2, lastAng: Math.PI / 2, speed: 0, speedSigned: 0, grace: 0 };
+  const look = LOOK_PLAY.clone();
+  const punch = { t: 0, mag: 0 };
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const _v = new THREE.Vector3();
+  const _v2 = new THREE.Vector3();
+  const UP = new THREE.Vector3(0, 1, 0);
+
+  const GEO = {
+    sphere: new THREE.SphereGeometry(1, 12, 10),
+    sphereHi: new THREE.SphereGeometry(1, 16, 12),
+    cyl: new THREE.CylinderGeometry(1, 1, 1, 14),
+    cone: new THREE.ConeGeometry(1, 1, 12),
+    box: new THREE.BoxGeometry(1, 1, 1),
+    torus: new THREE.TorusGeometry(1, 0.04, 8, 40),
+    plane: new THREE.PlaneGeometry(1, 1),
   };
 
-  const AUTHORED = [
-    {
-      id: 1, title: "Soft Cloud", kind: "teach",
-      metresNeeded: 3, bandWidth: "wide", bandH: 22, bandMid: 0.5,
-      tubRpm: 0.4, snapLimit: 3, metrePerSecInBand: 0.35, sagNoGain: true,
-      snapMs: 480,
-      barker: "Wide band. Circle the cone. Three snaps. Don’t rush.",
-    },
-    {
-      id: 2, title: "Twin Strand", kind: "dualNeedle",
-      metresNeeded: 4, bandWidth: "wide", bandH: 20, bandMid: 0.5,
-      tubRpm: 0.5, snapLimit: 2, metrePerSecInBand: 0.36, sagNoGain: true,
-      snapMs: 400, dualNeedle: true,
-      barker: "Two strands. Both needles in the band. Shared hold.",
-    },
-    {
-      id: 3, title: "Gust Stall", kind: "gust",
-      metresNeeded: 5, bandWidth: "mid", bandH: 16, bandMid: 0.5,
-      tubRpm: 0.65, snapLimit: 2, metrePerSecInBand: 0.38, sagNoGain: true,
-      snapMs: 320, gust: true, gustEveryMs: 2500, gustMs: 500, gustJump: 0.12,
-      barker: "Gust every few beats. Ride the jump or snap.",
-    },
-    {
-      id: 4, title: "Reverse Wind", kind: "invertDrag",
-      metresNeeded: 5, bandWidth: "mid", bandH: 16, bandMid: 0.5,
-      tubRpm: 0.7, snapLimit: 2, metrePerSecInBand: 0.38, sagNoGain: true,
-      snapMs: 300, invertDrag: true,
-      barker: "REVERSE — pull down to wind up. Muscle memory lies.",
-    },
-    {
-      id: 5, title: "Fake Snap Tent", kind: "fakeSnap",
-      metresNeeded: 6, bandWidth: "mid", bandH: 14, bandMid: 0.52,
-      tubRpm: 0.8, snapLimit: 2, metrePerSecInBand: 0.4, sagNoGain: true,
-      snapMs: 280, fakeSnap: true, fakeSnapCount: 3,
-      barker: "Booth audio lies. Three fake snaps. Ignore them.",
-    },
-    {
-      id: 6, title: "Sag Trap Shelf", kind: "sagTrap",
-      metresNeeded: 6, bandWidth: "mid", bandH: 14, bandMid: 0.5,
-      tubRpm: 0.85, snapLimit: 2, metrePerSecInBand: 0.4, sagNoGain: true, sagEats: true,
-      snapMs: 280, sagCatchMs: 520,
-      barker: "Sag eats metres. Catch up after the droop.",
-    },
-    {
-      id: 7, title: "Pulse Tub", kind: "pulseTub",
-      metresNeeded: 7, bandWidth: "mid", bandH: 13, bandMid: 0.5,
-      tubRpm: 0.95, snapLimit: 2, metrePerSecInBand: 0.42, sagNoGain: true,
-      snapMs: 260, pulse: true,
-      barker: "Tub pulses. Sync the wind to the sine.",
-    },
-    {
-      id: 8, title: "Fever Sugar Opera", kind: "comboFinale",
-      metresNeeded: 7, bandWidth: "mid", bandH: 12, bandMid: 0.5,
-      tubRpm: 1.0, snapLimit: 2, metrePerSecInBand: 0.42, sagNoGain: true,
-      snapMs: 260, dualNeedle: true, gustOnce: true, fakeSnapOnce: true,
-      reversePulseMid: true, pulse: true, fakeSnapCount: 1,
-      gustMs: 500, gustJump: 0.12,
-      barker: "Twin strand, one gust, one fake snap, reverse pulse. Gauntlet.",
-    },
-  ];
-
-  const P0_MOUNT = {
-    engine: "HoldBand",
-    displayName: "Fairy Floss Wheel",
-    depthUnit: "Stage",
-    sheet: "GOBLIN_AUTHORED_LEVELS_B04.md",
-    codaEnabled: CODA_ENABLED,
-    authoredCount: AUTHORED_COUNT,
-  };
-
-  const DEPTH_COPY = {
-    tag: "DEPTH RUN · 8 authored STAGES then ENDLESS · wind the cloud until it snaps",
-    body: "Authored rooms, not a thinner loop: Soft Cloud → Twin Strand → Gust Stall → Reverse Wind → Fake Snap Tent → Sag Trap Shelf → Pulse Tub → Fever Sugar Opera → ENDLESS Sugar Edge. Hold-drag around the cone. Too slow sags. Too fast SNAPs. Twin needles, gusts, reverse pull, fake snaps, sag rewind — not a skinnier band. No instant cone.",
-    status: "Depth run · START · 1 demo coin · 8 authored STAGES then ENDLESS",
-    machine: "Sugar stall · 1 demo coin · 8 authored STAGES",
-    idleHud: ["WIND IT TALL — DON’T SNAP THE CLOUD", "START · 1 demo coin — keep the pink band"],
-    punch: "Depth run — press START. Circle the cone. No full-cone button.",
-  };
-
-  function rk() {
-    return PF.runKit || null;
-  }
-
-  function el(id) {
-    return $(id);
-  }
-
+  function el(id) { return $(id); }
   function setText(id, text) {
     const node = el(id);
     if (node) node.textContent = text;
   }
-
-  function applyBand(p) {
-    const mid = p.bandMid != null ? p.bandMid : 0.5;
-    const half = (p.bandH / 100) * 0.5;
-    p.lo = kit.clamp(mid - half, 0.08, 0.78);
-    p.hi = kit.clamp(mid + half, 0.22, 0.94);
-    p.outLimitMs = 1e9;
-    p.graceStrikes = 99;
-    return p;
-  }
-
-  /* 18:23 drop-in from GOBLIN_BATCH04_MOUNT_CONFIGS.md — numbers are the contract. */
-  function fairyflossMountParams(n) {
-    const t = n - 1;
-    if (n === 1) {
-      return {
-        id: 1, title: "Soft Cloud", metresNeeded: 3, bandWidth: "wide", bandH: 22,
-        tubRpm: 0.4, snapLimit: 3, metrePerSecInBand: 0.35, sagNoGain: true,
-      };
-    }
-    if (n === 2) {
-      return {
-        id: 2, title: "Taller Spin", metresNeeded: 4, bandWidth: "wide", bandH: 20,
-        tubRpm: 0.55, snapLimit: 2, metrePerSecInBand: 0.38, sagNoGain: true,
-      };
-    }
-    if (n === 3) {
-      return {
-        id: 3, title: "Mid Band", metresNeeded: 5, bandWidth: "mid", bandH: 16,
-        tubRpm: 0.7, snapLimit: 2, metrePerSecInBand: 0.4, sagNoGain: true,
-      };
-    }
-    if (n === 4) {
-      return {
-        id: 4, title: "Fast Tub", metresNeeded: 6, bandWidth: "mid", bandH: 14,
-        tubRpm: 0.9, snapLimit: 2, metrePerSecInBand: 0.42, sagNoGain: true,
-      };
-    }
-    if (n === 5) {
-      return {
-        id: 5, title: "Thin Cloud", metresNeeded: 7, bandWidth: "thin", bandH: 11,
-        tubRpm: 1.1, snapLimit: 2, metrePerSecInBand: 0.45, sagNoGain: true,
-      };
-    }
-    return {
-      id: n,
-      title: "Sugar Edge",
-      metresNeeded: 7 + t,
-      bandWidth: "thinner",
-      bandH: Math.max(6, 11 - 0.5 * t),
-      tubRpm: Math.min(2.2, 1.1 + 0.12 * t),
-      snapLimit: 2,
-      metrePerSecInBand: Math.min(0.6, 0.45 + 0.02 * t),
-      sagNoGain: true,
-    };
-  }
-
-  function fairyflossCoda(n) {
-    const stage = Math.max(AUTHORED_COUNT + 1, n | 0);
-    const mount = fairyflossMountParams(stage);
-    return applyBand(Object.assign({}, mount, {
-      id: stage,
-      title: `Sugar Edge ${stage}`,
-      kind: "coda",
-      bandMid: 0.7,
-      snapMs: Math.max(180, 260 - 8 * (stage - AUTHORED_COUNT)),
-      wander: true,
-      pulse: true,
-      tallCone: stage % 2 === 0,
-      liar: true,
-      sticky: true,
-      liarLo: 0.34,
-      liarHi: 0.56,
-      coda: true,
-      barker: `ENDLESS — Sugar Edge ${stage}. Band shrinks. Tub climbs.`,
-    }));
-  }
-
-  function fairyflossStageParams(n) {
-    const stage = Math.max(1, n | 0);
-    if (stage <= AUTHORED_COUNT) return applyBand(Object.assign({}, AUTHORED[stage - 1]));
-    if (!CODA_ENABLED) return null;
-    return fairyflossCoda(stage);
-  }
-
-  function declareP0() {
-    const kitRun = rk();
-    if (!kitRun || typeof kitRun.declare !== "function") return;
-    try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already declared */ }
-    kitRun.p0 = kitRun.p0 || {};
-    kitRun.p0[GAME_ID] = Object.assign({
-      stageParams: fairyflossStageParams,
-      codaParams: fairyflossCoda,
-      mountParams: fairyflossMountParams,
-      authored: AUTHORED,
-      codaEnabled: CODA_ENABLED,
-      authoredCount: AUTHORED_COUNT,
-    }, P0_MOUNT);
-    kitRun.mounted = kitRun.mounted || {};
-    kitRun.mounted[GAME_ID] = true;
-  }
-
-  function card() {
-    return el("fairyFlossCard");
-  }
-
+  function rk() { return PF.runKit || null; }
+  function card() { return el("fairyFlossCard"); }
   function cabinetOn() {
     const node = document.getElementById("cabinet-fairy-floss");
     return !!(node && !node.hidden);
   }
-
   function isLive() {
     return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
   }
-
-  function attractSpec() {
-    return fairyflossStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
-  }
-
   function liveSpec() {
-    if (run && run.spec) return run.spec;
-    return attractSpec();
+    return (run && run.spec) || fairyflossStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
+  }
+  function clamp(n, a, b) { return kit ? kit.clamp(n, a, b) : Math.max(a, Math.min(b, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function wrapAng(a) {
+    while (a > Math.PI) a -= TAU;
+    while (a < -Math.PI) a += TAU;
+    return a;
+  }
+  function mat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color, roughness: 0.72, metalness: 0.08,
+    }, extra || {}));
+  }
+  function mesh(geo, material, sx, sy, sz, x, y, z) {
+    const m = new THREE.Mesh(geo, material);
+    m.scale.set(sx, sy, sz);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
+  }
+  function canvasTex(w, h, draw, rx, ry) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"));
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(rx || 1, ry || 1);
+    return t;
+  }
+  function sfx(name) {
+    if (kit && typeof kit.sfx === "function") kit.sfx(name);
   }
 
-  function snapMsOf(spec) {
-    return (spec && spec.snapMs) || SNAP_MS;
+  function showToast(title, sub, ms, kind) {
+    const node = el("fairyFlossToast");
+    if (!node) return;
+    node.hidden = false;
+    node.className = "ff-toast" + (kind ? " is-" + kind : "");
+    node.innerHTML = `${title}${sub ? `<small>${sub}</small>` : ""}`;
+    toastUntil = performance.now() + (ms || 1180);
   }
-
-  function roomTell(spec) {
-    if (!spec) return "WIND THE CLOUD";
-    if (spec.kind === "coda") return "ENDLESS — SUGAR EDGE CLIMB";
-    if (spec.kind === "comboFinale") return "TWIN + GUST + FAKE SNAP + REVERSE PULSE";
-    if (spec.kind === "pulseTub" || spec.pulse) return "TUB PULSES — MATCH THE SINE";
-    if (spec.sagEats) return "SAG EATS METRES — CATCH UP AFTER";
-    if (spec.fakeSnap) return "FAKE SNAPS — IGNORE THE BOOTH";
-    if (spec.invertDrag) return "REVERSE — PULL DOWN TO WIND UP";
-    if (spec.gust || spec.gustOnce) return "GUST JUMPS THE BAND — RIDE IT";
-    if (spec.dualNeedle) return "TWO NEEDLES — BOTH MUST SIT SWEET";
-    return "CIRCLE THE CONE · KEEP THE PINK BAND";
+  function hideToastIfDue(now) {
+    if (!toastUntil) return;
+    if (now >= toastUntil) {
+      toastUntil = 0;
+      const node = el("fairyFlossToast");
+      if (node) {
+        node.hidden = true;
+        node.className = "ff-toast";
+      }
+    }
   }
-
-  function drawRoomCard(ctx, spec, ms) {
-    if (!spec || !(ms > 0)) return;
-    const a = Math.min(1, ms / 220);
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = "rgba(12,6,9,0.92)";
-    ctx.fillRect(22, 168, W - 44, 108);
-    ctx.strokeStyle = spec.coda ? "#e8a0b8" : "#f4a0c0";
-    ctx.lineWidth = 2.2;
-    ctx.strokeRect(22.5, 168.5, W - 45, 107);
-    ctx.fillStyle = spec.coda ? "#e8a0b8" : "#d4a45a";
-    ctx.font = "bold 11px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText(spec.coda ? "ENDLESS CLOUD" : "AUTHORED STAGE", W / 2, 190);
-    ctx.fillStyle = "#fff6ec";
-    ctx.font = "bold 20px Georgia, serif";
-    ctx.fillText(spec.title, W / 2, 218);
-    ctx.fillStyle = "#e8a0b8";
-    ctx.font = "11px Georgia, serif";
-    ctx.fillText(roomTell(spec), W / 2, 246);
-    ctx.restore();
-  }
-
-  function kindWash(ctx, spec) {
-    if (!spec) return;
-    let col = null;
-    if (spec.kind === "comboFinale") col = "rgba(196,30,58,0.10)";
-    else if (spec.fakeSnap) col = "rgba(244,160,192,0.10)";
-    else if (spec.invertDrag) col = "rgba(184,232,224,0.08)";
-    else if (spec.gust || spec.gustOnce) col = "rgba(255,246,236,0.08)";
-    else if (spec.sagEats) col = "rgba(212,164,90,0.10)";
-    else if (spec.dualNeedle) col = "rgba(232,160,184,0.10)";
-    else if (spec.pulse) col = "rgba(196,30,58,0.08)";
-    else if (spec.coda) col = "rgba(232,160,184,0.10)";
-    if (!col) return;
-    ctx.fillStyle = col;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function coneOf(spec) {
-    return spec && spec.tallCone ? TALL_CONE : CONE;
-  }
-
-  function invertActive(spec) {
-    if (!spec) return false;
-    if (spec.invertDrag) return true;
-    if (run && run.invertUntil > (run.t || 0)) return true;
-    return false;
+  function setCall(text) {
+    const n = el("fairyFlossCall");
+    if (n) n.textContent = text;
   }
 
   function liveBand(spec, t) {
@@ -335,138 +285,1185 @@
     if (s.wander) {
       const mid = (lo + hi) / 2;
       const half = (hi - lo) / 2;
-      const drift = Math.sin((t || 0) * 0.00105) * 0.16;
-      lo = kit.clamp(mid + drift - half, 0.08, 0.74);
-      hi = kit.clamp(mid + drift + half, 0.26, 0.94);
+      const drift = Math.sin((t || 0) * 0.9) * 0.12;
+      lo = clamp(mid + drift - half, 0.1, 0.74);
+      hi = clamp(mid + drift + half, 0.26, 0.94);
     }
     if (s.pulse) {
       const mid = (lo + hi) / 2;
-      const half = ((hi - lo) / 2) * (1 + 0.32 * Math.sin((t || 0) * 0.0036));
-      lo = kit.clamp(mid - half, 0.08, 0.74);
-      hi = kit.clamp(mid + half, 0.26, 0.94);
+      const half = ((hi - lo) / 2) * (1 + 0.28 * Math.sin((t || 0) * 3.2));
+      lo = clamp(mid - half, 0.1, 0.74);
+      hi = clamp(mid + half, 0.26, 0.94);
     }
     if (run && run.gustUntil > (run.t || 0)) {
-      const jump = (run.gustSign || 1) * (s.gustJump != null ? s.gustJump : 0.12);
-      lo = kit.clamp(lo + jump, 0.08, 0.74);
-      hi = kit.clamp(hi + jump, 0.26, 0.94);
+      const jump = (run.gustSign || 1) * 0.08;
+      lo = clamp(lo + jump, 0.1, 0.74);
+      hi = clamp(hi + jump, 0.26, 0.94);
     }
     return { lo, hi };
   }
 
-  function liarBand(spec) {
-    if (!spec || !spec.liar) return null;
+  function invertActive(spec) {
+    if (!spec) return false;
+    if (spec.invertDrag) return true;
+    if (run && run.invertUntil > (run.t || 0)) return true;
+    return false;
+  }
+
+  function heightOf(runObj) {
+    return (runObj && runObj.totalMetres) || 0;
+  }
+  function heightDepth(runObj) {
+    return Math.floor(heightOf(runObj));
+  }
+  function hudLine(spec, playing) {
+    const m = heightOf(run);
+    const label = `${m.toFixed(1)}m`;
+    if (!spec) return `HEIGHT ${label}`;
+    if (spec.coda) return `ENDLESS · HEIGHT ${label} · ${spec.title}`;
+    return `HEIGHT ${label} · ${spec.title}`;
+  }
+
+  function roomTell(spec) {
+    if (!spec) return "HOLD AND CIRCLE — HEIGHT IS DEPTH";
+    if (spec.kind === "coda") return "ENDLESS — RING SHRINKS";
+    if (spec.kind === "comboFinale") return "TWIN RING + GUST + FAKE SNAP + REVERSE PULSE";
+    if (spec.invertDrag) return "CIRCLE THE OTHER WAY";
+    if (spec.gust) return "GUSTS SHOVE THE RIBBONS";
+    if (spec.dualNeedle) return "SPEED AND RADIUS MUST BOTH SIT SWEET";
+    if (spec.fakeSnap) return "FAKE SNAPS — IGNORE THE LIE";
+    if (spec.sagEats) return "IDLE MELTS THE CLOUD";
+    if (spec.pulse) return "TUB PULSES — SYNC THE WIND";
+    return "HOLD AND CIRCLE — HEIGHT IS DEPTH";
+  }
+
+  function makeAura() {
+    const g = new THREE.Group();
+    const skin = mat(0xf0c4a8, { emissive: 0x3a2018, emissiveIntensity: 0.12 });
+    const hair = mat(0x3d2418, { emissive: 0x1a0c08, emissiveIntensity: 0.15 });
+    const gold = mat(0xe8b84a, { metalness: 0.65, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.55 });
+    const heart = mat(0xd22b3a, { emissive: 0xd22b3a, emissiveIntensity: 0.65, roughness: 0.35 });
+    const dress = mat(0x1e6b3c, { emissive: 0x0a2010, emissiveIntensity: 0.25 });
+    const blouse = mat(0xf5f0ea, { emissive: 0x3a3028, emissiveIntensity: 0.18 });
+    const shoe = mat(0x141414, { roughness: 0.22, metalness: 0.45 });
+
+    const hip = new THREE.Group();
+    hip.position.y = 0.55;
+    g.add(hip);
+    hip.add(mesh(GEO.cyl, blouse, 0.14, 0.28, 0.14, 0, 0.3, 0));
+    const pinafore = mesh(GEO.cyl, dress, 0.24, 0.38, 0.24, 0, 0.06, 0);
+    pinafore.scale.set(1, 1, 0.85);
+    hip.add(pinafore);
+    const gem = mesh(GEO.box, heart, 0.08, 0.08, 0.035, 0, 0.22, 0.16);
+    gem.rotation.z = Math.PI / 4;
+    hip.add(gem);
+
+    const head = new THREE.Group();
+    head.position.y = 0.62;
+    hip.add(head);
+    head.add(mesh(GEO.sphere, skin, 0.18, 0.18, 0.18, 0, 0.02, 0));
+    head.add(mesh(GEO.sphere, hair, 0.2, 0.12, 0.2, 0, 0.1, -0.02));
+    [-1, 1].forEach((side) => {
+      head.add(mesh(GEO.sphere, hair, 0.1, 0.1, 0.1, side * 0.18, -0.04, 0.04));
+      head.add(mesh(GEO.sphere, heart, 0.04, 0.04, 0.04, side * 0.18, 0.05, 0.06));
+      head.add(mesh(GEO.sphere, mat(0xf7f2ea), 0.036, 0.042, 0.018, side * 0.055, 0.03, 0.16));
+      head.add(mesh(GEO.sphere, mat(0x2a1810), 0.02, 0.02, 0.02, side * 0.055, 0.03, 0.175));
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.007, 6, 10, Math.PI), mat(0xc45a6a));
+    smile.position.set(0, -0.04, 0.165);
+    smile.rotation.x = 2.55;
+    head.add(smile);
+
+    const crown = new THREE.Group();
+    crown.position.y = 0.22;
+    head.add(crown);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold);
+    band.rotation.x = Math.PI / 2;
+    crown.add(band);
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const h = i === 1 ? 0.14 : 0.09;
+      const spike = new THREE.Mesh(GEO.cone, gold);
+      spike.scale.set(0.035, h, 0.035);
+      spike.position.set(x, h * 0.45, 0);
+      crown.add(spike);
+    });
+    const heartGem = mesh(GEO.box, heart, 0.05, 0.05, 0.025, 0, 0.02, 0.12);
+    heartGem.rotation.z = Math.PI / 4;
+    crown.add(heartGem);
+
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.18 : 0.08), arm ? 0.38 : 0.0, 0);
+      const len = arm ? 0.3 : 0.36;
+      const bone = mesh(GEO.cyl, arm ? skin : dress, arm ? 0.035 : 0.045, len, arm ? 0.035 : 0.045, 0, -len / 2, 0);
+      pivot.add(bone);
+      if (arm) pivot.add(mesh(GEO.sphere, skin, 0.04, 0.04, 0.04, 0, -len, 0));
+      else pivot.add(mesh(GEO.box, shoe, 0.08, 0.05, 0.13, 0, -len - 0.02, 0.03));
+      hip.add(pivot);
+      return pivot;
+    }
+    const armL = limb(-1, true);
+    const armR = limb(1, true);
+    limb(-1, false);
+    limb(1, false);
+    const spare = makeConeMesh(0.85);
+    spare.position.set(0, -0.42, 0.02);
+    spare.rotation.z = 0.4;
+    armR.add(spare);
+
+    g.userData = { hip, head, armL, armR, mood: "idle", moodT: 0 };
+    g.scale.setScalar(1.12);
+    g.position.set(2.42, 0, 1.15);
+    g.rotation.y = -1.05;
+    g.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+    return g;
+  }
+
+  function makeConeMesh(scale) {
+    const g = new THREE.Group();
+    const paper = mat(0xf4e6d0, { roughness: 0.55, emissive: 0x3a2418, emissiveIntensity: 0.08 });
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.22, 14, 1, true), paper);
+    cone.position.y = 0.11;
+    cone.rotation.x = Math.PI;
+    g.add(cone);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.006, 6, 16), mat(0xfff4ea, { roughness: 0.45 }));
+    rim.position.y = 0.0;
+    rim.rotation.x = Math.PI / 2;
+    g.add(rim);
+    g.scale.setScalar(scale || 1);
+    return g;
+  }
+
+  function makeRibbon(puffMat) {
+    const g = new THREE.Group();
+    const puffs = [];
+    for (let i = 0; i < PUFF_N; i += 1) {
+      const m = new THREE.Mesh(GEO.sphere, puffMat.clone());
+      m.scale.setScalar(0.045 + i * 0.007);
+      g.add(m);
+      puffs.push(m);
+    }
+    g.visible = false;
     return {
-      lo: spec.liarLo != null ? spec.liarLo : 0.34,
-      hi: spec.liarHi != null ? spec.liarHi : 0.56,
+      mesh: g, puffs, alive: false, caught: false, age: 0, life: 2.6,
+      a0: 0, wind: 0, yieldM: 0.85, flash: 0,
     };
   }
 
-  function tensionState(spec, tension, t) {
-    const band = liveBand(spec, t);
-    const tooClose = !!(run && run.tooClose);
-    const t2 = run && run.tension2 != null ? run.tension2 : tension;
-    const inA = !tooClose && tension >= band.lo && tension <= band.hi;
-    const liar = liarBand(spec);
-    const onLiar = !!(!tooClose && liar && tension >= liar.lo && tension <= liar.hi && !inA);
+  function buildWorld(canvas) {
+    const renderer = new THREE.WebGLRenderer({
+      canvas, antialias: true, alpha: false, powerPreference: "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    if (THREE.ACESFilmicToneMapping != null) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.12;
+    }
+    renderer.setClearColor(0x140810, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x1a0812, 0.045);
+    scene.background = new THREE.Color(0x140810);
+
+    const camera = new THREE.PerspectiveCamera(46, 1.5, 0.08, 40);
+    camera.position.copy(CAM_PLAY);
+
+    const stripe = canvasTex(256, 256, (ctx) => {
+      for (let i = 0; i < 12; i += 1) {
+        ctx.fillStyle = i % 2 ? "#f3b6cc" : "#fff4ec";
+        ctx.fillRect(i * 22, 0, 22, 256);
+      }
+      ctx.fillStyle = "rgba(90,20,40,0.12)";
+      for (let i = 0; i < 18; i += 1) ctx.fillRect(0, i * 14, 256, 2);
+    }, 4, 2);
+    const wood = canvasTex(256, 256, (ctx) => {
+      ctx.fillStyle = "#2a1a12";
+      ctx.fillRect(0, 0, 256, 256);
+      for (let y = 0; y < 256; y += 28) {
+        ctx.fillStyle = y % 56 ? "#3a2418" : "#2e1c12";
+        ctx.fillRect(0, y, 256, 26);
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.fillRect(0, y + 25, 256, 2);
+        ctx.fillStyle = "rgba(255,196,90,0.08)";
+        ctx.fillRect(20 + (y % 40), y + 8, 90, 3);
+      }
+    }, 2, 4);
+    const signTex = canvasTex(512, 160, (ctx) => {
+      ctx.fillStyle = "#6a2038";
+      ctx.fillRect(0, 0, 512, 160);
+      ctx.strokeStyle = "#e8b84a";
+      ctx.lineWidth = 10;
+      ctx.strokeRect(8, 8, 496, 144);
+      ctx.fillStyle = "#ffe6f2";
+      ctx.font = "bold 52px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("FAIRY FLOSS", 256, 72);
+      ctx.fillStyle = "#f4a0c0";
+      ctx.font = "22px Georgia, serif";
+      ctx.fillText("CIRCLE · HEIGHT · SNAP KILLS", 256, 118);
+    }, 1, 1);
+    signTex.wrapS = signTex.wrapT = THREE.ClampToEdgeWrapping;
+
+    scene.add(new THREE.HemisphereLight(0xffd0e8, 0x1a0c10, 0.78));
+    const sun = new THREE.DirectionalLight(0xffe0c4, 0.58);
+    sun.position.set(2.6, 5.4, 3.4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 16;
+    sun.shadow.camera.left = -5;
+    sun.shadow.camera.right = 5;
+    sun.shadow.camera.top = 5;
+    sun.shadow.camera.bottom = -5;
+    scene.add(sun);
+    const tubLight = new THREE.PointLight(0xff6aa8, 2.6, 7, 1.35);
+    tubLight.position.set(TUB.x, TUB.y + 0.28, TUB.z);
+    scene.add(tubLight);
+    const lanternL = new THREE.PointLight(0xffc878, 0.95, 6, 1.5);
+    lanternL.position.set(-1.8, 2.55, 0.7);
+    scene.add(lanternL);
+    const lanternR = new THREE.PointLight(0xff9ec8, 0.85, 6, 1.5);
+    lanternR.position.set(1.9, 2.6, 0.3);
+    scene.add(lanternR);
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(5.2, 40),
+      mat(0x3a2418, { map: wood, roughness: 0.84 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const tentMat = mat(0xf4c4d4, {
+      map: stripe, roughness: 0.86, metalness: 0.02,
+      side: THREE.DoubleSide, transparent: true, opacity: 0.94,
+    });
+    const wall = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.05, 4.25, 3.5, 24, 1, true, Math.PI * 0.18, Math.PI * 1.64),
+      tentMat
+    );
+    wall.position.y = 1.75;
+    wall.receiveShadow = true;
+    scene.add(wall);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(4.45, 1.75, 18, 1, true), tentMat);
+    roof.position.y = 4.25;
+    scene.add(roof);
+    scene.add(new THREE.Mesh(new THREE.SphereGeometry(14, 16, 10), mat(0x1a1020, { roughness: 0.95, side: THREE.BackSide })));
+
+    for (let i = 0; i < 14; i += 1) {
+      const a = (i / 14) * TAU;
+      const bulb = mesh(
+        GEO.sphere,
+        mat(i % 2 ? 0xffe08a : 0xff9ec8, { emissive: i % 2 ? 0xffc050 : 0xff6aa8, emissiveIntensity: 1.45, roughness: 0.3 }),
+        0.05, 0.05, 0.05,
+        Math.sin(a) * 2.85, 2.85, Math.cos(a) * 2.85 - 0.2
+      );
+      scene.add(bulb);
+    }
+
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.35, 0.7),
+      mat(0xffffff, { map: signTex, roughness: 0.5, emissive: 0x3a1020, emissiveIntensity: 0.28 })
+    );
+    sign.position.set(0, 2.72, -2.85);
+    scene.add(sign);
+
+    const cart = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.92, 2.02, 0.78, 28),
+      mat(0x3a2418, { map: wood, roughness: 0.7 })
+    );
+    cart.position.set(0, 0.39, 0);
+    cart.castShadow = true;
+    cart.receiveShadow = true;
+    scene.add(cart);
+    const top = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.96, 1.96, 0.07, 28),
+      mat(0x5a3a24, { roughness: 0.42 })
+    );
+    top.position.set(0, 0.8, 0);
+    top.receiveShadow = true;
+    scene.add(top);
+
+    const copper = mat(0xb87333, { metalness: 0.86, roughness: 0.28, emissive: 0x4a1808, emissiveIntensity: 0.22 });
+    const tubGroup = new THREE.Group();
+    tubGroup.position.set(TUB.x, TUB.y, TUB.z);
+    const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.5, 0.24, 32, 1, true), copper);
+    basin.castShadow = true;
+    tubGroup.add(basin);
+    const basinBot = new THREE.Mesh(new THREE.CircleGeometry(0.5, 28), copper);
+    basinBot.rotation.x = -Math.PI / 2;
+    basinBot.position.y = -0.12;
+    tubGroup.add(basinBot);
+    const rimC = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.032, 8, 32), copper);
+    rimC.rotation.x = Math.PI / 2;
+    rimC.position.y = 0.12;
+    tubGroup.add(rimC);
+    const sugar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.46, 0.46, 0.07, 24),
+      mat(0xff8ec4, { emissive: 0xff4aa0, emissiveIntensity: 1.2, roughness: 0.32, transparent: true, opacity: 0.92 })
+    );
+    sugar.position.y = 0.02;
+    tubGroup.add(sugar);
+    const spinner = new THREE.Group();
+    spinner.add(mesh(GEO.cyl, mat(0xd4a45a, { metalness: 0.8, roughness: 0.25, emissive: 0xff6aa8, emissiveIntensity: 0.55 }), 0.09, 0.16, 0.09, 0, 0.08, 0));
+    spinner.add(mesh(GEO.sphere, mat(0xffb0d0, { emissive: 0xff5aa0, emissiveIntensity: 1.5, roughness: 0.28 }), 0.09, 0.09, 0.09, 0, 0.2, 0));
+    for (let i = 0; i < 3; i += 1) {
+      const arm = mesh(GEO.box, copper, 0.34, 0.03, 0.05, 0.2, 0.14, 0);
+      arm.rotation.y = (i / 3) * TAU;
+      spinner.add(arm);
+    }
+    tubGroup.add(spinner);
+    scene.add(tubGroup);
+
+    const sweetRing = new THREE.Mesh(
+      new THREE.TorusGeometry(RING_R, 0.028, 10, 64),
+      mat(0xff9ec8, { emissive: 0xff6aa8, emissiveIntensity: 0.95, transparent: true, opacity: 0.78, roughness: 0.28 })
+    );
+    sweetRing.rotation.x = Math.PI / 2;
+    sweetRing.position.set(TUB.x, TUB.y + 0.02, TUB.z);
+    scene.add(sweetRing);
+
+    const heatRing = new THREE.Mesh(
+      new THREE.TorusGeometry(HEAT_R, 0.016, 8, 40),
+      mat(0xc41e3a, { emissive: 0xff2244, emissiveIntensity: 0.4, transparent: true, opacity: 0.35, roughness: 0.4 })
+    );
+    heatRing.rotation.x = Math.PI / 2;
+    heatRing.position.set(TUB.x, TUB.y + 0.01, TUB.z);
+    scene.add(heatRing);
+
+    const arrows = new THREE.Group();
+    const arrowMat = mat(0xffe08a, { emissive: 0xe8b84a, emissiveIntensity: 0.7, roughness: 0.35 });
+    for (let i = 0; i < 8; i += 1) {
+      const a = (i / 8) * TAU;
+      const chev = mesh(GEO.cone, arrowMat, 0.05, 0.12, 0.05, Math.cos(a) * RING_R, TUB.y + 0.08, Math.sin(a) * RING_R);
+      chev.rotation.z = -Math.PI / 2;
+      chev.rotation.y = -a;
+      arrows.add(chev);
+    }
+    scene.add(arrows);
+
+    const hitPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 8),
+      new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+    );
+    hitPlane.rotation.x = -Math.PI / 2;
+    hitPlane.position.y = TUB.y;
+    scene.add(hitPlane);
+
+    const puffMat = mat(0xff9ec8, { emissive: 0xff5aa0, emissiveIntensity: 1.15, roughness: 0.35, transparent: true, opacity: 0.92 });
+    const ribbons = [];
+    const ribbonGroup = new THREE.Group();
+    scene.add(ribbonGroup);
+    for (let i = 0; i < RIBBON_N; i += 1) {
+      const r = makeRibbon(puffMat);
+      ribbonGroup.add(r.mesh);
+      ribbons.push(r);
+    }
+
+    const cone = makeConeMesh(1.35);
+    cone.position.set(RING_R, TUB.y + 0.12, 0.2);
+    scene.add(cone);
+    const cloud = new THREE.Group();
+    cone.add(cloud);
+    const cloudMat = mat(0xffb0d4, { emissive: 0xff6aa8, emissiveIntensity: 0.85, roughness: 0.4, transparent: true, opacity: 0.92 });
+    for (let i = 0; i < CLOUD_N; i += 1) {
+      const p = new THREE.Mesh(GEO.sphereHi, cloudMat.clone());
+      const u = i / CLOUD_N;
+      p.position.set(Math.sin(i * 2.2) * (0.04 + u * 0.08), 0.2 + u * 0.55, Math.cos(i * 1.7) * (0.04 + u * 0.08));
+      p.scale.setScalar(0.055 + u * 0.08);
+      p.visible = false;
+      p.userData = { vx: 0, vy: 0, vz: 0, scatter: 0, home: p.position.clone() };
+      cloud.add(p);
+    }
+
+    const strandGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    const strand = new THREE.Line(strandGeo, new THREE.LineBasicMaterial({
+      color: 0xff9ec8, transparent: true, opacity: 0.0,
+    }));
+    scene.add(strand);
+
+    const sparkGeo = new THREE.BufferGeometry();
+    const sparkPos = new Float32Array(SPARK_N * 3);
+    const sparkVel = [];
+    for (let i = 0; i < SPARK_N; i += 1) {
+      sparkPos[i * 3] = 0;
+      sparkPos[i * 3 + 1] = -8;
+      sparkPos[i * 3 + 2] = 0;
+      sparkVel.push({ vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+    sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
+    const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({
+      color: 0xffc0dc, size: 0.055, transparent: true, opacity: 0.9, depthWrite: false,
+    }));
+    scene.add(sparks);
+
+    const motesGeo = new THREE.BufferGeometry();
+    const motePos = new Float32Array(56 * 3);
+    for (let i = 0; i < 56; i += 1) {
+      motePos[i * 3] = (Math.random() - 0.5) * 7;
+      motePos[i * 3 + 1] = 0.5 + Math.random() * 3.6;
+      motePos[i * 3 + 2] = (Math.random() - 0.5) * 6;
+    }
+    motesGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+    const motes = new THREE.Points(motesGeo, new THREE.PointsMaterial({
+      color: 0xffc0dc, size: 0.04, transparent: true, opacity: 0.42, depthWrite: false,
+    }));
+    scene.add(motes);
+
+    const gustStreaks = new THREE.Group();
+    for (let i = 0; i < 7; i += 1) {
+      const s = mesh(
+        GEO.box,
+        mat(0xfff4ea, { transparent: true, opacity: 0, emissive: 0xffe6f2, emissiveIntensity: 0.4 }),
+        0.04, 0.02, 0.55, -1.2 + i * 0.35, TUB.y + 0.35, 0.4
+      );
+      gustStreaks.add(s);
+    }
+    scene.add(gustStreaks);
+
+    const jars = new THREE.Group();
+    [0xff9ec8, 0xffe08a, 0xc8f0e8].forEach((col, i) => {
+      const jar = mesh(GEO.cyl, mat(col, { transparent: true, opacity: 0.55, roughness: 0.2, emissive: col, emissiveIntensity: 0.25 }), 0.1, 0.18, 0.1, -1.55 + i * 0.28, 0.98, 1.15);
+      jars.add(jar);
+    });
+    scene.add(jars);
+    for (let i = 0; i < 5; i += 1) {
+      const spare = makeConeMesh(0.7);
+      spare.position.set(-1.55 + i * 0.12, 0.9, 1.42);
+      spare.rotation.z = 0.15 * (i % 2 ? 1 : -1);
+      scene.add(spare);
+    }
+
+    const aura = makeAura();
+    scene.add(aura);
+
+    const wash = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.MeshBasicMaterial({ color: 0xff6aa8, transparent: true, opacity: 0, depthTest: false })
+    );
+    wash.renderOrder = 20;
+    camera.add(wash);
+    wash.position.z = -0.35;
+    scene.add(camera);
+
+    return {
+      renderer, scene, camera, hitPlane, tubGroup, spinner, sugar, sweetRing, heatRing,
+      arrows, cone, cloud, ribbons, strand, sparks, sparkVel, motes, gustStreaks,
+      aura, tubLight, wash, sign,
+    };
+  }
+
+  function burstSparks(x, y, z, n, speed) {
+    if (!world) return;
+    const pos = world.sparks.geometry.attributes.position;
+    let spawned = 0;
+    for (let i = 0; i < SPARK_N && spawned < n; i += 1) {
+      const v = world.sparkVel[i];
+      if (v.life > 0) continue;
+      v.life = 0.55 + Math.random() * 0.4;
+      const s = (speed || 1.4) * (0.5 + Math.random());
+      const a = Math.random() * TAU;
+      v.vx = Math.cos(a) * s;
+      v.vy = 0.6 + Math.random() * 1.6;
+      v.vz = Math.sin(a) * s;
+      pos.setXYZ(i, x, y, z);
+      spawned += 1;
+    }
+    pos.needsUpdate = true;
+  }
+
+  function setAuraMood(mood) {
+    if (!world || !world.aura) return;
+    world.aura.userData.mood = mood;
+    world.aura.userData.moodT = 0.95;
+  }
+
+  function updateAura(dt, t) {
+    const a = world && world.aura;
+    if (!a) return;
+    const ud = a.userData;
+    ud.moodT = Math.max(0, ud.moodT - dt);
+    const sway = REDUCE ? 0 : Math.sin(t * 1.4) * 0.05;
+    ud.hip.rotation.y = sway;
+    ud.head.rotation.y = sway * 0.55 - 0.2;
+    if (ud.mood === "cheer" && ud.moodT > 0) {
+      ud.armL.rotation.z = 2.15;
+      ud.armR.rotation.z = -1.8;
+    } else if (ud.mood === "point" && ud.moodT > 0) {
+      ud.armR.rotation.z = -0.15;
+      ud.armR.rotation.x = -0.95;
+      ud.armL.rotation.z = 0.28;
+    } else {
+      ud.armL.rotation.z = 0.32 + Math.sin(t * 2.1) * 0.12;
+      ud.armR.rotation.z = -0.5 + Math.sin(t * 1.6) * 0.08;
+      ud.armR.rotation.x = -0.22;
+    }
+    if (ud.moodT <= 0) ud.mood = "idle";
+  }
+
+  function coneRadius() {
+    return Math.hypot(input.x - TUB.x, input.z - TUB.z);
+  }
+
+  function clampPlay(x, z) {
+    const dx = x - TUB.x;
+    const dz = z - TUB.z;
+    const r = Math.hypot(dx, dz) || 0.001;
+    const nr = clamp(r, 0.32, 1.82);
+    return { x: TUB.x + (dx / r) * nr, z: TUB.z + (dz / r) * nr };
+  }
+
+  function projectPointer(ev) {
+    if (!world) return null;
+    const canvas = world.renderer.domElement;
+    const r = canvas.getBoundingClientRect();
+    const t = (ev.touches && ev.touches[0]) || (ev.changedTouches && ev.changedTouches[0]) || ev;
+    const sx = t.clientX - r.left;
+    const sy = t.clientY - r.top;
+    _v.set(TUB.x, TUB.y, TUB.z).project(world.camera);
+    const tx = (_v.x * 0.5 + 0.5) * r.width;
+    const ty = (-_v.y * 0.5 + 0.5) * r.height;
+    const dx = sx - tx;
+    const dy = sy - ty;
+    const distPx = Math.hypot(dx, dy);
+    if (distPx < 36) return { x: input.aimX, z: input.aimZ, skip: true };
+    const ang = Math.atan2(dy, dx);
+    const spec = liveSpec();
+    let rad = RING_R;
     if (spec && spec.dualNeedle) {
-      const inB = !tooClose && t2 >= band.lo && t2 <= band.hi;
-      const overA = !tooClose && (tension > band.hi || onLiar);
-      const overB = !tooClose && t2 > band.hi;
-      const sagA = tooClose || (tension < band.lo && !onLiar);
-      const sagB = tooClose || t2 < band.lo;
-      return {
-        lo: band.lo,
-        hi: band.hi,
-        inBand: inA && inB,
-        inA,
-        inB,
-        dual: true,
-        onLiar,
-        tooClose,
-        over: overA || overB,
-        sag: (sagA || sagB) && !overA && !overB,
-      };
+      _v2.set(TUB.x + RING_R, TUB.y, TUB.z).project(world.camera);
+      const rx = (_v2.x * 0.5 + 0.5) * r.width;
+      const ry = (-_v2.y * 0.5 + 0.5) * r.height;
+      const ringPx = Math.max(48, Math.hypot(rx - tx, ry - ty));
+      rad = clamp(RING_R * (distPx / ringPx), 0.62, 1.78);
     }
     return {
-      lo: band.lo,
-      hi: band.hi,
-      inBand: inA,
-      onLiar,
-      tooClose,
-      over: !tooClose && (tension > band.hi || onLiar),
-      sag: tooClose || (tension < band.lo && !onLiar),
+      x: TUB.x + Math.cos(ang) * rad,
+      z: TUB.z + Math.sin(ang) * rad,
+      ang,
     };
   }
 
-  function pulseMul(spec, t) {
-    if (!spec || !spec.pulse) return 1;
-    return 1 + 0.42 * Math.sin((t || 0) * 0.0036);
+  function resize() {
+    if (!world) return;
+    const canvas = world.renderer.domElement;
+    const host = canvas.parentElement || canvas;
+    const w = Math.max(1, host.clientWidth || window.innerWidth);
+    const h = Math.max(1, host.clientHeight || window.innerHeight);
+    world.renderer.setSize(w, h, false);
+    world.camera.aspect = w / h;
+    world.camera.fov = w < 560 ? 54 : 46;
+    world.camera.updateProjectionMatrix();
   }
 
-  function cheatLabel(spec) {
-    if (!spec) return "";
-    if (spec.kind === "coda") return "SUGAR EDGE";
-    if (spec.kind === "comboFinale") return "SUGAR OPERA";
-    if (spec.kind === "pulseTub" || (spec.pulse && !spec.dualNeedle)) return "TUB PULSE";
-    if (spec.sagEats) return "SAG EATS";
-    if (spec.fakeSnap) return "FAKE SNAPS";
-    if (spec.invertDrag) return "REVERSE WIND";
-    if (spec.gust || spec.gustOnce) return "GUST STALL";
-    if (spec.dualNeedle) return "TWIN STRAND";
-    return "";
+  function killRibbon(rib) {
+    rib.alive = false;
+    rib.caught = false;
+    rib.age = 0;
+    rib.wind = 0;
+    rib.mesh.visible = false;
   }
 
-  function hudLine(spec, playing) {
-    if (!spec) return "STAGE 0";
-    if (spec.coda) return `ENDLESS · STAGE ${playing} · ${spec.title}`;
-    return `STAGE ${playing} · ${spec.title}`;
+  function spawnRibbon(spec, forceAng) {
+    if (!world) return null;
+    const rib = world.ribbons.find((r) => !r.alive);
+    if (!rib) return null;
+    rib.alive = true;
+    rib.caught = false;
+    rib.age = 0;
+    rib.wind = 0;
+    rib.life = spec.flyLife || 2.6;
+    rib.a0 = forceAng != null ? forceAng : Math.random() * TAU;
+    rib.yieldM = 0.7 + Math.random() * 0.35;
+    rib.flash = 0;
+    rib.mesh.visible = true;
+    rib.puffs.forEach((p) => { p.material.opacity = 0.92; p.material.emissiveIntensity = 1.15; });
+    return rib;
   }
 
-  function stageEl() {
-    const host = card();
-    return (host && host.querySelector(".vendor-stage")) || null;
+  function liveCount() {
+    if (!world) return 0;
+    let n = 0;
+    for (let i = 0; i < world.ribbons.length; i += 1) if (world.ribbons[i].alive) n += 1;
+    return n;
+  }
+
+  function caughtCount() {
+    if (!world) return 0;
+    let n = 0;
+    for (let i = 0; i < world.ribbons.length; i += 1) if (world.ribbons[i].alive && world.ribbons[i].caught) n += 1;
+    return n;
+  }
+
+  function ribbonPos(rib, i, spec, t) {
+    const u = i / (PUFF_N - 1);
+    if (rib.caught) {
+      const wrap = rib.wind * 10 + u * 6 + t * 8;
+      const cr = 0.05 + u * 0.05 + rib.wind * 0.04;
+      return {
+        x: input.x + Math.cos(wrap) * cr,
+        y: TUB.y + 0.14 + u * 0.22 + rib.wind * 0.12,
+        z: input.z + Math.sin(wrap) * cr,
+      };
+    }
+    const age = rib.age;
+    const spin = (spec.flySpin || 1.5) * (invertActive(spec) ? -1 : 1);
+    const expand = (spec.flyR || 1.25);
+    let rad = lerp(0.18, expand, Math.min(1, age / rib.life));
+    if (run && run.gustUntil > (run.t || 0)) rad += (run.gustSign || 1) * (spec.gustJump || 0.18);
+    const ang = rib.a0 + age * spin + u * 1.15;
+    const rise = (spec.flyH || 0.45) * Math.sin(Math.min(1, age / rib.life) * Math.PI) * (1 - u * 0.25);
+    return {
+      x: TUB.x + Math.cos(ang) * rad,
+      y: TUB.y + 0.16 + rise,
+      z: TUB.z + Math.sin(ang) * rad,
+    };
+  }
+
+  function tensionOf() {
+    const spec = liveSpec();
+    const band = liveBand(spec, simT);
+    let lo = band.lo;
+    let hi = band.hi;
+    if (run && run.wasInBand) {
+      lo = Math.max(0.08, lo - 0.07);
+      hi = Math.min(0.92, hi + 0.08);
+    }
+    const speed = clamp(input.speed / SPEED_REF, 0, 1);
+    const r = coneRadius();
+    const radiusN = clamp((r - 0.34) / 1.55, 0, 1);
+    const tooClose = r < HEAT_R;
+    const invertOn = invertActive(spec) && isLive();
+    const invertFail = invertOn && input.speedSigned > 0.45;
+    const dirOk = !invertOn || input.speedSigned < -0.1;
+    const inSpeed = !tooClose && speed >= lo && speed <= hi && dirOk && !invertFail;
+    const inRad = !tooClose && radiusN >= lo && radiusN <= hi;
+    const dual = !!(spec && spec.dualNeedle);
+    const inBand = dual ? (inSpeed && inRad) : inSpeed;
+    const over = !tooClose && (speed > hi || invertFail);
+    const sag = tooClose || (!over && speed < lo);
+    if (run) run.wasInBand = !!(inBand && input.down);
+    return { lo: band.lo, hi: band.hi, speed, radiusN, tooClose, inBand, inSpeed, inRad, dual, over, sag, invertFail };
+  }
+
+  function paintGauges(st) {
+    const n = el("fairyFlossNeedle");
+    const n2 = el("fairyFlossNeedle2");
+    const b = el("fairyFlossBand");
+    const b2 = el("fairyFlossBand2");
+    const rad = el("fairyFlossRadius");
+    if (n) n.style.left = `${clamp(st.speed, 0, 1) * 100}%`;
+    if (b) {
+      b.style.left = `${st.lo * 100}%`;
+      b.style.width = `${Math.max(4, (st.hi - st.lo) * 100)}%`;
+    }
+    if (rad) rad.hidden = !st.dual;
+    if (st.dual) {
+      if (n2) n2.style.left = `${clamp(st.radiusN, 0, 1) * 100}%`;
+      if (b2) {
+        b2.style.left = `${st.lo * 100}%`;
+        b2.style.width = `${Math.max(4, (st.hi - st.lo) * 100)}%`;
+      }
+    }
+  }
+
+  function paintNeed() {
+    if (!run || !run.spec) {
+      setText("fairyFlossNeed", "0 / 0m");
+      setText("fairyFlossMetresLive", "0.0m");
+      return;
+    }
+    setText("fairyFlossMetresLive", `${run.totalMetres.toFixed(1)}m`);
+    setText("fairyFlossNeed", `${run.totalMetres.toFixed(1)} / ${run.spec.metresNeeded}m`);
+  }
+
+  function addMetres(amount) {
+    if (!isLive() || amount <= 0 || run.stageHold > 0) return;
+    const before = run.totalMetres;
+    run.totalMetres += amount;
+    const tenths = Math.floor(run.totalMetres * 10) - Math.floor(before * 10);
+    if (tenths > 0) run.score += tenths * SCORE_PER_TENTH;
+    run.depth = heightDepth(run);
+    if (run.kitRun) {
+      run.kitRun.score = run.score;
+      run.kitRun.depth = run.depth;
+    }
+    paintNeed();
+    ensureHud();
+    if (Math.floor(run.totalMetres) !== Math.floor(before)) {
+      tellDepth(run.depth);
+      if (typeof PF.refreshDepth === "function") PF.refreshDepth();
+    }
+    if (run.totalMetres >= run.spec.metresNeeded) clearStage();
+  }
+
+  function catchRibbon(rib, spec) {
+    rib.caught = true;
+    rib.flash = 1;
+    sfx("tray");
+    burstSparks(input.x, TUB.y + 0.2, input.z, 12, 0.9);
+    punch.t = 0.7;
+    punch.mag = 0.05;
+    setAuraMood("cheer");
+    if (!run.taughtCatch) {
+      run.taughtCatch = true;
+      showToast("ON THE CONE", "Keep circling — height is depth", 1100, "wind");
+    }
+    setText("fairyFlossStatus", `Winding. Height ${run.totalMetres.toFixed(1)}m. One snap kills.`);
+  }
+
+  function dropRibbon(rib, ate) {
+    burstSparks(rib.puffs[0].position.x, rib.puffs[0].position.y, rib.puffs[0].position.z, 8, 0.6);
+    killRibbon(rib);
+    sfx("drop");
+    if (ate && isLive() && run.spec.sagEats) {
+      run.totalMetres = Math.max(0, run.totalMetres - 0.35);
+      paintNeed();
+    }
+  }
+
+  function doSnap(reason) {
+    if (!isLive()) return;
+    const spec = run.spec;
+    if (run.fakeLeft > 0 && reason === "snap") {
+      run.fakeLeft -= 1;
+      showToast("FAKE SNAP", "Ignore the lie — keep winding", 900, "fake");
+      punch.t = 0.4;
+      punch.mag = 0.04;
+      if (world) world.wash.material.opacity = 0.12;
+      sfx("spit");
+      return;
+    }
+    run.snaps += 1;
+    tellStrike("snap");
+    ensurePips(1);
+    burstSparks(input.x, TUB.y + 0.25, input.z, 28, 1.8);
+    punch.t = 1;
+    punch.mag = 0.16;
+    if (world) world.wash.material.opacity = 0.38;
+    setAuraMood("point");
+    scatterCloud();
+    world.ribbons.forEach((r) => { if (r.caught) killRibbon(r); });
+    sfx("stamp");
+    showToast("SNAP", "The cloud died. Too fast.", 1100);
+    setText("fairyFlossStatus", `SNAP — death at ${run.totalMetres.toFixed(1)}m.`);
+    beginDeath("snap");
+  }
+
+  function scatterCloud() {
+    if (!world) return;
+    world.cloud.children.forEach((p) => {
+      if (!p.visible) return;
+      p.userData.scatter = 0.8;
+      p.userData.vx = (Math.random() - 0.5) * 2.4;
+      p.userData.vy = 0.8 + Math.random() * 1.6;
+      p.userData.vz = (Math.random() - 0.5) * 2.4;
+    });
+  }
+
+  function updateCloud(dt, t) {
+    if (!world) return;
+    const metres = run ? run.totalMetres : 0.4;
+    const height = 0.28 + metres * 0.34;
+    const want = metres > 0.04
+      ? clamp(4 + Math.floor(metres * 4.2), 4, CLOUD_N)
+      : (isLive() ? 2 : 5);
+    world.cloud.children.forEach((p, i) => {
+      const ud = p.userData;
+      const u = i / Math.max(1, CLOUD_N - 1);
+      const y = 0.2 + u * height;
+      const rad = 0.045 + u * (0.07 + Math.min(0.16, metres * 0.012));
+      const spin = t * 0.85 + i * 0.65;
+      ud.home.set(Math.sin(spin) * rad, y, Math.cos(spin * 0.92) * rad);
+      if (ud.scatter > 0) {
+        ud.scatter -= dt;
+        p.position.x += ud.vx * dt;
+        p.position.y += ud.vy * dt;
+        p.position.z += ud.vz * dt;
+        ud.vy -= 2.8 * dt;
+        p.material.opacity = Math.max(0, ud.scatter);
+        if (ud.scatter <= 0) {
+          p.visible = false;
+          p.position.copy(ud.home);
+          p.material.opacity = 0.92;
+        }
+        return;
+      }
+      p.visible = i < want;
+      if (!p.visible) return;
+      p.position.copy(ud.home);
+      const s = 0.055 + u * 0.1 + Math.min(0.07, metres * 0.005) + Math.sin(t * 4 + i) * (REDUCE ? 0 : 0.008);
+      p.scale.setScalar(s);
+    });
+  }
+
+  function tickRibbons(dt, t, spec) {
+    if (!world) return;
+    const live = isLive() && run.stageHold <= 0;
+    if (live) {
+      run.spawnCd -= dt;
+      if (run.spawnCd <= 0 && liveCount() < (spec.maxLive || 3)) {
+        spawnRibbon(spec);
+        run.spawnCd = (spec.spawnMs || 1000) / 1000;
+      }
+    } else if (!run || run.done) {
+      if (liveCount() < 2 && Math.random() < dt * 0.8) spawnRibbon(spec);
+    }
+
+    const st = tensionOf();
+    const catchR = (spec.catchR || 0.45) * (input.down ? 1.2 : 1);
+    let winding = false;
+    for (let i = 0; i < world.ribbons.length; i += 1) {
+      const rib = world.ribbons[i];
+      if (!rib.alive) continue;
+      if (!rib.caught) {
+        rib.age += dt;
+        if (rib.age > rib.life) {
+          killRibbon(rib);
+          continue;
+        }
+        if (live) {
+          const lead = ribbonPos(rib, 2, spec, t);
+          const d = Math.hypot(lead.x - input.x, lead.z - input.z);
+          const dy = Math.abs(lead.y - (TUB.y + 0.16));
+          if (d < catchR && dy < 0.55) catchRibbon(rib, spec);
+        }
+      } else if (live && input.down && st.inBand) {
+        rib.wind = Math.min(1, rib.wind + dt * 0.55);
+        if (rib.wind >= 1) {
+          burstSparks(input.x, TUB.y + 0.28, input.z, 10, 0.7);
+          killRibbon(rib);
+        }
+      }
+      for (let p = 0; p < rib.puffs.length; p += 1) {
+        const pos = ribbonPos(rib, p, spec, t);
+        rib.puffs[p].position.set(pos.x, pos.y, pos.z);
+        const near = Math.hypot(pos.x - input.x, pos.z - input.z) < (catchR + 0.12);
+        rib.puffs[p].material.emissiveIntensity = rib.caught ? 1.6 : (near ? 1.55 : 1.05);
+        rib.puffs[p].material.opacity = rib.caught ? 0.96 : clamp(1.05 - rib.age / rib.life, 0.25, 0.95);
+      }
+    }
+    if (live && input.down && st.inBand) {
+      winding = true;
+      run.overMs = 0;
+      run.sagMs = 0;
+      addMetres(dt * (spec.metrePerSecInBand || 0.4));
+      if (!run.taughtWind) {
+        run.taughtWind = true;
+        showToast("WINDING", "Sugar climbs. Height is depth. Snap kills.", 1100, "wind");
+      }
+    } else if (live && input.down && input.grace <= 0 && (st.over || st.tooClose)) {
+      run.overMs = (run.overMs || 0) + dt * 1000;
+      if (run.overMs >= (spec.snapMs || 280)) {
+        run.overMs = 0;
+        doSnap("snap");
+      }
+    } else if (live && st.inBand) {
+      run.overMs = 0;
+      run.sagMs = 0;
+    } else if (live && !input.down) {
+      run.overMs = 0;
+      run.sagMs = (run.sagMs || 0) + dt * 1000;
+      if (run.sagMs >= 480) {
+        run.sagMs = 0;
+        world.ribbons.forEach((r) => { if (r.alive && r.caught) dropRibbon(r, true); });
+      }
+    }
+    if (live && input.down && input.grace <= 0 && st.tooClose) {
+      run.heatMs = (run.heatMs || 0) + dt * 1000;
+      if (run.heatMs >= (spec.snapMs || 280)) {
+        run.heatMs = 0;
+        doSnap("snap");
+      }
+    } else run.heatMs = 0;
+
+    if (live && spec.sagEats && !winding && caughtCount() === 0) {
+      run.idleMs = (run.idleMs || 0) + dt * 1000;
+      if (run.idleMs >= (spec.sagCatchMs || 520) && run.totalMetres > 0) {
+        run.idleMs = 0;
+        run.totalMetres = Math.max(0, run.totalMetres - 0.12);
+        paintNeed();
+        setCall("SAG EATS");
+      }
+    } else run.idleMs = 0;
+
+    const pos = world.strand.geometry.attributes.position;
+    pos.setXYZ(0, TUB.x, TUB.y + 0.18, TUB.z);
+    pos.setXYZ(1, input.x, TUB.y + 0.16, input.z);
+    pos.needsUpdate = true;
+    world.strand.material.opacity = winding ? 0.7 : (caughtCount() ? 0.35 : 0.08);
+  }
+
+  function tickFx(dt, t, spec, st) {
+    const rpm = (spec.tubRpm || 0.5) * (spec.pulse ? 1 + 0.42 * Math.sin(t * 3.2) : 1);
+    world.spinner.rotation.y += dt * rpm * TAU * (invertActive(spec) ? -1 : 1);
+    world.sugar.rotation.y += dt * rpm * 2.2;
+    const inBand = st.inBand;
+    world.sweetRing.material.emissiveIntensity = inBand ? 1.6 : (st.over ? 0.3 : 0.7);
+    world.sweetRing.material.color.setHex(inBand ? 0x8ee08a : (st.over ? 0xff6a7a : 0xff9ec8));
+    world.sweetRing.material.emissive.setHex(inBand ? 0x3aaa50 : (st.over ? 0xc41e3a : 0xff6aa8));
+    world.heatRing.material.opacity = st.tooClose ? 0.85 : 0.28;
+    world.heatRing.material.emissiveIntensity = st.tooClose ? 1.4 : 0.35;
+    world.tubLight.intensity = 2.2 + Math.sin(t * 6) * 0.35 + (inBand ? 0.6 : 0);
+    world.sweetRing.scale.setScalar(1);
+
+    const dir = invertActive(spec) ? -1 : 1;
+    world.arrows.rotation.y += dt * 1.2 * dir;
+    world.arrows.visible = true;
+    world.arrows.children.forEach((c) => {
+      c.material.emissiveIntensity = invertActive(spec) ? 1.2 : 0.55;
+      c.material.color.setHex(invertActive(spec) ? 0x8ee0d8 : 0xffe08a);
+    });
+
+    const gustOn = !!(run && run.gustUntil > (run.t || 0));
+    world.gustStreaks.children.forEach((s, i) => {
+      s.material.opacity = gustOn ? 0.4 : 0;
+      s.position.x = -1.4 + ((t * 2.4 + i * 0.35) % 2.8);
+    });
+
+    const mote = world.motes.geometry.attributes.position;
+    for (let i = 0; i < mote.count; i += 1) {
+      let y = mote.getY(i) + dt * 0.14;
+      if (y > 4.4) y = 0.4;
+      mote.setY(i, y);
+    }
+    mote.needsUpdate = true;
+
+    const pos = world.sparks.geometry.attributes.position;
+    for (let i = 0; i < SPARK_N; i += 1) {
+      const v = world.sparkVel[i];
+      if (v.life <= 0) continue;
+      v.life -= dt;
+      v.vy -= 2.2 * dt;
+      pos.setX(i, pos.getX(i) + v.vx * dt);
+      pos.setY(i, pos.getY(i) + v.vy * dt);
+      pos.setZ(i, pos.getZ(i) + v.vz * dt);
+      if (v.life <= 0) pos.setY(i, -8);
+    }
+    pos.needsUpdate = true;
+
+    if (world.wash.material.opacity > 0) world.wash.material.opacity *= 0.88;
+    punch.t = Math.max(0, punch.t - dt * 3.1);
+    updateCloud(dt, t);
+  }
+
+  function tickCamera(dt, t, st) {
+    const metres = run ? run.totalMetres : 0;
+    const want = CAM_PLAY.clone();
+    want.y += Math.min(1.15, metres * 0.06);
+    want.z += Math.min(1.7, metres * 0.09);
+    if (intro < 1 && !REDUCE) {
+      intro = Math.min(1, intro + dt * 0.55);
+      const e = intro * intro * (3 - 2 * intro);
+      world.camera.position.set(0, 1.55 + (want.y - 1.55) * e, 7.2 + (want.z - 7.2) * e);
+    } else {
+      world.camera.position.lerp(want, 0.08);
+    }
+    const hx = isLive() ? (input.x - TUB.x) * 0.18 : Math.sin(t * 0.32) * 0.22;
+    look.lerp(_v2.set(hx, 1.08 + Math.min(1.15, metres * 0.08) + (run && run.dying ? -0.12 : 0), -0.08 + (input.z - TUB.z) * 0.08), 0.1);
+    world.camera.position.x += hx * 0.35;
+    if (punch.t > 0) {
+      world.camera.position.x += (Math.random() - 0.5) * punch.mag * punch.t;
+      world.camera.position.y += (Math.random() - 0.5) * punch.mag * punch.t;
+    }
+    if (!REDUCE) {
+      world.camera.position.x += Math.sin(t * 0.7) * 0.03;
+      world.camera.position.y += Math.sin(t * 1.05) * 0.016;
+    }
+    world.camera.lookAt(look);
+  }
+
+  function seatCone(ang) {
+    const a = ang != null ? ang : Math.PI / 2;
+    input.x = TUB.x + Math.cos(a) * RING_R;
+    input.z = TUB.z + Math.sin(a) * RING_R;
+    input.aimX = input.x;
+    input.aimZ = input.z;
+    input.ang = a;
+    input.lastAng = a;
+    input.speed = 0;
+    input.speedSigned = 0;
+  }
+
+  function applyCone(dt, t) {
+    if (input.grace > 0) input.grace = Math.max(0, input.grace - dt);
+    if (!isLive() && !input.steer) {
+      const a = t * 0.42;
+      input.aimX = TUB.x + Math.cos(a) * RING_R;
+      input.aimZ = TUB.z + Math.sin(a) * RING_R;
+    }
+    const a0 = Math.atan2(input.z - TUB.z, input.x - TUB.x);
+    if (isLive() && !input.down) {
+      input.speedSigned *= Math.pow(0.08, dt * 6);
+      if (Math.abs(input.speedSigned) < 0.06) input.speedSigned = 0;
+      input.speed = Math.abs(input.speedSigned);
+    } else {
+      const r0 = Math.max(0.62, coneRadius());
+      const r1 = clamp(Math.hypot(input.aimX - TUB.x, input.aimZ - TUB.z), 0.62, 1.78);
+      const a1 = Math.atan2(input.aimZ - TUB.z, input.aimX - TUB.x);
+      const da = wrapAng(a1 - a0);
+      const maxTurn = 6.8 * Math.max(dt, 0.008);
+      const step = clamp(da, -maxTurn, maxTurn);
+      const r = lerp(r0, r1, 0.5);
+      const ang = a0 + step;
+      input.x = TUB.x + Math.cos(ang) * r;
+      input.z = TUB.z + Math.sin(ang) * r;
+      const raw = step / Math.max(dt, 0.008);
+      input.speedSigned = lerp(input.speedSigned || 0, raw, 0.42);
+      input.speed = Math.abs(input.speedSigned);
+      input.lastAng = ang;
+      input.ang = ang;
+    }
+    const ang = Math.atan2(input.z - TUB.z, input.x - TUB.x);
+    const r = coneRadius();
+    const spin = input.down && input.speed > 0.4 ? t * 10 : t * 5;
+    world.cone.position.set(input.x, TUB.y + 0.14 + Math.sin(t * 6) * 0.012, input.z);
+    world.cone.rotation.y = ang + Math.PI / 2;
+    world.cone.rotation.z = Math.sin(spin) * 0.08;
+    world.cone.scale.setScalar(r < HEAT_R ? 1.05 : 1.35);
+  }
+
+  function tickEvents(dt, spec) {
+    if (!isLive() || run.stageHold > 0) return;
+    run.t = (run.t || 0) + dt;
+    if (spec.gust || (spec.gustOnce && !run.gustDone)) {
+      run.gustCd = (run.gustCd || 0) - dt;
+      if (run.gustCd <= 0) {
+        run.gustUntil = run.t + ((spec.gustMs || 500) / 1000);
+        run.gustSign = Math.random() < 0.5 ? 1 : -1;
+        run.gustCd = (spec.gustEveryMs || 2800) / 1000;
+        if (spec.gustOnce) run.gustDone = true;
+        showToast("GUST", "Ribbons shove — stay with them", 800, "gust");
+        sfx("spit");
+      }
+    }
+    if (spec.reversePulseMid && !run.revDone && run.totalMetres >= spec.metresNeeded * 0.45) {
+      run.revDone = true;
+      run.invertUntil = run.t + 4.2;
+      showToast("REVERSE", "Circle the other way", 1000, "reverse");
+    }
+    if ((spec.fakeSnap || spec.fakeSnapOnce) && run.fakeArmed && run.t > run.fakeAt) {
+      run.fakeArmed = false;
+      doSnap("snap");
+    }
+  }
+
+  function clearStage() {
+    if (!isLive() || run.stageHold > 0) return;
+    run.depth = heightDepth(run);
+    run.score += CLEAR_BONUS;
+    if (run.kitRun) {
+      run.kitRun.depth = run.depth;
+      run.kitRun.score = run.score;
+    }
+    tellDepth(run.depth);
+    sfx("chapter");
+    setAuraMood("cheer");
+    PF.setAura("celebrate");
+    const next = run.stage + 1;
+    const nxt = fairyflossStageParams(next);
+    if (!nxt) {
+      beginDeath("souvenir");
+      return;
+    }
+    showToast(run.spec.title, `${run.totalMetres.toFixed(1)}m LOCKED — TUB CLIMBS`, 900, "wind");
+    setText("fairyFlossStatus", AURA_LINES.clear);
+    run.stageHold = 0.9;
+    run.pendingNext = next;
+  }
+
+  function beginDeath(reason) {
+    if (!run || run.dying || run.done) return;
+    run.dying = true;
+    run.deathNote = reason;
+    run.deathAt = performance.now();
+    sfx("stamp");
+    setAuraMood("point");
+    PF.setAura(reason === "souvenir" ? "celebrate" : "badLuck");
+    if (world) world.wash.material.opacity = reason === "souvenir" ? 0.1 : 0.42;
+    if (reason === "snap") scatterCloud();
+  }
+
+  function enterStage(n) {
+    const spec = fairyflossStageParams(n);
+    if (!spec) {
+      beginDeath("souvenir");
+      return;
+    }
+    run.stage = n;
+    run.spec = spec;
+    run.spawnCd = 0.35;
+    run.overMs = 0;
+    run.sagMs = 0;
+    run.heatMs = 0;
+    run.idleMs = 0;
+    run.gustUntil = 0;
+    run.gustCd = (spec.gustEveryMs || 2600) / 1000;
+    run.gustDone = false;
+    run.revDone = false;
+    run.invertUntil = 0;
+    run.fakeLeft = spec.fakeSnap ? (spec.fakeSnapCount || 3) : (spec.fakeSnapOnce ? 1 : 0);
+    run.fakeArmed = run.fakeLeft > 0;
+    run.fakeAt = 1.8 + Math.random() * 1.4;
+    run.t = 0;
+    run.t0 = performance.now();
+    input.grace = PRESS_GRACE;
+    input.down = false;
+    seatCone(Math.PI / 2);
+    if (world) world.ribbons.forEach(killRibbon);
+    ensureHud();
+    ensurePips(spec.snapLimit);
+    paintNeed();
+    tellDepth(heightDepth(run));
+    showToast(spec.coda ? "ENDLESS SUGAR" : "AUTHORED STAGE", `${spec.title} — ${roomTell(spec)}`, 1300);
+    setCall("CIRCLE THE WHEEL — HEIGHT IS DEPTH");
+    setText("fairyFlossStatus", spec.barker || `${spec.title} — drag a circle. Snap kills.`);
+    if (typeof PF.refreshDepth === "function") PF.refreshDepth();
   }
 
   function ensureHud() {
-    const stage = stageEl();
-    if (!stage) return null;
-    let hud = stage.querySelector(`[data-runkit-hud="${GAME_ID}"]`);
-    if (!hud) {
-      hud = document.createElement("p");
-      hud.className = "depth-hud";
-      hud.dataset.runkitHud = GAME_ID;
-      hud.setAttribute("aria-live", "polite");
-      stage.appendChild(hud);
-    }
+    const hud = document.querySelector(`[data-runkit-hud="${GAME_ID}"]`);
+    if (!hud) return;
     if (isLive() || (run && run.dying)) {
       hud.textContent = hudLine(liveSpec(), run.stage | 0);
       hud.hidden = false;
     } else {
-      hud.textContent = "STAGE 0";
+      hud.textContent = "HEIGHT 0.0m";
       hud.hidden = true;
     }
-    return hud;
   }
 
   function ensurePips(count) {
-    const stage = stageEl();
-    if (!stage) return;
-    let span = stage.querySelector("[data-runkit-strikes]");
-    const n = Math.max(2, count || 3);
-    if (!span) {
-      span = document.createElement("span");
-      span.className = "strike-pips";
-      span.dataset.runkitStrikes = GAME_ID;
-      span.setAttribute("aria-hidden", "true");
-      stage.appendChild(span);
-    }
+    const span = document.querySelector(`[data-runkit-strikes="${GAME_ID}"]`);
+    if (!span) return;
+    const n = Math.max(1, count || 1);
     if (span.querySelectorAll("i").length !== n) {
       span.innerHTML = Array.from({ length: n }, () => "<i></i>").join("");
     }
-    if (run) {
-      const lit = run.snaps | 0;
-      span.querySelectorAll("i").forEach((node, i) => node.classList.toggle("on", i < lit));
+    const lit = run ? (run.snaps | 0) : 0;
+    span.querySelectorAll("i").forEach((node, i) => node.classList.toggle("on", i < lit));
+  }
+
+  function resetPips() {
+    const span = document.querySelector(`[data-runkit-strikes="${GAME_ID}"]`);
+    if (!span) return;
+    span.querySelectorAll("i").forEach((n) => n.classList.remove("on"));
+  }
+
+  function tellDepth(n) {
+    if (run && run.kitRun && rk() && typeof rk().reportDepth === "function") {
+      const spec = liveSpec();
+      try { rk().reportDepth(run.kitRun, n | 0, { name: spec.title, coda: !!spec.coda }); } catch (_) { /* hud */ }
     }
+    ensureHud();
+  }
+
+  function tellStrike(reason) {
+    if (!run || !run.kitRun || !rk() || typeof rk().reportStrike !== "function") return;
+    try { rk().reportStrike(run.kitRun, reason); } catch (_) { /* pips */ }
   }
 
   function closeKitRun(partial) {
@@ -476,7 +1473,7 @@
         return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
       } catch (_) { /* fall through */ }
     }
-    kit.persistRun(PF.getState(), GAME_ID, partial);
+    if (kit && typeof kit.persistRun === "function") kit.persistRun(PF.getState(), GAME_ID, partial);
     return null;
   }
 
@@ -493,43 +1490,13 @@
     if (state) {
       state.bestDepth = state.bestDepth || {};
       state.bestDepth[GAME_ID] = Math.max(state.bestDepth[GAME_ID] || 0, payload.depth);
-      state.bestFairyFloss = Math.max(state.bestFairyFloss || 0, payload.depth);
+      state.bestFairyFloss = Math.max(state.bestFairyFloss || 0, payload.depth, Math.floor(metres));
       state.bestFairyFlossScore = Math.max(state.bestFairyFlossScore || 0, payload.score);
       state.bestFairyFlossMetres = Math.max(state.bestFairyFlossMetres || 0, metres);
     }
     closeKitRun(payload);
-    const siblingRuns = {};
-    if (state && state.lastRun && typeof state.lastRun === "object" && !Array.isArray(state.lastRun)) {
-      Object.keys(state.lastRun).forEach((k) => {
-        const v = state.lastRun[k];
-        if (v && typeof v === "object" && v.gameId) siblingRuns[k] = v;
-      });
-    }
-    kit.persistRun(state, GAME_ID, payload);
-    if (state) {
-      const keyed = Object.assign({ gameId: GAME_ID, at: Date.now() }, payload);
-      state.lastRun = Object.assign({}, siblingRuns, {
-        game: GAME_ID,
-        gameId: GAME_ID,
-        depth: payload.depth,
-        score: payload.score,
-        deathReason: payload.deathReason,
-        cashedOut: payload.cashedOut,
-        at: keyed.at,
-      });
-      state.lastRun[GAME_ID] = keyed;
-    }
+    if (kit && typeof kit.persistRun === "function") kit.persistRun(state, GAME_ID, payload);
     if (typeof PF.saveState === "function") PF.saveState();
-  }
-
-  function tellDepth(n) {
-    if (run && run.kitRun && rk() && typeof rk().reportDepth === "function") {
-      const spec = liveSpec();
-      try {
-        rk().reportDepth(run.kitRun, n | 0, { name: spec.title, coda: !!spec.coda });
-      } catch (_) { /* hud optional */ }
-    }
-    ensureHud();
   }
 
   function lastDepth() {
@@ -541,47 +1508,20 @@
     return Math.max(state.bestFairyFloss || 0, (state.bestDepth && state.bestDepth[GAME_ID]) || 0);
   }
 
-  function tellStrike(reason) {
-    if (!run || !run.kitRun || !rk() || typeof rk().reportStrike !== "function") return;
-    try { rk().reportStrike(run.kitRun, reason); } catch (_) { /* pips */ }
-    ensurePips((liveSpec() && liveSpec().snapLimit) || 2);
-  }
-
-  function shadowCtx(ctx) {
-    return {
-      gameId: GAME_ID,
-      startedAt: (ctx && ctx.startedAt) || Date.now(),
-      feverNode: !!(ctx && ctx.feverNode),
-      feverGate: ctx && ctx.feverGate,
-      depth: 0,
-      score: 0,
-      strikes: 0,
-      alive: true,
-    };
-  }
-
-  function mountHold(ctx) {
-    const engines = rk() && rk().engines;
-    if (!engines || !engines.HoldBand || typeof engines.HoldBand.mount !== "function" || !ctx) return null;
-    try {
-      /* Launcher only. Stall owns wind-rate tension + SNAP death.
-       * HoldBand.tick is Love rise/fall — do not drive the cone with it.
-       * Shadow ctx so reportDepth/finishRun cannot steal the coin run. */
-      return engines.HoldBand.mount(el("fairyFlossCanvas") || card(), {
-        stageParams: fairyflossStageParams,
-        graceStrikes: 99,
-        onClear() {},
-      }, shadowCtx(ctx));
-    } catch (_) {
-      return null;
+  function challengeLine(n) {
+    if (rk() && typeof rk().challengeText === "function") {
+      try { return rk().challengeText("Fairy Floss", n, GAME_ID); } catch (_) { /* local */ }
     }
+    return `Beat my Fairy Floss ${n}m on Penny Fever`;
   }
 
-  function resetPips() {
-    const host = card();
-    const pips = (host && host.querySelector("[data-runkit-strikes]")) || document.querySelector("[data-runkit-strikes=\"fairyfloss\"]");
-    if (!pips) return;
-    pips.querySelectorAll("i").forEach((n) => n.classList.remove("on"));
+  function auraLine(reason, depth, metres) {
+    if (reason === "leave") return AURA_LINES.leave;
+    if (reason === "souvenir") return AURA_LINES.souvenir;
+    if (depth <= 0) return AURA_LINES.shallow;
+    if (depth >= 6) return AURA_LINES.deep(depth);
+    if (metres >= 8) return AURA_LINES.snapDeep(metres.toFixed(1));
+    return AURA_LINES.snap;
   }
 
   function stampDepthCopy() {
@@ -589,32 +1529,9 @@
     if (!host) return;
     const num = host.querySelector(".machine-number");
     if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "pf-depth-tag vendor-vestibule-only";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => {
-      p.textContent = DEPTH_COPY.body;
-    });
-    const body = host.querySelector(".vendor-vestibule-only:not([data-pf-depth-tag]):not(.card-hero):not(.signature-prop)");
-    if (body && !body.hasAttribute("data-pf-depth-copy") && body.tagName === "P") {
-      body.setAttribute("data-pf-depth-copy", "1");
-      body.textContent = DEPTH_COPY.body;
-    }
+    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => { p.textContent = DEPTH_COPY.body; });
     ensureHud();
     ensurePips();
-    const canvas = el("fairyFlossCanvas");
-    if (canvas) {
-      canvas.classList.toggle("is-locked", !isLive());
-      canvas.style.touchAction = "none";
-    }
     if (!isLive() && (!run || run.done)) setText("fairyFlossStatus", DEPTH_COPY.status);
   }
 
@@ -624,7 +1541,6 @@
     const btn = el("fairyFlossStart");
     if (btn && !btn.hidden) {
       try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }
 
@@ -637,720 +1553,58 @@
       : null;
   }
 
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive() || (run && run.dying) || !cabinetOn()) return;
-    stopIdle();
-    let last = 0;
-    const tick = (now) => {
-      if (isLive() || (run && run.dying) || !cabinetOn()) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      idleT = now;
-      idleClock += Math.min(48, now - last);
-      last = now;
-      if (idleClock > IDLE_ROOM_MS) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-      }
-      draw(now);
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
-  }
-
-  function challengeLine(depth) {
-    if (rk() && typeof rk().challengeText === "function") {
-      return rk().challengeText("Fairy Floss stage", depth, GAME_ID);
-    }
-    return `Beat my Fairy Floss stage ${depth | 0} on Penny Fever`;
-  }
-
-  function angOf(x, y, cone) {
-    return Math.atan2(y - cone.y, x - cone.x);
-  }
-
-  function wrapDelta(a, b) {
-    let d = b - a;
-    while (d > Math.PI) d -= TAU;
-    while (d < -Math.PI) d += TAU;
-    return d;
-  }
-
-  function drawFloss(ctx, metres, need, snapped, sagging, t, cone) {
-    const frac = kit.clamp(need ? metres / need : 0, 0, 1);
-    const turns = 3 + frac * 9;
-    const maxR = 18 + frac * 52;
-    const droop = sagging ? 18 : 0;
-    ctx.save();
-    ctx.translate(cone.x, cone.y + 8 + droop * 0.35);
-    ctx.strokeStyle = snapped ? "rgba(240,208,154,0.28)" : (sagging ? "rgba(244,160,192,0.45)" : "#f4a0c0");
-    ctx.lineWidth = snapped ? 1.2 : (sagging ? 1.6 : 2.4);
-    ctx.beginPath();
-    for (let i = 0; i <= 90; i += 1) {
-      const u = i / 90;
-      const a = u * turns * TAU + t * 0.002;
-      const r = 6 + u * maxR;
-      const x = Math.cos(a) * r;
-      const y = u * 92 - 8 + Math.sin(a * 0.7) * 3 + droop * u * u;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    if (!snapped && frac > 0.08) {
-      ctx.strokeStyle = sagging ? "rgba(255,246,236,0.18)" : "rgba(255,246,236,0.45)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function drawBits(ctx) {
-    if (!run || !run.bits) return;
-    run.bits.forEach((b) => {
-      const age = b.life / b.max;
-      ctx.globalAlpha = Math.max(0, age);
-      ctx.strokeStyle = "#f4a0c0";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(b.x + b.vx * 18, b.y + b.vy * 18);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    });
-  }
-
-  function drawMeter(ctx, spec, st, tension) {
-    ctx.fillStyle = "rgba(12,6,9,0.55)";
-    ctx.fillRect(METER.x - 6, METER.y - 18, METER.w + 12, METER.h + 36);
-    ctx.strokeStyle = "rgba(212,164,90,0.45)";
-    ctx.strokeRect(METER.x - 5.5, METER.y - 17.5, METER.w + 11, METER.h + 35);
-    ctx.fillStyle = "#1a0c10";
-    ctx.fillRect(METER.x, METER.y, METER.w, METER.h);
-
-    const liar = liarBand(spec);
-    if (liar) {
-      const ly = METER.y + (1 - liar.hi) * METER.h;
-      const lh = (liar.hi - liar.lo) * METER.h;
-      ctx.fillStyle = "rgba(244,160,192,0.55)";
-      ctx.fillRect(METER.x + 2, ly, METER.w - 4, lh);
-      ctx.strokeStyle = "#f4a0c0";
-      ctx.setLineDash([4, 3]);
-      ctx.strokeRect(METER.x + 2.5, ly + 0.5, METER.w - 5, lh - 1);
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(244,160,192,0.95)";
-      ctx.font = "bold 9px Georgia, serif";
-      ctx.textAlign = "left";
-      ctx.fillText("LIES", METER.x + METER.w + 8, ly + lh / 2 + 3);
-    }
-
-    const bandY = METER.y + (1 - st.hi) * METER.h;
-    const bandHpx = (st.hi - st.lo) * METER.h;
-    ctx.fillStyle = st.inBand ? "rgba(255,246,236,0.38)" : "rgba(240,208,154,0.16)";
-    ctx.fillRect(METER.x + 2, bandY, METER.w - 4, bandHpx);
-    ctx.strokeStyle = st.inBand ? "#fff6ec" : "rgba(240,208,154,0.55)";
-    ctx.strokeRect(METER.x + 2.5, bandY + 0.5, METER.w - 5, bandHpx - 1);
-
-    const needleY = METER.y + (1 - tension) * METER.h;
-    ctx.fillStyle = st.over ? "#c41e3a" : (st.inBand ? "#fff6ec" : "#d4a45a");
-    ctx.fillRect(METER.x - 4, needleY - 3, METER.w + 8, 6);
-    if (spec.dualNeedle) {
-      const t2 = run && run.tension2 != null ? run.tension2 : tension;
-      const n2 = METER.y + (1 - t2) * METER.h;
-      ctx.fillStyle = st.inB ? "#e8a0b8" : "#c41e3a";
-      ctx.fillRect(METER.x - 2, n2 - 2, METER.w + 4, 4);
-      ctx.fillStyle = "#e8a0b8";
-      ctx.font = "bold 8px Georgia, serif";
-      ctx.textAlign = "left";
-      ctx.fillText("A", METER.x - 14, needleY + 3);
-      ctx.fillText("B", METER.x - 14, n2 + 3);
-    }
-
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "10px Georgia, serif";
-    ctx.textAlign = "left";
-    ctx.fillText(spec.liar ? "PALE" : "SWEET", METER.x + METER.w + 8, bandY + bandHpx / 2 + 3);
-    ctx.fillText("SNAP", METER.x + METER.w + 8, METER.y + 12);
-    ctx.fillText("SAG", METER.x + METER.w + 8, METER.y + METER.h - 4);
-  }
-
-  function draw(now) {
-    const canvas = el("fairyFlossCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#2a1220");
-    g.addColorStop(0.5, "#180a12");
-    g.addColorStop(1, "#0c0608");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    const spec = liveSpec();
-    const t = run ? run.t : (now || 0);
-    const cone = coneOf(spec);
-    const rpm = spec.tubRpm * pulseMul(spec, t);
-    const spin = t * 0.001 * rpm * TAU;
-    const attractBand = liveBand(spec, t);
-    const attractMid = (attractBand.lo + attractBand.hi) / 2;
-    const attractAmp = spec.liar ? 0.28 : 0.18;
-    const tension = run && (isLive() || run.dying)
-      ? run.tension
-      : attractMid + Math.sin(t * 0.0018) * attractAmp;
-    const st = tensionState(spec, tension, t);
-
-    kit.fillWood(ctx, 48, 328, 244, 118);
-    ctx.strokeStyle = "#d4a45a";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(48.5, 328.5, 243, 117);
-
-    ctx.save();
-    ctx.translate(TUB.x, TUB.y);
-    ctx.fillStyle = "#3a2418";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, TUB.rx, TUB.ry, 0, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = spec.pulse ? "#f4a0c0" : "#d4a45a";
-    ctx.lineWidth = spec.pulse ? 2.4 : 1.6;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(0, -6, TUB.rx - 10, TUB.ry - 8, 0, 0, TAU);
-    ctx.fillStyle = "#5a1830";
-    ctx.fill();
-    for (let i = 0; i < 8; i += 1) {
-      const a = spin + i * (Math.PI / 4);
-      ctx.strokeStyle = i % 2 ? "rgba(244,160,192,0.55)" : "rgba(255,246,236,0.28)";
-      ctx.beginPath();
-      ctx.ellipse(Math.cos(a) * 18, Math.sin(a) * 6 - 6, 22, 7, a, 0, TAU);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    if (run && run.dragging) {
-      ctx.strokeStyle = "rgba(244,160,192,0.45)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(TUB.x, TUB.y - 8);
-      ctx.quadraticCurveTo(TUB.x + 40, cone.y + 80, cone.x, cone.y + 10);
-      ctx.stroke();
-    }
-
-    const windR = spec.tallCone ? 72 : 54;
-    ctx.strokeStyle = run && run.dragging ? "rgba(244,160,192,0.55)" : "rgba(240,208,154,0.22)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(cone.x, cone.y + 18, windR, 0, TAU);
-    ctx.stroke();
-    if (spec.dualNeedle) {
-      ctx.strokeStyle = "rgba(232,160,184,0.45)";
-      ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.arc(cone.x, cone.y + 18, windR * 1.38, 0, TAU);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    ctx.fillStyle = "#f0d09a";
-    ctx.beginPath();
-    ctx.moveTo(cone.x, cone.y - (spec.tallCone ? 28 : 18));
-    ctx.lineTo(cone.x + 22, cone.y + (spec.tallCone ? 128 : 108));
-    ctx.lineTo(cone.x - 22, cone.y + (spec.tallCone ? 128 : 108));
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = "#8a6230";
-    ctx.stroke();
-
-    const metres = run ? run.metres : 0;
-    const sagging = !!(run && run.dragging && st.sag);
-    const snapped = !!(run && run.snapFlash > 0);
-    drawFloss(ctx, metres, spec.metresNeeded, snapped, sagging, t, cone);
-    if (spec.dualNeedle) {
-      drawFloss(ctx, metres * 0.85, spec.metresNeeded, snapped, sagging, t + 180, { x: cone.x + 10, y: cone.y + 6 });
-    }
-    drawBits(ctx);
-    drawMeter(ctx, spec, st, tension);
-
-    kindWash(ctx, spec);
-
-    const cheat = cheatLabel(spec);
-    if (cheat) {
-      ctx.fillStyle = spec.liar ? "rgba(244,160,192,0.95)" : "rgba(240,208,154,0.92)";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(cheat, W / 2, 54);
-    }
-
-    if (isLive() && run.roomCardMs > 0) drawRoomCard(ctx, spec, run.roomCardMs);
-    else if (!isLive() && !(run && run.dying) && (!run || run.done) && idleClock < 1100) {
-      drawRoomCard(ctx, spec, 1100 - idleClock);
-    }
-
-    if (isLive() && run.gustTeleUntil > run.t) {
-      ctx.fillStyle = "rgba(255,246,236,0.22)";
-      ctx.beginPath();
-      ctx.ellipse(TUB.x + 40, TUB.y - 48, 28, 16, 0.2, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,246,236,0.92)";
-      ctx.font = "bold 18px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("PUFF", W / 2, 86);
-    } else if (run && run.fakeSnapFlash > 0) {
-      ctx.fillStyle = `rgba(244,160,192,${Math.min(0.38, run.fakeSnapFlash / 420)})`;
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#fff6ec";
-      ctx.font = "bold 22px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("FAKE SNAP — IGNORE", W / 2, 86);
-    } else if (run && run.snapFlash > 0) {
-      ctx.fillStyle = `rgba(196,30,58,${Math.min(0.45, run.snapFlash / 420)})`;
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#fff6ec";
-      ctx.font = "bold 28px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("SNAP", W / 2, 86);
-    } else if (isLive() && invertActive(spec) && !run.dragging) {
-      ctx.fillStyle = "rgba(184,232,224,0.92)";
-      ctx.font = "bold 20px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("REVERSE — PULL DOWN", W / 2, 86);
-    } else if (isLive() && run.dragging && spec.dualNeedle && !st.inBand) {
-      ctx.fillStyle = "rgba(232,160,184,0.92)";
-      ctx.font = "bold 18px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(!st.inA && !st.inB ? "BOTH STRANDS" : (!st.inA ? "SPEED STRAND" : "RADIUS STRAND"), W / 2, 86);
-    } else if (isLive() && run.dragging && st.tooClose) {
-      ctx.fillStyle = "rgba(240,208,154,0.92)";
-      ctx.font = "bold 22px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("CIRCLE TALL", W / 2, 86);
-    } else if (isLive() && run.dragging && st.onLiar) {
-      ctx.fillStyle = "rgba(244,160,192,0.9)";
-      ctx.font = "bold 22px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("PINK LIES", W / 2, 86);
-    } else if (isLive() && run.dragging && st.over) {
-      ctx.fillStyle = "rgba(196,30,58,0.78)";
-      ctx.font = "bold 22px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(spec.sticky ? "STICKY — EASE" : "EASE UP", W / 2, 86);
-    } else if (isLive() && run.dragging && st.sag) {
-      ctx.fillStyle = "rgba(212,164,90,0.82)";
-      ctx.font = "bold 22px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText(spec.sagEats ? "SAG EATS" : "SAG", W / 2, 86);
-    }
-
-    if (run && run.closedStamp) kit.stampClosed(ctx, W, H, "SNAP");
-
-    if (isLive() || (run && run.dying)) {
-      const mode = !run.dragging ? "LIFT" : (st.inBand ? "WINDING" : (st.over ? "TOO FAST" : "SAG"));
-      kit.drawHud(ctx, W, [
-        `${spec.title} · ${run.metres.toFixed(1)}/${spec.metresNeeded}m · ${run.score}`,
-        `${hudLine(spec, run.stage)} · snaps ${run.snaps}/${spec.snapLimit} · ${mode}`,
-      ]);
-    } else if (!run || !run.closedStamp) {
-      const tell = cheatLabel(spec);
-      kit.drawHud(ctx, W, [
-        DEPTH_COPY.idleHud[0],
-        tell ? `${spec.title} · ${tell}` : DEPTH_COPY.idleHud[1],
-      ]);
-    }
-  }
-
-  function startStage(n) {
-    const spec = fairyflossStageParams(n);
-    if (!spec) {
-      finish("souvenir");
+  function start() {
+    if (isLive()) return;
+    if (!ensureWorld()) {
+      const fail = el("fairyFlossGlFail");
+      if (fail) fail.hidden = false;
+      setText("fairyFlossStatus", "This sugar wheel wants a WebGL tent.");
+      showToast("NO WEBGL", "This tent needs a WebGL browser", 1600);
       return;
     }
-    run.spec = spec;
-    run.stage = spec.id;
-    run.metres = 0;
-    run.snaps = 0;
-    run.overMs = 0;
-    run.dragging = false;
-    run.tooClose = false;
-    run.tension2 = 0.5;
-    run.orbit = 0.5;
-    run.lastY = 0;
-    run.nextGustAt = spec.gust ? run.t + (spec.gustEveryMs || 2500) : 0;
-    run.gustUntil = 0;
-    run.gustTeleUntil = 0;
-    run.gustSign = 1;
-    run.gustFired = 0;
-    run.fakeSnapsLeft = (spec.fakeSnap || spec.fakeSnapOnce) ? (spec.fakeSnapCount || 1) : 0;
-    run.nextFakeSnapAt = run.fakeSnapsLeft ? run.t + 1600 : 0;
-    run.fakeSnapFlash = 0;
-    run.sagCatchUntil = 0;
-    run.operaReverse = false;
-    run.invertUntil = 0;
-    run.roomCardMs = n === 1 ? 1480 : ROOM_CARD_MS;
-    if (run.band && typeof run.band.hold === "function") run.band.hold(false);
-    const band = liveBand(spec, run.t);
-    run.tension = (band.lo + band.hi) / 2;
-    tellDepth(run.depth);
-    ensurePips(spec.snapLimit);
-    ensureHud();
-    setText("fairyFlossStatus", spec.barker || `${spec.title} — circle the cone.`);
-  }
-
-  function start() {
-    if (isLive() || (run && run.dying)) return;
+    const fail = el("fairyFlossGlFail");
+    if (fail) fail.hidden = true;
     const kitRun = beginKitRun();
     if (!kitRun) {
       setText("fairyFlossStatus", "Out of demo coins · grant a pass");
-      PF.refreshNightBoard();
-      stampDepthCopy();
       return;
     }
-    stopIdle();
-    resetPips();
     run = {
-      done: false,
-      dying: false,
-      kitRun,
-      band: null,
-      t: 0,
-      last: 0,
-      stage: 1,
-      depth: 0,
-      spec: fairyflossStageParams(1),
-      metres: 0,
-      totalMetres: 0,
-      paidTenths: 0,
-      score: 0,
-      snaps: 0,
-      tension: 0.2,
-      dragging: false,
-      tooClose: false,
-      lastAng: 0,
-      lastPtr: 0,
-      overMs: 0,
-      snapFlash: 0,
-      fakeSnapFlash: 0,
-      tension2: 0.5,
-      orbit: 0.5,
-      lastY: 0,
-      nextGustAt: 0,
-      gustUntil: 0,
-      gustTeleUntil: 0,
-      gustSign: 1,
-      gustFired: 0,
-      fakeSnapsLeft: 0,
-      nextFakeSnapAt: 0,
-      sagCatchUntil: 0,
-      operaReverse: false,
-      invertUntil: 0,
-      bits: [],
-      raf: 0,
-      shake: 0,
-      closedStamp: false,
-      deathHold: 0,
-      deathReason: "",
-      roomCardMs: 0,
+      kitRun, stage: 1, depth: 0, score: 0, snaps: 0, totalMetres: 0,
+      spec: null, done: false, dying: false, t0: performance.now(),
+      stageHold: 0, pendingNext: 0, taughtCatch: false, taughtWind: false,
+      wasInBand: false,
     };
-    run.band = mountHold(kitRun);
-    tellDepth(0);
     const startBtn = el("fairyFlossStart");
     if (startBtn) startBtn.disabled = true;
     const verdict = el("fairyFlossVerdict");
     if (verdict) verdict.hidden = true;
-    kit.hideResult("fairyFlossResult");
+    if (kit && kit.hideResult) kit.hideResult("fairyFlossResult");
     PF.setTier("fairyFlossTier", "", "");
     kit.setMode(card(), "play");
-    stampDepthCopy();
-    startStage(1);
+    const hud = el("fairyFlossHud");
+    const gauges = el("fairyFlossGauges");
+    if (hud) hud.hidden = false;
+    if (gauges) gauges.hidden = false;
     PF.focusCard("fairyFlossCard", true);
-    PF.setAura("think");
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.t += dt;
-      if (run.dying) {
-        run.roomCardMs = Math.max(0, (run.roomCardMs || 0) - dt);
-        run.snapFlash = Math.max(0, run.snapFlash - dt);
-        run.fakeSnapFlash = Math.max(0, (run.fakeSnapFlash || 0) - dt);
-        run.bits = (run.bits || []).filter((b) => {
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          b.life -= dt;
-          return b.life > 0;
-        });
-        run.shake = Math.max(0, (run.shake || 0) * 0.92);
-        draw(now);
-        run.deathHold -= dt;
-        if (run.deathHold <= 0) {
-          sealResult(run.deathReason);
-          return;
-        }
-        run.raf = requestAnimationFrame(loop);
-        return;
-      }
-      step(dt);
-      draw(now);
-      PF.refreshDepth();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function tickRoomCheats(spec, dt) {
-    run.fakeSnapFlash = Math.max(0, (run.fakeSnapFlash || 0) - dt);
-    if ((spec.gust || spec.gustOnce) && (!spec.gustOnce || run.gustFired < 1)) {
-      const every = spec.gustEveryMs || 2500;
-      if (!run.nextGustAt) run.nextGustAt = run.t + every;
-      if (run.gustTeleUntil < run.t && run.nextGustAt - run.t < 320 && run.nextGustAt > run.t) {
-        run.gustTeleUntil = run.nextGustAt;
-      }
-      if (run.t >= run.nextGustAt) {
-        run.gustUntil = run.t + (spec.gustMs || 500);
-        run.gustSign = Math.random() < 0.5 ? 1 : -1;
-        run.gustFired = (run.gustFired || 0) + 1;
-        run.nextGustAt = spec.gustOnce ? run.t + 1e9 : run.t + every;
-        kit.sfx("spinner");
-        setText("fairyFlossStatus", "GUST — ride the jump.");
-      }
-    }
-    if (run.fakeSnapsLeft > 0 && run.dragging) {
-      if (!run.nextFakeSnapAt) run.nextFakeSnapAt = run.t + 1400;
-      if (run.t >= run.nextFakeSnapAt) {
-        run.fakeSnapsLeft -= 1;
-        run.fakeSnapFlash = 520;
-        run.nextFakeSnapAt = run.t + 2200 + Math.random() * 1400;
-        kit.sfx("miss");
-        setText("fairyFlossStatus", "Fake snap. Ignore the booth.");
-      }
-    }
-    if (spec.reversePulseMid && !run.operaReverse && run.metres >= spec.metresNeeded * 0.45) {
-      run.operaReverse = true;
-      run.invertUntil = run.t + 2800;
-      setText("fairyFlossStatus", "REVERSE PULSE — pull down to wind.");
-    }
-  }
-
-  function step(dt) {
-    if (!isLive()) return;
-    run.roomCardMs = Math.max(0, (run.roomCardMs || 0) - dt);
-    run.snapFlash = Math.max(0, run.snapFlash - dt);
-    run.bits = (run.bits || []).filter((b) => {
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      b.life -= dt;
-      return b.life > 0;
-    });
-    const spec = liveSpec();
-    tickRoomCheats(spec, dt);
-    const st = tensionState(spec, run.tension, run.t);
-    if (!run.dragging) {
-      const decay = (spec.sticky && st.over) ? 0.00055 : 0.0032;
-      run.tension = Math.max(0, run.tension - decay * dt);
-      if (spec.dualNeedle) run.tension2 = Math.max(0, (run.tension2 || 0.5) - decay * dt * 0.6);
-      run.overMs = 0;
-      return;
-    }
-    if (st.inBand) {
-      run.overMs = 0;
-      let rate = spec.metrePerSecInBand;
-      if (spec.sagEats && run.sagCatchUntil > run.t) rate *= 1.55;
-      const dm = rate * (dt / 1000);
-      run.metres += dm;
-      run.totalMetres += dm;
-      const tenths = Math.floor(run.totalMetres * 10);
-      if (tenths > run.paidTenths) {
-        run.score += SCORE_PER_TENTH * (tenths - run.paidTenths);
-        run.paidTenths = tenths;
-        if (run.kitRun) run.kitRun.score = run.score;
-      }
-      if (run.metres >= spec.metresNeeded) clearStage();
-      return;
-    }
-    if (st.sag && spec.sagEats) {
-      run.overMs = 0;
-      const eat = spec.metrePerSecInBand * 0.7 * (dt / 1000);
-      run.metres = Math.max(0, run.metres - eat);
-      run.sagCatchUntil = run.t + (spec.sagCatchMs || 520);
-      return;
-    }
-    if (st.over) {
-      run.overMs += dt;
-      if (run.overMs >= snapMsOf(spec) || run.tension > st.hi + 0.18) snap();
-    } else {
-      run.overMs = 0;
-    }
-  }
-
-  function pointerWind(ev) {
-    if (!isLive()) return;
-    const canvas = el("fairyFlossCanvas");
-    if (!canvas) return;
-    const spec = liveSpec();
-    const cone = coneOf(spec);
-    const p = kit.canvasPos(canvas, ev, W, H);
-    const ang = angOf(p.x, p.y, cone);
-    const now = performance.now();
-    const dist = Math.hypot(p.x - cone.x, p.y - cone.y);
-    const sweetR = spec.tallCone ? 72 : 58;
-    run.tooClose = !!(spec.tallCone && dist < 52) || !!(spec.dualNeedle && dist < 28);
-    if (spec.dualNeedle) {
-      run.tension2 = kit.clamp(dist / (sweetR * 2), 0, 1);
-    }
-    if (!run.dragging) {
-      run.dragging = true;
-      run.lastAng = ang;
-      run.lastPtr = now;
-      run.lastY = p.y;
-      if (run.band && typeof run.band.hold === "function") run.band.hold(true);
-      return;
-    }
-    const dt = Math.max(8, now - run.lastPtr);
-    if (run.tooClose) {
-      run.tension += (0.12 - run.tension) * Math.min(1, dt / 80);
-      run.lastAng = ang;
-      run.lastPtr = now;
-      run.lastY = p.y;
-      return;
-    }
-    let raw;
-    if (invertActive(spec)) {
-      const dy = p.y - (run.lastY || p.y);
-      const down = dy / (dt / 1000);
-      raw = down <= 0 ? 0 : kit.clamp(down / 420, 0, 1);
-    } else {
-      const omega = Math.abs(wrapDelta(run.lastAng, ang)) / (dt / 1000);
-      const expect = 9.2 * pulseMul(spec, run.t);
-      raw = kit.clamp(omega / expect, 0, 1);
-    }
-    const st = tensionState(spec, run.tension, run.t);
-    const lerpMs = (spec.sticky && st.over) ? 280 : 70;
-    run.tension += (raw - run.tension) * Math.min(1, dt / lerpMs);
-    run.lastAng = ang;
-    run.lastPtr = now;
-    run.lastY = p.y;
-  }
-
-  function pointerUp(fromLeave) {
-    if (!isLive()) return;
-    const spec = liveSpec();
-    const st = tensionState(spec, run.tension, run.t);
-    const wasDragging = run.dragging;
-    run.dragging = false;
-    run.tooClose = false;
-    if (run.band && typeof run.band.hold === "function") run.band.hold(false);
-    if (fromLeave) return;
-    if (wasDragging && (run.overMs >= snapMsOf(spec) || run.tension > st.hi + 0.18)) snap();
-  }
-
-  function clearStage() {
-    run.score += CLEAR_BONUS;
-    run.depth += 1;
-    if (run.kitRun) {
-      run.kitRun.depth = run.depth;
-      run.kitRun.score = run.score;
-    }
-    tellDepth(run.depth);
-    kit.sfx("rack");
-    PF.setAura("celebrate");
-    const next = fairyflossStageParams(run.depth + 1);
-    if (!next) {
-      finish("souvenir");
-      return;
-    }
-    setText("fairyFlossStatus", run.depth >= 6
-      ? AURA.deep(run.depth)
-      : `${AURA.clear} ${next.title} — ${next.metresNeeded}m · ${cheatLabel(next) || next.bandWidth}.`);
-    run.shake = 5;
-    startStage(run.depth + 1);
-  }
-
-  function spawnSnapBits() {
-    const cone = coneOf(liveSpec());
-    for (let i = 0; i < 10; i += 1) {
-      const a = Math.random() * TAU;
-      run.bits.push({
-        x: cone.x + (Math.random() - 0.5) * 24,
-        y: cone.y + Math.random() * 40,
-        vx: Math.cos(a) * 0.12,
-        vy: Math.sin(a) * 0.12 - 0.04,
-        life: 380 + Math.random() * 180,
-        max: 560,
-      });
-    }
-  }
-
-  function snap() {
-    if (!isLive()) return;
-    const spec = liveSpec();
-    const st = tensionState(spec, run.tension, run.t);
-    run.snaps += 1;
-    run.overMs = 0;
-    run.tension = kit.clamp(st.lo + 0.02, 0.12, 0.5);
-    run.dragging = false;
-    if (run.band && typeof run.band.hold === "function") run.band.hold(false);
-    run.snapFlash = 520;
-    run.shake = 8;
-    spawnSnapBits();
-    tellStrike("snap");
-    kit.sfx("miss");
-    PF.setAura("laugh");
-    setText("fairyFlossStatus", `SNAP ${run.snaps}/${spec.snapLimit} — greedy spin. Slow the circle.`);
-    if (run.snaps >= spec.snapLimit) finish("snap");
-  }
-
-  function auraLine(reason, depth, metres) {
-    if (reason === "leave") return AURA.leave;
-    if (reason === "souvenir") return AURA.souvenir;
-    if (depth >= 6) return AURA.deep(depth);
-    const m = Math.floor(metres || 0);
-    if (m >= 1) return AURA.snapDeep(m);
-    return AURA.snap;
-  }
-
-  function finish(reason) {
-    if (!run || run.done) return;
-    if (reason === "leave") {
-      sealResult(reason);
-      return;
-    }
-    if (run.dying) return;
-    run.dying = true;
-    run.dragging = false;
-    if (run.band && typeof run.band.hold === "function") run.band.hold(false);
-    run.deathReason = reason === "souvenir" ? "souvenir" : "snap";
-    run.closedStamp = reason !== "souvenir";
-    run.deathHold = DEATH_HOLD_MS;
-    run.snapFlash = Math.max(run.snapFlash, 520);
-    kit.sfx("stamp");
-    run.shake = 8;
+    enterStage(1);
+    sfx("chapter");
+    setAuraMood("cheer");
+    if (typeof PF.refreshDepth === "function") PF.refreshDepth();
   }
 
   function sealResult(reason) {
     if (!run || run.done) return;
     run.done = true;
     run.dying = false;
-    run.dragging = false;
-    if (run.band && typeof run.band.hold === "function") run.band.hold(false);
-    if (run.raf) cancelAnimationFrame(run.raf);
-    run.closedStamp = reason !== "leave";
+    const metres = run.totalMetres || 0;
+    run.depth = heightDepth(run);
     const depth = run.depth | 0;
-    const score = run.score;
-    const metres = run.totalMetres;
-    const death = reason === "leave" ? "leave" : (reason === "souvenir" ? "souvenir" : "snap");
+    const score = run.score | 0;
+    const death = reason === "leave" ? "leave" : (reason === "souvenir" ? "souvenir" : (run.deathNote || "snap"));
     persistDepth({
-      depth,
-      score,
-      deathReason: death,
-      cashedOut: death === "souvenir",
-      meta: { totalMetres: metres, snaps: run.snaps, lastStage: run.stage, kind: run.spec && run.spec.kind },
+      depth, score, deathReason: death, cashedOut: death === "souvenir",
+      meta: { stage: run.spec && run.spec.id, totalMetres: metres, height: metres, snaps: run.snaps, kind: run.spec && run.spec.kind },
     });
     stampDepthCopy();
     const startBtn = el("fairyFlossStart");
@@ -1360,13 +1614,17 @@
     }
     PF.focusCard("fairyFlossCard", false);
     kit.setMode(card(), "result");
-    const mLine = `FLOSS ${metres.toFixed(1)}m`;
+    const hud = el("fairyFlossHud");
+    const gauges = el("fairyFlossGauges");
+    if (hud) hud.hidden = true;
+    if (gauges) gauges.hidden = true;
+    const line = `HEIGHT ${metres.toFixed(1)}m · SCORE ${score}`;
     const aura = auraLine(reason, depth, metres);
-    const challenge = challengeLine(depth);
+    const challenge = challengeLine(Math.max(depth, Math.floor(metres)));
     const verdict = el("fairyFlossVerdict");
     if (verdict) {
       verdict.hidden = false;
-      verdict.textContent = `${mLine} · STAGE ${depth} · ${aura}`;
+      verdict.textContent = reason === "leave" ? `Left the stall · ${line}` : `${aura} ${line}`;
     }
     kit.fillResult({
       root: "fairyFlossResult",
@@ -1375,97 +1633,248 @@
       aura: "fairyFlossResultAura",
       copied: "fairyFlossCopied",
     }, {
-      depthLine: `STAGE ${depth} · ${mLine}`,
+      depthLine: `HEIGHT ${metres.toFixed(1)}m`,
       scoreLine: `SCORE ${score} · ${death.replace(/_/g, " ").toUpperCase()}`,
       auraLine: aura,
     });
     setText("fairyFlossChallengeText", challenge);
-    PF.setTier("fairyFlossTier", depth > 0 ? `STAGE ${depth}` : "SNAP", depth > 0 ? "perfect" : "miss");
-    setText("fairyFlossStatus", reason === "leave" ? "Stepped off the stall." : (reason === "souvenir" ? "Sugar souvenir. Cloud let you walk." : "Cloud stamped SNAP."));
-    if (depth > 0) {
+    PF.setTier("fairyFlossTier", metres > 0 ? `${metres.toFixed(1)}m` : "HEIGHT", metres >= 3 ? "perfect" : "miss");
+    setText("fairyFlossStatus", reason === "leave" ? "Left the stall." : (reason === "souvenir" ? "Sugar souvenir. Cloud keeps." : "Cloud snapped."));
+    if (metres >= 1) {
       PF.award(Math.max(8, Math.floor(score / 12)), true, "Fairy floss");
-      PF.setAura(depth >= 4 ? "celebrate" : "point");
-      if (reason !== "leave") PF.showBanner(true, `STAGE ${depth}`, `${mLine} · ${aura}`);
+      PF.setAura(metres >= 6 ? "celebrate" : "point");
+      if (reason !== "leave") PF.showBanner(true, `${metres.toFixed(1)}m`, aura);
     } else {
-      PF.award(0, false, "Fairy floss snap");
+      PF.award(0, false, "Fairy floss miss");
       PF.setAura("badLuck");
-      if (reason !== "leave") PF.showBanner(false, "SNAP", aura);
+      if (reason !== "leave") PF.showBanner(false, "FLOSS", aura);
     }
     PF.refreshNightBoard();
-    draw();
-    startIdle();
+    if (typeof PF.refreshDepth === "function") PF.refreshDepth();
+    showToast(reason === "souvenir" ? "SOUVENIR CLOUD" : "CLOUD SNAPPED", aura, 1600);
+    setCall(reason === "souvenir" ? "SOUVENIR CLOUD" : "CLOUD SNAPPED");
+  }
+
+  function finish(reason) {
+    if (!run || run.done) return;
+    if (reason === "leave" || reason === "souvenir") sealResult(reason);
+    else beginDeath(reason);
+  }
+
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    if (!world || !cabinetOn()) return;
+    const t = now * 0.001;
+    simT = t;
+    const dt = Math.min(0.033, lastT ? (now - lastT) / 1000 : 0.016);
+    lastT = now;
+    hideToastIfDue(now);
+
+    const spec = liveSpec();
+    if (run && run.stageHold > 0) {
+      run.stageHold -= dt;
+      if (run.stageHold <= 0 && run.pendingNext) {
+        const n = run.pendingNext;
+        run.pendingNext = 0;
+        enterStage(n);
+      }
+    }
+    if (run && run.dying && !run.done) {
+      if (now - run.deathAt >= DEATH_HOLD_MS) sealResult(run.deathNote || "snap");
+    }
+
+    idleClock += dt;
+    if (!isLive() && idleClock > 4.2) {
+      idleClock = 0;
+      idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
+    }
+
+    applyCone(dt, t);
+    const st = tensionOf();
+    paintGauges(st);
+    tickRibbons(dt, t, spec);
+    if (isLive()) tickEvents(dt, spec);
+    updateAura(dt, t);
+    tickFx(dt, t, spec, st);
+    tickCamera(dt, t, st);
+
+    if (isLive()) {
+      let call = input.down ? "CIRCLE THE WHEEL" : "HOLD AND CIRCLE THE WHEEL";
+      if (st.tooClose) call = "TOO CLOSE — BACK OFF THE HEATER";
+      else if (st.invertFail) call = "REVERSE — OTHER WAY";
+      else if (input.down && st.over) call = "EASE UP — SNAP IS DEATH";
+      else if (!input.down) call = "HOLD AND CIRCLE — HEIGHT IS DEPTH";
+      else if (st.dual && !st.inRad) call = "STAY ON THE GLOWING RING";
+      else if (st.inBand) call = `WINDING — ${run.totalMetres.toFixed(1)}m`;
+      setCall(call);
+    } else if (run && run.done) {
+      setCall(run.deathNote === "souvenir" ? "SOUVENIR CLOUD" : "CLOUD SNAPPED");
+    } else {
+      setCall("CIRCLE TO WIND · SNAP KILLS");
+    }
+
+    world.renderer.render(world.scene, world.camera);
+  }
+
+  function stopLoop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+  function startLoop() {
+    if (raf) return;
+    lastT = 0;
+    raf = requestAnimationFrame(loop);
+  }
+
+  function ensureWorld() {
+    const canvas = el("fairyFlossCanvas");
+    if (!canvas) return null;
+    if (world) return world;
+    try {
+      world = buildWorld(canvas);
+      resize();
+      spawnRibbon(fairyflossStageParams(1));
+      intro = 0;
+    } catch (err) {
+      setText("fairyFlossStatus", "This sugar wheel wants a WebGL tent.");
+      const fail = el("fairyFlossGlFail");
+      if (fail) fail.hidden = false;
+      world = null;
+    }
+    return world;
+  }
+
+  function declareP0() {
+    const kitRun = rk();
+    if (!kitRun || typeof kitRun.declare !== "function") return;
+    try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already */ }
+    kitRun.p0 = kitRun.p0 || {};
+    kitRun.p0[GAME_ID] = Object.assign({
+      stageParams: fairyflossStageParams,
+      codaParams: fairyflossCoda,
+      mountParams: fairyflossMountParams,
+      authored: AUTHORED,
+      codaEnabled: CODA_ENABLED,
+      authoredCount: AUTHORED_COUNT,
+    }, P0_MOUNT);
+    kitRun.mounted = kitRun.mounted || {};
+    kitRun.mounted[GAME_ID] = true;
+  }
+
+  function onPointerDown(ev) {
+    if (!world) return;
+    if (run && (run.dying || run.done)) return;
+    if (!isLive()) {
+      punchStart();
+      return;
+    }
+    ev.preventDefault();
+    const canvas = el("fairyFlossCanvas");
+    try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
+    input.down = true;
+    input.steer = true;
+    input.grace = PRESS_GRACE;
+    const p = projectPointer(ev);
+    if (p && !p.skip) {
+      const a = Math.atan2(p.z - TUB.z, p.x - TUB.x);
+      const rad = clamp(Math.hypot(p.x - TUB.x, p.z - TUB.z), 0.62, 1.78);
+      input.x = TUB.x + Math.cos(a) * rad;
+      input.z = TUB.z + Math.sin(a) * rad;
+      input.aimX = input.x;
+      input.aimZ = input.z;
+      input.ang = a;
+      input.lastAng = a;
+      input.speed = 0;
+      input.speedSigned = 0;
+    }
+  }
+
+  function onPointerMove(ev) {
+    if (!world) return;
+    const p = projectPointer(ev);
+    if (!p) return;
+    input.steer = true;
+    if (!isLive()) {
+      input.aimX = p.x;
+      input.aimZ = p.z;
+      return;
+    }
+    if (!input.down) return;
+    ev.preventDefault();
+    if (p.skip) return;
+    input.aimX = p.x;
+    input.aimZ = p.z;
+  }
+
+  function onPointerUp() {
+    input.down = false;
   }
 
   PF.registerVendor({
     id: "fairy-floss",
     playKey: "fairyfloss",
-    chalk: "Wind it tall — don’t snap the cloud.",
+    chalk: "Circle the wheel. Sugar height is depth. Snap kills.",
     defaults: { bestFairyFloss: 0, bestFairyFlossScore: 0, bestFairyFlossMetres: 0 },
     onLeave() {
       if (isLive() || (run && run.dying && !run.done)) finish("leave");
-      stopIdle();
+      stopLoop();
     },
-    onShow() { stampDepthCopy(); startIdle(); },
+    onShow() {
+      stampDepthCopy();
+      ensureWorld();
+      resize();
+      intro = REDUCE ? 1 : 0;
+      startLoop();
+    },
     onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
       run = null;
+      input.steer = false;
       const verdict = el("fairyFlossVerdict");
       if (verdict) verdict.hidden = true;
-      kit.hideResult("fairyFlossResult");
+      if (kit && kit.hideResult) kit.hideResult("fairyFlossResult");
       const startBtn = el("fairyFlossStart");
       if (startBtn) {
         startBtn.disabled = false;
         startBtn.textContent = "START · 1 demo coin";
       }
       kit.setMode(card(), "vestibule");
+      const hud = el("fairyFlossHud");
+      const gauges = el("fairyFlossGauges");
+      if (hud) hud.hidden = true;
+      if (gauges) gauges.hidden = true;
       resetPips();
       stampDepthCopy();
-      startIdle();
+      showToast("", "", 0);
+      setCall("CIRCLE TO WIND · SNAP KILLS");
+      if (world) world.ribbons.forEach(killRibbon);
+      startLoop();
     },
     refreshDepth(state) {
-      setText("depthFlossNow", isLive() || (run && run.dying) ? String(run.depth | 0) : "0");
-      setText("depthFlossMetres", isLive() || (run && run.dying) ? `${run.totalMetres.toFixed(1)}m` : "0m");
-      const bestN = Math.max(state.bestFairyFloss || 0, (state.bestDepth && state.bestDepth.fairyfloss) || 0);
-      const bestM = state.bestFairyFlossMetres || 0;
-      setText("depthFlossBest", bestN ? String(bestN) : "—");
+      const nowM = isLive() || (run && run.dying) ? run.totalMetres : 0;
+      setText("depthFlossNow", nowM ? nowM.toFixed(1) : "0");
+      setText("depthFlossMetres", nowM ? `${nowM.toFixed(1)}m` : "0m");
+      const bestM = Math.max(state.bestFairyFlossMetres || 0, (state.bestDepth && state.bestDepth.fairyfloss) || 0, state.bestFairyFloss || 0);
+      setText("depthFlossBest", bestM ? Number(bestM).toFixed(1) : "—");
       setText("depthFlossBestM", bestM ? `${Number(bestM).toFixed(1)}m` : "—");
       const door = el("fairyFlossDoorBest");
-      if (door) {
-        if (bestN || bestM) {
-          door.textContent = `Metres ${Math.floor(bestM || 0)} / Stage ${bestN || 0}`;
-        } else {
-          door.textContent = "Metres —";
-        }
-      }
+      if (door) door.textContent = bestM ? `Height ${Number(bestM).toFixed(1)}m` : "Height —";
     },
     bind() {
+      if (bound) return;
+      bound = true;
       declareP0();
-      ensurePips();
       ensureHud();
+      ensurePips();
       const startBtn = el("fairyFlossStart");
       if (startBtn) startBtn.addEventListener("click", start);
       const canvas = el("fairyFlossCanvas");
       if (canvas) {
         canvas.style.touchAction = "none";
-        canvas.addEventListener("pointerdown", (ev) => {
-          if (run && (run.dying || run.done)) return;
-          if (!isLive()) {
-            punchStart();
-            return;
-          }
-          ev.preventDefault();
-          try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* optional */ }
-          pointerWind(ev);
-        });
-        canvas.addEventListener("pointermove", (ev) => {
-          if (!isLive() || !run.dragging) return;
-          ev.preventDefault();
-          pointerWind(ev);
-        });
-        canvas.addEventListener("pointerup", () => { if (isLive()) pointerUp(false); });
-        canvas.addEventListener("pointercancel", () => { if (isLive()) pointerUp(false); });
-        canvas.addEventListener("pointerleave", () => { if (isLive()) pointerUp(true); });
-        canvas.addEventListener("lostpointercapture", () => { if (isLive()) pointerUp(false); });
+        canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+        canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+        canvas.addEventListener("pointerup", onPointerUp);
+        canvas.addEventListener("pointercancel", onPointerUp);
+        canvas.addEventListener("lostpointercapture", onPointerUp);
       }
       const copyBtn = el("fairyFlossChallenge");
       if (copyBtn) {
@@ -1482,7 +1891,11 @@
         });
       }
       stampDepthCopy();
-      draw();
+      window.addEventListener("resize", () => { if (world && cabinetOn()) resize(); });
+      if (cabinetOn()) {
+        ensureWorld();
+        startLoop();
+      }
     },
   });
-})();
+}

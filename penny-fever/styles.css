@@ -152,7 +152,7 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
 .discovery-door {
   position: relative;
   text-align: center;
-  padding: 2.5rem 1.25rem 2rem;
+  padding: 1.4rem 1.25rem 1.6rem;
   border-radius: var(--radius);
   background:
     linear-gradient(160deg, rgba(60, 28, 44, 0.95), rgba(22, 11, 16, 0.92));
@@ -943,8 +943,8 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
 
 .door-cinematic {
   position: relative;
-  width: min(100%, 280px);
-  margin: 0 auto 1.1rem;
+  width: min(100%, 220px);
+  margin: 0 auto 0.75rem;
   aspect-ratio: 3/4;
   border-radius: 16px;
   overflow: hidden;
@@ -960,6 +960,38 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
 }
 .discovery-door.knocking .door-cinematic {
   animation: door-shake 0.45s ease;
+}
+.admit-desk {
+  max-width: 22rem;
+  margin: 0 auto;
+}
+.admit-stub {
+  margin: 0 auto 0.9rem;
+  padding: 0.7rem 1rem 0.65rem;
+  border: 2px dashed rgba(212, 164, 90, 0.7);
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, #3a1a24, #241018);
+  color: var(--brass-soft);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.admit-stub span,
+.admit-stub strong,
+.admit-stub em { display: block; }
+.admit-stub span {
+  font: 700 0.62rem/1.2 system-ui, sans-serif;
+  letter-spacing: 0.22em;
+}
+.admit-stub strong {
+  margin: 0.2rem 0 0.15rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: #fff6ec;
+}
+.admit-stub em {
+  font-size: 0.82rem;
+  color: #e8a0b8;
 }
 @keyframes door-shake {
   0%,100% { transform: translateX(0); }

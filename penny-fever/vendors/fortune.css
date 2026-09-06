@@ -1,0 +1,450 @@
+/* Mystic Fortune Tent — Crystal Well. PF only. Never booth/port 6000. */
+
+#cabinet-fortune.fortune-interior {
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(140, 64, 180, 0.38), transparent 48%),
+    radial-gradient(ellipse at 18% 88%, rgba(40, 12, 36, 0.7), transparent 55%),
+    radial-gradient(ellipse at 82% 80%, rgba(80, 28, 12, 0.35), transparent 50%),
+    #0c0610;
+}
+
+#cabinet-fortune .fortune-sky {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(232, 184, 74, 0.2), transparent 42%),
+    linear-gradient(180deg, #1c0c24, transparent 72%);
+  pointer-events: none;
+}
+
+#cabinet-fortune .fortune-room {
+  max-width: 74rem;
+}
+
+#cabinet-fortune .fortune-card {
+  background:
+    linear-gradient(180deg, rgba(46, 18, 54, 0.9), rgba(14, 6, 16, 0.94));
+  border-color: rgba(186, 120, 220, 0.38);
+  box-shadow: 0 18px 48px rgba(40, 8, 40, 0.48), inset 0 1px rgba(255, 220, 160, 0.12);
+}
+
+#cabinet-fortune .fortune-card h2 {
+  color: #f0d09a;
+}
+
+.fortune-stage {
+  position: relative;
+  height: min(74vh, 760px);
+  min-height: 440px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 164, 90, 0.46);
+  background: #0a0610;
+  box-shadow:
+    inset 0 0 56px rgba(80, 20, 90, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.48);
+  touch-action: none;
+  user-select: none;
+}
+
+.fortune-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  background: #0a0610;
+}
+
+.fortune-card.is-playing .fortune-stage canvas {
+  cursor: crosshair;
+}
+
+.fortune-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.7rem 0.8rem 0.75rem;
+  z-index: 2;
+}
+
+.fortune-hud-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+
+.fortune-hud-room {
+  margin: 0;
+  max-width: 72%;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(12, 4, 14, 0.76);
+  border: 1px solid rgba(232, 184, 74, 0.42);
+  font: 700 0.76rem/1.3 Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  text-shadow: 0 1px 8px #000;
+}
+
+.fortune-hud-score {
+  font: 700 0.85rem/1 Georgia, serif;
+  color: #f7e6c0;
+  background: rgba(12, 4, 14, 0.72);
+  border: 1px solid rgba(186, 120, 220, 0.4);
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+}
+
+.fortune-hud-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  margin-top: 0.2rem;
+  pointer-events: none;
+}
+
+.fortune-hud-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.fortune-law {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+  pointer-events: none;
+}
+
+.fortune-law-gold,
+.fortune-law-red,
+.fortune-law-mid {
+  display: inline-block;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font: 700 0.78rem/1.2 Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px #000;
+}
+
+.fortune-law-gold {
+  color: #1a1008;
+  background: linear-gradient(180deg, #f4d078, #e8b84a);
+  border: 1px solid #ffe9b0;
+  box-shadow: 0 0 16px rgba(232, 184, 74, 0.55);
+}
+
+.fortune-law-red {
+  color: #fff4ea;
+  background: linear-gradient(180deg, #ff4a66, #c41e3a);
+  border: 1px solid #ff8899;
+  box-shadow: 0 0 16px rgba(255, 50, 80, 0.5);
+}
+
+.fortune-law-mid {
+  color: #f7e6c0;
+  background: rgba(12, 4, 14, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+}
+
+.fortune-sign-badge {
+  min-width: 9.5rem;
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(18, 8, 22, 0.82);
+  border: 1px solid rgba(232, 184, 74, 0.55);
+  color: #ffe9b0;
+  font: 700 0.92rem/1.25 Georgia, serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(232, 184, 74, 0.28);
+  text-align: center;
+}
+
+.fortune-meters {
+  width: min(22rem, 82%);
+  display: grid;
+  gap: 0.28rem;
+}
+
+.fortune-charge,
+.fortune-veil {
+  height: 0.46rem;
+  border-radius: 99px;
+  background: rgba(8, 4, 10, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.42);
+  overflow: hidden;
+}
+
+.fortune-veil {
+  height: 0.32rem;
+  border-color: rgba(186, 120, 220, 0.4);
+}
+
+.fortune-charge i,
+.fortune-veil i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+}
+
+.fortune-charge i {
+  background: linear-gradient(90deg, #6b3a8a, #e8b84a 70%, #f7f0c8);
+  box-shadow: 0 0 12px rgba(232, 184, 74, 0.7);
+  transition: width 80ms linear;
+}
+
+.fortune-veil i {
+  width: 100%;
+  background: linear-gradient(90deg, #3a1860, #c89ae0);
+  box-shadow: 0 0 10px rgba(180, 120, 220, 0.45);
+  transform-origin: left center;
+}
+
+.fortune-meter-lab {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d8c4a0;
+  text-shadow: 0 1px 6px #000;
+}
+
+.fortune-hud-hint {
+  margin: 0.15rem 0 0;
+  font: italic 1.02rem/1.35 Georgia, serif;
+  color: #f7e6c0;
+  text-shadow: 0 2px 10px #000;
+  text-align: center;
+  max-width: 36rem;
+}
+
+.fortune-toast {
+  pointer-events: none;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(90, 28, 120, 0.9);
+  color: #fff4ea;
+  font: 700 0.95rem/1.2 Georgia, serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.fortune-toast.is-on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.fortune-toast.is-bad {
+  background: rgba(140, 24, 48, 0.92);
+}
+
+.fortune-hud-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+
+.fortune-controls {
+  pointer-events: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  justify-content: center;
+  padding: 0.45rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(8, 4, 12, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  color: #f7e6c0;
+  font: 700 0.72rem/1.3 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px #000;
+}
+
+.fortune-controls span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.fortune-controls kbd {
+  display: inline-block;
+  padding: 0.08rem 0.38rem;
+  border-radius: 5px;
+  border: 1px solid rgba(232, 184, 74, 0.55);
+  background: rgba(40, 18, 48, 0.9);
+  color: #e8b84a;
+  font: 700 0.68rem/1.2 Georgia, serif;
+  letter-spacing: 0.06em;
+}
+
+.fortune-ctrl-gold kbd {
+  color: #1a1008;
+  background: #e8b84a;
+  border-color: #ffe9b0;
+}
+
+.fortune-ctrl-red kbd {
+  color: #fff4ea;
+  background: #c41e3a;
+  border-color: #ff8899;
+}
+
+.fortune-start-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 5.4rem;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fortune-start-overlay[hidden] {
+  display: none;
+}
+
+.fortune-start-overlay .ticket-button {
+  min-width: 14rem;
+  box-shadow: 0 0 0 1px rgba(232, 184, 74, 0.55), 0 0 28px rgba(186, 80, 220, 0.4);
+}
+
+.fortune-start-note {
+  margin: 0;
+  color: #f0d09a;
+  font: italic 0.85rem/1.3 Georgia, serif;
+  text-shadow: 0 2px 8px #000;
+}
+
+.fortune-float-ticket {
+  position: absolute;
+  left: 50%;
+  bottom: 6.2rem;
+  transform: translateX(-50%);
+  width: min(22rem, 86%);
+  padding: 0.7rem 0.9rem;
+  border-radius: 4px 12px 12px 4px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(36, 16, 24, 0.06) 11px 12px),
+    #f3e6d0;
+  color: #2a1810;
+  border-left: 3px dashed #c9a27a;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.fortune-float-colour {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a5a3a;
+}
+
+.fortune-float-line {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.fortune-webgl-fail {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1.5rem;
+  color: #f0d09a;
+  background: rgba(10, 6, 16, 0.82);
+  z-index: 4;
+}
+
+.fortune-actions {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.fortune-card.is-playing .vendor-vestibule-only,
+.fortune-card.is-result .vendor-vestibule-only,
+.fortune-card.is-playing #fortuneStart,
+.fortune-card.is-result #fortuneStart,
+.fortune-card.is-playing .fortune-start-overlay,
+.fortune-card.is-result .fortune-start-overlay {
+  display: none;
+}
+
+.fortune-card.is-playing .fortune-stage {
+  outline: 1px solid rgba(186, 120, 220, 0.35);
+}
+
+.fortune-card.is-result .vendor-result {
+  margin-top: 0.7rem;
+}
+
+.fortune-card.is-danger .fortune-stage {
+  animation: fortune-crack 0.28s steps(2) infinite;
+}
+
+@keyframes fortune-crack {
+  from { filter: saturate(1.2) hue-rotate(-8deg); }
+  to { filter: saturate(0.8) brightness(1.08); }
+}
+
+.fortune-legacy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .fortune-stage {
+    height: min(64vh, 580px);
+    min-height: 360px;
+  }
+  .fortune-controls {
+    font-size: 0.64rem;
+  }
+  .fortune-start-overlay {
+    bottom: 6.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fortune-charge i,
+  .fortune-toast {
+    transition: none;
+  }
+  .fortune-card.is-danger .fortune-stage {
+    animation: none;
+  }
+}

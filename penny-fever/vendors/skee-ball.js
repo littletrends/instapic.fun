@@ -1,39 +1,59 @@
-/* Skee-Ball Alley — Desktop Grok owns this file. PF only. Never booth/port 6000. Never Imagine.
- * GOBLIN B04 AUTHORED — GOBLIN_AUTHORED_LEVELS_B04.md · hybrid + codaEnabled.
- * 8 unique LANES (layout / cheat / verb), not a hotter target climb. Mount stageParams = coda only.
- * Soft Boardwalk → Gutter Whisper → Wax Sheen → Split Ring Gate → Bank Shot Alley →
- * Reverse Power → Moving Fifty → Fever Lane Opera → ENDLESS Wax Lie {n}.
- * SlingAim timing-power lob. Stall owns 9-ball under_target death (shadow ctx).
- * HUD = LANE {n} · {name} · coda labeled ENDLESS. Death hold ≥700ms. No unlimited balls. */
-(() => {
-  "use strict";
+/* Skee-Ball Alley — Desktop Grok owns this doorway. PF only. Never booth/port 6000. Never Imagine.
+ * 3D boardwalk tent. One-thumb SlingAim. Wax lies mid-stage. Under-target death after 9.
+ * One coin = one run. Family-safe carnival. Aura locked look if she appears. */
+import * as THREE from "../world/lib/three.module.min.js";
+
+(function boot() {
   const PF = window.PennyFever;
-  if (!PF || !PF.registerVendor) return;
+  if (!PF || !PF.registerVendor) {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+    else setTimeout(boot, 24);
+    return;
+  }
+  main(PF);
+})();
+
+function main(PF) {
+  "use strict";
   const { $, kit } = PF;
 
-  const W = 340;
-  const H = 500;
   const GAME_ID = "skee";
-  const TEE = { x: W / 2, y: H - 36 };
-  const GRAVITY = 0.22;
-  const BALL_R = 8.2;
-  const RING_HOME = { x: W / 2, y: 118 };
-  const RING_VALS = [10, 20, 30, 50];
-  const ROLL_MS = 720;
-  const CLEAR_BONUS = 250;
-  const LANE_TOP = 78;
-  const LANE_SPAN = TEE.y - LANE_TOP;
-  const DEATH_HOLD_MS = 760;
-  const WAX_AFTER = 3;
-  const MAX_STAGE_PTS = 9 * 50;
   const AUTHORED_COUNT = 8;
   const CODA_ENABLED = true;
+  const BALLS = 9;
+  const CLEAR_BONUS = 250;
+  const DEATH_HOLD_MS = 760;
+  const MAX_STAGE_PTS = 9 * 50;
+  const BALL_R = 0.05;
+  const LANE_Y = 0.92;
+  const LANE_HALF = 0.31;
+  const TEE = { x: 0, y: LANE_Y + BALL_R, z: 0.58 };
+  const FLAT_END = -5.72;
+  const RAMP_LEN = 1.88;
+  const RAMP_H = 1.26;
+  const RAMP_END = FLAT_END - RAMP_LEN;
+  const RAMP_THETA = Math.atan(RAMP_H / RAMP_LEN);
+  const GRAVITY = 9.6;
+  const LANE_FRIC = 0.34;
+  const RAMP_FRIC = 0.16;
+  const RING_VALS = [10, 20, 30, 50];
+
+  const SKIN = 0xf0c4a8;
+  const HAIR = 0x3d2418;
+  const DRESS = 0x1e6b3c;
+  const GOLD = 0xe8b84a;
+  const HEART = 0xd22b3a;
+  const BLOUSE = 0xf5f0ea;
+  const WOOD = 0x5a341c;
+  const WOOD_DARK = 0x2a160e;
 
   let run = null;
-  let idleRaf = 0;
+  let view = null;
   let idleT = 0;
   let idleRoom = 1;
-  let idleClock = 0;
+  let reduced = false;
+  let keys = { a: false, d: false, space: false };
+  const pointer = { down: false, id: 0, sx: 0, sy: 0, x: 0, y: 0 };
 
   const AURA = {
     under_target: "Aura: Wax got you.",
@@ -43,66 +63,67 @@
     leave: "Aura: Walking off mid-board? Coward’s stamp.",
     shallow: "Aura: Not a single lane. The board kept the balls.",
     souvenir: "Aura: Fever Lane Opera survived. Souvenir — the board tipped its hat.",
+    roll: "Aura: Hold one thumb. Release in the gold. The boards remember every roll.",
+    fifty: "Aura: Crown hole. That’s how you talk to wax.",
+    gutter: "Aura: Gutters whispered. Stay in the wood.",
   };
 
-  /* B04 authored LANES — unique geometry / cheat / verb. Target climb is coda-only. */
   const AUTHORED = [
     {
       id: 1, name: "Soft Boardwalk", title: "Soft Boardwalk", kind: "teach",
-      target: 100, ringScale: 1.0, waxLies: false, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.00078, goldLo: 0.54, goldHi: 0.90, loft: 34,
-      gutter: false, split50: false, bankRail: false, invertPower: false, movingFifty: false,
-      barker: "Soft Boardwalk. Wide gold. Slow needle. Lob, don’t tap. Nine balls. Beat 100.",
+      target: 100, ringScale: 1.08, waxLies: false, balls: 9,
+      goldLo: 0.54, goldHi: 0.90, loft: 1, needleSpeed: 0.70,
+      gutter: false, split50: false, bankRail: false, invertPower: false, movingFifty: false, crown: true,
+      barker: "Soft Boardwalk. Hold one thumb. Release in the wide gold. Honest wood.",
     },
     {
       id: 2, name: "Gutter Whisper", title: "Gutter Whisper", kind: "gutter",
-      target: 120, ringScale: 1.0, waxLies: false, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.00105, goldLo: 0.58, goldHi: 0.88, loft: 32,
+      target: 120, ringScale: 1.0, waxLies: false, balls: 9,
+      goldLo: 0.58, goldHi: 0.88, loft: 1, needleSpeed: 1.05,
       gutter: true, split50: false, bankRail: false, invertPower: false, movingFifty: false,
       barker: "Outlanes MAGNETIZE. Stay off the gutters or they whisper you out.",
     },
     {
       id: 3, name: "Wax Sheen", title: "Wax Sheen", kind: "waxLie",
-      target: 140, ringScale: 1.0, waxLies: true, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.00122, goldLo: 0.62, goldHi: 0.86, loft: 30,
+      target: 140, ringScale: 1.0, waxLies: true, balls: 9,
+      goldLo: 0.62, goldHi: 0.86, loft: 1, needleSpeed: 1.22,
       gutter: false, split50: false, bankRail: false, invertPower: false, movingFifty: false,
-      barker: "Sheen mid-lane. First ball after sheen SKIDS LONG. Ghost is not the land.",
+      barker: "Sheen hits MID-LANE. First ball after sheen SKIDS LONG. Ghost is not the land.",
     },
     {
       id: 4, name: "Split Ring Gate", title: "Split Ring Gate", kind: "split50",
-      target: 160, ringScale: 1.0, waxLies: false, balls: 9, rings: [10, 20, 30, 30],
-      needleSpeed: 0.00135, goldLo: 0.60, goldHi: 0.86, loft: 30,
+      target: 160, ringScale: 1.0, waxLies: false, balls: 9,
+      goldLo: 0.60, goldHi: 0.86, loft: 1, needleSpeed: 1.35,
       gutter: false, split50: true, bankRail: false, invertPower: false, movingFifty: false,
       barker: "The 50 split into TWO 30s. No center crown. Pick a gate.",
     },
     {
       id: 5, name: "Bank Shot Alley", title: "Bank Shot Alley", kind: "bankShot",
-      target: 180, ringScale: 1.0, waxLies: false, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.0014, goldLo: 0.58, goldHi: 0.88, loft: 30,
-      gutter: false, split50: false, bankRail: true, invertPower: false, movingFifty: false,
-      bankNeed: 2,
+      target: 180, ringScale: 1.0, waxLies: false, balls: 9,
+      goldLo: 0.58, goldHi: 0.88, loft: 1, needleSpeed: 1.4,
+      gutter: false, split50: false, bankRail: true, invertPower: false, movingFifty: false, bankNeed: 2,
       barker: "Left BANK rail is live. Bounce for a stamp. Beat 180 — or two bank stamps.",
     },
     {
       id: 6, name: "Reverse Power", title: "Reverse Power", kind: "invertPower",
-      target: 180, ringScale: 1.0, waxLies: false, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.00128, goldLo: 0.10, goldHi: 0.46, loft: 30,
+      target: 180, ringScale: 1.0, waxLies: false, balls: 9,
+      goldLo: 0.10, goldHi: 0.46, loft: 1, needleSpeed: 1.28,
       gutter: false, split50: false, bankRail: false, invertPower: true, movingFifty: false,
-      barker: "REVERSE — release EARLY for a long lob. Muscle memory is the cheat.",
+      barker: "REVERSE — release EARLY for a long sling. Muscle memory is the cheat.",
     },
     {
       id: 7, name: "Moving Fifty", title: "Moving Fifty", kind: "movingFifty",
-      target: 200, ringScale: 1.0, waxLies: false, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.00132, goldLo: 0.62, goldHi: 0.86, loft: 28,
+      target: 200, ringScale: 1.0, waxLies: false, balls: 9,
+      goldLo: 0.62, goldHi: 0.86, loft: 1, needleSpeed: 1.32,
       gutter: false, split50: false, bankRail: false, invertPower: false, movingFifty: true,
       barker: "The 50 ORBITS. 10/20/30 sit still. Lead the crown hole.",
     },
     {
       id: 8, name: "Fever Lane Opera", title: "Fever Lane Opera", kind: "comboFinale",
-      target: 220, ringScale: 1.0, waxLies: true, balls: 9, rings: RING_VALS.slice(),
-      needleSpeed: 0.0014, goldLo: 0.60, goldHi: 0.86, loft: 28,
+      target: 220, ringScale: 0.96, waxLies: true, balls: 9,
+      goldLo: 0.60, goldHi: 0.86, loft: 1, needleSpeed: 1.4,
       gutter: true, split50: false, bankRail: false, invertPower: false, movingFifty: true,
-      barker: "Finale: wax sheen + gutter pull + moving fifty. Nine balls. Beat 220.",
+      barker: "Finale: sheen mid-lane + gutter pull + moving fifty. Nine balls. Beat 220.",
     },
   ];
 
@@ -118,25 +139,32 @@
   };
 
   const DEPTH_COPY = {
-    tag: "DEPTH RUN · 8 authored LANES then ENDLESS · 9 balls · layout cheats, not hotter targets",
-    body: "Authored rooms, not a thinner loop: Soft Boardwalk → Gutter Whisper (magnet outlanes) → Wax Sheen (first ball skids long) → Split Ring Gate (two 30s, no 50) → Bank Shot Alley (rail bounce OR 180) → Reverse Power (early = long) → Moving Fifty (orbiting crown) → Fever Lane Opera → ENDLESS Wax Lie. Hold the timing bar, release to lob. Beat the board in nine balls or WAX stamps you. No unlimited balls.",
-    status: "Depth run · START · 1 demo coin · 8 authored LANES then ENDLESS",
-    machine: "Boardwalk skee · 1 demo coin · authored LANES",
-    idleHud: ["ROLL UP — BEAT THE BOARD", "START · 1 demo coin — 8 lanes, then ENDLESS"],
-    punch: "Depth run — press START. Nine balls. No unlimited balls.",
+    tag: "DEPTH RUN · 8 authored LANES then ENDLESS · 9 balls · the sheen is the cheat",
+    body: "One-thumb sling. Hold, release in the gold. Soft Boardwalk → Gutter Whisper → Wax Sheen (sheen hits MID-LANE, next ball skids long, ghost is not the land) → Split Ring Gate → Bank Shot Alley → Reverse Power → Moving Fifty → Fever Lane Opera → ENDLESS Wax Lie. Nine balls. Beat the board or WAX stamps you. No unlimited balls.",
+    status: "HOLD one thumb · release in GOLD · 9 balls · beat the board",
+    machine: "Boardwalk skee · 1 demo coin · one-thumb sling",
+    punch: "HOLD one thumb. Release in the gold band. Nine balls. Under target is death.",
   };
 
-  function rk() {
-    return PF.runKit || null;
-  }
-
-  function el(id) {
-    return $(id);
-  }
-
+  function rk() { return PF.runKit || null; }
+  function el(id) { return $(id); }
   function setText(id, text) {
     const node = el(id);
     if (node) node.textContent = text;
+  }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function card() { return el("skeeCard"); }
+  function cabinetOn() {
+    const node = document.getElementById("cabinet-skee-ball");
+    return !!(node && !node.hidden);
+  }
+  function isLive() {
+    return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
+  }
+  function liveSpec() {
+    if (run && run.spec) return run.spec;
+    return skeeStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
   }
 
   function skeeCoda(n) {
@@ -147,21 +175,19 @@
       title: `Wax Lie ${n}`,
       kind: "coda",
       target: Math.min(MAX_STAGE_PTS - 20, 220 + 40 * t),
-      ringScale: Math.max(0.55, 1.0 - 0.04 * t),
+      ringScale: Math.max(0.62, 1.0 - 0.04 * t),
       waxLies: true,
       balls: 9,
-      rings: RING_VALS.slice(),
-      needleSpeed: Math.min(0.0034, 0.0015 + 0.00012 * t),
+      goldLo: t % 3 === 0 ? 0.12 : 0.70,
+      goldHi: t % 3 === 0 ? 0.42 : 0.84,
+      loft: 1, needleSpeed: Math.min(2.2, 1.5 + 0.08 * t),
       gutter: true,
       split50: false,
       bankRail: false,
       invertPower: t % 3 === 0,
       movingFifty: true,
-      goldLo: t % 3 === 0 ? 0.12 : 0.70,
-      goldHi: t % 3 === 0 ? 0.42 : 0.84,
-      loft: 24,
       coda: true,
-      barker: `ENDLESS Wax Lie ${n} — target climb, rings shrink, wax on. Gutters still whisper.`,
+      barker: `ENDLESS Wax Lie ${n} — rings shrink, wax on, gutters still whisper.`,
     };
   }
 
@@ -175,7 +201,7 @@
   function declareP0() {
     const kitRun = rk();
     if (!kitRun || typeof kitRun.declare !== "function") return;
-    try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already declared */ }
+    try { kitRun.declare(GAME_ID, P0_MOUNT); } catch (_) { /* already */ }
     kitRun.p0 = kitRun.p0 || {};
     kitRun.p0[GAME_ID] = Object.assign({
       stageParams: skeeStageParams,
@@ -188,29 +214,6 @@
     kitRun.mounted[GAME_ID] = true;
   }
 
-  function card() {
-    return el("skeeCard");
-  }
-
-  function cabinetOn() {
-    const node = document.getElementById("cabinet-skee-ball");
-    return !!(node && !node.hidden);
-  }
-
-  function isLive() {
-    return !!(run && !run.done && !run.dying && run.kitRun && run.kitRun.alive !== false);
-  }
-
-  function liveSpec() {
-    if (run && run.spec) return run.spec;
-    return skeeStageParams(((idleRoom - 1) % AUTHORED_COUNT) + 1);
-  }
-
-  function stageEl() {
-    const host = card();
-    return (host && host.querySelector(".vendor-stage")) || null;
-  }
-
   function cheatLabel(spec) {
     if (!spec) return "";
     if (spec.kind === "coda") return "ENDLESS · WAX LIE";
@@ -219,8 +222,9 @@
     if (spec.kind === "invertPower" || spec.invertPower) return "REVERSE — EARLY = LONG";
     if (spec.kind === "bankShot" || spec.bankRail) return "BANK RAIL — STAMP OR SCORE";
     if (spec.kind === "split50" || spec.split50) return "NO 50 — TWO 30 GATES";
-    if (spec.kind === "waxLie" || spec.waxLies) return "SHEEN SKIDS THE NEXT BALL LONG";
+    if (spec.kind === "waxLie" || spec.waxLies) return "SHEEN HITS MID-LANE — GHOST ≠ LAND";
     if (spec.kind === "gutter" || spec.gutter) return "GUTTERS MAGNETIZE";
+    if (spec.kind === "teach" || spec.crown) return "CROWNED LANE — RAILS FUNNEL";
     return "";
   }
 
@@ -231,42 +235,39 @@
     return `LANE ${playing} · ${name}`;
   }
 
+  function ensureCss() {
+    if (document.querySelector('link[href*="skee-ball.css"]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "vendors/skee-ball.css";
+    document.head.appendChild(link);
+  }
+
+  function stageEl() {
+    return card() || document.getElementById("cabinet-skee-ball");
+  }
+
   function ensureHud() {
-    const stage = stageEl();
-    if (!stage) return null;
-    let hud = stage.querySelector(`[data-runkit-hud="${GAME_ID}"]`);
-    if (!hud) {
-      hud = document.createElement("p");
-      hud.className = "depth-hud";
-      hud.dataset.runkitHud = GAME_ID;
-      hud.setAttribute("aria-live", "polite");
-      stage.appendChild(hud);
+    const hud = el("skeeHud");
+    const line = stageEl() && stageEl().querySelector(`[data-runkit-hud="${GAME_ID}"]`);
+    if (line) {
+      if (isLive() || (run && run.dying)) {
+        line.textContent = hudLine(liveSpec(), run.stage | 0);
+        line.hidden = false;
+      } else {
+        line.textContent = "LANE 0";
+        line.hidden = true;
+        if (hud) hud.hidden = true;
+      }
     }
-    if (isLive() || (run && run.dying)) {
-      hud.textContent = hudLine(liveSpec(), run.stage | 0);
-      hud.hidden = false;
-    } else {
-      hud.textContent = "LANE 0";
-      hud.hidden = true;
-    }
-    return hud;
+    return line;
   }
 
   function ensurePips(count) {
-    const stage = stageEl();
-    if (!stage) return null;
-    let span = stage.querySelector(`[data-runkit-strikes="${GAME_ID}"]`);
+    const span = (stageEl() && stageEl().querySelector(`[data-runkit-strikes="${GAME_ID}"]`)) || null;
+    if (!span) return null;
     const n = Math.max(9, count | 0);
-    if (!span) {
-      span = document.createElement("span");
-      span.className = "strike-pips";
-      span.dataset.runkitStrikes = GAME_ID;
-      span.setAttribute("aria-hidden", "true");
-      stage.appendChild(span);
-    }
-    if (span.childElementCount !== n) {
-      span.innerHTML = new Array(n).fill("<i></i>").join("");
-    }
+    if (span.childElementCount !== n) span.innerHTML = new Array(n).fill("<i></i>").join("");
     return span;
   }
 
@@ -277,13 +278,17 @@
     if (!span) return;
     const used = (isLive() || (run && run.dying)) ? Math.max(0, max - (run.ballsLeft | 0)) : 0;
     span.querySelectorAll("i").forEach((node, i) => node.classList.toggle("on", i < used));
+    if (view) {
+      view.trough.forEach((mesh, i) => {
+        mesh.visible = i < ((isLive() || (run && run.dying)) ? (run.ballsLeft | 0) : max);
+      });
+    }
   }
 
   function resetPips() {
-    const host = card();
-    const pips = (host && host.querySelector("[data-runkit-strikes]")) || document.querySelector("[data-runkit-strikes=\"skee\"]");
-    if (!pips) return;
-    pips.querySelectorAll("i").forEach((n) => n.classList.remove("on"));
+    const pips = document.querySelector("[data-runkit-strikes=\"skee\"]");
+    if (pips) pips.querySelectorAll("i").forEach((n) => n.classList.remove("on"));
+    if (view) view.trough.forEach((mesh) => { mesh.visible = true; });
   }
 
   function closeKitRun(partial) {
@@ -291,7 +296,7 @@
     if (ctx && rk() && typeof rk().finishRun === "function") {
       try {
         return rk().finishRun(ctx, Object.assign({ gameId: GAME_ID }, partial), { navigate: false });
-      } catch (_) { /* fall through */ }
+      } catch (_) { /* fall */ }
     }
     kit.persistRun(PF.getState(), GAME_ID, partial);
     return null;
@@ -317,17 +322,10 @@
     kit.persistRun(state, GAME_ID, payload);
     if (state) {
       const keyed = Object.assign({ gameId: GAME_ID, at: Date.now() }, payload);
-      const prev = (state.lastRun && typeof state.lastRun === "object" && !Array.isArray(state.lastRun))
-        ? state.lastRun
-        : {};
+      const prev = (state.lastRun && typeof state.lastRun === "object" && !Array.isArray(state.lastRun)) ? state.lastRun : {};
       state.lastRun = Object.assign({}, prev, {
-        game: GAME_ID,
-        gameId: GAME_ID,
-        depth: payload.depth,
-        score: payload.score,
-        deathReason: payload.deathReason,
-        cashedOut: payload.cashedOut,
-        at: keyed.at,
+        game: GAME_ID, gameId: GAME_ID, depth: payload.depth, score: payload.score,
+        deathReason: payload.deathReason, cashedOut: payload.cashedOut, at: keyed.at,
       });
       state.lastRun[GAME_ID] = keyed;
     }
@@ -360,9 +358,6 @@
     const engines = rk() && rk().engines;
     if (!engines || !engines.SlingAim || typeof engines.SlingAim.mount !== "function" || !ctx) return null;
     try {
-      /* Launcher only. Stall owns 9-ball under_target death.
-       * missesToDeath is huge so SlingAim.resolveHit cannot steal the run.
-       * Shadow ctx so reportDepth/finishRun cannot steal the coin run. */
       return engines.SlingAim.mount(el("skeeCanvas") || card(), {
         gravity: GRAVITY,
         missesToDeath: 99,
@@ -375,91 +370,16 @@
     }
   }
 
-  function goldBand(spec) {
-    if (!spec) return { lo: 0.74, hi: 0.83 };
-    return {
-      lo: spec.goldLo != null ? spec.goldLo : 0.74,
-      hi: spec.goldHi != null ? spec.goldHi : 0.83,
-    };
-  }
-
-  function ringCenter(spec, t) {
-    const amp = spec && spec.offsetAmp ? spec.offsetAmp : 0;
-    const sway = amp ? Math.sin((t || 0) * 0.0018) * amp : 0;
-    return { x: RING_HOME.x + sway, y: RING_HOME.y };
-  }
-
-  function fiftyPos(spec, t) {
-    const c = ringCenter(spec, t);
-    if (!(spec && (spec.movingFifty || spec.kind === "movingFifty" || spec.kind === "comboFinale" || (spec.coda && spec.movingFifty)))) {
-      return c;
-    }
-    const a = (t || 0) * 0.00155;
-    return { x: c.x + Math.sin(a) * 40, y: c.y + Math.cos(a) * 14 };
-  }
-
-  function splitGates(spec, t) {
-    const c = ringCenter(spec, t);
-    return [
-      { x: c.x - 36, y: c.y + 4 },
-      { x: c.x + 36, y: c.y + 4 },
-    ];
-  }
-
-  function ringRadii(scale) {
-    const s = scale == null ? 1 : scale;
-    return { 50: 16 * s, 30: 32 * s, 20: 48 * s, 10: 66 * s };
-  }
-
-  function ovalMul(spec) {
-    return spec && spec.oval50 ? { x: 1.38, y: 0.62 } : { x: 1, y: 1 };
-  }
-
-  function waxMul() {
-    if (!run || !run.waxOn) return 1;
-    return run.waxMul || 1;
-  }
-
-  function effectivePower(power, spec) {
-    const p = kit.clamp(power, 0, 1);
-    if (spec && (spec.invertPower || spec.kind === "invertPower")) return 1 - p;
-    return p;
-  }
-
-  function landFromPower(power, aimX, mul, spec) {
-    const p = effectivePower(power, spec);
-    let travel = LANE_SPAN * (0.35 + p * 0.7) * (mul == null ? 1 : mul);
-    let destX = kit.clamp(TEE.x + aimX * (0.28 + p * 0.5), 42, W - 42);
-    if (spec && spec.crown) destX += (TEE.x - destX) * 0.32;
-    let destY = kit.clamp(TEE.y - travel, LANE_TOP + 6, TEE.y - 28);
-    let banked = false;
-    if (spec && spec.bankRail && destX < 118) {
-      destX = kit.clamp(118 + (118 - destX) * 0.72, 118, W - 72);
-      destY = kit.clamp(destY - 22, LANE_TOP + 8, TEE.y - 36);
-      banked = true;
-    }
-    if (spec && spec.gutter && !banked) {
-      const edge = 102;
-      if (destX < edge) destX = kit.clamp(destX - (edge - destX) * 0.62, 28, W - 28);
-      if (destX > W - edge) destX = kit.clamp(destX + (destX - (W - edge)) * 0.62, 28, W - 28);
-    }
-    return { x: destX, y: destY, banked };
-  }
-
-  function challengeLine(depth) {
-    if (rk() && typeof rk().challengeText === "function") {
-      return rk().challengeText("Skee-Ball stage", depth, GAME_ID);
-    }
-    return `Beat my Skee-Ball stage ${depth} on Penny Fever`;
-  }
-
   function tellDepth(n) {
     if (!run || !run.kitRun || !rk() || typeof rk().reportDepth !== "function") return;
     const spec = liveSpec();
-    try {
-      rk().reportDepth(run.kitRun, n | 0, { name: spec.title, coda: !!spec.coda });
-    } catch (_) { /* hud */ }
+    try { rk().reportDepth(run.kitRun, n | 0, { name: spec.title, coda: !!spec.coda }); } catch (_) { /* hud */ }
     ensureHud();
+  }
+
+  function challengeLine(depth) {
+    if (rk() && typeof rk().challengeText === "function") return rk().challengeText("Skee-Ball stage", depth, GAME_ID);
+    return `Beat my Skee-Ball stage ${depth} on Penny Fever`;
   }
 
   function lastDepth() {
@@ -471,611 +391,1022 @@
     return Math.max(state.bestSkee || 0, (state.bestDepth && state.bestDepth[GAME_ID]) || 0);
   }
 
-  function punchStart() {
-    stampDepthCopy();
-    setText("skeeStatus", DEPTH_COPY.punch);
-    const btn = el("skeeStart");
-    if (btn && !btn.hidden) {
-      try { btn.focus(); } catch (_) { /* ignore */ }
-      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  function goldBand(spec) {
+    if (!spec) return { lo: 0.62, hi: 0.86 };
+    return { lo: spec.goldLo != null ? spec.goldLo : 0.62, hi: spec.goldHi != null ? spec.goldHi : 0.86 };
+  }
+
+  function waxMul() {
+    if (!run || !run.waxOn) return 1;
+    return run.waxMul || 1;
+  }
+
+  function holeDefs(spec, t) {
+    const s = spec && spec.ringScale != null ? spec.ringScale : 1;
+    const split = !!(spec && (spec.split50 || spec.kind === "split50"));
+    const moving = !!(spec && (spec.movingFifty || spec.kind === "movingFifty" || spec.kind === "comboFinale" || (spec.coda && spec.movingFifty)));
+    const holes = [
+      { id: "10L", v: 10, u: 0.24, x: -0.27, r: 0.11 * s, skip: 2.75 },
+      { id: "10R", v: 10, u: 0.24, x: 0.27, r: 0.11 * s, skip: 2.75 },
+      { id: "20", v: 20, u: 0.38, x: 0, r: 0.080 * s, skip: 3.50 },
+      { id: "30", v: 30, u: 0.56, x: 0, r: 0.074 * s, skip: 4.40 },
+      { id: "40L", v: 40, u: 0.72, x: -0.15, r: 0.068 * s, skip: 5.10 },
+      { id: "40R", v: 40, u: 0.72, x: 0.15, r: 0.068 * s, skip: 5.10 },
+      { id: "50", v: 50, u: 0.90, x: 0, r: 0.064 * s, skip: 6.80 },
+    ];
+    if (split) {
+      holes.pop();
+      holes.push({ id: "30GL", v: 30, u: 0.90, x: -0.12, r: 0.07 * s, skip: 6.80, gate: 0 });
+      holes.push({ id: "30GR", v: 30, u: 0.90, x: 0.12, r: 0.07 * s, skip: 6.80, gate: 1 });
+    } else if (moving) {
+      const a = (t || 0) * 0.00155;
+      const h = holes[holes.length - 1];
+      h.x = Math.sin(a) * 0.16;
+      h.u = 0.88 + Math.cos(a) * 0.045;
+    }
+    return holes;
+  }
+
+  function holeWorld(h) {
+    const z = FLAT_END - h.u * RAMP_LEN;
+    const y = LANE_Y + h.u * RAMP_H + 0.02;
+    return { x: h.x, y, z };
+  }
+
+  /* ---------- textures / mats ---------- */
+  function texFrom(draw, w, h, repeatX, repeatY) {
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+    if (repeatX) t.repeat.set(repeatX, repeatY || 1);
+    return t;
+  }
+
+  function woodTex() {
+    return texFrom((ctx, w, h) => {
+      ctx.fillStyle = "#5a341c";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 18; i += 1) {
+        ctx.fillStyle = i % 2 ? "rgba(90,42,18,0.35)" : "rgba(212,164,90,0.12)";
+        ctx.fillRect((i / 18) * w, 0, w / 18, h);
+      }
+      ctx.fillStyle = "rgba(20,8,4,0.18)";
+      for (let y = 0; y < h; y += 7) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.sin(y * 0.2) * 2);
+        ctx.lineTo(w, y + Math.cos(y * 0.13) * 3);
+        ctx.strokeStyle = "rgba(20,8,4,0.22)";
+        ctx.stroke();
+      }
+    }, 256, 256, 4, 12);
+  }
+
+  function canvasStripe() {
+    return texFrom((ctx, w, h) => {
+      for (let i = 0; i < 10; i += 1) {
+        ctx.fillStyle = i % 2 ? "#7a1824" : "#f0d4b0";
+        ctx.fillRect(0, (i / 10) * h, w, h / 10);
+      }
+    }, 64, 256, 1, 6);
+  }
+
+  function sheenTex() {
+    return texFrom((ctx, w, h) => {
+      const g = ctx.createLinearGradient(0, 0, w, 0);
+      g.addColorStop(0, "rgba(255,246,236,0)");
+      g.addColorStop(0.45, "rgba(255,246,236,0.55)");
+      g.addColorStop(0.55, "rgba(232,160,184,0.4)");
+      g.addColorStop(1, "rgba(255,246,236,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }, 256, 64, 1, 1);
+  }
+
+  function makeMat(color, extra) {
+    return new THREE.MeshStandardMaterial(Object.assign({
+      color, roughness: 0.62, metalness: 0.08,
+    }, extra || {}));
+  }
+
+  function labelTex(text, color) {
+    return texFrom((ctx, w, h) => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = color || "#f0d09a";
+      ctx.font = "bold 42px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, w / 2, h / 2);
+    }, 128, 64);
+  }
+
+  function marqueeTex(text) {
+    return texFrom((ctx, w, h) => {
+      ctx.fillStyle = "#1a080c";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#d4a45a";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(6, 6, w - 12, h - 12);
+      ctx.fillStyle = "#f0d09a";
+      ctx.font = "bold 54px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, w / 2, h / 2);
+    }, 768, 160);
+  }
+
+  /* ---------- scene ---------- */
+  function meshBox(mat, sx, sy, sz, x, y, z) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = false;
+    m.receiveShadow = true;
+    return m;
+  }
+  function meshCyl(mat, rt, rb, h, x, y, z, segs) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, segs || 12), mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
+  }
+  function meshSphere(mat, r, x, y, z) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    return m;
+  }
+
+  function makeAura() {
+    const g = new THREE.Group();
+    const skin = makeMat(SKIN, { roughness: 0.55 });
+    const dress = makeMat(DRESS, { roughness: 0.45, emissive: 0x0a2010, emissiveIntensity: 0.22 });
+    const blouse = makeMat(BLOUSE, { roughness: 0.5 });
+    const hairM = makeMat(HAIR, { roughness: 0.7 });
+    const gold = makeMat(GOLD, { metalness: 0.65, roughness: 0.28, emissive: 0x6a4808, emissiveIntensity: 0.5 });
+    const heart = makeMat(HEART, { emissive: HEART, emissiveIntensity: 0.55 });
+    const shoe = makeMat(0x111111, { metalness: 0.45, roughness: 0.25 });
+
+    const hip = new THREE.Group();
+    hip.position.y = 0.42;
+    g.add(hip);
+    hip.add(meshCyl(blouse, 0.13, 0.15, 0.28, 0, 0.28, 0));
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.12, 0.34, 12), dress);
+    skirt.position.y = 0.06;
+    hip.add(skirt);
+    const heartBox = meshBox(heart, 0.09, 0.09, 0.04, 0, 0.22, 0.16);
+    heartBox.rotation.z = Math.PI / 4;
+    hip.add(heartBox);
+
+    const head = new THREE.Group();
+    head.position.y = 0.62;
+    hip.add(head);
+    head.add(meshSphere(skin, 0.175, 0, 0.02, 0));
+    const eyeW = makeMat(0xf7f2ea);
+    const eyeD = makeMat(0x2a1810);
+    [-1, 1].forEach((side) => {
+      const white = meshSphere(eyeW, 0.038, side * 0.055, 0.03, 0.15);
+      white.scale.set(0.038, 0.044, 0.02);
+      head.add(white);
+      head.add(meshSphere(eyeD, 0.02, side * 0.055, 0.03, 0.168));
+    });
+    const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 10, Math.PI), makeMat(0xc45a6a));
+    smile.position.set(0, -0.05, 0.16);
+    smile.rotation.x = 2.6;
+    head.add(smile);
+    head.add(meshSphere(hairM, 0.23, 0, 0.06, -0.02));
+    [-1, 1].forEach((side) => {
+      head.add(meshSphere(hairM, 0.11, side * 0.2, -0.04, 0.04));
+      head.add(meshSphere(heart, 0.045, side * 0.2, 0.06, 0.06));
+    });
+    head.add(meshBox(hairM, 0.28, 0.07, 0.1, 0, 0.14, 0.16));
+    const crown = new THREE.Group();
+    crown.position.y = 0.24;
+    head.add(crown);
+    crown.add(new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 8, 18), gold));
+    [-0.09, 0, 0.09].forEach((x, i) => {
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, i === 1 ? 0.14 : 0.09, 6), gold);
+      spike.position.set(x, (i === 1 ? 0.14 : 0.09) * 0.45, 0);
+      crown.add(spike);
+    });
+    const gem = meshBox(heart, 0.055, 0.055, 0.025, 0, 0.02, 0.11);
+    gem.rotation.z = Math.PI / 4;
+    crown.add(gem);
+
+    function limb(side, arm) {
+      const pivot = new THREE.Group();
+      pivot.position.set(side * (arm ? 0.16 : 0.07), arm ? 0.36 : 0.0, 0);
+      const len = arm ? 0.28 : 0.34;
+      const bone = meshCyl(arm ? skin : dress, arm ? 0.035 : 0.042, arm ? 0.035 : 0.042, len, 0, -len / 2, 0);
+      pivot.add(bone);
+      if (arm) pivot.add(meshSphere(skin, 0.04, 0, -len, 0));
+      else pivot.add(meshBox(shoe, 0.08, 0.05, 0.12, 0, -len - 0.02, 0.03));
+      hip.add(pivot);
+      return pivot;
+    }
+    g.userData = { hip, head, armL: limb(-1, true), armR: limb(1, true), legL: limb(-1, false), legR: limb(1, false), mood: "idle", moodT: 0 };
+    g.userData.armL.rotation.z = 0.35;
+    g.userData.armR.rotation.z = -0.55;
+    g.userData.armR.rotation.x = -0.4;
+    return g;
+  }
+
+  function makeBallMesh() {
+    const g = new THREE.Group();
+    const body = meshSphere(makeMat(0xb41e32, { roughness: 0.38, metalness: 0.12 }), BALL_R, 0, 0, 0);
+    g.add(body);
+    const stripe = new THREE.Mesh(new THREE.TorusGeometry(BALL_R * 0.72, 0.006, 6, 16), makeMat(0xfff6ec, { roughness: 0.4 }));
+    stripe.rotation.x = Math.PI / 2;
+    g.add(stripe);
+    const hi = meshSphere(makeMat(0xfff6ec, { roughness: 0.3 }), 0.012, -0.016, 0.018, 0.018);
+    g.add(hi);
+    return g;
+  }
+
+  function makeHoleGroup(def) {
+    const g = new THREE.Group();
+    const well = meshCyl(makeMat(0x080406, { roughness: 1 }), def.r * 0.92, def.r * 0.7, 0.16, 0, -0.04, 0, 18);
+    g.add(well);
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(def.r, 0.012, 8, 20),
+      makeMat(0xd4a45a, { metalness: 0.7, roughness: 0.28, emissive: 0x3a2808, emissiveIntensity: 0.25 })
+    );
+    rim.rotation.x = Math.PI / 2;
+    g.add(rim);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: labelTex(String(def.v)),
+      transparent: true,
+      depthWrite: false,
+    }));
+    spr.scale.set(0.16, 0.08, 1);
+    spr.position.set(0, 0.08, 0.02);
+    g.add(spr);
+    g.userData = { rim, def, sprite: spr };
+    return g;
+  }
+
+  function buildWorld(canvas) {
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: (window.devicePixelRatio || 1) < 1.7,
+      alpha: false,
+      failIfMajorPerformanceCaveat: false,
+    });
+    renderer.setPixelRatio(Math.min(1.75, window.devicePixelRatio || 1));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x14080c);
+    scene.fog = new THREE.FogExp2(0x14080c, 0.045);
+    const camera = new THREE.PerspectiveCamera(56, 1, 0.08, 80);
+    camera.position.set(0.2, 1.42, 1.7);
+    const clock = new THREE.Clock();
+
+    const wood = woodTex();
+    const woodMat = new THREE.MeshStandardMaterial({ map: wood, roughness: 0.72, metalness: 0.04, color: 0xffffff });
+    const darkWood = makeMat(WOOD_DARK, { roughness: 0.8 });
+    const brass = makeMat(GOLD, { metalness: 0.72, roughness: 0.3, emissive: 0x3a2808, emissiveIntensity: 0.2 });
+    const stripe = new THREE.MeshStandardMaterial({ map: canvasStripe(), roughness: 0.85, side: THREE.DoubleSide });
+    const velvet = makeMat(0x4a1a28, { roughness: 0.9 });
+
+    const tent = new THREE.Group();
+    scene.add(tent);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 18), velvet);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, 0, -4);
+    tent.add(floor);
+    [-1, 1].forEach((side) => {
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 5.4), stripe);
+      wall.position.set(side * 3.6, 2.6, -4);
+      wall.rotation.y = side * -Math.PI / 2;
+      tent.add(wall);
+    });
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(8, 5.4), stripe);
+    back.position.set(0, 2.6, -10.2);
+    tent.add(back);
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(9, 16), makeMat(0x3a1018, { side: THREE.DoubleSide, roughness: 0.95 }));
+    roof.rotation.x = Math.PI / 2.4;
+    roof.position.set(0, 4.6, -4);
+    tent.add(roof);
+
+    const machine = new THREE.Group();
+    scene.add(machine);
+    const bodyLen = 8.7;
+    machine.add(meshBox(darkWood, 1.15, 0.9, bodyLen, 0, 0.45, -3.4));
+    const lane = meshBox(woodMat, 0.64, 0.06, 6.4, 0, LANE_Y, -2.55);
+    machine.add(lane);
+    const gutterL = meshBox(makeMat(0x12080c), 0.16, 0.08, 6.4, -0.40, LANE_Y - 0.04, -2.55);
+    const gutterR = meshBox(makeMat(0x12080c), 0.16, 0.08, 6.4, 0.40, LANE_Y - 0.04, -2.55);
+    machine.add(gutterL, gutterR);
+    const railL = meshBox(brass, 0.04, 0.08, 6.3, -0.33, LANE_Y + 0.05, -2.55);
+    const railR = meshBox(brass, 0.04, 0.08, 6.3, 0.33, LANE_Y + 0.05, -2.55);
+    machine.add(railL, railR);
+    const bank = meshBox(makeMat(GOLD, { metalness: 0.6, roughness: 0.32, emissive: GOLD, emissiveIntensity: 0.25 }), 0.06, 0.16, 4.6, -0.30, LANE_Y + 0.1, -2.4);
+    bank.visible = false;
+    machine.add(bank);
+
+    const ramp = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.07, Math.hypot(RAMP_LEN, RAMP_H)), woodMat);
+    ramp.position.set(0, LANE_Y + RAMP_H * 0.5, (FLAT_END + RAMP_END) / 2);
+    ramp.rotation.x = -RAMP_THETA;
+    machine.add(ramp);
+    const face = meshBox(darkWood, 0.95, 1.55, 0.12, 0, LANE_Y + 0.85, RAMP_END - 0.08);
+    machine.add(face);
+    const backstop = meshBox(brass, 0.7, 0.08, 0.08, 0, LANE_Y + RAMP_H + 0.12, RAMP_END + 0.02);
+    machine.add(backstop);
+
+    const holeRoot = new THREE.Group();
+    machine.add(holeRoot);
+    const holeMeshes = [];
+    holeDefs(AUTHORED[0], 0).forEach((def) => {
+      const hg = makeHoleGroup(def);
+      holeRoot.add(hg);
+      holeMeshes.push(hg);
+    });
+
+    const sheen = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.58, 6.2),
+      new THREE.MeshBasicMaterial({ map: sheenTex(), transparent: true, opacity: 0, depthWrite: false })
+    );
+    sheen.rotation.x = -Math.PI / 2;
+    sheen.position.set(0, LANE_Y + 0.034, -2.55);
+    machine.add(sheen);
+
+    const marquee = new THREE.Mesh(
+      new THREE.BoxGeometry(1.7, 0.34, 0.06),
+      new THREE.MeshBasicMaterial({ map: marqueeTex("SKEE-BALL") })
+    );
+    marquee.position.set(0, 2.55, RAMP_END + 0.1);
+    machine.add(marquee);
+
+    const trough = [];
+    const troughGroup = new THREE.Group();
+    troughGroup.position.set(0.58, LANE_Y - 0.02, 0.55);
+    machine.add(troughGroup);
+    troughGroup.add(meshBox(darkWood, 0.22, 0.08, 0.7, 0, -0.04, 0));
+    for (let i = 0; i < 9; i += 1) {
+      const b = makeBallMesh();
+      b.position.set(0, BALL_R, -0.28 + i * 0.07);
+      troughGroup.add(b);
+      trough.push(b);
+    }
+
+    const liveBall = makeBallMesh();
+    liveBall.position.set(TEE.x, TEE.y, TEE.z);
+    scene.add(liveBall);
+    const pullHint = new THREE.Group();
+    const shaft = meshCyl(makeMat(0xf0d09a, { emissive: 0xf0d09a, emissiveIntensity: 0.7 }), 0.012, 0.012, 0.22, 0, 0, 0);
+    shaft.rotation.x = Math.PI / 2;
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 8), makeMat(0xc41e3a, { emissive: 0xc41e3a, emissiveIntensity: 0.55 }));
+    head.rotation.x = -Math.PI / 2;
+    head.position.z = 0.16;
+    pullHint.add(shaft, head);
+    pullHint.position.set(TEE.x, TEE.y + 0.1, TEE.z + 0.22);
+    scene.add(pullHint);
+    const ghost = makeBallMesh();
+    ghost.traverse((n) => {
+      if (n.material) {
+        n.material = n.material.clone();
+        n.material.transparent = true;
+        n.material.opacity = 0.35;
+        n.material.depthWrite = false;
+      }
+    });
+    ghost.visible = false;
+    scene.add(ghost);
+
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.06, 12),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false })
+    );
+    shadow.rotation.x = -Math.PI / 2;
+    scene.add(shadow);
+
+    const arcGeo = new THREE.BufferGeometry();
+    const arcPos = new Float32Array(24 * 3);
+    arcGeo.setAttribute("position", new THREE.BufferAttribute(arcPos, 3));
+    const arc = new THREE.Line(arcGeo, new THREE.LineBasicMaterial({ color: 0xf0d09a, transparent: true, opacity: 0.7 }));
+    arc.visible = false;
+    scene.add(arc);
+
+    const lights = [];
+    scene.add(new THREE.AmbientLight(0x6a4838, 1.05));
+    scene.add(new THREE.HemisphereLight(0xe8c8a0, 0x2a100c, 0.85));
+    const fill = new THREE.DirectionalLight(0xffd2a0, 0.85);
+    fill.position.set(2.2, 4.4, 3.2);
+    scene.add(fill);
+    const spot = new THREE.SpotLight(0xffd090, 8.5, 18, 0.62, 0.45, 1.05);
+    spot.position.set(0, 4.2, 1.2);
+    spot.target.position.set(0, LANE_Y, -4);
+    scene.add(spot, spot.target);
+    const faceLight = new THREE.PointLight(0xffc878, 3.2, 8, 1.6);
+    faceLight.position.set(0, 2.2, RAMP_END + 0.6);
+    scene.add(faceLight);
+    for (let i = 0; i < 10; i += 1) {
+      const z = 1.2 - i * 1.15;
+      const bulb = meshSphere(new THREE.MeshBasicMaterial({ color: 0xffe2a0 }), 0.045, (i % 2 ? -1.1 : 1.1), 3.15, z);
+      const pl = new THREE.PointLight(0xffd090, 0.55, 3.4, 2);
+      pl.position.copy(bulb.position);
+      tent.add(bulb, pl);
+      lights.push({ bulb, pl, phase: i * 0.7 });
+    }
+
+    const aura = makeAura();
+    aura.position.set(-1.05, 0, 0.15);
+    aura.rotation.y = 0.55;
+    scene.add(aura);
+
+    const prize = new THREE.Group();
+    prize.position.set(1.35, 0.7, -1.2);
+    prize.add(meshBox(darkWood, 0.7, 0.08, 0.4, 0, 0, 0));
+    prize.add(meshSphere(makeMat(0xc45a3a), 0.12, 0, 0.22, 0));
+    prize.add(meshSphere(makeMat(0xf0c4a8), 0.09, 0, 0.36, 0.02));
+    scene.add(prize);
+
+    const particles = [];
+    const pMat = makeMat(0xf0d09a, { emissive: 0xf0d09a, emissiveIntensity: 0.8 });
+    for (let i = 0; i < 28; i += 1) {
+      const p = meshSphere(pMat, 0.018, 0, -10, 0);
+      p.visible = false;
+      scene.add(p);
+      particles.push({ mesh: p, vx: 0, vy: 0, vz: 0, life: 0 });
+    }
+
+    const confetti = [];
+    [0xc41e3a, 0xd4a45a, 0x1e6b3c, 0xf0d09a, 0x3d8a8a].forEach((col, i) => {
+      for (let k = 0; k < 4; k += 1) {
+        const m = meshBox(makeMat(col, { emissive: col, emissiveIntensity: 0.2 }), 0.04, 0.01, 0.06, 0, -10, 0);
+        m.visible = false;
+        scene.add(m);
+        confetti.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, spin: 0 });
+      }
+    });
+
+    return {
+      renderer, scene, camera, clock, machine, lane, sheen, marquee, bank,
+      gutterL, gutterR, holeMeshes, holeRoot, liveBall, ghost, shadow, arc, arcPos,
+      trough, aura, lights, spot, faceLight, particles, confetti, railL, railR, pullHint,
+      cam: { mode: "idle", punch: 0, look: new THREE.Vector3(0, 1.15, -3.6) },
+      raf: 0, fitted: false, demo: null, demoCool: 0.6,
+    };
+  }
+
+  function layoutHoles(spec, t) {
+    if (!view) return;
+    const defs = holeDefs(spec, t);
+    view.holeMeshes.forEach((mesh, i) => {
+      const def = defs[i];
+      if (!def) {
+        mesh.visible = false;
+        return;
+      }
+      mesh.visible = true;
+      const w = holeWorld(def);
+      mesh.position.set(w.x, w.y, w.z);
+      mesh.rotation.x = -RAMP_THETA;
+      mesh.userData.def = def;
+      if (mesh.userData.sprite && mesh.userData.sprite.material.map) {
+        /* labels stay */
+      }
+    });
+    if (defs.length < view.holeMeshes.length) {
+      for (let i = defs.length; i < view.holeMeshes.length; i += 1) view.holeMeshes[i].visible = false;
+    }
+    while (defs.length > view.holeMeshes.length) {
+      const hg = makeHoleGroup(defs[view.holeMeshes.length]);
+      view.holeRoot.add(hg);
+      view.holeMeshes.push(hg);
+    }
+    defs.forEach((def, i) => {
+      const mesh = view.holeMeshes[i];
+      if (!mesh) return;
+      mesh.visible = true;
+      const w = holeWorld(def);
+      mesh.position.set(w.x, w.y, w.z);
+      mesh.rotation.x = -RAMP_THETA;
+      mesh.userData.def = def;
+    });
+  }
+
+  function applyLane(spec) {
+    if (!view || !spec) return;
+    layoutHoles(spec, run ? run.t : idleT);
+    view.bank.visible = !!spec.bankRail;
+    const gut = !!spec.gutter;
+    view.gutterL.material.emissive = new THREE.Color(gut ? 0xc45a7a : 0x000000);
+    view.gutterR.material.emissive = new THREE.Color(gut ? 0xc45a7a : 0x000000);
+    view.gutterL.material.emissiveIntensity = gut ? 0.45 : 0;
+    view.gutterR.material.emissiveIntensity = gut ? 0.45 : 0;
+    const map = marqueeTex(String(spec.name || "SKEE-BALL").toUpperCase().slice(0, 18));
+    if (view.marquee.material.map) view.marquee.material.map.dispose();
+    view.marquee.material.map = map;
+    view.marquee.material.needsUpdate = true;
+    const gold = goldBand(spec);
+    const bar = el("skeePowerGold");
+    if (bar) {
+      bar.style.bottom = (gold.lo * 100).toFixed(1) + "%";
+      bar.style.height = ((gold.hi - gold.lo) * 100).toFixed(1) + "%";
+    }
+    setText("skeeCheat", cheatLabel(spec));
+    setText("skeeBoardNeed", "/ " + (spec.target || 100));
+  }
+
+  function burst(x, y, z, n, col) {
+    if (!view) return;
+    let used = 0;
+    view.particles.forEach((p) => {
+      if (used >= n || p.life > 0) return;
+      p.life = 0.45 + Math.random() * 0.35;
+      p.vx = (Math.random() - 0.5) * 1.8;
+      p.vy = 1.2 + Math.random() * 1.6;
+      p.vz = (Math.random() - 0.5) * 1.8;
+      p.mesh.visible = true;
+      p.mesh.position.set(x, y, z);
+      if (p.mesh.material && col) p.mesh.material.color.setHex(col);
+      used += 1;
+    });
+  }
+
+  function throwConfetti() {
+    if (!view) return;
+    view.confetti.forEach((c) => {
+      c.life = 0.9 + Math.random() * 0.6;
+      c.vx = (Math.random() - 0.5) * 2.4;
+      c.vy = 2.2 + Math.random() * 2.2;
+      c.vz = -0.4 + Math.random() * 1.2;
+      c.spin = (Math.random() - 0.5) * 8;
+      c.mesh.visible = true;
+      c.mesh.position.set((Math.random() - 0.5) * 0.6, 1.8, RAMP_END + 0.4);
+    });
+  }
+
+  /* ---------- physics ---------- */
+  function makeBallState() {
+    return {
+      x: TEE.x, y: TEE.y, z: TEE.z,
+      vx: 0, vy: 0, vz: 0,
+      phase: "roll",
+      along: 0,
+      banked: false,
+      waxVeer: false,
+      spin: 0,
+      age: 0,
+      hole: null,
+      drop: 0,
+    };
+  }
+
+  function throwSpeed(power, spec, mul) {
+    const p = spec && spec.invertPower ? 1 - power : power;
+    const spd = (4.35 + clamp(p, 0, 1) * 7.15) * (mul == null ? 1 : mul);
+    return spd;
+  }
+
+  function aimVel(power, aim, spec, mul) {
+    const p = spec && spec.invertPower ? 1 - power : power;
+    const spd = throwSpeed(power, spec, mul);
+    return {
+      vx: clamp(aim, -1, 1) * (0.28 + p * 0.50),
+      vy: 0,
+      vz: -spd,
+    };
+  }
+
+  function stepBall(b, spec, dt, t) {
+    const events = [];
+    b.age += dt;
+    if (b.phase === "hole") {
+      b.drop += dt;
+      b.y -= 0.55 * dt;
+      b.vy = 0;
+      if (b.drop > 0.42) {
+        events.push({ type: "scored", v: b.hole ? b.hole.v : 0, hole: b.hole, banked: b.banked });
+        b.phase = "done";
+      }
+      return events;
+    }
+    if (b.phase === "dead") {
+      b.y += b.vy * dt;
+      b.vy -= GRAVITY * dt;
+      b.x += b.vx * dt;
+      b.z += b.vz * dt;
+      if (b.y < LANE_Y - 0.3 || b.age > 2.4) {
+        events.push({ type: "miss", banked: b.banked, gutter: !!b.gutter });
+        b.phase = "done";
+      }
+      return events;
+    }
+    if (b.phase === "done") return events;
+
+    const wax = b.honest ? 1 : waxMul();
+    let fric = LANE_FRIC;
+    if (!b.honest && run && run.waxOn) fric = wax > 1 ? 0.14 : 0.95;
+    if (spec && spec.crown && b.phase === "roll") b.vx += (0 - b.x) * 1.05 * dt;
+
+    if (b.phase === "roll") {
+      b.vx *= Math.max(0, 1 - fric * 1.25 * dt);
+      b.vz *= Math.max(0, 1 - fric * dt);
+      if (spec && spec.gutter && !b.banked) {
+        if (Math.abs(b.x) > 0.09) b.vx += Math.sign(b.x) * (Math.abs(b.x) - 0.09) * 8.4 * dt;
+      }
+      if (spec && spec.bankRail && b.x < -LANE_HALF + 0.06 && b.vx < 0) {
+        b.x = -LANE_HALF + 0.06;
+        b.vx = Math.abs(b.vx) * 0.9;
+        if (!b.banked) {
+          b.banked = true;
+          events.push({ type: "bank" });
+        }
+      }
+      b.x += b.vx * dt;
+      b.z += b.vz * dt;
+      b.y = LANE_Y + BALL_R;
+      b.spin += Math.abs(b.vz) * 18 * dt;
+      if (Math.abs(b.x) > LANE_HALF + 0.015) {
+        b.phase = "dead";
+        b.gutter = true;
+        b.vy = 0.2;
+        b.vz *= 0.4;
+        events.push({ type: "gutter" });
+        return events;
+      }
+      if (!b.honest && run && run.waxOn && !b.waxVeer && b.z < -1.8 && b.z > -3.6) {
+        b.waxVeer = true;
+        b.vz *= wax > 1 ? 1.10 : 0.82;
+        b.vx += (Math.random() - 0.5) * 0.18;
+        events.push({ type: "waxveer" });
+      }
+      if (b.z <= FLAT_END) {
+        b.phase = "ramp";
+        b.along = Math.abs(b.vz) * Math.cos(RAMP_THETA);
+      }
+    } else if (b.phase === "ramp") {
+      b.along += -GRAVITY * Math.sin(RAMP_THETA) * dt;
+      b.along *= Math.max(0, 1 - RAMP_FRIC * dt);
+      const dirY = Math.sin(RAMP_THETA);
+      const dirZ = -Math.cos(RAMP_THETA);
+      b.x += b.vx * 0.8 * dt;
+      b.y += dirY * b.along * dt;
+      b.z += dirZ * b.along * dt;
+      b.spin += Math.abs(b.along) * 14 * dt;
+      if (spec && spec.gutter && !b.banked && Math.abs(b.x) > 0.14) {
+        b.vx += Math.sign(b.x) * 2.4 * dt;
+      }
+      if (spec && spec.bankRail && b.x < -0.28 && b.vx < 0) {
+        b.vx = Math.abs(b.vx) * 0.82;
+        b.x = -0.28;
+        if (!b.banked) { b.banked = true; events.push({ type: "bank" }); }
+      }
+      const u = clamp((FLAT_END - b.z) / RAMP_LEN, -0.05, 1.12);
+      const surfaceY = LANE_Y + clamp(u, 0, 1) * RAMP_H + BALL_R * 0.85;
+      if (b.y < surfaceY) b.y = surfaceY;
+      if (Math.abs(b.x) > 0.36) {
+        b.phase = "dead";
+        b.gutter = true;
+        b.vy = -0.2;
+        events.push({ type: "gutter" });
+        return events;
+      }
+      const holes = holeDefs(spec, t).slice().sort((a, c) => c.u - a.u);
+      for (let i = 0; i < holes.length; i += 1) {
+        const h = holes[i];
+        const w = holeWorld(h);
+        const d = Math.hypot(b.x - w.x, (b.y - w.y) * 0.85, b.z - w.z);
+        const skip = h.skip != null ? h.skip : 5.4;
+        if (d < h.r * 0.95 && Math.abs(b.along) < skip) {
+          b.phase = "hole";
+          b.hole = h;
+          b.drop = 0;
+          b.x = w.x;
+          b.z = w.z;
+          events.push({ type: "hole", v: h.v, hole: h });
+          return events;
+        }
+      }
+      if (u >= 0.985 && b.along > 0) {
+        b.along *= -0.40;
+        b.y = LANE_Y + RAMP_H + BALL_R;
+        events.push({ type: "backstop" });
+      }
+      if (Math.abs(b.along) < 0.12 && u < 0.12) {
+        b.phase = "dead";
+        b.vy = -0.4;
+        events.push({ type: "short" });
+      }
+      if (b.along < -0.02 && u <= 0) {
+        b.phase = "dead";
+        b.vy = 0.1;
+        events.push({ type: "short" });
+      }
+    }
+    return events;
+  }
+
+  function predict(power, aim, spec, mul) {
+    const b = makeBallState();
+    b.honest = true;
+    const v = aimVel(power, aim, spec, mul);
+    b.vx = v.vx; b.vy = v.vy; b.vz = v.vz;
+    const pts = [];
+    const fakeT = (run ? run.t : idleT);
+    for (let i = 0; i < 200; i += 1) {
+      const ev = stepBall(b, spec, 1 / 60, fakeT + i * 16);
+      if (i % 8 === 0) pts.push({ x: b.x, y: b.y, z: b.z });
+      if (ev.some((e) => e.type === "scored" || e.type === "miss" || e.type === "hole" || e.type === "gutter")) {
+        pts.push({ x: b.x, y: b.y, z: b.z, hole: b.hole, gutter: b.gutter, v: b.hole && b.hole.v });
+        break;
+      }
+    }
+    return { pts, hole: b.hole, gutter: b.gutter, x: b.x, y: b.y, z: b.z };
+  }
+
+  /* ---------- camera / juice ---------- */
+  function setAuraMood(mood) {
+    if (!view || !view.aura) return;
+    view.aura.userData.mood = mood;
+    view.aura.userData.moodT = 0.7;
+  }
+
+  function say(line) {
+    setText("skeeAuraLine", line);
+    if (view && view.aura) view.aura.visible = true;
+  }
+
+  function popScore(val, kind) {
+    const node = el("skeePopup");
+    if (!node) return;
+    node.hidden = false;
+    node.textContent = val ? "+" + val : "GUTTER";
+    node.classList.toggle("is-miss", !val);
+    node.classList.toggle("is-fifty", val >= 50);
+    clearTimeout(popScore._t);
+    popScore._t = setTimeout(() => { node.hidden = true; }, 680);
+  }
+
+  function updateCamera(dt) {
+    if (!view) return;
+    const cam = view.camera;
+    const c = view.cam;
+    const t = run ? run.t * 0.001 : idleT * 0.001;
+    let tx = 0.0, ty = 1.42, tz = 1.55;
+    let lx = 0, ly = 1.12, lz = -3.6;
+    if (!isLive() && !(run && run.dying)) {
+      tx = 0.55 + Math.sin(t * 0.28) * 0.85;
+      ty = 1.55 + Math.sin(t * 0.18) * 0.1;
+      tz = 1.85 + Math.cos(t * 0.22) * 0.35;
+      lx = 0; ly = 1.18; lz = -4.4;
+    } else if (run && run.ball && run.ball.phase !== "hole" && run.ball.phase !== "done") {
+      const b = run.ball;
+      tx = b.x * 0.62;
+      ty = Math.max(1.28, b.y + 0.72);
+      tz = Math.min(1.7, b.z + 1.35);
+      lx = b.x * 0.45; ly = b.y + 0.12; lz = b.z - 1.1;
+    } else if (run && run.aim) {
+      tx = run.aim.aim * 0.22;
+      ty = 1.32;
+      tz = 1.48 + run.aim.power * 0.42;
+      lx = run.aim.aim * 0.35; ly = 1.05; lz = -3.8;
+    } else {
+      tx = 0.0; ty = 1.34; tz = 1.48;
+      lx = 0; ly = 1.08; lz = -4.0;
+    }
+    if (c.punch > 0) {
+      c.punch -= dt;
+      ty += 0.08;
+      tz -= 0.12;
+    }
+    const k = reduced ? 1 : 1 - Math.pow(0.001, dt);
+    cam.position.x = lerp(cam.position.x, tx, k);
+    cam.position.y = lerp(cam.position.y, ty, k);
+    cam.position.z = lerp(cam.position.z, tz, k);
+    c.look.x = lerp(c.look.x, lx, k);
+    c.look.y = lerp(c.look.y, ly, k);
+    c.look.z = lerp(c.look.z, lz, k);
+    cam.lookAt(c.look);
+    if (run && run.shake) {
+      cam.position.x += (Math.random() - 0.5) * run.shake * 0.012;
+      cam.position.y += (Math.random() - 0.5) * run.shake * 0.008;
+      run.shake *= 0.84;
+      if (run.shake < 0.04) run.shake = 0;
     }
   }
 
+  function animateAura(dt) {
+    if (!view) return;
+    const a = view.aura.userData;
+    a.moodT = Math.max(0, a.moodT - dt);
+    const t = (run ? run.t : idleT) * 0.001;
+    a.hip.rotation.y = Math.sin(t * 1.4) * 0.04;
+    a.head.rotation.y = Math.sin(t * 1.1) * 0.08;
+    if (a.mood === "cheer" && a.moodT > 0) {
+      a.armL.rotation.x = -1.4;
+      a.armR.rotation.x = -1.5;
+      a.armL.rotation.z = 0.2;
+      a.armR.rotation.z = -0.2;
+    } else if (a.mood === "laugh" && a.moodT > 0) {
+      a.head.rotation.z = Math.sin(t * 12) * 0.12;
+      a.armR.rotation.x = -0.6;
+    } else {
+      a.armL.rotation.x = Math.sin(t * 2.1) * 0.08;
+      a.armR.rotation.x = -0.45 + Math.sin(t * 1.7) * 0.06;
+      a.armL.rotation.z = 0.32;
+      a.armR.rotation.z = -0.55;
+      a.head.rotation.z = 0;
+      if (!isLive()) {
+        a.armL.rotation.z = 0.2 + Math.sin(t * 2.6) * 0.5;
+        a.armL.rotation.x = -0.2 + Math.sin(t * 2.6) * 0.4;
+      }
+    }
+  }
+
+  function fit() {
+    if (!view) return false;
+    const host = card() || document.getElementById("cabinet-skee-ball") || el("skeeCanvas");
+    if (!host) return false;
+    const w = Math.max(0, (host.clientWidth || window.innerWidth) | 0);
+    const h = Math.max(0, (host.clientHeight || window.innerHeight) | 0);
+    if (w < 32 || h < 32) {
+      view.fitted = false;
+      return false;
+    }
+    const bufW = Math.round(w * view.renderer.getPixelRatio());
+    const bufH = Math.round(h * view.renderer.getPixelRatio());
+    if (view.renderer.domElement.width !== bufW || view.renderer.domElement.height !== bufH) {
+      view.renderer.setSize(w, h, false);
+      view.camera.aspect = w / h;
+      view.camera.updateProjectionMatrix();
+    }
+    view.fitted = true;
+    return true;
+  }
+
+  function syncBallMesh(b, mesh) {
+    if (!b || !mesh) return;
+    mesh.visible = true;
+    mesh.position.set(b.x, b.y, b.z);
+    mesh.rotation.x = b.spin;
+    mesh.rotation.z = b.x * 2;
+    if (view.shadow) {
+      view.shadow.visible = b.phase !== "hole";
+      view.shadow.position.set(b.x, LANE_Y + 0.011, b.z);
+      const sc = b.phase === "ramp" || b.phase === "dead" ? 0.7 : 1;
+      view.shadow.scale.setScalar(sc);
+    }
+  }
+
+  function updateArc(pts, wax) {
+    if (!view) return;
+    const arr = view.arcPos;
+    for (let i = 0; i < 24; i += 1) {
+      const p = pts[Math.min(pts.length - 1, i)] || pts[pts.length - 1] || TEE;
+      arr[i * 3] = p.x;
+      arr[i * 3 + 1] = p.y;
+      arr[i * 3 + 2] = p.z;
+    }
+    view.arc.geometry.attributes.position.needsUpdate = true;
+    view.arc.material.color.setHex(wax ? 0xe8a0b8 : 0xf0d09a);
+    view.arc.visible = pts.length > 2;
+  }
+
+  /* ---------- run flow ---------- */
   function stampDepthCopy() {
     const host = card();
     if (!host) return;
     const num = host.querySelector(".machine-number");
     if (num) num.textContent = DEPTH_COPY.machine;
-    let tag = host.querySelector("[data-pf-depth-tag]");
-    if (!tag) {
-      tag = document.createElement("p");
-      tag.dataset.pfDepthTag = "1";
-      tag.className = "pf-depth-tag vendor-vestibule-only";
-      tag.setAttribute("role", "status");
-      const readout = host.querySelector(".depth-readout");
-      if (readout && readout.parentNode) readout.parentNode.insertBefore(tag, readout);
-      else host.appendChild(tag);
-    }
-    tag.textContent = DEPTH_COPY.tag;
-    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => {
-      p.textContent = DEPTH_COPY.body;
-    });
-    const body = host.querySelector(".vendor-vestibule-only:not([data-pf-depth-tag]):not(.card-hero):not(.signature-prop)");
-    if (body && !body.hasAttribute("data-pf-depth-copy") && body.tagName === "P") {
-      body.setAttribute("data-pf-depth-copy", "1");
-      body.textContent = DEPTH_COPY.body;
-    }
+    host.querySelectorAll("[data-pf-depth-copy]").forEach((p) => { p.textContent = DEPTH_COPY.body; });
     ensureHud();
     paintPips();
     const canvas = el("skeeCanvas");
-    if (canvas) {
-      canvas.style.touchAction = "none";
-      canvas.classList.toggle("is-locked", !isLive());
-    }
+    if (canvas) canvas.classList.toggle("is-locked", !isLive());
     if (!isLive() && (!run || run.done)) setText("skeeStatus", DEPTH_COPY.status);
+    const hud = el("skeeHud");
+    if (hud) hud.hidden = !(isLive() || (run && run.dying));
   }
 
-  function drawLane(ctx, spec, wax) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(78, 86);
-    ctx.lineTo(262, 86);
-    ctx.lineTo(318, H - 22);
-    ctx.lineTo(22, H - 22);
-    ctx.closePath();
-    ctx.clip();
-    kit.fillWood(ctx, 8, 70, 324, H - 80);
-    const sheen = ctx.createLinearGradient(0, 90, 0, H);
-    sheen.addColorStop(0, wax ? "rgba(232,160,184,0.42)" : "rgba(212,164,90,0.08)");
-    sheen.addColorStop(0.45, wax ? "rgba(240,208,154,0.34)" : "rgba(0,0,0,0.12)");
-    sheen.addColorStop(1, "rgba(0,0,0,0.28)");
-    ctx.fillStyle = sheen;
-    ctx.fillRect(8, 70, 324, H - 80);
-    if (spec && spec.gutter) {
-      ctx.fillStyle = "rgba(8,4,8,0.55)";
-      ctx.beginPath();
-      ctx.moveTo(22, H - 22);
-      ctx.lineTo(78, 86);
-      ctx.lineTo(96, 86);
-      ctx.lineTo(48, H - 22);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(318, H - 22);
-      ctx.lineTo(262, 86);
-      ctx.lineTo(244, 86);
-      ctx.lineTo(292, H - 22);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(232,160,184,0.7)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(48, H - 22);
-      ctx.lineTo(96, 86);
-      ctx.moveTo(292, H - 22);
-      ctx.lineTo(244, 86);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(232,160,184,0.92)";
-      ctx.font = "bold 10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("GUTTERS PULL — STAY CENTER", W / 2, 176);
-    }
-    if (spec && spec.bankRail) {
-      ctx.fillStyle = "rgba(212,164,90,0.55)";
-      ctx.fillRect(54, 96, 10, 280);
-      ctx.strokeStyle = "#d4a45a";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(54.5, 96.5, 9, 279);
-      ctx.fillStyle = "rgba(240,208,154,0.92)";
-      ctx.font = "bold 10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.save();
-      ctx.translate(42, 250);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText("BANK RAIL", 0, 0);
-      ctx.restore();
-    }
-    if (spec && spec.crown) {
-      ctx.strokeStyle = "rgba(240,208,154,0.38)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(TEE.x - 18, H - 40);
-      ctx.quadraticCurveTo(TEE.x, 220, TEE.x - 8, 96);
-      ctx.moveTo(TEE.x + 18, H - 40);
-      ctx.quadraticCurveTo(TEE.x, 220, TEE.x + 8, 96);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(240,208,154,0.86)";
-      ctx.font = "bold 10px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("CROWNED LANE — RAILS FUNNEL", W / 2, 176);
-    }
-    if (wax) {
-      const sweep = ((run ? run.t : idleT) * 0.05) % 240;
-      ctx.strokeStyle = "rgba(255,246,236,0.55)";
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.moveTo(62, 140 + sweep * 0.2);
-      ctx.quadraticCurveTo(W / 2, 240 + sweep * 0.15, 278, 360 + sweep * 0.1);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(232,160,184,0.92)";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.textAlign = "center";
-      const lie = run && run.waxMul > 1 ? "WAX SHEEN — FAST LANE" : "WAX SHEEN — SLOW LANE";
-      ctx.fillText(lie, W / 2, 156);
-    }
-    ctx.restore();
-    ctx.strokeStyle = "#d4a45a";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(78, 86);
-    ctx.lineTo(262, 86);
-    ctx.lineTo(318, H - 22);
-    ctx.lineTo(22, H - 22);
-    ctx.closePath();
-    ctx.stroke();
-  }
-
-  function drawRings(ctx, spec, t) {
-    const r = ringRadii(spec.ringScale);
-    const c = ringCenter(spec, t);
-    const oval = ovalMul(spec);
-    const flash = run && run.ringFlash;
-    const split = !!(spec.split50 || spec.kind === "split50");
-    const moving = !!(spec.movingFifty || spec.kind === "movingFifty" || spec.kind === "comboFinale");
-    const nest = [
-      { v: 10, rad: r[10], col: "#8a6230" },
-      { v: 20, rad: r[20], col: "#3d8a8a" },
-      { v: 30, rad: r[30], col: "#c41e3a" },
-    ];
-    nest.forEach((ring) => {
-      ctx.beginPath();
-      ctx.ellipse(c.x, c.y, ring.rad, ring.rad * 0.72, 0, 0, Math.PI * 2);
-      ctx.fillStyle = flash && flash.v === ring.v && !flash.gate ? "rgba(255,246,236,0.28)" : "rgba(8,4,8,0.72)";
-      ctx.fill();
-      ctx.strokeStyle = flash && flash.v === ring.v && !flash.gate ? "#fff6ec" : ring.col;
-      ctx.lineWidth = flash && flash.v === ring.v && !flash.gate ? 3.4 : 2.4;
-      ctx.stroke();
-    });
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "bold 11px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText("30", c.x, c.y - r[30] * 0.72 + 12);
-    ctx.fillText("20", c.x + r[20] * 0.72, c.y + 4);
-    ctx.fillText("10", c.x, c.y + r[10] * 0.72 - 6);
-    if (split) {
-      splitGates(spec, t).forEach((g, i) => {
-        ctx.beginPath();
-        ctx.ellipse(g.x, g.y, r[30] * 0.55, r[30] * 0.4, 0, 0, Math.PI * 2);
-        ctx.fillStyle = flash && flash.gate === i ? "rgba(255,246,236,0.32)" : "rgba(8,4,8,0.78)";
-        ctx.fill();
-        ctx.strokeStyle = flash && flash.gate === i ? "#fff6ec" : "#d4a45a";
-        ctx.lineWidth = 2.6;
-        ctx.stroke();
-        ctx.fillStyle = "#f0d09a";
-        ctx.fillText("30", g.x, g.y + 4);
-      });
-      ctx.fillStyle = "rgba(232,160,184,0.95)";
-      ctx.font = "bold 10px Georgia, serif";
-      ctx.fillText("SPLIT GATE — NO 50", c.x, c.y - r[10] * 0.72 - 8);
-    } else {
-      const f = fiftyPos(spec, t);
-      ctx.beginPath();
-      ctx.ellipse(f.x, f.y, r[50] * oval.x, r[50] * 0.72 * oval.y, 0, 0, Math.PI * 2);
-      ctx.fillStyle = flash && flash.v === 50 ? "rgba(255,246,236,0.32)" : "rgba(8,4,8,0.82)";
-      ctx.fill();
-      ctx.strokeStyle = flash && flash.v === 50 ? "#fff6ec" : "#d4a45a";
-      ctx.lineWidth = flash && flash.v === 50 ? 3.4 : 2.6;
-      ctx.stroke();
-      ctx.fillStyle = "#f0d09a";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.fillText("50", f.x, f.y + 4);
-      if (moving) {
-        ctx.fillStyle = "rgba(240,208,154,0.92)";
-        ctx.font = "bold 10px Georgia, serif";
-        ctx.fillText("50 ORBITS", f.x, f.y - r[50] * 0.72 - 8);
-        ctx.setLineDash([3, 4]);
-        ctx.strokeStyle = "rgba(240,208,154,0.45)";
-        ctx.beginPath();
-        ctx.ellipse(c.x, c.y, 40, 14, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+  function punchStart() {
+    stampDepthCopy();
+    setText("skeeStatus", DEPTH_COPY.punch);
+    const btn = el("skeeStart");
+    if (btn && !btn.hidden) {
+      try { btn.focus(); } catch (_) { /* */ }
+      if (btn.scrollIntoView) btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }
 
-  function drawPowerBar(ctx, power, wax, holding, spec) {
+  function setPowerUi(power, holding, spec) {
+    const wrap = el("skeePowerWrap");
+    const fill = el("skeePowerFill");
+    if (!wrap || !fill) return;
+    wrap.hidden = !(isLive() || holding);
     const gold = goldBand(spec);
-    const x = W - 32;
-    const y = 210;
-    const h = 220;
-    ctx.fillStyle = "rgba(12,6,9,0.7)";
-    ctx.fillRect(x - 16, y - 8, 34, h + 16);
-    ctx.strokeStyle = wax ? "#e8a0b8" : "#d4a45a";
-    ctx.strokeRect(x - 16.5, y - 8.5, 33, h + 15);
-    const goldY0 = y + h - gold.hi * h;
-    const goldH = Math.max(8, (gold.hi - gold.lo) * h);
-    ctx.fillStyle = "rgba(212,164,90,0.28)";
-    ctx.fillRect(x - 14, goldY0, 30, goldH);
-    const fill = kit.clamp(power, 0, 1);
-    ctx.fillStyle = fill >= gold.lo && fill <= gold.hi ? "#d4a45a" : fill > 0.92 ? "#c41e3a" : "#3d8a8a";
-    ctx.fillRect(x - 12, y + h - fill * h, 26, Math.max(2, fill * h));
-    if (holding) {
-      ctx.fillStyle = "#fff6ec";
-      ctx.fillRect(x - 15, y + h - fill * h - 1.5, 32, 3);
-    }
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "8px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText("PWR", x + 1, y - 14);
-    ctx.fillText("50", x + 1, goldY0 + goldH * 0.55);
-    if (spec && spec.kind === "teach") {
-      ctx.fillStyle = "rgba(240,208,154,0.95)";
-      ctx.fillText("WIDE", x + 1, goldY0 - 8);
-    }
-    if (spec && (spec.invertPower || spec.kind === "invertPower")) {
-      ctx.fillStyle = "rgba(232,160,184,0.95)";
-      ctx.fillText("REV", x + 1, goldY0 - 8);
-      ctx.fillText("EARLY", x + 1, y + h + 18);
-    }
-    if (wax) {
-      ctx.fillStyle = "rgba(232,160,184,0.95)";
-      ctx.fillText("LIE", x + 1, y + h + 18);
-    }
-  }
-
-  function drawBalls(ctx, left, total) {
-    const n = total || 9;
-    const y = H - 14;
-    for (let i = 0; i < n; i += 1) {
-      const x = 18 + i * 14;
-      ctx.beginPath();
-      ctx.arc(x, y, 4.2, 0, Math.PI * 2);
-      ctx.fillStyle = i < left ? "#c41e3a" : "rgba(196,30,58,0.18)";
-      ctx.fill();
-      ctx.strokeStyle = i < left ? "#fff6ec" : "rgba(255,246,236,0.2)";
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-    }
-  }
-
-  function drawBall(ctx, ball) {
-    const b = ball || { x: TEE.x, y: TEE.y, r: BALL_R };
-    const scale = kit.clamp(0.72 + (b.y / H) * 0.4, 0.7, 1.12);
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r * scale, 0, Math.PI * 2);
-    ctx.fillStyle = "#c41e3a";
-    ctx.fill();
-    ctx.strokeStyle = "#fff6ec";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(b.x - 2, b.y - 2, 2.1 * scale, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,246,236,0.5)";
-    ctx.fill();
-  }
-
-  function draw() {
-    const canvas = el("skeeCanvas");
-    const ctx = kit.prepCtx(canvas, W, H);
-    if (!ctx) return;
-    ctx.clearRect(0, 0, W, H);
-    if (run) run.shake = kit.applyShake(ctx, run.shake || 0);
-
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, "#2a1420");
-    bg.addColorStop(1, "#10080c");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    const spec = liveSpec();
-    const t = run ? run.t : idleT;
-    const wax = !!(run && run.waxOn) || (!run && spec && spec.waxLies);
-    drawLane(ctx, spec, wax);
-    drawRings(ctx, spec, t);
-
-    ctx.fillStyle = "rgba(12,6,9,0.62)";
-    ctx.fillRect(88, 48, 164, 22);
-    ctx.strokeStyle = "rgba(196,30,58,0.7)";
-    ctx.strokeRect(88.5, 48.5, 163, 21);
-    ctx.fillStyle = "#f0d09a";
-    ctx.font = "11px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText("ROLL UP · BEAT THE BOARD", W / 2, 63);
-
-    const cheat = cheatLabel(spec);
-    if (cheat && (!run || run.done || !wax)) {
-      ctx.fillStyle = "rgba(232,160,184,0.9)";
-      ctx.font = "bold 10px Georgia, serif";
-      ctx.fillText(cheat, W / 2, 80);
-    }
-
-    const power = run && run.aim ? run.aim.power : 0;
-    drawPowerBar(ctx, power, wax, !!(run && run.aim), spec);
-
-    if (run && run.aim) {
-      ctx.strokeStyle = "rgba(240,208,154,0.85)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(TEE.x, TEE.y);
-      ctx.lineTo(TEE.x + run.aim.aimX * 0.55, TEE.y - 18 - run.aim.power * 70);
-      ctx.stroke();
-      const ghost = landFromPower(run.aim.power, run.aim.aimX, 1, spec);
-      ctx.beginPath();
-      ctx.arc(ghost.x, ghost.y, 7, 0, Math.PI * 2);
-      ctx.strokeStyle = wax ? "rgba(232,160,184,0.8)" : (ghost.banked ? "rgba(212,164,90,0.9)" : "rgba(240,208,154,0.55)");
-      ctx.setLineDash([3, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      if (wax) {
-        ctx.fillStyle = "rgba(232,160,184,0.95)";
-        ctx.font = "bold 10px Georgia, serif";
-        ctx.fillText("SHEEN LIES — GHOST ≠ LAND", ghost.x, ghost.y - 12);
-      }
-      if (spec.invertPower) {
-        ctx.fillStyle = "rgba(232,160,184,0.95)";
-        ctx.font = "bold 10px Georgia, serif";
-        ctx.fillText("REVERSE GHOST", ghost.x, ghost.y - 12);
-      }
-      if (ghost.banked) {
-        ctx.fillStyle = "rgba(240,208,154,0.95)";
-        ctx.font = "bold 10px Georgia, serif";
-        ctx.fillText("BANK", ghost.x, ghost.y - 12);
-      }
-      if (spec.movingFifty || spec.kind === "comboFinale") {
-        const lead = fiftyPos(spec, t + 420);
-        ctx.beginPath();
-        ctx.arc(lead.x, lead.y, 5, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(240,208,154,0.7)";
-        ctx.setLineDash([2, 3]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(240,208,154,0.9)";
-        ctx.font = "bold 9px Georgia, serif";
-        ctx.fillText("LEAD", lead.x, lead.y - 10);
-      }
-    }
-
-    drawBall(ctx, run && run.ball);
-    if (run && run.ball && run.ball.waxVeer) {
-      ctx.fillStyle = "rgba(232,160,184,0.95)";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("WAX VEER", run.ball.x, run.ball.y - 18);
-    }
-    drawBalls(ctx, run && !run.done ? run.ballsLeft : 9, 9);
-
-    if (run && run.closedStamp) kit.stampClosed(ctx, W, H, "WAX");
-
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    if (run && !run.done) {
-      kit.drawHud(ctx, W, [
-        `${spec.title} · ${run.stagePts}/${spec.target}${spec.bankRail ? ` · BANK ${run.bankStamps || 0}/${spec.bankNeed || 2}` : ""} · balls ${run.ballsLeft}`,
-        `${hudLine(spec, run.stage)} · ${run.score}${wax ? " · WAX LIES" : ""}`,
-      ]);
-    } else if (!run || !run.closedStamp) {
-      const state = typeof PF.getState === "function" ? PF.getState() : {};
-      const bestPts = (state && state.bestSkeeStagePts) || 0;
-      const extra = bestPts ? [`BEST BOARD ${bestPts}`] : [];
-      kit.drawHud(ctx, W, DEPTH_COPY.idleHud.concat(extra));
-    }
-  }
-
-  function stopIdle() {
-    if (idleRaf) cancelAnimationFrame(idleRaf);
-    idleRaf = 0;
-  }
-
-  function startIdle() {
-    if (isLive() || (run && run.dying) || !cabinetOn()) return;
-    stopIdle();
-    let last = 0;
-    const tick = (now) => {
-      if (isLive() || (run && run.dying) || !cabinetOn()) {
-        idleRaf = 0;
-        return;
-      }
-      if (!last) last = now;
-      idleT = now;
-      idleClock += Math.min(48, now - last);
-      last = now;
-      if (idleClock > 2600) {
-        idleClock = 0;
-        idleRoom = (idleRoom % AUTHORED_COUNT) + 1;
-      }
-      draw();
-      idleRaf = requestAnimationFrame(tick);
-    };
-    idleRaf = requestAnimationFrame(tick);
+    const p = clamp(power, 0, 1);
+    fill.style.height = (p * 100).toFixed(1) + "%";
+    wrap.classList.toggle("is-gold", p >= gold.lo && p <= gold.hi);
+    wrap.classList.toggle("is-lie", !!(run && run.waxOn));
   }
 
   function startStage(n) {
     const spec = skeeStageParams(n);
-    if (!spec) return;
-    run.stage = spec.id;
+    if (!spec) return false;
+    run.stage = n;
     run.spec = spec;
-    run.ballsLeft = spec.balls;
     run.stagePts = 0;
-    run.bankStamps = 0;
+    run.ballsLeft = spec.balls || BALLS;
     run.ball = null;
     run.aim = null;
+    run.pause = 0;
     run.waxOn = false;
     run.waxMul = 1;
     run.waxSkidNext = false;
-    run.pause = n === 1 ? 0 : 420;
-    run.ringFlash = null;
+    run.waxArmed = !!spec.waxLies;
+    run.waxFlipAt = spec.waxLies ? ((spec.kind === "comboFinale" || spec.coda) ? 7 : 6) : -1;
+    run.bankStamps = 0;
+    run.t = 0;
+    applyLane(spec);
+    paintPips();
+    setText("skeeBoardPts", "0");
+    setText("skeeBoardNeed", "/ " + spec.target);
+    setText("skeeCheat", cheatLabel(spec));
+    setText("skeeHint", spec.invertPower ? "REVERSE · HOLD · release EARLY for a long sling" : "HOLD one thumb · release in GOLD");
+    say(spec.barker.indexOf("Aura") === 0 ? spec.barker : "Aura: " + spec.barker);
+    setText("skeeStatus", spec.barker);
     tellDepth(run.depth);
     ensureHud();
-    paintPips();
-    const cheat = cheatLabel(spec);
-    setText("skeeStatus", spec.barker || `${spec.title} — need ${spec.target} in ${spec.balls} balls.${cheat ? " " + cheat + "." : ""}`);
-  }
-
-  function start() {
-    if (isLive()) return;
-    const kitRun = beginKitRun();
-    if (!kitRun) {
-      setText("skeeStatus", "Out of demo coins · grant a pass");
-      PF.refreshNightBoard();
-      stampDepthCopy();
-      return;
-    }
-    stopIdle();
-    run = {
-      done: false,
-      dying: false,
-      kitRun,
-      sling: null,
-      t: 0,
-      last: 0,
-      raf: 0,
-      depth: 0,
-      stage: 1,
-      score: 0,
-      spec: skeeStageParams(1),
-      ballsLeft: 9,
-      stagePts: 0,
-      bankStamps: 0,
-      bestStagePts: 0,
-      ball: null,
-      aim: null,
-      waxOn: false,
-      waxMul: 1,
-      waxSkidNext: false,
-      pause: 0,
-      shake: 0,
-      closedStamp: false,
-      ringFlash: null,
-      deathHold: 0,
-      deathNote: "under_target",
-    };
-    run.sling = mountSling(kitRun);
-    tellDepth(0);
-    const startBtn = el("skeeStart");
-    if (startBtn) startBtn.disabled = true;
-    const verdict = el("skeeVerdict");
-    if (verdict) verdict.hidden = true;
-    kit.hideResult("skeeResult");
-    PF.setTier("skeeTier", "", "");
-    kit.setMode(card(), "play");
-    stampDepthCopy();
-    startStage(1);
-    PF.focusCard("skeeCard", true);
-    PF.setAura("think");
-    const loop = (now) => {
-      if (!run || run.done) return;
-      if (!run.last) run.last = now;
-      const dt = Math.min(32, now - run.last);
-      run.last = now;
-      run.t += dt;
-      if (run.dying) {
-        draw();
-        run.deathHold -= dt;
-        if (run.deathHold <= 0) {
-          sealResult(run.deathNote);
-          return;
-        }
-        run.raf = requestAnimationFrame(loop);
-        return;
-      }
-      step(dt);
-      draw();
-      PF.refreshDepth();
-      run.raf = requestAnimationFrame(loop);
-    };
-    run.raf = requestAnimationFrame(loop);
-  }
-
-  function rollWaxMul() {
-    run.waxMul = Math.random() < 0.5 ? 0.82 : 1.18;
+    const hud = el("skeeHud");
+    if (hud) hud.hidden = false;
+    return true;
   }
 
   function maybeWax() {
-    if (!run.spec.waxLies) return;
-    const used = run.spec.balls - run.ballsLeft;
-    if (!run.waxOn && used >= WAX_AFTER) {
-      run.waxOn = true;
-      run.waxMul = 1.26;
-      run.waxSkidNext = true;
-      run.shake = 6;
-      kit.sfx("flip");
-      setText("skeeStatus", "Sheen on — next ball SKIDS LONG. Ghost is not the land.");
-      PF.setAura("laugh");
+    if (!run || !run.waxArmed) return;
+    if (run.waxOn) {
+      if (run.ballsLeft === 3 && run.spec && (run.spec.kind === "comboFinale" || run.spec.coda)) {
+        run.waxMul = run.waxMul > 1 ? 0.84 : 1.18;
+        run.waxSkidNext = true;
+        setText("skeeCheat", run.waxMul > 1 ? "SHEEN FLIPPED FAST — GHOST ≠ LAND" : "SHEEN FLIPPED SLOW — GHOST ≠ LAND");
+        setText("skeeStatus", "Sheen flipped again. Ghost still lies.");
+        say("Aura: Sheen flipped. The ghost is not the land.");
+        PF.setAura("laugh");
+      }
       return;
     }
-    if (run.waxOn && used > WAX_AFTER && Math.random() < 0.35) {
-      rollWaxMul();
-      run.shake = 4;
-      setText("skeeStatus", run.waxMul > 1
-        ? "Sheen shifted FAST — the lie changed under the wood."
-        : "Sheen shifted SLOW — the lie changed under the wood.");
-    }
-  }
-
-  function resolveLanding(x, y) {
-    const spec = run.spec;
-    const r = ringRadii(spec.ringScale);
-    const c = ringCenter(spec, run.t);
-    const oval = ovalMul(spec);
-    if (spec.split50 || spec.kind === "split50") {
-      const gates = splitGates(spec, run.t);
-      for (let i = 0; i < gates.length; i += 1) {
-        const g = gates[i];
-        const d = Math.hypot((x - g.x) / 0.55, (y - g.y) / 0.4);
-        if (d <= r[30]) return { v: 30, near: false, dist: d, gate: i };
-      }
-      const dist = Math.hypot(x - c.x, (y - c.y) / 0.72);
-      if (dist <= r[30]) return { v: 30, near: false, dist };
-      if (dist <= r[20]) return { v: 20, near: false, dist };
-      if (dist <= r[10]) return { v: 10, near: false, dist };
-      return { v: 0, near: dist < r[10] + 14, dist };
-    }
-    const f = fiftyPos(spec, run.t);
-    const d50 = Math.hypot((x - f.x) / oval.x, ((y - f.y) / 0.72) / oval.y);
-    if (d50 <= r[50]) return { v: 50, near: false, dist: d50 };
-    const dist = Math.hypot(x - c.x, (y - c.y) / 0.72);
-    if (dist <= r[30]) return { v: 30, near: false, dist };
-    if (dist <= r[20]) return { v: 20, near: false, dist };
-    if (dist <= r[10]) return { v: 10, near: false, dist };
-    return { v: 0, near: dist < r[10] + 14, dist };
+    if (run.waxFlipAt < 0 || run.ballsLeft > run.waxFlipAt) return;
+    run.waxOn = true;
+    run.waxMul = 1.18;
+    run.waxSkidNext = true;
+    setText("skeeCheat", "SHEEN SKIDS THE NEXT BALL LONG — GHOST ≠ LAND");
+    setText("skeeHint", "WAX LIE · ghost is not the land");
+    setText("skeeStatus", "Sheen just hit. Next ball SKIDS LONG. Ghost is not the land.");
+    say("Aura: Sheen mid-lane. Ghost is not the land.");
+    PF.setAura("laugh");
+    setAuraMood("laugh");
+    if (view && view.sheen) view.sheen.material.opacity = 0.72;
+    kit.sfx("flip");
+    run.shake = 5;
   }
 
   function bankClear() {
-    return !!(run.spec && run.spec.bankRail && (run.bankStamps | 0) >= (run.spec.bankNeed || 2));
+    return !!(run.spec && run.spec.bankRail && run.bankStamps >= (run.spec.bankNeed || 2));
   }
 
-  function scoreRing(hit) {
-    const val = hit && hit.v ? hit.v : 0;
-    const banked = !!(run.ball && run.ball.banked);
+  function onScored(val, meta) {
+    if (!isLive()) return;
     run.stagePts += val;
     run.score += val;
     if (run.kitRun) run.kitRun.score = run.score;
-    if (banked) run.bankStamps = (run.bankStamps | 0) + 1;
+    if (meta && meta.banked) run.bankStamps = (run.bankStamps | 0) + 1;
     run.ball = null;
-    run.pause = 280;
-    run.ringFlash = val ? { v: val, until: run.t + 320, gate: hit && hit.gate } : null;
-    kit.sfx(val >= 50 || banked ? "rack" : val > 0 ? "sink" : "miss");
-    let note;
-    if (banked) {
-      note = `BANK STAMP ${run.bankStamps}/${run.spec.bankNeed || 2}${val ? ` · ${val}` : ""}. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
-    } else if (val) {
-      note = `${val}! Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
-    } else if (run.waxOn) {
-      note = `Wax ate it — ghost was not the land. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
-    } else if (hit && hit.near) {
-      note = `Near miss on the 10. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
-    } else if (run.spec.gutter) {
-      note = `Gutter whispered it out. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    run.pause = 0.28;
+    setText("skeeBoardPts", String(run.stagePts));
+    setText("skeeNightScore", String(run.score));
+    setText("depthSkeeScore", String(run.score));
+    popScore(val, val >= 50 ? "fifty" : val ? "hit" : "miss");
+    kit.sfx(val >= 50 || (meta && meta.banked) ? "rack" : val > 0 ? "sink" : "miss");
+    if (val >= 50) {
+      setAuraMood("cheer");
+      PF.setAura("celebrate");
+      say(AURA.fifty);
+      if (view && view.cam) view.cam.punch = 0.28;
+      run.shake = 7;
+    } else if (!val) {
+      setAuraMood("laugh");
+      PF.setAura("laugh");
     } else {
-      note = `Gutter. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+      PF.setAura("point");
     }
+    let note;
+    if (meta && meta.banked) note = `BANK STAMP ${run.bankStamps}/${run.spec.bankNeed || 2}${val ? " · " + val : ""}. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    else if (val) note = `${val}! Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    else if (meta && meta.gutter) note = `Gutter whispered it out. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    else note = `Short of the holes. Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    const need = Math.max(0, (run.spec.target | 0) - (run.stagePts | 0));
+    if (!note) note = `Board ${run.stagePts}/${run.spec.target} · ${run.ballsLeft} left`;
+    if (need > 0 && run.ballsLeft > 0) note += ` · NEED ${need}`;
     setText("skeeStatus", note);
     maybeWax();
-    if (run.stagePts >= run.spec.target || bankClear()) {
-      clearStage();
-    } else if (run.ballsLeft <= 0) {
-      finish("under_target");
-    }
+    if (run.stagePts >= run.spec.target || bankClear()) clearStage();
+    else if (run.ballsLeft <= 0) finish("under_target");
   }
 
   function clearStage() {
@@ -1087,127 +1418,18 @@
       run.kitRun.score = run.score;
     }
     tellDepth(run.depth);
-    kit.sfx("rack");
+    kit.sfx("chapter");
     PF.setAura("celebrate");
+    setAuraMood("cheer");
+    throwConfetti();
+    say(run.depth >= 6 ? AURA.deep(run.depth) : AURA.clear);
     const next = skeeStageParams(run.depth + 1);
     if (!next) {
       finish("souvenir");
       return;
     }
-    setText("skeeStatus", run.depth >= 6
-      ? AURA.deep(run.depth)
-      : `${AURA.clear} ${next.title} — ${next.bankRail ? "score or two bank stamps" : "need " + next.target}.`);
+    setText("skeeStatus", `${AURA.clear} ${next.title} — need ${next.target}.`);
     startStage(run.depth + 1);
-  }
-
-  function beginAim(x) {
-    if (!isLive() || run.ball || run.pause > 0) return;
-    if (run.ballsLeft <= 0) return;
-    run.aim = {
-      power: 0,
-      aimX: kit.clamp(x - TEE.x, -78, 78),
-      needle: 0,
-      dir: 1,
-    };
-    if (run.sling && typeof run.sling.beginPull === "function") {
-      run.sling.beginPull(TEE.x, TEE.y);
-    }
-  }
-
-  function updateAim(x) {
-    if (!run || !run.aim) return;
-    run.aim.aimX = kit.clamp(x - TEE.x, -78, 78);
-    if (run.sling && typeof run.sling.movePull === "function") run.sling.movePull(x, TEE.y + 40);
-  }
-
-  function releaseAim() {
-    if (!run || !run.aim || run.done || run.dying || run.ball) {
-      if (run) run.aim = null;
-      return;
-    }
-    const shown = run.aim.power;
-    if (shown < 0.08) {
-      run.aim = null;
-      if (run.sling && typeof run.sling.release === "function") run.sling.release();
-      setText("skeeStatus", "Hold the bar — release in the gold for 50.");
-      return;
-    }
-    if (run.sling && typeof run.sling.release === "function") run.sling.release();
-    const skid = run.waxSkidNext;
-    const mul = skid ? 1.32 : waxMul();
-    if (skid) run.waxSkidNext = false;
-    const dest = landFromPower(shown, run.aim.aimX, mul, run.spec);
-    run.ballsLeft -= 1;
-    paintPips();
-    const roll = ROLL_MS * (run.waxOn ? (run.waxMul > 1 || skid ? 0.78 : 1.22) : 1);
-    run.ball = {
-      x: TEE.x,
-      y: TEE.y,
-      r: BALL_R,
-      destX: dest.x,
-      destY: dest.y,
-      life: 0,
-      roll,
-      loft: run.spec.loft || 26,
-      waxVeer: false,
-      banked: !!dest.banked,
-      skid,
-    };
-    run.aim = null;
-    kit.sfx("throw");
-    setText("skeeStatus", dest.banked
-      ? "Banked off the left rail — stamp if it lands."
-      : skid
-        ? "Sheen skid — this one runs LONG."
-        : run.waxOn ? "Wax under the roll — ghost lied." : "Ball’s up the lane.");
-  }
-
-  function step(dt) {
-    if (run.ringFlash && run.t > run.ringFlash.until) run.ringFlash = null;
-    if (run.aim) {
-      const spd = run.spec.needleSpeed || 0.0018;
-      run.aim.needle += run.aim.dir * spd * dt;
-      if (run.aim.needle >= 1) {
-        run.aim.needle = 1;
-        run.aim.dir = -1;
-      } else if (run.aim.needle <= 0) {
-        run.aim.needle = 0;
-        run.aim.dir = 1;
-      }
-      run.aim.power = run.aim.needle;
-    }
-    if (run.pause > 0) {
-      run.pause -= dt;
-      return;
-    }
-    const ball = run.ball;
-    if (!ball) return;
-    ball.life += dt;
-    const k = dt / 16;
-    const t = kit.clamp(ball.life / (ball.roll || ROLL_MS), 0, 1);
-    if (run.spec.crown) {
-      ball.destX += (TEE.x - ball.destX) * Math.min(1, 0.055 * k);
-    }
-    if (run.spec.gutter && !ball.banked) {
-      const edge = 102;
-      if (ball.destX < edge) ball.destX -= (edge - ball.destX) * Math.min(1, 0.04 * k);
-      if (ball.destX > W - edge) ball.destX += (ball.destX - (W - edge)) * Math.min(1, 0.04 * k);
-    }
-    if (run.waxOn && !ball.waxVeer && t >= 0.28 && t <= 0.62) {
-      ball.waxVeer = true;
-      const kick = (run.waxMul > 1 ? 1 : -1) * (18 + Math.random() * 22);
-      ball.destY = kit.clamp(ball.destY - kick, LANE_TOP + 8, TEE.y - 36);
-      ball.destX = kit.clamp(ball.destX + (Math.random() * 2 - 1) * 12, 42, W - 42);
-      run.shake = 6;
-      kit.sfx("flip");
-      setText("skeeStatus", "Wax veered the roll — sheen lied mid-lane.");
-      PF.setAura("laugh");
-    }
-    const ease = 1 - (1 - t) * (1 - t);
-    const loft = Math.sin(Math.PI * t) * (ball.loft || 26);
-    ball.x = TEE.x + (ball.destX - TEE.x) * ease;
-    ball.y = TEE.y + (ball.destY - TEE.y) * ease - loft;
-    if (t >= 1) scoreRing(resolveLanding(ball.destX, ball.destY));
   }
 
   function auraLine(reason, depth) {
@@ -1233,27 +1455,28 @@
     run.dying = true;
     run.aim = null;
     run.deathNote = reason || "under_target";
-    run.closedStamp = true;
     run.deathHold = DEATH_HOLD_MS;
     kit.sfx("stamp");
     run.shake = 8;
+    const stamp = el("skeeStamp");
+    if (stamp) stamp.hidden = false;
+    const need = Math.max(0, ((run.spec && run.spec.target) || 0) - (run.stagePts | 0));
+    setText("skeeHint", "UNDER TARGET · WAX");
+    setText("skeeStatus", need ? `Under target by ${need}. Nine balls, board still hungry.` : "Board stamped WAX.");
+    say(auraLine(reason, run.depth));
   }
 
   function sealResult(reason) {
     if (!run || run.done) return;
     run.done = true;
     run.dying = false;
-    if (run.raf) cancelAnimationFrame(run.raf);
     run.closedStamp = reason !== "leave" && reason !== "souvenir";
     run.bestStagePts = Math.max(run.bestStagePts, run.stagePts);
     const depth = run.depth;
     const score = run.score;
     const death = reason === "leave" ? "leave" : reason === "souvenir" ? "souvenir" : "under_target";
     persistDepth({
-      depth,
-      score,
-      deathReason: death,
-      cashedOut: reason === "souvenir",
+      depth, score, deathReason: death, cashedOut: reason === "souvenir",
       meta: { stage: run.spec && run.spec.id, bestStagePts: run.bestStagePts, stagePts: run.stagePts, kind: run.spec && run.spec.kind, coda: !!(run.spec && run.spec.coda) },
     });
     stampDepthCopy();
@@ -1270,18 +1493,10 @@
     const verdict = el("skeeVerdict");
     if (verdict) {
       verdict.hidden = false;
-      verdict.textContent = reason === "leave"
-        ? `Left the alley · ${line}`
-        : reason === "souvenir"
-          ? `Souvenir. ${line}.`
-          : `Under target. ${line}.`;
+      verdict.textContent = reason === "leave" ? `Left the alley · ${line}` : reason === "souvenir" ? `Souvenir. ${line}.` : `Under target. ${line}.`;
     }
     kit.fillResult({
-      root: "skeeResult",
-      depth: "skeeResultDepth",
-      score: "skeeResultScore",
-      aura: "skeeResultAura",
-      copied: "skeeCopied",
+      root: "skeeResult", depth: "skeeResultDepth", score: "skeeResultScore", aura: "skeeResultAura", copied: "skeeCopied",
     }, {
       depthLine: `LANE ${depth}`,
       scoreLine: `SCORE ${score} · BOARD ${run.bestStagePts | 0} · ${death.replace(/_/g, " ").toUpperCase()}`,
@@ -1292,6 +1507,7 @@
     setText("skeeChallengeText", challenge);
     PF.setTier("skeeTier", depth > 0 ? `LANE ${depth}` : "WAX", depth > 0 || reason === "souvenir" ? "perfect" : "miss");
     setText("skeeStatus", reason === "leave" ? "Left the alley." : reason === "souvenir" ? "Board tipped its hat." : "Board stamped WAX.");
+    say(aura);
     if (depth > 0 || reason === "souvenir") {
       PF.award(Math.max(8, Math.floor(score / 12)), true, "Skee-Ball");
       PF.setAura(depth >= 4 || reason === "souvenir" ? "celebrate" : "point");
@@ -1302,8 +1518,368 @@
       if (reason !== "leave") PF.showBanner(false, "WAX", aura);
     }
     PF.refreshNightBoard();
-    draw();
-    startIdle();
+    const hud = el("skeeHud");
+    if (hud) hud.hidden = true;
+    el("skeePowerWrap") && (el("skeePowerWrap").hidden = true);
+  }
+
+  function start() {
+    if (isLive() || (run && run.dying)) return;
+    ensureWorld();
+    const ctx = beginKitRun();
+    if (!ctx) {
+      setText("skeeStatus", "Need a demo coin for the lane.");
+      return;
+    }
+    const stamp = el("skeeStamp");
+    if (stamp) stamp.hidden = true;
+    kit.hideResult("skeeResult");
+    const verdict = el("skeeVerdict");
+    if (verdict) verdict.hidden = true;
+    run = {
+      kitRun: ctx,
+      done: false,
+      dying: false,
+      depth: 0,
+      score: 0,
+      stage: 1,
+      stagePts: 0,
+      bestStagePts: 0,
+      ballsLeft: BALLS,
+      ball: null,
+      aim: null,
+      pause: 0,
+      t: 0,
+      shake: 0,
+      deathHold: 0,
+      spec: null,
+    };
+    kit.setMode(card(), "play");
+    const startBtn = el("skeeStart");
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.textContent = "ROLLING";
+    }
+    run.sling = mountSling(ctx);
+    if (view) { view.demo = null; view.demoCool = 9; if (view.pullHint) view.pullHint.visible = true; }
+    startStage(1);
+    stampDepthCopy();
+    setText("skeeNightScore", "0");
+    setText("skeeHint", "HOLD one thumb · RELEASE in GOLD");
+    say(AURA.roll);
+    PF.setAura("point");
+    kit.sfx("sling");
+  }
+
+  function beginAim(nx, ny) {
+    if (!isLive() || run.ball || run.pause > 0) return;
+    if (run.ballsLeft <= 0) return;
+    run.aim = {
+      power: 0,
+      aim: clamp((nx - 0.5) * 1.85, -1, 1),
+      needle: 0,
+      dir: 1,
+      sling: true,
+      fromKey: false,
+    };
+    pointer.sx = nx;
+    pointer.sy = ny;
+    const canvas = el("skeeCanvas");
+    if (canvas) canvas.classList.add("is-pulling");
+    if (run.sling && typeof run.sling.beginPull === "function") {
+      run.sling.beginPull(nx, ny);
+    }
+    setText("skeeHint", run.spec && run.spec.invertPower ? "REVERSE · release EARLY" : "HOLD · release in GOLD");
+  }
+
+  function updateAimFromPointer(nx, ny) {
+    if (!run || !run.aim) return;
+    run.aim.aim = clamp((nx - 0.5) * 1.85, -1, 1);
+    if (run.sling && typeof run.sling.movePull === "function") run.sling.movePull(nx, ny);
+  }
+
+  function releaseAim() {
+    const canvas = el("skeeCanvas");
+    if (canvas) canvas.classList.remove("is-pulling");
+    if (!run || !run.aim || run.done || run.dying || run.ball) {
+      if (run) run.aim = null;
+      setPowerUi(0, false, liveSpec());
+      return;
+    }
+    const shown = run.aim.power;
+    if (shown < 0.08) {
+      run.aim = null;
+      setPowerUi(0, false, liveSpec());
+      if (run.sling && typeof run.sling.release === "function") run.sling.release();
+      setText("skeeStatus", "Hold the sling — release in the gold band for 50.");
+      setText("skeeHint", "HOLD one thumb · RELEASE in GOLD");
+      return;
+    }
+    if (run.sling && typeof run.sling.release === "function") run.sling.release();
+    const skid = run.waxSkidNext;
+    const mul = skid ? 1.18 : waxMul();
+    if (skid) run.waxSkidNext = false;
+    const v = aimVel(shown, run.aim.aim, run.spec, mul);
+    run.ballsLeft -= 1;
+    paintPips();
+    const b = makeBallState();
+    b.vx = v.vx; b.vy = v.vy; b.vz = v.vz;
+    b.skid = skid;
+    run.ball = b;
+    run.aim = null;
+    setPowerUi(0, false, run.spec);
+    if (view) {
+      view.arc.visible = false;
+      view.ghost.visible = false;
+    }
+    kit.sfx("throw");
+    const gold = goldBand(run.spec);
+    const inGold = shown >= gold.lo && shown <= gold.hi;
+    setText("skeeStatus", skid
+      ? "Sheen skid — this one runs LONG. Ghost lied."
+      : run.waxOn
+        ? "Wax under the roll — ghost is not the land."
+        : inGold ? "Gold sling. Ball’s up the lane." : "Off the gold. Ball’s up the lane.");
+  }
+
+  function handleEvents(evs) {
+    evs.forEach((e) => {
+      if (e.type === "bank") {
+        kit.sfx("bumper");
+        run.shake = 4;
+        setText("skeeStatus", "Banked off the left rail.");
+      } else if (e.type === "waxveer") {
+        kit.sfx("flip");
+        run.shake = 5;
+        setText("skeeStatus", "Wax veered the roll — sheen lied mid-lane.");
+        say("Aura: Sheen lied mid-lane.");
+        PF.setAura("laugh");
+        setAuraMood("laugh");
+      } else if (e.type === "gutter") {
+        kit.sfx("pit");
+        say(AURA.gutter);
+        setAuraMood("laugh");
+      } else if (e.type === "backstop") {
+        kit.sfx("bumper");
+        run.shake = 3;
+      } else if (e.type === "hole") {
+        burst(run.ball.x, run.ball.y, run.ball.z, e.v >= 50 ? 18 : 8, e.v >= 50 ? 0xf0d09a : 0xc41e3a);
+        view.holeMeshes.forEach((m) => {
+          if (m.userData.def && m.userData.def.id === (e.hole && e.hole.id) && m.userData.rim) {
+            m.userData.rim.material.emissiveIntensity = 1.4;
+          }
+        });
+      } else if (e.type === "scored") {
+        onScored(e.v || 0, { banked: e.banked, hole: e.hole });
+      } else if (e.type === "miss") {
+        onScored(0, { banked: e.banked, gutter: e.gutter });
+      }
+    });
+  }
+
+  function tick(dt) {
+    idleT += dt * 1000;
+    if (view) {
+      view.lights.forEach((L) => {
+        const pulse = 0.42 + Math.sin(idleT * 0.004 + L.phase) * 0.18;
+        L.pl.intensity = pulse;
+      });
+      if (view.sheen) {
+        const wax = !!(run && run.waxOn);
+        view.sheen.material.opacity = wax ? 0.48 + Math.sin(idleT * 0.004) * 0.16 : 0.05;
+        view.sheen.material.map.offset.x = (idleT * 0.00018) % 1;
+      }
+      view.holeMeshes.forEach((m) => {
+        if (m.userData.rim && m.userData.rim.material.emissiveIntensity > 0.25) {
+          m.userData.rim.material.emissiveIntensity = Math.max(0.25, m.userData.rim.material.emissiveIntensity - dt * 1.8);
+        }
+      });
+      view.particles.forEach((p) => {
+        if (p.life <= 0) { p.mesh.visible = false; return; }
+        p.life -= dt;
+        p.vy -= 6 * dt;
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+      });
+      view.confetti.forEach((c) => {
+        if (c.life <= 0) { c.mesh.visible = false; return; }
+        c.life -= dt;
+        c.vy -= 8 * dt;
+        c.mesh.position.x += c.vx * dt;
+        c.mesh.position.y += c.vy * dt;
+        c.mesh.position.z += c.vz * dt;
+        c.mesh.rotation.z += c.spin * dt;
+      });
+    }
+    const spec = liveSpec();
+    if (spec && (spec.movingFifty || spec.kind === "movingFifty" || spec.kind === "comboFinale" || spec.coda)) {
+      layoutHoles(spec, run ? run.t : idleT);
+    }
+    if (!run || run.done) {
+      if (!run) {
+        const cycle = 4200;
+        idleRoom = (Math.floor(idleT / cycle) % AUTHORED_COUNT) + 1;
+        if (view && Math.floor(idleT / cycle) !== Math.floor((idleT - dt * 1000) / cycle)) applyLane(skeeStageParams(idleRoom));
+      }
+      if (view && view.pullHint) {
+        view.pullHint.visible = !view.demo;
+        view.pullHint.position.z = TEE.z + 0.18 + Math.sin(idleT * 0.004) * 0.08;
+      }
+      if (view) {
+        view.demoCool = (view.demoCool || 0) - dt;
+        if (!view.demo && view.demoCool <= 0) {
+          const spec = liveSpec();
+          const b = makeBallState();
+          b.honest = true;
+          const v = aimVel(0.72 + Math.random() * 0.12, (Math.random() - 0.5) * 0.35, spec, 1);
+          b.vx = v.vx; b.vy = v.vy; b.vz = v.vz;
+          view.demo = b;
+        }
+        if (view.demo) {
+          const spec = liveSpec();
+          const evs = stepBall(view.demo, spec, dt, idleT);
+          syncBallMesh(view.demo, view.liveBall);
+          if (evs.some((e) => e.type === "scored" || e.type === "miss" || e.type === "gutter") || view.demo.phase === "done") {
+            view.demo = null;
+            view.demoCool = 1.15;
+            view.liveBall.position.set(TEE.x, TEE.y, TEE.z);
+          }
+        } else {
+          view.liveBall.position.set(TEE.x, TEE.y, TEE.z);
+          view.liveBall.rotation.x = idleT * 0.002;
+          if (view.shadow) view.shadow.position.set(TEE.x, LANE_Y + 0.011, TEE.z);
+        }
+      }
+      return;
+    }
+    if (view && view.pullHint) view.pullHint.visible = !run.ball;
+    run.t += dt * 1000;
+    if (run.dying) {
+      run.deathHold -= dt * 1000;
+      if (run.deathHold <= 0) sealResult(run.deathNote || "under_target");
+      return;
+    }
+    if (run.aim) {
+      const spd = (run.spec && run.spec.needleSpeed) || 0.95;
+      run.aim.needle += run.aim.dir * spd * dt;
+      if (run.aim.needle >= 1) { run.aim.needle = 1; run.aim.dir = -1; }
+      else if (run.aim.needle <= 0) { run.aim.needle = 0; run.aim.dir = 1; }
+      run.aim.power = run.aim.needle;
+      if (keys.a) run.aim.aim = clamp(run.aim.aim - 1.6 * dt, -1, 1);
+      if (keys.d) run.aim.aim = clamp(run.aim.aim + 1.6 * dt, -1, 1);
+      setPowerUi(run.aim.power, true, run.spec);
+      const pred = predict(run.aim.power, run.aim.aim, run.spec, 1);
+      updateArc(pred.pts, !!(run.waxOn || run.waxSkidNext));
+      if (view && view.ghost) {
+        view.ghost.visible = true;
+        const last = pred.pts[pred.pts.length - 1] || TEE;
+        view.ghost.position.set(last.x, last.y, last.z);
+      }
+      if (view) {
+        view.liveBall.position.set(
+          TEE.x + run.aim.aim * 0.1,
+          TEE.y + Math.sin(run.aim.needle * Math.PI) * 0.025,
+          TEE.z
+        );
+        view.liveBall.rotation.x = run.aim.needle * 0.4;
+      }
+    } else {
+      setPowerUi(0, false, run.spec);
+      if (view) {
+        view.arc.visible = false;
+        view.ghost.visible = false;
+      }
+    }
+    if (run.pause > 0) {
+      run.pause -= dt;
+      if (!run.ball && view) {
+        view.liveBall.position.set(TEE.x, TEE.y, TEE.z);
+      }
+      return;
+    }
+    if (run.ball) {
+      const evs = stepBall(run.ball, run.spec, dt, run.t);
+      syncBallMesh(run.ball, view && view.liveBall);
+      handleEvents(evs);
+    } else if (view) {
+      view.liveBall.position.set(TEE.x, TEE.y, TEE.z);
+      view.liveBall.rotation.x = 0;
+      if (view.shadow) view.shadow.position.set(TEE.x, LANE_Y + 0.011, TEE.z);
+    }
+  }
+
+  function loop() {
+    if (!view) return;
+    if (!cabinetOn()) {
+      view.raf = 0;
+      return;
+    }
+    view.raf = requestAnimationFrame(loop);
+    if (!view.fitted) fit();
+    const dt = Math.min(0.033, view.clock.getDelta());
+    tick(dt);
+    updateCamera(dt);
+    animateAura(dt);
+    view.renderer.render(view.scene, view.camera);
+  }
+
+  function stopLoop() {
+    if (view && view.raf) {
+      cancelAnimationFrame(view.raf);
+      view.raf = 0;
+    }
+  }
+
+  function startLoop() {
+    if (!view) return;
+    if (!view.raf) {
+      view.clock.getDelta();
+      loop();
+    }
+  }
+
+  function ensureWorld() {
+    ensureCss();
+    reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const canvas = el("skeeCanvas");
+    if (!canvas) return null;
+    if (view) {
+      fit();
+      startLoop();
+      return view;
+    }
+    try {
+      view = buildWorld(canvas);
+    } catch (err) {
+      const msg = err && err.message ? err.message : String(err);
+      setText("skeeStatus", /webgl|context/i.test(msg)
+        ? "This tent wants WebGL. The wax will wait."
+        : "Lane hitch: " + msg);
+      try { console.error("skee-ball", err); } catch (_) { /* */ }
+      return null;
+    }
+    fit();
+    applyLane(skeeStageParams(1));
+    if (!view._ro && typeof ResizeObserver !== "undefined") {
+      view._ro = new ResizeObserver(() => fit());
+      const host = card() || document.getElementById("cabinet-skee-ball");
+      if (host) view._ro.observe(host);
+    }
+    window.addEventListener("resize", fit);
+    startLoop();
+    return view;
+  }
+
+  function canvasNorm(ev) {
+    const canvas = el("skeeCanvas");
+    if (!canvas) return { x: 0, y: 0 };
+    const r = canvas.getBoundingClientRect();
+    const t = (ev.touches && ev.touches[0]) || (ev.changedTouches && ev.changedTouches[0]) || ev;
+    return {
+      x: (t.clientX - r.left) / Math.max(1, r.width),
+      y: (t.clientY - r.top) / Math.max(1, r.height),
+    };
   }
 
   PF.registerVendor({
@@ -1313,15 +1889,22 @@
     defaults: { bestSkee: 0, bestSkeeScore: 0, bestSkeeStagePts: 0 },
     onLeave() {
       if (isLive() || (run && run.dying && !run.done)) finish("leave");
-      stopIdle();
+      stopLoop();
     },
-    onShow() { declareP0(); stampDepthCopy(); startIdle(); },
+    onShow() {
+      declareP0();
+      stampDepthCopy();
+      ensureWorld();
+      say(AURA.roll);
+    },
     onReset() {
-      if (run && run.raf) cancelAnimationFrame(run.raf);
+      if (run) run.done = true;
       run = null;
       const verdict = el("skeeVerdict");
       if (verdict) verdict.hidden = true;
       kit.hideResult("skeeResult");
+      const stamp = el("skeeStamp");
+      if (stamp) stamp.hidden = true;
       const startBtn = el("skeeStart");
       if (startBtn) {
         startBtn.disabled = false;
@@ -1330,20 +1913,22 @@
       kit.setMode(card(), "vestibule");
       resetPips();
       stampDepthCopy();
-      startIdle();
+      if (cabinetOn()) startLoop();
     },
     refreshDepth(state) {
       setText("depthSkeeNow", isLive() || (run && run.dying) ? String(run.depth) : "0");
       const bestN = Math.max(state.bestSkee || 0, (state.bestDepth && state.bestDepth.skee) || 0);
       setText("depthSkeeBest", bestN ? String(bestN) : "—");
       setText("depthSkeeScore", isLive() || (run && run.dying) ? String(run.score) : "0");
+      setText("skeeNightScore", isLive() || (run && run.dying) ? String(run.score) : "0");
+      setText("skeeBestBoard", state.bestSkeeStagePts ? String(state.bestSkeeStagePts) : "—");
       setText("depthSkeeBestBoard", state.bestSkeeStagePts ? String(state.bestSkeeStagePts) : "—");
       setText("skeeDoorBest", bestN ? `Best lane ${bestN}` : "Lanes —");
     },
     bind() {
       declareP0();
-      ensureHud();
-      paintPips();
+      ensureCss();
+      ensurePips(9);
       const startBtn = el("skeeStart");
       if (startBtn) startBtn.addEventListener("click", start);
       const canvas = el("skeeCanvas");
@@ -1351,35 +1936,56 @@
         canvas.style.touchAction = "none";
         canvas.addEventListener("pointerdown", (ev) => {
           if (run && (run.dying || run.done)) return;
-          if (!isLive()) {
-            punchStart();
-            return;
-          }
+          if (!isLive()) { punchStart(); return; }
           ev.preventDefault();
-          try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
-          const p = kit.canvasPos(canvas, ev, W, H);
-          beginAim(p.x);
+          try { canvas.setPointerCapture(ev.pointerId); } catch (_) { /* */ }
+          pointer.down = true;
+          pointer.id = ev.pointerId;
+          const p = canvasNorm(ev);
+          beginAim(p.x, p.y);
         });
         canvas.addEventListener("pointermove", (ev) => {
-          if (!run || !run.aim) return;
+          if (!run || !run.aim || !pointer.down) return;
           ev.preventDefault();
-          const p = kit.canvasPos(canvas, ev, W, H);
-          updateAim(p.x);
+          const p = canvasNorm(ev);
+          updateAimFromPointer(p.x, p.y);
         });
         const up = (ev) => {
-          if (!run || !run.aim) return;
-          ev.preventDefault();
+          if (!pointer.down && !(run && run.aim)) return;
+          pointer.down = false;
           if (ev) {
-            const p = kit.canvasPos(canvas, ev, W, H);
-            updateAim(p.x);
+            const p = canvasNorm(ev);
+            updateAimFromPointer(p.x, p.y);
           }
           releaseAim();
         };
         canvas.addEventListener("pointerup", up);
         canvas.addEventListener("lostpointercapture", up);
-        canvas.addEventListener("pointerleave", up);
         canvas.addEventListener("pointercancel", up);
       }
+      window.addEventListener("keydown", (ev) => {
+        if (!cabinetOn()) return;
+        if (ev.code === "KeyA" || ev.code === "ArrowLeft") keys.a = true;
+        if (ev.code === "KeyD" || ev.code === "ArrowRight") keys.d = true;
+        if (ev.code === "Space") {
+          ev.preventDefault();
+          if (!keys.space) {
+            keys.space = true;
+            if (isLive() && !run.aim && !run.ball) {
+              beginAim(0.5, 0.7);
+              if (run.aim) run.aim.fromKey = true;
+            }
+          }
+        }
+      });
+      window.addEventListener("keyup", (ev) => {
+        if (ev.code === "KeyA" || ev.code === "ArrowLeft") keys.a = false;
+        if (ev.code === "KeyD" || ev.code === "ArrowRight") keys.d = false;
+        if (ev.code === "Space") {
+          keys.space = false;
+          if (run && run.aim && run.aim.fromKey) releaseAim();
+        }
+      });
       const copyBtn = el("skeeChallenge");
       if (copyBtn) {
         copyBtn.addEventListener("click", () => {
@@ -1389,13 +1995,10 @@
             const copied = el("skeeCopied");
             if (copied) copied.hidden = false;
             setText("skeeStatus", "Copied — send it");
-          }, () => {
-            setText("skeeStatus", text);
-          });
+          }, () => setText("skeeStatus", text));
         });
       }
       stampDepthCopy();
-      draw();
     },
   });
-})();
+}

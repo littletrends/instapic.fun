@@ -154,6 +154,8 @@
       lastFortune: null,
       curios: {},
       demoCoins: 99,
+      admitTicket: false,
+      admitPassed: false,
       showmanPass: false,
       passDay: null,
       plays: { love: 0, lookup: 0, snap: 0, whisper: 0, marquee: 0 },
@@ -611,6 +613,10 @@
     if (door) door.hidden = true;
     if (foyer) foyer.hidden = true;
     document.querySelectorAll(".cabinet-interior").forEach((el) => { el.hidden = true; });
+    if (window.PennyFeverWorld && typeof window.PennyFeverWorld.pause === "function") {
+      window.PennyFeverWorld.pause();
+    }
+    document.body.classList.remove("is-in-world", "is-world-map");
   }
 
   function routeFromHash() {
@@ -648,6 +654,9 @@
           setTimeout(() => returnedDoor.classList.remove("alley-returned"), 1200);
         }
       }
+      if (window.PennyFeverWorld && typeof window.PennyFeverWorld.start === "function") {
+        window.PennyFeverWorld.start();
+      }
       return "foyer";
     }
     const m = hash.match(/^cabinet\/([\w-]+)(?:\/(play|result))?$/);
@@ -679,6 +688,9 @@
     // fallback
     const foyer = $("foyer");
     if (foyer) foyer.hidden = false;
+    if (window.PennyFeverWorld && typeof window.PennyFeverWorld.start === "function") {
+      window.PennyFeverWorld.start();
+    }
     return "foyer";
   }
 
@@ -688,6 +700,12 @@
 
   function enterCabinet(slug) {
     location.hash = "cabinet/" + slug;
+  }
+
+  function enterTent(slug) {
+    const button = document.querySelector(`.cabinet-door[data-enter="${slug}"]`);
+    if (button) approachTent(button);
+    else enterCabinet(slug);
   }
 
   let tentTransitionBusy = false;
@@ -1755,6 +1773,7 @@
   }
 
   function startLoveRun() {
+    if ($("loveStage")) return; /* 3D tent (vendors/love.js) owns play */
     if (loveRun && (loveRun.active || loveRun.dying)) return;
     const subject = ($("loveSubject") && $("loveSubject").value || "someone mysterious").trim();
     if (!spendDemoCoin("love")) {
@@ -2696,7 +2715,9 @@
 
   function setLookup(pct) {
     const p = Math.max(0, Math.min(100, pct));
-    $("lookupFill").style.width = `${p}%`;
+    const fill = $("lookupFill");
+    if (!fill) return p;
+    fill.style.width = `${p}%`;
     const sweet = document.querySelector(".lookup-sweet");
     if (sweet) {
       sweet.style.left = lookupZone.lo + "%";
@@ -3387,63 +3408,49 @@
       soundTone(button.classList.contains("ticket-button") ? 330 : 220, 0.085, 0.012, 0);
     });
 
-    $("enterArcade").addEventListener("click", () => {
-      const btn = $("enterArcade");
-      if (btn.dataset.busy === "1") return;
-      btn.dataset.busy = "1";
-      btn.disabled = true;
-      const door = $("discoveryDoor");
-      const art = $("doorStageArt");
-      const vid = $("doorStageVideo");
-      const idle = $("doorIdlePeek");
-      if (idle) { idle.pause(); idle.hidden = true; }
-      if (art) art.hidden = false;
-      const stages = [
-        { img: "assets/prepared/door-closed.webp", line: "Knock knock…" },
-        { img: "assets/prepared/door-ajar.webp", vid: "assets/prepared/door-ajar-loop.mp4", line: "A light in the heart." },
-        { img: "assets/prepared/doorway-beckon.webp", vid: "assets/prepared/doorway-beckon-loop.mp4", line: "Aura has the key." },
-        { img: "assets/prepared/door-open.webp", vid: "assets/prepared/door-open-loop.mp4", line: "In you go." },
-      ];
-      let i = 0;
-      door.classList.add("knocking");
-      const step = () => {
-        const s = stages[i];
-        if (art) art.src = s.img.startsWith("assets/") ? s.img : artPath(s.img);
-        if (vid) {
-          if (s.vid) {
-            if (art) art.hidden = true;
-            vid.hidden = false;
-            vid.src = s.vid.startsWith("assets/") ? s.vid : artPath(s.vid);
-            vid.play().catch(() => {});
-          } else {
-            vid.pause();
-            vid.hidden = true;
-            vid.removeAttribute("src");
-            if (art) art.hidden = false;
-          }
+    const takeTicket = $("takeTicket");
+    const giveTicket = $("giveTicket");
+    function paintAdmitDesk() {
+      const idle = $("admitIdle");
+      const hold = $("admitHold");
+      const done = $("admitDone");
+      if (!idle || !hold) return;
+      const stub = $("admitStub");
+      if (state.admitPassed) {
+        idle.hidden = true;
+        hold.hidden = false;
+        if (stub) stub.hidden = true;
+        if (done) {
+          done.hidden = false;
+          done.textContent = "“You’re stamped. Come through whenever you like.”";
         }
+        if (giveTicket) giveTicket.textContent = "Back to the alley";
+        return;
+      }
+      if (stub) stub.hidden = false;
+      idle.hidden = !!state.admitTicket;
+      hold.hidden = !state.admitTicket;
+      if (done) done.hidden = true;
+      if (giveTicket) giveTicket.textContent = "Walk to Aura at the door";
+    }
+    paintAdmitDesk();
+    if (takeTicket) {
+      takeTicket.addEventListener("click", () => {
+        state.admitTicket = true;
+        saveState(state);
+        paintAdmitDesk();
         const w = $("doorWhisper");
-        if (w) w.textContent = `“${s.line}”`;
-        i += 1;
-        if (i < stages.length) {
-          setTimeout(step, 700);
-        } else {
-          setTimeout(() => {
-            if (vid) { vid.pause(); vid.hidden = true; }
-            door.classList.remove("knocking");
-            btn.dataset.busy = "0";
-            btn.disabled = false;
-            showFoyer(false);
-            // reset door for next visit
-            if (art) { art.hidden = false; art.src = "assets/prepared/door-closed.webp"; }
-            if (idle) { idle.hidden = false; idle.play().catch(() => {}); }
-            const w = $("doorWhisper");
-            if (w) w.textContent = "“Psst. This isn’t the booth. This is my alley after dark. Come in if you’re curious.”";
-          }, 650);
-        }
-      };
-      step();
-    });
+        if (w) w.textContent = "“That’s the stub. Find me at the palace door — I don’t let anyone past without it.”";
+        const art = $("doorStageArt");
+        if (art) art.src = "assets/prepared/doorway-beckon.webp";
+      });
+    }
+    if (giveTicket) {
+      giveTicket.addEventListener("click", () => {
+        if (!state.admitTicket && !state.admitPassed) return;
+        showFoyer(false);
+      });
+    }
     $("leaveArcade").addEventListener("click", () => { location.hash = "door"; });
     $("startFortune").addEventListener("click", () => {
       if (state.fortuneDay === darwinDay()) return;
@@ -3502,7 +3509,8 @@
     $("loveChallenge").addEventListener("click", copyChallenge);
     if ($("marqueeStart")) $("marqueeStart").addEventListener("click", () => { startMarquee(); });
 
-    $("lookupStart").addEventListener("click", async () => {
+    const lookupOwned = vendorMods.some((v) => v.id === "lookup");
+    if ($("lookupStart") && !lookupOwned) $("lookupStart").addEventListener("click", async () => {
       if (!spendDemoCoin("lookup")) {
         $("lookupStatus").textContent = "Out of demo coins · grant a pass";
         return;
@@ -3555,17 +3563,20 @@
       }, 12000);
     });
 
-    $("snapStart").addEventListener("click", () => {
-      if (!spendDemoCoin("snap")) {
-        $("snapStatus").textContent = "Out of demo coins · grant a pass";
-        return;
-      }
-      $("snapStart").disabled = true;
-      $("snapStatus").textContent = "Armed…";
-      setArt("snapCabinetArt", VISUALS.snap.idle);
-      armSnap();
-    });
-    $("snapFreeze").addEventListener("click", freezeSnap);
+    const snapOwnedByVendor = vendorMods.some((v) => v.id === "snap");
+    if (!snapOwnedByVendor) {
+      $("snapStart").addEventListener("click", () => {
+        if (!spendDemoCoin("snap")) {
+          $("snapStatus").textContent = "Out of demo coins · grant a pass";
+          return;
+        }
+        $("snapStart").disabled = true;
+        $("snapStatus").textContent = "Armed…";
+        setArt("snapCabinetArt", VISUALS.snap.idle);
+        armSnap();
+      });
+      $("snapFreeze").addEventListener("click", freezeSnap);
+    }
 
     $("whisperGo").addEventListener("click", makeCharm);
 
@@ -3592,7 +3603,7 @@
       $("charmCard").hidden = true;
       $("loveVerdict").hidden = true;
       hideLoveResult();
-      $("lookupVerdict").hidden = true;
+      if ($("lookupVerdict")) $("lookupVerdict").hidden = true;
       $("snapVerdict").hidden = true;
       eachVendor(applyVendorDefaults);
       eachVendor((mod) => { if (mod.onReset) mod.onReset(); });
@@ -3632,9 +3643,21 @@
   window.PennyFever = {
     registerVendor,
     enter: enterCabinet,
+    enterTent,
     backToAlley: goArcade,
     getState: () => state,
     saveState: () => saveState(state),
+    takeAdmitTicket() {
+      state.admitTicket = true;
+      saveState(state);
+    },
+    passAdmitTicket() {
+      state.admitTicket = true;
+      state.admitPassed = true;
+      saveState(state);
+    },
+    hasAdmitTicket: () => !!state.admitTicket,
+    ticketPassed: () => !!state.admitPassed,
     spendDemoCoin,
     award,
     showBanner,

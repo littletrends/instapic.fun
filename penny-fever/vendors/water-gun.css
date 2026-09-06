@@ -1,0 +1,279 @@
+/* Water Gun Duel — 3D tent chrome. PF only. Never booth/port 6000. */
+#cabinet-water-gun.watergun-tent {
+  max-width: min(1120px, 100%);
+}
+#cabinet-water-gun .watergun-sky {
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(58, 170, 196, 0.24), transparent 48%),
+    radial-gradient(ellipse at 78% 100%, rgba(196, 30, 58, 0.14), transparent 42%),
+    linear-gradient(180deg, #0c1820 0%, #160b12 42%, #0a0810 100%);
+}
+#cabinet-water-gun .watergun-header {
+  margin-bottom: 0.45rem;
+}
+#cabinet-water-gun:has(#waterGunCard.is-playing) .plaque-kicker,
+#cabinet-water-gun:has(#waterGunCard.is-playing) .interior-blurb {
+  display: none;
+}
+#cabinet-water-gun:has(#waterGunCard.is-playing) .interior-header h1 {
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  margin: 0.1rem 0;
+}
+
+#waterGunCard .card-hero,
+#waterGunCard .signature-prop--watergun { display: none; }
+#waterGunCard h2 { margin: 0.1rem 0 0.2rem; }
+
+#cabinet-water-gun.watergun-tent,
+#cabinet-water-gun .interior-room,
+#cabinet-water-gun .interior-stage,
+#waterGunCard,
+.watergun-stage {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#cabinet-water-gun.is-hold-lock {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.watergun-stage {
+  position: relative;
+  width: 100%;
+  height: min(68vh, 640px);
+  min-height: 360px;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #071018;
+  border: 1px solid rgba(90, 196, 210, 0.42);
+  box-shadow:
+    inset 0 0 0 6px rgba(58, 36, 24, 0.5),
+    0 18px 40px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+}
+.watergun-stage::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 14px;
+  z-index: 4;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    #7a2140 0 18px,
+    #d4a45a 18px 36px,
+    #1e4a6a 36px 54px,
+    #d4a45a 54px 72px
+  );
+  clip-path: polygon(
+    0 0, 100% 0, 100% 70%,
+    94% 100%, 88% 70%, 82% 100%, 76% 70%, 70% 100%,
+    64% 70%, 58% 100%, 52% 70%, 46% 100%, 40% 70%,
+    34% 100%, 28% 70%, 22% 100%, 16% 70%, 10% 100%, 4% 70%, 0 100%
+  );
+}
+#waterGunCard.is-playing .watergun-stage {
+  height: min(78vh, 740px);
+  min-height: 420px;
+}
+#waterGunCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  background: #071018;
+}
+#waterGunCard.is-playing #waterGunCanvas { cursor: none; }
+#waterGunCard.is-vestibule #waterGunCanvas { cursor: pointer; }
+
+.watergun-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.watergun-meters {
+  position: absolute;
+  top: 1.35rem;
+  left: 0.7rem;
+  right: 0.7rem;
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+}
+.watergun-meter {
+  flex: 1;
+  max-width: 46%;
+  padding: 0.35rem 0.5rem 0.4rem;
+  border-radius: 0.35rem;
+  background: rgba(8, 10, 16, 0.7);
+  border: 1px solid rgba(240, 208, 154, 0.32);
+  color: #f0d09a;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+.watergun-meter span { display: block; font-weight: 700; }
+.watergun-meter i {
+  display: block;
+  height: 0.72rem;
+  margin: 0.28rem 0 0.12rem;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.watergun-meter i b {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  transform-origin: left center;
+}
+.watergun-meter--you i b { background: linear-gradient(90deg, #e85a7a, #ffd08a); }
+.watergun-meter--ghost {
+  border-color: rgba(94, 224, 208, 0.55);
+  color: #b8f0e8;
+  box-shadow: 0 0 12px rgba(94, 224, 208, 0.18);
+}
+.watergun-meter--ghost i b {
+  background: linear-gradient(90deg, #1a6a68, #7ef0e0 70%, #e8fff8);
+}
+.watergun-meter--ghost.is-filling {
+  border-color: #7ef0e0;
+}
+.watergun-meter--ghost.is-filling i b {
+  box-shadow: 0 0 10px rgba(126, 240, 224, 0.85);
+}
+.watergun-meter em { font-style: normal; font-weight: 700; letter-spacing: 0.06em; }
+.watergun-meter--ghost em { color: #7ef0e0; font-size: 0.9rem; }
+
+.watergun-howto {
+  position: absolute;
+  left: 50%;
+  bottom: 1.15rem;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  justify-content: center;
+  margin: 0;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(8, 10, 16, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  color: #f0d09a;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.watergun-howto b {
+  color: #ffe6a6;
+  font-weight: 800;
+}
+.watergun-howto i {
+  font-style: normal;
+  color: #9ee8de;
+  opacity: 0.9;
+}
+
+.watergun-toast,
+.watergun-count {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 0.4rem 1rem;
+  border-radius: 0.35rem;
+  background: rgba(12, 6, 9, 0.72);
+  color: #e8a0b8;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 3vw, 1.45rem);
+  border: 1px solid rgba(196, 30, 58, 0.7);
+}
+.watergun-count {
+  color: #ffe6a6;
+  border-color: rgba(212, 164, 90, 0.7);
+}
+
+.watergun-stall {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 5.4rem;
+  height: 0.55rem;
+  border-radius: 99px;
+  background: rgba(12, 6, 9, 0.7);
+  border: 1px solid rgba(196, 30, 58, 0.85);
+  overflow: hidden;
+}
+.watergun-stall i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #e8a0b8, #c41e3a);
+}
+.watergun-stall span {
+  position: absolute;
+  left: 0; right: 0;
+  top: -1.05rem;
+  text-align: center;
+  color: #f0d09a;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+}
+
+#waterGunCard.is-playing .barker-call {
+  color: #9ee8de;
+  font-size: 0.72rem;
+}
+#waterGunCard.is-result .watergun-stage { opacity: 0.92; }
+
+#waterGunResult.is-stall .vendor-result-game { color: #e8a0b8; }
+#waterGunResult.is-ghost .vendor-result-game { color: #7ef0e0; }
+#waterGunResultReason {
+  margin: 0.15rem 0 0.35rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+#waterGunResult.is-stall #waterGunResultReason { color: #e8a0b8; }
+#waterGunResult.is-ghost #waterGunResultReason { color: #7ef0e0; }
+
+.watergun-toast.is-stall {
+  color: #e8a0b8;
+  border-color: rgba(196, 30, 58, 0.85);
+}
+.watergun-toast.is-ghost {
+  color: #7ef0e0;
+  border-color: rgba(94, 224, 208, 0.85);
+}
+
+.watergun-keys {
+  position: absolute;
+  left: 0.7rem;
+  bottom: 1.15rem;
+  margin: 0;
+  color: rgba(240, 208, 154, 0.72);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .watergun-stage { min-height: 20rem; height: min(62vh, 520px); }
+  #waterGunCard.is-playing .watergun-stage { min-height: 22rem; height: min(70vh, 600px); }
+  .watergun-meters { flex-direction: column; gap: 0.3rem; }
+  .watergun-meter { max-width: none; }
+  .watergun-howto { white-space: normal; text-align: center; max-width: 94%; }
+  .watergun-keys { display: none; }
+}
