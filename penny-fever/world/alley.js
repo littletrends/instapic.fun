@@ -44,8 +44,8 @@ const BRASS = 0xd4a45a;
 
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
-const STALL_X = 2.95;
-const STALL_STEP = 3.55;
+const STALL_X = 2.62;
+const STALL_STEP = 2.68;
 const STALL_Z0 = 8;
 const AISLE = 1.62;
 const FACE_PULL = 1.7;
@@ -410,28 +410,40 @@ function animatePerson(p, dt, moving, waving) {
 function makeSign(text, accent) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
-  canvas.height = 128;
+  canvas.height = 176;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#1a0c10";
+  const bg = ctx.createLinearGradient(0, 0, 0, 176);
+  bg.addColorStop(0, "#351520");
+  bg.addColorStop(0.55, "#1a0c10");
+  bg.addColorStop(1, "#080407");
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, 512, 128);
-  ctx.strokeStyle = "#d4a45a";
-  ctx.lineWidth = 8;
-  ctx.strokeRect(8, 8, 496, 112);
-  ctx.fillStyle = "#f0d09a";
-  ctx.font = "700 48px Georgia, serif";
+  ctx.fillRect(0, 128, 512, 48);
+  ctx.strokeStyle = "#f0c96f";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(8, 8, 496, 160);
+  ctx.fillStyle = "#e8a0b8";
+  ctx.font = "800 18px system-ui, sans-serif";
+  ctx.letterSpacing = "5px";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 256, 64);
+  ctx.fillText("✦  STEP RIGHT UP  ✦", 256, 38);
+  ctx.fillStyle = "#f0d09a";
+  const fontSize = text.length > 20 ? 34 : text.length > 14 ? 40 : 47;
+  ctx.font = `800 ${fontSize}px Georgia, serif`;
+  ctx.shadowColor = "rgba(255, 190, 70, 0.75)";
+  ctx.shadowBlur = 12;
+  ctx.fillText(text.toUpperCase(), 256, 105, 455);
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   const mat = new THREE.MeshStandardMaterial({
     map: tex,
     emissive: accent || BRASS,
-    emissiveIntensity: 0.18,
+    emissiveIntensity: 0.34,
     roughness: 0.55,
   });
   const m = new THREE.Mesh(geoBox, mat);
-  m.scale.set(1.35, 0.32, 0.04);
+  m.scale.set(1.72, 0.54, 0.06);
   return m;
 }
 
@@ -461,18 +473,18 @@ function makeStall(spec, x, z, yaw) {
     roofR.rotation.z = -0.45;
     root.add(roofL, roofR);
     const poster = new THREE.Mesh(geoBox, art);
-    poster.scale.set(1.2, 1.45, 0.05);
-    poster.position.set(0, 1.15, 0.72);
+    poster.scale.set(1.43, 1.62, 0.05);
+    poster.position.set(0, 1.18, 0.72);
     root.add(poster);
   } else if (spec.kind === "cabinet") {
-    root.add(meshBox(dark, 1.25, 1.85, 0.95, 0, 0.95, 0));
-    root.add(meshBox(velvet, 1.28, 0.5, 1.0, 0, 2.05, 0));
+    root.add(meshBox(dark, 1.52, 2.1, 0.95, 0, 1.06, 0));
+    root.add(meshBox(velvet, 1.56, 0.5, 1.0, 0, 2.28, 0));
     const screen = new THREE.Mesh(geoBox, art);
-    screen.scale.set(1.12, 1.28, 0.06);
-    screen.position.set(0, 1.2, 0.52);
+    screen.scale.set(1.41, 1.67, 0.06);
+    screen.position.set(0, 1.28, 0.52);
     root.add(screen);
-    root.add(meshBox(accent, 1.3, 0.18, 0.55, 0, 2.42, 0.12));
-    root.add(meshBox(wood, 1.28, 0.14, 0.6, 0, 0.62, 0.38));
+    root.add(meshBox(accent, 1.58, 0.18, 0.55, 0, 2.58, 0.12));
+    root.add(meshBox(wood, 1.54, 0.14, 0.6, 0, 0.48, 0.38));
   } else {
     root.add(meshBox(wood, 1.55, 0.9, 0.85, 0, 0.5, 0.05));
     root.add(meshBox(dark, 1.6, 1.5, 0.22, 0, 1.35, -0.28));
@@ -484,13 +496,13 @@ function makeStall(spec, x, z, yaw) {
     awn.rotation.x = -0.28;
     root.add(awn);
     const poster = new THREE.Mesh(geoBox, art);
-    poster.scale.set(1.2, 1.2, 0.05);
+    poster.scale.set(1.42, 1.42, 0.05);
     poster.position.set(0, 1.2, 0.48);
     root.add(poster);
   }
 
   const sign = makeSign(spec.name, spec.accent);
-  sign.position.set(0, spec.kind === "cabinet" ? 2.68 : 2.42, 0.42);
+  sign.position.set(0, spec.kind === "cabinet" ? 2.94 : 2.56, 0.42);
   root.add(sign);
 
   const faceZ = spec.kind === "tent" ? 0.76 : spec.kind === "cabinet" ? 0.56 : 0.52;
