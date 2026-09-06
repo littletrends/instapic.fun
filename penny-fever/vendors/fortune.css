@@ -427,15 +427,49 @@
 }
 
 @media (max-width: 640px) {
+  #cabinet-fortune .interior-header {
+    padding: 0.65rem 0.7rem;
+  }
+  #cabinet-fortune .interior-header .interior-blurb,
+  .fortune-card > .machine-number,
+  .fortune-card > h2,
+  .fortune-card > .tent-mouth-joke,
+  .fortune-card > .pf-depth-tag,
+  .fortune-card > [data-pf-depth-copy],
+  .fortune-card > .signature-prop,
+  .fortune-card > .barker-call,
+  .fortune-card > .fortune-actions,
+  .fortune-card > .status-ticket {
+    display: none;
+  }
+  .fortune-card {
+    padding: 0.38rem;
+  }
   .fortune-stage {
-    height: min(64vh, 580px);
-    min-height: 360px;
+    height: min(74svh, 650px);
+    min-height: 430px;
+    margin: 0;
   }
   .fortune-controls {
     font-size: 0.64rem;
+    padding: 0.35rem;
   }
+  .fortune-controls span:first-child { font-size: 0; }
+  .fortune-controls span:first-child::after { content: "DRAG TO STEER"; font-size: 0.64rem; }
+  .fortune-controls span:last-child { display: none; }
   .fortune-start-overlay {
-    bottom: 6.2rem;
+    top: 50%;
+    bottom: auto;
+    width: 86%;
+    transform: translate(-50%, -50%);
+    padding: 0.8rem;
+    border: 1px solid rgba(232,184,74,.48);
+    border-radius: 1rem;
+    background: rgba(18,8,24,.88);
+    box-shadow: 0 12px 30px #0009,0 0 24px rgba(186,80,220,.3);
+  }
+  .fortune-start-note::after {
+    content: " · earn a fortune ticket";
   }
 }
 

@@ -188,6 +188,9 @@ import * as THREE from "../world/lib/three.module.min.js";
   }
   function cardRoot() { return el("fortuneCard"); }
   function sfx(name) { if (kit && kit.sfx) kit.sfx(name); }
+  function buzz(pattern) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) { /* optional phone feedback */ }
+  }
 
   function codaParams(n) {
     const t = Math.max(1, (n | 0) - AUTHORED_COUNT);
@@ -1266,6 +1269,7 @@ import * as THREE from "../world/lib/three.module.min.js";
     m._cy = crystal.position.y;
     m._cz = crystal.position.z;
     burstAt(m.mesh.position.x, m.mesh.position.y, m.mesh.position.z, m.rare ? 0x7ee0c0 : 0xffe08a);
+    buzz(m.rare ? [25, 25, 25] : 18);
     addCatch(m.rare);
   }
 
@@ -1285,6 +1289,7 @@ import * as THREE from "../world/lib/three.module.min.js";
       }
     }
     sfx("cash");
+    buzz([25, 25, 55]);
     if (typeof PF.setAura === "function") PF.setAura(run.depth >= 4 ? "celebrate" : "give");
     const ticket = {
       colourName: run.trueSign ? run.trueSign.toUpperCase() : "GOLD",
@@ -1436,6 +1441,7 @@ import * as THREE from "../world/lib/three.module.min.js";
     run.deathReason = deathReasonOf(reason);
     run.deathHold = DEATH_HOLD_MS;
     crackCrystal();
+    buzz([70, 35, 120]);
     if (kit && kit.sfx && reason !== "souvenir") sfx("stamp");
     const card = cardRoot();
     if (card) card.classList.add("is-danger");
