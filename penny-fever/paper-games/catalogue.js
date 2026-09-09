@@ -10,7 +10,7 @@ const rows = [
   ['ball-toss','Bess','Lantern Toss','Knock the swinging lanterns from a little circus skyline.'],
   ['coin-pusher','Copper','Copper Falls','Time the pusher and move a little tide of pennies.'],
   ['pinball','Pip','Thunder Garden','Keep a silver seed alive among ringing brass flowers.'],
-  ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.','../experiments/brasswater-harbour/'],
+  ['water-gun','Marina','Pocket Harbour','Nudge a little sailboat through a paper harbour.','../vendors/water-gun/play/'],
   ['milk-bottles','Mabel','The Topsy Dairy','Topple bottle towers with carefully placed throws.'],
   ['cover-the-spot','Dot','Patchwork Moon','Cover patterned moons with a handful of paper discs.'],
   ['mutoscope','Milo','The Missing Frames','Splice a moving picture back into its proper story.'],

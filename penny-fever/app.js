@@ -254,6 +254,8 @@
 
   function registerVendor(mod) {
     if (!mod || !mod.id) return;
+    // These replacement interiors own their lifecycle; do not also bind the old engine.
+    if (window.PennyFeverPaperRooms?.supports(mod.id)) return;
     if (vendorMods.some((v) => v.id === mod.id)) return;
     vendorMods.push(mod);
     applyVendorDefaults(mod);
@@ -280,8 +282,9 @@
     if (!activeVendorId || activeVendorId === nextSlug) return;
     const closing = activeVendorId;
     const room = $("cabinet-" + closing);
-    if (room) room.dispatchEvent(new CustomEvent("pennyfever:roomleave", { detail: { next: nextSlug } }));
-    const mod = vendorMods.find((item) => item.id === closing);
+    const closedPaper = window.PennyFeverPaperRooms?.close(closing) === true;
+    if (room && !closedPaper) room.dispatchEvent(new CustomEvent("pennyfever:roomleave", { detail: { next: nextSlug } }));
+    const mod = closedPaper ? null : vendorMods.find((item) => item.id === closing);
     if (mod && typeof mod.onLeave === "function") {
       try { mod.onLeave(); } catch (err) { console.warn("vendor close", closing, err); }
     }
@@ -754,6 +757,12 @@
     if (m) {
       const slug = m[1];
       const leaf = m[2] || "";
+      if (window.PennyFeverPaperRooms?.supports(slug)) {
+        window.PennyFeverPaperRooms.open(slug);
+        activeVendorId = slug;
+        document.body.setAttribute("data-active-room", slug);
+        return "cabinet:" + slug;
+      }
       const el = $("cabinet-" + slug);
       if (el) {
         el.hidden = false;
