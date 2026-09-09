@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "pennyFever.v1";
+  const STORAGE_KEY = "pennyFever.restyle.v1";
   const TZ = "Australia/Darwin";
 
   const ALLEY = [
@@ -156,6 +156,7 @@
       demoCoins: 99,
       admitTicket: false,
       admitPassed: false,
+      alleyLaps: 0,
       showmanPass: false,
       passDay: null,
       plays: { love: 0, lookup: 0, snap: 0, whisper: 0, marquee: 0 },
@@ -175,6 +176,7 @@
       _gutsBonus: false,
       _doubleExposure: false,
       charms: [],
+      guestDoll: null,
     };
   }
 
@@ -205,10 +207,17 @@
   }
 
   function saveState(s) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    window.PennyFeverInventoryModel?.reconcile(s);
+    let persisted = true;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+    catch { persisted = false; }
+    window.PennyFeverSavePersisted = persisted;
+    window.dispatchEvent(new CustomEvent("pennyfever:statechange", { detail: { persisted } }));
+    return persisted;
   }
 
   let state = loadState();
+  if (window.PennyFeverInventoryModel?.reconcile(state)) saveState(state);
   if (!state._coinEconomyV1) {
     state.demoCoins = 3;
     state._coinEconomyV1 = true;
@@ -534,6 +543,7 @@
       btn.addEventListener("click", () => {
         const tip = btn.getAttribute("data-tip") || "";
         const filled = btn.classList.contains("filled");
+        if (filled && window.PennyFeverInventory?.open(btn.getAttribute("data-curio"))) return;
         const itchEl = $("cabinetItch");
         if (!itchEl) return;
         if (filled) {
@@ -634,6 +644,16 @@
     }
     state.demoCoins -= 1;
     state.plays[kind] = (state.plays[kind] || 0) + 1;
+    saveState(state);
+    refreshNightBoard();
+    return true;
+  }
+
+  function spendPennies(amount) {
+    const need = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!need) return true;
+    if ((state.demoCoins || 0) < need) return false;
+    state.demoCoins -= need;
     saveState(state);
     refreshNightBoard();
     return true;
@@ -3498,15 +3518,16 @@
       const done = $("admitDone");
       if (!idle || !hold) return;
       const stub = $("admitStub");
-      if (state.admitPassed) {
+      const laps = Number(state.alleyLaps) || 0;
+      if (state.admitPassed || laps > 0) {
         idle.hidden = true;
         hold.hidden = false;
         if (stub) stub.hidden = true;
         if (done) {
           done.hidden = false;
-          done.textContent = "“You’re stamped. Come through whenever you like.”";
+          done.textContent = "“That’s the one. In you go.”";
         }
-        if (giveTicket) giveTicket.textContent = "Back to the alley";
+        if (giveTicket) giveTicket.textContent = "Enter Sideshow Alley";
         return;
       }
       if (stub) stub.hidden = false;
@@ -3518,18 +3539,19 @@
     paintAdmitDesk();
     if (takeTicket) {
       takeTicket.addEventListener("click", () => {
+        if ((Number(state.alleyLaps) || 0) > 0) return;
         state.admitTicket = true;
         saveState(state);
         paintAdmitDesk();
         const w = $("doorWhisper");
         if (w) w.textContent = "“That’s the stub. Find me at the palace door — I don’t let anyone past without it.”";
         const art = $("doorStageArt");
-        if (art) art.src = "assets/prepared/doorway-beckon.webp";
+        if (art) art.src = "assets/restyle/paper-aura-seated.png";
       });
     }
     if (giveTicket) {
       giveTicket.addEventListener("click", () => {
-        if (!state.admitTicket && !state.admitPassed) return;
+        if (!state.admitTicket && !state.admitPassed && !(Number(state.alleyLaps) || 0)) return;
         showFoyer(false);
       });
     }
@@ -3735,17 +3757,39 @@
     getState: () => state,
     saveState: () => saveState(state),
     takeAdmitTicket() {
+      if ((Number(state.alleyLaps) || 0) > 0) return false;
       state.admitTicket = true;
       saveState(state);
+      return true;
     },
     passAdmitTicket() {
-      state.admitTicket = true;
+      state.admitTicket = false;
       state.admitPassed = true;
+      state.alleyLaps = (Number(state.alleyLaps) || 0) + 1;
+      saveState(state);
+    },
+    admitAlleyLap(kind) {
+      if (state.admitPassed) return true;
+      const laps = Number(state.alleyLaps) || 0;
+      if (laps === 0) {
+        this.passAdmitTicket();
+        return true;
+      }
+      if (!spendPennies(1)) return false;
+      state.admitPassed = true;
+      state.alleyLaps = laps + 1;
+      saveState(state);
+      refreshNightBoard();
+      return true;
+    },
+    endAlleyLap() {
+      state.admitPassed = false;
       saveState(state);
     },
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
     spendDemoCoin,
+    spendPennies,
     addDemoCoins,
     cashInCompletedPlays,
     award,
