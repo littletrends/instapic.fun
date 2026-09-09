@@ -2,7 +2,7 @@
 // The two approved studies retain their own saved implementations.
 const rows = [
   ['fortune','Iris','Fate’s Loom','Weave a fortune through a moving moon garden.'],
-  ['love','Rosalie','Heartstrings','Swing a little heart from ribbon to ribbon.'],
+  ['love','Rosalie','Heartstrings','Release a swinging heart into moving ribbon baskets.'],
   ['curios','Digby','Clockwork Menagerie','Reconnect tracks for a wandering clockwork beetle.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.','../experiments/celestes-starlight/'],
   ['snap','Felix','Paper Safari','Frame the perfect moment in a moving paper woodland.'],
@@ -28,6 +28,6 @@ const rows = [
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
 ];
-const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack']);
+const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass']);
 export const games = rows.map(([id,host,title,blurb,direct]) => ({id,host,title,blurb,direct,ready: Boolean(direct)||built.has(id),asset:`assets/${id}.png`,module:`./stalls/${id}.js`}));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
