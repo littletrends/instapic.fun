@@ -28,6 +28,6 @@ const rows = [
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
 ];
-const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko']);
+const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn']);
 export const games = rows.map(([id,host,title,blurb,direct]) => ({id,host,title,blurb,direct,ready: Boolean(direct)||built.has(id),asset:`assets/${id}.png`,module:`./stalls/${id}.js`}));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
