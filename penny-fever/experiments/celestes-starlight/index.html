@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#10203c">
+  <title>Celeste’s Starlight · Penny Fever workshop</title>
+  <link rel="stylesheet" href="./starlight.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="back" id="exit" href="../../#alley">← Penny Fever</a>
+    <div class="title"><p>CELESTE’S MOONLIT WORKSHOP</p><h1>A little starlight</h1></div>
+    <button class="quiet" type="button" id="help">How to play</button>
+  </header>
+  <main class="workshop">
+    <div class="stage-column">
+      <div class="chapter-line"><span id="chapter-name">A little first light</span><span id="progress">0 stars lit</span></div>
+      <div class="stage" id="stage">
+        <img id="backdrop" src="./assets/observatory-v1.png" alt="Celeste’s miniature navy-and-gold paper observatory, with a moonlit open courtyard." draggable="false">
+        <canvas id="sky" tabindex="0" aria-label="Starlight puzzle. Tap a brass glass to turn it, or drag around its ring. Arrow keys select and turn glasses." aria-describedby="instructions"></canvas>
+        <section id="welcome" class="paper-note" aria-labelledby="welcome-title">
+          <span class="kicker">A LITTLE REQUEST FROM CELESTE</span>
+          <h2 id="welcome-title">The stars have<br>lost their way.</h2>
+          <p>Turn the little brass glasses.<br>Guide my starlight home.</p>
+          <p class="small">Tap to turn one notch, or drag a ring.<br>The light shows you what happens.</p>
+          <button class="brass" type="button" id="start">Let there be starlight ✦</button>
+          <span class="note-foot">No timer. No coins. Just a little wonder.</span>
+        </section>
+        <section id="result" class="paper-note result" hidden aria-labelledby="result-title">
+          <span class="kicker">ONE MORE WONDER IN THE NIGHT</span>
+          <h2 id="result-title">A constellation awakens.</h2>
+          <p id="result-copy"></p><p id="result-stats" class="small"></p>
+          <button class="brass" id="next" type="button">Next constellation →</button>
+          <button id="replay" class="ink-link" type="button">Try this one again</button>
+        </section>
+        <div class="paused" id="paused" hidden><span>The night can wait.</span><button id="resume" type="button" class="brass">Keep exploring →</button></div>
+        <div id="load-error" class="load-error" hidden role="alert"></div>
+      </div>
+      <div class="turning" aria-label="Turn selected glass">
+        <button type="button" id="left" aria-label="Turn selected glass one notch anticlockwise">↶</button>
+        <span>GLASS <strong id="selected">I</strong><small>tap a glass · turn its ring</small></span>
+        <button type="button" id="right" aria-label="Turn selected glass one notch clockwise">↷</button>
+        <button type="button" id="send" class="brass" disabled>Light every star</button>
+      </div>
+      <p id="feedback" class="feedback" role="status" aria-live="polite">A quiet corner of Celeste’s world.</p>
+    </div>
+    <aside class="notebook">
+      <div class="portrait"><img src="./assets/celeste-reference.webp" alt="Celeste with her navy star-covered cloak and telescope." draggable="false"></div>
+      <p class="eyebrow">PENNY FEVER · MOVEMENT STUDY 03</p>
+      <h2>A small turn.<br>A different sky.</h2>
+      <p id="instructions"><strong>Tap a glass to turn it.</strong> Or hold its ring and turn your finger around it. Watch where the light goes.</p>
+      <p>Light every hanging star <em>at the same time</em>, and reach the golden sky bell. Then send your comet along the path you made.</p>
+      <div class="glass-picker" id="glass-picker" role="group" aria-label="Select a glass"></div>
+      <div class="tools"><button id="undo" class="ink-link" type="button" disabled>Undo turn</button><button id="hint" class="ink-link" type="button">Celeste’s hint</button></div>
+      <fieldset class="chapters"><legend>EXPLORE THE NIGHT</legend>
+        <button type="button" data-chapter="0" aria-pressed="true"><span>01</span><span>The paper swallow<small>Three glasses · first light</small></span></button>
+        <button type="button" data-chapter="1" aria-pressed="false"><span>02</span><span>The wandering fox<small>Four glasses · crossing paths</small></span></button>
+        <button type="button" data-chapter="2" aria-pressed="false"><span>03</span><span>The sleeping hare<small>Five glasses · a moon’s shadow</small></span></button>
+      </fieldset>
+      <div class="tools"><button id="restart" class="ink-link" type="button">Start this sky again</button><button id="pause" class="ink-link" type="button" disabled>Pause</button><button id="sound" class="ink-link" type="button" aria-pressed="false">Sound off</button></div>
+      <p class="keyboard">Keyboard: ↑ ↓ select glass · ← → turn it · Enter sends the comet · P pauses.</p>
+      <p class="prototype">Local playtest. No prizes or progress saved. The existing booth games have not been replaced.<br><a id="harbour-link" href="../brasswater-harbour/">Return to Marina’s saved harbour ↗</a></p>
+    </aside>
+  </main>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <form method="dialog"><button class="close" aria-label="Close help">×</button></form>
+    <p class="eyebrow">CELESTE’S NOTEBOOK</p><h2 id="help-title">A little glass, a little light.</h2>
+    <ol><li>Tap a brass glass to rotate it one notch clockwise.</li><li>For a closer look, hold and turn around its ring. The beam follows your movement; release to settle into a notch.</li><li>Light <strong>all the hanging stars together</strong> and send the beam into the golden sky bell. The tiny stars printed on the floor are decoration.</li><li>When the path is ready, press <strong>Send the comet</strong> and watch your constellation wake up.</li></ol>
+    <p>You can also select a glass with its numbered button, then use ↶ / ↷. Undo and Celeste’s hint are free. There is no time limit.</p>
+    <p>Chapter three adds a solid moon: starlight cannot pass through it. The silver-blue line on each glass is its actual reflecting surface.</p>
+    <form method="dialog"><button class="brass">Back to the stars</button></form>
+  </dialog>
+  <noscript>JavaScript is needed for this local puzzle. No account or payment is required.</noscript>
+</body>
+</html>
