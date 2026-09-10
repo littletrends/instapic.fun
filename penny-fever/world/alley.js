@@ -816,6 +816,8 @@ let nearest = null;
 let focus = null;
 let vendorChatUntil = 0;
 let moveIntent = { ix: 0, iy: 0 };
+let stallCardOpen = false;
+let stallCardId = "";
 
 let promptTargetSlug = "";
 let raf = 0;
@@ -868,6 +870,20 @@ function attachHud() {
         </div>
         <em id="pfWorldPromptLine"></em>
       </div>
+      <div class="pf-stall-card" id="pfStallCard" hidden>
+        <div class="pf-stall-card-art">
+          <img id="pfStallCardBooth" alt="">
+          <img id="pfStallCardVendor" alt="">
+        </div>
+        <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
+        <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
+        <p class="pf-stall-card-line" id="pfStallCardLine"></p>
+        <div class="pf-stall-card-actions">
+          <button type="button" id="pfStallCardEnter">Enter</button>
+          <button type="button" id="pfStallCardChat">Chat</button>
+          <button type="button" id="pfStallCardBack">Back to the sideshow alley</button>
+        </div>
+      </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the boards · sidestep to a stall · hear the pitch · penny to play</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
@@ -903,6 +919,21 @@ function bindHud() {
       talkToFocus();
     });
   }
+  const stallEnter = el("pfStallCardEnter");
+  const stallChat = el("pfStallCardChat");
+  const stallBack = el("pfStallCardBack");
+  if (stallEnter) stallEnter.addEventListener("click", (event) => {
+    event.preventDefault();
+    enterNearest();
+  });
+  if (stallChat) stallChat.addEventListener("click", (event) => {
+    event.preventDefault();
+    talkToFocus();
+  });
+  if (stallBack) stallBack.addEventListener("click", (event) => {
+    event.preventDefault();
+    closeStallCard();
+  });
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
     window.PennyFeverInventory?.open('everyday-penny');
   });
@@ -1002,6 +1033,60 @@ function bindJoy() {
   pad.addEventListener("pointercancel", end);
 }
 
+function closeStallCard() {
+  stallCardOpen = false;
+  stallCardId = "";
+  focus = null;
+  nearest = null;
+  if (player) player.position.x = 0;
+  const card = el("pfStallCard");
+  if (card) card.hidden = true;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = false;
+}
+
+function syncStallCard(best) {
+  const card = el("pfStallCard");
+  if (!card) return;
+  if (!best || best.kind !== "stall") {
+    if (stallCardOpen) closeStallCard();
+    return;
+  }
+  if (stallCardId !== best.id) {
+    stallCardId = best.id;
+    const booth = el("pfStallCardBooth");
+    const vendor = el("pfStallCardVendor");
+    const hostEl = el("pfStallCardHost");
+    const nameEl = el("pfStallCardName");
+    const lineEl = el("pfStallCardLine");
+    const enter = el("pfStallCardEnter");
+    if (booth) {
+      booth.src = `assets/restyle/scene-turnarounds-2026-09-09/stalls/${best.id}/front.png`;
+      booth.alt = best.name || "";
+    }
+    const hostSlug = best.hostSlug;
+    if (vendor) {
+      if (hostSlug) {
+        vendor.hidden = false;
+        vendor.src = `assets/restyle/scene-turnarounds-2026-09-09/vendors/${hostSlug}/front.png`;
+        vendor.alt = best.host || "";
+        vendor.onerror = () => { vendor.hidden = true; };
+      } else {
+        vendor.removeAttribute("src");
+        vendor.hidden = true;
+      }
+    }
+    if (hostEl) hostEl.textContent = best.host ? `${best.host} · host` : "";
+    if (nameEl) nameEl.textContent = best.name || "";
+    if (lineEl) lineEl.textContent = best.line || "";
+    if (enter) enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+  }
+  stallCardOpen = true;
+  card.hidden = false;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = true;
+}
+
 function talkToFocus() {
   if (!nearest) return;
   if (nearest.kind === "aura") {
@@ -1024,6 +1109,12 @@ function talkToFocus() {
 function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
+  if (stallCardOpen && nearest.kind === "stall") {
+    const slug = nearest.id;
+    closeStallCard();
+    location.hash = "cabinet/" + slug;
+    return;
+  }
   if (nearest.kind === "vendor") {
     talkToFocus();
     return;
@@ -1327,6 +1418,7 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
+  if (stallCardOpen) return;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -1493,6 +1585,7 @@ function pickFocus(px, pz) {
       };
     }
   });
+  if (stallCardOpen && focus) return { passing, passingZ };
   if (Math.abs(moveIntent.iy) > 0.2) {
     focus = null;
     return { passing, passingZ };
@@ -1544,6 +1637,7 @@ function pickFocus(px, pz) {
       name: spec.name,
       line: spec.line,
       host: host?.userData.crewName || spec.name,
+      hostSlug: host?.userData.vendorHost || "",
       x: s.position.x,
       z: s.position.z,
       stallX: s.position.x,
@@ -1585,6 +1679,7 @@ function findNearest() {
   const passingZ = passing?.dz ?? 99;
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
+  syncStallCard(best && best.kind === "stall" ? nearest : null);
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -1618,6 +1713,12 @@ function findNearest() {
     } else if (best && best.kind === "aura") {
       gatePromptActive = false;
       promptTargetSlug = "";
+      prompt.hidden = true;
+      if (chatBtn) chatBtn.hidden = true;
+      prompt.classList.remove("is-ticket-handoff");
+    } else if (best && best.kind === "stall") {
+      gatePromptActive = false;
+      promptTargetSlug = best.id;
       prompt.hidden = true;
       if (chatBtn) chatBtn.hidden = true;
       prompt.classList.remove("is-ticket-handoff");
@@ -1739,7 +1840,7 @@ function updateHudAnchor() {
 
 function followPose() {
   const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
-  const viewing = !!(nearest && nearest.atCounter && !walkingAlley);
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && nearest.kind !== "stall");
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;

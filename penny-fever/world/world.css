@@ -278,6 +278,91 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 .pf-world-prompt.is-ticket-given { opacity: 0; transition: opacity 0.15s ease; }
 .pf-world-prompt[hidden] { display: none !important; }
+.pf-stall-card {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 4.6rem 1rem 1.2rem;
+  background:
+    radial-gradient(ellipse at 50% 28%, #3a2418 0%, #160b10 62%, #0a0608 100%);
+  pointer-events: auto;
+}
+.pf-stall-card[hidden] { display: none !important; }
+.pf-stall-card-art {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: min(96vw, 540px);
+  min-height: 46vh;
+  flex: 1 1 auto;
+}
+.pf-stall-card-art img {
+  object-fit: contain;
+  filter: drop-shadow(0 10px 22px #000a);
+}
+#pfStallCardBooth {
+  width: min(92%, 480px);
+  max-height: 52vh;
+}
+#pfStallCardVendor {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(42%, 220px);
+  max-height: 38vh;
+  transform: translateX(-58%);
+  z-index: 1;
+}
+.pf-stall-card-kicker {
+  margin: 0;
+  color: #f0d09a;
+  font: 700 0.68rem/1.2 system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.pf-stall-card-name {
+  margin: 0;
+  color: #fff6ec;
+  font: 700 clamp(1.3rem, 5vw, 2rem)/1.1 "Palatino Linotype", Palatino, Georgia, serif;
+}
+.pf-stall-card-line {
+  margin: 0 0 0.4rem;
+  max-width: 28rem;
+  color: #e8d0a0;
+  text-align: center;
+  font: italic 0.92rem/1.35 Georgia, serif;
+}
+.pf-stall-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  width: min(96%, 420px);
+}
+.pf-stall-card-actions button {
+  flex: 1 1 7rem;
+  font: 700 0.95rem/1.2 "Palatino Linotype", Palatino, Georgia, serif;
+  color: #160b10;
+  background: linear-gradient(180deg, #f5dda7, #d4a45a);
+  border: 2px dashed rgba(67, 29, 22, 0.62);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  box-shadow: 0 4px 0 #8a6230;
+  cursor: pointer;
+}
+#pfStallCardBack {
+  flex: 1 1 100%;
+  background: #435637;
+  color: #f4e4c2;
+  border-color: #2a3824;
+  box-shadow: 0 4px 0 #1e2818;
+}
 .pf-world-prompt button {
   width: auto;
   min-width: 5.6rem;
