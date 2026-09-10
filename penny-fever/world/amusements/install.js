@@ -3,14 +3,15 @@ import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js';
 import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js';
 
 const HOST_HEIGHT=1.7;
-const HOST_INSET=.88;
+const HOST_INSET=.7;
 const HOST_ALONG=-.92;
 const NEAR=52;
-// Stalls are 3.5 tall. Rides must dwarf them; side cards stay in the stall-to-wall gap.
+// Stalls are 3.5 tall. Rides must dwarf them. Side cards fill the centred wall bay
+// without crossing the aisle (1.62) or the wall (4.86).
 const RIDE_SCALE=2;
 const RIDE_HEIGHT_MIN=7;
 const RIDE_MAX_WIDTH=8.6;
-const RIDE_SIDE_WIDTH=1.85;
+const RIDE_SIDE_WIDTH=2.35;
 
 export function amusementYaw(x){return x>0?-Math.PI/2:Math.PI/2;}
 // Local +Z toward the foyer, so fronts greet a guest walking +Z down the alley.

@@ -448,7 +448,7 @@ const rows=[
  }
 ];
 export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
-// Sit behind Acer stalls (x=±2.62) and the old paper trim (~4.2).
+// Sit behind the centred wall-bay attractions (x=±3.24) and the old paper trim (~4.2).
 export const WALL_RADIAL=4.86;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{

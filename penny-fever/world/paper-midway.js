@@ -69,9 +69,17 @@ export function extendPaperAlley(scene,len){if(!paperRail)return;
  for(let z=1;z<len;z+=5.2)for(const side of [-1,1]){box(scene,.11,3.9,.12,side*5.36,1.95,z,mats.kraft);box(scene,.16,.12,2.5,side*5.38,3.55,z+1.25,mats.red)}
  const sign=label('A PENNY · ANOTHER LAP',4.4,.65);sign.position.set(0,2.7,len+.32);sign.rotation.y=Math.PI;scene.add(sign);
 }
-let panel,playerRef,auraRef,apiRef;function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.innerHTML='<strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button id="auraCounterAdmission">Take an admission ticket</button><button id="auraCounterCoins">Get 5 demo coins</button></div><small id="auraCounterMessage" aria-live="polite">Come back here whenever your pocket is empty.</small>';document.body.append(panel);
- panel.querySelector('#auraCounterCoins').onclick=()=>{if(!near())return;const n=apiRef.addDemoCoins(5);panel.querySelector('#auraCounterMessage').textContent=`${n} demo coins added. Enjoy the next lap, darling.`;};
+let panel,playerRef,auraRef,apiRef,dismissed=false;
+function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Take an admission ticket</button><button type="button" id="auraCounterCoins" hidden>Fill empty pocket</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that.</small>';document.body.append(panel);
+ panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;};
+ panel.querySelector('#auraCounterCoins').onclick=()=>{
+  if(!near())return;
+  const coins=Number(apiRef.getState().demoCoins)||0;
+  if(coins>0)return;
+  const n=apiRef.addDemoCoins(3);
+  panel.querySelector('#auraCounterMessage').textContent=`${n} souvenir pennies. Only when the pocket is empty — not each lap.`;
+ };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
   const state=apiRef.getState();
@@ -85,7 +93,21 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
     return;
   }
   if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';return;}
-  note.textContent='Need a penny. Take souvenir pennies if your pocket is empty.';
+  note.textContent='Need a penny. Fill an empty pocket, then pay for the walk.';
  };
 }
-export function updateTicketService(){if(!panel)return;panel.hidden=!near()||!document.body.classList.contains('is-in-world');if(panel.hidden)return;const state=apiRef.getState();const laps=Number(state.alleyLaps)||0;panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${state.demoCoins} demo coins`;const button=panel.querySelector('#auraCounterAdmission');button.disabled=!!state.admitPassed;button.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';}
+export function updateTicketService(){
+ if(!panel)return;
+ const here=!!near()&&document.body.classList.contains('is-in-world');
+ if(!here){dismissed=false;panel.hidden=true;return;}
+ if(dismissed){panel.hidden=true;return;}
+ panel.hidden=false;
+ const state=apiRef.getState();
+ const laps=Number(state.alleyLaps)||0;
+ const empty=!(Number(state.demoCoins)>0);
+ panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${state.demoCoins} ${Number(state.demoCoins)===1?'penny':'pennies'}`;
+ const admit=panel.querySelector('#auraCounterAdmission');
+ admit.disabled=!!state.admitPassed;
+ admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
+ panel.querySelector('#auraCounterCoins').hidden=!empty;
+}

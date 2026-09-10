@@ -37,10 +37,13 @@ export const AMUSEMENT_ART={
   stallRects:row([[42,388],[420,754],[785,1130],[1148,1501]],567,949)
  })
 };
+// Midpoint of the walkable aisle (1.62) and the illustrated walls (4.86), so
+// stalls and rides sit in front of their wall instead of hugging the path.
+export const BAY_X=3.24;
 export const AMUSEMENT_PLACES=[
- ['horse-carousel',3.55,0],['fairground-organ',-3.5,1],['helter-skelter',-3.55,3],
- ['ferris-wheel',3.6,6],['chair-swings',-3.55,9],['funhouse',3.5,12],
- ['balloon-tree',-3.45,15],['alley-wall-bay',3.5,18]
+ ['horse-carousel',BAY_X,0],['fairground-organ',-BAY_X,1],['helter-skelter',-BAY_X,3],
+ ['ferris-wheel',BAY_X,6],['chair-swings',-BAY_X,9],['funhouse',BAY_X,12],
+ ['balloon-tree',-BAY_X,15],['alley-wall-bay',BAY_X,18]
 ];
 export const PAPERCUT_ROOT='assets/restyle/scene-turnarounds-2026-09-09';
 export const PAPERCUT_VIEWS=['front','left','back','right'];

@@ -1,7 +1,8 @@
 /* Art-direction pass for the isolated original-game copy. No gameplay rules here. */
 import * as THREE from './lib/three.module.min.js';
 const names={clay:'Claymation',rubber:'Rubberhose',paper:'Paper craft'};
-export let style=new URLSearchParams(location.search).get('style')||'paper';
+const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
+export let style=paperRail?'paper':(new URLSearchParams(location.search).get('style')||'paper');
 if(!names[style])style='paper';
 let activeScene,base=[],people=[],materials=[],geometries=[],outlines=[];
 const textures={};
@@ -29,24 +30,6 @@ function material(m){
  n.roughness=style==='clay'?.94:1;n.metalness=0;n.bumpMap=texture(style);n.bumpScale=style==='clay'?.045:.017;
  if(style==='paper'){n.color.lerp(new THREE.Color('#b99b68'),.22);n.flatShading=true;}n.needsUpdate=true;materials.push(n);return n;
 }
-const SKINS={
- hall:{paper:'assets/restyle/paper-alley-bay.jpg',rubber:'assets/restyle/rubber-alley-bay.jpg',clay:'assets/restyle/clay-alley-bay.jpg'},
-};
-const skinMaps={};
-const skinLoader=new THREE.TextureLoader();
-function loadPath(path){
- if(skinMaps[path])return skinMaps[path];
- const t=skinLoader.load(path,()=>{if(activeScene)syncWorldSkin();});
- t.colorSpace=THREE.SRGBColorSpace;
- skinMaps[path]=t;
- return t;
-}
-function mapFor(slot){
- const path=SKINS[slot]?.[style];if(!path)return null;
- return loadPath(path);
-}
-Object.values(SKINS).forEach(set=>{if(set[style])loadPath(set[style]);});
-
 function restore(){outlines.forEach(o=>{o.parent?.remove(o);o.geometry.dispose();o.material.dispose()});outlines=[];base.forEach(b=>{b.mesh.material=b.material;b.mesh.geometry=b.geometry;b.mesh.scale.copy(b.scale)});people.forEach(p=>p.person.scale.copy(p.scale));materials.forEach(m=>m.dispose());materials=[];geometries.forEach(g=>g.dispose());geometries=[];}
 function hasPaperStand(person){const u=person.userData||{};return !!(u.paperProprietor||u.paperGuest||u.paperCrew);}
 function syncWorldSkin(){
@@ -55,15 +38,13 @@ function syncWorldSkin(){
  activeScene.traverse(o=>{
   if(o.userData.paperCutout)o.visible=paper;
   if(o.userData.hideWhenPaper)o.visible=!paper;
-  const slot=o.userData.restyleSkin;
-  if(slot&&o.material&&SKINS[slot]){o.material.map=mapFor(slot);o.material.needsUpdate=true;}
  });
 }
 function apply(){
  if(!activeScene)return;restore();const cache=new Map();
  base.forEach(b=>{const o=b.mesh,m=b.material;
  // Preserve sky, firefly sprites, translucent light effects, printed wall skins and signs.
- if(Array.isArray(m)||!m||m.side===THREE.BackSide||o.geometry?.type==='PlaneGeometry'||o.userData.restyleSkin||(m.transparent&&m.opacity<.7))return;
+ if(Array.isArray(m)||!m||m.side===THREE.BackSide||o.geometry?.type==='PlaneGeometry'||(m.transparent&&m.opacity<.7))return;
  if(!cache.has(m))cache.set(m,material(m));o.material=cache.get(m);
  if(o.isInstancedMesh){
   if(style==='clay'&&b.geometry.type==='BoxGeometry')o.geometry=roundedBox;
@@ -130,7 +111,4 @@ export function poseRestyle(person,dt){
 }
 document.body.dataset.restyle=style;
 
-if(new URLSearchParams(location.search).get('rail')==='paper') {
-  document.body.classList.add('paper-original-rail');
-  const roles=document.createElement('div');roles.className='paper-rail-roles';roles.textContent='YOU: THE GUEST · AURA: YOUR HOST';document.body.append(roles);
-}
+if(paperRail) document.body.classList.add('paper-original-rail');

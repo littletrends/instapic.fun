@@ -1,14 +1,15 @@
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
-import { mountRestyle, poseRestyle } from "./restyle.js?v=foyer-walls-1";
+import { mountRestyle, poseRestyle } from "./restyle.js?v=current-rail-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=approach-face-1";
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=foyer-walls-2";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=reliability-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=reliability-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=hud-top-1";
+import {BAY_X} from "./amusements/catalogue.js?v=hud-top-1";
 import {installWallBackdrops} from "./walls/install.js?v=angled-walls-2";
-import {installPapercutRides} from "./amusements/install.js?v=ride-scale-1";
+import {installPapercutRides} from "./amusements/install.js?v=hud-top-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=reliability-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=reliability-1";
 
@@ -54,7 +55,7 @@ const BRASS = 0xd4a45a;
 
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
-const STALL_X = 2.62;
+const STALL_X = paperRail ? BAY_X : 2.62;
 const STALL_STEP = paperRail ? 5.2 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
@@ -834,14 +835,20 @@ function attachHud() {
   if (!stage || el("pfWorldPrompt")) return;
   stage.insertAdjacentHTML("beforeend", `
     <div class="pf-world-hud" id="pfWorldHud">
-      <div class="pf-world-brand"><small>After dark</small><strong>Penny Fever</strong></div>
-      <div class="pf-world-tools">
-        <button type="button" id="pfWorldMap">Paper map</button>
-        <button type="button" id="pfWorldLeave">Leave alley</button>
-      </div>
-      <div class="pf-world-compass" id="pfWorldCompass">
-        <span id="pfWorldZone">PIER</span>
-        <strong id="pfWorldNearest">Heart palace</strong>
+      <div class="pf-world-top">
+        <div class="pf-world-compass" id="pfWorldCompass">
+          <span id="pfWorldZone">PIER</span>
+          <strong id="pfWorldNearest">Heart palace</strong>
+        </div>
+        <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
+          <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
+          <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
+          <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
+          <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
+        </nav>
+        <div class="pf-world-tools">
+          <button type="button" id="pfWorldLeave">Leave</button>
+        </div>
       </div>
       <div class="pf-world-speech" id="pfWorldSpeech" hidden>
         <b id="pfWorldSpeechName">Aura</b>
@@ -852,12 +859,6 @@ function attachHud() {
         <button type="button" id="pfWorldInspect" hidden>Look at booth</button>
         <em id="pfWorldPromptLine"></em>
       </div>
-      <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
-        <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
-        <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
-        <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
-        <button type="button" id="pfPocketChest"><span>🗝</span>Kept treasures</button>
-      </nav>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the boards · sidestep to a stall · hear the pitch · penny to play</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
@@ -865,7 +866,7 @@ function attachHud() {
     <div class="pf-world-fail" id="pfWorldFail" hidden>
       <div>
         <p>This machine won’t spin a 3D alley.</p>
-        <button type="button" id="pfWorldFailMap">Open the paper map</button>
+        <button type="button" id="pfWorldFailMap">Back to the entrance</button>
       </div>
     </div>
   `);
@@ -877,7 +878,6 @@ function bindHud() {
     if (!paperRail || !nearest?.atCounter) return;
     inspectedStall = inspectedStall === nearest.id ? null : nearest.id;
   });
-  const map = el("pfWorldMap");
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
   const pocketTicket = el("pfPocketTicket");
@@ -885,14 +885,6 @@ function bindHud() {
   const pocketChat = el("pfPocketChat");
   const pocketChest = el("pfPocketChest");
   const failMap = el("pfWorldFailMap");
-  if (map) {
-    map.addEventListener("click", () => {
-      document.body.classList.toggle("is-world-map");
-      map.textContent = document.body.classList.contains("is-world-map") ? "3D alley" : "Paper map";
-      if (document.body.classList.contains("is-world-map")) pause();
-      else resume();
-    });
-  }
   if (leave) leave.addEventListener("click", () => { location.hash = "door"; });
   if (enter) {
     enter.addEventListener("click", (event) => {
@@ -915,11 +907,7 @@ function bindHud() {
     window.PennyFeverInventory?.open();
   });
   if (failMap) {
-    failMap.addEventListener("click", () => {
-      document.body.classList.add("is-in-world", "is-world-map");
-      const stage = el("pfWorldStage");
-      if (stage) stage.style.display = "none";
-    });
+    failMap.addEventListener("click", () => { location.hash = "door"; });
   }
   bindJoy();
   bindLook();
@@ -936,10 +924,6 @@ function onKey(e) {
       e.preventDefault();
       enterNearest();
     }
-  }
-  if (k === "m") {
-    const map = el("pfWorldMap");
-    if (map) map.click();
   }
 }
 
@@ -1488,7 +1472,7 @@ function findNearest() {
   const z = pz;
   if (z < GATE_Z - 1.8) api.gateBump = false;
   if (zone) {
-    zone.textContent = z < FOYER_OUT ? "PIER · HEART PALACE" : `HALL · ${Math.max(0, Math.round(z))} PACES`;
+    zone.textContent = z < FOYER_OUT ? "Pier" : `Hall · ${Math.max(0, Math.round(z))}`;
   }
   if (nearEl) {
     if (!ticketPassed() && z < GATE_Z) nearEl.textContent = "Aura holds the door";
@@ -1759,7 +1743,7 @@ function startNow() {
     api.ok = false;
     const fail = el("pfWorldFail");
     if (fail) fail.hidden = false;
-    document.body.classList.add("is-in-world", "is-world-map");
+    document.body.classList.add("is-in-world");
     return false;
   }
   if (!el("pfWorld")) return false;

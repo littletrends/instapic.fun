@@ -4,7 +4,7 @@ body.paper-slice-game .restyle-bar{display:none} .paper-return{position:fixed;to
 
 .paper-rail-roles{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;background:#e7d4ac;color:#48351f;border:1px solid #a5804d;padding:7px 14px;font:10px Arial;letter-spacing:1.5px;white-space:nowrap}body.paper-original-rail .paper-rail-roles{display:none}body.paper-original-rail.is-in-world .paper-rail-roles{display:block}
 
-.aura-counter-service{position:fixed;left:20px;bottom:95px;z-index:100010;width:min(355px,90vw);padding:17px;background:#e7d4ad;color:#392918;border:4px ridge #b79462;box-shadow:5px 6px #493021;font:13px Georgia}.aura-counter-service[hidden]{display:none}.aura-counter-service strong{display:block;font-size:20px;margin-bottom:7px}.aura-counter-service span{display:block;margin:7px 0}.aura-counter-service div{display:flex;gap:8px}.aura-counter-service button{font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}.aura-counter-service button:disabled{background:#8e8569;cursor:default}.aura-counter-service small{display:block;margin-top:10px;font-size:11px;line-height:1.4}body:not(.is-in-world) .aura-counter-service{display:none}
+.aura-counter-service{position:fixed;left:20px;bottom:24px;z-index:100010;width:min(355px,90vw);padding:18px 42px 17px 17px;background:#e7d4ad;color:#392918;border:4px ridge #b79462;box-shadow:5px 6px #493021;font:13px Georgia}.aura-counter-service[hidden]{display:none}.aura-counter-service strong{display:block;font-size:20px;margin-bottom:7px}.aura-counter-service span{display:block;margin:7px 0}.aura-counter-service div{display:flex;gap:8px}.aura-counter-service button{font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}.aura-counter-service button:disabled{background:#8e8569;cursor:default}.aura-counter-service .aura-counter-close{position:absolute;top:8px;right:8px;width:32px;height:32px;padding:0;font:700 22px/1 Georgia,serif;background:#6b3a3a;color:#fff0d0}.aura-counter-service small{display:block;margin-top:10px;font-size:11px;line-height:1.4}body:not(.is-in-world) .aura-counter-service{display:none}
 
 /* Full window for now. Restore the 9:16 phone lane later. */
 html:has(body.paper-original-rail) {
@@ -27,14 +27,10 @@ body.paper-original-rail {
   border-radius: 0;
   box-shadow: none;
 }
-body.paper-original-rail.is-in-world:not(.is-world-map) {
+body.paper-original-rail.is-in-world:not(.is-world-map),
+body.paper-original-rail.is-in-world.is-world-map {
   height: 100dvh;
   overflow: hidden;
-}
-body.paper-original-rail.is-world-map {
-  height: auto;
-  min-height: 100dvh;
-  overflow: auto;
 }
 body.paper-original-rail .arcade-shell {
   max-width: none;
@@ -42,8 +38,10 @@ body.paper-original-rail .arcade-shell {
   padding: 1.25rem clamp(1rem, 4vw, 2.8rem) 3rem;
 }
 body.paper-original-rail.is-in-world.is-world-map .arcade-shell {
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 body.paper-original-rail .cabinet-interior {
   max-width: none;
@@ -65,12 +63,7 @@ body.paper-original-rail .vendor-stage canvas {
   object-fit: contain;
 }
 body.paper-original-rail.is-in-world .pf-joy { opacity: .78; }
-body.paper-original-rail.is-in-world .paper-rail-roles {
-  top: 10px;
-  left: 16px;
-  bottom: auto;
-  transform: none;
-}
+body.paper-original-rail.is-in-world .paper-rail-roles { display: none !important; }
 body.paper-original-rail #discoveryDoor .door-cinematic {
   width: min(42vw, 360px);
 }

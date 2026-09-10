@@ -485,6 +485,13 @@
     if (el && on) el.classList.add("has-focus");
   }
 
+  function hideLegacyDom() {
+    document.querySelectorAll(".fortune-legacy, .lookup-legacy, .whisper-legacy-stubs, .pack-legacy-mint").forEach((el) => {
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+    });
+  }
+
   function resetCabinetArt() {
     setArt("fortuneCabinetArt", VISUALS.fortune.idle);
     setArt("loveCabinetArt", VISUALS.love.cold);
@@ -723,8 +730,9 @@
     if (hash === "foyer" || hash === "arcade" || hash === "alley") {
       const foyer = $("foyer");
       if (foyer) { foyer.hidden = false; foyer.inert = false; }
+      const paperRail = new URLSearchParams(location.search).get("rail") === "paper";
       const alleyMotion = $("alleyMotion");
-      if (alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
+      if (!paperRail && alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
       // ensure foyer init bits
       setChalk();
       renderCabinet();
@@ -3487,6 +3495,7 @@
   }
 
   function bind() {
+    hideLegacyDom();
     document.querySelectorAll("[data-enter]").forEach((button) => {
       button.addEventListener("click", () => approachTent(button));
     });

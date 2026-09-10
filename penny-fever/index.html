@@ -38,9 +38,9 @@
   <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
-  <link rel="stylesheet" href="world/world.css?v=char-hud-1">
+  <link rel="stylesheet" href="world/world.css?v=current-rail-1">
   <script defer src="world/items/model.js?v=lap-free-1"></script>
-  <script defer src="app.js?v=lap-free-1"></script>
+  <script defer src="app.js?v=current-rail-1"></script>
   <link rel="stylesheet" href="world/items/inventory.css?v=door-ui-1">
   <script type="module" src="world/items/inventory.js?v=door-ui-1"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
@@ -48,10 +48,10 @@
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
-  <script type="module" src="world/alley.js?v=ride-scale-1"></script>
+  <script type="module" src="world/alley.js?v=current-rail-1"></script>
   <script type="module" src="world/crew-selector.js?v=reliability-1"></script>
   <link rel="stylesheet" href="world/crew-selector.css?v=crew-portraits-14">
-  <link rel="stylesheet" href="restyle.css?v=door-ui-1">
+  <link rel="stylesheet" href="restyle.css?v=current-rail-1">
   <link rel="stylesheet" href="world/paper-game-booths.css?v=acer-booth-games-1">
   <script type="module" src="world/paper-game-booths.js?v=acer-booth-games-1"></script>
 </head>
@@ -657,7 +657,7 @@
             <button class="quiet-button" id="fortuneChallenge" type="button">Copy challenge</button>
             <p class="vendor-result-copied" id="fortuneCopied" hidden>Copied</p>
           </div>
-          <div class="fortune-legacy" aria-hidden="true">
+          <div class="fortune-legacy" hidden aria-hidden="true">
             <img id="fortuneCabinetArt" data-live-art="1" data-asset="fortune_machine" src="assets/game/Free_Fortune_States/Closed.webp" alt="">
             <div id="fortuneIdle">
               <button class="ticket-button" id="startFortune" type="button" tabindex="-1">Take the chained stylus</button>
