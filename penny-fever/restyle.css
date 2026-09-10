@@ -63,8 +63,6 @@ body.paper-original-rail.is-in-world .paper-rail-roles { display: none !importan
 body.paper-original-rail #discoveryDoor .door-cinematic {
   width: min(42vw, 360px);
 }
-#pfWorldInspect { margin-top: 8px; font-size: .8rem; padding: 9px 16px; background: #435637; color: #f4e4c2; }
-#pfWorldInspect[hidden] { display: none; }
 
 /* Game interiors follow the alley restyle (alley.js not edited). */
 body[data-restyle=paper] .cabinet-interior .interior-sky {

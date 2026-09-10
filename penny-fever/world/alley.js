@@ -813,7 +813,7 @@ let glanceYaw = 0;
 let lookDrag = false;
 let viewBlend = 0;
 let nearest = null;
-let lookDownAlley = false;
+
 let promptTargetSlug = "";
 let raf = 0;
 let hintTimer = 0;
@@ -859,7 +859,6 @@ function attachHud() {
       </div>
       <div class="pf-world-prompt" id="pfWorldPrompt" hidden>
         <button type="button" id="pfWorldEnter">Step inside</button>
-        <button type="button" id="pfWorldInspect" hidden>Look at booth</button>
         <em id="pfWorldPromptLine"></em>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
@@ -876,11 +875,6 @@ function attachHud() {
 }
 
 function bindHud() {
-  const inspect = el("pfWorldInspect");
-  if (inspect) inspect.addEventListener("click", () => {
-    if (!paperRail || !nearest?.atCounter) return;
-    lookDownAlley = !lookDownAlley;
-  });
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
   const pocketTicket = el("pfPocketTicket");
@@ -997,10 +991,7 @@ function bindJoy() {
 function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
-  if (nearest.kind === "ride" || nearest.kind === "aura") {
-    lookDownAlley = false;
-    return;
-  }
+  if (nearest.kind === "ride" || nearest.kind === "aura") return;
   const slug = promptTargetSlug || nearest.id;
   if (!slug) return;
   const PF = window.PennyFever;
@@ -1498,12 +1489,6 @@ function findNearest() {
   const passingZ = bestHold.passingZ;
   const best = bestHold.best;
   nearest = best || (passing && passingZ < 1.45 ? passing : null);
-  if (!nearest?.atCounter) lookDownAlley = false;
-  const inspect = el('pfWorldInspect');
-  if (inspect) {
-    inspect.hidden = !paperRail || !nearest?.atCounter;
-    inspect.textContent = lookDownAlley ? "Look at " + nearest.name : "Look down alley";
-  }
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -1654,8 +1639,8 @@ function updateHudAnchor() {
 }
 
 function followPose() {
-  const viewing = !!(nearest && nearest.atCounter && !lookDownAlley);
-  viewBlend += ((viewing ? 1 : 0) - viewBlend) * 0.11;
+  const viewing = !!(nearest && nearest.atCounter);
+  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.18 : 0.14);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
   // Stay low and close until the camera itself has cleared both entrance arches.
@@ -1683,13 +1668,16 @@ function followPose() {
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
     const side = nearest.side || Math.sign(nearest.stallX || 1);
-    const lookBack = nearest.kind === "ride" ? (phoneLane ? 9.2 : 8.4) : nearest.kind === "aura" ? 4.6 : (phoneLane ? 6.4 : 5.4);
-    const stallTx = paperRail ? player.position.x * 0.45 - side * 0.2 : player.position.x - side * 1.15;
-    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.85 : 2.15) : 1.68;
+    const host = barkers?.find((b) => b.userData.stallId === nearest.id);
+    const hx = host ? host.position.x : nearest.stallX * 0.62;
+    const hz = host ? host.position.z : nearest.stallZ;
+    const lookBack = nearest.kind === "ride" ? (phoneLane ? 7.6 : 7.2) : nearest.kind === "aura" ? 3.8 : (phoneLane ? 4.2 : 4.0);
+    const stallTx = paperRail ? side * 0.22 : player.position.x - side * 1.15;
+    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.7 : 1.62) : 1.68;
     const stallTz = paperRail ? nearest.stallZ - lookBack : player.position.z + 0.08;
-    const stallLx = paperRail ? nearest.stallX * 0.62 : nearest.stallX;
-    const stallLy = paperRail ? (nearest.kind === "ride" ? 3.1 : nearest.kind === "aura" ? 1.55 : 1.9) : 1.32;
-    const stallLz = nearest.stallZ;
+    const stallLx = paperRail ? (nearest.kind === "stall" ? nearest.stallX * 0.58 + hx * 0.42 : nearest.stallX * 0.7) : nearest.stallX;
+    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : nearest.kind === "aura" ? 1.45 : 1.42) : 1.32;
+    const stallLz = paperRail ? (nearest.kind === "stall" ? nearest.stallZ * 0.62 + hz * 0.38 : nearest.stallZ) : nearest.stallZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;
     tz = alleyTz + (stallTz - alleyTz) * viewBlend;
