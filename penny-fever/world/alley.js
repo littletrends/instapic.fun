@@ -815,6 +815,7 @@ let viewBlend = 0;
 let nearest = null;
 let focus = null;
 let vendorChatUntil = 0;
+let moveIntent = { ix: 0, iy: 0 };
 
 let promptTargetSlug = "";
 let raf = 0;
@@ -1091,7 +1092,7 @@ function buildWorld() {
     s.userData.doorZ = z + Math.cos(yaw) * s.userData.faceOff;
     scene.add(s);
     stalls.push(s);
-    solids.push({ x, z, r: s.userData.hitR });
+    solids.push({ x, z, r: paperRail ? Math.min(0.82, s.userData.hitR) : s.userData.hitR });
   });
 
   const curtain = meshBox(makeMat(VELVET), 7.6, 3.8, 0.2, 0, 1.9, hallLen + 0.8);
@@ -1149,7 +1150,6 @@ function buildWorld() {
       s.updateMatrixWorld(true);
       b.position.copy(s.localToWorld(new THREE.Vector3(-side * 1.2, 0, .85)));
       b.rotation.y = Math.PI;
-      solids.push({x:b.position.x,z:b.position.z,r:.5});
     } else {
       b.position.set(s.userData.doorX + side * 0.1, 0, s.userData.doorZ);
     }
@@ -1186,7 +1186,7 @@ function buildWorld() {
 
   if (paperRail) {
     makeVisibleTicketBooth(scene);
-    solids.push({ x: COUNTER.x, z: COUNTER.z - 0.42, r: 0.95 });
+    solids.push({ x: COUNTER.x, z: COUNTER.z - 0.42, r: 0.72 });
     installIndividualVendors(stalls, scene);
     vendorCutouts = installVendorCutouts(barkers);
     stallCutouts = installStallCutouts(stalls);
@@ -1268,7 +1268,7 @@ function step(dt, input) {
 }
 
 function hitsSolid(nx, nz) {
-  const pad = 0.34;
+  const pad = 0.28;
   for (let i = 0; i < solids.length; i += 1) {
     const s = solids[i];
     const hit = s.r + pad;
@@ -1279,6 +1279,20 @@ function hitsSolid(nx, nz) {
   return false;
 }
 
+function towardHome(fromX, toX) {
+  return Math.abs(toX) < Math.abs(fromX) - 0.001;
+}
+
+function unstickPlayer() {
+  if (!player) return;
+  const x = player.position.x;
+  const z = player.position.z;
+  if (!hitsSolid(x, z) && Math.abs(x) <= walkLimit(z) + 0.02) return;
+  player.position.x = x * 0.72;
+  if (Math.abs(player.position.x) < 0.12) player.position.x = 0;
+  if (hitsSolid(player.position.x, z) || Math.abs(player.position.x) > walkLimit(z)) player.position.x = 0;
+}
+
 function walkLimit(nz) {
   if (paperRail && nz >= FOYER_IN - .4 && nz <= FOYER_OUT + .4) return 0.95;
   if (nz < -8.4) return 4.8;
@@ -1286,10 +1300,10 @@ function walkLimit(nz) {
   return AISLE;
 }
 
-function blocked(nx, nz) {
+function blocked(nx, nz, home = false) {
   if (!ticketPassed() && nz > GATE_Z) return true;
   if (nz < -34) return true;
-  if (hitsSolid(nx, nz)) return true;
+  if (!home && hitsSolid(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
   if (nz > hallLen + 1.2) return true;
   return Math.abs(nx) > walkLimit(nz);
@@ -1298,17 +1312,18 @@ function blocked(nx, nz) {
 function tryMove(dx, dz) {
   const x = player.position.x;
   const z = player.position.z;
-  if (!blocked(x + dx, z + dz)) {
+  const home = towardHome(x, x + dx);
+  if (!blocked(x + dx, z + dz, home)) {
     player.position.x += dx;
     player.position.z += dz;
     return;
   }
-  if (!blocked(x, z + dz)) {
+  if (!blocked(x, z + dz, home)) {
     player.position.z += dz;
     return;
   }
   if (!ticketPassed() && z + dz > GATE_Z) api.gateBump = true;
-  if (!blocked(x + dx, z)) player.position.x += dx;
+  if (!blocked(x + dx, z, home)) player.position.x += dx;
 }
 
 function updatePlayer(dt) {
@@ -1318,7 +1333,10 @@ function updatePlayer(dt) {
   if (keys.s || keys.arrowdown) iy -= 1;
   if (keys.a || keys.arrowleft) ix -= 1;
   if (keys.d || keys.arrowright) ix += 1;
-  const strafing = Math.abs(ix) > 0.12;
+  if (Math.abs(iy) > 0.34 && Math.abs(iy) >= Math.abs(ix) * 0.95) ix = 0;
+  const strafing = Math.abs(ix) > 0.32;
+  moveIntent.ix = ix;
+  moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
   let moving = false;
   if (mag > 0.08) {
@@ -1334,10 +1352,11 @@ function updatePlayer(dt) {
   if (player.position.z > -8) {
     api.facedAlley = true;
     if (!strafing) {
-      const pull = (0 - player.position.x) * Math.min(1, 8.2 * dt);
-      if (!blocked(player.position.x + pull, player.position.z)) player.position.x += pull;
+      const pull = (0 - player.position.x) * Math.min(1, 10 * dt);
+      if (!blocked(player.position.x + pull, player.position.z, true)) player.position.x += pull;
     }
   }
+  unstickPlayer();
   let face = iy < -0.22 ? Math.PI : 0;
   if (nearest && nearest.atCounter && Math.abs(iy) < 0.22) {
     face = Math.atan2(nearest.stallX - player.position.x, nearest.stallZ - player.position.z);
@@ -1474,6 +1493,10 @@ function pickFocus(px, pz) {
       };
     }
   });
+  if (Math.abs(moveIntent.iy) > 0.36 && Math.abs(moveIntent.iy) >= Math.abs(moveIntent.ix)) {
+    focus = null;
+    return { passing, passingZ };
+  }
   if (!ticketPassed() && pz < GATE_Z + 1.4) {
     focus = {
       id: "aura",
@@ -1715,7 +1738,8 @@ function updateHudAnchor() {
 }
 
 function followPose() {
-  const viewing = !!(nearest && nearest.atCounter);
+  const walkingAlley = Math.abs(moveIntent.iy) > 0.34 && Math.abs(moveIntent.iy) >= Math.abs(moveIntent.ix);
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley);
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.2 : 0.16);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
@@ -1773,6 +1797,10 @@ function updateCamera(dt) {
   camera.position.x += (pose.tx - camera.position.x) * 0.14;
   camera.position.y += (pose.ty - camera.position.y) * 0.14;
   camera.position.z += (pose.tz - camera.position.z) * 0.14;
+  if (paperRail) {
+    camera.position.x = Math.max(-1.02, Math.min(1.02, camera.position.x));
+    camera.position.y = Math.max(1.48, camera.position.y);
+  }
   camera.lookAt(pose.lx, pose.ly, pose.lz);
 }
 
