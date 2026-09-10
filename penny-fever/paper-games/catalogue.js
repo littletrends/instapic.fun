@@ -29,7 +29,7 @@ const rows = [
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass']);
-const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball']);
+const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass']);
 const experimentArt = {
   lookup: '../experiments/celestes-starlight/assets/observatory-v1.png',
   'water-gun': '../experiments/brasswater-harbour/assets/harbour-v1.png',
