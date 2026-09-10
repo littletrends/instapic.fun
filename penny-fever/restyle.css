@@ -1,6 +1,23 @@
 .restyle-bar{display:none!important}body[data-restyle=paper] button{border-radius:1px;box-shadow:3px 3px 0 #755430}
 
-.aura-counter-service{position:fixed;left:20px;bottom:24px;z-index:100010;width:min(355px,90vw);padding:18px 42px 17px 17px;background:#e7d4ad;color:#392918;border:4px ridge #b79462;box-shadow:5px 6px #493021;font:13px Georgia}.aura-counter-service[hidden]{display:none}.aura-counter-service strong{display:block;font-size:20px;margin-bottom:7px}.aura-counter-service span{display:block;margin:7px 0}.aura-counter-service div{display:flex;gap:8px}.aura-counter-service button{font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}.aura-counter-service button:disabled{background:#8e8569;cursor:default}.aura-counter-service .aura-counter-close{position:absolute;top:8px;right:8px;width:32px;height:32px;padding:0;font:700 22px/1 Georgia,serif;background:#6b3a3a;color:#fff0d0}.aura-counter-service small{display:block;margin-top:10px;font-size:11px;line-height:1.4}body:not(.is-in-world) .aura-counter-service{display:none}
+.aura-counter-service{
+  position:fixed;left:50%;bottom:10.8rem;transform:translateX(-50%);
+  z-index:9;width:min(340px,calc(100vw - 1.4rem));
+  padding:16px 44px 14px 16px;background:#e7d4ad;color:#392918;
+  border:4px ridge #b79462;box-shadow:5px 6px #493021;font:13px/1.35 Georgia,serif;
+}
+.aura-counter-service[hidden]{display:none}
+.aura-counter-service strong{display:block;font-size:1.15rem;margin-bottom:6px}
+.aura-counter-service span{display:block;margin:6px 0}
+.aura-counter-service div{display:flex;gap:8px;flex-wrap:wrap}
+.aura-counter-service button{flex:1;min-width:7rem;font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}
+.aura-counter-service button:disabled{background:#8e8569;cursor:default}
+.aura-counter-service .aura-counter-close{position:absolute;top:8px;right:8px;flex:none;min-width:0;width:32px;height:32px;padding:0;font:700 22px/1 Georgia,serif;background:#6b3a3a;color:#fff0d0}
+.aura-counter-service small{display:block;margin-top:8px;font-size:11px;line-height:1.4}
+body:not(.is-in-world) .aura-counter-service{display:none}
+@media(min-width:720px){
+  .aura-counter-service{left:auto;right:1.1rem;bottom:1.3rem;transform:none}
+}
 
 /* Full window for now. Restore the 9:16 phone lane later. */
 html:has(body.paper-original-rail) {

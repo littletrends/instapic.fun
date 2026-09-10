@@ -7,7 +7,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=paper-alley-live-6";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-9";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-10";
 import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-6";
 import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-6";
@@ -1590,22 +1590,15 @@ function findNearest() {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
       gatePromptActive = true;
       promptTargetSlug = "";
-      prompt.hidden = false;
-      enter.hidden = false;
+      prompt.hidden = true;
       if (chatBtn) chatBtn.hidden = true;
-      if (nameEl) nameEl.textContent = "Aura";
       prompt.classList.add("is-ticket-handoff");
-      const laps = Number(pfState().alleyLaps) || 0;
-      if (laps === 0) {
-        enter.textContent = hasAdmitTicket() ? "Show ticket" : "Come through";
-        line.textContent = hasAdmitTicket() ? "Hand it over." : "Aura is waiting.";
-      } else if (pocketPennies() >= 1) {
-        enter.textContent = "Pay a penny";
-        line.textContent = "Then you may pass.";
-      } else {
-        enter.textContent = "Need a penny";
-        line.textContent = "Aura’s till still hands out souvenir pennies.";
-      }
+    } else if (best && best.kind === "aura") {
+      gatePromptActive = false;
+      promptTargetSlug = "";
+      prompt.hidden = true;
+      if (chatBtn) chatBtn.hidden = true;
+      prompt.classList.remove("is-ticket-handoff");
     } else if (best) {
       gatePromptActive = false;
       promptTargetSlug = best.kind === "stall" ? best.id : "";

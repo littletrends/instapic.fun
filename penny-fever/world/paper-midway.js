@@ -15,9 +15,14 @@ export function makeVisibleTicketBooth(scene){
  if(!paperRail)return;
  const g=new THREE.Group();g.name='Aura ticket booth · papercut';
  g.position.set(COUNTER.x-.35,0,COUNTER.z-.15);g.rotation.y=Math.PI/2;scene.add(g);ticketBooth=g;
+ const stub=new THREE.Group();stub.name='Ticket booth placeholder';
+ box(stub,1.6,2.4,.7,0,1.2,0,mats.green);
+ box(stub,1.7,.12,.78,0,2.42,0,mats.gold);
+ g.add(stub);
  const opts={height:2.85,maxWidth:2.4,sideWidth:1.35,layout:'stand'};
  const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/';
  loadFramedPng(ROOT+'front.png',AURA_BOOTH_FRAMES.front,{urgent:true}).then(async front=>{
+  stub.removeFromParent();
   const cut=buildPapercut({front},opts);g.add(cut);
   g.userData.papercutViews=cut.userData.papercutViews;g.userData.papercutStand=cut;
   for(const view of PAPERCUT_VIEWS){
@@ -71,7 +76,7 @@ export function extendPaperAlley(scene,len){if(!paperRail)return;
 }
 let panel,playerRef,auraRef,apiRef,dismissed=false;
 function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Take an admission ticket</button><button type="button" id="auraCounterCoins" hidden>Fill empty pocket</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that.</small>';document.body.append(panel);
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='demo';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins" hidden>Fill empty pocket</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
@@ -98,10 +103,10 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
 }
 export function updateTicketService(){
  if(!panel)return;
- panel.hidden=true;
  const here=!!near()&&document.body.classList.contains('is-in-world');
- if(!here){dismissed=false;return;}
- if(dismissed)return;
+ if(!here){dismissed=false;panel.hidden=true;return;}
+ if(dismissed){panel.hidden=true;return;}
+ panel.hidden=false;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
  const empty=!(Number(state.demoCoins)>0);
