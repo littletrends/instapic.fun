@@ -315,6 +315,7 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   height: 58vh;
   max-width: 68vw;
   max-height: 58vh;
+  order: 2;
   z-index: 0;
   margin: 0;
 }
@@ -328,12 +329,13 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   max-width: 40vw;
   max-height: 48vh;
   transform: none;
+  order: 1;
   z-index: 1;
-  margin: 0 -1.25rem 0 0;
+  margin: 0 -3.5rem 0 0;
 }
 .pf-stall-card-art.is-rear #pfStallCardVendor {
-  order: 2;
-  margin: 0 0 0 -1.25rem;
+  order: 3;
+  margin: 0 0 0 -3.5rem;
 }
 .pf-stall-card-views {
   display: flex;
