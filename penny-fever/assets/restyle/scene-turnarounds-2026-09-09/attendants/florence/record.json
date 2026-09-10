@@ -1,0 +1,97 @@
+{
+  "id": "florence",
+  "group": "attendants",
+  "title": "Florence",
+  "pairedId": "horse-carousel",
+  "source": "amusements/01-horse-carousel-turnaround.png",
+  "sourcePrompt": "amusements/01-horse-carousel-turnaround.md",
+  "band": [
+    87,
+    474
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "attendants/florence",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "5b872e6fc685f621f19f39a84addf4dbe9ba4964bf18db07e8b5dfd33472aec4",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-275745df-afe1-452b-b661-3e844193712e.png",
+  "generatedSourceSHA256": "85fb9215ec4819f1c43d6ac729fe0b38553db8e0449f02f9346841a445c41f42",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      756,
+      496
+    ],
+    [
+      756,
+      0,
+      1536,
+      496
+    ],
+    [
+      0,
+      496,
+      748,
+      1024
+    ],
+    [
+      748,
+      496,
+      1536,
+      1024
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

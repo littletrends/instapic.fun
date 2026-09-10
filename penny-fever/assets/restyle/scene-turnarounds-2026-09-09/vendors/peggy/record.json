@@ -1,0 +1,97 @@
+{
+  "id": "peggy",
+  "group": "vendors",
+  "title": "Peggy",
+  "pairedId": "plinko",
+  "source": "turnarounds/17-plinko-v2.png",
+  "sourcePrompt": "turnarounds/17-plinko-v2.md",
+  "band": [
+    65,
+    445
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/peggy",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "98c8357f53a4d5137c291ac44854dd80536ec4f797ced4fc5e0ec67c165804fb",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-0d0a4347-3f37-4e0b-87b1-78bcd91b5da7.png",
+  "generatedSourceSHA256": "b850909a87093150541a73beebaecfbf7248914c3c06f66c3dbfbe36a7b23855",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      648,
+      580
+    ],
+    [
+      648,
+      0,
+      1312,
+      580
+    ],
+    [
+      0,
+      580,
+      666,
+      1199
+    ],
+    [
+      666,
+      580,
+      1312,
+      1199
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

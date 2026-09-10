@@ -1,0 +1,1684 @@
+/* Goblin alley vendor stalls — Desktop Grok desk */
+.vendor-stage {
+  position: relative;
+  margin: 0.55rem 0 0.8rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 164, 90, 0.35);
+  background: #12080c;
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.55);
+}
+.vendor-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+}
+.vendor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.7rem;
+  align-items: center;
+}
+.vendor-actions .quiet-button { margin-top: 0; }
+
+.signature-prop--balltoss { gap: 0.55rem; }
+.prop-board {
+  position: relative;
+  width: min(100%, 12.5rem);
+  height: 2.6rem;
+  border-radius: 6px;
+  transform: perspective(180px) rotateX(18deg) skewX(-8deg);
+  background:
+    repeating-linear-gradient(90deg, #3a2418 0 18px, #2a1810 18px 20px),
+    linear-gradient(#4a2e1c, #2a1810);
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.45);
+}
+.prop-hole {
+  position: absolute;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #0a0508;
+  border: 1px solid var(--brass-soft);
+  transform: translate(-50%, -50%);
+  animation: hole-drift 2.6s ease-in-out infinite;
+}
+.prop-hole:nth-child(1) { left: 22%; animation-duration: 2.2s; }
+.prop-hole:nth-child(2) { left: 52%; width: 0.42rem; height: 0.42rem; animation-duration: 1.8s; animation-delay: -0.4s; }
+.prop-hole:nth-child(3) { left: 78%; animation-duration: 2.9s; animation-delay: -1s; }
+@keyframes hole-drift {
+  0%, 100% { margin-left: 0; }
+  50% { margin-left: 10px; }
+}
+
+.signature-prop--pusher { flex-direction: column; }
+.prop-ledge {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  width: min(100%, 14rem);
+  height: 2.1rem;
+  padding: 0 0.4rem 0.15rem;
+  border-bottom: 6px solid #3a2418;
+  box-shadow: 0 6px 0 #1a0c10;
+}
+.prop-ledge i {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0 -0.22rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f0d09a, #d4a45a 55%, #8a6230);
+  border: 1px solid rgba(120, 80, 30, 0.7);
+  box-shadow: 0 2px 0 #5a3a18;
+}
+.prop-ledge i:nth-child(2),
+.prop-ledge i:nth-child(5) { margin-bottom: 0.45rem; }
+.prop-ledge i:nth-child(3) { margin-bottom: 0.85rem; }
+
+.signature-prop--pinball { gap: 0.6rem; }
+.prop-backglass {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #1a1028, #12080c);
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  box-shadow: inset 0 0 12px rgba(232, 160, 184, 0.2);
+}
+.prop-backglass i {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--brass);
+  animation: backglass-blink 1.6s ease-in-out infinite;
+}
+.prop-backglass i:nth-child(1) { background: var(--rose); animation-delay: 0s; }
+.prop-backglass i:nth-child(2) { background: var(--brass-soft); animation-delay: 0.35s; }
+.prop-backglass i:nth-child(3) { background: var(--teal); animation-delay: 0.7s; }
+.prop-flipper {
+  font-size: 1.4rem;
+  color: var(--brass-soft);
+  transform: rotate(-18deg);
+}
+@keyframes backglass-blink {
+  0%, 100% { opacity: 0.35; box-shadow: none; }
+  50% { opacity: 1; box-shadow: 0 0 10px currentColor; }
+}
+
+.balltoss-card .barker-call,
+.pusher-card .barker-call,
+.pinball-card .barker-call,
+.watergun-card .barker-call,
+.milk-card .barker-call,
+.coverspot-card .barker-call,
+.mutoscope-card .barker-call,
+.catop-card .barker-call,
+.highstriker-card .barker-call,
+.bentring-card .barker-call {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+}
+
+/* Water Gun Duel */
+.signature-prop--watergun { gap: 0.7rem; }
+.signature-prop--watergun .prop-duel {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.15rem;
+}
+.signature-prop--watergun .prop-lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+}
+.signature-prop--watergun .prop-balloon {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #c41e3a;
+  border: 1px solid var(--brass-soft);
+  box-shadow: 0 0 6px rgba(196, 30, 58, 0.45);
+}
+.signature-prop--watergun .prop-lane--ghost .prop-balloon {
+  width: 0.95rem;
+  height: 0.95rem;
+  background: var(--teal);
+  opacity: 0.7;
+  box-shadow: 0 0 8px rgba(61, 138, 138, 0.55);
+}
+.signature-prop--watergun .prop-tube {
+  position: relative;
+  width: 0.62rem;
+  height: 2.35rem;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--brass);
+  background: #12080c;
+}
+.signature-prop--watergun .prop-tube i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 38%;
+  background: linear-gradient(#7ec8e0, #2a6a8a);
+}
+.signature-prop--watergun .prop-lane--ghost .prop-tube {
+  border-color: #b8e8e0;
+}
+.signature-prop--watergun .prop-lane--ghost .prop-tube i {
+  height: 72%;
+  background: linear-gradient(#b8e8e0, #3d8a8a);
+  animation: wgd-ghost-tube-rise 2.4s ease-in-out infinite;
+}
+.signature-prop--watergun .prop-gun {
+  width: 1.25rem;
+  height: 0.32rem;
+  border-radius: 2px;
+  background: var(--brass);
+}
+.signature-prop--watergun .prop-lane--ghost .prop-gun {
+  background: #b8e8e0;
+  opacity: 0.55;
+}
+@keyframes wgd-ghost-tube-rise {
+  0%, 100% { height: 62%; }
+  50% { height: 88%; }
+}
+
+/* Weighted Milk Bottles */
+.signature-prop--milk {
+  gap: 0.7rem;
+  align-items: flex-end;
+}
+.signature-prop--milk .prop-cutaway {
+  position: relative;
+  width: 1.2rem;
+  height: 2.15rem;
+  border-radius: 0.38rem 0.38rem 0.5rem 0.5rem / 0.22rem 0.22rem 0.62rem 0.62rem;
+  background: linear-gradient(180deg, #d5dee4 0 32%, #f3eee4 32% 58%, #1a120e 58% 100%);
+  border: 1px solid rgba(212, 164, 90, 0.7);
+  box-shadow: inset -3px 0 0 rgba(255, 255, 255, 0.18);
+}
+.signature-prop--milk .prop-cutaway::before {
+  content: "";
+  position: absolute;
+  left: -0.12rem;
+  right: -0.12rem;
+  top: -0.22rem;
+  height: 0.32rem;
+  border-radius: 2px;
+  background: #c41e3a;
+  box-shadow: 0 1px 0 #f0d09a;
+}
+.signature-prop--milk .prop-slug {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 7%;
+  height: 30%;
+  border-radius: 45%;
+  background: radial-gradient(circle at 40% 30%, #6a5428, #12080c 70%);
+  box-shadow: 0 0 6px rgba(212, 164, 90, 0.55);
+}
+.signature-prop--milk .prop-pyramid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+}
+.signature-prop--milk .prop-row {
+  display: flex;
+  gap: 0.16rem;
+  justify-content: center;
+}
+.signature-prop--milk .prop-milk {
+  position: relative;
+  display: block;
+  width: 0.62rem;
+  height: 1.05rem;
+  border-radius: 0.28rem 0.28rem 0.34rem 0.34rem / 0.16rem 0.16rem 0.42rem 0.42rem;
+  background: linear-gradient(180deg, #e8f0f2 0 38%, #f7f2ea 38% 100%);
+  border: 1px solid rgba(212, 164, 90, 0.65);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
+  transform-origin: 50% 100%;
+}
+.signature-prop--milk .prop-milk::before {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: -0.14rem;
+  height: 0.16rem;
+  border-radius: 1px;
+  background: #c41e3a;
+}
+.signature-prop--milk .prop-milk.is-heavy {
+  background: linear-gradient(180deg, #b8a898 0 42%, #2a1c16 42% 100%);
+  border-color: #8a6a50;
+}
+.signature-prop--milk .prop-milk.is-light {
+  animation: milk-sway 1.45s ease-in-out infinite;
+}
+@keyframes milk-sway {
+  0%, 100% { transform: rotate(-7deg) translateX(-1px); }
+  50% { transform: rotate(8deg) translateX(2px); }
+}
+
+/* Milk / Water Gun — namespaced HUD. PF only. GOBLIN REVIEW HIT #2 FEEL 2026-09-05. */
+#milkCanvas,
+#waterGunCanvas { touch-action: none; }
+#milkCard .milk-rk-hud,
+#waterGunCard .watergun-rk-hud {
+  margin: 0.15rem 0 0;
+  min-height: 1.1em;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: #ffe6a6;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+#milkCard.is-playing .milk-rk-hud,
+#waterGunCard.is-playing .watergun-rk-hud {
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  color: #ffe6a6;
+}
+#milkCard:not(.is-playing) .milk-rk-hud,
+#waterGunCard:not(.is-playing) .watergun-rk-hud { display: none; }
+/* Vestibule: keep the pyramid / duel canvas on a phone — not buried under the hero. */
+#milkCard.is-vestibule .card-hero,
+#waterGunCard.is-vestibule .card-hero {
+  max-height: 6.4rem;
+  overflow: hidden;
+}
+#milkCard.is-vestibule .card-hero img,
+#waterGunCard.is-vestibule .card-hero img {
+  width: 100%;
+  height: 6.4rem;
+  object-fit: cover;
+  object-position: center 40%;
+}
+#milkCard.is-vestibule .vendor-stage,
+#waterGunCard.is-vestibule .vendor-stage {
+  margin-top: 0.35rem;
+}
+#milkCard.is-playing .barker-call,
+#waterGunCard.is-playing .barker-call {
+  color: #ffe6a6;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+
+/* P0 Batch 01 — namespaced HUD. GOBLIN REVIEW REDO 2026-09-05. PF only. */
+#ballTossCanvas,
+#pusherCanvas,
+#pinballCanvas { touch-action: none; }
+#ballTossCard .balltoss-rk-hud,
+#pusherCard .pusher-rk-hud,
+#pinballCard .pinball-rk-hud {
+  margin: 0.15rem 0 0;
+  min-height: 1.1em;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: #ffe6a6;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+#ballTossCard:not(.is-playing) .balltoss-rk-hud,
+#pusherCard:not(.is-playing) .pusher-rk-hud,
+#pinballCard:not(.is-playing) .pinball-rk-hud { display: none; }
+
+/* Mutoscope Hood */
+.signature-prop--mutoscope { gap: 0.7rem; }
+.signature-prop--mutoscope .prop-hood {
+  position: relative;
+  width: 4.35rem;
+  height: 4.35rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #3a2418, #12080c 62%);
+  border: 4px solid var(--brass);
+  box-shadow:
+    inset 0 0 0 3px #5a3a24,
+    inset 0 0 18px #000,
+    0 0 0 2px #1a0c10;
+}
+.signature-prop--mutoscope .prop-hood i {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: #0a0508;
+  box-shadow: inset 0 0 10px #000;
+  animation: muto-iris-breathe 3.2s ease-in-out infinite;
+}
+.signature-prop--mutoscope .prop-hood i::after {
+  content: "";
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f0d09a 0 35%, #1a0c14 36%);
+  opacity: 0.85;
+}
+.mutoscope-card .card-hero {
+  background: radial-gradient(circle at 50% 42%, #2a1814, #12080c 72%);
+}
+.vendor-stage--hood {
+  position: relative;
+}
+.vendor-stage--hood canvas { cursor: default; }
+.mutoscope-card.is-playing .vendor-stage--hood canvas { cursor: none; touch-action: none; }
+.vendor-stage--hood.is-eyed canvas { cursor: none; }
+.signature-prop--mutoscope .prop-crank {
+  width: 0.85rem;
+  height: 1.55rem;
+  border-radius: 0.2rem 0.2rem 0.45rem 0.45rem;
+  background: linear-gradient(180deg, #d4a45a, #8a6230);
+  border: 1px solid #f0d09a;
+  box-shadow: 0 0 6px rgba(212, 164, 90, 0.4);
+  transform: rotate(-28deg);
+}
+.mutoscope-flash {
+  pointer-events: none;
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: #fff6ec;
+  opacity: 0;
+  transition: opacity 40ms linear;
+}
+.mutoscope-card.is-result .vendor-stage { opacity: 0.72; }
+#mutoscopeCrank {
+  min-width: 5.5rem;
+  min-height: 2.75rem;
+  touch-action: none;
+}
+#mutoscopeCrank.is-unjam {
+  background: #d4a45a;
+  color: #12080c;
+  letter-spacing: 0.12em;
+  box-shadow: 0 0 12px rgba(212, 164, 90, 0.55);
+  animation: muto-unjam-pulse 0.55s ease-in-out infinite;
+}
+#mutoscopeCrank.is-poison {
+  background: #c41e3a;
+  color: #fff6ec;
+  letter-spacing: 0.14em;
+  box-shadow: 0 0 14px rgba(196, 30, 58, 0.6);
+  animation: muto-unjam-pulse 0.45s ease-in-out infinite;
+}
+@keyframes muto-unjam-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); filter: brightness(1.12); }
+}
+.mutoscope-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · DEPTH RUN · HOLD STILL";
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid #e1ac4d;
+  background: rgba(12, 6, 9, 0.82);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mutoscope-card .depth-hud,
+.catop-card .depth-hud,
+.fairyfloss-card .depth-hud,
+.popcorn-card .depth-hud,
+.duckpond-card .depth-hud,
+.skee-card .depth-hud,
+.pennypitch-card .depth-hud,
+.dunk-card .depth-hud {
+  position: absolute;
+  top: 0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  margin: 0;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  background: rgba(12, 6, 9, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.mutoscope-card .strike-pips i.ghost {
+  background: rgba(240, 208, 154, 0.55);
+  box-shadow: 0 0 10px rgba(240, 208, 154, 0.85);
+  transform: scale(1.18);
+}
+.vendor-stage--hood.is-flash .mutoscope-flash { opacity: 0.88; }
+.vendor-stage--hood .strike-pips {
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  transform: translateX(-50%);
+}
+@keyframes muto-iris-breathe {
+  0%, 100% { transform: scale(0.42); }
+  50% { transform: scale(1); }
+}
+
+.pf-depth-tag {
+  margin: 0.4rem 0 0.15rem;
+  padding: 0.22rem 0.6rem;
+  display: inline-block;
+  border: 1px solid #e1ac4d;
+  color: #ffe6a6;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+.vendor-stage canvas.is-locked {
+  cursor: default;
+}
+.balltoss-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.pusher-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.pinball-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.milk-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.watergun-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.highstriker-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.bentring-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.plinko-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.skee-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.pennypitch-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.dunk-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.fairyfloss-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.popcorn-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.duckpond-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · DEPTH RUN · NO ONE-TAP PRIZE";
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid #e1ac4d;
+  background: rgba(12, 6, 9, 0.82);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.milk-card.is-result .vendor-stage,
+.watergun-card.is-result .vendor-stage { opacity: 0.72; }
+.watergun-card.is-playing .vendor-stage canvas { cursor: grabbing; }
+
+/* Batch 01 guts — ball toss / coin pusher / pinball only */
+.prop-hole--tight {
+  width: 0.38rem;
+  height: 0.38rem;
+}
+.prop-hole--oval {
+  width: 0.72rem;
+  height: 0.34rem;
+  border-radius: 70% 70% 60% 60%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+}
+
+.balltoss-card.is-playing .vendor-vestibule-only,
+.pusher-card.is-playing .vendor-vestibule-only,
+.pinball-card.is-playing .vendor-vestibule-only,
+.milk-card.is-playing .vendor-vestibule-only,
+.watergun-card.is-playing .vendor-vestibule-only,
+.plinko-card.is-playing .vendor-vestibule-only,
+.mutoscope-card.is-playing .vendor-vestibule-only,
+.highstriker-card.is-playing .vendor-vestibule-only,
+.bentring-card.is-playing .vendor-vestibule-only,
+.fairyfloss-card.is-playing .vendor-vestibule-only,
+.popcorn-card.is-playing .vendor-vestibule-only,
+.balltoss-card.is-result .vendor-vestibule-only,
+.pusher-card.is-result .vendor-vestibule-only,
+.pinball-card.is-result .vendor-vestibule-only,
+.milk-card.is-result .vendor-vestibule-only,
+.watergun-card.is-result .vendor-vestibule-only,
+.plinko-card.is-result .vendor-vestibule-only,
+.mutoscope-card.is-result .vendor-vestibule-only,
+.highstriker-card.is-result .vendor-vestibule-only,
+.bentring-card.is-result .vendor-vestibule-only,
+.fairyfloss-card.is-result .vendor-vestibule-only,
+.popcorn-card.is-result .vendor-vestibule-only { display: none; }
+.balltoss-card .vendor-play-only,
+.pusher-card .vendor-play-only,
+.pinball-card .vendor-play-only,
+.mutoscope-card .vendor-play-only { display: none; }
+.balltoss-card.is-playing .vendor-play-only,
+.pusher-card.is-playing .vendor-play-only,
+.pinball-card.is-playing .vendor-play-only,
+.milk-card.is-playing .vendor-play-only,
+.watergun-card.is-playing .vendor-play-only,
+.plinko-card.is-playing .vendor-play-only,
+.mutoscope-card.is-playing .vendor-play-only,
+.highstriker-card.is-playing .vendor-play-only,
+.bentring-card.is-playing .vendor-play-only,
+.fairyfloss-card.is-playing .vendor-play-only,
+.popcorn-card.is-playing .vendor-play-only,
+.duckpond-card.is-playing .vendor-play-only { display: inline-flex; }
+
+.balltoss-card.is-playing #ballTossStart,
+.pinball-card.is-playing #pinballStart,
+.milk-card.is-playing #milkStart,
+.watergun-card.is-playing #waterGunStart,
+.plinko-card.is-playing #plinkoStart,
+.mutoscope-card.is-playing #mutoscopeStart,
+.highstriker-card.is-playing #highStrikerStart,
+.bentring-card.is-playing #bentRingStart,
+.fairyfloss-card.is-playing #fairyFlossStart,
+.popcorn-card.is-playing #popcornStart,
+.duckpond-card.is-playing #duckPondStart { display: none; }
+
+.balltoss-card .barker-call,
+.pusher-card .barker-call,
+.pinball-card .barker-call {
+  letter-spacing: 0.08em;
+}
+
+.vendor-result {
+  margin-top: 0.7rem;
+  padding: 0.85rem 0.9rem 1rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  background:
+    linear-gradient(180deg, rgba(42, 18, 24, 0.92), rgba(12, 6, 9, 0.92));
+  box-shadow: inset 0 0 24px rgba(196, 30, 58, 0.12);
+}
+.vendor-result-game {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--brass-soft);
+}
+.vendor-result-depth {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.55rem;
+  color: var(--cream, #fff6ec);
+}
+.vendor-result-score {
+  margin: 0.1rem 0 0.45rem;
+  color: var(--brass);
+  letter-spacing: 0.08em;
+}
+.vendor-result-aura {
+  margin: 0 0 0.55rem;
+  font-style: italic;
+  color: #f3d4c4;
+}
+.vendor-result-challenge {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  color: var(--brass-soft);
+}
+.vendor-result-copied {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: #b8e8e0;
+}
+
+.greed-prompt {
+  position: absolute;
+  inset: auto 8% 12%;
+  padding: 0.75rem 0.8rem 0.85rem;
+  border: 2px solid #d4a45a;
+  background: rgba(12, 6, 9, 0.92);
+  text-align: center;
+  z-index: 2;
+  box-shadow: 0 0 24px rgba(212, 164, 90, 0.35);
+}
+.greed-prompt p {
+  margin: 0 0 0.55rem;
+  color: #f0d09a;
+  font-size: 0.88rem;
+}
+.greed-prompt .ticket-button,
+.greed-prompt .quiet-button {
+  width: 100%;
+  margin: 0.25rem 0 0;
+}
+
+.cash-scream {
+  animation: cash-scream 0.9s ease-in-out infinite;
+  box-shadow: 0 0 16px rgba(212, 164, 90, 0.55);
+}
+.pusher-card.is-playing #pusherCash.cash-scream,
+.pusher-card.is-playing #pusherGreedCash.cash-scream,
+.pusher-card.is-playing #pusherDropAgain.cash-scream {
+  box-shadow: 0 0 18px rgba(212, 164, 90, 0.7);
+  min-height: 44px;
+}
+@keyframes cash-scream {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.18); }
+}
+
+.flip-zones {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22%;
+}
+.pinball-card.is-playing .flip-zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.flip-zones span {
+  display: grid;
+  place-items: end center;
+  padding-bottom: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: rgba(240, 208, 154, 0.55);
+  background: linear-gradient(180deg, transparent, rgba(212, 164, 90, 0.08));
+}
+.flip-zones span:first-child {
+  border-right: 1px dashed rgba(212, 164, 90, 0.25);
+}
+
+.balltoss-card.is-result .vendor-stage,
+.pusher-card.is-result .vendor-stage,
+.pinball-card.is-result .vendor-stage { opacity: 0.72; }
+
+/* Batch 10 shared depth chrome */
+.depth-hud {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  background: rgba(12, 6, 9, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  pointer-events: none;
+}
+.strike-pips {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  margin-top: 0.35rem;
+}
+.strike-pips i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: rgba(240, 208, 154, 0.25);
+  border: 1px solid rgba(212, 164, 90, 0.35);
+}
+.strike-pips i.on {
+  background: #c45c5c;
+  border-color: #f0a0a0;
+  box-shadow: 0 0 8px rgba(196, 92, 92, 0.55);
+}
+.barker-toast {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  max-width: 90%;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.65rem;
+  font-size: 0.78rem;
+  color: #160b10;
+  background: #f0d09a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: barker-in 0.35s ease-out;
+}
+@keyframes barker-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.result-ticket {
+  border: 1px dashed rgba(212, 164, 90, 0.55);
+  background:
+    linear-gradient(135deg, rgba(212, 164, 90, 0.12), transparent 40%),
+    rgba(22, 11, 16, 0.92);
+  padding: 0.85rem 1rem;
+  border-radius: 0.4rem;
+  color: #f0d09a;
+}
+.hold-btn {
+  min-width: 7rem;
+  min-height: 7rem;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 164, 90, 0.55);
+  background: radial-gradient(circle at 40% 35%, #5a3040, #160b10);
+  color: #f0d09a;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  touch-action: none;
+  user-select: none;
+}
+.hold-btn:active,
+.hold-btn.is-held {
+  border-color: #f0d09a;
+  box-shadow: 0 0 22px rgba(212, 164, 90, 0.45);
+  transform: scale(0.97);
+}
+.sling-aim {
+  touch-action: none;
+  cursor: crosshair;
+}
+.lane-spray {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 80%, rgba(240, 208, 154, 0.12), transparent 55%);
+}
+
+/* Cover-the-Spot Cruel — namespaced. PF only. Desktop Grok owns this block.
+   GOBLIN HIT #2 FEEL — named SPOTs = verb/layout change; GreedFloor cash-out between spots. */
+#coverSpotCard .vendor-stage { position: relative; }
+#coverSpotCanvas { touch-action: none; cursor: crosshair; pointer-events: auto; }
+#coverSpotCard.is-playing #coverSpotCanvas { pointer-events: auto; }
+#coverSpotCard .coverspot-rk-hud {
+  margin: 0.15rem 0 0;
+  min-height: 1.2em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffe6a6;
+  text-transform: uppercase;
+}
+#coverSpotCard.is-playing .coverspot-rk-hud {
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+}
+#coverSpotCard:not(.is-playing) .coverspot-rk-hud { display: none; }
+#coverSpotCard .coverspot-miss-pips {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.7rem;
+  margin: 0;
+  z-index: 2;
+}
+#coverSpotCard:not(.is-playing) .coverspot-miss-pips { display: none; }
+#coverSpotCard .coverspot-hud-tag {
+  margin: 0.4rem 0 0.15rem;
+  padding: 0.22rem 0.6rem;
+  display: inline-block;
+  border: 1px solid #e1ac4d;
+  color: #ffe6a6;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+#coverSpotCard.is-playing .coverspot-hud-tag,
+#coverSpotCard.is-result .coverspot-hud-tag { display: none; }
+#coverSpotGreed { z-index: 3; }
+#coverSpotCard.is-playing #coverSpotGreed:not([hidden]) {
+  inset: auto 6% 8%;
+  border-width: 3px;
+  background: rgba(12, 6, 9, 0.92);
+}
+#coverSpotGreed .ticket-button,
+#coverSpotGreed .quiet-button,
+#coverSpotCard .vendor-actions .ticket-button,
+#coverSpotCard .vendor-actions .quiet-button {
+  min-height: 44px;
+}
+#coverSpotCard.is-playing #coverSpotDropAgain {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-width: 2px;
+  min-height: 44px;
+}
+#coverSpotCard.is-playing #coverSpotGreed:not([hidden]) .ticket-button {
+  min-height: 44px;
+}
+#coverSpotCard.is-playing #coverSpotCash.cash-scream,
+#coverSpotCard.is-playing #coverSpotGreedCash.cash-scream,
+#coverSpotCard.is-playing #coverSpotDropAgain.cash-scream {
+  box-shadow: 0 0 18px rgba(212, 164, 90, 0.7);
+}
+.signature-prop--coverspot { gap: 0.7rem; }
+.signature-prop--coverspot .prop-spot {
+  position: relative;
+  width: 3.4rem;
+  height: 3.4rem;
+}
+.signature-prop--coverspot .prop-red {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #e24a4a, #c41e3a 62%, #7a1018);
+  border: 1px solid #f0d09a;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35);
+}
+.signature-prop--coverspot .prop-disc {
+  position: absolute;
+  width: 2.22rem;
+  height: 2.22rem;
+  border-radius: 50%;
+  left: 0.12rem;
+  top: 0.18rem;
+  background: radial-gradient(circle at 35% 30%, #f7e2b0, #d4a45a 58%, #8a6230);
+  border: 1px solid #5a3a18;
+  opacity: 0.9;
+}
+.signature-prop--coverspot .prop-disc--two {
+  left: auto;
+  right: 0.08rem;
+  top: 0.72rem;
+  opacity: 0.82;
+}
+/* Vestibule: felt is the cheat. Keep the hero short so oval/twin/ring/blob read on a phone. */
+#coverSpotCard.is-vestibule .card-hero {
+  max-height: 6.4rem;
+  overflow: hidden;
+}
+#coverSpotCard.is-vestibule .card-hero img {
+  width: 100%;
+  height: 6.4rem;
+  object-fit: cover;
+  object-position: center 40%;
+}
+#coverSpotCard.is-vestibule .vendor-stage {
+  margin-top: 0.35rem;
+}
+.coverspot-card .barker-call { letter-spacing: 0.08em; }
+.coverspot-card.is-playing .barker-call {
+  color: #ffe6a6;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+.coverspot-card.is-playing .tent-mouth-joke {
+  color: #f0d09a;
+  font-size: 0.78rem;
+}
+#coverSpotCard[data-cover-kind="oval"] .signature-prop--coverspot .prop-red {
+  transform: rotate(-18deg) scaleX(1.42) scaleY(0.72);
+}
+#coverSpotCard[data-cover-kind="twin"] .signature-prop--coverspot .prop-spot {
+  width: 4.8rem;
+}
+#coverSpotCard[data-cover-kind="twin"] .signature-prop--coverspot .prop-red {
+  inset: auto;
+  left: 0;
+  top: 0.85rem;
+  width: 1.55rem;
+  height: 1.55rem;
+}
+#coverSpotCard[data-cover-kind="twin"] .signature-prop--coverspot .prop-red::after {
+  content: "";
+  position: absolute;
+  width: 1.55rem;
+  height: 1.55rem;
+  left: 1.85rem;
+  top: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #e24a4a, #c41e3a 62%, #7a1018);
+  border: 1px solid #f0d09a;
+}
+#coverSpotCard[data-cover-kind="twin"] .signature-prop--coverspot .prop-disc {
+  width: 1.05rem;
+  height: 1.05rem;
+  left: 0.25rem;
+  top: 1.08rem;
+}
+#coverSpotCard[data-cover-kind="twin"] .signature-prop--coverspot .prop-disc--two {
+  left: 2.1rem;
+  right: auto;
+  top: 1.08rem;
+}
+#coverSpotCard[data-cover-kind="ring"] .signature-prop--coverspot .prop-red {
+  background: radial-gradient(circle at 50% 50%, #16351f 0 34%, #c41e3a 36% 72%, #7a1018 100%);
+}
+#coverSpotCard[data-cover-kind="drift"] .signature-prop--coverspot .prop-red {
+  animation: coverspot-lead 2.6s ease-in-out infinite;
+}
+#coverSpotCard[data-cover-kind="blob"] .signature-prop--coverspot .prop-red {
+  border-radius: 46% 54% 42% 58% / 54% 42% 58% 46%;
+  animation: coverspot-stamp 0.5s ease-in-out infinite;
+}
+#coverSpotCard[data-cover-tight="1"] .signature-prop--coverspot .prop-disc {
+  transform: scale(0.84);
+  transform-origin: 40% 40%;
+}
+#coverSpotCard[data-cover-kind="oval"] .signature-prop--coverspot .prop-disc,
+#coverSpotCard[data-cover-kind="oval"] .signature-prop--coverspot .prop-disc--two {
+  border-radius: 50%;
+}
+#coverSpotCard.is-playing .depth-readout strong {
+  letter-spacing: 0.06em;
+}
+@keyframes coverspot-lead {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(8px, -4px); }
+}
+@keyframes coverspot-stamp {
+  0%, 68% { transform: translate(0, 0); }
+  82%, 100% { transform: translate(6px, -5px); }
+}
+.coverspot-card.is-playing .vendor-vestibule-only,
+.coverspot-card.is-result .vendor-vestibule-only { display: none; }
+.coverspot-card .vendor-play-only { display: none; }
+.coverspot-card.is-playing .vendor-play-only { display: inline-flex; }
+.coverspot-card.is-playing #coverSpotStart { display: none; }
+.coverspot-card.is-result .vendor-stage { opacity: 0.72; }
+.coverspot-card .vendor-stage canvas { cursor: pointer; }
+
+/* Catoptromancy Mirror — namespaced. PF only. OracleRooms KEEP/BURN/DOUBLE. */
+.signature-prop--catop { gap: 0.7rem; }
+.signature-prop--catop .prop-glass {
+  position: relative;
+  width: 3.1rem;
+  height: 3.8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, rgba(184, 232, 224, 0.35), #1a1024 42%, #07040a);
+  border: 3px solid #d4a45a;
+  box-shadow: inset 0 0 12px rgba(61, 138, 138, 0.35), 0 0 10px rgba(212, 164, 90, 0.25);
+}
+.signature-prop--catop .prop-glass i {
+  position: absolute;
+  left: 18%;
+  top: 16%;
+  width: 1.1rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: rgba(240, 208, 154, 0.28);
+}
+.catop-card .barker-call { letter-spacing: 0.08em; }
+.catop-card.is-playing .vendor-vestibule-only,
+.catop-card.is-result .vendor-vestibule-only { display: none; }
+.catop-card .vendor-play-only { display: none; }
+.catop-card.is-playing .vendor-play-only { display: inline-flex; }
+.catop-card.is-playing #catopStart { display: none; }
+.catop-card.is-result .vendor-stage { opacity: 0.72; }
+.vendor-stage--glass { position: relative; }
+.catop-card .vendor-stage--glass canvas { cursor: grab; }
+.catop-card.is-playing .vendor-stage--glass canvas { cursor: none; }
+.catop-gaze {
+  min-width: 8.5rem;
+  min-height: 2.75rem;
+  touch-action: none;
+  user-select: none;
+}
+.catop-choices .ticket-button,
+.catop-choices .quiet-button,
+.catop-double {
+  min-height: 2.75rem;
+  min-width: 4.6rem;
+}
+.catop-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · DEPTH RUN · NO SKIP · NO GUMBALL";
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid #e1ac4d;
+  background: rgba(12, 6, 9, 0.82);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.catop-gaze[hidden],
+.catop-choices[hidden],
+.catop-ticket[hidden] { display: none !important; }
+.catop-card.is-playing .catop-gaze:not([hidden]) { display: inline-flex; }
+.catop-gaze.is-holding {
+  background: #3d8a8a;
+  color: #fff6ec;
+  box-shadow: 0 0 14px rgba(61, 138, 138, 0.55);
+}
+.catop-gaze.is-phantom {
+  background: #c41e3a;
+  color: #fff6ec;
+  box-shadow: 0 0 14px rgba(196, 30, 58, 0.5);
+}
+.catop-gaze.is-false-full {
+  background: #7ee0c0;
+  color: #12080c;
+  box-shadow: 0 0 14px rgba(126, 224, 192, 0.55);
+}
+.catop-gaze.is-lie-skip {
+  background: #c41e3a;
+  color: #fff6ec;
+  letter-spacing: 0.16em;
+  box-shadow: 0 0 16px rgba(196, 30, 58, 0.65);
+}
+.catop-ghost-choices {
+  display: none;
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 0.45rem;
+  z-index: 3;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+.catop-card.is-playing .catop-ghost-choices.is-on:not([hidden]) { display: flex; }
+.catop-ghost-choices[hidden] { display: none !important; }
+.catop-ghost-choices .ticket-button,
+.catop-ghost-choices .quiet-button {
+  min-height: 2.75rem;
+  min-width: 4.6rem;
+  opacity: 0.78;
+  filter: saturate(0.65);
+  animation: catop-ghost-pulse 0.55s ease-in-out infinite;
+}
+.catop-ghost-hint {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  color: #f0d09a;
+  opacity: 0.85;
+}
+@keyframes catop-ghost-pulse {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 0.95; }
+}
+.catop-choices {
+  display: none;
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 0.45rem;
+  z-index: 2;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+.catop-card.is-playing .catop-choices:not([hidden]) { display: flex; }
+.catop-ticket {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 3.4rem;
+  z-index: 2;
+  padding: 0.55rem 0.7rem 0.65rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  background: rgba(18, 8, 12, 0.88);
+  color: #f0d09a;
+  text-align: center;
+  pointer-events: none;
+}
+.catop-ticket[hidden] { display: none; }
+.catop-ticket-colour {
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+.catop-ticket-line {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #fff6ec;
+}
+.catop-double { letter-spacing: 0.12em; }
+.catop-double.is-theatre {
+  letter-spacing: 0.1em;
+  box-shadow: 0 0 14px rgba(212, 164, 90, 0.55);
+  animation: catop-ghost-pulse 0.7s ease-in-out infinite;
+}
+.catop-ticket.is-hazy {
+  border-color: rgba(200, 212, 220, 0.7);
+  background: rgba(28, 32, 40, 0.9);
+}
+.catop-ticket.is-hazy .catop-ticket-colour {
+  letter-spacing: 0.14em;
+  opacity: 0.88;
+}
+
+/* Plinko Pegboard — Custom tilt. PF only. */
+.signature-prop--plinko { gap: 0.65rem; }
+.signature-prop--plinko .prop-plinko-board {
+  position: relative;
+  width: 3.6rem;
+  height: 3.1rem;
+  border-radius: 0.28rem;
+  background:
+    repeating-linear-gradient(180deg, #3a2418 0 10px, #2a1810 10px 12px),
+    #2a1810;
+  border: 1px solid rgba(212, 164, 90, 0.65);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+  animation: plinko-breath 2.8s ease-in-out infinite;
+  transform-origin: 50% 8%;
+}
+.signature-prop--plinko .prop-plinko-peg {
+  position: absolute;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 50%;
+  background: #d4a45a;
+  border: 1px solid #5a3a18;
+}
+.signature-prop--plinko .prop-plinko-peg:nth-child(1) { left: 18%; top: 28%; }
+.signature-prop--plinko .prop-plinko-peg:nth-child(2) { left: 48%; top: 46%; }
+.signature-prop--plinko .prop-plinko-peg:nth-child(3) { left: 72%; top: 30%; }
+.signature-prop--plinko .prop-plinko-chip {
+  position: absolute;
+  left: 42%;
+  top: 6%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f7e2b0, #d4a45a 58%, #8a6230);
+  border: 1px solid #5a3a18;
+  animation: plinko-chip-drop 2.8s ease-in infinite;
+}
+@keyframes plinko-breath {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+@keyframes plinko-chip-drop {
+  0% { top: 4%; left: 42%; opacity: 1; }
+  70% { top: 72%; left: 58%; opacity: 1; }
+  100% { top: 80%; left: 62%; opacity: 0.2; }
+}
+.plinko-card .barker-call { letter-spacing: 0.08em; }
+.plinko-card.is-result .vendor-stage { opacity: 0.72; }
+.plinko-card .vendor-stage canvas { cursor: pointer; }
+
+/* Batch 04 — Fairy Floss / Popcorn / Duck Pond / Skee / Penny Pitch / Dunk. PF only. */
+.signature-prop--duckpond { gap: 0.65rem; }
+.signature-prop--duckpond .prop-pond {
+  position: relative;
+  width: 4.2rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #3d8a8a, #1a4a58 70%);
+  border: 2px solid #d4a45a;
+  overflow: hidden;
+}
+.signature-prop--duckpond .prop-duck {
+  position: absolute;
+  top: 38%;
+  width: 0.7rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  animation: duck-drift 2.4s ease-in-out infinite;
+}
+.signature-prop--duckpond .prop-duck--yellow { left: 14%; background: #f0d09a; }
+.signature-prop--duckpond .prop-duck--blue { left: 42%; background: #3d8a8a; animation-delay: -0.6s; }
+.signature-prop--duckpond .prop-duck--red { left: 68%; background: #c41e3a; animation-delay: -1.2s; }
+.signature-prop--duckpond .prop-hook {
+  position: absolute;
+  left: 48%;
+  top: -8%;
+  width: 2px;
+  height: 1.1rem;
+  background: #f0d09a;
+}
+@keyframes duck-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
+}
+.duckpond-card .barker-call { letter-spacing: 0.08em; }
+.duckpond-card.is-playing .vendor-vestibule-only,
+.duckpond-card.is-result .vendor-vestibule-only { display: none; }
+.fairyfloss-card.is-result .vendor-stage,
+.popcorn-card.is-result .vendor-stage,
+.duckpond-card.is-result .vendor-stage { opacity: 0.72; }
+.duckpond-card .vendor-stage canvas { cursor: grab; }
+.duckpond-card.is-playing .vendor-stage canvas { cursor: grabbing; }
+.fairyfloss-card .vendor-stage canvas { cursor: grab; }
+.fairyfloss-card.is-playing .vendor-stage canvas { cursor: grabbing; }
+.popcorn-card .vendor-stage canvas { cursor: pointer; }
+
+.signature-prop--skee { gap: 0.65rem; }
+.signature-prop--skee .prop-skee {
+  position: relative;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a0c10 32%, #3a2418 33% 48%, #1a0c10 49% 64%, #3a2418 65% 82%, #1a0c10 83%);
+  border: 2px solid #d4a45a;
+}
+.signature-prop--skee .prop-skee-ball {
+  position: absolute;
+  left: 42%;
+  bottom: 6%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #c41e3a;
+  border: 1px solid #fff6ec;
+  animation: skee-roll 1.8s ease-in infinite;
+}
+@keyframes skee-roll {
+  0% { bottom: 4%; opacity: 1; }
+  80% { bottom: 58%; opacity: 1; }
+  100% { bottom: 70%; opacity: 0.2; }
+}
+.skee-card .barker-call { letter-spacing: 0.08em; }
+.skee-card.is-playing .vendor-vestibule-only,
+.skee-card.is-result .vendor-vestibule-only { display: none; }
+.skee-card.is-playing #skeeStart { display: none; }
+.skee-card.is-result .vendor-stage { opacity: 0.72; }
+.skee-card .vendor-stage canvas { cursor: crosshair; }
+.skee-card.is-playing .vendor-stage canvas { cursor: grab; }
+.skee-card.is-playing .vendor-stage canvas:active { cursor: grabbing; }
+
+.signature-prop--pennypitch { gap: 0.65rem; }
+.signature-prop--pennypitch .prop-cloth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 2.8rem;
+  height: 2.8rem;
+  gap: 2px;
+  border: 2px solid #d4a45a;
+  animation: cloth-jerk 2.6s ease-in-out infinite;
+}
+.signature-prop--pennypitch .prop-cloth i:nth-child(1) { background: #4a7a48; }
+.signature-prop--pennypitch .prop-cloth i:nth-child(2) { background: #3d8a8a; }
+.signature-prop--pennypitch .prop-cloth i:nth-child(3) { background: #c41e3a; }
+.signature-prop--pennypitch .prop-cloth i:nth-child(4) { background: #d4a45a; }
+@keyframes cloth-jerk {
+  0%, 70%, 100% { transform: translateX(0); }
+  78% { transform: translateX(5px); }
+  86% { transform: translateX(-4px); }
+}
+.pennypitch-card .barker-call { letter-spacing: 0.08em; }
+.pennypitch-card.is-playing .vendor-vestibule-only,
+.pennypitch-card.is-result .vendor-vestibule-only { display: none; }
+.pennypitch-card.is-playing #pennyPitchStart { display: none; }
+.pennypitch-card.is-result .vendor-stage { opacity: 0.72; }
+.pennypitch-card .vendor-stage canvas { cursor: pointer; }
+.pennypitch-card.is-playing .vendor-stage canvas { cursor: grab; }
+.pennypitch-card.is-playing .vendor-stage canvas:active { cursor: grabbing; }
+
+.signature-prop--dunk { gap: 0.65rem; }
+.signature-prop--dunk .prop-dunk {
+  position: relative;
+  width: 3.4rem;
+  height: 3.1rem;
+}
+.signature-prop--dunk .prop-tank {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 1.15rem;
+  background: linear-gradient(#3d8a8a, #1a4a58);
+  border: 2px solid #d4a45a;
+  border-radius: 0 0 0.3rem 0.3rem;
+}
+.signature-prop--dunk .prop-plate {
+  position: absolute;
+  left: 38%;
+  top: 8%;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: #c41e3a;
+  border: 2px solid #f0d09a;
+  animation: plate-swing 1.6s ease-in-out infinite;
+}
+.signature-prop--dunk .prop-crown {
+  position: absolute;
+  left: 42%;
+  top: 38%;
+  width: 0.7rem;
+  height: 0.45rem;
+  background: #d4a45a;
+  clip-path: polygon(0 100%, 0 40%, 25% 0, 50% 40%, 75% 0, 100% 40%, 100% 100%);
+}
+@keyframes plate-swing {
+  0%, 100% { transform: translateX(-8px); }
+  50% { transform: translateX(10px); }
+}
+.dunk-card .barker-call { letter-spacing: 0.08em; }
+.dunk-card.is-playing .vendor-vestibule-only,
+.dunk-card.is-result .vendor-vestibule-only { display: none; }
+.dunk-card.is-playing #dunkStart { display: none; }
+.dunk-card.is-result .vendor-stage { opacity: 0.72; }
+.dunk-card .vendor-stage canvas { cursor: crosshair; }
+.dunk-card.is-playing .vendor-stage canvas { cursor: grab; }
+
+/* Fairy Floss Wheel — HoldBand tension. PF only. */
+.signature-prop--fairyfloss { gap: 0.65rem; }
+.signature-prop--fairyfloss .prop-tub {
+  position: relative;
+  width: 3.2rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 40%, #5a1830, #3a2418 70%);
+  border: 1px solid rgba(212, 164, 90, 0.7);
+  box-shadow: inset 0 0 8px rgba(244, 160, 192, 0.35);
+}
+.signature-prop--fairyfloss .prop-tub i {
+  position: absolute;
+  left: 18%;
+  top: 28%;
+  width: 64%;
+  height: 42%;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 160, 192, 0.7);
+  animation: floss-spin 1.8s linear infinite;
+}
+.signature-prop--fairyfloss .prop-cone {
+  width: 0;
+  height: 0;
+  border-left: 0.55rem solid transparent;
+  border-right: 0.55rem solid transparent;
+  border-top: 1.45rem solid #f0d09a;
+  filter: drop-shadow(0 0 4px rgba(244, 160, 192, 0.45));
+}
+@keyframes floss-spin {
+  to { transform: rotate(360deg); }
+}
+.fairyfloss-card .barker-call { letter-spacing: 0.08em; }
+.fairyfloss-card.is-result .vendor-stage { opacity: 0.72; }
+.fairyfloss-card .vendor-stage canvas { cursor: grab; }
+.fairyfloss-card.is-playing .vendor-stage canvas { cursor: grabbing; }
+.fairyfloss-card .vendor-stage--floss .strike-pips,
+.popcorn-card .vendor-stage--kettle .strike-pips,
+.duckpond-card .vendor-stage .strike-pips,
+.skee-card .vendor-stage .strike-pips,
+.pennypitch-card .vendor-stage .strike-pips,
+.dunk-card .vendor-stage .strike-pips {
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 3;
+}
+.fairyfloss-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.popcorn-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after,
+.duckpond-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid #e1ac4d;
+  background: rgba(12, 6, 9, 0.82);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fairyfloss-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · 5 AUTHORED THEN ENDLESS · NO FULL CONE";
+}
+.popcorn-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · 5 AUTHORED THEN ENDLESS · IGNORE STEAM";
+}
+.duckpond-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  content: "PRESS START · 5 AUTHORED THEN ENDLESS · NOT EVERY DUCK";
+}
+.fairyfloss-card .vendor-stage canvas,
+.popcorn-card .vendor-stage canvas,
+.duckpond-card .vendor-stage canvas {
+  touch-action: none;
+  min-height: 44px;
+}
+
+/* Popcorn Kettle — TimingTap. PF only. */
+.signature-prop--popcorn { gap: 0.65rem; }
+.signature-prop--popcorn .prop-kettle {
+  position: relative;
+  width: 2.4rem;
+  height: 2.1rem;
+  border-radius: 50% 50% 42% 42%;
+  background: radial-gradient(circle at 38% 32%, #c4783a, #6a3218 70%);
+  border: 1px solid rgba(212, 164, 90, 0.7);
+  box-shadow: inset 0 0 8px rgba(232, 140, 40, 0.35);
+}
+.signature-prop--popcorn .prop-kettle i:first-child {
+  position: absolute;
+  left: 28%;
+  top: -0.35rem;
+  width: 0.85rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: rgba(230, 230, 230, 0.45);
+  animation: kettle-steam 1.6s ease-in-out infinite;
+}
+.signature-prop--popcorn .prop-kettle i:last-child {
+  position: absolute;
+  left: 42%;
+  top: 18%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #f7e2b0;
+  border: 1px solid #c41e3a;
+  animation: kettle-pop 1.1s ease-in infinite;
+}
+@keyframes kettle-steam {
+  0%, 100% { transform: translateY(0); opacity: 0.25; }
+  50% { transform: translateY(-6px); opacity: 0.8; }
+}
+@keyframes kettle-pop {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: translateY(-10px) scale(1); opacity: 0; }
+}
+.popcorn-card .barker-call { letter-spacing: 0.08em; }
+.popcorn-card.is-result .vendor-stage { opacity: 0.72; }
+.popcorn-card .vendor-stage canvas { cursor: pointer; }
+.popcorn-card.is-playing .vendor-stage canvas { cursor: pointer; }
+
+/* High Striker Pegs — namespaced. PF only. TimingTap vertical climb. */
+.signature-prop--highstriker { gap: 0.7rem; }
+.signature-prop--highstriker .prop-tower {
+  position: relative;
+  width: 1.35rem;
+  height: 3.6rem;
+  border-radius: 3px 3px 2px 2px;
+  background: linear-gradient(#4a2e1c, #2a1810);
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+.signature-prop--highstriker .prop-bell {
+  position: absolute;
+  left: 50%;
+  top: -0.28rem;
+  width: 0.85rem;
+  height: 0.55rem;
+  margin-left: -0.42rem;
+  border-radius: 50% 50% 8% 8%;
+  background: #f0d09a;
+  box-shadow: 0 0 8px rgba(240, 208, 154, 0.45);
+}
+.signature-prop--highstriker .prop-peg {
+  position: absolute;
+  right: -0.28rem;
+  width: 0.45rem;
+  height: 0.12rem;
+  background: #d4a45a;
+}
+.signature-prop--highstriker .prop-peg:nth-child(2) { top: 28%; }
+.signature-prop--highstriker .prop-peg:nth-child(3) { top: 52%; }
+.signature-prop--highstriker .prop-peg:nth-child(4) { top: 76%; }
+.signature-prop--highstriker .prop-puck {
+  position: absolute;
+  left: 0.18rem;
+  bottom: 0.35rem;
+  width: 0.95rem;
+  height: 0.32rem;
+  background: #c41e3a;
+  border: 1px solid #fff6ec;
+  animation: striker-climb 2.4s ease-in-out infinite;
+}
+@keyframes striker-climb {
+  0%, 100% { bottom: 0.28rem; }
+  50% { bottom: 2.15rem; }
+}
+.highstriker-card .barker-call { letter-spacing: 0.08em; }
+.highstriker-card .vendor-play-only { display: none; }
+.highstriker-card.is-playing .vendor-play-only { display: inline-flex; }
+.highstriker-card.is-result .vendor-stage { opacity: 0.72; }
+.highstriker-card .vendor-stage canvas { cursor: pointer; }
+.highstriker-card #highStrikerTap,
+.plinko-card #plinkoDrop {
+  min-height: 48px;
+  min-width: 44px;
+  flex: 1;
+  padding: 0.7rem 1.4rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
+}
+.highstriker-card.is-playing .vendor-actions,
+.plinko-card.is-playing .vendor-actions {
+  width: 100%;
+}
+.plinko-card .vendor-play-only { display: none; }
+.plinko-card.is-playing .vendor-play-only { display: inline-flex; }
+.plinko-card.is-result .vendor-stage { opacity: 0.72; }
+.plinko-card .barker-call { letter-spacing: 0.08em; }
+.plinko-card .vendor-stage canvas { cursor: pointer; }
+.bentring-card .vendor-stage canvas { cursor: crosshair; }
+.bentring-card.is-playing .vendor-stage canvas { cursor: grab; }
+.bentring-card.is-playing .vendor-stage canvas:active { cursor: grabbing; }
+.highstriker-card .vendor-stage,
+.bentring-card .vendor-stage,
+.plinko-card .vendor-stage {
+  position: relative;
+}
+.highstriker-card .vendor-stage .depth-hud,
+.bentring-card .vendor-stage .depth-hud,
+.plinko-card .vendor-stage .depth-hud {
+  position: absolute;
+  top: 0.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  margin: 0;
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(212, 164, 90, 0.7);
+  background: rgba(12, 6, 9, 0.92);
+  color: #f0d09a;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.highstriker-card.is-playing .vendor-stage .depth-hud,
+.bentring-card.is-playing .vendor-stage .depth-hud,
+.plinko-card.is-playing .vendor-stage .depth-hud {
+  font-size: 1.12rem;
+  padding: 0.55rem 1.35rem;
+  box-shadow: 0 0 0 1px rgba(196, 30, 58, 0.35);
+}
+.highstriker-card .vendor-stage .strike-pips,
+.bentring-card .vendor-stage .strike-pips,
+.plinko-card .vendor-stage .strike-pips {
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 5;
+}
+.highstriker-card .vendor-result-reason,
+.bentring-card .vendor-result-reason,
+.plinko-card .vendor-result-reason {
+  margin: 0.12rem 0 0;
+  color: #e8a0b8;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.highstriker-card #highStrikerCopied,
+.bentring-card #bentRingCopied,
+.plinko-card #plinkoCopied {
+  color: #f0d09a;
+  letter-spacing: 0.08em;
+}
+
+/* Bent Ring Pegs — namespaced. PF only. SlingAim mid-flight lean. */
+.signature-prop--bentring { gap: 0.7rem; }
+.signature-prop--bentring .prop-pegs {
+  position: relative;
+  width: 4.4rem;
+  height: 2.6rem;
+}
+.signature-prop--bentring .prop-peg {
+  position: absolute;
+  bottom: 0.15rem;
+  width: 0.22rem;
+  height: 1.7rem;
+  background: linear-gradient(#d4a45a, #8a6230);
+  border-radius: 2px;
+  transform-origin: 50% 100%;
+}
+.signature-prop--bentring .prop-peg.lean-left {
+  left: 0.55rem;
+  animation: peg-lean-l 2.2s ease-in-out infinite;
+}
+.signature-prop--bentring .prop-peg.lean-right {
+  left: 2rem;
+  animation: peg-lean-r 2.2s ease-in-out infinite;
+}
+.signature-prop--bentring .prop-peg.lean-left:nth-child(3) {
+  left: 3.35rem;
+  animation-delay: -0.6s;
+}
+.signature-prop--bentring .prop-ring {
+  position: absolute;
+  left: 1.55rem;
+  top: 0.05rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 3px solid #c41e3a;
+  border-radius: 50%;
+  animation: ring-toss 2.2s ease-in infinite;
+}
+@keyframes peg-lean-l {
+  0%, 40% { transform: rotate(0deg); }
+  70%, 100% { transform: rotate(-16deg); }
+}
+@keyframes peg-lean-r {
+  0%, 40% { transform: rotate(0deg); }
+  70%, 100% { transform: rotate(16deg); }
+}
+@keyframes ring-toss {
+  0% { top: -0.2rem; opacity: 1; }
+  70% { top: 0.85rem; opacity: 1; }
+  100% { top: 1.1rem; opacity: 0.2; }
+}
+.bentring-card .barker-call { letter-spacing: 0.08em; }
+.bentring-card.is-result .vendor-stage { opacity: 0.72; }
+.bentring-card .vendor-stage canvas { cursor: crosshair; }
+.highstriker-card #highStrikerStart,
+.bentring-card #bentRingStart,
+.plinko-card #plinkoStart {
+  min-height: 44px;
+}
+.plinko-card .vendor-stage canvas { min-height: 44px; }

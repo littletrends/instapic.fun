@@ -1,0 +1,97 @@
+{
+  "id": "willa",
+  "group": "vendors",
+  "title": "Willa",
+  "pairedId": "whisper",
+  "source": "turnarounds/06-whisper.png",
+  "sourcePrompt": "turnarounds/06-whisper.md",
+  "band": [
+    68,
+    458
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/willa",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "b35ca358de536b44ff5e977dd0911a3fc43f9aaf14031f81aade15fcccfcef57",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-70cdf7c5-7eaa-4e23-a8cd-ceb1f3e2a403.png",
+  "generatedSourceSHA256": "944c800ad5352fa0cd57a36090e04485d89f7b8803fe65d5623016b592faa25f",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      641,
+      591
+    ],
+    [
+      641,
+      0,
+      1303,
+      591
+    ],
+    [
+      0,
+      591,
+      644,
+      1207
+    ],
+    [
+      644,
+      591,
+      1303,
+      1207
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

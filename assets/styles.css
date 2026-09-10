@@ -544,6 +544,67 @@ body {
   margin-top: 1rem;
 }
 
+.penny-fever-hatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: min(420px, 100%);
+  margin: 0.25rem auto 1.5rem;
+  padding: 0.85rem 1.1rem;
+  text-decoration: none;
+  color: #f3e2bd;
+  background: radial-gradient(ellipse at top, #3a2416, #120c0a 72%);
+  border: 1px solid rgba(210, 166, 91, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.penny-fever-hatch-arch {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 78px;
+  border-radius: 48% 48% 8px 8px;
+  border: 2px double #d2a65b;
+  background:
+    linear-gradient(180deg, transparent 42%, #5a3a22 42%, #5a3a22 58%, transparent 58%),
+    radial-gradient(ellipse at top, #765027, #20180f 75%);
+  box-shadow: inset 0 0 0 1px #0006;
+}
+
+.penny-fever-hatch-copy {
+  text-align: left;
+}
+
+.penny-fever-hatch-kicker,
+.penny-fever-hatch em {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d2a65b;
+}
+
+.penny-fever-hatch strong {
+  display: block;
+  margin: 0.15rem 0 0.2rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+}
+
+.penny-fever-hatch em {
+  font-style: normal;
+  color: #cbb892;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.penny-fever-hatch:hover,
+.penny-fever-hatch:focus-visible {
+  transform: translateY(-1px);
+  border-color: #e4c27a;
+}
+
 @media (max-width: 700px) {
   .portal-orb {
     width: 220px;
@@ -552,6 +613,10 @@ body {
 
   .hero-qr-copy {
     text-align: center;
+  }
+
+  .penny-fever-hatch {
+    width: min(360px, 100%);
   }
 }
 

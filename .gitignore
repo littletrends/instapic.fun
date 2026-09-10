@@ -31,3 +31,16 @@ README_BRIDGE_STATUS_*.txt
 # Local operating-system metadata
 .DS_Store
 ._*
+
+# Penny Fever workshop / not-live (Restyled Original playable set is published)
+penny-fever/.local-backups/
+penny-fever/design-concepts/
+penny-fever/ops/
+penny-fever/docs/
+penny-fever/assets/restyle/grok-edited/
+penny-fever/assets/restyle/level-expansions-2026-09-09/
+penny-fever/assets/restyle/items-turnarounds-2026-09-09/
+penny-fever/assets/restyle/items-single-2026-09-09/
+penny-fever/assets/restyle/items-batch-02/
+penny-fever/assets/restyle/walls/sheets/
+penny-fever/assets/workshop-from-windows/

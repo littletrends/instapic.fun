@@ -1,0 +1,12 @@
+.local-backups/
+design-concepts/
+ops/
+docs/
+*.tar.gz
+assets/restyle/grok-edited/
+assets/restyle/level-expansions-2026-09-09/
+assets/restyle/items-turnarounds-2026-09-09/
+assets/restyle/items-single-2026-09-09/
+assets/restyle/items-batch-02/
+assets/restyle/walls/sheets/
+assets/workshop-from-windows/

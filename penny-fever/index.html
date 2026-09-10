@@ -1,0 +1,2509 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="theme-color" content="#160b10">
+  <meta name="description" content="Private development preview of Aura's Penny Fever.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>Penny Fever — Restyled Original</title>
+  <link rel="stylesheet" href="world/entry-flow.css?v=loading-recovery-5">
+  <link rel="preload" as="image" href="assets/restyle/paper-aura-seated.png">
+  <script src="world/entry-flow.js?v=loading-recovery-5"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23f2c75c' d='M7 47h50l-5-29-13 12-7-20-7 20L12 18z'/%3E%3Cpath fill='%237b2743' d='M10 49h44v7H10z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=desk-lane-917">
+  <link rel="stylesheet" href="vendors/vendors.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/curios.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/marquee.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/fairy-floss.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/cover-the-spot.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/milk-bottles.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/dunk-tank.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/pack.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/whisper.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/coin-pusher.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/ball-toss.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/high-striker.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/plinko.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/bent-rings.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/popcorn.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/duck-pond.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/pinball.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/love.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/mutoscope.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/lookup.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/catoptromancy.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/skee-ball.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
+  <link rel="stylesheet" href="world/world.css?v=char-hud-1">
+  <script defer src="world/items/model.js?v=lap-free-1"></script>
+  <script defer src="app.js?v=lap-free-1"></script>
+  <link rel="stylesheet" href="world/items/inventory.css?v=door-ui-1">
+  <script type="module" src="world/items/inventory.js?v=door-ui-1"></script>
+  <script defer src="vendors/kit.js?v=interior-cam-1"></script>
+  <script defer src="vendors/runKit.js?v=treasures-1"></script>
+  <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
+  <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
+  <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
+  <script type="module" src="world/alley.js?v=ride-scale-1"></script>
+  <script type="module" src="world/crew-selector.js?v=reliability-1"></script>
+  <link rel="stylesheet" href="world/crew-selector.css?v=crew-portraits-14">
+  <link rel="stylesheet" href="restyle.css?v=door-ui-1">
+  <link rel="stylesheet" href="world/paper-game-booths.css?v=acer-booth-games-1">
+  <script type="module" src="world/paper-game-booths.js?v=acer-booth-games-1"></script>
+</head>
+<body>
+  <div class="development-ribbon" role="status">Private development preview · no payments · Darwin local day</div>
+
+  <div class="tent-transition" id="tentTransition" hidden aria-live="polite" aria-atomic="true">
+    <div class="tent-transition-glow" aria-hidden="true"></div>
+    <div class="tent-curtain tent-curtain--left" aria-hidden="true"></div>
+    <div class="tent-curtain tent-curtain--right" aria-hidden="true"></div>
+    <div class="tent-transition-copy">
+      <span>STEP RIGHT UP</span>
+      <strong id="tentTransitionTitle">THE NEXT TENT</strong>
+      <em id="tentTransitionLine">Mind the canvas.</em>
+    </div>
+  </div>
+
+  <main class="arcade-shell">
+    <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
+      <div class="door-cinematic" aria-hidden="true">
+        <img id="doorStageArt" class="door-stage-art" src="assets/restyle/paper-aura-seated.png" alt="Papercut Aura welcomes you with a ticket" width="1024" height="1536" fetchpriority="high">
+      </div>
+      <p class="eyebrow">Somewhere beneath Instapic…</p>
+      <h1 id="doorTitle">A curious little doorway</h1>
+      <p class="aura-whisper" id="doorWhisper">“Take a ticket. I’ll be at the palace door — you don’t get past me without it.”</p>
+      <div class="admit-desk" id="admitDesk">
+        <div id="admitIdle">
+          <button class="ticket-button" id="takeTicket" type="button">Take a ticket · free tonight</button>
+        </div>
+        <div id="admitHold" hidden>
+          <div class="admit-stub" id="admitStub" aria-label="Admit-one ticket">
+            <span>ADMIT ONE</span>
+            <strong>PENNY FEVER</strong>
+            <em>Give this to Aura at the palace door</em>
+          </div>
+          <button class="ticket-button" id="giveTicket" type="button">Walk to Aura at the door</button>
+        </div>
+        <p id="admitDone" class="aura-whisper" hidden>“That’s the one. In you go.”</p>
+      </div>
+      <details class="door-crew">
+        <summary>Meet the felt crew</summary>
+        <img src="assets/restyle/paper-crew-six.png" alt="Six colourful papercut companions ready for the sideshow alley" width="1024" height="1536" loading="lazy">
+      </details>
+    </section>
+
+    <section class="foyer" id="foyer" hidden aria-labelledby="foyerTitle">
+      <div class="pf-world-stage" id="pfWorldStage">
+        <canvas id="pfWorld" aria-label="Walkable Penny Fever carnival"></canvas>
+      </div>
+      <header class="foyer-header">
+        <div class="marquee-lights" aria-hidden="true"></div>
+        <button class="carnival-sound" id="carnivalSound" type="button" aria-pressed="false">Sound asleep ♪</button>
+        <p class="eyebrow">Established at an uncertain hour</p>
+        <h1 id="foyerTitle" tabindex="-1"><span>Aura’s</span> Penny Fever</h1>
+        <p class="foyer-subtitle">Walk the boardwalk. Choose a canvas flap. See how far the night lets you go.</p>
+        <div class="night-board" id="nightBoard" aria-label="Tonight’s carnival score">
+          <div class="night-stat"><span class="night-label">Fever</span><strong id="feverScore">0</strong></div>
+          <div class="night-stat"><span class="night-label">Streak</span><strong id="feverStreak">0</strong></div>
+          <div class="night-stat"><span class="night-label">Stars</span><strong id="feverStars">☆☆☆</strong></div>
+          <div class="night-stat"><span class="night-label">Coins</span><strong id="feverCoins">99</strong></div>
+        </div>
+        <p class="night-toast" id="nightToast" hidden></p>
+      </header>
+      <div class="result-banner" id="resultBanner" hidden>
+        <img id="resultFrame" src="assets/game/Result_Frames/Success_Reward_Frame.webp" alt="">
+        <div class="result-banner-copy">
+          <p class="result-tier" id="resultTier">PERFECT</p>
+          <p class="result-detail" id="resultDetail"></p>
+        </div>
+      </div>
+
+      <section class="aura-welcome cabinet-panel" aria-labelledby="welcomeTitle">
+        <div class="aura-space">
+          <img class="aura-proprietor" id="auraPortrait" data-live-art="1" src="assets/prepared/welcome-proprietor.webp" alt="Aura, proprietor of Penny Fever" width="220" height="280">
+        </div>
+        <div>
+          <p class="plaque-kicker">The proprietor appears</p>
+          <h2 id="welcomeTitle">Shoes stay on. Wallets stay light.</h2>
+          <p id="auraLine">Welcome to my crooked little boardwalk. Your first fortune is free each day; every other tent takes one pretend penny while the till is sleeping. Follow the lights. Mind the barkers.</p>
+          <p class="chalkboard" id="chalkboard">Today’s chalk: <em id="chalkText">Try One Fortune. Leave with a stub.</em></p>
+        </div>
+      </section>
+
+      <section class="charm-wall-panel cabinet-panel" id="charmWallPanel" aria-label="Whisper charms">
+        <p class="plaque-kicker">Sealed tonight</p>
+        <h2>Charm ribbon wall</h2>
+        <div class="charm-wall" id="charmWall" hidden></div>
+        <p class="status-ticket">Whisper words appear here — rare ones glow harder.</p>
+      </section>
+
+
+      <section class="arcade-hall" id="arcadeHall" aria-label="Penny Fever sideshow alley">
+        <p class="plaque-kicker">The goblin alley</p>
+        <h2 class="hall-title">Choose a tent. Step under the canvas.</h2>
+        <p class="barker-call">STEP RIGHT UP · ONE DEMO PENNY · HOW FAR CAN YOU GO?</p>
+        <p class="hall-note">Every tent mouth promises a run. The deeper you go, the better the story of where you died.</p>
+        <div class="hall-floor">
+          <video class="alley-motion" id="alleyMotion" autoplay muted loop playsinline preload="metadata" poster="assets/prepared/arcade-hall-wide.webp" aria-hidden="true">
+            <source src="assets/prepared/arcade-hall-wide-loop.mp4" type="video/mp4">
+          </video>
+          <div class="alley-fireflies" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="alley-canopy" aria-hidden="true">
+            <span class="canopy-rope"></span>
+            <span class="canopy-bulbs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="canopy-pennants"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="alley-walk-hud" id="alleyWalkHud">
+            <span class="walk-depth" id="alleyWalkDepth">GATE · 0 PACES</span>
+            <span class="walk-meter" aria-hidden="true"><i id="alleyWalkFill"></i></span>
+            <strong id="alleyNearestTent">Aura’s ticket booth</strong>
+            <button class="walk-deeper" id="alleyWalkDeeper" type="button">Walk deeper ↓</button>
+          </div>
+          <nav class="alley-directory" aria-label="Jump along the sideshow alley">
+            <span>ALLEY MAP</span>
+            <button type="button" data-alley-jump="0">Gate</button>
+            <button type="button" data-alley-jump="5">Oddities</button>
+            <button type="button" data-alley-jump="10">Midway</button>
+            <button type="button" data-alley-jump="15">After Dark</button>
+            <button type="button" data-alley-jump="20">Deep Alley</button>
+            <button type="button" data-alley-jump="25">Backstage</button>
+          </nav>
+          <div class="alley-dressing" aria-hidden="true">
+            <span class="alley-floss">FAIRY FLOSS</span>
+            <span class="alley-ticket">ADMIT ONE</span>
+            <span class="alley-queue"><i></i><i></i><i></i></span>
+          </div>
+          <div class="barker-rail" aria-hidden="true">
+            <span>TONIGHT ONLY</span><i>✦</i><span>NO PROMISES</span><i>✦</i><span>ONE PENNY A RUN</span>
+          </div>
+          <div class="hall-perspective">
+          <button type="button" class="cabinet-door" data-enter="fortune" aria-label="Step under the Mystic Fortune Tent">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/game/Free_Fortune_States/Closed.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">✦</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Mystic Tent</strong>
+              <span class="door-tag door-tag--free">FREE DAILY FORTUNE</span>
+              <em>One theatrical ticket</em>
+              <span class="door-cta">Draw today’s fortune →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="curios" aria-label="Step into the Digger's Vault stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/game/Cabinet_of_Curios/Empty_Cabinet.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">⌑</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Digger’s Vault</strong>
+              <span class="door-tag door-tag--tuning">COLLECTION · ENGINE TUNING</span>
+              <em>Inspect tonight’s curios</em>
+              <span class="door-cta">Open the collection →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="love" aria-label="Step under the Love Tester Tent">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/love-thermometer-tease.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">♥</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Love Tester Tent</strong>
+              <span class="door-tag door-tag--live">DEPTH RUN</span>
+              <em id="loveDoorBest">Heat Stage —</em>
+              <span class="door-cta">Step right up →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="lookup" aria-label="Step under the Star-Gazing Tent">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/lookup-wonder.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">↑</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Star-Gazing Tent</strong>
+              <span class="door-tag door-tag--live">DEPTH RUN</span>
+              <em id="lookupDoorBest">Sky Tier —</em>
+              <span class="door-cta">Fly the lantern →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="snap" aria-label="Step into the Photo-Alley Flash Booth">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/snap-freeze-flash.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◎</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Flash Booth</strong>
+              <span class="door-tag door-tag--play">REACTION TEST</span>
+              <em>Tap only on the true pop</em>
+              <span class="door-cta">Test your reflexes →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="whisper" aria-label="Part the Gossip Booth curtain">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/game/Whisper_Charm/Idle.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">🗨</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Gossip Booth</strong>
+              <span class="door-tag door-tag--tuning">CHARM MAKER · RUN TUNING</span>
+              <em>One word becomes a charm</em>
+              <span class="door-cta">Make a charm →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="ball-toss" aria-label="Step up to the Barely-Fit Toss stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img data-asset="ball_toss_board" src="assets/prepared/ball-toss-board.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">○</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Barely-Fit Toss</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em>Holes that barely fit</em>
+              <span class="door-cta">How many racks? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="coin-pusher" aria-label="Step up to the Coin Pusher Shelf">
+            <span class="door-3d">
+              <span class="door-face">
+                <img data-asset="coin_pusher_shelf" src="assets/prepared/coin-pusher-greed.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">●</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Coin Pusher Shelf</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em>Cash out or go deeper</em>
+              <span class="door-cta">Greed is the game →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="pinball" aria-label="Step up to Pinball Alley">
+            <span class="door-3d">
+              <span class="door-face">
+                <img data-asset="pinball_backglass" src="assets/prepared/pinball-neon-playfield.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">▶</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Pinball Alley</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em>One ball · chapters</em>
+              <span class="door-cta">How many chapters? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="water-gun" aria-label="Step up to the Water Gun Duel stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/water-gun-duel.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">≋</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Water Gun Duel</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em>First to fill the heat</em>
+              <span class="door-cta">How many heats? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="milk-bottles" aria-label="Step up to the Weighted Milk Bottles stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/milk-bottle-pyramid.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">△</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Weighted Bottles</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em>Bottom row’s lead</em>
+              <span class="door-cta">How many pyramids? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="cover-the-spot" aria-label="Step up to the Cover-the-Spot stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/cover-the-spot.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◉</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Cover-the-Spot</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="coverSpotDoorBest">Coverage —</em>
+              <span class="door-cta">Cover it — or get greedy →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="mutoscope" aria-label="Step up to the Mutoscope Hood">
+            <span class="door-3d">
+              <span class="door-face">
+                <img data-asset="mutoscope_hood" src="assets/prepared/mutoscope-peephole-glow.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◉</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Mutoscope Hood</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="mutoscopeDoorBest">Stage —</em>
+              <span class="door-cta">How many stages? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="high-striker" aria-label="Step up to the High Striker Pegs stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">▲</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>High Striker</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="highStrikerDoorBest">Pegs —</em>
+              <span class="door-cta">How many pegs? →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="catoptromancy" aria-label="Step under the Catoptromancy Mirror tent">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/doorway-beckon.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◎</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Catoptromancy</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="catopDoorBest">Room —</em>
+              <span class="door-cta">Don’t look away →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="bent-rings" aria-label="Step up to the Bent Ring Pegs stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◎</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Bent Ring Pegs</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="bentRingDoorBest">Stages —</em>
+              <span class="door-cta">Ring a bent peg →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="plinko" aria-label="Step up to the Plinko Pegboard">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">●</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Plinko Pegboard</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="plinkoDoorBest">Stages —</em>
+              <span class="door-cta">Drop with the breath →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="fairy-floss" aria-label="Step up to the Fairy Floss Wheel">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/fairy-floss-sugar-tent.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">✿</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Fairy Floss Wheel</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="fairyFlossDoorBest">Metres —</em>
+              <span class="door-cta">Wind it tall →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="popcorn" aria-label="Step up to the Popcorn Kettle">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">❂</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Popcorn Kettle</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="popcornDoorBest">Batch —</em>
+              <span class="door-cta">Pour the kettle →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="duck-pond" aria-label="Step up to the Duck Pond Hook stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">🦆</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Duck Pond Hook</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="duckPondDoorBest">Stages —</em>
+              <span class="door-cta">Hook the call →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="skee-ball" aria-label="Step up to Skee-Ball Alley">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">◎</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Skee-Ball Alley</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="skeeDoorBest">Stages —</em>
+              <span class="door-cta">Beat the board →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="penny-pitch" aria-label="Step up to the Penny Pitch Cloth stall">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">¢</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Penny Pitch</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="pennyPitchDoorBest">Stages —</em>
+              <span class="door-cta">Land a colour →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="dunk-tank" aria-label="Step up to Dunk the Barker">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/night-carnival-exterior.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">💧</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Dunk the Barker</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="dunkDoorBest">Dunks —</em>
+              <span class="door-cta">Soak the crown →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="marquee" aria-label="Walk beneath the Boardwalk Letter Lights">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/prepared/ticket-booth-lean.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">✦</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Boardwalk Lights</strong>
+              <span class="door-tag door-tag--live">VENDOR · DEPTH RUN</span>
+              <em id="marqueeDoorBest">Wave —</em>
+              <span class="door-cta">Step inside the sign →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="pack" aria-label="Open Aura's Night Kit suitcase">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/game/Cabinet_of_Curios/Pressed_Penny.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">●</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Night Kit</strong>
+              <span class="door-tag door-tag--souvenir">DEMO SOUVENIR</span>
+              <em>Pack the run suitcase</em>
+              <span class="door-cta">Open the case →</span>
+            </span>
+          </button>
+          <button type="button" class="cabinet-door" data-enter="pass" aria-label="Slip through the Backstage Flap">
+            <span class="door-3d">
+              <span class="door-face">
+                <img src="assets/game/Showmans_Pass/Blank_Ticket.webp" alt="">
+                <span class="door-glyph" aria-hidden="true">🎟</span>
+              </span>
+              <span class="door-side" aria-hidden="true"></span>
+            </span>
+            <span class="door-plaque">
+              <strong>Backstage Flap</strong>
+              <span class="door-tag door-tag--tuning">DEMO ACCESS</span>
+              <em>Employees only—probably</em>
+              <span class="door-cta">Slip backstage →</span>
+            </span>
+          </button>
+          </div>
+          <div class="alley-afterglow" aria-hidden="true">
+            <span class="dropped-ticket">023 · ADMIT ONE</span>
+            <span class="alley-footsteps">· · · · ·</span>
+            <span class="distant-barker">“CLOSER, DARLING—THE TENTS DON’T BITE FIRST.”</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foyer-footer">
+        <p>No accounts · no Square yet · no booth APIs · local stubs only · Aura © house style</p>
+        <button class="quiet-button" id="leaveArcade" type="button">Return through the little door</button>
+        <button class="quiet-button dev-only" id="devReset" type="button">Dev: clear local stubs (test again)</button>
+      </footer>
+    </section>
+
+    <!-- Cabinet interiors — full journeys -->
+    <section class="cabinet-interior fortune-interior" id="cabinet-fortune" hidden data-cabinet="fortune" aria-labelledby="cabinet-fortune-title">
+      <div class="interior-sky fortune-sky" aria-hidden="true"></div>
+      <div class="interior-room fortune-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the mystic tent flap</p>
+          <h1 id="cabinet-fortune-title" tabindex="-1">Mystic Fortune Tent</h1>
+          <p class="interior-blurb">Walk in. Sit with Aura. One penny, one ticket.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card fortune-card is-playing" id="fortuneCard">
+          <p class="machine-number">Walk-in tent · 1 demo coin · one reading</p>
+          <h2>Aura’s Table</h2>
+          <p class="barker-call">WALK UP · SIT · A PENNY FOR A READING</p>
+          <div class="vendor-stage fortune-stage" id="fortuneStage">
+            <canvas id="fortuneCanvas" width="960" height="720" tabindex="0" aria-label="Walk through the mystic tent to Aura at her table. WASD to walk, E to sit for a reading."></canvas>
+            <div class="fortune-hud" id="fortuneHud">
+              <div class="fortune-hud-play">
+                <div class="fortune-hud-top">
+                  <p class="fortune-hud-room" id="fortuneHudRoom">INSIDE THE MYSTIC TENT</p>
+                </div>
+                <p class="fortune-hud-hint" id="fortuneHudHint">Walk up to Aura. She is already seated.</p>
+              </div>
+              <div class="fortune-hud-mid">
+                <span class="fortune-toast" id="fortuneToast" hidden></span>
+              </div>
+              <div class="fortune-hud-bottom">
+                <div class="fortune-walk" aria-label="Walk">
+                  <button type="button" data-fortune-walk="w" aria-label="Walk forward">▲</button>
+                  <span>
+                    <button type="button" data-fortune-walk="a" aria-label="Walk left">◀</button>
+                    <button type="button" data-fortune-walk="s" aria-label="Walk back">▼</button>
+                    <button type="button" data-fortune-walk="d" aria-label="Walk right">▶</button>
+                  </span>
+                </div>
+                <div class="fortune-controls" id="fortuneControls">
+                  <span><kbd>WASD</kbd> walk the tent</span>
+                  <span><kbd>E</kbd> sit · 1 penny</span>
+                </div>
+              </div>
+            </div>
+            <div class="fortune-start-overlay" id="fortuneStartOverlay" hidden>
+              <button class="ticket-button" id="fortuneGo" type="button">SIT · 1 penny</button>
+              <p class="fortune-start-note">Walk up to Aura’s table.</p>
+            </div>
+            <div class="fortune-float-ticket" id="fortuneFloatTicket" hidden>
+              <p class="fortune-float-colour" id="fortuneTicketColour"></p>
+              <p class="fortune-float-line" id="fortuneTicketLine"></p>
+            </div>
+            <p class="fortune-webgl-fail" id="fortuneWebglFail" hidden>This tent wants WebGL. The crystal went shy.</p>
+          </div>
+          <div class="vendor-actions fortune-actions">
+            <button class="ticket-button" id="fortuneStart" type="button">SIT · 1 penny</button>
+          </div>
+          <p class="status-ticket" id="fortunePlayStatus">Walk up to Aura. She is already seated.</p>
+          <p class="tier-pill" id="fortuneTier" hidden></p>
+          <p class="love-verdict" id="fortuneVerdict" hidden></p>
+          <div class="vendor-result" id="fortuneOracleResult" hidden>
+            <p class="vendor-result-game">MYSTIC FORTUNE TENT · AURA’S TABLE</p>
+            <p class="vendor-result-depth" id="fortuneResultDepth">ROOM 0</p>
+            <p class="vendor-result-score" id="fortuneResultScore">SCORE 0</p>
+            <p class="vendor-result-aura" id="fortuneResultAura"></p>
+            <p class="vendor-result-challenge" id="fortuneChallengeText">Beat my Mystic Tent room 0 on Penny Fever</p>
+            <button class="quiet-button" id="fortuneChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="fortuneCopied" hidden>Copied</p>
+          </div>
+          <div class="fortune-legacy" aria-hidden="true">
+            <img id="fortuneCabinetArt" data-live-art="1" data-asset="fortune_machine" src="assets/game/Free_Fortune_States/Closed.webp" alt="">
+            <div id="fortuneIdle">
+              <button class="ticket-button" id="startFortune" type="button" tabindex="-1">Take the chained stylus</button>
+              <p class="status-ticket" id="fortuneStatus">First room free each Darwin day · how deep will the oracle let you go?</p>
+            </div>
+            <form id="fortuneForm" class="fortune-form" hidden>
+              <fieldset>
+                <legend>Your mood</legend>
+                <label><input type="radio" name="mood" value="sparkly"> Sparkly</label>
+              </fieldset>
+              <button type="submit" hidden>Deal</button>
+              <button class="quiet-button" id="cancelFortune" type="button" tabindex="-1">Not tonight</button>
+            </form>
+            <div id="fortuneResult" class="fortune-result" hidden>
+              <div class="fortune-flourish" id="fortuneFlourish" hidden>
+                <img data-asset="fortune_mailbox" src="assets/prepared/fortune-mailbox.webp" alt="">
+              </div>
+              <div class="ticket-stub" id="ticketStub">
+                <p class="fortune-text" id="fortuneText"></p>
+                <p class="stub-line" id="stubLine"></p>
+                <p class="ticket-serial" id="ticketSerial"></p>
+              </div>
+              <button class="quiet-button" id="fortuneAgainHint" type="button" tabindex="-1">Back to the alley</button>
+            </div>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior cabinet-interior--curios" id="cabinet-curios" hidden data-cabinet="curios" aria-labelledby="cabinet-curios-title">
+      <div class="interior-sky interior-sky--vault" aria-hidden="true"></div>
+      <div class="interior-room curios-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the velvet digger flap</p>
+          <h1 id="cabinet-curios-title" tabindex="-1">Digger’s Vault</h1>
+          <p class="interior-blurb">Drag the claw. Drop on gold. Cash out — or risk the whole pocket on the next floor.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card cabinet-card curios-card is-vestibule" id="curiosCard">
+          <p class="machine-number">Velvet claw · 1 demo coin · 7 authored FLOORS then ENDLESS</p>
+          <h2>The Velvet Digger</h2>
+          <p class="tent-mouth-joke vendor-vestibule-only">The claw is honest. The floor isn’t. Walk with the pocket — or greed the stairs and lose it all.</p>
+          <p class="pf-depth-tag vendor-vestibule-only" data-pf-depth-tag="1" role="status">DEPTH RUN · DRAG · DROP · CASH OUT OR RISK THE POCKET</p>
+          <p class="vendor-vestibule-only" data-pf-depth-copy>A 3D claw, not a shelf list. Drag to aim. Hit DROP. Catch files nothing until you cash out. Descend and miss an empty pit — the vault eats every curio you were carrying. Two drops a floor. No casino.</p>
+          <div class="depth-readout" data-runkit-hud="curios" aria-label="Digger Vault run depth">
+            <span><small>Floor now</small><strong id="depthCurioFloor">0</strong></span>
+            <span><small>Loot pocket</small><strong id="depthCurioLoot">0</strong></span>
+            <span><small>Best floor</small><strong id="depthCurioBest">—</strong></span>
+            <span><small>Best loot</small><strong id="depthCurioBestLoot">—</strong></span>
+          </div>
+          <p class="barker-call">MOVE THE CLAW — DROP ON GOLD — CASH OUT OR GO DEEPER</p>
+          <div class="vendor-stage vendor-stage--vault" id="curiosStage">
+            <canvas id="curiosCanvas" width="960" height="720" tabindex="0" aria-label="Digger Vault claw. Drag to aim the claw. Press DROP to grab. Cash out to keep the pocket, or descend and risk it all. Empty pit is death."></canvas>
+            <div class="curios-hud" id="curiosHud">
+              <div class="curios-hud-top">
+                <p class="curios-hud-floor" id="curiosHudFloor">FLOOR · GLASS NURSERY</p>
+                <span class="curios-hud-score" id="curiosHudScore">POCKET 0 · DROPS ●●</span>
+              </div>
+              <p class="curios-hud-hint" id="curiosHudHint">DRAG the claw over a prize. Hit DROP. Cash out keeps the pocket. Descend risks every curio.</p>
+              <span class="curios-toast" id="curiosToast" hidden></span>
+              <div class="curios-hud-bottom">
+                <div class="curios-controls" id="curiosControls">
+                  <span><kbd>AIM</kbd> drag · WASD</span>
+                  <span><kbd>DROP</kbd> the gold button</span>
+                  <span><kbd>CASH</kbd> keep the pocket</span>
+                  <span><kbd>DESCEND</kbd> risk it all</span>
+                </div>
+              </div>
+            </div>
+            <button class="curios-drop-fab" id="curiosDropFab" type="button" hidden>DROP</button>
+            <div class="curios-start-overlay" id="curiosStartOverlay">
+              <button class="ticket-button" id="curiosGo" type="button">START · 1 demo coin</button>
+              <p class="curios-start-note">Drag to aim. DROP to grab. Empty pit eats the pocket.</p>
+            </div>
+            <div class="curios-greed" id="curiosGreed" hidden>
+              <p class="curios-greed-tease" id="curiosGreedTease"></p>
+              <p id="curiosGreedLine">Walk with the pocket — or risk every curio on the next floor.</p>
+              <div class="curios-greed-bar" aria-hidden="true"><i id="curiosGreedFill"></i></div>
+              <p class="curios-greed-timer" id="curiosGreedTimer" hidden>The stairs are pulling…</p>
+              <div class="curios-greed-actions">
+                <button class="ticket-button cash-scream" id="curiosGreedCash" type="button">CASH OUT · KEEP</button>
+                <button class="ticket-button curios-descend-risk" id="curiosDescend" type="button">DESCEND · RISK ALL</button>
+              </div>
+            </div>
+            <div class="curios-empty" id="curiosEmpty" hidden>
+              <strong>EMPTY PIT</strong>
+              <em id="curiosEmptyLine">The vault keeps your night</em>
+            </div>
+            <p class="curios-webgl-fail" id="curiosWebglFail" hidden>This tent wants WebGL. The vault lamps went shy.</p>
+          </div>
+          <div class="vendor-actions curios-actions">
+            <button class="ticket-button" id="curiosStart" type="button">START · 1 demo coin</button>
+            <button class="quiet-button vendor-play-only" id="curiosDrop" type="button" hidden>DROP</button>
+            <button class="ticket-button vendor-play-only" id="curiosCash" type="button" hidden disabled>CASH OUT</button>
+          </div>
+          <p class="status-ticket" id="curiosStatus">Drag to aim. DROP to grab. Cash out keeps the pocket. Empty pit is death.</p>
+          <p class="tier-pill" id="curiosTier" hidden></p>
+          <p class="love-verdict" id="curiosVerdict" hidden></p>
+          <div class="vendor-result" id="curiosResult" hidden>
+            <p class="vendor-result-game">DIGGER’S VAULT</p>
+            <p class="vendor-result-depth" id="curiosResultDepth">FLOOR 0</p>
+            <p class="vendor-result-score" id="curiosResultScore">SCORE 0</p>
+            <p class="vendor-result-reason" id="curiosResultReason"></p>
+            <p class="vendor-result-aura" id="curiosResultAura"></p>
+            <p class="vendor-result-challenge" id="curiosChallengeText">Beat my Digger Vault floor 0 on Penny Fever</p>
+            <button class="quiet-button" id="curiosChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="curiosCopied" hidden>Copied — send it</p>
+          </div>
+          <div class="curios-pocket" id="curiosPocket" hidden>
+            <div class="cabinet-shelves" id="cabinetShelves" aria-hidden="true"></div>
+            <p class="cabinet-itch" id="cabinetItch" hidden></p>
+            <p class="status-ticket" id="cabinetStatus" hidden></p>
+            <p class="set-bonus" id="setBonus" hidden></p>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior love3d-interior" id="cabinet-love" hidden data-cabinet="love" aria-labelledby="cabinet-love-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the Love Tester flap</p>
+          <h1 id="cabinet-love-title">Love Tester Tent</h1>
+          <p class="interior-blurb">Heartline. Steer the ruby spark through every pink heart. Ice and gold shatter the glass.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card love-card love3d-card is-vestibule" id="loveCard">
+            <p class="machine-number">3D Heartline · 8 authored Heat Stages · then ENDLESS · 1 demo coin</p>
+            <h2>Heartline</h2>
+            <p class="tent-mouth-joke">A ruby spark in a velvet palace. Steer. Pulse. Kiss the pink. Ice and gold shatter you.</p>
+            <div class="depth-readout" aria-label="Love Heat Run depth">
+              <span><small>Now</small><strong id="loveStageDepth">Heat Stage —</strong></span>
+              <span><small>Best</small><strong id="loveBestDepth">—</strong></span>
+            </div>
+            <div class="love-stage-wrap" id="loveStage">
+              <canvas id="loveCanvas" width="960" height="760" aria-label="Love Tester Heartline. Drag to bank the spark. Fly through pink LOVE hearts. Gold hoops with an X are liars. Space to pulse."></canvas>
+              <div class="love-hud">
+                <div class="love-hud-top">
+                  <span class="love-hud-verb" id="loveHazard">HEARTLINE · FLY THE PINK</span>
+                  <span class="love-hud-heat" id="thermoReadout">♥ —</span>
+                </div>
+                <p class="love-hud-barker" id="loveBarker">STEER with mouse or WASD. Fly THROUGH the glowing pink heart. SPACE to pulse.</p>
+                <div class="love-hud-mid">
+                  <span class="love-toast" id="loveToast" hidden></span>
+                </div>
+                <div class="love-hud-bottom">
+                  <p class="love-warn" id="loveWarn"></p>
+                  <div class="love-controls" id="loveControls">
+                    <span><b>DRAG</b> to bank · <b>TILT</b> the phone</span>
+                    <span><b>WASD</b> · arrows</span>
+                    <span><b>PULSE</b> space · tap</span>
+                    <span><b>PINK LOVE</b> · <b>GOLD X = LIE</b></span>
+                  </div>
+                  <div class="love-tilt" id="loveTilt" hidden>
+                    <span class="love-tilt-label">DRAG / TILT</span>
+                    <i id="loveTiltKnub"></i>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="love-start-overlay" id="loveOverlay">
+                <strong>CLICK TO FLY</strong>
+                <span>1 demo coin · Heartline</span>
+                <em>DRAG to bank · pink LOVE only · gold X is a liar</em>
+              </button>
+            </div>
+            <p class="barker-call">DRAG TO BANK — PINK LOVE ONLY</p>
+            <div class="love-play-row">
+              <button class="ticket-button" id="loveGo" type="button">START · 1 demo coin</button>
+              <button class="ticket-button hold-btn love-squeeze" id="loveSqueeze" type="button" disabled>PULSE THE SPARK</button>
+            </div>
+            <p class="status-ticket" id="loveStatus">One coin · DRAG to bank · pink LOVE · gold X is a liar</p>
+            <p class="tier-pill" id="loveTier" hidden></p>
+            <p class="love-verdict" id="loveVerdict" hidden></p>
+            <p class="combo-line" id="loveCombo" hidden></p>
+            <div class="vendor-result" id="loveResult" hidden>
+              <p class="vendor-result-game">LOVE TESTER · HEAT RUN</p>
+              <p class="vendor-result-depth" id="loveResultDepth">HEAT STAGE 0</p>
+              <p class="vendor-result-score" id="loveResultScore">DEAD ON HEAT 1</p>
+              <p class="vendor-result-aura" id="loveResultAura"></p>
+              <p class="vendor-result-challenge" id="loveChallengeText">Beat my Love Heat Stage 0 on Penny Fever</p>
+              <button class="quiet-button" id="loveCopy" type="button">Copy challenge</button>
+              <p class="vendor-result-copied" id="loveCopied" hidden>Copied</p>
+            </div>
+            <div class="love-desk-compat" aria-hidden="true">
+              <button id="loveStartRun" type="button" tabindex="-1">START</button>
+              <button id="loveHold" type="button" tabindex="-1" disabled>HOLD</button>
+              <div id="holdBtn"></div>
+              <button id="loveChallenge" type="button" tabindex="-1">Copy</button>
+              <input id="lovePractice" type="checkbox" tabindex="-1">
+              <span id="loveModeHint"></span>
+              <span id="loveRoundLabel"></span>
+              <img id="loveCabinetArt" alt="" src="assets/prepared/love-thermometer-tease.webp" width="1" height="1">
+              <div id="loveTube"><div id="mercury"></div><div id="sweetBand"></div><div id="sweetBandSecond" hidden></div><div id="sweetBandDecoy" hidden></div></div>
+              <div id="loveTwinMeters" hidden><i id="loveTwinUpperFill"></i><i id="loveTwinLowerFill"></i></div>
+              <div id="loveRounds" hidden></div>
+              <div id="loveHazardRail" hidden></div>
+              <div class="love-squeeze-meter" hidden><i id="loveSqueezeFill"></i></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior lookup-3d" id="cabinet-lookup" hidden data-cabinet="lookup" aria-labelledby="cabinet-lookup-title">
+      <div class="interior-sky lookup-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header lookup-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the star-gazing flap</p>
+          <h1 id="cabinet-lookup-title">Star-Gazing Tent</h1>
+          <p class="interior-blurb">Fly a wish-lantern through gold star-gates. Rose is a liar. Meteors smash.</p>
+        </header>
+        <div class="interior-stage lookup-stage-wrap">
+          <article class="attraction-card lookup-card is-vestibule" id="lookupCard">
+            <div class="lookup-world" id="lookupWorld">
+              <canvas id="lookupCanvas" tabindex="0" aria-label="Star-Gazing Tent. Drag or WASD to steer. Space or click to pulse. Fly open GOLD hoops. Skip barred ROSE. Dodge ice-white meteors."></canvas>
+              <div class="lookup-vignette" aria-hidden="true"></div>
+              <div class="lookup-hud">
+                <div class="lookup-hud-top">
+                  <p class="machine-number">Planetarium tent · 1 demo coin · 8 authored SKY TIERS then ENDLESS</p>
+                  <p class="barker-call" id="lookupBarker">FLY THE LANTERN · THREAD THE GOLD</p>
+                  <p class="tent-mouth-joke vendor-vestibule-only">The dome is a racetrack now. Gold gates are the path. Rose gates lie. One coin. Go as deep as the sky lets you.</p>
+                  <div class="depth-readout" aria-label="Star-Gazing run depth">
+                    <span><small>Sky tier</small><strong id="depthLookupNow">0</strong></span>
+                    <span><small>Rings</small><strong id="depthLookupDrawn">0</strong></span>
+                    <span><small>Best sky</small><strong id="depthLookupBest">—</strong></span>
+                    <span><small>Score</small><strong id="depthLookupScore">0</strong></span>
+                  </div>
+                  <p class="lookup-rk-hud" data-runkit-hud="lookup" aria-live="polite"></p>
+                  <div class="lookup-trace" id="lookupTrace" aria-hidden="true"></div>
+                  <span class="strike-pips" data-runkit-strikes="lookup" aria-hidden="true"><i></i><i></i><i></i></span>
+                </div>
+                <div class="lookup-hud-mid">
+                  <div class="lookup-compass" id="lookupCompass" hidden>
+                    <span id="lookupCompassNeedle" aria-hidden="true">▲</span>
+                    <em>NEXT GOLD</em>
+                  </div>
+                  <p class="lookup-phase" id="lookupPhase">LOOK UP</p>
+                  <p class="status-ticket" id="lookupStatus">Open GOLD hoops are the path. Barred ROSE is a liar. Ice-white streaks smash. Drag or WASD to steer. Space to pulse.</p>
+                  <div class="lookup-timer" id="lookupTimer" hidden><i id="lookupTimerFill"></i></div>
+                  <p class="tier-pill" id="lookupTier" hidden></p>
+                  <p class="love-verdict" id="lookupVerdict" hidden></p>
+                </div>
+                <div class="lookup-hud-bot">
+                  <div class="vendor-actions lookup-actions">
+                    <button class="ticket-button" id="lookupStart" type="button">LIFT THE LANTERN · 1 demo coin</button>
+                    <button class="ticket-button lookup-pulse" id="lookupPulse" type="button" hidden>PULSE</button>
+                  </div>
+                  <div class="lookup-controls" id="lookupControls" aria-label="How to play">
+                    <p><kbd>DRAG</kbd> <kbd>WASD</kbd> <kbd>ARROWS</kbd> look · lantern flies · <kbd>SPACE</kbd> <kbd>CLICK</kbd> pulse</p>
+                    <p><span class="lookup-key lookup-key--gold">GOLD ○</span> thread · <span class="lookup-key lookup-key--rose">ROSE ✕</span> skip · <span class="lookup-key lookup-key--ice">ICE ☄</span> dodge</p>
+                  </div>
+                  <div class="vendor-result" id="lookupResult" hidden>
+                    <p class="vendor-result-game">STAR-GAZING TENT</p>
+                    <p class="vendor-result-depth" id="lookupResultDepth">SKY TIER 0</p>
+                    <p class="vendor-result-score" id="lookupResultScore">SCORE 0</p>
+                    <p class="vendor-result-aura" id="lookupResultAura"></p>
+                    <p class="vendor-result-challenge" id="lookupChallengeText">Beat my Sky Tier 0 on Penny Fever</p>
+                    <button class="quiet-button" id="lookupChallenge" type="button">Copy challenge</button>
+                    <p class="vendor-result-copied" id="lookupCopied" hidden>Copied</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <img id="lookupCabinetArt" hidden data-live-art="1" data-asset="lookup_sky" src="assets/prepared/lookup-wonder.webp" alt="">
+            <div class="lookup-legacy" hidden aria-hidden="true">
+              <div class="lookup-meter"><div class="lookup-fill" id="lookupFill"></div><div class="lookup-sweet"></div></div>
+              <p id="lookupReadout"></p>
+              <div class="hold-bar"><div class="hold-fill" id="lookupHoldBar"></div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior" id="cabinet-snap" hidden data-cabinet="snap" aria-labelledby="cabinet-snap-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the flash-booth curtain</p>
+          <h1 id="cabinet-snap-title">Flash Booth</h1>
+          <p class="interior-blurb">True pop and liar lamp in one look. TAP white. Orange lies. Drag to look.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card snap-card is-vestibule" id="snapCard">
+          <p class="machine-number">Living plate · 1 demo coin · hunt the WHITE flash</p>
+          <img id="snapCabinetArt" hidden data-live-art="1" data-asset="snap_stage" src="assets/prepared/snap-freeze-flash.webp" alt="">
+          <h2>Flash Booth</h2>
+          <p class="tent-mouth-joke vendor-vestibule-only">White pop and orange lamp share the frame. Tap the white.</p>
+          <p class="vendor-vestibule-only" data-pf-depth-copy>True pop and liar lamp in one look. TAP the bright WHITE flash. The orange lamp lies. DRAG with a finger to look around — there is no 3-2-1 SNAP button. Catch every white before the timer dies. One coin. Go as far as the plate holds.</p>
+          <div class="depth-readout" aria-label="Flash Booth run depth">
+            <span><small>Take now</small><strong id="depthSnapNow">0</strong></span>
+            <span><small>Best take</small><strong id="depthSnapBest">—</strong></span>
+            <span><small>Score</small><strong id="depthSnapScore">0</strong></span>
+            <span><small>Best pop</small><strong id="depthSnapBestMs">— ms</strong></span>
+          </div>
+          <span id="depthSnapStreak" hidden>0</span>
+          <div class="signature-prop signature-prop--snap vendor-vestibule-only" aria-hidden="true">
+            <span class="is-true">WHITE</span><i>ORANGE</i><b>CLICK</b>
+          </div>
+          <p class="barker-call vendor-vestibule-only">TAP THE WHITE POP — THE ORANGE LAMP LIES</p>
+          <div class="vendor-stage vendor-stage--flash" id="snapStage">
+            <canvas id="snapCanvas" width="960" height="720" aria-label="Flash Booth 3D studio. Drag to look. Tap the white flash. Orange lamps lie."></canvas>
+            <div class="snap-viewfinder" aria-hidden="true"><i></i><i></i></div>
+            <div class="snap-reticle" id="snapReticle" aria-hidden="true"></div>
+            <div class="snap-flash-veil" id="snapFlashVeil"></div>
+            <div class="snap-help" id="snapHelp">
+              <p class="snap-help-title">HOW TO PLAY</p>
+              <p class="snap-help-line"><b>TAP</b> the <span class="snap-leg-true">WHITE</span> pop · the <span class="snap-leg-fake">ORANGE</span> lamp lies · <b>DRAG</b> (finger or mouse) to look · <span class="snap-leg-bird">BIRDIE</span> also burns the plate</p>
+            </div>
+            <div class="snap-hud">
+              <p class="snap-hud-depth" data-runkit-hud="snap">TAKE —</p>
+              <p class="snap-hud-need" id="snapNeed">CATCH  0  /  0  WHITE</p>
+              <div class="snap-timer" id="snapTimerWrap"><i id="snapTimerFill"></i><span id="snapTimerSec"></span></div>
+              <p class="snap-callout" id="snapCountdown">ready?</p>
+              <p class="snap-hint" id="snapHint">TAP the WHITE pop. The orange lamp is a liar. Drag to look.</p>
+              <p class="snap-ms" id="snapMs" hidden></p>
+            </div>
+            <div class="snap-legend" id="snapLegend" aria-hidden="true">
+              <span class="is-true">WHITE · catch</span>
+              <span class="is-fake">ORANGE · don’t</span>
+              <span class="is-bird">BIRDIE · don’t</span>
+            </div>
+            <div class="snap-polaroid-fly" id="snapPolaroid" hidden>
+              <img src="assets/prepared/snap-freeze-flash.webp" alt="" width="120" height="150">
+              <p id="snapPolaroidText">SNAP!</p>
+            </div>
+            <div class="vendor-actions snap-actions snap-stage-actions">
+              <button class="ticket-button" id="snapStart" type="button">START · 1 demo coin</button>
+              <button class="ticket-button snap-shutter vendor-play-only" id="snapFreeze" type="button" hidden disabled>SNAP · WHITE</button>
+            </div>
+          </div>
+          <p class="status-ticket" id="snapStatus">Living plate · START · 1 demo coin · 8 authored TAKES then ENDLESS</p>
+          <p class="tier-pill" id="snapTier" hidden></p>
+          <p class="love-verdict" id="snapVerdict" hidden></p>
+          <p class="combo-line" id="snapCombo" hidden></p>
+          <div class="vendor-result" id="snapResult" hidden>
+            <p class="vendor-result-game">FLASH BOOTH</p>
+            <p class="vendor-result-depth" id="snapResultDepth">TAKE 0</p>
+            <p class="vendor-result-score" id="snapResultScore">SCORE 0</p>
+            <p class="vendor-result-reason" id="snapResultReason"></p>
+            <p class="vendor-result-aura" id="snapResultAura"></p>
+            <p class="vendor-result-challenge" id="snapChallengeText">Beat my Flash Booth take 0 on Penny Fever</p>
+            <button class="quiet-button" id="snapChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="snapCopied" hidden>Copied</p>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior whisper-interior" id="cabinet-whisper" hidden data-cabinet="whisper" aria-labelledby="cabinet-whisper-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the gossip curtain</p>
+          <h1 id="cabinet-whisper-title">Gossip Booth</h1>
+          <p class="interior-blurb">One thumb. Drag the brass ear-trumpet. Tap to snap. ROSE-GOLD is a fib — catch it. CREAM is a truth — let it pass. Colour is the lock. No typing. No mic.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card whisper-card is-vestibule" id="whisperCard">
+          <p class="machine-number" id="whisperMachine">3D parlor · ear-trumpet · 1 demo coin · secrets held</p>
+          <h2>Gossip Booth</h2>
+          <p class="tent-mouth-joke">Colour is the lock. Rose-gold lies. Cream tells the truth.</p>
+          <p class="vendor-vestibule-only" data-pf-depth-copy>One thumb on the parlor: drag to move the brass ear-trumpet, tap to SNAP. ROSE-GOLD notes are fibs — catch every one. CREAM notes are truths — let them pass. Don’t read the gossip; trust the colour. No mic. No text field. Eight authored salons, then ENDLESS. Depth is secrets held. One coin, one run, curtain on a miss.</p>
+          <div class="depth-readout" aria-label="Gossip Booth run depth">
+            <span><small>Secrets now</small><strong id="depthWhisperCount">0</strong></span>
+            <span><small>Best secrets</small><strong id="depthWhisperBest">—</strong></span>
+            <span><small>Score</small><strong id="depthWhisperScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthWhisperBestScore">—</strong></span>
+          </div>
+          <ol class="whisper-howto" id="whisperHowto">
+            <li><b>ONE THUMB</b> — drag to move the trumpet. Tap (or the SNAP pad) to snap. Hold on rose-gold and it catches.</li>
+            <li><b>ROSE-GOLD = FIB</b> — snap it. <b>CREAM = TRUTH</b> — let it pass. Colour is the lock; don’t type, don’t talk, don’t guess.</li>
+            <li><b>MOTHS</b> are noise. No mic. No text field.</li>
+          </ol>
+          <div class="signature-prop signature-prop--whisper vendor-vestibule-only" aria-hidden="true">
+            <span class="prop-curtain">❮</span><b>SNAP THE FIB</b><i>AIM</i><i>LISTEN</i><span class="prop-curtain">❯</span>
+          </div>
+          <p class="barker-call" id="whisperBarker">ONE THUMB · DRAG TO AIM · TAP ROSE-GOLD</p>
+          <div class="vendor-stage vendor-stage--whisper" id="whisperStage">
+            <canvas id="whisperCanvas" width="960" height="720" tabindex="0" aria-label="Gossip parlor. One thumb: drag to move the brass ear-trumpet, tap to snap rose-gold fibs. Cream notes are truths — let them pass. No microphone. No typing."></canvas>
+            <div class="whisper-hud" id="whisperHud" aria-live="polite">
+              <p class="whisper-hud-room" id="whisperHudRoom">SECRET 0</p>
+              <div class="whisper-legend" id="whisperLegend">
+                <span class="leg-fib">ROSE-GOLD = FIB · SNAP</span>
+                <span class="leg-true">CREAM = TRUTH · LET PASS</span>
+                <span class="leg-moth">MOTHS = NOISE</span>
+              </div>
+              <p class="whisper-range" id="whisperRange" hidden>ROSE-GOLD FIB — TAP TO SNAP</p>
+              <p class="whisper-hud-barker" id="whisperHudBarker">ONE THUMB · DRAG TO AIM · TAP ROSE-GOLD</p>
+              <div class="whisper-timer" id="whisperTimer" hidden><i id="whisperTimerFill"></i></div>
+              <p class="whisper-hover" id="whisperHover"></p>
+              <div class="whisper-controls" id="whisperControls">
+                <span>ONE THUMB · drag = move</span>
+                <span>TAP / HOLD ROSE-GOLD = SNAP</span>
+              </div>
+            </div>
+            <button class="whisper-snap-btn" id="whisperSnap" type="button" tabindex="-1">TAP · SNAP</button>
+            <div class="whisper-flash" id="whisperFlash" hidden aria-hidden="true"></div>
+            <div class="whisper-slam" id="whisperSlam" hidden aria-hidden="true"><span>CURTAIN DROP</span></div>
+            <span class="strike-pips" data-runkit-strikes="whisper" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+          <div class="vendor-actions">
+            <button class="ticket-button" id="whisperStart" type="button">START · 1 demo coin</button>
+          </div>
+          <p class="status-ticket" id="whisperStatus">Depth run · START · 1 demo coin · 8 authored salons then ENDLESS · one thumb · colour-lock</p>
+          <p class="tier-pill" id="whisperTier" hidden></p>
+          <p class="love-verdict" id="whisperVerdict" hidden></p>
+          <div class="vendor-result" id="whisperResult" hidden>
+            <p class="vendor-result-game">GOSSIP BOOTH</p>
+            <p class="vendor-result-depth" id="whisperResultDepth">SECRETS 0</p>
+            <p class="vendor-result-score" id="whisperResultScore">SCORE 0</p>
+            <p class="vendor-result-aura" id="whisperResultAura"></p>
+            <p class="vendor-result-challenge" id="whisperChallengeText">Beat my Gossip Booth secrets 0 on Penny Fever</p>
+            <button class="quiet-button" id="whisperChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="whisperCopied" hidden>Copied — send it</p>
+          </div>
+          <div class="whisper-legacy-stubs" hidden>
+            <img id="whisperCabinetArt" data-live-art="1" data-asset="whisper_cabinet" src="assets/game/Whisper_Charm/Idle.webp" alt="">
+            <label class="subject-label" for="whisperWord">Your word</label>
+            <input class="subject-input" id="whisperWord" type="text" maxlength="24" autocomplete="off" disabled readonly tabindex="-1" aria-hidden="true">
+            <button class="ticket-button" id="whisperGo" type="button" tabindex="-1" aria-hidden="true">Part the peep curtain</button>
+            <div class="charm-card" id="charmCard" hidden>
+              <p class="charm-seal">✧ CHARM ✧</p>
+              <p class="tier-pill" id="charmRarity" hidden></p>
+              <p class="charm-word" id="charmWord"></p>
+              <p class="charm-line" id="charmLine"></p>
+            </div>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior pf-mq-root" id="cabinet-marquee" hidden data-cabinet="marquee" aria-labelledby="cabinet-marquee-title">
+      <div class="interior-room pf-mq-room">
+        <div class="interior-stage pf-mq-stage-wrap">
+          <div class="pf-mq-viewport">
+            <canvas id="marqueeCanvas" width="1280" height="720" tabindex="0" aria-label="Boardwalk Lights spark ride. Drag or use WASD and arrow keys to steer the spark. Fly through gold letters. Dodge ice-blue shorts."></canvas>
+            <div class="pf-mq-vignette" aria-hidden="true"></div>
+            <header class="interior-header pf-mq-header">
+              <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+              <div class="pf-mq-titles">
+                <p class="plaque-kicker">Under the night sign</p>
+                <h1 id="cabinet-marquee-title" tabindex="-1">Boardwalk Lights</h1>
+                <p class="interior-blurb pf-mq-blurb">You are the spark. Steer down the pier. Gold letters light the night. Ice-blue shorts kill the fuse.</p>
+              </div>
+            </header>
+            <article class="attraction-card marquee-card is-vestibule" id="marqueeCard">
+              <img class="pf-mq-art-keep" id="marqueeArt" data-live-art="1" src="assets/prepared/ticket-booth-lean.webp" alt="">
+              <p class="marquee-rk-hud" data-runkit-hud="marquee" aria-live="polite">WAVE 0</p>
+              <div class="pf-mq-playhud vendor-play-only" aria-live="polite">
+                <p class="pf-mq-word" id="marqueeCueWord"></p>
+                <p class="pf-mq-hint" id="marqueeHint">STEER THE SPARK · GOLD THROUGH · ICE DODGE</p>
+              </div>
+              <div class="pf-mq-howto" id="marqueeHowTo">
+                <p class="pf-mq-howto-title">HOW TO PLAY</p>
+                <ul>
+                  <li><b>STEER</b> finger / drag · WASD · arrows</li>
+                  <li><b>GOLD hoop</b> fly through the letter</li>
+                  <li><b>ICE-BLUE hoop</b> dodge — a short costs a strike</li>
+                  <li><b>3 STRIKES</b> and the fuse dies</li>
+                </ul>
+              </div>
+              <div class="pf-mq-keys vendor-play-only" aria-hidden="true">
+                <span>STEER · finger / drag</span>
+                <span class="gold">GOLD · through</span>
+                <span class="ice">ICE-BLUE · dodge</span>
+              </div>
+              <span class="strike-pips pf-mq-pips" data-runkit-strikes="marquee" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="status-ticket pf-mq-status" id="marqueeStatus">STEER the spark · GOLD through · ICE dodge · START · 1 demo coin</p>
+              <div class="pf-mq-dock">
+                <p class="machine-number">Spark ride · 1 demo coin · 3D depth run</p>
+                <p class="tent-mouth-joke vendor-vestibule-only">Not a tap-the-bulb teaser. You fly the night sign.</p>
+                <p class="pf-depth-tag vendor-vestibule-only" data-pf-depth-tag="1" role="status">DEPTH RUN · 8 authored WAVES then ENDLESS · steer the spark</p>
+                <p class="vendor-vestibule-only" data-pf-depth-copy>Ride a carnival spark down the 3D pier. Steer through gold letter gates. Ice-blue is a short. Three shorts stamp the fuse. Eight authored courses, then ENDLESS sky sign.</p>
+                <div class="depth-readout" aria-label="Boardwalk Lights run depth">
+                  <span><small>Wave now</small><strong id="depthMarqueeNow">0</strong></span>
+                  <span><small>Best wave</small><strong id="depthMarqueeBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthMarqueeScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthMarqueeBestScore">—</strong></span>
+                </div>
+                <p class="barker-call">STEER THE SPARK — GOLD THROUGH, ICE DODGE</p>
+                <button class="ticket-button" id="marqueeGo" type="button">RIDE · 1 demo coin</button>
+                <p class="tier-pill" id="marqueeTier" hidden></p>
+                <p class="love-verdict" id="marqueeVerdict" hidden></p>
+                <div class="vendor-result" id="marqueeResult" hidden>
+                  <p class="vendor-result-game">BOARDWALK LIGHTS</p>
+                  <p class="vendor-result-depth" id="marqueeResultDepth">WAVE 0</p>
+                  <p class="vendor-result-score" id="marqueeResultScore">SCORE 0</p>
+                  <p class="vendor-result-aura" id="marqueeResultAura"></p>
+                  <p class="vendor-result-challenge" id="marqueeChallengeText">Beat my Boardwalk Lights 0 on Penny Fever</p>
+                  <button class="quiet-button" id="marqueeChallenge" type="button">Copy challenge</button>
+                  <p class="vendor-result-copied" id="marqueeCopied" hidden>Copied</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior pack-interior" id="cabinet-pack" hidden data-cabinet="pack" aria-labelledby="cabinet-pack-title">
+      <article class="attraction-card pack-card is-vestibule" id="packCard">
+        <canvas id="packCanvas" width="960" height="720" aria-label="Night Kit packing tent. Steer the heart lantern, hold to fly, catch three glowing kits, then dive the packed night."></canvas>
+        <div class="pack-vignette" aria-hidden="true"></div>
+        <header class="pack-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="pack-titleblock">
+            <p class="plaque-kicker">Inside the packing tent</p>
+            <h1 id="cabinet-pack-title">Night Kit</h1>
+          </div>
+        </header>
+        <p class="depth-hud pack-rk-hud" data-runkit-hud="pack" hidden aria-live="polite">ROUTE 0</p>
+        <div class="pack-hud" id="packHud" hidden>
+          <div class="pack-call" id="packCallChip"><span>LOADOUT</span><strong id="packCall">PICK 3 ROOMS</strong></div>
+          <ul class="pack-slots" id="packSlots">
+            <li data-slot="0">—</li>
+            <li data-slot="1">—</li>
+            <li data-slot="2">—</li>
+          </ul>
+          <div class="pack-need"><small>Packed</small><strong id="packNeed">0 / 3</strong></div>
+          <span class="strike-pips" data-runkit-strikes="pack" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <div class="pack-timer" id="packTimer" hidden aria-hidden="true"><i id="packTimerFill"></i></div>
+        <p class="pack-toast" id="packToast" hidden></p>
+        <div class="pack-controls" id="packControls">
+          <span><b>STEER</b> pointer or WASD</span>
+          <span><b>HOLD</b> click / Space to fly</span>
+          <span><b>PACK</b> fly into a kit — it becomes a room</span>
+          <span><b>SWAP</b> tap a slot · <b>LATCH / Enter</b> dive in that order</span>
+        </div>
+        <p class="pack-prompt" id="packPrompt">Pack three kits. Each one is a room you dive, in the order you packed.</p>
+        <div class="pack-vestibule vendor-vestibule-only">
+          <p class="machine-number">Packing parlor · 1 demo coin · depth run</p>
+          <h2>Night Kit</h2>
+          <p class="tent-mouth-joke">The suitcase is a loadout, not a loot peek. Pack three rooms, then fly them in order.</p>
+          <p class="pf-depth-tag" data-pf-depth-tag="1" role="status">DEPTH RUN · 8 authored ROUTES · ENDLESS · pack a loadout · dive those rooms</p>
+          <p data-pf-depth-copy>Steer the heart lantern. Hold to fly. Scoop three kits — penny, lantern, ticket, charm, coin, or map. The order you pack is the order you dive: slam-gates, dark hoops, gold tickets, stillness, peak coins, star path. Tap a slot to swap. LATCH (or Enter) to commit. Ghost kits are fog. Moths steal. Death ends the route.</p>
+          <div class="depth-readout" aria-label="Night Kit run depth">
+            <span><small>Routes now</small><strong id="depthPackNow">0</strong></span>
+            <span><small>Best route</small><strong id="depthPackBest">—</strong></span>
+            <span><small>Score</small><strong id="depthPackScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthPackBestScore">—</strong></span>
+          </div>
+          <p class="barker-call">PACK THREE ROOMS — DIVE THEM IN ORDER</p>
+          <button class="ticket-button" id="packStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="packLiveStatus">Depth run · START · 1 demo coin · pack three rooms · latch · dive that loadout</p>
+        </div>
+        <p class="tier-pill" id="packTier" hidden></p>
+        <p class="love-verdict" id="packVerdict" hidden></p>
+        <div class="vendor-result" id="packResult" hidden>
+          <p class="vendor-result-game">NIGHT KIT</p>
+          <p class="vendor-result-depth" id="packResultDepth">ROUTE 0</p>
+          <p class="vendor-result-score" id="packResultScore">SCORE 0</p>
+          <p class="vendor-result-reason" id="packResultReason"></p>
+          <p class="vendor-result-aura" id="packResultAura"></p>
+          <p class="vendor-result-challenge" id="packChallengeText">Beat my Night Kit route 0 on Penny Fever</p>
+          <button class="quiet-button" id="packChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="packCopied" hidden>Copied — send it</p>
+        </div>
+        <img id="packArt" data-live-art="1" src="assets/game/Cabinet_of_Curios/Pressed_Penny.webp" alt="" hidden>
+        <button id="mintPack" class="pack-legacy-mint" type="button" hidden tabindex="-1" aria-hidden="true">Mint demo pack</button>
+        <div class="penny-pack" id="pennyPack" hidden>
+          <div class="penny" id="penny0"></div>
+          <div class="penny" id="penny1"></div>
+          <div class="penny" id="penny2"></div>
+        </div>
+        <p class="status-ticket" id="packStatus" hidden>Three pennies · one pack per Darwin evening (demo)</p>
+        <button class="ticket-button pack-latch" id="packLatch" type="button" hidden>LATCH · DIVE THIS LOADOUT</button>
+      </article>
+    </section>
+    <section class="cabinet-interior pass-interior" id="cabinet-pass" hidden data-cabinet="pass" aria-labelledby="cabinet-pass-title">
+      <article class="attraction-card pass-card is-vestibule" id="passCard">
+        <canvas id="passCanvas" width="960" height="720" aria-label="Prestige fly gallery. Move to aim the brass hook. Click to CATCH gold bags. Let DUMP ghosts fall. Press 1 2 3 4 when a fly rope glows."></canvas>
+        <div class="pass-vignette" aria-hidden="true"></div>
+        <div class="pass-flash" id="passFlash" aria-hidden="true"></div>
+        <header class="pass-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="pass-titleblock">
+            <p class="plaque-kicker">Behind the employees-only flap</p>
+            <h1 id="cabinet-pass-title">Backstage Flap</h1>
+          </div>
+        </header>
+        <p class="pass-depth-hud" data-runkit-hud="pass" hidden aria-live="polite">CALL 0</p>
+        <div class="pass-hud" id="passHud" hidden>
+          <div class="pass-need"><small>Caught</small><strong id="passNeed">0 / 6</strong></div>
+          <div class="pass-rope-chip" id="passRopeChip" data-hot="off"><span>FLY ROPE</span><strong id="passRopeCall">—</strong></div>
+          <span class="strike-pips" data-runkit-strikes="pass" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <aside class="pass-controls" id="passControls" aria-label="How to play">
+          <p class="pass-controls-title">THE RUN</p>
+          <p><kbd>MOVE</kbd> Slide the hoop under gold</p>
+          <p><kbd>CLICK</kbd> / <kbd>SPACE</kbd> Extra snatch</p>
+          <p><i class="pass-swatch pass-swatch--gold"></i> <b>CATCH</b> gold</p>
+          <p><i class="pass-swatch pass-swatch--ghost"></i> <b>DUMP</b> pale ghosts</p>
+          <p><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> when a rope glows</p>
+          <p class="pass-controls-foot">3 misses close the house</p>
+        </aside>
+        <div class="pass-flykeys" id="passFlyKeys" role="group" aria-label="Fly ropes 1 to 4">
+          <button type="button" class="pass-flykey" data-rope="0"><b>1</b><span>TREE</span></button>
+          <button type="button" class="pass-flykey" data-rope="1"><b>2</b><span>MOON</span></button>
+          <button type="button" class="pass-flykey" data-rope="2"><b>3</b><span>CASTLE</span></button>
+          <button type="button" class="pass-flykey" data-rope="3"><b>4</b><span>STAR</span></button>
+        </div>
+        <p class="pass-toast" id="passToast" hidden></p>
+        <div class="pass-vestibule vendor-vestibule-only">
+          <p class="machine-number">Employees only · prestige run · 1 demo coin</p>
+          <img id="passArt" class="pass-art-keep" data-live-art="1" data-asset="showman_pass" src="assets/game/Showmans_Pass/Blank_Ticket.webp" alt="Ornate Showman's Pass">
+          <p class="tent-mouth-joke">Catch gold. Dump ghosts. Pull 1–4 when they glow.</p>
+          <p class="pf-depth-tag" data-pf-depth-tag="1" role="status">DEPTH RUN · 8 CALLS then ENDLESS · not a stamp card</p>
+          <p data-pf-depth-copy>One coin. Catch gold loft-bags. Let pale ghosts hit the pit. When a fly rope glows, hit 1 2 3 4. Eight authored calls, then ENDLESS.</p>
+          <div class="depth-readout" aria-label="Backstage fly-gallery depth">
+            <span><small>Call now</small><strong id="depthPassNow">0</strong></span>
+            <span><small>Best call</small><strong id="depthPassBest">—</strong></span>
+            <span><small>Score</small><strong id="depthPassScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthPassBestScore">—</strong></span>
+          </div>
+          <p class="barker-call" id="passBarker">EMPLOYEES ONLY — KEEP HER LIT</p>
+          <button class="quiet-button pass-grant" id="demoPass" type="button">Demo: grant Showman’s Pass</button>
+          <p class="status-ticket" id="passStatus">Prestige run · STEP INSIDE · 1 demo coin</p>
+        </div>
+        <button class="ticket-button pass-start" id="passStart" type="button">STEP INSIDE · 1 demo coin</button>
+        <p class="tier-pill" id="passTier" hidden></p>
+        <p class="love-verdict" id="passVerdict" hidden></p>
+        <div class="vendor-result" id="passResult" hidden>
+          <p class="vendor-result-game">BACKSTAGE FLAP</p>
+          <p class="vendor-result-depth" id="passResultDepth">CALL 0</p>
+          <p class="vendor-result-score" id="passResultScore">SCORE 0</p>
+          <p class="vendor-result-aura" id="passResultAura"></p>
+          <p class="vendor-result-challenge" id="passChallengeText">Beat my Backstage Flap call 0 on Penny Fever</p>
+          <button class="quiet-button" id="passChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="passCopied" hidden>Copied</p>
+        </div>
+      </article>
+    </section>
+    <section class="cabinet-interior" id="cabinet-ball-toss" hidden data-cabinet="ball-toss" aria-labelledby="cabinet-ball-toss-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room toss3d-room">
+        <header class="interior-header toss3d-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the toss-stall flap</p>
+          <h1 id="cabinet-ball-toss-title">Barely-Fit Toss</h1>
+          <p class="interior-blurb">A real toss alley — hanging hoops, sliding buckets, a clown mouth that lies. Point. Pull. Throw. Soft sinks. Heaters spit.</p>
+        </header>
+        <div class="interior-stage toss3d-stage">
+          <article class="attraction-card balltoss-card is-vestibule" id="ballTossCard">
+            <div class="toss3d-viewport vendor-stage" id="ballTossStage">
+              <canvas id="ballTossCanvas" aria-label="3D barely-fit toss alley. Point at a hole, pull back, release to throw."></canvas>
+              <aside class="toss3d-howto" id="ballTossHowTo" aria-label="How to play">
+                <p class="toss3d-howto-title">HOW TO PLAY</p>
+                <p><kbd>POINT</kbd> at a hoop, bucket, or mouth</p>
+                <p><kbd>PULL BACK</kbd> that’s your power</p>
+                <p><kbd>RELEASE</kbd> to throw</p>
+                <p>Soft tosses <b>sink</b>. Heaters <b>spit</b>.</p>
+                <p class="toss3d-howto-foot">3 misses close the stall · 1 coin = 1 run</p>
+              </aside>
+              <div class="toss3d-hud">
+                <div class="depth-readout" aria-label="Ball toss run depth">
+                  <span><small>Racks now</small><strong id="depthTossNow">0</strong></span>
+                  <span><small>Best rack</small><strong id="depthTossBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthTossScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthTossBestScore">—</strong></span>
+                </div>
+                <div class="toss3d-pips" id="ballTossPips" aria-label="Misses remaining">
+                  <i></i><i></i><i></i>
+                </div>
+              </div>
+              <div class="toss3d-room-card" id="ballTossRoomCard" hidden>
+                <small id="ballTossRoomKicker">AUTHORED RACK</small>
+                <strong id="ballTossHudRack">Honest Hoops</strong>
+                <em id="ballTossHudTell">THREE HANGING BRASS HOOPS</em>
+              </div>
+              <div class="toss3d-power" id="ballTossPower" hidden><span></span></div>
+              <p class="toss3d-hint" id="ballTossHint" hidden>Point · pull back · release</p>
+              <div class="toss3d-spit" id="ballTossSpit" hidden>SPIT</div>
+              <div class="toss3d-stamp" id="ballTossStamp" hidden>CLOSED</div>
+              <div class="toss3d-gate vendor-vestibule-only">
+                <p class="machine-number">Midway toss · 1 demo coin · depth run</p>
+                <h2>Barely-Fit Toss</h2>
+                <p class="tent-mouth-joke">The holes are slightly too small. Some of them aren’t holes at all.</p>
+                <p class="pf-depth-tag" data-pf-depth-tag="1" role="status">DEPTH RUN · 8 authored RACKS then ENDLESS · not a one-tap prize</p>
+                <p data-pf-depth-copy>Honest Hoops → Pendulum Hoops → Sway Buckets → Oval Mouth → Cluster Cans → Spin Wheel → Decoy Crate → Warp Keyhole. Each rack is a new aim verb. Soft thread sinks. Heaters SPIT. Three misses stamps CLOSED.</p>
+                <p class="barker-call">STEP RIGHT UP — HOLES THAT BARELY FIT — HOW MANY RACKS?</p>
+                <button class="ticket-button" id="ballTossStart" type="button">START · 1 demo coin</button>
+              </div>
+              <div class="toss3d-playbar vendor-play-only">
+                <p class="status-ticket" id="ballTossStatus">Point at a hole · pull back · three misses stamps CLOSED</p>
+              </div>
+              <p class="tier-pill" id="ballTossTier" hidden></p>
+              <p class="love-verdict" id="ballTossVerdict" hidden></p>
+              <div class="vendor-result" id="ballTossResult" hidden>
+                <p class="vendor-result-game">BARELY-FIT TOSS</p>
+                <p class="vendor-result-depth" id="ballTossResultDepth">RACK 0</p>
+                <p class="vendor-result-score" id="ballTossResultScore">SCORE 0</p>
+                <p class="vendor-result-aura" id="ballTossResultAura"></p>
+                <p class="vendor-result-challenge" id="ballTossChallengeText">Beat my Ball Toss rack 0 on Penny Fever</p>
+                <button class="quiet-button" id="ballTossChallenge" type="button">Copy challenge</button>
+                <p class="vendor-result-copied" id="ballTossCopied" hidden>Copied</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior pf-pusher-root" id="cabinet-coin-pusher" hidden data-cabinet="coin-pusher" aria-labelledby="cabinet-coin-pusher-title">
+      <div class="interior-room pf-pusher-room">
+        <div class="interior-stage pf-pusher-stage-wrap">
+          <div class="pf-pusher-viewport">
+            <canvas id="pusherCanvas" width="960" height="720" aria-label="Three-dimensional penny cascade. Slide to aim the hopper. Tap or press Space to drop a penny. Press C to cash out."></canvas>
+            <div class="pf-pusher-vignette" aria-hidden="true"></div>
+            <header class="interior-header pf-pusher-header">
+              <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+              <div class="pf-pusher-titles">
+                <p class="plaque-kicker">Beyond the penny-ledge flap</p>
+                <h1 id="cabinet-coin-pusher-title" tabindex="-1">Coin Pusher Shelf</h1>
+                <p class="interior-blurb pf-pusher-blurb">A three-tier brass cascade under glass. Slide the hopper. Drop. Cash out — or the pit takes the night.</p>
+              </div>
+            </header>
+            <article class="attraction-card pusher-card is-vestibule" id="pusherCard">
+              <img class="pf-pusher-art-keep" id="pusherArt" data-live-art="1" data-asset="coin_pusher_shelf" src="assets/prepared/coin-pusher-greed.webp" alt="">
+              <p class="pusher-rk-hud" data-runkit-hud="coinpusher" aria-live="polite"></p>
+              <div class="pf-pusher-playhud vendor-play-only" aria-live="polite">
+                <div class="pf-pusher-scoreblock">
+                  <p class="pf-pusher-score" id="depthPusherCoins">0</p>
+                  <p class="pf-pusher-scorelabel">BANKED</p>
+                </div>
+                <p class="pf-pusher-floor" id="depthPusherM">FLOOR 0</p>
+              </div>
+              <div class="pf-pusher-howto vendor-play-only" id="pusherHowTo">
+                <p class="pf-pusher-howto-title">HOW TO PLAY</p>
+                <ul>
+                  <li><b>MOVE</b> slide hopper · ← → / A D / drag</li>
+                  <li><b>DROP</b> tap the glass · SPACE · DROP</li>
+                  <li><b>CASH OUT</b> C · walk with the tray</li>
+                </ul>
+              </div>
+              <p class="pusher-aim-hint" id="pusherAimHint" hidden>Hopper center</p>
+              <p class="pf-pusher-toast" id="pusherToast" hidden></p>
+              <div class="pf-pusher-keys vendor-play-only" aria-hidden="true">
+                <span id="pusherKeyL">AIM LEFT</span>
+                <span id="pusherKeyDrop">TAP TO DROP</span>
+                <span id="pusherKeyR">AIM RIGHT</span>
+              </div>
+              <div class="pf-pusher-playbar vendor-play-only">
+                <button class="quiet-button" id="pusherDrop" type="button">DROP</button>
+                <button class="ticket-button" id="pusherCash" type="button">CASH OUT</button>
+              </div>
+              <div class="greed-prompt" id="pusherGreed" hidden>
+                <p>Tray jingled <strong id="pusherGreedN">0</strong>. Take it — or go deeper?</p>
+                <button class="ticket-button cash-scream" id="pusherGreedCash" type="button">CASH OUT</button>
+                <button class="ticket-button" id="pusherDropAgain" type="button">NEXT FLOOR</button>
+              </div>
+              <p class="status-ticket pf-pusher-status" id="pusherStatus">Slide · DROP · watch the cascade · cash out or get buried</p>
+              <div class="pf-pusher-dock">
+                <p class="machine-number">Penny cascade · 1 demo coin · 3D depth run</p>
+                <p class="tent-mouth-joke vendor-vestibule-only">The shelf of pennies — greed vs getting buried.</p>
+                <p class="pf-depth-tag vendor-vestibule-only" data-pf-depth-tag="1" role="status">DEPTH RUN · 7 authored FLOORS · ENDLESS coda · cash out or greed</p>
+                <p class="vendor-vestibule-only" data-pf-depth-copy>Slide the hopper. Drop a penny. Brass plates shove. Coins cascade. Tray jingled? Walk with it — or go deeper. Empty shelf after Floor 1 is death.</p>
+                <div class="depth-readout" aria-label="Coin pusher run depth">
+                  <span><small>Best floor</small><strong id="depthPusherBestM">—</strong></span>
+                  <span><small>Best banked</small><strong id="depthPusherBestC">—</strong></span>
+                </div>
+                <p class="barker-call">GREED IS THE GAME — CASH OUT OR GO DEEPER</p>
+                <button class="ticket-button" id="pusherStart" type="button">DROP IN · 1 demo coin</button>
+                <p class="tier-pill" id="pusherTier" hidden></p>
+                <p class="love-verdict" id="pusherVerdict" hidden></p>
+                <div class="vendor-result" id="pusherResult" hidden>
+                  <p class="vendor-result-game">COIN PUSHER SHELF</p>
+                  <p class="vendor-result-depth" id="pusherResultDepth">FLOOR 0</p>
+                  <p class="vendor-result-score" id="pusherResultScore">SCORE 0</p>
+                  <p class="vendor-result-aura" id="pusherResultAura"></p>
+                  <p class="vendor-result-challenge" id="pusherChallengeText">Beat my Coin Pusher floor 0 on Penny Fever</p>
+                  <button class="quiet-button" id="pusherChallenge" type="button">Copy challenge</button>
+                  <p class="vendor-result-copied" id="pusherCopied" hidden>Copied</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior pf-pin-root" id="cabinet-pinball" hidden data-cabinet="pinball" aria-labelledby="cabinet-pinball-title">
+      <div class="interior-room pf-pin-room">
+        <div class="interior-stage pf-pin-stage-wrap">
+          <div class="pf-pin-viewport">
+            <canvas id="pinballCanvas" width="960" height="1280" aria-label="Pinball Alley. One thumb: hold to plunge, tap to flip. The left lane is hungry."></canvas>
+            <div class="pf-pin-vignette" aria-hidden="true"></div>
+            <header class="interior-header pf-pin-header">
+              <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+              <div class="pf-pin-titles">
+                <p class="plaque-kicker">Beyond the backglass glow</p>
+                <h1 id="cabinet-pinball-title">Pinball Alley</h1>
+                <p class="interior-blurb pf-pin-blurb">One thumb. The left lane is hungry. Keep her on the right.</p>
+              </div>
+            </header>
+            <article class="attraction-card pinball-card is-vestibule" id="pinballCard">
+              <img class="pf-pin-art-keep" id="pinballArt" data-live-art="1" data-asset="pinball_backglass" src="assets/prepared/pinball-neon-playfield.webp" alt="">
+              <p class="pinball-rk-hud" data-runkit-hud="pinball"></p>
+              <div class="pf-pin-playhud vendor-play-only" aria-live="polite">
+                <p class="pf-pin-score" id="pinballLiveScore">0</p>
+                <p class="pf-pin-mission" id="pinballMission">Hit each bumper once</p>
+              </div>
+              <div class="pf-pin-howto vendor-play-only" id="pinballHowTo">
+                <p class="pf-pin-howto-title">HOW TO PLAY</p>
+                <ul>
+                  <li><b>ONE THUMB</b> hold to plunge · tap to flip. That is the whole verb.</li>
+                  <li><b>HUNGRY LEFT</b> the left lane eats. Keep her on the right paddle.</li>
+                  <li><b>ONE BALL</b> drain ends the coin · lit toys clear chapters</li>
+                </ul>
+              </div>
+              <p class="pf-pin-plunge vendor-play-only" id="pinballPlunge" hidden>HOLD with one thumb · LET GO to plunge</p>
+              <div class="pf-pin-charge" id="pinballCharge" aria-hidden="true"><i id="pinballChargeFill"></i></div>
+              <button type="button" class="pf-pin-thumb vendor-play-only" id="pinballThumb">HOLD TO PLUNGE</button>
+              <div class="pf-pin-dock">
+                <p class="machine-number">One thumb · one chrome ball · 1 demo coin</p>
+                <p class="tent-mouth-joke vendor-vestibule-only">The left lane is a mouth. One thumb on the right paddle. The table teaches the rest.</p>
+                <p class="pf-depth-tag vendor-vestibule-only" data-pf-depth-tag="1" role="status">DEPTH RUN · chapters until DRAIN · one thumb · not a two-flipper sim</p>
+                <div class="pf-pin-howto pf-pin-howto--dock vendor-vestibule-only">
+                  <p class="pf-pin-howto-title">HOW TO PLAY</p>
+                  <ul>
+                    <li><b>ONE THUMB</b> hold to charge the spring, let go to plunge, tap to flip.</li>
+                    <li><b>HUNGRY LEFT</b> there is no left flipper. That lane wants to eat.</li>
+                    <li><b>STAY RIGHT</b> the live paddle is the only save.</li>
+                    <li><b>DRAIN</b> ends the night. Lit missions clear chapters.</li>
+                  </ul>
+                </div>
+                <p class="vendor-vestibule-only" data-pf-depth-copy>One thumb. The table is the teacher. The left lane is hungry.</p>
+                <div class="depth-readout" aria-label="Pinball run depth">
+                  <span><small>Score now</small><strong id="depthPinballBalls">0</strong></span>
+                  <span><small>Chapter</small><strong id="depthPinballCh">—</strong></span>
+                  <span><small>Best score</small><strong id="depthPinballBestB">—</strong></span>
+                  <span><small>Best chapter</small><strong id="depthPinballBestCh">—</strong></span>
+                </div>
+                <p class="barker-call">ONE THUMB — THE LEFT LANE IS HUNGRY</p>
+                <button class="ticket-button" id="pinballStart" type="button">START · 1 demo coin</button>
+                <p class="status-ticket" id="pinballStatus">Depth run · START · 1 demo coin · drain ends the run</p>
+                <p class="tier-pill" id="pinballTier" hidden></p>
+                <p class="love-verdict" id="pinballVerdict" hidden></p>
+                <div class="vendor-result" id="pinballResult" hidden>
+                  <p class="vendor-result-game">PINBALL ALLEY</p>
+                  <p class="vendor-result-depth" id="pinballResultDepth">CHAPTER 0</p>
+                  <p class="vendor-result-score" id="pinballResultScore">SCORE 0</p>
+                  <p class="vendor-result-aura" id="pinballResultAura"></p>
+                  <p class="vendor-result-challenge" id="pinballChallengeText">Beat my Pinball chapter 0 on Penny Fever</p>
+                  <button class="quiet-button" id="pinballChallenge" type="button">Copy challenge</button>
+                  <p class="vendor-result-copied" id="pinballCopied" hidden>Copied</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior watergun-tent" id="cabinet-water-gun" hidden data-cabinet="water-gun" aria-labelledby="cabinet-water-gun-title">
+      <div class="interior-sky watergun-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header watergun-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the spray-lane flap</p>
+          <h1 id="cabinet-water-gun-title">Water Gun Duel</h1>
+          <p class="interior-blurb">Hold the brass gun. Race the ghost clown. First balloon to pop wins the heat.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card watergun-card is-vestibule" id="waterGunCard">
+          <p class="machine-number">3D spray gallery · 1 demo coin · depth run</p>
+          <div class="card-hero card-hero--wide vendor-vestibule-only">
+            <img id="waterGunArt" data-live-art="1" data-asset="water_gun_duel" src="assets/prepared/water-gun-duel.webp" alt="Two carnival water-gun lanes; ghost tube already rising">
+          </div>
+          <h2>Water Gun Duel</h2>
+          <p class="tent-mouth-joke">Two clowns. One ghost. The mouth lies. Fill yours first or go DRY.</p>
+          <p class="watergun-rk-hud" data-runkit-hud="watergun" aria-live="polite"></p>
+          <p class="barker-call">HOLD TO SPRAY — FIRST BALLOON POPS THE HEAT</p>
+          <div class="vendor-stage watergun-stage" id="waterGunStage">
+            <canvas id="waterGunCanvas" width="960" height="540" aria-label="3D water gun duel. Hold to spray, move to aim at the live clown mouth. First balloon to pop wins."></canvas>
+            <div class="watergun-overlay">
+              <div class="watergun-meters">
+                <div class="watergun-meter watergun-meter--you">
+                  <span>YOU</span>
+                  <i><b id="waterGunYouFill"></b></i>
+                  <em id="waterGunYouPct">0%</em>
+                </div>
+                <div class="watergun-meter watergun-meter--ghost">
+                  <span>GHOST</span>
+                  <i><b id="waterGunGhostFill"></b></i>
+                  <em id="waterGunGhostPct">0%</em>
+                </div>
+              </div>
+              <p class="watergun-toast" id="waterGunToast" hidden></p>
+              <p class="watergun-count" id="waterGunCount" hidden></p>
+              <div class="watergun-stall" id="waterGunStall" hidden>
+                <i id="waterGunStallFill"></i>
+                <span>STALL — HIT THE MOUTH</span>
+              </div>
+              <p class="watergun-keys">Space spray · WASD nudge · first hold spends the coin</p>
+              <p class="watergun-howto"><b>HOLD</b> spray <i>·</i> <b>MOVE</b> aim <i>·</i> <b>FILL</b> your balloon first</p>
+            </div>
+          </div>
+          <p class="vendor-vestibule-only" data-pf-depth-copy>Click the tent — or HOLD anywhere on the gallery — to spend one coin and race. Keep the stream on the glowing live mouth. Ghost never blinks. Stall while they fill and the night stamps DRY.</p>
+          <div class="depth-readout" aria-label="Water gun run depth">
+            <span><small>Heats now</small><strong id="depthGunNow">0</strong></span>
+            <span><small>Best heats</small><strong id="depthGunBest">—</strong></span>
+            <span><small>Score</small><strong id="depthGunScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthGunBestScore">—</strong></span>
+          </div>
+          <button class="ticket-button" id="waterGunStart" type="button">HOLD TO PLAY · 1 demo coin</button>
+          <p class="status-ticket" id="waterGunStatus">Click the gallery or HOLD to spray · live mouth glows · ghost never blinks</p>
+          <p class="tier-pill" id="waterGunTier" hidden></p>
+          <p class="love-verdict" id="waterGunVerdict" hidden></p>
+          <div class="vendor-result" id="waterGunResult" hidden>
+            <p class="vendor-result-game">WATER GUN DUEL</p>
+            <p class="vendor-result-reason" id="waterGunResultReason"></p>
+            <p class="vendor-result-depth" id="waterGunResultDepth">HEAT 0</p>
+            <p class="vendor-result-score" id="waterGunResultScore">SCORE 0</p>
+            <p class="vendor-result-aura" id="waterGunResultAura"></p>
+            <p class="vendor-result-challenge" id="waterGunChallengeText">Beat my Water Gun heat 0 on Penny Fever</p>
+            <button class="quiet-button" id="waterGunChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="waterGunCopied" hidden>Copied</p>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior milk-tent-root" id="cabinet-milk-bottles" hidden data-cabinet="milk-bottles" aria-labelledby="cabinet-milk-bottles-title">
+      <article class="attraction-card milk-card is-vestibule" id="milkCard">
+        <header class="milk-chrome">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="milk-chrome-copy">
+            <p class="plaque-kicker">Beyond the bottle-pyramid flap</p>
+            <h1 id="cabinet-milk-bottles-title">Weighted Milk Bottles</h1>
+          </div>
+          <div class="depth-readout" aria-label="Milk bottles run depth">
+            <span><small>Pyramids now</small><strong id="depthMilkNow">0</strong></span>
+            <span><small>Best pyramids</small><strong id="depthMilkBest">—</strong></span>
+            <span><small>Score</small><strong id="depthMilkScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthMilkBestScore">—</strong></span>
+          </div>
+        </header>
+        <div class="milk-stage vendor-stage" id="milkStage">
+          <canvas id="milkCanvas" aria-label="3D weighted milk-bottle tent. Drag to aim, pull back for power, release to throw."></canvas>
+          <div class="milk-overlay">
+            <aside class="milk-howto" id="milkHowTo">
+              <p class="milk-howto-kicker">How to play — no guessing</p>
+              <ol>
+                <li><b>One coin</b> buys the rail. Three softballs a pyramid.</li>
+                <li><b>Drag</b> anywhere on the tent to aim.</li>
+                <li><b>Pull toward you</b> to load power. The dots are your arc.</li>
+                <li><b>Let go</b> to throw. Knock every bottle. Cream flies. Heels are lead — they don't dance.</li>
+              </ol>
+            </aside>
+            <p class="milk-tell" id="milkTell">CREAM WOBBLES · HEELS DON'T · THAT'S LEAD</p>
+            <p class="milk-rk-hud" data-runkit-hud="milk" aria-live="polite"></p>
+            <p class="barker-call" id="milkBarker">KNOCK ’EM ALL — THE BOTTOM ONES FIGHT BACK</p>
+            <div class="milk-legend" id="milkLegend" aria-hidden="true">
+              <span>DRAG aim</span>
+              <span>PULL power</span>
+              <span>RELEASE throw</span>
+            </div>
+            <div class="milk-power" id="milkPower" hidden>
+              <i id="milkPowerFill"></i>
+              <em>POWER</em>
+            </div>
+            <div class="milk-throws" id="milkThrows" aria-hidden="true"><i></i><i></i><i></i></div>
+            <p class="status-ticket" id="milkStatus">Watch the wobble · still bottles are lead · 3 throws a pyramid</p>
+            <p class="milk-hint" id="milkHint">Tap the tent or the coin — then drag, pull, let go</p>
+            <p class="tier-pill" id="milkTier" hidden></p>
+            <p class="love-verdict" id="milkVerdict" hidden></p>
+            <button class="ticket-button" id="milkStart" type="button">PLAY · 1 demo coin</button>
+            <div class="vendor-result" id="milkResult" hidden>
+              <p class="vendor-result-game">WEIGHTED MILK BOTTLES</p>
+              <p class="vendor-result-depth" id="milkResultDepth">PYRAMID 0</p>
+              <p class="vendor-result-score" id="milkResultScore">SCORE 0</p>
+              <p class="vendor-result-aura" id="milkResultAura"></p>
+              <p class="vendor-result-challenge" id="milkChallengeText">Beat my Milk Bottles pyramid 0 on Penny Fever</p>
+              <button class="quiet-button" id="milkChallenge" type="button">Copy challenge</button>
+              <p class="vendor-result-copied" id="milkCopied" hidden>Copied</p>
+            </div>
+          </div>
+        </div>
+        <img id="milkArt" hidden data-live-art="1" data-asset="milk_bottles_pyramid" src="assets/prepared/milk-bottle-pyramid.webp" alt="">
+      </article>
+    </section>
+    <section class="cabinet-interior coverspot-3d" id="cabinet-cover-the-spot" hidden data-cabinet="cover-the-spot" aria-labelledby="cabinet-cover-the-spot-title">
+      <div class="interior-sky coverspot-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header coverspot-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">The gilding table</p>
+          <h1 id="cabinet-cover-the-spot-title">Cover-the-Spot</h1>
+          <p class="interior-blurb">Round felt. Brass plates. Cover the red — then cash, or get greedy.</p>
+        </header>
+        <div class="interior-stage coverspot-stage">
+          <article class="attraction-card coverspot-card is-vestibule" id="coverSpotCard">
+            <div class="coverspot-world" id="coverSpotWorld">
+              <canvas id="coverSpotCanvas" width="960" height="720" tabindex="0" aria-label="Cover-the-Spot 3D tent. Move to aim a brass disc. Tap or press Space to drop it on the red spot."></canvas>
+              <div class="coverspot-vignette" aria-hidden="true"></div>
+              <div class="coverspot-hud">
+                <p class="machine-number">Gilding table · 1 demo coin · 7 authored SPOTs then ENDLESS</p>
+                <p class="barker-call" id="coverSpotBarker">COVER THE RED — ONE DISC NEVER COVERS</p>
+                <p class="tent-mouth-joke" id="coverSpotJoke">Move to aim. Tap the table or press Space to drop. Cover the mark, then cash out or go deeper.</p>
+                <div class="depth-readout" aria-label="Cover-the-Spot run depth">
+                  <span><small>Spot now</small><strong id="depthCoverNow">SPOT 0</strong></span>
+                  <span><small>Coverage</small><strong id="depthCoverPct">0%</strong></span>
+                  <span><small>Best spot</small><strong id="depthCoverBest">—</strong></span>
+                  <span><small>Best cover</small><strong id="depthCoverBestPct">—</strong></span>
+                </div>
+                <p class="coverspot-rk-hud" data-runkit-hud="coverspot" aria-live="polite"></p>
+                <div class="coverspot-disc-pips" id="coverSpotPips" aria-hidden="true"></div>
+                <div class="coverspot-meter" id="coverSpotMeter" hidden>
+                  <i id="coverSpotMeterFill"></i>
+                  <b id="coverSpotMeterNeed"></b>
+                  <em id="coverSpotMeterLabel">0%</em>
+                </div>
+                <span class="strike-pips coverspot-miss-pips" data-runkit-strikes="coverspot" aria-hidden="true"><i></i><i></i></span>
+              </div>
+              <aside class="coverspot-help" id="coverSpotHelp">
+                <p class="coverspot-help-title">HOW TO PLAY</p>
+                <ul class="coverspot-keys">
+                  <li><kbd>MOVE</kbd> Aim the brass disc</li>
+                  <li><kbd>TAP</kbd> / <kbd>SPACE</kbd> Drop it on the red</li>
+                  <li><kbd>CASH OUT</kbd> Bank a clear</li>
+                  <li><kbd>DROP AGAIN</kbd> Greed — next felt</li>
+                </ul>
+                <p class="coverspot-help-joke" id="coverSpotHelpHint">After you drop, the cloth tugs. The % is honest. Cover the red, then cash out or greed-drop.</p>
+              </aside>
+              <p class="coverspot-toast" id="coverSpotToast" hidden>CLOTH TUG</p>
+              <div class="coverspot-vestibule vendor-vestibule-only">
+                <p data-pf-depth-copy>Seven authored felts on a round gilding table: Honest Circle → Bounce Rest → Oval Blush → Walking Blush → Twin Lanterns → The Well → Stamp Night. Then ENDLESS. Drop brass. Cover the red. Cash out between spots — or get greedy.</p>
+                <p class="coverspot-hud-tag" data-pf-depth-tag role="status">DEPTH RUN · 7 authored SPOTs · cash out between spots · ENDLESS after Stamp Night</p>
+              </div>
+              <div class="greed-prompt" id="coverSpotGreed" hidden>
+                <p class="coverspot-greed-kicker">SPOT COVERED · HONEST %</p>
+                <p><strong id="coverSpotGreedPct">0%</strong> covered. <span id="coverSpotGreedHint">CASH OUT and bank it — or DROP AGAIN on the next felt.</span></p>
+                <button class="ticket-button cash-scream" id="coverSpotGreedCash" type="button">CASH OUT</button>
+                <button class="ticket-button" id="coverSpotDropAgain" type="button">DROP AGAIN</button>
+              </div>
+              <p class="coverspot-gl-fail" id="coverSpotGlFail" hidden>This tent wants WebGL. The felt is waiting.</p>
+            </div>
+            <div class="vendor-actions">
+              <button class="ticket-button" id="coverSpotStart" type="button">START · 1 demo coin</button>
+              <button class="quiet-button vendor-play-only" id="coverSpotDrop" type="button" hidden>DROP DISC</button>
+              <button class="ticket-button vendor-play-only" id="coverSpotCash" type="button" hidden disabled>CASH OUT</button>
+            </div>
+            <p class="status-ticket" id="coverSpotStatus">Tap START or the table · 1 demo coin · move to aim · tap / Space to drop</p>
+            <p class="tier-pill" id="coverSpotTier" hidden></p>
+            <p class="love-verdict" id="coverSpotVerdict" hidden></p>
+            <div class="vendor-result" id="coverSpotResult" hidden>
+              <p class="vendor-result-game">COVER-THE-SPOT</p>
+              <p class="vendor-result-depth" id="coverSpotResultDepth">SPOT 0</p>
+              <p class="vendor-result-score" id="coverSpotResultScore">SCORE 0</p>
+              <p class="vendor-result-aura" id="coverSpotResultAura"></p>
+              <p class="vendor-result-challenge" id="coverSpotChallengeText">Beat my Cover-the-Spot stage 0 on Penny Fever</p>
+              <button class="quiet-button" id="coverSpotChallenge" type="button">Copy challenge</button>
+              <p class="vendor-result-copied" id="coverSpotCopied" hidden>Copied</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior mutoscope-3d" id="cabinet-mutoscope" hidden data-cabinet="mutoscope" aria-labelledby="cabinet-mutoscope-title">
+      <div class="interior-sky muto-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header muto-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the peep-hood flap</p>
+          <h1 id="cabinet-mutoscope-title">Mutoscope Hood</h1>
+          <p class="interior-blurb">Hold still. Click the red heart — gold is a decoy.</p>
+        </header>
+        <div class="interior-stage muto-stage">
+          <article class="attraction-card mutoscope-card is-vestibule" id="mutoscopeCard">
+            <img id="mutoscopeArt" hidden data-live-art="1" data-asset="mutoscope_hood" src="assets/prepared/mutoscope-peephole-glow.webp" alt="">
+            <div class="muto-world vendor-stage vendor-stage--hood" id="mutoscopeStage">
+              <canvas id="mutoscopeCanvas" tabindex="0" aria-label="3D mutoscope parlor. Hold still to open the iris. Click the red heart, not the gold decoy."></canvas>
+              <div class="muto-vignette" aria-hidden="true"></div>
+              <div class="muto-iris-ring" aria-hidden="true"></div>
+              <span class="mutoscope-flash" aria-hidden="true"></span>
+              <div class="muto-hud">
+                <p class="machine-number">Peep parlor · 1 demo coin · authored STAGES</p>
+                <p class="barker-call">HOLD STILL — RED HEART, NOT THE GOLD DECOY</p>
+                <p class="tent-mouth-joke">Hold still to open the iris. Click the RED heart. The gold one is a liar. Fidget slams it shut.</p>
+                <div class="depth-readout" aria-label="Mutoscope run depth">
+                  <span><small>Stage now</small><strong id="depthMutoNow">0</strong></span>
+                  <span><small>Cards now</small><strong id="depthMutoCards">0</strong></span>
+                  <span><small>Slams</small><strong id="depthMutoSlams">—</strong></span>
+                  <span><small>Best stage</small><strong id="depthMutoBest">—</strong></span>
+                </div>
+                <p class="depth-hud" data-runkit-hud="mutoscope" hidden>STAGE 0</p>
+                <p class="muto-hint" id="mutoscopeHint">Hold still. Click the RED heart — gold is a decoy.</p>
+              </div>
+              <aside class="muto-help" id="mutoscopeHelp" aria-label="How to play">
+                <strong>How to play</strong>
+                <ol>
+                  <li><b>START</b> spends 1 demo coin and leans you into the hood.</li>
+                  <li><b>HOLD STILL</b> — fidget slams the iris shut.</li>
+                  <li><b>CLICK</b> the RED heart. The gold heart/penny is a decoy — that slams too.</li>
+                  <li>Crank only when a room asks (Parade / Reverse). Don’t crank the red flicker. Don’t click Jack.</li>
+                </ol>
+              </aside>
+              <div class="muto-vestibule vendor-vestibule-only">
+                <p data-pf-depth-copy>Hold still. The iris opens. Click the RED heart — the gold one is a decoy. Fidget slams it. Crank only when a room asks (Parade / Reverse / don’t crank Flicker). Eight rooms then ENDLESS. Depth is stages cleared.</p>
+                <p class="muto-hud-tag" data-pf-depth-tag role="status">DEPTH RUN · HOLD STILL · RED HEART NOT GOLD DECOY · 8 STAGES then ENDLESS</p>
+              </div>
+              <span class="strike-pips" data-runkit-strikes="mutoscope" aria-hidden="true"><i></i><i></i><i></i></span>
+              <p class="muto-gl-fail" id="mutoscopeGlFail" hidden>This parlor wants WebGL. The iris is waiting.</p>
+            </div>
+            <div class="vendor-actions">
+              <button class="ticket-button" id="mutoscopeStart" type="button">START · 1 demo coin</button>
+              <button class="quiet-button vendor-play-only" id="mutoscopeCrank" type="button" hidden>CRANK</button>
+            </div>
+            <p class="status-ticket" id="mutoscopeStatus">Hold still · click the RED heart · gold is a decoy · 1 demo coin</p>
+            <p class="tier-pill" id="mutoscopeTier" hidden></p>
+            <p class="love-verdict" id="mutoscopeVerdict" hidden></p>
+            <div class="vendor-result" id="mutoscopeResult" hidden>
+              <p class="vendor-result-game">MUTOSCOPE HOOD</p>
+              <p class="vendor-result-depth" id="mutoscopeResultDepth">STAGE 0</p>
+              <p class="vendor-result-score" id="mutoscopeResultScore">SCORE 0</p>
+              <p class="vendor-result-aura" id="mutoscopeResultAura"></p>
+              <p class="vendor-result-challenge" id="mutoscopeChallengeText">Beat my Mutoscope stage 0 on Penny Fever</p>
+              <button class="quiet-button" id="mutoscopeChallenge" type="button">Copy challenge</button>
+              <p class="vendor-result-copied" id="mutoscopeCopied" hidden>Copied</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior" id="cabinet-catoptromancy" hidden data-cabinet="catoptromancy" aria-labelledby="cabinet-catoptromancy-title">
+      <div class="interior-sky catop-sky" aria-hidden="true"></div>
+      <div class="interior-room catop-room">
+        <div class="interior-stage catop-stage">
+          <article class="attraction-card catop-card is-vestibule" id="catopCard">
+            <div class="catop-theater" id="catopTheater">
+              <canvas id="catopCanvas" tabindex="0" aria-label="Catoptromancy mercury gallery. Point at the matching glass and hold. Looking away fails."></canvas>
+              <div class="catop-vignette" aria-hidden="true"></div>
+              <div class="catop-flash" aria-hidden="true"></div>
+              <div class="catop-crosshair" id="catopCrosshair" hidden aria-hidden="true"></div>
+              <header class="catop-header">
+                <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+                <div class="catop-titleblock">
+                  <p class="plaque-kicker">Beyond the dark-glass flap</p>
+                  <h1 id="cabinet-catoptromancy-title">Catoptromancy</h1>
+                  <p class="interior-blurb">The basin names a sigil. Hold your pointer on that glass. Look away and the gallery takes you.</p>
+                </div>
+              </header>
+              <aside class="catop-help" aria-label="How to play">
+                <p class="catop-help-title">HOW TO PLAY</p>
+                <ul>
+                  <li><kbd>AIM</kbd> point at the matching glass</li>
+                  <li><kbd>HOLD</kbd> press and stay on that glass</li>
+                  <li><kbd>FAIL</kbd> look away = the glass takes you</li>
+                </ul>
+                <p class="catop-help-note">No slider. The 3D glass is the control. Liars crack (3 strikes). Depth is rooms cleared.</p>
+              </aside>
+              <div class="catop-vestibule vendor-vestibule-only" id="catopVestibule">
+                <p class="machine-number">Mercury gallery · 1 demo coin · 3D depth run</p>
+                <h2>Catoptromancy</h2>
+                <p class="tent-mouth-joke">The wait is still the game — but the wait is ON the glass. Look away and it notices.</p>
+                <p data-pf-depth-copy>Eight authored rooms, then ENDLESS. Point at the matching pane and HOLD. Mercury fills only while you look. Looking away after you start is death. Twin Pane wants two holds. Lie Flicker baits a flinch. Turning Glass only counts face-on. Depth is rooms cleared.</p>
+                <p class="barker-call">HOLD THE MATCHING GLASS — DON’T LOOK AWAY</p>
+                <button class="ticket-button" id="catopStart" type="button">START · 1 demo coin</button>
+              </div>
+              <div class="catop-result vendor-result" id="catopResult" hidden>
+                <p class="vendor-result-game">CATOPTROMANCY</p>
+                <p class="vendor-result-depth" id="catopResultDepth">ROOM 0</p>
+                <p class="vendor-result-score" id="catopResultScore">SCORE 0</p>
+                <p class="vendor-result-aura" id="catopResultAura"></p>
+                <p class="vendor-result-challenge" id="catopChallengeText">Beat my Catoptromancy room 0 on Penny Fever</p>
+                <button class="quiet-button" id="catopChallenge" type="button">Copy challenge</button>
+                <p class="vendor-result-copied" id="catopCopied" hidden>Copied</p>
+                <button class="ticket-button" id="catopReplay" type="button">GAZE AGAIN · 1 demo coin</button>
+              </div>
+              <div class="catop-hud">
+                <div class="catop-call" id="catopCall" hidden>
+                  <span class="catop-call-glyph" id="catopCallGlyph">◎</span>
+                  <strong id="catopCallName">HOLD THE EYE</strong>
+                </div>
+                <p class="catop-roomline" id="catopHudLine" data-runkit-hud="catoptromancy">ROOM 0</p>
+                <div class="depth-readout" aria-label="Catoptromancy run depth">
+                  <span><small>Room now</small><strong id="depthCatopNow">Room 0</strong></span>
+                  <span><small>Best room</small><strong id="depthCatopBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthCatopScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthCatopBestScore">—</strong></span>
+                  <span><small>Hold fill</small><strong id="catopFill">—</strong></span>
+                  <span><small>Hold</small><strong id="catopGazes">—</strong></span>
+                  <span><small>Strikes</small><strong id="catopStrikes">0/3</strong></span>
+                </div>
+                <div class="catop-pips-row">
+                  <span class="catop-fill-bar" id="catopFillBar" aria-hidden="true"><i></i></span>
+                  <span class="strike-pips catop-strike-pips" id="catopStrikePips" data-runkit-strikes="catoptromancy" aria-label="Liar strikes"><i></i><i></i><i></i></span>
+                </div>
+                <p class="status-ticket catop-status" id="catopStatus">HOLD the matching glass · look away and the glass takes you</p>
+                <div class="catop-actions" id="catopActions" hidden></div>
+                <p class="tier-pill catop-tier" id="catopTier" hidden></p>
+                <p class="love-verdict catop-verdict" id="catopVerdict" hidden></p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior" id="cabinet-high-striker" hidden data-cabinet="high-striker" aria-labelledby="cabinet-high-striker-title">
+      <div class="interior-room">
+        <div class="interior-stage">
+          <article class="attraction-card highstriker-card is-vestibule" id="highStrikerCard">
+            <div class="vendor-stage" id="highStrikerStage">
+              <canvas id="highStrikerCanvas" width="960" height="720" aria-label="High Striker 3D tent. Hold to wind. Release when the needle is in the gold. Bell is a checkpoint."></canvas>
+            </div>
+            <div class="hs-overlay">
+              <div class="hs-top">
+                <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+                <div class="hs-titleblock">
+                  <p class="plaque-kicker">Beyond the strength-tower flap</p>
+                  <h1 id="cabinet-high-striker-title" tabindex="-1">High Striker</h1>
+                  <p class="interior-blurb">Hold to wind. Release on the gold beat. The bell is a checkpoint, not the ending.</p>
+                </div>
+              </div>
+              <aside class="hs-howto" id="highStrikerHowTo">
+                <p class="hs-howto-title">HOW TO PLAY</p>
+                <ol>
+                  <li><b>HOLD</b> to wind the mallet</li>
+                  <li><b>RELEASE</b> when the needle is in the gold</li>
+                  <li>The <b>paint can lie</b> — true gold may sit late</li>
+                  <li>Ring the bell — checkpoint. Keep climbing. <b>3 strikes</b>.</li>
+                </ol>
+              </aside>
+              <div class="hs-vestibule vendor-vestibule-only">
+                <p class="machine-number">Strength tower · 1 demo coin · 3D smash</p>
+                <h2>High Striker</h2>
+                <p class="tent-mouth-joke">The bell rings and the barker grins like you won. That’s the checkpoint. Keep climbing.</p>
+                <p data-pf-depth-copy>HOLD to wind the mallet. RELEASE when the needle is in the true gold — timing is the joke, not how long you hold. The paint can sit early. A decoy gold can wink. Bell is a checkpoint, not the ending. Three misses stamp SLIP.</p>
+                <div class="depth-readout" aria-label="High Striker run depth">
+                  <span><small>Towers now</small><strong id="depthStrikerNow">0</strong></span>
+                  <span><small>Best towers</small><strong id="depthStrikerBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthStrikerScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthStrikerBestScore">—</strong></span>
+                </div>
+              </div>
+              <p class="hs-toast" id="highStrikerToast" hidden></p>
+              <div class="hs-roomcard" id="highStrikerRoomCard" hidden>
+                <small id="highStrikerRoomKind">AUTHORED TOWER</small>
+                <strong id="highStrikerRoomName">Soft Gold</strong>
+                <em id="highStrikerRoomTell">RELEASE IN THE GOLD · BELL ISN’T THE END</em>
+              </div>
+              <div class="vendor-result" id="highStrikerResult" hidden>
+                <p class="vendor-result-game">HIGH STRIKER</p>
+                <p class="vendor-result-depth" id="highStrikerResultDepth">TOWER 0</p>
+                <p class="vendor-result-score" id="highStrikerResultScore">SCORE 0</p>
+                <p class="vendor-result-reason" id="highStrikerResultReason"></p>
+                <p class="vendor-result-aura" id="highStrikerResultAura"></p>
+                <p class="vendor-result-challenge" id="highStrikerChallengeText">Beat my High Striker towers 0 on Penny Fever</p>
+                <button class="quiet-button" id="highStrikerChallenge" type="button">Copy challenge</button>
+                <p class="vendor-result-copied" id="highStrikerCopied" hidden>Copied</p>
+              </div>
+              <div class="hs-bottom">
+                <p class="barker-call" id="highStrikerBarker">HOLD TO WIND · RELEASE ON GOLD</p>
+                <div class="hs-power" id="highStrikerPowerWrap" hidden>
+                  <span>BEAT</span>
+                  <i class="hs-power-track">
+                    <em class="hs-paint-zone" id="highStrikerPaintZone" hidden></em>
+                    <em class="hs-gold-zone" id="highStrikerGoldZone"></em>
+                    <b id="highStrikerPowerBar"></b>
+                  </i>
+                  <em id="highStrikerPowerLabel">WAIT</em>
+                </div>
+                <div class="hs-status-row">
+                  <p class="depth-hud" data-runkit-hud="highstriker">TOWER 0</p>
+                  <span class="strike-pips" data-runkit-strikes="highstriker" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <p class="status-ticket" id="highStrikerStatus">Hold to wind · release on gold · bell is a checkpoint · 3 strikes</p>
+                </div>
+                <div class="vendor-actions">
+                  <button class="ticket-button" id="highStrikerStart" type="button">START · 1 demo coin</button>
+                  <button class="ticket-button vendor-play-only" id="highStrikerTap" type="button" hidden>HOLD · RELEASE ON GOLD</button>
+                </div>
+                <p class="tier-pill" id="highStrikerTier" hidden></p>
+                <p class="love-verdict" id="highStrikerVerdict" hidden></p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior" id="cabinet-bent-rings" hidden data-cabinet="bent-rings" aria-labelledby="cabinet-bent-rings-title">
+      <div class="interior-room">
+        <div class="interior-stage">
+          <article class="attraction-card bentring-card is-playing" id="bentRingCard">
+            <div class="vendor-stage" id="bentRingStage">
+              <canvas id="bentRingCanvas" width="960" height="720" aria-label="Bent Ring Pegs 3D tent. Drag to aim and throw. Step the rail. Spin the ring to match bent hooks. Pegs lean after you throw."></canvas>
+            </div>
+            <div class="br-overlay">
+              <div class="br-top">
+                <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+                <div class="br-titleblock">
+                  <p class="plaque-kicker">The crooked hook garden</p>
+                  <h1 id="cabinet-bent-rings-title" tabindex="-1">Bent Ring Pegs</h1>
+                  <p class="interior-blurb">Sidestep the rail. Spin the ring to match a bent hook. They lean after you throw — red ghosts tell.</p>
+                </div>
+              </div>
+              <aside class="br-howto" id="bentRingHowTo">
+                <p class="br-howto-title">HOW TO PLAY</p>
+                <ol>
+                  <li><b>DRAG</b> the tent to aim · <b>RELEASE</b> to throw</li>
+                  <li><b>STEP</b> left / right to line up a peg</li>
+                  <li><b>SPIN</b> the ring to match the hook’s bend</li>
+                  <li><b>Red ghosts</b> = where pegs duck AFTER the throw</li>
+                  <li>Stick what the board needs before rings run out</li>
+                </ol>
+                <p class="br-howto-keys">Buttons below work too · A/D step · Q/E spin · hold THROW</p>
+              </aside>
+              <div class="br-hud">
+                <div class="depth-readout" aria-label="Bent Ring Pegs run depth">
+                  <span><small>Board</small><strong id="depthBentNow">0</strong></span>
+                  <span><small>Best</small><strong id="depthBentBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthBentScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthBentBestScore">—</strong></span>
+                </div>
+                <p class="depth-hud" data-runkit-hud="bentring">BOARD 0</p>
+                <p class="br-need" id="bentRingNeed">STICK —</p>
+                <span class="strike-pips" data-runkit-strikes="bentring" aria-hidden="true"><i></i><i></i><i></i></span>
+              </div>
+              <div class="br-vestibule vendor-vestibule-only" id="bentRingGate" hidden>
+                <p class="machine-number">Crooked hook garden · 1 demo coin · 3D depth run</p>
+                <h2>Bent Ring Pegs</h2>
+                <p class="tent-mouth-joke">The pegs look honest until the ring is in the air. Then they lean. Red ghosts mark the cheat. Spin the ring to match a bent hook.</p>
+                <p data-pf-depth-copy>One coin. Eight authored boards, then ENDLESS. Step the rail. Spin the ring. Drag to throw. Pegs duck mid-flight. Stick what the board needs. Leftover rings stay in the house.</p>
+                <p class="barker-call">RING A BENT PEG — IF IT STAYS BENT</p>
+                <button class="ticket-button" id="bentRingStart" type="button">PLAY NOW · 1 demo coin</button>
+              </div>
+              <p class="br-toast" id="bentRingToast" hidden></p>
+              <div class="br-roomcard" id="bentRingRoomCard" hidden>
+                <small id="bentRingRoomKind">AUTHORED BOARD</small>
+                <strong id="bentRingRoomName">Soft Hook Lane</strong>
+                <em id="bentRingRoomTell">FLAT RINGS · MILD LEAN · NEED TWO</em>
+              </div>
+              <div class="br-power" id="bentRingPower" hidden>
+                <small>POWER · GOLD BAND LANDS</small>
+                <b class="br-sweet" aria-hidden="true"></b>
+                <i id="bentRingPowerFill"></i>
+              </div>
+              <div class="br-tilt" id="bentRingTiltHud">
+                <small>RING TILT · MATCH THE HOOK</small>
+                <span class="br-tilt-dial"><i id="bentRingTiltPip"></i></span>
+              </div>
+              <div class="vendor-result" id="bentRingResult" hidden>
+                <p class="vendor-result-game">BENT RING PEGS</p>
+                <p class="vendor-result-depth" id="bentRingResultDepth">BOARD 0</p>
+                <p class="vendor-result-score" id="bentRingResultScore">SCORE 0</p>
+                <p class="vendor-result-reason" id="bentRingResultReason"></p>
+                <p class="vendor-result-aura" id="bentRingResultAura"></p>
+                <p class="vendor-result-challenge" id="bentRingChallengeText">Beat my Bent Rings board 0 on Penny Fever</p>
+                <button class="quiet-button" id="bentRingChallenge" type="button">Copy challenge</button>
+                <p class="vendor-result-copied" id="bentRingCopied" hidden>Copied</p>
+                <button class="ticket-button" id="bentRingAgain" type="button">TOSS AGAIN · 1 demo coin</button>
+              </div>
+              <div class="br-bottom">
+                <p class="barker-call" id="bentRingBarker">RING A BENT PEG — IF IT STAYS BENT</p>
+                <div class="br-status-row">
+                  <p class="status-ticket" id="bentRingStatus">Drag to throw · step the rail · spin to match hooks · leftover unused</p>
+                </div>
+                <p class="br-hint" id="bentRingHint">DRAG BACK TO THROW · GOLD POWER LANDS</p>
+                <div class="br-controls" id="bentRingControls">
+                  <button type="button" class="br-ctl" id="bentRingStepL">◀ STEP</button>
+                  <button type="button" class="br-ctl" id="bentRingSpinL">SPIN ◐</button>
+                  <button type="button" class="br-ctl br-ctl-throw" id="bentRingThrow">HOLD TO THROW</button>
+                  <button type="button" class="br-ctl" id="bentRingSpinR">SPIN ◑</button>
+                  <button type="button" class="br-ctl" id="bentRingStepR">STEP ▶</button>
+                </div>
+                <p class="br-keys" id="bentRingKeys">A/D or arrows step · Q/E spin · drag canvas or hold THROW</p>
+                <div class="vendor-actions">
+                  <button class="ticket-button" id="bentRingStartPlay" type="button" hidden>PLAY NOW · 1 demo coin</button>
+                </div>
+                <p class="tier-pill" id="bentRingTier" hidden></p>
+                <p class="love-verdict" id="bentRingVerdict" hidden></p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior" id="cabinet-plinko" hidden data-cabinet="plinko" aria-labelledby="cabinet-plinko-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room plinko-room">
+        <header class="interior-header plinko-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the pegboard flap</p>
+          <h1 id="cabinet-plinko-title">Plinko Pegboard</h1>
+          <p class="interior-blurb">Lean the whole fall. Pegs lunge mid-drop. Souvenir pockets — not a payout.</p>
+        </header>
+        <div class="interior-stage plinko-stage">
+          <article class="attraction-card plinko-card is-vestibule" id="plinkoCard">
+            <div class="plinko-viewport vendor-stage">
+              <canvas id="plinkoCanvas" aria-label="3D Breath Board. Tilt the cabinet with A and D or drag. Click a cup or press Space to drop a penny into glowing prize pockets."></canvas>
+              <div class="plinko-hud">
+                <div class="depth-readout" aria-label="Plinko run depth">
+                  <span><small>Drop now</small><strong id="depthPlinkoNow">0</strong></span>
+                  <span><small>Best drop</small><strong id="depthPlinkoBest">—</strong></span>
+                  <span><small>Score</small><strong id="depthPlinkoScore">0</strong></span>
+                  <span><small>Best score</small><strong id="depthPlinkoBestScore">—</strong></span>
+                </div>
+                <div class="plinko-lean-wrap" aria-hidden="true">
+                  <div class="plinko-lean" id="plinkoLean"><i id="plinkoLeanBob"></i></div>
+                  <p class="plinko-lean-label" id="plinkoBreath">LEAN THE CABINET</p>
+                  <p class="plinko-cheat-tell" id="plinkoCheatTell" hidden>PEGS LUNGE</p>
+                </div>
+              </div>
+              <div class="plinko-room-card" id="plinkoRoomCard" hidden>
+                <small id="plinkoRoomKicker">AUTHORED DROP</small>
+                <strong id="plinkoRoomName">Soft Breath Board</strong>
+                <em id="plinkoRoomTell">DROP WHEN THE BOARD LEANS WITH PAY</em>
+              </div>
+              <div class="plinko-house-stamp" id="plinkoHouseStamp" hidden>HOUSE</div>
+              <div class="plinko-howto" id="plinkoHowto">
+                <p class="plinko-howto-title">HOW TO PLAY</p>
+                <ol>
+                  <li><b>LEAN</b> the cabinet — A/D, drag, or hold TILT. This is the whole sport.</li>
+                  <li><b>DROP</b> a penny — SPACE or DROP — then <b>keep leaning</b> while it falls.</li>
+                  <li>Pegs <b>lunge mid-drop</b> (they glow and lean). Lean against the cheat. Land a souvenir pocket, not lint.</li>
+                </ol>
+              </div>
+              <div class="plinko-gate vendor-vestibule-only">
+                <p class="machine-number">Breath Board · 1 demo coin · you rock the cabinet</p>
+                <h2>The Breath Board</h2>
+                <p class="tent-mouth-joke">You are the lean. The house still tries to breathe against you.</p>
+                <p data-pf-depth-copy>One coin. Lean while the penny falls. Pegs glow and lunge — counter-lean. Land a carnival souvenir, not lint. Leftovers stay in Aura’s till.</p>
+                <p class="barker-call">YOU ROCK IT — THE HOUSE ROCKS BACK</p>
+                <button class="ticket-button" id="plinkoStart" type="button">PLAY NOW · 1 demo coin</button>
+              </div>
+              <div class="plinko-playbar vendor-play-only">
+                <p class="status-ticket plinko-status" id="plinkoStatus">Tilt the cabinet · drop a penny · leftover pennies stay in the house</p>
+                <div class="plinko-controls" id="plinkoControls">
+                  <button type="button" class="plinko-ctl" id="plinkoTiltL" aria-label="Tilt left">◀ TILT</button>
+                  <button type="button" class="plinko-ctl plinko-ctl-drop vendor-play-only" id="plinkoDrop" hidden>DROP</button>
+                  <button type="button" class="plinko-ctl" id="plinkoTiltR" aria-label="Tilt right">TILT ▶</button>
+                </div>
+                <p class="plinko-keys">HOLD A/D to lean the whole fall · SPACE drop · pegs cheat mid-drop</p>
+              </div>
+              <p class="tier-pill" id="plinkoTier" hidden></p>
+              <p class="love-verdict" id="plinkoVerdict" hidden></p>
+              <div class="vendor-result" id="plinkoResult" hidden>
+                <p class="vendor-result-game">PLINKO PEGBOARD</p>
+                <p class="vendor-result-depth" id="plinkoResultDepth">DROP 0</p>
+                <p class="vendor-result-score" id="plinkoResultScore">SCORE 0</p>
+                <p class="vendor-result-reason" id="plinkoResultReason"></p>
+                <p class="vendor-result-aura" id="plinkoResultAura"></p>
+                <p class="vendor-result-challenge" id="plinkoChallengeText">Beat my Plinko drop 0 on Penny Fever</p>
+                <button class="quiet-button" id="plinkoChallenge" type="button">Copy challenge</button>
+                <p class="vendor-result-copied" id="plinkoCopied" hidden>Copied</p>
+              </div>
+            </div>
+            <img id="plinkoArt" data-live-art="1" src="assets/prepared/night-carnival-exterior.webp" alt="" hidden>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior fairy-floss-interior" id="cabinet-fairy-floss" hidden data-cabinet="fairy-floss" aria-labelledby="cabinet-fairy-floss-title">
+      <article class="attraction-card fairyfloss-card is-vestibule" id="fairyFlossCard">
+        <canvas id="fairyFlossCanvas" width="960" height="720" aria-label="3D fairy floss tent. Hold and drag a circle around the copper wheel to wind sugar. Height is your depth. Too fast snaps — snap is death."></canvas>
+        <p class="ff-glfail" id="fairyFlossGlFail" hidden>This sugar wheel wants a WebGL tent.</p>
+        <div class="ff-vignette" aria-hidden="true"></div>
+        <header class="ff-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="ff-titleblock">
+            <p class="plaque-kicker">Beyond the sugar-tub flap</p>
+            <h1 id="cabinet-fairy-floss-title">Fairy Floss Wheel</h1>
+          </div>
+        </header>
+        <p class="depth-hud ff-depth-hud" data-runkit-hud="fairyfloss" hidden aria-live="polite">HEIGHT 0.0m</p>
+        <div class="ff-hud" id="fairyFlossHud" hidden>
+          <div class="ff-metres"><small>Height</small><strong id="fairyFlossMetresLive">0.0m</strong></div>
+          <div class="ff-need"><small>Next</small><strong id="fairyFlossNeed">0 / 0m</strong></div>
+          <span class="ff-snap-warn">SNAP = DEATH</span>
+          <span class="strike-pips" data-runkit-strikes="fairyfloss" hidden aria-hidden="true"><i></i></span>
+        </div>
+        <div class="ff-gauges" id="fairyFlossGauges" hidden>
+          <div class="ff-speed" id="fairyFlossSpeed">
+            <span>SAG</span>
+            <div class="ff-speed-track" aria-hidden="true"><b class="ff-speed-band" id="fairyFlossBand"></b><i id="fairyFlossNeedle"></i></div>
+            <span>SNAP</span>
+          </div>
+          <div class="ff-speed ff-speed--radius" id="fairyFlossRadius" hidden>
+            <span>HEAT</span>
+            <div class="ff-speed-track" aria-hidden="true"><b class="ff-speed-band" id="fairyFlossBand2"></b><i id="fairyFlossNeedle2"></i></div>
+            <span>FAR</span>
+          </div>
+        </div>
+        <p class="ff-toast" id="fairyFlossToast" hidden></p>
+        <p class="ff-call" id="fairyFlossCall">WIND IT TALL</p>
+        <div class="ff-help" id="fairyFlossHelp">
+          <p class="ff-help-title">How to play</p>
+          <ol>
+            <li><b>HOLD</b> and drag a circle around the wheel</li>
+            <li><b>WIND</b> — sugar climbs. Height is your depth</li>
+            <li>Keep the pace in the green band</li>
+            <li>Too fast <b>SNAPS</b> — one snap and you’re done</li>
+          </ol>
+        </div>
+        <div class="ff-vestibule vendor-vestibule-only">
+          <p class="machine-number">Sugar stall · 1 demo coin · Depth run</p>
+          <h2>Fairy Floss Wheel</h2>
+          <p class="tent-mouth-joke">Circle the wheel. Sugar grows taller. One snap and the cloud dies.</p>
+          <p data-pf-depth-copy>Drag a circle around the copper wheel. Sugar winds onto the cone and grows taller — that height is your depth. Soft Cloud → Twin Strand → Gust Stall → Reverse Wind → Fake Snap Tent → Sag Trap Shelf → Pulse Tub → Fever Sugar Opera → ENDLESS Sugar Edge. Too slow sags. Too fast SNAPS. Snap is death.</p>
+          <div class="depth-readout" aria-label="Fairy Floss run depth">
+            <span><small>Height now</small><strong id="depthFlossNow">0</strong></span>
+            <span><small>Metres</small><strong id="depthFlossMetres">0m</strong></span>
+            <span><small>Best height</small><strong id="depthFlossBest">—</strong></span>
+            <span><small>Best metres</small><strong id="depthFlossBestM">—</strong></span>
+          </div>
+          <p class="barker-call">CIRCLE TO WIND — HEIGHT IS DEPTH — SNAP KILLS</p>
+          <button class="ticket-button" id="fairyFlossStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="fairyFlossStatus">Depth run · START · 1 demo coin · 8 authored STAGES then ENDLESS</p>
+        </div>
+        <p class="tier-pill" id="fairyFlossTier" hidden></p>
+        <p class="love-verdict" id="fairyFlossVerdict" hidden></p>
+        <div class="vendor-result" id="fairyFlossResult" hidden>
+          <p class="vendor-result-game">FAIRY FLOSS WHEEL</p>
+          <p class="vendor-result-depth" id="fairyFlossResultDepth">HEIGHT 0.0m</p>
+          <p class="vendor-result-score" id="fairyFlossResultScore">SCORE 0</p>
+          <p class="vendor-result-aura" id="fairyFlossResultAura"></p>
+          <p class="vendor-result-challenge" id="fairyFlossChallengeText">Beat my Fairy Floss 0m on Penny Fever</p>
+          <button class="quiet-button" id="fairyFlossChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="fairyFlossCopied" hidden>Copied — send it</p>
+        </div>
+      </article>
+    </section>
+    <section class="cabinet-interior popcorn-interior" id="cabinet-popcorn" hidden data-cabinet="popcorn" aria-labelledby="cabinet-popcorn-title">
+      <article class="attraction-card popcorn-card is-vestibule" id="popcornCard">
+        <canvas id="popcornCanvas" width="960" height="720" aria-label="3D popcorn kettle tent. Move to tilt the bowl. Hold HEAT or SPACE, release on gold. Butter-gold is a real pop. Grey steam is a fake — let it rise."></canvas>
+        <p class="popcorn-glfail" id="popcornGlFail" hidden>This kettle wants a WebGL tent.</p>
+        <div class="popcorn-vignette" aria-hidden="true"></div>
+        <header class="popcorn-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="popcorn-titleblock">
+            <p class="plaque-kicker">Beyond the kettle-counter flap</p>
+            <h1 id="cabinet-popcorn-title">Popcorn Kettle</h1>
+          </div>
+        </header>
+        <p class="depth-hud popcorn-depth-hud" data-runkit-hud="popcorn" hidden aria-live="polite">BATCH 0</p>
+        <div class="popcorn-hud" id="popcornHud" hidden>
+          <div class="popcorn-call-chip" id="popcornCallChip" data-call="gold"><span>BAG</span><strong id="popcornCallLabel">GOLD</strong></div>
+          <div class="popcorn-need"><small>Bagged</small><strong id="popcornNeed">0 / 5</strong></div>
+          <span class="strike-pips" data-runkit-strikes="popcorn" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <aside class="popcorn-how" id="popcornHow" aria-label="How to play">
+          <p><kbd>MOVE</kbd> or <kbd>WASD</kbd> — tilt the kettle, pour the oil</p>
+          <p><kbd>HOLD HEAT</kbd> or <kbd>SPACE</kbd> — release when the bar is GOLD</p>
+          <p><b>Gold kernel = real pop.</b> Bag it. <b>Grey puff = STEAM FAKE.</b> Let it rise — bagging it burns.</p>
+        </aside>
+        <div class="popcorn-heat" id="popcornHeatWrap" hidden>
+          <div class="popcorn-heat-meter" aria-hidden="true">
+            <span>HEAT</span>
+            <div class="popcorn-heat-track">
+              <i id="popcornHeatGold"></i>
+              <b id="popcornHeatFill"></b>
+            </div>
+            <em id="popcornHeatCall">HOLD</em>
+          </div>
+          <button class="popcorn-heat-btn" id="popcornHeatBtn" type="button">HOLD HEAT · RELEASE ON GOLD</button>
+        </div>
+        <p class="popcorn-toast" id="popcornCall" hidden></p>
+        <div class="popcorn-stamp" id="popcornStamp" hidden>BURN</div>
+        <div class="popcorn-vestibule vendor-vestibule-only">
+          <p class="machine-number">Hot kettle · 1 demo coin · 3D burst bowl</p>
+          <h2>Popcorn Kettle</h2>
+          <p class="tent-mouth-joke">Heat the oil. Real pops are butter-gold. Grey steam is a fake — let it rise, never bag it.</p>
+          <p data-pf-depth-copy>A real 3D kettle tent. Honest Oil → Butter Slide → Steam Gallery → Lid Gate → Colour Call → Quake Ring → Mirror Pour → Fever Kernel Opera → ENDLESS Steam Lie. Hold HEAT, release on GOLD, tilt to pour. Gold kernels are true pops. Grey steam is a fake — let it rise. Bagging steam burns. Three burns stamp the kettle.</p>
+          <div class="depth-readout" aria-label="Popcorn run depth">
+            <span><small>Batch now</small><strong id="depthPopNow">0</strong></span>
+            <span><small>Bagged</small><strong id="depthPopCatch">0</strong></span>
+            <span><small>Best batch</small><strong id="depthPopBest">—</strong></span>
+            <span><small>Best score</small><strong id="depthPopBestScore">—</strong></span>
+          </div>
+          <p class="barker-call">HEAT · BURST · POUR — STEAM LIES</p>
+          <button class="ticket-button" id="popcornStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="popcornStatus">Depth run · START · 1 demo coin · heat, burst, pour the gold</p>
+        </div>
+        <p class="tier-pill" id="popcornTier" hidden></p>
+        <p class="love-verdict" id="popcornVerdict" hidden></p>
+        <div class="vendor-result" id="popcornResult" hidden>
+          <p class="vendor-result-game">POPCORN KETTLE</p>
+          <p class="vendor-result-depth" id="popcornResultDepth">BATCH 0</p>
+          <p class="vendor-result-score" id="popcornResultScore">SCORE 0</p>
+          <p class="vendor-result-aura" id="popcornResultAura"></p>
+          <p class="vendor-result-challenge" id="popcornChallengeText">Beat my Popcorn stage 0 on Penny Fever</p>
+          <button class="quiet-button" id="popcornChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="popcornCopied" hidden>Copied — send it</p>
+        </div>
+      </article>
+    </section>
+    <section class="cabinet-interior duckpond-interior" id="cabinet-duck-pond" hidden data-cabinet="duck-pond" aria-labelledby="cabinet-duck-pond-title">
+      <article class="attraction-card duckpond-card is-vestibule" id="duckPondCard">
+        <canvas id="duckPondCanvas" width="960" height="720" aria-label="3D night gaff pond. Move to aim. Tap commits the drop — lead the duck. Hook the glowing CALL body. Hats and numbers are decoys."></canvas>
+        <div class="duckpond-vignette" aria-hidden="true"></div>
+        <header class="duckpond-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="duckpond-titleblock">
+            <p class="plaque-kicker">Beyond the pond-flap</p>
+            <h1 id="cabinet-duck-pond-title">Duck Pond Hook</h1>
+          </div>
+        </header>
+        <p class="depth-hud duckpond-depth-hud" data-runkit-hud="duckpond" hidden aria-live="polite">POND 0</p>
+        <div class="duckpond-hud" id="duckPondHud" hidden>
+          <div class="duckpond-call" id="duckPondCallChip" data-call="yellow"><span>CALL</span><strong id="duckPondCall">YELLOW</strong></div>
+          <div class="duckpond-need"><small>Hooked</small><strong id="duckPondNeed">0 / 5</strong></div>
+          <div class="duckpond-need duckpond-mill" id="duckPondMillWrap" hidden><small>Mill ate</small><strong id="duckPondMill">0 / 2</strong></div>
+          <span class="strike-pips" data-runkit-strikes="duckpond" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <aside class="duckpond-help" id="duckPondHelp" aria-label="How to play">
+          <p class="duckpond-help-title">How to play</p>
+          <ol>
+            <li><b>MOVE</b> to aim · <b>TAP</b> commits the gaff</li>
+            <li><b>LEAD</b> the swim — the hook does not scoop</li>
+            <li>Hook the <b>GLOWING</b> call body</li>
+            <li>Hats and numbers are <b>decoys</b> · empty splash is safe</li>
+          </ol>
+          <p class="duckpond-help-keys">Keys: arrows / WASD aim · Space drop</p>
+        </aside>
+        <p class="duckpond-playhint" id="duckPondPlayHint">LEAD the duck · TAP commits · hook the GLOW — hats lie</p>
+        <p class="duckpond-toast" id="duckPondToast" hidden></p>
+        <div class="duckpond-vestibule vendor-vestibule-only">
+          <p class="machine-number">Night gaff · 1 demo coin · Depth run</p>
+          <h2>Duck Pond Hook</h2>
+          <p class="tent-mouth-joke">Hats wear the call. Numbers lie. The glow is the luck. Not carnival pick-a-duck.</p>
+          <p data-pf-depth-copy>Night gaff, not pick-a-duck. TAP commits — the hook does not scoop. Still Nursery → Cross Current → Painted Decoy → Sinkers → Lily Maze → Call Flip → Mill Rush → Fever Opera → ENDLESS Lucky Lie. Hook the GLOWING call body. Hats and numbers are decoys. Empty splash is safe. The mill claims true calls you miss.</p>
+          <div class="depth-readout" aria-label="Duck pond run depth">
+            <span><small>Pond now</small><strong id="depthDuckNow">0</strong></span>
+            <span><small>Best pond</small><strong id="depthDuckBest">—</strong></span>
+            <span><small>Score</small><strong id="depthDuckScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthDuckBestScore">—</strong></span>
+          </div>
+          <p class="barker-call">HOOK THE CALL — NOT EVERY DUCK IS LUCKY</p>
+          <button class="ticket-button" id="duckPondStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="duckPondStatus">Depth run · START or tap the pond · 1 demo coin · aim, drop, hook the call</p>
+        </div>
+        <p class="tier-pill" id="duckPondTier" hidden></p>
+        <p class="love-verdict" id="duckPondVerdict" hidden></p>
+        <div class="vendor-result" id="duckPondResult" hidden>
+          <p class="vendor-result-game">DUCK POND HOOK</p>
+          <p class="vendor-result-depth" id="duckPondResultDepth">POND 0</p>
+          <p class="vendor-result-score" id="duckPondResultScore">SCORE 0</p>
+          <p class="vendor-result-reason" id="duckPondResultReason"></p>
+          <p class="vendor-result-aura" id="duckPondResultAura"></p>
+          <p class="vendor-result-challenge" id="duckPondChallengeText">Beat my Duck Pond stage 0 on Penny Fever</p>
+          <button class="quiet-button" id="duckPondChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="duckPondCopied" hidden>Copied — send it</p>
+        </div>
+      </article>
+    </section>
+    <section class="cabinet-interior skee-interior" id="cabinet-skee-ball" hidden data-cabinet="skee-ball" aria-labelledby="cabinet-skee-ball-title">
+      <article class="attraction-card skee-card is-vestibule" id="skeeCard">
+        <canvas id="skeeCanvas" width="960" height="720" aria-label="3D skee-ball alley. Hold with one thumb to sling. Slide to aim. Release in the gold band. Nine balls. Beat the board or wax stamps you."></canvas>
+        <div class="skee-vignette" aria-hidden="true"></div>
+        <header class="skee-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="skee-titleblock">
+            <p class="plaque-kicker">Beyond the wax-lane flap</p>
+            <h1 id="cabinet-skee-ball-title">Skee-Ball Alley</h1>
+          </div>
+        </header>
+        <p class="depth-hud" data-runkit-hud="skee" hidden>LANE 0</p>
+        <div class="skee-hud" id="skeeHud" hidden>
+          <div class="skee-scoreboard">
+            <span><small>Board</small><strong id="skeeBoardPts">0</strong><em id="skeeBoardNeed">/ 100</em></span>
+            <span><small>Night</small><strong id="skeeNightScore">0</strong></span>
+          </div>
+          <span class="strike-pips" data-runkit-strikes="skee" aria-hidden="true"></span>
+        </div>
+        <p class="skee-cheat" id="skeeCheat"></p>
+        <div class="skee-power" id="skeePowerWrap" hidden>
+          <b id="skeePowerGold"></b>
+          <i id="skeePowerFill"></i>
+        </div>
+        <p class="skee-call" id="skeeHint">HOLD · RELEASE IN GOLD</p>
+        <div class="skee-help" id="skeeHelp">
+          <p class="skee-help-title">How to play</p>
+          <ol>
+            <li><b>HOLD</b> with one thumb — the sling needle swings</li>
+            <li><b>SLIDE</b> left or right to aim while you hold</li>
+            <li><b>RELEASE</b> in the gold band to roll up the lane</li>
+            <li>Nine balls. Beat the board or <b>WAX</b> stamps you. Sheen hits mid-lane — the ghost is not the land.</li>
+          </ol>
+        </div>
+        <p class="skee-aura-line" id="skeeAuraLine">Aura: The boards remember every roll.</p>
+        <div class="skee-popup" id="skeePopup" hidden></div>
+        <div class="skee-stamp" id="skeeStamp" hidden><b>WAX</b></div>
+        <div class="skee-vestibule vendor-vestibule-only">
+          <p class="machine-number">Boardwalk skee · 1 demo coin · 3D alley</p>
+          <h2>Skee-Ball Alley</h2>
+          <p class="tent-mouth-joke">One thumb. Gold band. Sheen hits mid-lane. Ghost is not the land.</p>
+          <p data-pf-depth-copy>Hold, release in the gold. Soft Boardwalk → Gutter Whisper → Wax Sheen (sheen mid-stage, next ball skids long) → Split Ring Gate → Bank Shot Alley → Reverse Power → Moving Fifty → Fever Lane Opera → ENDLESS Wax Lie. Nine balls. Under target is death.</p>
+          <div class="depth-readout" aria-label="Skee-Ball run depth">
+            <span><small>Lane now</small><strong id="depthSkeeNow">0</strong></span>
+            <span><small>Best lane</small><strong id="depthSkeeBest">—</strong></span>
+            <span><small>Score</small><strong id="depthSkeeScore">0</strong></span>
+            <span><small>Best board</small><strong id="depthSkeeBestBoard">—</strong></span>
+          </div>
+          <p class="barker-call">ROLL UP — BEAT THE BOARD</p>
+          <button class="ticket-button" id="skeeStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="skeeStatus">HOLD one thumb · release in GOLD · 9 balls · beat the board</p>
+        </div>
+        <p class="tier-pill" id="skeeTier" hidden></p>
+        <p class="love-verdict" id="skeeVerdict" hidden></p>
+        <div class="vendor-result" id="skeeResult" hidden>
+          <p class="vendor-result-game">SKEE-BALL ALLEY</p>
+          <p class="vendor-result-depth" id="skeeResultDepth">LANE 0</p>
+          <p class="vendor-result-score" id="skeeResultScore">SCORE 0</p>
+          <p class="vendor-result-reason" id="skeeResultReason"></p>
+          <p class="vendor-result-aura" id="skeeResultAura"></p>
+          <p class="vendor-result-challenge" id="skeeChallengeText">Beat my Skee-Ball stage 0 on Penny Fever</p>
+          <button class="quiet-button" id="skeeChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="skeeCopied" hidden>Copied — send it</p>
+        </div>
+      </article>
+    </section>
+    <section class="cabinet-interior" id="cabinet-penny-pitch" hidden data-cabinet="penny-pitch" aria-labelledby="cabinet-penny-pitch-title">
+      <div class="interior-sky" aria-hidden="true"></div>
+      <div class="interior-room">
+        <header class="interior-header">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <p class="plaque-kicker">Beyond the canvas flap</p>
+          <h1 id="cabinet-penny-pitch-title">Penny Pitch</h1>
+          <p class="interior-blurb">Carnival glass dishes on a living quilt. Flick pennies. Land inside a dish. The cloth may yank after you let go.</p>
+        </header>
+        <div class="interior-stage">
+          <article class="attraction-card pennypitch-card is-vestibule" id="pennyPitchCard">
+          <p class="machine-number">Pitch tent · 1 demo coin · dish garden</p>
+          <div class="card-hero card-hero--wide vendor-vestibule-only">
+            <img id="pennyPitchArt" data-live-art="1" src="assets/prepared/night-carnival-exterior.webp" alt="Night carnival stall for penny pitch">
+          </div>
+          <h2 class="vendor-vestibule-only">The Dish Garden</h2>
+          <p class="tent-mouth-joke vendor-vestibule-only">Not a grid. A table of glass. Flick, bounce, nest — then the quilt changes its mind.</p>
+          <p class="barker-call vendor-vestibule-only">FLICK A DISH — THE QUILT HAS OPINIONS</p>
+          <div class="vendor-stage vendor-stage--pitch3d" id="pennyPitchStage">
+            <canvas id="pennyPitchCanvas" width="960" height="720" aria-label="Three-dimensional penny pitch tent. Drag back to charge, drag sideways to aim, release to flick a penny into a glass dish. The quilt may yank after you let go."></canvas>
+            <aside class="pitch-howto" id="pennyPitchHow" aria-label="How to play Penny Pitch">
+              <p class="pitch-howto-title">How to play</p>
+              <ol>
+                <li><b>Drag back</b> to charge the flick</li>
+                <li><b>Drag left / right</b> to aim</li>
+                <li><b>Release</b> to pitch the penny</li>
+                <li>Land <b>inside a glass dish</b> to score</li>
+                <li>Hit <b>NEED</b> before pennies run out</li>
+              </ol>
+              <p class="pitch-howto-warn">The quilt may YANK after you let go. Hold SPACE + arrows also works.</p>
+            </aside>
+            <p class="pitch-banner" id="pennyPitchBanner">HONEST GARDEN — DISHES SIT STILL</p>
+            <p class="pitch-aim-hint" id="pennyPitchHint">Click START or drag on the table to pitch</p>
+            <div class="pitch-live" id="pennyPitchLive">
+              <span id="pennyPitchLiveNeed">Need 30</span>
+              <span id="pennyPitchLivePts">Pts 0</span>
+              <span id="pennyPitchLivePennies">6 pennies</span>
+              <span id="pennyPitchLiveLand" hidden></span>
+              <span id="pennyPitchLivePair" hidden>STACK</span>
+            </div>
+            <div class="pitch-power" id="pennyPitchPower" hidden><i id="pennyPitchPowerFill"></i></div>
+            <p class="pitch-power-label" id="pennyPitchPowerLabel" hidden>Power</p>
+            <p class="pitch-yank-flash" id="pennyPitchYank" hidden>THE QUILT YANKS</p>
+            <p class="pitch-toast" id="pennyPitchToast" hidden></p>
+          </div>
+          <button class="ticket-button" id="pennyPitchStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="pennyPitchStatus">Drag back · aim · release · land inside a dish · quilt may yank after you let go</p>
+          <p class="vendor-vestibule-only" data-pf-depth-copy>Step inside. Drag back to charge, aim left or right, release to flick. Land a penny fully inside a glass dish. Hit NEED before pennies run out. Honest Garden → Soft Yank → Nested Rings → Dead Gold → Knock Chain → Breathing Velvet → Mirror Flick → Fever Dish Opera → ENDLESS Mood Swing. Six pennies a cloth. The quilt yanks AFTER you let go.</p>
+          <div class="depth-readout" aria-label="Penny pitch run depth">
+            <span><small>Cloth now</small><strong id="depthPitchNow">0</strong></span>
+            <span><small>Best cloth</small><strong id="depthPitchBest">—</strong></span>
+            <span><small>Score</small><strong id="depthPitchScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthPitchBestScore">—</strong></span>
+          </div>
+          <div class="signature-prop signature-prop--pennypitch vendor-vestibule-only" aria-hidden="true">
+            <span class="prop-cloth">
+              <i></i><i></i><i></i><i></i>
+            </span>
+            <b>FLICK</b><i>DISH</i><i>YANK</i>
+          </div>
+          <p class="tier-pill" id="pennyPitchTier" hidden></p>
+          <p class="love-verdict" id="pennyPitchVerdict" hidden></p>
+          <div class="vendor-result" id="pennyPitchResult" hidden>
+            <p class="vendor-result-game">PENNY PITCH</p>
+            <p class="vendor-result-depth" id="pennyPitchResultDepth">CLOTH 0</p>
+            <p class="vendor-result-score" id="pennyPitchResultScore">SCORE 0</p>
+            <p class="vendor-result-reason" id="pennyPitchResultReason"></p>
+            <p class="vendor-result-aura" id="pennyPitchResultAura"></p>
+            <p class="vendor-result-challenge" id="pennyPitchChallengeText">Beat my Penny Pitch stage 0 on Penny Fever</p>
+            <button class="quiet-button" id="pennyPitchChallenge" type="button">Copy challenge</button>
+            <p class="vendor-result-copied" id="pennyPitchCopied" hidden>Copied — send it</p>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+    <section class="cabinet-interior dunk-tank-interior" id="cabinet-dunk-tank" hidden data-cabinet="dunk-tank" aria-labelledby="cabinet-dunk-tank-title">
+      <article class="attraction-card dunk-card is-vestibule" id="dunkCard">
+        <canvas id="dunkCanvas" aria-label="Dunk the Barker. Drag to aim, release to throw at the glowing red plate. Three balls a seat."></canvas>
+        <div class="dunk-vignette" aria-hidden="true"></div>
+        <header class="dunk-top">
+          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
+          <div class="dunk-titleblock">
+            <p class="plaque-kicker">Beyond the dunk-seat flap</p>
+            <h1 id="cabinet-dunk-tank-title">Dunk the Barker</h1>
+          </div>
+        </header>
+        <p class="depth-hud dunk-depth-hud" data-runkit-hud="dunk" hidden aria-live="polite">SEAT 0</p>
+        <p class="dunk-seat-banner" id="dunkSeatBanner" hidden></p>
+        <div class="dunk-hud" id="dunkHud" hidden>
+          <div class="dunk-hud-stat"><small>Balls</small><strong id="dunkBallsHud">3</strong></div>
+          <span class="strike-pips" data-runkit-strikes="dunk" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="dunk-hud-stat"><small>Dunks</small><strong id="dunkDepthHud">0</strong></div>
+        </div>
+        <aside class="dunk-help" id="dunkHelp" aria-label="How to play">
+          <p class="dunk-help-title">How to play</p>
+          <ol id="dunkHowTo">
+            <li><b>DRAG</b> on the tent to aim</li>
+            <li><b>PULL</b> farther = more power</li>
+            <li><b>RELEASE</b> to throw the softball</li>
+            <li>Hit the glowing <b>RED HIT</b> plate</li>
+            <li>Three balls a seat · the pale plate is a <b>LIE</b></li>
+          </ol>
+        </aside>
+        <div class="dunk-power" id="dunkPower" hidden><i id="dunkPowerFill"></i><span>POWER</span></div>
+        <p class="dunk-playhint" id="dunkPlayHint">TAP the tent or START · then DRAG to throw at the RED PLATE</p>
+        <p class="dunk-toast" id="dunkToast" hidden></p>
+        <div class="dunk-vestibule vendor-vestibule-only" id="dunkStage">
+          <p class="machine-number">Night dunk · 1 demo coin · Depth run</p>
+          <p class="tent-mouth-joke">The plate lies. Throw the glowing HIT. Three balls a seat. Keep it cute.</p>
+          <p data-pf-depth-copy hidden>Authored seats, not a smaller-plate loop. Dunk is a checkpoint. Keep it cute.</p>
+          <div class="depth-readout" aria-label="Dunk tank run depth">
+            <span><small>Dunks now</small><strong id="depthDunkNow">0</strong></span>
+            <span><small>Best dunks</small><strong id="depthDunkBest">—</strong></span>
+            <span><small>Score</small><strong id="depthDunkScore">0</strong></span>
+            <span><small>Best score</small><strong id="depthDunkBestScore">—</strong></span>
+          </div>
+          <button class="ticket-button" id="dunkStart" type="button">START · 1 demo coin</button>
+          <p class="status-ticket" id="dunkStatus">Tap the tent or START · drag to throw · three balls a seat</p>
+        </div>
+        <p class="tier-pill" id="dunkTier" hidden></p>
+        <p class="love-verdict" id="dunkVerdict" hidden></p>
+        <div class="vendor-result" id="dunkResult" hidden>
+          <p class="vendor-result-game">DUNK THE BARKER</p>
+          <p class="vendor-result-depth" id="dunkResultDepth">DUNKS 0</p>
+          <p class="vendor-result-score" id="dunkResultScore">SCORE 0</p>
+          <p class="vendor-result-reason" id="dunkResultReason"></p>
+          <p class="vendor-result-aura" id="dunkResultAura"></p>
+          <p class="vendor-result-challenge" id="dunkChallengeText">Beat my Dunk seats 0 on Penny Fever</p>
+          <button class="quiet-button" id="dunkChallenge" type="button">Copy challenge</button>
+          <p class="vendor-result-copied" id="dunkCopied" hidden>Copied — send it</p>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

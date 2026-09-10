@@ -1,0 +1,416 @@
+/* Barely-Fit Toss — 3D tent chrome. PF only. Never booth/port 6000. */
+
+#cabinet-ball-toss {
+  --toss-red: #c41e3a;
+  --toss-cream: #f0d09a;
+  --toss-teal: #3d8a8a;
+  --toss-pink: #e8a0b8;
+  max-width: 1120px;
+}
+
+#cabinet-ball-toss .toss3d-header {
+  margin-top: 0.35rem;
+  padding: 0.85rem 0.85rem 0.65rem;
+  border: 1px solid rgba(196, 30, 58, 0.42);
+  border-radius: 1rem 1rem 0.3rem 0.3rem;
+  background:
+    linear-gradient(180deg, rgba(74, 18, 28, 0.82), rgba(18, 8, 12, 0.35)),
+    repeating-linear-gradient(90deg, #7a1c2e 0 12%, #e8c878 12% 24%);
+  background-size: auto, 100% 0.7rem;
+  background-repeat: no-repeat;
+}
+
+#cabinet-ball-toss .toss3d-stage {
+  perspective: none;
+}
+
+#cabinet-ball-toss .toss3d-stage .attraction-card {
+  max-width: min(1120px, 100%);
+  transform: none;
+  padding: 0.5rem 0.5rem 0.65rem;
+  background: #0a080c;
+  border-color: rgba(212, 164, 90, 0.42);
+}
+
+#cabinet-ball-toss .toss3d-viewport.vendor-stage {
+  position: relative;
+  margin: 0;
+  height: min(78vh, 860px);
+  min-height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(240, 208, 154, 0.42);
+  background: #14080c;
+  box-shadow:
+    inset 0 0 48px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(196, 30, 58, 0.16);
+}
+
+#cabinet-ball-toss #ballTossCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+#cabinet-ball-toss .balltoss-card.is-playing #ballTossCanvas {
+  cursor: grab;
+}
+
+#cabinet-ball-toss .balltoss-card.is-playing #ballTossCanvas.is-pulling {
+  cursor: grabbing;
+}
+
+#cabinet-ball-toss .balltoss-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after {
+  display: none;
+}
+
+#cabinet-ball-toss .balltoss-card.is-result .vendor-stage,
+#cabinet-ball-toss .balltoss-card.is-result .toss3d-viewport {
+  opacity: 1;
+}
+
+#cabinet-ball-toss .toss3d-hud {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  align-items: flex-end;
+  padding: 0.7rem 0.8rem 0;
+  pointer-events: none;
+}
+
+#cabinet-ball-toss .toss3d-hud .depth-readout {
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  background: rgba(12, 6, 9, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  border-radius: 8px;
+}
+
+#cabinet-ball-toss .toss3d-pips {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+#cabinet-ball-toss .toss3d-pips i {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  border: 1px solid #f0d09a;
+  background: rgba(240, 208, 154, 0.18);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+#cabinet-ball-toss .toss3d-pips i.is-miss {
+  background: #c41e3a;
+  box-shadow: 0 0 8px rgba(196, 30, 58, 0.7);
+}
+
+#cabinet-ball-toss .toss3d-room-card {
+  position: absolute;
+  top: 4.4rem;
+  left: 0.75rem;
+  z-index: 3;
+  max-width: min(22rem, 72%);
+  padding: 0.45rem 0.7rem 0.5rem;
+  border: 1px solid rgba(232, 160, 184, 0.45);
+  border-radius: 8px;
+  background: rgba(12, 6, 9, 0.78);
+  color: #f0d09a;
+  pointer-events: none;
+}
+
+#cabinet-ball-toss .toss3d-room-card small {
+  display: block;
+  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+  color: #e8a0b8;
+}
+
+#cabinet-ball-toss .toss3d-room-card strong {
+  display: block;
+  margin: 0.12rem 0 0.08rem;
+  color: #ffe6a6;
+  font-size: 1.02rem;
+}
+
+#cabinet-ball-toss .toss3d-room-card em {
+  display: block;
+  font-size: 0.78rem;
+  color: #f0d09a;
+}
+
+#cabinet-ball-toss .toss3d-power {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 5.4rem;
+  z-index: 3;
+  width: 0.55rem;
+  height: 7.2rem;
+  border: 1px solid rgba(240, 208, 154, 0.55);
+  border-radius: 6px;
+  background: rgba(12, 6, 9, 0.55);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#cabinet-ball-toss .toss3d-power span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: calc(var(--power, 0) * 100%);
+  background: linear-gradient(180deg, #ffe6a6, #c41e3a);
+  box-shadow: 0 0 10px rgba(196, 30, 58, 0.45);
+}
+
+#cabinet-ball-toss .toss3d-power[hidden],
+#cabinet-ball-toss .toss3d-room-card[hidden] {
+  display: none;
+}
+
+#cabinet-ball-toss .toss3d-gate {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  left: 0.7rem;
+  z-index: 4;
+  padding: 0.75rem 0.9rem 0.85rem;
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(28, 10, 14, 0.92), rgba(12, 6, 9, 0.88));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+#cabinet-ball-toss .toss3d-gate h2 {
+  margin: 0.15rem 0 0.2rem;
+  color: #ffe6a6;
+}
+
+#cabinet-ball-toss .toss3d-gate .barker-call {
+  margin: 0.35rem 0 0.55rem;
+}
+
+#cabinet-ball-toss .toss3d-playbar {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  left: 0.7rem;
+  z-index: 4;
+  display: none;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  border-radius: 8px;
+  background: rgba(12, 6, 9, 0.78);
+}
+
+#cabinet-ball-toss .balltoss-card.is-playing .toss3d-playbar {
+  display: block;
+}
+
+#cabinet-ball-toss .balltoss-card.is-playing .toss3d-gate,
+#cabinet-ball-toss .balltoss-card.is-result .toss3d-gate {
+  display: none;
+}
+
+#cabinet-ball-toss .toss3d-stamp {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 5;
+  padding: 0.45rem 1.1rem;
+  border: 6px solid #c41e3a;
+  color: #c41e3a;
+  font: 700 2.1rem Georgia, serif;
+  letter-spacing: 0.18em;
+  background: rgba(196, 30, 58, 0.12);
+  transform: translate(-50%, -50%) rotate(-14deg);
+  pointer-events: none;
+}
+
+#cabinet-ball-toss .toss3d-stamp[hidden] {
+  display: none;
+}
+
+#cabinet-ball-toss .toss3d-spit {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  z-index: 6;
+  padding: 0.28rem 0.9rem;
+  border: 5px solid #ff4a2a;
+  color: #ff4a2a;
+  font: 700 1.7rem Georgia, serif;
+  letter-spacing: 0.22em;
+  background: rgba(196, 30, 58, 0.16);
+  transform: translate(-50%, -50%) rotate(-8deg);
+  pointer-events: none;
+  text-shadow: 0 0 18px rgba(255, 80, 40, 0.55);
+  animation: toss-spit-pop 0.45s ease-out;
+}
+
+#cabinet-ball-toss .toss3d-spit.is-lie {
+  border-color: #f0d09a;
+  color: #f0d09a;
+  background: rgba(90, 40, 18, 0.55);
+}
+
+#cabinet-ball-toss .toss3d-spit[hidden] {
+  display: none;
+}
+
+@keyframes toss-spit-pop {
+  0% { transform: translate(-50%, -50%) rotate(-8deg) scale(0.55); opacity: 0; }
+  55% { transform: translate(-50%, -50%) rotate(-8deg) scale(1.08); opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(-8deg) scale(1); opacity: 1; }
+}
+
+#cabinet-ball-toss .balltoss-card .vendor-result {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  left: 0.7rem;
+  z-index: 6;
+  margin: 0;
+  background: rgba(12, 6, 9, 0.92);
+}
+
+#cabinet-ball-toss .balltoss-card.is-playing #ballTossStart {
+  display: none;
+}
+
+#cabinet-ball-toss .toss3d-hint {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  z-index: 3;
+  padding: 0.28rem 0.7rem;
+  border: 1px solid rgba(240, 208, 154, 0.4);
+  border-radius: 999px;
+  background: rgba(12, 6, 9, 0.7);
+  color: #ffe6a6;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+#cabinet-ball-toss .toss3d-hint[hidden] {
+  display: none;
+}
+
+#cabinet-ball-toss .toss3d-howto {
+  position: absolute;
+  right: 0.7rem;
+  top: 4.5rem;
+  z-index: 4;
+  width: min(15.5rem, 42vw);
+  padding: 0.55rem 0.7rem 0.6rem;
+  border: 1px solid rgba(240, 208, 154, 0.45);
+  border-radius: 10px;
+  background: rgba(12, 6, 9, 0.82);
+  color: #f0d09a;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+#cabinet-ball-toss .toss3d-howto-title {
+  margin: 0 0 0.35rem;
+  color: #ffe6a6;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+}
+
+#cabinet-ball-toss .toss3d-howto p {
+  margin: 0.18rem 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+#cabinet-ball-toss .toss3d-howto kbd {
+  display: inline-block;
+  min-width: 5.4rem;
+  margin-right: 0.2rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  border-radius: 4px;
+  color: #ffe6a6;
+  font: 600 0.68rem Georgia, serif;
+  letter-spacing: 0.06em;
+}
+
+#cabinet-ball-toss .toss3d-howto-foot {
+  margin-top: 0.4rem !important;
+  color: #e8a0b8;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem !important;
+}
+
+#cabinet-ball-toss .balltoss-card.is-result .toss3d-howto {
+  opacity: 0.35;
+}
+
+@media (max-width: 720px) {
+  #cabinet-ball-toss .toss3d-howto {
+    top: auto;
+    bottom: 5.6rem;
+    right: 0.55rem;
+    left: auto;
+    width: min(13.5rem, 48vw);
+    padding: 0.4rem 0.5rem;
+  }
+  #cabinet-ball-toss .toss3d-howto p { font-size: 0.7rem; }
+}
+
+@media (max-width: 720px) {
+  #cabinet-ball-toss .toss3d-viewport.vendor-stage {
+    height: min(72vh, 720px);
+    min-height: 360px;
+  }
+  #cabinet-ball-toss .toss3d-room-card {
+    top: 5.4rem;
+    max-width: 86%;
+  }
+  #cabinet-ball-toss .toss3d-power {
+    height: 5.4rem;
+    bottom: 6.2rem;
+  }
+
+  /* The vestibule is an introduction, not a stack of HUDs over a game.
+     Give the 3D attract screen its own window and let the ticket copy flow
+     beneath it. Playing mode returns to the full-height stage above. */
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-viewport.vendor-stage {
+    height: auto;
+    min-height: 0;
+    padding-top: 11.75rem;
+    overflow: hidden;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule #ballTossCanvas {
+    bottom: auto;
+    height: 11.75rem !important;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-howto {
+    display: none;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-gate {
+    position: relative;
+    inset: auto;
+    margin: 0.5rem;
+  }
+  #cabinet-ball-toss .balltoss-card.is-vestibule .toss3d-gate [data-pf-depth-copy] {
+    margin: 0.45rem 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+}

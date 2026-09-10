@@ -1,0 +1,419 @@
+/* Love Tester tent — Heartline 3D interior. PF only. Never booth/port 6000. */
+#cabinet-love.love3d-interior {
+  --love-pink: #ff6aa8;
+  --love-ruby: #c41e3a;
+  --love-brass: #d4a45a;
+  --love-velvet: #4a1028;
+}
+
+#cabinet-love.love3d-interior .interior-sky {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(196, 40, 80, 0.35), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(80, 16, 36, 0.5), transparent 50%),
+    linear-gradient(180deg, #2a0814, #12060c);
+}
+
+#cabinet-love.love3d-interior .interior-room {
+  max-width: 1120px;
+}
+
+#cabinet-love.love3d-interior .interior-header {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.7rem;
+}
+
+#cabinet-love.love3d-interior .interior-blurb {
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.love3d-card {
+  position: relative;
+  padding: 0.7rem 0.75rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(72, 16, 36, 0.55), rgba(18, 6, 10, 0.72)),
+    repeating-linear-gradient(90deg, rgba(212, 164, 90, 0.05) 0 12px, transparent 12px 24px);
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  border-radius: 1rem;
+  box-shadow: inset 0 1px rgba(255, 210, 170, 0.12), 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.love3d-card .machine-number {
+  margin-bottom: 0.35rem;
+}
+
+.love-stage-wrap {
+  position: relative;
+  width: 100%;
+  height: min(78vh, 820px);
+  min-height: 440px;
+  margin: 0.45rem 0 0.7rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 106, 168, 0.28);
+  background: #10050a;
+  box-shadow:
+    inset 0 0 48px rgba(80, 8, 24, 0.55),
+    0 0 0 1px rgba(212, 164, 90, 0.18),
+    0 16px 36px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+  user-select: none;
+}
+
+#loveCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+#loveCanvas.is-holding,
+.love3d-card.is-dragging #loveCanvas {
+  cursor: grabbing;
+}
+
+.love-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.7rem 0.8rem 0.75rem;
+  z-index: 2;
+}
+
+.love-hud-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.love-hud-verb {
+  display: inline-block;
+  max-width: 74%;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(12, 4, 8, 0.72);
+  border: 1px solid rgba(255, 106, 168, 0.45);
+  color: #ffd0e4;
+  font: 700 0.78rem/1.3 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(196, 30, 58, 0.35);
+}
+
+.love-hud-heat {
+  font: 700 0.85rem/1 Georgia, serif;
+  color: #f0d09a;
+  background: rgba(12, 4, 8, 0.7);
+  border: 1px solid rgba(212, 164, 90, 0.35);
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.love-hud-barker {
+  margin: 0.45rem 0 0;
+  color: #f7e6c8;
+  font: italic 0.92rem/1.35 Georgia, serif;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  max-width: 36rem;
+}
+
+.love-hud-mid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2.4rem;
+}
+
+.love-toast {
+  pointer-events: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(196, 30, 58, 0.88);
+  color: #fff4ea;
+  font: 700 0.95rem/1.2 Georgia, serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.love-toast.is-on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.love-hud-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.love-warn {
+  min-height: 1.15rem;
+  color: #ffb0c8;
+  font: 700 0.8rem/1.3 Georgia, serif;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 12px rgba(196, 30, 58, 0.8);
+}
+
+.love-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.love-controls span {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(12, 4, 8, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  color: #f7e6c8;
+  font: 600 0.72rem/1.3 Georgia, serif;
+  letter-spacing: 0.04em;
+}
+
+.love-controls b {
+  color: #ffd0e4;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.love-tilt {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 4.6rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 208, 228, 0.55);
+  background: radial-gradient(circle at 50% 50%, rgba(72, 16, 36, 0.55), rgba(12, 4, 8, 0.82));
+  box-shadow: inset 0 0 12px rgba(255, 106, 168, 0.25), 0 6px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.love-tilt[hidden] {
+  display: none;
+}
+
+.love-tilt.is-hot {
+  border-color: #ffd0e4;
+  box-shadow: inset 0 0 16px rgba(255, 106, 168, 0.45), 0 0 18px rgba(255, 80, 120, 0.35);
+}
+
+.love-tilt-label {
+  position: absolute;
+  left: 50%;
+  top: -1.15rem;
+  transform: translateX(-50%);
+  color: #ffd0e4;
+  font: 700 0.58rem/1 Georgia, serif;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  text-shadow: 0 2px 6px #000;
+}
+
+.love-tilt i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe0f0, #ff6aa8 55%, #9a1838);
+  box-shadow: 0 0 10px #ff6aa8;
+  transition: transform 60ms linear;
+}
+
+.love-desk-compat .love-squeeze-meter {
+  display: none;
+}
+
+.love-start-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 6.4rem;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: auto;
+  min-width: min(22rem, 86%);
+  padding: 0.85rem 1.2rem 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid #ffd0e4;
+  background: linear-gradient(180deg, rgba(196, 40, 80, 0.92), rgba(72, 12, 28, 0.94));
+  color: #fff8f4;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 24px rgba(255, 80, 120, 0.28);
+  cursor: pointer;
+  text-align: center;
+  font: 700 1rem/1.25 Georgia, serif;
+}
+
+.love-start-overlay[hidden] {
+  display: none;
+}
+
+.love-start-overlay strong {
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.love-start-overlay span {
+  display: block;
+  margin-top: 0.25rem;
+  color: #ffd0e4;
+  font-size: 0.85rem;
+}
+
+.love-start-overlay em {
+  display: block;
+  margin-top: 0.4rem;
+  font-style: italic;
+  font-weight: 500;
+  color: #f7e6c8;
+  font-size: 0.82rem;
+}
+
+.love3d-card.is-hot .love-stage-wrap {
+  box-shadow:
+    inset 0 0 48px rgba(196, 30, 58, 0.45),
+    0 0 28px rgba(255, 80, 120, 0.28),
+    0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.love3d-card.is-danger .love-stage-wrap {
+  animation: love-danger-pulse 0.28s steps(2) infinite;
+}
+
+.love3d-card.is-coda .love-stage-wrap {
+  border-color: rgba(255, 160, 60, 0.55);
+}
+
+@keyframes love-danger-pulse {
+  from { box-shadow: inset 0 0 40px rgba(196, 30, 58, 0.2), 0 0 0 1px rgba(255, 80, 120, 0.2); }
+  to { box-shadow: inset 0 0 70px rgba(196, 30, 58, 0.7), 0 0 24px rgba(255, 40, 80, 0.55); }
+}
+
+.love-play-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.love-play-row .ticket-button {
+  min-width: 11rem;
+}
+
+.hold-btn.love-squeeze {
+  background: linear-gradient(180deg, #e45a86, #9a1838);
+  border-color: #ffd0e0;
+  color: #fff8f4;
+  box-shadow: 0 0 0 1px rgba(255, 180, 200, 0.25), 0 8px 18px rgba(120, 16, 40, 0.4);
+}
+
+.hold-btn.love-squeeze:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+.hold-btn.love-squeeze.is-down {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.love3d-card .vendor-result {
+  margin-top: 0.7rem;
+}
+
+.love-desk-compat {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  #cabinet-love .interior-header {
+    padding: 0.65rem 0.7rem;
+  }
+  #cabinet-love .interior-header .interior-blurb {
+    display: none;
+  }
+  .love3d-card > .machine-number,
+  .love3d-card > h2,
+  .love3d-card > .tent-mouth-joke,
+  .love3d-card > .barker-call,
+  .love3d-card > .love-play-row,
+  .love3d-card > .status-ticket {
+    display: none;
+  }
+  .love3d-card {
+    padding: 0.38rem;
+  }
+  .love-tilt {
+    width: 60px;
+    height: 60px;
+    bottom: 5.2rem;
+  }
+  .love-stage-wrap {
+    height: min(74svh, 650px);
+    min-height: 430px;
+    margin: 0;
+  }
+  .love-hud-verb {
+    font-size: 0.64rem;
+    max-width: 78%;
+  }
+  .love-start-overlay {
+    top: 50%;
+    bottom: auto;
+    min-width: 84%;
+    padding: 0.85rem 0.8rem;
+    transform: translate(-50%, -50%);
+  }
+  .love-start-overlay strong {
+    font-size: 1.1rem;
+  }
+  .love-controls span {
+    font-size: 0.64rem;
+  }
+  .love-controls span:nth-child(2),
+  .love-controls span:nth-child(3) {
+    display: none;
+  }
+  .love-hud-barker {
+    max-width: 88%;
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+  .love-hud {
+    padding: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .love3d-card.is-danger .love-stage-wrap,
+  #cabinet-love.love3d-interior .interior-sky {
+    animation: none;
+  }
+  .love-toast {
+    transition: none;
+  }
+}

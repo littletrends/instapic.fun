@@ -1,0 +1,124 @@
+{
+  "id": "felix",
+  "group": "vendors",
+  "title": "Felix",
+  "pairedId": "snap",
+  "source": "turnarounds/05-snap.png",
+  "sourcePrompt": "turnarounds/05-snap.md",
+  "band": [
+    90,
+    492
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/felix",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "e3c505f44c7165db48b4e4382022312e9a9bac832a1f420b9441da7e87a4e6c1",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-b3efeedb-a32c-4792-b196-43ca3506d7f7.png",
+  "generatedSourceSHA256": "ba6916965b1118e09a0d31d338dd78f776e453d5d0d9bd8535592a762f4f9c31",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      679,
+      594
+    ],
+    [
+      679,
+      0,
+      1356,
+      594
+    ],
+    [
+      0,
+      594,
+      680,
+      1159
+    ],
+    [
+      680,
+      594,
+      1356,
+      1159
+    ]
+  ],
+  "generatedSourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "removedSeparatorColumns": [
+    674,
+    675,
+    676,
+    677,
+    678,
+    679,
+    680,
+    681
+  ],
+  "removedSeparatorRows": [
+    590,
+    591,
+    592,
+    593,
+    594,
+    595,
+    596,
+    597
+  ],
+  "removedSeparatorComponents": [],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

@@ -1,0 +1,124 @@
+{
+  "id": "laughing",
+  "group": "aura",
+  "title": "Aura \u2014 Laughing",
+  "source": "aura/aura-laughing-turnaround.png",
+  "sourcePrompt": "aura/aura-laughing-turnaround.md",
+  "band": [
+    8,
+    927
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "aura/laughing",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "cde657e6bda5bf2cb5683908d9688564a39fc6da637a5505e433957305e71985",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-8793815a-56b2-4d02-9395-896cf63b6a64.png",
+  "generatedSourceSHA256": "21f53c159a687f031aac0174edab892c55781b547aafb8b69fbc6aba389e3652",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      621,
+      635
+    ],
+    [
+      621,
+      0,
+      1225,
+      635
+    ],
+    [
+      0,
+      635,
+      635,
+      1284
+    ],
+    [
+      635,
+      635,
+      1225,
+      1284
+    ]
+  ],
+  "generatedSourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "removedSeparatorColumns": [
+    608,
+    609,
+    610,
+    611,
+    612,
+    613,
+    614,
+    615,
+    616
+  ],
+  "removedSeparatorRows": [
+    638,
+    639,
+    640,
+    641,
+    642,
+    643,
+    644,
+    645
+  ],
+  "removedSeparatorComponents": [],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

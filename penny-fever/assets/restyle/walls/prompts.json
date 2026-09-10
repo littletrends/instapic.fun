@@ -1,0 +1,347 @@
+{
+  "version": 1,
+  "method": "built-in image_gen",
+  "viewOrder": [
+    "front",
+    "back",
+    "left-three-quarter",
+    "right-three-quarter"
+  ],
+  "basePrompt": "Use case: stylized-concept. Create ONE new production concept turnaround SHEET of a freestanding PAPER ALLEY BACKDROP WALL, not a booth or building. Input images are STYLE REFERENCES only: ornate layered paper carnival walls behind the stalls, plus a matching wall turnaround example. Match its physical cut-paper relief, worn painted timber-paper, brass fretwork and Victorian sideshow elegance. Subject: {name}. Palette and ornament: {theme}. Secrets: {secret}; all closed decorative future entrances. Wall about 5m wide x 4m high x .3m thin; curved stepped ornate silhouette, modest tall side pinnacles, believable layered thickness. Design both front and finished back; reverse shows simpler matching ornament and corresponding door back, not a new unrelated design. FOUR views of SAME wall in equal 2x2 quadrants: upper-left FRONT elevation; upper-right BACK elevation; lower-left LEFT three-quarter showing thin edge; lower-right RIGHT three-quarter showing thin edge. Front/back truly straight-on, entire silhouettes visible with clear margins inside quadrants; equal groundline per row, blank separation at image centre. Cream studio background. No stall, vendor, people, attraction apparatus, furniture, surrounding scene, floor, labels, text, grid lines, or watermark. The subject is only a scenery wall to sit BEHIND a separate existing stall. Rich layered papercraft, not flat icons, no modern cartoon gradients.",
+  "assets": [
+    {
+      "id": "fortune",
+      "name": "Mystic Tent · Iris",
+      "theme": "plum and antique gold, crescent moons and star fretwork",
+      "secret": "a moon-locked tall door and tiny tunnel hatch",
+      "source": "sheets/fortune-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-6e90b53c-7aa8-4a86-8ba1-ea5d11ada578.png",
+      "promptOverride": "Use case: stylized-concept. Generate a NEW game-environment asset using attached image ONLY as art-direction reference, not an edit of that sheet. Deliver one turnaround sheet for the MATCHING PAPER ALLEY BACKDROP WALL behind Mystic Tent/Iris. No stall, no vendor, no character, no telescope, no booth furniture. The subject is just a freestanding modular scenery wall with layered cut-paper Gothic curves, deep plum timber-paper panels, tiny gilt moon/star reliefs, warm brass edging. A narrow locked moon door on the front and a concealed little tunnel hatch, both closed. Finished back decorated more simply in matching plum/brass, not an unfinished cardboard back. Visible thick stacked paper edges. This is a wall, about 5 metres wide and 4 metres high, only .3 metre thick. Four views of THE EXACT SAME WALL on one landscape turnaround sheet, arranged 2x2: top-left straight FRONT, top-right straight BACK, bottom-left LEFT edge at slight three-quarter angle, bottom-right RIGHT edge at slight three-quarter angle. All views wholly inside their quadrants with generous clear margin, equal vertical scale, aligned ground lines per row. No perspective on front/back. Show thin side thickness honestly, not four different buildings. Pure cream background, no ground scenery, no cast shadows outside silhouettes, no text/captions/borders/watermarks. Rich detailed physical papercraft like the reference, not flat vector. These walls are separate scenery to place behind existing booths. Save the generated image as a real file and return its location."
+    },
+    {
+      "id": "love",
+      "name": "Love Tester · Rosalie",
+      "theme": "dusty rose, burgundy and antique gold; layered hearts and roses",
+      "secret": "a heart-key lock on a tall secret door and a rose-covered low hatch",
+      "source": "sheets/love-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-9c476a15-eb17-4937-99c9-26bc8cc17761.png"
+    },
+    {
+      "id": "curios",
+      "name": "Curios · Digby",
+      "theme": "forest green and aged brass; keys, lock escutcheons and tiny cabinet reliefs",
+      "secret": "an oversized keyhole door and disguised little cupboard tunnel",
+      "source": "sheets/curios-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-aaad7769-3151-49ec-a156-fdf36a5744da.png"
+    },
+    {
+      "id": "lookup",
+      "name": "Look Up · Celeste",
+      "theme": "midnight blue and gold with silver accents; constellations and celestial circles",
+      "secret": "a star-lock observatory door and crescent crawl hatch",
+      "source": "sheets/lookup-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-5ca23b63-010b-4ad3-ac37-ee3c90a630f5.png"
+    },
+    {
+      "id": "snap",
+      "name": "SNAP · Felix",
+      "theme": "deep teal and brass; Art Nouveau camera iris, flash and film-edge relief motifs",
+      "secret": "a shutter-pattern darkroom door and small film-canister hatch",
+      "source": "sheets/snap-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-9d33251f-5e97-4000-a17e-07acee90cf5e.png"
+    },
+    {
+      "id": "whisper",
+      "name": "Whisper · Willa",
+      "theme": "lavender, plum and faded brass; envelopes, wings and heart seals",
+      "secret": "a letter-slot secret door and sealed envelope cupboard",
+      "source": "sheets/whisper-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-db6c9eaf-d9be-4ba5-961e-c9a3dcc3233c.png"
+    },
+    {
+      "id": "ball-toss",
+      "name": "Ball Toss · Bess",
+      "theme": "rust red and cream with gilt trim; circus scallops and three-ball motifs",
+      "secret": "a brass ball-lock door and striped low trapdoor",
+      "source": "sheets/ball-toss-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-cfa29d5e-3e63-4322-a4f0-5e882a643135.png"
+    },
+    {
+      "id": "coin-pusher",
+      "name": "Coin Pusher · Copper",
+      "theme": "dark walnut and burnished copper; pressed pennies and coin channels",
+      "secret": "a round coin-lock vault door and little counting-room hatch",
+      "source": "sheets/coin-pusher-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-4d40c5a6-a6b1-4123-886e-bae350ae9b58.png"
+    },
+    {
+      "id": "pinball",
+      "name": "Pinball · Pip",
+      "theme": "indigo and dusty pink with brass relief; lightning bolts and silver pinball tracks",
+      "secret": "a lightning-locked service door and small silver-ball hatch",
+      "source": "sheets/pinball-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-36078cb7-b2d7-4d9a-95b6-859911cad452.png"
+    },
+    {
+      "id": "water-gun",
+      "name": "Water Gun · Marina",
+      "theme": "petrol blue, teal and aged gold; curling paper waves and droplets",
+      "secret": "a wave-wheel lock door and low porthole tunnel",
+      "source": "sheets/water-gun-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-aab8ae12-381f-48db-8ce8-387e63502190.png"
+    },
+    {
+      "id": "milk-bottles",
+      "name": "Milk Bottles · Mabel",
+      "theme": "sage green, aged ivory and gold; milk-bottle silhouettes and dairy scallops",
+      "secret": "a milk-churn latch door and tiny delivery hatch",
+      "source": "sheets/milk-bottles-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-935498db-b419-4f9a-a2e9-6a425704cef3.png"
+    },
+    {
+      "id": "cover-the-spot",
+      "name": "Cover the Spot · Dot",
+      "theme": "dusty brick red, cream and gold; overlapping circle medallions",
+      "secret": "a three-disc puzzle-lock door and dotted crawl hatch",
+      "source": "sheets/cover-the-spot-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-c914a58e-1203-4b69-897b-05b5ab522422.png"
+    },
+    {
+      "id": "mutoscope",
+      "name": "Mutoscope · Milo",
+      "theme": "dark tobacco brown and antique brass; film reels and picture frames",
+      "secret": "a film-reel lock door and projection-room tunnel hatch",
+      "source": "sheets/mutoscope-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-d26409f8-445f-4f38-8549-f66d64474242.png"
+    },
+    {
+      "id": "high-striker",
+      "name": "High Striker · Magnus",
+      "theme": "oxblood and brass; bell reliefs and rising scale marks",
+      "secret": "a hammer-and-bell lock door and strength-tester service hatch",
+      "source": "sheets/high-striker-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-2e768a7f-c564-4b66-96eb-1eb30d955a6f.png"
+    },
+    {
+      "id": "catoptromancy",
+      "name": "Looking Glass · Opal",
+      "theme": "smoky violet and tarnished silver-gold; ornate mirrors and reflected moons",
+      "secret": "a mirror-shaped secret door and little silver-framed hatch",
+      "source": "sheets/catoptromancy-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-5bfd811b-3a5d-4432-a468-929377109e2b.png"
+    },
+    {
+      "id": "bent-rings",
+      "name": "Bent Rings · Ringo",
+      "theme": "olive green and gold; interlocking ring reliefs and pagoda curls",
+      "secret": "a ring puzzle lock door and circular crawl hatch",
+      "source": "sheets/bent-rings-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-b4de92d8-8365-435e-8b53-118a4700876e.png"
+    },
+    {
+      "id": "plinko",
+      "name": "Plinko · Peggy",
+      "theme": "deep jade and gold; decorative rows of pegs and falling discs",
+      "secret": "a pegboard-pattern hidden door and low disc hatch",
+      "source": "sheets/plinko-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-fdfd42a0-821e-4f6b-8c88-8c128749aee5.png"
+    },
+    {
+      "id": "fairy-floss",
+      "name": "Fairy Floss · Flossie",
+      "theme": "muted mauve-pink, faded cream and brass; layered spun-sugar clouds",
+      "secret": "a cloud-shaped lock door and sweet-shop tunnel hatch",
+      "source": "sheets/fairy-floss-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-e121ba7a-4c96-4241-a9d5-e9e9438bc82c.png"
+    },
+    {
+      "id": "popcorn",
+      "name": "Popcorn · Poppy",
+      "theme": "warm caramel, cream and gold with restrained burgundy accents; kernels and scallops",
+      "secret": "a popcorn-box patterned secret door and corn-kernel hatch",
+      "source": "sheets/popcorn-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-64b65cd5-649f-463c-9daa-30065cee2d02.png"
+    },
+    {
+      "id": "duck-pond",
+      "name": "Duck Pond · Dottie",
+      "theme": "pond green, pale gold and soft blue; reeds, ripples and tiny duck reliefs",
+      "secret": "a duck-key garden door and low ripple-shaped tunnel",
+      "source": "sheets/duck-pond-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-0c10cf52-3471-4d16-ac9b-65aca4af60a1.png"
+    },
+    {
+      "id": "skee-ball",
+      "name": "Skee Ball · Skip",
+      "theme": "slate blue, warm timber and gold; concentric score rings",
+      "secret": "a target-lock door and round ball-return hatch",
+      "source": "sheets/skee-ball-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-fb67fb6e-036d-4428-a4f3-0299691fbc95.png"
+    },
+    {
+      "id": "penny-pitch",
+      "name": "Penny Pitch · Penelope",
+      "theme": "terracotta, peach and brass; scalloped plates, leaves and pressed pennies",
+      "secret": "a penny-slot garden door and dish-shaped low hatch",
+      "source": "sheets/penny-pitch-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-78d8b4d6-7bc0-4b68-b214-c4f87194fa63.png"
+    },
+    {
+      "id": "dunk-tank",
+      "name": "Dunk Tank · Duncan",
+      "theme": "turquoise, weathered cream and brass; waves and life-ring motifs",
+      "secret": "a life-ring lock door and storm-drain style tunnel hatch",
+      "source": "sheets/dunk-tank-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-09c8e855-7df4-4bad-94f6-423586110c98.png"
+    },
+    {
+      "id": "marquee",
+      "name": "Marquee · Lumi",
+      "theme": "antique olive-gold and dark wood; tiny warm bulb housings and starburst reliefs",
+      "secret": "a star-key backstage door and electrician cupboard hatch",
+      "source": "sheets/marquee-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-c5038f6a-19ba-4cab-84e2-5a9df21e7f1b.png"
+    },
+    {
+      "id": "pack",
+      "name": "Pack · Kit",
+      "theme": "sage green, leather-brown and antique brass; travel trunks and luggage tags",
+      "secret": "a suitcase-clasp door and luggage-room tunnel hatch",
+      "source": "sheets/pack-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-19cc777e-8209-4c13-9493-e07d115193a3.png"
+    },
+    {
+      "id": "pass",
+      "name": "Showman’s Pass · Bea",
+      "theme": "wine-red and old gold; layered velvet-paper curtain swags and tickets",
+      "secret": "a ticket-slot locked backstage door and curtain-hidden low hatch",
+      "source": "sheets/pass-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-51e8c77b-cdc2-478d-82a1-b87010974bd2.png"
+    },
+    {
+      "id": "horse-carousel",
+      "name": "Horse Carousel · Florence",
+      "theme": "deep burgundy, evergreen and gold; carved-paper horses and carousel canopy scallops",
+      "secret": "a horse-key stable door and small gilded service hatch",
+      "source": "sheets/horse-carousel-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-91e06cfd-ba92-441f-8000-136253b5d683.png"
+    },
+    {
+      "id": "ferris-wheel",
+      "name": "Ferris Wheel · Jasper",
+      "theme": "forest green, ochre and gold; wheel spokes and little gondola reliefs",
+      "secret": "a spoke-wheel locked door and low machinery hatch",
+      "source": "sheets/ferris-wheel-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-00f7d3bf-39f3-498a-bd84-fb3a476ad07e.png"
+    },
+    {
+      "id": "helter-skelter",
+      "name": "Helter-skelter · Tilly",
+      "theme": "faded vermilion, plum and gold; spiral ribbons and tower crenellations",
+      "secret": "a spiral-latch tower door and round tunnel hatch",
+      "source": "sheets/helter-skelter-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-67250d02-01e9-4b8b-8451-b22fd3596019.png"
+    },
+    {
+      "id": "chair-swings",
+      "name": "Chair Swings · Hugo",
+      "theme": "burgundy, green and gold; hanging chains, hearts and chair silhouettes",
+      "secret": "a chain-and-heart locked service door and low hatch",
+      "source": "sheets/chair-swings-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-4f75182c-892e-4ae4-bb1d-bed37f2bc85e.png"
+    },
+    {
+      "id": "funhouse",
+      "name": "Funhouse · Juno",
+      "theme": "dark green, burgundy and aged gold; theatrical mask reliefs and wavy framing",
+      "secret": "a sly smiling mask door and skewed small secret hatch; charming not horror",
+      "source": "sheets/funhouse-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-48109d40-6ea7-48d1-b45a-77444d5739b9.png"
+    },
+    {
+      "id": "fairground-organ",
+      "name": "Fairground Organ · Otto",
+      "theme": "walnut, dark green and brass; pipe-organ reliefs and music scrolls",
+      "secret": "a treble-key organ-service door and small music-box tunnel hatch",
+      "source": "sheets/fairground-organ-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-e607c6ab-07e8-484b-b09b-3bdab2c5d3a3.png"
+    },
+    {
+      "id": "balloon-tree",
+      "name": "Balloon Tree · Nell",
+      "theme": "plum, emerald and burgundy with antique gold; raised balloon clusters and tied ribbons",
+      "secret": "a ribbon-lock garden door and little balloon-shaped hatch",
+      "source": "sheets/balloon-tree-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-22b66973-1647-4ba4-8928-5ae171e43b69.png"
+    },
+    {
+      "id": "alley-wall-bay",
+      "name": "Painted Alley Bay · Arlo",
+      "theme": "deep green, rust-red awnings and gilt trim; theatrical window panels",
+      "secret": "a key-locked mural door and discreet tunnel behind a low panel",
+      "source": "sheets/alley-wall-bay-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-2346f997-5197-4706-8d0d-5421b671969d.png"
+    },
+    {
+      "id": "foyer",
+      "name": "Foyer · first paper passage",
+      "theme": "aged cream, deep evergreen and gold; little yellow crown reliefs and heart scrollwork",
+      "secret": "a closed crown-locked side door and tiny curiosity hatch; wall segment not a gateway across the path",
+      "source": "sheets/foyer-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-9103a338-c610-4952-afab-549fe59ebaa7.png"
+    },
+    {
+      "id": "aura-ticket-booth",
+      "name": "Aura · ticket counter backdrop",
+      "theme": "evergreen, burgundy and gold; yellow crown medallion and torn-ticket reliefs",
+      "secret": "a heart-and-crown private door and ticket-shaped locked hatch",
+      "source": "sheets/aura-ticket-booth-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-843cf791-31c1-4274-920a-707ed74b6aa9.png"
+    },
+    {
+      "id": "end-curtain",
+      "name": "End Curtain · behind the show",
+      "theme": "deep burgundy velvet-paper and gold; layered curtain swags and heart-crown crest",
+      "secret": "a closed curtain-framed backstage door and hidden little panel tunnel; no readable signs",
+      "source": "sheets/end-curtain-wall-turnaround.png",
+      "status": "generated",
+      "originalGeneratedFile": "/home/magic_mirror1/.codex/generated_images/019f9826-9a40-7fa1-8e9b-3f156ea222d3/exec-1890514c-426d-49a6-b4cf-bc06c7e4c690.png"
+    }
+  ]
+}

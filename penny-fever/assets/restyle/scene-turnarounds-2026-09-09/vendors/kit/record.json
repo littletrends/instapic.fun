@@ -1,0 +1,97 @@
+{
+  "id": "kit",
+  "group": "vendors",
+  "title": "Kit",
+  "pairedId": "pack",
+  "source": "turnarounds/25-pack-v2.png",
+  "sourcePrompt": "turnarounds/25-pack-v2.md",
+  "band": [
+    79,
+    484
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/kit",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "e6385bbb4db054e3177d47d9670ec58fc1d41c54ae95ac50be0397e1a6caa97d",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-49a2eb7f-73e9-4946-8e3c-6d28330a9b85.png",
+  "generatedSourceSHA256": "738a4ef9a60585a2bfca2df0596c3dcb727ff4fd4cef94933c865865efee59f7",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      660,
+      635
+    ],
+    [
+      660,
+      0,
+      1254,
+      635
+    ],
+    [
+      0,
+      635,
+      631,
+      1254
+    ],
+    [
+      631,
+      635,
+      1254,
+      1254
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

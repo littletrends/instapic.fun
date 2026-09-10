@@ -1,0 +1,97 @@
+{
+  "id": "dot",
+  "group": "vendors",
+  "title": "Dot",
+  "pairedId": "cover-the-spot",
+  "source": "turnarounds/12-cover-the-spot.png",
+  "sourcePrompt": "turnarounds/12-cover-the-spot.md",
+  "band": [
+    83,
+    477
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/dot",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "61f8398fb0b6834afcf9be90dc47f87a0a52f3341c7f7d2246e4f743326b610d",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-1f477a97-8a1f-4448-b8c7-e85f57045cf8.png",
+  "generatedSourceSHA256": "21ac752ab6da38bc174f8eb0fb5817e3e14b2e0c6a8f08b3025cb7dcf8c6666a",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      685,
+      556
+    ],
+    [
+      685,
+      0,
+      1365,
+      556
+    ],
+    [
+      0,
+      556,
+      678,
+      1152
+    ],
+    [
+      678,
+      556,
+      1365,
+      1152
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

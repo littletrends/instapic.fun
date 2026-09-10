@@ -1,0 +1,372 @@
+/* Penny Fever 3D alley — PF only. Never booth/port 6000. */
+
+.pf-world-stage {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: #07060a;
+}
+.pf-world-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+.pf-world-stage canvas:active { cursor: grabbing; }
+.pf-world-stage::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 42%, transparent 46%, rgba(4, 2, 8, 0.55) 100%),
+    linear-gradient(180deg, rgba(8, 6, 12, 0.28), transparent 18%, transparent 78%, rgba(8, 4, 10, 0.45));
+}
+.pf-world-loop-veil {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, #260914 0 49%, #050205 50% 51%, #260914 52% 100%);
+  transition: opacity .24s ease;
+}
+.pf-world-loop-veil span {
+  color: #f0d09a;
+  font: 700 .72rem/1.2 Georgia,serif;
+  letter-spacing: .18em;
+  text-shadow: 0 2px 10px #000;
+}
+.pf-world-loop-veil.is-closing { opacity: 1; }
+.pf-world-loop-veil.is-opening { opacity: 0; transition-duration: .48s; }
+
+body.is-in-world {
+  overflow: hidden;
+  height: 100dvh;
+}
+body.is-in-world:not(.is-world-map) .development-ribbon { display: none; }
+body.is-in-world .arcade-shell {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+body.is-in-world .pf-world-stage { display: block; }
+body.is-in-world .aura-welcome,
+body.is-in-world .charm-wall-panel,
+body.is-in-world .arcade-hall,
+body.is-in-world .foyer-footer,
+body.is-in-world .foyer-header .eyebrow,
+body.is-in-world .foyer-header .foyer-subtitle,
+body.is-in-world .foyer-header .marquee-lights,
+body.is-in-world .foyer-header h1 {
+  display: none !important;
+}
+body.is-in-world .foyer-header {
+  position: fixed;
+  top: 1.7rem;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  padding: 0.45rem 0.8rem 0;
+  background: linear-gradient(180deg, rgba(8, 5, 10, 0.72), transparent 88%);
+  pointer-events: none;
+  text-align: left;
+}
+body.is-in-world .foyer-header .carnival-sound,
+body.is-in-world .foyer-header .night-board,
+body.is-in-world .foyer-header .night-toast {
+  pointer-events: auto;
+}
+body.is-in-world .carnival-sound {
+  position: static !important;
+  display: inline-block;
+  margin: 0 0 0.4rem;
+  float: none;
+}
+body.is-in-world .night-board {
+  margin: 0;
+  width: max-content;
+  max-width: calc(100% - 7.2rem);
+  backdrop-filter: blur(8px);
+}
+body.is-in-world .result-banner {
+  position: fixed;
+  z-index: 12;
+  left: 50%;
+  top: 5.2rem;
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+}
+
+body.is-in-world.is-world-map {
+  overflow: auto;
+  height: auto;
+}
+body.is-in-world.is-world-map .pf-world-stage { display: none; }
+body.is-in-world.is-world-map .arcade-hall,
+body.is-in-world.is-world-map .aura-welcome,
+body.is-in-world.is-world-map .charm-wall-panel,
+body.is-in-world.is-world-map .foyer-footer,
+body.is-in-world.is-world-map .foyer-header h1,
+body.is-in-world.is-world-map .foyer-header .eyebrow,
+body.is-in-world.is-world-map .foyer-header .foyer-subtitle {
+  display: block !important;
+}
+body.is-in-world.is-world-map .arcade-shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+body.is-in-world.is-world-map .foyer-header {
+  position: relative;
+  top: 0;
+  background: none;
+  pointer-events: auto;
+  text-align: center;
+  padding: 0;
+}
+
+.pf-world-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+.pf-world-tools,
+.pf-world-prompt,
+.pf-world-pocket,
+.pf-joy { pointer-events: auto; }
+.pf-world-hud > .pf-world-loop-veil,
+.pf-world-brand,
+.pf-world-compass,
+.pf-world-speech,
+.pf-world-hint { pointer-events: none; }
+
+.pf-world-brand {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.7rem;
+  text-align: right;
+  color: #f0d09a;
+  text-shadow: 0 2px 10px #000;
+  pointer-events: none;
+}
+.pf-world-brand small {
+  display: block;
+  letter-spacing: 0.18em;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.pf-world-brand strong {
+  font-family: "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 1.05rem;
+}
+
+.pf-world-tools {
+  position: absolute;
+  top: 3.15rem;
+  right: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.pf-world-tools button {
+  font: 650 0.72rem/1 "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  background: rgba(12, 6, 10, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  border-radius: 999px;
+  padding: 0.42rem 0.75rem;
+  cursor: pointer;
+}
+
+.pf-world-speech {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  bottom: auto;
+  transform: translate(-50%, -100%);
+  width: min(92%, 440px);
+  padding: 0.7rem 0.9rem;
+  border-radius: 16px 16px 16px 4px;
+  background: rgba(18, 8, 14, 0.88);
+  border: 1px solid rgba(212, 164, 90, 0.42);
+  color: #fff6ec;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.pf-world-speech[hidden] { display: none !important; }
+.pf-world-speech.is-anchored { bottom: auto; }
+.pf-world-speech b {
+  display: block;
+  color: #e8a0b8;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.pf-world-speech p { margin: 0; font-family: Georgia, serif; font-size: 0.95rem; }
+
+.pf-world-prompt {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 42%;
+  bottom: auto;
+  transform: translate(-50%, -100%);
+  min-width: min(88%, 360px);
+  text-align: center;
+}
+.pf-world-prompt.is-anchored { bottom: auto; }
+.pf-world-pocket {
+  position: absolute;
+  z-index: 9;
+  right: 0.7rem;
+  bottom: 0.8rem;
+  display: flex;
+  gap: 0.38rem;
+  padding: 0.36rem;
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  border-radius: 14px;
+  background: rgba(12, 6, 10, 0.82);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.42);
+}
+.pf-world-pocket button {
+  min-width: 3.7rem;
+  padding: 0.42rem 0.38rem;
+  border: 0;
+  border-radius: 9px;
+  color: #f0d09a;
+  background: transparent;
+  font: 700 0.62rem/1.1 system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.pf-world-pocket button span { display: block; margin-bottom: 0.2rem; font-size: 1rem; }
+.pf-world-pocket button b { color: #fff6ec; font-size: 0.72rem; }
+.pf-world-pocket button.is-active { color: #fff6ec; background: rgba(193, 68, 107, 0.32); }
+.pf-world-pocket button.is-nudging { animation: pf-pocket-nudge 0.35s ease; }
+@keyframes pf-pocket-nudge { 50% { transform: translateY(-5px); color: #fff6ec; } }
+.pf-world-prompt.is-ticket-handoff {
+  top: 36%;
+}
+.pf-world-prompt.is-ticket-handoff button {
+  border: 2px dashed rgba(67, 29, 22, 0.62);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f5dda7, #d8ad61);
+  letter-spacing: 0.035em;
+}
+.pf-world-prompt.is-ticket-given { opacity: 0; transition: opacity 0.15s ease; }
+.pf-world-prompt[hidden] { display: none !important; }
+.pf-world-prompt button {
+  width: 100%;
+  font: 700 1rem/1.2 "Palatino Linotype", Palatino, Georgia, serif;
+  color: #160b10;
+  background:
+    radial-gradient(circle at 0 50%, transparent 0 7px, #efd297 8px),
+    radial-gradient(circle at 100% 50%, transparent 0 7px, #efd297 8px),
+    linear-gradient(180deg, #f5dda7, #d4a45a);
+  border: 2px dashed rgba(67, 29, 22, 0.62);
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem 0.75rem;
+  box-shadow: 0 4px 0 #8a6230, 0 10px 24px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+.pf-world-prompt em {
+  display: block;
+  margin-top: 0.35rem;
+  color: #f0d09a;
+  font-size: 0.78rem;
+  text-shadow: 0 2px 8px #000;
+}
+
+.pf-world-compass {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 9.2rem;
+  top: auto;
+  color: #f0d09a;
+  text-shadow: 0 2px 8px #000;
+  pointer-events: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.pf-world-compass strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  margin-top: 0.15rem;
+}
+
+.pf-joy {
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  bottom: auto;
+  width: 142px;
+  height: 142px;
+  margin: 0;
+  transform: translate(-50%, 0);
+  border-radius: 50%;
+  background: rgba(12, 6, 10, 0.28);
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  touch-action: none;
+}
+.pf-joy.is-anchored { bottom: auto; }
+.pf-joy-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f0d09a, #a87838);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.pf-world-hint {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 1.1rem;
+  max-width: 12rem;
+  color: rgba(240, 208, 154, 0.8);
+  font-size: 0.72rem;
+  text-align: right;
+  text-shadow: 0 2px 8px #000;
+  pointer-events: none;
+}
+.pf-world-hint[data-gone="1"] { opacity: 0; transition: opacity 1.2s ease; }
+
+.pf-world-fail {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  color: #f7ebe0;
+  background: #160b10;
+}
+.pf-world-fail[hidden] { display: none !important; }
+
+@media (max-width: 640px) {
+  .pf-joy { width: 128px; height: 128px; }
+  .pf-world-pocket { right: 0.45rem; bottom: 0.55rem; }
+  .pf-world-pocket button { min-width: 3.25rem; font-size: 0.56rem; }
+  .pf-world-hint { display: none; }
+}
+
+

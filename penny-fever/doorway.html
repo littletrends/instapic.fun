@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Penny Fever doorway — Instapic</title>
+  <meta name="description" content="A little papercut doorway under Instapic. Penny Fever is under construction, with a crew entrance into the live foyer.">
+  <link rel="canonical" href="https://instapic.fun/penny-fever/doorway.html">
+  <meta name="theme-color" content="#160b10">
+  <style>
+    :root {
+      --ink: #f3e2bd;
+      --muted: #cbb892;
+      --brass: #d2a65b;
+      --board: #5a3a22;
+      --night: #120c0a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: var(--ink);
+      font: 18px/1.5 Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(ellipse at 50% 0, #3a2416 0%, var(--night) 58%),
+        #120c0a;
+    }
+    a { color: var(--brass); }
+    .site-back {
+      display: inline-block;
+      margin: 1rem 1.2rem 0;
+      font: 600 .78rem/1.4 system-ui, sans-serif;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+    }
+    .site-back:hover, .site-back:focus-visible { color: var(--ink); }
+    main {
+      flex: 1;
+      width: min(720px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 1rem 0 3rem;
+      text-align: center;
+    }
+    .eyebrow {
+      margin: 0;
+      font: 600 .73rem/1.7 system-ui, sans-serif;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--brass);
+    }
+    h1 {
+      margin: .35rem 0 .6rem;
+      font-size: clamp(2rem, 7vw, 3.4rem);
+      line-height: 1.1;
+      font-weight: 700;
+    }
+    .whisper {
+      max-width: 34rem;
+      margin: 0 auto 1.4rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .arch {
+      position: relative;
+      width: min(320px, 78vw);
+      margin: 0 auto 1.5rem;
+      aspect-ratio: 2 / 3;
+      border-radius: 48% 48% 12px 12px;
+      border: 3px double var(--brass);
+      background:
+        radial-gradient(ellipse at top, #765027, #20180f 75%);
+      box-shadow: 0 0 36px #d2a65b24, 0 18px 40px #0008;
+      overflow: hidden;
+    }
+    .arch img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center 12%;
+    }
+    .boards {
+      position: absolute;
+      inset: 18% 8% 12%;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+    .boards span {
+      display: block;
+      width: 118%;
+      padding: .55rem .4rem;
+      background: linear-gradient(#7a4e2c, var(--board) 55%, #3d2416);
+      color: #f6e2b8;
+      font: 700 .92rem/1.1 system-ui, sans-serif;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      transform: rotate(-11deg);
+      box-shadow: 0 8px 18px #0008;
+      border: 1px solid #c9a36a88;
+    }
+    .boards span:nth-child(2) {
+      width: 108%;
+      margin-top: .55rem;
+      transform: rotate(8deg);
+      font-size: .72rem;
+      letter-spacing: .12em;
+      opacity: .92;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .75rem;
+      margin-top: .4rem;
+    }
+    .ticket, .quiet {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3rem;
+      padding: .75rem 1.35rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font: 700 .95rem/1.2 system-ui, sans-serif;
+    }
+    .ticket {
+      color: #1a120c;
+      background: linear-gradient(180deg, #f2d48a, var(--brass) 58%, #a87932);
+      box-shadow: 0 0 22px #d2a65b55;
+    }
+    .ticket:hover, .ticket:focus-visible { filter: brightness(1.06); }
+    .quiet {
+      color: var(--muted);
+      border: 1px solid #b4936055;
+      background: #0003;
+    }
+    .quiet:hover, .quiet:focus-visible { color: var(--ink); }
+    .note {
+      margin: 1.4rem auto 0;
+      max-width: 28rem;
+      font: .8rem/1.5 system-ui, sans-serif;
+      color: #b7a07a;
+    }
+    footer {
+      padding: 1rem;
+      text-align: center;
+      color: #8d7a5c;
+      font: .75rem/1.4 system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <a class="site-back" href="../index.html">← instapic.fun</a>
+  <main>
+    <p class="eyebrow">Somewhere beneath Instapic</p>
+    <h1>Penny Fever doorway</h1>
+    <p class="whisper">“The alley is still being papered, darling. The foyer light is on if you already have a ticket.”</p>
+    <div class="arch" aria-hidden="true">
+      <img src="assets/restyle/paper-aura-seated.png" alt="" width="1024" height="1536">
+      <div class="boards">
+        <span>Under construction</span>
+        <span>Paper alley ahead</span>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="ticket" href="index.html?style=paper&amp;rail=paper#foyer">Crew entrance · live foyer</a>
+      <a class="quiet" href="index.html?style=paper&amp;rail=paper#door">Start at the ticket desk</a>
+    </div>
+    <p class="note">Public opening is still being built. The crew door opens the current walkable foyer on this machine’s live files.</p>
+  </main>
+  <footer>Instapic by Little Trends · a private little carnival</footer>
+</body>
+</html>

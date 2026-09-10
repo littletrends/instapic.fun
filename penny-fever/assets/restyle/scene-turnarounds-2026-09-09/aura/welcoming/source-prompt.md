@@ -1,0 +1,8 @@
+# aura-welcoming-turnaround
+
+Tool: built-in image generation.
+References:
+- /home/magic_mirror1/Desktop/Penny Fever/Restyled Original/assets/restyle/paper-aura.png
+- /home/magic_mirror1/Desktop/Penny Fever/Aura_Reactions/Welcoming.jpg
+
+Use case: stylized-concept. Create a landscape character turnaround sheet for Penny Fever. Reference image 1 is the EXACT character and material style to preserve: Aura, a charming brown-eyed paper doll with brown layered-paper twin ponytails, red heart hair ties, gold three-point crown with red heart, white Peter Pan collar short-sleeved shirt, forest-green pleated pinafore with gold-edged red heart on chest, black Mary Jane shoes, visible round brass paper-fastener joints at elbows and knees. Keep this face, proportions and paper construction; no smooth plastic or fabric. Reference image 2 supplies ONLY the reaction, gesture and expression, which must be translated into that existing papercut style. Composition: exactly FOUR complete full-body views in one horizontal row, equal scale and ground line, spacious gutters, no overlapping silhouettes, nothing cropped. Left-to-right: FRONT facing camera; LEFT PROFILE nose points toward image left; BACK facing completely away with no face/chest heart visible; RIGHT PROFILE nose points toward image right. Rotate the SAME posed doll consistently in 90-degree steps, same hands and props. Neutral warm ivory background, clear tiny view labels below feet, no scenery, no glow or extra objects. Crown, hands and shoes all visible. Reaction: Friendly welcoming smile, her right hand makes the small finger-heart gesture near shoulder, left hand on hip.

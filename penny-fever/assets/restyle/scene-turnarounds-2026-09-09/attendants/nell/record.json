@@ -1,0 +1,127 @@
+{
+  "id": "nell",
+  "group": "attendants",
+  "title": "Nell",
+  "pairedId": "balloon-tree",
+  "source": "amusements/07-balloon-tree-turnaround-v4.png",
+  "sourcePrompt": "amusements/07-balloon-tree-turnaround-v4.md",
+  "band": [
+    135,
+    510
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "attendants/nell",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "right",
+    "back",
+    "left"
+  ],
+  "sourceSHA256": "cb768b6c32555ce7f5565160ee567f2575b80508fc8c7839982b9f05e4f89edb",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-5c4d6e01-071e-4f74-94a6-7b2c99b6848a.png",
+  "generatedSourceSHA256": "fe196e8925d14b319b628d81278808ef6637dde6f979632d8c43dacf262dd372",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      693,
+      577
+    ],
+    [
+      693,
+      0,
+      1374,
+      577
+    ],
+    [
+      0,
+      577,
+      682,
+      1145
+    ],
+    [
+      682,
+      577,
+      1374,
+      1145
+    ]
+  ],
+  "generatedSourceViewOrder": [
+    "front",
+    "right",
+    "back",
+    "left"
+  ],
+  "removedSeparatorColumns": [
+    682,
+    683,
+    684,
+    685,
+    686,
+    687,
+    688,
+    689,
+    690,
+    691
+  ],
+  "removedSeparatorRows": [
+    568,
+    569,
+    570,
+    571,
+    572,
+    573,
+    574,
+    575,
+    576
+  ],
+  "removedSeparatorComponents": [],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

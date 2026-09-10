@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#112923">
+  <title>Digby’s Clockwork Vault · Penny Fever workshop</title>
+  <link rel="stylesheet" href="vault.css">
+</head>
+<body>
+  <header class="masthead">
+    <a href="../../index.html#alley" class="back">← Penny Fever</a>
+    <span>THE AFTER-HOURS WORKSHOP</span>
+    <button id="sound" type="button" aria-pressed="false">Sound off</button>
+  </header>
+  <main>
+    <section class="introduction">
+      <p class="eyebrow">DIGBY’S COLLECTION OF IMPOSSIBLE LITTLE THINGS</p>
+      <h1>The Clockwork Vault</h1>
+      <p class="lede">Every treasure has a way in. Find it with your hands.</p>
+    </section>
+    <div class="workbench">
+      <section class="theatre" aria-label="Interactive clockwork vault">
+        <div class="stage-top"><span id="chapter">01 · Find the feeling</span><span id="turns">0 turns</span></div>
+        <div id="viewport" tabindex="0" role="group" aria-label="Vault. Drag brass rings, or choose a ring and use Left and Right arrow keys. Up and Down select a ring."></div>
+        <p class="loading" id="loading" role="status">Digby is setting out his tools…</p>
+        <div class="failure" id="failure" hidden role="alert"><strong>The workbench couldn’t open.</strong><p id="failure-copy">This experiment needs WebGL. Your regular Penny Fever game has not been changed.</p><button type="button" id="reload">Try again</button></div>
+        <div class="bench-caption"><span class="live-dot"></span><span id="stage-note">DRAG THE BRASS · FEEL THE NOTCHES</span></div>
+      </section>
+      <aside class="notebook">
+        <p class="eyebrow">A NOTE FROM THE KEEPER</p>
+        <h2 id="level-title">The apprentice’s lock</h2>
+        <p class="digby" id="story">“A patient hand opens more doors than a heavy hammer.”</p>
+        <p id="instruction">Drag each brass ring. Bring its coloured jewel to the matching socket at twelve o’clock.</p>
+        <div class="locks" aria-label="Aligned rings"><span id="lock-0">◇ Crown</span><span id="lock-1">◇ Star</span><span id="lock-2">◇ Moon</span></div>
+        <fieldset id="dial-controls" disabled>
+          <legend>Choose a ring to turn</legend>
+          <div class="dial-tabs" role="group" aria-label="Selected ring">
+            <button type="button" data-dial="0" aria-pressed="true">Crown</button>
+            <button type="button" data-dial="1" aria-pressed="false">Star</button>
+            <button type="button" data-dial="2" aria-pressed="false">Moon</button>
+          </div>
+          <p id="connection" class="connection">Crown turns alone.</p>
+          <div class="nudge"><button type="button" id="left" aria-label="Turn selected ring one notch anticlockwise">↶</button><span>ONE NOTCH<br><small>or drag the ring</small></span><button type="button" id="right" aria-label="Turn selected ring one notch clockwise">↷</button></div>
+        </fieldset>
+        <button type="button" id="action" class="primary" disabled>Align the three jewels</button>
+        <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true">No rush. Nothing is timed, and nothing costs a penny.</p>
+        <div class="tools"><button type="button" id="undo" disabled>Undo turn</button><button type="button" id="hint" disabled>A small hint</button><button type="button" id="reset" disabled>Reset lock</button></div>
+        <div class="treasure-note" id="treasure-note" hidden><span class="eyebrow">FOUND IN THE FALSE BOTTOM</span><h3>A clockwork butterfly</h3><p>It has been waiting for someone to wind it. Turn its little key—or hold the wind button—and watch its paper wings wake up.</p><button type="button" id="wind">Hold to wind · Space on the vault</button><button type="button" id="next" class="primary">Try the next lock →</button></div>
+        <details><summary>What moves what?</summary><ol id="rules"></ol><p>Each ring has twelve notches. Its jewel belongs in the socket directly above its axle. A coupled ring may move backwards. Undo is always free.</p></details>
+      </aside>
+    </div>
+    <footer><span>WORKSHOP EXPERIMENT 01</span><p>Three locks · free play · no wallet or collection changes. Existing stalls and artwork are untouched. Closing this page ends the experiment.</p></footer>
+  </main>
+  <noscript><p>This interactive experiment needs JavaScript enabled.</p></noscript>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

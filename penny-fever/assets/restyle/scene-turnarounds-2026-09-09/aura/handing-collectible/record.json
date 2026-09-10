@@ -1,0 +1,99 @@
+{
+  "id": "handing-collectible",
+  "group": "aura",
+  "title": "Aura \u2014 Handing a collectible",
+  "source": "aura/aura-handing-collectible-turnaround.png",
+  "sourcePrompt": "aura/aura-handing-collectible-turnaround.md",
+  "band": [
+    8,
+    927
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "aura/handing-collectible",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "cbc0cd0eab8f03b7e2006981992a4b948e88fcbafb5b049b168741ad9d4d0e70",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-1ef68428-6f63-48ab-83cd-123ae14f023b.png",
+  "generatedSourceSHA256": "df4214b06cd0240c774a34f6e946859591b22397ef952245ef0175cf5aff8351",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      650,
+      613
+    ],
+    [
+      650,
+      0,
+      1295,
+      613
+    ],
+    [
+      0,
+      613,
+      676,
+      1214
+    ],
+    [
+      676,
+      613,
+      1295,
+      1214
+    ]
+  ],
+  "removedSeparatorComponents": [
+    31977
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

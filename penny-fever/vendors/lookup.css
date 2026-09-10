@@ -1,0 +1,49 @@
+/* Celeste’s booth hosts Starlight full-bleed. Old lantern-flight chrome is archived. */
+#cabinet-lookup.starlight-booth {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #10203c;
+}
+#cabinet-lookup.starlight-booth .starlight-booth-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+#cabinet-lookup.starlight-booth .starlight-booth-note {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 1.2rem;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 16px;
+  max-width: min(92vw, 420px);
+  text-align: center;
+  font: 14px/1.45 Georgia, "Times New Roman", serif;
+  color: #e8e0c8;
+  background: #1a2d4a;
+  box-shadow: 4px 7px 0 #0a1628;
+}
+#cabinet-lookup.starlight-booth .starlight-booth-note .interior-back {
+  display: block;
+  margin: 8px auto 0;
+  color: #e8e0c8;
+}
+#lookupStarlightFrame {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  border: 0;
+  background: #10203c;
+}

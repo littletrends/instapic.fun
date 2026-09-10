@@ -1,0 +1,99 @@
+{
+  "id": "thinking",
+  "group": "aura",
+  "title": "Aura \u2014 Thinking",
+  "source": "aura/aura-thinking-turnaround.png",
+  "sourcePrompt": "aura/aura-thinking-turnaround.md",
+  "band": [
+    8,
+    927
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "aura/thinking",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "a36de8eb6fc2492278cccf96fc72706d463eac16971374cd63d55d0f29acaa95",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-a2233d6f-4e1f-4165-8691-213280bc6051.png",
+  "generatedSourceSHA256": "6db214b4cd86508d7243d936d9cbefdf966cd09486178325ef5145761b0bae18",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      615,
+      644
+    ],
+    [
+      615,
+      0,
+      1225,
+      644
+    ],
+    [
+      0,
+      644,
+      623,
+      1284
+    ],
+    [
+      623,
+      644,
+      1225,
+      1284
+    ]
+  ],
+  "removedSeparatorComponents": [
+    17515
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

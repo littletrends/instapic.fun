@@ -1,0 +1,97 @@
+{
+  "id": "ringo",
+  "group": "vendors",
+  "title": "Ringo",
+  "pairedId": "bent-rings",
+  "source": "turnarounds/16-bent-rings.png",
+  "sourcePrompt": "turnarounds/16-bent-rings.md",
+  "band": [
+    21,
+    429
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/ringo",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "07b08ceb2d0043843801cf9ef0c1c687a5bd7e23ce18a7ea584c3cd459d665f9",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-af12cb9a-c17e-46ac-ac11-ca3a98895266.png",
+  "generatedSourceSHA256": "0e0be1f870f444c0d09dff28475347367fb75fe6c3bb706e83585666df796cd5",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      637,
+      604
+    ],
+    [
+      637,
+      0,
+      1312,
+      604
+    ],
+    [
+      0,
+      604,
+      637,
+      1199
+    ],
+    [
+      637,
+      604,
+      1312,
+      1199
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

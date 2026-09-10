@@ -1,0 +1,96 @@
+{
+  "id": "welcoming",
+  "group": "aura",
+  "title": "Aura \u2014 Welcoming",
+  "source": "aura/aura-welcoming-turnaround.png",
+  "sourcePrompt": "aura/aura-welcoming-turnaround.md",
+  "band": [
+    8,
+    927
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "aura/welcoming",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "eaf8e37c85c69e1c4e199487b33bbdd4b2d6aea35bd1f08e544978fd71dd7e6e",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-1d8d0fdf-cef9-4abe-80b4-21d89496063b.png",
+  "generatedSourceSHA256": "b6b138463ac9c2800e68920747b5db56212f73e06a63d31fb488b9febd79ee2c",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      554,
+      764
+    ],
+    [
+      554,
+      0,
+      1024,
+      764
+    ],
+    [
+      0,
+      764,
+      544,
+      1536
+    ],
+    [
+      544,
+      764,
+      1024,
+      1536
+    ]
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

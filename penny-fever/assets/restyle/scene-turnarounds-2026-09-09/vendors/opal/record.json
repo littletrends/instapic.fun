@@ -1,0 +1,100 @@
+{
+  "id": "opal",
+  "group": "vendors",
+  "title": "Opal",
+  "pairedId": "catoptromancy",
+  "source": "turnarounds/15-catoptromancy.png",
+  "sourcePrompt": "turnarounds/15-catoptromancy.md",
+  "band": [
+    39,
+    432
+  ],
+  "sourceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "path": "vendors/opal",
+  "frames": {
+    "front": {
+      "file": "front.png",
+      "atlasRect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    "left": {
+      "file": "left.png",
+      "atlasRect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    "back": {
+      "file": "back.png",
+      "atlasRect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    "right": {
+      "file": "right.png",
+      "atlasRect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  },
+  "referenceViewOrder": [
+    "front",
+    "left",
+    "back",
+    "right"
+  ],
+  "sourceSHA256": "2f72e27b0420b56a2f1b7bbff94220950e77c8ebaf084370becb0680fa2e0289",
+  "extraction": "cyan-matte-extraction-with-edge-decontamination",
+  "generator": "built-in image_gen background edit using original character design",
+  "generatedSource": "/home/magic_mirror1/.codex/generated_images/01a079ce-b893-7320-9b78-1d0fb12ffd5f/exec-ff651a08-970f-48ef-b536-b50cdc535673.png",
+  "generatedSourceSHA256": "807ae0e048e95a973224adbbb3e960cc1fae506c2f59f4a1cb1aed2ae901ff7c",
+  "generatedSourceCropRects": [
+    [
+      0,
+      0,
+      675,
+      571
+    ],
+    [
+      675,
+      0,
+      1374,
+      571
+    ],
+    [
+      0,
+      571,
+      706,
+      1145
+    ],
+    [
+      706,
+      571,
+      1374,
+      1145
+    ]
+  ],
+  "removedSeparatorComponents": [
+    15028
+  ],
+  "reviewWarnings": [],
+  "visualReview": "reviewed-on-dark-and-cream",
+  "reviewedDate": "2026-09-09"
+}

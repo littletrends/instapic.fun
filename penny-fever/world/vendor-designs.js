@@ -1,0 +1,31 @@
+// Individual paper midway art direction. Order matches the original 26 doors.
+const rows = [
+// id, host, silhouette, motif, body, trim, art, invitation
+['fortune','Iris','dome','moon','#4d365f','#c6a267','fortune-mailbox','A LITTLE LOOK AHEAD'],
+['love','Rosalie','heart','heart','#853f50','#e3af9a','love-thermometer-cabinet','WARM YOUR HEART'],
+['curios','Digby','shelves','key','#4e5c3c','#c5aa72','back-room-storeroom','SMALL THINGS · BIG STORIES'],
+['lookup','Celeste','observatory','star','#2d455d','#b8bcc3','lookup-sky','A POCKET FULL OF STARS'],
+['snap','Felix','camera','camera','#355d57','#d1b781','snap-stage','MAKE A LITTLE MEMORY'],
+['whisper','Willa','gable','envelope','#66506c','#d6b3b9','whisper-cabinet','SECRETS SENT SOFTLY'],
+['ball-toss','Bess','circus','balls','#964e39','#dec089','ball-toss-board','THREE LITTLE CHANCES'],
+['coin-pusher','Copper','vault','coin','#78512f','#d4ae58','coin-pusher-greed','THE COPPER COUNTER'],
+['pinball','Pip','lightning','bolt','#3e496b','#da90ae','pinball-neon-playfield','FOLLOW THE SILVER BALL'],
+['water-gun','Marina','wave','water','#356771','#cfb98a','water-gun-duel','READY · AIM · SPLASH'],
+['milk-bottles','Mabel','dairy','bottle','#57756e','#e4d7b5','milk-bottle-pyramid','THE LITTLE DAIRY'],
+['cover-the-spot','Dot','circus','disc','#8b4b48','#e9cc99','cover-the-spot','A PERFECT LITTLE FIT'],
+['mutoscope','Milo','cinema','reel','#604632','#c7a76d','mutoscope-peepshow','THE PICTURE PARLOUR'],
+['high-striker','Magnus','tower','hammer','#8b3e32','#d5ad65',null,'MAKE THE BELL SING'],
+['catoptromancy','Opal','mirror','mirror','#564362','#c4b5ad',null,'THE LOOKING-GLASS ROOM'],
+['bent-rings','Ringo','pagoda','rings','#52613d','#d5b666',null,'A LITTLE TWIST OF LUCK'],
+['plinko','Peggy','gable','pegs','#37675f','#d8be72',null,'DOWN THE GOLDEN PEGS'],
+['fairy-floss','Flossie','cloud','floss','#956379','#ebceb6','fairy-floss-sugar-tent','CLOUDS ON A STICK'],
+['popcorn','Poppy','cart','popcorn','#8b6333','#edd6a0',null,'WARM LITTLE WONDERS'],
+['duck-pond','Dottie','pond','duck','#467567','#e5c778',null,'THE QUACKING GARDEN'],
+['skee-ball','Skip','scoreboard','target','#41617b','#d5b18b',null,'ROLL INTO THE GOOD TIMES'],
+['penny-pitch','Penelope','scallop','dish','#995c47','#e4c092',null,'A PENNY IN THE GARDEN'],
+['dunk-tank','Duncan','wave','lifering','#397681','#edc19f',null,'ONE VERY BIG SPLASH'],
+['marquee','Lumi','marquee','bulb','#756038','#e2c67e','ticket-booth','KEEP THE LIGHTS DANCING'],
+['pack','Kit','luggage','case','#54624b','#c5a27d','back-room-storeroom','PACK A LITTLE ADVENTURE'],
+['pass','Bea','curtain','ticket','#733d46','#cfa666','showmans-pass','BEHIND THE VELVET CURTAIN'],
+];
+export const VENDOR_DESIGNS = Object.fromEntries(rows.map(([id,host,shape,motif,body,trim,art,invitation],index)=>[id,{id,host,shape,motif,body,trim,art:art?`assets/prepared/${art}.webp`:null,invitation,index}]));
