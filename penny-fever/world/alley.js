@@ -813,6 +813,8 @@ let glanceYaw = 0;
 let lookDrag = false;
 let viewBlend = 0;
 let nearest = null;
+let focus = null;
+let vendorChatUntil = 0;
 
 let promptTargetSlug = "";
 let raf = 0;
@@ -858,7 +860,11 @@ function attachHud() {
         <p id="pfWorldSpeechText"></p>
       </div>
       <div class="pf-world-prompt" id="pfWorldPrompt" hidden>
-        <button type="button" id="pfWorldEnter">Step inside</button>
+        <p class="pf-action-name" id="pfWorldPromptName"></p>
+        <div class="pf-action-row">
+          <button type="button" id="pfWorldEnter">Enter</button>
+          <button type="button" id="pfWorldChat" hidden>Chat</button>
+        </div>
         <em id="pfWorldPromptLine"></em>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
@@ -887,6 +893,13 @@ function bindHud() {
     enter.addEventListener("click", (event) => {
       event.preventDefault();
       enterNearest();
+    });
+  }
+  const chat = el("pfWorldChat");
+  if (chat) {
+    chat.addEventListener("click", (event) => {
+      event.preventDefault();
+      talkToFocus();
     });
   }
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
@@ -988,10 +1001,30 @@ function bindJoy() {
   pad.addEventListener("pointercancel", end);
 }
 
+function talkToFocus() {
+  if (!nearest) return;
+  if (nearest.kind === "aura") {
+    chatPinned = true;
+    const pocketChat = el("pfPocketChat");
+    if (pocketChat) {
+      pocketChat.classList.add("is-active");
+      pocketChat.setAttribute("aria-pressed", "true");
+    }
+    return;
+  }
+  if (nearest.kind === "vendor") {
+    vendorChatUntil = performance.now() + 6400;
+  }
+}
+
 function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
-  if (nearest.kind === "ride" || nearest.kind === "aura") return;
+  if (nearest.kind === "vendor") {
+    talkToFocus();
+    return;
+  }
+  if (nearest.kind === "ride" || nearest.kind === "aura" || nearest.kind === "booth") return;
   const slug = promptTargetSlug || nearest.id;
   if (!slug) return;
   const PF = window.PennyFever;
@@ -1417,78 +1450,132 @@ function updateCrowd(dt) {
   });
 }
 
-function considerTarget(info, px, pz, bestHold) {
-  const dz = Math.abs(pz - info.stallZ);
-  const d = Math.hypot(px - info.worldX, pz - info.worldZ);
-  info.dist = d;
-  if (dz < bestHold.passingZ) {
-    bestHold.passingZ = dz;
-    bestHold.passing = info;
-  }
-  const aligned = dz < (info.kind === "ride" ? 1.7 : COUNTER_Z);
-  const onSide = Math.sign(px || info.side) === info.side;
-  const sidestepped = Math.abs(px) >= (info.kind === "aura" ? 0.35 : COUNTER_X);
-  if (aligned && onSide && sidestepped && d < bestHold.bestD) {
-    bestHold.bestD = d;
-    bestHold.best = info;
-    info.atCounter = true;
-  }
-  return info;
-}
-
-function findNearest() {
-  const bestHold = { passing: null, passingZ: COUNTER_Z, best: null, bestD: COUNTER_REACH };
-  const px = player.position.x;
-  const pz = player.position.z;
-  stalls.forEach((s) => {
-    const spec = s.userData.stall;
-    considerTarget({
-      id: spec.id,
-      name: spec.name,
-      line: spec.line,
-      kind: "stall",
-      worldX: s.userData.doorX,
-      worldZ: s.userData.doorZ,
-      stallX: s.position.x,
-      stallZ: s.position.z,
-      side: s.userData.side,
-      atCounter: false,
-    }, px, pz, bestHold);
-  });
-  if (paperRail) {
-    considerTarget({
-      id: "aura-booth",
-      name: "Aura’s ticket booth",
-      line: "Stop and look — she is facing the aisle.",
+function gatherFocusTargets() {
+  const list = [];
+  if (paperRail && aura) {
+    list.push({
+      id: "aura",
       kind: "aura",
-      worldX: COUNTER.x,
-      worldZ: COUNTER.z,
+      name: "Aura",
+      line: "Ask her anything about the alley.",
+      action: "chat",
+      x: aura.position.x,
+      z: aura.position.z,
       stallX: COUNTER.x,
       stallZ: COUNTER.z,
       side: -1,
-      atCounter: false,
-    }, px, pz, bestHold);
-    (papercutRides?.figures || []).forEach((fig) => {
-      if (fig.userData.kind !== "ride") return;
-      const id = fig.userData.amusementId;
-      considerTarget({
-        id,
-        name: (fig.name || id).replace(" · papercut", ""),
-        line: "Sidestep and look — this is the front of the ride.",
-        kind: "ride",
-        worldX: fig.position.x,
-        worldZ: fig.position.z,
-        stallX: fig.position.x,
-        stallZ: fig.position.z,
-        side: Math.sign(fig.position.x) || 1,
-        atCounter: false,
-      }, px, pz, bestHold);
+    });
+    list.push({
+      id: "ticket-booth",
+      kind: "booth",
+      name: "Ticket booth",
+      line: "Aura’s till faces the aisle.",
+      action: "look",
+      x: COUNTER.x,
+      z: COUNTER.z,
+      stallX: COUNTER.x,
+      stallZ: COUNTER.z,
+      side: -1,
     });
   }
-  const passing = bestHold.passing;
-  const passingZ = bestHold.passingZ;
-  const best = bestHold.best;
-  nearest = best || (passing && passingZ < 1.45 ? passing : null);
+  stalls.forEach((s) => {
+    const spec = s.userData.stall;
+    list.push({
+      id: spec.id,
+      kind: "stall",
+      name: spec.name,
+      line: spec.line,
+      action: "enter",
+      x: s.position.x,
+      z: s.position.z,
+      stallX: s.position.x,
+      stallZ: s.position.z,
+      side: s.userData.side,
+    });
+  });
+  (barkers || []).forEach((b) => {
+    const spec = stalls.find((s) => s.userData.stall.id === b.userData.stallId)?.userData.stall;
+    list.push({
+      id: "vendor-" + b.userData.stallId,
+      kind: "vendor",
+      name: b.userData.crewName || spec?.name || "Host",
+      stallId: b.userData.stallId,
+      line: spec?.line || "Have a word.",
+      action: "chat",
+      x: b.position.x,
+      z: b.position.z,
+      stallX: spec ? stalls.find((s) => s.userData.stall.id === b.userData.stallId).position.x : b.position.x,
+      stallZ: b.position.z,
+      side: Math.sign(b.position.x) || 1,
+    });
+  });
+  (papercutRides?.figures || []).forEach((fig) => {
+    if (fig.userData.kind !== "ride") return;
+    const id = fig.userData.amusementId;
+    list.push({
+      id,
+      kind: "ride",
+      name: (fig.name || id).replace(" · papercut", ""),
+      line: "The ride faces the aisle.",
+      action: "look",
+      x: fig.position.x,
+      z: fig.position.z,
+      stallX: fig.position.x,
+      stallZ: fig.position.z,
+      side: Math.sign(fig.position.x) || 1,
+    });
+  });
+  return list;
+}
+
+function pickFocus(px, pz) {
+  const targets = gatherFocusTargets();
+  const ax = -joy.x + (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0);
+  const az = -joy.y + (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
+  const stick = Math.hypot(ax, az);
+  let best = null;
+  let bestScore = -1;
+  targets.forEach((t) => {
+    const dx = t.x - px;
+    const dz = t.z - pz;
+    const d = Math.hypot(dx, dz);
+    t.dist = d;
+    if (d < 0.35 || d > 8.8) return;
+    let aim = 0;
+    if (stick > 0.3) {
+      aim = (dx * ax + dz * az) / (d * stick);
+      if (aim < 0.18) return;
+    } else {
+      if (d > 3.2) return;
+      if ((t.kind === "stall" || t.kind === "ride" || t.kind === "vendor") && Math.abs(px) < 0.42 && d > 2.4) return;
+      aim = 0.4 + Math.max(0, dz) / (d + 0.2) * 0.25;
+    }
+    const score = aim * (1.35 / (0.45 + d));
+    if (score > bestScore) {
+      bestScore = score;
+      best = t;
+    }
+  });
+  if (focus && stick < 0.22) {
+    const still = targets.find((t) => t.id === focus.id);
+    if (still && still.dist < 6.4) best = still;
+  }
+  focus = best;
+  return { targets, passing: targets.reduce((p, t) => {
+    const dz = Math.abs(pz - t.z);
+    if ((t.kind === "stall" || t.kind === "ride") && dz < (p?.dz ?? 99)) return { ...t, dz };
+    return p;
+  }, null) };
+}
+
+function findNearest() {
+  const px = player.position.x;
+  const pz = player.position.z;
+  const picked = paperRail ? pickFocus(px, pz) : { passing: null };
+  const passing = picked.passing;
+  const passingZ = passing?.dz ?? 99;
+  const best = focus;
+  nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -1505,45 +1592,55 @@ function findNearest() {
   if (nearEl) {
     if (!ticketPassed() && z < GATE_Z) nearEl.textContent = "Aura holds the door";
     else if (z > hallLen - 6) nearEl.textContent = "End of the walk · a penny to go again";
-    else if (best && best.atCounter) nearEl.textContent = "At the counter · " + best.name;
+    else if (best) nearEl.textContent = best.name;
     else if (passing && passingZ < 1.45) {
-      nearEl.textContent = passing.name + (passing.side < 0 ? " · sidestep LEFT" : " · sidestep RIGHT");
+      nearEl.textContent = passing.name + (passing.side < 0 ? " · left" : " · right");
     } else nearEl.textContent = z < FOYER_OUT ? "Walk through the doorway" : "Walk the boards";
   }
+  const nameEl = el("pfWorldPromptName");
+  const chatBtn = el("pfWorldChat");
   if (prompt && enter && line) {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
       gatePromptActive = true;
       promptTargetSlug = "";
       prompt.hidden = false;
       enter.hidden = false;
+      if (chatBtn) chatBtn.hidden = true;
+      if (nameEl) nameEl.textContent = "Aura";
       prompt.classList.add("is-ticket-handoff");
       const laps = Number(pfState().alleyLaps) || 0;
       if (laps === 0) {
-        enter.textContent = hasAdmitTicket() ? "Show ticket · one lap" : "Come through";
+        enter.textContent = hasAdmitTicket() ? "Show ticket" : "Come through";
         line.textContent = hasAdmitTicket() ? "Hand it over." : "Aura is waiting.";
       } else if (pocketPennies() >= 1) {
-        enter.textContent = "Pay a penny · one lap";
+        enter.textContent = "Pay a penny";
         line.textContent = "Then you may pass.";
       } else {
         enter.textContent = "Need a penny";
         line.textContent = "Aura’s till still hands out souvenir pennies.";
       }
-    } else if (best && best.atCounter) {
+    } else if (best) {
       gatePromptActive = false;
       promptTargetSlug = best.kind === "stall" ? best.id : "";
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
+      if (nameEl) nameEl.textContent = best.name;
       const playable = best.kind === "stall";
+      const chatable = best.kind === "vendor" || best.kind === "aura";
       enter.hidden = !playable;
-      enter.textContent = playable
-        ? ((best.id === "fortune" ? "Take a fortune · " : "Pay a penny · ") + best.name)
-        : "Look";
-      line.textContent = best.line;
+      enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+      if (chatBtn) {
+        chatBtn.hidden = !chatable;
+        chatBtn.textContent = "Chat";
+      }
+      line.textContent = best.line || "";
     } else {
       gatePromptActive = false;
       promptTargetSlug = "";
       prompt.hidden = true;
       enter.hidden = false;
+      if (chatBtn) chatBtn.hidden = true;
+      if (nameEl) nameEl.textContent = "";
       prompt.classList.remove("is-ticket-handoff");
     }
   }
@@ -1563,7 +1660,12 @@ function findNearest() {
         : pocketPennies() >= 1
           ? "A penny, darling. Then you may pass."
           : "My till will fill a light pocket.";
-    } else if (best && best.atCounter && best.kind === "stall") {
+    } else if (best && best.kind === "vendor" && performance.now() < vendorChatUntil) {
+      speech.hidden = false;
+      if (speechName) speechName.textContent = best.name;
+      speech.classList.add(best.side < 0 ? "is-left" : "is-right");
+      speechText.textContent = best.line;
+    } else if (best && best.kind === "stall") {
       speech.hidden = true;
     } else if (z > hallLen - 6) {
       speech.hidden = false;
@@ -1640,7 +1742,7 @@ function updateHudAnchor() {
 
 function followPose() {
   const viewing = !!(nearest && nearest.atCounter);
-  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.18 : 0.14);
+  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.2 : 0.16);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
   // Stay low and close until the camera itself has cleared both entrance arches.
@@ -1667,17 +1769,24 @@ function followPose() {
   let ly = alleyLy;
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
-    const side = nearest.side || Math.sign(nearest.stallX || 1);
-    const host = barkers?.find((b) => b.userData.stallId === nearest.id);
-    const hx = host ? host.position.x : nearest.stallX * 0.62;
-    const hz = host ? host.position.z : nearest.stallZ;
-    const lookBack = nearest.kind === "ride" ? (phoneLane ? 7.6 : 7.2) : nearest.kind === "aura" ? 3.8 : (phoneLane ? 4.2 : 4.0);
+    const side = nearest.side || Math.sign(nearest.stallX || nearest.x || 1);
+    const lookX = nearest.kind === "vendor" || nearest.kind === "aura"
+      ? nearest.x
+      : (nearest.stallX || nearest.x) * 0.72;
+    const lookZ = nearest.kind === "vendor" || nearest.kind === "aura"
+      ? nearest.z
+      : (nearest.stallZ || nearest.z);
+    const lookBack = nearest.kind === "ride"
+      ? (phoneLane ? 7.6 : 7.2)
+      : nearest.kind === "stall"
+        ? (phoneLane ? 4.3 : 4.1)
+        : 3.8;
     const stallTx = paperRail ? side * 0.22 : player.position.x - side * 1.15;
     const stallTy = paperRail ? (nearest.kind === "ride" ? 2.7 : 1.62) : 1.68;
-    const stallTz = paperRail ? nearest.stallZ - lookBack : player.position.z + 0.08;
-    const stallLx = paperRail ? (nearest.kind === "stall" ? nearest.stallX * 0.58 + hx * 0.42 : nearest.stallX * 0.7) : nearest.stallX;
-    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : nearest.kind === "aura" ? 1.45 : 1.42) : 1.32;
-    const stallLz = paperRail ? (nearest.kind === "stall" ? nearest.stallZ * 0.62 + hz * 0.38 : nearest.stallZ) : nearest.stallZ;
+    const stallTz = paperRail ? lookZ - lookBack : player.position.z + 0.08;
+    const stallLx = paperRail ? lookX : nearest.stallX;
+    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : 1.45) : 1.32;
+    const stallLz = paperRail ? lookZ : nearest.stallZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;
     tz = alleyTz + (stallTz - alleyTz) * viewBlend;
