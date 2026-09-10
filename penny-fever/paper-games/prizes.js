@@ -35,6 +35,9 @@ export const items = {
   'crowned-duck': {collection:'garden-prizes', name:'Crowned duck'},
   'brave-try-ribbon': {collection:'awards', name:'Brave-try ribbon'},
   'lucky-dish': {collection:'garden-prizes', name:'Lucky dish'},
+  'moon-lantern': {collection:'parlour-prizes', name:'Moon lantern'},
+  'fortune-slip': {collection:'alley-curios', name:'Fortune slip'},
+  'moon-brooch': {collection:'wearables', name:'Moon brooch'},
 };
 
 export const spriteKey = id => {
@@ -66,5 +69,9 @@ export const kits = {
   'duck-pond': {
     sprites: ['crowned-duck'],
     prizes: ['brave-try-ribbon','lucky-dish','crowned-duck'],
+  },
+  fortune: {
+    sprites: ['moon-lantern','fortune-slip','moon-penny','moon-brooch'],
+    prizes: ['fortune-slip','moon-penny','moon-brooch'],
   },
 };
