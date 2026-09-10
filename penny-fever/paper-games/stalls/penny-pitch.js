@@ -1,5 +1,15 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, pace, swell} from '../chapter-kit.js';
+
+const layouts = [
+  [450, 450, 450],
+  [350, 520, 420],
+  [560, 380, 520],
+  [280, 620, 400],
+  [620, 280, 560],
+  [300, 600, 340],
+];
 
 function tap(s) {
   if (!s.coin) {
@@ -18,17 +28,18 @@ export default {
   title: 'Wishing Wells',
   intro: 'Penelope knows a penny can do more than fall. Keep yours dancing over the water, from one little wishing ring to the next.',
   instructions: 'Send a penny, then tap Skip as it meets the water. The penny and its shadow come together at that moment. Hold Left/Right to steer between the rings. Space sends/skips too. Touch gives a short forgiving window. Three rings in one run; retries are free.',
-  levels: ['Three straight wishes', 'A wandering wish', 'Ripples after dark'],
+  levels: ['Three straight wishes', 'A wandering wish', 'Ripples after dark', 'A zigzag of rings', 'Wells on the drift', 'Six skips of moonlight'],
   sprites: ['everyday-penny', 'moon-penny'],
   prizes: ['five-penny-stack', 'moon-penny', 'wishing-acorn'],
   actions: [{id: 'left', label: 'Steer left', hold: true}, {id: 'skip', label: 'Send / Skip · Space'}, {id: 'right', label: 'Steer right', hold: true}],
   create(level) {
-    const xs = level === 0 ? [450, 450, 450] : level === 1 ? [350, 520, 420] : [560, 380, 520];
+    const xs = pick(layouts, level);
     return {level, t: 0, lastTap: -9, coin: null, hits: 0, runs: 0, ripples: [], wells: xs.map((x, i) => ({base: x, x, y: 840 - i * 155, hit: false})), note: 'Three wishes wait on the water.'};
   },
   update(s, dt, input) {
     s.t += dt;
-    for (const [i, w] of s.wells.entries()) w.x = w.base + (s.level === 2 ? Math.sin(s.t * .5 + i) * 17 : 0);
+    const drift = s.level >= 2 ? swell(s.level, 5, 6, 36) : 0;
+    for (const [i, w] of s.wells.entries()) w.x = w.base + Math.sin(s.t * (.5 + s.level * .05) + i) * drift;
     for (const r of s.ripples) r.t += dt;
     s.ripples = s.ripples.filter(r => r.t < 1.2);
     if (!s.coin) return;
@@ -47,7 +58,7 @@ export default {
       if (c.z <= 0) {
         c.z = 0; c.touch = .23; s.ripples.push({x: c.x, y: c.y, t: 0});
         const w = s.wells[s.hits];
-        if (w && dist(c, w) < 59 - s.level * 4) {
+        if (w && dist(c, w) < pace(s.level, 59, 4, 40)) {
           w.hit = true; s.hits++;
           if (s.hits === 3) {
             done(s, 'Three wishes in a single silver ripple', 'All three rings reached in one run. ' + s.runs + ' practice runs, and Penelope kept every wish a secret.');

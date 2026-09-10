@@ -1,10 +1,14 @@
 import {clamp,dist,lerp,done,TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, swell} from '../chapter-kit.js';
 
 const houses = [
   {x: 450, y: 1040, name: 'the lantern landing'},
   {x: 220, y: 340, name: 'the willow house'},
   {x: 450, y: 270, name: 'the heart arch'},
+  {x: 680, y: 480, name: 'the reed nook'},
+  {x: 250, y: 920, name: 'the lily porch'},
+  {x: 640, y: 300, name: 'the moon jetty'},
 ];
 function behind(path, distance) {
   for (let i = path.length - 1; i > 0; i--) {
@@ -25,17 +29,20 @@ function move(s, p, q, speed, dt) {
 export default {
   title: 'Duckling Parade',
   intro: 'Dottie’s ducklings went exploring. Find them, make a little rippling parade and bring everyone back to the house that is waiting with a lantern.',
-  instructions: 'Tap the water to lead the mother duck, or use arrows and the four buttons. Swim close to each duckling to collect it. They follow your travelled path around the pads. After gathering everyone, return to the glowing house for this chapter and wait for the last little tail. The third chapter’s last recruit is a crowned duck.',
-  levels: ['Four little wanderers', 'The willow house', 'The grand duck parade'],
+  instructions: 'Tap the water to lead the mother duck, or use arrows and the four buttons. Swim close to each duckling to collect it. They follow your travelled path around the pads. After gathering everyone, return to the glowing house for this chapter and wait for the last little tail. From the grand parade onward, the last recruit is a crowned duck.',
+  levels: ['Four little wanderers', 'The willow house', 'The grand duck parade', 'The reed nook parade', 'Seven ducklings out', 'Home to the moon jetty'],
   actions: [{id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true}, {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true}, {id: 'stop', label: 'Wait here'}],
   create(level) {
-    const home = houses[level];
-    const spots = [[300, 880], [620, 780], [280, 560], [640, 500], [470, 430], [600, 940]];
+    const home = pick(houses, level);
+    const spots = [[300, 880], [620, 780], [280, 560], [640, 500], [470, 430], [600, 940], [360, 780]];
     const lilies = [{x: 450, y: 720, r: 42}, {x: 400, y: 520, r: 32}];
     if (level > 0) lilies.push({x: 590, y: 640, r: 28});
     if (level > 1) lilies.push({x: 290, y: 700, r: 24});
+    if (level > 2) lilies.push({x: 520, y: 860, r: 26});
+    if (level > 3) lilies.push({x: 330, y: 430, r: 22});
+    const nDucks = swell(level, 4, 1, 7);
     const start = {x: 450, y: 820};
-    return {level, t: 0, home, p: {...start}, target: {...start}, path: [{...start}], ducks: spots.slice(0, 4 + level).map(([x, y], i) => ({x, y, joined: false, order: 0, face: 1, crown: level === 2 && i === 4 + level - 1})), lilies, joined: 0, docking: false, face: 1};
+    return {level, t: 0, home, p: {...start}, target: {...start}, path: [{...start}], ducks: spots.slice(0, nDucks).map(([x, y], i) => ({x, y, joined: false, order: 0, face: 1, crown: level >= 2 && i === nDucks - 1})), lilies, joined: 0, docking: false, face: 1};
   },
   update(s, dt, input) {
     s.t += dt;

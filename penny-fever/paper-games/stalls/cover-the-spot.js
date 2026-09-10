@@ -1,14 +1,22 @@
 import {clamp, dist, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
 const center = {x: 450, y: 670};
 const patches = ['moon-penny', 'rose-penny', 'star-token'];
 const colors = ['#b7747c', '#85978c', '#b8a079'];
+const discR = [118, 118, 125, 126, 134, 130];
+const shapes = [
+  () => 134,
+  a => 1 / Math.sqrt(Math.cos(a) ** 2 / 156 ** 2 + Math.sin(a) ** 2 / 118 ** 2),
+  a => 126 + 13 * Math.cos(5 * a),
+  a => 124 + 16 * Math.cos(6 * a),
+  a => 148 / (Math.abs(Math.cos(a)) + Math.abs(Math.sin(a))),
+  a => 1 / Math.sqrt(Math.cos(a) ** 2 / 140 ** 2 + Math.sin(a) ** 2 / 105 ** 2) + 18 * Math.cos(a - .5),
+];
 
 function radius(level, a) {
-  if (level === 0) return 134;
-  if (level === 1) return 1 / Math.sqrt(Math.cos(a) ** 2 / 156 ** 2 + Math.sin(a) ** 2 / 118 ** 2);
-  return 126 + 13 * Math.cos(5 * a);
+  return pick(shapes, level)(a);
 }
 function evaluate(s) {
   s.uncovered = s.samples.filter(p => !s.discs.some(c => dist(c, p) <= c.r));
@@ -19,7 +27,7 @@ export default {
   title: 'Patchwork Moon',
   intro: 'Dot has three catalogue pennies and an awkward piece of moonlight showing through the quilt. Cover every little glimmer.',
   instructions: 'Drag the three pennies over the golden shape. They may overlap. Light dots show uncovered gaps. Choose a disc with Next patch, then nudge with arrows if you prefer. There is no timer. Check the quilt when you think every edge is covered.',
-  levels: ['The round moon', 'A stretched moon', 'A five-petalled moon'],
+  levels: ['The round moon', 'A stretched moon', 'A five-petalled moon', 'A six-petalled moon', 'A diamond of moonlight', 'An offset oval moon'],
   sprites: ['moon-penny', 'rose-penny', 'star-token'],
   prizes: ['perfect-circle', 'pressed-flower-book', 'lucky-dish'],
   actions: [{id: 'next', label: 'Next patch'}, {id: 'check', label: 'Check the quilt'}, {id: 'hint', label: 'Show a placement hint'}],
@@ -36,9 +44,9 @@ export default {
     const s = {
       level,
       discs: [
-        {x: 250, y: 1000, r: level === 2 ? 125 : 118, id: patches[0]},
-        {x: 450, y: 1000, r: level === 2 ? 125 : 118, id: patches[1]},
-        {x: 650, y: 1000, r: level === 2 ? 125 : 118, id: patches[2]},
+        {x: 250, y: 1000, r: pick(discR, level), id: patches[0]},
+        {x: 450, y: 1000, r: pick(discR, level), id: patches[1]},
+        {x: 650, y: 1000, r: pick(discR, level), id: patches[2]},
       ],
       samples, selected: 0, drag: false, offset: {x: 0, y: 0}, coverage: 0, uncovered: [], hint: 0, moves: 0,
       note: 'Overlap the pennies. Hide the moonlight.',
@@ -104,9 +112,13 @@ export default {
     for (let i = 0; i < s.uncovered.length; i += 3) d.circle(s.uncovered[i].x, s.uncovered[i].y, 2, '#fff7d5');
     if (s.hint) {
       const a = s.selected * TAU / 3 - Math.PI / 2;
-      const sol = s.level === 1
-        ? [{x: 365, y: 670}, {x: 535, y: 670}, {x: 450, y: 670}][s.selected]
-        : {x: 450 + Math.cos(a) * 67, y: 670 + Math.sin(a) * 67};
+      const hints = {
+        1: [{x: 365, y: 670}, {x: 535, y: 670}, {x: 450, y: 670}],
+        4: [{x: 450, y: 590}, {x: 370, y: 730}, {x: 530, y: 730}],
+        5: [{x: 500, y: 650}, {x: 400, y: 640}, {x: 450, y: 740}],
+      };
+      const row = hints[s.level];
+      const sol = row ? row[s.selected] : {x: 450 + Math.cos(a) * 67, y: 670 + Math.sin(a) * 67};
       d.ring(sol.x, sol.y, 17, '#724e58', 3);
       d.text('centre here', sol.x, sol.y - 28, 16, '#734a57');
     }

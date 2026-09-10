@@ -1,5 +1,6 @@
 import {clamp,segmentDistance,done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 const start = {x: 450, y: 1010}, flight = .92, g = 540;
 function throwBall(s) {
@@ -16,15 +17,15 @@ export default {
   title: 'Lantern Toss',
   intro: 'Bess has hung a tiny circus skyline from ribbons. Knock its paper lanterns loose and watch them tumble onto the velvet catching mat.',
   instructions: 'Aim by touching or moving across the stage; release to throw. The dotted arc shows the ball’s actual flight, but the lanterns keep swinging. Arrow keys adjust aim; Space or Throw sends a ball. Clear every lantern.',
-  levels: ['Four little lanterns', 'The swaying skyline', 'The wind picks up'],
+  levels: ['Four little lanterns', 'The swaying skyline', 'The wind picks up', 'A crowded ribbon night', 'Lanterns in a gale', 'The storm-hung skyline'],
   sprites: ['autumn-leaf-lantern', 'moon-lantern'],
   prizes: ['juggling-bird', 'patchwork-bear', 'prize-bag'],
   actions: [{id: 'throw', label: 'Throw ball'}],
   create(level) {
     return {
       level, t: 0, aim: {x: 450, y: 600}, ball: null, trails: [], trail: [], throws: 0, cooldown: 0,
-      lanterns: Array.from({length: 4 + level}, (_, i) => ({
-        ax: 260 + (i % 3) * 190, ay: 350 + Math.floor(i / 3) * 220,
+      lanterns: Array.from({length: swell(level, 4, 1, 8)}, (_, i) => ({
+        ax: 260 + (i % 3) * 190, ay: 350 + Math.floor(i / 3) * 200,
         x: 0, y: 0, a: 0, fallen: false, vx: 0, vy: 0, spin: 0, id: lanternId(level, i),
       })),
       note: 'Lead the lantern a little.',
@@ -39,7 +40,7 @@ export default {
     s.aim.y = clamp(s.aim.y + dy * 230 * dt, 420, 820);
     for (const [i, l] of s.lanterns.entries()) {
       if (!l.fallen) {
-        l.a = Math.sin(s.t * (.65 + s.level * .18) + i * 1.7) * (.27 + s.level * .06);
+        l.a = Math.sin(s.t * swell(s.level, .65, .18, 1.35) + i * 1.7) * swell(s.level, .27, .06, .5);
         l.x = l.ax + Math.sin(l.a) * 130;
         l.y = l.ay + Math.cos(l.a) * 130;
       } else {

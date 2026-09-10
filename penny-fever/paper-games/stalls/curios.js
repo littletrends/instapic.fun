@@ -1,7 +1,15 @@
 import {dist,lerp,done,clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
-const paths = [[12, 8, 4, 5, 1], [12, 13, 9, 5, 4, 0, 1], [12, 8, 9, 10, 6, 2, 1]];
+const paths = [
+  [12, 8, 4, 5, 1],
+  [12, 13, 9, 5, 4, 0, 1],
+  [12, 8, 9, 10, 6, 2, 1],
+  [12, 13, 14, 15, 11, 7, 3, 2, 1],
+  [12, 13, 14, 10, 9, 5, 1],
+  [12, 8, 9, 13, 14, 10, 6, 2, 1],
+];
 const vectors = [{x: 0, y: -1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}];
 const keyIds = ['clockwork-key', 'cabinet-key', 'heart-gear'];
 const home = {x: 450, y: 255};
@@ -39,11 +47,11 @@ function rotate(s, i) {
 export default {
   title: 'Clockwork Menagerie',
   intro: 'Digby’s smallest exhibit has escaped its bell jar. Reconnect the brass garden railway and let a traveller fetch three winding keys for the door at the top.',
-  instructions: 'Tap a round track disc to rotate it. Connect the lower-left entrance to the keyhole door, visiting every golden key. Wind the traveller to watch your route. Keyboard: arrows choose a disc, Space rotates, Enter winds. A wrong route keeps your work intact. The third chapter sends the clockwork butterfly home.',
-  levels: ['The runaway beetle', 'A very curious detour', 'Bring the butterfly home'],
+  instructions: 'Tap a round track disc to rotate it. Connect the lower-left entrance to the keyhole door, visiting every golden key. Wind the traveller to watch your route. Keyboard: arrows choose a disc, Space rotates, Enter winds. A wrong route keeps your work intact. Later chapters send the clockwork butterfly home.',
+  levels: ['The runaway beetle', 'A very curious detour', 'Bring the butterfly home', 'The garden perimeter', 'Through the lower beds', 'The butterfly’s long way home'],
   actions: [{id: 'rotate', label: 'Turn chosen disc'}, {id: 'wind', label: 'Wind the traveller'}, {id: 'hint', label: 'Align one disc'}],
   create(level, rng) {
-    const path = paths[level];
+    const path = pick(paths, level);
     const tiles = Array.from({length: 16}, () => ({base: [0, 1], rot: Math.floor(rng() * 4), solved: false}));
     path.forEach((i, n) => {
       tiles[i] = {base: [n ? direction(i, path[n - 1]) : 3, n < path.length - 1 ? direction(i, path[n + 1]) : 0], rot: 1 + Math.floor(rng() * 3), solved: true};
@@ -56,7 +64,7 @@ export default {
     const a = s.walk[s.edge], b = s.walk[s.edge + 1];
     if (!b) {
       s.running = false;
-      if (s.valid) done(s, 'A most satisfactory little expedition', (s.level === 2 ? 'The butterfly ' : 'The beetle ') + 'returned with all three winding keys after ' + s.tries + ' exploratory walks.');
+      if (s.valid) done(s, 'A most satisfactory little expedition', (s.level === 2 || s.level === 5 ? 'The butterfly ' : 'The beetle ') + 'returned with all three winding keys after ' + s.tries + ' exploratory walks.');
       return;
     }
     s.fraction += dt * 115 / Math.max(1, dist(a, b));
@@ -109,7 +117,7 @@ export default {
     d.item(spriteKey('display-dome'), home.x, home.y, {w: 72, fallback: () => { d.ring(home.x, home.y, 32); d.text('HOME', home.x, home.y + 48, 13); }});
     const c = d.c;
     c.save(); c.translate(s.beetle.x, s.beetle.y); c.rotate(s.angle || 0);
-    if (s.level === 2) {
+    if (s.level === 2 || s.level === 5) {
       d.item(spriteKey('clockwork-butterfly'), 0, 0, {w: 56, shadow: false, fallback: () => d.ellipse(0, 0, 22, 14, '#b39951', '#f5d899', 2)});
     } else {
       for (let i = 0; i < 3; i++) {

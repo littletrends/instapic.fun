@@ -1,7 +1,25 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, pace, swell} from '../chapter-kit.js';
 
+const chimes = [
+  [810, 670, 490],
+  [500, 805, 660],
+  [710, 520, 790],
+  [830, 710, 590, 490],
+  [800, 520, 680, 490],
+  [745, 500, 660, 820, 575],
+];
 function peak(s) { return 1000 - (70 + 460 * (-s.angle / 1.45)); }
+function drift(s) {
+  if (s.level < 2) return 0;
+  return Math.sin(s.t * swell(s.level, .5, .07, .85)) * swell(s.level, 8, 5, 24);
+}
+function mark(s, i = s.rung) {
+  const raw = s.targets[i];
+  if (raw == null) return s.targets[s.targets.length - 1];
+  return clamp(raw + (i === s.rung ? drift(s) : 0), 480, 860);
+}
 function strike(s) {
   if (s.flying) return;
   s.flying = true; s.y = 1000; s.vy = -Math.sqrt(1000 * (1000 - peak(s)));
@@ -10,9 +28,9 @@ function strike(s) {
 
 export default {
   title: 'Bellfoundry',
-  intro: 'Magnus does not need brute force. He needs someone who can play a three-note tune with a mighty mallet and a mercury weight the size of a small wardrobe.',
-  instructions: 'Lift the mallet by dragging its head upwards, then release. The little brass pointer on the tower predicts the weight’s highest point. Match the glowing bell, not always the top one. Hold Lift then release to strike, or use Up/Down to set the mallet and Space to strike.',
-  levels: ['Three measured notes', 'The backward chime', 'A restless belfry'],
+  intro: 'Magnus does not need brute force. He needs someone who can play the tower’s bells with a mighty mallet and a mercury weight the size of a small wardrobe.',
+  instructions: 'Lift the mallet by dragging its head upwards, then release. The little brass pointer on the tower predicts the weight’s highest point. Match the glowing bell, not always the top one. Later chapters add extra bells, and some of them drift. Hold Lift then release to strike, or use Up/Down to set the mallet and Space to strike.',
+  levels: ['Three measured notes', 'The backward chime', 'A restless belfry', 'Four bells to find', 'A wandering peal', 'Five notes in the wind'],
   sprites: ['mighty-mallet', 'bell-of-bravery', 'mercury-bead'],
   prizes: ['mighty-mallet', 'bell-bracelet', 'bell-of-bravery'],
   actions: [{id: 'lift', label: 'Hold to lift · release to strike', hold: true}, {id: 'strike', label: 'Strike now'}],
@@ -20,7 +38,7 @@ export default {
     return {
       level, t: 0, angle: -.1, swing: 0, hold: false, drag: false, flying: false,
       y: 1000, vy: 0, tries: 0, rung: 0, judged: false, flash: 0,
-      targets: level === 0 ? [810, 670, 490] : level === 1 ? [500, 805, 660] : [710, 520, 790],
+      targets: pick(chimes, level).slice(),
       note: 'Raise the mallet until the pointer meets the lit bell.',
     };
   },
@@ -36,12 +54,12 @@ export default {
     s.vy += 500 * dt; s.y += s.vy * dt;
     if (old < 0 && s.vy >= 0 && !s.judged) {
       s.judged = true;
-      const target = s.targets[s.rung] + (s.level === 2 ? Math.sin(s.t * .6) * 15 : 0);
+      const target = mark(s);
       const error = Math.abs(s.y - target);
-      if (error < 32 - s.level * 3) { s.rung++; s.flash = 1; s.note = 'That note rings true.'; }
+      if (error < pace(s.level, 32, 2.2, 21)) { s.rung++; s.flash = 1; s.note = 'That note rings true.'; }
       else s.note = s.y < target ? 'Too much muscle. Lower the mallet a little.' : 'A little more lift next time.';
-      if (s.rung === 3) {
-        done(s, 'A tune fit for the midway', 'Three bells rung in ' + s.tries + ' measured strikes. Magnus takes a very theatrical bow.');
+      if (s.rung === s.targets.length) {
+        done(s, 'A tune fit for the midway', s.targets.length + ' bells rung in ' + s.tries + ' measured strikes. Magnus takes a very theatrical bow.');
         return;
       }
     }
@@ -63,9 +81,9 @@ export default {
     d.poly([[365, 390], [405, 390], [405, 1010], [365, 1010]], '#985d46', '#dcb477', 3);
     d.line({x: 385, y: 408}, {x: 385, y: 990}, '#e4c68e', 4);
     for (let y = 430; y < 1000; y += 35) d.line({x: 372, y}, {x: 385, y}, '#c59c67', 2);
-    const target = s.targets[s.rung] + (s.level === 2 ? Math.sin(s.t * .6) * 15 : 0);
-    for (const [i, raw] of s.targets.entries()) {
-      const y = raw + (s.level === 2 && i === s.rung ? Math.sin(s.t * .6) * 15 : 0);
+    const target = mark(s);
+    for (const [i] of s.targets.entries()) {
+      const y = mark(s, i);
       d.line({x: 405, y: y - 25}, {x: 497, y: y - 25}, '#967144', 4);
       if (i === s.rung) d.glow(492, y, 55, '#e9c67e');
       d.item(spriteKey('bell-of-bravery'), 492, y, {
@@ -102,5 +120,5 @@ export default {
     });
     if (s.flash) d.arc(492, target || 500, 65, 0, Math.PI * 2, '#f5d69a88', 2);
   },
-  readout: s => s.rung + ' / 3 bells · ' + s.tries + ' strikes · ' + s.note,
+  readout: s => s.rung + ' / ' + s.targets.length + ' bells · ' + s.tries + ' strikes · ' + s.note,
 };

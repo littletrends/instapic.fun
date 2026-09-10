@@ -1,5 +1,6 @@
 import {clamp, dist, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pace, swell} from '../chapter-kit.js';
 
 const kinds = ['balloon-bouquet', 'autumn-leaf-lantern', 'moon-lantern', 'prize-bag'];
 
@@ -8,8 +9,8 @@ function spawn(s) {
   const id = kinds[(s.spawned + s.level) % kinds.length];
   s.floaters.push({
     id, x: 240 + (s.spawned % 5) * 105, y: 1080,
-    vx: (s.spawned % 2 ? 1 : -1) * (20 + s.level * 8),
-    vy: -(70 + s.level * 12 + (s.spawned % 3) * 8),
+    vx: (s.spawned % 2 ? 1 : -1) * swell(s.level, 20, 8, 52),
+    vy: -(swell(s.level, 70, 12, 120) + (s.spawned % 3) * 8),
     a: 0, popped: false,
   });
   s.spawned++;
@@ -19,14 +20,14 @@ export default {
   title: 'Balloon Garden',
   intro: 'Nell has let a handful of paper balloons loose in the garden. Pop only the one she calls, and let the others drift on.',
   instructions: 'Tap the matching balloon as it floats past. The picture at the top is the one to pop. Wrong balloons simply keep flying. Arrows move a little pointer; Space pops whatever is nearest. Fill the garden with the right pops — no timer.',
-  levels: ['A quiet afternoon', 'A breeze in the garden', 'The evening release'],
+  levels: ['A quiet afternoon', 'A breeze in the garden', 'The evening release', 'A busy little sky', 'The midnight bunch', 'A garden in a hurry'],
   sprites: kinds,
   prizes: ['balloon-bouquet', 'prize-bag', 'swing-spinner'],
   actions: [{id: 'left', label: 'Pointer left', hold: true}, {id: 'pop', label: 'Pop nearest · Space'}, {id: 'right', label: 'Pointer right', hold: true}],
   create(level) {
     return {
       level, t: 0, aim: 450, floaters: [], spawned: 0, popped: 0, misses: 0,
-      goal: 8 + level * 3, delay: .2, target: kinds[0],
+      goal: swell(level, 8, 3, 22), delay: .2, target: kinds[0],
       note: 'Pop only the matching balloon.',
     };
   },
@@ -35,7 +36,7 @@ export default {
     const axis = (input.actions.has('right') || input.keys.has('ArrowRight') ? 1 : 0)
       - (input.actions.has('left') || input.keys.has('ArrowLeft') ? 1 : 0);
     s.aim = clamp(s.aim + axis * 280 * dt, 210, 690);
-    if (s.delay <= 0) { spawn(s); s.delay = 1.15 - s.level * .18; }
+    if (s.delay <= 0) { spawn(s); s.delay = pace(s.level, 1.15, .14, .52); }
     if (s.popped % 3 === 0) s.target = kinds[(Math.floor(s.popped / 3) + s.level) % kinds.length];
     for (const b of s.floaters) {
       if (b.popped) { b.vy += 280 * dt; b.a += dt * 4; }

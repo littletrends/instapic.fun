@@ -1,5 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 function toss(s) {
   if (s.ring) return;
@@ -11,14 +12,17 @@ export default {
   title: 'The Ring Orchard',
   intro: 'Ringo grows crooked little brass branches, each tipped with a wishing acorn. Float a ring over the right one and let gravity finish the trick.',
   instructions: 'Aim at the peg’s base, then release to toss. Watch the separate shadow beneath the flying ring: that is where it really is on the ground. Lead a moving peg slightly. Arrows aim; Space or Toss launches. Catch every peg with one ring.',
-  levels: ['The still orchard', 'A gentle sway', 'Branches on the breeze'],
+  levels: ['The still orchard', 'A gentle sway', 'Branches on the breeze', 'A crowded acorn night', 'The packed orchard', 'The orchard in a gale'],
   sprites: ['wishing-acorn', 'lucky-ring-trio'],
   prizes: ['lucky-ring-trio', 'splash-ring', 'wishing-acorn'],
   actions: [{id: 'toss', label: 'Toss brass ring'}],
   create(level) {
+    const n = swell(level, 4, 1, 8), rows = Math.ceil(n / 2);
+    const yTop = 520, yBot = rows <= 2 ? 685 : 840;
+    const dy = rows > 1 ? (yBot - yTop) / (rows - 1) : 0;
     return {
       level, t: 0, aim: {x: 300, y: 610}, ring: null, throws: 0, caught: 0, note: 'Watch the landing shadow.',
-      pegs: Array.from({length: 4 + level}, (_, i) => ({bx: 280 + (i % 2) * 330, by: 530 + Math.floor(i / 2) * 155, x: 0, y: 0, hit: false})),
+      pegs: Array.from({length: n}, (_, i) => ({bx: 280 + (i % 2) * 330, by: yTop + Math.floor(i / 2) * dy, x: 0, y: 0, hit: false})),
     };
   },
   update(s, dt, input) {
@@ -28,8 +32,8 @@ export default {
     s.aim.x = clamp(s.aim.x + dx * 230 * dt, 220, 680);
     s.aim.y = clamp(s.aim.y + dy * 230 * dt, 470, 880);
     s.pegs.forEach((p, i) => {
-      p.x = p.bx + Math.sin(s.t * .7 + i * 1.5) * s.level * 24;
-      p.y = p.by + Math.cos(s.t * .5 + i) * s.level * 10;
+      p.x = p.bx + Math.sin(s.t * .7 + i * 1.5) * swell(s.level, 0, 24, 90);
+      p.y = p.by + Math.cos(s.t * .5 + i) * swell(s.level, 0, 10, 40);
     });
     if (!s.ring) return;
     const r = s.ring, oldZ = r.z;

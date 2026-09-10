@@ -27,7 +27,7 @@ function pause(){if(!playing)return;stop();veil('Take your time','The room is re
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);}
 function reset(){stop();ended=false;time=0;state=engine.create(level,seeded(1703+level*297));paint();$('#readout').textContent=engine.readout?.(state)||'';veil(entry.host+' presents',engine.levels[level],engine.instructions,'Begin chapter');$('#begin').disabled=false;$('#pause').textContent='Pause';}
 function start(){if(disposed||!engine||!state||playing)return;if(ended)reset();$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
-function tick(now){if(!playing||disposed)return;try{if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;engine.update?.(state,dt,input);if(now-paintAt>1000/30){paintAt=now;paint();}if(now-reportAt>350){reportAt=now;const text=engine.readout?.(state)||'';if($('#readout').textContent!==text)$('#readout').textContent=text;}if(state.result){ended=true;stop();paint();const r=state.result,prize=(engine.prizes||kits[entry.id]?.prizes||[])[level];veil('Chapter complete',r.title,r.detail,level<engine.levels.length-1?'Next chapter':'Play chapter again',prize);if(prize)tellRoom('prize',{item:prize,stall:entry.id,chapter:level});$('#readout').textContent=engine.readout?.(state)||'';return;}raf=requestAnimationFrame(tick);}catch(e){error(e);}}
+function tick(now){if(!playing||disposed)return;try{if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;engine.update?.(state,dt,input);if(now-paintAt>1000/30){paintAt=now;paint();}if(now-reportAt>350){reportAt=now;const text=engine.readout?.(state)||'';if($('#readout').textContent!==text)$('#readout').textContent=text;}if(state.result){ended=true;stop();paint();const r=state.result,list=engine.prizes||kits[entry.id]?.prizes||[],prize=list[level]||list[list.length-1];veil('Chapter complete',r.title,r.detail,level<engine.levels.length-1?'Next chapter':'Play chapter again',prize);if(prize)tellRoom('prize',{item:prize,stall:entry.id,chapter:level});$('#readout').textContent=engine.readout?.(state)||'';return;}raf=requestAnimationFrame(tick);}catch(e){error(e);}}
 function point(e){const b=canvas.getBoundingClientRect();return{x:clamp((e.clientX-b.left)/b.width*900,0,900),y:clamp((e.clientY-b.top)/b.height*1200,0,1200)};}
 function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;canvas.setPointerCapture(e.pointerId);}if(type==='up'||type==='cancel')input.down=false;engine.pointer?.(state,type,p,input);paint();}
 function dispose(){if(disposed)return;disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
@@ -39,7 +39,7 @@ try{
  engine.levels.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+name;$('#chapter').append(o);});
  draw=new Draw(canvas);draw.art={};
  const kit=kits[entry.id]||{sprites:[],prizes:[]};
- engine.prizes=engine.prizes||kit.prizes||[];
+ engine.prizes=(kit.prizes&&kit.prizes.length)?kit.prizes:(engine.prizes||[]);
  const spriteIds=[...new Set([...(engine.sprites||kit.sprites||[]),...engine.prizes])];
  draw.art=await loadSprites(spriteIds.map(spriteKey));
  observer=new ResizeObserver(()=>{const b=stage.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(stage);
