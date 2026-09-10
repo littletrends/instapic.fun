@@ -10,9 +10,9 @@
   <title>Penny Fever — Restyled Original</title>
   <link rel="stylesheet" href="world/entry-flow.css?v=paper-alley-live-1">
   <link rel="preload" as="image" href="assets/restyle/paper-aura-seated.png" media="(min-width: 800px)">
-  <script src="world/entry-flow.js?v=paper-alley-live-1"></script>
+  <script src="world/entry-flow.js?v=paper-alley-live-27"></script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23f2c75c' d='M7 47h50l-5-29-13 12-7-20-7 20L12 18z'/%3E%3Cpath fill='%237b2743' d='M10 49h44v7H10z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=paper-alley-live-3">
+  <link rel="stylesheet" href="styles.css?v=treasure-book-1">
   <link rel="stylesheet" href="vendors/vendors.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/curios.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/marquee.css?v=interior-cam-1">
@@ -38,25 +38,25 @@
   <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
-  <link rel="stylesheet" href="world/world.css?v=paper-alley-live-26">
-  <script defer src="world/items/model.js?v=paper-pennies-1"></script>
-  <script defer src="app.js?v=paper-pennies-1"></script>
-  <link rel="stylesheet" href="world/items/inventory.css?v=pocket-book-1">
-  <script type="module" src="world/items/inventory.js?v=paper-pennies-1"></script>
+  <link rel="stylesheet" href="world/world.css?v=sideshow-map-1">
+  <script defer src="world/items/model.js?v=treasure-shelf-1"></script>
+  <script defer src="app.js?v=sideshow-map-1"></script>
+  <link rel="stylesheet" href="world/items/inventory.css?v=treasure-shelf-1">
+  <script type="module" src="world/items/inventory.js?v=treasure-shelf-1"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
-  <script type="module" src="world/alley.js?v=paper-alley-live-26"></script>
-  <script type="module" src="world/crew-selector.js?v=paper-alley-live-3"></script>
-  <link rel="stylesheet" href="world/crew-selector.css?v=paper-alley-live-3">
-  <link rel="stylesheet" href="restyle.css?v=paper-pennies-1">
+  <script type="module" src="world/alley.js?v=sideshow-map-1"></script>
+  <script type="module" src="world/crew-selector.js?v=treasure-book-1"></script>
+  <link rel="stylesheet" href="world/crew-selector.css?v=treasure-book-1">
+  <link rel="stylesheet" href="restyle.css?v=treasure-book-1">
   <link rel="stylesheet" href="world/paper-game-booths.css?v=paper-pennies-1">
   <script type="module" src="world/paper-game-booths.js?v=paper-pennies-1"></script>
 </head>
 <body>
-  <div class="development-ribbon" role="status">Private development preview · no payments · Darwin local day</div>
+  <div class="development-ribbon" role="status">Private development preview · no payments</div>
 
   <div class="tent-transition" id="tentTransition" hidden aria-live="polite" aria-atomic="true">
     <div class="tent-transition-glow" aria-hidden="true"></div>
@@ -71,7 +71,6 @@
 
   <main class="arcade-shell">
     <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
-      <a class="site-back" href="../index.html">← instapic.fun</a>
       <div class="door-cinematic" aria-hidden="true">
         <img id="doorStageArt" class="door-stage-art" src="assets/restyle/paper-aura-seated.png" alt="Papercut Aura welcomes you with a ticket" width="1024" height="1536" fetchpriority="high">
       </div>
@@ -92,10 +91,20 @@
         </div>
         <p id="admitDone" class="aura-whisper" hidden>“That’s the one. In you go.”</p>
       </div>
-      <details class="door-crew">
-        <summary>Meet the felt crew</summary>
-        <img src="assets/restyle/paper-crew-six.png" alt="Six colourful papercut companions ready for the sideshow alley" width="1024" height="1536" loading="lazy">
-      </details>
+      <div class="door-crew">
+        <div class="crew-entry">
+          <span id="chosenCrewPortrait" class="crew-portrait" role="img"></span>
+          <div>
+            <p id="chosenCrew"></p>
+            <button type="button" id="editCrew" class="ticket-button">Edit character</button>
+          </div>
+        </div>
+        <details>
+          <summary>Meet the felt crew</summary>
+          <img src="assets/restyle/paper-crew-six.png" alt="Six colourful papercut companions ready for the sideshow alley" width="1024" height="1536" loading="lazy">
+        </details>
+      </div>
+      <a class="site-back" href="../index.html">← instapic.fun</a>
     </section>
 
     <section class="foyer" id="foyer" hidden aria-labelledby="foyerTitle">

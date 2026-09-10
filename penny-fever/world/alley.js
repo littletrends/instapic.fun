@@ -891,8 +891,6 @@ function attachHud() {
           <button type="button" data-view="back">Back</button>
           <button type="button" data-view="right">Right</button>
           <button type="button" data-spin="1" aria-label="Turn right">↷</button>
-          <button type="button" data-zoom="-1" aria-label="Zoom out">−</button>
-          <button type="button" data-zoom="1" aria-label="Zoom in">+</button>
         </div>
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
@@ -905,12 +903,10 @@ function attachHud() {
       </div>
       <div class="pf-look-rig" id="pfLookRig" hidden>
         <button type="button" data-orbit="-1" aria-label="Turn left">↶</button>
-        <button type="button" data-zoom="-1" aria-label="Zoom out">−</button>
-        <button type="button" data-zoom="1" aria-label="Zoom in">+</button>
         <button type="button" data-orbit="1" aria-label="Turn right">↷</button>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
-      <p class="pf-world-hint" id="pfWorldHint">Hold and drag to turn · pinch or +/− to zoom · walk around the booths</p>
+      <p class="pf-world-hint" id="pfWorldHint">Walk the boards · drag to turn a booth · ↶↷ or Front/Left/Back/Right</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
       <div class="pf-alley-map" id="pfAlleyMap" hidden>
         <div class="pf-alley-map-bar">
@@ -1062,12 +1058,6 @@ function bindHud() {
         spinLookCard(Number(spin.dataset.spin));
         return;
       }
-      const zoom = event.target.closest("button[data-zoom]");
-      if (zoom) {
-        event.preventDefault();
-        nudgeLookZoom(Number(zoom.dataset.zoom));
-        return;
-      }
       const b = event.target.closest("button[data-view]");
       if (!b) return;
       event.preventDefault();
@@ -1082,11 +1072,6 @@ function bindHud() {
         event.preventDefault();
         spinLookCard(Number(orbit.dataset.orbit));
         return;
-      }
-      const zoom = event.target.closest("button[data-zoom]");
-      if (zoom) {
-        event.preventDefault();
-        nudgeLookZoom(Number(zoom.dataset.zoom));
       }
     });
   }
@@ -1140,8 +1125,6 @@ function onKey(e) {
   }
   if (k === "q") { e.preventDefault(); spinLookCard(-1); }
   if (k === "t") { e.preventDefault(); spinLookCard(1); }
-  if (e.key === "-" || e.key === "_") { e.preventDefault(); nudgeLookZoom(-1); }
-  if (e.key === "=" || e.key === "+") { e.preventDefault(); nudgeLookZoom(1); }
 }
 
 function bindLook() {
@@ -1149,30 +1132,17 @@ function bindLook() {
   if (!canvas) return;
   const pointers = new Map();
   let lastX = 0;
-  let pinch0 = 0;
   canvas.addEventListener("pointerdown", (e) => {
     if (e.target.closest?.(".pf-joy, .pf-look-rig, .pf-stall-card, button, a")) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lookDrag = true;
     lastX = e.clientX;
-    if (pointers.size === 2) {
-      const pts = [...pointers.values()];
-      pinch0 = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-    }
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener("pointermove", (e) => {
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size >= 2) {
-      const pts = [...pointers.values()];
-      const pinch = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      if (pinch0 > 8) {
-        lookZoom = Math.max(0.62, Math.min(1.85, lookZoom * (pinch / pinch0)));
-        pinch0 = pinch;
-      }
-      return;
-    }
+    if (pointers.size >= 2) return;
     const dx = e.clientX - lastX;
     lastX = e.clientX;
     if (nearest && nearest.atCounter) {
@@ -1193,10 +1163,6 @@ function bindLook() {
   };
   canvas.addEventListener("pointerup", end);
   canvas.addEventListener("pointercancel", end);
-  canvas.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    nudgeLookZoom(e.deltaY > 0 ? -1 : 1);
-  }, { passive: false });
 }
 
 function bindJoy() {
@@ -1304,7 +1270,7 @@ function spinLookCard(dir) {
 }
 
 function nudgeLookZoom(dir) {
-  lookZoom = Math.max(0.7, Math.min(1.55, lookZoom + dir * 0.14));
+  return dir;
 }
 
 function bindCardSpin() {
@@ -1800,6 +1766,7 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
+  if (alleyMapOpen) return false;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -2264,7 +2231,7 @@ function followPose() {
     const lookZ = nearest.kind === "aura" ? nearest.z : (nearest.stallZ || nearest.z);
     const side = nearest.side || Math.sign(lookX || 1);
     const base = nearest.kind === "ride" ? 7.2 : nearest.kind === "aura" ? 3.8 : 4.3;
-    const lookBack = Math.max(2.8, base / lookZoom);
+    const lookBack = base;
     const stallTx = Math.max(-0.85, Math.min(0.85, side * 0.22));
     const stallTy = nearest.kind === "ride" ? 2.7 : 1.62;
     const stallTz = lookZ - lookBack;
@@ -2410,13 +2377,19 @@ function startNow() {
   camYaw = 0;
   glanceYaw = 0;
   viewBlend = 0;
+  lookZoom = 1;
   document.body.classList.add("is-in-world");
   document.body.classList.remove("is-world-map");
   closeAlleyMap();
   onResize();
+  wallBackdrops?.resume();
+  papercutRides?.resume();
+  vendorCutouts?.resume();
+  stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
   loop();
+  window.dispatchEvent(new Event("pf-world-ready"));
   return true;
 }
 

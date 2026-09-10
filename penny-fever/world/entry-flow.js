@@ -1,7 +1,7 @@
 // Runs before the main game modules so the old map never flashes during startup.
 (() => {
   // Live draft is Restyled Original paper alley. Naked #alley drops ?rail=paper
-  // and boots the old 2D tent map — keep this draft pinned.
+  // and used to boot the old 2D tent map — keep this draft pinned.
   const live = new URL(location.href);
   if (live.searchParams.get('style') !== 'paper' || live.searchParams.get('rail') !== 'paper') {
     live.searchParams.set('style', 'paper');
@@ -27,13 +27,20 @@
   }, true);
   function sync() {
     clearTimeout(timer);
-    root.classList.toggle('world-loading', inAlley());
+    const alley = inAlley();
+    const world = window.PennyFeverWorld;
+    if (alley && world?.started) {
+      root.classList.remove('world-loading');
+      document.getElementById('worldLoading')?.classList.remove('loading-failed');
+      return;
+    }
+    root.classList.toggle('world-loading', alley);
     document.getElementById('worldLoading')?.classList.remove('loading-failed');
     const message = document.getElementById('worldLoadingMessage');
     if (message) message.textContent = 'Lighting the paper midway…';
-    if (inAlley() && startupError) { showFailure(startupError); return; }
-    if (inAlley()) timer = setTimeout(() => {
-      if (window.PennyFeverWorld?.started && !window.PennyFeverWorld.paused) {
+    if (alley && startupError) { showFailure(startupError); return; }
+    if (alley) timer = setTimeout(() => {
+      if (window.PennyFeverWorld?.started) {
         root.classList.remove('world-loading');
       } else {
         showFailure('The midway has not finished loading. Please reload and try again.');
