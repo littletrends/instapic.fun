@@ -98,10 +98,10 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
 }
 export function updateTicketService(){
  if(!panel)return;
+ panel.hidden=true;
  const here=!!near()&&document.body.classList.contains('is-in-world');
- if(!here){dismissed=false;panel.hidden=true;return;}
- if(dismissed){panel.hidden=true;return;}
- panel.hidden=false;
+ if(!here){dismissed=false;return;}
+ if(dismissed)return;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
  const empty=!(Number(state.demoCoins)>0);
