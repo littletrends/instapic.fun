@@ -1,8 +1,9 @@
 import * as THREE from './lib/three.module.min.js';
 import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=paper-alley-live-3';
 import {loadWallArt} from './walls/art.js';
-import {buildWall} from './walls/models.js';
+import {buildWall} from './walls/models.js?v=paper-alley-live-4';
 import { decorativePaper } from './paper-panels.js?v=reliability-1';
+import { phoneLane } from './phone-lane.js?v=paper-alley-live-4';
 export const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;
@@ -70,8 +71,9 @@ export function makePaperEntrance(scene){
 
  const midZ=(FOYER_IN+FOYER_OUT)/2,span=FOYER_OUT-FOYER_IN;
  const floor=new THREE.Mesh(new THREE.BoxGeometry(3.0,.06,span+.4),card);floor.position.set(0,-.005,midZ);scene.add(floor);
- for(let z=FOYER_IN+.45;z<FOYER_OUT-.3;z+=1.6){
-  const light=new THREE.PointLight(0xffd69b,1.2,7,2);light.position.set(0,2.85,z);scene.add(light);
+ const lightStep=phoneLane?3.2:1.6;
+ for(let z=FOYER_IN+.45;z<FOYER_OUT-.3;z+=lightStep){
+  const light=new THREE.PointLight(0xffd69b,phoneLane?0.85:1.2,7,2);light.position.set(0,2.85,z);scene.add(light);
  }
 
  // Folded foyer screens meet both ends so the passage is a paper folder, not two gates with gaps.
@@ -84,7 +86,7 @@ export function makePaperEntrance(scene){
    wall.name=(side<0?'Left':'Right')+' folded foyer wall';
    scene.add(wall);
   }).catch(error=>console.warn('[Penny Fever foyer]',error.message));
-  for(let i=0;i<5;i++){
+  if(!phoneLane)for(let i=0;i<5;i++){
    const fold=new THREE.Mesh(new THREE.PlaneGeometry(.55,3.6),new THREE.MeshBasicMaterial({
     map:decorativePaper('#5a3a22','#d2b073',i),transparent:true,alphaTest:.08,side:THREE.DoubleSide
    }));

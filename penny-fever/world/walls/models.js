@@ -15,6 +15,7 @@ export function buildWall(id,art,{width=6.4,height=4.2,depth=.22,fit='contain'}=
   new THREE.MeshStandardMaterial({color:'#896a41',roughness:1}));
  core.position.z=-depth/2;root.add(core);
  for(const [face,z,yaw] of [[art.front,depth/2+.003,0],[art.back,-depth/2-.003,Math.PI]]){
+  if(!face?.texture)continue;
   const fh=Math.min(h,w/face.aspect),fw=fh*face.aspect;
   const plane=new THREE.Mesh(new THREE.PlaneGeometry(fw,fh),
    new THREE.MeshBasicMaterial({map:face.texture,transparent:true,alphaTest:.25,side:THREE.FrontSide}));

@@ -1,5 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=paper-alley-live-2';
+import {phoneLane} from '../phone-lane.js?v=paper-alley-live-4';
 
 function clearParchment(data,w,h){
  const n=w*h,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
@@ -77,6 +78,7 @@ export async function loadWallArt(id,{signal,side=0,angled=false}={}){
  const aisleRow=useAngle?1:0;
  const front=elevation(image,aisleCol,aisleRow);
  try{
+  if(phoneLane)return {front,aisleView:useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front'};
   await new Promise(resolve=>setTimeout(resolve,0));
   if(signal?.aborted)throw Error('Wall load cancelled');
   const back=elevation(image,1,0);

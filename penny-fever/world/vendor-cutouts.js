@@ -1,10 +1,12 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-3';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
+import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-4';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';
-const NEAR=52;
+const NEAR=PAPERCUT_NEAR;
+const SIDE_NEAR=PAPERCUT_SIDES;
 
 export function installVendorCutouts(barkers){
  const figures=[];
@@ -26,20 +28,33 @@ export function installVendorCutouts(barkers){
    if(dead||!active||controller.signal.aborted||!figure.parent){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
-   for(const view of PAPERCUT_VIEWS){
-    if(view==='front')continue;
-    if(dead||controller.signal.aborted||!figure.parent)return;
-    const face=await loadFramedPng(ROOT+host+'/'+view+'.png',VENDOR_FRAMES[host][view],{signal:controller.signal});
-    if(dead||!figure.parent||controller.signal.aborted){face.texture?.dispose();return;}
-    setPapercutFace(cut,view,face,opts);
-    figure.userData.papercutViews=cut.userData.papercutViews;
-   }
+   figure.userData.needSides=true;
   }catch(error){
    if(!controller.signal.aborted)console.warn('[Penny Fever vendors]',host,error.message);
   }finally{
    figure.userData.loading=false;
    const i=inflight.indexOf(job);if(i>=0)inflight.splice(i,1);
   }
+ }
+ async function fillSides(figure){
+  if(!figure.userData.needSides||figure.userData.sidesLoading)return;
+  const host=figure.userData.vendorHost,cut=figure.userData.papercutStand;
+  if(!cut||!VENDOR_FRAMES[host])return;
+  figure.userData.sidesLoading=true;
+  const opts={height:1.7,maxWidth:1.2,sideWidth:.55,layout:'stand'};
+  try{
+   for(const view of PAPERCUT_VIEWS){
+    if(view==='front')continue;
+    if(dead||!figure.parent)return;
+    const face=await loadFramedPng(ROOT+host+'/'+view+'.png',VENDOR_FRAMES[host][view]);
+    if(!figure.parent){face.texture?.dispose();return;}
+    setPapercutFace(cut,view,face,opts);
+    figure.userData.papercutViews=cut.userData.papercutViews;
+   }
+   figure.userData.needSides=false;
+  }catch(error){
+   if(error?.message)console.warn('[Penny Fever vendors]',host,error.message);
+  }finally{figure.userData.sidesLoading=false;}
  }
  function start(figure){
   const controller=new AbortController();
@@ -57,9 +72,12 @@ export function installVendorCutouts(barkers){
    }
   }
   if(dead||!active)return;
+  for(const figure of figures){
+   if(figure.userData.needSides&&Math.abs(figure.position.z-currentZ)<SIDE_NEAR)fillSides(figure);
+  }
   const queued=figures.filter(f=>!f.userData.papercutStand&&!f.userData.loading)
    .sort((a,b)=>Math.abs(a.position.z-currentZ)-Math.abs(b.position.z-currentZ));
-  while(inflight.length<2){
+  while(inflight.length<PAPERCUT_INFLIGHT){
    const next=queued[0];
    if(!next||Math.abs(next.position.z-currentZ)>=NEAR)break;
    queued.shift();start(next);

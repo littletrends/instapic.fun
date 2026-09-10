@@ -2,16 +2,17 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-3";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-3";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-4";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-4";
+import { phoneLane } from "./phone-lane.js?v=paper-alley-live-4";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-3";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-4";
 import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-2";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-3";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-3";
-import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-3";
+import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-4";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-4";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-4";
+import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-4";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
@@ -1010,8 +1011,13 @@ function enterNearest() {
 function buildWorld() {
   const canvas = el("pfWorld");
   const first = laneSize();
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 1.6, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(paperRail ? 1.25 : 2, window.devicePixelRatio || 1));
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !phoneLane && window.devicePixelRatio < 1.6,
+    powerPreference: phoneLane ? "low-power" : "high-performance",
+    stencil: false,
+  });
+  renderer.setPixelRatio(Math.min(phoneLane ? 1 : (paperRail ? 1.25 : 2), window.devicePixelRatio || 1));
   renderer.setSize(first.w, first.h, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ReinhardToneMapping;

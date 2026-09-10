@@ -1,7 +1,8 @@
 import * as THREE from '../lib/three.module.min.js';
 import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=paper-alley-live-2';
-import {loadWallArt,disposeWallArt} from './art.js';
-import {buildWall,disposeWall} from './models.js';
+import {loadWallArt,disposeWallArt} from './art.js?v=paper-alley-live-4';
+import {buildWall,disposeWall} from './models.js?v=paper-alley-live-4';
+import {WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=paper-alley-live-4';
 
 // Scenery only: never changes player collision, booth entry, wallet or game state.
 export function installWallBackdrops(scene,len,{load=loadWallArt}={}){
@@ -19,7 +20,7 @@ export function installWallBackdrops(scene,len,{load=loadWallArt}={}){
   rail(.2,.1,len+12,side*(WALL_RADIAL+.21),2.23,(len-8)/2,edge);
  }
  let active=true,dead=false,busy=null,tick=0,currentZ=-8,wanted=new Set();
- const status={loaded:0,loading:0,failures:0,maxResident:16};
+ const status={loaded:0,loading:0,failures:0,maxResident:WALL_RESIDENT};
  const inflight=[];
  const release=site=>{disposeWall(site.model);site.model=null;};
  async function start(site){
@@ -41,11 +42,11 @@ export function installWallBackdrops(scene,len,{load=loadWallArt}={}){
  function update(z,dt=0){
   if(dead||!active)return;
   currentZ=z;tick+=dt;if(tick<.4)return;tick=0;
-  const near=sites.filter(p=>Math.abs(p.z-z)<52).sort((a,b)=>Math.abs(a.z-z)-Math.abs(b.z-z)).slice(0,16);
+  const near=sites.filter(p=>Math.abs(p.z-z)<WALL_NEAR).sort((a,b)=>Math.abs(a.z-z)-Math.abs(b.z-z)).slice(0,WALL_RESIDENT);
   wanted=new Set(near);
   for(const site of sites)if(site.model&&!wanted.has(site))release(site);
   for(const job of inflight)if(!wanted.has(job.site))job.controller.abort();
-  while(inflight.length<2){
+  while(inflight.length<PAPERCUT_INFLIGHT){
    const next=near.find(p=>!p.model&&!p.loading&&Date.now()>=p.retryAt);
    if(!next)break;
    start(next);
