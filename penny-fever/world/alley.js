@@ -60,7 +60,8 @@ const STALL_X = paperRail ? BAY_X : 2.62;
 const STALL_STEP = paperRail ? 5.2 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
-const WALK_X = AISLE;
+const WALK_X = paperRail ? 4.18 : AISLE;
+const WALL_X = 4.55;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
 const COUNTER_X = 0.58;
@@ -819,6 +820,10 @@ let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
 let stallCardId = "";
 let stallCardView = "front";
+let orbitYaw = 0;
+let orbitDist = 4.4;
+let lookZoom = 1;
+const LOOK_VIEWS = ["front", "left", "back", "right"];
 
 let promptTargetSlug = "";
 let raf = 0;
@@ -877,10 +882,14 @@ function attachHud() {
           <img id="pfStallCardVendor" alt="">
         </div>
         <div class="pf-stall-card-views" id="pfStallCardViews">
+          <button type="button" data-spin="-1" aria-label="Turn left">↶</button>
           <button type="button" data-view="front" aria-pressed="true">Front</button>
           <button type="button" data-view="left">Left</button>
           <button type="button" data-view="back">Back</button>
           <button type="button" data-view="right">Right</button>
+          <button type="button" data-spin="1" aria-label="Turn right">↷</button>
+          <button type="button" data-zoom="-1" aria-label="Zoom out">−</button>
+          <button type="button" data-zoom="1" aria-label="Zoom in">+</button>
         </div>
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
@@ -891,8 +900,14 @@ function attachHud() {
           <button type="button" id="pfStallCardBack">Back to the sideshow alley</button>
         </div>
       </div>
+      <div class="pf-look-rig" id="pfLookRig" hidden>
+        <button type="button" data-orbit="-1" aria-label="Turn left">↶</button>
+        <button type="button" data-zoom="-1" aria-label="Zoom out">−</button>
+        <button type="button" data-zoom="1" aria-label="Zoom in">+</button>
+        <button type="button" data-orbit="1" aria-label="Turn right">↷</button>
+      </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
-      <p class="pf-world-hint" id="pfWorldHint">Walk the boards · sidestep to a stall · hear the pitch · penny to play</p>
+      <p class="pf-world-hint" id="pfWorldHint">Hold and drag to turn · pinch or +/− to zoom · walk around the booths</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
     </div>
     <div class="pf-world-fail" id="pfWorldFail" hidden>
@@ -944,12 +959,41 @@ function bindHud() {
   const views = el("pfStallCardViews");
   if (views) {
     views.addEventListener("click", (event) => {
+      const spin = event.target.closest("button[data-spin]");
+      if (spin) {
+        event.preventDefault();
+        spinLookCard(Number(spin.dataset.spin));
+        return;
+      }
+      const zoom = event.target.closest("button[data-zoom]");
+      if (zoom) {
+        event.preventDefault();
+        nudgeLookZoom(Number(zoom.dataset.zoom));
+        return;
+      }
       const b = event.target.closest("button[data-view]");
       if (!b) return;
       event.preventDefault();
       applyLookCardView(b.dataset.view);
     });
   }
+  const rig = el("pfLookRig");
+  if (rig) {
+    rig.addEventListener("click", (event) => {
+      const orbit = event.target.closest("button[data-orbit]");
+      if (orbit) {
+        event.preventDefault();
+        orbitYaw += Number(orbit.dataset.orbit) * 0.55;
+        return;
+      }
+      const zoom = event.target.closest("button[data-zoom]");
+      if (zoom) {
+        event.preventDefault();
+        nudgeLookZoom(Number(zoom.dataset.zoom));
+      }
+    });
+  }
+  bindCardSpin();
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
     window.PennyFeverInventory?.open('everyday-penny');
   });
@@ -983,29 +1027,60 @@ function onKey(e) {
       enterNearest();
     }
   }
+  if (k === "q") { e.preventDefault(); orbitYaw -= 0.45; spinLookCard(-1); }
+  if (k === "t") { e.preventDefault(); orbitYaw += 0.45; spinLookCard(1); }
+  if (e.key === "-" || e.key === "_") { e.preventDefault(); nudgeLookZoom(-1); }
+  if (e.key === "=" || e.key === "+") { e.preventDefault(); nudgeLookZoom(1); }
 }
 
 function bindLook() {
   const canvas = el("pfWorld");
   if (!canvas) return;
-  let dragging = false;
+  const pointers = new Map();
   let lastX = 0;
+  let pinch0 = 0;
   canvas.addEventListener("pointerdown", (e) => {
-    dragging = true;
+    if (e.target.closest?.(".pf-joy, .pf-look-rig, .pf-stall-card, button, a")) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lookDrag = true;
     lastX = e.clientX;
+    if (pointers.size === 2) {
+      const pts = [...pointers.values()];
+      pinch0 = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    }
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    glanceYaw -= (e.clientX - lastX) * 0.0022;
-    if (glanceYaw > 0.28) glanceYaw = 0.28;
-    if (glanceYaw < -0.28) glanceYaw = -0.28;
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) {
+      const pts = [...pointers.values()];
+      const pinch = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinch0 > 8) {
+        lookZoom = Math.max(0.62, Math.min(1.85, lookZoom * (pinch / pinch0)));
+        pinch0 = pinch;
+      }
+      return;
+    }
+    const dx = e.clientX - lastX;
     lastX = e.clientX;
+    if (nearest && nearest.atCounter) orbitYaw -= dx * 0.006;
+    else {
+      glanceYaw -= dx * 0.0022;
+      if (glanceYaw > 0.28) glanceYaw = 0.28;
+      if (glanceYaw < -0.28) glanceYaw = -0.28;
+    }
   });
-  const end = () => { dragging = false; lookDrag = false; };
+  const end = (e) => {
+    pointers.delete(e.pointerId);
+    if (!pointers.size) lookDrag = false;
+  };
   canvas.addEventListener("pointerup", end);
   canvas.addEventListener("pointercancel", end);
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    nudgeLookZoom(e.deltaY > 0 ? -1 : 1);
+  }, { passive: false });
 }
 
 function bindJoy() {
@@ -1078,6 +1153,46 @@ function lookCardArt(best, view = "front") {
   };
 }
 
+function spinLookCard(dir) {
+  const i = LOOK_VIEWS.indexOf(stallCardView);
+  applyLookCardView(LOOK_VIEWS[(i + dir + 4) % 4]);
+}
+
+function nudgeLookZoom(dir) {
+  lookZoom = Math.max(0.62, Math.min(1.85, lookZoom + dir * 0.16));
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (stage) stage.style.transform = `scale(${lookZoom})`;
+}
+
+function bindCardSpin() {
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (!stage) return;
+  let drag = null;
+  let accum = 0;
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, dist: 0 };
+    accum = 0;
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (drag?.id !== e.pointerId) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    accum += dx;
+    drag.dist += Math.hypot(dx, dy);
+    if (Math.abs(accum) > 42) {
+      spinLookCard(accum > 0 ? 1 : -1);
+      accum = 0;
+    }
+  });
+  const end = (e) => { if (drag?.id === e.pointerId) drag = null; };
+  stage.addEventListener("pointerup", end);
+  stage.addEventListener("pointercancel", end);
+}
+
 function applyLookCardView(view) {
   if (!nearest || !lookCardKind(nearest)) return;
   stallCardView = view;
@@ -1112,13 +1227,12 @@ function applyLookCardView(view) {
 function closeStallCard() {
   stallCardOpen = false;
   stallCardId = "";
-  focus = null;
-  nearest = null;
-  if (player) player.position.x = 0;
+  orbitYaw = 0;
+  lookZoom = 1;
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (stage) stage.style.transform = "";
   const card = el("pfStallCard");
   if (card) card.hidden = true;
-  const joy = el("pfJoy");
-  if (joy) joy.hidden = false;
 }
 
 function syncStallCard(best) {
@@ -1185,8 +1299,6 @@ function syncStallCard(best) {
   }
   stallCardOpen = true;
   card.hidden = false;
-  const joy = el("pfJoy");
-  if (joy) joy.hidden = true;
 }
 
 function talkToFocus() {
@@ -1301,7 +1413,7 @@ function buildWorld() {
     s.userData.doorZ = z + Math.cos(yaw) * s.userData.faceOff;
     scene.add(s);
     stalls.push(s);
-    solids.push({ x, z, r: paperRail ? Math.min(0.82, s.userData.hitR) : s.userData.hitR });
+    solids.push({ x, z, r: paperRail ? Math.min(0.7, s.userData.hitR) : s.userData.hitR });
   });
 
   const curtain = meshBox(makeMat(VELVET), 7.6, 3.8, 0.2, 0, 1.9, hallLen + 0.8);
@@ -1509,10 +1621,15 @@ function walkLimit(nz) {
   return AISLE;
 }
 
+function behindWall(nx, nz) {
+  return paperRail && nz > FOYER_OUT + .2 && Math.abs(nx) > WALL_X;
+}
+
 function blocked(nx, nz, home = false) {
   if (!ticketPassed() && nz > GATE_Z) return true;
   if (nz < -34) return true;
   if (!home && hitsSolid(nx, nz)) return true;
+  if (behindWall(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
   if (nz > hallLen + 1.2) return true;
   return Math.abs(nx) > walkLimit(nz);
@@ -1536,7 +1653,6 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
-  if (stallCardOpen) return;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -1703,7 +1819,11 @@ function pickFocus(px, pz) {
       };
     }
   });
-  if (stallCardOpen && focus) return { passing, passingZ };
+  if (stallCardOpen && focus) {
+    const d = Math.hypot(px - (focus.x || 0), pz - (focus.z || 0));
+    if (d > 6.4 || Math.abs(moveIntent.iy) > 0.55) closeStallCard();
+    else return { passing, passingZ };
+  }
   const atTill = (!ticketPassed() && pz < GATE_Z + 1.4)
     || (paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28);
   if (Math.abs(moveIntent.iy) > 0.2 && !atTill && focus?.kind !== "aura") {
@@ -1802,7 +1922,14 @@ function findNearest() {
   const passingZ = passing?.dz ?? 99;
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
+  const tag = nearest && nearest.atCounter ? nearest.kind + ":" + nearest.id : "";
+  if (tag !== stallCardId) {
+    orbitYaw = 0;
+    lookZoom = 1;
+  }
   syncStallCard(lookCardKind(best) ? nearest : null);
+  const rig = el("pfLookRig");
+  if (rig) rig.hidden = !(nearest && nearest.atCounter);
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -1957,14 +2084,12 @@ function updateHudAnchor() {
 
 function followPose() {
   const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
-  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && !lookCardKind(nearest));
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley);
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
-  // Stay low and close until the camera itself has cleared both entrance arches.
   const openAlley = Math.max(0, Math.min(1, (player.position.z - FOYER_OUT - 4) / 6));
   const onPier = paperRail && player.position.z < FOYER_IN - 0.8;
-  const inFoyer = paperRail && player.position.z >= FOYER_IN - 0.8 && player.position.z <= FOYER_OUT + 1;
   const dist = paperRail ? (onPier ? 4.6 : (phoneLane ? 4.2 : 3.4)) + openAlley * 2.4 : (onHall ? 4.9 : 5.6);
   const height = paperRail ? (onPier ? 2.15 : (phoneLane ? 2.1 : 2.0)) + openAlley * .3 : (onHall ? 2.18 : 2.05);
   const lookY = paperRail ? (onPier ? 1.12 : 1.05) + openAlley * .25 : .95;
@@ -1972,7 +2097,7 @@ function followPose() {
   const followX = 0.2;
   const railX = player.position.x * followX;
   const rawAlleyX = railX - Math.sin(camYaw) * dist;
-  const alleyTx = paperRail ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
+  const alleyTx = paperRail && Math.abs(orbitYaw) < 0.08 ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
   const alleyTy = player.position.y + height;
   const alleyTz = player.position.z - Math.cos(camYaw) * dist;
   const alleyLx = railX * 0.35;
@@ -1985,27 +2110,25 @@ function followPose() {
   let ly = alleyLy;
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
-    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x) * 0.55;
+    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x);
     const lookZ = nearest.kind === "aura" ? nearest.z : (nearest.stallZ || nearest.z);
-    if (paperRail && nearest.kind === "stall") {
-      lx = alleyLx + (lookX - alleyLx) * viewBlend * 0.55;
-      ly = alleyLy + (1.4 - alleyLy) * viewBlend * 0.45;
-      lz = alleyLz + (lookZ - alleyLz) * viewBlend * 0.4;
-    } else {
-      const lookBack = nearest.kind === "ride" ? (phoneLane ? 7.6 : 7.2) : 3.8;
-      const stallTx = paperRail ? Math.max(-0.85, Math.min(0.85, (nearest.side || 1) * 0.18)) : player.position.x - (nearest.side || 1) * 1.15;
-      const stallTy = paperRail ? (nearest.kind === "ride" ? 2.7 : 1.62) : 1.68;
-      const stallTz = paperRail ? lookZ - lookBack : player.position.z + 0.08;
-      const stallLx = paperRail ? lookX : nearest.stallX;
-      const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : 1.45) : 1.32;
-      const stallLz = paperRail ? lookZ : nearest.stallZ;
-      tx = alleyTx + (stallTx - alleyTx) * viewBlend;
-      ty = alleyTy + (stallTy - alleyTy) * viewBlend;
-      tz = alleyTz + (stallTz - alleyTz) * viewBlend;
-      lx = alleyLx + (stallLx - alleyLx) * viewBlend;
-      ly = alleyLy + (stallLy - alleyLy) * viewBlend;
-      lz = alleyLz + (stallLz - alleyLz) * viewBlend;
-    }
+    const side = nearest.side || Math.sign(lookX || 1);
+    const base = nearest.kind === "ride" ? 7.2 : nearest.kind === "aura" ? 3.8 : 4.3;
+    const radius = Math.max(2.4, (base / lookZoom));
+    const facing = -side * Math.PI / 2;
+    const yaw = facing + orbitYaw;
+    const stallTx = lookX + Math.sin(yaw) * radius;
+    const stallTz = lookZ + Math.cos(yaw) * radius;
+    const stallTy = nearest.kind === "ride" ? 2.7 : 1.7;
+    const stallLx = lookX;
+    const stallLy = nearest.kind === "ride" ? 2.8 : 1.45;
+    const stallLz = lookZ;
+    tx = alleyTx + (stallTx - alleyTx) * viewBlend;
+    ty = alleyTy + (stallTy - alleyTy) * viewBlend;
+    tz = alleyTz + (stallTz - alleyTz) * viewBlend;
+    lx = alleyLx + (stallLx - alleyLx) * viewBlend;
+    ly = alleyLy + (stallLy - alleyLy) * viewBlend;
+    lz = alleyLz + (stallLz - alleyLz) * viewBlend;
   }
   return { tx, ty, tz, lx, ly, lz };
 }
@@ -2013,12 +2136,16 @@ function followPose() {
 function updateCamera(dt) {
   if (!lookDrag) glanceYaw += (0 - glanceYaw) * 0.14;
   const pose = followPose();
-  camera.position.x += (pose.tx - camera.position.x) * 0.14;
-  camera.position.y += (pose.ty - camera.position.y) * 0.14;
-  camera.position.z += (pose.tz - camera.position.z) * 0.14;
-  if (paperRail) {
-    camera.position.x = Math.max(-1.02, Math.min(1.02, camera.position.x));
+  camera.position.x += (pose.tx - camera.position.x) * 0.16;
+  camera.position.y += (pose.ty - camera.position.y) * 0.16;
+  camera.position.z += (pose.tz - camera.position.z) * 0.16;
+  const orbiting = paperRail && nearest && nearest.atCounter && (Math.abs(orbitYaw) > 0.04 || lookZoom !== 1);
+  if (paperRail && !orbiting) {
+    camera.position.x = Math.max(-1.15, Math.min(1.15, camera.position.x));
     camera.position.y = Math.max(1.48, camera.position.y);
+  } else if (paperRail) {
+    camera.position.x = Math.max(-WALL_X + 0.2, Math.min(WALL_X - 0.2, camera.position.x));
+    camera.position.y = Math.max(1.2, Math.min(4.6, camera.position.y));
   }
   camera.lookAt(pose.lx, pose.ly, pose.lz);
 }
@@ -2072,10 +2199,11 @@ function loop() {
   updatePaperProprietor(aura, player);
   updateCrewGuest(player, camera, dt);
   updatePaperCrew(guests, camera);
-  if (paperRail) updateTicketBooth(player);
-  if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, player);
-  if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, player);
-  if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, player);
+  const eye = (nearest && nearest.atCounter && (lookDrag || Math.abs(orbitYaw) > 0.05)) ? camera : player;
+  if (paperRail) updateTicketBooth(eye);
+  if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, eye);
+  if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, eye);
+  if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, eye);
   if (paperRail && wallBackdrops) wallBackdrops.update(player.position.z, dt);
   updateTicketService();
   if (stallCardOpen) {
