@@ -8,7 +8,7 @@ import { phoneLane } from "./phone-lane.js?v=paper-alley-live-6";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-10";
-import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
+import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-6";
 import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-6";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-6";
@@ -1033,6 +1033,34 @@ function bindJoy() {
   pad.addEventListener("pointercancel", end);
 }
 
+function lookCardKind(best) {
+  return best && (best.kind === "stall" || best.kind === "ride" || best.kind === "aura");
+}
+
+function lookCardArt(best) {
+  const root = "assets/restyle/scene-turnarounds-2026-09-09";
+  if (best.kind === "stall") {
+    return {
+      booth: `${root}/stalls/${best.id}/front.png`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/front.png` : "",
+      role: "host",
+    };
+  }
+  if (best.kind === "ride") {
+    const host = (best.hostSlug || best.host || "").toLowerCase();
+    return {
+      booth: `${root}/amusements/${best.id}/front.png`,
+      vendor: host ? `${root}/attendants/${host}/front.png` : "",
+      role: "attendant",
+    };
+  }
+  return {
+    booth: `${root}/aura/ticket-booth/front.png`,
+    vendor: `${root}/aura/welcoming/front.png`,
+    role: "proprietor",
+  };
+}
+
 function closeStallCard() {
   stallCardOpen = false;
   stallCardId = "";
@@ -1048,27 +1076,30 @@ function closeStallCard() {
 function syncStallCard(best) {
   const card = el("pfStallCard");
   if (!card) return;
-  if (!best || best.kind !== "stall") {
+  if (!lookCardKind(best)) {
     if (stallCardOpen) closeStallCard();
     return;
   }
-  if (stallCardId !== best.id) {
-    stallCardId = best.id;
+  if (stallCardId !== best.kind + ":" + best.id) {
+    stallCardId = best.kind + ":" + best.id;
+    const art = lookCardArt(best);
     const booth = el("pfStallCardBooth");
     const vendor = el("pfStallCardVendor");
     const hostEl = el("pfStallCardHost");
     const nameEl = el("pfStallCardName");
     const lineEl = el("pfStallCardLine");
     const enter = el("pfStallCardEnter");
+    const chat = el("pfStallCardChat");
     if (booth) {
-      booth.src = `assets/restyle/scene-turnarounds-2026-09-09/stalls/${best.id}/front.png`;
+      booth.src = art.booth;
       booth.alt = best.name || "";
+      booth.onerror = () => { booth.hidden = true; };
+      booth.hidden = false;
     }
-    const hostSlug = best.hostSlug;
     if (vendor) {
-      if (hostSlug) {
+      if (art.vendor) {
         vendor.hidden = false;
-        vendor.src = `assets/restyle/scene-turnarounds-2026-09-09/vendors/${hostSlug}/front.png`;
+        vendor.src = art.vendor;
         vendor.alt = best.host || "";
         vendor.onerror = () => { vendor.hidden = true; };
       } else {
@@ -1076,10 +1107,31 @@ function syncStallCard(best) {
         vendor.hidden = true;
       }
     }
-    if (hostEl) hostEl.textContent = best.host ? `${best.host} · host` : "";
+    if (hostEl) hostEl.textContent = best.host ? `${best.host} · ${art.role}` : "";
     if (nameEl) nameEl.textContent = best.name || "";
     if (lineEl) lineEl.textContent = best.line || "";
-    if (enter) enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+    if (enter) {
+      if (best.kind === "stall") {
+        enter.hidden = false;
+        enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+      } else if (best.kind === "aura") {
+        const laps = Number(pfState().alleyLaps) || 0;
+        enter.hidden = false;
+        enter.textContent = ticketPassed()
+          ? "This lap is punched"
+          : laps === 0
+            ? (hasAdmitTicket() ? "Show ticket" : "Come through")
+            : "Pay a penny";
+        enter.disabled = !!ticketPassed();
+      } else {
+        enter.hidden = true;
+        enter.disabled = false;
+      }
+    }
+    if (chat) {
+      chat.hidden = false;
+      chat.textContent = best.kind === "aura" && !(Number(pfState().demoCoins) > 0) ? "Pennies" : "Chat";
+    }
   }
   stallCardOpen = true;
   card.hidden = false;
@@ -1103,7 +1155,11 @@ function talkToFocus() {
     }
     return;
   }
-  if (nearest.kind === "stall") vendorChatUntil = performance.now() + 6400;
+  if (nearest.kind === "stall" || nearest.kind === "ride") {
+    vendorChatUntil = performance.now() + 6400;
+    const lineEl = el("pfStallCardLine");
+    if (lineEl) lineEl.textContent = nearest.line || "";
+  }
 }
 
 function enterNearest() {
@@ -1115,6 +1171,18 @@ function enterNearest() {
     location.hash = "cabinet/" + slug;
     return;
   }
+  if (stallCardOpen && nearest.kind === "aura") {
+    if (ticketPassed()) return;
+    const PF = window.PennyFever;
+    const laps = Number(pfState().alleyLaps) || 0;
+    if (PF && typeof PF.admitAlleyLap === "function") {
+      PF.admitAlleyLap(laps === 0 ? "ticket" : "penny");
+    }
+    stallCardId = "";
+    syncStallCard(nearest);
+    return;
+  }
+  if (stallCardOpen && nearest.kind === "ride") return;
   if (nearest.kind === "vendor") {
     talkToFocus();
     return;
@@ -1586,7 +1654,9 @@ function pickFocus(px, pz) {
     }
   });
   if (stallCardOpen && focus) return { passing, passingZ };
-  if (Math.abs(moveIntent.iy) > 0.2) {
+  const atTill = (!ticketPassed() && pz < GATE_Z + 1.4)
+    || (paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28);
+  if (Math.abs(moveIntent.iy) > 0.2 && !atTill && focus?.kind !== "aura") {
     focus = null;
     return { passing, passingZ };
   }
@@ -1653,12 +1723,15 @@ function pickFocus(px, pz) {
     const d = Math.hypot(px - fig.position.x, pz - fig.position.z);
     if (d >= bestD) return;
     const id = fig.userData.amusementId;
+    const art = AMUSEMENT_ART[id];
     bestD = d;
     best = {
       id,
       kind: "ride",
-      name: (fig.name || id).replace(" · papercut", ""),
-      line: "The ride faces the aisle.",
+      name: art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: art?.host || "",
+      hostSlug: (art?.host || "").toLowerCase(),
+      line: "The ride faces the aisle. No ticket to go aboard yet.",
       x: fig.position.x,
       z: fig.position.z,
       stallX: fig.position.x,
@@ -1679,7 +1752,7 @@ function findNearest() {
   const passingZ = passing?.dz ?? 99;
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
-  syncStallCard(best && best.kind === "stall" ? nearest : null);
+  syncStallCard(lookCardKind(best) ? nearest : null);
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -1710,13 +1783,7 @@ function findNearest() {
       prompt.hidden = true;
       if (chatBtn) chatBtn.hidden = true;
       prompt.classList.add("is-ticket-handoff");
-    } else if (best && best.kind === "aura") {
-      gatePromptActive = false;
-      promptTargetSlug = "";
-      prompt.hidden = true;
-      if (chatBtn) chatBtn.hidden = true;
-      prompt.classList.remove("is-ticket-handoff");
-    } else if (best && best.kind === "stall") {
+    } else if (lookCardKind(best)) {
       gatePromptActive = false;
       promptTargetSlug = best.id;
       prompt.hidden = true;
@@ -1840,7 +1907,7 @@ function updateHudAnchor() {
 
 function followPose() {
   const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
-  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && nearest.kind !== "stall");
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && !lookCardKind(nearest));
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
@@ -1961,6 +2028,10 @@ function loop() {
   if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, player);
   if (paperRail && wallBackdrops) wallBackdrops.update(player.position.z, dt);
   updateTicketService();
+  if (stallCardOpen) {
+    const till = document.querySelector(".aura-counter-service");
+    if (till) till.hidden = true;
+  }
   updateHudAnchor();
   updateFx(t);
   hintTimer += dt;
