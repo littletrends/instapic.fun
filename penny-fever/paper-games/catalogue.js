@@ -10,7 +10,7 @@ const rows = [
   ['ball-toss','Bess','Lantern Toss','Knock the swinging lanterns from a little circus skyline.'],
   ['coin-pusher','Copper','Copper Falls','Time the pusher and move a little tide of pennies.'],
   ['pinball','Pip','Thunder Garden','Keep a silver seed alive among ringing brass flowers.'],
-  ['water-gun','Marina','Pocket Harbour','Nudge a little sailboat through a paper harbour.','../vendors/water-gun/play/'],
+  ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.','../experiments/brasswater-harbour/'],
   ['milk-bottles','Mabel','The Topsy Dairy','Topple bottle towers with carefully placed throws.'],
   ['cover-the-spot','Dot','Patchwork Moon','Cover patterned moons with a handful of paper discs.'],
   ['mutoscope','Milo','The Missing Frames','Splice a moving picture back into its proper story.'],
@@ -29,5 +29,16 @@ const rows = [
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass']);
-export const games = rows.map(([id,host,title,blurb,direct]) => ({id,host,title,blurb,direct,ready: Boolean(direct)||built.has(id),asset:`assets/${id}.png`,module:`./stalls/${id}.js`}));
+const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass']);
+const experimentArt = {
+  lookup: '../experiments/celestes-starlight/assets/observatory-v1.png',
+  'water-gun': '../experiments/brasswater-harbour/assets/harbour-v1.png',
+};
+export const games = rows.map(([id,host,title,blurb,direct]) => ({
+  id,host,title,blurb,direct,
+  ready: Boolean(direct)||built.has(id),
+  restyle: restyled.has(id),
+  asset: experimentArt[id] || `assets/${id}.png`,
+  module: `./stalls/${id}.js`,
+}));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));

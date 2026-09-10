@@ -1,0 +1,188 @@
+// Catalogue ids used as play pieces and chapter prizes. Paths match the
+// transparent turnaround pack. Workshop play never writes the pocket.
+export const items = {
+  'everyday-penny': {collection:'pennies', name:'Everyday penny'},
+  'moon-penny': {collection:'pennies', name:'Moon penny'},
+  'rose-penny': {collection:'pennies', name:'Rose penny'},
+  'star-token': {collection:'pennies', name:'Star token'},
+  'crown-token': {collection:'pennies', name:'Crown token'},
+  'penny-purse': {collection:'pennies', name:'Penny purse'},
+  'coin-sleeve': {collection:'gift-wrapping', name:'Coin sleeve'},
+  'copper-cascade': {collection:'game-prizes', name:'Copper cascade'},
+  'penny-tree': {collection:'game-prizes', name:'Penny tree'},
+  'trade-envelope': {collection:'gift-wrapping', name:'Trade envelope'},
+  'sealed-secret': {collection:'alley-curios', name:'Sealed secret'},
+  'return-postcard': {collection:'tickets', name:'Return postcard'},
+  'message-bottle': {collection:'future-curios', name:'Message bottle'},
+  'charm-pouch': {collection:'gift-wrapping', name:'Charm pouch'},
+  'whisper-charm': {collection:'alley-curios', name:'Whisper charm'},
+  'secret-keeper': {collection:'parlour-prizes', name:'Secret keeper'},
+  'ticket-satchel': {collection:'wearables', name:'Ticket satchel'},
+  'lucky-match': {collection:'alley-curios', name:'Lucky match'},
+  'pressed-heart': {collection:'alley-curios', name:'Pressed heart'},
+  'pocket-observatory': {collection:'parlour-prizes', name:'Pocket observatory'},
+  'penny-collector-book': {collection:'collector-books', name:'Penny collector book'},
+  'night-suitcase': {collection:'garden-prizes', name:'Night suitcase'},
+  'heart-biscuit': {collection:'sweet-treats', name:'Heart biscuit'},
+  'rose-hair-bow': {collection:'wearables', name:'Rose hair bow'},
+  'rose-press': {collection:'parlour-prizes', name:'Rose press'},
+  'rose-lockbox': {collection:'parlour-prizes', name:'Rose lockbox'},
+  'clockwork-key': {collection:'machine-curios', name:'Clockwork key'},
+  'cabinet-key': {collection:'parlour-prizes', name:'Cabinet key'},
+  'heart-gear': {collection:'machine-curios', name:'Heart gear'},
+  'display-dome': {collection:'gift-wrapping', name:'Display dome'},
+  'clockwork-butterfly': {collection:'future-curios', name:'Clockwork butterfly'},
+  'crowned-duck': {collection:'garden-prizes', name:'Crowned duck'},
+  'brave-try-ribbon': {collection:'awards', name:'Brave-try ribbon'},
+  'lucky-dish': {collection:'garden-prizes', name:'Lucky dish'},
+  'moon-lantern': {collection:'parlour-prizes', name:'Moon lantern'},
+  'fortune-slip': {collection:'alley-curios', name:'Fortune slip'},
+  'moon-brooch': {collection:'wearables', name:'Moon brooch'},
+  'autumn-leaf-lantern': {collection:'seasonal-treasures', name:'Autumn-leaf lantern'},
+  'juggling-bird': {collection:'game-prizes', name:'Juggling bird'},
+  'patchwork-bear': {collection:'game-prizes', name:'Patchwork bear'},
+  'prize-bag': {collection:'gift-wrapping', name:'Prize bag'},
+  'memory-camera': {collection:'parlour-prizes', name:'Memory camera'},
+  'shutter-click': {collection:'machine-curios', name:'Shutter click'},
+  'photo-accordion': {collection:'collector-books', name:'Photo accordion'},
+  'lightning-pin': {collection:'game-prizes', name:'Lightning pin'},
+  'pegboard-star': {collection:'wonder-prizes', name:'Pegboard star'},
+  'mercury-bead': {collection:'machine-curios', name:'Mercury bead'},
+  'dairy-calf': {collection:'game-prizes', name:'Dairy calf'},
+  'alley-collector-cup': {collection:'awards', name:'Alley collector cup'},
+  'perfect-circle': {collection:'game-prizes', name:'Perfect circle'},
+  'pressed-flower-book': {collection:'collector-books', name:'Pressed flower book'},
+  'flicker-book': {collection:'wonder-prizes', name:'Flicker book'},
+  'pocket-peepshow': {collection:'wonder-prizes', name:'Pocket peepshow'},
+  'memory-scrapbook': {collection:'collector-books', name:'Memory scrapbook'},
+  'moon-rabbit': {collection:'toy-shelf', name:'Moon rabbit'},
+  'singing-bird': {collection:'toy-shelf', name:'Singing bird'},
+  'dapper-fox': {collection:'toy-shelf', name:'Dapper fox'},
+  'mighty-mallet': {collection:'wonder-prizes', name:'Mighty mallet'},
+  'bell-of-bravery': {collection:'wonder-prizes', name:'Bell of bravery'},
+  'bell-bracelet': {collection:'wearables', name:'Bell bracelet'},
+  'looking-glass-locket': {collection:'wonder-prizes', name:'Looking-glass locket'},
+  'mirror-shard': {collection:'alley-curios', name:'Mirror shard'},
+  'star-fragment': {collection:'future-curios', name:'Star fragment'},
+  'lucky-ring-trio': {collection:'wonder-prizes', name:'Lucky ring trio'},
+  'splash-ring': {collection:'garden-prizes', name:'Splash ring'},
+  'wishing-acorn': {collection:'future-curios', name:'Wishing acorn'},
+  'five-penny-stack': {collection:'pennies', name:'Five-penny stack'},
+  'fairy-floss': {collection:'sweet-treats', name:'Fairy floss'},
+  'pocket-cloud': {collection:'future-curios', name:'Pocket cloud'},
+  'cloud-jar': {collection:'wonder-prizes', name:'Cloud jar'},
+  'swirl-lolly': {collection:'sweet-treats', name:'Swirl lolly'},
+  'popcorn-carton': {collection:'sweet-treats', name:'Popcorn carton'},
+  'tiny-kettle': {collection:'garden-prizes', name:'Tiny kettle'},
+  'sweet-heat': {collection:'machine-curios', name:'Sweet heat'},
+  'showman-pass': {collection:'tickets', name:'Showman pass'},
+  'velvet-mask': {collection:'garden-prizes', name:'Velvet mask'},
+  'secret-door-key': {collection:'future-curios', name:'Secret door key'},
+  'marquee-bulb': {collection:'machine-curios', name:'Marquee bulb'},
+  'pocket-marquee': {collection:'garden-prizes', name:'Pocket marquee'},
+  'lantern-lighter': {collection:'working-midway', name:'Lantern lighter'},
+};
+
+export const spriteKey = id => {
+  const item = items[id];
+  return item ? item.collection+'/'+id : id;
+};
+export const itemName = id => items[id]?.name || id;
+export const kits = {
+  'coin-pusher': {
+    sprites: ['everyday-penny','moon-penny','rose-penny','star-token','crown-token'],
+    prizes: ['coin-sleeve','copper-cascade','penny-tree'],
+  },
+  whisper: {
+    sprites: ['trade-envelope','sealed-secret','return-postcard','message-bottle','charm-pouch'],
+    prizes: ['whisper-charm','charm-pouch','secret-keeper'],
+  },
+  pack: {
+    sprites: ['night-suitcase','ticket-satchel','penny-purse','coin-sleeve','lucky-match','whisper-charm','pocket-observatory'],
+    prizes: ['pressed-heart','penny-purse','penny-collector-book'],
+  },
+  love: {
+    sprites: ['pressed-heart','heart-biscuit','rose-penny','rose-lockbox'],
+    prizes: ['rose-hair-bow','rose-press','rose-lockbox'],
+  },
+  curios: {
+    sprites: ['clockwork-key','cabinet-key','heart-gear','display-dome','clockwork-butterfly'],
+    prizes: ['clockwork-key','display-dome','clockwork-butterfly'],
+  },
+  'duck-pond': {
+    sprites: ['crowned-duck'],
+    prizes: ['brave-try-ribbon','lucky-dish','crowned-duck'],
+  },
+  fortune: {
+    sprites: ['moon-lantern','fortune-slip','moon-penny','moon-brooch'],
+    prizes: ['fortune-slip','moon-penny','moon-brooch'],
+  },
+  'ball-toss': {
+    sprites: ['autumn-leaf-lantern','moon-lantern'],
+    prizes: ['juggling-bird','patchwork-bear','prize-bag'],
+  },
+  snap: {
+    sprites: ['memory-camera','shutter-click'],
+    prizes: ['shutter-click','photo-accordion','memory-camera'],
+  },
+  pinball: {
+    sprites: ['lightning-pin','star-token'],
+    prizes: ['lightning-pin','star-token','pegboard-star'],
+  },
+  'milk-bottles': {
+    sprites: ['message-bottle','mercury-bead'],
+    prizes: ['dairy-calf','lucky-dish','alley-collector-cup'],
+  },
+  'cover-the-spot': {
+    sprites: ['moon-penny','rose-penny','star-token'],
+    prizes: ['perfect-circle','pressed-flower-book','lucky-dish'],
+  },
+  mutoscope: {
+    sprites: ['moon-rabbit','singing-bird','dapper-fox','moon-lantern','trade-envelope','cabinet-key'],
+    prizes: ['flicker-book','pocket-peepshow','memory-scrapbook'],
+  },
+  'high-striker': {
+    sprites: ['mighty-mallet','bell-of-bravery','mercury-bead'],
+    prizes: ['mighty-mallet','bell-bracelet','bell-of-bravery'],
+  },
+  catoptromancy: {
+    sprites: ['moon-lantern','star-fragment'],
+    prizes: ['looking-glass-locket','mirror-shard','star-fragment'],
+  },
+  'bent-rings': {
+    sprites: ['wishing-acorn','lucky-ring-trio'],
+    prizes: ['lucky-ring-trio','splash-ring','wishing-acorn'],
+  },
+  plinko: {
+    sprites: ['pressed-heart','star-token','moon-penny','lucky-dish'],
+    prizes: ['five-penny-stack','lucky-dish','mercury-bead'],
+  },
+  'fairy-floss': {
+    sprites: ['fairy-floss','swirl-lolly','pocket-cloud','heart-biscuit'],
+    prizes: ['fairy-floss','pocket-cloud','cloud-jar'],
+  },
+  popcorn: {
+    sprites: ['popcorn-carton','tiny-kettle','sweet-heat'],
+    prizes: ['popcorn-carton','tiny-kettle','sweet-heat'],
+  },
+  'skee-ball': {
+    sprites: ['moon-penny','star-token'],
+    prizes: ['moon-penny','star-token','pegboard-star'],
+  },
+  'penny-pitch': {
+    sprites: ['everyday-penny','moon-penny'],
+    prizes: ['five-penny-stack','moon-penny','wishing-acorn'],
+  },
+  'dunk-tank': {
+    sprites: ['crowned-duck','mercury-bead'],
+    prizes: ['splash-ring','crowned-duck','dairy-calf'],
+  },
+  marquee: {
+    sprites: ['marquee-bulb','pocket-marquee','star-token','moon-penny','pressed-heart'],
+    prizes: ['marquee-bulb','pocket-marquee','lantern-lighter'],
+  },
+  pass: {
+    sprites: ['secret-door-key','velvet-mask'],
+    prizes: ['showman-pass','velvet-mask','secret-door-key'],
+  },
+};

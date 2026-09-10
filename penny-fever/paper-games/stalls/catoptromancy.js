@@ -1,17 +1,89 @@
-import {clamp,dist,done} from '../draw.js';
-function blocked(s,x,y){return s.hedges.some(h=>Math.abs(y-h.y)<23&&!(x>h.gap-32&&x<h.gap+32));}
-function travel(s,dx,dy){let x=clamp(s.p.x+dx,-85,85),y=s.p.y;if(!blocked(s,x,y))s.p.x=x;y=clamp(s.p.y+dy,395,1030);if(!blocked(s,s.p.x,y))s.p.y=y;}
-export default{
- title:'Looking-Glass Garden',intro:'Opal has lit a lantern on each side of the glass. One follows your hand; the other follows your reflection. Take both through the folded hedges and collect the moon drops.',
- instructions:'Guide either lantern with a held pointer. The other mirrors it: left becomes right across the glass. You must weave through the gaps, collect every paired moon drop and reach the two arches at the top. Arrow keys or the four buttons move the left lantern. No timer or lost lives.',
- levels:['Across the glass','The folded hedges','The long reflection'],actions:[{id:'left',label:'←',hold:true},{id:'up',label:'↑',hold:true},{id:'down',label:'↓',hold:true},{id:'right',label:'→',hold:true}],
- create(level){const n=3+level,hedges=Array.from({length:n},(_,i)=>({y:930-i*(470/(n-1)),gap:(i%2?-1:1)*58}));return{level,p:{x:0,y:1020},target:null,drag:false,t:0,hedges,drops:hedges.map(h=>({x:h.gap,y:h.y-37,taken:false})),trail:[]};},
- update(s,dt,input){s.t+=dt;let dx=(input.keys.has('ArrowRight')||input.actions.has('right')?1:0)-(input.keys.has('ArrowLeft')||input.actions.has('left')?1:0),dy=(input.keys.has('ArrowDown')||input.actions.has('down')?1:0)-(input.keys.has('ArrowUp')||input.actions.has('up')?1:0);if(!dx&&!dy&&s.drag&&s.target){const dd=dist(s.p,s.target);if(dd>3){dx=(s.target.x-s.p.x)/dd;dy=(s.target.y-s.p.y)/dd;}}const norm=Math.max(1,Math.hypot(dx,dy));travel(s,dx/norm*135*dt,dy/norm*135*dt);for(const a of s.drops)if(dist(a,s.p)<23)a.taken=true;if(dx||dy){s.trail.push({...s.p});if(s.trail.length>80)s.trail.shift();}if(s.p.y<415&&Math.abs(s.p.x)<35&&s.drops.every(a=>a.taken))done(s,'Both sides of a little wonder','Every moon drop found, and neither lantern left behind. Opal smiles twice.');},
- pointer(s,type,p){if(type==='down')s.drag=true;if(type==='down'||type==='move')s.target={x:clamp(p.x<450?p.x-320:580-p.x,-85,85),y:clamp(p.y,395,1030)};if(type==='up'||type==='cancel')s.drag=false;},
- draw(s,d){d.line({x:450,y:360},{x:450,y:1080},'#dbcaaa88',4);for(const [side,cx] of [320,580].entries()){const sign=side?-1:1;d.ellipse(cx,710,117,365,side?'#788caa22':'#e9cfad22','#d7c7ae',3);d.arc(cx,415,40,Math.PI,0,'#e3cfad',5);d.line({x:cx-40,y:415},{x:cx-40,y:440},'#b1a089',4);d.line({x:cx+40,y:415},{x:cx+40,y:440},'#b1a089',4);
-   for(const h of s.hedges)for(let u=-94;u<=94;u+=15){if(Math.abs(u-h.gap)<38)continue;const x=cx+u*sign;d.poly([[x-11,h.y+14],[x-13,h.y-5],[x,h.y-21],[x+12,h.y-4],[x+10,h.y+14]],side?'#767f9c':'#8e7c9b','#b7acb4',1);d.line({x,y:h.y-16},{x,y:h.y+10},'#c6b8b1',1);}
-   for(const a of s.drops)if(!a.taken){const x=cx+a.x*sign;d.glow(x,a.y,30,'#dbd8ef');d.poly([[x,a.y-16],[x+11,a.y],[x,a.y+16],[x-11,a.y]],'#e3d9e2','#f7dfaf',2);}
-   d.path(s.trail.map(p=>({x:cx+p.x*sign,y:p.y})),'#e6cba433',2);const x=cx+s.p.x*sign,y=s.p.y;d.glow(x,y,37,'#f0d097');d.poly([[x-9,y+12],[x-11,y-10],[x+11,y-10],[x+9,y+12]],side?'#bac6db':'#ebd09a','#efd6a8',2);d.ellipse(x,y,3,7+Math.sin(s.t*6)*2,'#fff3c7');d.ring(x,y-17,6,'#d7b88b',2);}
-  d.text('HAND',320,1090,15,'#ecdabf');d.text('REFLECTION',580,1090,15,'#ecdabf');},
- readout:s=>s.drops.filter(a=>a.taken).length+' / '+s.drops.length+' paired moon drops · Guide both lanterns to the arches'
+import {clamp, dist, done} from '../draw.js';
+import {spriteKey} from '../prizes.js';
+
+function blocked(s, x, y) {
+  return s.hedges.some(h => Math.abs(y - h.y) < 23 && !(x > h.gap - 32 && x < h.gap + 32));
+}
+function travel(s, dx, dy) {
+  let x = clamp(s.p.x + dx, -85, 85), y = s.p.y;
+  if (!blocked(s, x, y)) s.p.x = x;
+  y = clamp(s.p.y + dy, 395, 1030);
+  if (!blocked(s, s.p.x, y)) s.p.y = y;
+}
+
+export default {
+  title: 'Looking-Glass Garden',
+  intro: 'Opal has lit a moon lantern on each side of the glass. One follows your hand; the other follows your reflection. Take both through the folded hedges and collect the star fragments.',
+  instructions: 'Guide either lantern with a held pointer. The other mirrors it: left becomes right across the glass. You must weave through the gaps, collect every paired star fragment and reach the two arches at the top. Arrow keys or the four buttons move the left lantern. No timer or lost lives.',
+  levels: ['Across the glass', 'The folded hedges', 'The long reflection'],
+  sprites: ['moon-lantern', 'star-fragment'],
+  prizes: ['looking-glass-locket', 'mirror-shard', 'star-fragment'],
+  actions: [{id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true}, {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true}],
+  create(level) {
+    const n = 3 + level, hedges = Array.from({length: n}, (_, i) => ({y: 930 - i * (470 / (n - 1)), gap: (i % 2 ? -1 : 1) * 58}));
+    return {
+      level, p: {x: 0, y: 1020}, target: null, drag: false, t: 0, hedges,
+      drops: hedges.map(h => ({x: h.gap, y: h.y - 37, taken: false})), trail: [],
+    };
+  },
+  update(s, dt, input) {
+    s.t += dt;
+    let dx = (input.keys.has('ArrowRight') || input.actions.has('right') ? 1 : 0)
+      - (input.keys.has('ArrowLeft') || input.actions.has('left') ? 1 : 0);
+    let dy = (input.keys.has('ArrowDown') || input.actions.has('down') ? 1 : 0)
+      - (input.keys.has('ArrowUp') || input.actions.has('up') ? 1 : 0);
+    if (!dx && !dy && s.drag && s.target) {
+      const dd = dist(s.p, s.target);
+      if (dd > 3) { dx = (s.target.x - s.p.x) / dd; dy = (s.target.y - s.p.y) / dd; }
+    }
+    const norm = Math.max(1, Math.hypot(dx, dy));
+    travel(s, dx / norm * 135 * dt, dy / norm * 135 * dt);
+    for (const a of s.drops) if (dist(a, s.p) < 23) a.taken = true;
+    if (dx || dy) { s.trail.push({...s.p}); if (s.trail.length > 80) s.trail.shift(); }
+    if (s.p.y < 415 && Math.abs(s.p.x) < 35 && s.drops.every(a => a.taken))
+      done(s, 'Both sides of a little wonder', 'Every star fragment found, and neither lantern left behind. Opal smiles twice.');
+  },
+  pointer(s, type, p) {
+    if (type === 'down') s.drag = true;
+    if (type === 'down' || type === 'move') s.target = {x: clamp(p.x < 450 ? p.x - 320 : 580 - p.x, -85, 85), y: clamp(p.y, 395, 1030)};
+    if (type === 'up' || type === 'cancel') s.drag = false;
+  },
+  draw(s, d) {
+    d.line({x: 450, y: 360}, {x: 450, y: 1080}, '#dbcaaa88', 4);
+    for (const [side, cx] of [320, 580].entries()) {
+      const sign = side ? -1 : 1;
+      d.ellipse(cx, 710, 117, 365, side ? '#788caa22' : '#e9cfad22', '#d7c7ae', 3);
+      d.arc(cx, 415, 40, Math.PI, 0, '#e3cfad', 5);
+      d.line({x: cx - 40, y: 415}, {x: cx - 40, y: 440}, '#b1a089', 4);
+      d.line({x: cx + 40, y: 415}, {x: cx + 40, y: 440}, '#b1a089', 4);
+      for (const h of s.hedges) for (let u = -94; u <= 94; u += 15) {
+        if (Math.abs(u - h.gap) < 38) continue;
+        const x = cx + u * sign;
+        d.poly([[x - 11, h.y + 14], [x - 13, h.y - 5], [x, h.y - 21], [x + 12, h.y - 4], [x + 10, h.y + 14]], side ? '#767f9c' : '#8e7c9b', '#b7acb4', 1);
+        d.line({x, y: h.y - 16}, {x, y: h.y + 10}, '#c6b8b1', 1);
+      }
+      for (const a of s.drops) if (!a.taken) {
+        const x = cx + a.x * sign;
+        d.glow(x, a.y, 30, '#dbd8ef');
+        d.item(spriteKey('star-fragment'), x, a.y, {
+          w: 30, shadow: false,
+          fallback: () => d.poly([[x, a.y - 16], [x + 11, a.y], [x, a.y + 16], [x - 11, a.y]], '#e3d9e2', '#f7dfaf', 2),
+        });
+      }
+      d.path(s.trail.map(p => ({x: cx + p.x * sign, y: p.y})), '#e6cba433', 2);
+      const x = cx + s.p.x * sign, y = s.p.y;
+      d.glow(x, y, 37, '#f0d097');
+      d.item(spriteKey('moon-lantern'), x, y, {
+        w: 40, shadow: false,
+        fallback: () => {
+          d.poly([[x - 9, y + 12], [x - 11, y - 10], [x + 11, y - 10], [x + 9, y + 12]], side ? '#bac6db' : '#ebd09a', '#efd6a8', 2);
+          d.ellipse(x, y, 3, 7 + Math.sin(s.t * 6) * 2, '#fff3c7');
+          d.ring(x, y - 17, 6, '#d7b88b', 2);
+        },
+      });
+    }
+    d.text('HAND', 320, 1090, 15, '#ecdabf');
+    d.text('REFLECTION', 580, 1090, 15, '#ecdabf');
+  },
+  readout: s => s.drops.filter(a => a.taken).length + ' / ' + s.drops.length + ' paired star fragments · Guide both lanterns to the arches',
 };
