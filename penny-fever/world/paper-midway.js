@@ -38,7 +38,7 @@ export function makeVisibleTicketBooth(scene){
 }
 export function updateTicketBooth(eye){
  if(!ticketBooth?.userData.papercutViews||!eye)return;
- showPapercutView(ticketBooth,papercutViewIndex(ticketBooth,eye));
+ showPapercutView(ticketBooth, Number.isInteger(ticketBooth.userData.pinView)?ticketBooth.userData.pinView:papercutViewIndex(ticketBooth,eye));
 }
 // Shallow scenery behind the stalls leaves the playable aisle clear.
 // Reuse box geometry and materials to keep the long street inexpensive to draw.
@@ -76,14 +76,14 @@ export function extendPaperAlley(scene,len){if(!paperRail)return;
 }
 let panel,playerRef,auraRef,apiRef,dismissed=false;
 function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='demo';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins" hidden>Fill empty pocket</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that.</small>';document.body.append(panel);
+function pocketCount(){return Math.max(0,Math.floor(Number(apiRef?.getState?.()?.demoCoins)||0))}
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='demo';panel.dataset.square='pending';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy pennies</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that. Square will take this till.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
-  const coins=Number(apiRef.getState().demoCoins)||0;
-  if(coins>0)return;
-  const n=apiRef.addDemoCoins(3);
-  panel.querySelector('#auraCounterMessage').textContent=`${n} souvenir pennies. Only when the pocket is empty — not each lap.`;
+  const n=apiRef.buyPennyRoll?apiRef.buyPennyRoll():apiRef.addDemoCoins(10);
+  const note=panel.querySelector('#auraCounterMessage');
+  note.textContent=`A roll of ${n}. Square will take this till — this is the stand-in until then.`;
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
@@ -98,7 +98,7 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
     return;
   }
   if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';return;}
-  note.textContent='Need a penny. Fill an empty pocket, then pay for the walk.';
+  note.textContent='Need a penny. Buy a roll here, then pay for the walk.';
  };
 }
 export function updateTicketService(){
@@ -109,10 +109,9 @@ export function updateTicketService(){
  panel.hidden=false;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
- const empty=!(Number(state.demoCoins)>0);
- panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${state.demoCoins} ${Number(state.demoCoins)===1?'penny':'pennies'}`;
+ const coins=pocketCount();
+ panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${coins} ${coins===1?'penny':'pennies'}`;
  const admit=panel.querySelector('#auraCounterAdmission');
  admit.disabled=!!state.admitPassed;
  admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
- panel.querySelector('#auraCounterCoins').hidden=!empty;
 }

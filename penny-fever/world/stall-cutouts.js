@@ -74,7 +74,7 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
   if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    showPapercutView(figure,papercutViewIndex(figure,look));
+    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:papercutViewIndex(figure,look));
    }
   }
   if(dead||!active)return;

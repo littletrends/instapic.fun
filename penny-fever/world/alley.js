@@ -7,12 +7,12 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=paper-alley-live-24";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-10";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-pennies-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-24";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-24";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-24";
-import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-24";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-26";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-26";
+import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-26";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
@@ -60,8 +60,7 @@ const STALL_X = paperRail ? BAY_X : 2.62;
 const STALL_STEP = paperRail ? 5.2 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
-const WALK_X = paperRail ? 4.18 : AISLE;
-const WALL_X = 4.55;
+const WALK_X = AISLE;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
 const COUNTER_X = 0.58;
@@ -787,6 +786,10 @@ function hasAdmitTicket() {
 function pocketPennies() {
   return Number(pfState().demoCoins) || 0;
 }
+function paintPocketHud() {
+  const pocketCount = el("pfPocketCoinCount");
+  if (pocketCount) pocketCount.textContent = String(pocketPennies());
+}
 
 const api = {
   ok: false,
@@ -818,10 +821,9 @@ let focus = null;
 let vendorChatUntil = 0;
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
+let alleyMapOpen = false;
 let stallCardId = "";
 let stallCardView = "front";
-let orbitYaw = 0;
-let orbitDist = 4.4;
 let lookZoom = 1;
 const LOOK_VIEWS = ["front", "left", "back", "right"];
 
@@ -860,6 +862,7 @@ function attachHud() {
           <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">
+          <button type="button" id="pfAlleyMapOpen">Map</button>
           <button type="button" id="pfWorldLeave">Ticket desk</button>
           <a id="pfWorldHome" href="../index.html">Home</a>
         </div>
@@ -909,6 +912,27 @@ function attachHud() {
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Hold and drag to turn · pinch or +/− to zoom · walk around the booths</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
+      <div class="pf-alley-map" id="pfAlleyMap" hidden>
+        <div class="pf-alley-map-bar">
+          <strong>Sideshow alley</strong>
+          <button type="button" id="pfAlleyMapClose">Close</button>
+        </div>
+        <div class="pf-alley-map-board">
+          <img src="assets/restyle/maps/sideshow-alley-map.png" alt="Papercraft map of the sideshow alley" width="1296" height="1728">
+          <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
+        </div>
+        <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
+          <div class="pf-alley-map-marks">
+            <button type="button" data-place="pier">Pier</button>
+            <button type="button" data-place="aura">Aura’s booth</button>
+            <button type="button" data-place="end">End of the walk</button>
+          </div>
+          <div class="pf-alley-map-cols">
+            <div id="pfAlleyMapLeft"></div>
+            <div id="pfAlleyMapRight"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="pf-world-fail" id="pfWorldFail" hidden>
       <div>
@@ -919,6 +943,65 @@ function attachHud() {
   `);
 }
 
+function fillAlleyMap() {
+  const left = el("pfAlleyMapLeft");
+  const right = el("pfAlleyMapRight");
+  if (!left || !right || left.dataset.ready) return;
+  left.dataset.ready = "1";
+  STALLS.forEach((spec, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.place = spec.id;
+    b.textContent = spec.name;
+    (i % 2 === 0 ? left : right).append(b);
+  });
+}
+
+function syncAlleyMapYou() {
+  const pin = el("pfAlleyMapYou");
+  const map = el("pfAlleyMap");
+  if (!pin || !map || map.hidden || !player) return;
+  const start = FOYER_OUT;
+  const end = Math.max(start + 1, hallLen - 1);
+  const z = player.position.z;
+  const t = z < start ? -0.08 : Math.max(0, Math.min(1, (z - start) / (end - start)));
+  pin.style.bottom = `${28 + t * 48}%`;
+}
+
+function closeAlleyMap() {
+  alleyMapOpen = false;
+  const map = el("pfAlleyMap");
+  if (map) map.hidden = true;
+  document.body.classList.remove("pf-alley-map-open");
+  const open = el("pfAlleyMapOpen");
+  if (open) open.setAttribute("aria-pressed", "false");
+}
+
+function openAlleyMap() {
+  fillAlleyMap();
+  alleyMapOpen = true;
+  closeStallCard();
+  const map = el("pfAlleyMap");
+  if (map) map.hidden = false;
+  document.body.classList.add("pf-alley-map-open");
+  const open = el("pfAlleyMapOpen");
+  if (open) open.setAttribute("aria-pressed", "true");
+  syncAlleyMapYou();
+}
+
+function walkToMapPlace(place) {
+  closeAlleyMap();
+  if (!player) return;
+  if (place === "pier") return warp(0, FOYER_IN + 1.2, 0);
+  if (place === "aura") return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  if (!ticketPassed()) return warp(paperRail ? -0.45 : 0, COUNTER.z + 1.15, 0);
+  if (place === "end") return warp(0, hallLen - 2.4, 0);
+  const s = stalls.find((x) => x.userData.stall?.id === place);
+  if (!s) return;
+  const side = Math.sign(s.position.x) || 1;
+  warp(side * 0.28, s.position.z, 0);
+}
+
 function bindHud() {
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
@@ -927,7 +1010,21 @@ function bindHud() {
   const pocketChat = el("pfPocketChat");
   const pocketChest = el("pfPocketChest");
   const failMap = el("pfWorldFailMap");
+  const mapOpen = el("pfAlleyMapOpen");
+  const mapClose = el("pfAlleyMapClose");
+  const mapLegend = el("pfAlleyMapLegend");
   if (leave) leave.addEventListener("click", () => { location.hash = "door"; });
+  if (mapOpen) mapOpen.addEventListener("click", () => {
+    if (alleyMapOpen) closeAlleyMap();
+    else openAlleyMap();
+  });
+  if (mapClose) mapClose.addEventListener("click", closeAlleyMap);
+  if (mapLegend) mapLegend.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-place]");
+    if (!button) return;
+    event.preventDefault();
+    walkToMapPlace(button.dataset.place);
+  });
   if (enter) {
     enter.addEventListener("click", (event) => {
       event.preventDefault();
@@ -983,7 +1080,7 @@ function bindHud() {
       const orbit = event.target.closest("button[data-orbit]");
       if (orbit) {
         event.preventDefault();
-        orbitYaw += Number(orbit.dataset.orbit) * 0.55;
+        spinLookCard(Number(orbit.dataset.orbit));
         return;
       }
       const zoom = event.target.closest("button[data-zoom]");
@@ -1008,6 +1105,8 @@ function bindHud() {
   if (pocketChest) pocketChest.addEventListener("click", () => {
     window.PennyFeverInventory?.open();
   });
+  paintPocketHud();
+  window.addEventListener("pennyfever:statechange", paintPocketHud);
   if (failMap) {
     failMap.addEventListener("click", () => { location.hash = "door"; });
   }
@@ -1020,6 +1119,18 @@ function bindHud() {
 function onKey(e) {
   if (api.paused || document.querySelector('dialog[open]')) return;
   const k = e.key.toLowerCase();
+  if (alleyMapOpen) {
+    if (e.key === "Escape" || k === "m") {
+      e.preventDefault();
+      closeAlleyMap();
+    }
+    return;
+  }
+  if (k === "m") {
+    e.preventDefault();
+    openAlleyMap();
+    return;
+  }
   keys[k] = true;
   if (k === "e" || k === "enter") {
     if (gatePromptActive || promptTargetSlug || (nearest && nearest.atCounter)) {
@@ -1027,8 +1138,8 @@ function onKey(e) {
       enterNearest();
     }
   }
-  if (k === "q") { e.preventDefault(); orbitYaw -= 0.45; spinLookCard(-1); }
-  if (k === "t") { e.preventDefault(); orbitYaw += 0.45; spinLookCard(1); }
+  if (k === "q") { e.preventDefault(); spinLookCard(-1); }
+  if (k === "t") { e.preventDefault(); spinLookCard(1); }
   if (e.key === "-" || e.key === "_") { e.preventDefault(); nudgeLookZoom(-1); }
   if (e.key === "=" || e.key === "+") { e.preventDefault(); nudgeLookZoom(1); }
 }
@@ -1064,8 +1175,13 @@ function bindLook() {
     }
     const dx = e.clientX - lastX;
     lastX = e.clientX;
-    if (nearest && nearest.atCounter) orbitYaw -= dx * 0.006;
-    else {
+    if (nearest && nearest.atCounter) {
+      bindLook.accum = (bindLook.accum || 0) + dx;
+      if (Math.abs(bindLook.accum) > 48) {
+        spinLookCard(bindLook.accum > 0 ? 1 : -1);
+        bindLook.accum = 0;
+      }
+    } else {
       glanceYaw -= dx * 0.0022;
       if (glanceYaw > 0.28) glanceYaw = 0.28;
       if (glanceYaw < -0.28) glanceYaw = -0.28;
@@ -1153,15 +1269,42 @@ function lookCardArt(best, view = "front") {
   };
 }
 
+function focusedFigures() {
+  const list = [];
+  if (!nearest) return list;
+  if (nearest.kind === "stall") {
+    const s = stalls?.find((st) => st.userData.stall.id === nearest.id);
+    if (s) list.push(s);
+    const b = barkers?.find((p) => p.userData.stallId === nearest.id);
+    if (b) list.push(b);
+  } else if (nearest.kind === "ride") {
+    (papercutRides?.figures || []).forEach((fig) => {
+      if (fig.userData.amusementId === nearest.id) list.push(fig);
+    });
+  } else if (nearest.kind === "aura") {
+    if (aura) list.push(aura);
+    const booth = scene?.getObjectByName("Aura ticket booth · papercut");
+    if (booth) list.push(booth);
+  }
+  return list;
+}
+
+function pinFocusedView(index) {
+  stallCardView = LOOK_VIEWS[index] || "front";
+  focusedFigures().forEach((fig) => {
+    fig.userData.pinView = index;
+    if (fig.userData.papercutStand) fig.userData.papercutStand.userData.pinView = index;
+  });
+}
+
 function spinLookCard(dir) {
-  const i = LOOK_VIEWS.indexOf(stallCardView);
-  applyLookCardView(LOOK_VIEWS[(i + dir + 4) % 4]);
+  const i = (LOOK_VIEWS.indexOf(stallCardView) + dir + 4) % 4;
+  pinFocusedView(i);
+  if (stallCardOpen) applyLookCardView(LOOK_VIEWS[i]);
 }
 
 function nudgeLookZoom(dir) {
-  lookZoom = Math.max(0.62, Math.min(1.85, lookZoom + dir * 0.16));
-  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
-  if (stage) stage.style.transform = `scale(${lookZoom})`;
+  lookZoom = Math.max(0.7, Math.min(1.55, lookZoom + dir * 0.14));
 }
 
 function bindCardSpin() {
@@ -1225,17 +1368,20 @@ function applyLookCardView(view) {
 }
 
 function closeStallCard() {
+  focusedFigures().forEach((fig) => {
+    delete fig.userData.pinView;
+    if (fig.userData.papercutStand) delete fig.userData.papercutStand.userData.pinView;
+  });
   stallCardOpen = false;
   stallCardId = "";
-  orbitYaw = 0;
   lookZoom = 1;
-  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
-  if (stage) stage.style.transform = "";
   const card = el("pfStallCard");
   if (card) card.hidden = true;
 }
 
 function syncStallCard(best) {
+  if (stallCardOpen) closeStallCard();
+  return;
   const card = el("pfStallCard");
   if (!card) return;
   if (!lookCardKind(best)) {
@@ -1276,7 +1422,7 @@ function syncStallCard(best) {
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
-        enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+        enter.textContent = best.id === "fortune" ? "Fortune · 1 penny" : "Enter · 1 penny";
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;
@@ -1293,7 +1439,7 @@ function syncStallCard(best) {
     }
     if (chat) {
       chat.hidden = false;
-      chat.textContent = best.kind === "aura" && !(Number(pfState().demoCoins) > 0) ? "Pennies" : "Chat";
+      chat.textContent = "Chat";
     }
     applyLookCardView("front");
   }
@@ -1304,11 +1450,6 @@ function syncStallCard(best) {
 function talkToFocus() {
   if (!nearest) return;
   if (nearest.kind === "aura") {
-    const PF = window.PennyFever;
-    if (PF && !(Number(pfState().demoCoins) > 0) && typeof PF.addDemoCoins === "function") {
-      PF.addDemoCoins(3);
-      return;
-    }
     chatPinned = true;
     const pocketChat = el("pfPocketChat");
     if (pocketChat) {
@@ -1329,6 +1470,11 @@ function enterNearest() {
   if (!nearest || !nearest.atCounter) return;
   if (stallCardOpen && nearest.kind === "stall") {
     const slug = nearest.id;
+    if (pocketPennies() < 1 && !pfState().showmanPass) {
+      tillMessage = "Need a penny, darling. Buy a roll at my ticket booth.";
+      tillMessageUntil = performance.now() + 7000;
+      return;
+    }
     closeStallCard();
     location.hash = "cabinet/" + slug;
     return;
@@ -1337,8 +1483,12 @@ function enterNearest() {
     if (ticketPassed()) return;
     const PF = window.PennyFever;
     const laps = Number(pfState().alleyLaps) || 0;
+    const kind = laps === 0 ? "ticket" : "penny";
     if (PF && typeof PF.admitAlleyLap === "function") {
-      PF.admitAlleyLap(laps === 0 ? "ticket" : "penny");
+      if (!PF.admitAlleyLap(kind) && kind === "penny") {
+        tillMessage = "A penny for the next walk. Buy a roll at the ticket booth if the pocket is empty.";
+        tillMessageUntil = performance.now() + 7000;
+      }
     }
     stallCardId = "";
     syncStallCard(nearest);
@@ -1621,15 +1771,12 @@ function walkLimit(nz) {
   return AISLE;
 }
 
-function behindWall(nx, nz) {
-  return paperRail && nz > FOYER_OUT + .2 && Math.abs(nx) > WALL_X;
-}
+
 
 function blocked(nx, nz, home = false) {
   if (!ticketPassed() && nz > GATE_Z) return true;
   if (nz < -34) return true;
   if (!home && hitsSolid(nx, nz)) return true;
-  if (behindWall(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
   if (nz > hallLen + 1.2) return true;
   return Math.abs(nx) > walkLimit(nz);
@@ -1732,7 +1879,13 @@ function handleGatePrompt() {
   const PF = window.PennyFever;
   const laps = Number(pfState().alleyLaps) || 0;
   const kind = laps === 0 ? "ticket" : "penny";
-  if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) return true;
+  if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
+    if (kind === "penny") {
+      tillMessage = "A penny for the next walk. Buy a roll at the ticket booth if the pocket is empty.";
+      tillMessageUntil = performance.now() + 7000;
+    }
+    return true;
+  }
   const prompt = el("pfWorldPrompt");
   if (prompt) prompt.classList.add("is-ticket-given");
   if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
@@ -1768,14 +1921,16 @@ function updateAura(dt) {
   }
   const nearPlayer = player.position.distanceTo(aura.position) < 2.4;
   if (pendingTillCashIn && player.position.distanceTo(aura.position) < 2.85) {
-    const PF = window.PennyFever;
-    const paid = PF && typeof PF.cashInCompletedPlays === "function" ? PF.cashInCompletedPlays() : 0;
-    tillMessage = paid
-      ? `You brought me a proper night. ${paid} fresh ${paid === 1 ? "penny" : "pennies"} for another round.`
-      : "Nothing to cash yet, darling. Play a stall, then bring the night back around.";
-    tillMessageUntil = performance.now() + 5200;
     pendingTillCashIn = false;
-    if (paid && navigator.vibrate) navigator.vibrate([28, 35, 28, 35, 60]);
+    if (!paperRail) {
+      const PF = window.PennyFever;
+      const paid = PF && typeof PF.cashInCompletedPlays === "function" ? PF.cashInCompletedPlays() : 0;
+      tillMessage = paid
+        ? `You brought me a proper night. ${paid} fresh ${paid === 1 ? "penny" : "pennies"} for another round.`
+        : "Nothing to cash yet, darling. Play a stall, then bring the night back around.";
+      tillMessageUntil = performance.now() + 5200;
+      if (paid && navigator.vibrate) navigator.vibrate([28, 35, 28, 35, 60]);
+    }
   }
   animatePerson(aura, dt, moving, nearPlayer && !moving);
 }
@@ -1922,12 +2077,7 @@ function findNearest() {
   const passingZ = passing?.dz ?? 99;
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
-  const tag = nearest && nearest.atCounter ? nearest.kind + ":" + nearest.id : "";
-  if (tag !== stallCardId) {
-    orbitYaw = 0;
-    lookZoom = 1;
-  }
-  syncStallCard(lookCardKind(best) ? nearest : null);
+  if (stallCardOpen) closeStallCard();
   const rig = el("pfLookRig");
   if (rig) rig.hidden = !(nearest && nearest.atCounter);
   const prompt = el("pfWorldPrompt");
@@ -1975,10 +2125,10 @@ function findNearest() {
       const playable = best.kind === "stall";
       const chatable = best.kind === "stall" || best.kind === "aura";
       enter.hidden = !playable;
-      enter.textContent = best.id === "fortune" ? "Fortune" : "Enter";
+      enter.textContent = best.id === "fortune" ? "Fortune · 1 penny" : "Enter · 1 penny";
       if (chatBtn) {
         chatBtn.hidden = !chatable;
-        chatBtn.textContent = best.kind === "aura" && !(Number(pfState().demoCoins) > 0) ? "Pennies" : "Chat";
+        chatBtn.textContent = "Chat";
       }
       line.textContent = best.line || "";
     } else {
@@ -2097,7 +2247,7 @@ function followPose() {
   const followX = 0.2;
   const railX = player.position.x * followX;
   const rawAlleyX = railX - Math.sin(camYaw) * dist;
-  const alleyTx = paperRail && Math.abs(orbitYaw) < 0.08 ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
+  const alleyTx = paperRail ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
   const alleyTy = player.position.y + height;
   const alleyTz = player.position.z - Math.cos(camYaw) * dist;
   const alleyLx = railX * 0.35;
@@ -2110,18 +2260,16 @@ function followPose() {
   let ly = alleyLy;
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
-    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x);
+    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x) * 0.72;
     const lookZ = nearest.kind === "aura" ? nearest.z : (nearest.stallZ || nearest.z);
     const side = nearest.side || Math.sign(lookX || 1);
     const base = nearest.kind === "ride" ? 7.2 : nearest.kind === "aura" ? 3.8 : 4.3;
-    const radius = Math.max(2.4, (base / lookZoom));
-    const facing = -side * Math.PI / 2;
-    const yaw = facing + orbitYaw;
-    const stallTx = lookX + Math.sin(yaw) * radius;
-    const stallTz = lookZ + Math.cos(yaw) * radius;
-    const stallTy = nearest.kind === "ride" ? 2.7 : 1.7;
+    const lookBack = Math.max(2.8, base / lookZoom);
+    const stallTx = Math.max(-0.85, Math.min(0.85, side * 0.22));
+    const stallTy = nearest.kind === "ride" ? 2.7 : 1.62;
+    const stallTz = lookZ - lookBack;
     const stallLx = lookX;
-    const stallLy = nearest.kind === "ride" ? 2.8 : 1.45;
+    const stallLy = nearest.kind === "ride" ? 2.9 : 1.45;
     const stallLz = lookZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;
@@ -2139,20 +2287,15 @@ function updateCamera(dt) {
   camera.position.x += (pose.tx - camera.position.x) * 0.16;
   camera.position.y += (pose.ty - camera.position.y) * 0.16;
   camera.position.z += (pose.tz - camera.position.z) * 0.16;
-  const orbiting = paperRail && nearest && nearest.atCounter && (Math.abs(orbitYaw) > 0.04 || lookZoom !== 1);
-  if (paperRail && !orbiting) {
-    camera.position.x = Math.max(-1.15, Math.min(1.15, camera.position.x));
+  if (paperRail) {
+    camera.position.x = Math.max(-1.02, Math.min(1.02, camera.position.x));
     camera.position.y = Math.max(1.48, camera.position.y);
-  } else if (paperRail) {
-    camera.position.x = Math.max(-WALL_X + 0.2, Math.min(WALL_X - 0.2, camera.position.x));
-    camera.position.y = Math.max(1.2, Math.min(4.6, camera.position.y));
   }
   camera.lookAt(pose.lx, pose.ly, pose.lz);
 }
 
 function updateFx(t) {
-  const pocketCount = el("pfPocketCoinCount");
-  if (pocketCount) pocketCount.textContent = String(Number(pfState().demoCoins) || 0);
+  paintPocketHud();
   lamps.forEach((l) => {
     l.intensity = 1.05 + Math.sin(t * 3.1 * l.userData.flicker) * 0.18;
   });
@@ -2195,11 +2338,12 @@ function loop() {
   updateAura(dt);
   updateCrowd(dt);
   findNearest();
+  if (alleyMapOpen) syncAlleyMapYou();
   updateCamera(dt);
   updatePaperProprietor(aura, player);
   updateCrewGuest(player, camera, dt);
   updatePaperCrew(guests, camera);
-  const eye = (nearest && nearest.atCounter && (lookDrag || Math.abs(orbitYaw) > 0.05)) ? camera : player;
+  const eye = player;
   if (paperRail) updateTicketBooth(eye);
   if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, eye);
   if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, eye);
@@ -2268,6 +2412,7 @@ function startNow() {
   viewBlend = 0;
   document.body.classList.add("is-in-world");
   document.body.classList.remove("is-world-map");
+  closeAlleyMap();
   onResize();
   clock.getDelta();
   cancelAnimationFrame(raf);
@@ -2276,6 +2421,7 @@ function startNow() {
 }
 
 function pause() {
+  closeAlleyMap();
   api.paused = true;
   keys = {};
   joy.active = false;

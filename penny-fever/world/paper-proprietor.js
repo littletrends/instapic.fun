@@ -32,5 +32,5 @@ export function updatePaperProprietor(aura,eye) {
   const stand=aura.userData.paperProprietor;
   if(!stand||!stand.visible||!eye)return;
   aura.scale.z=aura.scale.x;
-  showPapercutView(aura,papercutViewIndex(aura,eye));
+  showPapercutView(aura, Number.isInteger(aura.userData.pinView)?aura.userData.pinView:papercutViewIndex(aura,eye));
 }
