@@ -78,8 +78,10 @@ export function buildPapercut(faces,opts={}){
  globalThis.PennyFeverRestyle?.notePaperCutout(root);
  return root;
 }
-export function papercutViewIndex(object,camera){
- const bearing=Math.atan2(camera.position.x-object.position.x,camera.position.z-object.position.z);
+export function papercutViewIndex(object,eye){
+ const p=eye&&(eye.position||eye);
+ const px=p?.x??0,pz=p?.z??0;
+ const bearing=Math.atan2(px-object.position.x,pz-object.position.z);
  const yaw=object.rotation.y;
  const angle=Math.atan2(Math.sin(bearing-yaw),Math.cos(bearing-yaw));
  return Math.abs(angle)<Math.PI/4?0:Math.abs(angle)>Math.PI*3/4?2:angle>0?3:1;

@@ -1,6 +1,6 @@
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {STALL_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-3';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/stalls/';
 const NEAR=52;
@@ -22,7 +22,7 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
  function hideFallback(stall){
   const shell=stall.children.find(c=>c.name&&c.name.includes("'s "));
   if(!shell)return;
-  for(const child of shell.children)if(!child.name.endsWith(' walking sign'))child.visible=false;
+  for(const child of shell.children)child.visible=false;
  }
  async function run(job){
   const {figure,controller}=job,id=figure.userData.stall.id,opts=optsFor(id);
@@ -52,13 +52,14 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
   const controller=new AbortController();
   figure.userData.loading=true;const job={figure,controller};inflight.push(job);run(job);
  }
- function update(camera,z){
+ function update(camera,z,eye){
   if(camera)currentCam=camera;
   if(typeof z==='number')currentZ=z;else if(camera)currentZ=camera.position.z;
-  if(currentCam){
+  const look=eye||currentCam;
+  if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    showPapercutView(figure,papercutViewIndex(figure,currentCam));
+    showPapercutView(figure,papercutViewIndex(figure,look));
    }
   }
   if(dead||!active)return;

@@ -141,21 +141,6 @@ function top(parent,d) {
   if(['cinema','marquee','lightning'].includes(type))for(let i=0;i<9;i++)disk(parent,d.trim,.042,-1.06+i*.265,3.4,.46);
   if(type==='curtain')for(const side of [-1,1])for(let i=0;i<4;i++)block(parent,i%2?d.body:'#532d36',.10,1.8,.12,side*(.72+i*.09),1.64,.6);
 }
-// Projecting paper signs face along the alley, rather than only across it.
-function aisleSign(shell,spec,d,icon,side){
-  const signRoot=new THREE.Group();signRoot.name=`${spec.name} walking sign`;
-  signRoot.position.set(-side*1.08,2.0,.66);
-  signRoot.rotation.y=side*Math.PI/2;shell.add(signRoot);
-  block(signRoot,d.trim,.65,.045,.045,0,.36,0);
-  for(const x of [-.24,.24])block(signRoot,d.trim,.025,.16,.025,x,.27,0);
-  for(const facing of [-1,1]){
-    const face=new THREE.Group();face.rotation.y=facing<0?Math.PI:0;signRoot.add(face);
-    panel(face,decorativePaper(d.body,d.trim,d.index),.67,.65,0,-.03,.03);
-    panel(face,icon,.32,.32,0,.04,.04);
-    panel(face,sign(spec.name.toUpperCase(),d),.63,.13,0,-.23,.045);
-  }
-}
-
 // Game-matching papercut set pieces. Extra volume goes up, sideways and back — not into the aisle.
 function attraction(shell,spec,d){
   const b=d.body,t=d.trim,kraft='#c2a477',dark='#30271f',red='#7a3b33',pink='#dba4b8',water='#5a8a92';
@@ -442,7 +427,6 @@ export function installIndividualVendors(stalls,scene) {
       cyl(lantern,'#ead1a0',.095,.095,.20,0,.035,0,4);
       cyl(lantern,d.trim,.12,.04,.08,0,-.10,0,4);
     }
-    aisleSign(shell,spec,d,icon,stall.userData.side);
     batchBoxes(shell);
     if(spec.id==='fortune')installMysticFront(shell);
     if(spec.id==='love')installLoveFront(shell);

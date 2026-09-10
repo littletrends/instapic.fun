@@ -1,6 +1,6 @@
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_WELCOMING_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-3';
 
 const active = new URLSearchParams(location.search).get('rail') === 'paper';
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/';
@@ -28,9 +28,9 @@ export function installPaperProprietor(aura) {
     }
   }).catch(()=>console.warn('Paper Aura could not load; retaining the original proprietor figure.'));
 }
-export function updatePaperProprietor(aura,camera) {
+export function updatePaperProprietor(aura,eye) {
   const stand=aura.userData.paperProprietor;
-  if(!stand||!stand.visible||!camera)return;
+  if(!stand||!stand.visible||!eye)return;
   aura.scale.z=aura.scale.x;
-  showPapercutView(aura,papercutViewIndex(aura,camera));
+  showPapercutView(aura,papercutViewIndex(aura,eye));
 }

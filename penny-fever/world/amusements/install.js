@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js?v=paper-alley-live-2';
-import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js';
+import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js?v=paper-alley-live-3';
 
 const HOST_HEIGHT=1.7;
 const HOST_INSET=.7;
@@ -65,14 +65,15 @@ export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
   const job={figure,controller};
   figure.userData.loading=true;inflight.push(job);run(job);
  }
- function update(camera,z){
+ function update(camera,z,eye){
   if(camera)currentCam=camera;
   if(typeof z==='number')currentZ=z;else if(camera)currentZ=camera.position.z;
-  if(currentCam){
+  const look=eye||currentCam;
+  if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    showPapercutView(figure,papercutViewIndex(figure,currentCam));
-    if(figure.userData.billboard)billboardPapercut(figure,currentCam);
+    showPapercutView(figure,papercutViewIndex(figure,look));
+    if(figure.userData.billboard)billboardPapercut(figure,currentCam||look);
    }
   }
   if(dead||!active)return;

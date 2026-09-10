@@ -148,6 +148,17 @@ h2 { font-size: 1.35rem; margin: 0.2rem 0 0.55rem; }
   line-height: 1.45;
 }
 
+.site-back {
+  display: inline-block;
+  margin: 0 0 0.8rem;
+  font: 600 0.78rem/1.4 system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #cbb892;
+}
+.site-back:hover, .site-back:focus-visible { color: #f3e2bd; }
+
 /* Discovery door */
 .discovery-door {
   position: relative;

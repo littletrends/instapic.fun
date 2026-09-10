@@ -2,16 +2,16 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=approach-face-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=foyer-walls-2";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-3";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-3";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
-import { installIndividualVendors } from "./paper-vendors.js?v=reliability-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=hud-top-1";
+import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-3";
 import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-2";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-2";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=reliability-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=reliability-1";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-3";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-3";
+import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-3";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
@@ -811,7 +811,7 @@ let glanceYaw = 0;
 let lookDrag = false;
 let viewBlend = 0;
 let nearest = null;
-let inspectedStall = null;
+let lookDownAlley = false;
 let promptTargetSlug = "";
 let raf = 0;
 let hintTimer = 0;
@@ -847,7 +847,8 @@ function attachHud() {
           <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">
-          <button type="button" id="pfWorldLeave">Leave</button>
+          <button type="button" id="pfWorldLeave">Ticket desk</button>
+          <a id="pfWorldHome" href="../index.html">Home</a>
         </div>
       </div>
       <div class="pf-world-speech" id="pfWorldSpeech" hidden>
@@ -876,7 +877,7 @@ function bindHud() {
   const inspect = el("pfWorldInspect");
   if (inspect) inspect.addEventListener("click", () => {
     if (!paperRail || !nearest?.atCounter) return;
-    inspectedStall = inspectedStall === nearest.id ? null : nearest.id;
+    lookDownAlley = !lookDownAlley;
   });
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
@@ -994,6 +995,10 @@ function bindJoy() {
 function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
+  if (nearest.kind === "ride" || nearest.kind === "aura") {
+    lookDownAlley = false;
+    return;
+  }
   const slug = promptTargetSlug || nearest.id;
   if (!slug) return;
   const PF = window.PennyFever;
@@ -1281,7 +1286,6 @@ function updatePlayer(dt) {
   const mag = Math.hypot(ix, iy);
   let moving = false;
   if (mag > 0.08) {
-    inspectedStall = null;
     if (mag > 1) {
       ix /= mag;
       iy /= mag;
@@ -1413,53 +1417,83 @@ function updateCrowd(dt) {
   });
 }
 
+function considerTarget(info, px, pz, bestHold) {
+  const dz = Math.abs(pz - info.stallZ);
+  const d = Math.hypot(px - info.worldX, pz - info.worldZ);
+  info.dist = d;
+  if (dz < bestHold.passingZ) {
+    bestHold.passingZ = dz;
+    bestHold.passing = info;
+  }
+  const aligned = dz < (info.kind === "ride" ? 1.7 : COUNTER_Z);
+  const onSide = Math.sign(px || info.side) === info.side;
+  const sidestepped = Math.abs(px) >= (info.kind === "aura" ? 0.35 : COUNTER_X);
+  if (aligned && onSide && sidestepped && d < bestHold.bestD) {
+    bestHold.bestD = d;
+    bestHold.best = info;
+    info.atCounter = true;
+  }
+  return info;
+}
+
 function findNearest() {
-  let passing = null;
-  let passingZ = COUNTER_Z;
-  let best = null;
-  let bestD = COUNTER_REACH;
+  const bestHold = { passing: null, passingZ: COUNTER_Z, best: null, bestD: COUNTER_REACH };
   const px = player.position.x;
   const pz = player.position.z;
   stalls.forEach((s) => {
     const spec = s.userData.stall;
-    const side = s.userData.side;
-    const stallX = s.position.x;
-    const stallZ = s.position.z;
-    const doorX = s.userData.doorX;
-    const doorZ = s.userData.doorZ;
-    const dz = Math.abs(pz - stallZ);
-    const d = Math.hypot(px - doorX, pz - doorZ);
-    const info = {
+    considerTarget({
       id: spec.id,
       name: spec.name,
       line: spec.line,
-      worldX: doorX,
-      worldZ: doorZ,
-      stallX,
-      stallZ,
-      side,
-      dist: d,
+      kind: "stall",
+      worldX: s.userData.doorX,
+      worldZ: s.userData.doorZ,
+      stallX: s.position.x,
+      stallZ: s.position.z,
+      side: s.userData.side,
       atCounter: false,
-    };
-    if (dz < passingZ) {
-      passingZ = dz;
-      passing = info;
-    }
-    const aligned = dz < COUNTER_Z;
-    const onSide = Math.sign(px || side) === side;
-    const sidestepped = Math.abs(px) >= COUNTER_X;
-    if (aligned && onSide && sidestepped && d < bestD) {
-      bestD = d;
-      best = info;
-      best.atCounter = true;
-    }
+    }, px, pz, bestHold);
   });
+  if (paperRail) {
+    considerTarget({
+      id: "aura-booth",
+      name: "Aura’s ticket booth",
+      line: "Stop and look — she is facing the aisle.",
+      kind: "aura",
+      worldX: COUNTER.x,
+      worldZ: COUNTER.z,
+      stallX: COUNTER.x,
+      stallZ: COUNTER.z,
+      side: -1,
+      atCounter: false,
+    }, px, pz, bestHold);
+    (papercutRides?.figures || []).forEach((fig) => {
+      if (fig.userData.kind !== "ride") return;
+      const id = fig.userData.amusementId;
+      considerTarget({
+        id,
+        name: (fig.name || id).replace(" · papercut", ""),
+        line: "Sidestep and look — this is the front of the ride.",
+        kind: "ride",
+        worldX: fig.position.x,
+        worldZ: fig.position.z,
+        stallX: fig.position.x,
+        stallZ: fig.position.z,
+        side: Math.sign(fig.position.x) || 1,
+        atCounter: false,
+      }, px, pz, bestHold);
+    });
+  }
+  const passing = bestHold.passing;
+  const passingZ = bestHold.passingZ;
+  const best = bestHold.best;
   nearest = best || (passing && passingZ < 1.45 ? passing : null);
-  if (!nearest?.atCounter || nearest.id !== inspectedStall) inspectedStall = null;
+  if (!nearest?.atCounter) lookDownAlley = false;
   const inspect = el('pfWorldInspect');
   if (inspect) {
-    inspect.hidden = !paperRail || !nearest?.atCounter || !ticketPassed();
-    inspect.textContent = inspectedStall ? 'Look down alley' : 'Look at booth';
+    inspect.hidden = !paperRail || !nearest?.atCounter;
+    inspect.textContent = lookDownAlley ? "Look at " + nearest.name : "Look down alley";
   }
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
@@ -1487,6 +1521,7 @@ function findNearest() {
       gatePromptActive = true;
       promptTargetSlug = "";
       prompt.hidden = false;
+      enter.hidden = false;
       prompt.classList.add("is-ticket-handoff");
       const laps = Number(pfState().alleyLaps) || 0;
       if (laps === 0) {
@@ -1501,15 +1536,20 @@ function findNearest() {
       }
     } else if (best && best.atCounter) {
       gatePromptActive = false;
-      promptTargetSlug = best.id;
+      promptTargetSlug = best.kind === "stall" ? best.id : "";
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
-      enter.textContent = (best.id === "fortune" ? "Take a fortune · " : "Pay a penny · ") + best.name;
+      const playable = best.kind === "stall";
+      enter.hidden = !playable;
+      enter.textContent = playable
+        ? ((best.id === "fortune" ? "Take a fortune · " : "Pay a penny · ") + best.name)
+        : "Look";
       line.textContent = best.line;
     } else {
       gatePromptActive = false;
       promptTargetSlug = "";
       prompt.hidden = true;
+      enter.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
     }
   }
@@ -1529,13 +1569,8 @@ function findNearest() {
         : pocketPennies() >= 1
           ? "A penny, darling. Then you may pass."
           : "My till will fill a light pocket.";
-    } else if (best && best.atCounter) {
-      speech.hidden = false;
-      if (speechName) speechName.textContent = barkers.find(b => b.userData.stallId === best.id)?.userData.crewName || best.name;
-      speech.classList.add(best.side < 0 ? "is-left" : "is-right");
-      speechText.textContent = best.id === "fortune"
-        ? best.line + " First one’s on the house. Come closer."
-        : best.line + " One penny, love. Step up and I’ll take it.";
+    } else if (best && best.atCounter && best.kind === "stall") {
+      speech.hidden = true;
     } else if (z > hallLen - 6) {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura";
@@ -1602,7 +1637,7 @@ function updateHudAnchor() {
 }
 
 function followPose() {
-  const viewing = !!(nearest && nearest.atCounter && (!paperRail || inspectedStall === nearest.id));
+  const viewing = !!(nearest && nearest.atCounter && !lookDownAlley);
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * 0.11;
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
@@ -1628,11 +1663,11 @@ function followPose() {
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
     const side = nearest.side || Math.sign(nearest.stallX || 1);
-    const stallTx = paperRail ? -side * .35 : player.position.x - side * 1.15;
-    const stallTy = paperRail ? (nearest.stallZ - 6.2 <= FOYER_OUT + .5 ? 2.0 : 2.8) : 1.68;
-    const stallTz = paperRail ? nearest.stallZ - 6.2 : player.position.z + 0.08;
+    const stallTx = paperRail ? 0 : player.position.x - side * 1.15;
+    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.35 : 1.72) : 1.68;
+    const stallTz = paperRail ? nearest.stallZ + 0.15 : player.position.z + 0.08;
     const stallLx = nearest.stallX;
-    const stallLy = paperRail ? 2.1 : 1.32;
+    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.8 : nearest.kind === "aura" ? 1.55 : 1.7) : 1.32;
     const stallLz = nearest.stallZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;
@@ -1699,13 +1734,13 @@ function loop() {
   updateCrowd(dt);
   findNearest();
   updateCamera(dt);
-  updatePaperProprietor(aura, camera);
+  updatePaperProprietor(aura, player);
   updateCrewGuest(player, camera, dt);
   updatePaperCrew(guests, camera);
-  if (paperRail) updateTicketBooth(camera);
-  if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z);
-  if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z);
-  if (paperRail && papercutRides) papercutRides.update(camera, player.position.z);
+  if (paperRail) updateTicketBooth(player);
+  if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, player);
+  if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, player);
+  if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, player);
   if (paperRail && wallBackdrops) wallBackdrops.update(player.position.z, dt);
   updateTicketService();
   updateHudAnchor();

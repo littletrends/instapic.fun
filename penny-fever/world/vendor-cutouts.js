@@ -1,7 +1,7 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-3';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';
 const NEAR=52;
@@ -45,14 +45,15 @@ export function installVendorCutouts(barkers){
   const controller=new AbortController();
   figure.userData.loading=true;const job={figure,controller};inflight.push(job);run(job);
  }
- function update(camera,z){
+ function update(camera,z,eye){
   if(camera)currentCam=camera;
   if(typeof z==='number')currentZ=z;else if(camera)currentZ=camera.position.z;
-  if(currentCam){
+  const look=eye||currentCam;
+  if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
     figure.scale.z=figure.scale.x;
-    showPapercutView(figure,papercutViewIndex(figure,currentCam));
+    showPapercutView(figure,papercutViewIndex(figure,look));
    }
   }
   if(dead||!active)return;

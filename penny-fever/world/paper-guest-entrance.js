@@ -1,8 +1,8 @@
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=reliability-1';
+import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=paper-alley-live-3';
 import {loadWallArt} from './walls/art.js';
 import {buildWall} from './walls/models.js';
-import {WALL_RADIAL} from './walls/catalogue.js?v=paper-alley-live-2';
+import { decorativePaper } from './paper-panels.js?v=reliability-1';
 export const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;
@@ -51,23 +51,46 @@ export function updateCrewGuest(player,camera,dt){
 }
 export function makePaperEntrance(scene){
  const card=new THREE.MeshStandardMaterial({color:0xa88c61,roughness:1,metalness:0});
- const loader=new THREE.TextureLoader();const arch=loader.load('assets/restyle/paper-entrance-cutout.png');arch.colorSpace=THREE.SRGBColorSpace;
- function box(w,h,d,x,y,z,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat||card);m.position.set(x,y,z);scene.add(m);return m}
- function facade(z){const m=new THREE.Mesh(new THREE.PlaneGeometry(9.4,5.33),new THREE.MeshBasicMaterial({map:arch,transparent:true,alphaTest:.15,side:THREE.DoubleSide}));m.position.set(0,2.65,z);m.rotation.y=Math.PI;scene.add(m);return m}
- facade(FOYER_IN);facade(FOYER_OUT);
+ const trim=new THREE.MeshStandardMaterial({color:0x765431,roughness:1,metalness:0});
+ const loader=new THREE.TextureLoader();
+ const arch=loader.load('assets/restyle/paper-entrance-cutout.png');arch.colorSpace=THREE.SRGBColorSpace;
+ const gate=new THREE.Mesh(new THREE.PlaneGeometry(9.4,5.33),new THREE.MeshBasicMaterial({map:arch,transparent:true,alphaTest:.15,side:THREE.DoubleSide}));
+ gate.position.set(0,2.65,FOYER_IN);gate.rotation.y=Math.PI;scene.add(gate);
+
+ // One Penny Fever arch. The inner end is a folded-paper lintel, not a second sign.
+ const inner=new THREE.Group();inner.name='Folded paper inner foyer';inner.position.z=FOYER_OUT;scene.add(inner);
+ for(const x of [-2.15,2.15]){
+  const post=new THREE.Mesh(new THREE.BoxGeometry(.18,4.2,.18),card);post.position.set(x,2.1,0);inner.add(post);
+ }
+ const beam=new THREE.Mesh(new THREE.BoxGeometry(4.5,.22,.2),trim);beam.position.set(0,4.15,0);inner.add(beam);
+ const valance=new THREE.Mesh(new THREE.PlaneGeometry(4.3,.7),new THREE.MeshBasicMaterial({
+  map:decorativePaper('#435637','#d2b073',1),transparent:true,alphaTest:.08,side:THREE.DoubleSide
+ }));
+ valance.position.set(0,3.7,.08);inner.add(valance);
+
  const midZ=(FOYER_IN+FOYER_OUT)/2,span=FOYER_OUT-FOYER_IN;
- box(3.0,.06,span+.4,0,-.005,midZ,card);
- for(let z=FOYER_IN+.45;z<FOYER_OUT-.3;z+=1.6){const light=new THREE.PointLight(0xffd69b,1.2,7,2);light.position.set(0,2.85,z);scene.add(light)}
- // Line the passage on the alley wall line, inset from both arch planes so the
- // PENNY FEVER cutout doorway stays open. Close-in walls filled the hole.
- const ARCH_INSET=1.2,lo=FOYER_IN+ARCH_INSET,hi=FOYER_OUT-ARCH_INSET,wallZ=(lo+hi)/2,wallSpan=hi-lo;
+ const floor=new THREE.Mesh(new THREE.BoxGeometry(3.0,.06,span+.4),card);floor.position.set(0,-.005,midZ);scene.add(floor);
+ for(let z=FOYER_IN+.45;z<FOYER_OUT-.3;z+=1.6){
+  const light=new THREE.PointLight(0xffd69b,1.2,7,2);light.position.set(0,2.85,z);scene.add(light);
+ }
+
+ // Folded foyer screens meet both ends so the passage is a paper folder, not two gates with gaps.
+ const lo=FOYER_IN+.08,hi=FOYER_OUT-.08,wallZ=(lo+hi)/2,wallSpan=hi-lo,wallX=2.42;
  for(const side of [-1,1]){
   loadWallArt('foyer',{side,angled:true}).then(art=>{
    const wall=buildWall('foyer',art,{width:wallSpan,height:4.2,fit:'width',depth:.22});
-   wall.position.set(side*WALL_RADIAL,.04,wallZ);
+   wall.position.set(side*wallX,.04,wallZ);
    wall.rotation.y=-side*Math.PI/2;
-   wall.name=(side<0?'Left':'Right')+' foyer passage wall';
+   wall.name=(side<0?'Left':'Right')+' folded foyer wall';
    scene.add(wall);
   }).catch(error=>console.warn('[Penny Fever foyer]',error.message));
+  for(let i=0;i<5;i++){
+   const fold=new THREE.Mesh(new THREE.PlaneGeometry(.55,3.6),new THREE.MeshBasicMaterial({
+    map:decorativePaper('#5a3a22','#d2b073',i),transparent:true,alphaTest:.08,side:THREE.DoubleSide
+   }));
+   fold.position.set(side*(wallX-.28),1.85,lo+(i+.5)*(wallSpan/5));
+   fold.rotation.y=-side*Math.PI/2+side*(i%2?.32:-.32);
+   scene.add(fold);
+  }
  }
 }

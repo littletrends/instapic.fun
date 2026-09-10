@@ -2,7 +2,7 @@ import * as THREE from './lib/three.module.min.js';
 import {paperRail} from './paper-guest-entrance.js';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-3';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -31,9 +31,9 @@ export function makeVisibleTicketBooth(scene){
  const warm=new THREE.PointLight(0xffddaa,1.7,5,2);warm.position.set(COUNTER.x,1.6,COUNTER.z-1);scene.add(warm);
  return g;
 }
-export function updateTicketBooth(camera){
- if(!ticketBooth?.userData.papercutViews||!camera)return;
- showPapercutView(ticketBooth,papercutViewIndex(ticketBooth,camera));
+export function updateTicketBooth(eye){
+ if(!ticketBooth?.userData.papercutViews||!eye)return;
+ showPapercutView(ticketBooth,papercutViewIndex(ticketBooth,eye));
 }
 // Shallow scenery behind the stalls leaves the playable aisle clear.
 // Reuse box geometry and materials to keep the long street inexpensive to draw.
