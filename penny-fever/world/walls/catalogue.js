@@ -1,5 +1,5 @@
 import {VENDOR_DESIGNS} from '../vendor-designs.js';
-import {AMUSEMENT_PLACES} from '../amusements/catalogue.js';
+import {AMUSEMENT_PLACES} from '../amusements/catalogue.js?v=paper-alley-live-2';
 
 const rows=[
  {
@@ -12,7 +12,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/fortune-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/fortune-wall-turnaround.png"
  },
  {
   "id": "love",
@@ -24,7 +23,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/love-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/love-wall-turnaround.png"
  },
  {
   "id": "curios",
@@ -36,7 +34,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/curios-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/curios-wall-turnaround.png"
  },
  {
   "id": "lookup",
@@ -48,7 +45,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/lookup-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/lookup-wall-turnaround.png"
  },
  {
   "id": "snap",
@@ -60,7 +56,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/snap-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/snap-wall-turnaround.png"
  },
  {
   "id": "whisper",
@@ -72,7 +67,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/whisper-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/whisper-wall-turnaround.png"
  },
  {
   "id": "ball-toss",
@@ -84,7 +78,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/ball-toss-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/ball-toss-wall-turnaround.png"
  },
  {
   "id": "coin-pusher",
@@ -96,7 +89,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/coin-pusher-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/coin-pusher-wall-turnaround.png"
  },
  {
   "id": "pinball",
@@ -108,7 +100,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/pinball-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/pinball-wall-turnaround.png"
  },
  {
   "id": "water-gun",
@@ -120,7 +111,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/water-gun-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/water-gun-wall-turnaround.png"
  },
  {
   "id": "milk-bottles",
@@ -132,7 +122,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/milk-bottles-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/milk-bottles-wall-turnaround.png"
  },
  {
   "id": "cover-the-spot",
@@ -144,7 +133,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/cover-the-spot-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/cover-the-spot-wall-turnaround.png"
  },
  {
   "id": "mutoscope",
@@ -156,7 +144,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/mutoscope-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/mutoscope-wall-turnaround.png"
  },
  {
   "id": "high-striker",
@@ -168,7 +155,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/high-striker-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/high-striker-wall-turnaround.png"
  },
  {
   "id": "catoptromancy",
@@ -180,7 +166,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/catoptromancy-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/catoptromancy-wall-turnaround.png"
  },
  {
   "id": "bent-rings",
@@ -192,7 +177,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/bent-rings-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/bent-rings-wall-turnaround.png"
  },
  {
   "id": "plinko",
@@ -204,7 +188,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/plinko-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/plinko-wall-turnaround.png"
  },
  {
   "id": "fairy-floss",
@@ -216,7 +199,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/fairy-floss-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/fairy-floss-wall-turnaround.png"
  },
  {
   "id": "popcorn",
@@ -228,7 +210,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/popcorn-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/popcorn-wall-turnaround.png"
  },
  {
   "id": "duck-pond",
@@ -240,7 +221,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/duck-pond-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/duck-pond-wall-turnaround.png"
  },
  {
   "id": "skee-ball",
@@ -252,7 +232,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/skee-ball-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/skee-ball-wall-turnaround.png"
  },
  {
   "id": "penny-pitch",
@@ -264,7 +243,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/penny-pitch-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/penny-pitch-wall-turnaround.png"
  },
  {
   "id": "dunk-tank",
@@ -276,7 +254,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/dunk-tank-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/dunk-tank-wall-turnaround.png"
  },
  {
   "id": "marquee",
@@ -288,7 +265,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/marquee-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/marquee-wall-turnaround.png"
  },
  {
   "id": "pack",
@@ -300,7 +276,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/pack-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/pack-wall-turnaround.png"
  },
  {
   "id": "pass",
@@ -312,7 +287,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/pass-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/pass-wall-turnaround.png"
  },
  {
   "id": "horse-carousel",
@@ -324,7 +298,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/horse-carousel-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/horse-carousel-wall-turnaround.png"
  },
  {
   "id": "ferris-wheel",
@@ -336,7 +309,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/ferris-wheel-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/ferris-wheel-wall-turnaround.png"
  },
  {
   "id": "helter-skelter",
@@ -348,7 +320,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/helter-skelter-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/helter-skelter-wall-turnaround.png"
  },
  {
   "id": "chair-swings",
@@ -360,7 +331,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/chair-swings-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/chair-swings-wall-turnaround.png"
  },
  {
   "id": "funhouse",
@@ -372,7 +342,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/funhouse-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/funhouse-wall-turnaround.png"
  },
  {
   "id": "fairground-organ",
@@ -384,7 +353,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/fairground-organ-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/fairground-organ-wall-turnaround.png"
  },
  {
   "id": "balloon-tree",
@@ -396,7 +364,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/balloon-tree-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/balloon-tree-wall-turnaround.png"
  },
  {
   "id": "alley-wall-bay",
@@ -408,7 +375,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/alley-wall-bay-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/alley-wall-bay-wall-turnaround.png"
  },
  {
   "id": "foyer",
@@ -420,7 +386,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/foyer-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/foyer-wall-turnaround.png"
  },
  {
   "id": "aura-ticket-booth",
@@ -432,7 +397,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/aura-ticket-booth-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/aura-ticket-booth-wall-turnaround.png"
  },
  {
   "id": "end-curtain",
@@ -444,7 +408,6 @@ const rows=[
   "height": 4.2,
   "depth": 0.22,
   "source": "assets/restyle/walls/runtime/end-curtain-wall-turnaround.webp",
-  "sheet": "assets/restyle/walls/sheets/end-curtain-wall-turnaround.png"
  }
 ];
 export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));

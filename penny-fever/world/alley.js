@@ -7,9 +7,9 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=reliability-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=hud-top-1";
-import {BAY_X} from "./amusements/catalogue.js?v=hud-top-1";
-import {installWallBackdrops} from "./walls/install.js?v=angled-walls-2";
-import {installPapercutRides} from "./amusements/install.js?v=hud-top-1";
+import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
+import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-2";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-2";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=reliability-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=reliability-1";
 

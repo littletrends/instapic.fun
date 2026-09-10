@@ -1976,7 +1976,7 @@
     if (holdBand && typeof holdBand.hold === "function") holdBand.hold(false);
     $("loveVerdict").hidden = true;
     hideLoveResult();
-    const scores = $("loveRoundScores");
+    const scores = $("loveRoundScores") || $("loveRounds");
     if (scores) {
       scores.hidden = true;
       scores.innerHTML = "";
@@ -3247,9 +3247,11 @@
 
   async function marqueePlaySeq(seq) {
     const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
+    if (!bulbs.length) return;
     bulbs.forEach((b) => { b.disabled = true; b.classList.remove("on"); });
     for (const idx of seq) {
       const b = bulbs[idx];
+      if (!b) continue;
       b.classList.add("on", "flash");
       await marqueeSleep(400);
       b.classList.remove("on", "flash");
@@ -3259,23 +3261,28 @@
 
   async function startMarquee() {
     if (marqueeBusy) return;
+    const startBtn = $("marqueeStart");
+    const status = $("marqueeStatus");
+    const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
+    // Live Boardwalk Lights uses #marqueeGo + canvas. Do not hijack that
+    // ride button with this leftover Simon-bulb flow.
+    if (!startBtn || bulbs.length < 1) return;
     if (!spendDemoCoin("marquee")) {
-      $("marqueeStatus").textContent = "Out of demo coins · grant a pass";
+      if (status) status.textContent = "Out of demo coins · grant a pass";
       refreshNightBoard();
       return;
     }
     marqueeBusy = true;
     focusCard("marqueeCard", true);
     setTier("marqueeTier", "", "");
-    $("marqueeStart").disabled = true;
+    startBtn.disabled = true;
     const len = 3 + Math.floor(Math.random() * 3); // 3–5
     const seq = Array.from({ length: len }, () => Math.floor(Math.random() * 6));
-    $("marqueeStatus").textContent = "Watch the marquee…";
+    if (status) status.textContent = "Watch the marquee…";
     await marqueePlaySeq(seq);
     let progress = 0;
-    const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
     bulbs.forEach((b) => { b.disabled = false; });
-    $("marqueeStatus").textContent = "Your turn — tap the pattern";
+    if (status) status.textContent = "Your turn — tap the pattern";
 
     const onTap = (ev) => {
       const btn = ev.currentTarget;
@@ -3296,11 +3303,11 @@
         b.removeEventListener("click", onTap);
       });
       marqueeBusy = false;
-      $("marqueeStart").disabled = false;
+      startBtn.disabled = false;
       focusCard("marqueeCard", false);
       if (ok) {
         setTier("marqueeTier", "LIT", "perfect");
-        $("marqueeStatus").textContent = "Marquee sings — bulb filed";
+        if (status) status.textContent = "Marquee sings — bulb filed";
         grantCurio("marquee_bulb", "guts");
         renderCabinet();
         award(20 + len * 8, true, "Marquee");
@@ -3308,7 +3315,7 @@
         setAura("celebrate");
       } else {
         setTier("marqueeTier", "FIZZLED", "miss");
-        $("marqueeStatus").textContent = "Pattern broken — try again";
+        if (status) status.textContent = "Pattern broken — try again";
         award(0, false, "Marquee miss");
         showBanner(false, "FIZZLED", "Watch closer");
         setAura("badLuck");

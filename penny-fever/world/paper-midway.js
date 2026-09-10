@@ -1,6 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
 import {paperRail} from './paper-guest-entrance.js';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
 // Ticket service just inside the alley, clear of the foyer passage.

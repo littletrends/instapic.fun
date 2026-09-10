@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=acer-booth-games-1';
+import {games} from '../paper-games/catalogue.js?v=paper-alley-live-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready).map(game=>({

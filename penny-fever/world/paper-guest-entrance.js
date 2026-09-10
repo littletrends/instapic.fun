@@ -2,7 +2,7 @@ import * as THREE from './lib/three.module.min.js';
 import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=reliability-1';
 import {loadWallArt} from './walls/art.js';
 import {buildWall} from './walls/models.js';
-import {WALL_RADIAL} from './walls/catalogue.js';
+import {WALL_RADIAL} from './walls/catalogue.js?v=paper-alley-live-2';
 export const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;

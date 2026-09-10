@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {wallPlacements,WALL_RADIAL} from './catalogue.js';
+import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=paper-alley-live-2';
 import {loadWallArt,disposeWallArt} from './art.js';
 import {buildWall,disposeWall} from './models.js';
 

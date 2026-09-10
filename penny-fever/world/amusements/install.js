@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js';
+import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js?v=paper-alley-live-2';
 import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js';
 
 const HOST_HEIGHT=1.7;

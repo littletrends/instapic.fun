@@ -1,4 +1,4 @@
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_WELCOMING_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
 

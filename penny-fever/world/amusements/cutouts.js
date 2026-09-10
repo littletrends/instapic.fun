@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {AMUSEMENT_ART,PAPERCUT_VIEWS,PAPERCUT_SHEET,PAPERCUT_FRAMES,papercutRideSrc,papercutHostSrc} from './catalogue.js';
+import {AMUSEMENT_ART,PAPERCUT_VIEWS,PAPERCUT_SHEET,PAPERCUT_FRAMES,papercutRideSrc,papercutHostSrc} from './catalogue.js?v=paper-alley-live-2';
 
 const loader=new THREE.TextureLoader();
 let busy=0;const waiting=[];

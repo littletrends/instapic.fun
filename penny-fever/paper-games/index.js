@@ -5,7 +5,7 @@ for(const [i,g] of games.entries()){
  const a=document.createElement(g.ready?'a':'article');a.className='game-card'+(g.ready?'':' queued');
  if(g.ready)a.href=g.direct||'play.html?stall='+encodeURIComponent(g.id);
  const img=document.createElement('img');img.loading='lazy';img.decoding='async';img.alt='';
- img.src=g.direct?(g.id==='water-gun'?'../experiments/brasswater-harbour/assets/harbour-v1.png':'../experiments/celestes-starlight/assets/observatory-v1.png'):g.asset;
+ img.src=g.asset;
  if(g.ready)a.append(img);
  const body=document.createElement('div'),small=document.createElement('small'),h=document.createElement('h2'),p=document.createElement('p'),status=document.createElement('span');
  small.textContent=String(i+1).padStart(2,'0')+' · '+g.host;h.textContent=g.title;p.textContent=g.blurb;status.textContent=g.ready?'Step inside →':'On the workbench';

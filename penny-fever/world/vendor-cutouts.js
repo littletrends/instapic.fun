@@ -1,5 +1,5 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js';
 
