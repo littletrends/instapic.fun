@@ -1669,11 +1669,12 @@ function followPose() {
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
     const side = nearest.side || Math.sign(nearest.stallX || 1);
-    const stallTx = paperRail ? 0 : player.position.x - side * 1.15;
-    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.35 : 1.72) : 1.68;
-    const stallTz = paperRail ? nearest.stallZ + 0.15 : player.position.z + 0.08;
-    const stallLx = nearest.stallX;
-    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.8 : nearest.kind === "aura" ? 1.55 : 1.7) : 1.32;
+    const lookBack = nearest.kind === "ride" ? 8.4 : nearest.kind === "aura" ? 4.2 : 5.2;
+    const stallTx = paperRail ? -side * 0.12 : player.position.x - side * 1.15;
+    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.85 : 2.05) : 1.68;
+    const stallTz = paperRail ? nearest.stallZ - lookBack : player.position.z + 0.08;
+    const stallLx = paperRail ? nearest.stallX * 0.72 : nearest.stallX;
+    const stallLy = paperRail ? (nearest.kind === "ride" ? 3.1 : nearest.kind === "aura" ? 1.55 : 1.85) : 1.32;
     const stallLz = nearest.stallZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;
