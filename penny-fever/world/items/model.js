@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const rows = [
-    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Your spendable demo pennies.',.07],
+    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Your spendable pennies. Buy more from Aura at the ticket booth.',.07],
     ['admission-ticket','Admission ticket','Essentials','ticket',null,'Aura’s ticket booth','Take a ticket from Aura. Its punched heart remembers your entry.',.025],
     ['showman-pass','Showman pass','Essentials','pass',null,'Backstage · Bea','The demo Showman pass lasts until midnight in Darwin.',.06],
     ['ticket-stub','Ticket stub','Alley Ephemera','curio','ticket_stub','Mystic · Iris','Draw a fortune at the Mystic Tent.',.035],
@@ -117,7 +117,7 @@
     ['seaside-day-book','Seaside-day book','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'paper-doll-books'],
     ['pocket-marquee','Pocket marquee','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'garden-prizes'],
     ['lantern-lighter','Lantern lighter','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'working-midway'],
-    ['midway-map','Midway map','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'tickets'],
+    ['midway-map','Sideshow alley map','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'tickets'],
     ['aura-keepsake','Aura keepsake','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'awards'],
     ['velvet-mask','Velvet mask','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'garden-prizes'],
     ['secret-door-key','Secret door key','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'future-curios'],
@@ -200,7 +200,7 @@
   function entries(state={},today=day()) {
     return definitions.map(d=>{
       let owned=false,quantity=0,status='Not collected yet',at=null;
-      if (d.kind==='currency') { owned=true; quantity=count(state.demoCoins); status=`${quantity} demo ${quantity===1?'penny':'pennies'}`; }
+      if (d.kind==='currency') { owned=true; quantity=count(state.demoCoins); status=`${quantity} ${quantity===1?'penny':'pennies'} in your pocket`; }
       if (d.kind==='ticket') { owned=!!(state.admitTicket||state.admitPassed||state.alleyLaps); quantity=owned?1:0; status=state.admitPassed?'Punched · this lap':state.admitTicket?'Ready to show Aura':state.alleyLaps?'Used · first walk':'Take a ticket at the door'; }
       if (d.kind==='pass') { owned=!!state.showmanPass && state.passDay===today; quantity=owned?1:0; status=owned?'Active until midnight Darwin':'No active Showman pass'; }
       if (d.kind==='curio') { owned=!!state.curios?.[d.key];quantity=owned?1:0;at=state.curios?.[d.key]?.at||null;status=owned?'Collected':status; }

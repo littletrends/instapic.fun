@@ -2,7 +2,7 @@ import {games} from '../paper-games/catalogue.js?v=paper-worlds-v2-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=paper-pennies-1'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -29,8 +29,16 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const retry=doc.createElement('button');retry.type='button';retry.textContent='Restart';retry.addEventListener('click',()=>load(true));
-  bar.append(back,title,list,retry);
+  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'Restart':'Play again · 1 penny';retry.addEventListener('click',()=>load(true));
+  const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
+  const paintWallet=()=>{
+    const n=Number(window.PennyFever?.getState?.()?.demoCoins)||0;
+    wallet.textContent=n+' '+(n===1?'penny':'pennies');
+    if(game.id==='coin-pusher'&&frame&&frame.getAttribute('src')==='about:blank'&&n>0) load();
+  };
+  paintWallet();
+  window.addEventListener('pennyfever:statechange',paintWallet);
+  bar.append(back,title,list,wallet,retry);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -45,6 +53,22 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
  function load(restart=false){
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
+  const PF=window.PennyFever;
+  const pusher=game.id==='coin-pusher';
+  if(!pusher){
+    if(!PF?.spendDemoCoin?.(game.id)){
+      status.hidden=false;
+      status.textContent='Need a penny. Buy a roll at Aura’s ticket booth.';
+      return;
+    }
+  }else if(!restart){
+    const n=Number(PF?.getState?.()?.demoCoins)||0;
+    if(n<1&&!PF?.getState?.()?.showmanPass){
+      status.hidden=false;
+      status.textContent='Need a penny in your pocket to feed Copper Falls. Buy a roll at Aura’s ticket booth.';
+      return;
+    }
+  }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};
   frame.onerror=()=>{clearTimeout(timer);status.hidden=false;status.textContent='This game could not open. Try Restart or return to the alley.';};

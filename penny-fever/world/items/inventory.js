@@ -163,9 +163,10 @@ function render() {
   if (!dialog.open) return;
   const all = entries();
   const filled = all.filter(i => i.owned).length;
+  const pennies = all.find(i => i.id === 'everyday-penny')?.quantity || 0;
   text('treasureCount', studio
     ? all.length + ' individual paper objects'
-    : filled + ' of ' + all.length + ' places in the book · ' + all[0].quantity + ' demo pennies');
+    : filled + ' of ' + all.length + ' places in the book · ' + pennies + (pennies === 1 ? ' penny' : ' pennies'));
 
   const index = $('pocketIndex');
   index.replaceChildren();

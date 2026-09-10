@@ -153,7 +153,7 @@
       fortuneDay: null,
       lastFortune: null,
       curios: {},
-      demoCoins: 99,
+      demoCoins: 3,
       admitTicket: false,
       admitPassed: false,
       alleyLaps: 0,
@@ -675,15 +675,18 @@
     return added;
   }
 
+  const PENNY_ROLL = 10;
+
+  function pennies() {
+    return Math.max(0, Math.floor(Number(state.demoCoins) || 0));
+  }
+
+  function buyPennyRoll() {
+    return addDemoCoins(PENNY_ROLL);
+  }
+
   function cashInCompletedPlays() {
-    const total = Object.values(state.plays || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
-    const previous = Number(state._cashedPlays) || 0;
-    const completed = Math.max(0, total - previous);
-    if (!completed) return 0;
-    const coins = Math.min(5, Math.max(1, Math.ceil(completed / 2)));
-    state._cashedPlays = total;
-    addDemoCoins(coins);
-    return coins;
+    return 0;
   }
 
   function setChalk() {
@@ -1887,7 +1890,7 @@
     if (loveRun && (loveRun.active || loveRun.dying)) return;
     const subject = ($("loveSubject") && $("loveSubject").value || "someone mysterious").trim();
     if (!spendDemoCoin("love")) {
-      $("loveStatus").textContent = "Out of demo coins · grant a pass";
+      $("loveStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
       return;
     }
     const practice = lovePracticeOn();
@@ -3126,7 +3129,7 @@
       return;
     }
     if (!spendDemoCoin("whisper")) {
-      $("whisperStatus").textContent = "Out of demo coins · grant a pass";
+      $("whisperStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
       refreshNightBoard();
       return;
     }
@@ -3268,7 +3271,7 @@
     // ride button with this leftover Simon-bulb flow.
     if (!startBtn || bulbs.length < 1) return;
     if (!spendDemoCoin("marquee")) {
-      if (status) status.textContent = "Out of demo coins · grant a pass";
+      if (status) status.textContent = "Need a penny · buy more at Aura’s ticket booth";
       refreshNightBoard();
       return;
     }
@@ -3632,7 +3635,7 @@
     const lookupOwned = vendorMods.some((v) => v.id === "lookup");
     if ($("lookupStart") && !lookupOwned) $("lookupStart").addEventListener("click", async () => {
       if (!spendDemoCoin("lookup")) {
-        $("lookupStatus").textContent = "Out of demo coins · grant a pass";
+        $("lookupStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
         return;
       }
       $("lookupVerdict").hidden = true;
@@ -3687,7 +3690,7 @@
     if (!snapOwnedByVendor) {
       $("snapStart").addEventListener("click", () => {
         if (!spendDemoCoin("snap")) {
-          $("snapStatus").textContent = "Out of demo coins · grant a pass";
+          $("snapStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
           return;
         }
         $("snapStart").disabled = true;
@@ -3804,9 +3807,12 @@
     },
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
+    pennies,
     spendDemoCoin,
     spendPennies,
     addDemoCoins,
+    buyPennyRoll,
+    pennyRoll: PENNY_ROLL,
     cashInCompletedPlays,
     award,
     showBanner,
