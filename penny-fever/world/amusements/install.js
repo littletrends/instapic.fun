@@ -1,7 +1,7 @@
 import * as THREE from '../lib/three.module.min.js';
 import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js?v=paper-alley-live-2';
 import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js?v=paper-alley-live-4';
-import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=paper-alley-live-4';
+import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=paper-alley-live-6';
 
 const NEAR=PAPERCUT_NEAR;
 const SIDE_NEAR=PAPERCUT_SIDES;

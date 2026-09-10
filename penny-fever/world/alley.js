@@ -3,16 +3,16 @@
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-4";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-4";
-import { phoneLane } from "./phone-lane.js?v=paper-alley-live-4";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-6";
+import { phoneLane } from "./phone-lane.js?v=paper-alley-live-6";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-4";
 import {BAY_X} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-4";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-4";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-4";
-import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-4";
+import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-6";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-6";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-6";
+import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-6";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
@@ -60,6 +60,7 @@ const STALL_X = paperRail ? BAY_X : 2.62;
 const STALL_STEP = paperRail ? 5.2 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
+const WALK_X = paperRail ? 2.48 : AISLE;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
 const COUNTER_X = 0.58;
@@ -1030,7 +1031,7 @@ function buildWorld() {
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x0b1018, 0.026);
-  camera = new THREE.PerspectiveCamera(58, first.w / first.h, 0.1, skyR + 80);
+  camera = new THREE.PerspectiveCamera(phoneLane ? 74 : 58, first.w / first.h, 0.1, skyR + 80);
   clock = new THREE.Clock();
 
   scene.add(new THREE.AmbientLight(0x4a382c, 0.95));
@@ -1196,6 +1197,7 @@ function onResize() {
   if (!renderer || !camera) return;
   const { w, h } = laneSize();
   camera.aspect = w / h;
+  camera.fov = phoneLane ? 74 : 58;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
 }
@@ -1250,18 +1252,20 @@ function hitsSolid(nx, nz) {
   return false;
 }
 
+function walkLimit(nz) {
+  if (paperRail && nz >= FOYER_IN - .4 && nz <= FOYER_OUT + .4) return 0.95;
+  if (nz < -8.4) return 4.8;
+  if (paperRail && nz > FOYER_OUT + .5) return WALK_X;
+  return AISLE;
+}
+
 function blocked(nx, nz) {
   if (!ticketPassed() && nz > GATE_Z) return true;
-  // Match the visible foyer walls: the guest's body must stay inside the opening.
-  if (paperRail && nz >= FOYER_IN - .4 && nz <= FOYER_OUT + .4 && Math.abs(nx) > .95) return true;
-  if (nz < -8.4) {
-    if (nz < -34) return true;
-    return Math.abs(nx) > 4.8;
-  }
+  if (nz < -34) return true;
   if (hitsSolid(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
   if (nz > hallLen + 1.2) return true;
-  return Math.abs(nx) > AISLE;
+  return Math.abs(nx) > walkLimit(nz);
 }
 
 function tryMove(dx, dz) {
@@ -1272,13 +1276,12 @@ function tryMove(dx, dz) {
     player.position.z += dz;
     return;
   }
-  /* Stay on the boards: slide down the alley, never around a stall. */
   if (!blocked(x, z + dz)) {
     player.position.z += dz;
     return;
   }
   if (!ticketPassed() && z + dz > GATE_Z) api.gateBump = true;
-  if (!blocked(x + dx, z) && Math.abs(x + dx) <= AISLE) player.position.x += dx;
+  if (!blocked(x + dx, z)) player.position.x += dx;
 }
 
 function updatePlayer(dt) {
@@ -1632,6 +1635,13 @@ function updateHudAnchor() {
   const prompt = el("pfWorldPrompt");
   if (!prompt || prompt.hidden) return;
   prompt.classList.add("is-anchored");
+  if (phoneLane) {
+    prompt.style.left = "50%";
+    prompt.style.top = "auto";
+    prompt.style.bottom = "10.5rem";
+    prompt.style.transform = "translate(-50%, 0)";
+    return;
+  }
   const atStall = nearest && nearest.atCounter && !prompt.classList.contains("is-ticket-handoff");
   const speechUp = speech && !speech.hidden;
   const p = atStall
@@ -1640,6 +1650,7 @@ function updateHudAnchor() {
   prompt.style.left = `${clamp(p.x, 48, w - 48)}px`;
   prompt.style.top = `${clamp(p.y, 140, h - 200)}px`;
   prompt.style.bottom = "auto";
+  prompt.style.transform = "translate(-50%, -100%)";
 }
 
 function followPose() {
@@ -1649,13 +1660,16 @@ function followPose() {
   const onHall = player.position.z > -1;
   // Stay low and close until the camera itself has cleared both entrance arches.
   const openAlley = Math.max(0, Math.min(1, (player.position.z - FOYER_OUT - 4) / 6));
-  const dist = paperRail ? 3.4 + openAlley * 3 : (onHall ? 4.9 : 5.6);
-  const height = paperRail ? 2.0 + openAlley * .45 : (onHall ? 2.18 : 2.05);
-  const lookY = paperRail ? 1.05 + openAlley * .3 : .95;
-  const lookAhead = paperRail ? 3.6 + openAlley * 3.4 : (onHall ? 6.4 : 3.6);
-  const railX = player.position.x * 0.2;
+  const onPier = paperRail && player.position.z < FOYER_IN - 0.8;
+  const inFoyer = paperRail && player.position.z >= FOYER_IN - 0.8 && player.position.z <= FOYER_OUT + 1;
+  const dist = paperRail ? ((onPier || phoneLane) ? 5.4 : 3.4) + openAlley * 2.6 : (onHall ? 4.9 : 5.6);
+  const height = paperRail ? ((onPier || phoneLane) ? 2.35 : 2.0) + openAlley * .35 : (onHall ? 2.18 : 2.05);
+  const lookY = paperRail ? (onPier ? 1.35 : 1.05) + openAlley * .3 : .95;
+  const lookAhead = paperRail ? ((onPier || phoneLane) ? 8.2 : 3.6) + openAlley * 2.4 : (onHall ? 6.4 : 3.6);
+  const followX = paperRail ? (phoneLane ? 0.78 : 0.62) : 0.2;
+  const railX = player.position.x * followX;
   const rawAlleyX = railX - Math.sin(camYaw) * dist;
-  const alleyTx = paperRail && openAlley < 1 ? Math.max(-.35, Math.min(.35, rawAlleyX)) : rawAlleyX;
+  const alleyTx = inFoyer ? Math.max(-.35, Math.min(.35, rawAlleyX)) : rawAlleyX;
   const alleyTy = player.position.y + height;
   const alleyTz = player.position.z - Math.cos(camYaw) * dist;
   const alleyLx = railX * 0.35;
@@ -1669,12 +1683,12 @@ function followPose() {
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
     const side = nearest.side || Math.sign(nearest.stallX || 1);
-    const lookBack = nearest.kind === "ride" ? 8.4 : nearest.kind === "aura" ? 4.2 : 5.2;
-    const stallTx = paperRail ? -side * 0.12 : player.position.x - side * 1.15;
-    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.85 : 2.05) : 1.68;
+    const lookBack = nearest.kind === "ride" ? (phoneLane ? 9.2 : 8.4) : nearest.kind === "aura" ? 4.6 : (phoneLane ? 6.4 : 5.4);
+    const stallTx = paperRail ? player.position.x * 0.45 - side * 0.2 : player.position.x - side * 1.15;
+    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.85 : 2.15) : 1.68;
     const stallTz = paperRail ? nearest.stallZ - lookBack : player.position.z + 0.08;
-    const stallLx = paperRail ? nearest.stallX * 0.72 : nearest.stallX;
-    const stallLy = paperRail ? (nearest.kind === "ride" ? 3.1 : nearest.kind === "aura" ? 1.55 : 1.85) : 1.32;
+    const stallLx = paperRail ? nearest.stallX * 0.62 : nearest.stallX;
+    const stallLy = paperRail ? (nearest.kind === "ride" ? 3.1 : nearest.kind === "aura" ? 1.55 : 1.9) : 1.32;
     const stallLz = nearest.stallZ;
     tx = alleyTx + (stallTx - alleyTx) * viewBlend;
     ty = alleyTy + (stallTy - alleyTy) * viewBlend;

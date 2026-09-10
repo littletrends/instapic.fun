@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=paper-alley-live-2';
-import {phoneLane} from '../phone-lane.js?v=paper-alley-live-4';
+import {phoneLane} from '../phone-lane.js?v=paper-alley-live-6';
 
 function clearParchment(data,w,h){
  const n=w*h,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
