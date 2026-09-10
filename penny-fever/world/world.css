@@ -328,19 +328,20 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 .pf-joy {
   position: absolute;
   left: 50%;
-  top: 68%;
-  bottom: auto;
-  width: 142px;
-  height: 142px;
+  top: auto;
+  bottom: 1.05rem;
+  width: 148px;
+  height: 148px;
   margin: 0;
-  transform: translate(-50%, 0);
+  transform: translateX(-50%);
+  z-index: 12;
   border-radius: 50%;
-  background: rgba(12, 6, 10, 0.28);
-  border: 1px solid rgba(212, 164, 90, 0.38);
+  background: rgba(12, 6, 10, 0.42);
+  border: 1px solid rgba(212, 164, 90, 0.45);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
   touch-action: none;
 }
-.pf-joy.is-anchored { bottom: auto; }
+.pf-joy.is-anchored { left: 50%; top: auto; bottom: 1.05rem; transform: translateX(-50%); }
 .pf-joy-knob {
   position: absolute;
   left: 50%;

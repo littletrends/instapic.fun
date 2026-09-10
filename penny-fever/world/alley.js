@@ -1680,15 +1680,11 @@ function updateHudAnchor() {
 
   const joy = el("pfJoy");
   if (joy) {
-    if (phoneLane) {
-      joy.classList.remove("is-anchored");
-      joy.style.left = "";
-      joy.style.top = "";
-    } else {
-      joy.classList.add("is-anchored");
-      joy.style.left = `${clamp(feet.x, 78, w - 78)}px`;
-      joy.style.top = `${clamp(feet.y + 12, 110, h - 78)}px`;
-    }
+    joy.classList.remove("is-anchored");
+    joy.style.left = "";
+    joy.style.top = "";
+    joy.style.bottom = "";
+    joy.style.transform = "";
   }
 
   const speech = el("pfWorldSpeech");
