@@ -1,7 +1,7 @@
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
-import { mountRestyle, poseRestyle } from "./restyle.js?v=current-rail-1";
+import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=approach-face-1";
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=foyer-walls-2";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";

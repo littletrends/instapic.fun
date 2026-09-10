@@ -19,7 +19,14 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
   const back=doc.createElement('button');back.type='button';back.textContent='← Back to the alley';
-  back.addEventListener('click',()=>{nav.hash='alley';});
+  back.addEventListener('click',()=>{
+    const live=new URL(nav.href);
+    live.searchParams.set('style','paper');
+    live.searchParams.set('rail','paper');
+    live.searchParams.set('v','paper-alley-live-1');
+    live.hash='alley';
+    nav.href=live.href;
+  });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
   const retry=doc.createElement('button');retry.type='button';retry.textContent='Restart';retry.addEventListener('click',()=>load(true));

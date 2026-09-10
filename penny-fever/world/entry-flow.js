@@ -1,5 +1,14 @@
 // Runs before the main game modules so the old map never flashes during startup.
 (() => {
+  // Live draft is Restyled Original paper alley. Naked #alley drops ?rail=paper
+  // and boots the old 2D tent map — keep this draft pinned.
+  const live = new URL(location.href);
+  if (live.searchParams.get('style') !== 'paper' || live.searchParams.get('rail') !== 'paper') {
+    live.searchParams.set('style', 'paper');
+    live.searchParams.set('rail', 'paper');
+    live.searchParams.set('v', 'paper-alley-live-1');
+    history.replaceState(null, '', live);
+  }
   const root = document.documentElement;
   let timer;
   let startupError = '';

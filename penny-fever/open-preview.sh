@@ -4,7 +4,7 @@ preview_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 if [[ "$(hostname)" == motherpc ]] && [[ -x "$HOME/instapic_admin/open_penny_fever_preview.sh" ]]; then
   exec "$HOME/instapic_admin/open_penny_fever_preview.sh"
 fi
-preview_url='http://127.0.0.1:4191/index.html?style=paper&rail=paper&v=current-rail-1#door'
+preview_url='http://127.0.0.1:4191/index.html?style=paper&rail=paper&v=paper-alley-live-1#door'
 if ! curl --fail --silent --max-time 2 http://127.0.0.1:4191/index.html >/dev/null; then
   nohup python3 "$preview_root/ops/preview-server.py" 4191 > /tmp/penny-fever-restyled-server.log 2>&1 < /dev/null &
 fi

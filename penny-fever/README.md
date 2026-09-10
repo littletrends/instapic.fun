@@ -1,8 +1,14 @@
-# Penny Fever — live playable set
+# Penny Fever — Paper Alley Live
 
-This folder is the Restyled Original game that runs on [instapic.fun](https://instapic.fun/penny-fever/doorway.html).
+This folder is the current playable draft. Call it **Paper Alley Live** when you tell Mother PC to pull.
 
 Public door: `doorway.html`  
-Foyer: `index.html?style=paper&rail=paper#foyer`
+Play: `index.html?style=paper&rail=paper#door`
 
-What stays here is only what the doorway, foyer, alley, and 26 booth games load. Workshop dumps, unused vendor engines, design books, and old Grok art packs were removed. A restore archive is on MotherPC at `instapic_fun/_penny-fever-sync-backups/20260910-unused-cleanup.tgz`.
+It is the 3D paper alley, Aura’s booth, 26 booth games, and last night’s paper worlds (including Celeste, Marina, and the clockwork vault). The old 2D tent map is not in this folder’s walk anymore.
+
+Old leftover files were moved out to:
+
+`../Archive/2026-09-10-old-junk-from-restyled/`
+
+That archive is not part of the live draft. Mother should pull **Restyled Original** only.

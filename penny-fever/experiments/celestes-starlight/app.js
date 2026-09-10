@@ -194,7 +194,7 @@ function dispose() {
 function leaving(e) { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && !e.defaultPrevented && (e.button === 0 || e.button === undefined)) dispose(); }
 if (window.parent !== window) {
   $('exit').textContent = '← Back to the alley';
-  $('exit').setAttribute('href', '../../#alley');
+  $('exit').setAttribute('href', '../../index.html?style=paper&rail=paper&v=paper-alley-live-1#alley');
   $('exit').setAttribute('target', '_parent');
 }
 on($('exit'), 'click', (event) => {
