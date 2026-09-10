@@ -38,6 +38,15 @@ export const items = {
   'moon-lantern': {collection:'parlour-prizes', name:'Moon lantern'},
   'fortune-slip': {collection:'alley-curios', name:'Fortune slip'},
   'moon-brooch': {collection:'wearables', name:'Moon brooch'},
+  'autumn-leaf-lantern': {collection:'seasonal-treasures', name:'Autumn-leaf lantern'},
+  'juggling-bird': {collection:'game-prizes', name:'Juggling bird'},
+  'patchwork-bear': {collection:'game-prizes', name:'Patchwork bear'},
+  'prize-bag': {collection:'gift-wrapping', name:'Prize bag'},
+  'memory-camera': {collection:'parlour-prizes', name:'Memory camera'},
+  'shutter-click': {collection:'machine-curios', name:'Shutter click'},
+  'photo-accordion': {collection:'collector-books', name:'Photo accordion'},
+  'lightning-pin': {collection:'game-prizes', name:'Lightning pin'},
+  'pegboard-star': {collection:'wonder-prizes', name:'Pegboard star'},
 };
 
 export const spriteKey = id => {
@@ -73,5 +82,17 @@ export const kits = {
   fortune: {
     sprites: ['moon-lantern','fortune-slip','moon-penny','moon-brooch'],
     prizes: ['fortune-slip','moon-penny','moon-brooch'],
+  },
+  'ball-toss': {
+    sprites: ['autumn-leaf-lantern','moon-lantern'],
+    prizes: ['juggling-bird','patchwork-bear','prize-bag'],
+  },
+  snap: {
+    sprites: ['memory-camera','shutter-click'],
+    prizes: ['shutter-click','photo-accordion','memory-camera'],
+  },
+  pinball: {
+    sprites: ['lightning-pin','star-token'],
+    prizes: ['lightning-pin','star-token','pegboard-star'],
   },
 };
