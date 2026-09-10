@@ -2,7 +2,7 @@ import {VENDOR_DESIGNS} from './vendor-designs.js';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
-import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-23';
+import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-24';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';
 const NEAR=PAPERCUT_NEAR;
@@ -72,15 +72,18 @@ export function installVendorCutouts(barkers){
    }
   }
   if(dead||!active)return;
-  for(const figure of figures){
-   if(figure.userData.needSides&&Math.abs(figure.position.z-currentZ)<SIDE_NEAR)fillSides(figure);
-  }
   const queued=figures.filter(f=>!f.userData.papercutStand&&!f.userData.loading)
    .sort((a,b)=>Math.abs(a.position.z-currentZ)-Math.abs(b.position.z-currentZ));
   while(inflight.length<PAPERCUT_INFLIGHT){
    const next=queued[0];
    if(!next||Math.abs(next.position.z-currentZ)>=NEAR)break;
    queued.shift();start(next);
+  }
+  const waitingFront=queued[0]&&Math.abs(queued[0].position.z-currentZ)<NEAR;
+  if(!waitingFront){
+   for(const figure of figures){
+    if(figure.userData.needSides&&Math.abs(figure.position.z-currentZ)<SIDE_NEAR)fillSides(figure);
+   }
   }
  }
  function pause(){active=false;inflight.slice().forEach(job=>job.controller.abort());}

@@ -3,16 +3,16 @@
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-4";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-23";
-import { phoneLane } from "./phone-lane.js?v=paper-alley-live-23";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-24";
+import { phoneLane } from "./phone-lane.js?v=paper-alley-live-24";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-alley-live-10";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-23";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-23";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-23";
-import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-23";
+import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-24";
+import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-24";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-24";
+import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-24";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
