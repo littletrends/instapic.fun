@@ -1,12 +1,93 @@
 .treasure-launch{position:fixed;bottom:20px;left:20px;z-index:9000;border:2px solid #b49450;border-radius:24px;padding:12px 20px;background:#304537;color:#fff0cd;font:700 16px Georgia,serif;cursor:pointer;box-shadow:0 4px 18px #0006}
 #discoveryDoor .door-pocket{display:block;width:100%;max-width:22rem;margin:1.25rem auto 0;box-sizing:border-box}
-.is-in-world .treasure-launch,.is-in-world .door-pocket{display:none}.has-treasure-open{overflow:hidden}
-.treasure-book{width:min(1120px,96vw);max-width:none;height:min(820px,94dvh);max-height:94dvh;padding:0;border:3px solid #b28b49;border-radius:18px;background:#f4e9d3;color:#463529;box-shadow:0 20px 90px #0009;font:17px/1.45 Georgia,serif;overflow:auto}
-.treasure-book::backdrop{background:#142019cc}.treasure-book [hidden]{display:none!important}
-.treasure-book button,.treasure-book input{font:inherit}.treasure-book button{border:1px solid #ad8b53;background:#fff8e9;color:#463529;border-radius:8px;padding:9px 13px;cursor:pointer;min-height:42px}.treasure-book button:hover{background:#e5d7b9}.treasure-book :focus-visible{outline:3px solid #7b345a;outline-offset:3px}
-.treasure-header{display:flex;justify-content:space-between;align-items:start;gap:20px;background:#304537;color:#fff0cd;padding:22px 26px;border-bottom:3px double #c4a064}.treasure-header h1{font-size:34px;margin:0}.treasure-header p{margin:3px 0}.treasure-eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase}.treasure-save{background:#ffe6b8;padding:12px 24px;margin:0}
-.treasure-layout{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:560px}.treasure-shelves{padding:18px;border-right:1px solid #c4ac81}.treasure-shelves>label{display:block;margin-bottom:5px}.treasure-shelves input[type=search]{width:100%;padding:9px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#463529}.treasure-owned{font-size:14px;margin:12px 0}
-#treasureItems{max-height:470px;overflow-y:auto;padding:4px;display:grid;gap:8px}.treasure-slot{display:flex;align-items:center;text-align:left;gap:8px;width:100%}.treasure-slot[aria-pressed=true]{border:2px solid #38583b;background:#e1dfbd}.treasure-slot canvas,.treasure-uncollected{width:64px;height:64px;flex:0 0 64px;object-fit:contain}.treasure-uncollected{display:grid;place-items:center;font-size:38px;color:#b6a180}.treasure-slot strong,.treasure-slot small{display:block}.treasure-slot strong{font-size:15px}.treasure-slot small{font-size:12px;margin-top:4px;color:#77634d}
-.treasure-inspection{padding:22px 26px;text-align:center;min-width:0}.treasure-inspection h2{font-size:28px;margin:4px 0}.treasure-inspection>p{margin:7px 0}.treasure-stage{height:330px;width:100%;border-radius:16px;background:radial-gradient(ellipse,#fff9ed 25%,#e5d7b9 85%);touch-action:none;cursor:grab;overflow:hidden}.treasure-stage:active{cursor:grabbing}.treasure-stage>canvas{display:block;max-width:100%;height:100%;margin:auto;object-fit:contain}.treasure-controls{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:14px 0}.treasure-controls button{font-size:14px}#treasureHow,#treasureHint,#treasureDetail{font-size:14px}#treasureDetail{color:#77634d}#treasureLoading{min-height:24px;font-size:14px}
-@media(max-width:700px){.treasure-book{height:96dvh;max-height:96dvh}.treasure-header{padding:14px}.treasure-header h1{font-size:26px}.treasure-layout{grid-template-columns:1fr}.treasure-shelves{border-right:0;border-bottom:1px solid #c4ac81;padding:12px}.treasure-owned{display:inline-block!important;margin:6px 0}#treasureItems{max-height:150px;grid-template-columns:repeat(2,minmax(0,1fr))}.treasure-slot{padding:5px!important}.treasure-slot canvas,.treasure-uncollected{width:40px;height:40px;flex-basis:40px}.treasure-slot strong{font-size:13px}.treasure-slot small{font-size:11px}.treasure-inspection{padding:14px}.treasure-stage{height:280px}}
-.treasure-notice{position:fixed;right:18px;bottom:80px;z-index:9500;max-width:min(380px,90vw);padding:12px 18px;border:1px solid #c4a064;border-radius:12px;background:#304537;color:#fff0cd;box-shadow:0 4px 20px #0005;font:15px/1.4 Georgia,serif;pointer-events:none}.treasure-notice[hidden]{display:none}
+.is-in-world .treasure-launch,.is-in-world .door-pocket{display:none}
+.has-treasure-open{overflow:hidden}
+.treasure-book{width:min(1180px,96vw);max-width:none;height:min(860px,94dvh);max-height:94dvh;padding:0;border:0;border-radius:18px;background:transparent;color:#3d2c1f;box-shadow:none;font:17px/1.45 Georgia,serif;overflow:visible}
+.treasure-book::backdrop{background:#120c0ad4}
+.treasure-book[hidden],.treasure-book [hidden]{display:none!important}
+.treasure-book button,.treasure-book input,.treasure-book select{font:inherit}
+.treasure-book button{border:1px solid #ad8b53;background:#fff8e9;color:#3d2c1f;border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px}
+.treasure-book button:hover{background:#e9d9b6}
+.treasure-book :focus-visible{outline:3px solid #7b345a;outline-offset:3px}
+
+.pocket-shell{position:relative;display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg,#2a1c16,#1a120f 40%,#241810);border:3px solid #c4a064;border-radius:18px;box-shadow:0 22px 80px #000a,inset 0 0 0 1px #7a523288;overflow:hidden}
+.pocket-header{position:relative;z-index:6;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:16px 20px 12px;color:#fff0cd}
+.pocket-header h1{font-size:clamp(26px,4vw,36px);margin:0;letter-spacing:.02em}
+.pocket-header p{margin:2px 0}
+.pocket-eyebrow{font:700 11px/1.6 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#e2c48a}
+.pocket-close{background:#3a2a22;color:#fff0cd;border-color:#c4a064}
+.pocket-save{margin:0;padding:8px 20px;background:#ffe6b8;color:#5a3a28}
+
+.pocket-menu{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 16px 12px}
+.pocket-menu input[type=search]{flex:1 1 180px;min-width:140px;padding:8px 12px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#3d2c1f}
+.pocket-filters{display:flex;gap:4px}
+.pocket-filters button{min-height:36px;padding:6px 12px;border-radius:999px;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.pocket-filters button[aria-pressed=true]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
+
+.pocket-body{flex:1;min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr);background:#c4a064}
+.pocket-index{background:linear-gradient(180deg,#3a2a22,#2a1c16);color:#f3e2c4;padding:10px 8px 16px;overflow:auto;border-right:3px solid #8a6238}
+.pocket-index h2{font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;margin:6px 10px 10px;color:#e2c48a}
+.pocket-index button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:transparent;color:#f3e2c4;border:0;border-radius:8px;padding:8px 10px;min-height:0;font:16px/1.25 Georgia,serif}
+.pocket-index button:hover{background:#fff2c214}
+.pocket-index button[aria-current=true]{background:#fff2c228;color:#fff6e4;box-shadow:inset 3px 0 0 #e2c48a}
+.pocket-index small{font:700 11px/1 system-ui,sans-serif;color:#e2c48a;white-space:nowrap}
+.pocket-index .is-complete small{color:#b7e3b0}
+
+.pocket-spread{position:relative;display:grid;grid-template-columns:1fr 1fr;min-height:0;background:#e9d7b4;box-shadow:inset 0 0 80px #0002}
+.pocket-spread::before{content:"";position:absolute;inset:0 50% 0 calc(50% - 14px);width:28px;background:linear-gradient(90deg,#0000,#6a4a2833 45%,#6a4a2866,#6a4a2833 55%,#0000);pointer-events:none;z-index:2}
+.pocket-page{padding:22px 26px 18px;overflow:auto;min-width:0}
+.pocket-page.is-left{background:linear-gradient(90deg,#f4e6c8,#efe0c0 88%,#e4d0a8)}
+.pocket-page.is-right{background:linear-gradient(90deg,#e4d0a8,#efe0c0 12%,#f4e6c8)}
+.pocket-kicker{font:700 11px/1.6 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7a3040;margin:0}
+.pocket-page h2{font-size:clamp(22px,3vw,32px);margin:4px 0 8px}
+.pocket-blurb{color:#6a5340;margin:0 0 14px}
+.pocket-progress{height:8px;border-radius:99px;background:#d7c199;overflow:hidden;margin:0 0 8px}
+.pocket-progress>i{display:block;height:100%;background:linear-gradient(90deg,#7a3040,#c4a064);border-radius:99px}
+.pocket-count{font:700 13px/1.4 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a3040;margin:0 0 16px}
+
+.pocket-stamps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pocket-stamp{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 8px 8px;background:#fffaf0d8;border:1px solid #c9ae7b;border-radius:12px;box-shadow:0 2px 0 #e4d0a8;min-height:0;text-align:center}
+.pocket-stamp:hover{border-color:#7a3040;transform:translateY(-2px)}
+.pocket-stamp[aria-pressed=true]{border:2px solid #38583b;background:#e8efd4}
+.pocket-stamp img,.pocket-stamp canvas,.pocket-ghost{width:88px;height:88px;object-fit:contain;display:block}
+.pocket-stamp.is-missing img,.pocket-stamp.is-missing canvas{filter:grayscale(1) brightness(.42) contrast(1.1);opacity:.55}
+.pocket-stamp strong{font-size:13px;font-weight:400;color:#3d2c1f}
+.pocket-stamp.is-missing strong{color:#8a7460;font-style:italic}
+.pocket-stamp em{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.pocket-stamp.is-missing em{color:#9a8a74}
+.pocket-ghost{display:grid;place-items:center;font-size:42px;color:#c4b08a}
+
+.pocket-inspect{position:absolute;top:122px;left:12px;right:12px;bottom:12px;z-index:5;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:0;background:#1a120f;border:2px solid #c4a064;border-radius:16px;box-shadow:0 18px 50px #000a;overflow:hidden}
+.pocket-inspect[hidden]{display:none!important}
+.pocket-stage{min-width:0;min-height:320px;height:100%;background:radial-gradient(ellipse at 50% 42%,#3a2e24 0%,#1a120f 72%);touch-action:none;cursor:grab}
+.pocket-stage:active{cursor:grabbing}
+.pocket-stage canvas{display:block;width:100%;height:100%}
+.pocket-card{padding:22px 20px;background:#f4e6c8;color:#3d2c1f;overflow:auto}
+.pocket-card h2{font-size:28px;margin:4px 0}
+.pocket-card p{margin:8px 0}
+.pocket-how{font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a3040}
+.pocket-hint{color:#6a5340}
+.pocket-inspect-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+.treasure-notice{position:fixed;right:18px;bottom:80px;z-index:9500;max-width:min(380px,90vw);padding:12px 18px;border:1px solid #c4a064;border-radius:12px;background:#304537;color:#fff0cd;box-shadow:0 4px 20px #0005;font:15px/1.4 Georgia,serif;pointer-events:none}
+.treasure-notice[hidden]{display:none}
+
+@media(max-width:840px){
+  .pocket-body{grid-template-columns:1fr}
+  .pocket-index{max-height:132px;border-right:0;border-bottom:3px solid #8a6238;display:flex;flex-wrap:nowrap;gap:6px;align-items:stretch;padding:8px}
+  .pocket-index h2{display:none}
+  .pocket-index button{flex:0 0 auto;width:auto;white-space:nowrap;padding:8px 12px}
+  .pocket-spread{grid-template-columns:1fr}
+  .pocket-spread::before{display:none}
+  .pocket-page.is-left{padding:14px 16px 0}
+  .pocket-blurb{display:none}
+  .pocket-inspect{inset:8px;grid-template-columns:1fr}
+  .pocket-stage{min-height:46dvh}
+  .pocket-stamps{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .pocket-stamp img,.pocket-stamp canvas,.pocket-ghost{width:64px;height:64px}
+}
+@media(max-width:520px){
+  .pocket-stamps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pocket-header{padding:12px}
+  .pocket-menu{padding:0 10px 10px}
+}

@@ -132,16 +132,54 @@
     ['swing-spinner','Swing spinner','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'ride-keepsakes'],
   ];
   const hingedIds = ['admission-ticket','night-suitcase','moonlight-wardrobe'];
-  const definitions = Object.freeze(rows.map(([id,name,category,kind,key,source,hint,depth,collection]) => Object.freeze({
-    id,name,category,kind,key,source,hint,depth,
-    alpha: Boolean(collection),
-    asset: collection
-      ? `assets/restyle/game-sprites/${collection}/${id}/front.png`
-      : `assets/restyle/items/${id}.png`,
-    columns: collection ? 1 : 2,
-    rows: collection ? 1 : (hingedIds.includes(id) ? 2 : 1),
-    hinged: hingedIds.includes(id) && !collection,
-  })));
+  const albumMeta = {
+    essentials: ['On your person', 'Pennies, a ticket, a pass — what you carry onto the boards.'],
+    ephemera: ['Alley ephemera', 'Six little finds from the tents. Complete the set for a costume book.'],
+    guts: ['Machine guts', 'Brass, mercury and a ghost in the works.'],
+    pennies: ['Pennies & tokens', 'Pressed copper, moon metal and a little album to keep them.'],
+    tickets: ['Tickets & claims', 'Paper that gets you in, and paper that claims a prize.'],
+    wearables: ['Things to wear', 'Bows, pins, spectacles, a crown, a scarf.'],
+    awards: ['Awards & ribbons', 'What the midway pins on you when you have been brave.'],
+    'game-prizes': ['Won at the games', 'Birds, calves, boats, lightning and other trophies.'],
+    'garden-prizes': ['Garden prizes', 'Dishes, kettles, marquees and a looking-glass garden.'],
+    'parlour-prizes': ['Parlour prizes', 'Lockboxes, cameras, keys and a crystal cradle.'],
+    'wonder-prizes': ['Wonder prizes', 'Mallets, bells, lockets, peepshows and stars.'],
+    'toy-shelf': ['The toy shelf', 'A rabbit, a dragon, a theatre, and friends with buttons.'],
+    'sweet-treats': ['Sweet treats', 'Floss, fizz, cocoa, toffee and a picnic parcel.'],
+    'seasonal-treasures': ['Seasonal treasures', 'Fans, globes, seeds, crackers and a pumpkin friend.'],
+    'ride-keepsakes': ['Ride keepsakes', 'Carousels, wheels, balloons and a laughing doorway.'],
+    'collector-books': ['Books & albums', 'Journals, scrapbooks, stamp books and paper-doll wardrobes.'],
+    'gift-wrapping': ['Wrapping & parcels', 'Sleeves, tins, pouches and surprises still tied up.'],
+    'future-curios': ['Future curios', 'Compasses, invitations, bottles, clouds and secret keys.'],
+    'working-midway': ['Working midway', 'Punches, pads, tags and the lantern lighter’s kit.'],
+    rewards: ['Keepsake rewards', 'Gifts for arriving, and for finishing a collection.'],
+  };
+  const albumOrder = Object.keys(albumMeta);
+  function albumOf(category, collection) {
+    if (category === 'Essentials') return 'essentials';
+    if (category === 'Alley Ephemera' || collection === 'alley-curios') return 'ephemera';
+    if (category === 'Machine Guts' || collection === 'machine-curios') return 'guts';
+    if (category === 'Collection rewards') return 'rewards';
+    if (collection === 'doll-accessories') return 'toy-shelf';
+    if (collection === 'paper-doll-books') return 'collector-books';
+    if (collection && albumMeta[collection]) return collection;
+    return 'rewards';
+  }
+  const definitions = Object.freeze(rows.map(([id,name,category,kind,key,source,hint,depth,collection]) => {
+    const album = albumOf(category, collection);
+    return Object.freeze({
+      id,name,category,kind,key,source,hint,depth,collection,album,
+      alpha: Boolean(collection),
+      asset: collection
+        ? `assets/restyle/game-sprites/${collection}/${id}/front.png`
+        : `assets/restyle/items/${id}.png`,
+      columns: collection ? 1 : 2,
+      rows: collection ? 1 : (hingedIds.includes(id) ? 2 : 1),
+      hinged: hingedIds.includes(id) && !collection,
+      turnaround: Boolean(collection),
+    });
+  }));
+  const albums = Object.freeze(albumOrder.map(id => Object.freeze({id, title: albumMeta[id][0], blurb: albumMeta[id][1]})));
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const count = value => Number.isFinite(Number(value)) ? Math.max(0,Math.floor(Number(value))) : 0;
   const day = () => new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Darwin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -215,5 +253,5 @@
     state.paperInventory.items[d.id] = {at: now, source: result.stall || 'paper-world', chapter: result.chapter};
     return [d.id];
   }
-  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,reconcile,entries,resolve,day,recordResult,recordPaperPrize});
+  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,albums,reconcile,entries,resolve,day,recordResult,recordPaperPrize});
 })();
