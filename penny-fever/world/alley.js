@@ -60,7 +60,7 @@ const STALL_X = paperRail ? BAY_X : 2.62;
 const STALL_STEP = paperRail ? 5.2 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
-const WALK_X = paperRail ? 2.48 : AISLE;
+const WALK_X = AISLE;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
 const COUNTER_X = 0.58;
@@ -1333,14 +1333,13 @@ function updatePlayer(dt) {
   }
   if (player.position.z > -8) {
     api.facedAlley = true;
-    const atAuraBooth = paperRail && Math.hypot(player.position.x - COUNTER.x, player.position.z - COUNTER.z) < 3.4;
-    if (!strafing && !(nearest && nearest.atCounter) && !atAuraBooth) {
-      const pull = (0 - player.position.x) * Math.min(1, 3.4 * dt);
+    if (!strafing) {
+      const pull = (0 - player.position.x) * Math.min(1, 8.2 * dt);
       if (!blocked(player.position.x + pull, player.position.z)) player.position.x += pull;
     }
   }
   let face = iy < -0.22 ? Math.PI : 0;
-  if (nearest && nearest.atCounter) {
+  if (nearest && nearest.atCounter && Math.abs(iy) < 0.22) {
     face = Math.atan2(nearest.stallX - player.position.x, nearest.stallZ - player.position.z);
   }
   player.userData.heading = face;
@@ -1728,10 +1727,10 @@ function followPose() {
   const height = paperRail ? (onPier ? 2.15 : (phoneLane ? 2.1 : 2.0)) + openAlley * .3 : (onHall ? 2.18 : 2.05);
   const lookY = paperRail ? (onPier ? 1.12 : 1.05) + openAlley * .25 : .95;
   const lookAhead = paperRail ? (onPier ? 4.8 : (phoneLane ? 4.4 : 3.6)) + openAlley * 2.2 : (onHall ? 6.4 : 3.6);
-  const followX = paperRail ? (phoneLane ? 0.78 : 0.62) : 0.2;
+  const followX = 0.2;
   const railX = player.position.x * followX;
   const rawAlleyX = railX - Math.sin(camYaw) * dist;
-  const alleyTx = inFoyer ? Math.max(-.35, Math.min(.35, rawAlleyX)) : rawAlleyX;
+  const alleyTx = paperRail ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
   const alleyTy = player.position.y + height;
   const alleyTz = player.position.z - Math.cos(camYaw) * dist;
   const alleyLx = railX * 0.35;
