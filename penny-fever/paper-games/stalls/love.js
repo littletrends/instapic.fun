@@ -1,5 +1,6 @@
 import {clamp,done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, pace, swell} from '../chapter-kit.js';
 
 const hearts = ['pressed-heart', 'heart-biscuit', 'rose-penny'];
 const pivot = {x: 450, y: 290};
@@ -22,17 +23,17 @@ export default {
   title: 'Heartstrings',
   intro: 'Rosalie’s tiny theatre runs on impossible leaps of affection. Set a keepsake swinging from the arch, then let it go into the waiting rose lockbox.',
   instructions: 'The heart swings on a real pendulum. Tap the carpet or Release to let go; Space works too. Aim for the glowing lockbox. Arrow buttons gently pump the swing. Watch the short dotted flight forecast. Misses simply rewind the ribbon — no lives or payment lost. Each chapter is a different keepsake.',
-  levels: ['First flutter', 'A change of heart', 'Hearts on the breeze'],
+  levels: ['First flutter', 'A change of heart', 'Hearts on the breeze', 'The restless lockbox', 'Four little leaps', 'A gale of valentines'],
   actions: [{id: 'left', label: 'Lean left', hold: true}, {id: 'release', label: 'Release heart'}, {id: 'right', label: 'Lean right', hold: true}],
   create(level) {
-    const s = {level, t: 0, caught: 0, shots: 0, wait: 0, x: 0, y: 0, vx: 0, vy: 0, basket: {x: 640, y: 780}, note: 'Let the ribbon swing.'};
+    const s = {level, t: 0, caught: 0, shots: 0, wait: 0, x: 0, y: 0, vx: 0, vy: 0, basket: {x: 640, y: 780}, goal: level >= 4 ? 4 : 3, note: 'Let the ribbon swing.'};
     rewind(s); return s;
   },
   update(s, dt, input) {
     s.t += dt;
     const dir = s.caught % 2 ? -1 : 1;
-    s.basket.x = 450 + dir * (150 + s.level * 12) + Math.sin(s.t * .75) * s.level * 26;
-    s.basket.y = 780 - Math.sin(s.t * .5) * s.level * 16;
+    s.basket.x = 450 + dir * (150 + swell(s.level, 0, 12, 48)) + Math.sin(s.t * .75) * swell(s.level, 0, 26, 110);
+    s.basket.y = 780 - Math.sin(s.t * .5) * swell(s.level, 0, 16, 64);
     if (s.wait) { s.wait -= dt; if (s.wait <= 0) rewind(s); return; }
     if (s.attached) {
       const pump = (input.actions.has('right') || input.keys.has('ArrowRight') ? 1 : 0) - (input.actions.has('left') || input.keys.has('ArrowLeft') ? 1 : 0);
@@ -44,16 +45,16 @@ export default {
       s.y = pivot.y + Math.cos(s.angle) * length;
     } else {
       const oldY = s.y;
-      s.vx += Math.sin(s.t * .7) * s.level * 15 * dt;
+      s.vx += Math.sin(s.t * .7) * swell(s.level, 0, 15, 60) * dt;
       s.vy += 460 * dt;
       s.x += s.vx * dt; s.y += s.vy * dt;
       s.trail.push({x: s.x, y: s.y});
       if (s.trail.length > 25) s.trail.shift();
-      if (oldY < s.basket.y && s.y >= s.basket.y && s.vy > 0 && Math.abs(s.x - s.basket.x) < 58 - s.level * 4) {
+      if (oldY < s.basket.y && s.y >= s.basket.y && s.vy > 0 && Math.abs(s.x - s.basket.x) < pace(s.level, 58, 4, 38)) {
         s.caught++;
         s.note = 'Caught! The next nest is on the other side.';
-        if (s.caught === 3) {
-          done(s, 'Three little leaps of faith', 'Three keepsakes delivered in ' + s.shots + ' releases. Rosalie would call that a connection.');
+        if (s.caught === s.goal) {
+          done(s, 'Little leaps of faith', s.goal + ' keepsakes delivered in ' + s.shots + ' releases. Rosalie would call that a connection.');
           return;
         }
         s.wait = .8;
@@ -79,8 +80,8 @@ export default {
     d.item(spriteKey('rose-lockbox'), s.basket.x, s.basket.y + 8, {w: 78, fallback: () => {
       d.poly([[s.basket.x - 50, s.basket.y], [s.basket.x - 34, s.basket.y + 40], [s.basket.x + 34, s.basket.y + 40], [s.basket.x + 50, s.basket.y]], '#b77774', '#edc993', 3);
     }});
-    d.item(spriteKey(hearts[s.level]), s.x, s.y, {w: 52, fallback: () => d.heart(s.x, s.y, 22, '#c95c79')});
-    for (let i = 0; i < 3; i++) d.heart(410 + i * 40, 1088, 12, i < s.caught ? '#e9c181' : '#9b6a7988');
+    d.item(spriteKey(pick(hearts, s.level % hearts.length)), s.x, s.y, {w: 52, fallback: () => d.heart(s.x, s.y, 22, '#c95c79')});
+    for (let i = 0; i < s.goal; i++) d.heart(450 - (s.goal - 1) * 20 + i * 40, 1088, 12, i < s.caught ? '#e9c181' : '#9b6a7988');
   },
-  readout: s => s.caught + ' / 3 keepsakes delivered · ' + s.note,
+  readout: s => s.caught + ' / ' + s.goal + ' keepsakes delivered · ' + s.note,
 };

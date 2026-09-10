@@ -1,10 +1,31 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
 const colors = ['#e2a0b4', '#a6c9ba', '#e8c589'];
 const names = ['Rose', 'Mint', 'Honey'];
 const radii = [145, 185, 110];
 const sugars = ['fairy-floss', 'swirl-lolly', 'heart-biscuit'];
+const recipes = [
+  [0, 1, 2],
+  [1, 0, 2],
+  [2, 0, 1],
+  [0, 2, 1],
+  [1, 2, 0],
+  [2, 1, 0],
+];
+const clouds = ['a cloud', 'a little heart', 'a moon pillow', 'a tall swirl', 'a honey-rose coil', 'a tricolour pillow'];
+
+function puffXY(level, x, y) {
+  return pick([
+    [x, y],
+    [x, y - Math.abs(x) * .3],
+    [x * 1.2, y * .55],
+    [x * .7, y * 1.2],
+    [x * 1.15, y - Math.abs(x) * .22],
+    [x * 1.3, y * .48],
+  ], level);
+}
 
 function wind(s, delta, r, speed) {
   s.angle += delta; s.r = r;
@@ -21,14 +42,12 @@ function wind(s, delta, r, speed) {
   const count = Math.min(75, Math.floor(s.turns * 38));
   while (s.puffs.filter(p => p.layer === s.layer).length < count) {
     const i = s.puffs.length, a = i * 2.39996, rr = 15 + Math.sqrt((i % 75) / 75) * 115;
-    let x = Math.cos(a) * rr, y = Math.sin(a) * rr * .7;
-    if (s.level === 1) y -= Math.abs(x) * .3;
-    if (s.level === 2) { x *= 1.2; y *= .55; }
+    const [x, y] = puffXY(s.level, Math.cos(a) * rr, Math.sin(a) * rr * .7);
     s.puffs.push({x, y, r: 16 + (i % 4) * 3, layer: s.layer, color: colors[s.color]});
   }
   if (s.turns >= 2) {
     s.layer++; s.turns = 0; s.heat = Math.max(0, s.heat - .1);
-    if (s.layer === 3) done(s, 'A cloud worth keeping', 'Three carefully wound layers. Flossie is calling this one ' + ['a cloud', 'a little heart', 'a moon pillow'][s.level] + '.');
+    if (s.layer === 3) done(s, 'A cloud worth keeping', 'Three carefully wound layers. Flossie is calling this one ' + pick(clouds, s.level) + '.');
     else s.note = 'Next layer: ' + names[s.recipe[s.layer]] + '.';
   }
 }
@@ -37,7 +56,7 @@ export default {
   title: 'Cloud Atelier',
   intro: 'Flossie does not just spin sugar. She sculpts the weather. Wind three coloured layers into a little cloud you can almost feel, then keep it as fairy floss.',
   instructions: 'Hold and circle the stick around the bowl, following the glowing ring. Use the requested sugar colour. Keep a gentle steady pace; stop to cool when needed. For keyboard/buttons, hold Stir and use Up/Down or Inner/Outer to change radius. Each layer needs two smooth turns.',
-  levels: ['A rose cloud', 'A spun-sugar heart', 'A honey moon pillow'],
+  levels: ['A rose cloud', 'A spun-sugar heart', 'A honey moon pillow', 'A rose-and-honey swirl', 'A mint-and-honey coil', 'The tricolour pillow'],
   sprites: ['fairy-floss', 'swirl-lolly', 'pocket-cloud', 'heart-biscuit'],
   prizes: ['fairy-floss', 'pocket-cloud', 'cloud-jar'],
   actions: [
@@ -46,7 +65,7 @@ export default {
   ],
   create(level) {
     return {
-      level, t: 0, recipe: level === 0 ? [0, 1, 2] : level === 1 ? [1, 0, 2] : [2, 0, 1],
+      level, t: 0, recipe: pick(recipes, level),
       layer: 0, color: 0, turns: 0, r: 145, angle: 0, lastAngle: null, lastTime: 0, heat: 0, puffs: [],
       note: 'Choose the first sugar colour.',
     };

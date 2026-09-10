@@ -1,5 +1,6 @@
 import {clamp, segmentDistance, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pace, swell} from '../chapter-kit.js';
 
 function throwBall(s) {
   if (s.ball || s.dunk >= 0) return;
@@ -12,7 +13,7 @@ export default {
   title: 'Splashworks',
   intro: 'Duncan’s bravest crowned duck is on the seat today. Release the three brass latches and give it the most unnecessarily theatrical bath in the carnival.',
   instructions: 'Aim and release a bead at the glowing latch. Each hit releases the next one. The third opens the seat. Arrows aim, Space throws. Later chapters add moving latches and a swinging guard. No one gets hurt: the duck is a willing clockwork volunteer.',
-  levels: ['The volunteer’s first bath', 'Three restless latches', 'Mind the swinging guard'],
+  levels: ['The volunteer’s first bath', 'Three restless latches', 'Mind the swinging guard', 'A faster latch waltz', 'The long-swing bath', 'Duncan’s grand dunk'],
   sprites: ['crowned-duck', 'mercury-bead'],
   prizes: ['splash-ring', 'crowned-duck', 'dairy-calf'],
   actions: [{id: 'throw', label: 'Throw at the latch'}],
@@ -26,10 +27,11 @@ export default {
   update(s, dt, input) {
     s.t += dt;
     s.latches.forEach((a, i) => {
-      a.x = a.bx + Math.sin(s.t * (.6 + s.level * .12) + i) * s.level * 21;
-      a.y = a.by + Math.cos(s.t * .5 + i) * s.level * 11;
+      a.x = a.bx + Math.sin(s.t * (.6 + s.level * .12) + i) * swell(s.level, 0, 21, 90);
+      a.y = a.by + Math.cos(s.t * .5 + i) * swell(s.level, 0, 11, 48);
     });
-    s.guard.x = 450 + Math.sin(s.t * 1.1) * 155;
+    const extra = Math.max(0, s.level - 2);
+    s.guard.x = 450 + Math.sin(s.t * (1.1 + extra * .18)) * (155 + extra * 12);
     if (s.dunk >= 0) {
       s.dunk += dt;
       if (s.dunk > 2.7) done(s, 'A magnificently unnecessary splash', 'Three latches released in ' + s.throws + ' throws. The crowned duck would like another go.');
@@ -42,12 +44,12 @@ export default {
     if (s.ball) {
       const p = s.ball, old = {x: p.x, y: p.y};
       p.vy += 500 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
-      if (s.level === 2 && segmentDistance(s.guard, old, p) < 43) {
+      if (s.level >= 2 && segmentDistance(s.guard, old, p) < 43) {
         p.vx = (p.x < s.guard.x ? -1 : 1) * 190; p.vy = Math.abs(p.vy) * .4;
         s.note = 'The guard caught it. Wait for a clear lane.';
       }
       const target = s.latches[s.hit];
-      if (target && segmentDistance(target, old, p) < 37 - s.level * 3) {
+      if (target && segmentDistance(target, old, p) < pace(s.level, 37, 3, 22)) {
         s.hit++; s.ball = null; s.note = 'Latch released.';
         if (s.hit === 3) s.dunk = 0;
       } else if (p.y > 1110 || p.y < 320 || p.x < 150 || p.x > 750) s.ball = null;
@@ -84,7 +86,7 @@ export default {
       d.circle(l.x, l.y, 18, null, '#f2d8aa', 4);
       d.circle(l.x, l.y, 6, '#eee0b0');
     }
-    if (s.level === 2) { d.line({x: 450, y: 735}, s.guard, '#c0a16e', 3); d.ring(s.guard.x, s.guard.y, 32, '#bc7769', 13); }
+    if (s.level >= 2) { d.line({x: 450, y: 735}, s.guard, '#c0a16e', 3); d.ring(s.guard.x, s.guard.y, 32, '#bc7769', 13); }
     if (s.dunk > .65) {
       const t = s.dunk - .65;
       for (let i = 0; i < 18; i++) {

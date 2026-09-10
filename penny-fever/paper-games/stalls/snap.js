@@ -1,7 +1,8 @@
 import {clamp,dist,done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
-const kinds = ['rabbit', 'fox', 'bird'];
+const kinds = ['rabbit', 'fox', 'bird', 'duck'];
 function shutter(s) {
   if (!s.holding) return;
   s.holding = false; s.shots++; s.flash = .2;
@@ -11,9 +12,9 @@ function shutter(s) {
     const quality = Math.round(65 + s.focus * 20 + (1 - dist(target, s.camera) / 110) * 15);
     s.album.push({kind: target.kind, quality});
     s.note = 'A lovely ' + target.kind + ' portrait — ' + quality + '/100.';
-    if (s.album.length === 3) {
-      done(s, 'Three tiny lives, beautifully caught',
-        'Your little field album scores ' + Math.round(s.album.reduce((a, p) => a + p.quality, 0) / 3) + '/100. ' + s.shots + ' shutter releases.');
+    if (s.album.length === s.animals.length) {
+      done(s, 'Tiny lives, beautifully caught',
+        'Your little field album scores ' + Math.round(s.album.reduce((a, p) => a + p.quality, 0) / s.album.length) + '/100. ' + s.shots + ' shutter releases.');
     }
   } else {
     s.note = inside
@@ -27,23 +28,25 @@ export default {
   title: 'Paper Safari',
   intro: 'Felix has built a woodland that fits inside his camera. Its inhabitants never quite stand still. Your job is to notice the lovely little moments.',
   instructions: 'Move the frame with the pointer or arrow keys. Hold on the stage (or hold Focus) to steady the lens; release to take the photo. Keep the requested animal fully inside the frame until the focus ring is green. Space focuses while held and releases the shutter when lifted.',
-  levels: ['A quiet morning', 'The busy afternoon', 'Twilight visitors'],
+  levels: ['A quiet morning', 'The busy afternoon', 'Twilight visitors', 'The darting duck', 'Four portraits at dusk', 'A midnight safari'],
   sprites: ['memory-camera', 'shutter-click'],
   prizes: ['shutter-click', 'photo-accordion', 'memory-camera'],
   actions: [{id: 'focus', label: 'Hold focus · release shutter', hold: true}],
   create(level) {
+    const n = level >= 3 ? 4 : 3;
     return {
       level, t: 0, camera: {x: 450, y: 700},
-      animals: kinds.map((kind, i) => ({kind, x: 450, y: 500 + i * 170})),
+      animals: kinds.slice(0, n).map((kind, i) => ({kind, x: 450, y: 500 + i * 170})),
       focus: 0, holding: false, shots: 0, album: [], flash: 0, note: 'First portrait: the rabbit.',
     };
   },
   update(s, dt, input) {
     s.t += dt; s.flash = Math.max(0, s.flash - dt);
-    const rate = .28 + s.level * .1;
+    const rate = swell(s.level, .28, .1, .72);
+    const spread = s.animals.length > 3 ? 145 : 180;
     s.animals.forEach((a, i) => {
       a.x = 450 + Math.sin(s.t * rate + i * 2.2) * 210;
-      a.y = 490 + i * 180 + Math.sin(s.t * .6 + i) * 30;
+      a.y = 490 + i * spread + Math.sin(s.t * .6 + i) * 30;
     });
     const dx = (input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0);
     const dy = (input.keys.has('ArrowDown') ? 1 : 0) - (input.keys.has('ArrowUp') ? 1 : 0);
@@ -79,8 +82,9 @@ export default {
     d.arc(p.x, p.y, 31, -Math.PI / 2, -Math.PI / 2 + s.focus * Math.PI * 2, s.focus > .68 ? '#bff4c4' : '#f1dba3', 4);
     c.restore();
     d.item(spriteKey('memory-camera'), p.x + 118, p.y + 78, {w: 54, fallback: () => {}});
-    for (let i = 0; i < 3; i++) {
-      const x = 330 + i * 120;
+    const n = s.animals.length;
+    for (let i = 0; i < n; i++) {
+      const x = 450 - (n - 1) * 60 + i * 120;
       d.poly([[x - 48, 1010], [x + 48, 1010], [x + 48, 1120], [x - 48, 1120]], '#e4d5b3', '#bca573', 2);
       if (s.album[i]) {
         d.animal(x, 1060, s.album[i].kind, .7, s.t);
@@ -91,5 +95,5 @@ export default {
     }
     if (s.flash > 0) { c.fillStyle = '#fffbe022'; c.fillRect(0, 0, 900, 1200); }
   },
-  readout: s => 'Find: ' + (kinds[s.album.length] || 'album complete') + ' · Focus ' + Math.round(s.focus * 100) + '% · ' + s.note,
+  readout: s => 'Find: ' + (s.animals[s.album.length]?.kind || 'album complete') + ' · Focus ' + Math.round(s.focus * 100) + '% · ' + s.note,
 };

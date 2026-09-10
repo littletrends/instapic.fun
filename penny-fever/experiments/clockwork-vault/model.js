@@ -24,6 +24,27 @@ export const LEVELS = [
     start: [5, 9, 2], links: [[1, -1, 0], [0, 1, -1], [-2, 0, 1]],
     rules: ['Crown drives Star backwards.', 'Star drives Moon backwards.', 'Moon drives Crown backwards two notches.'],
   },
+  {
+    title: 'Three hands at once', label: '04 · A crowded axle',
+    story: '“When one wheel moves, the others like to gossip.”',
+    instruction: 'Crown now turns every ring. Set Star and Moon with the quieter wheels, then bring Crown home last.',
+    start: [4, 10, 7], links: [[1, 1, 1], [0, 1, 1], [0, 0, 1]],
+    rules: ['Crown drives Star and Moon forwards.', 'Star drives Moon forwards.', 'Moon turns alone.'],
+  },
+  {
+    title: 'Crossed springs', label: '05 · Listen twice',
+    story: '“A spring remembers every neighbour it was wound against.”',
+    instruction: 'Crown turns all three, but Moon travels backwards. Star still leads Moon forward. Order matters more than force.',
+    start: [8, 3, 11], links: [[1, 1, -1], [0, 1, 1], [0, 0, 1]],
+    rules: ['Crown drives Star forwards and Moon backwards.', 'Star drives Moon forwards.', 'Moon turns alone.'],
+  },
+  {
+    title: 'The closed circuit', label: '06 · Finish the round',
+    story: '“The last lock is a little conversation between all three rings.”',
+    instruction: 'Moon has joined the circuit. It turns Crown backwards and Star forwards. Unpick the loop a notch at a time.',
+    start: [6, 2, 9], links: [[1, -1, 0], [0, 1, -1], [-1, 1, 1]],
+    rules: ['Crown drives Star backwards.', 'Star drives Moon backwards.', 'Moon drives Crown backwards and Star forwards.'],
+  },
 ];
 export const wrap = n => ((n % NOTCHES) + NOTCHES) % NOTCHES;
 export const signedAngle = n => Math.atan2(Math.sin(n), Math.cos(n));

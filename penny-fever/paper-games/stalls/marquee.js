@@ -1,9 +1,18 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, pace} from '../chapter-kit.js';
 
 const colours = ['#edc87e', '#a3d7cb', '#e4a4b7'];
 const seals = ['star-token', 'moon-penny', 'pressed-heart'];
 const xs = [270, 450, 630];
+const patterns = [
+  [0, 1, 2, 1, 0, 2, 0, 1, 2, 2, 1, 0],
+  [0, 2, 1, 0, 1, 2, 2, 0, 1, 2, 0, 2, 1, 0, 1, 2],
+  [0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 0, 2, 1, 2, 1, 0, 1, 2],
+  [0, 1, 2, 1, 0, 2, 2, 1, 0, 1, 2, 0, 2, 1, 0, 2, 1, 2, 0, 1, 2, 1, 0, 2],
+  [0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 2, 1, 2, 0, 1, 2, 1, 0, 2, 0, 1, 2, 0, 1, 2, 1, 0, 2],
+  [0, 1, 2, 0, 1, 2, 2, 1, 0, 2, 1, 0, 1, 2, 0, 2, 1, 2, 0, 1, 0, 2, 1, 2, 0, 1, 2, 1, 0, 2, 1, 0],
+];
 
 function strike(s, lane) {
   if (s.cool[lane] > 0) return;
@@ -27,19 +36,15 @@ export default {
   title: 'Light the Night',
   intro: 'Lumi has caught a handful of travelling marquee bulbs. Meet each one at its pocket lantern and conduct the whole boardwalk awake, one warm window at a time.',
   instructions: 'Watch the star, moon and heart travel down their strings. Tap the matching lantern as the light reaches its brass ring. Left, Down and Right arrows work too. Missed lights return for another try; this is a melody to learn, not a life counter.',
-  levels: ['A lantern waltz', 'Three little harmonies', 'The whole boardwalk'],
+  levels: ['A lantern waltz', 'Three little harmonies', 'The whole boardwalk', 'A midnight refrain', 'Lanterns in canon', 'The all-night encore'],
   sprites: ['marquee-bulb', 'pocket-marquee', 'star-token', 'moon-penny', 'pressed-heart'],
   prizes: ['marquee-bulb', 'pocket-marquee', 'lantern-lighter'],
   actions: [{id: '0', label: 'Star · ←'}, {id: '1', label: 'Moon · ↓'}, {id: '2', label: 'Heart · →'}],
   create(level) {
-    const patterns = [
-      [0, 1, 2, 1, 0, 2, 0, 1, 2, 2, 1, 0],
-      [0, 2, 1, 0, 1, 2, 2, 0, 1, 2, 0, 2, 1, 0, 1, 2],
-      [0, 1, 2, 0, 2, 1, 1, 0, 2, 1, 2, 0, 0, 2, 1, 2, 1, 0, 1, 2],
-    ];
+    const phrase = pick(patterns, level);
     return {
-      level, queue: patterns[level].map((lane, id) => ({lane, id})), total: patterns[level].length,
-      notes: [], travel: 3.3 - level * .2, window: .32, spawn: .7, t: 0, hits: 0, combo: 0, best: 0,
+      level, queue: phrase.map((lane, id) => ({lane, id})), total: phrase.length,
+      notes: [], travel: pace(level, 3.3, .2, 2.2), window: .32, spawn: .7, t: 0, hits: 0, combo: 0, best: 0,
       flash: [0, 0, 0], cool: [0, 0, 0], flares: [], note: 'Follow the lights, not a countdown.',
     };
   },
@@ -47,7 +52,7 @@ export default {
     s.t += dt; s.spawn -= dt;
     for (let i = 0; i < 3; i++) { s.flash[i] = Math.max(0, s.flash[i] - dt); s.cool[i] = Math.max(0, s.cool[i] - dt); }
     if (s.spawn <= 0 && s.queue.length) {
-      const n = s.queue.shift(); s.notes.push({...n, age: 0}); s.spawn = [1.5, 1.18, .95][s.level];
+      const n = s.queue.shift(); s.notes.push({...n, age: 0}); s.spawn = pace(s.level, 1.5, .12, .7);
     }
     for (const n of [...s.notes]) {
       n.age += dt;
@@ -106,8 +111,9 @@ export default {
         },
       });
     }
+    const rows = Math.ceil(s.total / 2), rowH = Math.min(49, 600 / Math.max(1, rows));
     for (let i = 0; i < s.total; i++) {
-      const side = i % 2, x = side ? 720 : 180, y = 475 + Math.floor(i / 2) * 49;
+      const side = i % 2, x = side ? 720 : 180, y = 475 + Math.floor(i / 2) * rowH;
       d.line({x: x - 9, y}, {x: x + 9, y}, '#ad905c', 2);
       if (i < s.hits) d.glow(x, y, 25, '#f4d590');
       d.circle(x, y, 6, i < s.hits ? '#ffe6a4' : '#625b48', '#c2a46d', 1);

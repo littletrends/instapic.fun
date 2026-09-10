@@ -1,5 +1,13 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pace, swell} from '../chapter-kit.js';
+
+const keySpots = [{x: 310, y: 980}, {x: 600, y: 755}, {x: 305, y: 550}, {x: 640, y: 410}];
+const lightPosts = [
+  {x: 175, y: 765, base: 0},
+  {x: 725, y: 545, base: Math.PI},
+  {x: 450, y: 980, base: 1.15},
+];
 
 function safe(s, p) { return s.hides.some(h => dist(p, h) < 47); }
 function blocked(s, x, y) { return s.curtains.some(g => Math.abs(y - g.y) < 30 && (x < g.x - g.gap / 2 + 16 || x > g.x + g.gap / 2 - 16)); }
@@ -26,18 +34,21 @@ function curtain(d, x1, x2, y) {
 export default {
   title: 'Backstage Run',
   intro: 'Bea has left the last curtain unlocked… almost. Wind up a tiny traveller and slip through the theatre while its scenery changes around you.',
-  instructions: 'Tap a destination or hold the arrows to walk. Pass through the gaps in the moving curtains and collect all three secret door keys. In later chapters, stay out of the sweeping spotlights or rest in the green hiding circles. Each key saves a safe return point. Reach the top doorway with all three.',
-  levels: ['After the audience leaves', 'Someone left a light on', 'The midnight curtain call'],
+  instructions: 'Tap a destination or hold the arrows to walk. Pass through the gaps in the moving curtains and collect the secret door keys. In later chapters, stay out of the sweeping spotlights or rest in the green hiding circles. Each key saves a safe return point. Reach the top doorway with every key.',
+  levels: ['After the audience leaves', 'Someone left a light on', 'The midnight curtain call', 'A rehearsal in the dark', 'Four keys backstage', 'The last velvet call'],
   sprites: ['secret-door-key', 'velvet-mask'],
   prizes: ['showman-pass', 'velvet-mask', 'secret-door-key'],
   actions: [{id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true}, {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true}, {id: 'wait', label: 'Wait here'}],
   create(level) {
-    const keys = [{x: 310, y: 980}, {x: 600, y: 755}, {x: 305, y: 550}];
+    const nKeys = level >= 4 ? 4 : 3;
+    const keys = keySpots.slice(0, nKeys).map(p => ({...p, got: false}));
+    const hides = [...keys, {x: 670, y: 555}, {x: 240, y: 755}];
+    if (nKeys > 3) hides.push({x: 250, y: 420});
     return {
       level, t: 0, p: {x: 450, y: 1080}, target: null, checkpoint: {x: 450, y: 1080},
-      keys: keys.map(p => ({...p, got: false})), hides: [...keys, {x: 670, y: 555}, {x: 240, y: 755}],
-      curtains: [890, 680, 460].map((y, i) => ({y, x: 450, gap: 155 - level * 12, phase: i * 1.8})),
-      lights: Array.from({length: level}, (_, i) => ({x: i ? 725 : 175, y: i ? 545 : 765, a: 0, base: i ? Math.PI : 0})),
+      keys, hides,
+      curtains: [890, 680, 460].map((y, i) => ({y, x: 450, gap: pace(level, 155, 12, 90), phase: i * 1.8})),
+      lights: lightPosts.slice(0, swell(level, 0, 1, 3)).map(p => ({...p, a: 0})),
       seen: 0, shield: 0, rewinds: 0, steps: 0, note: 'Find the secret door keys. The green circles are safe resting places.',
     };
   },
@@ -77,8 +88,8 @@ export default {
     s.seen = clamp(s.seen + (inLight ? dt : dt * -2), 0, .48);
     if (s.seen >= .48) spotted(s);
     if (s.p.y < 375 && Math.abs(s.p.x - 450) < 73) {
-      if (s.keys.every(k => k.got)) done(s, 'Beyond the last velvet curtain', 'Three keys, one tiny traveller and a whole theatre explored. ' + s.rewinds + ' gentle returns to a safe place. Bea kept the final light on for you.');
-      else s.note = 'The final curtain needs all three keys.';
+      if (s.keys.every(k => k.got)) done(s, 'Beyond the last velvet curtain', s.keys.length + ' keys, one tiny traveller and a whole theatre explored. ' + s.rewinds + ' gentle returns to a safe place. Bea kept the final light on for you.');
+      else s.note = 'The final curtain needs every key.';
     }
   },
   pointer(s, type, p, input) {
@@ -113,7 +124,8 @@ export default {
       });
     } else d.text('✓', k.x, k.y + 4, 20, '#dae0b3');
     d.ellipse(450, 365, 64, 21, '#3e2d2733', '#bc995e', 3);
-    for (let i = 0; i < 3; i++) d.circle(422 + i * 28, 345, 7, s.keys[i].got ? '#e7c275' : '#5c4839', '#bc995e', 1);
+    const n = s.keys.length;
+    for (let i = 0; i < n; i++) d.circle(450 - (n - 1) * 14 + i * 28, 345, 7, s.keys[i].got ? '#e7c275' : '#5c4839', '#bc995e', 1);
     if (s.target) d.ellipse(s.target.x, s.target.y, 10, 6, null, '#f9e6bb', 2);
     const p = s.p;
     d.ellipse(p.x, p.y + 17, 22, 9, '#30252155');
@@ -130,5 +142,5 @@ export default {
     if (s.seen) d.arc(p.x, p.y, 30, -Math.PI / 2, -Math.PI / 2 + s.seen / .48 * Math.PI * 2, '#e9aa70', 5);
     if (s.shield) d.ring(p.x, p.y, 29, '#b5dab288', 2);
   },
-  readout: s => s.keys.filter(k => k.got).length + ' / 3 keys · ' + (safe(s, s.p) ? 'Hiding safely · ' : '') + s.note,
+  readout: s => s.keys.filter(k => k.got).length + ' / ' + s.keys.length + ' keys · ' + (safe(s, s.p) ? 'Hiding safely · ' : '') + s.note,
 };

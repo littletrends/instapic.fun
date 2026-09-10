@@ -1,7 +1,15 @@
 import {clamp,done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
-const puzzles = [['AABB', 'ACCB', 'ACDB', 'DDDD'], ['AAABB', 'ACCBB', 'ADCEE', 'DDDEE'], ['AABBB', 'AACBD', 'ECCDD', 'EECFD', 'EEFFF']];
+const puzzles = [
+  ['AABB', 'ACCB', 'ACDB', 'DDDD'],
+  ['AAABB', 'ACCBB', 'ADCEE', 'DDDEE'],
+  ['AABBB', 'AACBD', 'ECCDD', 'EECFD', 'EEFFF'],
+  ['AAAAB', 'CDDDB', 'CEFFB', 'CEFFB', 'CEEEE'],
+  ['AAAAAB', 'CCCDDB', 'CEFDDB', 'CEFFFB', 'CEEEEB'],
+  ['AAAAAF', 'BBBBAF', 'CCBBDF', 'CCDDDF', 'CEEDDF', 'CEEEEF'],
+];
 const treasures = [
   {id: 'ticket-satchel', name: 'Ticket satchel'},
   {id: 'penny-purse', name: 'Penny purse'},
@@ -10,6 +18,7 @@ const treasures = [
   {id: 'whisper-charm', name: 'Whisper charm'},
   {id: 'pocket-observatory', name: 'Pocket observatory'},
 ];
+function loot(id) { return treasures[id % treasures.length]; }
 function normal(cells) {
   const mx = Math.min(...cells.map(c => c[0])), my = Math.min(...cells.map(c => c[1]));
   return cells.map(([x, y]) => [x - mx, y - my]);
@@ -21,7 +30,7 @@ function valid(s, p, x, y) {
     return a >= 0 && b >= 0 && a < s.w && b < s.h && !s.pieces.some(q => q !== p && q.place && q.cells.some(([qx, qy]) => q.place.x + qx === a && q.place.y + qy === b));
   });
 }
-function choose(s, p) { s.active = p.id; s.ghost = {x: 1, y: 1}; s.note = treasures[p.id].name + ': turn it, then find a snug place.'; }
+function choose(s, p) { s.active = p.id; s.ghost = {x: 1, y: 1}; s.note = loot(p.id).name + ': turn it, then find a snug place.'; }
 function place(s) {
   const p = s.pieces[s.active];
   if (!p || p.place) return;
@@ -49,7 +58,7 @@ function stamp(d, p, x, y, size, alpha = 1) {
   }
   c.restore();
   const spanX = Math.max(...p.cells.map(c => c[0])) + 1, spanY = Math.max(...p.cells.map(c => c[1])) + 1;
-  d.item(spriteKey(treasures[p.id].id), x + spanX * size / 2, y + spanY * size / 2, {
+  d.item(spriteKey(loot(p.id).id), x + spanX * size / 2, y + spanY * size / 2, {
     w: Math.min(spanX, spanY) * size * .92, alpha, shadow: false,
     fallback: () => d.circle(x + spanX * size / 2, y + spanY * size / 2, size * .28, '#c3a071', '#e8d6a2', 2),
   });
@@ -59,10 +68,10 @@ export default {
   title: 'The Impossible Suitcase',
   intro: 'Kit promised to pack lightly. Kit brought a telescope. Real treasures, a felt packing cloth, and a very particular midnight departure.',
   instructions: 'Drag treasures from the lower shelf into the packing cloth. Rotate turns the selected treasure; it must fit without overlaps. You can lift packed pieces back out. Keyboard: arrows move the preview, R rotates, Enter places. Next treasure selects another. Kit’s sketch shows where one piece could go.',
-  levels: ['A small overnight case', 'Just one more thing', 'The midnight expedition'],
+  levels: ['A small overnight case', 'Just one more thing', 'The midnight expedition', 'The overstuffed valise', 'Everything but the kettle', 'The hexomino hold-all'],
   actions: [{id: 'rotate', label: 'Rotate · R'}, {id: 'place', label: 'Tuck it in · Enter'}, {id: 'next', label: 'Next treasure'}, {id: 'lift', label: 'Unpack selected'}, {id: 'hint', label: 'Kit’s sketch'}],
   create(level) {
-    const grid = puzzles[level], w = grid[0].length, h = grid.length, size = 400 / w;
+    const grid = pick(puzzles, level), w = grid[0].length, h = grid.length, size = 400 / w;
     const letters = [...new Set(grid.join(''))].sort();
     const pieces = letters.map((letter, id) => {
       const cells = [];

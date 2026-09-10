@@ -1,5 +1,6 @@
 import {clamp, lerp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
 const pos = i => ({x: 270 + (i % 3) * 180, y: 800 + Math.floor(i / 3) * 118});
 
@@ -30,7 +31,7 @@ function scene(d, level, u, x, y, scale = 1) {
       w: 48, shadow: false,
       fallback: () => d.envelope(50, 40 - clamp((u - .45) * 150, 0, 100), 14, '#ebd5ad', '♥'),
     });
-  } else {
+  } else if (level === 2) {
     const fx = -140 + (u < .5 ? u * 560 : (1 - u) * 560);
     d.ring(140, 20, 25);
     d.item(spriteKey('dapper-fox'), fx, 40, {
@@ -44,6 +45,58 @@ function scene(d, level, u, x, y, scale = 1) {
         d.ring(keyX, keyY, 9, '#d2ad62', 3);
         d.line({x: keyX + 6, y: keyY + 7}, {x: keyX + 23, y: keyY + 22}, '#d8b265', 4);
       },
+    });
+  } else if (level === 3) {
+    const lx = Math.sin((u - .5) * Math.PI) * 130, ly = -18 + Math.abs(Math.cos((u - .5) * Math.PI)) * 36;
+    d.item(spriteKey('moon-lantern'), lx, ly, {
+      w: 74, shadow: false,
+      fallback: () => d.ring(lx, ly, 42, '#d4b279', 4),
+    });
+    const rx = -130 + u * 260, ry = 38 - Math.sin(u * Math.PI * 2) * 22;
+    d.item(spriteKey('moon-rabbit'), rx, ry, {
+      w: 70, shadow: false,
+      fallback: () => d.animal(rx, ry, 'rabbit', 1.15, u * 8),
+    });
+  } else if (level === 4) {
+    const handed = u < .62;
+    const fx = -150 + Math.min(u, .62) / .62 * 210;
+    d.item(spriteKey('dapper-fox'), fx, 38, {
+      w: 76, shadow: false,
+      fallback: () => d.animal(fx, 38, 'fox', 1.08, u * 7),
+    });
+    const bx = handed ? 150 : fx + 48 + (u - .62) * 380;
+    const by = handed ? 18 : 18 - (u - .62) * 140;
+    d.item(spriteKey('singing-bird'), bx, by, {
+      w: 64, shadow: false,
+      fallback: () => d.animal(bx, by, 'bird', 1.15, u * 10),
+    });
+    const ex = handed ? fx + 40 : bx + 18, ey = handed ? 24 : by + 10;
+    d.item(spriteKey('trade-envelope'), ex, ey, {
+      w: 40, shadow: false,
+      fallback: () => d.envelope(ex, ey, 12, '#ebd5ad', '♥'),
+    });
+  } else {
+    const rx = -155 + u * 155, fx = 155 - u * 155;
+    d.item(spriteKey('moon-rabbit'), rx, 36, {
+      w: 68, shadow: false,
+      fallback: () => d.animal(rx, 36, 'rabbit', 1.1, u * 6),
+    });
+    d.item(spriteKey('moon-lantern'), rx + 28, 4, {
+      w: 42, shadow: false,
+      fallback: () => d.ring(rx + 28, 4, 18, '#d4b279', 3),
+    });
+    d.item(spriteKey('dapper-fox'), fx, 38, {
+      w: 72, shadow: false,
+      fallback: () => d.animal(fx, 38, 'fox', 1.05, u * 7),
+    });
+    d.item(spriteKey('cabinet-key'), fx - 30, 18, {
+      w: 32, shadow: false,
+      fallback: () => d.ring(fx - 30, 18, 8, '#d2ad62', 3),
+    });
+    const bx = -140 + u * 280, by = -28 - Math.sin(u * Math.PI) * 36;
+    d.item(spriteKey('singing-bird'), bx, by, {
+      w: 58, shadow: false,
+      fallback: () => d.animal(bx, by, 'bird', 1.05, u * 11),
     });
   }
   c.restore();
@@ -61,12 +114,12 @@ export default {
   title: 'The Missing Frames',
   intro: 'Milo has dropped tomorrow’s moving picture. Put the scraps of film back in sequence and turn a jittery jumble into one lovely little story of catalogue treasures.',
   instructions: 'Tap one film frame, then another to swap them. Watch the large moving scene above; it follows your edited sequence. The story runs left-to-right, then down the rows. Arrows choose a frame, Space selects it, Enter runs the reel. A helpful splice places one frame if you get stuck.',
-  levels: ['The rabbit and the moon', 'The flying post', 'A fox and a borrowed key'],
+  levels: ['The rabbit and the moon', 'The flying post', 'A fox and a borrowed key', 'Lanterns after dark', 'The fox’s night post', 'A meeting of three'],
   sprites: ['moon-rabbit', 'singing-bird', 'dapper-fox', 'moon-lantern', 'trade-envelope', 'cabinet-key'],
   prizes: ['flicker-book', 'pocket-peepshow', 'memory-scrapbook'],
   actions: [{id: 'play', label: 'Run the reel'}, {id: 'choose', label: 'Select chosen frame'}, {id: 'hint', label: 'One helpful splice'}],
   create(level, rng) {
-    const n = level === 0 ? 6 : 9, order = Array.from({length: n}, (_, i) => i);
+    const n = pick([6, 9, 9, 6, 9, 9], level), order = Array.from({length: n}, (_, i) => i);
     for (let i = n - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];

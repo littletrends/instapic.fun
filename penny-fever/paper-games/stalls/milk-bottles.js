@@ -1,7 +1,16 @@
 import {clamp, segmentDistance, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick} from '../chapter-kit.js';
 
 const start = {x: 450, y: 1050};
+const layouts = [
+  [{x: 450, y: 810, n: 3}],
+  [{x: 315, y: 830, n: 3}, {x: 610, y: 670, n: 2}],
+  [{x: 310, y: 830, n: 3}, {x: 600, y: 780, n: 3}],
+  [{x: 280, y: 820, n: 2}, {x: 450, y: 680, n: 3}, {x: 630, y: 820, n: 2}],
+  [{x: 260, y: 850, n: 3}, {x: 450, y: 620, n: 2}, {x: 640, y: 850, n: 3}],
+  [{x: 330, y: 860, n: 4}, {x: 620, y: 700, n: 3}],
+];
 
 function topple(b, vx = 80) {
   if (b.fallen) return;
@@ -18,9 +27,7 @@ function toss(s) {
 }
 function build(level) {
   const bottles = [];
-  const towers = level === 0 ? [{x: 450, y: 810, n: 3}]
-    : level === 1 ? [{x: 315, y: 830, n: 3}, {x: 610, y: 670, n: 2}]
-    : [{x: 310, y: 830, n: 3}, {x: 600, y: 780, n: 3}];
+  const towers = pick(layouts, level).map(t => ({...t}));
   for (const tower of towers) {
     let below = [];
     for (let row = 0; row < tower.n; row++) {
@@ -45,7 +52,7 @@ export default {
   title: 'The Topsy Dairy',
   intro: 'Mabel insists these message bottles are perfectly sensible arrangements. Find the weak point and turn an impossible stack into a very satisfying little tumble.',
   instructions: 'Aim at the bottle tower and release to throw a mercury bead. Hit the supporting bottles to bring the upper ones down. Arrows aim and Space throws too. The dotted arc is your actual path. Each chapter has unlimited practice throws; try to clear it in fewer.',
-  levels: ['The six-bottle pyramid', 'The high shelf', 'Two troublesome towers'],
+  levels: ['The six-bottle pyramid', 'The high shelf', 'Two troublesome towers', 'Three little dairies', 'The tall and the tiny', 'The four-row pyramid'],
   sprites: ['message-bottle', 'mercury-bead'],
   prizes: ['dairy-calf', 'lucky-dish', 'alley-collector-cup'],
   actions: [{id: 'throw', label: 'Throw mercury bead'}],

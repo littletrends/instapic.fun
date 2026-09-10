@@ -1,5 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pace} from '../chapter-kit.js';
 
 function roll(s) {
   if (s.ball || s.rolls === 9) return;
@@ -16,7 +17,7 @@ export default {
   title: 'Moonbow Alley',
   intro: 'Skip’s little wooden ramp sends a moon penny up into the moonlight. Give it enough roll, but not so much that it sails past everything.',
   instructions: 'Pull back from the penny to set power and sideways aim, then release. Or use Left/Right for angle, Up/Down for power and Space to roll. Watch the ground shadow when the penny leaves the ramp. Nine free rolls per chapter; all scores are local.',
-  levels: ['The moonbow bowls', 'The narrow silver cups', 'Two high moons'],
+  levels: ['The moonbow bowls', 'The narrow silver cups', 'Two high moons', 'The shrinking silver', 'Tight little moons', 'A needle of moonlight'],
   sprites: ['moon-penny', 'star-token'],
   prizes: ['moon-penny', 'star-token', 'pegboard-star'],
   actions: [{id: 'less', label: 'Softer roll'}, {id: 'roll', label: 'Roll penny · Space'}, {id: 'more', label: 'Stronger roll'}],
@@ -24,9 +25,9 @@ export default {
     return {
       level, t: 0, angle: 0, power: 390, ball: null, rolls: 0, score: 0, drag: false, note: 'A medium roll is a good beginning.',
       holes: [
-        {x: 450, y: 700, r: 70, score: 10}, {x: 450, y: 565, r: 55 - level * 3, score: 30},
-        {x: 450, y: 445, r: 42 - level * 2, score: 50}, {x: 290, y: 470, r: 36 - level * 2, score: 100},
-        {x: 610, y: 470, r: 36 - level * 2, score: 100},
+        {x: 450, y: 700, r: 70, score: 10}, {x: 450, y: 565, r: pace(level, 55, 3, 28), score: 30},
+        {x: 450, y: 445, r: pace(level, 42, 2, 28), score: 50}, {x: 290, y: 470, r: pace(level, 36, 2, 28), score: 100},
+        {x: 610, y: 470, r: pace(level, 36, 2, 28), score: 100},
       ],
     };
   },

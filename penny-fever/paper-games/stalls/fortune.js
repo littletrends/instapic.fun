@@ -1,15 +1,22 @@
 import {dist,clamp,segmentDistance,done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pick, swell} from '../chapter-kit.js';
 
 const patterns = [
   [[280,980],[240,760],[360,540],[580,510],[650,740],[520,930],[280,980]],
   [[260,980],[240,650],[400,440],[620,560],[660,860],[440,980],[360,730],[260,980]],
   [[230,950],[230,630],[340,430],[570,460],[680,680],[630,960],[460,880],[460,620],[230,950]],
+  [[270,970],[240,740],[350,490],[560,470],[680,690],[540,960],[390,800],[530,640],[320,680],[270,970]],
+  [[250,980],[220,760],[280,520],[470,420],[680,520],[690,780],[560,980],[340,900],[240,700],[400,560],[560,700],[250,980]],
+  [[240,960],[430,990],[660,920],[690,700],[520,640],[280,720],[220,540],[390,430],[640,500],[670,660],[500,840],[300,860],[240,960]],
 ];
 const fortunes = [
   'A quiet hand can move a whole constellation.',
   'A detour is still a way forward.',
   'The most interesting path is the one you make.',
+  'What looks tangled from the ground is a map from the moon.',
+  'Follow the lanterns and you will not lose the night.',
+  'A long thread still belongs to a single needle.',
 ];
 
 function snag(s) {
@@ -36,7 +43,7 @@ function advance(s, dt) {
     s.saved = s.thread.length;
     s.note = s.next === s.nodes.length ? 'The last eyelet is yours.' : 'The next eyelet is glowing.';
     if (s.next === s.nodes.length) {
-      done(s, 'Your fortune is woven', fortunes[s.level] + ' ' + s.snags + ' little tangles, all patiently untied.');
+      done(s, 'Your fortune is woven', pick(fortunes, s.level) + ' ' + s.snags + ' little tangles, all patiently untied.');
     }
   }
 }
@@ -45,18 +52,18 @@ export default {
   title: 'Fate’s Loom',
   intro: 'Iris has mislaid a constellation in her moon garden. Guide a fortune slip through the brass eyelets while paper lanterns drift by.',
   instructions: 'Hold the glowing slip, then guide it through the numbered eyelets in order. It follows at a gentle speed: you cannot teleport past a lantern. Let go whenever you need a rest. Arrow keys also move. A snag returns only to your last eyelet.',
-  levels: ['A small constellation', 'The wandering star', 'The secret constellation'],
+  levels: ['A small constellation', 'The wandering star', 'The secret constellation', 'The figure-eight garden', 'Lanterns in a spiral', 'The midnight crossing'],
   sprites: ['moon-lantern', 'fortune-slip'],
   prizes: ['fortune-slip', 'moon-penny', 'moon-brooch'],
   actions: [{id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true}, {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true}],
   create(level) {
-    const nodes = patterns[level].map(([x, y]) => ({x, y}));
+    const nodes = pick(patterns, level).map(([x, y]) => ({x, y}));
     return {
       level, nodes,
       needle: {...nodes[0]}, target: {...nodes[0]}, next: 1,
       thread: [{...nodes[0]}], saved: 1, snags: 0, drag: false, t: 0, flash: 0,
       note: 'Pick up the fortune slip.',
-      moons: Array.from({length: level + 1}, (_, i) => ({x: 450, y: 650, r: 28 + i * 4, phase: i * 2.1})),
+      moons: Array.from({length: swell(level, 1, 1, 5)}, (_, i) => ({x: 450, y: 650, r: 28 + i * 4, phase: i * 2.1})),
     };
   },
   update(s, dt, input) {

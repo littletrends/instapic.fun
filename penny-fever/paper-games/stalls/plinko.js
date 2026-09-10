@@ -1,5 +1,6 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 const seals = ['pressed-heart', 'star-token', 'moon-penny'];
 const colors = ['#de8f99', '#e2c478', '#a6d1c9'];
@@ -25,7 +26,7 @@ export default {
   title: 'Peggy’s Marble Mill',
   intro: 'A sealed treasure, a forest of brass pegs, and two little gates with minds of their own. Help Peggy sort the day’s deliveries.',
   instructions: 'Choose a drop position at the top and release a marble. Hold Tilt left/right to influence its path; Flip gates reverses the two lower ramps. Match the marble’s seal to its cup. Arrows tilt, Space drops, Up flips the gates. Wrong deliveries are free to retry.',
-  levels: ['The first sorting run', 'Six special deliveries', 'A quicker little mill'],
+  levels: ['The first sorting run', 'Six special deliveries', 'A quicker little mill', 'The morning rush', 'Pegs in a hurry', 'Nine seals to sort'],
   sprites: ['pressed-heart', 'star-token', 'moon-penny', 'lucky-dish'],
   prizes: ['five-penny-stack', 'lucky-dish', 'mercury-bead'],
   actions: [{id: 'left', label: 'Tilt left', hold: true}, {id: 'drop', label: 'Drop marble'}, {id: 'gate', label: 'Flip gates'}, {id: 'right', label: 'Tilt right', hold: true}],
@@ -42,7 +43,7 @@ export default {
     const p = s.ball;
     for (let n = 0; n < 4; n++) {
       const h = dt / 4;
-      p.vx += tilt * 300 * h; p.vy += (250 + s.level * 35) * h; p.vx *= Math.exp(-.12 * h);
+      p.vx += tilt * 300 * h; p.vy += swell(s.level, 250, 40, 460) * h; p.vx *= Math.exp(-.12 * h);
       p.x += p.vx * h; p.y += p.vy * h;
       if (p.x < 222) { p.x = 222; p.vx = Math.abs(p.vx) * .7; }
       if (p.x > 678) { p.x = 678; p.vx = -Math.abs(p.vx) * .7; }

@@ -1,5 +1,6 @@
 import {clamp,done,TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 const rails = [[[220,850],[220,405]],[[220,405],[320,350]],[[320,350],[580,350]],[[580,350],[680,405]],[[680,405],[680,850]],[[220,850],[322,944]],[[680,850],[578,944]]].map(([a,b]) => ({a:{x:a[0],y:a[1]},b:{x:b[0],y:b[1]}}));
 function collide(p, a, b, r, omega = 0, pivot = a) {
@@ -22,16 +23,19 @@ export default {
   title: 'Thunder Garden',
   intro: 'Pip plants silver seeds and grows little thunderstorms. Keep a lightning pin rolling through the garden until every brass flower rings awake.',
   instructions: 'Launch a lightning pin, then use the two flippers. Hold the left/right side of the stage or the two buttons; Z and X work on a keyboard. Space launches. Wake all the flowers. A drained pin returns to the launch spring; your lit flowers stay lit.',
-  levels: ['First sparks', 'The six-flower storm', 'Lightning among the roses'],
+  levels: ['First sparks', 'The six-flower storm', 'Lightning among the roses', 'A garden packed with bells', 'The crowded thunderbed', 'Roses in a tempest'],
   sprites: ['lightning-pin', 'star-token'],
   prizes: ['lightning-pin', 'star-token', 'pegboard-star'],
   actions: [{id: 'left', label: 'Left flipper · Z', hold: true}, {id: 'launch', label: 'Launch · Space'}, {id: 'right', label: 'Right flipper · X', hold: true}],
   create(level) {
+    const n = swell(level, 4, 1, 8), rows = Math.ceil(n / 2);
+    const yTop = 450, yBot = rows <= 2 ? 605 : rows === 3 ? 750 : 780;
+    const dy = rows > 1 ? (yBot - yTop) / (rows - 1) : 0;
     return {
       level, t: 0, live: false, launches: 0, score: 0, left: false, right: false,
       flippers: [{x: 322, y: 944, a: .31, w: 0, sign: 1}, {x: 578, y: 944, a: Math.PI - .31, w: 0, sign: -1}],
       ball: {x: 647, y: 960, vx: 0, vy: 0}, trail: [],
-      flowers: Array.from({length: 4 + level}, (_, i) => ({x: 320 + (i % 2) * 260, y: 460 + Math.floor(i / 2) * 145, lit: false, cool: 0, phase: i})),
+      flowers: Array.from({length: n}, (_, i) => ({x: 320 + (i % 2) * 260, y: yTop + Math.floor(i / 2) * dy, lit: false, cool: 0, phase: i})),
     };
   },
   update(s, dt, input) {
@@ -46,7 +50,7 @@ export default {
       });
       if (!s.live) continue;
       const p = s.ball;
-      p.vy += (440 + s.level * 25) * h; p.vx *= Math.exp(-.025 * h); p.x += p.vx * h; p.y += p.vy * h;
+      p.vy += swell(s.level, 440, 25, 540) * h; p.vx *= Math.exp(-.025 * h); p.x += p.vx * h; p.y += p.vy * h;
       for (const r of rails) collide(p, r.a, r.b, 7);
       for (const f of s.flippers) collide(p, f, {x: f.x + Math.cos(f.a) * 123, y: f.y + Math.sin(f.a) * 123}, 12, f.w, f);
       for (const f of s.flowers) {

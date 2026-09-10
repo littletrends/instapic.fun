@@ -28,6 +28,27 @@ export const COURSES = Object.freeze([
     letters: [[300, 828], [644, 687], [351, 355]],
     islands: [[566, 837, 43], [371, 612, 38]], gate: true, ferry: true, eddy: true,
   },
+  {
+    name: 'Postcard cove', subtitle: 'A slower garden of little islands.',
+    hint: 'Weave between the three islands. Short bursts keep the letters dry.',
+    start: [360, 970], dock: [460, 285], par: 75,
+    letters: [[580, 860], [280, 600], [620, 380]],
+    islands: [[430, 780, 50], [540, 540, 44], [330, 420, 38]], gate: false, ferry: false, eddy: false,
+  },
+  {
+    name: 'The inner basin', subtitle: 'The boom still keeps time. The letters have moved.',
+    hint: 'Wait for the red boom to open, then slip through with a short burst.',
+    start: [520, 968], dock: [460, 285], par: 90,
+    letters: [[300, 840], [610, 600], [340, 350]],
+    islands: [[470, 800, 52], [300, 430, 36]], gate: true, ferry: false, eddy: false,
+  },
+  {
+    name: 'Picnic on the tide', subtitle: 'Ferry, boom, whirlpool — and a picnic to deliver.',
+    hint: 'Collect around the ferry, skip the eddy if it pulls, and wait for the boom.',
+    start: [430, 978], dock: [460, 285], par: 110,
+    letters: [[620, 850], [290, 640], [600, 360]],
+    islands: [[500, 860, 40], [360, 580, 42]], gate: true, ferry: true, eddy: true,
+  },
 ]);
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export function createGame(course = 0) {

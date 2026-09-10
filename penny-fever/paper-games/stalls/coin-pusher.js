@@ -16,6 +16,9 @@ const mix = [
   ['everyday','everyday','everyday','moon'],
   ['moon','moon','everyday','star'],
   ['everyday','moon','rose','star','crown'],
+  ['moon','rose','star','crown','everyday'],
+  ['star','crown','rose','moon','crown'],
+  ['crown','star','rose','moon','crown','star'],
 ];
 
 function inside(x, y) {
@@ -48,7 +51,7 @@ export default {
   title: 'Copper Falls',
   intro: 'A little mechanical tide of pressed pennies. Drop them at the lock, wait for the brass boom, and watch the canal carry a fortune to the docks.',
   instructions: 'Move the chute along the top lock, then tap or press Drop. Arrows choose the chute; Space drops. The boom sweeps the water. Special pennies are worth more when they reach the lower docks. After the last penny the canal has a few seconds to settle. Workshop scores never enter your wallet.',
-  levels: ['The copper tide', 'Moon mint', 'The crowded mint'],
+  levels: ['The copper tide', 'Moon mint', 'The crowded mint', 'A tide of crowns', 'The midnight mint', 'Pennies in a flood'],
   actions: [{id: 'drop', label: 'Drop practice penny'}],
   create(level, rng) {
     const field = [];

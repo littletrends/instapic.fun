@@ -30,6 +30,30 @@ export const CHAPTERS = [
     hints: ['Go left before reaching the moon.', 'Send the light up the left side.', 'Send it right, above the moon.', 'Send the light up, towards Glass V.', 'Send it left to the waiting sky bell.'],
     moons: [[455, 684, 66]],
   },
+  {
+    title: 'A lantern for moths', name: 'The paper moth',
+    line: 'Four glasses, a quiet moon, and a path that folds like a wing.',
+    route: [[450, 1025], [450, 820], [680, 820], [680, 500], [220, 500], [220, 330]],
+    stars: [[450, 920], [565, 820], [680, 660], [450, 500], [220, 410]], initial: [0, 2, 0, 6],
+    hints: ['Send the light right, towards Glass II.', 'Send the light up, towards Glass III.', 'Send it left, across the courtyard.', 'Send the light up, into the sky bell.'],
+    moons: [[450, 640, 58]],
+  },
+  {
+    title: 'A borrowed north', name: 'The watchful owl',
+    line: 'A diagonal first leap, then a careful climb along the eaves.',
+    route: [[450, 1025], [450, 870], [250, 670], [250, 450], [640, 450], [640, 320], [380, 320]],
+    stars: [[450, 945], [350, 770], [250, 560], [445, 450], [640, 385], [510, 320]], initial: [1, 6, 2, 0, 3],
+    hints: ['Aim up and left, towards Glass II.', 'Send the light up the left eave.', 'Send it right, under the owl’s perch.', 'Send the light up, towards Glass V.', 'Send it left to the waiting sky bell.'],
+    moons: [[470, 560, 52]],
+  },
+  {
+    title: 'Invitation at midnight', name: 'The folding swan',
+    line: 'Two moons keep the middle. Thread the light between them.',
+    route: [[450, 1025], [450, 900], [200, 900], [200, 620], [700, 620], [700, 340], [450, 340]],
+    stars: [[450, 960], [325, 900], [200, 760], [450, 620], [700, 480], [575, 340]], initial: [0, 4, 1, 3, 7],
+    hints: ['Go left before the first moon.', 'Send the light up the left margin.', 'Thread it right, between the two moons.', 'Send the light up, towards Glass V.', 'Send it left to the waiting sky bell.'],
+    moons: [[450, 760, 54], [450, 470, 50]],
+  },
 ].map(c => ({ ...c, mirrors: c.route.slice(1, -1), source: c.route[0], receiver: c.route.at(-1),
   solution: c.route.slice(1, -1).map((p, i) => {
     const before = c.route[i], after = c.route[i + 2];

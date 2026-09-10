@@ -1,5 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 function blocked(s, x, y) {
   return s.hedges.some(h => Math.abs(y - h.y) < 23 && !(x > h.gap - 32 && x < h.gap + 32));
@@ -15,12 +16,12 @@ export default {
   title: 'Looking-Glass Garden',
   intro: 'Opal has lit a moon lantern on each side of the glass. One follows your hand; the other follows your reflection. Take both through the folded hedges and collect the star fragments.',
   instructions: 'Guide either lantern with a held pointer. The other mirrors it: left becomes right across the glass. You must weave through the gaps, collect every paired star fragment and reach the two arches at the top. Arrow keys or the four buttons move the left lantern. No timer or lost lives.',
-  levels: ['Across the glass', 'The folded hedges', 'The long reflection'],
+  levels: ['Across the glass', 'The folded hedges', 'The long reflection', 'A maze of twins', 'Seven silver hedges', 'The endless looking-glass'],
   sprites: ['moon-lantern', 'star-fragment'],
   prizes: ['looking-glass-locket', 'mirror-shard', 'star-fragment'],
   actions: [{id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true}, {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true}],
   create(level) {
-    const n = 3 + level, hedges = Array.from({length: n}, (_, i) => ({y: 930 - i * (470 / (n - 1)), gap: (i % 2 ? -1 : 1) * 58}));
+    const n = swell(level, 3, 1, 7), hedges = Array.from({length: n}, (_, i) => ({y: 930 - i * (470 / (n - 1)), gap: (i % 2 ? -1 : 1) * 58}));
     return {
       level, p: {x: 0, y: 1020}, target: null, drag: false, t: 0, hedges,
       drops: hedges.map(h => ({x: h.gap, y: h.y - 37, taken: false})), trail: [],

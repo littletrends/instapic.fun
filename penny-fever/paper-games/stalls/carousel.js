@@ -1,11 +1,12 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {pace, swell} from '../chapter-kit.js';
 
 const rides = ['music-carousel', 'organ-music-box', 'pocket-wheel', 'swing-spinner', 'gyro-ghost', 'star-token'];
 
 function catchRide(s) {
   if (s.cool > 0 || s.result) return;
-  const n = s.rides.length, window = .22 - s.level * .03;
+  const n = s.rides.length, window = pace(s.level, .22, .025, .12);
   let best = 0, error = 99;
   for (let i = 0; i < n; i++) {
     const a = s.spin + i * TAU / n;
@@ -27,20 +28,20 @@ export default {
   title: 'Carousel Waltz',
   intro: 'Calliope’s pocket carousel never quite sits still. Stop it when the matching treasure is under the lantern, and the whole little band will keep time with you.',
   instructions: 'Watch the spinning treasures. When the one shown at the top sits under the lantern, tap Stop or press Space. Later chapters spin faster. Misses are free; the carousel simply turns again.',
-  levels: ['A gentle first waltz', 'The band picks up', 'Midnight horses'],
+  levels: ['A gentle first waltz', 'The band picks up', 'Midnight horses', 'A quicker little band', 'Six treasures spinning', 'The last lantern waltz'],
   sprites: rides,
   prizes: ['music-carousel', 'organ-music-box', 'pocket-wheel'],
   actions: [{id: 'stop', label: 'Stop · Space'}],
   create(level) {
-    const list = rides.slice(0, 4 + level);
+    const list = rides.slice(0, swell(level, 4, 1, 6));
     return {
-      level, t: 0, spin: 0, cool: 0, caught: 0, tries: 0, goal: 3 + level,
+      level, t: 0, spin: 0, cool: 0, caught: 0, tries: 0, goal: swell(level, 3, 1, 8),
       rides: list, target: list[0], note: 'Wait for the matching ride to reach the lantern.',
     };
   },
   update(s, dt) {
     s.t += dt; s.cool = Math.max(0, s.cool - dt);
-    s.spin += (0.7 + s.level * 0.28) * dt;
+    s.spin += swell(s.level, 0.7, 0.28, 1.72) * dt;
   },
   pointer(s, type) { if (type === 'down') catchRide(s); },
   action(s, id) { if (id === 'stop') catchRide(s); },

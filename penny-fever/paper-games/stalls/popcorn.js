@@ -1,5 +1,6 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
+import {swell} from '../chapter-kit.js';
 
 function pump(s) {
   if (s.pumpDelay > 0) return;
@@ -19,12 +20,12 @@ export default {
   title: 'Popcorn Symphony',
   intro: 'Poppy’s tiny kettle has a very bouncy personality. Keep the fire comfortable, catch the good popcorn in a carton and let the burnt bits pass.',
   instructions: 'Move the carton with the pointer or Left/Right. Pump the bellows when the flame gets low; Space also pumps. Too much heat makes burnt kernels, which spoil two good pieces if caught. Fill the carton with golden popcorn. No countdown — take the pace you like.',
-  levels: ['A small bag', 'The matinee crowd', 'The evening rush'],
+  levels: ['A small bag', 'The matinee crowd', 'The evening rush', 'The Saturday kettle', 'A midnight popping', 'The carnival feast'],
   sprites: ['popcorn-carton', 'tiny-kettle', 'sweet-heat'],
   prizes: ['popcorn-carton', 'tiny-kettle', 'sweet-heat'],
   actions: [{id: 'left', label: 'Basket left', hold: true}, {id: 'pump', label: 'Pump bellows · Space'}, {id: 'right', label: 'Basket right', hold: true}],
   create(level, rng) {
-    return {level, rng, t: 0, x: 450, target: 450, heat: .48, pumpDelay: 0, popDelay: .4, kernels: [], caught: 0, missed: 0, goal: 16 + level * 6, note: 'A gentle flame makes the best popcorn.'};
+    return {level, rng, t: 0, x: 450, target: 450, heat: .48, pumpDelay: 0, popDelay: .4, kernels: [], caught: 0, missed: 0, goal: swell(level, 16, 6, 46), note: 'A gentle flame makes the best popcorn.'};
   },
   update(s, dt, input) {
     s.t += dt;
