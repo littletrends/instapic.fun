@@ -19,12 +19,33 @@
     ['marquee-bulb','Marquee bulb','Machine Guts','curio','marquee_bulb','Boardwalk Lights · Lumi','Light the marquee, or find an olive-lamp fortune.',.14],
     ['night-suitcase','Night suitcase','Collection rewards','reward',null,'Aura’s welcome','Yours after handing Aura your admission ticket.',.24],
     ['moonlight-wardrobe','Moonlight wardrobe','Collection rewards','reward',null,'Alley collection','Collect all six Alley Ephemera to receive this costume keepsake book.',.12],
+    ['coin-sleeve','Coin sleeve','Workshop prizes','prize',null,'Copper Falls · Copper','Catch pennies at Copper Falls.',.08,'gift-wrapping'],
+    ['copper-cascade','Copper cascade','Workshop prizes','prize',null,'Copper Falls · Copper','Finish the moon mint at Copper Falls.',.12,'game-prizes'],
+    ['penny-tree','Penny tree','Workshop prizes','prize',null,'Copper Falls · Copper','Settle the crowded mint at Copper Falls.',.14,'game-prizes'],
+    ['charm-pouch','Charm pouch','Workshop prizes','prize',null,'Lost Letter Express · Willa','Cross the winds at Lost Letter Express.',.08,'gift-wrapping'],
+    ['secret-keeper','Secret keeper','Workshop prizes','prize',null,'Lost Letter Express · Willa','Finish the late-night express.',.12,'parlour-prizes'],
+    ['penny-purse','Penny purse','Workshop prizes','prize',null,'Impossible Suitcase · Kit','Pack just one more thing.',.1,'pennies'],
+    ['penny-collector-book','Penny collector book','Workshop prizes','prize',null,'Impossible Suitcase · Kit','Close the midnight expedition.',.12,'collector-books'],
+    ['rose-hair-bow','Rose hair bow','Workshop prizes','prize',null,'Heartstrings · Rosalie','A first flutter at Rosalie’s theatre.',.08,'wearables'],
+    ['rose-press','Rose press','Workshop prizes','prize',null,'Heartstrings · Rosalie','A change of heart.',.1,'parlour-prizes'],
+    ['rose-lockbox','Rose lockbox','Workshop prizes','prize',null,'Heartstrings · Rosalie','Three keepsakes in the breeze.',.12,'parlour-prizes'],
+    ['clockwork-key','Clockwork key','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','Reconnect the runaway beetle’s track.',.1,'machine-curios'],
+    ['display-dome','Display dome','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','A curious detour, safely under glass.',.12,'gift-wrapping'],
+    ['clockwork-butterfly','Clockwork butterfly','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','Bring the butterfly home.',.16,'future-curios'],
+    ['brave-try-ribbon','Brave-try ribbon','Workshop prizes','prize',null,'Duckling Parade · Dottie','Bring the first little wanderers home.',.07,'awards'],
+    ['lucky-dish','Lucky dish','Workshop prizes','prize',null,'Duckling Parade · Dottie','Lead them to the willow house.',.1,'garden-prizes'],
+    ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Finish the grand duck parade.',.12,'garden-prizes'],
   ];
-  const definitions = Object.freeze(rows.map(([id,name,category,kind,key,source,hint,depth]) => Object.freeze({
+  const hingedIds = ['admission-ticket','night-suitcase','moonlight-wardrobe'];
+  const definitions = Object.freeze(rows.map(([id,name,category,kind,key,source,hint,depth,collection]) => Object.freeze({
     id,name,category,kind,key,source,hint,depth,
-    asset:`assets/restyle/items/${id}.png`,
-    columns:2,rows:['admission-ticket','night-suitcase','moonlight-wardrobe'].includes(id)?2:1,
-    hinged:['night-suitcase','moonlight-wardrobe'].includes(id),
+    alpha: Boolean(collection),
+    asset: collection
+      ? `assets/restyle/game-sprites/${collection}/${id}/front.png`
+      : `assets/restyle/items/${id}.png`,
+    columns: collection ? 1 : 2,
+    rows: collection ? 1 : (hingedIds.includes(id) ? 2 : 1),
+    hinged: hingedIds.includes(id) && !collection,
   })));
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const count = value => Number.isFinite(Number(value)) ? Math.max(0,Math.floor(Number(value))) : 0;
@@ -51,6 +72,7 @@
       if (d.kind==='pass') { owned=!!state.showmanPass && state.passDay===today; quantity=owned?1:0; status=owned?'Active until midnight Darwin':'No active Showman pass'; }
       if (d.kind==='curio') { owned=!!state.curios?.[d.key];quantity=owned?1:0;at=state.curios?.[d.key]?.at||null;status=owned?'Collected':status; }
       if (d.kind==='reward') { owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;status=owned?'Collection keepsake':status; }
+      if (d.kind==='prize') { owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;status=owned?'Won in a paper world':status; }
       return {...d,owned,quantity,status,at,punched:d.kind==='ticket'&&!!state.admitPassed};
     });
   }
@@ -80,5 +102,23 @@
     }
     reconcile(state);return earned;
   }
-  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,reconcile,entries,resolve,day,recordResult});
+  function recordPaperPrize(state, result) {
+    if (!object(state) || !object(result)) return [];
+    const id = result.item;
+    const d = definitions.find(i => i.id === id);
+    if (!d) return [];
+    reconcile(state);
+    const now = result.at || Date.now();
+    if (d.kind === 'curio') {
+      if (!object(state.curios)) state.curios = {};
+      if (state.curios[d.key]) return [];
+      state.curios[d.key] = {shelf: d.category === 'Alley Ephemera' ? 'alley' : 'guts', at: now, source: result.stall || 'paper-world'};
+      reconcile(state);
+      return [d.id];
+    }
+    if (state.paperInventory.items[d.id]) return [];
+    state.paperInventory.items[d.id] = {at: now, source: result.stall || 'paper-world', chapter: result.chapter};
+    return [d.id];
+  }
+  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,reconcile,entries,resolve,day,recordResult,recordPaperPrize});
 })();

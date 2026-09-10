@@ -8,6 +8,6 @@ for(const [i,g] of games.entries()){
  img.src=g.asset;
  if(g.ready)a.append(img);
  const body=document.createElement('div'),small=document.createElement('small'),h=document.createElement('h2'),p=document.createElement('p'),status=document.createElement('span');
- small.textContent=String(i+1).padStart(2,'0')+' · '+g.host;h.textContent=g.title;p.textContent=g.blurb;status.textContent=g.ready?'Step inside →':'On the workbench';
+ small.textContent=String(i+1).padStart(2,'0')+' · '+g.host;h.textContent=g.title;p.textContent=g.blurb;status.textContent=g.ready?(g.restyle?'Treasures in the room →':'Step inside →'):'On the workbench';
  body.append(small,h,p,status);a.append(body);root.append(a);
 }

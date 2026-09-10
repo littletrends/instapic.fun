@@ -10,7 +10,9 @@ export async function loadArt(item) {
     for(let row=0;row<item.rows;row++)for(let col=0;col<item.columns;col++){
       const c=canvas(),ctx=c.getContext('2d',{willReadFrequently:true});
       ctx.drawImage(im,col*sw,row*sh,sw,sh,0,0,512,512);
-      const pixels=ctx.getImageData(0,0,512,512);removeBackground(pixels.data,512,512,['whisper-charm','gyro-ghost','shutter-click'].includes(item.id));ctx.putImageData(pixels,0,0);
+      const pixels=ctx.getImageData(0,0,512,512);
+      if(!item.alpha)removeBackground(pixels.data,512,512,['whisper-charm','gyro-ghost','shutter-click'].includes(item.id));
+      ctx.putImageData(pixels,0,0);
       const bounds=alphaBounds(pixels.data,512,512);if(!bounds)throw new Error('The item picture is empty.');
       parts.push({canvas:c,bounds});
     }

@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=paper-alley-live-2';
+import {games} from '../paper-games/catalogue.js?v=paper-worlds-v2-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready).map(game=>({
@@ -55,7 +55,23 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   onReset(){if(room()&&!room().hidden)load(true);else unload();}};
 }
 
+function listenForPrizes(){
+ if(listenForPrizes.bound)return;
+ listenForPrizes.bound=true;
+ window.addEventListener('message',event=>{
+  if(event.origin!==location.origin)return;
+  const data=event.data;
+  if(!data||data.channel!=='pf-paper-world'||data.type!=='prize')return;
+  const PF=window.PennyFever, model=window.PennyFeverInventoryModel;
+  if(!PF?.getState||!model?.recordPaperPrize)return;
+  const earned=model.recordPaperPrize(PF.getState(),{item:data.item,stall:data.stall,chapter:data.chapter});
+  if(!earned.length)return;
+  PF.saveState?.();
+  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned}}));
+ });
+}
 export function registerPaperGameBooths(PF,doc=globalThis.document,nav=globalThis.location){
+ listenForPrizes();
  const vendors=paperGameRooms.map(game=>createPaperGameVendor(game,doc,nav));
  vendors.forEach(vendor=>PF.registerVendor(vendor));return vendors;
 }

@@ -1,4 +1,4 @@
-import {loadArt,paintIcon} from './art.js?v=treasures-1';
+import {loadArt,paintIcon} from './art.js?v=paper-worlds-v2-1';
 const model=globalThis.PennyFeverInventoryModel;
 const studio=document.body.dataset.objectStudio==='true';
 const iconCache=new Map();let dialog,viewer,current=null,selectionToken=0,listToken=0,opener,resumeWorld=false,openedHash='',observer;

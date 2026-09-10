@@ -6,7 +6,7 @@ export function segmentDistance(p,a,b){const x=b.x-a.x,y=b.y-a.y,t=clamp(((p.x-a
 export function seeded(seed=41){return()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
 export function done(s,title,detail){s.result={title,detail};}
 export class Draw {
- constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');if(!this.c)throw Error('Canvas is unavailable.');this.resize(450,600,1);}
+ constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');if(!this.c)throw Error('Canvas is unavailable.');this.art={};this.resize(450,600,1);}
  resize(w,h,r=1){r=clamp(r,1,1.5);this.canvas.width=Math.max(1,Math.round(w*r));this.canvas.height=Math.max(1,Math.round(h*r));}
  clear(){const c=this.c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,this.canvas.width,this.canvas.height);c.setTransform(this.canvas.width/W,0,0,this.canvas.height/H,0,0);c.lineCap='round';c.lineJoin='round';}
  line(a,b,color='#edcf94',width=2){const c=this.c;c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
@@ -25,5 +25,17 @@ export class Draw {
  envelope(x,y,size=28,color='#f3e1bf',symbol='♥',angle=0){const c=this.c;c.save();c.translate(x,y);c.rotate(angle);this.poly([[-size,-size*.6],[size,-size*.6],[size,size*.6],[-size,size*.6]],color,'#c4a276',2);this.path([{x:-size,y:-size*.6},{x:0,y:6},{x:size,y:-size*.6}],'#aa9375',1.5);this.text(symbol,0,8,16,'#b76665');c.restore();}
  animal(x,y,kind='rabbit',scale=1,t=0){const c=this.c;c.save();c.translate(x,y);c.scale(scale,scale);const colors={rabbit:'#e3d4b1',fox:'#c78b62',duck:'#e5c46c',bird:'#83a8a5'};const co=colors[kind]||'#d8bc84';this.ellipse(3,15,31,10,'#11213730');this.ellipse(0,0,25,18,co,'#f2d8a7',1.5);if(kind==='duck'||kind==='bird'){this.circle(19,-17,12,co,'#eedcac',1);this.poly([[27,-20],[44,-15],[28,-11]],'#c89559');this.poly([[-11,-6],[-29,-15+Math.sin(t)*4],[-22,4]],co);this.circle(22,-20,2,'#263441');}else{this.circle(20,-17,17,co,'#ebd4aa',1.5);if(kind==='rabbit'){this.ellipse(13,-40,5,19,co,'#f5e6c9');this.ellipse(27,-42,5,20,co,'#f5e6c9');}else{this.poly([[8,-25],[7,-50],[22,-31]],co);this.poly([[24,-30],[36,-47],[34,-22]],co);this.poly([[-18,8],[-50,-7],[-40,16],[-18,17]],co);this.poly([[-43,-1],[-51,-6],[-42,16],[-35,12]],'#ebd5b2');}this.circle(27,-20,2.5,'#303340');this.circle(37,-11,3,'#8b6558');this.ellipse(-10,16,10,5,co);this.ellipse(16,16,10,5,co);}c.restore();}
  arc(x,y,r,a,b,color='#f2d49b',width=4){const c=this.c;c.beginPath();c.arc(x,y,r,a,b);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
- dispose(){this.canvas.width=1;this.canvas.height=1;}
+ shadow(x,y,rx,ry){this.ellipse(x+4,y+ry*.35,rx,Math.max(4,ry*.45),'#12233540');}
+ sprite(img,x,y,opts={}){
+  if(!img)return false;
+  const w=opts.w||img.width,h=opts.h||w*(img.height||1)/(img.width||1);
+  const c=this.c;c.save();c.globalAlpha=opts.alpha??1;c.translate(x,y);if(opts.angle)c.rotate(opts.angle);if(opts.flip)c.scale(-1,1);
+  if(opts.shadow!==false){c.fillStyle='#12233555';c.beginPath();c.ellipse(3,h*.36,w*.42,h*.14,0,0,TAU);c.fill();}
+  c.drawImage(img,-w/2,-h/2,w,h);c.restore();return true;
+ }
+ item(id,x,y,opts={}){
+  if(this.sprite(this.art?.[id],x,y,opts))return true;
+  opts.fallback?.(this,x,y,opts);return false;
+ }
+ dispose(){this.canvas.width=1;this.canvas.height=1;this.art=null;}
 }

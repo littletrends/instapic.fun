@@ -29,6 +29,7 @@ const rows = [
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass']);
+const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond']);
 const experimentArt = {
   lookup: '../experiments/celestes-starlight/assets/observatory-v1.png',
   'water-gun': '../experiments/brasswater-harbour/assets/harbour-v1.png',
@@ -36,6 +37,7 @@ const experimentArt = {
 export const games = rows.map(([id,host,title,blurb,direct]) => ({
   id,host,title,blurb,direct,
   ready: Boolean(direct)||built.has(id),
+  restyle: restyled.has(id),
   asset: experimentArt[id] || `assets/${id}.png`,
   module: `./stalls/${id}.js`,
 }));
