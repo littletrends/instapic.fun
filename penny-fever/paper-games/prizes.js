@@ -81,6 +81,14 @@ export const items = {
   'marquee-bulb': {collection:'machine-curios', name:'Marquee bulb'},
   'pocket-marquee': {collection:'garden-prizes', name:'Pocket marquee'},
   'lantern-lighter': {collection:'working-midway', name:'Lantern lighter'},
+  'little-sailboat': {collection:'game-prizes', name:'Little sailboat'},
+  'star-spectacles': {collection:'wearables', name:'Star spectacles'},
+  'music-carousel': {collection:'ride-keepsakes', name:'Music carousel'},
+  'organ-music-box': {collection:'ride-keepsakes', name:'Organ music box'},
+  'pocket-wheel': {collection:'ride-keepsakes', name:'Pocket wheel'},
+  'balloon-bouquet': {collection:'ride-keepsakes', name:'Balloon bouquet'},
+  'swing-spinner': {collection:'ride-keepsakes', name:'Swing spinner'},
+  'gyro-ghost': {collection:'machine-curios', name:'Gyro ghost'},
 };
 
 export const spriteKey = id => {
@@ -184,5 +192,21 @@ export const kits = {
   pass: {
     sprites: ['secret-door-key','velvet-mask'],
     prizes: ['showman-pass','velvet-mask','secret-door-key'],
+  },
+  lookup: {
+    sprites: ['star-fragment','star-spectacles','pocket-observatory','moon-rabbit','dapper-fox','moon-lantern'],
+    prizes: ['star-fragment','pocket-observatory','star-spectacles'],
+  },
+  'water-gun': {
+    sprites: ['little-sailboat','trade-envelope','message-bottle'],
+    prizes: ['little-sailboat','message-bottle','splash-ring'],
+  },
+  carousel: {
+    sprites: ['music-carousel','organ-music-box','pocket-wheel','swing-spinner','gyro-ghost','star-token'],
+    prizes: ['music-carousel','organ-music-box','pocket-wheel'],
+  },
+  balloons: {
+    sprites: ['balloon-bouquet','autumn-leaf-lantern','moon-lantern','prize-bag'],
+    prizes: ['balloon-bouquet','prize-bag','swing-spinner'],
   },
 };

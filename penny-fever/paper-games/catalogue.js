@@ -4,13 +4,13 @@ const rows = [
   ['fortune','Iris','Fate’s Loom','Weave a fortune through a moving moon garden.'],
   ['love','Rosalie','Heartstrings','Release a swinging heart into moving ribbon baskets.'],
   ['curios','Digby','Clockwork Menagerie','Reconnect tracks for a wandering clockwork beetle.'],
-  ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.','../experiments/celestes-starlight/'],
+  ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
   ['snap','Felix','Paper Safari','Frame the perfect moment in a moving paper woodland.'],
   ['whisper','Willa','Lost Letter Express','Fly folded letters into their matching letterboxes.'],
   ['ball-toss','Bess','Lantern Toss','Knock the swinging lanterns from a little circus skyline.'],
   ['coin-pusher','Copper','Copper Falls','Time the pusher and move a little tide of pennies.'],
   ['pinball','Pip','Thunder Garden','Keep a silver seed alive among ringing brass flowers.'],
-  ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.','../experiments/brasswater-harbour/'],
+  ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.'],
   ['milk-bottles','Mabel','The Topsy Dairy','Topple bottle towers with carefully placed throws.'],
   ['cover-the-spot','Dot','Patchwork Moon','Cover patterned moons with a handful of paper discs.'],
   ['mutoscope','Milo','The Missing Frames','Splice a moving picture back into its proper story.'],
@@ -27,18 +27,17 @@ const rows = [
   ['marquee','Lumi','Light the Night','Conduct a travelling wave of boardwalk lights.'],
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
+  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.','','workshop'],
+  ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.','','workshop'],
 ];
-const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass']);
-const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass']);
-const experimentArt = {
-  lookup: '../experiments/celestes-starlight/assets/observatory-v1.png',
-  'water-gun': '../experiments/brasswater-harbour/assets/harbour-v1.png',
-};
-export const games = rows.map(([id,host,title,blurb,direct]) => ({
+const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons']);
+const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons']);
+export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   id,host,title,blurb,direct,
+  workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: experimentArt[id] || `assets/${id}.png`,
+  asset: `assets/${id}.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));

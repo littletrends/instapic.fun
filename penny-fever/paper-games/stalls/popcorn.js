@@ -67,7 +67,7 @@ export default {
       w: 36 + s.heat * 18, alpha: .35 + s.heat * .5, shadow: false, fallback: () => {},
     });
     d.item(spriteKey('tiny-kettle'), 450, 560, {
-      w: 150,
+      w: 96,
       fallback: () => {
         d.poly([[375, 545], [390, 625], [510, 625], [525, 545]], '#a67d50', '#ead1a0', 4);
         d.ellipse(450, 545, 75, 22, '#4d4436', '#e2c795', 5);
