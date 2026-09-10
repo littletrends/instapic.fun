@@ -1,6 +1,6 @@
 .local-backups/
 design-concepts/
-ops/
+ops/*.tgz
 docs/
 *.tar.gz
 assets/restyle/grok-edited/

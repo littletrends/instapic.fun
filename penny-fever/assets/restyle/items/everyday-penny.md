@@ -1,6 +1,0 @@
-# everyday-penny — rotating object texture
-
-Tool: built-in image generation.
-Reference: /home/magic_mirror1/Desktop/Penny Fever/Restyled Original/design-concepts/2026-09-08/items/inspect-everyday-penny.png
-
-Use case: stylized-concept. Create production texture artwork for ONE individual Penny Fever rotating layered-paper object. Reference image is design source only; extract ONLY everyday-penny. Object design: round copper penny; FRONT gold crowned heart and numeral 1; BACK gold PF monogram in wreath. Layout: TWO equal square cells side by side, landscape output width exactly twice height. LEFT strict orthographic FRONT. RIGHT strict orthographic BACK of the SAME object.  Each cell centred, object fits within central 80 percent of cell, matching height, scale and top/bottom alignment across front and back. True flat-on elevations, no perspective, no side faces drawn into front/back. Preserve silhouette and motifs from reference. Fine fibrous cut-paper, embossed gold foil, original rich burgundy/forest/plum palette. Objects float in isolation on a fully transparent background; if transparency cannot be produced use completely uniform pure white #FFFFFF. No cast shadow, no ground, no paper presentation background, no frame, no labels, no title, no grid lines, no characters, no duplicate objects beyond specified views. Background must be empty. 

@@ -1,5 +1,0 @@
-# Correction pass
-
-Built-in image generation edit. Prefer this v2 sheet over the original after visual review.
-
-Edit this Penny Fever turnaround reference sheet. Replace all four characters with MABEL: fair skin, auburn braided pigtails, cream beret, cream dairy apron with black cow emblem, sage dress, brown shoes, holding a MILK BOTTLE. NO sailor hat, NO dark curly sailor, NO water gun. Replace all four stalls with the approved MILK BOTTLES stall in bottom centre of reference 3: sage-and-cream striped awning, cow crest, bottle pyramid throwing counter, ornate gold dairy leaf panels; no guns, ships wheels or nautical anchors. All corrected vendor views must be FRONT / strict LEFT profile nose left / BACK / strict RIGHT profile nose right. Image 1 is the edit target. Image 2 is the original correct cast identity reference. Keep original sheet layout, typography, paper texture, ornate stall decoration, spacing and other elements unchanged. Maintain distinct correctly oriented side views and full body silhouettes. Image 3 supplies the correct milk-bottle stall architecture.
