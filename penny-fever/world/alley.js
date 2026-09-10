@@ -1059,7 +1059,7 @@ function buildWorld() {
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x0b1018, 0.026);
-  camera = new THREE.PerspectiveCamera(phoneLane ? 74 : 58, first.w / first.h, 0.1, skyR + 80);
+  camera = new THREE.PerspectiveCamera(phoneLane ? 68 : 58, first.w / first.h, 0.45, skyR + 80);
   clock = new THREE.Clock();
 
   scene.add(new THREE.AmbientLight(0x4a382c, 0.95));
@@ -1224,7 +1224,7 @@ function onResize() {
   if (!renderer || !camera) return;
   const { w, h } = laneSize();
   camera.aspect = w / h;
-  camera.fov = phoneLane ? 74 : 58;
+  camera.fov = phoneLane ? 68 : 58;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
 }
@@ -1333,8 +1333,8 @@ function updatePlayer(dt) {
   if (keys.s || keys.arrowdown) iy -= 1;
   if (keys.a || keys.arrowleft) ix -= 1;
   if (keys.d || keys.arrowright) ix += 1;
-  if (Math.abs(iy) > 0.34 && Math.abs(iy) >= Math.abs(ix) * 0.95) ix = 0;
-  const strafing = Math.abs(ix) > 0.32;
+  if (Math.abs(iy) > 0.22 && Math.abs(iy) >= Math.abs(ix) * 0.72) ix = 0;
+  const strafing = Math.abs(ix) > 0.38;
   moveIntent.ix = ix;
   moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
@@ -1493,7 +1493,7 @@ function pickFocus(px, pz) {
       };
     }
   });
-  if (Math.abs(moveIntent.iy) > 0.36 && Math.abs(moveIntent.iy) >= Math.abs(moveIntent.ix)) {
+  if (Math.abs(moveIntent.iy) > 0.2) {
     focus = null;
     return { passing, passingZ };
   }
@@ -1738,9 +1738,9 @@ function updateHudAnchor() {
 }
 
 function followPose() {
-  const walkingAlley = Math.abs(moveIntent.iy) > 0.34 && Math.abs(moveIntent.iy) >= Math.abs(moveIntent.ix);
+  const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
   const viewing = !!(nearest && nearest.atCounter && !walkingAlley);
-  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.2 : 0.16);
+  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
   // Stay low and close until the camera itself has cleared both entrance arches.
@@ -1767,26 +1767,27 @@ function followPose() {
   let ly = alleyLy;
   let lz = alleyLz;
   if (viewBlend > 0.01 && nearest) {
-    const side = nearest.side || Math.sign(nearest.stallX || nearest.x || 1);
-    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x) * 0.72;
+    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x) * 0.55;
     const lookZ = nearest.kind === "aura" ? nearest.z : (nearest.stallZ || nearest.z);
-    const lookBack = nearest.kind === "ride"
-      ? (phoneLane ? 7.6 : 7.2)
-      : nearest.kind === "stall"
-        ? (phoneLane ? 4.3 : 4.1)
-        : 3.8;
-    const stallTx = paperRail ? side * 0.22 : player.position.x - side * 1.15;
-    const stallTy = paperRail ? (nearest.kind === "ride" ? 2.7 : 1.62) : 1.68;
-    const stallTz = paperRail ? lookZ - lookBack : player.position.z + 0.08;
-    const stallLx = paperRail ? lookX : nearest.stallX;
-    const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : 1.45) : 1.32;
-    const stallLz = paperRail ? lookZ : nearest.stallZ;
-    tx = alleyTx + (stallTx - alleyTx) * viewBlend;
-    ty = alleyTy + (stallTy - alleyTy) * viewBlend;
-    tz = alleyTz + (stallTz - alleyTz) * viewBlend;
-    lx = alleyLx + (stallLx - alleyLx) * viewBlend;
-    ly = alleyLy + (stallLy - alleyLy) * viewBlend;
-    lz = alleyLz + (stallLz - alleyLz) * viewBlend;
+    if (paperRail && nearest.kind === "stall") {
+      lx = alleyLx + (lookX - alleyLx) * viewBlend * 0.55;
+      ly = alleyLy + (1.4 - alleyLy) * viewBlend * 0.45;
+      lz = alleyLz + (lookZ - alleyLz) * viewBlend * 0.4;
+    } else {
+      const lookBack = nearest.kind === "ride" ? (phoneLane ? 7.6 : 7.2) : 3.8;
+      const stallTx = paperRail ? Math.max(-0.85, Math.min(0.85, (nearest.side || 1) * 0.18)) : player.position.x - (nearest.side || 1) * 1.15;
+      const stallTy = paperRail ? (nearest.kind === "ride" ? 2.7 : 1.62) : 1.68;
+      const stallTz = paperRail ? lookZ - lookBack : player.position.z + 0.08;
+      const stallLx = paperRail ? lookX : nearest.stallX;
+      const stallLy = paperRail ? (nearest.kind === "ride" ? 2.9 : 1.45) : 1.32;
+      const stallLz = paperRail ? lookZ : nearest.stallZ;
+      tx = alleyTx + (stallTx - alleyTx) * viewBlend;
+      ty = alleyTy + (stallTy - alleyTy) * viewBlend;
+      tz = alleyTz + (stallTz - alleyTz) * viewBlend;
+      lx = alleyLx + (stallLx - alleyLx) * viewBlend;
+      ly = alleyLy + (stallLy - alleyLy) * viewBlend;
+      lz = alleyLz + (stallLz - alleyLz) * viewBlend;
+    }
   }
   return { tx, ty, tz, lx, ly, lz };
 }
