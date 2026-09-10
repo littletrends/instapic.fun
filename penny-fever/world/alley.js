@@ -1105,6 +1105,8 @@ function applyLookCardView(view) {
       b.setAttribute("aria-pressed", String(b.dataset.view === view));
     });
   }
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (stage) stage.classList.toggle("is-rear", view === "back" || view === "right");
 }
 
 function closeStallCard() {
