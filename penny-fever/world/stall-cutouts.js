@@ -1,7 +1,7 @@
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {STALL_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
-import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-6';
+import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-23';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/stalls/';
 const NEAR=PAPERCUT_NEAR;

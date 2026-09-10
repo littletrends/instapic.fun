@@ -3,7 +3,7 @@ import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=paper-alley
 import {loadWallArt} from './walls/art.js';
 import {buildWall} from './walls/models.js?v=paper-alley-live-4';
 import { decorativePaper } from './paper-panels.js?v=reliability-1';
-import { phoneLane } from './phone-lane.js?v=paper-alley-live-6';
+import { phoneLane } from './phone-lane.js?v=paper-alley-live-23';
 export const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;
