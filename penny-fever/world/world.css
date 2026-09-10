@@ -296,11 +296,13 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 .pf-stall-card-art {
   position: relative;
   display: flex;
+  flex-direction: row;
   align-items: flex-end;
   justify-content: center;
-  width: min(98vw, 640px);
+  width: min(100vw, 720px);
   min-height: 52vh;
   flex: 1 1 auto;
+  gap: 0;
 }
 .pf-stall-card-art img {
   object-fit: contain;
@@ -309,24 +311,29 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 #pfStallCardBooth {
   display: block;
-  width: min(90%, 560px);
-  max-height: 62vh;
+  width: auto;
+  height: 58vh;
+  max-width: 68vw;
+  max-height: 58vh;
   z-index: 0;
+  margin: 0;
 }
 #pfStallCardVendor {
-  position: absolute;
-  left: 16%;
-  bottom: 0;
-  width: min(32%, 170px);
-  max-height: 40vh;
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: auto;
+  height: 48vh;
+  max-width: 40vw;
+  max-height: 48vh;
   transform: none;
   z-index: 1;
-  margin: 0;
+  margin: 0 -1.25rem 0 0;
 }
 .pf-stall-card-art.is-rear #pfStallCardVendor {
-  left: auto;
-  right: 16%;
-  margin: 0;
+  order: 2;
+  margin: 0 0 0 -1.25rem;
 }
 .pf-stall-card-views {
   display: flex;
