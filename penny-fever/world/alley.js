@@ -818,6 +818,7 @@ let vendorChatUntil = 0;
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
 let stallCardId = "";
+let stallCardView = "front";
 
 let promptTargetSlug = "";
 let raf = 0;
@@ -874,6 +875,12 @@ function attachHud() {
         <div class="pf-stall-card-art">
           <img id="pfStallCardBooth" alt="">
           <img id="pfStallCardVendor" alt="">
+        </div>
+        <div class="pf-stall-card-views" id="pfStallCardViews">
+          <button type="button" data-view="front" aria-pressed="true">Front</button>
+          <button type="button" data-view="left">Left</button>
+          <button type="button" data-view="back">Back</button>
+          <button type="button" data-view="right">Right</button>
         </div>
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
@@ -934,6 +941,15 @@ function bindHud() {
     event.preventDefault();
     closeStallCard();
   });
+  const views = el("pfStallCardViews");
+  if (views) {
+    views.addEventListener("click", (event) => {
+      const b = event.target.closest("button[data-view]");
+      if (!b) return;
+      event.preventDefault();
+      applyLookCardView(b.dataset.view);
+    });
+  }
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
     window.PennyFeverInventory?.open('everyday-penny');
   });
@@ -1037,28 +1053,58 @@ function lookCardKind(best) {
   return best && (best.kind === "stall" || best.kind === "ride" || best.kind === "aura");
 }
 
-function lookCardArt(best) {
+function lookCardArt(best, view = "front") {
   const root = "assets/restyle/scene-turnarounds-2026-09-09";
+  const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
   if (best.kind === "stall") {
     return {
-      booth: `${root}/stalls/${best.id}/front.png`,
-      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/front.png` : "",
+      booth: `${root}/stalls/${best.id}/${v}.png`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
       role: "host",
     };
   }
   if (best.kind === "ride") {
     const host = (best.hostSlug || best.host || "").toLowerCase();
     return {
-      booth: `${root}/amusements/${best.id}/front.png`,
-      vendor: host ? `${root}/attendants/${host}/front.png` : "",
+      booth: `${root}/amusements/${best.id}/${v}.png`,
+      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
       role: "attendant",
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/front.png`,
-    vendor: `${root}/aura/welcoming/front.png`,
+    booth: `${root}/aura/ticket-booth/${v}.png`,
+    vendor: `${root}/aura/welcoming/${v}.png`,
     role: "proprietor",
   };
+}
+
+function applyLookCardView(view) {
+  if (!nearest || !lookCardKind(nearest)) return;
+  stallCardView = view;
+  const art = lookCardArt(nearest, view);
+  const booth = el("pfStallCardBooth");
+  const vendor = el("pfStallCardVendor");
+  if (booth) {
+    booth.hidden = false;
+    booth.src = art.booth;
+    booth.onerror = () => { if (view !== "front") applyLookCardView("front"); };
+  }
+  if (vendor) {
+    if (art.vendor) {
+      vendor.hidden = false;
+      vendor.src = art.vendor;
+      vendor.onerror = () => { vendor.hidden = true; };
+    } else {
+      vendor.removeAttribute("src");
+      vendor.hidden = true;
+    }
+  }
+  const views = el("pfStallCardViews");
+  if (views) {
+    views.querySelectorAll("button").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.view === view));
+    });
+  }
 }
 
 function closeStallCard() {
@@ -1082,7 +1128,8 @@ function syncStallCard(best) {
   }
   if (stallCardId !== best.kind + ":" + best.id) {
     stallCardId = best.kind + ":" + best.id;
-    const art = lookCardArt(best);
+    stallCardView = "front";
+    const art = lookCardArt(best, "front");
     const booth = el("pfStallCardBooth");
     const vendor = el("pfStallCardVendor");
     const hostEl = el("pfStallCardHost");
@@ -1132,6 +1179,7 @@ function syncStallCard(best) {
       chat.hidden = false;
       chat.textContent = best.kind === "aura" && !(Number(pfState().demoCoins) > 0) ? "Pennies" : "Chat";
     }
+    applyLookCardView("front");
   }
   stallCardOpen = true;
   card.hidden = false;

@@ -319,6 +319,29 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   transform: translateX(-58%);
   z-index: 1;
 }
+.pf-stall-card-views {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pf-stall-card-views button {
+  min-width: 4.2rem;
+  font: 700 0.72rem/1.1 system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  background: rgba(12, 6, 10, 0.55);
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+.pf-stall-card-views button[aria-pressed="true"] {
+  color: #160b10;
+  background: linear-gradient(180deg, #f5dda7, #d4a45a);
+  border-color: #8a6230;
+}
 .pf-stall-card-kicker {
   margin: 0;
   color: #f0d09a;
