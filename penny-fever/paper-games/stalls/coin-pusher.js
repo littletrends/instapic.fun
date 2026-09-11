@@ -1,23 +1,23 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-7';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-8';
 
 const DUMP_CAP = 24;
-const LIP_SPEED = 22;
-const STROKE = 0.4;
-const SHOVE = 56;
+const LIP_SPEED = 16;
+const STROKE = 0.42;
+const SHOVE = 78;
 const LAYERS = [
   {left: 258, right: 642, back: 188, lip: 448},
   {left: 228, right: 672, back: 478, lip: 768},
   {left: 202, right: 698, back: 798, lip: 1072},
 ];
 const SETS = [
-  {mix0: ['everyday-penny'], mix1: ['everyday-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'looking-glass-locket', prize: 'coin-sleeve'},
-  {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['moon-penny', 'star-token'], unique: 'moon-brooch', prize: 'copper-cascade'},
-  {mix0: ['everyday-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['everyday-penny', 'pressed-heart'], unique: 'crystal-cradle', prize: 'penny-tree'},
-  {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token', 'lucky-match'], unique: 'secret-door-key', prize: 'coin-album'},
-  {mix0: ['everyday-penny', 'star-token'], mix1: ['moon-penny', 'rose-penny'], mix2: ['star-token', 'crown-token'], unique: 'midnight-invitation', prize: 'treasure-tin'},
-  {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'rose-penny', 'star-token'], mix2: ['crown-token', 'pressed-heart', 'lucky-match'], unique: 'wishing-acorn', prize: 'five-penny-stack'},
+  {mix0: ['everyday-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
+  {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['moon-penny', 'star-token'], unique: 'copper-cascade', prize: 'copper-cascade'},
+  {mix0: ['everyday-penny', 'rose-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['rose-penny', 'star-token'], unique: 'penny-tree', prize: 'penny-tree'},
+  {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token'], unique: 'coin-album', prize: 'coin-album'},
+  {mix0: ['everyday-penny', 'star-token'], mix1: ['moon-penny', 'rose-penny'], mix2: ['star-token', 'crown-token'], unique: 'treasure-tin', prize: 'treasure-tin'},
+  {mix0: ['everyday-penny', 'moon-penny', 'rose-penny'], mix1: ['star-token', 'crown-token'], mix2: ['moon-penny', 'crown-token'], unique: 'five-penny-stack', prize: 'five-penny-stack'},
 ];
 const TOKENS = {
   'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 160, token: true},
@@ -35,7 +35,15 @@ const UNIQUES = [
   'sleepy-compass', 'clockwork-key', 'heart-gear',
 ];
 const UNIQUE = Object.fromEntries(UNIQUES.map(id => [id, {r: 20, w: 44, score: 0, color: '#c4a46a', weight: 1, unique: true, prize: true}]));
-const DEFS = {...TOKENS, ...UNIQUE};
+const CHAPTER_ITEMS = {
+  'coin-sleeve': {r: 22, w: 50, score: 0, color: '#c4a46a', unique: true, prize: true},
+  'copper-cascade': {r: 24, w: 54, score: 0, color: '#b68445', unique: true, prize: true},
+  'penny-tree': {r: 24, w: 54, score: 0, color: '#8a9a4a', unique: true, prize: true},
+  'coin-album': {r: 22, w: 48, score: 0, color: '#9a4d4a', unique: true, prize: true},
+  'treasure-tin': {r: 22, w: 48, score: 0, color: '#c4a46a', unique: true, prize: true},
+  'five-penny-stack': {r: 20, w: 46, score: 5, color: '#b68445', unique: true, prize: true, token: true},
+};
+const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS};
 const POOL = Object.entries(DEFS).map(([id, def]) => ({id, ...def}));
 const SPRITES = [...Object.keys(DEFS), 'penny-purse'];
 
@@ -157,11 +165,9 @@ function spill(s, c) {
     return false;
   }
   c.layer += 1;
-  const L = LAYERS[c.layer];
   c.falling = true;
-  c.y = L.back - 12;
-  c.vy = 36;
-  c.vx *= 0.15;
+  c.vy = 80;
+  c.vx *= 0.4;
   s.note = c.prize ? itemName(c.id) + ' dropped a tray.' : 'The tide moved down a tray.';
   return true;
 }
@@ -245,7 +251,7 @@ function pack(layer, rng, ids) {
   const out = [];
   const dx = 33, dy = 30;
   let row = 0;
-  for (let y = L.back + 48; y <= L.lip - 22; y += dy, row++) {
+  for (let y = L.back + 46; y <= L.lip - 16; y += dy, row++) {
     const inset = (row % 2) * (dx * 0.5);
     for (let x = L.left + 22 + inset; x <= L.right - 22; x += dx) {
       const id = ids[out.length % ids.length];
@@ -277,8 +283,13 @@ function fresh(level, rng) {
   const seen = [];
   if (set.unique) {
     const L = LAYERS[2];
-    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 90, L.lip - 52, 2));
+    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 90, L.lip - 28, 2));
     seen.push(set.unique);
+  }
+  if (level >= 3) {
+    const L = LAYERS[1];
+    coins.push(mint('heart-gear', L.left + 80 + rng() * 200, L.lip - 40, 1));
+    seen.push('heart-gear');
   }
   const ammo = 12 + level * 3;
   return {
@@ -331,6 +342,7 @@ export default {
       if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
       return;
     }
+    const shoving = s.stroke > 0 && s.stroke < 0.7;
     if (s.stroke > 0) {
       const was = s.stroke;
       s.stroke += dt / STROKE;
@@ -341,16 +353,18 @@ export default {
         const dPlate = (extend - prev) * SHOVE;
         for (let i = 0; i < LAYERS.length; i++) {
           const L = LAYERS[i];
-          const power = i === 0 ? 1 : i === 1 ? 0.4 : 0.2;
-          const plate = L.back + 22 + extend * SHOVE * power;
+          const plate = L.back + 22 + extend * SHOVE;
+          const depth = L.lip - L.back || 1;
           for (const c of s.coins) {
             if (c.falling || c.layer !== i) continue;
             if (c.y < plate + c.r) {
-              c.y += dPlate * power;
-              c.vy = Math.max(c.vy, dPlate * power * 70);
-            } else if (c.y > L.lip - 42 && !c.unique) {
-              c.y += dPlate * power * 0.35;
-              c.vy = Math.max(c.vy, dPlate * power * 30);
+              c.y += dPlate;
+              c.vy = Math.max(c.vy, dPlate * 80);
+            } else {
+              const along = clamp((c.y - L.back) / depth, 0, 1);
+              const tide = dPlate * (0.06 + 0.16 * along);
+              c.y += tide;
+              c.vy = Math.max(c.vy, tide * 40);
             }
           }
         }
@@ -383,9 +397,9 @@ export default {
             hit = true;
             const nx = dx / dd, ny = dy / dd, overlap = need - dd;
             c.x -= nx * overlap; c.y -= ny * overlap;
-            const j = Math.max(0, c.vy) * 0.28;
-            o.vx += nx * j * 0.2;
-            o.vy += Math.max(0, ny) * j * 0.45;
+            const j = Math.max(0, c.vy) * 0.62;
+            o.vx += nx * j * 0.35;
+            o.vy += Math.max(j * 0.85, ny * j);
             c.vy *= 0.28;
             c.vx *= 0.45;
           }
@@ -408,7 +422,7 @@ export default {
         if (c.x < L.left + c.r) { c.x = L.left + c.r; c.vx = Math.abs(c.vx) * 0.2; }
         if (c.x > L.right - c.r) { c.x = L.right - c.r; c.vx = -Math.abs(c.vx) * 0.2; }
         if (c.y < L.back + c.r) { c.y = L.back + c.r; c.vy = Math.max(0, c.vy); }
-        if (c.y + c.r > L.lip && c.vy < (c.layer < 2 ? 3 : 10)) {
+        if (c.y + c.r > L.lip && !shoving && c.vy < LIP_SPEED) {
           c.y = L.lip - c.r;
           c.vy = 0;
         }
@@ -437,9 +451,7 @@ export default {
     for (const c of s.coins) {
       if (c.falling) { stay.push(c); continue; }
       const L = LAYERS[c.layer];
-      if (c.layer < 2) {
-        if (c.y + c.r > L.lip) { if (!spill(s, c)) continue; }
-      } else if (c.y + c.r > L.lip && c.vy >= 10) {
+      if (c.y + c.r > L.lip && (shoving || c.vy >= LIP_SPEED)) {
         if (!spill(s, c)) continue;
       }
       stay.push(c);
