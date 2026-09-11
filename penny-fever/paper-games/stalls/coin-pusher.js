@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=games-open-2';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=booth-play-2';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -101,6 +101,18 @@ function snapshot(s) {
     })),
   };
 }
+function plantPrize(coins, level, rng) {
+  const set = SETS[level] || SETS[0];
+  const id = set.unique || set.prize;
+  if (!id) return;
+  if (coins.some(c => !c.falling && (c.id === id || c.id === set.prize))) return;
+  const layer = 1;
+  const L = LAYERS[layer];
+  coins.push(mint(id,
+    (L.left + L.right) / 2 + (rng() - 0.5) * 48,
+    L.back + (L.lip - L.back) * 0.42 + (rng() - 0.5) * 18,
+    layer));
+}
 function hydrate(blob) {
   const coins = (blob.pieces || []).map(p => {
     const c = mint(p.id, p.x, p.y, p.layer | 0);
@@ -111,19 +123,8 @@ function hydrate(blob) {
     c.vy = 0;
     return c;
   });
-  if ((blob.v || 0) < 3 && coins.length < 90) topUp(coins, Math.random);
-  const chapter = SETS[blob.chapter || 0] || SETS[0];
-  const prizeId = chapter.unique || chapter.prize;
-  const floor = LAYERS[2];
-  for (const c of coins) {
-    if (c.id !== prizeId || c.layer !== 2) continue;
-    if (c.y > floor.back + 120) {
-      c.y = floor.back + 58;
-      c.x = clamp(c.x, floor.left + c.r + 10, floor.right - c.r - 10);
-      c.vx = 0;
-      c.vy = 0;
-    }
-  }
+  if (coins.length < 40) topUp(coins, Math.random);
+  plantPrize(coins, blob.chapter || 0, Math.random);
   return {
     level: blob.chapter || 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
@@ -296,11 +297,9 @@ function fresh(level, rng) {
     ...pack(2, rng, set.mix2),
   ];
   const seen = [];
-  if (set.unique) {
-    const L = LAYERS[2];
-    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 28, L.back + 58, 2));
-    seen.push(set.unique);
-  }
+  plantPrize(coins, level, rng);
+  const prizeId = set.unique || set.prize;
+  if (prizeId) seen.push(prizeId);
   if (level >= 3) {
     const L = LAYERS[1];
     coins.push(mint('heart-gear', L.left + 90 + rng() * 160, L.back + 52, 1));
@@ -311,7 +310,7 @@ function fresh(level, rng) {
     level, t: 0, coins, aim: 450, ammo, total: ammo, score: 0, specials: 0,
     cooldown: 0, settle: 0, falling: [], dropped: 0, started: !alleyPlay,
     queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0, fly: [],
-    note: alleyPlay ? 'The prize sits at the back. Shove it off the lip to keep it.' : 'Drop a penny from the purse.',
+    note: alleyPlay ? 'The prize is in the tide. Shove it off a lip to keep it.' : 'Drop a penny from the purse.',
   };
 }
 
@@ -333,13 +332,15 @@ export default {
   ],
   persist,
   create(level, rng) {
+    const roll = rng || Math.random;
     const saved = loadMachine(level);
-    if (saved && saved.pieces && saved.pieces.length) {
+    if (saved && saved.pieces && saved.pieces.length >= 40) {
       const s = hydrate(saved);
       s.level = level;
+      plantPrize(s.coins, level, roll);
       return s;
     }
-    const s = fresh(level, rng);
+    const s = fresh(level, roll);
     persist(s);
     return s;
   },
