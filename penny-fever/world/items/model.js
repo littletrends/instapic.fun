@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const rows = [
-    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Your spendable pennies. Buy more from Aura at the ticket booth.',.07],
+    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Spend these at Copper Falls, and for another lap of the boards. Cash a booth ticket at the falls for a five-penny stack.',.07],
+    ['ticket-roll','Ticket roll','Essentials','scrip',null,'Aura’s ticket booth','Booth tickets torn from Aura’s brass roll. One ticket enters a stall. Cash one at Copper Falls for five pennies.',.08,'tickets'],
     ['admission-ticket','Admission ticket','Essentials','ticket',null,'Aura’s ticket booth','Take a ticket from Aura. Its punched heart remembers your entry.',.025],
     ['showman-pass','Showman pass','Essentials','pass',null,'Backstage · Bea','The demo Showman pass lasts until midnight in Darwin.',.06],
     ['ticket-stub','Ticket stub','Alley Ephemera','curio','ticket_stub','Mystic · Iris','Draw a fortune at the Mystic Tent.',.035],
@@ -37,7 +38,7 @@
     ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Finish the grand duck parade.',.12,'garden-prizes'],
     ['coin-album','Coin album','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'pennies'],
     ['treasure-tin','Treasure tin','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'gift-wrapping'],
-    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'pennies'],
+    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Copper Falls · Copper','Cash a booth ticket at Copper Falls for five spendable pennies. The stack is the keepsake; the count lives in your pocket.',.1,'pennies'],
     ['surprise-parcel','Surprise parcel','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'gift-wrapping'],
     ['stamp-passport','Stamp passport','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'tickets'],
     ['lost-and-found-tag','Lost-and-found tag','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'working-midway'],
@@ -165,10 +166,57 @@
     if (collection && albumMeta[collection]) return collection;
     return 'rewards';
   }
+  const bookMeta = [
+    {id:'penny-collector-book', title:'Penny collector book', kicker:'Pennies & tokens', blurb:'Copper wells for every penny, token and little purse.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png'},
+    {id:'curio-cabinet-album', title:'Curio cabinet album', kicker:'Cabinet of curios', blurb:'Little labelled niches for alley finds and machine guts.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/curio-cabinet-album/front.png'},
+    {id:'fortune-journal', title:'Fortune journal', kicker:'Future curios', blurb:'Moon-clasp pages for compasses, keys, bottles and secrets still on their way.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/fortune-journal/front.png'},
+    {id:'photo-accordion', title:'Photo accordion', kicker:'Wonders in frames', blurb:'Fold-out frames for peepshows, flickers, lockets and other sights worth keeping.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/photo-accordion/front.png'},
+    {id:'pressed-flower-book', title:'Pressed flower book', kicker:'Parlour keepsakes', blurb:'Vellum pockets for roses, lockboxes, cameras and other tender prizes.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/pressed-flower-book/front.png'},
+    {id:'ride-stamp-book', title:'Ride stamp book', kicker:'Ride keepsakes', blurb:'A cream passport waiting for every amusement’s coloured stamp.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/ride-stamp-book/front.png'},
+    {id:'charm-display-case', title:'Charm display case', kicker:'Things to wear', blurb:'Hooks and velvet paper for bows, pins, spectacles and hanging charms.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/charm-display-case/front.png'},
+    {id:'memory-scrapbook', title:'Memory scrapbook', kicker:'Tickets & awards', blurb:'Pockets for tickets, maps, ribbons and the night you first walked in.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/memory-scrapbook/front.png'},
+    {id:'garden-party-book', title:'Garden party book', kicker:'Garden prizes', blurb:'A costume book that also keeps dishes, clocks, ducks and garden souvenirs.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/garden-party-book/front.png'},
+    {id:'winter-lantern-book', title:'Winter lantern book', kicker:'Seasonal treasures', blurb:'Scarves, seeds, globes, fans and the little pumpkin who waits for autumn.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/winter-lantern-book/front.png'},
+    {id:'seaside-day-book', title:'Seaside day book', kicker:'Sweet treats', blurb:'A sailor’s album of floss, fizz, cocoa, toffee and picnic parcels.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/seaside-day-book/front.png'},
+    {id:'moonlight-wardrobe', title:'Moonlight wardrobe', kicker:'Costume book', blurb:'Crescent cloak pages. Outfit cutouts will settle here as they are found.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/moonlight-wardrobe/front.png'},
+    {id:'night-suitcase', title:'Night suitcase', kicker:'Parcels & tools', blurb:'A paper-lined case for wrapping, punches, tags and the kit that keeps the midway working.', kind:'case', cover:'assets/restyle/game-sprites/garden-prizes/night-suitcase/front.png'},
+    {id:'pocket-theatre', title:'Pocket theatre', kicker:'Toys & game prizes', blurb:'A tiny stage for prize-shelf friends, birds, boats and other trophies.', kind:'album', cover:'assets/restyle/game-sprites/toy-shelf/pocket-theatre/front.png'},
+  ];
+  const bookIds = new Set(bookMeta.map(b => b.id));
+  const albumBook = {
+    pennies:'penny-collector-book',
+    ephemera:'curio-cabinet-album',
+    guts:'curio-cabinet-album',
+    'future-curios':'fortune-journal',
+    'wonder-prizes':'photo-accordion',
+    'parlour-prizes':'pressed-flower-book',
+    'ride-keepsakes':'ride-stamp-book',
+    wearables:'charm-display-case',
+    tickets:'memory-scrapbook',
+    awards:'memory-scrapbook',
+    essentials:'memory-scrapbook',
+    'garden-prizes':'garden-party-book',
+    'seasonal-treasures':'winter-lantern-book',
+    'sweet-treats':'seaside-day-book',
+    'gift-wrapping':'night-suitcase',
+    'working-midway':'night-suitcase',
+    rewards:'night-suitcase',
+    'toy-shelf':'pocket-theatre',
+    'game-prizes':'pocket-theatre',
+  };
+  function bookOf(id, album, collection) {
+    if (id === 'everyday-penny' || id === 'five-penny-stack') return 'penny-collector-book';
+    if (id === 'ticket-roll') return 'memory-scrapbook';
+    if (id === 'moonlight-wardrobe' || collection === 'doll-accessories') return 'moonlight-wardrobe';
+    if (id === 'night-suitcase') return 'night-suitcase';
+    if (bookIds.has(id)) return id;
+    return albumBook[album] || 'memory-scrapbook';
+  }
   const definitions = Object.freeze(rows.map(([id,name,category,kind,key,source,hint,depth,collection]) => {
     const album = albumOf(category, collection);
+    const book = bookOf(id, album, collection);
     return Object.freeze({
-      id,name,category,kind,key,source,hint,depth,collection,album,
+      id,name,category,kind,key,source,hint,depth,collection,album,book,
       alpha: Boolean(collection),
       asset: collection
         ? `assets/restyle/game-sprites/${collection}/${id}/front.png`
@@ -180,6 +228,7 @@
     });
   }));
   const albums = Object.freeze(albumOrder.map(id => Object.freeze({id, title: albumMeta[id][0], blurb: albumMeta[id][1]})));
+  const books = Object.freeze(bookMeta.map(b => Object.freeze({...b})));
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const count = value => Number.isFinite(Number(value)) ? Math.max(0,Math.floor(Number(value))) : 0;
   const day = () => new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Darwin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -201,11 +250,16 @@
     return definitions.map(d=>{
       let owned=false,quantity=0,status='Not collected yet',at=null;
       if (d.kind==='currency') { owned=true; quantity=count(state.demoCoins); status=`${quantity} ${quantity===1?'penny':'pennies'} in your pocket`; }
+      if (d.kind==='scrip') { owned=true; quantity=count(state.playTickets); status=`${quantity} booth ${quantity===1?'ticket':'tickets'} on the roll`; }
       if (d.kind==='ticket') { owned=!!(state.admitTicket||state.admitPassed||state.alleyLaps); quantity=owned?1:0; status=state.admitPassed?'Punched · this lap':state.admitTicket?'Ready to show Aura':state.alleyLaps?'Used · first walk':'Take a ticket at the door'; }
       if (d.kind==='pass') { owned=!!state.showmanPass && state.passDay===today; quantity=owned?1:0; status=owned?'Active until midnight Darwin':'No active Showman pass'; }
       if (d.kind==='curio') { owned=!!state.curios?.[d.key];quantity=owned?1:0;at=state.curios?.[d.key]?.at||null;status=owned?'Collected':status; }
       if (d.kind==='reward') { owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;status=owned?'Collection keepsake':status; }
-      if (d.kind==='prize') { owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;status=owned?'Won in a paper world':status; }
+      if (d.kind==='prize') {
+        owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;
+        const src=state.paperInventory?.items?.[d.id]?.source;
+        status=owned?(src==='cash-drop'?'Cashed at Copper Falls':'Won in a paper world'):status;
+      }
       return {...d,owned,quantity,status,at,punched:d.kind==='ticket'&&!!state.admitPassed};
     });
   }
@@ -253,5 +307,14 @@
     state.paperInventory.items[d.id] = {at: now, source: result.stall || 'paper-world', chapter: result.chapter};
     return [d.id];
   }
-  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,albums,reconcile,entries,resolve,day,recordResult,recordPaperPrize});
+  function stampKeepsake(state, id, source, now=Date.now()) {
+    if (!object(state) || !id) return false;
+    reconcile(state);
+    if (state.paperInventory.items[id]) return false;
+    const d = definitions.find(i => i.id === id);
+    if (!d || d.kind === 'currency' || d.kind === 'scrip' || d.kind === 'ticket' || d.kind === 'pass') return false;
+    state.paperInventory.items[id] = {at: now, source: source || 'pocket'};
+    return true;
+  }
+  globalThis.PennyFeverInventoryModel=Object.freeze({definitions,albums,books,reconcile,entries,resolve,day,recordResult,recordPaperPrize,stampKeepsake});
 })();

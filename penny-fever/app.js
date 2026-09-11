@@ -154,6 +154,7 @@
       lastFortune: null,
       curios: {},
       demoCoins: 3,
+      playTickets: 3,
       admitTicket: false,
       admitPassed: false,
       alleyLaps: 0,
@@ -222,6 +223,11 @@
     state.demoCoins = 3;
     state._coinEconomyV1 = true;
     state._cashedPlays = 0;
+    saveState(state);
+  }
+  if (!state._ticketEconomyV1) {
+    if (state.playTickets == null) state.playTickets = 3;
+    state._ticketEconomyV1 = true;
     saveState(state);
   }
 
@@ -676,13 +682,59 @@
   }
 
   const PENNY_ROLL = 10;
+  const TICKET_STRIP = 5;
+  const PENNY_STACK = 5;
 
   function pennies() {
     return Math.max(0, Math.floor(Number(state.demoCoins) || 0));
   }
 
+  function tickets() {
+    return Math.max(0, Math.floor(Number(state.playTickets) || 0));
+  }
+
+  function stampKeepsake(id, source) {
+    const model = window.PennyFeverInventoryModel;
+    if (!model?.stampKeepsake) return false;
+    if (!model.stampKeepsake(state, id, source)) return false;
+    saveState(state);
+    window.dispatchEvent(new CustomEvent("pennyfever:inventoryaward", { detail: { ids: [id] } }));
+    return true;
+  }
+
+  function addTickets(amount) {
+    const added = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!added) return 0;
+    state.playTickets = tickets() + added;
+    saveState(state);
+    refreshNightBoard();
+    return added;
+  }
+
+  function spendTicket(kind) {
+    if (state.showmanPass && state.passDay === darwinDay()) return true;
+    if (tickets() < 1) return false;
+    state.playTickets = tickets() - 1;
+    if (kind) state.plays[kind] = (state.plays[kind] || 0) + 1;
+    saveState(state);
+    refreshNightBoard();
+    return true;
+  }
+
+  function buyTicketStrip() {
+    return addTickets(TICKET_STRIP);
+  }
+
   function buyPennyRoll() {
     return addDemoCoins(PENNY_ROLL);
+  }
+
+  function cashTicketForPennies() {
+    if (tickets() < 1) return 0;
+    state.playTickets = tickets() - 1;
+    const added = addDemoCoins(PENNY_STACK);
+    stampKeepsake("five-penny-stack", "cash-drop");
+    return added;
   }
 
   function cashInCompletedPlays() {
@@ -3808,11 +3860,18 @@
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
     pennies,
+    tickets,
     spendDemoCoin,
     spendPennies,
+    spendTicket,
     addDemoCoins,
+    addTickets,
     buyPennyRoll,
+    buyTicketStrip,
+    cashTicketForPennies,
     pennyRoll: PENNY_ROLL,
+    ticketStrip: TICKET_STRIP,
+    pennyStack: PENNY_STACK,
     cashInCompletedPlays,
     award,
     showBanner,

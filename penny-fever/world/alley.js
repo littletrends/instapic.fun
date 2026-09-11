@@ -7,7 +7,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=paper-alley-live-24";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-pennies-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-tickets-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-24";
 import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-26";
@@ -786,9 +786,21 @@ function hasAdmitTicket() {
 function pocketPennies() {
   return Number(pfState().demoCoins) || 0;
 }
+function pocketTickets() {
+  const PF = window.PennyFever;
+  if (typeof PF?.tickets === "function") return PF.tickets();
+  return Number(pfState().playTickets) || 0;
+}
 function paintPocketHud() {
   const pocketCount = el("pfPocketCoinCount");
   if (pocketCount) pocketCount.textContent = String(pocketPennies());
+  const ticketCount = el("pfPocketScripCount");
+  if (ticketCount) ticketCount.textContent = String(pocketTickets());
+}
+function stallEnterLabel(id) {
+  if (id === "coin-pusher") return "Cash drop";
+  if (id === "fortune") return "Fortune · 1 ticket";
+  return "Enter · 1 ticket";
 }
 
 const api = {
@@ -856,6 +868,7 @@ function attachHud() {
           <strong id="pfWorldNearest">Heart palace</strong>
         </div>
         <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
+          <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
           <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
           <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
           <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
@@ -1001,6 +1014,7 @@ function walkToMapPlace(place) {
 function bindHud() {
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
+  const pocketScrip = el("pfPocketScrip");
   const pocketTicket = el("pfPocketTicket");
   const pocketDoll = el("pfPocketDoll");
   const pocketChat = el("pfPocketChat");
@@ -1076,6 +1090,9 @@ function bindHud() {
     });
   }
   bindCardSpin();
+  if (pocketScrip) pocketScrip.addEventListener("click", () => {
+    window.PennyFeverInventory?.open('ticket-roll');
+  });
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
     window.PennyFeverInventory?.open('everyday-penny');
   });
@@ -1388,7 +1405,7 @@ function syncStallCard(best) {
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
-        enter.textContent = best.id === "fortune" ? "Fortune · 1 penny" : "Enter · 1 penny";
+        enter.textContent = stallEnterLabel(best.id);
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;
@@ -1436,8 +1453,8 @@ function enterNearest() {
   if (!nearest || !nearest.atCounter) return;
   if (stallCardOpen && nearest.kind === "stall") {
     const slug = nearest.id;
-    if (pocketPennies() < 1 && !pfState().showmanPass) {
-      tillMessage = "Need a penny, darling. Buy a roll at my ticket booth.";
+    if (slug !== "coin-pusher" && pocketTickets() < 1 && !pfState().showmanPass) {
+      tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
       tillMessageUntil = performance.now() + 7000;
       return;
     }
@@ -1452,7 +1469,7 @@ function enterNearest() {
     const kind = laps === 0 ? "ticket" : "penny";
     if (PF && typeof PF.admitAlleyLap === "function") {
       if (!PF.admitAlleyLap(kind) && kind === "penny") {
-        tillMessage = "A penny for the next walk. Buy a roll at the ticket booth if the pocket is empty.";
+        tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
         tillMessageUntil = performance.now() + 7000;
       }
     }
@@ -1848,7 +1865,7 @@ function handleGatePrompt() {
   const kind = laps === 0 ? "ticket" : "penny";
   if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
     if (kind === "penny") {
-      tillMessage = "A penny for the next walk. Buy a roll at the ticket booth if the pocket is empty.";
+      tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
       tillMessageUntil = performance.now() + 7000;
     }
     return true;
@@ -2092,7 +2109,7 @@ function findNearest() {
       const playable = best.kind === "stall";
       const chatable = best.kind === "stall" || best.kind === "aura";
       enter.hidden = !playable;
-      enter.textContent = best.id === "fortune" ? "Fortune · 1 penny" : "Enter · 1 penny";
+      enter.textContent = stallEnterLabel(best.id);
       if (chatBtn) {
         chatBtn.hidden = !chatable;
         chatBtn.textContent = "Chat";

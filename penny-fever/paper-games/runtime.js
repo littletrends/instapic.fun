@@ -33,9 +33,9 @@ function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(typ
 function dispose(){if(disposed)return;disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- engine=(await import(entry.module+'?v=paper-pennies-1')).default;
+ engine=(await import(entry.module+'?v=paper-tickets-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
- if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Each drop spends a penny from your pocket. Winnings return to the pocket. Buy more from Aura at the ticket booth.':'A penny from your pocket starts this stall. Workshop play from the paper-games list stays free.';}
+ if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Each drop spends a penny from your pocket. Cash a booth ticket for a five-penny stack. Winnings return to the pocket.':'A booth ticket from Aura’s roll starts this stall. Cash tickets for pennies at Copper Falls. Workshop play from the paper-games list stays free.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave');});}
  engine.levels.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+name;$('#chapter').append(o);});
  draw=new Draw(canvas);draw.art={};

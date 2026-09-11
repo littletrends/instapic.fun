@@ -43,7 +43,7 @@ function drop(s) {
   if (s.cooldown > 0) return;
   if (alleyPlay) {
     if (!spend(1)) {
-      s.note = 'Need a penny. Buy a roll at Aura’s ticket booth.';
+      s.note = 'Need a penny. Cash a booth ticket for a five-penny stack.';
       return;
     }
     s.started = true;
@@ -63,7 +63,7 @@ export default {
   title: 'Copper Falls',
   intro: 'A little mechanical tide of pressed pennies. Drop them at the lock, wait for the brass boom, and watch the canal carry a fortune to the docks.',
   instructions: alleyPlay
-    ? 'Move the chute along the top lock, then drop a penny from your pocket. Arrows choose the chute; Space drops. Pennies that reach the docks go back into your pocket — specials are worth more. The machine sleeps until the first drop. Buy more pennies from Aura if the pocket runs dry.'
+    ? 'Move the chute along the top lock, then drop a penny from your pocket. Arrows choose the chute; Space drops. Pennies that reach the docks go back into your pocket — specials are worth more. Cash a booth ticket at the bar for a five-penny stack. The machine sleeps until the first drop.'
     : 'Move the chute along the top lock, then tap or press Drop. Arrows choose the chute; Space drops. The boom sweeps the water. Special pennies are worth more when they reach the lower docks. After the last penny the canal has a few seconds to settle. Workshop scores never enter your wallet.',
   levels: ['The copper tide', 'Moon mint', 'The crowded mint', 'A tide of crowns', 'The midnight mint', 'Pennies in a flood'],
   actions: [{id: 'drop', label: alleyPlay ? 'Drop a penny' : 'Drop practice penny'}],

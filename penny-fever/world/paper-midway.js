@@ -77,13 +77,14 @@ export function extendPaperAlley(scene,len){if(!paperRail)return;
 let panel,playerRef,auraRef,apiRef,dismissed=false;
 function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
 function pocketCount(){return Math.max(0,Math.floor(Number(apiRef?.getState?.()?.demoCoins)||0))}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='demo';panel.dataset.square='pending';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy pennies</button></div><small id="auraCounterMessage" aria-live="polite">A ticket for the first walk. A penny after that. Square will take this till.</small>';document.body.append(panel);
+function ticketCount(){return Math.max(0,Math.floor(Number(apiRef?.tickets?.()??apiRef?.getState?.()?.playTickets)||0))}
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='demo';panel.dataset.square='pending';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy tickets</button></div><small id="auraCounterMessage" aria-live="polite">A walk-in ticket for the first lap. Booth tickets from this roll after that. Square will take this till.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
-  const n=apiRef.buyPennyRoll?apiRef.buyPennyRoll():apiRef.addDemoCoins(10);
+  const n=apiRef.buyTicketStrip?apiRef.buyTicketStrip():apiRef.addTickets?apiRef.addTickets(5):0;
   const note=panel.querySelector('#auraCounterMessage');
-  note.textContent=`A roll of ${n}. Square will take this till — this is the stand-in until then.`;
+  note.textContent=`A strip of ${n} from the roll. One ticket enters a booth. Cash one at Copper Falls for five pennies. Square will take this till.`;
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
@@ -98,7 +99,7 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
     return;
   }
   if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';return;}
-  note.textContent='Need a penny. Buy a roll here, then pay for the walk.';
+  note.textContent='Need a penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.';
  };
 }
 export function updateTicketService(){
@@ -110,7 +111,8 @@ export function updateTicketService(){
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
  const coins=pocketCount();
- panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${coins} ${coins===1?'penny':'pennies'}`;
+ const tix=ticketCount();
+ panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${tix} ${tix===1?'ticket':'tickets'} · ${coins} ${coins===1?'penny':'pennies'}`;
  const admit=panel.querySelector('#auraCounterAdmission');
  admit.disabled=!!state.admitPassed;
  admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
