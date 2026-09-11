@@ -8,6 +8,11 @@ function fever() {
   try { return window.parent.PennyFever || null; } catch { return null; }
 }
 
+export function owned(id) {
+  if (!id) return false;
+  try { return !!fever()?.getState?.()?.paperInventory?.items?.[id]; } catch { return false; }
+}
+
 export function pocket() {
   if (!alleyPlay) return null;
   const n = Number(fever()?.getState?.()?.demoCoins);

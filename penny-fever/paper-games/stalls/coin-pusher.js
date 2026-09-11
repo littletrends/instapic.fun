@@ -304,6 +304,7 @@ export default {
   title: 'Copper Falls',
   live: alleyPlay,
   tables: true,
+  chapterEnds: false,
   tableDetail: 'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.',
   intro: 'Six tables, each a new set. The bank lets a little copper go so you stay. Dump the purse and the table usually wins. Walk away when the lip still looks kind — that table keeps until you come back.',
   instructions: alleyPlay

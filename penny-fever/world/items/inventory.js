@@ -140,11 +140,13 @@ function mount() {
   document.body.append(notice);
   let noticeTimer;
   window.addEventListener('pennyfever:inventoryaward', e => {
-    const names = (e.detail?.ids || []).map(id => model.definitions.find(d => d.id === id)?.name).filter(Boolean);
+    const ids = e.detail?.ids || [];
+    const names = ids.map(id => model.definitions.find(d => d.id === id)?.name).filter(Boolean);
     if (!names.length) return;
     notice.textContent = 'Kept in the treasure book: ' + names.join(' · ');
     notice.hidden = false;
     clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { notice.hidden = true; }, 6500);
+    if (e.detail?.celebrate !== false && ids[0]) celebrate(ids[0]);
   });
   dialog.addEventListener('keydown', e => {
     e.stopPropagation();
@@ -152,7 +154,7 @@ function mount() {
     if (!$('pocketInspect').hidden) { e.preventDefault(); hideInspect(); }
     else if (bookId) { e.preventDefault(); closeBook(); }
   });
-  globalThis.PennyFeverInventory = {open, close: () => dialog.close()};
+  globalThis.PennyFeverInventory = {open, celebrate, close: () => dialog.close()};
   updateLaunch();
   const preview = new URLSearchParams(location.search).get('treasures');
   if (studio) open();
@@ -395,7 +397,9 @@ function describe(item) {
 function hideInspect() {
   selectionToken++;
   viewer?.destroy?.(); viewer = null;
+  $('pocketInspect').classList.remove('is-prize-arrive');
   $('pocketInspect').hidden = true;
+  $('treasureStage').classList.remove('is-prize-chest');
   $('treasureStage').replaceChildren();
 }
 
@@ -438,11 +442,29 @@ async function select(id, punchedOverride) {
       viewer.show(item, art, !item.owned);
     }
     text('treasureLoading', '');
+    if (spinPrize) {
+      spinPrize = false;
+      const inspect = $('pocketInspect');
+      const stage = $('treasureStage');
+      inspect?.classList.add('is-prize-arrive');
+      stage?.classList.add('is-prize-chest');
+      if (viewer && 'vel' in viewer) { viewer.vel = 0.16; viewer.coast?.(); }
+      setTimeout(() => {
+        inspect?.classList.remove('is-prize-arrive');
+        stage?.classList.remove('is-prize-chest');
+      }, 3200);
+    }
   } catch {
     if (token !== selectionToken || !dialog.open) return;
     text('treasureLoading', 'This keepsake could not be opened. Your collection is still saved.');
     $('treasureRetry').hidden = false;
   }
+}
+
+let spinPrize = false;
+function celebrate(id) {
+  spinPrize = true;
+  open(id);
 }
 
 function open(id) {

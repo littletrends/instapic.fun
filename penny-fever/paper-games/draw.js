@@ -4,7 +4,7 @@ export const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const lerp=(a,b,t)=>a+(b-a)*t;
 export function segmentDistance(p,a,b){const x=b.x-a.x,y=b.y-a.y,t=clamp(((p.x-a.x)*x+(p.y-a.y)*y)/(x*x+y*y||1),0,1);return Math.hypot(p.x-a.x-x*t,p.y-a.y-y*t);}
 export function seeded(seed=41){return()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
-export function done(s,title,detail){s.result={title,detail};}
+export function done(s,title,detail,extra={}){s.result={title,detail,...extra};}
 export class Draw {
  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');if(!this.c)throw Error('Canvas is unavailable.');this.art={};this.resize(450,600,1);}
  resize(w,h,r=1){r=clamp(r,1,1.5);this.canvas.width=Math.max(1,Math.round(w*r));this.canvas.height=Math.max(1,Math.round(h*r));}
