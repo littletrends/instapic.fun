@@ -752,8 +752,10 @@
   }
 
   function setChalk() {
+    const el = $("chalkText");
+    if (!el) return;
     const i = Math.floor(Date.now() / 86400000) % CHALK.length;
-    $("chalkText").textContent = CHALK[i];
+    el.textContent = CHALK[i];
   }
 
 
@@ -799,14 +801,18 @@
       const alleyMotion = $("alleyMotion");
       if (!paperRail && alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
       // ensure foyer init bits
-      setChalk();
-      renderCabinet();
-      refreshFortuneUi();
-      refreshPassUi();
-      refreshPackUi();
-      resetCabinetArt();
-      refreshNightBoard();
-      renderCharmWall();
+      try {
+        setChalk();
+        renderCabinet();
+        refreshFortuneUi();
+        refreshPassUi();
+        refreshPackUi();
+        resetCabinetArt();
+        refreshNightBoard();
+        renderCharmWall();
+      } catch (err) {
+        console.warn("Penny Fever foyer refresh skipped a missing cabinet node", err);
+      }
       if (alleyReturnY > 0) {
         const returnY = alleyReturnY;
         requestAnimationFrame(() => window.scrollTo({ top: returnY, behavior: "auto" }));
@@ -3257,19 +3263,23 @@
 
 
   function refreshPackUi() {
+    const pack = $("pennyPack");
+    const mint = $("mintPack");
+    const status = $("packStatus");
+    if (!pack && !mint && !status) return;
     const used = state.packDay === darwinDay();
     if (used && state.lastPack && state.lastPack.length) {
-      $("pennyPack").hidden = false;
+      if (pack) pack.hidden = false;
       state.lastPack.forEach((label, i) => {
         const el = $("penny" + i);
         if (el) el.textContent = label;
       });
-      $("mintPack").disabled = true;
-      $("packStatus").textContent = "Pack minted for this Darwin evening (demo)";
+      if (mint) mint.disabled = true;
+      if (status) status.textContent = "Pack minted for this Darwin evening (demo)";
     } else {
-      $("pennyPack").hidden = true;
-      $("mintPack").disabled = false;
-      $("packStatus").textContent = "Three pennies · one pack per Darwin evening (demo)";
+      if (pack) pack.hidden = true;
+      if (mint) mint.disabled = false;
+      if (status) status.textContent = "Three pennies · one pack per Darwin evening (demo)";
     }
   }
 
