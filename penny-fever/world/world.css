@@ -635,8 +635,14 @@ body.pf-alley-map-open .pf-stall-card,
 body.pf-alley-map-open .pf-world-prompt,
 body.pf-alley-map-open .aura-counter-service,
 body.pf-alley-map-open .aura-till,
-body.pf-alley-map-open .pf-world-top,
 body.pf-alley-map-open .pf-world-hint {
+  visibility: hidden;
+}
+body.pf-alley-map-open .pf-world-top {
+  visibility: visible;
+  z-index: 26;
+}
+body.pf-alley-map-open .pf-world-compass {
   visibility: hidden;
 }
 

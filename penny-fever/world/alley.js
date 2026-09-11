@@ -1001,19 +1001,45 @@ function openAlleyMap() {
   const open = el("pfAlleyMapOpen");
   if (open) open.setAttribute("aria-pressed", "true");
   syncAlleyMapYou();
+  paintPocketHud();
+}
+
+function enterStallById(id) {
+  if (!id) return false;
+  if (id !== "coin-pusher" && pocketTickets() < 1 && !pfState().showmanPass) {
+    tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
+    tillMessageUntil = performance.now() + 7000;
+    return false;
+  }
+  if (!document.getElementById("cabinet-" + id)) return false;
+  closeStallCard();
+  closeAlleyMap();
+  location.hash = "cabinet/" + id;
+  return true;
 }
 
 function walkToMapPlace(place) {
-  closeAlleyMap();
   if (!player) return;
-  if (place === "pier") return warp(0, FOYER_IN + 1.2, 0);
-  if (place === "aura") return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
-  if (!ticketPassed()) return warp(paperRail ? -0.45 : 0, COUNTER.z + 1.15, 0);
-  if (place === "end") return warp(0, hallLen - 2.4, 0);
-  const s = stalls.find((x) => x.userData.stall?.id === place);
-  if (!s) return;
-  const side = Math.sign(s.position.x) || 1;
-  warp(side * 0.28, s.position.z, 0);
+  if (place === "pier") {
+    closeAlleyMap();
+    return warp(0, FOYER_IN + 1.2, 0);
+  }
+  if (place === "aura") {
+    closeAlleyMap();
+    return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  }
+  if (place === "end") {
+    closeAlleyMap();
+    if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+    return warp(0, hallLen - 2.4, 0);
+  }
+  const s = stalls?.find((x) => x.userData.stall?.id === place);
+  if (s) {
+    const side = Math.sign(s.position.x) || 1;
+    warp(side * 0.28, s.position.z, 0);
+  }
+  if (enterStallById(place)) return;
+  closeAlleyMap();
 }
 
 function bindHud() {
@@ -1460,14 +1486,7 @@ function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
   if (stallCardOpen && nearest.kind === "stall") {
-    const slug = nearest.id;
-    if (slug !== "coin-pusher" && pocketTickets() < 1 && !pfState().showmanPass) {
-      tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
-      tillMessageUntil = performance.now() + 7000;
-      return;
-    }
-    closeStallCard();
-    location.hash = "cabinet/" + slug;
+    enterStallById(nearest.id);
     return;
   }
   if (stallCardOpen && nearest.kind === "aura") {
