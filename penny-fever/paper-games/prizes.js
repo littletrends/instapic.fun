@@ -186,11 +186,11 @@ export const kits = {
     prizes: ['shutter-click','photo-accordion','memory-camera','ride-stamp-book','first-visit-badge','pocket-theatre'],
   },
   pinball: {
-    sprites: ['lightning-pin','star-token'],
-    prizes: ['lightning-pin','star-token','pegboard-star','summer-sun-pin','bullseye-clock','new-year-star-cracker'],
+    sprites: ['lightning-pin','everyday-penny','star-token','moon-penny','rose-penny','crown-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket','penny-purse'],
+    prizes: ['lightning-pin','star-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket'],
   },
   'milk-bottles': {
-    sprites: ['message-bottle','mercury-bead'],
+    sprites: ['message-bottle','mercury-bead','dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant','penny-purse','everyday-penny'],
     prizes: ['dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant'],
   },
   'cover-the-spot': {
