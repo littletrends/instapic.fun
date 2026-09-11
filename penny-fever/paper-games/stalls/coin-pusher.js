@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-5';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-6';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -108,7 +108,7 @@ function startStroke(s) {
   s.started = true;
 }
 function persist(s) {
-  if (!alleyPlay || !s) return;
+  if (!s) return;
   saveMachine(snapshot(s));
   s.dirty = false;
   s.saveAt = s.t;
@@ -294,12 +294,10 @@ export default {
   ],
   persist,
   create(level, rng) {
-    if (alleyPlay) {
-      const saved = loadMachine();
-      if (saved && saved.pieces && saved.pieces.length) return hydrate(saved);
-    }
+    const saved = loadMachine();
+    if (saved && saved.pieces && saved.pieces.length) return hydrate(saved);
     const s = fresh(level, rng);
-    if (alleyPlay) persist(s);
+    persist(s);
     return s;
   },
   update(s, dt, input) {
@@ -350,14 +348,7 @@ export default {
     const busy = s.queue > 0 || s.stroke > 0 || s.coins.some(c => c.falling || c.vx * c.vx + c.vy * c.vy > 2.2);
     if (!busy) {
       for (const c of s.coins) { c.vx = 0; c.vy = 0; }
-      if (alleyPlay && s.dirty && s.t - s.saveAt > 1.2) persist(s);
-      if (!alleyPlay && s.ammo === 0 && s.queue === 0) {
-        s.settle -= dt;
-        if (s.settle <= 0) s.result = {
-          title: 'The mint has settled',
-          detail: s.score + ' from the docks' + (s.specials ? ', including ' + s.specials + ' specials' : '') + '. A local workshop score, not wallet winnings.',
-        };
-      }
+      if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
       return;
     }
     if (s.restock && s.restock % 7 === 0) {
@@ -446,7 +437,7 @@ export default {
       for (const f of s.fly) f.t += dt;
       s.fly = s.fly.filter(f => f.t < f.dur);
     }
-    if (alleyPlay && s.dirty && s.t - s.saveAt > 1.4) persist(s);
+    if (s.dirty && s.t - s.saveAt > 1.4) persist(s);
   },
   pointer(s, type, p) {
     if (type === 'move' || type === 'down') s.aim = clamp(p.x, 280, 620);

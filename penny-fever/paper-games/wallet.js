@@ -48,14 +48,32 @@ export function keep(id) {
   }
 }
 
+const MACHINE_KEY = 'pennyFever.cashDrop';
+
+function readLocal() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const blob = JSON.parse(localStorage.getItem(MACHINE_KEY) || 'null');
+    return blob && Array.isArray(blob.pieces) ? blob : null;
+  } catch { return null; }
+}
+
+function validMachine(blob) {
+  return blob && blob.v >= 1 && blob.v <= 3 && Array.isArray(blob.pieces) && blob.pieces.length > 0;
+}
+
 export function loadMachine() {
-  if (!alleyPlay) return null;
-  const blob = fever()?.getState?.()?.cashDrop;
-  return blob && blob.v >= 1 && blob.v <= 3 && Array.isArray(blob.pieces) ? blob : null;
+  const parent = fever()?.getState?.()?.cashDrop;
+  const local = readLocal();
+  const a = validMachine(parent) ? parent : null;
+  const b = validMachine(local) ? local : null;
+  if (a && b) return (Number(a.dropped) || 0) >= (Number(b.dropped) || 0) ? a : b;
+  return a || b;
 }
 
 export function saveMachine(blob) {
-  if (!alleyPlay || !blob) return;
+  if (!blob) return;
+  try { if (typeof localStorage !== 'undefined') localStorage.setItem(MACHINE_KEY, JSON.stringify(blob)); } catch { /* quota */ }
   const api = fever();
   const state = api?.getState?.();
   if (!state) return;
