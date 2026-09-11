@@ -1,7 +1,7 @@
 // New paper interiors. A row becomes playable only after its module and art land.
 // The two approved studies retain their own saved implementations.
 const rows = [
-  ['fortune','Iris','Fate’s Loom','Weave a fortune through a moving moon garden.'],
+  ['fortune','Iris','Iris’s Reading','Three cards: past, present, future. A keepsake is hiding in the deck.'],
   ['love','Rosalie','Heartstrings','Release a swinging heart into moving ribbon baskets.'],
   ['curios','Digby','Clockwork Menagerie','Reconnect tracks for a wandering clockwork beetle.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
