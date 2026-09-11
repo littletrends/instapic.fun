@@ -3866,6 +3866,7 @@
     spendTicket,
     addDemoCoins,
     addTickets,
+    stampKeepsake,
     buyPennyRoll,
     buyTicketStrip,
     cashTicketForPennies,
