@@ -920,7 +920,6 @@ function attachHud() {
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
         <p class="pf-stall-card-line" id="pfStallCardLine"></p>
         <div class="pf-stall-card-till" id="pfStallCardTill" hidden>
-          <button type="button" id="pfTillPennies">Buy pennies</button>
           <button type="button" id="pfTillTickets">Buy tickets</button>
           <button type="button" id="pfTillTrade">5 pennies → 1 ticket</button>
         </div>
@@ -1088,15 +1087,8 @@ function bindHud() {
     event.preventDefault();
     if (nearest) openBoothCard(nearest);
   });
-  const tillPennies = el("pfTillPennies");
   const tillTickets = el("pfTillTickets");
   const tillTrade = el("pfTillTrade");
-  if (tillPennies) tillPennies.addEventListener("click", () => {
-    const PF = window.PennyFever;
-    const n = PF?.buyPennyRoll?.() || PF?.addDemoCoins?.(10) || 0;
-    tillMessage = n ? `${n} pennies in the purse.` : "The till is quiet.";
-    tillMessageUntil = performance.now() + 4000;
-  });
   if (tillTickets) tillTickets.addEventListener("click", () => {
     const n = window.PennyFever?.buyTicketStrip?.() || 0;
     tillMessage = n ? `A strip of ${n} booth tickets.` : "No tickets printed.";
