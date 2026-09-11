@@ -1,11 +1,11 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-3';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-4';
 
 const DUMP_CAP = 24;
-const LIP_SPEED = 24;
-const STROKE = 0.48;
-const SHOVE = 72;
+const LIP_SPEED = 16;
+const STROKE = 0.42;
+const SHOVE = 118;
 const LAYERS = [
   {left: 258, right: 642, back: 188, lip: 448},
   {left: 228, right: 672, back: 478, lip: 768},
@@ -223,9 +223,9 @@ function restock(s, rng) {
 function pack(layer, rng, ids) {
   const L = LAYERS[layer];
   const out = [];
-  const dx = 32, dy = 28;
+  const dx = 33, dy = 30;
   let row = 0;
-  for (let y = L.back + 50; y <= L.lip - 18; y += dy, row++) {
+  for (let y = L.back + 48; y <= L.lip - 22; y += dy, row++) {
     const inset = (row % 2) * (dx * 0.5);
     for (let x = L.left + 22 + inset; x <= L.right - 22; x += dx) {
       const id = ids[out.length % ids.length];
@@ -310,6 +310,7 @@ export default {
       if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
       return;
     }
+    const shoving = s.stroke > 0 && s.stroke < 0.7;
     if (s.stroke > 0) {
       const was = s.stroke;
       s.stroke += dt / STROKE;
@@ -317,15 +318,21 @@ export default {
       const extend = t < 0.7 ? t / 0.7 : 1;
       const prev = was < 0.7 ? was / 0.7 : 1;
       if (extend > prev) {
+        const dPlate = (extend - prev) * SHOVE;
         for (let i = 0; i < LAYERS.length; i++) {
           const L = LAYERS[i];
           const plate = L.back + 22 + extend * SHOVE;
+          const depth = L.lip - L.back || 1;
           for (const c of s.coins) {
             if (c.falling || c.layer !== i) continue;
             if (c.y < plate + c.r) {
-              const shove = plate + c.r - c.y;
-              c.y += shove;
-              c.vy = Math.max(c.vy, shove * 55);
+              c.y += dPlate;
+              c.vy = Math.max(c.vy, dPlate * 90);
+            } else {
+              const along = clamp((c.y - L.back) / depth, 0, 1);
+              const tide = dPlate * (0.4 + 0.55 * along);
+              c.y += tide;
+              c.vy = Math.max(c.vy, tide * 70);
             }
           }
         }
@@ -390,7 +397,7 @@ export default {
         if (c.x < L.left + c.r) { c.x = L.left + c.r; c.vx = Math.abs(c.vx) * 0.2; }
         if (c.x > L.right - c.r) { c.x = L.right - c.r; c.vx = -Math.abs(c.vx) * 0.2; }
         if (c.y < L.back + c.r) { c.y = L.back + c.r; c.vy = Math.max(0, c.vy); }
-        if (c.y + c.r > L.lip && c.vy < LIP_SPEED) {
+        if (c.y + c.r > L.lip && !shoving && c.vy < LIP_SPEED) {
           c.y = L.lip - c.r;
           c.vy = 0;
         }
@@ -419,7 +426,7 @@ export default {
     for (const c of s.coins) {
       if (c.falling) { stay.push(c); continue; }
       const L = LAYERS[c.layer];
-      if (c.y + c.r > L.lip && c.vy >= LIP_SPEED) {
+      if (c.y + c.r > L.lip && (shoving || c.vy >= LIP_SPEED)) {
         if (!spill(s, c)) continue;
       }
       stay.push(c);
