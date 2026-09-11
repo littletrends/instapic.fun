@@ -638,13 +638,14 @@
       saveState(state);
     }
     const st = $("passStatus");
+    const passBtn = $("demoPass");
     if (state.showmanPass) {
-      st.textContent = "Showman’s Pass active until midnight Darwin (demo)";
-      $("demoPass").disabled = true;
+      if (st) st.textContent = "Showman’s Pass active until midnight Darwin (demo)";
+      if (passBtn) passBtn.disabled = true;
       setArt("passArt", VISUALS.pass.stamped);
     } else {
-      st.textContent = "No Square connected · demo unlock for testing";
-      $("demoPass").disabled = false;
+      if (st) st.textContent = "No Square connected · demo unlock for testing";
+      if (passBtn) passBtn.disabled = false;
       setArt("passArt", VISUALS.pass.idle);
     }
   }
@@ -3767,7 +3768,7 @@
 
     if ($("mintPack")) $("mintPack").addEventListener("click", mintPack);
 
-    $("demoPass").addEventListener("click", () => {
+    if ($("demoPass")) $("demoPass").addEventListener("click", () => {
       state.showmanPass = true;
       state.passDay = darwinDay();
       grantCurio("showman_ribbon", "alley");
@@ -3776,7 +3777,8 @@
       refreshPassUi();
       renderCabinet();
       setArt("passArt", VISUALS.pass.stamped);
-      $("auraLine").textContent = "Showman’s Pass (demo). Soft plays until midnight Darwin.";
+      const line = $("auraLine");
+      if (line) line.textContent = "Showman’s Pass (demo). Soft plays until midnight Darwin.";
       setAura("celebrate");
     });
 
