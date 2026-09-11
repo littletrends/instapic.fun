@@ -10,7 +10,11 @@ const entries = () => studio
   ? model.definitions.map(d => ({...d, owned: true, quantity: 1, status: 'Object study', punched: false}))
   : model.entries(state());
 const text = (id, value) => { $(id).textContent = value; };
-const interior = (all, id) => all.filter(i => i.book === id && i.id !== id);
+const interior = (all, id) => {
+  const book = model.books.find(b => b.id === id);
+  if (book?.master) return all.filter(i => i.id !== id);
+  return all.filter(i => i.book === id && i.id !== id);
+};
 
 function mount() {
   if (!model) return;
@@ -189,15 +193,18 @@ function openBook(id) {
   bookId = id;
   hideInspect();
   render();
-  $('shelfBack')?.focus();
+  const page = $('treasureItems')?.closest('.pocket-page');
+  if (page) page.scrollTop = 0;
+  if (window.matchMedia('(pointer: fine)').matches) $('shelfBack')?.focus();
 }
 
 function closeBook() {
   bookId = null;
   hideInspect();
   render();
-  const first = $('shelfGrid')?.querySelector('[data-book]');
-  first?.focus();
+  if (window.matchMedia('(pointer: fine)').matches) {
+    $('shelfGrid')?.querySelector('[data-book]')?.focus();
+  }
 }
 
 function render() {
@@ -214,8 +221,9 @@ function render() {
   $('treasureShelf').hidden = !onShelf;
   $('treasureSpread').hidden = onShelf;
   $('shelfBack').hidden = onShelf;
-  $('treasureSearch').placeholder = onShelf ? 'Find a book or keepsake' : 'Find a keepsake in this book';
-  text('shelfIntro', 'Open a book or album. Pages wait in silhouette until you find each keepsake.');
+  dialog.querySelector('.pocket-shell')?.classList.toggle('is-open-book', !onShelf);
+  $('treasureSearch').placeholder = onShelf ? 'Find a book or keepsake' : 'Find a keepsake';
+  text('shelfIntro', 'Open a book. Empty places wait for the keepsakes you bring home.');
 
   if (onShelf) {
     paintShelf(all);
@@ -224,23 +232,23 @@ function render() {
 
   if (!model.books.some(b => b.id === bookId)) bookId = model.books[0].id;
   const book = model.books.find(b => b.id === bookId);
-  const {group, have, ownedCover} = bookStats(all, bookId);
+  const {group, have} = bookStats(all, bookId);
   text('pocketAlbumKicker', book.kicker || 'Collection');
   text('pocketAlbumTitle', book.title);
   text('pocketAlbumBlurb', book.blurb);
   $('pocketAlbumBar').style.width = (group.length ? Math.round(have / group.length * 100) : 0) + '%';
-  text('pocketAlbumCount', (group.length
+  text('pocketAlbumCount', group.length
     ? have + ' of ' + group.length + ' found' + (have === group.length ? ' · complete' : '')
-    : 'Pages still being bound') + (ownedCover ? '' : ' · the book itself is still waiting'));
+    : 'Pages still being bound');
   const cover = $('bookCover');
   cover.src = book.cover;
   cover.alt = book.title;
-  $('bookCoverBtn').classList.toggle('is-missing', !ownedCover);
-  $('bookCoverBtn').setAttribute('aria-label', ownedCover ? 'Inspect ' + book.title : book.title + ' — not collected yet. Inspect the outline.');
+  $('bookCoverBtn').classList.remove('is-missing');
+  $('bookCoverBtn').setAttribute('aria-label', 'Inspect ' + book.title);
 
   const shown = bookItems(all, bookId);
   $('treasureEmpty').hidden = shown.length !== 0;
-  paintSlots(shown);
+  paintSlots(shown, {groupByBook: !!book?.master});
 }
 
 function paintShelf(all) {
@@ -250,8 +258,8 @@ function paintShelf(all) {
   let shown = 0;
   for (const book of model.books) {
     const {group, have, ownedCover} = bookStats(all, book.id);
-    const started = have > 0 || ownedCover;
-    const waiting = !group.length || have < group.length || !ownedCover;
+    const started = have > 0;
+    const waiting = !group.length || have < group.length;
     if (filter === 'found' && !started) continue;
     if (filter === 'missing' && !waiting) continue;
     const hay = `${book.title} ${book.blurb} ${book.kicker} ` + group.map(i => i.name).join(' ');
@@ -259,7 +267,7 @@ function paintShelf(all) {
     shown++;
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'shelf-book' + (ownedCover ? '' : ' is-missing') + (have === group.length && group.length ? ' is-complete' : '');
+    b.className = 'shelf-book' + (have === group.length && group.length ? ' is-complete' : '');
     b.dataset.book = book.id;
     b.setAttribute('aria-label', book.title + ', ' + have + ' of ' + group.length + ' found');
     const well = document.createElement('span');
@@ -277,11 +285,11 @@ function paintShelf(all) {
     root.append(b);
   }
   text('shelfIntro', shown
-    ? 'Open a book or album. Pages wait in silhouette until you find each keepsake.'
+    ? 'Open a book. Empty places wait for the keepsakes you bring home.'
     : 'Nothing on the shelf matches that search.');
 }
 
-function paintSlots(shown) {
+function paintSlots(shown, opts = {}) {
   observer?.disconnect();
   const token = ++listToken, root = $('treasureItems');
   root.replaceChildren();
@@ -297,6 +305,7 @@ function paintSlots(shown) {
       }).catch(() => {}).finally(() => { running--; if (token === listToken) pump(); });
     }
   }
+  const scrollRoot = root.closest('.pocket-page') || root;
   observer = new IntersectionObserver(changes => {
     for (const change of changes) if (change.isIntersecting) {
       observer.unobserve(change.target);
@@ -304,9 +313,9 @@ function paintSlots(shown) {
       if (item) queue.push({canvas: change.target, item});
     }
     pump();
-  }, {root, rootMargin: '40px'});
+  }, {root: scrollRoot, rootMargin: '80px'});
 
-  for (const item of shown) {
+  function appendSlot(item) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'album-slot' + (item.owned ? ' is-found' : ' is-missing');
@@ -333,10 +342,37 @@ function paintSlots(shown) {
     const name = document.createElement('strong');
     name.textContent = item.name;
     const mark = document.createElement('em');
-    mark.textContent = item.owned ? (item.kind === 'currency' ? 'Always with you' : 'Found') : 'To collect';
+    mark.textContent = item.owned ? (item.kind === 'currency' || item.kind === 'scrip' ? 'Always with you' : 'Found') : 'To collect';
     button.append(well, name, mark);
     root.append(button);
   }
+
+  if (opts.groupByBook) {
+    const byBook = new Map();
+    for (const item of shown) {
+      const bid = item.book || 'penny-collector-book';
+      if (!byBook.has(bid)) byBook.set(bid, []);
+      byBook.get(bid).push(item);
+    }
+    const order = model.books.map(b => b.id);
+    for (const item of shown) if (!order.includes(item.book)) order.push(item.book);
+    for (const bid of order) {
+      const items = byBook.get(bid);
+      if (!items?.length) continue;
+      const book = model.books.find(b => b.id === bid);
+      const heading = document.createElement('h3');
+      heading.className = 'album-chapter';
+      heading.textContent = book ? (book.master ? 'Pennies & tokens' : book.title) : bid;
+      root.append(heading);
+      const cover = items.find(i => i.id === bid);
+      const rest = items.filter(i => i.id !== bid);
+      if (cover) appendSlot(cover);
+      rest.forEach(appendSlot);
+    }
+    return;
+  }
+
+  shown.forEach(appendSlot);
 }
 
 function describe(item) {
@@ -363,7 +399,7 @@ async function select(id, punchedOverride) {
   if (!item) return;
   if (studio && punchedOverride !== undefined) item.punched = punchedOverride;
   current = item;
-  bookId = item.book || bookId;
+  if (bookId !== 'penny-collector-book') bookId = item.book || bookId;
   const token = ++selectionToken;
   describe(item);
   viewer?.destroy?.(); viewer = null;
@@ -376,8 +412,9 @@ async function select(id, punchedOverride) {
   $('treasurePunch').textContent = item.punched ? 'Show intact ticket' : 'Show punched ticket';
   $('pocketInspect').hidden = false;
   dialog.querySelectorAll('[data-item]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.item === item.id)));
+  const touch = window.matchMedia('(pointer: coarse)').matches;
   text('treasureHow', item.turnaround || (item.columns > 1)
-    ? 'Press and turn. Arrow keys spin; Home shows the front.'
+    ? (touch ? 'Drag to turn the keepsake.' : 'Press and turn. Arrow keys spin; Home shows the front.')
     : 'A pressed paper portrait — drag to rock it in the light.');
   text('treasureLoading', item.owned ? 'Unwrapping your keepsake…' : 'The outline is here. Win it, and the colour comes in.');
   try {
@@ -411,7 +448,16 @@ function open(id) {
     resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
     if (resumeWorld) world.pause();
     document.body.classList.add('has-treasure-open');
-    dialog.showModal();
+    try {
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else {
+        dialog.setAttribute('open', '');
+        dialog.classList.add('is-open');
+      }
+    } catch {
+      dialog.setAttribute('open', '');
+      dialog.classList.add('is-open');
+    }
     $('treasureSave').hidden = globalThis.PennyFeverSavePersisted !== false;
     text('treasureSave', 'Your browser could not save this change. Keep this tab open to retain this visit.');
     if (!studio && model.reconcile(state())) globalThis.PennyFever?.saveState();
