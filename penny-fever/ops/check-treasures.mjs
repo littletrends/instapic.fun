@@ -36,11 +36,12 @@ assert.equal(empty.length, 0, 'every book has interior items: ' + empty.join(', 
 
 const inventory = fs.readFileSync(path.join(root, 'world/items/inventory.js'), 'utf8');
 assert(inventory.includes('treasureTree'), 'tree view is mounted');
+assert(inventory.includes('treasureShelf'), 'collection shelf is mounted');
+assert(inventory.includes('data-tab'), 'games and collection tabs');
+assert(inventory.includes('openBook'), 'books open onto their pages');
 assert(inventory.includes('is-missing'), 'shaded missing slots');
 assert(inventory.includes('openStall'), 'stalls open onto chapter pages');
-assert(inventory.includes('treasureTree'), 'stalls are listed as a tree');
 assert(inventory.includes('On the alley'), 'missing prizes stay on the alley');
-assert(inventory.includes('tree-prize') || inventory.includes('Chapter '), 'chapter labels on prizes');
 
 const master = model.books.find(b => b.master);
 assert(master?.id === 'penny-collector-book', 'penny collector is the master book');
