@@ -2,7 +2,7 @@ import {games} from '../paper-games/catalogue.js?v=paper-worlds-v2-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=paper-tickets-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=paper-cashdrop-1'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -29,7 +29,9 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'Restart':'Play again · 1 ticket';retry.addEventListener('click',()=>load(true));
+  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'The trays stay':'Play again · 1 ticket';
+  if(game.id==='coin-pusher'){retry.disabled=true;retry.title='Leave and come back — the trays are as you left them.';}
+  else retry.addEventListener('click',()=>load(true));
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
     const PF=window.PennyFever;

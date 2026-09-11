@@ -27,3 +27,25 @@ export function credit(amount) {
   if (!api?.addDemoCoins) return 0;
   return api.addDemoCoins(amount) || 0;
 }
+
+export function keep(id) {
+  if (!alleyPlay || !id) return;
+  try {
+    window.parent.postMessage({channel: 'pf-paper-world', type: 'prize', item: id, stall: 'coin-pusher'}, location.origin);
+  } catch { /* workshop or cross-origin */ }
+}
+
+export function loadMachine() {
+  if (!alleyPlay) return null;
+  const blob = fever()?.getState?.()?.cashDrop;
+  return blob && blob.v === 1 && Array.isArray(blob.pieces) ? blob : null;
+}
+
+export function saveMachine(blob) {
+  if (!alleyPlay || !blob) return;
+  const api = fever();
+  const state = api?.getState?.();
+  if (!state) return;
+  state.cashDrop = blob;
+  api.saveState?.();
+}
