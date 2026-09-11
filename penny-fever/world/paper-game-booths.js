@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=iris-cards-1';
+import {games} from '../paper-games/catalogue.js?v=one-name-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({

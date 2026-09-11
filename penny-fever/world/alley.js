@@ -1,35 +1,57 @@
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
+import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
+import { phoneLane } from "./phone-lane.js?v=keep-light-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
+import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=penny-trade-2";
+import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
+import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
+import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=one-name-1";
 
+const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
-  { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
-  { id: "love", name: "Love Tester", kind: "cabinet", art: "assets/prepared/love-thermometer-tease.webp", accent: 0xc43a5a, line: "Hold the pink. Miss it and you die hotter." },
-  { id: "curios", name: "Digger’s Vault", kind: "cabinet", art: "assets/game/Cabinet_of_Curios/Empty_Cabinet.webp", accent: 0x8a6230, line: "Cash out or go deeper. Greed is the claw." },
-  { id: "lookup", name: "Star-Gazing Tent", kind: "tent", art: "assets/prepared/lookup-wonder.webp", accent: 0x3d6a8a, line: "The sky is a button. Look up, darling." },
-  { id: "snap", name: "Flash Booth", kind: "cabinet", art: "assets/prepared/snap-freeze-flash.webp", accent: 0xe8d0a0, line: "Tap the true pop. False flashes eat you." },
-  { id: "whisper", name: "Gossip Booth", kind: "tent", art: "assets/game/Whisper_Charm/Idle.webp", accent: 0x8a4a6a, line: "Lean in. One word becomes a charm." },
-  { id: "ball-toss", name: "Barely-Fit Toss", kind: "booth", art: "assets/prepared/ball-toss-board.webp", accent: 0xc45a3a, line: "Holes that barely fit. Three misses and the oval wins." },
-  { id: "coin-pusher", name: "Coin Pusher Shelf", kind: "cabinet", art: "assets/prepared/coin-pusher-greed.webp", accent: 0xd4a45a, line: "Drop a penny. Walk away or get buried." },
-  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: "assets/prepared/pinball-neon-playfield.webp", accent: 0x3a8a6a, line: "One thumb. Survive the chapters." },
-  { id: "water-gun", name: "Water Gun Duel", kind: "booth", art: "assets/prepared/water-gun-duel.webp", accent: 0x3a7aaa, line: "Fill the clown. The other lane is a ghost." },
-  { id: "milk-bottles", name: "Weighted Bottles", kind: "booth", art: "assets/prepared/milk-bottle-pyramid.webp", accent: 0xc0c4cc, line: "Bottom row’s lead. You felt it." },
-  { id: "cover-the-spot", name: "Cover-the-Spot", kind: "booth", art: "assets/prepared/cover-the-spot.webp", accent: 0xc45a6a, line: "Cover it — or get greedy." },
-  { id: "mutoscope", name: "Mutoscope Hood", kind: "cabinet", art: "assets/prepared/mutoscope-peephole-glow.webp", accent: 0x8a3030, line: "Stillness opens the iris." },
-  { id: "high-striker", name: "High Striker", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xd45a3a, line: "Ring the bell. The pegs lie about the weight." },
-  { id: "catoptromancy", name: "Catoptromancy", kind: "tent", art: "assets/prepared/doorway-beckon.webp", accent: 0x5a3a8a, line: "Don’t look away from the glass." },
-  { id: "bent-rings", name: "Bent Ring Pegs", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x8a6a3a, line: "The pegs lean. The rings know." },
-  { id: "plinko", name: "Plinko Pegboard", kind: "cabinet", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a8a8a, line: "Drop with the breath." },
-  { id: "fairy-floss", name: "Fairy Floss Wheel", kind: "tent", art: "assets/prepared/fairy-floss-sugar-tent.webp", accent: 0xe8a0c0, line: "Wind it tall. Don’t snap the sugar." },
-  { id: "popcorn", name: "Popcorn Kettle", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xe8c45a, line: "Tap the pop. Steam fakes the beat." },
-  { id: "duck-pond", name: "Duck Pond Hook", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a8a5a, line: "Hook the call, not the decoy." },
-  { id: "skee-ball", name: "Skee-Ball Alley", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xc46a3a, line: "Wax lies mid-stage." },
-  { id: "penny-pitch", name: "Penny Pitch", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xd4a45a, line: "Land a colour. The cloth jerks after you let go." },
-  { id: "dunk-tank", name: "Dunk the Barker", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a6aaa, line: "Soak the crown. Three balls a seat." },
-  { id: "marquee", name: "Boardwalk Lights", kind: "cabinet", art: "assets/prepared/ticket-booth-lean.webp", accent: 0xf0d09a, line: "Repeat the bulb storm." },
-  { id: "pack", name: "Night Kit", kind: "booth", art: "assets/game/Cabinet_of_Curios/Pressed_Penny.webp", accent: 0x8a6230, line: "Pack the suitcase before a run." },
-  { id: "pass", name: "Backstage Flap", kind: "tent", art: "assets/game/Showmans_Pass/Blank_Ticket.webp", accent: 0x5a2030, line: "Employees only — probably." },
+  { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Three cards. A keepsake is hiding in the deck." },
+  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Thread the heart. Miss the lockbox and the ribbon keeps it." },
+  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
+  { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
+  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Frame the hanging prize before the light goes." },
+  { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
+  { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock every lantern in one toss." },
+  { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },
+  { id: "pinball", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
+  { id: "water-gun", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Nudge a little sailboat through a paper harbour." },
+  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "A penny a bead. Two or three throws. The shelf or the book." },
+  { id: "cover-the-spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover the moon. Don’t get greedy." },
+  { id: "mutoscope", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Crank the reel. Light the story." },
+  { id: "high-striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "One penny, one strike. Ring the lit mouth." },
+  { id: "catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Fold the glass. Don’t look away." },
+  { id: "bent-rings", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "Seat the ring on the wishing branch." },
+  { id: "plinko", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Drop a marble. Flip the gates." },
+  { id: "fairy-floss", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Wind the cloud. Don’t snap the sugar." },
+  { id: "popcorn", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Pump the bellows. Catch the pop." },
+  { id: "duck-pond", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Paddle the flock home." },
+  { id: "skee-ball", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "A penny a roll. Land the hanging moon." },
+  { id: "penny-pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Skip a penny across the wells." },
+  { id: "dunk-tank", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "One bead. Clear the plates." },
+  { id: "marquee", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Wake the night. Catch the hanging prize." },
+  { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Tuck pennies. Nestle the unique." },
+  { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
+const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
+for (const spec of STALLS) {
+  const g = paperById[spec.id];
+  if (!g) continue;
+  spec.host = g.host;
+  spec.name = g.title;
+  spec.blurb = g.blurb;
+}
 
 const SKIN = 0xf0c4a8;
 const HAIR = 0x3d2418;
@@ -44,12 +66,16 @@ const BRASS = 0xd4a45a;
 
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
-const STALL_X = 2.62;
-const STALL_STEP = 2.68;
-const STALL_Z0 = 8;
+const STALL_X = paperRail ? BAY_X : 2.62;
+const STALL_STEP = paperRail ? 5.2 : 2.68;
+const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
-const FACE_PULL = 1.7;
+const WALK_X = AISLE;
+const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
+const COUNTER_X = 0.58;
+const COUNTER_Z = 1.18;
+const COUNTER_REACH = 1.92;
 let hallLen = 0;
 
 const geoBox = new THREE.BoxGeometry(1, 1, 1);
@@ -391,6 +417,7 @@ function dressBarker(g, accent) {
 
 function animatePerson(p, dt, moving, waving) {
   const u = p.userData;
+  if (paperRail && (u.papercutStand || u.paperCrew || u.paperGuest || u.paperProprietor || u.vendorHost)) return;
   u.t += dt * (moving ? 9 : 2.4);
   const bob = Math.sin(u.t) * (moving ? 0.04 : 0.012);
   u.hip.position.y = 0.42 + bob;
@@ -405,6 +432,7 @@ function animatePerson(p, dt, moving, waving) {
     u.armR.rotation.z = 0.05;
     u.armR.rotation.x = -swing;
   }
+  poseRestyle(p, dt);
 }
 
 function makeSign(text, accent) {
@@ -452,6 +480,13 @@ function makeStall(spec, x, z, yaw) {
   root.position.set(x, 0, z);
   /* Local +Z is the pretty face. Yaw so that face looks at walkers on the aisle. */
   root.rotation.y = yaw;
+  const faceZ = spec.kind === "tent" ? 0.76 : spec.kind === "cabinet" ? 0.56 : 0.52;
+  root.userData.stall = spec;
+  root.userData.worldX = x;
+  root.userData.worldZ = z;
+  root.userData.faceOff = faceZ + 0.4;
+  root.userData.hitR = spec.kind === "tent" ? 1.02 : spec.kind === "cabinet" ? 0.86 : 0.94;
+  if (paperRail) return root;
   const wood = makeMat(WOOD, { map: woodTex("#4a2e1c", "rgba(0,0,0,0.18)") });
   const dark = makeMat(WOOD_DARK);
   const velvet = makeMat(VELVET);
@@ -505,17 +540,10 @@ function makeStall(spec, x, z, yaw) {
   sign.position.set(0, spec.kind === "cabinet" ? 2.94 : 2.56, 0.42);
   root.add(sign);
 
-  const faceZ = spec.kind === "tent" ? 0.76 : spec.kind === "cabinet" ? 0.56 : 0.52;
   root.add(meshBox(dark, 0.09, 1.62, 0.09, -0.64, 1.12, faceZ));
   root.add(meshBox(dark, 0.09, 1.62, 0.09, 0.64, 1.12, faceZ));
   root.add(meshBox(accent, 1.38, 0.1, 0.1, 0, 1.96, faceZ));
   root.add(meshBox(wood, 0.92, 0.07, 0.5, 0, 0.04, faceZ + 0.34));
-
-  root.userData.stall = spec;
-  root.userData.worldX = x;
-  root.userData.worldZ = z;
-  root.userData.faceOff = faceZ + 0.4;
-  root.userData.hitR = spec.kind === "tent" ? 1.22 : spec.kind === "cabinet" ? 0.98 : 1.08;
   return root;
 }
 
@@ -538,7 +566,7 @@ function makePalace(group) {
   group.add(meshBox(makeMat(0x1a100c), 0.2, 3.05, 0.28, 1.05, 1.52, frontZ + 0.08));
   group.add(meshBox(makeMat(0x1a100c), 2.3, 0.18, 0.28, 0, 3.02, frontZ + 0.08));
 
-  const facadeMap = artMap("assets/prepared/night-carnival-exterior.webp");
+  const facadeMap = artMap("assets/restyle/paper-entrance-cutout.png");
   const facade = new THREE.Mesh(
     new THREE.PlaneGeometry(7.6, 11.4),
     new THREE.MeshBasicMaterial({ map: facadeMap, side: THREE.DoubleSide })
@@ -546,7 +574,7 @@ function makePalace(group) {
   facade.position.set(0.1, 5.65, frontZ);
   facade.rotation.y = Math.PI;
   group.add(facade);
-  loadImage("assets/prepared/night-carnival-exterior.webp").then((img) => {
+  loadImage("assets/restyle/paper-entrance-cutout.png").then((img) => {
     facade.material = new THREE.MeshBasicMaterial({
       map: punchPalaceFacade(img),
       transparent: true,
@@ -632,7 +660,7 @@ function makePier(group) {
 function makeHall(group, len) {
   const floorT = woodTex("#4a3424", "rgba(20,10,0,0.2)");
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(8.6, len + 4),
+    new THREE.PlaneGeometry(paperRail ? 9.8 : 8.6, len + 4),
     makeMat(0x4a3424, { map: floorT, roughness: 0.78 })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -647,12 +675,16 @@ function makeHall(group, len) {
 
   const wallT = woodTex("#2a1a12", "rgba(0,0,0,0.25)");
   const wallM = makeMat(0x2a1a12, { map: wallT, roughness: 0.85 });
+  if (paperRail) {
+    makePaperWalls(group, len);
+  } else {
   [-1, 1].forEach((side) => {
     group.add(meshBox(wallM, 0.28, 4.6, len, side * 4.25, 2.3, len / 2));
     group.add(meshBox(makeMat(VELVET), 0.12, 1.4, len, side * 4.05, 3.6, len / 2));
   });
   group.add(meshBox(makeMat(0x1c120e), 8.8, 0.2, len, 0, 4.7, len / 2));
   group.add(meshBox(makeMat(WOOD_DARK), 8.6, 3.6, 0.4, 0, 1.8, len + 1.6));
+  }
 
   const lampMat = makeMat(0xffe2a8, { emissive: 0xffd08a, emissiveIntensity: 0.85 });
   const brass = makeMat(BRASS, { metalness: 0.7, roughness: 0.3 });
@@ -662,33 +694,36 @@ function makeHall(group, len) {
       group.add(meshCyl(brass, 0.05, 0.05, 0.4, lx, 3.7, z));
       group.add(meshSphere(lampMat, 0.12, lx, 3.45, z));
     });
+    if (paperRail) continue;
     const lamp = new THREE.PointLight(0xffd090, 1.25, 14, 2);
     lamp.position.set(0, 3.5, z);
     lamp.userData.flicker = 0.8 + Math.random();
     group.add(lamp);
   }
 
-  const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.01, 10);
-  const coinMat = makeMat(GOLD, { metalness: 0.8, roughness: 0.35, emissive: 0x3a2a08, emissiveIntensity: 0.15 });
-  const coins = new THREE.InstancedMesh(coinGeo, coinMat, 140);
-  const dummy = new THREE.Object3D();
-  for (let i = 0; i < 140; i += 1) {
-    dummy.position.set((Math.random() - 0.5) * 2.4, 0.02, 4 + Math.random() * (len - 8));
-    dummy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
-    dummy.updateMatrix();
-    coins.setMatrixAt(i, dummy.matrix);
+  if (!paperRail) {
+    const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.01, 10);
+    const coinMat = makeMat(GOLD, { metalness: 0.8, roughness: 0.35, emissive: 0x3a2a08, emissiveIntensity: 0.15 });
+    const coins = new THREE.InstancedMesh(coinGeo, coinMat, 140);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < 140; i += 1) {
+      dummy.position.set((Math.random() - 0.5) * 2.4, 0.02, 4 + Math.random() * (len - 8));
+      dummy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
+      dummy.updateMatrix();
+      coins.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(coins);
   }
-  group.add(coins);
 }
 
-function makeSky() {
-  const geo = new THREE.SphereGeometry(90, 24, 16);
+function makeSky(radius) {
+  const geo = new THREE.SphereGeometry(radius, 24, 16);
   const mat = new THREE.MeshBasicMaterial({ map: starTex(), side: THREE.BackSide });
   return new THREE.Mesh(geo, mat);
 }
 
 function makeFireflies() {
-  const n = 90;
+  const n = paperRail ? 18 : 90;
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(n * 3);
   const phase = [];
@@ -749,9 +784,9 @@ function makeLooseCoins() {
   return group;
 }
 
-const GATE_Z = -7.52;
-const AURA_DOOR = { x: 0.12, z: -7.72 };
-const AURA_TILL = { x: 2.15, z: 3.1 };
+const GATE_Z = paperRail ? COUNTER.z + 1.2 : -7.52;
+const AURA_DOOR = paperRail ? { x: -1.55, z: 6.2 } : { x: 0.12, z: -7.72 };
+const AURA_TILL = paperRail ? AURA_DOOR : { x: 2.15, z: 3.1 };
 
 function pfState() {
   return (window.PennyFever && typeof window.PennyFever.getState === "function" && window.PennyFever.getState()) || {};
@@ -761,6 +796,25 @@ function ticketPassed() {
 }
 function hasAdmitTicket() {
   return !!pfState().admitTicket;
+}
+function pocketPennies() {
+  return Number(pfState().demoCoins) || 0;
+}
+function pocketTickets() {
+  const PF = window.PennyFever;
+  if (typeof PF?.tickets === "function") return PF.tickets();
+  return Number(pfState().playTickets) || 0;
+}
+function paintPocketHud() {
+  const pocketCount = el("pfPocketCoinCount");
+  if (pocketCount) pocketCount.textContent = String(pocketPennies());
+  const ticketCount = el("pfPocketScripCount");
+  if (ticketCount) ticketCount.textContent = String(pocketTickets());
+}
+function stallEnterLabel(id) {
+  if (id === "coin-pusher") return "Cash drop";
+  if (id === "fortune") return "Fortune · 1 ticket";
+  return "Enter · 1 ticket";
 }
 
 const api = {
@@ -781,12 +835,25 @@ const api = {
 window.PennyFeverWorld = api;
 
 let renderer, scene, camera, clock;
-let player, aura, barkers, guests, stalls, fireflies, lamps, looseCoins;
+let player, aura, barkers, guests, stalls, fireflies, lamps, looseCoins, wallBackdrops, papercutRides, vendorCutouts, stallCutouts;
 let keys = {};
 let joy = { x: 0, y: 0, active: false };
 let camYaw = 0;
+let glanceYaw = 0;
 let lookDrag = false;
+let viewBlend = 0;
 let nearest = null;
+let focus = null;
+let vendorChatUntil = 0;
+let moveIntent = { ix: 0, iy: 0 };
+let stallCardOpen = false;
+let stallCardPinned = false;
+let alleyMapOpen = false;
+let stallCardId = "";
+let stallCardView = "front";
+let lookZoom = 1;
+const LOOK_VIEWS = ["front", "left", "back", "right"];
+
 let promptTargetSlug = "";
 let raf = 0;
 let hintTimer = 0;
@@ -810,68 +877,311 @@ function attachHud() {
   if (!stage || el("pfWorldPrompt")) return;
   stage.insertAdjacentHTML("beforeend", `
     <div class="pf-world-hud" id="pfWorldHud">
-      <div class="pf-world-brand"><small>After dark</small><strong>Penny Fever</strong></div>
-      <div class="pf-world-tools">
-        <button type="button" id="pfWorldMap">Paper map</button>
-        <button type="button" id="pfWorldLeave">Leave alley</button>
-      </div>
-      <div class="pf-world-compass" id="pfWorldCompass">
-        <span id="pfWorldZone">PIER</span>
-        <strong id="pfWorldNearest">Heart palace</strong>
+      <div class="pf-world-top">
+        <div class="pf-world-compass" id="pfWorldCompass">
+          <span id="pfWorldZone">PIER</span>
+          <strong id="pfWorldNearest">Heart palace</strong>
+        </div>
+        <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
+          <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
+          <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
+          <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
+          <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
+          <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
+        </nav>
+        <div class="pf-world-tools">
+          <button type="button" id="pfAlleyMapOpen">Map</button>
+          <button type="button" id="pfWorldLeave">Ticket desk</button>
+          <a id="pfWorldHome" href="../index.html">Home</a>
+        </div>
       </div>
       <div class="pf-world-speech" id="pfWorldSpeech" hidden>
-        <b>Aura</b>
+        <b id="pfWorldSpeechName">Aura</b>
         <p id="pfWorldSpeechText"></p>
       </div>
       <div class="pf-world-prompt" id="pfWorldPrompt" hidden>
-        <button type="button" id="pfWorldEnter">Step inside</button>
+        <p class="pf-action-name" id="pfWorldPromptName"></p>
+        <div class="pf-action-row">
+          <button type="button" id="pfWorldEnter">Enter</button>
+          <button type="button" id="pfWorldChat" hidden>Chat</button>
+        </div>
         <em id="pfWorldPromptLine"></em>
       </div>
-      <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
-        <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
-        <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
-        <button type="button" id="pfPocketChest"><span>🗝</span>Cabinet</button>
-      </nav>
+      <button type="button" class="pf-pass-chip" id="pfPassChip" hidden>
+        <span id="pfPassChipHost"></span>
+        <strong id="pfPassChipName"></strong>
+        <em>Look</em>
+      </button>
+      <div class="pf-stall-card" id="pfStallCard" hidden>
+        <div class="pf-stall-card-art">
+          <img id="pfStallCardBooth" alt="">
+          <img id="pfStallCardVendor" alt="">
+        </div>
+        <div class="pf-stall-card-views" id="pfStallCardViews">
+          <button type="button" data-spin="-1" aria-label="Turn left">↶</button>
+          <button type="button" data-view="front" aria-pressed="true">Front</button>
+          <button type="button" data-view="left">Left</button>
+          <button type="button" data-view="back">Back</button>
+          <button type="button" data-view="right">Right</button>
+          <button type="button" data-spin="1" aria-label="Turn right">↷</button>
+        </div>
+        <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
+        <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
+        <p class="pf-stall-card-line" id="pfStallCardLine"></p>
+        <div class="pf-stall-card-till" id="pfStallCardTill" hidden>
+          <button type="button" id="pfTillTickets">Buy tickets</button>
+          <button type="button" id="pfTillTrade">5 pennies → 1 ticket</button>
+        </div>
+        <div class="pf-stall-card-actions">
+          <button type="button" id="pfStallCardEnter">Enter</button>
+          <button type="button" id="pfStallCardChat">Chat</button>
+          <button type="button" id="pfStallCardBack">Back to the alley</button>
+        </div>
+      </div>
+      <div class="pf-look-rig" id="pfLookRig" hidden>
+        <button type="button" data-orbit="-1" aria-label="Turn left">↶</button>
+        <button type="button" data-orbit="1" aria-label="Turn right">↷</button>
+      </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
-      <p class="pf-world-hint" id="pfWorldHint">Walk the aisle · stalls left and right · tap a door to enter</p>
+      <p class="pf-world-hint" id="pfWorldHint">Walk the boards · tap Look over your head · step toward a booth to open it</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
+      <div class="pf-alley-map" id="pfAlleyMap" hidden>
+        <div class="pf-alley-map-bar">
+          <strong>Sideshow alley</strong>
+          <button type="button" id="pfAlleyMapClose">Close</button>
+        </div>
+        <div class="pf-alley-map-board">
+          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
+          <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
+        </div>
+        <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
+          <div class="pf-alley-map-marks">
+            <button type="button" data-place="pier">Pier</button>
+            <button type="button" data-place="aura">Aura’s booth</button>
+            <button type="button" data-place="end">End of the walk</button>
+          </div>
+          <div class="pf-alley-map-cols">
+            <div id="pfAlleyMapLeft"></div>
+            <div id="pfAlleyMapRight"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="pf-world-fail" id="pfWorldFail" hidden>
       <div>
         <p>This machine won’t spin a 3D alley.</p>
-        <button type="button" id="pfWorldFailMap">Open the paper map</button>
+        <button type="button" id="pfWorldFailMap">Back to the entrance</button>
       </div>
     </div>
   `);
 }
 
+function fillAlleyMap() {
+  const left = el("pfAlleyMapLeft");
+  const right = el("pfAlleyMapRight");
+  if (!left || !right || left.dataset.ready) return;
+  left.dataset.ready = "1";
+  STALLS.forEach((spec, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.place = spec.id;
+    b.textContent = spec.host ? spec.host + " · " + spec.name : spec.name;
+    (i % 2 === 0 ? left : right).append(b);
+  });
+}
+
+function syncAlleyMapYou() {
+  const pin = el("pfAlleyMapYou");
+  const map = el("pfAlleyMap");
+  if (!pin || !map || map.hidden || !player) return;
+  const start = FOYER_OUT;
+  const end = Math.max(start + 1, hallLen - 1);
+  const z = player.position.z;
+  const t = z < start ? -0.08 : Math.max(0, Math.min(1, (z - start) / (end - start)));
+  pin.style.bottom = `${28 + t * 48}%`;
+}
+
+function closeAlleyMap() {
+  alleyMapOpen = false;
+  const map = el("pfAlleyMap");
+  if (map) map.hidden = true;
+  document.body.classList.remove("pf-alley-map-open");
+  const open = el("pfAlleyMapOpen");
+  if (open) open.setAttribute("aria-pressed", "false");
+}
+
+function openAlleyMap() {
+  fillAlleyMap();
+  alleyMapOpen = true;
+  closeStallCard();
+  const map = el("pfAlleyMap");
+  if (map) map.hidden = false;
+  document.body.classList.add("pf-alley-map-open");
+  const open = el("pfAlleyMapOpen");
+  if (open) open.setAttribute("aria-pressed", "true");
+  syncAlleyMapYou();
+  paintPocketHud();
+}
+
+const RIDE_GAMES = {
+  "horse-carousel": "carousel",
+  "balloon-tree": "balloons",
+  "ferris-wheel": "ferris",
+  "helter-skelter": "helter",
+  "chair-swings": "swings",
+  "funhouse": "funhouse",
+  "fairground-organ": "organ",
+  "alley-wall-bay": "mural",
+};
+function playIdFor(id) {
+  return RIDE_GAMES[id] || id;
+}
+
+function enterStallById(id) {
+  if (!id) return false;
+  id = playIdFor(id);
+  if (!document.getElementById("cabinet-" + id)) return false;
+  if (id !== "coin-pusher" && id !== "pinball" && pocketTickets() < 1 && !pfState().showmanPass) {
+    tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
+    tillMessageUntil = performance.now() + 7000;
+  }
+  closeStallCard();
+  closeAlleyMap();
+  location.hash = "cabinet/" + id;
+  return true;
+}
+
+function walkToMapPlace(place) {
+  if (!player) return;
+  if (place === "pier") {
+    closeAlleyMap();
+    return warp(0, FOYER_IN + 1.2, 0);
+  }
+  if (place === "aura") {
+    closeAlleyMap();
+    return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  }
+  if (place === "end") {
+    closeAlleyMap();
+    if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+    return warp(0, hallLen - 2.4, 0);
+  }
+  const s = stalls?.find((x) => x.userData.stall?.id === place);
+  if (s) {
+    const side = Math.sign(s.position.x) || 1;
+    warp(side * 0.28, s.position.z, 0);
+  }
+  closeAlleyMap();
+}
+
 function bindHud() {
-  const map = el("pfWorldMap");
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
+  const pocketScrip = el("pfPocketScrip");
   const pocketTicket = el("pfPocketTicket");
+  const pocketDoll = el("pfPocketDoll");
   const pocketChat = el("pfPocketChat");
   const pocketChest = el("pfPocketChest");
   const failMap = el("pfWorldFailMap");
-  if (map) {
-    map.addEventListener("click", () => {
-      document.body.classList.toggle("is-world-map");
-      map.textContent = document.body.classList.contains("is-world-map") ? "3D alley" : "Paper map";
-      if (document.body.classList.contains("is-world-map")) pause();
-      else resume();
-    });
-  }
-  if (leave) leave.addEventListener("click", () => { location.hash = "door"; });
+  const mapOpen = el("pfAlleyMapOpen");
+  const mapClose = el("pfAlleyMapClose");
+  const mapLegend = el("pfAlleyMapLegend");
+  if (leave) leave.addEventListener("click", (event) => {
+    event.preventDefault();
+    openBoothCard(auraDeskFocus());
+  });
+  const passChip = el("pfPassChip");
+  if (passChip) passChip.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (nearest) openBoothCard(nearest);
+  });
+  const tillTickets = el("pfTillTickets");
+  const tillTrade = el("pfTillTrade");
+  if (tillTickets) tillTickets.addEventListener("click", () => {
+    const n = window.PennyFever?.buyTicketStrip?.() || 0;
+    tillMessage = n ? `A strip of ${n} booth tickets.` : "No tickets printed.";
+    tillMessageUntil = performance.now() + 4000;
+  });
+  if (tillTrade) tillTrade.addEventListener("click", () => {
+    const ok = window.PennyFever?.tradePenniesForTicket?.();
+    tillMessage = ok ? "Five pennies for one booth ticket." : "Need five pennies for a ticket.";
+    tillMessageUntil = performance.now() + 4000;
+  });
+  if (mapOpen) mapOpen.addEventListener("click", () => {
+    if (alleyMapOpen) closeAlleyMap();
+    else openAlleyMap();
+  });
+  if (mapClose) mapClose.addEventListener("click", closeAlleyMap);
+  if (mapLegend) mapLegend.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-place]");
+    if (!button) return;
+    event.preventDefault();
+    walkToMapPlace(button.dataset.place);
+  });
   if (enter) {
     enter.addEventListener("click", (event) => {
       event.preventDefault();
       enterNearest();
     });
   }
+  const chat = el("pfWorldChat");
+  if (chat) {
+    chat.addEventListener("click", (event) => {
+      event.preventDefault();
+      talkToFocus();
+    });
+  }
+  const stallEnter = el("pfStallCardEnter");
+  const stallChat = el("pfStallCardChat");
+  const stallBack = el("pfStallCardBack");
+  if (stallEnter) stallEnter.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (nearest?.kind === "stall" || nearest?.kind === "ride") enterStallById(nearest.id);
+    else enterNearest();
+  });
+  if (stallChat) stallChat.addEventListener("click", (event) => {
+    event.preventDefault();
+    talkToFocus();
+  });
+  if (stallBack) stallBack.addEventListener("click", (event) => {
+    event.preventDefault();
+    closeStallCard();
+  });
+  const views = el("pfStallCardViews");
+  if (views) {
+    views.addEventListener("click", (event) => {
+      const spin = event.target.closest("button[data-spin]");
+      if (spin) {
+        event.preventDefault();
+        spinLookCard(Number(spin.dataset.spin));
+        return;
+      }
+      const b = event.target.closest("button[data-view]");
+      if (!b) return;
+      event.preventDefault();
+      applyLookCardView(b.dataset.view);
+    });
+  }
+  const rig = el("pfLookRig");
+  if (rig) {
+    rig.addEventListener("click", (event) => {
+      const orbit = event.target.closest("button[data-orbit]");
+      if (orbit) {
+        event.preventDefault();
+        spinLookCard(Number(orbit.dataset.orbit));
+        return;
+      }
+    });
+  }
+  bindCardSpin();
+  if (pocketScrip) pocketScrip.addEventListener("click", () => {
+    window.PennyFeverInventory?.open('ticket-roll');
+  });
   if (pocketTicket) pocketTicket.addEventListener("click", () => {
-    pocketTicket.classList.remove("is-nudging");
-    void pocketTicket.offsetWidth;
-    pocketTicket.classList.add("is-nudging");
+    window.PennyFeverInventory?.open('everyday-penny');
+  });
+  if (pocketDoll) pocketDoll.addEventListener("click", () => {
+    window.PennyFeverDoll?.open();
   });
   if (pocketChat) pocketChat.addEventListener("click", () => {
     chatPinned = !chatPinned;
@@ -879,16 +1189,12 @@ function bindHud() {
     pocketChat.setAttribute("aria-pressed", String(chatPinned));
   });
   if (pocketChest) pocketChest.addEventListener("click", () => {
-    const PF = window.PennyFever;
-    if (PF && typeof PF.enterTent === "function") PF.enterTent("curios");
-    else if (PF && typeof PF.enter === "function") PF.enter("curios");
+    window.PennyFeverInventory?.open();
   });
+  paintPocketHud();
+  window.addEventListener("pennyfever:statechange", paintPocketHud);
   if (failMap) {
-    failMap.addEventListener("click", () => {
-      document.body.classList.add("is-in-world", "is-world-map");
-      const stage = el("pfWorldStage");
-      if (stage) stage.style.display = "none";
-    });
+    failMap.addEventListener("click", () => { location.hash = "door"; });
   }
   bindJoy();
   bindLook();
@@ -897,37 +1203,65 @@ function bindHud() {
 }
 
 function onKey(e) {
+  if (api.paused || document.querySelector('dialog[open]')) return;
   const k = e.key.toLowerCase();
+  if (alleyMapOpen) {
+    if (e.key === "Escape" || k === "m") {
+      e.preventDefault();
+      closeAlleyMap();
+    }
+    return;
+  }
+  if (k === "m") {
+    e.preventDefault();
+    openAlleyMap();
+    return;
+  }
   keys[k] = true;
   if (k === "e" || k === "enter") {
-    if (gatePromptActive || promptTargetSlug || nearest) {
+    if (gatePromptActive || promptTargetSlug || (nearest && nearest.atCounter)) {
       e.preventDefault();
       enterNearest();
     }
   }
-  if (k === "m") {
-    const map = el("pfWorldMap");
-    if (map) map.click();
-  }
+  if (k === "q") { e.preventDefault(); spinLookCard(-1); }
+  if (k === "t") { e.preventDefault(); spinLookCard(1); }
 }
 
 function bindLook() {
   const canvas = el("pfWorld");
   if (!canvas) return;
-  let dragging = false;
+  const pointers = new Map();
   let lastX = 0;
   canvas.addEventListener("pointerdown", (e) => {
-    dragging = true;
+    if (e.target.closest?.(".pf-joy, .pf-look-rig, .pf-stall-card, button, a")) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     lookDrag = true;
     lastX = e.clientX;
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    camYaw -= (e.clientX - lastX) * 0.005;
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) return;
+    const dx = e.clientX - lastX;
     lastX = e.clientX;
+    if (nearest && nearest.atCounter) {
+      bindLook.accum = (bindLook.accum || 0) + dx;
+      if (Math.abs(bindLook.accum) > 48) {
+        spinLookCard(bindLook.accum > 0 ? 1 : -1);
+        bindLook.accum = 0;
+      }
+    } else {
+      glanceYaw -= dx * 0.0022;
+      if (glanceYaw > 0.28) glanceYaw = 0.28;
+      if (glanceYaw < -0.28) glanceYaw = -0.28;
+    }
   });
-  const end = () => { dragging = false; lookDrag = false; };
+  const end = (e) => {
+    pointers.delete(e.pointerId);
+    if (!pointers.size) lookDrag = false;
+  };
   canvas.addEventListener("pointerup", end);
   canvas.addEventListener("pointercancel", end);
 }
@@ -973,9 +1307,319 @@ function bindJoy() {
   pad.addEventListener("pointercancel", end);
 }
 
+function lookCardKind(best) {
+  return best && (best.kind === "stall" || best.kind === "ride" || best.kind === "aura");
+}
+
+function lookCardArt(best, view = "front") {
+  const root = "assets/restyle/scene-turnarounds-2026-09-09";
+  const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
+  if (best.kind === "stall") {
+    return {
+      booth: `${root}/stalls/${best.id}/${v}.png`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
+      role: "host",
+    };
+  }
+  if (best.kind === "ride") {
+    const host = (best.hostSlug || best.host || "").toLowerCase();
+    return {
+      booth: `${root}/amusements/${best.id}/${v}.png`,
+      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
+      role: "attendant",
+    };
+  }
+  return {
+    booth: `${root}/aura/ticket-booth/${v}.png`,
+    vendor: `${root}/aura/welcoming/${v}.png`,
+    role: "proprietor",
+  };
+}
+
+function focusedFigures() {
+  const list = [];
+  if (!nearest) return list;
+  if (nearest.kind === "stall") {
+    const s = stalls?.find((st) => st.userData.stall.id === nearest.id);
+    if (s) list.push(s);
+    const b = barkers?.find((p) => p.userData.stallId === nearest.id);
+    if (b) list.push(b);
+  } else if (nearest.kind === "ride") {
+    (papercutRides?.figures || []).forEach((fig) => {
+      if (fig.userData.amusementId === nearest.id) list.push(fig);
+    });
+  } else if (nearest.kind === "aura") {
+    if (aura) list.push(aura);
+    const booth = scene?.getObjectByName("Aura ticket booth · papercut");
+    if (booth) list.push(booth);
+  }
+  return list;
+}
+
+function pinFocusedView(index) {
+  stallCardView = LOOK_VIEWS[index] || "front";
+  focusedFigures().forEach((fig) => {
+    fig.userData.pinView = index;
+    if (fig.userData.papercutStand) fig.userData.papercutStand.userData.pinView = index;
+  });
+}
+
+function spinLookCard(dir) {
+  const i = (LOOK_VIEWS.indexOf(stallCardView) + dir + 4) % 4;
+  pinFocusedView(i);
+  if (stallCardOpen) applyLookCardView(LOOK_VIEWS[i]);
+}
+
+function nudgeLookZoom(dir) {
+  return dir;
+}
+
+function bindCardSpin() {
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (!stage) return;
+  let drag = null;
+  let accum = 0;
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, dist: 0 };
+    accum = 0;
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (drag?.id !== e.pointerId) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    accum += dx;
+    drag.dist += Math.hypot(dx, dy);
+    if (Math.abs(accum) > 42) {
+      spinLookCard(accum > 0 ? 1 : -1);
+      accum = 0;
+    }
+  });
+  const end = (e) => { if (drag?.id === e.pointerId) drag = null; };
+  stage.addEventListener("pointerup", end);
+  stage.addEventListener("pointercancel", end);
+}
+
+function applyLookCardView(view) {
+  if (!nearest || !lookCardKind(nearest)) return;
+  stallCardView = view;
+  const art = lookCardArt(nearest, view);
+  const booth = el("pfStallCardBooth");
+  const vendor = el("pfStallCardVendor");
+  if (booth) {
+    booth.hidden = false;
+    booth.src = art.booth;
+    booth.onerror = () => { if (view !== "front") applyLookCardView("front"); };
+  }
+  if (vendor) {
+    if (art.vendor) {
+      vendor.hidden = false;
+      vendor.src = art.vendor;
+      vendor.onerror = () => { vendor.hidden = true; };
+    } else {
+      vendor.removeAttribute("src");
+      vendor.hidden = true;
+    }
+  }
+  const views = el("pfStallCardViews");
+  if (views) {
+    views.querySelectorAll("button").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.view === view));
+    });
+  }
+  const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
+  if (stage) stage.classList.toggle("is-rear", view === "back" || view === "right");
+}
+
+function auraDeskFocus() {
+  return {
+    id: "aura",
+    kind: "aura",
+    name: "Ticket booth",
+    host: "Aura",
+    hostSlug: "",
+    line: "Pennies, booth tickets, and a punch for the walk.",
+    x: COUNTER.x,
+    z: COUNTER.z,
+    stallX: COUNTER.x,
+    stallZ: COUNTER.z,
+    side: -1,
+    dist: 0,
+    atCounter: true,
+  };
+}
+
+function hidePassChip() {
+  const chip = el("pfPassChip");
+  if (chip) chip.hidden = true;
+}
+
+function showPassChip(place) {
+  const chip = el("pfPassChip");
+  if (!chip || !place) return hidePassChip();
+  const host = el("pfPassChipHost");
+  const name = el("pfPassChipName");
+  if (host) host.textContent = place.host || (place.kind === "aura" ? "Aura" : "");
+  if (name) name.textContent = place.name || "";
+  chip.hidden = false;
+}
+
+function openBoothCard(best) {
+  if (!lookCardKind(best)) return;
+  stallCardPinned = true;
+  focus = best;
+  nearest = { ...best, atCounter: true };
+  hidePassChip();
+  syncStallCard(nearest);
+}
+
+function closeStallCard() {
+  focusedFigures().forEach((fig) => {
+    delete fig.userData.pinView;
+    if (fig.userData.papercutStand) delete fig.userData.papercutStand.userData.pinView;
+  });
+  stallCardOpen = false;
+  stallCardPinned = false;
+  stallCardId = "";
+  lookZoom = 1;
+  const card = el("pfStallCard");
+  if (card) card.hidden = true;
+  const till = el("pfStallCardTill");
+  if (till) till.hidden = true;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = false;
+  if (player && Math.abs(player.position.x) > 0.35) player.position.x *= 0.2;
+}
+
+function syncStallCard(best) {
+  const card = el("pfStallCard");
+  if (!card) return;
+  if (!lookCardKind(best)) {
+    if (stallCardOpen) closeStallCard();
+    return;
+  }
+  if (stallCardId !== best.kind + ":" + best.id) {
+    stallCardId = best.kind + ":" + best.id;
+    stallCardView = "front";
+    const art = lookCardArt(best, "front");
+    const booth = el("pfStallCardBooth");
+    const vendor = el("pfStallCardVendor");
+    const hostEl = el("pfStallCardHost");
+    const nameEl = el("pfStallCardName");
+    const lineEl = el("pfStallCardLine");
+    const enter = el("pfStallCardEnter");
+    const chat = el("pfStallCardChat");
+    if (booth) {
+      booth.src = art.booth;
+      booth.alt = best.name || "";
+      booth.onerror = () => { booth.hidden = true; };
+      booth.hidden = false;
+    }
+    if (vendor) {
+      if (art.vendor) {
+        vendor.hidden = false;
+        vendor.src = art.vendor;
+        vendor.alt = best.host || "";
+        vendor.onerror = () => { vendor.hidden = true; };
+      } else {
+        vendor.removeAttribute("src");
+        vendor.hidden = true;
+      }
+    }
+    if (hostEl) hostEl.textContent = best.host ? `${best.host} · ${art.role}` : "";
+    if (nameEl) nameEl.textContent = best.name || "";
+    if (lineEl) lineEl.textContent = best.line || "";
+    if (enter) {
+      if (best.kind === "stall") {
+        enter.hidden = false;
+        enter.disabled = false;
+        enter.textContent = stallEnterLabel(best.id);
+      } else if (best.kind === "ride") {
+        const open = !!document.getElementById("cabinet-" + playIdFor(best.id));
+        enter.hidden = !open;
+        enter.disabled = false;
+        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : "Not open yet";
+      } else if (best.kind === "aura") {
+        const laps = Number(pfState().alleyLaps) || 0;
+        enter.hidden = false;
+        enter.textContent = ticketPassed()
+          ? "This lap is punched"
+          : laps === 0
+            ? (hasAdmitTicket() ? "Show ticket" : "Come through")
+            : "Pay a penny";
+        enter.disabled = !!ticketPassed();
+      } else {
+        enter.hidden = true;
+        enter.disabled = false;
+      }
+    }
+    if (chat) {
+      chat.hidden = best.kind === "aura";
+      chat.textContent = "Chat";
+    }
+    const till = el("pfStallCardTill");
+    if (till) till.hidden = best.kind !== "aura";
+    applyLookCardView("front");
+  }
+  stallCardOpen = true;
+  card.hidden = false;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = true;
+}
+
+function talkToFocus() {
+  if (!nearest) return;
+  if (nearest.kind === "aura") {
+    chatPinned = true;
+    const pocketChat = el("pfPocketChat");
+    if (pocketChat) {
+      pocketChat.classList.add("is-active");
+      pocketChat.setAttribute("aria-pressed", "true");
+    }
+    return;
+  }
+  if (nearest.kind === "stall" || nearest.kind === "ride") {
+    vendorChatUntil = performance.now() + 6400;
+    const lineEl = el("pfStallCardLine");
+    if (lineEl) lineEl.textContent = nearest.line || "";
+  }
+}
+
 function enterNearest() {
+  if (stallCardOpen && (nearest?.kind === "stall" || nearest?.kind === "ride")) {
+    enterStallById(nearest.id);
+    return;
+  }
   if (handleGatePrompt()) return;
-  const slug = promptTargetSlug || (nearest && nearest.id);
+  if (!nearest || !nearest.atCounter) return;
+  if (stallCardOpen && nearest.kind === "aura") {
+    if (ticketPassed()) return;
+    const PF = window.PennyFever;
+    const laps = Number(pfState().alleyLaps) || 0;
+    const kind = laps === 0 ? "ticket" : "penny";
+    if (PF && typeof PF.admitAlleyLap === "function") {
+      if (!PF.admitAlleyLap(kind) && kind === "penny") {
+        tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
+        tillMessageUntil = performance.now() + 7000;
+      }
+    }
+    stallCardId = "";
+    syncStallCard(nearest);
+    return;
+  }
+  if (stallCardOpen && nearest.kind === "ride") {
+    enterStallById(nearest.id);
+    return;
+  }
+  if (nearest.kind === "vendor") {
+    talkToFocus();
+    return;
+  }
+  if (nearest.kind === "ride" || nearest.kind === "aura" || nearest.kind === "booth") return;
+  const slug = promptTargetSlug || nearest.id;
   if (!slug) return;
   const PF = window.PennyFever;
   if (PF && typeof PF.enterTent === "function") PF.enterTent(slug);
@@ -985,17 +1629,27 @@ function enterNearest() {
 
 function buildWorld() {
   const canvas = el("pfWorld");
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 1.6, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  const first = laneSize();
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !paperRail && !phoneLane && window.devicePixelRatio < 1.6,
+    powerPreference: phoneLane ? "low-power" : "high-performance",
+    stencil: false,
+  });
+  renderer.setPixelRatio(Math.min(phoneLane || paperRail ? 1 : 2, window.devicePixelRatio || 1));
+  renderer.setSize(first.w, first.h, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ReinhardToneMapping;
-  renderer.toneMappingExposure = 2.05;
+  renderer.toneMapping = paperRail ? THREE.NoToneMapping : THREE.ReinhardToneMapping;
+  renderer.toneMappingExposure = paperRail ? 1 : 2.05;
   renderer.setClearColor(0x070b16, 1);
+
+  hallLen = STALL_Z0 + STALLS.length * STALL_STEP + 8;
+  // Dome must enclose the last stall — radius 90 cut the aisle after Catoptromancy.
+  const skyR = Math.max(180, hallLen + 48);
 
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x0b1018, 0.026);
-  camera = new THREE.PerspectiveCamera(58, window.innerWidth / Math.max(1, window.innerHeight), 0.1, 140);
+  camera = new THREE.PerspectiveCamera(phoneLane ? 68 : 58, first.w / first.h, 0.45, skyR + 80);
   clock = new THREE.Clock();
 
   scene.add(new THREE.AmbientLight(0x4a382c, 0.95));
@@ -1009,10 +1663,10 @@ function buildWorld() {
   scene.add(pierFill);
   scene.add(pierFill.target);
 
-  scene.add(makeSky());
+  scene.add(makeSky(skyR));
   makePier(scene);
-  makePalace(scene);
-  hallLen = STALL_Z0 + STALLS.length * STALL_STEP + 8;
+  if (paperRail) makePaperEntrance(scene);
+  else makePalace(scene);
   makeHall(scene, hallLen);
 
   stalls = [];
@@ -1028,7 +1682,7 @@ function buildWorld() {
     s.userData.doorZ = z + Math.cos(yaw) * s.userData.faceOff;
     scene.add(s);
     stalls.push(s);
-    solids.push({ x, z, r: s.userData.hitR });
+    solids.push({ x, z, r: paperRail ? Math.min(0.7, s.userData.hitR) : s.userData.hitR });
   });
 
   const curtain = meshBox(makeMat(VELVET), 7.6, 3.8, 0.2, 0, 1.9, hallLen + 0.8);
@@ -1037,35 +1691,25 @@ function buildWorld() {
   endSign.position.set(0, 3.4, hallLen + 0.6);
   scene.add(endSign);
 
-  const booth = new THREE.Group();
-  booth.position.set(2.15, 0, 3.1);
-  booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
-  booth.add(makeSign("AURA’S TILL", GOLD));
-  booth.children[1].position.set(0, 1.35, 0.2);
-  const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/prepared/welcome-proprietor.webp") }));
-  poster.scale.set(0.55, 0.72, 0.03);
-  poster.position.set(-0.35, 0.85, 0.42);
-  booth.add(poster);
-  scene.add(booth);
-  solids.push({ x: 2.15, z: 3.1, r: 0.85 });
-
-  const vendorNote = makeNoteBoard("VENDOR DESK", [
-    "One Grok per doorway — go 3D in the tent.",
-    "Full creative reins. Recreate freely.",
-    "Do NOT touch world/alley.js",
-    "Do NOT touch booth / port 6000",
-    "Own vendors/{id}.js + #cabinet/{id}",
-    "Read ops/ATTN_VENDOR_AGENTS.md",
-  ]);
-  vendorNote.position.set(-2.45, 1.45, 4.2);
-  vendorNote.rotation.y = Math.PI / 2;
-  scene.add(vendorNote);
+  if (!paperRail) {
+    const booth = new THREE.Group();
+    booth.position.set(2.15, 0, 3.1);
+    booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
+    booth.add(makeSign("AURA’S TILL", GOLD));
+    booth.children[1].position.set(0, 1.35, 0.2);
+    const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/prepared/welcome-proprietor.webp") }));
+    poster.scale.set(0.55, 0.72, 0.03);
+    poster.position.set(-0.35, 0.85, 0.42);
+    booth.add(poster);
+    scene.add(booth);
+    solids.push({ x: 2.15, z: 3.1, r: 0.85 });
+  }
 
   player = makePerson({ kind: "guest", cloth: 0xb08a78, scale: 1.05 });
-  player.position.set(0, 0, -16.2);
+  player.position.set(paperRail ? -0.6 : 0, 0, paperRail ? -18.2 : -16.2);
   scene.add(player);
-  camera.position.set(0, 2.35, -22.2);
-  camera.lookAt(0, 1.15, -16.2);
+  camera.position.set(paperRail ? -.12 : 0, paperRail ? 2.0 : 2.45, paperRail ? -21.6 : -22.2);
+  camera.lookAt(0, paperRail ? 1.05 : 1.2, paperRail ? -14.6 : -16.2);
 
   aura = makePerson({ kind: "aura", cloth: DRESS, scale: 1.08, chibi: true });
   dressAura(aura);
@@ -1073,27 +1717,37 @@ function buildWorld() {
   scene.add(aura);
 
   barkers = [];
-  [1, 6, 8, 22].forEach((idx) => {
-    if (!stalls[idx]) return;
-    const b = makePerson({ cloth: STALLS[idx].accent, scale: 0.95 });
-    dressBarker(b, STALLS[idx].accent);
-    const s = stalls[idx];
-    b.position.set(s.userData.doorX, 0, s.userData.doorZ);
+  stalls.forEach((s) => {
+    const spec = s.userData.stall;
+    const b = makePerson({ cloth: spec.accent, scale: 0.95 });
+    dressBarker(b, spec.accent);
+    const side = s.userData.side;
+    if (paperRail) {
+      // Barker out front at the corner, leaving the guest's approach clear.
+      s.updateMatrixWorld(true);
+      b.position.copy(s.localToWorld(new THREE.Vector3(-side * 1.2, 0, .85)));
+      b.rotation.y = Math.PI;
+    } else {
+      b.position.set(s.userData.doorX + side * 0.1, 0, s.userData.doorZ);
+    }
+    b.userData.stallId = spec.id;
     scene.add(b);
     barkers.push(b);
   });
 
   guests = [];
-  for (let i = 0; i < 4; i += 1) {
+  const wanderN = paperRail ? 5 : 4;
+  const wanderSpan = Math.max(28, hallLen - 22);
+  for (let i = 0; i < wanderN; i += 1) {
     const g = makePerson({
-      cloth: [0x4a3040, 0x2a3a48, 0x4a3a28, 0x3a2840][i],
+      cloth: [0x4a3040, 0x2a3a48, 0x4a3a28, 0x3a2840, 0x3a2848][i % 5],
       scale: 0.9 + Math.random() * 0.12,
     });
     g.userData.patrol = {
-      dir: Math.random() > 0.5 ? 1 : -1,
-      speed: 0.7 + Math.random() * 0.5,
+      dir: i % 2 === 0 ? 1 : -1,
+      speed: paperRail ? 3.2 + (i % 3) * 0.5 : 0.7 + Math.random() * 0.5,
     };
-    g.position.set((Math.random() - 0.5) * 1.4, 0, 10 + i * 14);
+    g.position.set(i % 2 ? 0.42 : -0.42, 0, 12 + (i + 0.3) * (wanderSpan / wanderN));
     scene.add(g);
     guests.push(g);
   }
@@ -1107,14 +1761,47 @@ function buildWorld() {
     if (o.isPointLight && o.userData.flicker) lamps.push(o);
   });
 
+  if (paperRail) {
+    makeVisibleTicketBooth(scene);
+    solids.push({ x: COUNTER.x, z: COUNTER.z - 0.42, r: 0.72 });
+    installIndividualVendors(stalls, scene);
+    vendorCutouts = installVendorCutouts(barkers);
+    stallCutouts = installStallCutouts(stalls);
+    papercutRides = installPapercutRides(scene, STALL_Z0, STALL_STEP);
+    extendPaperAlley(scene, hallLen);
+    wallBackdrops = installWallBackdrops(scene, hallLen);
+    installTicketService(player, aura, window.PennyFever);
+    curtain.visible = false;
+    endSign.visible = false;
+  }
+  mountRestyle(scene, [player, aura, ...barkers, ...guests]);
+  installPaperProprietor(aura);
+  installCrewGuest(player);
+  installPaperCrew(paperRail ? guests : [...barkers, ...guests]);
   window.addEventListener("resize", onResize);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
+  const stage = el("pfWorldStage");
+  if (stage && typeof ResizeObserver === "function" && !stage._pfLaneRO) {
+    stage._pfLaneRO = new ResizeObserver(onResize);
+    stage._pfLaneRO.observe(stage);
+  }
+}
+
+function laneSize() {
+  const stage = el("pfWorldStage");
+  if (stage) {
+    const w = Math.round(stage.clientWidth);
+    const h = Math.round(stage.clientHeight);
+    if (w > 8 && h > 8) return { w, h };
+  }
+  return { w: window.innerWidth, h: Math.max(1, window.innerHeight) };
 }
 
 function onResize() {
   if (!renderer || !camera) return;
-  const w = window.innerWidth;
-  const h = Math.max(1, window.innerHeight);
+  const { w, h } = laneSize();
   camera.aspect = w / h;
+  camera.fov = phoneLane ? 68 : 58;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
 }
@@ -1128,7 +1815,7 @@ function pose() {
     yaw: camYaw,
     nearest: nearest && nearest.id,
     nearestDist: nearest && nearest.dist,
-    zone: z < -3 ? "pier" : "alley",
+    zone: z < FOYER_OUT ? "pier" : "alley",
   };
 }
 
@@ -1153,12 +1840,12 @@ function step(dt, input) {
   }
   updatePlayer(typeof dt === "number" ? dt : 1 / 60);
   findNearest();
-  updateCamera();
+  updateCamera(typeof dt === "number" ? dt : 1 / 60);
   return pose();
 }
 
 function hitsSolid(nx, nz) {
-  const pad = 0.34;
+  const pad = 0.28;
   for (let i = 0; i < solids.length; i += 1) {
     const s = solids[i];
     const hit = s.r + pad;
@@ -1169,69 +1856,111 @@ function hitsSolid(nx, nz) {
   return false;
 }
 
-function blocked(nx, nz) {
+function towardHome(fromX, toX) {
+  return Math.abs(toX) < Math.abs(fromX) - 0.001;
+}
+
+function unstickPlayer() {
+  if (!player) return;
+  const x = player.position.x;
+  const z = player.position.z;
+  if (!hitsSolid(x, z) && Math.abs(x) <= walkLimit(z) + 0.02) return;
+  player.position.x = x * 0.72;
+  if (Math.abs(player.position.x) < 0.12) player.position.x = 0;
+  if (hitsSolid(player.position.x, z) || Math.abs(player.position.x) > walkLimit(z)) player.position.x = 0;
+}
+
+function walkLimit(nz) {
+  if (paperRail && nz >= FOYER_IN - .4 && nz <= FOYER_OUT + .4) return 0.95;
+  if (nz < -8.4) return 4.8;
+  if (paperRail && nz > FOYER_OUT + .5) return WALK_X;
+  return AISLE;
+}
+
+
+
+function blocked(nx, nz, home = false) {
   if (!ticketPassed() && nz > GATE_Z) return true;
-  if (nz < -8.4) {
-    if (nz < -34) return true;
-    return Math.abs(nx) > 4.8;
-  }
-  if (hitsSolid(nx, nz)) return true;
+  if (nz < -34) return true;
+  if (!home && hitsSolid(nx, nz)) return true;
   if (nz < 1.2 && Math.abs(nx) < 1.25) return false;
   if (nz > hallLen + 1.2) return true;
-  return Math.abs(nx) > AISLE;
+  return Math.abs(nx) > walkLimit(nz);
 }
 
 function tryMove(dx, dz) {
   const x = player.position.x;
   const z = player.position.z;
-  if (!blocked(x + dx, z + dz)) {
+  const home = towardHome(x, x + dx);
+  if (!blocked(x + dx, z + dz, home)) {
     player.position.x += dx;
     player.position.z += dz;
     return;
   }
-  if (!blocked(x + dx, z)) player.position.x += dx;
-  if (!blocked(x, z + dz)) player.position.z += dz;
-  else if (!ticketPassed() && z + dz > GATE_Z) api.gateBump = true;
+  if (!blocked(x, z + dz, home)) {
+    player.position.z += dz;
+    return;
+  }
+  if (!ticketPassed() && z + dz > GATE_Z) api.gateBump = true;
+  if (!blocked(x + dx, z, home)) player.position.x += dx;
 }
 
 function updatePlayer(dt) {
+  if (alleyMapOpen || stallCardOpen) return false;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
   if (keys.s || keys.arrowdown) iy -= 1;
   if (keys.a || keys.arrowleft) ix -= 1;
   if (keys.d || keys.arrowright) ix += 1;
+  if (Math.abs(iy) > 0.22 && Math.abs(iy) >= Math.abs(ix) * 0.72) ix = 0;
+  const strafing = Math.abs(ix) > 0.38;
+  moveIntent.ix = ix;
+  moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
   let moving = false;
   if (mag > 0.08) {
-    ix /= mag;
-    iy /= mag;
-    const speed = (keys.shift ? 6.2 : 3.6) * dt;
-    const fx = Math.sin(camYaw);
-    const fz = Math.cos(camYaw);
-    /* Looking +Z, Three.js +X is screen-left. Flip strafe so arrows match the screen. */
-    const rx = -Math.cos(camYaw);
-    const rz = Math.sin(camYaw);
-    const dx = (iy * fx + ix * rx) * speed;
-    const dz = (iy * fz + ix * rz) * speed;
-    tryMove(dx, dz);
-    player.userData.heading = Math.atan2(dx, dz);
-    player.rotation.y = player.userData.heading;
-    moving = true;
+    if (mag > 1) {
+      ix /= mag;
+      iy /= mag;
+    }
+    const speed = (paperRail ? (keys.shift ? 11 : 7.4) : (keys.shift ? 6.2 : 3.6)) * dt;
+    /* Looking +Z, world +X is screen-left — flip so arrows match the aisle. */
+    tryMove(-ix * speed, iy * speed);
+    moving = Math.abs(iy) > 0.08 || strafing;
   }
+  if (player.position.z > -8) {
+    api.facedAlley = true;
+    if (!strafing) {
+      const pull = (0 - player.position.x) * Math.min(1, 10 * dt);
+      if (!blocked(player.position.x + pull, player.position.z, true)) player.position.x += pull;
+    }
+  }
+  unstickPlayer();
+  let face = iy < -0.22 ? Math.PI : 0;
+  if (nearest && nearest.atCounter && Math.abs(iy) < 0.22) {
+    face = Math.atan2(nearest.stallX - player.position.x, nearest.stallZ - player.position.z);
+  }
+  player.userData.heading = face;
+  const spin = face - player.rotation.y;
+  const wrap = ((spin + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  player.rotation.y += wrap * Math.min(1, 10 * dt);
   if (!loopingAlley && ticketPassed() && player.position.z > hallLen - 0.15) {
     loopingAlley = true;
     const veil = el("pfWorldLoopVeil");
     if (veil) veil.classList.add("is-closing");
     loopTimer = window.setTimeout(() => {
+      const PF = window.PennyFever;
+      if (PF && typeof PF.endAlleyLap === "function") PF.endAlleyLap();
       const fromZ = player.position.z;
-      const nextZ = 1.55;
-      player.position.x = Math.max(-0.8, Math.min(0.8, player.position.x));
+      const nextZ = paperRail ? LOOP_START.z : 1.55;
+      player.position.x = paperRail ? LOOP_START.x : Math.max(-0.8, Math.min(0.8, player.position.x));
       player.position.z = nextZ;
       if (camera) camera.position.z += nextZ - fromZ;
       nearest = null;
       promptTargetSlug = "";
       pendingTillCashIn = true;
+      if (paperRail) { tillMessage = "A penny for the next walk, darling."; tillMessageUntil = performance.now() + 7000; }
       if (veil) {
         veil.classList.remove("is-closing");
         veil.classList.add("is-opening");
@@ -1255,14 +1984,17 @@ function handleGatePrompt() {
   if (ticketPassed()) return false;
   if (!gatePromptActive && !atAuraGate() && !api.gateBump) return false;
   const PF = window.PennyFever;
-  if (!hasAdmitTicket()) {
-    if (PF && typeof PF.takeAdmitTicket === "function") PF.takeAdmitTicket();
-    if (navigator.vibrate) navigator.vibrate(30);
+  const laps = Number(pfState().alleyLaps) || 0;
+  const kind = laps === 0 ? "ticket" : "penny";
+  if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
+    if (kind === "penny") {
+      tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
+      tillMessageUntil = performance.now() + 7000;
+    }
     return true;
   }
   const prompt = el("pfWorldPrompt");
   if (prompt) prompt.classList.add("is-ticket-given");
-  if (PF && typeof PF.passAdmitTicket === "function") PF.passAdmitTicket();
   if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
   api.gateBump = false;
   gatePromptActive = false;
@@ -1287,7 +2019,8 @@ function updateAura(dt) {
     aura.position.z += (dz / dist) * sp;
     moving = true;
   }
-  if (moving) aura.rotation.y = Math.atan2(dx, dz);
+  if (paperRail && aura.userData.papercutStand) aura.rotation.y = Math.PI;
+  else if (moving) aura.rotation.y = Math.atan2(dx, dz);
   else {
     const lx = player.position.x - aura.position.x;
     const lz = player.position.z - aura.position.z;
@@ -1295,14 +2028,16 @@ function updateAura(dt) {
   }
   const nearPlayer = player.position.distanceTo(aura.position) < 2.4;
   if (pendingTillCashIn && player.position.distanceTo(aura.position) < 2.85) {
-    const PF = window.PennyFever;
-    const paid = PF && typeof PF.cashInCompletedPlays === "function" ? PF.cashInCompletedPlays() : 0;
-    tillMessage = paid
-      ? `You brought me a proper night. ${paid} fresh ${paid === 1 ? "penny" : "pennies"} for another round.`
-      : "Nothing to cash yet, darling. Play a stall, then bring the night back around.";
-    tillMessageUntil = performance.now() + 5200;
     pendingTillCashIn = false;
-    if (paid && navigator.vibrate) navigator.vibrate([28, 35, 28, 35, 60]);
+    if (!paperRail) {
+      const PF = window.PennyFever;
+      const paid = PF && typeof PF.cashInCompletedPlays === "function" ? PF.cashInCompletedPlays() : 0;
+      tillMessage = paid
+        ? `You brought me a proper night. ${paid} fresh ${paid === 1 ? "penny" : "pennies"} for another round.`
+        : "Nothing to cash yet, darling. Play a stall, then bring the night back around.";
+      tillMessageUntil = performance.now() + 5200;
+      if (paid && navigator.vibrate) navigator.vibrate([28, 35, 28, 35, 60]);
+    }
   }
   animatePerson(aura, dt, moving, nearPlayer && !moving);
 }
@@ -1311,104 +2046,276 @@ function updateCrowd(dt) {
   barkers.forEach((b) => {
     const lx = player.position.x - b.position.x;
     const lz = player.position.z - b.position.z;
-    b.rotation.y = Math.atan2(lx, lz);
-    animatePerson(b, dt, false, Math.hypot(lx, lz) < 3.2);
+    if (!(paperRail && b.userData.papercutStand)) b.rotation.y = Math.atan2(lx, lz);
+    const pitching = !!(nearest && nearest.atCounter && nearest.id === b.userData.stallId);
+    animatePerson(b, dt, false, pitching || Math.hypot(lx, lz) < 1.6);
   });
   guests.forEach((g) => {
     const p = g.userData.patrol;
     g.position.z += p.dir * p.speed * dt;
-    if (g.position.z > hallLen - 4 || g.position.z < 6) p.dir *= -1;
+    if (g.position.z > hallLen - 5 || g.position.z < FOYER_OUT + 4) p.dir *= -1;
     g.rotation.y = p.dir > 0 ? 0 : Math.PI;
     animatePerson(g, dt, true, false);
   });
 }
 
-function findNearest() {
-  let best = null;
-  let bestD = DOOR_REACH;
+function inFrontOf(px, pz, x, z, side, reach = 4.4, band = 2.05) {
+  const dz = Math.abs(pz - z);
+  const d = Math.hypot(px - x, pz - z);
+  const onSide = Math.sign(px || side) === side;
+  return onSide && Math.abs(px) >= 0.48 && dz < band && d < reach;
+}
+
+function pickFocus(px, pz) {
+  let passing = null;
+  let passingZ = 99;
+  function consider(place, dz) {
+    if (dz >= passingZ || dz > 2.35) return;
+    passingZ = dz;
+    passing = place;
+  }
   stalls.forEach((s) => {
     const spec = s.userData.stall;
-    const dx = player.position.x - s.userData.doorX;
-    const dz = player.position.z - s.userData.doorZ;
-    const d = Math.hypot(dx, dz);
-    if (d < bestD) {
-      bestD = d;
-      best = {
-        id: spec.id,
-        name: spec.name,
-        line: spec.line,
-        worldX: s.userData.doorX,
-        worldZ: s.userData.doorZ,
-        dist: d,
-      };
-    }
+    const host = barkers?.find((b) => b.userData.stallId === spec.id);
+    consider({
+      id: spec.id,
+      kind: "stall",
+      name: spec.name,
+      host: spec.host || host?.userData.crewName || spec.name,
+      hostSlug: host?.userData.vendorHost || "",
+      line: spec.line,
+      x: s.position.x,
+      z: s.position.z,
+      stallX: s.position.x,
+      stallZ: s.position.z,
+      side: s.userData.side,
+      dist: Math.hypot(px - s.position.x, pz - s.position.z),
+      dz: Math.abs(pz - s.position.z),
+    }, Math.abs(pz - s.position.z));
   });
-  nearest = best;
+  (papercutRides?.figures || []).forEach((fig) => {
+    if (fig.userData.kind !== "ride") return;
+    const id = fig.userData.amusementId;
+    const art = AMUSEMENT_ART[id];
+    consider({
+      id,
+      kind: "ride",
+      name: art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: art?.host || "",
+      hostSlug: (art?.host || "").toLowerCase(),
+      line: "The ride faces the aisle.",
+      x: fig.position.x,
+      z: fig.position.z,
+      stallX: fig.position.x,
+      stallZ: fig.position.z,
+      side: Math.sign(fig.position.x) || 1,
+      dist: Math.hypot(px - fig.position.x, pz - fig.position.z),
+      dz: Math.abs(pz - fig.position.z),
+    }, Math.abs(pz - fig.position.z));
+  });
+  if (paperRail) {
+    consider({
+      id: "aura",
+      kind: "aura",
+      name: "Ticket booth",
+      host: "Aura",
+      hostSlug: "",
+      line: "Pennies, booth tickets, and a punch for the walk.",
+      x: COUNTER.x,
+      z: COUNTER.z,
+      stallX: COUNTER.x,
+      stallZ: COUNTER.z,
+      side: -1,
+      dist: Math.hypot(px - COUNTER.x, pz - COUNTER.z),
+      dz: Math.abs(pz - COUNTER.z),
+    }, Math.abs(pz - COUNTER.z));
+  }
+  if (stallCardOpen && focus) return { passing, passingZ };
+  const walkingStraight = Math.abs(moveIntent.iy) > 0.2 && Math.abs(moveIntent.ix) < 0.38;
+  const atTill = paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28;
+  if (walkingStraight && !atTill) {
+    focus = null;
+    return { passing, passingZ };
+  }
+  if (atTill) {
+    focus = {
+      id: "aura",
+      kind: "aura",
+      name: "Ticket booth",
+      line: "Pennies, booth tickets, and a punch for the walk.",
+      x: aura.position.x,
+      z: aura.position.z,
+      stallX: COUNTER.x,
+      stallZ: COUNTER.z,
+      side: -1,
+      dist: Math.hypot(px - aura.position.x, pz - aura.position.z),
+      host: "Aura",
+    };
+    return { passing, passingZ };
+  }
+  let best = null;
+  let bestD = 99;
+  stalls.forEach((s) => {
+    const spec = s.userData.stall;
+    if (!inFrontOf(px, pz, s.position.x, s.position.z, s.userData.side)) return;
+    const d = Math.hypot(px - s.position.x, pz - s.position.z);
+    if (d >= bestD) return;
+    const host = barkers?.find((b) => b.userData.stallId === spec.id);
+    bestD = d;
+    best = {
+      id: spec.id,
+      kind: "stall",
+      name: spec.name,
+      line: spec.line,
+      host: spec.host || host?.userData.crewName || spec.name,
+      hostSlug: host?.userData.vendorHost || "",
+      x: s.position.x,
+      z: s.position.z,
+      stallX: s.position.x,
+      stallZ: s.position.z,
+      side: s.userData.side,
+      dist: d,
+    };
+  });
+  (papercutRides?.figures || []).forEach((fig) => {
+    if (fig.userData.kind !== "ride") return;
+    const side = Math.sign(fig.position.x) || 1;
+    if (!inFrontOf(px, pz, fig.position.x, fig.position.z, side, 5.2, 1.8)) return;
+    const d = Math.hypot(px - fig.position.x, pz - fig.position.z);
+    if (d >= bestD) return;
+    const id = fig.userData.amusementId;
+    const art = AMUSEMENT_ART[id];
+    bestD = d;
+    best = {
+      id,
+      kind: "ride",
+      name: art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: art?.host || "",
+      hostSlug: (art?.host || "").toLowerCase(),
+      line: "The ride faces the aisle. No ticket to go aboard yet.",
+      x: fig.position.x,
+      z: fig.position.z,
+      stallX: fig.position.x,
+      stallZ: fig.position.z,
+      side,
+      dist: d,
+    };
+  });
+  focus = best;
+  return { passing, passingZ };
+}
+
+function findNearest() {
+  const px = player.position.x;
+  const pz = player.position.z;
+  const picked = paperRail ? pickFocus(px, pz) : { passing: null };
+  const passing = picked.passing;
+  const passingZ = passing?.dz ?? 99;
+  const best = focus;
+  if (stallCardPinned && lookCardKind(nearest)) {
+    hidePassChip();
+  } else if (lookCardKind(best)) {
+    nearest = { ...best, atCounter: true };
+    hidePassChip();
+    syncStallCard(nearest);
+  } else {
+    nearest = passing && passingZ < 2.2 ? passing : null;
+    if (stallCardOpen) closeStallCard();
+    if (lookCardKind(nearest)) showPassChip(nearest);
+    else hidePassChip();
+  }
+  const rig = el("pfLookRig");
+  if (rig) rig.hidden = true;
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
   const zone = el("pfWorldZone");
   const nearEl = el("pfWorldNearest");
   const speech = el("pfWorldSpeech");
+  const speechName = el("pfWorldSpeechName");
   const speechText = el("pfWorldSpeechText");
-  const z = player.position.z;
+  const z = pz;
   if (z < GATE_Z - 1.8) api.gateBump = false;
   if (zone) {
-    zone.textContent = z < -3 ? "PIER · HEART PALACE" : `HALL · ${Math.max(0, Math.round(z))} PACES`;
+    zone.textContent = z < FOYER_OUT ? "Pier" : `Hall · ${Math.max(0, Math.round(z))}`;
   }
   if (nearEl) {
-    if (!ticketPassed() && z < 0) nearEl.textContent = "Aura holds the door";
-    else if (z > hallLen - 6) nearEl.textContent = "The alley bends around";
-    else nearEl.textContent = best ? best.name : (z < -3 ? "Walk through the doorway" : "Walk up to a door");
+    if (!ticketPassed() && z < GATE_Z) nearEl.textContent = "Aura holds the door";
+    else if (z > hallLen - 6) nearEl.textContent = "End of the walk · a penny to go again";
+    else if (best) nearEl.textContent = best.name;
+    else if (passing && passingZ < 1.45) {
+      nearEl.textContent = passing.name + (passing.side < 0 ? " · left" : " · right");
+    } else nearEl.textContent = z < FOYER_OUT ? "Walk through the doorway" : "Walk the boards";
   }
+  const nameEl = el("pfWorldPromptName");
+  const chatBtn = el("pfWorldChat");
   if (prompt && enter && line) {
     if (!ticketPassed() && (atAuraGate() || api.gateBump)) {
       gatePromptActive = true;
       promptTargetSlug = "";
-      prompt.hidden = false;
+      prompt.hidden = true;
+      if (chatBtn) chatBtn.hidden = true;
       prompt.classList.add("is-ticket-handoff");
-      if (!hasAdmitTicket()) {
-        enter.textContent = "Take a ticket · free tonight";
-        line.textContent = "She won’t step aside without a stub.";
-      } else {
-        enter.textContent = "Give the ticket to Aura";
-        line.textContent = "Hand it over. Then the doorway opens.";
-      }
+    } else if (lookCardKind(best) || lookCardKind(nearest)) {
+      gatePromptActive = false;
+      promptTargetSlug = (best || nearest).id;
+      prompt.hidden = true;
+      if (chatBtn) chatBtn.hidden = true;
+      prompt.classList.remove("is-ticket-handoff");
     } else if (best) {
       gatePromptActive = false;
-      promptTargetSlug = best.id;
+      promptTargetSlug = best.kind === "stall" ? best.id : "";
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
-      enter.textContent = "1 penny to play · " + best.name;
-      line.textContent = best.line;
+      if (nameEl) nameEl.textContent = best.kind === "stall" && best.host ? best.name : best.name;
+      const playable = best.kind === "stall";
+      const chatable = best.kind === "stall" || best.kind === "aura";
+      enter.hidden = !playable;
+      enter.textContent = stallEnterLabel(best.id);
+      if (chatBtn) {
+        chatBtn.hidden = !chatable;
+        chatBtn.textContent = "Chat";
+      }
+      line.textContent = best.line || "";
     } else {
       gatePromptActive = false;
       promptTargetSlug = "";
       prompt.hidden = true;
+      enter.hidden = false;
+      if (chatBtn) chatBtn.hidden = true;
+      if (nameEl) nameEl.textContent = "";
       prompt.classList.remove("is-ticket-handoff");
     }
   }
   if (speech && speechText) {
     const dAura = player.position.distanceTo(aura.position);
+    speech.classList.remove("is-left", "is-right");
     if (tillMessage && performance.now() < tillMessageUntil) {
       speech.hidden = false;
+      if (speechName) speechName.textContent = "Aura";
       speechText.textContent = tillMessage;
+    } else if (el("pfPassChip") && !el("pfPassChip").hidden) {
+      speech.hidden = true;
     } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
+      speech.hidden = true;
+    } else if (best && best.kind === "stall" && performance.now() < vendorChatUntil) {
       speech.hidden = false;
-      speechText.textContent = hasAdmitTicket()
-        ? "That’s far enough. Ticket, please."
-        : "Ticket first, darling. You don’t get past me without it.";
-    } else if (best && best.dist < 2.1) {
-      speech.hidden = false;
+      if (speechName) speechName.textContent = best.host || best.name;
+      speech.classList.add(best.side < 0 ? "is-left" : "is-right");
       speechText.textContent = best.line;
+    } else if (best && best.kind === "stall") {
+      speech.hidden = true;
     } else if (z > hallLen - 6) {
       speech.hidden = false;
-      speechText.textContent = "Keep walking. My midway refuses to end neatly.";
+      if (speechName) speechName.textContent = "Aura";
+      speechText.textContent = "The walk is done. A penny to come round again.";
     } else if (ticketPassed() && dAura < 2.4) {
       speech.hidden = false;
+      if (speechName) speechName.textContent = "Aura";
       speechText.textContent = "First fortune is free. Everything else is a pretend penny. Follow the lights.";
     } else if (chatPinned) {
       speech.hidden = false;
+      if (speechName) speechName.textContent = "Aura";
       speechText.textContent = "Ask me at any tent. I know which machines lie and which merely cheat.";
     } else {
       speech.hidden = true;
@@ -1416,35 +2323,133 @@ function findNearest() {
   }
 }
 
-function updateHudAnchor() {
-  const prompt = el("pfWorldPrompt");
-  if (!prompt || prompt.hidden || !player || !camera || !renderer) return;
-  hudAnchor.copy(player.position);
-  hudAnchor.y += 2.15;
+function projectWorld(x, y, z) {
+  hudAnchor.set(x, y, z);
   hudAnchor.project(camera);
-  const rect = renderer.domElement.getBoundingClientRect();
-  const x = Math.max(170, Math.min(rect.width - 170, (hudAnchor.x * 0.5 + 0.5) * rect.width));
-  const y = Math.max(145, Math.min(rect.height - 210, (-hudAnchor.y * 0.5 + 0.5) * rect.height - 12));
-  prompt.style.left = `${x}px`;
-  prompt.style.top = `${y}px`;
-  prompt.style.bottom = "auto";
+  const canvas = renderer.domElement;
+  return {
+    x: (hudAnchor.x * 0.5 + 0.5) * canvas.clientWidth,
+    y: (-hudAnchor.y * 0.5 + 0.5) * canvas.clientHeight,
+  };
 }
 
-function updateCamera() {
-  const dist = player.position.z > -1 ? 4.6 : 5.6;
-  const height = 2.05;
-  const lookY = 0.95;
-  const tx = player.position.x - Math.sin(camYaw) * dist;
-  const tz = player.position.z - Math.cos(camYaw) * dist;
-  camera.position.x += (tx - camera.position.x) * 0.12;
-  camera.position.y += (player.position.y + height - camera.position.y) * 0.12;
-  camera.position.z += (tz - camera.position.z) * 0.12;
-  camera.lookAt(player.position.x, player.position.y + lookY, player.position.z);
+function updateHudAnchor() {
+  if (!player || !camera || !renderer) return;
+  const w = renderer.domElement.clientWidth;
+  const h = renderer.domElement.clientHeight;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const px = player.position.x;
+  const pz = player.position.z;
+  const head = projectWorld(px, 2.08, pz);
+  const feet = projectWorld(px, 0.06, pz);
+
+  const joy = el("pfJoy");
+  if (joy) {
+    joy.classList.remove("is-anchored");
+    joy.style.left = "";
+    joy.style.top = "";
+    joy.style.bottom = "";
+    joy.style.transform = "";
+  }
+
+  const speech = el("pfWorldSpeech");
+  if (speech && !speech.hidden) {
+    speech.classList.add("is-anchored");
+    speech.style.left = `${clamp(head.x, 170, w - 170)}px`;
+    speech.style.top = `${clamp(head.y - 10, 64, h - 240)}px`;
+  }
+
+  const chip = el("pfPassChip");
+  if (chip && !chip.hidden) {
+    chip.style.left = `${clamp(head.x, 72, w - 72)}px`;
+    chip.style.top = `${clamp(head.y - 28, 88, h - 220)}px`;
+  }
+
+  const prompt = el("pfWorldPrompt");
+  if (!prompt || prompt.hidden) return;
+  prompt.classList.add("is-anchored");
+  if (phoneLane) {
+    prompt.style.left = "50%";
+    prompt.style.top = "auto";
+    prompt.style.bottom = "10.5rem";
+    prompt.style.transform = "translate(-50%, 0)";
+    return;
+  }
+  const atStall = nearest && nearest.atCounter && !prompt.classList.contains("is-ticket-handoff");
+  const speechUp = speech && !speech.hidden;
+  const p = atStall
+    ? projectWorld(nearest.stallX, 1.72, nearest.stallZ)
+    : { x: head.x, y: head.y - (speechUp ? 88 : 8) };
+  prompt.style.left = `${clamp(p.x, 48, w - 48)}px`;
+  prompt.style.top = `${clamp(p.y, 140, h - 200)}px`;
+  prompt.style.bottom = "auto";
+  prompt.style.transform = "translate(-50%, -100%)";
+}
+
+function followPose() {
+  const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && nearest.kind !== "stall");
+  viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
+  camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
+  const onHall = player.position.z > -1;
+  const openAlley = Math.max(0, Math.min(1, (player.position.z - FOYER_OUT - 4) / 6));
+  const onPier = paperRail && player.position.z < FOYER_IN - 0.8;
+  const dist = paperRail ? (onPier ? 4.6 : (phoneLane ? 4.2 : 3.4)) + openAlley * 2.4 : (onHall ? 4.9 : 5.6);
+  const height = paperRail ? (onPier ? 2.15 : (phoneLane ? 2.1 : 2.0)) + openAlley * .3 : (onHall ? 2.18 : 2.05);
+  const lookY = paperRail ? (onPier ? 1.12 : 1.05) + openAlley * .25 : .95;
+  const lookAhead = paperRail ? (onPier ? 4.8 : (phoneLane ? 4.4 : 3.6)) + openAlley * 2.2 : (onHall ? 6.4 : 3.6);
+  const followX = 0.2;
+  const railX = player.position.x * followX;
+  const rawAlleyX = railX - Math.sin(camYaw) * dist;
+  const alleyTx = paperRail ? Math.max(-.32, Math.min(.32, rawAlleyX)) : rawAlleyX;
+  const alleyTy = player.position.y + height;
+  const alleyTz = player.position.z - Math.cos(camYaw) * dist;
+  const alleyLx = railX * 0.35;
+  const alleyLy = player.position.y + lookY;
+  const alleyLz = player.position.z + lookAhead;
+  let tx = alleyTx;
+  let ty = alleyTy;
+  let tz = alleyTz;
+  let lx = alleyLx;
+  let ly = alleyLy;
+  let lz = alleyLz;
+  if (viewBlend > 0.01 && nearest) {
+    const lookX = nearest.kind === "aura" ? nearest.x : (nearest.stallX || nearest.x) * 0.72;
+    const lookZ = nearest.kind === "aura" ? nearest.z : (nearest.stallZ || nearest.z);
+    const side = nearest.side || Math.sign(lookX || 1);
+    const base = nearest.kind === "ride" ? 7.2 : nearest.kind === "aura" ? 3.8 : 4.3;
+    const lookBack = base;
+    const stallTx = Math.max(-0.85, Math.min(0.85, side * 0.22));
+    const stallTy = nearest.kind === "ride" ? 2.7 : 1.62;
+    const stallTz = lookZ - lookBack;
+    const stallLx = lookX;
+    const stallLy = nearest.kind === "ride" ? 2.9 : 1.45;
+    const stallLz = lookZ;
+    tx = alleyTx + (stallTx - alleyTx) * viewBlend;
+    ty = alleyTy + (stallTy - alleyTy) * viewBlend;
+    tz = alleyTz + (stallTz - alleyTz) * viewBlend;
+    lx = alleyLx + (stallLx - alleyLx) * viewBlend;
+    ly = alleyLy + (stallLy - alleyLy) * viewBlend;
+    lz = alleyLz + (stallLz - alleyLz) * viewBlend;
+  }
+  return { tx, ty, tz, lx, ly, lz };
+}
+
+function updateCamera(dt) {
+  if (!lookDrag) glanceYaw += (0 - glanceYaw) * 0.14;
+  const pose = followPose();
+  camera.position.x += (pose.tx - camera.position.x) * 0.16;
+  camera.position.y += (pose.ty - camera.position.y) * 0.16;
+  camera.position.z += (pose.tz - camera.position.z) * 0.16;
+  if (paperRail) {
+    camera.position.x = Math.max(-1.02, Math.min(1.02, camera.position.x));
+    camera.position.y = Math.max(1.48, camera.position.y);
+  }
+  camera.lookAt(pose.lx, pose.ly, pose.lz);
 }
 
 function updateFx(t) {
-  const pocketCount = el("pfPocketCoinCount");
-  if (pocketCount) pocketCount.textContent = String(Number(pfState().demoCoins) || 0);
+  paintPocketHud();
   lamps.forEach((l) => {
     l.intensity = 1.05 + Math.sin(t * 3.1 * l.userData.flicker) * 0.18;
   });
@@ -1481,13 +2486,32 @@ function updateFx(t) {
 function loop() {
   if (!api.started || api.paused) return;
   raf = requestAnimationFrame(loop);
-  const dt = Math.min(0.05, clock.getDelta());
+  const dt = Math.min(0.1, clock.getDelta());
   const t = clock.elapsedTime;
   updatePlayer(dt);
   updateAura(dt);
   updateCrowd(dt);
   findNearest();
-  updateCamera();
+  if (alleyMapOpen) syncAlleyMapYou();
+  updateCamera(dt);
+  updatePaperProprietor(aura, player);
+  updateCrewGuest(player, camera, dt);
+  updatePaperCrew(guests, camera);
+  const eye = player;
+  if (paperRail) updateTicketBooth(eye);
+  if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, eye);
+  if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, eye);
+  if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, eye);
+  if (paperRail && wallBackdrops) wallBackdrops.update(player.position.z, dt);
+  updateTicketService();
+  if (stallCardOpen) {
+    const till = document.querySelector(".aura-counter-service");
+    if (till) till.hidden = true;
+    document.querySelector(".aura-till-backdrop")?.setAttribute("hidden", "");
+    const tillSheet = document.querySelector(".aura-till");
+    if (tillSheet) tillSheet.hidden = true;
+    document.body.classList.remove("has-aura-till");
+  }
   updateHudAnchor();
   updateFx(t);
   hintTimer += dt;
@@ -1498,13 +2522,32 @@ function loop() {
   renderer.render(scene, camera);
 }
 
+let pendingStart = false;
 function start() {
+  if (pendingStart) return true;
+  pendingStart = true;
+  // Let the loading screen paint before synchronous scene construction begins.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    pendingStart = false;
+    if (!/^#(foyer|arcade|alley)$/.test(location.hash)) return;
+    try {
+      const opened = startNow();
+      window.dispatchEvent(new Event(opened ? 'pf-world-ready' : 'pf-world-error'));
+    } catch (err) {
+      console.warn('Penny Fever startup', err);
+      window.dispatchEvent(new Event('pf-world-error'));
+    }
+  }));
+  return true;
+}
+
+function startNow() {
   attachHud();
   if (!canGL()) {
     api.ok = false;
     const fail = el("pfWorldFail");
     if (fail) fail.hidden = false;
-    document.body.classList.add("is-in-world", "is-world-map");
+    document.body.classList.add("is-in-world");
     return false;
   }
   if (!el("pfWorld")) return false;
@@ -1522,17 +2565,35 @@ function start() {
   api.ok = true;
   api.started = true;
   api.paused = false;
+  camYaw = 0;
+  glanceYaw = 0;
+  viewBlend = 0;
+  lookZoom = 1;
   document.body.classList.add("is-in-world");
   document.body.classList.remove("is-world-map");
+  closeAlleyMap();
   onResize();
+  wallBackdrops?.resume();
+  papercutRides?.resume();
+  vendorCutouts?.resume();
+  stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
   loop();
+  window.dispatchEvent(new Event("pf-world-ready"));
   return true;
 }
 
 function pause() {
+  closeAlleyMap();
   api.paused = true;
+  keys = {};
+  joy.active = false;
+  joy.x = joy.y = 0;
+  wallBackdrops?.pause();
+  papercutRides?.pause();
+  vendorCutouts?.pause();
+  stallCutouts?.pause();
   cancelAnimationFrame(raf);
   clearTimeout(loopTimer);
   clearTimeout(loopOpenTimer);
@@ -1546,6 +2607,10 @@ function resume() {
   if (!api.started) return start();
   api.paused = false;
   document.body.classList.add("is-in-world");
+  wallBackdrops?.resume();
+  papercutRides?.resume();
+  vendorCutouts?.resume();
+  stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
   loop();
@@ -1559,6 +2624,18 @@ function stop() {
 
 function boot() {
   if (window.PennyFever) window.PennyFever.world = api;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (api.started && !api.paused) {
+        api.tabPause = true;
+        pause();
+      }
+      return;
+    }
+    if (!api.tabPause) return;
+    api.tabPause = false;
+    if (/^#(foyer|arcade|alley)$/.test(location.hash)) resume();
+  });
   const hash = (location.hash || "").replace(/^#/, "");
   if (hash === "foyer" || hash === "arcade" || hash === "alley") {
     start();
