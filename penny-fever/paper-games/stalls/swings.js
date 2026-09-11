@@ -1,7 +1,6 @@
 import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {pace, swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 const CHAIRS = ['swing-spinner', 'pressed-heart', 'star-token', 'moon-penny', 'prize-bag', 'friendship-pins'];
 
@@ -50,15 +49,13 @@ export default {
   action(s, id) { if (id === 'catch') snap(s); },
   key(s, k, down) { if (k === ' ' && down) snap(s); },
   draw(s, d) {
-    paperRoom(d, ROOMS.swings);
-    const cx = 450, cy = 620, r = 200, n = s.chairs.length;
-    d.item(spriteKey(s.target), cx, 236, {w: 64, shadow: false, fallback: () => d.star(cx, 236, 20)});
-    d.text('this chair', cx, 186, 15, '#f0d0c0');
-    d.ellipse(cx, cy + r + 8, 46, 16, '#c890a055', '#c890a0', 2);
+    const cx = 450, cy = 740, r = 188, n = s.chairs.length;
+    d.item(spriteKey(s.target), cx, 430, {w: 64, shadow: false, fallback: () => d.star(cx, 430, 20)});
+    d.text('this chair', cx, 380, 15, '#5a3a40');
+    d.ellipse(cx, cy + r * 0.58, 46, 16, '#c890a055', '#c890a0', 2);
     for (let i = 0; i < n; i++) {
       const a = s.spin + i * TAU / n;
       const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.55;
-      d.line({x: cx, y: cy}, {x, y: y - 18}, '#c890a088', 2);
       const front = Math.abs(Math.atan2(Math.sin(a - Math.PI / 2), Math.cos(a - Math.PI / 2))) < 0.22;
       if (front) d.glow(x, y, 40, '#ffd0c0');
       d.item(spriteKey(s.chairs[i]), x, y, {
@@ -66,7 +63,7 @@ export default {
         fallback: () => d.circle(x, y, 16, '#e8b0a0', '#f8dfa7', 2),
       });
     }
-    d.text(s.caught + ' / ' + s.goal, 450, 1090, 20, '#f3e2d4');
+    d.text(s.caught + ' / ' + s.goal, 450, 1090, 20, '#5a3a40');
   },
   readout: s => s.caught + ' / ' + s.goal + ' chairs · ' + s.note,
 };

@@ -1,7 +1,6 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {pace, swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 const KEYS = ['organ-music-box', 'star-token', 'moon-penny', 'pressed-heart'];
 
@@ -27,7 +26,7 @@ export default {
     if (s.spawn <= 0) {
       s.notes.push({
         id: KEYS[Math.floor(Math.random() * KEYS.length)],
-        x: 260 + Math.random() * 380, y: 280, hit: false,
+        x: 280 + Math.random() * 340, y: 400, hit: false,
       });
       s.spawn = pace(s.level, 0.9, 0.08, 0.38);
     }
@@ -49,17 +48,15 @@ export default {
   },
   key(s, k, down) { if (k === ' ' && down) this.action(s, 'play'); },
   draw(s, d) {
-    paperRoom(d, ROOMS.organ);
-    d.line({x: 200, y: 880}, {x: 700, y: 880}, '#e8c878', 6);
-    d.text('play here', 450, 200, 15, '#e8c878');
+    d.line({x: 220, y: 880}, {x: 680, y: 880}, '#c4a070', 6);
+    d.text('play here', 450, 390, 15, '#5a3a40');
     for (const n of s.notes) {
       d.item(spriteKey(n.id), n.x, n.y, {
         w: n.hit ? 36 : 52, alpha: n.hit ? 0.35 : 1,
         fallback: () => d.circle(n.x, n.y, 16, '#e8c878'),
       });
     }
-    d.item(spriteKey('organ-music-box'), 450, 236, {w: 70, shadow: false, fallback: () => d.star(450, 236, 20)});
-    d.text(s.hit + ' / ' + s.goal, 450, 1090, 20, '#efe2c6');
+    d.text(s.hit + ' / ' + s.goal, 450, 1090, 20, '#5a3a40');
   },
   readout: s => s.hit + ' / ' + s.goal + ' notes · ' + s.note,
 };

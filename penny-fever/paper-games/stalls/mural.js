@@ -1,16 +1,15 @@
 import {dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 function spots(level) {
   const n = swell(level, 6, 2, 16);
   const out = [];
   for (let i = 0; i < n; i++) {
     out.push({
-      x: 260 + (i % 4) * 120 + (i % 2) * 16,
-      y: 420 + Math.floor(i / 4) * 130,
-      r: 38 - level,
+      x: 270 + (i % 4) * 120 + (i % 2) * 16,
+      y: 520 + Math.floor(i / 4) * 120,
+      r: 36 - level,
       filled: false,
     });
   }
@@ -41,15 +40,14 @@ export default {
     } else s.note = 'A little closer to a pale circle.';
   },
   draw(s, d) {
-    paperRoom(d, ROOMS.mural);
-    d.item(spriteKey('midway-map'), 450, 228, {w: 72, shadow: false, fallback: () => d.star(450, 228, 20)});
-    d.text('stamp the wall', 450, 178, 15, '#ead6a8');
+    d.item(spriteKey('midway-map'), 450, 400, {w: 64, shadow: false, fallback: () => d.star(450, 400, 20)});
+    d.text('stamp the wall', 450, 350, 15, '#5a3a40');
     for (const p of s.patches) {
       d.circle(p.x, p.y, p.r, p.filled ? '#c4a46acc' : '#efe6c844', p.filled ? '#ead6a8' : '#b89a68', 3);
       if (p.filled) d.item(spriteKey('star-token'), p.x, p.y, {w: 28, shadow: false, fallback: () => {}});
     }
     const have = s.patches.filter(p => p.filled).length;
-    d.text(have + ' / ' + s.patches.length, 450, 1090, 20, '#f4ead0');
+    d.text(have + ' / ' + s.patches.length, 450, 1090, 20, '#5a3a40');
   },
   readout: s => {
     const have = s.patches.filter(p => p.filled).length;

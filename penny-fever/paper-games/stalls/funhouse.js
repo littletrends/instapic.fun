@@ -1,17 +1,23 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 const FACES = ['laughing-doorway', 'looking-glass-locket', 'velvet-mask'];
 
 function deal(s) {
-  s.doors = [0, 1, 2].map(i => FACES[i % FACES.length]);
-  s.real = Math.floor(Math.random() * 3);
-  s.doors[s.real] = 'laughing-doorway';
-  s.flash = 0.85;
+  s.doors = ['looking-glass-locket', 'laughing-doorway', 'velvet-mask'];
+  s.real = 1;
+  s.flash = 0.9;
+  s.shuffled = false;
   s.locked = false;
   s.note = 'Watch the real doorway — then pick it.';
+}
+
+function shuffleDoors(s) {
+  const order = [0, 1, 2].sort(() => Math.random() - 0.5);
+  s.doors = order.map(i => s.doors[i]);
+  s.real = s.doors.indexOf('laughing-doorway');
+  s.shuffled = true;
 }
 
 export default {
@@ -27,13 +33,15 @@ export default {
     {id: 'd2', label: 'Right door'},
   ],
   create(level) {
-    const s = {level, t: 0, found: 0, goal: swell(level, 3, 1, 8), doors: [], real: 0, flash: 0, locked: false, note: ''};
+    const s = {level, t: 0, found: 0, goal: swell(level, 3, 1, 8), doors: [], real: 0, flash: 0, shuffled: false, locked: false, note: ''};
     deal(s);
     return s;
   },
   update(s, dt) {
     s.t += dt;
+    const was = s.flash;
     s.flash = Math.max(0, s.flash - dt);
+    if (was > 0 && s.flash === 0 && !s.shuffled) shuffleDoors(s);
   },
   pointer(s, type, p) {
     if (type !== 'down' || s.flash > 0 || s.locked || s.result) return;
@@ -64,18 +72,17 @@ export default {
     if (k === 'ArrowRight' || k === '3') this.action(s, 'd2');
   },
   draw(s, d) {
-    paperRoom(d, ROOMS.funhouse);
-    d.text(s.flash > 0 ? 'watch the laugh' : 'pick the real door', 450, 200, 16, '#f0d0c8');
+    d.text(s.flash > 0 ? 'watch the laugh' : 'pick the real door', 450, 390, 16, '#5a3a40');
     const xs = [250, 450, 650];
     xs.forEach((x, i) => {
       const real = i === s.real;
       const show = s.flash > 0 ? (real ? 'laughing-doorway' : s.doors[i]) : s.doors[i];
-      if (s.flash > 0 && real) d.glow(x, 640, 70, '#ffe0d0');
-      d.item(spriteKey(show), x, 640, {
-        w: 110, fallback: () => d.poly([[x - 40, 520], [x + 40, 520], [x + 40, 760], [x - 40, 760]], '#d4a0b8', '#f0d0c8', 2),
+      if (s.flash > 0 && real) d.glow(x, 700, 70, '#ffe0d0');
+      d.item(spriteKey(show), x, 700, {
+        w: 110, fallback: () => d.poly([[x - 40, 580], [x + 40, 580], [x + 40, 820], [x - 40, 820]], '#d4a0b8', '#f0d0c8', 2),
       });
     });
-    d.text(s.found + ' / ' + s.goal, 450, 1090, 20, '#f6e6da');
+    d.text(s.found + ' / ' + s.goal, 450, 1090, 20, '#5a3a40');
   },
   readout: s => s.found + ' / ' + s.goal + ' doors · ' + s.note,
 };

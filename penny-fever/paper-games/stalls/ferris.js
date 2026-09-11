@@ -1,7 +1,6 @@
 import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {pace, swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 const CABINS = ['pocket-wheel', 'star-token', 'moon-penny', 'ride-ticket', 'gyro-ghost', 'pressed-heart'];
 
@@ -30,7 +29,7 @@ function stop(s) {
 export default {
   title: 'Pocket Wheel',
   intro: 'Jasper’s ferris wheel never quite sits. Stop it when the matching cabin kisses the crescent.',
-  instructions: 'Watch the cabins. When the one shown at the top is at the very peak, tap Stop or press Space. Later chapters turn faster.',
+  instructions: 'Watch the cabins in the oval. When the one shown at the top is at the very peak, tap Stop or press Space. Later chapters turn faster.',
   levels: ['A slow first turn', 'The evening lift', 'Lantern cabins', 'A quicker wheel', 'Six little cars', 'The last crescent'],
   sprites: CABINS,
   prizes: ['pocket-wheel', 'star-token', 'moon-penny', 'ride-ticket', 'ride-stamp-book', 'ride-explorer-pennant'],
@@ -50,15 +49,13 @@ export default {
   action(s, id) { if (id === 'stop') stop(s); },
   key(s, k, down) { if (k === ' ' && down) stop(s); },
   draw(s, d) {
-    paperRoom(d, ROOMS.ferris);
-    const cx = 450, cy = 640, r = 176, n = s.cabins.length;
-    d.item(spriteKey(s.target), cx, 236, {w: 64, shadow: false, fallback: () => d.star(cx, 236, 20)});
-    d.text('this cabin', cx, 186, 15, '#f0d6a8');
-    d.circle(cx, cy, 18, '#c4a46a', '#f0d6a0', 2);
+    const cx = 450, cy = 730, r = 168, n = s.cabins.length;
+    d.item(spriteKey(s.target), cx, 408, {w: 64, shadow: false, fallback: () => d.star(cx, 408, 20)});
+    d.text('this cabin', cx, 358, 15, '#5a3a40');
+    d.glow(cx, cy - r, 36, '#f4d590');
     for (let i = 0; i < n; i++) {
       const a = s.spin + i * TAU / n;
-      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-      d.line({x: cx, y: cy}, {x, y}, '#c4a46a88', 2);
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.82;
       const top = Math.abs(Math.atan2(Math.sin(a + Math.PI / 2), Math.cos(a + Math.PI / 2))) < 0.22;
       if (top) d.glow(x, y, 40, '#ffe6a4');
       d.item(spriteKey(s.cabins[i]), x, y, {
@@ -66,7 +63,7 @@ export default {
         fallback: () => d.circle(x, y, 16, '#cdb281', '#f8dfa7', 2),
       });
     }
-    d.text(s.caught + ' / ' + s.goal, 450, 1090, 20, '#efe6d0');
+    d.text(s.caught + ' / ' + s.goal, 450, 1090, 20, '#5a3a40');
   },
   readout: s => s.caught + ' / ' + s.goal + ' cabins · ' + s.note,
 };

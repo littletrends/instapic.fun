@@ -1,12 +1,11 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {pace, swell} from '../chapter-kit.js';
-import {ROOMS, paperRoom} from '../paper-room.js';
 
 function point(t) {
   const a = t * 7.2;
-  const r = 210 - t * 150;
-  return {x: 450 + Math.sin(a) * r, y: 300 + t * 680};
+  const r = 200 - t * 140;
+  return {x: 450 + Math.sin(a) * r, y: 400 + t * 600};
 }
 function ringsFor(level) {
   const n = swell(level, 3, 1, 6);
@@ -53,18 +52,17 @@ export default {
   },
   key(s, k, down) { if (k === ' ' && down) this.action(s, 'catch'); },
   draw(s, d) {
-    paperRoom(d, ROOMS.helter);
     for (let i = 0; i <= 40; i++) {
       const a = point(i / 40), b = point((i + 1) / 40);
-      d.line(a, b, '#7aa08a', 7);
+      d.line(a, b, '#8a6238cc', 7);
     }
     for (const r of s.rings) {
       const p = point(r.u);
-      d.circle(p.x, p.y, 22, r.got ? '#d8ecc866' : null, r.got ? '#d8ecc8' : '#e8c878', 4);
+      d.circle(p.x, p.y, 22, r.got ? '#e8c87866' : null, r.got ? '#d8ecc8' : '#e8c878', 4);
     }
     const p = point(s.u);
     d.item(spriteKey('star-token'), p.x, p.y, {w: 44, fallback: () => d.circle(p.x, p.y, 14, '#e8c878')});
-    d.text(s.caught + ' / ' + s.rings.length, 450, 1090, 20, '#e8f2e6');
+    d.text(s.caught + ' / ' + s.rings.length, 450, 1090, 20, '#5a3a40');
   },
   readout: s => s.caught + ' / ' + s.rings.length + ' rings · ' + s.note,
 };
