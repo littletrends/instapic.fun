@@ -43,13 +43,13 @@
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
-  <script type="module" src="world/paper-game-booths.js?v=iris-cards-2"></script>
+  <script type="module" src="world/paper-game-booths.js?v=tent1-land-1"></script>
   <link rel="stylesheet" href="world/items/inventory.css?v=found-turn-1">
   <script type="module" src="world/items/inventory.js?v=found-turn-1"></script>
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
   <link rel="stylesheet" href="world/ticket-till.css?v=penny-trade-2">
-  <script type="module" src="world/alley.js?v=iris-land-1"></script>
+  <script type="module" src="world/alley.js?v=tent1-land-1"></script>
   <script type="module" src="world/crew-selector.js?v=crew-door-3"></script>
   <link rel="stylesheet" href="world/crew-selector.css?v=crew-door-3">
   <link rel="stylesheet" href="restyle.css?v=penny-trade-2">
@@ -148,103 +148,9 @@
       </div>
     </section>
 
-    <!-- Cabinet interiors — full journeys -->
-    <section class="cabinet-interior fortune-interior" id="cabinet-fortune" hidden data-cabinet="fortune" aria-labelledby="cabinet-fortune-title">
-      <div class="interior-sky fortune-sky" aria-hidden="true"></div>
-      <div class="interior-room fortune-room">
-        <header class="interior-header">
-          <button type="button" class="quiet-button interior-back" data-back-arcade>← Back to the alley</button>
-          <p class="plaque-kicker">Iris’s tent</p>
-          <h1 id="cabinet-fortune-title" tabindex="-1">Iris’s Reading</h1>
-          <p class="interior-blurb">Three cards: past, present, future. A keepsake is hiding in the deck.</p>
-        </header>
-        <div class="interior-stage">
-          <article class="attraction-card fortune-card is-playing" id="fortuneCard">
-          <p class="machine-number">Walk-in tent · 1 demo coin · one reading</p>
-          <h2>Iris’s table</h2>
-          <p class="barker-call">A BOOTH TICKET SITS YOU DOWN · THREE CARDS</p>
-          <div class="vendor-stage fortune-stage" id="fortuneStage">
-            <canvas id="fortuneCanvas" width="960" height="720" tabindex="0" aria-label="Walk through the mystic tent to Aura at her table. WASD to walk, E to sit for a reading."></canvas>
-            <div class="fortune-hud" id="fortuneHud">
-              <div class="fortune-hud-play">
-                <div class="fortune-hud-top">
-                  <p class="fortune-hud-room" id="fortuneHudRoom">INSIDE THE MYSTIC TENT</p>
-                </div>
-                <p class="fortune-hud-hint" id="fortuneHudHint">Walk up to Aura. She is already seated.</p>
-              </div>
-              <div class="fortune-hud-mid">
-                <span class="fortune-toast" id="fortuneToast" hidden></span>
-              </div>
-              <div class="fortune-hud-bottom">
-                <div class="fortune-walk" aria-label="Walk">
-                  <button type="button" data-fortune-walk="w" aria-label="Walk forward">▲</button>
-                  <span>
-                    <button type="button" data-fortune-walk="a" aria-label="Walk left">◀</button>
-                    <button type="button" data-fortune-walk="s" aria-label="Walk back">▼</button>
-                    <button type="button" data-fortune-walk="d" aria-label="Walk right">▶</button>
-                  </span>
-                </div>
-                <div class="fortune-controls" id="fortuneControls">
-                  <span><kbd>WASD</kbd> walk the tent</span>
-                  <span><kbd>E</kbd> sit · 1 penny</span>
-                </div>
-              </div>
-            </div>
-            <div class="fortune-start-overlay" id="fortuneStartOverlay" hidden>
-              <button class="ticket-button" id="fortuneGo" type="button">SIT · 1 penny</button>
-              <p class="fortune-start-note">Walk up to Aura’s table.</p>
-            </div>
-            <div class="fortune-float-ticket" id="fortuneFloatTicket" hidden>
-              <p class="fortune-float-colour" id="fortuneTicketColour"></p>
-              <p class="fortune-float-line" id="fortuneTicketLine"></p>
-            </div>
-            <p class="fortune-webgl-fail" id="fortuneWebglFail" hidden>This tent wants WebGL. The crystal went shy.</p>
-          </div>
-          <div class="vendor-actions fortune-actions">
-            <button class="ticket-button" id="fortuneStart" type="button">SIT · 1 penny</button>
-          </div>
-          <p class="status-ticket" id="fortunePlayStatus">Walk up to Aura. She is already seated.</p>
-          <p class="tier-pill" id="fortuneTier" hidden></p>
-          <p class="love-verdict" id="fortuneVerdict" hidden></p>
-          <div class="vendor-result" id="fortuneOracleResult" hidden>
-            <p class="vendor-result-game">MYSTIC FORTUNE TENT · AURA’S TABLE</p>
-            <p class="vendor-result-depth" id="fortuneResultDepth">ROOM 0</p>
-            <p class="vendor-result-score" id="fortuneResultScore">SCORE 0</p>
-            <p class="vendor-result-aura" id="fortuneResultAura"></p>
-            <p class="vendor-result-challenge" id="fortuneChallengeText">Beat my Mystic Tent room 0 on Penny Fever</p>
-            <button class="quiet-button" id="fortuneChallenge" type="button">Copy challenge</button>
-            <p class="vendor-result-copied" id="fortuneCopied" hidden>Copied</p>
-          </div>
-          <div class="fortune-legacy" hidden aria-hidden="true">
-            <img id="fortuneCabinetArt" data-live-art="1" data-asset="fortune_machine" src="assets/game/Free_Fortune_States/Closed.webp" alt="">
-            <div id="fortuneIdle">
-              <button class="ticket-button" id="startFortune" type="button" tabindex="-1">Take the chained stylus</button>
-              <p class="status-ticket" id="fortuneStatus">First room free each Darwin day · how deep will the oracle let you go?</p>
-            </div>
-            <form id="fortuneForm" class="fortune-form" hidden>
-              <fieldset>
-                <legend>Your mood</legend>
-                <label><input type="radio" name="mood" value="sparkly"> Sparkly</label>
-              </fieldset>
-              <button type="submit" hidden>Deal</button>
-              <button class="quiet-button" id="cancelFortune" type="button" tabindex="-1">Not tonight</button>
-            </form>
-            <div id="fortuneResult" class="fortune-result" hidden>
-              <div class="fortune-flourish" id="fortuneFlourish" hidden>
-                <img data-asset="fortune_mailbox" src="assets/prepared/fortune-mailbox.webp" alt="">
-              </div>
-              <div class="ticket-stub" id="ticketStub">
-                <p class="fortune-text" id="fortuneText"></p>
-                <p class="stub-line" id="stubLine"></p>
-                <p class="ticket-serial" id="ticketSerial"></p>
-              </div>
-              <button class="quiet-button" id="fortuneAgainHint" type="button" tabindex="-1">Back to the alley</button>
-            </div>
-          </div>
-        </article>
-        </div>
-      </div>
-    </section>
+    <!-- Cabinet interiors. Fortune (tent 1) is a clean mount for the paper-world overlay.
+         Old mystic-tent / Aura table UI removed so every landing hits Iris’s Reading. -->
+    <section class="cabinet-interior" id="cabinet-fortune" hidden data-cabinet="fortune" aria-label="Iris’s Reading"></section>
     <section class="cabinet-interior cabinet-interior--curios" id="cabinet-curios" hidden data-cabinet="curios" aria-labelledby="cabinet-curios-title">
       <div class="interior-sky interior-sky--vault" aria-hidden="true"></div>
       <div class="interior-room curios-room">

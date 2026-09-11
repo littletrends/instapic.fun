@@ -153,7 +153,8 @@
       fortuneDay: null,
       lastFortune: null,
       curios: {},
-      demoCoins: 99,
+      demoCoins: 3,
+      playTickets: 3,
       admitTicket: false,
       admitPassed: false,
       alleyLaps: 0,
@@ -224,6 +225,11 @@
     state._cashedPlays = 0;
     saveState(state);
   }
+  if (!state._ticketEconomyV1) {
+    if (state.playTickets == null) state.playTickets = 3;
+    state._ticketEconomyV1 = true;
+    saveState(state);
+  }
 
   const $ = (id) => document.getElementById(id);
 
@@ -254,9 +260,8 @@
 
   function registerVendor(mod) {
     if (!mod || !mod.id) return;
-    // These replacement interiors own their lifecycle; do not also bind the old engine.
-    if (window.PennyFeverPaperRooms?.supports(mod.id)) return;
-    if (vendorMods.some((v) => v.id === mod.id)) return;
+    const existing = vendorMods.findIndex((v) => v.id === mod.id);
+    if (existing >= 0) vendorMods.splice(existing, 1);
     vendorMods.push(mod);
     applyVendorDefaults(mod);
     if (mod.chalk && CHALK.indexOf(mod.chalk) === -1) CHALK.push(mod.chalk);
@@ -282,9 +287,8 @@
     if (!activeVendorId || activeVendorId === nextSlug) return;
     const closing = activeVendorId;
     const room = $("cabinet-" + closing);
-    const closedPaper = window.PennyFeverPaperRooms?.close(closing) === true;
-    if (room && !closedPaper) room.dispatchEvent(new CustomEvent("pennyfever:roomleave", { detail: { next: nextSlug } }));
-    const mod = closedPaper ? null : vendorMods.find((item) => item.id === closing);
+    if (room) room.dispatchEvent(new CustomEvent("pennyfever:roomleave", { detail: { next: nextSlug } }));
+    const mod = vendorMods.find((item) => item.id === closing);
     if (mod && typeof mod.onLeave === "function") {
       try { mod.onLeave(); } catch (err) { console.warn("vendor close", closing, err); }
     }
@@ -308,7 +312,7 @@
   const GAME_ASSET = "assets/game/";
   const VISUALS = {
     aura: {
-      welcome: "assets/prepared/welcome-proprietor.webp",
+      welcome: "assets/restyle/paper-aura-seated.png",
       think: "Aura_Reactions/Thinking.webp",
       celebrate: "Aura_Reactions/Celebrating.webp",
       laugh: "Aura_Reactions/Laughing.webp",
@@ -327,7 +331,7 @@
       boil: "Love_Thermometer_States/Boil_Over.webp",
     },
     lookup: {
-      idle: "assets/prepared/lookup-wonder.webp",
+      idle: "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
       rising: "Look_Up_Darling/Needle_Rising.webp",
       success: "Look_Up_Darling/Sky_Reveal.webp",
       fail: "Look_Up_Darling/Failure_Shoes.webp",
@@ -486,6 +490,13 @@
     document.querySelectorAll(".attraction-card").forEach((c) => c.classList.remove("has-focus"));
     const el = $(id);
     if (el && on) el.classList.add("has-focus");
+  }
+
+  function hideLegacyDom() {
+    document.querySelectorAll(".fortune-legacy, .lookup-legacy, .whisper-legacy-stubs, .pack-legacy-mint").forEach((el) => {
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+    });
   }
 
   function resetCabinetArt() {
@@ -671,15 +682,72 @@
     return added;
   }
 
+  const PENNY_ROLL = 10;
+  const TICKET_STRIP = 5;
+  const PENNY_STACK = 5;
+
+  function pennies() {
+    return Math.max(0, Math.floor(Number(state.demoCoins) || 0));
+  }
+
+  function tickets() {
+    return Math.max(0, Math.floor(Number(state.playTickets) || 0));
+  }
+
+  function stampKeepsake(id, source) {
+    const model = window.PennyFeverInventoryModel;
+    if (!model?.stampKeepsake) return false;
+    if (!model.stampKeepsake(state, id, source)) return false;
+    saveState(state);
+    window.dispatchEvent(new CustomEvent("pennyfever:inventoryaward", { detail: { ids: [id] } }));
+    return true;
+  }
+
+  function addTickets(amount) {
+    const added = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!added) return 0;
+    state.playTickets = tickets() + added;
+    saveState(state);
+    refreshNightBoard();
+    return added;
+  }
+
+  function spendTicket(kind) {
+    if (state.showmanPass && state.passDay === darwinDay()) return true;
+    if (tickets() < 1) return false;
+    state.playTickets = tickets() - 1;
+    if (kind) state.plays[kind] = (state.plays[kind] || 0) + 1;
+    saveState(state);
+    refreshNightBoard();
+    return true;
+  }
+
+  function buyTicketStrip() {
+    return addTickets(TICKET_STRIP);
+  }
+
+  function buyPennyRoll() {
+    return addDemoCoins(PENNY_ROLL);
+  }
+
+  function cashTicketForPennies() {
+    if (tickets() < 1) return 0;
+    state.playTickets = tickets() - 1;
+    const added = addDemoCoins(PENNY_STACK);
+    stampKeepsake("five-penny-stack", "cash-drop");
+    return added;
+  }
+
+  function tradePenniesForTicket() {
+    if (pennies() < PENNY_STACK) return false;
+    if (!spendPennies(PENNY_STACK)) return false;
+    addTickets(1);
+    stampKeepsake("ticket-roll", "aura-till");
+    return true;
+  }
+
   function cashInCompletedPlays() {
-    const total = Object.values(state.plays || {}).reduce((sum, value) => sum + (Number(value) || 0), 0);
-    const previous = Number(state._cashedPlays) || 0;
-    const completed = Math.max(0, total - previous);
-    if (!completed) return 0;
-    const coins = Math.min(5, Math.max(1, Math.ceil(completed / 2)));
-    state._cashedPlays = total;
-    addDemoCoins(coins);
-    return coins;
+    return 0;
   }
 
   function setChalk() {
@@ -726,8 +794,9 @@
     if (hash === "foyer" || hash === "arcade" || hash === "alley") {
       const foyer = $("foyer");
       if (foyer) { foyer.hidden = false; foyer.inert = false; }
+      const paperRail = new URLSearchParams(location.search).get("rail") === "paper";
       const alleyMotion = $("alleyMotion");
-      if (alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
+      if (!paperRail && alleyMotion && !matchMedia("(prefers-reduced-motion: reduce)").matches) alleyMotion.play().catch(() => {});
       // ensure foyer init bits
       setChalk();
       renderCabinet();
@@ -757,12 +826,6 @@
     if (m) {
       const slug = m[1];
       const leaf = m[2] || "";
-      if (window.PennyFeverPaperRooms?.supports(slug)) {
-        window.PennyFeverPaperRooms.open(slug);
-        activeVendorId = slug;
-        document.body.setAttribute("data-active-room", slug);
-        return "cabinet:" + slug;
-      }
       const el = $("cabinet-" + slug);
       if (el) {
         el.hidden = false;
@@ -889,8 +952,8 @@
       return;
     }
     tentTransitionBusy = true;
-    $("tentTransitionTitle").textContent = title ? title.textContent : "THE NEXT TENT";
-    $("tentTransitionLine").textContent = line ? line.textContent : "Mind the canvas.";
+    $("tentTransitionTitle").textContent = title ? title.textContent : "THE NEXT BAY";
+    $("tentTransitionLine").textContent = line ? line.textContent : "Mind the boards.";
     overlay.hidden = false;
     document.body.classList.add("tent-is-opening");
     playTentCue();
@@ -939,6 +1002,7 @@
 
 
   function refreshFortuneUi() {
+    if (!$("fortuneIdle")) return;
     const used = state.fortuneDay === darwinDay();
     $("fortuneIdle").hidden = used && !state.lastFortune;
     $("fortuneForm").hidden = true;
@@ -1888,7 +1952,7 @@
     if (loveRun && (loveRun.active || loveRun.dying)) return;
     const subject = ($("loveSubject") && $("loveSubject").value || "someone mysterious").trim();
     if (!spendDemoCoin("love")) {
-      $("loveStatus").textContent = "Out of demo coins · grant a pass";
+      $("loveStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
       return;
     }
     const practice = lovePracticeOn();
@@ -1977,7 +2041,7 @@
     if (holdBand && typeof holdBand.hold === "function") holdBand.hold(false);
     $("loveVerdict").hidden = true;
     hideLoveResult();
-    const scores = $("loveRoundScores");
+    const scores = $("loveRoundScores") || $("loveRounds");
     if (scores) {
       scores.hidden = true;
       scores.innerHTML = "";
@@ -3127,7 +3191,7 @@
       return;
     }
     if (!spendDemoCoin("whisper")) {
-      $("whisperStatus").textContent = "Out of demo coins · grant a pass";
+      $("whisperStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
       refreshNightBoard();
       return;
     }
@@ -3248,9 +3312,11 @@
 
   async function marqueePlaySeq(seq) {
     const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
+    if (!bulbs.length) return;
     bulbs.forEach((b) => { b.disabled = true; b.classList.remove("on"); });
     for (const idx of seq) {
       const b = bulbs[idx];
+      if (!b) continue;
       b.classList.add("on", "flash");
       await marqueeSleep(400);
       b.classList.remove("on", "flash");
@@ -3260,23 +3326,28 @@
 
   async function startMarquee() {
     if (marqueeBusy) return;
+    const startBtn = $("marqueeStart");
+    const status = $("marqueeStatus");
+    const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
+    // Live Boardwalk Lights uses #marqueeGo + canvas. Do not hijack that
+    // ride button with this leftover Simon-bulb flow.
+    if (!startBtn || bulbs.length < 1) return;
     if (!spendDemoCoin("marquee")) {
-      $("marqueeStatus").textContent = "Out of demo coins · grant a pass";
+      if (status) status.textContent = "Need a penny · buy more at Aura’s ticket booth";
       refreshNightBoard();
       return;
     }
     marqueeBusy = true;
     focusCard("marqueeCard", true);
     setTier("marqueeTier", "", "");
-    $("marqueeStart").disabled = true;
+    startBtn.disabled = true;
     const len = 3 + Math.floor(Math.random() * 3); // 3–5
     const seq = Array.from({ length: len }, () => Math.floor(Math.random() * 6));
-    $("marqueeStatus").textContent = "Watch the marquee…";
+    if (status) status.textContent = "Watch the marquee…";
     await marqueePlaySeq(seq);
     let progress = 0;
-    const bulbs = [...document.querySelectorAll("#marqueeBoard .bulb")];
     bulbs.forEach((b) => { b.disabled = false; });
-    $("marqueeStatus").textContent = "Your turn — tap the pattern";
+    if (status) status.textContent = "Your turn — tap the pattern";
 
     const onTap = (ev) => {
       const btn = ev.currentTarget;
@@ -3297,11 +3368,11 @@
         b.removeEventListener("click", onTap);
       });
       marqueeBusy = false;
-      $("marqueeStart").disabled = false;
+      startBtn.disabled = false;
       focusCard("marqueeCard", false);
       if (ok) {
         setTier("marqueeTier", "LIT", "perfect");
-        $("marqueeStatus").textContent = "Marquee sings — bulb filed";
+        if (status) status.textContent = "Marquee sings — bulb filed";
         grantCurio("marquee_bulb", "guts");
         renderCabinet();
         award(20 + len * 8, true, "Marquee");
@@ -3309,7 +3380,7 @@
         setAura("celebrate");
       } else {
         setTier("marqueeTier", "FIZZLED", "miss");
-        $("marqueeStatus").textContent = "Pattern broken — try again";
+        if (status) status.textContent = "Pattern broken — try again";
         award(0, false, "Marquee miss");
         showBanner(false, "FIZZLED", "Watch closer");
         setAura("badLuck");
@@ -3344,7 +3415,7 @@
       "location": "fortuneCard"
     },
     "door_beckon": {
-      "src": "assets/prepared/doorway-beckon.webp",
+      "src": "assets/restyle/paper-aura-seated.png",
       "kind": "still",
       "priority": "P1",
       "location": "discoveryDoor"
@@ -3368,19 +3439,19 @@
       "location": "passCard"
     },
     "lookup_sky": {
-      "src": "assets/prepared/lookup-wonder.webp",
+      "src": "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
       "kind": "still",
       "priority": "P2",
       "location": "lookupCard"
     },
     "foyer_hall": {
-      "src": "assets/prepared/arcade-hall-wide.webp",
+      "src": "assets/restyle/maps/sideshow-alley-map.webp",
       "kind": "still",
       "priority": "P1",
       "location": "arcadeHall"
     },
     "welcome_proprietor": {
-      "src": "assets/prepared/welcome-proprietor.webp",
+      "src": "assets/restyle/paper-aura-seated.png",
       "kind": "still",
       "priority": "P1",
       "location": "auraPortrait"
@@ -3496,6 +3567,7 @@
   }
 
   function bind() {
+    hideLegacyDom();
     document.querySelectorAll("[data-enter]").forEach((button) => {
       button.addEventListener("click", () => approachTent(button));
     });
@@ -3565,7 +3637,7 @@
       });
     }
     $("leaveArcade").addEventListener("click", () => { location.hash = "door"; });
-    $("startFortune").addEventListener("click", () => {
+    if ($("startFortune")) $("startFortune").addEventListener("click", () => {
       if (state.fortuneDay === darwinDay()) return;
       setArt("fortuneCabinetArt", VISUALS.fortune.think);
       setAura("think");
@@ -3573,18 +3645,18 @@
       $("fortuneForm").hidden = false;
       $("fortuneResult").hidden = true;
     });
-    $("cancelFortune").addEventListener("click", () => {
+    if ($("cancelFortune")) $("cancelFortune").addEventListener("click", () => {
       setArt("fortuneCabinetArt", VISUALS.fortune.idle);
       setAura("welcome");
       $("fortuneForm").hidden = true;
       $("fortuneIdle").hidden = false;
     });
-    $("fortuneForm").addEventListener("submit", (e) => {
+    if ($("fortuneForm")) $("fortuneForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const fd = new FormData($("fortuneForm"));
       dealFortune(fd.get("mood"), fd.get("colour"), fd.get("company"));
     });
-    $("fortuneAgainHint").addEventListener("click", () => {
+    if ($("fortuneAgainHint")) $("fortuneAgainHint").addEventListener("click", () => {
       $("fortuneResult").hidden = true;
       refreshFortuneUi();
     });
@@ -3625,7 +3697,7 @@
     const lookupOwned = vendorMods.some((v) => v.id === "lookup");
     if ($("lookupStart") && !lookupOwned) $("lookupStart").addEventListener("click", async () => {
       if (!spendDemoCoin("lookup")) {
-        $("lookupStatus").textContent = "Out of demo coins · grant a pass";
+        $("lookupStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
         return;
       }
       $("lookupVerdict").hidden = true;
@@ -3680,7 +3752,7 @@
     if (!snapOwnedByVendor) {
       $("snapStart").addEventListener("click", () => {
         if (!spendDemoCoin("snap")) {
-          $("snapStatus").textContent = "Out of demo coins · grant a pass";
+          $("snapStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
           return;
         }
         $("snapStart").disabled = true;
@@ -3797,9 +3869,21 @@
     },
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
+    pennies,
+    tickets,
     spendDemoCoin,
     spendPennies,
+    spendTicket,
     addDemoCoins,
+    addTickets,
+    stampKeepsake,
+    buyPennyRoll,
+    buyTicketStrip,
+    cashTicketForPennies,
+    tradePenniesForTicket,
+    pennyRoll: PENNY_ROLL,
+    ticketStrip: TICKET_STRIP,
+    pennyStack: PENNY_STACK,
     cashInCompletedPlays,
     award,
     showBanner,
@@ -3842,9 +3926,51 @@
     },
   };
 
+  function livePaperFrame() {
+    return document.querySelector(".cabinet-interior.paper-game-cabinet:not([hidden]) iframe.paper-game-frame");
+  }
+  function installConstructionLoan() {
+    const btn = document.getElementById("pfBankLoan");
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const n = addDemoCoins(100);
+        btn.textContent = "Bank loan · +" + n + " · now " + pennies();
+      });
+    }
+    const rest = document.getElementById("pfRestGame");
+    if (!rest || rest.dataset.bound) return;
+    rest.dataset.bound = "1";
+    rest.addEventListener("click", () => {
+      const frame = livePaperFrame();
+      if (frame && frame.contentWindow) {
+        const waking = rest.classList.contains("is-resting");
+        frame.contentWindow.postMessage({
+          channel: "pf-paper-world",
+          type: waking ? "resume" : "pause",
+        }, location.origin);
+        rest.classList.toggle("is-resting", !waking);
+        rest.textContent = waking ? "Rest game" : "Wake game";
+        return;
+      }
+      const world = window.PennyFeverWorld;
+      if (world && world.started) {
+        if (world.paused) {
+          world.resume();
+          rest.classList.remove("is-resting");
+          rest.textContent = "Rest game";
+        } else {
+          world.pause();
+          rest.classList.add("is-resting");
+          rest.textContent = "Wake game";
+        }
+      }
+    });
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bind);
+    document.addEventListener("DOMContentLoaded", () => { bind(); installConstructionLoan(); });
   } else {
-    setTimeout(bind, 0);
+    setTimeout(() => { bind(); installConstructionLoan(); }, 0);
   }
 })();
