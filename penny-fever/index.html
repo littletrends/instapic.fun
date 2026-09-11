@@ -49,8 +49,8 @@
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
   <script type="module" src="world/alley.js?v=paper-tickets-1"></script>
-  <script type="module" src="world/crew-selector.js?v=treasure-book-1"></script>
-  <link rel="stylesheet" href="world/crew-selector.css?v=treasure-book-1">
+  <script type="module" src="world/crew-selector.js?v=crew-door-3"></script>
+  <link rel="stylesheet" href="world/crew-selector.css?v=crew-door-3">
   <link rel="stylesheet" href="restyle.css?v=treasure-book-1">
   <link rel="stylesheet" href="world/paper-game-booths.css?v=paper-cashdrop-1">
   <script type="module" src="world/paper-game-booths.js?v=paper-cashdrop-1"></script>
@@ -93,9 +93,9 @@
       </div>
       <div class="door-crew">
         <div class="crew-entry">
-          <span id="chosenCrewPortrait" class="crew-portrait" role="img"></span>
+          <span id="chosenCrewPortrait" class="crew-portrait" role="img" aria-label="Oliver" style="background-image:url('assets/restyle/crew/oliver-turnaround.png')"></span>
           <div>
-            <p id="chosenCrew"></p>
+            <p id="chosenCrew">Playing as Oliver</p>
             <button type="button" id="editCrew" class="ticket-button">Edit character</button>
           </div>
         </div>
@@ -2059,5 +2059,22 @@
       </article>
     </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('#editCrew');
+      if (!btn) return;
+      if (window.PennyFeverDoll && window.PennyFeverDoll.open) {
+        window.PennyFeverDoll.open(e);
+        return;
+      }
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'world/crew-selector.js?v=crew-door-3';
+      s.onload = function () {
+        if (window.PennyFeverDoll && window.PennyFeverDoll.open) window.PennyFeverDoll.open(e);
+      };
+      document.head.appendChild(s);
+    });
+  </script>
 </body>
 </html>
