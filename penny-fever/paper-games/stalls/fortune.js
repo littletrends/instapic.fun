@@ -151,6 +151,23 @@ function finishIfFound(s) {
   s.note = 'A keepsake was printed in the ' + SLOTS[slot] + '.';
 }
 
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 7;
+    } else line = trial;
+  }
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
+}
+
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -316,11 +333,6 @@ export default {
         return;
       }
     }
-    if (s.phase === 'wait') {
-      const i = hitCard(p, s);
-      if (i < 0) shuffleDeck(s);
-      return;
-    }
     if (s.phase === 'deal' || s.phase === 'read') {
       const i = hitCard(p, s);
       if (i >= 0) turnCard(s, i);
@@ -341,8 +353,9 @@ export default {
   draw(s, d) {
     const lead = s.topic ? topicOf(s.topic).lead : '';
     d.text('Iris’s tarot', 450, 178, 15, '#efe6d0');
-    if (s.phase === 'pick' || s.phase === 'wait' || !s.topic) {
-      d.text('What shall she read?', 450, 358, 16, '#f6e8c4');
+    const showChips = s.phase === 'pick' || s.phase === 'wait' || !s.topic;
+    if (showChips) {
+      d.text(s.phase === 'wait' ? 'Ask again, or shuffle' : 'What shall she read?', 450, 358, 18, '#fff6d8');
       TOPICS.forEach((t, i) => {
         const b = chipBox(i);
         const on = s.topic === t.id;
@@ -356,7 +369,7 @@ export default {
         d.text(t.label, b.x + b.w / 2, b.y + 32, 17, on ? '#fff6d8' : '#f3e2bd');
       });
     } else {
-      d.text(topicOf(s.topic).label + ' · past · present · future', 450, 358, 16, '#f6e8c4');
+      d.text(topicOf(s.topic).label + ' · past · present · future', 450, 358, 18, '#fff6d8');
     }
 
     const shaking = s.phase === 'shuffle';
@@ -381,17 +394,25 @@ export default {
       }
     }
 
-    if ((s.phase === 'read' || s.phase === 'wait' || s.won) && s.hand) {
+    if ((s.phase === 'read' || s.phase === 'wait' || s.won) && s.hand && s.hand.some(h => h.flip >= 1)) {
+      const c = d.c;
+      roundRect(c, 130, 816, 640, 196, 18);
+      c.fillStyle = '#1a1028f2';
+      c.fill();
+      c.strokeStyle = '#e8c878';
+      c.lineWidth = 3;
+      c.stroke();
+      const names = s.hand.map((h, i) => SLOTS[i] + ': ' + (h.flip >= 1 ? h.card.name : '…')).join('   ·   ');
+      d.text(names, 450, 848, 15, '#e8c878');
       const spoken = (s.hand[1] && s.hand[1].flip >= 1) ? s.hand[1] : s.hand.find(h => h.flip >= 1);
-      if (spoken) d.text(lead + spoken.card.said, 450, 1048, 15, '#efe6d0');
+      const bodyY = wrapLine(d, lead + spoken.card.said, 450, 888, 22, '#fff6d8', 580);
+      wrapLine(d, s.note, 450, bodyY + 28, 16, '#f0d18f', 580);
     }
-    const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
-    d.text(s.reads + (s.reads === 1 ? ' sitting' : ' sittings') + ' · ' + purse, 450, 1168, 13, '#ead6a4');
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
-    return purse + ' · ' + s.reads + ' sittings · ' + s.note;
+    const sits = s.reads + (s.reads === 1 ? ' sitting' : ' sittings');
+    return purse + ' · ' + sits + ' · ' + s.note;
   },
 };
