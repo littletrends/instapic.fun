@@ -18,7 +18,7 @@ import {games as paperGames} from "../paper-games/catalogue.js?v=one-name-1";
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
   { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Three cards. A keepsake is hiding in the deck." },
-  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Thread the heart. Miss the lockbox and the ribbon keeps it." },
+  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
   { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
   { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
   { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Frame the hanging prize before the light goes." },
@@ -965,6 +965,7 @@ function attachHud() {
             <button type="button" data-place="aura">Aura’s booth</button>
             <button type="button" data-place="end">End of the walk</button>
           </div>
+          <div class="pf-alley-map-rides" id="pfAlleyMapRides"></div>
           <div class="pf-alley-map-cols">
             <div id="pfAlleyMapLeft"></div>
             <div id="pfAlleyMapRight"></div>
@@ -993,6 +994,17 @@ function fillAlleyMap() {
     b.textContent = spec.host ? spec.host + " · " + spec.name : spec.name;
     (i % 2 === 0 ? left : right).append(b);
   });
+  const rides = el("pfAlleyMapRides");
+  if (rides) {
+    Object.entries(RIDE_GAMES).forEach(([amuseId, playId]) => {
+      const g = paperById[playId];
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.place = amuseId;
+      b.textContent = g ? g.host + " · " + g.title : playId;
+      rides.append(b);
+    });
+  }
 }
 
 function syncAlleyMapYou() {
@@ -1075,6 +1087,9 @@ function walkToMapPlace(place) {
   if (s) {
     const side = Math.sign(s.position.x) || 1;
     warp(side * 0.28, s.position.z, 0);
+  } else {
+    const ride = papercutRides?.figures?.find((f) => f.userData.amusementId === place);
+    if (ride) warp((Math.sign(ride.position.x) || 1) * 0.28, ride.position.z, 0);
   }
   enterStallById(place);
 }
@@ -2104,13 +2119,14 @@ function pickFocus(px, pz) {
     if (fig.userData.kind !== "ride") return;
     const id = fig.userData.amusementId;
     const art = AMUSEMENT_ART[id];
+    const g = paperById[playIdFor(id)];
     consider({
       id,
       kind: "ride",
-      name: art?.name || (fig.name || id).replace(" · papercut", ""),
-      host: art?.host || "",
-      hostSlug: (art?.host || "").toLowerCase(),
-      line: "The ride faces the aisle.",
+      name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: g?.host || art?.host || "",
+      hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
+      line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
       stallX: fig.position.x,
@@ -2192,14 +2208,15 @@ function pickFocus(px, pz) {
     if (d >= bestD) return;
     const id = fig.userData.amusementId;
     const art = AMUSEMENT_ART[id];
+    const g = paperById[playIdFor(id)];
     bestD = d;
     best = {
       id,
       kind: "ride",
-      name: art?.name || (fig.name || id).replace(" · papercut", ""),
-      host: art?.host || "",
-      hostSlug: (art?.host || "").toLowerCase(),
-      line: "The ride faces the aisle. No ticket to go aboard yet.",
+      name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: g?.host || art?.host || "",
+      hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
+      line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
       stallX: fig.position.x,
