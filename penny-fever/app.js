@@ -3915,9 +3915,19 @@
     },
   };
 
+  function installConstructionLoan() {
+    const btn = document.getElementById("pfBankLoan");
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const n = addDemoCoins(100);
+      btn.textContent = "Bank loan · +" + n + " · now " + pennies();
+    });
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bind);
+    document.addEventListener("DOMContentLoaded", () => { bind(); installConstructionLoan(); });
   } else {
-    setTimeout(bind, 0);
+    setTimeout(() => { bind(); installConstructionLoan(); }, 0);
   }
 })();
