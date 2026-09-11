@@ -33,7 +33,7 @@ export function credit(amount) {
   return api.addDemoCoins(amount) || 0;
 }
 
-export function keep(id, stall = 'coin-pusher') {
+export function keep(id, stall = 'coin-pusher', opts = {}) {
   if (!alleyPlay || !id) return false;
   try {
     const PF = fever();
@@ -42,11 +42,13 @@ export function keep(id, stall = 'coin-pusher') {
       const earned = model.recordPaperPrize(PF.getState(), {item: id, stall});
       if (earned.length) {
         PF.saveState?.();
-        window.parent.dispatchEvent(new CustomEvent('pennyfever:inventoryaward', {detail: {ids: earned}}));
+        window.parent.dispatchEvent(new CustomEvent('pennyfever:inventoryaward', {
+          detail: {ids: earned, celebrate: opts.celebrate === true},
+        }));
         return true;
       }
     }
-    window.parent.postMessage({channel: 'pf-paper-world', type: 'prize', item: id, stall}, location.origin);
+    window.parent.postMessage({channel: 'pf-paper-world', type: 'prize', item: id, stall, celebrate: opts.celebrate === true}, location.origin);
     return true;
   } catch {
     return false;

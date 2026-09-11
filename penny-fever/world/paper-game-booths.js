@@ -2,7 +2,7 @@ import {games} from '../paper-games/catalogue.js?v=games-open-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=booth-play-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=booth-play-2'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -103,7 +103,7 @@ function listenForPrizes(){
   const earned=model.recordPaperPrize(PF.getState(),{item:data.item,stall:data.stall,chapter:data.chapter});
   if(!earned.length)return;
   PF.saveState?.();
-  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned}}));
+  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned,celebrate:data.celebrate===true}}));
  });
 }
 export function registerPaperGameBooths(PF,doc=globalThis.document,nav=globalThis.location){

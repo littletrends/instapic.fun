@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=games-open-2';
+import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=booth-play-2';
 
 const R = 11;
 const G = 390;
