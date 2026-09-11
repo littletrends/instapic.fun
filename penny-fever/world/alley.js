@@ -1,18 +1,18 @@
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
-import { mountRestyle, poseRestyle } from "./restyle.js?v=paper-alley-live-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=paper-alley-live-4";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=paper-alley-live-24";
-import { phoneLane } from "./phone-lane.js?v=paper-alley-live-24";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wanderers-2";
-import { installIndividualVendors } from "./paper-vendors.js?v=paper-alley-live-3";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=paper-tickets-1";
+import { mountRestyle, poseRestyle } from "./restyle.js?v=alley-perf-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=alley-perf-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=alley-perf-1";
+import { phoneLane } from "./phone-lane.js?v=alley-perf-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=alley-perf-1";
+import { installIndividualVendors } from "./paper-vendors.js?v=alley-perf-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=alley-perf-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=paper-alley-live-24";
-import {installPapercutRides} from "./amusements/install.js?v=paper-alley-live-26";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=paper-alley-live-26";
-import {installStallCutouts} from "./stall-cutouts.js?v=paper-alley-live-26";
+import {installWallBackdrops} from "./walls/install.js?v=alley-perf-1";
+import {installPapercutRides} from "./amusements/install.js?v=alley-perf-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=alley-perf-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=alley-perf-1";
 
 const STALLS = [
   { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
@@ -407,6 +407,7 @@ function dressBarker(g, accent) {
 
 function animatePerson(p, dt, moving, waving) {
   const u = p.userData;
+  if (paperRail && (u.papercutStand || u.paperCrew || u.paperGuest || u.paperProprietor || u.vendorHost)) return;
   u.t += dt * (moving ? 9 : 2.4);
   const bob = Math.sin(u.t) * (moving ? 0.04 : 0.012);
   u.hip.position.y = 0.42 + bob;
@@ -469,6 +470,13 @@ function makeStall(spec, x, z, yaw) {
   root.position.set(x, 0, z);
   /* Local +Z is the pretty face. Yaw so that face looks at walkers on the aisle. */
   root.rotation.y = yaw;
+  const faceZ = spec.kind === "tent" ? 0.76 : spec.kind === "cabinet" ? 0.56 : 0.52;
+  root.userData.stall = spec;
+  root.userData.worldX = x;
+  root.userData.worldZ = z;
+  root.userData.faceOff = faceZ + 0.4;
+  root.userData.hitR = spec.kind === "tent" ? 1.02 : spec.kind === "cabinet" ? 0.86 : 0.94;
+  if (paperRail) return root;
   const wood = makeMat(WOOD, { map: woodTex("#4a2e1c", "rgba(0,0,0,0.18)") });
   const dark = makeMat(WOOD_DARK);
   const velvet = makeMat(VELVET);
@@ -522,17 +530,10 @@ function makeStall(spec, x, z, yaw) {
   sign.position.set(0, spec.kind === "cabinet" ? 2.94 : 2.56, 0.42);
   root.add(sign);
 
-  const faceZ = spec.kind === "tent" ? 0.76 : spec.kind === "cabinet" ? 0.56 : 0.52;
   root.add(meshBox(dark, 0.09, 1.62, 0.09, -0.64, 1.12, faceZ));
   root.add(meshBox(dark, 0.09, 1.62, 0.09, 0.64, 1.12, faceZ));
   root.add(meshBox(accent, 1.38, 0.1, 0.1, 0, 1.96, faceZ));
   root.add(meshBox(wood, 0.92, 0.07, 0.5, 0, 0.04, faceZ + 0.34));
-
-  root.userData.stall = spec;
-  root.userData.worldX = x;
-  root.userData.worldZ = z;
-  root.userData.faceOff = faceZ + 0.4;
-  root.userData.hitR = spec.kind === "tent" ? 1.02 : spec.kind === "cabinet" ? 0.86 : 0.94;
   return root;
 }
 
@@ -683,23 +684,26 @@ function makeHall(group, len) {
       group.add(meshCyl(brass, 0.05, 0.05, 0.4, lx, 3.7, z));
       group.add(meshSphere(lampMat, 0.12, lx, 3.45, z));
     });
+    if (paperRail) continue;
     const lamp = new THREE.PointLight(0xffd090, 1.25, 14, 2);
     lamp.position.set(0, 3.5, z);
     lamp.userData.flicker = 0.8 + Math.random();
     group.add(lamp);
   }
 
-  const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.01, 10);
-  const coinMat = makeMat(GOLD, { metalness: 0.8, roughness: 0.35, emissive: 0x3a2a08, emissiveIntensity: 0.15 });
-  const coins = new THREE.InstancedMesh(coinGeo, coinMat, 140);
-  const dummy = new THREE.Object3D();
-  for (let i = 0; i < 140; i += 1) {
-    dummy.position.set((Math.random() - 0.5) * 2.4, 0.02, 4 + Math.random() * (len - 8));
-    dummy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
-    dummy.updateMatrix();
-    coins.setMatrixAt(i, dummy.matrix);
+  if (!paperRail) {
+    const coinGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.01, 10);
+    const coinMat = makeMat(GOLD, { metalness: 0.8, roughness: 0.35, emissive: 0x3a2a08, emissiveIntensity: 0.15 });
+    const coins = new THREE.InstancedMesh(coinGeo, coinMat, 140);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < 140; i += 1) {
+      dummy.position.set((Math.random() - 0.5) * 2.4, 0.02, 4 + Math.random() * (len - 8));
+      dummy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
+      dummy.updateMatrix();
+      coins.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(coins);
   }
-  group.add(coins);
 }
 
 function makeSky(radius) {
@@ -709,7 +713,7 @@ function makeSky(radius) {
 }
 
 function makeFireflies() {
-  const n = 90;
+  const n = paperRail ? 18 : 90;
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(n * 3);
   const phase = [];
@@ -927,7 +931,7 @@ function attachHud() {
           <button type="button" id="pfAlleyMapClose">Close</button>
         </div>
         <div class="pf-alley-map-board">
-          <img src="assets/restyle/maps/sideshow-alley-map.png" alt="Papercraft map of the sideshow alley" width="1296" height="1728">
+          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
           <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
         </div>
         <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
@@ -1496,15 +1500,15 @@ function buildWorld() {
   const first = laneSize();
   renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: !phoneLane && window.devicePixelRatio < 1.6,
+    antialias: !paperRail && !phoneLane && window.devicePixelRatio < 1.6,
     powerPreference: phoneLane ? "low-power" : "high-performance",
     stencil: false,
   });
-  renderer.setPixelRatio(Math.min(phoneLane ? 1 : (paperRail ? 1.25 : 2), window.devicePixelRatio || 1));
+  renderer.setPixelRatio(Math.min(phoneLane || paperRail ? 1 : 2, window.devicePixelRatio || 1));
   renderer.setSize(first.w, first.h, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ReinhardToneMapping;
-  renderer.toneMappingExposure = 2.05;
+  renderer.toneMapping = paperRail ? THREE.NoToneMapping : THREE.ReinhardToneMapping;
+  renderer.toneMappingExposure = paperRail ? 1 : 2.05;
   renderer.setClearColor(0x070b16, 1);
 
   hallLen = STALL_Z0 + STALLS.length * STALL_STEP + 8;
@@ -2062,8 +2066,15 @@ function findNearest() {
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
   if (stallCardOpen) closeStallCard();
+  if (!nearest || !nearest.atCounter) {
+    (stalls || []).forEach((s) => {
+      if ("pinView" in s.userData) delete s.userData.pinView;
+      if (s.userData.papercutStand) delete s.userData.papercutStand.userData.pinView;
+    });
+    (barkers || []).forEach((b) => { if ("pinView" in b.userData) delete b.userData.pinView; });
+  }
   const rig = el("pfLookRig");
-  if (rig) rig.hidden = !(nearest && nearest.atCounter);
+  if (rig) rig.hidden = !(nearest && nearest.atCounter && nearest.kind !== "stall");
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");
@@ -2218,7 +2229,7 @@ function updateHudAnchor() {
 
 function followPose() {
   const walkingAlley = Math.abs(moveIntent.iy) > 0.2;
-  const viewing = !!(nearest && nearest.atCounter && !walkingAlley);
+  const viewing = !!(nearest && nearest.atCounter && !walkingAlley && nearest.kind !== "stall");
   viewBlend += ((viewing ? 1 : 0) - viewBlend) * (viewing ? 0.16 : 0.28);
   camYaw += ((viewing ? 0 : glanceYaw) - camYaw) * 0.22;
   const onHall = player.position.z > -1;
@@ -2450,6 +2461,18 @@ function stop() {
 
 function boot() {
   if (window.PennyFever) window.PennyFever.world = api;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (api.started && !api.paused) {
+        api.tabPause = true;
+        pause();
+      }
+      return;
+    }
+    if (!api.tabPause) return;
+    api.tabPause = false;
+    if (/^#(foyer|arcade|alley)$/.test(location.hash)) resume();
+  });
   const hash = (location.hash || "").replace(/^#/, "");
   if (hash === "foyer" || hash === "arcade" || hash === "alley") {
     start();
