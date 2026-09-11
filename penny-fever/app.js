@@ -3636,7 +3636,7 @@
         showFoyer(false);
       });
     }
-    $("leaveArcade").addEventListener("click", () => { location.hash = "door"; });
+    if ($("leaveArcade")) $("leaveArcade").addEventListener("click", () => { location.hash = "door"; });
     if ($("startFortune")) $("startFortune").addEventListener("click", () => {
       if (state.fortuneDay === darwinDay()) return;
       setArt("fortuneCabinetArt", VISUALS.fortune.think);
@@ -3681,7 +3681,7 @@
       heating = false;
       if (loveRun && loveRun.holdBand && typeof loveRun.holdBand.hold === "function") loveRun.holdBand.hold(false);
     };
-    $("loveStartRun").addEventListener("click", startLoveRun);
+    if ($("loveStartRun")) $("loveStartRun").addEventListener("click", startLoveRun);
     const practiceBox = $("lovePractice");
     if (practiceBox) practiceBox.addEventListener("change", paintLoveMode);
     paintLoveMode();
@@ -3691,7 +3691,7 @@
       holdZone.addEventListener("pointercancel", endHold);
       holdZone.addEventListener("lostpointercapture", endHold);
     }
-    $("loveChallenge").addEventListener("click", copyChallenge);
+    if ($("loveChallenge")) $("loveChallenge").addEventListener("click", copyChallenge);
     if ($("marqueeStart")) $("marqueeStart").addEventListener("click", () => { startMarquee(); });
 
     const lookupOwned = vendorMods.some((v) => v.id === "lookup");
@@ -3750,7 +3750,7 @@
 
     const snapOwnedByVendor = vendorMods.some((v) => v.id === "snap");
     if (!snapOwnedByVendor) {
-      $("snapStart").addEventListener("click", () => {
+      if ($("snapStart")) $("snapStart").addEventListener("click", () => {
         if (!spendDemoCoin("snap")) {
           $("snapStatus").textContent = "Need a penny · buy more at Aura’s ticket booth";
           return;
@@ -3760,12 +3760,12 @@
         setArt("snapCabinetArt", VISUALS.snap.idle);
         armSnap();
       });
-      $("snapFreeze").addEventListener("click", freezeSnap);
+      if ($("snapFreeze")) $("snapFreeze").addEventListener("click", freezeSnap);
     }
 
-    $("whisperGo").addEventListener("click", makeCharm);
+    if ($("whisperGo")) $("whisperGo").addEventListener("click", makeCharm);
 
-    $("mintPack").addEventListener("click", mintPack);
+    if ($("mintPack")) $("mintPack").addEventListener("click", mintPack);
 
     $("demoPass").addEventListener("click", () => {
       state.showmanPass = true;
