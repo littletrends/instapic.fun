@@ -1,8 +1,10 @@
 import {loadArt,paintIcon} from './art.js?v=pocket-book-1';
+import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=treasure-menu-2';
+
 const model = globalThis.PennyFeverInventoryModel;
 const studio = document.body.dataset.objectStudio === 'true';
 const iconCache = new Map();
-let dialog, viewer, current = null, bookId = null, filter = 'all';
+let dialog, viewer, current = null, focus = null, fromCollection = false, filter = 'all';
 let selectionToken = 0, listToken = 0, opener, resumeWorld = false, openedHash = '', observer;
 const $ = id => document.getElementById(id);
 const state = () => globalThis.PennyFever?.getState() || {};
@@ -10,11 +12,7 @@ const entries = () => studio
   ? model.definitions.map(d => ({...d, owned: true, quantity: 1, status: 'Object study', punched: false}))
   : model.entries(state());
 const text = (id, value) => { $(id).textContent = value; };
-const interior = (all, id) => {
-  const book = model.books.find(b => b.id === id);
-  if (book?.master) return all.filter(i => i.id !== id);
-  return all.filter(i => i.book === id && i.id !== id);
-};
+const bookOwned = all => studio || !!all.find(i => i.id === 'penny-collector-book')?.owned;
 
 function mount() {
   if (!model) return;
@@ -37,38 +35,38 @@ function mount() {
       <header class="pocket-header">
         <div>
           <p class="pocket-eyebrow">Penny Fever · treasures</p>
-          <h1 id="treasureTitle">The treasure book</h1>
+          <h1 id="treasureTitle">Treasures</h1>
           <p id="treasureCount"></p>
         </div>
-        <button type="button" class="pocket-close" id="closeTreasures" aria-label="Close the treasure book">Close ×</button>
+        <button type="button" class="pocket-close" id="closeTreasures" aria-label="Close treasures">Close ×</button>
       </header>
       <p id="treasureSave" class="pocket-save" role="status" hidden></p>
       <div class="pocket-menu">
-        <button type="button" class="shelf-back" id="shelfBack" hidden>← The shelf</button>
-        <input type="search" id="treasureSearch" placeholder="Find a book or keepsake" aria-label="Search the collection">
-        <div class="pocket-filters" role="group" aria-label="Filter pages">
+        <button type="button" class="shelf-back" id="shelfBack" hidden>← All stalls</button>
+        <input type="search" id="treasureSearch" placeholder="Find a stall, chapter or prize" aria-label="Search treasures">
+        <div class="pocket-filters" role="group" aria-label="Filter prizes">
           <button type="button" data-filter="all" aria-pressed="true">All</button>
           <button type="button" data-filter="found" aria-pressed="false">Found</button>
           <button type="button" data-filter="missing" aria-pressed="false">Waiting</button>
         </div>
       </div>
       <div class="shelf-view" id="treasureShelf">
-        <p class="shelf-intro" id="shelfIntro">Open a book or album. Pages wait in silhouette until you find each keepsake.</p>
-        <div class="shelf-grid" id="shelfGrid"></div>
+        <p class="shelf-intro" id="shelfIntro">Each stall keeps six chapter prizes. Open a game to see the chapters.</p>
+        <div class="stall-list" id="shelfGrid"></div>
       </div>
       <div class="pocket-body" id="treasureSpread" hidden>
         <section class="pocket-page is-left" aria-labelledby="pocketAlbumTitle">
-          <button type="button" class="book-cover-btn" id="bookCoverBtn" aria-label="Inspect this book">
+          <button type="button" class="book-cover-btn" id="bookCoverBtn" aria-label="Inspect this stall">
             <img id="bookCover" alt="">
           </button>
-          <p class="pocket-kicker" id="pocketAlbumKicker">Collection</p>
+          <p class="pocket-kicker" id="pocketAlbumKicker">Stall</p>
           <h2 id="pocketAlbumTitle"></h2>
           <p class="pocket-blurb" id="pocketAlbumBlurb"></p>
           <div class="pocket-progress" aria-hidden="true"><i id="pocketAlbumBar"></i></div>
           <p class="pocket-count" id="pocketAlbumCount"></p>
         </section>
         <section class="pocket-page is-right">
-          <p id="treasureEmpty" hidden>Nothing in this book matches that search.</p>
+          <p id="treasureEmpty" hidden>Nothing here matches that search.</p>
           <div class="album-slots" id="treasureItems"></div>
         </section>
       </div>
@@ -95,8 +93,8 @@ function mount() {
 
   $('closeTreasures').addEventListener('click', () => dialog.close());
   $('pocketBack').addEventListener('click', hideInspect);
-  $('shelfBack').addEventListener('click', closeBook);
-  $('bookCoverBtn').addEventListener('click', () => { if (bookId) select(bookId); });
+  $('shelfBack').addEventListener('click', goBack);
+  $('bookCoverBtn').addEventListener('click', inspectFocusCover);
   dialog.addEventListener('close', close);
   $('treasureSearch').addEventListener('input', render);
   dialog.querySelector('.pocket-filters').addEventListener('click', e => {
@@ -109,8 +107,10 @@ function mount() {
     const b = e.target.closest('[data-item]'); if (b) select(b.dataset.item);
   });
   $('shelfGrid').addEventListener('click', e => {
-    const b = e.target.closest('[data-book]'); if (!b) return;
-    openBook(b.dataset.book);
+    const row = e.target.closest('[data-stall]');
+    if (row) { openStall(row.dataset.stall); return; }
+    const book = e.target.closest('[data-collection]');
+    if (book) openCollection();
   });
   $('treasureOpen').addEventListener('click', () => {
     const on = viewer?.toggleOpen?.();
@@ -152,13 +152,17 @@ function mount() {
     e.stopPropagation();
     if (e.key !== 'Escape') return;
     if (!$('pocketInspect').hidden) { e.preventDefault(); hideInspect(); }
-    else if (bookId) { e.preventDefault(); closeBook(); }
+    else if (focus) { e.preventDefault(); goBack(); }
   });
   globalThis.PennyFeverInventory = {open, celebrate, close: () => dialog.close()};
   updateLaunch();
   const preview = new URLSearchParams(location.search).get('treasures');
   if (studio) open();
-  else if (preview != null) open(preview === '' || preview === 'shelf' ? undefined : preview);
+  else if (preview != null) {
+    if (preview === '' || preview === 'shelf') open();
+    else if (preview === 'collection') { open(); openCollection(); }
+    else open(preview);
+  }
 }
 
 function updateLaunch() {
@@ -175,24 +179,27 @@ function matchesQuery(item, q) {
   return `${item.name} ${item.source} ${item.category} ${item.book}`.toLowerCase().includes(q);
 }
 
-function bookItems(all, id) {
+function stallMatches(stall, all, q) {
+  const {items} = stallStats(all, stall);
+  if (!q) return true;
+  const hay = `${stall.host} ${stall.title} ${stall.blurb} ` + items.map(i => i.name).join(' ');
+  return hay.toLowerCase().includes(q) || items.some(i => matchesQuery(i, q));
+}
+
+function visibleItems(items) {
   const q = query();
-  return interior(all, id).filter(i => {
+  return items.filter(i => {
     if (filter === 'found' && !i.owned) return false;
     if (filter === 'missing' && i.owned) return false;
     return matchesQuery(i, q);
   });
 }
 
-function bookStats(all, id) {
-  const group = interior(all, id);
-  const have = group.filter(i => i.owned).length;
-  const cover = all.find(i => i.id === id);
-  return {group, have, cover, ownedCover: !cover || !!cover.owned};
-}
-
-function openBook(id) {
-  bookId = id;
+function openStall(id, fromBook = false) {
+  const stall = stallById(id);
+  if (!stall) return;
+  fromCollection = !!fromBook;
+  focus = {kind: 'stall', id};
   hideInspect();
   render();
   const page = $('treasureItems')?.closest('.pocket-page');
@@ -200,12 +207,39 @@ function openBook(id) {
   if (window.matchMedia('(pointer: fine)').matches) $('shelfBack')?.focus();
 }
 
-function closeBook() {
-  bookId = null;
+function openCollection() {
+  const all = entries();
+  if (!bookOwned(all)) {
+    select('penny-collector-book');
+    return;
+  }
+  fromCollection = false;
+  focus = {kind: 'collection'};
   hideInspect();
   render();
+  if (window.matchMedia('(pointer: fine)').matches) $('shelfBack')?.focus();
+}
+
+function goBack() {
+  hideInspect();
+  if (focus?.kind === 'stall' && fromCollection) {
+    fromCollection = false;
+    focus = {kind: 'collection'};
+  } else {
+    fromCollection = false;
+    focus = null;
+  }
+  render();
   if (window.matchMedia('(pointer: fine)').matches) {
-    $('shelfGrid')?.querySelector('[data-book]')?.focus();
+    $('shelfGrid')?.querySelector('button')?.focus();
+  }
+}
+
+function inspectFocusCover() {
+  if (focus?.kind === 'collection') select('penny-collector-book');
+  else if (focus?.kind === 'stall') {
+    const first = stallById(focus.id)?.prizes?.[0];
+    if (first) select(first);
   }
 }
 
@@ -219,79 +253,192 @@ function render() {
     ? all.length + ' individual paper objects'
     : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies'));
 
-  const onShelf = !bookId;
-  $('treasureShelf').hidden = !onShelf;
-  $('treasureSpread').hidden = onShelf;
-  $('shelfBack').hidden = onShelf;
-  dialog.querySelector('.pocket-shell')?.classList.toggle('is-open-book', !onShelf);
-  $('treasureSearch').placeholder = onShelf ? 'Find a book or keepsake' : 'Find a keepsake';
-  text('shelfIntro', 'Open a book. Empty places wait for the keepsakes you bring home.');
+  const onMenu = !focus;
+  $('treasureShelf').hidden = !onMenu;
+  $('treasureSpread').hidden = onMenu;
+  $('shelfBack').hidden = onMenu;
+  $('shelfBack').textContent = focus?.kind === 'stall' && fromCollection ? '← Full collection' : '← All stalls';
+  dialog.querySelector('.pocket-shell')?.classList.toggle('is-open-book', !onMenu);
+  $('treasureSearch').placeholder = onMenu ? 'Find a stall, chapter or prize' : 'Find a prize';
 
-  if (onShelf) {
-    paintShelf(all);
+  if (onMenu) {
+    paintMenu(all);
     return;
   }
-
-  if (!model.books.some(b => b.id === bookId)) bookId = model.books[0].id;
-  const book = model.books.find(b => b.id === bookId);
-  const {group, have} = bookStats(all, bookId);
-  text('pocketAlbumKicker', book.kicker || 'Collection');
-  text('pocketAlbumTitle', book.title);
-  text('pocketAlbumBlurb', book.blurb);
-  $('pocketAlbumBar').style.width = (group.length ? Math.round(have / group.length * 100) : 0) + '%';
-  text('pocketAlbumCount', group.length
-    ? have + ' of ' + group.length + ' found' + (have === group.length ? ' · complete' : '')
-    : 'Pages still being bound');
-  const cover = $('bookCover');
-  cover.src = book.cover;
-  cover.alt = book.title;
-  $('bookCoverBtn').classList.remove('is-missing');
-  $('bookCoverBtn').setAttribute('aria-label', 'Inspect ' + book.title);
-
-  const shown = bookItems(all, bookId);
-  $('treasureEmpty').hidden = shown.length !== 0;
-  paintSlots(shown, {groupByBook: !!book?.master});
+  if (focus.kind === 'collection') paintCollection(all);
+  else paintStall(all, focus.id);
 }
 
-function paintShelf(all) {
+function paintMenu(all) {
   const root = $('shelfGrid');
   const q = query();
   root.replaceChildren();
   let shown = 0;
-  for (const book of model.books) {
-    const {group, have, ownedCover} = bookStats(all, book.id);
-    const started = have > 0;
-    const waiting = !group.length || have < group.length;
-    if (filter === 'found' && !started) continue;
-    if (filter === 'missing' && !waiting) continue;
-    const hay = `${book.title} ${book.blurb} ${book.kicker} ` + group.map(i => i.name).join(' ');
-    if (q && !hay.toLowerCase().includes(q) && !group.some(i => matchesQuery(i, q))) continue;
-    shown++;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'shelf-book' + (have === group.length && group.length ? ' is-complete' : '');
-    b.dataset.book = book.id;
-    b.setAttribute('aria-label', book.title + ', ' + have + ' of ' + group.length + ' found');
-    const well = document.createElement('span');
-    well.className = 'shelf-cover';
-    const img = document.createElement('img');
-    img.src = book.cover; img.alt = ''; img.width = 220; img.height = 220; img.loading = 'lazy';
-    well.append(img);
-    const name = document.createElement('strong');
-    name.textContent = book.title;
-    const mark = document.createElement('em');
-    mark.textContent = group.length
-      ? (have === group.length ? 'Complete' : have + ' / ' + group.length)
-      : (ownedCover ? 'Found' : 'Waiting');
-    b.append(well, name, mark);
-    root.append(b);
+  const haveBook = bookOwned(all);
+  const book = all.find(i => i.id === 'penny-collector-book');
+  const bookHay = 'full collection penny collector book kit suitcase';
+  if (!q || bookHay.includes(q) || (book && matchesQuery(book, q))) {
+    if (!(filter === 'found' && !haveBook) && !(filter === 'missing' && haveBook)) {
+      shown++;
+      root.append(collectionCard(all, haveBook));
+    }
   }
+  const alley = stalls.filter(s => !s.workshop);
+  const shop = stalls.filter(s => s.workshop);
+  shown += appendStallGroup(root, all, alley, q, null);
+  if (shop.length) shown += appendStallGroup(root, all, shop, q, 'Workshop rooms — these do not write the pocket.');
   text('shelfIntro', shown
-    ? 'Open a book. Empty places wait for the keepsakes you bring home.'
-    : 'Nothing on the shelf matches that search.');
+    ? 'Each stall keeps six chapter prizes. Open a game to see the chapters.'
+    : 'Nothing matches that search.');
 }
 
-function paintSlots(shown, opts = {}) {
+function collectionCard(all, haveBook) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'stall-row is-collection' + (haveBook ? '' : ' is-locked');
+  b.dataset.collection = 'penny-collector-book';
+  const prizeCount = stalls.filter(s => !s.extra).reduce((n, s) => n + stallStats(all, s).have, 0);
+  const prizeTotal = stalls.filter(s => !s.extra).reduce((n, s) => n + stallStats(all, s).total, 0);
+  b.setAttribute('aria-label', haveBook
+    ? 'Full collection, ' + prizeCount + ' of ' + prizeTotal + ' stall prizes'
+    : 'Penny collector book, waiting. Win it at Kit’s suitcase, chapter 3.');
+  const well = document.createElement('span');
+  well.className = 'stall-cover';
+  const img = document.createElement('img');
+  img.src = 'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png';
+  img.alt = ''; img.width = 96; img.height = 96; img.loading = 'lazy';
+  well.append(img);
+  const copy = document.createElement('span');
+  copy.className = 'stall-copy';
+  const host = document.createElement('em');
+  host.textContent = 'The whole midway';
+  const name = document.createElement('strong');
+  name.textContent = 'Full collection';
+  const mark = document.createElement('span');
+  mark.className = 'stall-mark';
+  mark.textContent = haveBook
+    ? prizeCount + ' / ' + prizeTotal + ' stall prizes'
+    : 'Win Kit’s suitcase · chapter 3';
+  copy.append(host, name, mark);
+  b.append(well, copy);
+  return b;
+}
+
+function appendStallGroup(root, all, list, q, heading) {
+  const rows = [];
+  for (const stall of list) {
+    const {have, total} = stallStats(all, stall);
+    if (filter === 'found' && have === 0) continue;
+    if (filter === 'missing' && total && have === total) continue;
+    if (!stallMatches(stall, all, q)) continue;
+    rows.push(stallRow(all, stall));
+  }
+  if (!rows.length) return 0;
+  if (heading) {
+    const h = document.createElement('p');
+    h.className = 'stall-group';
+    h.textContent = heading;
+    root.append(h);
+  }
+  rows.forEach(row => root.append(row));
+  return rows.length;
+}
+
+function stallRow(all, stall) {
+  const {have, total, items} = stallStats(all, stall);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'stall-row' + (have === total && total ? ' is-complete' : '') + (stall.workshop ? ' is-workshop' : '');
+  b.dataset.stall = stall.id;
+  b.setAttribute('aria-label', stall.host + ' · ' + stall.title + ', ' + have + ' of ' + total + ' found');
+  const well = document.createElement('span');
+  well.className = 'stall-cover';
+  const img = document.createElement('img');
+  img.src = stall.cover; img.alt = ''; img.width = 96; img.height = 96; img.loading = 'lazy';
+  well.append(img);
+  const copy = document.createElement('span');
+  copy.className = 'stall-copy';
+  const host = document.createElement('em');
+  host.textContent = stall.host;
+  const name = document.createElement('strong');
+  name.textContent = stall.title;
+  const mark = document.createElement('span');
+  mark.className = 'stall-mark';
+  mark.textContent = stall.extra
+    ? (have + ' / ' + total)
+    : (have + ' / ' + total + ' chapters');
+  copy.append(host, name, mark);
+  b.append(well, copy, pips(have, total, items));
+  return b;
+}
+
+function pips(have, total, items) {
+  const row = document.createElement('span');
+  row.className = 'stall-pips';
+  row.setAttribute('aria-hidden', 'true');
+  const n = Math.min(6, total || 0);
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('i');
+    if (items ? items[i]?.owned : i < have) d.className = 'is-on';
+    row.append(d);
+  }
+  return row;
+}
+
+function paintStall(all, id) {
+  const stall = stallById(id);
+  if (!stall) { focus = null; paintMenu(all); return; }
+  const {items, have, total} = stallStats(all, stall);
+  text('pocketAlbumKicker', stall.workshop ? 'Workshop' : stall.extra ? 'Booth' : stall.host);
+  text('pocketAlbumTitle', stall.title);
+  text('pocketAlbumBlurb', stall.blurb);
+  $('pocketAlbumBar').style.width = (total ? Math.round(have / total * 100) : 0) + '%';
+  text('pocketAlbumCount', total
+    ? have + ' of ' + total + (stall.extra ? ' found' : ' chapters') + (have === total && total ? ' · complete' : '')
+    : 'Prizes still being bound');
+  const cover = $('bookCover');
+  cover.src = stall.cover;
+  cover.alt = stall.host + ' · ' + stall.title;
+  $('bookCoverBtn').classList.remove('is-missing');
+  $('bookCoverBtn').setAttribute('aria-label', 'Inspect prizes from ' + stall.title);
+  const shown = visibleItems(items).map(item => ({
+    item,
+    chapter: stall.extra ? '' : 'Chapter ' + (stall.prizes.indexOf(item.id) + 1),
+  }));
+  $('treasureEmpty').hidden = shown.length !== 0;
+  paintSlots(shown);
+}
+
+function paintCollection(all) {
+  const book = all.find(i => i.id === 'penny-collector-book');
+  const prizeItems = stalls.filter(s => !s.workshop).flatMap(s => stallItems(all, s));
+  const uniqueIds = [...new Set(prizeItems.map(i => i.id))];
+  const have = uniqueIds.filter(id => all.find(i => i.id === id)?.owned).length;
+  text('pocketAlbumKicker', 'The whole midway');
+  text('pocketAlbumTitle', 'Full collection');
+  text('pocketAlbumBlurb', 'Every stall, chapter and prize in one book. Pages wait in silhouette until you bring each one home.');
+  $('pocketAlbumBar').style.width = (uniqueIds.length ? Math.round(have / uniqueIds.length * 100) : 0) + '%';
+  text('pocketAlbumCount', have + ' of ' + uniqueIds.length + ' stall prizes' + (have === uniqueIds.length ? ' · complete' : ''));
+  const cover = $('bookCover');
+  cover.src = book?.asset || 'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png';
+  cover.alt = 'Penny collector book';
+  $('bookCoverBtn').classList.toggle('is-missing', !book?.owned);
+  $('bookCoverBtn').setAttribute('aria-label', 'Inspect the penny collector book');
+  const shown = [];
+  for (const stall of stalls.filter(s => !s.workshop)) {
+    const items = visibleItems(stallItems(all, stall));
+    if (!items.length) continue;
+    shown.push({heading: stall.host + ' · ' + stall.title, stall: stall.id});
+    items.forEach(item => shown.push({
+      item,
+      chapter: stall.extra ? '' : 'Chapter ' + (stall.prizes.indexOf(item.id) + 1),
+    }));
+  }
+  $('treasureEmpty').hidden = shown.some(row => row.item);
+  paintSlots(shown);
+}
+
+function paintSlots(shown) {
   observer?.disconnect();
   const token = ++listToken, root = $('treasureItems');
   root.replaceChildren();
@@ -311,19 +458,41 @@ function paintSlots(shown, opts = {}) {
   observer = new IntersectionObserver(changes => {
     for (const change of changes) if (change.isIntersecting) {
       observer.unobserve(change.target);
-      const item = shown.find(i => i.id === change.target.dataset.icon);
+      const item = shown.find(row => row.item?.id === change.target.dataset.icon)?.item;
       if (item) queue.push({canvas: change.target, item});
     }
     pump();
   }, {root: scrollRoot, rootMargin: '80px'});
 
-  function appendSlot(item) {
+  for (const row of shown) {
+    if (row.heading) {
+      const heading = document.createElement('h3');
+      heading.className = 'album-chapter';
+      if (row.stall) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'album-chapter-link';
+        b.textContent = row.heading;
+        b.addEventListener('click', () => openStall(row.stall, true));
+        heading.append(b);
+      } else heading.textContent = row.heading;
+      root.append(heading);
+      continue;
+    }
+    const item = row.item;
+    if (!item) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'album-slot' + (item.owned ? ' is-found' : ' is-missing');
+    button.className = 'album-slot chapter-slot' + (item.owned ? ' is-found' : ' is-missing');
     button.dataset.item = item.id;
     button.setAttribute('aria-pressed', String(item.id === current?.id));
-    button.setAttribute('aria-label', item.name + (item.owned ? ', found' : ', waiting to be collected'));
+    button.setAttribute('aria-label', (row.chapter ? row.chapter + ', ' : '') + item.name + (item.owned ? ', found' : ', waiting to be collected'));
+    if (row.chapter) {
+      const ch = document.createElement('span');
+      ch.className = 'chapter-num';
+      ch.textContent = row.chapter;
+      button.append(ch);
+    }
     const well = document.createElement('span');
     well.className = 'slot-well';
     if (item.turnaround && item.asset) {
@@ -353,45 +522,24 @@ function paintSlots(shown, opts = {}) {
     button.append(well, name, mark);
     root.append(button);
   }
-
-  if (opts.groupByBook) {
-    const byBook = new Map();
-    for (const item of shown) {
-      const bid = item.book || 'penny-collector-book';
-      if (!byBook.has(bid)) byBook.set(bid, []);
-      byBook.get(bid).push(item);
-    }
-    const order = model.books.map(b => b.id);
-    for (const item of shown) if (!order.includes(item.book)) order.push(item.book);
-    for (const bid of order) {
-      const items = byBook.get(bid);
-      if (!items?.length) continue;
-      const book = model.books.find(b => b.id === bid);
-      const heading = document.createElement('h3');
-      heading.className = 'album-chapter';
-      heading.textContent = book ? (book.master ? 'Pennies & tokens' : book.title) : bid;
-      root.append(heading);
-      const cover = items.find(i => i.id === bid);
-      const rest = items.filter(i => i.id !== bid);
-      if (cover) appendSlot(cover);
-      rest.forEach(appendSlot);
-    }
-    return;
-  }
-
-  shown.forEach(appendSlot);
 }
 
 function describe(item) {
+  const stall = stallForItem(item.id);
+  const chapter = stall && !stall.extra ? stall.prizes.indexOf(item.id) + 1 : 0;
   text('treasureName', item.name);
-  text('treasureSource', item.source);
+  text('treasureSource', stall
+    ? (chapter ? stall.host + ' · ' + stall.title + ' · chapter ' + chapter : stall.host + ' · ' + stall.title)
+    : item.source);
   text('treasureStatus', item.owned ? item.status : 'Not found yet — a shaded place is waiting in the book.');
   text('treasureHint', item.hint);
   text('treasureDetail', item.id === 'moonlight-wardrobe'
     ? 'A collectible costume book. The six original crew remain free; wearing these outfits will follow.'
     : item.id === 'night-suitcase'
       ? 'A little home for the things you bring back from the midway.'
-      : '');
+      : item.id === 'penny-collector-book'
+        ? 'Once this book is yours, the Treasures tab opens the full stall-by-stall collection.'
+        : '');
 }
 
 function hideInspect() {
@@ -408,7 +556,10 @@ async function select(id, punchedOverride) {
   if (!item) return;
   if (studio && punchedOverride !== undefined) item.punched = punchedOverride;
   current = item;
-  if (bookId !== 'penny-collector-book') bookId = item.book || bookId;
+  if (!focus && item.id !== 'penny-collector-book') {
+    const stall = stallForItem(item.id);
+    if (stall) { focus = {kind: 'stall', id: stall.id}; render(); }
+  }
   const token = ++selectionToken;
   describe(item);
   viewer?.destroy?.(); viewer = null;
@@ -492,11 +643,24 @@ function open(id) {
   hideInspect();
   if (id) {
     const item = entries().find(i => i.id === model.resolve(id));
-    bookId = item?.book || null;
-    render();
-    if (item && item.id !== item.book) select(item.id);
+    const stall = item && stallForItem(item.id);
+    if (item?.id === 'penny-collector-book' && bookOwned(entries())) {
+      focus = {kind: 'collection'};
+      fromCollection = false;
+      render();
+    } else if (stall) {
+      focus = {kind: 'stall', id: stall.id};
+      fromCollection = false;
+      render();
+      if (item) select(item.id);
+    } else {
+      focus = null;
+      render();
+      if (item) select(item.id);
+    }
   } else {
-    bookId = null;
+    focus = null;
+    fromCollection = false;
     render();
   }
   return true;
@@ -504,7 +668,7 @@ function open(id) {
 
 function close() {
   selectionToken++; listToken++; observer?.disconnect(); hideInspect();
-  bookId = null;
+  focus = null; fromCollection = false;
   document.body.classList.remove('has-treasure-open');
   if (resumeWorld && location.hash === openedHash && document.body.classList.contains('is-in-world')) {
     globalThis.PennyFeverWorld?.resume();
