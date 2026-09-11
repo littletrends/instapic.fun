@@ -1,5 +1,5 @@
 import {loadArt,paintIcon} from './art.js?v=pocket-book-1';
-import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=treasure-tabs-1';
+import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=found-turn-1';
 
 const model = globalThis.PennyFeverInventoryModel;
 const studio = document.body.dataset.objectStudio === 'true';
@@ -58,6 +58,10 @@ function mount() {
       <div class="shelf-view" id="treasureShelf">
         <p class="shelf-intro" id="shelfIntro">Open a book or album. Pages wait in silhouette until you find each keepsake.</p>
         <div class="shelf-grid" id="shelfGrid"></div>
+      </div>
+      <div class="found-view" id="foundView" hidden>
+        <p class="shelf-intro" id="foundIntro">Keepsakes you brought home. Turn them back and forth like the paper dolls.</p>
+        <div class="found-grid" id="foundGrid"></div>
       </div>
       <div class="pocket-body is-tree-spread" id="treasureSpread" hidden>
         <nav class="treasure-tree pocket-page is-left" id="treasureTree" aria-label="Stalls"></nav>
@@ -132,6 +136,16 @@ function mount() {
   });
   $('shelfGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-book]'); if (b) openBook(b.dataset.book);
+  });
+  $('foundGrid').addEventListener('click', e => {
+    const spin = e.target.closest('[data-found-spin]');
+    if (spin) {
+      e.preventDefault();
+      turnFoundCard(spin.closest('[data-item]'), Number(spin.dataset.foundSpin));
+      return;
+    }
+    const card = e.target.closest('[data-item]');
+    if (card) select(card.dataset.item);
   });
   $('treasureTree').addEventListener('click', e => {
     const prize = e.target.closest('[data-item]');
@@ -302,17 +316,19 @@ function render() {
     : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies'));
 
   dialog.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
-  const onShelf = tab === 'collection' && !bookId;
-  const onBook = tab === 'collection' && !!bookId;
-  const onGames = tab === 'games';
+  const onFound = filter === 'found';
+  const onShelf = !onFound && tab === 'collection' && !bookId;
+  const onBook = !onFound && tab === 'collection' && !!bookId;
+  const onGames = !onFound && tab === 'games';
   $('treasureShelf').hidden = !onShelf;
-  $('treasureSpread').hidden = onShelf;
+  $('foundView').hidden = !onFound;
+  $('treasureSpread').hidden = onShelf || onFound;
   $('treasureTree').hidden = !onGames;
   $('bookPane').hidden = !onBook;
   $('stallHead').hidden = !onGames;
   $('shelfBack').hidden = !(onBook || (onGames && focus));
   $('shelfBack').textContent = onBook ? '← The shelf' : '← All stalls';
-  $('treasureSearch').placeholder = onGames ? 'Find a stall or prize' : (onBook ? 'Find a keepsake' : 'Find a book or keepsake');
+  $('treasureSearch').placeholder = onFound ? 'Find a found keepsake' : onGames ? 'Find a stall or prize' : (onBook ? 'Find a keepsake' : 'Find a book or keepsake');
   dialog.querySelector('.pocket-shell')?.classList.toggle('is-open-book', !onShelf);
   dialog.querySelector('.pocket-shell')?.classList.toggle('is-book-open', onBook);
   dialog.querySelector('.pocket-body')?.classList.toggle('is-tree-spread', onGames);
@@ -321,6 +337,10 @@ function render() {
   $('treasureItems').classList.toggle('is-chapters', onGames);
   $('treasureItems').classList.toggle('is-album', onBook);
 
+  if (onFound) {
+    paintFound(all);
+    return;
+  }
   if (onShelf) {
     paintShelf(all);
     return;
@@ -332,6 +352,80 @@ function render() {
     return;
   }
   paintBook(all);
+}
+
+const TURN_VIEWS = ['front', 'back', 'left', 'right'];
+function itemFace(item, view) {
+  const name = TURN_VIEWS[((view % TURN_VIEWS.length) + TURN_VIEWS.length) % TURN_VIEWS.length];
+  if (!item.turnaround || !item.asset) return item.asset;
+  return item.asset.replace(/front\.png$/, name + '.png');
+}
+function poseFoundCard(card, view) {
+  const img = card.querySelector('.found-doll');
+  const label = card.querySelector('.found-view-label');
+  const item = entries().find(i => i.id === card.dataset.item);
+  if (!img || !item) return;
+  const i = ((view % TURN_VIEWS.length) + TURN_VIEWS.length) % TURN_VIEWS.length;
+  card.dataset.view = String(i);
+  img.src = itemFace(item, i);
+  img.onerror = () => { img.onerror = null; img.src = item.asset; };
+  if (label) label.textContent = TURN_VIEWS[i];
+}
+function turnFoundCard(card, dir) {
+  if (!card) return;
+  poseFoundCard(card, (Number(card.dataset.view) || 0) + dir);
+}
+function paintFound(all) {
+  const root = $('foundGrid');
+  const q = query();
+  const shown = all.filter(i => i.owned && matchesQuery(i, q));
+  root.replaceChildren();
+  for (const item of shown) {
+    const card = document.createElement('article');
+    card.className = 'found-card';
+    card.dataset.item = item.id;
+    card.dataset.view = '0';
+    const stage = document.createElement('button');
+    stage.type = 'button';
+    stage.className = 'found-runway';
+    stage.setAttribute('aria-label', 'Inspect ' + item.name);
+    const img = document.createElement('img');
+    img.className = 'found-doll';
+    img.alt = item.name;
+    img.width = 220;
+    img.height = 280;
+    img.loading = 'lazy';
+    img.src = itemFace(item, 0);
+    img.onerror = () => { img.onerror = null; img.src = item.asset; };
+    stage.append(img);
+    const bar = document.createElement('div');
+    bar.className = 'found-turn';
+    if (item.turnaround) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.dataset.foundSpin = '-1';
+      back.setAttribute('aria-label', 'Show previous view');
+      back.textContent = '◀ Back';
+      const label = document.createElement('span');
+      label.className = 'found-view-label';
+      label.textContent = 'front';
+      const forth = document.createElement('button');
+      forth.type = 'button';
+      forth.dataset.foundSpin = '1';
+      forth.setAttribute('aria-label', 'Show next view');
+      forth.textContent = 'Forth ▶';
+      bar.append(back, label, forth);
+    }
+    const name = document.createElement('strong');
+    name.textContent = item.name;
+    const mark = document.createElement('em');
+    mark.textContent = item.quantity > 1 ? '×' + item.quantity : 'Found';
+    card.append(stage, bar, name, mark);
+    root.append(card);
+  }
+  text('foundIntro', shown.length
+    ? 'Turn them back and forth like the paper dolls. Tap a figure to look closer. Waiting keepsakes stay in Collection.'
+    : (q ? 'Nothing found matches that search.' : 'Nothing in the book yet. Win a chapter on the alley — it will appear here.'));
 }
 
 function paintShelf(all) {
@@ -441,6 +535,17 @@ function paintTree(all) {
       if (focus?.id === row.stall.id) details.classList.add('is-current');
       if (row.have === row.total && row.total) details.classList.add('is-complete');
       const sum = document.createElement('summary');
+      if (row.stall.vendor) {
+        const mug = document.createElement('img');
+        mug.className = 'tree-vendor';
+        mug.alt = '';
+        mug.width = 40;
+        mug.height = 56;
+        mug.loading = 'lazy';
+        mug.src = row.stall.vendor;
+        mug.onerror = () => mug.remove();
+        sum.append(mug);
+      }
       const name = document.createElement('span');
       name.className = 'tree-name';
       name.textContent = row.stall.host + ' · ' + row.stall.title;
@@ -489,8 +594,9 @@ function paintStall(all, id) {
     ? have + ' of ' + total + (stall.extra ? ' found' : ' chapters') + (have === total && total ? ' · complete' : '')
     : 'Prizes still being bound');
   const cover = $('stallCover');
-  cover.src = stall.cover;
+  cover.src = stall.vendor || stall.cover;
   cover.alt = stall.host + ' · ' + stall.title;
+  cover.onerror = () => { cover.onerror = null; cover.src = stall.cover; };
   $('stallCoverBtn').classList.remove('is-missing');
   $('stallCoverBtn').setAttribute('aria-label', 'Inspect prizes from ' + stall.title);
   const shown = visibleItems(items).map(item => ({

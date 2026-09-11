@@ -84,6 +84,7 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .treasure-tree summary::-webkit-details-marker,.treasure-tree summary::marker{display:none;content:''}
 .treasure-tree summary::before{content:'▸';color:#7a3040;margin-right:6px;font-size:12px}
 .treasure-tree details[open] summary::before{content:'▾'}
+.tree-vendor{width:36px;height:48px;object-fit:contain;flex:0 0 36px;filter:drop-shadow(0 2px 4px #0003)}
 .tree-name{flex:1;min-width:0}
 .tree-mark{font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a3040;white-space:nowrap}
 .treasure-book .tree-prize{display:grid;grid-template-columns:1.4rem minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;margin:0;padding:6px 12px 6px 28px;border:0;border-top:1px solid #efe4c8;border-radius:0;background:transparent;color:#3d2c1f;text-align:left;min-height:0;box-shadow:none;font:15px/1.3 Georgia,serif}
@@ -150,6 +151,18 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .pocket-how{font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a3040}
 .pocket-hint{color:#6a5340}
 .pocket-inspect-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+.found-view{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:linear-gradient(180deg,#f4e6c8,#efe0c0)}
+.found-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px 14px;align-content:start}
+.found-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 10px 12px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;text-align:center;box-shadow:0 3px 0 #e4d0a8}
+.found-runway{display:grid;place-items:end center;width:100%;aspect-ratio:3/4;margin:0;padding:8px 8px 0;border:3px double #a17c43;border-radius:12px;background:linear-gradient(#cbb892 0 16%,#ead6b1 16% 100%);cursor:pointer;min-height:0}
+.found-runway:hover{border-color:#7a3040}
+.found-doll{max-width:78%;max-height:92%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 8px 10px #0004)}
+.found-turn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px}
+.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:4px 10px;min-height:32px;font:13px Georgia,serif;cursor:pointer}
+.found-view-label{min-width:4.2rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 11px system-ui,sans-serif;color:#7a3040}
+.found-card strong{font-size:15px;font-weight:400}
+.found-card em{font:700 11px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#38583b;font-style:normal}
 
 .treasure-notice{position:fixed;right:18px;bottom:80px;z-index:9500;max-width:min(380px,90vw);padding:12px 18px;border:1px solid #c4a064;border-radius:12px;background:#304537;color:#fff0cd;box-shadow:0 4px 20px #0005;font:15px/1.4 Georgia,serif;pointer-events:none}
 .treasure-notice[hidden]{display:none}

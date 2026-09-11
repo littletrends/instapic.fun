@@ -2,6 +2,7 @@ import {games} from '../../paper-games/catalogue.js?v=treasure-menu-2';
 import {kits} from '../../paper-games/prizes.js?v=treasure-menu-2';
 
 const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
+const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.png`;
 const FALLBACK_ART = id => `paper-games/assets/${id}.png`;
 
 export const extras = [
@@ -14,6 +15,7 @@ export const extras = [
     extra: true,
     prizes: ['everyday-penny', 'ticket-roll', 'admission-ticket', 'night-suitcase'],
     cover: 'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.png',
+    vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png',
   },
   {
     id: 'collection-gift',
@@ -38,6 +40,7 @@ export const stalls = [
     extra: false,
     prizes: [...(kits[g.id]?.prizes || [])],
     cover: g.id === 'carousel' || g.id === 'balloons' ? FALLBACK_ART(g.id) : STALL_ART(g.id),
+    vendor: VENDOR_ART(g.host),
   })),
 ];
 
