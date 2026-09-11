@@ -2,7 +2,7 @@
 // The two approved studies retain their own saved implementations.
 const rows = [
   ['fortune','Iris','Iris’s Reading','Three cards: past, present, future. A keepsake is hiding in the deck.'],
-  ['love','Rosalie','Heartstrings','Release a swinging heart into moving ribbon baskets.'],
+  ['love','Rosalie','Love Tester','Write two names. Count the loves. Read the heat.'],
   ['curios','Digby','Clockwork Menagerie','Reconnect tracks for a wandering clockwork beetle.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
   ['snap','Felix','Paper Safari','Frame the perfect moment in a moving paper woodland.'],
