@@ -1,10 +1,16 @@
+.aura-till-backdrop{
+  position:fixed;inset:0;z-index:9999;background:#120c0acc;
+}
+.aura-till-backdrop[hidden]{display:none!important}
 .aura-till{
+  position:fixed;z-index:10000;left:50%;top:50%;transform:translate(-50%,-50%);
   width:min(420px,96vw);max-height:92dvh;overflow:auto;box-sizing:border-box;
   padding:22px 18px 18px;border:4px ridge #b79462;border-radius:10px;
   background:#e7d4ad;color:#392918;font:15px/1.4 Georgia,serif;
-  box-shadow:8px 12px 28px #0008;z-index:10000;
+  box-shadow:8px 12px 28px #0008;
 }
-.aura-till::backdrop{background:#120c0acc}
+.aura-till[hidden]{display:none!important}
+body.has-aura-till{overflow:hidden}
 .aura-till h2{margin:.1rem 0 .4rem;font-size:1.45rem}
 .pf-till-kicker{margin:0;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b4e24}
 .pf-till-lead{margin:0 0 12px;color:#5a4630}
@@ -31,12 +37,16 @@
   display:none;width:100%;height:48px;min-height:48px;border:0;border-radius:12px;cursor:pointer;
   -webkit-appearance:-apple-pay-button;-apple-pay-button-type:pay;-apple-pay-button-style:black;
 }
+#pfApplePay.is-ready{
+  display:block!important;
+}
 #pfApplePay.apple-pay-button-fallback{
   -webkit-appearance:none!important;appearance:none!important;background:#000!important;color:#fff!important;
   display:none;align-items:center;justify-content:center;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
   font-size:1.05rem;font-weight:500;
 }
+#pfApplePay.apple-pay-button-fallback.is-ready{display:flex!important}
 #pfApplePay.apple-pay-button-fallback .apple-pay-fallback-label{display:inline-flex;align-items:center;gap:.35rem;line-height:1}
 #pfApplePay.apple-pay-button-fallback .apple-pay-mark{display:inline-block}
 #pfApplePay.apple-pay-button-fallback strong{font-weight:700}
@@ -48,5 +58,5 @@
 .aura-till .pf-till-go:disabled{opacity:.5;cursor:default}
 #pfTillStatus{margin:0;min-height:1.3em;font-size:.92rem;color:#5a4630}
 @media(max-width:520px){
-  .aura-till{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;margin:0}
+  .aura-till{left:0;top:0;transform:none;width:100%;max-width:none;height:100%;max-height:none;border-radius:0;margin:0}
 }

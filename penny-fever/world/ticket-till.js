@@ -11,17 +11,18 @@ const FALLBACK_SQUARE = {
 
 let apiRef = null;
 let till = null;
+let backdrop = null;
 let card = null;
 let payments = null;
 let applePay = null;
 let googlePay = null;
 let selected = null;
 let paying = false;
-let walletSeq = 0;
+let walletBusy = false;
 let config = {packs: FALLBACK_PACKS, ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;
-const previewHost = () => {
+const isPreview = () => {
   const host = location.hostname;
   return host === '127.0.0.1' || host === 'localhost';
 };
@@ -29,6 +30,9 @@ const $ = (id, root = till) => root?.querySelector('#' + id);
 function setStatus(text) {
   const el = $('pfTillStatus');
   if (el) el.textContent = text || '';
+}
+function tillOpen() {
+  return !!(till && !till.hidden);
 }
 
 function packLine(pack) {
@@ -38,13 +42,18 @@ function packLine(pack) {
   return bits.join(' · ') || 'Scrip';
 }
 
-function isPreview() {
-  return previewHost();
+export function closeTill() {
+  if (!till || till.hidden) return;
+  till.hidden = true;
+  if (backdrop) backdrop.hidden = true;
+  document.body.classList.remove('has-aura-till');
 }
 
-export function closeTill() {
-  if (!till?.open) return;
-  till.close();
+function showTill() {
+  if (!till) return;
+  till.hidden = false;
+  if (backdrop) backdrop.hidden = false;
+  document.body.classList.add('has-aura-till');
 }
 
 async function loadSquareSdk() {
@@ -81,32 +90,31 @@ function paymentRequest() {
 
 function styleApplePayButton(btn) {
   btn.type = 'button';
-  btn.hidden = true;
-  btn.style.display = 'none';
   btn.classList.add('apple-pay-button');
   btn.setAttribute('lang', 'en');
   btn.setAttribute('aria-label', 'Pay with Apple Pay');
   btn.style.setProperty('-webkit-appearance', '-apple-pay-button');
   btn.style.setProperty('-apple-pay-button-type', 'pay');
   btn.style.setProperty('-apple-pay-button-style', 'black');
-  btn.textContent = '';
-  if (!CSS.supports || !CSS.supports('-webkit-appearance', '-apple-pay-button')) {
-    btn.classList.add('apple-pay-button-fallback');
+  const native = CSS.supports && CSS.supports('-webkit-appearance', '-apple-pay-button');
+  btn.classList.toggle('apple-pay-button-fallback', !native);
+  if (!native) {
     btn.innerHTML =
       '<span class="apple-pay-fallback-label">' +
       '<svg class="apple-pay-mark" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
       '<path fill="currentColor" d="M16.365 12.23c-.03-2.22 1.81-3.29 1.89-3.34-1.03-1.51-2.64-1.72-3.21-1.74-1.37-.14-2.67.8-3.36.8-.7 0-1.77-.78-2.91-.76-1.5.02-2.88.87-3.65 2.21-1.56 2.7-.4 6.7 1.12 8.89.74 1.07 1.62 2.27 2.78 2.23 1.12-.05 1.54-.72 2.89-.72 1.34 0 1.72.72 2.9.7 1.2-.02 1.96-1.09 2.69-2.17.85-1.24 1.2-2.44 1.22-2.5-.03-.01-2.33-.89-2.36-3.6zm-2.2-6.5c.62-.75 1.04-1.79.92-2.83-.89.04-1.97.59-2.61 1.34-.57.66-1.07 1.72-.94 2.73 1 .08 2.02-.51 2.63-1.24z"/>' +
       '</svg>Pay with&nbsp;<strong>Apple&nbsp;Pay</strong></span>';
+  } else {
+    btn.textContent = '';
   }
   return btn;
 }
 
-function hideApplePay() {
+function setApplePayVisible(on) {
   const btn = $('pfApplePay');
-  applePay = null;
   if (!btn) return;
-  btn.hidden = true;
-  btn.style.display = 'none';
+  btn.hidden = !on;
+  btn.classList.toggle('is-ready', on);
 }
 
 async function destroyGooglePay() {
@@ -124,34 +132,44 @@ function updateWalletChrome() {
   const appleBtn = $('pfApplePay');
   const googleWrap = $('pfGooglePayWrap');
   const divider = $('pfTillOr');
-  const appleOn = !!(appleBtn && !appleBtn.hidden && appleBtn.style.display !== 'none');
+  const appleOn = !!(appleBtn && !appleBtn.hidden);
   const googleOn = !!(googleWrap && !googleWrap.hidden);
   if (divider) divider.hidden = !(appleOn || googleOn);
   const parts = [];
   if (appleOn) parts.push('Apple Pay');
   if (googleOn) parts.push('Google Pay');
-  if (parts.length) setStatus(parts.join(' and ') + ' available on this device. Desktop Apple Pay may show a phone QR.');
-  else if (selected) setStatus('Pay securely by card below. AUD.');
+  if (parts.length) {
+    setStatus(appleOn && !applePay
+      ? 'Apple Pay: tap for the phone QR on a laptop, or the wallet on iPhone.'
+      : parts.join(' and ') + ' available.');
+  } else if (selected) setStatus('Pay securely by card below. AUD.');
+}
+
+async function ensureApplePay() {
+  if (!payments || !selected) return null;
+  if (applePay) return applePay;
+  applePay = await payments.applePay(paymentRequest());
+  return applePay;
 }
 
 async function refreshApplePay() {
   const btn = $('pfApplePay');
-  if (!btn || !payments || !selected) return false;
-  hideApplePay();
+  if (!btn || !payments || !selected || isPreview()) {
+    setApplePayVisible(false);
+    applePay = null;
+    return false;
+  }
   styleApplePayButton(btn);
   try {
     applePay = await payments.applePay(paymentRequest());
-    btn.hidden = false;
-    btn.style.display = btn.classList.contains('apple-pay-button-fallback') ? 'flex' : 'block';
-    btn.style.visibility = 'visible';
-    btn.style.opacity = '1';
-    return true;
   } catch (err) {
     applePay = null;
-    hideApplePay();
-    console.warn('Apple Pay availability', err);
-    return false;
+    console.warn('Apple Pay setup', err);
   }
+  // Keep the logo button even when the browser cannot host Apple Pay natively.
+  // Click then opens Square's phone QR on Chrome/Firefox/Windows laptops.
+  setApplePayVisible(true);
+  return true;
 }
 
 async function refreshGooglePay() {
@@ -178,31 +196,32 @@ async function refreshGooglePay() {
 }
 
 async function refreshWallets() {
+  if (walletBusy) return;
   if (isPreview() || !payments || !selected) {
+    setApplePayVisible(false);
+    await destroyGooglePay();
     updateWalletChrome();
     return;
   }
-  const seq = ++walletSeq;
-  setStatus('Checking Apple Pay and Google Pay…');
-  await refreshApplePay();
-  if (seq !== walletSeq) return;
-  await refreshGooglePay();
-  if (seq !== walletSeq) return;
-  updateWalletChrome();
+  walletBusy = true;
+  try {
+    setStatus('Checking Apple Pay and Google Pay…');
+    await refreshApplePay();
+    await refreshGooglePay();
+    updateWalletChrome();
+  } finally {
+    walletBusy = false;
+  }
 }
 
-async function attachCard() {
-  await card?.destroy?.().catch(() => {});
-  card = null;
-  const mount = $('pfTillCard');
-  if (mount) mount.replaceChildren();
+async function ensureSquare() {
   const pay = $('pfTillPay');
   if (isPreview()) {
     setStatus('This preview till does not charge. Live Square is on instapic.fun.');
     pay.disabled = !selected;
     pay.textContent = selected ? 'Fill this pack · preview only' : 'Choose a pack';
     $('pfTillOr').hidden = true;
-    hideApplePay();
+    setApplePayVisible(false);
     await destroyGooglePay();
     return;
   }
@@ -211,19 +230,20 @@ async function attachCard() {
     pay.disabled = true;
     return;
   }
-  try {
-    setStatus('Opening the card till…');
-    const Square = await loadSquareSdk();
-    payments = Square.payments(config.application_id, config.location_id);
-    card = await payments.card();
-    await card.attach('#pfTillCard');
+  if (payments && card) {
     pay.disabled = !selected;
     pay.textContent = selected ? `Pay ${money(selected.amount_cents)} by card` : 'Pay with card';
     await refreshWallets();
-  } catch (err) {
-    setStatus(err?.message || 'Square could not open on this device.');
-    pay.disabled = true;
+    return;
   }
+  setStatus('Opening the card till…');
+  const Square = await loadSquareSdk();
+  payments = Square.payments(config.application_id, config.location_id);
+  card = await payments.card();
+  await card.attach('#pfTillCard');
+  pay.disabled = !selected;
+  pay.textContent = selected ? `Pay ${money(selected.amount_cents)} by card` : 'Pay with card';
+  await refreshWallets();
 }
 
 function paintPacks() {
@@ -241,8 +261,11 @@ function paintPacks() {
   }
 }
 
-function choosePack(id) {
-  selected = config.packs.find(p => p.id === id) || null;
+function choosePack(id, refresh = true) {
+  const next = config.packs.find(p => p.id === id) || null;
+  const changed = next?.id !== selected?.id;
+  selected = next;
+  applePay = null;
   till.querySelectorAll('[data-pack]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pack === selected?.id)));
   const pay = $('pfTillPay');
   if (isPreview()) {
@@ -253,7 +276,7 @@ function choosePack(id) {
   }
   pay.disabled = !selected || !card;
   pay.textContent = selected ? `Pay ${money(selected.amount_cents)} by card` : 'Pay with card';
-  if (payments && selected) refreshWallets();
+  if (refresh && changed && payments && selected) refreshWallets();
 }
 
 function creditPack(pack, paymentId) {
@@ -311,17 +334,20 @@ async function payWithCard() {
     setStatus(err?.message || 'The till could not take that payment.');
   } finally {
     paying = false;
-    if (till?.open) $('pfTillPay').disabled = !selected || (!isPreview() && !card);
+    if (tillOpen()) $('pfTillPay').disabled = !selected || (!isPreview() && !card);
   }
 }
 
 async function payWithApple() {
-  if (paying || !selected || !applePay) return;
+  if (paying || !selected) return;
   paying = true;
   try {
-    setStatus('Apple Pay… scan the QR on a phone if this is a laptop.');
-    await chargeToken(await applePay.tokenize(), 'Apple Pay');
+    setStatus('Apple Pay… on a laptop this may open a phone QR.');
+    const method = await ensureApplePay();
+    if (!method) throw new Error('Apple Pay is not available in this browser. Use Google Pay or card, or open the till on iPhone.');
+    await chargeToken(await method.tokenize(), 'Apple Pay');
   } catch (err) {
+    applePay = null;
     setStatus(err?.message || 'Apple Pay did not finish.');
   } finally {
     paying = false;
@@ -357,20 +383,27 @@ async function refreshConfig() {
     config = {packs: FALLBACK_PACKS, ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
   }
   paintPacks();
-  if (selected) choosePack(selected.id);
 }
 
 export function mountTill(api) {
   apiRef = api;
-  if (document.querySelector('dialog.aura-till')) {
-    till = document.querySelector('dialog.aura-till');
+  const existing = document.querySelector('.aura-till');
+  if (existing) {
+    till = existing;
+    backdrop = document.querySelector('.aura-till-backdrop');
     return;
   }
-  till = document.createElement('dialog');
+  backdrop = document.createElement('div');
+  backdrop.className = 'aura-till-backdrop';
+  backdrop.hidden = true;
+  till = document.createElement('aside');
   till.className = 'aura-till';
+  till.hidden = true;
+  till.setAttribute('role', 'dialog');
+  till.setAttribute('aria-modal', 'true');
   till.setAttribute('aria-labelledby', 'pfTillTitle');
   till.innerHTML = `
-    <form method="dialog"><button class="pf-till-close" aria-label="Close the till">×</button></form>
+    <button type="button" class="pf-till-close" id="pfTillClose" aria-label="Close the till">×</button>
     <p class="pf-till-kicker">Aura’s ticket booth</p>
     <h2 id="pfTillTitle">Tickets and pennies</h2>
     <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. First walk on the boards is still free.</p>
@@ -378,7 +411,7 @@ export function mountTill(api) {
     <div class="pf-till-pay">
       <div class="pf-till-wallets" id="pfTillWallets">
         <div class="pf-apple-wrap">
-          <button id="pfApplePay" type="button" hidden style="display:none"></button>
+          <button id="pfApplePay" type="button" hidden></button>
         </div>
         <div class="pf-google-wrap" id="pfGooglePayWrap" hidden>
           <div id="pfGooglePay"></div>
@@ -389,10 +422,12 @@ export function mountTill(api) {
       <button type="button" class="pf-till-go" id="pfTillPay" disabled>Choose a pack</button>
       <p id="pfTillStatus" role="status"></p>
     </div>`;
-  document.body.append(till);
+  document.body.append(backdrop, till);
+  backdrop.addEventListener('click', closeTill);
+  $('pfTillClose').addEventListener('click', closeTill);
   till.addEventListener('click', e => {
     const pack = e.target.closest('[data-pack]');
-    if (pack) choosePack(pack.dataset.pack);
+    if (pack) choosePack(pack.dataset.pack, true);
   });
   $('pfTillPay').addEventListener('click', payWithCard);
   $('pfApplePay').addEventListener('click', e => {
@@ -404,10 +439,8 @@ export function mountTill(api) {
     e.preventDefault();
     payWithGoogle();
   }, true);
-  till.addEventListener('close', () => {
-    selected = null;
-    paying = false;
-    walletSeq += 1;
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && tillOpen()) closeTill();
   });
   paintPacks();
 }
@@ -415,10 +448,12 @@ export function mountTill(api) {
 export async function openTill() {
   if (!till) mountTill(apiRef);
   await refreshConfig();
-  if (!till.open) {
-    try { till.showModal(); }
-    catch { till.setAttribute('open', ''); }
+  if (!selected && config.packs[0]) choosePack(config.packs[0].id, false);
+  else paintPacks();
+  showTill();
+  try {
+    await ensureSquare();
+  } catch (err) {
+    setStatus(err?.message || 'Square could not open on this device.');
   }
-  if (config.packs[0] && !selected) choosePack(config.packs[0].id);
-  await attachCard();
 }
