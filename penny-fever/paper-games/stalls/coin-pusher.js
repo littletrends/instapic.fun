@@ -1,15 +1,23 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-6';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-7';
 
 const DUMP_CAP = 24;
-const LIP_SPEED = 16;
-const STROKE = 0.42;
-const SHOVE = 78;
+const LIP_SPEED = 22;
+const STROKE = 0.4;
+const SHOVE = 56;
 const LAYERS = [
   {left: 258, right: 642, back: 188, lip: 448},
   {left: 228, right: 672, back: 478, lip: 768},
   {left: 202, right: 698, back: 798, lip: 1072},
+];
+const SETS = [
+  {mix0: ['everyday-penny'], mix1: ['everyday-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'looking-glass-locket', prize: 'coin-sleeve'},
+  {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['moon-penny', 'star-token'], unique: 'moon-brooch', prize: 'copper-cascade'},
+  {mix0: ['everyday-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['everyday-penny', 'pressed-heart'], unique: 'crystal-cradle', prize: 'penny-tree'},
+  {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token', 'lucky-match'], unique: 'secret-door-key', prize: 'coin-album'},
+  {mix0: ['everyday-penny', 'star-token'], mix1: ['moon-penny', 'rose-penny'], mix2: ['star-token', 'crown-token'], unique: 'midnight-invitation', prize: 'treasure-tin'},
+  {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'rose-penny', 'star-token'], mix2: ['crown-token', 'pressed-heart', 'lucky-match'], unique: 'wishing-acorn', prize: 'five-penny-stack'},
 ];
 const TOKENS = {
   'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 160, token: true},
@@ -67,7 +75,8 @@ function pick(s, rng, wantUnique) {
 }
 function snapshot(s) {
   return {
-    v: 3,
+    v: 4,
+    chapter: s.level || 0,
     t: s.t,
     aim: s.aim,
     dropped: s.dropped,
@@ -96,7 +105,7 @@ function hydrate(blob) {
   });
   if ((blob.v || 0) < 3 && coins.length < 90) topUp(coins, Math.random);
   return {
-    level: 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
+    level: blob.chapter || 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
     falling: [], fly: [], dropped: blob.dropped || 0, started: false, queue: blob.queue || 0,
     restock: blob.restock || 0, seen: blob.seen || [], paid: blob.paid || [],
@@ -109,7 +118,7 @@ function startStroke(s) {
 }
 function persist(s) {
   if (!s) return;
-  saveMachine(snapshot(s));
+  saveMachine(snapshot(s), s.level || 0);
   s.dirty = false;
   s.saveAt = s.t;
 }
@@ -134,6 +143,7 @@ function payout(s, c) {
     }
   }
   if (c.id !== 'everyday-penny' && alleyPlay) keep(c.id);
+  if (c.unique && alleyPlay && SETS[s.level]?.prize) keep(SETS[s.level].prize);
   if (c.prize && !s.paid.includes(c.id)) s.paid.push(c.id);
   flyHome(s, c);
   s.dirty = true;
@@ -147,9 +157,11 @@ function spill(s, c) {
     return false;
   }
   c.layer += 1;
+  const L = LAYERS[c.layer];
   c.falling = true;
-  c.vy = 80;
-  c.vx *= 0.4;
+  c.y = L.back - 12;
+  c.vy = 36;
+  c.vx *= 0.15;
   s.note = c.prize ? itemName(c.id) + ' dropped a tray.' : 'The tide moved down a tray.';
   return true;
 }
@@ -256,19 +268,17 @@ function topUp(coins, rng) {
   }
 }
 function fresh(level, rng) {
+  const set = SETS[level] || SETS[0];
   const coins = [
-    ...pack(0, rng, ['everyday-penny', 'everyday-penny', 'everyday-penny', 'moon-penny']),
-    ...pack(1, rng, ['everyday-penny', 'everyday-penny', 'rose-penny', 'star-token']),
-    ...pack(2, rng, ['everyday-penny', 'everyday-penny', 'crown-token', 'pressed-heart']),
+    ...pack(0, rng, set.mix0),
+    ...pack(1, rng, set.mix1),
+    ...pack(2, rng, set.mix2),
   ];
   const seen = [];
-  if (alleyPlay) {
-    const rare = pick({coins, seen, paid: []}, rng, true);
-    if (rare) {
-      const L = LAYERS[2];
-      coins.push(mint(rare, (L.left + L.right) / 2 + (rng() - 0.5) * 80, L.lip - 22, 2));
-      seen.push(rare);
-    }
+  if (set.unique) {
+    const L = LAYERS[2];
+    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 90, L.lip - 52, 2));
+    seen.push(set.unique);
   }
   const ammo = 12 + level * 3;
   return {
@@ -282,10 +292,11 @@ function fresh(level, rng) {
 export default {
   title: 'Copper Falls',
   live: alleyPlay,
-  intro: 'A real cash drop is packed to the lip. Your purse feeds it. Each penny lands, then the plate shoves once and stops — sit still and nothing falls. What slips the last lip is yours, and the trays remember if you walk away.',
+  tables: true,
+  intro: 'Six tables, each a new set. The bank lets a little copper go so you stay. Dump the purse and the table usually wins. Walk away when the lip still looks kind — that table keeps until you come back.',
   instructions: alleyPlay
-    ? 'Aim, then drop a penny from the purse or dump it (up to twenty-four). The trays are packed. Each drop gives one shove of the plate; it does not keep running. Leave and come back — the pile stays. Cash a booth ticket at the bar for a five-penny stack.'
-    : 'Aim, drop a penny from the purse or dump the rest. Packed trays, one shove per drop. Workshop scores never enter your wallet.',
+    ? 'Each chapter is a different cabinet. Drop a penny: the plate shoves once. Sit still and nothing falls. Leave and that chapter’s trays wait. Dump it all and the bank has the longer breath. Cash a booth ticket for a five-penny stack if the purse is empty.'
+    : 'Each chapter is a new set. One shove per drop. Workshop scores never enter your wallet.',
   levels: ['The copper tide', 'Moon mint', 'The crowded mint', 'A tide of crowns', 'The midnight mint', 'Pennies in a flood'],
   sprites: SPRITES,
   actions: [
@@ -294,8 +305,12 @@ export default {
   ],
   persist,
   create(level, rng) {
-    const saved = loadMachine();
-    if (saved && saved.pieces && saved.pieces.length) return hydrate(saved);
+    const saved = loadMachine(level);
+    if (saved && saved.pieces && saved.pieces.length) {
+      const s = hydrate(saved);
+      s.level = level;
+      return s;
+    }
     const s = fresh(level, rng);
     persist(s);
     return s;
@@ -316,7 +331,6 @@ export default {
       if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
       return;
     }
-    const shoving = s.stroke > 0 && s.stroke < 0.7;
     if (s.stroke > 0) {
       const was = s.stroke;
       s.stroke += dt / STROKE;
@@ -327,18 +341,16 @@ export default {
         const dPlate = (extend - prev) * SHOVE;
         for (let i = 0; i < LAYERS.length; i++) {
           const L = LAYERS[i];
-          const plate = L.back + 22 + extend * SHOVE;
-          const depth = L.lip - L.back || 1;
+          const power = i === 0 ? 1 : i === 1 ? 0.4 : 0.2;
+          const plate = L.back + 22 + extend * SHOVE * power;
           for (const c of s.coins) {
             if (c.falling || c.layer !== i) continue;
             if (c.y < plate + c.r) {
-              c.y += dPlate;
-              c.vy = Math.max(c.vy, dPlate * 80);
-            } else {
-              const along = clamp((c.y - L.back) / depth, 0, 1);
-              const tide = dPlate * (0.06 + 0.16 * along);
-              c.y += tide;
-              c.vy = Math.max(c.vy, tide * 40);
+              c.y += dPlate * power;
+              c.vy = Math.max(c.vy, dPlate * power * 70);
+            } else if (c.y > L.lip - 42 && !c.unique) {
+              c.y += dPlate * power * 0.35;
+              c.vy = Math.max(c.vy, dPlate * power * 30);
             }
           }
         }
@@ -371,9 +383,9 @@ export default {
             hit = true;
             const nx = dx / dd, ny = dy / dd, overlap = need - dd;
             c.x -= nx * overlap; c.y -= ny * overlap;
-            const j = Math.max(0, c.vy) * 0.62;
-            o.vx += nx * j * 0.35;
-            o.vy += Math.max(j * 0.85, ny * j);
+            const j = Math.max(0, c.vy) * 0.28;
+            o.vx += nx * j * 0.2;
+            o.vy += Math.max(0, ny) * j * 0.45;
             c.vy *= 0.28;
             c.vx *= 0.45;
           }
@@ -396,7 +408,7 @@ export default {
         if (c.x < L.left + c.r) { c.x = L.left + c.r; c.vx = Math.abs(c.vx) * 0.2; }
         if (c.x > L.right - c.r) { c.x = L.right - c.r; c.vx = -Math.abs(c.vx) * 0.2; }
         if (c.y < L.back + c.r) { c.y = L.back + c.r; c.vy = Math.max(0, c.vy); }
-        if (c.y + c.r > L.lip && !shoving && c.vy < LIP_SPEED) {
+        if (c.y + c.r > L.lip && c.vy < (c.layer < 2 ? 3 : 10)) {
           c.y = L.lip - c.r;
           c.vy = 0;
         }
@@ -425,7 +437,9 @@ export default {
     for (const c of s.coins) {
       if (c.falling) { stay.push(c); continue; }
       const L = LAYERS[c.layer];
-      if (c.y + c.r > L.lip && (shoving || c.vy >= LIP_SPEED)) {
+      if (c.layer < 2) {
+        if (c.y + c.r > L.lip) { if (!spill(s, c)) continue; }
+      } else if (c.y + c.r > L.lip && c.vy >= 10) {
         if (!spill(s, c)) continue;
       }
       stay.push(c);
