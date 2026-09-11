@@ -1,8 +1,8 @@
-import {games} from '../paper-games/catalogue.js?v=games-open-1';
+import {games} from '../paper-games/catalogue.js?v=games-open-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=games-open-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=games-open-2'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself

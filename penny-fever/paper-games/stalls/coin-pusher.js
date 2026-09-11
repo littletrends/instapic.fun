@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-8';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=games-open-2';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -45,7 +45,7 @@ const CHAPTER_ITEMS = {
 };
 const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS};
 const POOL = Object.entries(DEFS).map(([id, def]) => ({id, ...def}));
-const SPRITES = [...Object.keys(DEFS), 'penny-purse'];
+const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse',...Object.keys(CHAPTER_ITEMS)];
 
 function mint(id, x, y, layer) {
   const def = DEFS[id] || DEFS['everyday-penny'];
@@ -304,6 +304,7 @@ export default {
   title: 'Copper Falls',
   live: alleyPlay,
   tables: true,
+  tableDetail: 'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.',
   intro: 'Six tables, each a new set. The bank lets a little copper go so you stay. Dump the purse and the table usually wins. Walk away when the lip still looks kind — that table keeps until you come back.',
   instructions: alleyPlay
     ? 'Each chapter is a different cabinet. Drop a penny: the plate shoves once. Sit still and nothing falls. Leave and that chapter’s trays wait. Dump it all and the bank has the longer breath. Cash a booth ticket for a five-penny stack if the purse is empty.'
