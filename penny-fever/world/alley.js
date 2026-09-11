@@ -49,8 +49,10 @@ for (const spec of STALLS) {
   const g = paperById[spec.id];
   if (!g) continue;
   spec.host = g.host;
+  spec.hostSlug = String(g.host || "").toLowerCase().replace(/[^a-z]+/g, "");
   spec.name = g.title;
   spec.blurb = g.blurb;
+  spec.line = g.blurb;
 }
 
 const SKIN = 0xf0c4a8;
@@ -812,8 +814,11 @@ function paintPocketHud() {
   if (ticketCount) ticketCount.textContent = String(pocketTickets());
 }
 function stallEnterLabel(id) {
-  if (id === "coin-pusher") return "Cash drop";
-  if (id === "fortune") return "Fortune · 1 ticket";
+  if (id === "fortune") return "Sit for a reading · 1 ticket";
+  if (id === "coin-pusher") return "The trays · pennies";
+  if (id === "pinball") return "The table · pennies";
+  if (id === "milk-bottles") return "The dairy · pennies";
+  if (id === "skee-ball") return "The moonbow · pennies";
   return "Enter · 1 ticket";
 }
 
@@ -1731,6 +1736,8 @@ function buildWorld() {
       b.position.set(s.userData.doorX + side * 0.1, 0, s.userData.doorZ);
     }
     b.userData.stallId = spec.id;
+    b.userData.vendorHost = spec.hostSlug || "";
+    b.userData.crewName = spec.host || spec.name;
     scene.add(b);
     barkers.push(b);
   });
@@ -2082,7 +2089,7 @@ function pickFocus(px, pz) {
       kind: "stall",
       name: spec.name,
       host: spec.host || host?.userData.crewName || spec.name,
-      hostSlug: host?.userData.vendorHost || "",
+      hostSlug: spec.hostSlug || host?.userData.vendorHost || "",
       line: spec.line,
       x: s.position.x,
       z: s.position.z,
@@ -2168,7 +2175,7 @@ function pickFocus(px, pz) {
       name: spec.name,
       line: spec.line,
       host: spec.host || host?.userData.crewName || spec.name,
-      hostSlug: host?.userData.vendorHost || "",
+      hostSlug: spec.hostSlug || host?.userData.vendorHost || "",
       x: s.position.x,
       z: s.position.z,
       stallX: s.position.x,
