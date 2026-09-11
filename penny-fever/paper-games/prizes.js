@@ -150,7 +150,7 @@ export const spriteKey = id => {
 export const itemName = id => items[id]?.name || id;
 export const kits = {
   'coin-pusher': {
-    sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear'],
+    sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear','coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack'],
     prizes: ['coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack'],
   },
   whisper: {
@@ -260,5 +260,29 @@ export const kits = {
   balloons: {
     sprites: ['balloon-bouquet','autumn-leaf-lantern','moon-lantern','prize-bag'],
     prizes: ['balloon-bouquet','prize-bag','swing-spinner','birthday-crown-box','friendship-pins','paper-crown'],
+  },
+  ferris: {
+    sprites: ['pocket-wheel','star-token','moon-penny','ride-ticket','gyro-ghost','pressed-heart'],
+    prizes: ['pocket-wheel','star-token','moon-penny','ride-ticket','ride-stamp-book','ride-explorer-pennant'],
+  },
+  helter: {
+    sprites: ['ride-explorer-pennant','star-token','moon-penny','prize-bag'],
+    prizes: ['ride-explorer-pennant','star-token','moon-penny','prize-bag','ride-ticket','first-visit-badge'],
+  },
+  swings: {
+    sprites: ['swing-spinner','pressed-heart','star-token','moon-penny','prize-bag','friendship-pins'],
+    prizes: ['swing-spinner','pressed-heart','star-token','prize-bag','friendship-pins','ride-ticket'],
+  },
+  funhouse: {
+    sprites: ['laughing-doorway','looking-glass-locket','velvet-mask'],
+    prizes: ['laughing-doorway','velvet-mask','looking-glass-locket','secret-door-key','pocket-theatre','showman-ribbon'],
+  },
+  organ: {
+    sprites: ['organ-music-box','star-token','moon-penny','pressed-heart'],
+    prizes: ['organ-music-box','star-token','moon-penny','pressed-heart','ride-ticket','showman-ribbon'],
+  },
+  mural: {
+    sprites: ['midway-map','stamp-and-inkpad','lantern-lighter','star-token'],
+    prizes: ['midway-map','stamp-and-inkpad','lantern-lighter','ride-stamp-book','first-visit-badge','ride-explorer-pennant'],
   },
 };
