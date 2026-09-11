@@ -9,7 +9,7 @@ const rows = [
   ['whisper','Willa','Lost Letter Express','Fly folded letters into their matching letterboxes.'],
   ['ball-toss','Bess','Lantern Toss','Knock the swinging lanterns from a little circus skyline.'],
   ['coin-pusher','Copper','Copper Falls','Time the pusher and move a little tide of pennies.'],
-  ['pinball','Pip','Thunder Garden','Keep a silver seed alive among ringing brass flowers.'],
+  ['pinball','Pip','Thunder Garden','An old-school pin table. Plunge a penny, tap the flippers, and let the house smile.'],
   ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.'],
   ['milk-bottles','Mabel','The Topsy Dairy','Topple bottle towers with carefully placed throws.'],
   ['cover-the-spot','Dot','Patchwork Moon','Cover patterned moons with a handful of paper discs.'],
@@ -37,7 +37,7 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: `assets/${id}.png`,
+  asset: `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
