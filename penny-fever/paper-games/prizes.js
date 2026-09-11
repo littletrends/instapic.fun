@@ -226,7 +226,7 @@ export const kits = {
     prizes: ['popcorn-carton','tiny-kettle','sweet-heat','picnic-parcel','lemon-fizz','toffee-apple'],
   },
   'skee-ball': {
-    sprites: ['moon-penny','star-token'],
+    sprites: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin','penny-purse','everyday-penny'],
     prizes: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin'],
   },
   'penny-pitch': {

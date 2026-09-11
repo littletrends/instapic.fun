@@ -2,7 +2,7 @@ import {games} from '../paper-games/catalogue.js?v=games-open-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=rest-hud-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=skip-moonbow-2'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -29,9 +29,9 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball';
-  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':'Play again · 1 ticket';
-  if(pennyPlay){retry.disabled=true;retry.title=game.id==='coin-pusher'?'Leave and come back — the trays are as you left them.':'Leave and come back — the table remembers what it has already paid.';}
+  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
+  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':'Play again · 1 ticket';
+  if(pennyPlay){retry.disabled=true;retry.title=game.id==='coin-pusher'?'Leave and come back — the trays are as you left them.':game.id==='pinball'?'Leave and come back — the table remembers what it has already paid.':game.id==='milk-bottles'?'Leave and come back — the dairy is waiting.':'Leave and come back — the moons are waiting.';}
   else retry.addEventListener('click',()=>load(true));
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
@@ -54,7 +54,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
         return;
       }
       status.hidden=false;
-      status.textContent=game.id==='pinball'?'A five-penny stack for the table.':'A five-penny stack for the falls.';
+      status.textContent=game.id==='pinball'?'A five-penny stack for the table.':game.id==='milk-bottles'?'A five-penny stack for the dairy.':game.id==='skee-ball'?'A five-penny stack for the moonbow.':'A five-penny stack for the falls.';
       paintWallet();
       if(frame&&frame.getAttribute('src')==='about:blank') load();
     });
@@ -76,7 +76,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
   const PF=window.PennyFever;
-  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball';
+  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
   if(!pennyPlay && PF?.spendTicket && !PF.spendTicket(game.id)){
     status.hidden=false;
     status.textContent='No booth ticket in the pocket — still opening so you can look around. Buy a strip from Aura’s roll for a proper play.';
