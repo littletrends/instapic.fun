@@ -7,8 +7,8 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=till-desk-1";
-import {openTill} from "./ticket-till.js?v=till-desk-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=booth-till-1";
+import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=ride-stagger-1";
 import {installWallBackdrops} from "./walls/install.js?v=ride-stagger-1";
 import {installPapercutRides} from "./amusements/install.js?v=ride-stagger-1";
@@ -936,8 +936,12 @@ function attachHud() {
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
         <p class="pf-stall-card-line" id="pfStallCardLine"></p>
         <div class="pf-stall-card-till" id="pfStallCardTill" hidden>
+          <section class="aura-counter-wallet" aria-label="Current wallet">
+            <p class="aura-counter-kicker">Your pocket</p>
+            <ul id="pfAuraWalletList"></ul>
+          </section>
+          <button type="button" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
           <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
-          <button type="button" id="pfTillTrade">5 pennies → 1 ticket</button>
         </div>
         <div class="pf-stall-card-actions">
           <button type="button" id="pfStallCardEnter">Enter</button>
@@ -1122,8 +1126,9 @@ function bindHud() {
   });
   if (tillTrade) tillTrade.addEventListener("click", () => {
     const ok = window.PennyFever?.tradePenniesForTicket?.();
-    tillMessage = ok ? "Five pennies for one booth ticket." : "Need five pennies for a ticket.";
+    tillMessage = ok ? "One booth ticket from five pennies." : "Need five pennies for a ticket.";
     tillMessageUntil = performance.now() + 4000;
+    paintAuraWallet(el("pfStallCard"));
   });
   if (mapOpen) mapOpen.addEventListener("click", () => {
     if (alleyMapOpen) closeAlleyMap();
@@ -1457,7 +1462,7 @@ function auraDeskFocus() {
     name: "Ticket booth",
     host: "Aura",
     hostSlug: "",
-    line: "Square till: tickets, pennies, and a punch for the walk.",
+    line: "Trade pennies for a ticket here. Square is only for buying packs.",
     x: COUNTER.x,
     z: COUNTER.z,
     stallX: COUNTER.x,
@@ -1578,6 +1583,7 @@ function syncStallCard(best) {
     }
     const till = el("pfStallCardTill");
     if (till) till.hidden = best.kind !== "aura";
+    if (best.kind === "aura") paintAuraWallet(el("pfStallCard"));
     applyLookCardView("front");
   }
   stallCardOpen = true;
@@ -2149,7 +2155,7 @@ function pickFocus(px, pz) {
       name: "Ticket booth",
       host: "Aura",
       hostSlug: "",
-      line: "Square till: tickets, pennies, and a punch for the walk.",
+      line: "Trade pennies for a ticket here. Square is only for buying packs.",
       x: COUNTER.x,
       z: COUNTER.z,
       stallX: COUNTER.x,
@@ -2171,7 +2177,7 @@ function pickFocus(px, pz) {
       id: "aura",
       kind: "aura",
       name: "Ticket booth",
-      line: "Square till: tickets, pennies, and a punch for the walk.",
+      line: "Trade pennies for a ticket here. Square is only for buying packs.",
       x: aura.position.x,
       z: aura.position.z,
       stallX: COUNTER.x,
@@ -2555,7 +2561,7 @@ function start() {
   // Let the loading screen paint before synchronous scene construction begins.
   requestAnimationFrame(() => requestAnimationFrame(() => {
     pendingStart = false;
-    if (!/^#(foyer|arcade|alley)$/.test(location.hash)) return;
+    if (!/^#(foyer|arcade|alley|booth)$/.test(location.hash)) return;
     try {
       const opened = startNow();
       window.dispatchEvent(new Event(opened ? 'pf-world-ready' : 'pf-world-error'));
@@ -2605,6 +2611,9 @@ function startNow() {
   stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
+  if ((location.hash || "").replace(/^#/, "") === "booth") {
+    warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  }
   loop();
   window.dispatchEvent(new Event("pf-world-ready"));
   return true;
@@ -2660,10 +2669,10 @@ function boot() {
     }
     if (!api.tabPause) return;
     api.tabPause = false;
-    if (/^#(foyer|arcade|alley)$/.test(location.hash)) resume();
+    if (/^#(foyer|arcade|alley|booth)$/.test(location.hash)) resume();
   });
   const hash = (location.hash || "").replace(/^#/, "");
-  if (hash === "foyer" || hash === "arcade" || hash === "alley") {
+  if (hash === "foyer" || hash === "arcade" || hash === "alley" || hash === "booth") {
     start();
   }
 }

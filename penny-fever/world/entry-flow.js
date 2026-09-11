@@ -12,7 +12,7 @@
   const root = document.documentElement;
   let timer;
   let startupError = '';
-  const inAlley = () => /^#(foyer|arcade|alley)$/.test(location.hash);
+  const inAlley = () => /^#(foyer|arcade|alley|booth)$/.test(location.hash);
   function showFailure(message) {
     clearTimeout(timer);
     document.getElementById('worldLoading')?.classList.add('loading-failed');

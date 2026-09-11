@@ -1,6 +1,6 @@
 const API_BASE = 'https://motherpc.taild1a44c.ts.net';
 const FALLBACK_PACKS = [
-  {id:'PF_STRIP', name:'Ticket strip', blurb:'Five booth tickets from Aura’s roll. One ticket enters a stall.', amount_cents:500, tickets:5, pennies:0},
+  {id:'PF_STRIP', name:'Ticket strip', blurb:'Five booth tickets from Aura’s roll. Cash a ticket for five pennies at any stall bar.', amount_cents:500, tickets:5, pennies:0},
   {id:'PF_ROLL', name:'Penny pack', blurb:'Ten pennies for another lap and the machines.', amount_cents:500, tickets:0, pennies:10},
   {id:'PF_POCKET', name:'Pocket pack', blurb:'Five tickets and ten pennies — enough for a little wander.', amount_cents:800, tickets:5, pennies:10},
 ];
@@ -252,14 +252,6 @@ async function ensureSquare() {
   await refreshWallets();
 }
 
-function paintTrade() {
-  const btn = $('pfTillTrade');
-  if (!btn) return;
-  const coins = Math.max(0, Math.floor(Number(apiRef?.pennies?.() ?? apiRef?.getState?.()?.demoCoins) || 0));
-  btn.disabled = coins < 5;
-  btn.textContent = coins < 5 ? 'Need 5 pennies · 1 ticket' : 'Trade 5 pennies · 1 ticket';
-}
-
 function paintPacks() {
   const list = $('pfTillPacks');
   if (!list) return;
@@ -418,11 +410,10 @@ export function mountTill(api) {
   till.setAttribute('aria-labelledby', 'pfTillTitle');
   till.innerHTML = `
     <button type="button" class="pf-till-close" id="pfTillClose" aria-label="Close the till">×</button>
-    <p class="pf-till-kicker">Aura’s ticket booth</p>
-    <h2 id="pfTillTitle">Tickets and pennies</h2>
-    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. First walk on the boards is still free.</p>
+    <p class="pf-till-kicker">Square till</p>
+    <h2 id="pfTillTitle">Buy a pack</h2>
+    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. Trading pennies for tickets happens at Aura’s booth, not here.</p>
     <div class="pf-till-packs" id="pfTillPacks"></div>
-    <button type="button" class="pf-till-trade" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
     <div class="pf-till-pay">
       <div class="pf-till-wallets" id="pfTillWallets">
         <div class="pf-apple-wrap">
@@ -443,15 +434,6 @@ export function mountTill(api) {
   till.addEventListener('click', e => {
     const pack = e.target.closest('[data-pack]');
     if (pack) choosePack(pack.dataset.pack, true);
-  });
-  $('pfTillTrade').addEventListener('click', () => {
-    if (apiRef?.tradePenniesForTicket?.()) {
-      setStatus('One ticket from five pennies. Copper Falls pays five pennies back.');
-      paintTrade();
-      return;
-    }
-    setStatus('Need five pennies for a ticket.');
-    paintTrade();
   });
   $('pfTillPay').addEventListener('click', payWithCard);
   $('pfApplePay').addEventListener('click', e => {
@@ -475,7 +457,6 @@ export async function openTill(opts = {}) {
   await refreshConfig();
   if (!selected && config.packs[0]) choosePack(config.packs[0].id, false);
   else paintPacks();
-  paintTrade();
   showTill();
   try {
     await ensureSquare();

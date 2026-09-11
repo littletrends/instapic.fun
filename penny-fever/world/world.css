@@ -319,6 +319,18 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   justify-content: center;
   width: min(96%, 420px);
 }
+.pf-stall-card-till .aura-counter-wallet {
+  flex: 1 1 100%;
+  text-align: left;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(20, 12, 8, 0.45);
+  border: 1px solid rgba(244, 228, 194, 0.28);
+  color: #f4e4c2;
+}
+.pf-stall-card-till .aura-counter-kicker { margin: 0 0 4px; color: #e8d0a0; }
+.pf-stall-card-till .aura-counter-wallet ul { margin: 0; padding-left: 1.1rem; }
+.pf-stall-card-till #pfTillTrade { background: #5a3a62; }
 .pf-stall-card-till[hidden] { display: none !important; }
 .pf-stall-card-till button {
   flex: 1 1 7rem;

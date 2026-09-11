@@ -667,6 +667,7 @@
   function spendPennies(amount) {
     const need = Math.max(0, Math.floor(Number(amount) || 0));
     if (!need) return true;
+    if (state.showmanPass && state.passDay === darwinDay()) return true;
     if ((state.demoCoins || 0) < need) return false;
     state.demoCoins -= need;
     saveState(state);
@@ -794,7 +795,7 @@
       if (door) { door.hidden = false; door.inert = false; }
       return "door";
     }
-    if (hash === "foyer" || hash === "arcade" || hash === "alley") {
+    if (hash === "foyer" || hash === "arcade" || hash === "alley" || hash === "booth") {
       const foyer = $("foyer");
       if (foyer) { foyer.hidden = false; foyer.inert = false; }
       const paperRail = new URLSearchParams(location.search).get("rail") === "paper";

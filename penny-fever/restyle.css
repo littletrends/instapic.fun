@@ -8,11 +8,17 @@
 }
 .aura-counter-service[hidden]{display:none}
 .aura-counter-service strong{display:block;font-size:1.15rem;margin-bottom:6px}
+.aura-counter-kicker{margin:0 0 4px;font:700 10px/1.4 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b4e24}
+.aura-counter-wallet{margin:8px 0;padding:8px 10px;background:#fff8e8;border:1px solid #c9ae7b}
+.aura-counter-wallet ul{margin:0;padding-left:1.1rem}
+.aura-counter-wallet li{margin:.15rem 0}
 .aura-counter-service span{display:block;margin:6px 0}
+.aura-counter-service .aura-counter-actions{display:flex;gap:8px;flex-wrap:wrap}
 .aura-counter-service div{display:flex;gap:8px;flex-wrap:wrap}
 .aura-counter-service button{flex:1;min-width:7rem;font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}
 .aura-counter-service button:disabled{background:#8e8569;cursor:default}
 .aura-counter-service #auraCounterCoins{background:#6b4e24}
+.aura-counter-service #auraCounterTrade{background:#5a3a62}
 .aura-counter-service .aura-counter-close{position:absolute;top:8px;right:8px;flex:none;min-width:0;width:32px;height:32px;padding:0;font:700 22px/1 Georgia,serif;background:#6b3a3a;color:#fff0d0}
 .aura-counter-service small{display:block;margin-top:8px;font-size:11px;line-height:1.4}
 body:not(.is-in-world) .aura-counter-service{display:none}

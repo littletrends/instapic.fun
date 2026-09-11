@@ -1,9 +1,9 @@
 import * as THREE from './lib/three.module.min.js';
 import {paperRail} from './paper-guest-entrance.js?v=keep-light-1';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=ride-stagger-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
-import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=till-desk-1';
+import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=booth-till-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -76,12 +76,62 @@ let panel,playerRef,auraRef,apiRef,dismissed=false;
 function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
 function pocketCount(){return Math.max(0,Math.floor(Number(apiRef?.getState?.()?.demoCoins)||0))}
 function ticketCount(){return Math.max(0,Math.floor(Number(apiRef?.tickets?.()??apiRef?.getState?.()?.playTickets)||0))}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='square';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Tickets and penny packs are paid here with Square.</small>';document.body.append(panel);
+function walletLines(){
+ const state=apiRef?.getState?.()||{};
+ const coins=pocketCount();
+ const tix=ticketCount();
+ const lines=[
+  `${tix} booth ${tix===1?'ticket':'tickets'}`,
+  `${coins} ${coins===1?'penny':'pennies'}`,
+ ];
+ const model=window.PennyFeverInventoryModel;
+ if(model?.entries){
+  for(const d of model.entries(state)){
+   if(!d.owned||!d.quantity)continue;
+   if(d.id==='everyday-penny'||d.id==='ticket-roll')continue;
+   const money=d.kind==='currency'||d.kind==='scrip'||d.kind==='ticket'||d.kind==='pass'||d.collection==='pennies'||d.collection==='tickets';
+   if(!money)continue;
+   if(d.kind==='ticket'||d.kind==='pass')lines.push(d.name+' · '+d.status);
+   else lines.push(d.quantity>1?`${d.quantity} × ${d.name}`:d.name);
+  }
+ }
+ return lines;
+}
+export function paintAuraWallet(root){
+ const host=root||panel;
+ if(!host)return;
+ const list=host.querySelector('#auraCounterWalletList')||host.querySelector('#pfAuraWalletList');
+ if(!list)return;
+ list.replaceChildren();
+ for(const line of walletLines()){
+  const li=document.createElement('li');
+  li.textContent=line;
+  list.append(li);
+ }
+ const trade=host.querySelector('#auraCounterTrade')||host.querySelector('#pfTillTrade');
+ if(trade){
+  const coins=pocketCount();
+  trade.disabled=coins<5;
+  trade.textContent=coins<5?'Need 5 pennies · 1 ticket':'Trade 5 pennies · 1 ticket';
+ }
+}
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><section class="aura-counter-wallet" aria-label="Current wallet"><p class="aura-counter-kicker">Your pocket</p><ul id="auraCounterWalletList"></ul></section><div class="aura-counter-actions"><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Square is only for buying packs.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;closeTill();};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
   openTill();
   panel.querySelector('#auraCounterMessage').textContent='Choose a pack. Square takes the till.';
+ };
+ panel.querySelector('#auraCounterTrade').onclick=()=>{
+  if(!near())return;
+  const note=panel.querySelector('#auraCounterMessage');
+  if(apiRef?.tradePenniesForTicket?.()){
+   note.textContent='One booth ticket from five pennies.';
+   paintAuraWallet();
+   return;
+  }
+  note.textContent='Need five pennies for a ticket.';
+  paintAuraWallet();
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
@@ -93,11 +143,13 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
     const had=!!state.admitTicket;
     apiRef.admitAlleyLap('ticket');
     note.textContent=had?'Ticket shown. Enjoy the walk.':'In you go.';
+    paintAuraWallet();
     return;
   }
-  if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';return;}
-  note.textContent='Need a penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.';
+  if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';paintAuraWallet();return;}
+  note.textContent='Need a penny for the next walk. Trade five pennies for a ticket here, or buy a pack.';
  };
+ window.addEventListener('pennyfever:statechange',()=>paintAuraWallet());
 }
 export function updateTicketService(){
  if(!panel)return;
@@ -116,9 +168,7 @@ export function updateTicketService(){
  panel.hidden=false;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
- const coins=pocketCount();
- const tix=ticketCount();
- panel.querySelector('#auraCounterWallet').textContent=`Your pocket: ${tix} ${tix===1?'ticket':'tickets'} · ${coins} ${coins===1?'penny':'pennies'}`;
+ paintAuraWallet();
  const admit=panel.querySelector('#auraCounterAdmission');
  admit.disabled=!!state.admitPassed;
  admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
