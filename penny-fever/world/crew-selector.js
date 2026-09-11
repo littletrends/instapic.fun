@@ -156,7 +156,7 @@ function mount() {
 </div>
 <div class="crew-runway-turn">
  <button type="button" id="crewTurnLeft" aria-label="Show previous view">◀ Back</button>
- <span id="crewViewLabel">front</span>
+ <span id="crewViewLabel" aria-live="polite">front</span>
  <button type="button" id="crewTurnRight" aria-label="Show next view">Forth ▶</button>
 </div>
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
@@ -170,6 +170,30 @@ function mount() {
       if (b) chooseCrew(b.dataset.crew);
     });
     book.addEventListener('close', () => document.getElementById('editCrew')?.focus());
+    const doll = book.querySelector('#crewRunwayDoll');
+    if (doll) {
+      let drag = null;
+      doll.style.touchAction = 'pan-y';
+      doll.style.cursor = 'ew-resize';
+      doll.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        drag = {id: e.pointerId, x: e.clientX, accum: 0};
+        try { doll.setPointerCapture(e.pointerId); } catch {}
+      });
+      doll.addEventListener('pointermove', e => {
+        if (drag?.id !== e.pointerId) return;
+        const dx = e.clientX - drag.x;
+        drag.x = e.clientX;
+        drag.accum += dx;
+        if (Math.abs(drag.accum) > 42) {
+          turn(drag.accum > 0 ? 1 : -1);
+          drag.accum = 0;
+        }
+      });
+      const end = e => { if (drag?.id === e.pointerId) drag = null; };
+      doll.addEventListener('pointerup', end);
+      doll.addEventListener('pointercancel', end);
+    }
   }
 
   if (opener && opener.dataset.crewBound !== '1') {

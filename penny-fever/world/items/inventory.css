@@ -158,8 +158,12 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .found-runway{display:grid;place-items:end center;width:100%;aspect-ratio:3/4;margin:0;padding:8px 8px 0;border:3px double #a17c43;border-radius:12px;background:linear-gradient(#cbb892 0 16%,#ead6b1 16% 100%);cursor:pointer;min-height:0}
 .found-runway:hover{border-color:#7a3040}
 .found-doll{max-width:78%;max-height:92%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 8px 10px #0004)}
+.found-runway{touch-action:pan-y;cursor:ew-resize;user-select:none}
+.pocket-inspect-turn{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
+.pocket-inspect-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia,serif;white-space:nowrap}
+.pocket-inspect-turn span{min-width:4.5rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 12px system-ui,sans-serif;color:#7a3040}
 .found-turn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px}
-.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:4px 10px;min-height:32px;font:13px Georgia,serif;cursor:pointer}
+.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:4px 10px;min-height:32px;font:13px Georgia,serif;cursor:pointer;white-space:nowrap}
 .found-view-label{min-width:4.2rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 11px system-ui,sans-serif;color:#7a3040}
 .found-card strong{font-size:15px;font-weight:400}
 .found-card em{font:700 11px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#38583b;font-style:normal}

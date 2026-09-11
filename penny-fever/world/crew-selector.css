@@ -9,11 +9,11 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .crew-runway{position:relative;margin:12px auto 8px;height:280px;max-width:420px;overflow:hidden;border:3px double #a17c43;background:linear-gradient(#cbb892 0 18%,#ead6b1 18% 100%)}
 .crew-runway-board{position:absolute;left:8%;right:8%;bottom:18px;height:42px;background:repeating-linear-gradient(90deg,#8a6230 0 12px,#d2b073 12px 24px);transform:perspective(240px) rotateX(58deg);transform-origin:bottom center;box-shadow:0 10px 18px #0004}
 .crew-runway-stage{position:absolute;inset:12px 12px 48px;display:grid;place-items:end center}
-.crew-runway-doll{width:min(180px,46%);filter:drop-shadow(0 10px 10px #0005);transform-origin:50% 100%}
+.crew-runway-doll{width:min(180px,46%);filter:drop-shadow(0 10px 10px #0005);transform-origin:50% 100%;cursor:ew-resize;touch-action:pan-y;user-select:none}
 .crew-runway-doll.is-falling{animation:crew-fall .45s ease-in forwards}
 .crew-runway-doll.is-arriving{animation:crew-arrive .4s ease-out}
 .crew-runway-turn{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0 14px}
-.crew-runway-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia}
+.crew-runway-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia;white-space:nowrap}
 .crew-runway-turn span{min-width:4.5rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 12px system-ui}
 @keyframes crew-fall{to{transform:translateY(130%) rotateZ(22deg);opacity:0}}
 @keyframes crew-arrive{from{transform:translateY(-28%) scale(.92);opacity:0}to{transform:none;opacity:1}}

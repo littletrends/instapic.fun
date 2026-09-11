@@ -8,6 +8,37 @@ let dialog, viewer, current = null, focus = null, bookId = null, tab = 'collecti
 const expanded = new Set();
 let selectionToken = 0, listToken = 0, opener, resumeWorld = false, openedHash = '', observer;
 const $ = id => document.getElementById(id);
+function bindDragTurn(root, onStep, cardSel) {
+  if (!root) return;
+  let drag = null;
+  root.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    if (e.target.closest('[data-found-spin]')) return;
+    const card = e.target.closest(cardSel);
+    if (!card) return;
+    drag = {id: e.pointerId, x: e.clientX, accum: 0, dist: 0, card, stepped: false};
+    try { root.setPointerCapture(e.pointerId); } catch {}
+  });
+  root.addEventListener('pointermove', e => {
+    if (drag?.id !== e.pointerId) return;
+    const dx = e.clientX - drag.x;
+    drag.x = e.clientX;
+    drag.accum += dx;
+    drag.dist += Math.abs(dx);
+    if (Math.abs(drag.accum) > 42) {
+      onStep(drag.card, drag.accum > 0 ? 1 : -1);
+      drag.accum = 0;
+      drag.stepped = true;
+    }
+  });
+  const end = e => {
+    if (drag?.id !== e.pointerId) return;
+    if (drag.stepped) drag.card.dataset.skipClick = '1';
+    drag = null;
+  };
+  root.addEventListener('pointerup', end);
+  root.addEventListener('pointercancel', end);
+}
 const state = () => globalThis.PennyFever?.getState() || {};
 const entries = () => studio
   ? model.definitions.map(d => ({...d, owned: true, quantity: 1, status: 'Object study', punched: false}))
@@ -100,6 +131,11 @@ function mount() {
           <p id="treasureLoading" role="status"></p>
           <p class="pocket-hint" id="treasureHint"></p>
           <p id="treasureDetail"></p>
+          <div class="pocket-inspect-turn" id="inspectTurn" hidden>
+            <button type="button" id="inspectBack" aria-label="Show previous view">◀ Back</button>
+            <span id="inspectViewLabel" aria-live="polite">front</span>
+            <button type="button" id="inspectForth" aria-label="Show next view">Forth ▶</button>
+          </div>
           <div class="pocket-inspect-bar">
             <button type="button" id="pocketBack">← Back to the page</button>
             <button type="button" id="treasureOpen" aria-expanded="false" hidden>Open</button>
@@ -137,14 +173,28 @@ function mount() {
   $('shelfGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-book]'); if (b) openBook(b.dataset.book);
   });
+  $('inspectBack')?.addEventListener('click', () => {
+    if (viewer?.step) viewer.step(-1);
+    else viewer?.turn?.(-Math.PI / 2);
+  });
+  $('inspectForth')?.addEventListener('click', () => {
+    if (viewer?.step) viewer.step(1);
+    else viewer?.turn?.(Math.PI / 2);
+  });
+  bindDragTurn($('foundGrid'), (card, dir) => turnFoundCard(card, dir), '.found-card');
   $('foundGrid').addEventListener('click', e => {
+    const card = e.target.closest('[data-item]');
+    if (card?.dataset.skipClick === '1') {
+      delete card.dataset.skipClick;
+      e.preventDefault();
+      return;
+    }
     const spin = e.target.closest('[data-found-spin]');
     if (spin) {
       e.preventDefault();
       turnFoundCard(spin.closest('[data-item]'), Number(spin.dataset.foundSpin));
       return;
     }
-    const card = e.target.closest('[data-item]');
     if (card) select(card.dataset.item);
   });
   $('treasureTree').addEventListener('click', e => {
@@ -354,7 +404,7 @@ function render() {
   paintBook(all);
 }
 
-const TURN_VIEWS = ['front', 'back', 'left', 'right'];
+const TURN_VIEWS = ['front', 'left', 'back', 'right'];
 function itemFace(item, view) {
   const name = TURN_VIEWS[((view % TURN_VIEWS.length) + TURN_VIEWS.length) % TURN_VIEWS.length];
   if (!item.turnaround || !item.asset) return item.asset;
@@ -395,12 +445,17 @@ function paintFound(all) {
     img.width = 220;
     img.height = 280;
     img.loading = 'lazy';
+    img.draggable = false;
     img.src = itemFace(item, 0);
     img.onerror = () => { img.onerror = null; img.src = item.asset; };
     stage.append(img);
-    const bar = document.createElement('div');
-    bar.className = 'found-turn';
+    const name = document.createElement('strong');
+    name.textContent = item.name;
+    const mark = document.createElement('em');
+    mark.textContent = item.quantity > 1 ? '×' + item.quantity : 'Found';
     if (item.turnaround) {
+      const bar = document.createElement('div');
+      bar.className = 'found-turn';
       const back = document.createElement('button');
       back.type = 'button';
       back.dataset.foundSpin = '-1';
@@ -408,6 +463,7 @@ function paintFound(all) {
       back.textContent = '◀ Back';
       const label = document.createElement('span');
       label.className = 'found-view-label';
+      label.setAttribute('aria-live', 'polite');
       label.textContent = 'front';
       const forth = document.createElement('button');
       forth.type = 'button';
@@ -415,12 +471,10 @@ function paintFound(all) {
       forth.setAttribute('aria-label', 'Show next view');
       forth.textContent = 'Forth ▶';
       bar.append(back, label, forth);
+      card.append(stage, bar, name, mark);
+    } else {
+      card.append(stage, name, mark);
     }
-    const name = document.createElement('strong');
-    name.textContent = item.name;
-    const mark = document.createElement('em');
-    mark.textContent = item.quantity > 1 ? '×' + item.quantity : 'Found';
-    card.append(stage, bar, name, mark);
     root.append(card);
   }
   text('foundIntro', shown.length
@@ -772,23 +826,29 @@ async function select(id, punchedOverride) {
   $('pocketInspect').hidden = false;
   dialog.querySelectorAll('[data-item]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.item === item.id)));
   const touch = window.matchMedia('(pointer: coarse)').matches;
-  text('treasureHow', item.turnaround || (item.columns > 1)
-    ? (touch ? 'Drag to turn the keepsake.' : 'Press and turn. Arrow keys spin; Home shows the front.')
+  const canTurn = !!(item.turnaround || (item.columns > 1));
+  $('inspectTurn').hidden = !canTurn;
+  const inspectLabel = $('inspectViewLabel');
+  if (inspectLabel) inspectLabel.textContent = 'front';
+  text('treasureHow', canTurn
+    ? (touch ? 'Drag to turn. Back and Forth step the faces.' : 'Drag to turn. Back and Forth step. Arrow keys spin; Home is the front.')
     : 'A pressed paper portrait — drag to rock it in the light.');
   text('treasureLoading', item.owned ? 'Unwrapping your keepsake…' : 'The outline is here. Win it, and the colour comes in.');
   try {
     const art = await loadArt(item);
     if (token !== selectionToken || !dialog.open) return;
     if (item.hinged && item.owned) {
-      const {ObjectViewer} = await import('./viewer.js?v=pocket-book-1');
+      const {ObjectViewer} = await import('./viewer.js?v=look-bf-1');
       if (token !== selectionToken || !dialog.open) return;
       viewer = new ObjectViewer($('treasureStage'));
+      viewer.onView = name => { const n = $('inspectViewLabel'); if (n) n.textContent = name; };
       viewer.show(item, art);
-      $('treasureHow').textContent = 'Drag to turn. Open lifts the cover.';
+      $('treasureHow').textContent = 'Drag to turn. Back and Forth step. Open lifts the cover.';
     } else {
-      const {Turntable} = await import('./viewer.js?v=pocket-book-1');
+      const {Turntable} = await import('./viewer.js?v=look-bf-1');
       if (token !== selectionToken || !dialog.open) return;
       viewer = new Turntable($('treasureStage'));
+      viewer.onView = name => { const n = $('inspectViewLabel'); if (n) n.textContent = name; };
       viewer.show(item, art, !item.owned);
     }
     text('treasureLoading', '');

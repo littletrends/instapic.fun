@@ -9,12 +9,12 @@ import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=till-desk-1";
 import {openTill} from "./ticket-till.js?v=till-desk-1";
-import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
-import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";
+import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=ride-stagger-1";
+import {installWallBackdrops} from "./walls/install.js?v=ride-stagger-1";
+import {installPapercutRides} from "./amusements/install.js?v=ride-stagger-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=one-name-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -815,12 +815,16 @@ function paintPocketHud() {
   if (ticketCount) ticketCount.textContent = String(pocketTickets());
 }
 function stallEnterLabel(id) {
-  if (id === "fortune") return "Sit for a reading · 1 ticket";
+  id = playIdFor(id);
+  if (id === "fortune") return "Sit for a reading · 1 penny";
   if (id === "coin-pusher") return "The trays · pennies";
   if (id === "pinball") return "The table · pennies";
   if (id === "milk-bottles") return "The dairy · pennies";
   if (id === "skee-ball") return "The moonbow · pennies";
-  return "Enter · 1 ticket";
+  if (id === "love") return "Enter · 1 penny";
+  const sitDown = new Set(["carousel", "balloons", "ferris", "helter", "swings", "funhouse", "organ", "mural"]);
+  if (sitDown.has(id)) return "Enter · 1 penny";
+  return "Enter · pennies";
 }
 
 const api = {
@@ -920,16 +924,13 @@ function attachHud() {
       </button>
       <div class="pf-stall-card" id="pfStallCard" hidden>
         <div class="pf-stall-card-art">
-          <img id="pfStallCardBooth" alt="">
-          <img id="pfStallCardVendor" alt="">
+          <img id="pfStallCardBooth" alt="" draggable="false">
+          <img id="pfStallCardVendor" alt="" draggable="false">
         </div>
         <div class="pf-stall-card-views" id="pfStallCardViews">
-          <button type="button" data-spin="-1" aria-label="Turn left">↶</button>
-          <button type="button" data-view="front" aria-pressed="true">Front</button>
-          <button type="button" data-view="left">Left</button>
-          <button type="button" data-view="back">Back</button>
-          <button type="button" data-view="right">Right</button>
-          <button type="button" data-spin="1" aria-label="Turn right">↷</button>
+          <button type="button" data-spin="-1" aria-label="Show previous view">◀ Back</button>
+          <span id="pfStallCardViewLabel" aria-live="polite">front</span>
+          <button type="button" data-spin="1" aria-label="Show next view">Forth ▶</button>
         </div>
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
@@ -945,8 +946,9 @@ function attachHud() {
         </div>
       </div>
       <div class="pf-look-rig" id="pfLookRig" hidden>
-        <button type="button" data-orbit="-1" aria-label="Turn left">↶</button>
-        <button type="button" data-orbit="1" aria-label="Turn right">↷</button>
+        <button type="button" data-orbit="-1" aria-label="Show previous view">◀ Back</button>
+        <span id="pfLookRigLabel" aria-live="polite">front</span>
+        <button type="button" data-orbit="1" aria-label="Show next view">Forth ▶</button>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the boards · tap Look over your head · step toward a booth to open it</p>
@@ -1059,10 +1061,6 @@ function enterStallById(id) {
   if (!id) return false;
   id = playIdFor(id);
   if (!document.getElementById("cabinet-" + id)) return false;
-  if (id !== "coin-pusher" && id !== "pinball" && pocketTickets() < 1 && !pfState().showmanPass) {
-    tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
-    tillMessageUntil = performance.now() + 7000;
-  }
   closeStallCard();
   closeAlleyMap();
   location.hash = "cabinet/" + id;
@@ -1171,15 +1169,9 @@ function bindHud() {
   if (views) {
     views.addEventListener("click", (event) => {
       const spin = event.target.closest("button[data-spin]");
-      if (spin) {
-        event.preventDefault();
-        spinLookCard(Number(spin.dataset.spin));
-        return;
-      }
-      const b = event.target.closest("button[data-view]");
-      if (!b) return;
+      if (!spin) return;
       event.preventDefault();
-      applyLookCardView(b.dataset.view);
+      spinLookCard(Number(spin.dataset.spin));
     });
   }
   const rig = el("pfLookRig");
@@ -1384,9 +1376,18 @@ function pinFocusedView(index) {
   });
 }
 
+function paintLookViewLabel(view) {
+  const name = LOOK_VIEWS.includes(view) ? view : "front";
+  const card = el("pfStallCardViewLabel");
+  if (card) card.textContent = name;
+  const rig = el("pfLookRigLabel");
+  if (rig) rig.textContent = name;
+}
+
 function spinLookCard(dir) {
   const i = (LOOK_VIEWS.indexOf(stallCardView) + dir + 4) % 4;
   pinFocusedView(i);
+  paintLookViewLabel(LOOK_VIEWS[i]);
   if (stallCardOpen) applyLookCardView(LOOK_VIEWS[i]);
 }
 
@@ -1444,12 +1445,7 @@ function applyLookCardView(view) {
       vendor.hidden = true;
     }
   }
-  const views = el("pfStallCardViews");
-  if (views) {
-    views.querySelectorAll("button").forEach((b) => {
-      b.setAttribute("aria-pressed", String(b.dataset.view === view));
-    });
-  }
+  paintLookViewLabel(view);
   const stage = el("pfStallCard")?.querySelector(".pf-stall-card-art");
   if (stage) stage.classList.toggle("is-rear", view === "back" || view === "right");
 }
@@ -2092,7 +2088,17 @@ function pickFocus(px, pz) {
   let passing = null;
   let passingZ = 99;
   function consider(place, dz) {
-    if (dz >= passingZ || dz > 2.35) return;
+    if (dz > 2.8) return;
+    const onThisSide = Math.sign(px || place.side) === place.side;
+    if (passing && Math.abs(dz - passingZ) < 0.7) {
+      const passSide = Math.sign(px || passing.side) === passing.side;
+      if (onThisSide && !passSide) {
+        passing = place;
+        passingZ = dz;
+      }
+      return;
+    }
+    if (dz >= passingZ) return;
     passingZ = dz;
     passing = place;
   }
@@ -2203,7 +2209,7 @@ function pickFocus(px, pz) {
   (papercutRides?.figures || []).forEach((fig) => {
     if (fig.userData.kind !== "ride") return;
     const side = Math.sign(fig.position.x) || 1;
-    if (!inFrontOf(px, pz, fig.position.x, fig.position.z, side, 5.2, 1.8)) return;
+    if (!inFrontOf(px, pz, fig.position.x, fig.position.z, side, 6.4, 2.7)) return;
     const d = Math.hypot(px - fig.position.x, pz - fig.position.z);
     if (d >= bestD) return;
     const id = fig.userData.amusementId;

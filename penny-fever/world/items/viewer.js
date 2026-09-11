@@ -2,11 +2,19 @@ import * as THREE from '../lib/three.module.min.js';
 import {makeObject,disposeObject} from './geometry.js?v=treasures-1';
 
 const TAU = Math.PI * 2;
+const VIEW_NAMES = ['front', 'left', 'back', 'right'];
+function viewName(angle, n = 4) {
+  const count = Math.max(1, n || 4);
+  const t = ((angle % TAU) + TAU) % TAU;
+  const i = Math.round(t / (TAU / count)) % count;
+  return count === 4 ? VIEW_NAMES[i] : (i + 1) + ' / ' + count;
+}
 
 export class Turntable {
   constructor(host) {
     this.host = host; this.dead = false; this.art = null; this.item = null;
     this.angle = 0; this.vel = 0; this.zoom = 1; this.grey = false; this.drag = null;
+    this.onView = null; this._viewName = '';
     this.canvas = document.createElement('canvas');
     this.canvas.setAttribute('aria-hidden', 'true');
     host.append(this.canvas);
@@ -42,11 +50,26 @@ export class Turntable {
   }
   show(item, art, grey = false) {
     this.item = item; this.art = art; this.grey = grey; this.angle = 0; this.vel = 0;
+    this._viewName = '';
     const n = art.faces.length;
-    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Press and turn to spin.' : '.'));
+    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Drag to turn, or use Back and Forth.' : '.'));
     this.draw();
+    this.emitView();
+  }
+  emitView() {
+    if (!this.onView || !this.art) return;
+    const name = viewName(this.angle, this.art.faces.length);
+    if (name === this._viewName) return;
+    this._viewName = name;
+    this.onView(name);
   }
   magnify(amount) { this.zoom = Math.min(1.7, Math.max(.6, this.zoom + amount)); this.draw(); }
+  step(dir) {
+    const n = this.art?.faces?.length || 4;
+    this.angle += (dir || 0) * (Math.PI * 2 / n);
+    this.vel = 0;
+    this.draw();
+  }
   coast() {
     if (this.dead || this.raf) return;
     const step = () => {
@@ -89,6 +112,7 @@ export class Turntable {
         ctx.globalAlpha = f; ctx.drawImage(faces[b], x, y, size, size);
       }
       ctx.restore();
+      this.emitView();
     });
   }
   destroy() {
@@ -100,6 +124,7 @@ export class Turntable {
 export class ObjectViewer {
   constructor(host,onMode=()=>{}) {
     this.host=host;this.onMode=onMode;this.angle=0;this.tilt=0;this.zoom=1;this.opened=false;this.dead=false;
+    this.onView=null;this._viewName='';
     this.scene=new THREE.Scene();this.camera=new THREE.PerspectiveCamera(38,1,.1,30);this.camera.position.z=6.3;
     this.scene.add(new THREE.HemisphereLight(0xfff7e6,0x594638,2.3));
     const lamp=new THREE.DirectionalLight(0xffe3b5,2.5);lamp.position.set(-3,5,6);this.scene.add(lamp);
@@ -135,12 +160,21 @@ export class ObjectViewer {
   show(item,art){
     if(this.dead)return;
     if(this.object){this.scene.remove(this.object.root);disposeObject(this.object.root);this.object=null;}
-    this.item=item;this.art=art;this.opened=false;this.angle=0;this.tilt=0;this.zoom=1;
+    this.item=item;this.art=art;this.opened=false;this.angle=0;this.tilt=0;this.zoom=1;this._viewName='';
     if(this.renderer){this.object=makeObject(item,art);this.scene.add(this.object.root);}
-    this.host.setAttribute('aria-label',`${item.name}. Drag to turn, or use the arrow keys. Home shows the front.`);
+    this.host.setAttribute('aria-label',`${item.name}. Drag to turn, or use Back and Forth. Home shows the front.`);
     this.draw();
+    this.emitView();
+  }
+  emitView(){
+    if(!this.onView||!this.art)return;
+    const name=viewName(this.angle,this.art.faces.length);
+    if(name===this._viewName)return;
+    this._viewName=name;
+    this.onView(name);
   }
   turn(amount){this.angle+=amount;this.draw();}
+  step(dir){this.turn((dir||0)*Math.PI/2);}
   view(side){this.angle=({front:0,left:-Math.PI/2,back:Math.PI,right:Math.PI/2})[side]??0;this.tilt=0;this.draw();}
   magnify(amount){this.zoom=Math.min(1.7,Math.max(.6,this.zoom+amount));this.draw();}
   toggleOpen(){this.opened=!this.opened;this.object?.setOpen(this.opened);this.draw();return this.opened;}
@@ -164,6 +198,7 @@ export class ObjectViewer {
         ctx.save();if(this.item.id==='mirror-shard'&&back){ctx.translate(512,0);ctx.scale(-1,1);}
         ctx.drawImage(this.art.faces[index]||this.art.faces[0],(512-size)/2,(512-size)/2,size,size);ctx.restore();
       }
+      this.emitView();
     });
   }
   destroy(){
