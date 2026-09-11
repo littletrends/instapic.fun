@@ -1,8 +1,8 @@
-import {games} from '../paper-games/catalogue.js?v=stall-front-1';
+import {games} from '../paper-games/catalogue.js?v=games-open-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=mabel-dairy-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=games-open-1'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -77,12 +77,9 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
   const PF=window.PennyFever;
   const pennyPlay=game.id==='coin-pusher'||game.id==='pinball';
-  if(!pennyPlay){
-    if(!PF?.spendTicket?.(game.id)){
-      status.hidden=false;
-      status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
-      return;
-    }
+  if(!pennyPlay && PF?.spendTicket && !PF.spendTicket(game.id)){
+    status.hidden=false;
+    status.textContent='No booth ticket in the pocket — still opening so you can look around. Buy a strip from Aura’s roll for a proper play.';
   }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};
@@ -112,15 +109,26 @@ function listenForPrizes(){
 export function registerPaperGameBooths(PF,doc=globalThis.document,nav=globalThis.location){
  listenForPrizes();
  const vendors=paperGameRooms.map(game=>createPaperGameVendor(game,doc,nav));
- vendors.forEach(vendor=>PF.registerVendor(vendor));return vendors;
+ vendors.forEach(vendor=>{
+  PF.registerVendor(vendor);
+  const hash=(nav.hash||'').replace(/^#/,'');
+  if(hash==='cabinet/'+vendor.id||hash.startsWith('cabinet/'+vendor.id+'/')) vendor.onShow();
+ });
+ return vendors;
 }
 if(typeof window!=='undefined'){
  let installed=false;
  const install=()=>{
-  if(installed||!window.PennyFever?.registerVendor)return;
+  if(installed||!window.PennyFever?.registerVendor)return false;
   installed=true;const vendors=registerPaperGameBooths(window.PennyFever);
+  const showHash=()=>{const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];vendors.find(v=>v.id===id)?.onShow();};
+  window.addEventListener('hashchange',showHash);
   window.addEventListener('pagehide',()=>vendors.forEach(v=>v.onLeave()));
-  window.addEventListener('pageshow',event=>{if(event.persisted){const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];vendors.find(v=>v.id===id)?.onShow();}});
+  window.addEventListener('pageshow',event=>{if(event.persisted)showHash();});
+  return true;
  };
- install();if(!installed)document.addEventListener('DOMContentLoaded',install,{once:true});
+ if(!install()){
+  document.addEventListener('DOMContentLoaded',install,{once:true});
+  window.addEventListener('pf-world-ready',install,{once:true});
+ }
 }

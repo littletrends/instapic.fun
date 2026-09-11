@@ -260,7 +260,8 @@
 
   function registerVendor(mod) {
     if (!mod || !mod.id) return;
-    if (vendorMods.some((v) => v.id === mod.id)) return;
+    const existing = vendorMods.findIndex((v) => v.id === mod.id);
+    if (existing >= 0) vendorMods.splice(existing, 1);
     vendorMods.push(mod);
     applyVendorDefaults(mod);
     if (mod.chalk && CHALK.indexOf(mod.chalk) === -1) CHALK.push(mod.chalk);

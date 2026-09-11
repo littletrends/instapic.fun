@@ -1006,12 +1006,11 @@ function openAlleyMap() {
 
 function enterStallById(id) {
   if (!id) return false;
-  if (id !== "coin-pusher" && pocketTickets() < 1 && !pfState().showmanPass) {
+  if (!document.getElementById("cabinet-" + id)) return false;
+  if (id !== "coin-pusher" && id !== "pinball" && pocketTickets() < 1 && !pfState().showmanPass) {
     tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
     tillMessageUntil = performance.now() + 7000;
-    return false;
   }
-  if (!document.getElementById("cabinet-" + id)) return false;
   closeStallCard();
   closeAlleyMap();
   location.hash = "cabinet/" + id;
