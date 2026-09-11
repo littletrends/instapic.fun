@@ -13,7 +13,6 @@
 .aura-counter-service button{flex:1;min-width:7rem;font:12px Georgia;background:#486143;color:#fff0d0;border:1px solid #7b613b;padding:10px;cursor:pointer}
 .aura-counter-service button:disabled{background:#8e8569;cursor:default}
 .aura-counter-service #auraCounterCoins{background:#6b4e24}
-.aura-counter-service #auraCounterTrade{background:#5a3a62;flex:1 1 100%}
 .aura-counter-service .aura-counter-close{position:absolute;top:8px;right:8px;flex:none;min-width:0;width:32px;height:32px;padding:0;font:700 22px/1 Georgia,serif;background:#6b3a3a;color:#fff0d0}
 .aura-counter-service small{display:block;margin-top:8px;font-size:11px;line-height:1.4}
 body:not(.is-in-world) .aura-counter-service{display:none}

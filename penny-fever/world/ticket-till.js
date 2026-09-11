@@ -246,6 +246,14 @@ async function ensureSquare() {
   await refreshWallets();
 }
 
+function paintTrade() {
+  const btn = $('pfTillTrade');
+  if (!btn) return;
+  const coins = Math.max(0, Math.floor(Number(apiRef?.pennies?.() ?? apiRef?.getState?.()?.demoCoins) || 0));
+  btn.disabled = coins < 5;
+  btn.textContent = coins < 5 ? 'Need 5 pennies · 1 ticket' : 'Trade 5 pennies · 1 ticket';
+}
+
 function paintPacks() {
   const list = $('pfTillPacks');
   if (!list) return;
@@ -408,6 +416,7 @@ export function mountTill(api) {
     <h2 id="pfTillTitle">Tickets and pennies</h2>
     <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. First walk on the boards is still free.</p>
     <div class="pf-till-packs" id="pfTillPacks"></div>
+    <button type="button" class="pf-till-trade" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
     <div class="pf-till-pay">
       <div class="pf-till-wallets" id="pfTillWallets">
         <div class="pf-apple-wrap">
@@ -428,6 +437,15 @@ export function mountTill(api) {
   till.addEventListener('click', e => {
     const pack = e.target.closest('[data-pack]');
     if (pack) choosePack(pack.dataset.pack, true);
+  });
+  $('pfTillTrade').addEventListener('click', () => {
+    if (apiRef?.tradePenniesForTicket?.()) {
+      setStatus('One ticket from five pennies. Copper Falls pays five pennies back.');
+      paintTrade();
+      return;
+    }
+    setStatus('Need five pennies for a ticket.');
+    paintTrade();
   });
   $('pfTillPay').addEventListener('click', payWithCard);
   $('pfApplePay').addEventListener('click', e => {
@@ -450,6 +468,7 @@ export async function openTill() {
   await refreshConfig();
   if (!selected && config.packs[0]) choosePack(config.packs[0].id, false);
   else paintPacks();
+  paintTrade();
   showTill();
   try {
     await ensureSquare();
