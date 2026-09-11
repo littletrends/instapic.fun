@@ -1015,7 +1015,16 @@ function openAlleyMap() {
   paintPocketHud();
 }
 
-const RIDE_GAMES = { "horse-carousel": "carousel", "balloon-tree": "balloons" };
+const RIDE_GAMES = {
+  "horse-carousel": "carousel",
+  "balloon-tree": "balloons",
+  "ferris-wheel": "ferris",
+  "helter-skelter": "helter",
+  "chair-swings": "swings",
+  "funhouse": "funhouse",
+  "fairground-organ": "organ",
+  "alley-wall-bay": "mural",
+};
 function playIdFor(id) {
   return RIDE_GAMES[id] || id;
 }

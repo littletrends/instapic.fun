@@ -29,9 +29,15 @@ const rows = [
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
   ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
   ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.'],
+  ['ferris','Jasper','Pocket Wheel','Stop the ferris wheel when the matching cabin kisses the crescent.'],
+  ['helter','Tilly','Spiral Slide','Catch every gold ring on the way down the paper helter-skelter.'],
+  ['swings','Hugo','Chair Waltz','Catch the matching chair as it sweeps over the front mat.'],
+  ['funhouse','Juno','Laughing Doorway','Remember the real laugh after the mirrors shuffle.'],
+  ['organ','Otto','Calliope Keys','Tap the organ notes as they cross the gold bar.'],
+  ['mural','Arlo','Painted Bay','Stamp the fading patches until the alley wall remembers.'],
 ];
-const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons']);
-const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons']);
+const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
+const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
 export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   id,host,title,blurb,direct,
   workshop: flag === 'workshop',
