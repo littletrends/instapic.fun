@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="world/entry-flow.css?v=paper-alley-live-1">
   <script src="world/entry-flow.js?v=keep-light-1"></script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23f2c75c' d='M7 47h50l-5-29-13 12-7-20-7 20L12 18z'/%3E%3Cpath fill='%237b2743' d='M10 49h44v7H10z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=bank-loan-1">
+  <link rel="stylesheet" href="styles.css?v=dev-tools-1">
   <link rel="stylesheet" href="vendors/vendors.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/curios.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/marquee.css?v=interior-cam-1">
@@ -39,13 +39,13 @@
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
   <link rel="stylesheet" href="world/world.css?v=map-play-1">
   <script defer src="world/items/model.js?v=pinball-cabinets-1"></script>
-  <script defer src="app.js?v=penny-trade-1"></script>
+  <script defer src="app.js?v=rest-hud-1"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
-  <script type="module" src="world/paper-game-booths.js?v=booth-play-2"></script>
-  <link rel="stylesheet" href="world/items/inventory.css?v=treasure-tabs-1">
-  <script type="module" src="world/items/inventory.js?v=treasure-tabs-1"></script>
+  <script type="module" src="world/paper-game-booths.js?v=skip-moonbow-2"></script>
+  <link rel="stylesheet" href="world/items/inventory.css?v=found-turn-1">
+  <script type="module" src="world/items/inventory.js?v=found-turn-1"></script>
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
   <link rel="stylesheet" href="world/ticket-till.css?v=till-wallets-2">
@@ -57,7 +57,10 @@
 </head>
 <body>
   <div class="development-ribbon" role="status">Private development preview · Aura’s till uses Square</div>
-  <button type="button" id="pfBankLoan" class="pf-bank-loan" title="Construction only — tap for 100 pennies, as often as you like">Bank loan · +100</button>
+  <div class="pf-dev-tools" role="group" aria-label="Construction tools">
+    <button type="button" id="pfBankLoan" class="pf-bank-loan" title="Construction only — tap for 100 pennies, as often as you like">Bank loan · +100</button>
+    <button type="button" id="pfRestGame" class="pf-rest-game" title="Pause or wake the alley or the booth">Rest game</button>
+  </div>
 
   <div class="tent-transition" id="tentTransition" hidden aria-live="polite" aria-atomic="true">
     <div class="tent-transition-glow" aria-hidden="true"></div>

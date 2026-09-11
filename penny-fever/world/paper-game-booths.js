@@ -1,8 +1,8 @@
-import {games} from '../paper-games/catalogue.js?v=paper-worlds-v2-2';
+import {games} from '../paper-games/catalogue.js?v=games-open-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=skip-moonbow-2'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself
@@ -29,8 +29,38 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const retry=doc.createElement('button');retry.type='button';retry.textContent='Restart';retry.addEventListener('click',()=>load(true));
-  bar.append(back,title,list,retry);
+  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
+  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':'Play again · 1 ticket';
+  if(pennyPlay){retry.disabled=true;retry.title=game.id==='coin-pusher'?'Leave and come back — the trays are as you left them.':game.id==='pinball'?'Leave and come back — the table remembers what it has already paid.':game.id==='milk-bottles'?'Leave and come back — the dairy is waiting.':'Leave and come back — the moons are waiting.';}
+  else retry.addEventListener('click',()=>load(true));
+  const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
+  const paintWallet=()=>{
+    const PF=window.PennyFever;
+    const n=Number(PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
+    const t=Number(PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
+    wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies');
+  };
+  paintWallet();
+  window.addEventListener('pennyfever:statechange',paintWallet);
+  let cash;
+  if(pennyPlay){
+    cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
+    cash.addEventListener('click',()=>{
+      const PF=window.PennyFever;
+      const got=PF?.cashTicketForPennies?.();
+      if(!got){
+        status.hidden=false;
+        status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
+        return;
+      }
+      status.hidden=false;
+      status.textContent=game.id==='pinball'?'A five-penny stack for the table.':game.id==='milk-bottles'?'A five-penny stack for the dairy.':game.id==='skee-ball'?'A five-penny stack for the moonbow.':'A five-penny stack for the falls.';
+      paintWallet();
+      if(frame&&frame.getAttribute('src')==='about:blank') load();
+    });
+  }
+  if(cash) bar.append(back,title,list,wallet,cash,retry);
+  else bar.append(back,title,list,wallet,retry);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -45,6 +75,12 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
  function load(restart=false){
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
+  const PF=window.PennyFever;
+  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
+  if(!pennyPlay && PF?.spendTicket && !PF.spendTicket(game.id)){
+    status.hidden=false;
+    status.textContent='No booth ticket in the pocket — still opening so you can look around. Buy a strip from Aura’s roll for a proper play.';
+  }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};
   frame.onerror=()=>{clearTimeout(timer);status.hidden=false;status.textContent='This game could not open. Try Restart or return to the alley.';};
@@ -67,21 +103,32 @@ function listenForPrizes(){
   const earned=model.recordPaperPrize(PF.getState(),{item:data.item,stall:data.stall,chapter:data.chapter});
   if(!earned.length)return;
   PF.saveState?.();
-  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned}}));
+  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned,celebrate:data.celebrate===true}}));
  });
 }
 export function registerPaperGameBooths(PF,doc=globalThis.document,nav=globalThis.location){
  listenForPrizes();
  const vendors=paperGameRooms.map(game=>createPaperGameVendor(game,doc,nav));
- vendors.forEach(vendor=>PF.registerVendor(vendor));return vendors;
+ vendors.forEach(vendor=>{
+  PF.registerVendor(vendor);
+  const hash=(nav.hash||'').replace(/^#/,'');
+  if(hash==='cabinet/'+vendor.id||hash.startsWith('cabinet/'+vendor.id+'/')) vendor.onShow();
+ });
+ return vendors;
 }
 if(typeof window!=='undefined'){
  let installed=false;
  const install=()=>{
-  if(installed||!window.PennyFever?.registerVendor)return;
+  if(installed||!window.PennyFever?.registerVendor)return false;
   installed=true;const vendors=registerPaperGameBooths(window.PennyFever);
+  const showHash=()=>{const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];vendors.find(v=>v.id===id)?.onShow();};
+  window.addEventListener('hashchange',showHash);
   window.addEventListener('pagehide',()=>vendors.forEach(v=>v.onLeave()));
-  window.addEventListener('pageshow',event=>{if(event.persisted){const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];vendors.find(v=>v.id===id)?.onShow();}});
+  window.addEventListener('pageshow',event=>{if(event.persisted)showHash();});
+  return true;
  };
- install();if(!installed)document.addEventListener('DOMContentLoaded',install,{once:true});
+ if(!install()){
+  document.addEventListener('DOMContentLoaded',install,{once:true});
+  window.addEventListener('pf-world-ready',install,{once:true});
+ }
 }

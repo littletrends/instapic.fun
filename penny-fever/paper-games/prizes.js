@@ -68,6 +68,7 @@ export const items = {
   'splash-ring': {collection:'garden-prizes', name:'Splash ring'},
   'wishing-acorn': {collection:'future-curios', name:'Wishing acorn'},
   'five-penny-stack': {collection:'pennies', name:'Five-penny stack'},
+  'ticket-roll': {collection:'tickets', name:'Ticket roll'},
   'fairy-floss': {collection:'sweet-treats', name:'Fairy floss'},
   'pocket-cloud': {collection:'future-curios', name:'Pocket cloud'},
   'cloud-jar': {collection:'wonder-prizes', name:'Cloud jar'},
@@ -129,7 +130,7 @@ export const items = {
   'stamp-passport': {collection:'tickets', name:'Stamp passport'},
   'prize-claim': {collection:'tickets', name:'Prize claim'},
   'ride-ticket': {collection:'tickets', name:'Ride ticket'},
-  'midway-map': {collection:'tickets', name:'Midway map'},
+  'midway-map': {collection:'tickets', name:'Sideshow alley map'},
   'lost-and-found-tag': {collection:'working-midway', name:'Lost-and-found tag'},
   'stamp-and-inkpad': {collection:'working-midway', name:'Stamp and inkpad'},
   'ticket-punch': {collection:'working-midway', name:'Ticket punch'},
@@ -149,7 +150,7 @@ export const spriteKey = id => {
 export const itemName = id => items[id]?.name || id;
 export const kits = {
   'coin-pusher': {
-    sprites: ['everyday-penny','moon-penny','rose-penny','star-token','crown-token'],
+    sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear'],
     prizes: ['coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack'],
   },
   whisper: {
@@ -185,11 +186,11 @@ export const kits = {
     prizes: ['shutter-click','photo-accordion','memory-camera','ride-stamp-book','first-visit-badge','pocket-theatre'],
   },
   pinball: {
-    sprites: ['lightning-pin','star-token'],
-    prizes: ['lightning-pin','star-token','pegboard-star','summer-sun-pin','bullseye-clock','new-year-star-cracker'],
+    sprites: ['lightning-pin','everyday-penny','star-token','moon-penny','rose-penny','crown-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket','penny-purse'],
+    prizes: ['lightning-pin','star-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket'],
   },
   'milk-bottles': {
-    sprites: ['message-bottle','mercury-bead'],
+    sprites: ['message-bottle','mercury-bead','dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant','penny-purse','everyday-penny'],
     prizes: ['dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant'],
   },
   'cover-the-spot': {
@@ -225,7 +226,7 @@ export const kits = {
     prizes: ['popcorn-carton','tiny-kettle','sweet-heat','picnic-parcel','lemon-fizz','toffee-apple'],
   },
   'skee-ball': {
-    sprites: ['moon-penny','star-token'],
+    sprites: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin','penny-purse','everyday-penny'],
     prizes: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin'],
   },
   'penny-pitch': {
