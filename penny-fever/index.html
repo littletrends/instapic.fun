@@ -6,13 +6,12 @@
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="theme-color" content="#160b10">
   <meta name="description" content="Private development preview of Aura's Penny Fever.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://web.squarecdn.com https://www.gstatic.com https://www.google.com; media-src 'self'; style-src 'self' 'unsafe-inline' https://web.squarecdn.com; script-src 'self' https://web.squarecdn.com https://pay.google.com; connect-src 'self' https://motherpc.taild1a44c.ts.net https://pci-connect.squareup.com https://connect.squareup.com https://pci-connect.squareupsandbox.com https://connect.squareupsandbox.com https://web.squarecdn.com https://pay.google.com https://google.com https://www.google.com https://payments.googleapis.com https://applepay.cdn-apple.com https://pay.apple.com; frame-src https://web.squarecdn.com https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com https://pay.google.com https://js.squarecdn.com; form-action 'self' https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com; base-uri 'none'">
   <title>Penny Fever — Restyled Original</title>
   <link rel="stylesheet" href="world/entry-flow.css?v=paper-alley-live-1">
-  <link rel="preload" as="image" href="assets/restyle/paper-aura-seated.png" media="(min-width: 800px)">
-  <script src="world/entry-flow.js?v=paper-alley-live-1"></script>
+  <script src="world/entry-flow.js?v=keep-light-1"></script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23f2c75c' d='M7 47h50l-5-29-13 12-7-20-7 20L12 18z'/%3E%3Cpath fill='%237b2743' d='M10 49h44v7H10z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=paper-alley-live-3">
+  <link rel="stylesheet" href="styles.css?v=bank-loan-1">
   <link rel="stylesheet" href="vendors/vendors.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/curios.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/marquee.css?v=interior-cam-1">
@@ -38,25 +37,27 @@
   <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
-  <link rel="stylesheet" href="world/world.css?v=paper-alley-live-22">
-  <script defer src="world/items/model.js?v=pocket-book-1"></script>
-  <script defer src="app.js?v=paper-alley-live-2"></script>
-  <link rel="stylesheet" href="world/items/inventory.css?v=pocket-book-1">
-  <script type="module" src="world/items/inventory.js?v=pocket-book-1"></script>
+  <link rel="stylesheet" href="world/world.css?v=map-play-1">
+  <script defer src="world/items/model.js?v=pinball-cabinets-1"></script>
+  <script defer src="app.js?v=games-open-1"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
+  <script type="module" src="world/paper-game-booths.js?v=mabel-dairy-2"></script>
+  <link rel="stylesheet" href="world/items/inventory.css?v=treasure-menu-2">
+  <script type="module" src="world/items/inventory.js?v=treasure-menu-2"></script>
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
-  <script type="module" src="world/alley.js?v=paper-alley-live-24"></script>
-  <script type="module" src="world/crew-selector.js?v=paper-alley-live-3"></script>
-  <link rel="stylesheet" href="world/crew-selector.css?v=paper-alley-live-3">
-  <link rel="stylesheet" href="restyle.css?v=paper-alley-live-10">
-  <link rel="stylesheet" href="world/paper-game-booths.css?v=paper-alley-live-6">
-  <script type="module" src="world/paper-game-booths.js?v=paper-worlds-v2-1"></script>
+  <link rel="stylesheet" href="world/ticket-till.css?v=till-wallets-2">
+  <script type="module" src="world/alley.js?v=stall-enter-1"></script>
+  <script type="module" src="world/crew-selector.js?v=crew-door-3"></script>
+  <link rel="stylesheet" href="world/crew-selector.css?v=crew-door-3">
+  <link rel="stylesheet" href="restyle.css?v=treasure-book-1">
+  <link rel="stylesheet" href="world/paper-game-booths.css?v=one-game-2">
 </head>
 <body>
-  <div class="development-ribbon" role="status">Private development preview · no payments · Darwin local day</div>
+  <div class="development-ribbon" role="status">Private development preview · Aura’s till uses Square</div>
+  <button type="button" id="pfBankLoan" class="pf-bank-loan" title="Construction only — tap for 100 pennies, as often as you like">Bank loan · +100</button>
 
   <div class="tent-transition" id="tentTransition" hidden aria-live="polite" aria-atomic="true">
     <div class="tent-transition-glow" aria-hidden="true"></div>
@@ -64,14 +65,13 @@
     <div class="tent-curtain tent-curtain--right" aria-hidden="true"></div>
     <div class="tent-transition-copy">
       <span>STEP RIGHT UP</span>
-      <strong id="tentTransitionTitle">THE NEXT TENT</strong>
-      <em id="tentTransitionLine">Mind the canvas.</em>
+      <strong id="tentTransitionTitle">THE NEXT BAY</strong>
+      <em id="tentTransitionLine">Mind the boards.</em>
     </div>
   </div>
 
   <main class="arcade-shell">
     <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
-      <a class="site-back" href="../index.html">← instapic.fun</a>
       <div class="door-cinematic" aria-hidden="true">
         <img id="doorStageArt" class="door-stage-art" src="assets/restyle/paper-aura-seated.png" alt="Papercut Aura welcomes you with a ticket" width="1024" height="1536" fetchpriority="high">
       </div>
@@ -92,10 +92,20 @@
         </div>
         <p id="admitDone" class="aura-whisper" hidden>“That’s the one. In you go.”</p>
       </div>
-      <details class="door-crew">
-        <summary>Meet the felt crew</summary>
-        <img src="assets/restyle/paper-crew-six.png" alt="Six colourful papercut companions ready for the sideshow alley" width="1024" height="1536" loading="lazy">
-      </details>
+      <div class="door-crew">
+        <div class="crew-entry">
+          <span id="chosenCrewPortrait" class="crew-portrait" role="img" aria-label="Oliver" style="background-image:url('assets/restyle/crew/oliver-turnaround.png')"></span>
+          <div>
+            <p id="chosenCrew">Playing as Oliver</p>
+            <button type="button" id="editCrew" class="ticket-button">Edit character</button>
+          </div>
+        </div>
+        <details>
+          <summary>Meet the felt crew</summary>
+          <img src="assets/restyle/paper-crew-six.png" alt="Six colourful papercut companions ready for the sideshow alley" width="1024" height="1536" loading="lazy">
+        </details>
+      </div>
+      <a class="site-back" href="../index.html">← instapic.fun</a>
     </section>
 
     <section class="foyer" id="foyer" hidden aria-labelledby="foyerTitle">
@@ -107,12 +117,12 @@
         <button class="carnival-sound" id="carnivalSound" type="button" aria-pressed="false">Sound asleep ♪</button>
         <p class="eyebrow">Established at an uncertain hour</p>
         <h1 id="foyerTitle" tabindex="-1"><span>Aura’s</span> Penny Fever</h1>
-        <p class="foyer-subtitle">Walk the boardwalk. Choose a canvas flap. See how far the night lets you go.</p>
+        <p class="foyer-subtitle">Walk the sideshow alley. Pick a bay. See how far the night lets you go.</p>
         <div class="night-board" id="nightBoard" aria-label="Tonight’s carnival score">
           <div class="night-stat"><span class="night-label">Fever</span><strong id="feverScore">0</strong></div>
           <div class="night-stat"><span class="night-label">Streak</span><strong id="feverStreak">0</strong></div>
           <div class="night-stat"><span class="night-label">Stars</span><strong id="feverStars">☆☆☆</strong></div>
-          <div class="night-stat"><span class="night-label">Coins</span><strong id="feverCoins">99</strong></div>
+          <div class="night-stat"><span class="night-label">Pennies</span><strong id="feverCoins">3</strong></div>
         </div>
         <p class="night-toast" id="nightToast" hidden></p>
       </header>
@@ -469,7 +479,7 @@
                 </div>
               </div>
             </div>
-            <img id="lookupCabinetArt" hidden data-live-art="1" data-asset="lookup_sky" src="assets/prepared/lookup-wonder.webp" alt="">
+            <img id="lookupCabinetArt" hidden data-live-art="1" data-asset="lookup_sky" src="assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png" alt="">
             <div class="lookup-legacy" hidden aria-hidden="true">
               <div class="lookup-meter"><div class="lookup-fill" id="lookupFill"></div><div class="lookup-sweet"></div></div>
               <p id="lookupReadout"></p>
@@ -1651,7 +1661,7 @@
                 <p class="vendor-result-copied" id="plinkoCopied" hidden>Copied</p>
               </div>
             </div>
-            <img id="plinkoArt" data-live-art="1" src="assets/prepared/night-carnival-exterior.webp" alt="" hidden>
+            <img id="plinkoArt" data-live-art="1" src="assets/restyle/scene-turnarounds-2026-09-09/stalls/plinko/front.png" alt="" hidden>
           </article>
         </div>
       </div>
@@ -1928,7 +1938,7 @@
           <article class="attraction-card pennypitch-card is-vestibule" id="pennyPitchCard">
           <p class="machine-number">Pitch tent · 1 demo coin · dish garden</p>
           <div class="card-hero card-hero--wide vendor-vestibule-only">
-            <img id="pennyPitchArt" data-live-art="1" src="assets/prepared/night-carnival-exterior.webp" alt="Night carnival stall for penny pitch">
+            <img id="pennyPitchArt" data-live-art="1" src="assets/restyle/scene-turnarounds-2026-09-09/stalls/penny-pitch/front.png" alt="Penny Pitch stall" hidden>
           </div>
           <h2 class="vendor-vestibule-only">The Dish Garden</h2>
           <p class="tent-mouth-joke vendor-vestibule-only">Not a grid. A table of glass. Flick, bounce, nest — then the quilt changes its mind.</p>
@@ -2050,5 +2060,22 @@
       </article>
     </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('#editCrew');
+      if (!btn) return;
+      if (window.PennyFeverDoll && window.PennyFeverDoll.open) {
+        window.PennyFeverDoll.open(e);
+        return;
+      }
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'world/crew-selector.js?v=crew-door-3';
+      s.onload = function () {
+        if (window.PennyFeverDoll && window.PennyFeverDoll.open) window.PennyFeverDoll.open(e);
+      };
+      document.head.appendChild(s);
+    });
+  </script>
 </body>
 </html>
