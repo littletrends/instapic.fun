@@ -7,7 +7,8 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=penny-trade-2";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=till-desk-1";
+import {openTill} from "./ticket-till.js?v=till-desk-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
 import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";
@@ -934,7 +935,7 @@ function attachHud() {
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
         <p class="pf-stall-card-line" id="pfStallCardLine"></p>
         <div class="pf-stall-card-till" id="pfStallCardTill" hidden>
-          <button type="button" id="pfTillTickets">Buy tickets</button>
+          <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
           <button type="button" id="pfTillTrade">5 pennies → 1 ticket</button>
         </div>
         <div class="pf-stall-card-actions">
@@ -1118,9 +1119,8 @@ function bindHud() {
   const tillTickets = el("pfTillTickets");
   const tillTrade = el("pfTillTrade");
   if (tillTickets) tillTickets.addEventListener("click", () => {
-    const n = window.PennyFever?.buyTicketStrip?.() || 0;
-    tillMessage = n ? `A strip of ${n} booth tickets.` : "No tickets printed.";
-    tillMessageUntil = performance.now() + 4000;
+    closeStallCard();
+    openTill({pin: true});
   });
   if (tillTrade) tillTrade.addEventListener("click", () => {
     const ok = window.PennyFever?.tradePenniesForTicket?.();
@@ -1461,7 +1461,7 @@ function auraDeskFocus() {
     name: "Ticket booth",
     host: "Aura",
     hostSlug: "",
-    line: "Pennies, booth tickets, and a punch for the walk.",
+    line: "Square till: tickets, pennies, and a punch for the walk.",
     x: COUNTER.x,
     z: COUNTER.z,
     stallX: COUNTER.x,
@@ -2143,7 +2143,7 @@ function pickFocus(px, pz) {
       name: "Ticket booth",
       host: "Aura",
       hostSlug: "",
-      line: "Pennies, booth tickets, and a punch for the walk.",
+      line: "Square till: tickets, pennies, and a punch for the walk.",
       x: COUNTER.x,
       z: COUNTER.z,
       stallX: COUNTER.x,
@@ -2165,7 +2165,7 @@ function pickFocus(px, pz) {
       id: "aura",
       kind: "aura",
       name: "Ticket booth",
-      line: "Pennies, booth tickets, and a punch for the walk.",
+      line: "Square till: tickets, pennies, and a punch for the walk.",
       x: aura.position.x,
       z: aura.position.z,
       stallX: COUNTER.x,
@@ -2529,12 +2529,8 @@ function loop() {
   if (paperRail && wallBackdrops) wallBackdrops.update(player.position.z, dt);
   updateTicketService();
   if (stallCardOpen) {
-    const till = document.querySelector(".aura-counter-service");
-    if (till) till.hidden = true;
-    document.querySelector(".aura-till-backdrop")?.setAttribute("hidden", "");
-    const tillSheet = document.querySelector(".aura-till");
-    if (tillSheet) tillSheet.hidden = true;
-    document.body.classList.remove("has-aura-till");
+    const counter = document.querySelector(".aura-counter-service");
+    if (counter) counter.hidden = true;
   }
   updateHudAnchor();
   updateFx(t);

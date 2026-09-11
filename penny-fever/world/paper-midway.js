@@ -3,7 +3,7 @@ import {paperRail} from './paper-guest-entrance.js?v=keep-light-1';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
-import {mountTill, openTill, closeTill} from './ticket-till.js?v=penny-trade-2';
+import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=till-desk-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -102,8 +102,17 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
 export function updateTicketService(){
  if(!panel)return;
  const here=!!near()&&document.body.classList.contains('is-in-world');
- if(!here){dismissed=false;panel.hidden=true;closeTill();return;}
- if(dismissed){panel.hidden=true;closeTill();return;}
+ if(!here){
+  dismissed=false;
+  panel.hidden=true;
+  if(!tillPinned()) closeTill();
+  return;
+ }
+ if(dismissed){
+  panel.hidden=true;
+  if(!tillPinned()) closeTill();
+  return;
+ }
  panel.hidden=false;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;

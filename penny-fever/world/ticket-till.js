@@ -19,6 +19,7 @@ let googlePay = null;
 let selected = null;
 let paying = false;
 let walletBusy = false;
+let pinned = false;
 let config = {packs: FALLBACK_PACKS, ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;
@@ -42,7 +43,12 @@ function packLine(pack) {
   return bits.join(' · ') || 'Scrip';
 }
 
+export function tillPinned() {
+  return pinned;
+}
+
 export function closeTill() {
+  pinned = false;
   if (!till || till.hidden) return;
   till.hidden = true;
   if (backdrop) backdrop.hidden = true;
@@ -463,7 +469,8 @@ export function mountTill(api) {
   paintPacks();
 }
 
-export async function openTill() {
+export async function openTill(opts = {}) {
+  if (opts.pin) pinned = true;
   if (!till) mountTill(apiRef);
   await refreshConfig();
   if (!selected && config.packs[0]) choosePack(config.packs[0].id, false);
