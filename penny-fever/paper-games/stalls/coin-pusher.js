@@ -1,16 +1,18 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-2';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-3';
 
 const DUMP_CAP = 24;
-const LIP_SPEED = 26;
+const LIP_SPEED = 24;
+const STROKE = 0.48;
+const SHOVE = 72;
 const LAYERS = [
   {left: 258, right: 642, back: 188, lip: 448},
   {left: 228, right: 672, back: 478, lip: 768},
   {left: 202, right: 698, back: 798, lip: 1072},
 ];
 const TOKENS = {
-  'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 96, token: true},
+  'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 160, token: true},
   'moon-penny': {r: 16, w: 36, score: 3, color: '#c48a4a', weight: 7, cap: 6, token: true},
   'rose-penny': {r: 16, w: 34, score: 3, color: '#b56b62', weight: 6, cap: 5, token: true},
   'star-token': {r: 15, w: 32, score: 3, color: '#c9a45a', weight: 5, cap: 4, token: true},
@@ -65,7 +67,7 @@ function pick(s, rng, wantUnique) {
 }
 function snapshot(s) {
   return {
-    v: 2,
+    v: 3,
     t: s.t,
     aim: s.aim,
     dropped: s.dropped,
@@ -73,6 +75,7 @@ function snapshot(s) {
     specials: s.specials,
     restock: s.restock,
     queue: s.queue,
+    stroke: 0,
     seen: s.seen.slice(),
     paid: s.paid.slice(),
     pieces: s.coins.filter(c => !c.falling).map(c => ({
@@ -91,13 +94,18 @@ function hydrate(blob) {
     c.vy = 0;
     return c;
   });
+  if ((blob.v || 0) < 3 && coins.length < 90) topUp(coins, Math.random);
   return {
     level: 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
     falling: [], dropped: blob.dropped || 0, started: false, queue: blob.queue || 0,
     restock: blob.restock || 0, seen: blob.seen || [], paid: blob.paid || [],
-    dirty: false, saveAt: 0, note: 'The trays waited. Drop a penny to wake them.',
+    dirty: false, saveAt: 0, stroke: 0, note: 'The trays waited. Drop a penny to wake them.',
   };
+}
+function startStroke(s) {
+  s.stroke = 0.001;
+  s.started = true;
 }
 function persist(s) {
   if (!alleyPlay || !s) return;
@@ -162,6 +170,7 @@ function drop(s) {
   }
   s.cooldown = 0.28;
   dropOne(s, 'everyday-penny', s.aim);
+  startStroke(s);
   s.restock += 1;
   s.note = 'A penny from the purse.';
 }
@@ -186,6 +195,7 @@ function dump(s) {
   s.queue += take;
   s.dropped = (s.dropped || 0) + take;
   s.cooldown = 0.08;
+  startStroke(s);
   s.note = take === 1 ? 'One penny from the purse.' : take + ' pennies dumped from the purse.';
 }
 function seat(s, id, layer, rng) {
@@ -200,7 +210,7 @@ function seat(s, id, layer, rng) {
 function restock(s, rng) {
   const on = counts(s.coins);
   const pennies = on['everyday-penny'] || 0;
-  if (pennies < 28 && rng() < 0.45) seat(s, 'everyday-penny', 0, rng);
+  if (pennies < 70 && rng() < 0.4) seat(s, 'everyday-penny', 0, rng);
   if (s.restock > 0 && s.restock % 7 === 0) {
     const rare = rng() < 0.18;
     const id = pick(s, rng, rare);
@@ -210,26 +220,38 @@ function restock(s, rng) {
     }
   }
 }
-function scatter(layer, n, rng, ids) {
+function pack(layer, rng, ids) {
   const L = LAYERS[layer];
   const out = [];
-  const cols = Math.max(3, Math.ceil(Math.sqrt(n * 1.7)));
-  const rows = Math.max(1, Math.ceil(n / cols));
-  const dx = (L.right - L.left - 56) / Math.max(1, cols - 1);
-  const dy = (L.lip - L.back - 100) / Math.max(1, rows);
-  for (let i = 0; i < n; i++) {
-    const col = i % cols, row = Math.floor(i / cols);
-    const x = L.left + 28 + col * dx + (rng() - 0.5) * 6;
-    const y = L.back + 48 + row * dy + (rng() - 0.5) * 6;
-    out.push(mint(ids[i % ids.length], x, y, layer));
+  const dx = 32, dy = 28;
+  let row = 0;
+  for (let y = L.back + 50; y <= L.lip - 18; y += dy, row++) {
+    const inset = (row % 2) * (dx * 0.5);
+    for (let x = L.left + 22 + inset; x <= L.right - 22; x += dx) {
+      const id = ids[out.length % ids.length];
+      out.push(mint(id, x + (rng() - 0.5) * 3, y + (rng() - 0.5) * 2, layer));
+    }
   }
   return out;
 }
+function topUp(coins, rng) {
+  const packed = [
+    ...pack(0, rng, ['everyday-penny']),
+    ...pack(1, rng, ['everyday-penny']),
+    ...pack(2, rng, ['everyday-penny']),
+  ];
+  for (const p of packed) {
+    const L = LAYERS[p.layer];
+    if (p.y > L.lip - 48) continue;
+    if (coins.some(c => c.layer === p.layer && Math.hypot(c.x - p.x, c.y - p.y) < c.r + p.r + 2)) continue;
+    coins.push(p);
+  }
+}
 function fresh(level, rng) {
   const coins = [
-    ...scatter(0, alleyPlay ? 18 : 14 + level * 2, rng, ['everyday-penny', 'everyday-penny', 'everyday-penny', 'moon-penny']),
-    ...scatter(1, alleyPlay ? 22 : 16 + level * 2, rng, ['everyday-penny', 'everyday-penny', 'rose-penny', 'star-token']),
-    ...scatter(2, alleyPlay ? 20 : 14 + level, rng, ['everyday-penny', 'everyday-penny', 'crown-token', 'pressed-heart']),
+    ...pack(0, rng, ['everyday-penny', 'everyday-penny', 'everyday-penny', 'moon-penny']),
+    ...pack(1, rng, ['everyday-penny', 'everyday-penny', 'rose-penny', 'star-token']),
+    ...pack(2, rng, ['everyday-penny', 'everyday-penny', 'crown-token', 'pressed-heart']),
   ];
   const seen = [];
   if (alleyPlay) {
@@ -244,18 +266,18 @@ function fresh(level, rng) {
   return {
     level, t: 0, coins, aim: 450, ammo, total: ammo, score: 0, specials: 0,
     cooldown: 0, settle: 0, falling: [], dropped: 0, started: !alleyPlay,
-    queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0,
-    note: alleyPlay ? 'The trays wait. Pennies from your purse knock the pile.' : 'Drop a penny from the purse.',
+    queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0,
+    note: alleyPlay ? 'The trays wait. A penny from the purse lands, then the plate shoves once.' : 'Drop a penny from the purse.',
   };
 }
 
 export default {
   title: 'Copper Falls',
   live: alleyPlay,
-  intro: 'Your purse holds the pennies. Drop one — or dump the lot — onto the trays. Nothing moves until a penny lands on the pile and knocks it forward. What slips the last lip is yours, and the trays remember if you walk away.',
+  intro: 'A real cash drop is packed to the lip. Your purse feeds it. Each penny lands, then the plate shoves once and stops — sit still and nothing falls. What slips the last lip is yours, and the trays remember if you walk away.',
   instructions: alleyPlay
-    ? 'Aim, then drop a penny from your purse or dump the purse (up to twenty-four). Trays do not run on their own: coins only shuffle when a dropped penny lands on them. Knock a piece over the last lip and it is yours. Leave and come back — the pile stays. Cash a booth ticket at the bar for a five-penny stack.'
-    : 'Aim, drop a penny from the purse or dump the rest. Trays stay still until a penny lands on the pile. Workshop scores never enter your wallet.',
+    ? 'Aim, then drop a penny from the purse or dump it (up to twenty-four). The trays are packed. Each drop gives one shove of the plate; it does not keep running. Leave and come back — the pile stays. Cash a booth ticket at the bar for a five-penny stack.'
+    : 'Aim, drop a penny from the purse or dump the rest. Packed trays, one shove per drop. Workshop scores never enter your wallet.',
   levels: ['The copper tide', 'Moon mint', 'The crowded mint', 'A tide of crowns', 'The midnight mint', 'Pennies in a flood'],
   sprites: SPRITES,
   actions: [
@@ -288,7 +310,29 @@ export default {
       if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
       return;
     }
-    const busy = s.queue > 0 || s.coins.some(c => c.falling || c.vx * c.vx + c.vy * c.vy > 2.2);
+    if (s.stroke > 0) {
+      const was = s.stroke;
+      s.stroke += dt / STROKE;
+      const t = clamp(s.stroke, 0, 1);
+      const extend = t < 0.7 ? t / 0.7 : 1;
+      const prev = was < 0.7 ? was / 0.7 : 1;
+      if (extend > prev) {
+        for (let i = 0; i < LAYERS.length; i++) {
+          const L = LAYERS[i];
+          const plate = L.back + 22 + extend * SHOVE;
+          for (const c of s.coins) {
+            if (c.falling || c.layer !== i) continue;
+            if (c.y < plate + c.r) {
+              const shove = plate + c.r - c.y;
+              c.y += shove;
+              c.vy = Math.max(c.vy, shove * 55);
+            }
+          }
+        }
+      }
+      if (s.stroke >= 1) s.stroke = 0;
+    }
+    const busy = s.queue > 0 || s.stroke > 0 || s.coins.some(c => c.falling || c.vx * c.vx + c.vy * c.vy > 2.2);
     if (!busy) {
       for (const c of s.coins) { c.vx = 0; c.vy = 0; }
       if (alleyPlay && s.dirty && s.t - s.saveAt > 1.2) persist(s);
@@ -400,7 +444,10 @@ export default {
       const L = LAYERS[i];
       d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a228e' : '#6a462c88', '#e4c48a', 3);
       d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18f', 5);
-      d.line({x: L.left + 8, y: L.back + 8}, {x: L.right - 8, y: L.back + 8}, '#c9a56a88', 6);
+      const extend = s.stroke > 0 && s.stroke < 0.7 ? s.stroke / 0.7 : (s.stroke >= 0.7 ? 1 : 0);
+      const plate = L.back + 18 + extend * SHOVE;
+      d.line({x: L.left + 10, y: plate}, {x: L.right - 10, y: plate}, '#d2b07a', 12);
+      d.line({x: L.left + 10, y: plate - 5}, {x: L.right - 10, y: plate - 5}, '#f3ddb0', 3);
     }
     const order = [...s.coins, ...s.falling].sort((a, b) => a.layer - b.layer || a.y - b.y);
     for (const c of order) {
