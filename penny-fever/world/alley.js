@@ -1076,7 +1076,7 @@ function walkToMapPlace(place) {
     const side = Math.sign(s.position.x) || 1;
     warp(side * 0.28, s.position.z, 0);
   }
-  closeAlleyMap();
+  enterStallById(place);
 }
 
 function bindHud() {

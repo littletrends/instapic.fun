@@ -1002,6 +1002,7 @@
 
 
   function refreshFortuneUi() {
+    if (!$("fortuneIdle")) return;
     const used = state.fortuneDay === darwinDay();
     $("fortuneIdle").hidden = used && !state.lastFortune;
     $("fortuneForm").hidden = true;
@@ -3636,7 +3637,7 @@
       });
     }
     $("leaveArcade").addEventListener("click", () => { location.hash = "door"; });
-    $("startFortune").addEventListener("click", () => {
+    if ($("startFortune")) $("startFortune").addEventListener("click", () => {
       if (state.fortuneDay === darwinDay()) return;
       setArt("fortuneCabinetArt", VISUALS.fortune.think);
       setAura("think");
@@ -3644,18 +3645,18 @@
       $("fortuneForm").hidden = false;
       $("fortuneResult").hidden = true;
     });
-    $("cancelFortune").addEventListener("click", () => {
+    if ($("cancelFortune")) $("cancelFortune").addEventListener("click", () => {
       setArt("fortuneCabinetArt", VISUALS.fortune.idle);
       setAura("welcome");
       $("fortuneForm").hidden = true;
       $("fortuneIdle").hidden = false;
     });
-    $("fortuneForm").addEventListener("submit", (e) => {
+    if ($("fortuneForm")) $("fortuneForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const fd = new FormData($("fortuneForm"));
       dealFortune(fd.get("mood"), fd.get("colour"), fd.get("company"));
     });
-    $("fortuneAgainHint").addEventListener("click", () => {
+    if ($("fortuneAgainHint")) $("fortuneAgainHint").addEventListener("click", () => {
       $("fortuneResult").hidden = true;
       refreshFortuneUi();
     });
