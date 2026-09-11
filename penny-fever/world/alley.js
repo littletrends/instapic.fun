@@ -1015,8 +1015,14 @@ function openAlleyMap() {
   paintPocketHud();
 }
 
+const RIDE_GAMES = { "horse-carousel": "carousel", "balloon-tree": "balloons" };
+function playIdFor(id) {
+  return RIDE_GAMES[id] || id;
+}
+
 function enterStallById(id) {
   if (!id) return false;
+  id = playIdFor(id);
   if (!document.getElementById("cabinet-" + id)) return false;
   if (id !== "coin-pusher" && id !== "pinball" && pocketTickets() < 1 && !pfState().showmanPass) {
     tillMessage = "Need a booth ticket, darling. Buy a strip from my roll.";
@@ -1121,7 +1127,7 @@ function bindHud() {
   const stallBack = el("pfStallCardBack");
   if (stallEnter) stallEnter.addEventListener("click", (event) => {
     event.preventDefault();
-    if (nearest?.kind === "stall") enterStallById(nearest.id);
+    if (nearest?.kind === "stall" || nearest?.kind === "ride") enterStallById(nearest.id);
     else enterNearest();
   });
   if (stallChat) stallChat.addEventListener("click", (event) => {
@@ -1522,6 +1528,11 @@ function syncStallCard(best) {
         enter.hidden = false;
         enter.disabled = false;
         enter.textContent = stallEnterLabel(best.id);
+      } else if (best.kind === "ride") {
+        const open = !!document.getElementById("cabinet-" + playIdFor(best.id));
+        enter.hidden = !open;
+        enter.disabled = false;
+        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : "Not open yet";
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;
@@ -1569,7 +1580,7 @@ function talkToFocus() {
 }
 
 function enterNearest() {
-  if (stallCardOpen && nearest?.kind === "stall") {
+  if (stallCardOpen && (nearest?.kind === "stall" || nearest?.kind === "ride")) {
     enterStallById(nearest.id);
     return;
   }
@@ -1590,7 +1601,10 @@ function enterNearest() {
     syncStallCard(nearest);
     return;
   }
-  if (stallCardOpen && nearest.kind === "ride") return;
+  if (stallCardOpen && nearest.kind === "ride") {
+    enterStallById(nearest.id);
+    return;
+  }
   if (nearest.kind === "vendor") {
     talkToFocus();
     return;

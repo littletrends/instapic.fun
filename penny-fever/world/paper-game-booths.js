@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=games-open-2';
+import {games} from '../paper-games/catalogue.js?v=ride-play-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({

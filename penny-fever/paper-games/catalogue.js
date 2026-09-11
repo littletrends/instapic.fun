@@ -27,8 +27,8 @@ const rows = [
   ['marquee','Lumi','Light the Night','Conduct a travelling wave of boardwalk lights.'],
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
-  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.','','workshop'],
-  ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.','','workshop'],
+  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
+  ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons']);
 const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons']);
@@ -37,7 +37,11 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: `../assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`,
+  asset: id === 'carousel'
+    ? '../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.png'
+    : id === 'balloons'
+      ? '../assets/restyle/scene-turnarounds-2026-09-09/amusements/balloon-tree/front.png'
+      : `../assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
