@@ -14,33 +14,34 @@ import {installPapercutRides} from "./amusements/install.js?v=alley-perf-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=alley-perf-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=alley-perf-1";
 
+const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
-  { id: "fortune", name: "Mystic Tent", kind: "tent", art: "assets/game/Free_Fortune_States/Closed.webp", accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
-  { id: "love", name: "Love Tester", kind: "cabinet", art: "assets/prepared/love-thermometer-tease.webp", accent: 0xc43a5a, line: "Hold the pink. Miss it and you die hotter." },
-  { id: "curios", name: "Digger’s Vault", kind: "cabinet", art: "assets/game/Cabinet_of_Curios/Empty_Cabinet.webp", accent: 0x8a6230, line: "Cash out or go deeper. Greed is the claw." },
-  { id: "lookup", name: "Star-Gazing Tent", kind: "tent", art: "assets/prepared/lookup-wonder.webp", accent: 0x3d6a8a, line: "The sky is a button. Look up, darling." },
-  { id: "snap", name: "Flash Booth", kind: "cabinet", art: "assets/prepared/snap-freeze-flash.webp", accent: 0xe8d0a0, line: "Tap the true pop. False flashes eat you." },
-  { id: "whisper", name: "Gossip Booth", kind: "tent", art: "assets/game/Whisper_Charm/Idle.webp", accent: 0x8a4a6a, line: "Lean in. One word becomes a charm." },
-  { id: "ball-toss", name: "Barely-Fit Toss", kind: "booth", art: "assets/prepared/ball-toss-board.webp", accent: 0xc45a3a, line: "Holes that barely fit. Three misses and the oval wins." },
-  { id: "coin-pusher", name: "Coin Pusher Shelf", kind: "cabinet", art: "assets/prepared/coin-pusher-greed.webp", accent: 0xd4a45a, line: "Drop a penny. Walk away or get buried." },
-  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: "assets/prepared/pinball-neon-playfield.webp", accent: 0x3a8a6a, line: "One thumb. Survive the chapters." },
-  { id: "water-gun", name: "Water Gun Duel", kind: "booth", art: "assets/prepared/water-gun-duel.webp", accent: 0x3a7aaa, line: "Fill the clown. The other lane is a ghost." },
-  { id: "milk-bottles", name: "Weighted Bottles", kind: "booth", art: "assets/prepared/milk-bottle-pyramid.webp", accent: 0xc0c4cc, line: "Bottom row’s lead. You felt it." },
-  { id: "cover-the-spot", name: "Cover-the-Spot", kind: "booth", art: "assets/prepared/cover-the-spot.webp", accent: 0xc45a6a, line: "Cover it — or get greedy." },
-  { id: "mutoscope", name: "Mutoscope Hood", kind: "cabinet", art: "assets/prepared/mutoscope-peephole-glow.webp", accent: 0x8a3030, line: "Stillness opens the iris." },
-  { id: "high-striker", name: "High Striker", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xd45a3a, line: "Ring the bell. The pegs lie about the weight." },
-  { id: "catoptromancy", name: "Catoptromancy", kind: "tent", art: "assets/prepared/doorway-beckon.webp", accent: 0x5a3a8a, line: "Don’t look away from the glass." },
-  { id: "bent-rings", name: "Bent Ring Pegs", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x8a6a3a, line: "The pegs lean. The rings know." },
-  { id: "plinko", name: "Plinko Pegboard", kind: "cabinet", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a8a8a, line: "Drop with the breath." },
-  { id: "fairy-floss", name: "Fairy Floss Wheel", kind: "tent", art: "assets/prepared/fairy-floss-sugar-tent.webp", accent: 0xe8a0c0, line: "Wind it tall. Don’t snap the sugar." },
-  { id: "popcorn", name: "Popcorn Kettle", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xe8c45a, line: "Tap the pop. Steam fakes the beat." },
-  { id: "duck-pond", name: "Duck Pond Hook", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a8a5a, line: "Hook the call, not the decoy." },
-  { id: "skee-ball", name: "Skee-Ball Alley", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xc46a3a, line: "Wax lies mid-stage." },
-  { id: "penny-pitch", name: "Penny Pitch", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0xd4a45a, line: "Land a colour. The cloth jerks after you let go." },
-  { id: "dunk-tank", name: "Dunk the Barker", kind: "booth", art: "assets/prepared/night-carnival-exterior.webp", accent: 0x3a6aaa, line: "Soak the crown. Three balls a seat." },
-  { id: "marquee", name: "Boardwalk Lights", kind: "cabinet", art: "assets/prepared/ticket-booth-lean.webp", accent: 0xf0d09a, line: "Repeat the bulb storm." },
-  { id: "pack", name: "Night Kit", kind: "booth", art: "assets/game/Cabinet_of_Curios/Pressed_Penny.webp", accent: 0x8a6230, line: "Pack the suitcase before a run." },
-  { id: "pass", name: "Backstage Flap", kind: "tent", art: "assets/game/Showmans_Pass/Blank_Ticket.webp", accent: 0x5a2030, line: "Employees only — probably." },
+  { id: "fortune", name: "Mystic Tent", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
+  { id: "love", name: "Love Tester", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Hold the pink. Miss it and you die hotter." },
+  { id: "curios", name: "Digger’s Vault", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Cash out or go deeper. Greed is the claw." },
+  { id: "lookup", name: "Star-Gazing Tent", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "The sky is a button. Look up, darling." },
+  { id: "snap", name: "Flash Booth", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Tap the true pop. False flashes eat you." },
+  { id: "whisper", name: "Gossip Booth", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Lean in. One word becomes a charm." },
+  { id: "ball-toss", name: "Barely-Fit Toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Holes that barely fit. Three misses and the oval wins." },
+  { id: "coin-pusher", name: "Coin Pusher Shelf", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "Drop a penny. Walk away or get buried." },
+  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "One thumb. Survive the chapters." },
+  { id: "water-gun", name: "Water Gun Duel", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Fill the clown. The other lane is a ghost." },
+  { id: "milk-bottles", name: "Weighted Bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "Bottom row’s lead. You felt it." },
+  { id: "cover-the-spot", name: "Cover-the-Spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover it — or get greedy." },
+  { id: "mutoscope", name: "Mutoscope Hood", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Stillness opens the iris." },
+  { id: "high-striker", name: "High Striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "Ring the bell. The pegs lie about the weight." },
+  { id: "catoptromancy", name: "Catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Don’t look away from the glass." },
+  { id: "bent-rings", name: "Bent Ring Pegs", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "The pegs lean. The rings know." },
+  { id: "plinko", name: "Plinko Pegboard", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Drop with the breath." },
+  { id: "fairy-floss", name: "Fairy Floss Wheel", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Wind it tall. Don’t snap the sugar." },
+  { id: "popcorn", name: "Popcorn Kettle", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Tap the pop. Steam fakes the beat." },
+  { id: "duck-pond", name: "Duck Pond Hook", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Hook the call, not the decoy." },
+  { id: "skee-ball", name: "Skee-Ball Alley", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "Wax lies mid-stage." },
+  { id: "penny-pitch", name: "Penny Pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Land a colour. The cloth jerks after you let go." },
+  { id: "dunk-tank", name: "Dunk the Barker", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "Soak the crown. Three balls a seat." },
+  { id: "marquee", name: "Boardwalk Lights", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Repeat the bulb storm." },
+  { id: "pack", name: "Night Kit", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Pack the suitcase before a run." },
+  { id: "pass", name: "Backstage Flap", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Employees only — probably." },
 ];
 
 const SKIN = 0xf0c4a8;
@@ -556,7 +557,7 @@ function makePalace(group) {
   group.add(meshBox(makeMat(0x1a100c), 0.2, 3.05, 0.28, 1.05, 1.52, frontZ + 0.08));
   group.add(meshBox(makeMat(0x1a100c), 2.3, 0.18, 0.28, 0, 3.02, frontZ + 0.08));
 
-  const facadeMap = artMap("assets/prepared/night-carnival-exterior.webp");
+  const facadeMap = artMap("assets/restyle/paper-entrance-cutout.png");
   const facade = new THREE.Mesh(
     new THREE.PlaneGeometry(7.6, 11.4),
     new THREE.MeshBasicMaterial({ map: facadeMap, side: THREE.DoubleSide })
@@ -564,7 +565,7 @@ function makePalace(group) {
   facade.position.set(0.1, 5.65, frontZ);
   facade.rotation.y = Math.PI;
   group.add(facade);
-  loadImage("assets/prepared/night-carnival-exterior.webp").then((img) => {
+  loadImage("assets/restyle/paper-entrance-cutout.png").then((img) => {
     facade.material = new THREE.MeshBasicMaterial({
       map: punchPalaceFacade(img),
       transparent: true,
@@ -1364,11 +1365,12 @@ function closeStallCard() {
   lookZoom = 1;
   const card = el("pfStallCard");
   if (card) card.hidden = true;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = false;
+  if (player) player.position.x *= 0.2;
 }
 
 function syncStallCard(best) {
-  if (stallCardOpen) closeStallCard();
-  return;
   const card = el("pfStallCard");
   if (!card) return;
   if (!lookCardKind(best)) {
@@ -1432,6 +1434,8 @@ function syncStallCard(best) {
   }
   stallCardOpen = true;
   card.hidden = false;
+  const joy = el("pfJoy");
+  if (joy) joy.hidden = true;
 }
 
 function talkToFocus() {
@@ -1564,7 +1568,7 @@ function buildWorld() {
   booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
   booth.add(makeSign("AURA’S TILL", GOLD));
   booth.children[1].position.set(0, 1.35, 0.2);
-  const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/prepared/welcome-proprietor.webp") }));
+  const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/restyle/paper-aura-seated.png") }));
   poster.scale.set(0.55, 0.72, 0.03);
   poster.position.set(-0.35, 0.85, 0.42);
   booth.add(poster);
@@ -1787,7 +1791,7 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
-  if (alleyMapOpen) return false;
+  if (alleyMapOpen || stallCardOpen) return false;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -1962,11 +1966,7 @@ function pickFocus(px, pz) {
       };
     }
   });
-  if (stallCardOpen && focus) {
-    const d = Math.hypot(px - (focus.x || 0), pz - (focus.z || 0));
-    if (d > 6.4 || Math.abs(moveIntent.iy) > 0.55) closeStallCard();
-    else return { passing, passingZ };
-  }
+  if (stallCardOpen && focus) return { passing, passingZ };
   const atTill = (!ticketPassed() && pz < GATE_Z + 1.4)
     || (paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28);
   if (Math.abs(moveIntent.iy) > 0.2 && !atTill && focus?.kind !== "aura") {
@@ -2065,16 +2065,9 @@ function findNearest() {
   const passingZ = passing?.dz ?? 99;
   const best = focus;
   nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
-  if (stallCardOpen) closeStallCard();
-  if (!nearest || !nearest.atCounter) {
-    (stalls || []).forEach((s) => {
-      if ("pinView" in s.userData) delete s.userData.pinView;
-      if (s.userData.papercutStand) delete s.userData.papercutStand.userData.pinView;
-    });
-    (barkers || []).forEach((b) => { if ("pinView" in b.userData) delete b.userData.pinView; });
-  }
+  syncStallCard(lookCardKind(best) ? nearest : null);
   const rig = el("pfLookRig");
-  if (rig) rig.hidden = !(nearest && nearest.atCounter && nearest.kind !== "stall");
+  if (rig) rig.hidden = true;
   const prompt = el("pfWorldPrompt");
   const enter = el("pfWorldEnter");
   const line = el("pfWorldPromptLine");

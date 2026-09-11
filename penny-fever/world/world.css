@@ -300,17 +300,15 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 .pf-stall-card {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 11;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.35rem;
-  padding: 0.4rem 1rem 8.4rem;
-  background: linear-gradient(180deg, transparent, rgba(10, 6, 8, 0.55) 22%, #0a0608 78%);
+  gap: 0.4rem;
+  padding: 4.4rem 1rem 1.2rem;
+  background: radial-gradient(ellipse at 50% 22%, #665334 0%, #34432d 58%, #231a12 100%);
   pointer-events: auto;
 }
 .pf-stall-card[hidden] { display: none !important; }
@@ -321,9 +319,9 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   align-items: flex-end;
   justify-content: center;
   width: min(100vw, 720px);
-  min-height: 0;
-  height: 32vh;
-  flex: 0 0 auto;
+  min-height: 48vh;
+  height: auto;
+  flex: 1 1 auto;
   gap: 0;
   cursor: grab;
   touch-action: none;
@@ -338,9 +336,9 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 #pfStallCardBooth {
   display: block;
   width: auto;
-  height: 32vh;
-  max-width: 68vw;
-  max-height: 32vh;
+  height: 52vh;
+  max-width: 72vw;
+  max-height: 52vh;
   order: 2;
   z-index: 0;
   margin: 0;
@@ -351,9 +349,9 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   right: auto;
   bottom: auto;
   width: auto;
-  height: 26vh;
-  max-width: 40vw;
-  max-height: 26vh;
+  height: 42vh;
+  max-width: 42vw;
+  max-height: 42vh;
   transform: none;
   order: 1;
   z-index: 1;
@@ -636,7 +634,8 @@ body.pf-alley-map-open .pf-look-rig,
 body.pf-alley-map-open .pf-stall-card,
 body.pf-alley-map-open .pf-world-prompt,
 body.pf-alley-map-open .aura-counter-service,
-body.pf-alley-map-open .pf-world-top {
+body.pf-alley-map-open .pf-world-top,
+body.pf-alley-map-open .pf-world-hint {
   visibility: hidden;
 }
 
