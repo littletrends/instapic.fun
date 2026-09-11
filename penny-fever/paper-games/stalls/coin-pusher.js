@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=copper-ch1-1';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=copper-edge-1';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -12,7 +12,7 @@ const LAYERS = [
   {left: 202, right: 698, back: 798, lip: 1072},
 ];
 const SETS = [
-  {mix0: ['everyday-penny', 'everyday-penny', 'everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'everyday-penny', 'moon-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
+  {mix0: ['everyday-penny'], mix1: ['everyday-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
   {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['moon-penny', 'star-token'], unique: 'copper-cascade', prize: 'copper-cascade'},
   {mix0: ['everyday-penny', 'rose-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['rose-penny', 'star-token'], unique: 'penny-tree', prize: 'penny-tree'},
   {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token'], unique: 'coin-album', prize: 'coin-album'},
@@ -83,7 +83,7 @@ function pick(s, rng, wantUnique) {
 }
 function snapshot(s) {
   return {
-    v: 5,
+    v: 6,
     chapter: s.level || 0,
     t: s.t,
     aim: s.aim,
@@ -109,8 +109,8 @@ function plantPrize(coins, level, rng) {
   const layer = 1;
   const L = LAYERS[layer];
   coins.push(mint(id,
-    (L.left + L.right) / 2 + (rng() - 0.5) * 36,
-    L.back + (L.lip - L.back) * 0.68 + (rng() - 0.5) * 12,
+    (L.left + L.right) / 2 + (rng() - 0.5) * 48,
+    L.back + (L.lip - L.back) * 0.42 + (rng() - 0.5) * 18,
     layer));
 }
 function hydrate(blob) {
@@ -271,7 +271,7 @@ function pack(layer, rng, ids) {
     const inset = (row % 2) * (dx * 0.5);
     for (let x = L.left + 22 + inset; x <= L.right - 22; x += dx) {
       const id = ids[out.length % ids.length];
-      out.push(mint(id, x + (rng() - 0.5) * 9, y + (rng() - 0.5) * 7, layer));
+      out.push(mint(id, x + (rng() - 0.5) * 3, y + (rng() - 0.5) * 2, layer));
     }
   }
   return out;
@@ -334,7 +334,7 @@ export default {
   create(level, rng) {
     const roll = rng || Math.random;
     const saved = loadMachine(level);
-    if (saved && saved.v >= 5 && saved.pieces && saved.pieces.length >= 40) {
+    if (saved && saved.v >= 6 && saved.pieces && saved.pieces.length >= 40) {
       const s = hydrate(saved);
       s.level = level;
       plantPrize(s.coins, level, roll);
@@ -496,8 +496,8 @@ export default {
   draw(s, d) {
     for (let i = 0; i < LAYERS.length; i++) {
       const L = LAYERS[i];
-      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a228e' : '#6a462c88', '#e4c48a', 3);
-      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18f', 5);
+      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a2233' : '#6a462c28', '#e4c48a66', 2);
+      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18fcc', 4);
       const extend = s.stroke > 0 && s.stroke < 0.7 ? s.stroke / 0.7 : (s.stroke >= 0.7 ? 1 : 0);
       const plate = L.back + 18 + extend * SHOVE;
       d.line({x: L.left + 10, y: plate}, {x: L.right - 10, y: plate}, '#d2b07a', 12);
@@ -544,6 +544,6 @@ export default {
     if (alleyPlay) {
       return (n == null ? '0' : n) + (n === 1 ? ' penny' : ' pennies') + ' in the purse · ' + trays + ' on the trays · ' + s.score + ' won' + (s.queue ? ' · dumping ' + s.queue : '') + ' · ' + s.note;
     }
-    return n + ' / ' + s.total + ' in the purse · ' + trays + ' on the trays · ' + s.score + ' at the docks' + (s.ammo === 0 ? ' · settling' : '') + ' · ' + s.note;
+    return n + ' / ' + s.total + ' in the purse · ' + trays + ' on the trays · ' + s.score + ' over the lip' + (s.ammo === 0 ? ' · settling' : '') + ' · ' + s.note;
   },
 };
