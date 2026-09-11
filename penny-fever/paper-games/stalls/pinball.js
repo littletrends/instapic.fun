@@ -9,6 +9,7 @@ const FLIP = 118;
 const REST = 0.46;
 const UP = -0.64;
 const LANE = {x: 726, y: 992, pull: 50};
+const CLOCK = 48;
 const GATE = seg([666, 422], [708, 422]);
 const BOOK = 'pennyFever.thunderGarden';
 const TOKENS = [
@@ -152,7 +153,6 @@ function dropFromHit(s, kind, x, y) {
     s.score += 120;
     if (rng < 0.08 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.08 * d + 0.022 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.08 * d + 0.022 * d + 0.002 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
   } else if (kind === 'sling') {
     s.score += 40;
     if (rng < 0.04 * d) pay(s, 'everyday-penny', x, y);
@@ -160,15 +160,10 @@ function dropFromHit(s, kind, x, y) {
     s.score += kind === 'target' ? 250 : 80;
     if (rng < 0.22 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.32 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.32 * d + 0.012 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
   } else if (kind === 'saucer') {
     s.score += jackpot ? 1400 : 800;
-    if (jackpot && rng < 0.18 * u) {
-      const prize = pickUnique(s) || pickToken(s);
-      pay(s, prize, x, y);
-    } else if (rng < 0.48 * d) pay(s, 'everyday-penny', x, y);
+    if (rng < 0.48 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.78 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.78 * d + 0.07 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
     if (jackpot) s.lights = [false, false, false];
   }
 }
@@ -222,6 +217,7 @@ function layout(level) {
   return {
     rails, slings, bumpers, posts, targets, rolls,
     saucer: {x: 440, y: 268, cool: 0, hold: 0},
+    prizeSpot: {x: 440, y: 338, r: 28, cool: 0, flash: 0},
     flippers: [
       {x: 292, y: 1008, a: REST, w: 0, sign: 1},
       {x: 576, y: 1008, a: Math.PI - REST, w: 0, sign: -1},
@@ -271,6 +267,7 @@ function releasePlunger(s) {
     }
   } else s.ammo--;
   s.mode = 'live';
+  s.clock = s.clockMax || CLOCK;
   s.balls++;
   s.ball.vx = -18 - power * 28;
   s.ball.vy = -460 - power * 760;
@@ -285,7 +282,7 @@ function drain(s) {
   s.combo = 0;
   s.stuck = 0;
   s.note = alleyPlay
-    ? 'Drained. Another penny for another ball — the table always has the last word.'
+    ? 'Drained. Another penny for another ball.'
     : (s.ammo > 0 ? 'Drained. Pull the spring for another practice ball.' : 'Practice balls spent.');
 }
 function inShooter(p) { return p.x > 690; }
@@ -303,24 +300,25 @@ export default {
   live: alleyPlay,
   tables: true,
   intro: alleyPlay
-    ? 'Six old-school pin tables. A penny from the purse pulls the spring. Tap the flippers to keep the silver ball alive. Bumpers rain small wins; stars and hearts cap out; the table’s own prize almost never leaves the glass. The house smiles, then takes the ball.'
-    : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
+    ? 'Six old-school pin tables. A penny pulls the spring. Hit this cabinet’s prize hanging on the glass to keep it. The ball has a clock — drain or time, and another penny buys another ball. On a mouse, Shift (or the quiet pad between the bats) slaps both flippers.'
+    : 'Workshop pin tables. Hit the hanging prize. Shift slaps both bats.',
   instructions: alleyPlay
-    ? 'Hold Plunge (or drag the spring) and release to shoot. Tap Left and Right — or the two sides of the glass — for the flippers. Z and X work on a keyboard. Each ball costs a penny. Hits often score, sometimes drip a penny or a star, and almost never a unique. Drain, and the house waits for another penny. Cash a booth ticket for a five-penny stack.'
-    : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
+    ? 'Hold Plunge and release. Z / X or the sides of the glass for the bats. Shift, or the unmarked pad between them, hits both at once. A penny a ball. A clock runs while the ball is live. Hit the prize on the glass to stamp it. Cash a booth ticket for a five-penny stack.'
+    : 'Hold Plunge. Z and X, or Shift for both bats. Hit the prize.',
   liveTitle: 'Thunder Garden',
   liveDetail: alleyPlay
-    ? 'Hold the plunger, let go, then tap the flippers. A penny a ball. Small wins feel generous. The rare things stay rare.'
-    : 'Pull the spring and tap the flippers.',
+    ? 'A penny a ball. Hit the prize hanging on the glass. The clock is running.'
+    : 'Pull the spring. Hit the prize. Shift for both bats.',
   liveButton: 'Step up to the table',
   tableDetail: alleyPlay
-    ? 'A penny a ball. Hold the plunger, let go, then tap the flippers. Small wins drip back; stars and hearts cap out; this cabinet’s prize almost never leaves the glass.'
-    : 'A different cabinet. Pull the spring, tap the bats. Practice balls stay in the workshop.',
+    ? 'A penny a ball. Hit this cabinet’s prize on the glass to keep it. Time runs out, or the drain takes it — another penny for another ball. Shift slaps both bats.'
+    : 'Hit the hanging prize. Shift for both bats.',
   levels: ['First ball', 'A hungrier drain', 'Lights in a hurry', 'The tight outlanes', 'Storm on the glass', 'The house never blinks'],
   sprites: SPRITES,
   prizes: SETS.map(t => t.prize),
   actions: [
     {id: 'left', label: 'Left flipper · Z', hold: true},
+    {id: 'both', label: 'Both bats · Shift', hold: true},
     {id: 'plunge', label: alleyPlay ? 'Plunge · 1 penny' : 'Plunge', hold: true},
     {id: 'right', label: 'Right flipper · X', hold: true},
   ],
@@ -331,11 +329,13 @@ export default {
     const built = layout(level);
     const s = {
       level, t: 0, mode: 'lane', charge: 0, charging: false, pointerPlunge: false,
-      left: false, right: false, combo: 0, lights: [false, false, false],
+      left: false, right: false, both: false, combo: 0, lights: [false, false, false],
       balls: book.balls, score: book.score, wonPennies: book.wonPennies, specials: book.specials,
       seen: book.seen, paid: book.paid, tokens: book.tokens, fly: [], trail: [], stuck: 0,
       ammo: alleyPlay ? 0 : Math.max(4, 9 - level),
-      note: alleyPlay ? 'A penny pulls the spring.' : 'Pull the spring.',
+      clockMax: Math.max(28, CLOCK - level * 3), clock: Math.max(28, CLOCK - level * 3),
+      prizeOut: !!(book.paid || []).includes(set.prize),
+      note: alleyPlay ? 'A penny pulls the spring. Hit the prize on the glass to keep it.' : 'Pull the spring. Hit the prize.',
       set, ...built,
     };
     seatLane(s);
@@ -343,13 +343,24 @@ export default {
   },
   update(s, dt, input) {
     s.t += dt;
+    if (s.mode === 'live') {
+      s.clock = Math.max(0, (s.clock ?? s.clockMax) - dt);
+      if (s.clock <= 0) {
+        drain(s);
+        s.note = alleyPlay
+          ? 'Time. Another penny for another ball.'
+          : 'Time. Pull the spring again.';
+      }
+    }
     const hunger = 1 + s.level * 0.055;
     for (const b of s.bumpers) { b.cool = Math.max(0, b.cool - dt); b.flash = Math.max(0, b.flash - dt); }
     for (const t of s.targets) t.cool = Math.max(0, t.cool - dt);
     for (const sl of s.slings) sl.cool = Math.max(0, sl.cool - dt);
     s.saucer.cool = Math.max(0, s.saucer.cool - dt);
-    const wantL = s.left || input.actions.has('left') || input.keys.has('z') || input.keys.has('Z') || input.keys.has('ArrowLeft');
-    const wantR = s.right || input.actions.has('right') || input.keys.has('x') || input.keys.has('X') || input.keys.has('ArrowRight');
+    if (s.prizeSpot) { s.prizeSpot.cool = Math.max(0, s.prizeSpot.cool - dt); s.prizeSpot.flash = Math.max(0, (s.prizeSpot.flash || 0) - dt); }
+    const both = s.both || input.actions.has('both') || input.keys.has('Shift') || input.keys.has('c') || input.keys.has('C') || input.keys.has('Control');
+    const wantL = both || s.left || input.actions.has('left') || input.keys.has('z') || input.keys.has('Z') || input.keys.has('ArrowLeft');
+    const wantR = both || s.right || input.actions.has('right') || input.keys.has('x') || input.keys.has('X') || input.keys.has('ArrowRight');
     const holdPlunge = s.pointerPlunge || input.actions.has('plunge') || input.keys.has(' ');
     if (s.mode === 'lane') {
       if (holdPlunge) beginCharge(s);
@@ -429,6 +440,19 @@ export default {
           s.lights[s.rolls.indexOf(r)] = true;
         }
       }
+      if (s.prizeSpot && s.prizeSpot.cool === 0 && bounceCircle(p, s.prizeSpot, s.prizeSpot.r, 520)) {
+        s.prizeSpot.cool = 0.45;
+        s.prizeSpot.flash = 0.35;
+        s.combo++;
+        if (!s.prizeOut) {
+          const prize = chapterPrize(s);
+          if (prize) {
+            s.prizeOut = true;
+            pay(s, prize, s.prizeSpot.x, s.prizeSpot.y);
+            s.note = itemName(prize) + ' — you hit it off the glass!';
+          }
+        } else dropFromHit(s, 'bumper', s.prizeSpot.x, s.prizeSpot.y);
+      }
       if (s.saucer.cool === 0 && Math.hypot(p.x - s.saucer.x, p.y - s.saucer.y) < 24) {
         s.saucer.cool = 1.25;
         s.saucer.hold = 0.38;
@@ -477,6 +501,8 @@ export default {
         s.pointerPlunge = true;
         beginCharge(s);
         s.charge = clamp((p.y - LANE.y) / LANE.pull, 0.05, 1);
+      } else if (p.y > 1112 && p.x > 370 && p.x < 530) {
+        s.both = true;
       } else if (p.x < 450) s.left = true;
       else s.right = true;
     }
@@ -485,12 +511,13 @@ export default {
     }
     if (type === 'up' || type === 'cancel') {
       if (s.pointerPlunge) { s.pointerPlunge = false; releasePlunger(s); }
-      s.left = false; s.right = false;
+      s.left = false; s.right = false; s.both = false;
     }
   },
   action(s, id, down) {
     if (id === 'left') s.left = !!down;
     if (id === 'right') s.right = !!down;
+    if (id === 'both') s.both = !!down;
     if (id === 'plunge') {
       if (down) beginCharge(s);
       else releasePlunger(s);
@@ -499,6 +526,8 @@ export default {
   key(s, k, down) {
     if ((k === 'z' || k === 'Z' || k === 'ArrowLeft') && !down) s.left = false;
     if ((k === 'x' || k === 'X' || k === 'ArrowRight') && !down) s.right = false;
+    if ((k === 'Shift' || k === 'Control' || k === 'c' || k === 'C') && !down) s.both = false;
+    if ((k === 'Shift' || k === 'Control' || k === 'c' || k === 'C') && down) s.both = true;
     if (k === ' ') {
       if (down) beginCharge(s);
       else releasePlunger(s);
@@ -506,13 +535,14 @@ export default {
   },
   draw(s, d, _t, input) {
     const set = s.set || SETS[s.level] || SETS[0];
-    const leftOn = s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
-    const rightOn = s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
+    const bothOn = s.both || input?.keys?.has('Shift') || input?.keys?.has('c') || input?.keys?.has('C') || input?.actions?.has('both');
+    const leftOn = bothOn || s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
+    const rightOn = bothOn || s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
     d.poly([[64, 18], [836, 18], [858, 1184], [42, 1184]], set.wood, '#e6c57a', 4);
     d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
     d.text('THUNDER GARDEN', 450, 92, 28, '#fff3d0');
-    d.text(String(s.score).padStart(6, '0'), 450, 128, 26, '#f0d49a');
+    d.text(String(s.score).padStart(6, '0'), 450, 118, 22, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
     d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], set.felt, '#d7b56a', 3);
     for (const r of s.rails) {
@@ -538,6 +568,16 @@ export default {
       d.ellipse(r.x, r.y, 16, 8, r.on ? '#f0d08055' : '#00000033', r.on ? '#f0d080' : '#c4a46a', 2);
     }
     d.circle(s.saucer.x, s.saucer.y, 20, '#3a2a38cc', s.lights.every(Boolean) ? '#f0d080' : '#b89668', 3);
+    if (s.prizeSpot) {
+      const ps = s.prizeSpot;
+      if (ps.flash > 0) d.glow(ps.x, ps.y, 78, '#f0d49a');
+      d.circle(ps.x, ps.y, ps.r + 4, s.prizeOut ? '#2a242888' : '#6a3a28ee', '#f0d6a0', 3);
+      d.item(spriteKey(set.prize), ps.x, ps.y, {
+        w: s.prizeOut ? 34 : 48, alpha: s.prizeOut ? 0.35 : 1,
+        fallback: () => d.star(ps.x, ps.y, 16, '#f4e2a8'),
+      });
+      if (!s.prizeOut) d.text('hit', ps.x, ps.y + ps.r + 16, 11, '#f0d6a8');
+    }
     d.path(s.trail, '#f0d6a844', 4);
     for (const f of s.flippers) {
       const c = Math.cos(f.a), sn = Math.sin(f.a);
@@ -561,9 +601,12 @@ export default {
     });
     d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
+    d.circle(450, 1148, 14, bothOn ? '#f0d080' : '#3a2a2288', '#c4a46a66', 1);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.text('Z', 210, 1152, 12, '#fff6d8');
     d.text('X', 690, 1152, 12, '#fff6d8');
+    const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
+    d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
@@ -582,7 +625,8 @@ export default {
     const n = alleyPlay ? pocket() : s.ammo;
     const purse = (n == null ? '0' : n) + (alleyPlay ? (n === 1 ? ' penny' : ' pennies') : ' practice');
     const mode = s.mode === 'live' ? 'ball in play' : s.mode === 'lane' ? (s.charging ? 'spring drawn' : 'pull the spring') : 'drained';
-    return purse + ' · ' + s.score + ' · ' + s.wonPennies + ' won back · ' + s.specials + ' specials · ' + mode + ' · ' + s.note;
+    const clock = s.mode === 'live' ? Math.ceil(Math.max(0, s.clock)) + 's' : 'clock ready';
+    return purse + ' · ' + clock + ' · ' + s.score + ' · ' + (s.prizeOut ? 'prize kept' : 'hit the prize') + ' · ' + mode + ' · ' + s.note;
   },
 };
 

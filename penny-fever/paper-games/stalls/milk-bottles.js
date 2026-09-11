@@ -4,12 +4,12 @@ import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=mabel-dairy-
 
 const start = {x: 450, y: 1050};
 const SETS = [
-  {prize: 'dairy-calf', throws: 2, towers: [{x: 450, y: 840, n: 4}]},
-  {prize: 'lucky-dish', throws: 2, towers: [{x: 310, y: 840, n: 3}, {x: 600, y: 840, n: 3}]},
-  {prize: 'alley-collector-cup', throws: 2, towers: [{x: 300, y: 850, n: 4}, {x: 620, y: 720, n: 3}]},
-  {prize: 'cocoa-cup', throws: 3, towers: [{x: 250, y: 840, n: 3}, {x: 450, y: 700, n: 4}, {x: 650, y: 840, n: 3}]},
-  {prize: 'crown-hatbox', throws: 3, towers: [{x: 270, y: 860, n: 4}, {x: 450, y: 620, n: 3}, {x: 640, y: 860, n: 4}]},
-  {prize: 'button-elephant', throws: 3, towers: [{x: 320, y: 870, n: 5}, {x: 620, y: 720, n: 4}]},
+  {prize: 'dairy-calf', throws: 1, towers: [{x: 450, y: 840, n: 4}]},
+  {prize: 'lucky-dish', throws: 1, towers: [{x: 310, y: 840, n: 3}, {x: 600, y: 840, n: 3}]},
+  {prize: 'alley-collector-cup', throws: 1, towers: [{x: 300, y: 850, n: 4}, {x: 620, y: 720, n: 3}]},
+  {prize: 'cocoa-cup', throws: 1, towers: [{x: 250, y: 840, n: 3}, {x: 450, y: 700, n: 4}, {x: 650, y: 840, n: 3}]},
+  {prize: 'crown-hatbox', throws: 1, towers: [{x: 270, y: 860, n: 4}, {x: 450, y: 620, n: 3}, {x: 640, y: 860, n: 4}]},
+  {prize: 'button-elephant', throws: 1, towers: [{x: 320, y: 870, n: 5}, {x: 620, y: 720, n: 4}]},
 ];
 
 function topple(b, vx = 80) {
@@ -22,7 +22,7 @@ function topple(b, vx = 80) {
 function toss(s) {
   if (s.ball || s.won || s.lost) return;
   if (s.throws >= s.limit) {
-    s.note = 'No beads left this dairy. One penny, one throw.';
+    s.note = 'That bead is spent. Another penny for another throw.';
     return;
   }
   if (alleyPlay) {
@@ -65,10 +65,10 @@ export default {
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
-  intro: 'Mabel’s milk-bottle alley. Six full dairies, one keepsake each. A penny a throw, and only a couple of throws. One clean hit can take the lot — miss, and the shelf stays hers.',
+  intro: 'Mabel’s milk-bottle alley. One penny, one throw. Knock every bottle in that single bead and the keepsake is yours. Leave one standing and she keeps the shelf.',
   instructions: alleyPlay
-    ? 'Aim and throw (one penny a bead). You only get two or three throws this dairy. Knock every bottle to stamp the prize and open it in the treasure book. Chapters you have cleared are marked. Arrows aim, Space throws.'
-    : 'Aim and throw. Limited beads. Clear the dairy to finish the chapter.',
+    ? 'Aim and throw (one penny a bead). The prize only flies if the whole dairy falls in that one throw. A leftover bottle means try again — another penny. Arrows aim, Space throws.'
+    : 'One throw. Clear every bottle in that bead to finish the chapter.',
   levels: ['The full dairy', 'Two parlour stacks', 'The high shelf', 'Three little dairies', 'The tall and the tiny', 'The grand pyramid'],
   sprites: ['message-bottle', 'mercury-bead', 'dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'button-elephant', 'penny-purse', 'everyday-penny'],
   prizes: SETS.map(s => s.prize),
@@ -77,7 +77,7 @@ export default {
     return {
       ...build(level),
       level, aim: {x: 450, y: 770}, ball: null, throws: 0, t: 0, settle: 0, won: false, lost: false,
-      note: alleyPlay ? 'A penny a bead. ' + (SETS[level] || SETS[0]).throws + ' throws this dairy.' : 'Limited practice beads. Clear the dairy.',
+      note: alleyPlay ? 'One penny. One throw. All down, or the prize stays.' : 'One practice bead. Clear the dairy.',
     };
   },
   update(s, dt, input) {
@@ -107,16 +107,22 @@ export default {
     if (!s.won && !s.lost && s.bottles.every(b => b.fallen)) {
       s.settle += dt;
       if (s.settle > 1.1) {
-        s.won = true;
-        if (alleyPlay && s.prize) keep(s.prize, 'milk-bottles');
-        done(s, 'Not a bottle left standing',
-          itemName(s.prize) + ' flies into the treasure book.', {prize: s.prize, won: true});
+        const clean = s.throws === 1;
+        s.won = clean;
+        s.lost = !clean;
+        if (alleyPlay && s.prize && clean) keep(s.prize, 'milk-bottles');
+        done(s,
+          clean ? 'Not a bottle left standing' : 'They fell — but not in one throw',
+          clean
+            ? itemName(s.prize) + ' flies into the treasure book.'
+            : 'The prize wanted a single clean hit. Another penny for another bead.',
+          {prize: clean ? s.prize : null, won: clean});
       }
     } else if (!s.won && !s.lost && !s.ball && s.throws >= s.limit && s.bottles.some(b => !b.fallen)) {
       s.lost = true;
       const left = s.bottles.filter(b => !b.fallen).length;
       done(s, 'The dairy still stands',
-        left + ' bottle' + (left === 1 ? '' : 's') + ' left after ' + s.throws + ' throws. Mabel keeps the shelf.', {won: false});
+        left + ' bottle' + (left === 1 ? '' : 's') + ' left. Another penny for another throw.', {won: false});
     }
   },
   pointer(s, type, p) {
