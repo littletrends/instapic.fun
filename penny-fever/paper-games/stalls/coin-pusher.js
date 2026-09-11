@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-4';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=paper-cashdrop-5';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -98,7 +98,7 @@ function hydrate(blob) {
   return {
     level: 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
-    falling: [], dropped: blob.dropped || 0, started: false, queue: blob.queue || 0,
+    falling: [], fly: [], dropped: blob.dropped || 0, started: false, queue: blob.queue || 0,
     restock: blob.restock || 0, seen: blob.seen || [], paid: blob.paid || [],
     dirty: false, saveAt: 0, stroke: 0, note: 'The trays waited. Drop a penny to wake them.',
   };
@@ -117,21 +117,29 @@ function markSeen(s, id) {
   if (!DEFS[id]?.unique) return;
   if (!s.seen.includes(id)) s.seen.push(id);
 }
+function flyHome(s, c) {
+  s.fly = s.fly || [];
+  s.fly.push({
+    id: c.id, x: c.x, y: c.y, w: c.w, color: c.color, t: 0, dur: 0.62,
+    prize: !!(c.prize || (c.id !== 'everyday-penny')),
+  });
+}
 function payout(s, c) {
   if (c.token || c.score) {
     s.score += c.score;
     if (c.id !== 'everyday-penny') s.specials++;
-    if (alleyPlay && c.score) credit(c.score);
+    if (alleyPlay && c.score) {
+      credit(c.score);
+      keep('penny-purse');
+    }
   }
-  if (c.prize || (c.id !== 'everyday-penny' && !c.token)) {
-    if (alleyPlay) keep(c.id);
-    if (!s.paid.includes(c.id)) s.paid.push(c.id);
-  } else if (c.id !== 'everyday-penny' && alleyPlay) keep(c.id);
-  s.falling.push({...c, falling: true, vy: 90, t: 0});
+  if (c.id !== 'everyday-penny' && alleyPlay) keep(c.id);
+  if (c.prize && !s.paid.includes(c.id)) s.paid.push(c.id);
+  flyHome(s, c);
   s.dirty = true;
-  s.note = c.prize
-    ? itemName(c.id) + ' slipped the last lip!'
-    : c.id === 'everyday-penny' ? 'A penny for the docks.' : itemName(c.id) + ' crossed the lip.';
+  s.note = c.prize || c.id !== 'everyday-penny'
+    ? itemName(c.id) + ' into the treasure book!'
+    : 'A penny into the purse.';
 }
 function spill(s, c) {
   if (c.layer >= 2) {
@@ -266,7 +274,7 @@ function fresh(level, rng) {
   return {
     level, t: 0, coins, aim: 450, ammo, total: ammo, score: 0, specials: 0,
     cooldown: 0, settle: 0, falling: [], dropped: 0, started: !alleyPlay,
-    queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0,
+    queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0, fly: [],
     note: alleyPlay ? 'The trays wait. A penny from the purse lands, then the plate shoves once.' : 'Drop a penny from the purse.',
   };
 }
@@ -434,6 +442,10 @@ export default {
     s.coins = stay;
     for (const c of s.falling) { c.t += dt; c.vy += 520 * dt; c.y += c.vy * dt; }
     s.falling = s.falling.filter(c => c.y < 1240);
+    if (s.fly) {
+      for (const f of s.fly) f.t += dt;
+      s.fly = s.fly.filter(f => f.t < f.dur);
+    }
     if (alleyPlay && s.dirty && s.t - s.saveAt > 1.4) persist(s);
   },
   pointer(s, type, p) {
@@ -461,13 +473,26 @@ export default {
       d.item(spriteKey(c.id), c.x, c.y, {w: c.w, fallback: () => d.ball(c.x, c.y, c.r, c.color)});
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    d.item(spriteKey('penny-purse'), 126, 132, {w: 118, fallback: () => d.heart(126, 132, 36, '#6a7a52')});
-    const show = Math.min(n, 8);
-    for (let i = 0; i < show; i++) {
-      d.item(spriteKey('everyday-penny'), 92 + i * 8, 154 - (i % 3) * 4, {w: 20, shadow: false, fallback: () => d.ball(92 + i * 8, 154, 8, '#b68445')});
+    const px = 132, py = 148;
+    d.item(spriteKey('penny-purse'), px, py, {w: 148, fallback: () => d.heart(px, py, 44, '#6a7a52')});
+    const heap = Math.min(Math.max(0, n), 36);
+    for (let i = 0; i < heap; i++) {
+      const row = Math.floor(i / 7), col = i % 7;
+      const hx = px - 48 + col * 15 + row * 4;
+      const hy = py + 8 - row * 10 - (col % 2) * 3;
+      d.item(spriteKey('everyday-penny'), hx, hy, {w: 24, shadow: false, fallback: () => d.ball(hx, hy, 9, '#b68445')});
     }
-    d.text(String(n), 126, 198, 22, '#fff6d8');
-    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', 126, 218, 13, '#ead6a4');
+    d.text(String(n), px, py + 78, 24, '#fff6d8');
+    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 100, 14, '#ead6a4');
+    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    d.text('treasures', 788, 144, 13, '#ead6a4');
+    for (const f of (s.fly || [])) {
+      const u = Math.min(1, f.t / f.dur);
+      const e = 1 - (1 - u) * (1 - u);
+      const destX = f.prize ? 780 : px, destY = f.prize ? 90 : py;
+      const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
+      d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, (f.w || 32) * (1 - u * 0.4)), fallback: () => d.ball(fx, fy, 10, f.color || '#b68445')});
+    }
     d.poly([[s.aim - 22, 92], [s.aim + 22, 92], [s.aim + 14, 138], [s.aim - 14, 138]], '#8a7450cc', '#ead097', 2);
     d.text('↓', s.aim, 124, 20, '#fff3d0');
     if (alleyPlay && !s.started) d.text('trays still', 450, 72, 18, '#f0d6a8');

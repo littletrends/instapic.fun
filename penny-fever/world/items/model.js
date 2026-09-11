@@ -25,12 +25,13 @@
     ['penny-tree','Penny tree','Workshop prizes','prize',null,'Copper Falls · Copper','Settle the crowded mint at Copper Falls.',.14,'game-prizes'],
     ['charm-pouch','Charm pouch','Workshop prizes','prize',null,'Lost Letter Express · Willa','Cross the winds at Lost Letter Express.',.08,'gift-wrapping'],
     ['secret-keeper','Secret keeper','Workshop prizes','prize',null,'Lost Letter Express · Willa','Finish the late-night express.',.12,'parlour-prizes'],
-    ['penny-purse','Penny purse','Workshop prizes','prize',null,'Impossible Suitcase · Kit','Pack just one more thing.',.1,'pennies'],
+    ['penny-purse','Penny purse','Workshop prizes','prize',null,'Copper Falls · Copper','The purse on Copper Falls. It holds every spendable penny you carry.',.1,'pennies'],
     ['penny-collector-book','Penny collector book','Workshop prizes','prize',null,'Impossible Suitcase · Kit','Close the midnight expedition.',.12,'collector-books'],
     ['rose-hair-bow','Rose hair bow','Workshop prizes','prize',null,'Heartstrings · Rosalie','A first flutter at Rosalie’s theatre.',.08,'wearables'],
     ['rose-press','Rose press','Workshop prizes','prize',null,'Heartstrings · Rosalie','A change of heart.',.1,'parlour-prizes'],
     ['rose-lockbox','Rose lockbox','Workshop prizes','prize',null,'Heartstrings · Rosalie','Three keepsakes in the breeze.',.12,'parlour-prizes'],
     ['clockwork-key','Clockwork key','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','Reconnect the runaway beetle’s track.',.1,'machine-curios'],
+    ['heart-gear','Heart gear','Workshop prizes','prize',null,'Copper Falls · Copper','A brass heart-gear from the cash-drop trays.',.1,'machine-curios'],
     ['display-dome','Display dome','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','A curious detour, safely under glass.',.12,'gift-wrapping'],
     ['clockwork-butterfly','Clockwork butterfly','Workshop prizes','prize',null,'Clockwork Menagerie · Digby','Bring the butterfly home.',.16,'future-curios'],
     ['brave-try-ribbon','Brave-try ribbon','Workshop prizes','prize',null,'Duckling Parade · Dottie','Bring the first little wanderers home.',.07,'awards'],
@@ -54,7 +55,9 @@
     ['spooky-pumpkin-friend','Spooky pumpkin friend','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'seasonal-treasures'],
     ['crown-turtle','Crown turtle','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'toy-shelf'],
     ['fortune-slip','Fortune slip','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'alley-curios'],
-    ['moon-penny','Moon penny','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'pennies'],
+    ['moon-penny','Moon penny','Workshop prizes','prize',null,'Copper Falls · Copper','A moon-pressed penny from the cash-drop trays.',.1,'pennies'],
+    ['rose-penny','Rose penny','Workshop prizes','prize',null,'Copper Falls · Copper','A rose-pressed penny from the cash-drop trays.',.1,'pennies'],
+    ['crown-token','Crown token','Workshop prizes','prize',null,'Copper Falls · Copper','A scalloped crown token from the cash-drop trays.',.1,'pennies'],
     ['moon-brooch','Moon brooch','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'wearables'],
     ['fortune-journal','Fortune journal','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'collector-books'],
     ['moon-festival-fan','Moon-festival fan','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'seasonal-treasures'],
@@ -256,9 +259,14 @@
       if (d.kind==='curio') { owned=!!state.curios?.[d.key];quantity=owned?1:0;at=state.curios?.[d.key]?.at||null;status=owned?'Collected':status; }
       if (d.kind==='reward') { owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;status=owned?'Collection keepsake':status; }
       if (d.kind==='prize') {
-        owned=!!state.paperInventory?.items?.[d.id];quantity=owned?1:0;at=state.paperInventory?.items?.[d.id]?.at||null;
-        const src=state.paperInventory?.items?.[d.id]?.source;
-        status=owned?(src==='cash-drop'?'Cashed at Copper Falls':'Won in a paper world'):status;
+        const row=state.paperInventory?.items?.[d.id];
+        owned=!!row;quantity=owned?count(row.qty)||1:0;at=row?.at||null;
+        const src=row?.source;
+        status=owned
+          ? (quantity>1
+            ? `${quantity} in your collection`
+            : (src==='coin-pusher'||src==='cash-drop'?'Won at Copper Falls':'Won in a paper world'))
+          : status;
       }
       return {...d,owned,quantity,status,at,punched:d.kind==='ticket'&&!!state.admitPassed};
     });
@@ -303,8 +311,16 @@
       reconcile(state);
       return [d.id];
     }
-    if (state.paperInventory.items[d.id]) return [];
-    state.paperInventory.items[d.id] = {at: now, source: result.stall || 'paper-world', chapter: result.chapter};
+    if (state.paperInventory.items[d.id]) {
+      if (['moon-penny','rose-penny','star-token','crown-token'].includes(d.id)) {
+        const row = state.paperInventory.items[d.id];
+        row.qty = (count(row.qty) || 1) + 1;
+        row.at = now;
+        return [d.id];
+      }
+      return [];
+    }
+    state.paperInventory.items[d.id] = {at: now, source: result.stall || 'paper-world', chapter: result.chapter, qty: 1};
     return [d.id];
   }
   function stampKeepsake(state, id, source, now=Date.now()) {
@@ -313,7 +329,7 @@
     if (state.paperInventory.items[id]) return false;
     const d = definitions.find(i => i.id === id);
     if (!d || d.kind === 'currency' || d.kind === 'scrip' || d.kind === 'ticket' || d.kind === 'pass') return false;
-    state.paperInventory.items[id] = {at: now, source: source || 'pocket'};
+    state.paperInventory.items[id] = {at: now, source: source || 'pocket', qty: 1};
     return true;
   }
   globalThis.PennyFeverInventoryModel=Object.freeze({definitions,albums,books,reconcile,entries,resolve,day,recordResult,recordPaperPrize,stampKeepsake});

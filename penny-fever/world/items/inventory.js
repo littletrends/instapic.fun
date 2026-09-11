@@ -342,7 +342,12 @@ function paintSlots(shown, opts = {}) {
     const name = document.createElement('strong');
     name.textContent = item.name;
     const mark = document.createElement('em');
-    mark.textContent = item.owned ? (item.kind === 'currency' || item.kind === 'scrip' ? 'Always with you' : 'Found') : 'To collect';
+    mark.textContent = item.owned
+      ? (item.kind === 'currency' ? item.quantity + (item.quantity === 1 ? ' penny' : ' pennies')
+        : item.kind === 'scrip' ? item.quantity + (item.quantity === 1 ? ' ticket' : ' tickets')
+        : item.quantity > 1 ? '×' + item.quantity
+        : 'Found')
+      : 'To collect';
     button.append(well, name, mark);
     root.append(button);
   }

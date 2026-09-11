@@ -2,7 +2,7 @@ import {games} from '../paper-games/catalogue.js?v=paper-worlds-v2-2';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=paper-cashdrop-4'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=paper-cashdrop-5'),gameBase).href,
 }));
 
 // Existing room routing owns the alley pause and return position. The game itself

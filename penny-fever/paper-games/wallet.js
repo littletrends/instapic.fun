@@ -29,10 +29,23 @@ export function credit(amount) {
 }
 
 export function keep(id) {
-  if (!alleyPlay || !id) return;
+  if (!alleyPlay || !id) return false;
   try {
+    const PF = fever();
+    const model = window.parent.PennyFeverInventoryModel;
+    if (PF?.getState && model?.recordPaperPrize) {
+      const earned = model.recordPaperPrize(PF.getState(), {item: id, stall: 'coin-pusher'});
+      if (earned.length) {
+        PF.saveState?.();
+        window.parent.dispatchEvent(new CustomEvent('pennyfever:inventoryaward', {detail: {ids: earned}}));
+        return true;
+      }
+    }
     window.parent.postMessage({channel: 'pf-paper-world', type: 'prize', item: id, stall: 'coin-pusher'}, location.origin);
-  } catch { /* workshop or cross-origin */ }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function loadMachine() {
