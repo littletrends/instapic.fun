@@ -1083,7 +1083,8 @@ function bindHud() {
   const stallBack = el("pfStallCardBack");
   if (stallEnter) stallEnter.addEventListener("click", (event) => {
     event.preventDefault();
-    enterNearest();
+    if (nearest?.kind === "stall") enterStallById(nearest.id);
+    else enterNearest();
   });
   if (stallChat) stallChat.addEventListener("click", (event) => {
     event.preventDefault();
@@ -1436,6 +1437,7 @@ function syncStallCard(best) {
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
+        enter.disabled = false;
         enter.textContent = stallEnterLabel(best.id);
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
@@ -1482,12 +1484,12 @@ function talkToFocus() {
 }
 
 function enterNearest() {
-  if (handleGatePrompt()) return;
-  if (!nearest || !nearest.atCounter) return;
-  if (stallCardOpen && nearest.kind === "stall") {
+  if (stallCardOpen && nearest?.kind === "stall") {
     enterStallById(nearest.id);
     return;
   }
+  if (handleGatePrompt()) return;
+  if (!nearest || !nearest.atCounter) return;
   if (stallCardOpen && nearest.kind === "aura") {
     if (ticketPassed()) return;
     const PF = window.PennyFever;
