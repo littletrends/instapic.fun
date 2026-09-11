@@ -838,6 +838,7 @@ let focus = null;
 let vendorChatUntil = 0;
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
+let stallCardPinned = false;
 let alleyMapOpen = false;
 let stallCardId = "";
 let stallCardView = "front";
@@ -897,6 +898,11 @@ function attachHud() {
         </div>
         <em id="pfWorldPromptLine"></em>
       </div>
+      <button type="button" class="pf-pass-chip" id="pfPassChip" hidden>
+        <span id="pfPassChipHost"></span>
+        <strong id="pfPassChipName"></strong>
+        <em>Look</em>
+      </button>
       <div class="pf-stall-card" id="pfStallCard" hidden>
         <div class="pf-stall-card-art">
           <img id="pfStallCardBooth" alt="">
@@ -913,10 +919,15 @@ function attachHud() {
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
         <p class="pf-stall-card-line" id="pfStallCardLine"></p>
+        <div class="pf-stall-card-till" id="pfStallCardTill" hidden>
+          <button type="button" id="pfTillPennies">Buy pennies</button>
+          <button type="button" id="pfTillTickets">Buy tickets</button>
+          <button type="button" id="pfTillTrade">5 pennies → 1 ticket</button>
+        </div>
         <div class="pf-stall-card-actions">
           <button type="button" id="pfStallCardEnter">Enter</button>
           <button type="button" id="pfStallCardChat">Chat</button>
-          <button type="button" id="pfStallCardBack">Back to the sideshow alley</button>
+          <button type="button" id="pfStallCardBack">Back to the alley</button>
         </div>
       </div>
       <div class="pf-look-rig" id="pfLookRig" hidden>
@@ -924,7 +935,7 @@ function attachHud() {
         <button type="button" data-orbit="1" aria-label="Turn right">↷</button>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
-      <p class="pf-world-hint" id="pfWorldHint">Walk the boards · drag to turn a booth · ↶↷ or Front/Left/Back/Right</p>
+      <p class="pf-world-hint" id="pfWorldHint">Walk the boards · tap Look over your head · step toward a booth to open it</p>
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
       <div class="pf-alley-map" id="pfAlleyMap" hidden>
         <div class="pf-alley-map-bar">
@@ -1053,7 +1064,34 @@ function bindHud() {
   const mapOpen = el("pfAlleyMapOpen");
   const mapClose = el("pfAlleyMapClose");
   const mapLegend = el("pfAlleyMapLegend");
-  if (leave) leave.addEventListener("click", () => { location.hash = "door"; });
+  if (leave) leave.addEventListener("click", (event) => {
+    event.preventDefault();
+    openBoothCard(auraDeskFocus());
+  });
+  const passChip = el("pfPassChip");
+  if (passChip) passChip.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (nearest) openBoothCard(nearest);
+  });
+  const tillPennies = el("pfTillPennies");
+  const tillTickets = el("pfTillTickets");
+  const tillTrade = el("pfTillTrade");
+  if (tillPennies) tillPennies.addEventListener("click", () => {
+    const PF = window.PennyFever;
+    const n = PF?.buyPennyRoll?.() || PF?.addDemoCoins?.(10) || 0;
+    tillMessage = n ? `${n} pennies in the purse.` : "The till is quiet.";
+    tillMessageUntil = performance.now() + 4000;
+  });
+  if (tillTickets) tillTickets.addEventListener("click", () => {
+    const n = window.PennyFever?.buyTicketStrip?.() || 0;
+    tillMessage = n ? `A strip of ${n} booth tickets.` : "No tickets printed.";
+    tillMessageUntil = performance.now() + 4000;
+  });
+  if (tillTrade) tillTrade.addEventListener("click", () => {
+    const ok = window.PennyFever?.tradePenniesForTicket?.();
+    tillMessage = ok ? "Five pennies for one booth ticket." : "Need five pennies for a ticket.";
+    tillMessageUntil = performance.now() + 4000;
+  });
   if (mapOpen) mapOpen.addEventListener("click", () => {
     if (alleyMapOpen) closeAlleyMap();
     else openAlleyMap();
@@ -1381,19 +1419,64 @@ function applyLookCardView(view) {
   if (stage) stage.classList.toggle("is-rear", view === "back" || view === "right");
 }
 
+function auraDeskFocus() {
+  return {
+    id: "aura",
+    kind: "aura",
+    name: "Ticket booth",
+    host: "Aura",
+    hostSlug: "",
+    line: "Pennies, booth tickets, and a punch for the walk.",
+    x: COUNTER.x,
+    z: COUNTER.z,
+    stallX: COUNTER.x,
+    stallZ: COUNTER.z,
+    side: -1,
+    dist: 0,
+    atCounter: true,
+  };
+}
+
+function hidePassChip() {
+  const chip = el("pfPassChip");
+  if (chip) chip.hidden = true;
+}
+
+function showPassChip(place) {
+  const chip = el("pfPassChip");
+  if (!chip || !place) return hidePassChip();
+  const host = el("pfPassChipHost");
+  const name = el("pfPassChipName");
+  if (host) host.textContent = place.host || (place.kind === "aura" ? "Aura" : "");
+  if (name) name.textContent = place.name || "";
+  chip.hidden = false;
+}
+
+function openBoothCard(best) {
+  if (!lookCardKind(best)) return;
+  stallCardPinned = true;
+  focus = best;
+  nearest = { ...best, atCounter: true };
+  hidePassChip();
+  syncStallCard(nearest);
+}
+
 function closeStallCard() {
   focusedFigures().forEach((fig) => {
     delete fig.userData.pinView;
     if (fig.userData.papercutStand) delete fig.userData.papercutStand.userData.pinView;
   });
   stallCardOpen = false;
+  stallCardPinned = false;
   stallCardId = "";
   lookZoom = 1;
   const card = el("pfStallCard");
   if (card) card.hidden = true;
+  const till = el("pfStallCardTill");
+  if (till) till.hidden = true;
   const joy = el("pfJoy");
   if (joy) joy.hidden = false;
-  if (player) player.position.x *= 0.2;
+  if (player && Math.abs(player.position.x) > 0.35) player.position.x *= 0.2;
 }
 
 function syncStallCard(best) {
@@ -1454,9 +1537,11 @@ function syncStallCard(best) {
       }
     }
     if (chat) {
-      chat.hidden = false;
+      chat.hidden = best.kind === "aura";
       chat.textContent = "Chat";
     }
+    const till = el("pfStallCardTill");
+    if (till) till.hidden = best.kind !== "aura";
     applyLookCardView("front");
   }
   stallCardOpen = true;
@@ -1961,47 +2046,80 @@ function inFrontOf(px, pz, x, z, side, reach = 4.4, band = 2.05) {
 function pickFocus(px, pz) {
   let passing = null;
   let passingZ = 99;
-  stalls.forEach((s) => {
-    const dz = Math.abs(pz - s.position.z);
-    if (dz < passingZ) {
-      passingZ = dz;
-      passing = {
-        id: s.userData.stall.id,
-        name: s.userData.stall.name,
-        side: s.userData.side,
-        dz,
-      };
-    }
-  });
-  if (stallCardOpen && focus) return { passing, passingZ };
-  const atTill = (!ticketPassed() && pz < GATE_Z + 1.4)
-    || (paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28);
-  if (Math.abs(moveIntent.iy) > 0.2 && !atTill && focus?.kind !== "aura") {
-    focus = null;
-    return { passing, passingZ };
+  function consider(place, dz) {
+    if (dz >= passingZ || dz > 2.35) return;
+    passingZ = dz;
+    passing = place;
   }
-  if (!ticketPassed() && pz < GATE_Z + 1.4) {
-    focus = {
+  stalls.forEach((s) => {
+    const spec = s.userData.stall;
+    const host = barkers?.find((b) => b.userData.stallId === spec.id);
+    consider({
+      id: spec.id,
+      kind: "stall",
+      name: spec.name,
+      host: host?.userData.crewName || spec.name,
+      hostSlug: host?.userData.vendorHost || "",
+      line: spec.line,
+      x: s.position.x,
+      z: s.position.z,
+      stallX: s.position.x,
+      stallZ: s.position.z,
+      side: s.userData.side,
+      dist: Math.hypot(px - s.position.x, pz - s.position.z),
+      dz: Math.abs(pz - s.position.z),
+    }, Math.abs(pz - s.position.z));
+  });
+  (papercutRides?.figures || []).forEach((fig) => {
+    if (fig.userData.kind !== "ride") return;
+    const id = fig.userData.amusementId;
+    const art = AMUSEMENT_ART[id];
+    consider({
+      id,
+      kind: "ride",
+      name: art?.name || (fig.name || id).replace(" · papercut", ""),
+      host: art?.host || "",
+      hostSlug: (art?.host || "").toLowerCase(),
+      line: "The ride faces the aisle.",
+      x: fig.position.x,
+      z: fig.position.z,
+      stallX: fig.position.x,
+      stallZ: fig.position.z,
+      side: Math.sign(fig.position.x) || 1,
+      dist: Math.hypot(px - fig.position.x, pz - fig.position.z),
+      dz: Math.abs(pz - fig.position.z),
+    }, Math.abs(pz - fig.position.z));
+  });
+  if (paperRail) {
+    consider({
       id: "aura",
       kind: "aura",
-      name: "Aura",
-      line: "Hand it over at the till.",
-      x: aura.position.x,
-      z: aura.position.z,
+      name: "Ticket booth",
+      host: "Aura",
+      hostSlug: "",
+      line: "Pennies, booth tickets, and a punch for the walk.",
+      x: COUNTER.x,
+      z: COUNTER.z,
       stallX: COUNTER.x,
       stallZ: COUNTER.z,
       side: -1,
-      dist: Math.hypot(px - aura.position.x, pz - aura.position.z),
-      host: "Aura",
-    };
+      dist: Math.hypot(px - COUNTER.x, pz - COUNTER.z),
+      dz: Math.abs(pz - COUNTER.z),
+    }, Math.abs(pz - COUNTER.z));
+  }
+  if (stallCardOpen && focus) return { passing, passingZ };
+  const walkingStraight = Math.abs(moveIntent.iy) > 0.2 && Math.abs(moveIntent.ix) < 0.38;
+  const atTill = paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28;
+  if (walkingStraight && !atTill) {
+    focus = null;
     return { passing, passingZ };
   }
-  if (paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28) {
+  if (atTill) {
     focus = {
       id: "aura",
       kind: "aura",
-      name: "Aura",
-      line: "Ask her about the alley.",
+      name: "Ticket booth",
+      line: "Pennies, booth tickets, and a punch for the walk.",
       x: aura.position.x,
       z: aura.position.z,
       stallX: COUNTER.x,
@@ -2071,8 +2189,18 @@ function findNearest() {
   const passing = picked.passing;
   const passingZ = passing?.dz ?? 99;
   const best = focus;
-  nearest = best ? { ...best, atCounter: true } : (passing && passingZ < 1.45 ? passing : null);
-  syncStallCard(lookCardKind(best) ? nearest : null);
+  if (stallCardPinned && lookCardKind(nearest)) {
+    hidePassChip();
+  } else if (lookCardKind(best)) {
+    nearest = { ...best, atCounter: true };
+    hidePassChip();
+    syncStallCard(nearest);
+  } else {
+    nearest = passing && passingZ < 2.2 ? passing : null;
+    if (stallCardOpen) closeStallCard();
+    if (lookCardKind(nearest)) showPassChip(nearest);
+    else hidePassChip();
+  }
   const rig = el("pfLookRig");
   if (rig) rig.hidden = true;
   const prompt = el("pfWorldPrompt");
@@ -2105,9 +2233,9 @@ function findNearest() {
       prompt.hidden = true;
       if (chatBtn) chatBtn.hidden = true;
       prompt.classList.add("is-ticket-handoff");
-    } else if (lookCardKind(best)) {
+    } else if (lookCardKind(best) || lookCardKind(nearest)) {
       gatePromptActive = false;
-      promptTargetSlug = best.id;
+      promptTargetSlug = (best || nearest).id;
       prompt.hidden = true;
       if (chatBtn) chatBtn.hidden = true;
       prompt.classList.remove("is-ticket-handoff");
@@ -2143,6 +2271,8 @@ function findNearest() {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura";
       speechText.textContent = tillMessage;
+    } else if (el("pfPassChip") && !el("pfPassChip").hidden) {
+      speech.hidden = true;
     } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
       speech.hidden = true;
     } else if (best && best.kind === "stall" && performance.now() < vendorChatUntil) {
@@ -2204,6 +2334,12 @@ function updateHudAnchor() {
     speech.classList.add("is-anchored");
     speech.style.left = `${clamp(head.x, 170, w - 170)}px`;
     speech.style.top = `${clamp(head.y - 10, 64, h - 240)}px`;
+  }
+
+  const chip = el("pfPassChip");
+  if (chip && !chip.hidden) {
+    chip.style.left = `${clamp(head.x, 72, w - 72)}px`;
+    chip.style.top = `${clamp(head.y - 28, 88, h - 220)}px`;
   }
 
   const prompt = el("pfWorldPrompt");

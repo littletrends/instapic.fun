@@ -136,6 +136,7 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 .pf-world-top,
 .pf-world-prompt,
+.pf-pass-chip,
 .pf-joy { pointer-events: auto; }
 .pf-world-hud > .pf-world-loop-veil,
 .pf-world-speech,
@@ -278,6 +279,57 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 .pf-world-prompt.is-ticket-given { opacity: 0; transition: opacity 0.15s ease; }
 .pf-world-prompt[hidden] { display: none !important; }
+.pf-pass-chip {
+  position: absolute;
+  z-index: 9;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 7.5rem;
+  max-width: min(72vw, 16rem);
+  padding: 0.42rem 0.7rem 0.5rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  border-radius: 14px;
+  background: rgba(12, 6, 10, 0.86);
+  color: #fff6ec;
+  box-shadow: 0 10px 24px #0008;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.pf-pass-chip[hidden] { display: none !important; }
+.pf-pass-chip span {
+  font: 700 0.62rem/1.1 system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0d09a;
+}
+.pf-pass-chip strong {
+  font: 700 0.95rem/1.15 "Palatino Linotype", Palatino, Georgia, serif;
+}
+.pf-pass-chip em {
+  font: italic 0.78rem/1 Georgia, serif;
+  color: #e8d0a0;
+}
+.pf-stall-card-till {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  width: min(96%, 420px);
+}
+.pf-stall-card-till[hidden] { display: none !important; }
+.pf-stall-card-till button {
+  flex: 1 1 7rem;
+  font: 700 0.88rem/1.2 "Palatino Linotype", Palatino, Georgia, serif;
+  color: #fff6ec;
+  background: #435637;
+  border: 2px dashed rgba(244, 228, 194, 0.35);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+}
 .pf-look-rig {
   position: absolute;
   right: 0.55rem;
@@ -632,6 +684,7 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 body.pf-alley-map-open .pf-joy,
 body.pf-alley-map-open .pf-look-rig,
 body.pf-alley-map-open .pf-stall-card,
+body.pf-alley-map-open .pf-pass-chip,
 body.pf-alley-map-open .pf-world-prompt,
 body.pf-alley-map-open .aura-counter-service,
 body.pf-alley-map-open .aura-till,
