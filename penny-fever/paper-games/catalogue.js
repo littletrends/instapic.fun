@@ -9,7 +9,7 @@ const rows = [
   ['whisper','Willa','Lost Letter Express','Fly folded letters into their matching letterboxes.'],
   ['ball-toss','Bess','Lantern Toss','Knock the swinging lanterns from a little circus skyline.'],
   ['coin-pusher','Copper','Copper Falls','Time the pusher and move a little tide of pennies.'],
-  ['pinball','Pip','Thunder Garden','Keep a silver seed alive among ringing brass flowers.'],
+  ['pinball','Pip','Thunder Garden','An old-school pin table. Plunge a penny, tap the flippers, and let the house smile.'],
   ['water-gun','Marina','Paper Harbour','Nudge a little sailboat through a paper harbour.'],
   ['milk-bottles','Mabel','The Topsy Dairy','Topple bottle towers with carefully placed throws.'],
   ['cover-the-spot','Dot','Patchwork Moon','Cover patterned moons with a handful of paper discs.'],
@@ -27,8 +27,8 @@ const rows = [
   ['marquee','Lumi','Light the Night','Conduct a travelling wave of boardwalk lights.'],
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
-  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.','','workshop'],
-  ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.','','workshop'],
+  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
+  ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons']);
 const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons']);
@@ -37,7 +37,7 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: `assets/${id}.png`,
+  asset: `./assets/${id}.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
