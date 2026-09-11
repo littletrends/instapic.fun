@@ -13,36 +13,45 @@ import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
 import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=one-name-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
-  { id: "fortune", name: "Mystic Tent", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "One theatrical ticket. Don’t skip the wait." },
-  { id: "love", name: "Love Tester", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Hold the pink. Miss it and you die hotter." },
-  { id: "curios", name: "Digger’s Vault", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Cash out or go deeper. Greed is the claw." },
-  { id: "lookup", name: "Star-Gazing Tent", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "The sky is a button. Look up, darling." },
-  { id: "snap", name: "Flash Booth", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Tap the true pop. False flashes eat you." },
-  { id: "whisper", name: "Gossip Booth", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Lean in. One word becomes a charm." },
-  { id: "ball-toss", name: "Barely-Fit Toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Holes that barely fit. Three misses and the oval wins." },
-  { id: "coin-pusher", name: "Coin Pusher Shelf", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "Drop a penny. Walk away or get buried." },
-  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
-  { id: "water-gun", name: "Water Gun Duel", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Fill the clown. The other lane is a ghost." },
-  { id: "milk-bottles", name: "Weighted Bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "Bottom row’s lead. You felt it." },
-  { id: "cover-the-spot", name: "Cover-the-Spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover it — or get greedy." },
-  { id: "mutoscope", name: "Mutoscope Hood", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Stillness opens the iris." },
-  { id: "high-striker", name: "High Striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "Ring the bell. The pegs lie about the weight." },
-  { id: "catoptromancy", name: "Catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Don’t look away from the glass." },
-  { id: "bent-rings", name: "Bent Ring Pegs", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "The pegs lean. The rings know." },
-  { id: "plinko", name: "Plinko Pegboard", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Drop with the breath." },
-  { id: "fairy-floss", name: "Fairy Floss Wheel", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Wind it tall. Don’t snap the sugar." },
-  { id: "popcorn", name: "Popcorn Kettle", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Tap the pop. Steam fakes the beat." },
-  { id: "duck-pond", name: "Duck Pond Hook", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Hook the call, not the decoy." },
-  { id: "skee-ball", name: "Skee-Ball Alley", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "Wax lies mid-stage." },
-  { id: "penny-pitch", name: "Penny Pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Land a colour. The cloth jerks after you let go." },
-  { id: "dunk-tank", name: "Dunk the Barker", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "Soak the crown. Three balls a seat." },
-  { id: "marquee", name: "Boardwalk Lights", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Repeat the bulb storm." },
-  { id: "pack", name: "Night Kit", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Pack the suitcase before a run." },
-  { id: "pass", name: "Backstage Flap", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Employees only — probably." },
+  { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Three cards. A keepsake is hiding in the deck." },
+  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Thread the heart. Miss the lockbox and the ribbon keeps it." },
+  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
+  { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
+  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Frame the hanging prize before the light goes." },
+  { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
+  { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock every lantern in one toss." },
+  { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },
+  { id: "pinball", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
+  { id: "water-gun", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Nudge a little sailboat through a paper harbour." },
+  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "A penny a bead. Two or three throws. The shelf or the book." },
+  { id: "cover-the-spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover the moon. Don’t get greedy." },
+  { id: "mutoscope", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Crank the reel. Light the story." },
+  { id: "high-striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "One penny, one strike. Ring the lit mouth." },
+  { id: "catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Fold the glass. Don’t look away." },
+  { id: "bent-rings", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "Seat the ring on the wishing branch." },
+  { id: "plinko", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Drop a marble. Flip the gates." },
+  { id: "fairy-floss", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Wind the cloud. Don’t snap the sugar." },
+  { id: "popcorn", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Pump the bellows. Catch the pop." },
+  { id: "duck-pond", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Paddle the flock home." },
+  { id: "skee-ball", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "A penny a roll. Land the hanging moon." },
+  { id: "penny-pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Skip a penny across the wells." },
+  { id: "dunk-tank", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "One bead. Clear the plates." },
+  { id: "marquee", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Wake the night. Catch the hanging prize." },
+  { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Tuck pennies. Nestle the unique." },
+  { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
+const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
+for (const spec of STALLS) {
+  const g = paperById[spec.id];
+  if (!g) continue;
+  spec.host = g.host;
+  spec.name = g.title;
+  spec.blurb = g.blurb;
+}
 
 const SKIN = 0xf0c4a8;
 const HAIR = 0x3d2418;
@@ -976,7 +985,7 @@ function fillAlleyMap() {
     const b = document.createElement("button");
     b.type = "button";
     b.dataset.place = spec.id;
-    b.textContent = spec.name;
+    b.textContent = spec.host ? spec.host + " · " + spec.name : spec.name;
     (i % 2 === 0 ? left : right).append(b);
   });
 }
@@ -1062,7 +1071,6 @@ function walkToMapPlace(place) {
     const side = Math.sign(s.position.x) || 1;
     warp(side * 0.28, s.position.z, 0);
   }
-  if (enterStallById(place)) return;
   closeAlleyMap();
 }
 
@@ -2073,7 +2081,7 @@ function pickFocus(px, pz) {
       id: spec.id,
       kind: "stall",
       name: spec.name,
-      host: host?.userData.crewName || spec.name,
+      host: spec.host || host?.userData.crewName || spec.name,
       hostSlug: host?.userData.vendorHost || "",
       line: spec.line,
       x: s.position.x,
@@ -2159,7 +2167,7 @@ function pickFocus(px, pz) {
       kind: "stall",
       name: spec.name,
       line: spec.line,
-      host: host?.userData.crewName || spec.name,
+      host: spec.host || host?.userData.crewName || spec.name,
       hostSlug: host?.userData.vendorHost || "",
       x: s.position.x,
       z: s.position.z,
