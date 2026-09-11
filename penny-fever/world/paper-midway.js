@@ -76,12 +76,21 @@ let panel,playerRef,auraRef,apiRef,dismissed=false;
 function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
 function pocketCount(){return Math.max(0,Math.floor(Number(apiRef?.getState?.()?.demoCoins)||0))}
 function ticketCount(){return Math.max(0,Math.floor(Number(apiRef?.tickets?.()??apiRef?.getState?.()?.playTickets)||0))}
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='square';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Tickets and penny packs are paid here with Square.</small>';document.body.append(panel);
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.dataset.gateway='square';panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><span id="auraCounterWallet"></span><div><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Five pennies buy one booth ticket. Copper Falls pays the other way.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;closeTill();};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
   openTill();
   panel.querySelector('#auraCounterMessage').textContent='Choose a pack. Square takes the till.';
+ };
+ panel.querySelector('#auraCounterTrade').onclick=()=>{
+  if(!near())return;
+  const note=panel.querySelector('#auraCounterMessage');
+  if(apiRef.tradePenniesForTicket?.()){
+    note.textContent='One ticket from five pennies. Stalls take tickets; Copper Falls pays five pennies back.';
+    return;
+  }
+  note.textContent='Need five pennies for a ticket. A penny pack or the bank loan will do.';
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
@@ -113,4 +122,9 @@ export function updateTicketService(){
  const admit=panel.querySelector('#auraCounterAdmission');
  admit.disabled=!!state.admitPassed;
  admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
+ const trade=panel.querySelector('#auraCounterTrade');
+ if(trade){
+  trade.disabled=coins<5;
+  trade.textContent=coins<5?'Need 5 pennies · 1 ticket':'Trade 5 pennies · 1 ticket';
+ }
 }

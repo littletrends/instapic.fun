@@ -7,7 +7,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=till-wallets-2";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=penny-trade-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
 import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
 import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";

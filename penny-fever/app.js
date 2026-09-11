@@ -738,6 +738,14 @@
     return added;
   }
 
+  function tradePenniesForTicket() {
+    if (pennies() < PENNY_STACK) return false;
+    if (!spendPennies(PENNY_STACK)) return false;
+    addTickets(1);
+    stampKeepsake("ticket-roll", "aura-till");
+    return true;
+  }
+
   function cashInCompletedPlays() {
     return 0;
   }
@@ -3871,6 +3879,7 @@
     buyPennyRoll,
     buyTicketStrip,
     cashTicketForPennies,
+    tradePenniesForTicket,
     pennyRoll: PENNY_ROLL,
     ticketStrip: TICKET_STRIP,
     pennyStack: PENNY_STACK,
