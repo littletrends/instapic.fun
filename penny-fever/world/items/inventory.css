@@ -20,10 +20,8 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .pocket-close{background:#3a2a22;color:#fff0cd;border-color:#c4a064}
 .pocket-save{margin:0;padding:8px 20px;background:#ffe6b8;color:#5a3a28}
 
-.pocket-menu{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:0 16px 12px}
-.stall-pick-wrap{display:flex;flex-direction:column;gap:4px;flex:1 1 240px;min-width:min(100%,220px);font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e2c48a}
-.treasure-book .stall-pick-wrap select{width:100%;min-height:40px;padding:8px 12px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#3d2c1f;font:16px/1.3 Georgia,serif;letter-spacing:0;text-transform:none}
-.pocket-menu input[type=search]{flex:1 1 160px;min-width:0;width:100%;padding:8px 12px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#3d2c1f;font-size:16px}
+.pocket-menu{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 16px 12px}
+.pocket-menu input[type=search]{flex:1 1 180px;min-width:0;width:100%;padding:8px 12px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#3d2c1f;font-size:16px}
 .pocket-filters{display:flex;gap:4px}
 .pocket-filters button{min-height:36px;padding:6px 12px;border-radius:999px;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .pocket-filters button[aria-pressed=true]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
@@ -72,7 +70,29 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .treasure-book .shelf-book.is-complete{box-shadow:0 3px 0 #e4d0a8,0 0 0 2px #c4a064}
 .treasure-book .shelf-book.is-complete em{color:#38583b}
 
-.pocket-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(240px,.42fr) minmax(0,1fr);background:#c4a064;overflow:hidden}
+.treasure-tree{padding:12px 10px 18px;overflow:auto}
+.tree-group{margin:12px 6px 6px;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7a3040}
+.tree-group:first-child{margin-top:0}
+.treasure-tree details{margin:0 0 6px;border:1px solid #e4d0a8;border-radius:12px;background:#fffaf0}
+.treasure-tree details.is-current{border-color:#7a3040;box-shadow:0 0 0 1px #7a304055}
+.treasure-tree details.is-complete summary .tree-mark{color:#38583b}
+.treasure-tree summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;cursor:pointer;list-style:none;font:16px/1.3 Georgia,serif;color:#3d2c1f}
+.treasure-tree summary::-webkit-details-marker,.treasure-tree summary::marker{display:none;content:''}
+.treasure-tree summary::before{content:'▸';color:#7a3040;margin-right:6px;font-size:12px}
+.treasure-tree details[open] summary::before{content:'▾'}
+.tree-name{flex:1;min-width:0}
+.tree-mark{font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a3040;white-space:nowrap}
+.treasure-book .tree-prize{display:grid;grid-template-columns:1.4rem minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;margin:0;padding:6px 12px 6px 28px;border:0;border-top:1px solid #efe4c8;border-radius:0;background:transparent;color:#3d2c1f;text-align:left;min-height:0;box-shadow:none;font:15px/1.3 Georgia,serif}
+.treasure-book .tree-prize:hover{background:#fff6e0}
+.tree-ch{font:700 11px/1 system-ui,sans-serif;letter-spacing:.08em;color:#7a3040}
+.tree-prize em{font:700 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.tree-prize.is-missing{color:#8a7460}
+.tree-prize.is-missing em{color:#9a8a74}
+.tree-stall-head .book-cover-btn{max-width:220px}
+@media(min-width:841px){
+  .treasure-book .shelf-back{display:none!important}
+}
+.pocket-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,.4fr) minmax(0,1fr);background:#c4a064;overflow:hidden}
 .pocket-spread{position:relative;display:grid;grid-template-columns:1fr 1fr;min-height:0;background:#e9d7b4;box-shadow:inset 0 0 80px #0002}
 .pocket-page{padding:22px 26px 18px;overflow:auto;min-width:0;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .pocket-page.is-left{background:
@@ -139,7 +159,8 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
   .pocket-header h1{font-size:22px}
   .pocket-header p{font-size:13px}
   .pocket-menu{padding:0 12px 10px;align-items:stretch}
-  .stall-pick-wrap{flex:1 1 100%}
+  .pocket-body:not(.has-stall) .is-right{display:none}
+  .pocket-body.has-stall .treasure-tree{display:none}
   .pocket-filters{width:100%}
   .pocket-filters button{flex:1}
   .shelf-intro{font-size:14px;margin:0 4px 10px}
@@ -150,16 +171,17 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
   .stall-pips{grid-area:pips;justify-content:flex-start;max-width:none}
   .stall-copy strong{font-size:16px}
   .pocket-body{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
-  .pocket-page.is-left{
+  .treasure-tree{padding:10px}
+  .tree-stall-head{
     display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-areas:"cover kicker" "cover title" "cover bar" "cover count";
-    gap:2px 12px;align-items:center;padding:10px 12px;overflow:hidden;
+    gap:2px 12px;align-items:center;margin-bottom:10px;
   }
-  .pocket-page.is-left .book-cover-btn{grid-area:cover;max-width:72px;width:72px;margin:0;padding:4px}
-  .book-cover-btn img{height:64px}
-  .pocket-page.is-left .pocket-kicker{grid-area:kicker;margin:0}
-  .pocket-page.is-left h2{grid-area:title;font-size:18px;margin:0}
-  .pocket-page.is-left .pocket-progress{grid-area:bar;margin:4px 0}
-  .pocket-page.is-left .pocket-count{grid-area:count;margin:0;font-size:11px}
+  .tree-stall-head .book-cover-btn{grid-area:cover;max-width:72px;width:72px;margin:0;padding:4px}
+  .tree-stall-head .book-cover-btn img{height:64px}
+  .tree-stall-head .pocket-kicker{grid-area:kicker;margin:0}
+  .tree-stall-head h2{grid-area:title;font-size:18px;margin:0}
+  .tree-stall-head .pocket-progress{grid-area:bar;margin:4px 0}
+  .tree-stall-head .pocket-count{grid-area:count;margin:0;font-size:11px}
   .pocket-blurb{display:none}
   .pocket-page.is-right{padding:10px 12px 18px}
   .album-slots{grid-template-columns:1fr;gap:8px}
