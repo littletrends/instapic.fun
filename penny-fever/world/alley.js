@@ -3,9 +3,9 @@
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=till-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
@@ -24,7 +24,7 @@ const STALLS = [
   { id: "whisper", name: "Gossip Booth", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Lean in. One word becomes a charm." },
   { id: "ball-toss", name: "Barely-Fit Toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Holes that barely fit. Three misses and the oval wins." },
   { id: "coin-pusher", name: "Coin Pusher Shelf", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "Drop a penny. Walk away or get buried." },
-  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "One thumb. Survive the chapters." },
+  { id: "pinball", name: "Pinball Alley", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
   { id: "water-gun", name: "Water Gun Duel", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Fill the clown. The other lane is a ghost." },
   { id: "milk-bottles", name: "Weighted Bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "Bottom row’s lead. You felt it." },
   { id: "cover-the-spot", name: "Cover-the-Spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover it — or get greedy." },

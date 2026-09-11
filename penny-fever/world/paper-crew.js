@@ -1,8 +1,19 @@
 import * as THREE from './lib/three.module.min.js';
 import { paperRail } from './paper-guest-entrance.js?v=keep-light-1';
-import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=crew-door-2';
+import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=crew-door-3';
 
 export const CREW = CREW_IDS.map((id) => id[0].toUpperCase() + id.slice(1));
+
+const loader = new THREE.TextureLoader();
+const maps = {};
+function crewTex(src) {
+  if (!src) return null;
+  if (maps[src]) return maps[src];
+  const t = loader.load(src);
+  t.colorSpace = THREE.SRGBColorSpace;
+  maps[src] = t;
+  return t;
+}
 
 function wandererIds() {
   const play = getDoll().crew;
@@ -20,16 +31,6 @@ function crewView(person, camera) {
 /** Aisle wanderers only. Stall hosts keep their own vendor portraits. */
 export function installPaperCrew(npcs) {
   if (!paperRail) return;
-  const originals = npcs.map((person) => [...person.children]);
-  const loader = new THREE.TextureLoader();
-  const maps = {};
-  function tex(src) {
-    if (maps[src]) return maps[src];
-    const t = loader.load(src);
-    t.colorSpace = THREE.SRGBColorSpace;
-    maps[src] = t;
-    return t;
-  }
 
   npcs.forEach((person, index) => {
     const mat = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.12, side: THREE.DoubleSide });
@@ -60,7 +61,7 @@ export function installPaperCrew(npcs) {
       stand.add(view);
       views.push(view);
     }
-    originals[index].forEach((o) => {
+    [...person.children].forEach((o) => {
       o.visible = false;
       globalThis.PennyFeverRestyle?.noteLiveBody(o);
     });
@@ -85,10 +86,8 @@ export function installPaperCrew(npcs) {
       const c = person.userData.paperCrew;
       if (!c) return;
       c.wantedArt = crewArt(id);
-      if (c.mat.map) {
-        c.mat.map = tex(c.wantedArt);
-        c.mat.needsUpdate = true;
-      }
+      c.mat.map = crewTex(c.wantedArt);
+      c.mat.needsUpdate = true;
     });
     globalThis.PennyFeverRestyle?.refreshRestyle();
   }
@@ -101,10 +100,11 @@ export function updatePaperCrew(npcs, camera) {
     const c = person.userData.paperCrew;
     if (!c || !c.stand.visible) continue;
     if (person.userData.stallId) continue;
-    if (!c.mat.map && c.wantedArt && camera && Math.abs(person.position.z - camera.position.z) < 24) {
-      c.mat.map = tex(c.wantedArt);
+    if (!c.mat.map && c.wantedArt) {
+      c.mat.map = crewTex(c.wantedArt);
       c.mat.needsUpdate = true;
     }
+    if (!camera) continue;
     person.scale.z = person.scale.x;
     const dx = person.position.x - c.lastX;
     const dz = person.position.z - c.lastZ;
