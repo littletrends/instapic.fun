@@ -112,6 +112,18 @@ function hydrate(blob) {
     return c;
   });
   if ((blob.v || 0) < 3 && coins.length < 90) topUp(coins, Math.random);
+  const chapter = SETS[blob.chapter || 0] || SETS[0];
+  const prizeId = chapter.unique || chapter.prize;
+  const floor = LAYERS[2];
+  for (const c of coins) {
+    if (c.id !== prizeId || c.layer !== 2) continue;
+    if (c.y > floor.back + 120) {
+      c.y = floor.back + 58;
+      c.x = clamp(c.x, floor.left + c.r + 10, floor.right - c.r - 10);
+      c.vx = 0;
+      c.vy = 0;
+    }
+  }
   return {
     level: blob.chapter || 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
@@ -142,22 +154,25 @@ function flyHome(s, c) {
   });
 }
 function payout(s, c) {
+  const chapter = SETS[s.level] || SETS[0];
+  const wonChapter = c.id === chapter.prize || c.id === chapter.unique;
   if (c.token || c.score) {
     s.score += c.score;
     if (c.id !== 'everyday-penny') s.specials++;
-    if (alleyPlay && c.score) {
-      credit(c.score);
-      keep('penny-purse');
-    }
+    if (alleyPlay && c.score) credit(c.score);
   }
-  if (c.id !== 'everyday-penny' && alleyPlay) keep(c.id);
-  if (c.unique && alleyPlay && SETS[s.level]?.prize) keep(SETS[s.level].prize);
+  if (alleyPlay) {
+    if (wonChapter) keep(chapter.prize);
+    else if (c.id !== 'everyday-penny') keep(c.id);
+  }
   if (c.prize && !s.paid.includes(c.id)) s.paid.push(c.id);
   flyHome(s, c);
   s.dirty = true;
-  s.note = c.prize || c.id !== 'everyday-penny'
-    ? itemName(c.id) + ' into the treasure book!'
-    : 'A penny into the purse.';
+  s.note = wonChapter
+    ? itemName(chapter.prize) + ' shoved off the lip — into the treasure book!'
+    : c.id !== 'everyday-penny'
+      ? itemName(c.id) + ' into the treasure book!'
+      : 'A penny into the purse.';
 }
 function spill(s, c) {
   if (c.layer >= 2) {
@@ -283,12 +298,12 @@ function fresh(level, rng) {
   const seen = [];
   if (set.unique) {
     const L = LAYERS[2];
-    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 90, L.lip - 28, 2));
+    coins.push(mint(set.unique, (L.left + L.right) / 2 + (rng() - 0.5) * 28, L.back + 58, 2));
     seen.push(set.unique);
   }
   if (level >= 3) {
     const L = LAYERS[1];
-    coins.push(mint('heart-gear', L.left + 80 + rng() * 200, L.lip - 40, 1));
+    coins.push(mint('heart-gear', L.left + 90 + rng() * 160, L.back + 52, 1));
     seen.push('heart-gear');
   }
   const ammo = 12 + level * 3;
@@ -296,7 +311,7 @@ function fresh(level, rng) {
     level, t: 0, coins, aim: 450, ammo, total: ammo, score: 0, specials: 0,
     cooldown: 0, settle: 0, falling: [], dropped: 0, started: !alleyPlay,
     queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0, fly: [],
-    note: alleyPlay ? 'The trays wait. A penny from the purse lands, then the plate shoves once.' : 'Drop a penny from the purse.',
+    note: alleyPlay ? 'The prize sits at the back. Shove it off the lip to keep it.' : 'Drop a penny from the purse.',
   };
 }
 
