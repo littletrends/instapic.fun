@@ -135,7 +135,6 @@
     ['balloon-bouquet','Balloon bouquet','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'ride-keepsakes'],
     ['swing-spinner','Swing spinner','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'ride-keepsakes'],
   ];
-  const hingedIds = ['admission-ticket','night-suitcase','moonlight-wardrobe'];
   const albumMeta = {
     essentials: ['On your person', 'Pennies, a ticket, a pass — what you carry onto the boards.'],
     ephemera: ['Alley ephemera', 'Six little finds from the tents. Complete the set for a costume book.'],
@@ -220,14 +219,12 @@
     const book = bookOf(id, album, collection);
     return Object.freeze({
       id,name,category,kind,key,source,hint,depth,collection,album,book,
-      alpha: Boolean(collection),
-      asset: collection
-        ? `assets/restyle/game-sprites/${collection}/${id}/front.png`
-        : `assets/restyle/items/${id}.png`,
-      columns: collection ? 1 : 2,
-      rows: collection ? 1 : (hingedIds.includes(id) ? 2 : 1),
-      hinged: hingedIds.includes(id) && !collection,
-      turnaround: Boolean(collection),
+      alpha: true,
+      asset: `assets/restyle/game-sprites/${collection}/${id}/front.png`,
+      columns: 1,
+      rows: 1,
+      hinged: false,
+      turnaround: true,
     });
   }));
   const albums = Object.freeze(albumOrder.map(id => Object.freeze({id, title: albumMeta[id][0], blurb: albumMeta[id][1]})));
