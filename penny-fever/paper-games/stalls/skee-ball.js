@@ -1,6 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=skip-moonbow-3';
+import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=arcade-restore-1';
 
 const SETS = [
   {prize: 'moon-penny', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,
@@ -202,29 +202,22 @@ export default {
   },
   key(s, k, down) { if (k === ' ' && down) roll(s); },
   draw(s, d) {
-    d.poly([[64, 18], [836, 18], [858, 1184], [42, 1184]], '#4a3224', '#e6c57a', 4);
-    d.poly([[96, 30], [804, 30], [804, 168], [96, 168]], '#161022f2', '#e6c57a', 2);
-    d.text('SKIP’S', 450, 58, 14, '#e8c878');
-    d.text('MOONBOW ALLEY', 450, 92, 26, '#fff3d0');
-    d.text(s.hung, 450, 128, 15, '#f0d49a');
-    d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], '#1c2834ee', '#d7b56a', 3);
-
-    d.poly([[70, 200], [248, 200], [248, 318], [70, 318]], '#3a2a22ee', '#e4c48a', 2);
-    d.text('this moon', 159, 222, 12, '#ead6a4');
-    d.item(spriteKey(s.prize), 159, 258, {w: 56, fallback: () => d.star(159, 258, 20)});
-    d.text(itemName(s.prize), 159, 298, 12, '#fff0cb');
+    d.poly([[70, 108], [250, 108], [250, 292], [70, 292]], '#4a3424cc', '#e4c48a', 2);
+    d.text('this moon', 160, 130, 13, '#ead6a4');
+    d.item(spriteKey(s.prize), 160, 188, {w: 84, fallback: () => d.star(160, 188, 28)});
+    d.text(itemName(s.prize), 160, 246, 12, '#fff0cb');
+    d.text((s.limit - s.throws) + ' roll' + (s.limit - s.throws === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
     for (let i = 0; i < SETS.length; i++) {
-      const x = 86 + (i % 3) * 48, y = 348 + Math.floor(i / 3) * 50;
+      const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
       const got = owned(SETS[i].prize) || (s.won && i === s.level);
-      const here = i === s.level;
-      d.circle(x, y, 18, here ? '#6a4a28' : '#1a120866', here ? '#f0d49a' : '#c4a46a66', here ? 2 : 1);
-      d.item(spriteKey(SETS[i].prize), x, y, {w: 30, fallback: () => d.star(x, y, 10)});
-      if (got) d.text('✓', x + 12, y - 10, 14, '#f6e2a2');
+      d.item(spriteKey(SETS[i].prize), x, y, {w: 36, fallback: () => d.star(x, y, 12)});
+      if (got) d.text('✓', x + 14, y - 10, 16, '#f6e2a2');
+      else d.circle(x, y, 20, '#1a120866');
     }
     const n = alleyPlay ? (pocket() ?? 0) : '∞';
-    d.item(spriteKey('penny-purse'), 790, 248, {w: 72, fallback: () => d.heart(790, 248, 22, '#6a7a52')});
-    d.text(String(n), 790, 298, 16, '#fff6d8');
-    d.text(n === 1 ? 'penny' : 'pennies', 790, 316, 12, '#ead6a4');
+    d.item(spriteKey('penny-purse'), 790, 160, {w: 92, fallback: () => d.heart(790, 160, 28, '#6a7a52')});
+    d.text(String(n), 790, 218, 18, '#fff6d8');
+    d.text(n === 1 ? 'penny' : 'pennies', 790, 236, 12, '#ead6a4');
 
     d.arc(450, 620, 210, Math.PI * 1.12, Math.PI * 1.88, '#c9a56a44', 10);
     d.arc(450, 620, 186, Math.PI * 1.15, Math.PI * 1.85, '#ead6a433', 4);
@@ -240,23 +233,23 @@ export default {
 
     for (const b of s.holes) {
       d.ellipse(b.x + 5, b.y + 12, b.r + 8, (b.r + 8) * .72, '#283c4d55');
-      d.ellipse(b.x, b.y, b.r, b.r * .72, b.want ? '#4a3a20' : '#2a3440cc', b.want ? '#f0d49a' : '#8a7a5a88', b.want ? 8 : 4);
-      d.ellipse(b.x, b.y + 6, Math.max(8, b.r - 12), Math.max(6, (b.r - 12) * .67), b.want ? '#6a5030' : '#3a4450', b.want ? '#ead6a4' : '#6a6458', 2);
+      d.ellipse(b.x, b.y, b.r, b.r * .72, b.want ? '#3a4a38' : '#314052', b.want ? '#f0d49a' : '#dbbe88', b.want ? 9 : 7);
+      d.ellipse(b.x, b.y + 8, b.r - 14, (b.r - 14) * .67, '#706551', '#ae966c', 2);
       if (b.want) {
-        d.glow(b.x, b.y, b.r + 22, '#f0d49a');
-        d.item(spriteKey(s.prize), b.x, b.y - b.r - 4, {
-          w: 28, shadow: false, fallback: () => d.star(b.x, b.y - b.r - 4, 12),
+        d.glow(b.x, b.y, b.r + 18, '#f0d49a');
+        d.item(spriteKey(s.prize), b.x, b.y - 2, {
+          w: Math.min(42, b.r), shadow: false, fallback: () => d.star(b.x, b.y, 14),
         });
       } else if (b.score >= 50) {
         d.item(spriteKey('star-token'), b.x, b.y, {
-          w: 18, shadow: false, fallback: () => d.star(b.x, b.y, 8, '#f9edca'),
+          w: 22, shadow: false, fallback: () => d.text(b.score, b.x, b.y + 8, 21, '#e5cc98'),
         });
       }
-      d.text(b.id === 'needle' ? '★' : String(b.score), b.x, b.y + 8, b.want ? 16 : 14, b.want ? '#fff4d0' : '#c4b090aa');
+      d.text(b.score, b.x, b.y + (b.want || b.score >= 50 ? 22 : 8), 18, b.want ? '#fff4d0' : '#e5cc98');
     }
 
-    d.poly([[290, 1060], [610, 1060], [610, 870], [575, 804], [325, 804], [290, 870]], '#5a4a38', '#d1b486', 4);
-    d.poly([[300, 870], [600, 870], [575, 804], [325, 804]], '#8a8070', '#edcea0', 2);
+    d.poly([[290, 1060], [610, 1060], [610, 870], [575, 804], [325, 804], [290, 870]], '#687b8d', '#d1b486', 4);
+    d.poly([[300, 870], [600, 870], [575, 804], [325, 804]], '#a3a5a0', '#edcea0', 2);
     for (let x = 325; x <= 575; x += 50) d.line({x, y: 1050}, {x, y: 866}, '#b3b29b55', 1);
     d.line({x: 300, y: 1050}, {x: 300, y: 872}, '#e4c798', 5);
     d.line({x: 600, y: 1050}, {x: 600, y: 872}, '#e4c798', 5);
@@ -272,11 +265,9 @@ export default {
       d.ring(end.x, end.y, 14, '#a17955', 2);
       d.text('LIFT ' + Math.round((s.power - 240) / 310 * 100) + '%', 450, 1110, 17, '#f0d9ae');
     }
-    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
-    d.text((s.limit - s.throws) + ' roll left · ' + s.cue, 450, 1150, 13, '#ead6a4');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 159 : 790, destY = f.prize ? 258 : 248;
+      const destX = f.prize ? 160 : 790, destY = f.prize ? 188 : 160;
       d.item(spriteKey(f.id), f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, {
         w: 28 * (1 - u * 0.35),
         fallback: () => d.star(f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, 10, '#f4e2a8'),

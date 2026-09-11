@@ -496,8 +496,8 @@ export default {
   draw(s, d) {
     for (let i = 0; i < LAYERS.length; i++) {
       const L = LAYERS[i];
-      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a2233' : '#6a462c28', '#e4c48a66', 2);
-      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18fcc', 4);
+      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a228e' : '#6a462c88', '#e4c48a', 3);
+      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18f', 5);
       const extend = s.stroke > 0 && s.stroke < 0.7 ? s.stroke / 0.7 : (s.stroke >= 0.7 ? 1 : 0);
       const plate = L.back + 18 + extend * SHOVE;
       d.line({x: L.left + 10, y: plate}, {x: L.right - 10, y: plate}, '#d2b07a', 12);
