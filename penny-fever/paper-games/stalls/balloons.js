@@ -8,7 +8,7 @@ function spawn(s) {
   if (s.floaters.length >= 5) return;
   const id = kinds[(s.spawned + s.level) % kinds.length];
   s.floaters.push({
-    id, x: 240 + (s.spawned % 5) * 105, y: 1080,
+    id, x: 280 + (s.spawned % 5) * 85, y: 980,
     vx: (s.spawned % 2 ? 1 : -1) * swell(s.level, 20, 8, 52),
     vy: -(swell(s.level, 70, 12, 120) + (s.spawned % 3) * 8),
     a: 0, popped: false,
@@ -35,16 +35,16 @@ export default {
     s.t += dt; s.delay -= dt;
     const axis = (input.actions.has('right') || input.keys.has('ArrowRight') ? 1 : 0)
       - (input.actions.has('left') || input.keys.has('ArrowLeft') ? 1 : 0);
-    s.aim = clamp(s.aim + axis * 280 * dt, 210, 690);
+    s.aim = clamp(s.aim + axis * 280 * dt, 260, 640);
     if (s.delay <= 0) { spawn(s); s.delay = pace(s.level, 1.15, .14, .52); }
     if (s.popped % 3 === 0) s.target = kinds[(Math.floor(s.popped / 3) + s.level) % kinds.length];
     for (const b of s.floaters) {
       if (b.popped) { b.vy += 280 * dt; b.a += dt * 4; }
       else { b.x += b.vx * dt; b.y += b.vy * dt; b.a = Math.sin(s.t * 2 + b.x) * .12; }
-      if (b.x < 200) { b.x = 200; b.vx = Math.abs(b.vx); }
-      if (b.x > 700) { b.x = 700; b.vx = -Math.abs(b.vx); }
+      if (b.x < 250) { b.x = 250; b.vx = Math.abs(b.vx); }
+      if (b.x > 650) { b.x = 650; b.vx = -Math.abs(b.vx); }
     }
-    s.floaters = s.floaters.filter(b => b.y > 280 && b.y < 1180);
+    s.floaters = s.floaters.filter(b => b.y > 320 && b.y < 1040);
     if (s.popped >= s.goal) done(s, 'The garden is full of little pops', s.popped + ' matching balloons, ' + s.misses + ' wanderers left to drift. Nell is tying the next bunch.');
   },
   pointer(s, type, p) {
@@ -68,18 +68,18 @@ export default {
   },
   key(s, k, down) { if (k === ' ' && down) this.action(s, 'pop'); },
   draw(s, d) {
-    d.item(spriteKey(s.target), 450, 360, {w: 78, fallback: () => d.circle(450, 360, 28, '#e2a0b4')});
-    d.text('pop this', 450, 300, 16, '#f3dfb2');
-    d.line({x: s.aim, y: 430}, {x: s.aim, y: 1080}, '#f6d78a44', 2);
+    d.item(spriteKey(s.target), 450, 236, {w: 68, shadow: false, fallback: () => d.circle(450, 236, 24, '#e2a0b4')});
+    d.text('pop this', 450, 186, 15, '#5a3a48');
+    d.line({x: s.aim, y: 360}, {x: s.aim, y: 980}, '#6a3a5044', 2);
     for (const b of s.floaters) {
       const c = d.c; c.save(); c.translate(b.x, b.y); c.rotate(b.a);
       d.item(spriteKey(b.id), 0, 0, {
-        w: 64, alpha: b.popped ? .45 : 1,
-        fallback: () => d.circle(0, 0, 24, '#e4a4b7', '#f6d78a', 2),
+        w: 58, alpha: b.popped ? 0.4 : 1,
+        fallback: () => d.circle(0, 0, 22, '#e4a4b7', '#f6d78a', 2),
       });
       c.restore();
     }
-    d.text(s.popped + ' / ' + s.goal, 450, 1088, 20);
+    d.text(s.popped + ' / ' + s.goal, 450, 1092, 20, '#5a3a48');
   },
   readout: s => s.popped + ' / ' + s.goal + ' matching · ' + s.note,
 };

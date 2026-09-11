@@ -37,11 +37,9 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: id === 'carousel'
-    ? '../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.png'
-    : id === 'balloons'
-      ? '../assets/restyle/scene-turnarounds-2026-09-09/amusements/balloon-tree/front.png'
-      : `../assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`,
+  asset: id === 'carousel' || id === 'balloons'
+    ? `./assets/${id}.png`
+    : `../assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));

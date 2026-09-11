@@ -1,4 +1,4 @@
-import {games} from '../../paper-games/catalogue.js?v=ride-play-1';
+import {games} from '../../paper-games/catalogue.js?v=paper-world-1';
 import {kits} from '../../paper-games/prizes.js?v=treasure-menu-2';
 
 const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;

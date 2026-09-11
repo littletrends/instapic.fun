@@ -47,24 +47,21 @@ export default {
   action(s, id) { if (id === 'stop') catchRide(s); },
   key(s, k, down) { if (k === ' ' && down) catchRide(s); },
   draw(s, d) {
-    const cx = 450, cy = 700, r = 210, n = s.rides.length;
-    d.ellipse(cx, cy + 8, r + 36, r * .72 + 10, '#d7c4a433', '#e8d2a4', 3);
-    d.item(spriteKey(s.target), cx, 390, {w: 72, fallback: () => d.star(cx, 390, 24)});
-    d.text('catch this', cx, 330, 16, '#f3dfb2');
-    d.glow(cx, cy - r * .62, 40, '#f4d590');
-    d.poly([[cx - 14, cy - r * .62 - 28], [cx + 14, cy - r * .62 - 28], [cx, cy - r * .62 - 6]], '#e8c484', '#a78348', 2);
+    const cx = 450, cy = 690, r = 168, n = s.rides.length;
+    d.item(spriteKey(s.target), cx, 248, {w: 70, shadow: false, fallback: () => d.star(cx, 248, 22)});
+    d.text('catch this', cx, 198, 15, '#5a3a40');
+    d.glow(cx, cy - r * 0.78, 36, '#f4d590');
     for (let i = 0; i < n; i++) {
       const a = s.spin + i * TAU / n;
-      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * .72;
-      const under = Math.abs(Math.atan2(Math.sin(a + Math.PI / 2), Math.cos(a + Math.PI / 2))) < .2;
-      if (under) d.glow(x, y, 50, '#ffe6a4');
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.78;
+      const under = Math.abs(Math.atan2(Math.sin(a + Math.PI / 2), Math.cos(a + Math.PI / 2))) < 0.22;
+      if (under) d.glow(x, y, 44, '#ffe6a4');
       d.item(spriteKey(s.rides[i]), x, y, {
-        w: under ? 74 : 58, alpha: s.rides[i] === s.target ? 1 : .85,
-        fallback: () => d.circle(x, y, 22, '#cdb281', '#f8dfa7', 2),
+        w: under ? 68 : 52, alpha: s.rides[i] === s.target ? 1 : 0.9,
+        fallback: () => d.circle(x, y, 20, '#cdb281', '#f8dfa7', 2),
       });
     }
-    d.item(spriteKey('music-carousel'), cx, cy, {w: 90, alpha: .35, shadow: false, fallback: () => {}});
-    d.text(s.caught + ' / ' + s.goal, cx, 1040, 22);
+    d.text(s.caught + ' / ' + s.goal, cx, 1088, 20, '#5a3a40');
   },
   readout: s => s.caught + ' / ' + s.goal + ' stops · ' + s.tries + ' tries · ' + s.note,
 };
