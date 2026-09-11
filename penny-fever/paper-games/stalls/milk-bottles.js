@@ -65,6 +65,8 @@ export default {
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
+  loseTitle: 'The dairy still stands',
+  retryButton: 'Try this dairy again',
   intro: 'Mabel’s milk-bottle alley. Six full dairies, one keepsake each. A penny a throw, and only a couple of throws. One clean hit can take the lot — miss, and the shelf stays hers.',
   instructions: alleyPlay
     ? 'Aim and throw (one penny a bead). You only get two or three throws this dairy. Knock every bottle to stamp the prize and open it in the treasure book. Chapters you have cleared are marked. Arrows aim, Space throws.'
