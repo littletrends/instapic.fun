@@ -1,6 +1,6 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=copper-ch1-1';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -12,7 +12,7 @@ const LAYERS = [
   {left: 202, right: 698, back: 798, lip: 1072},
 ];
 const SETS = [
-  {mix0: ['everyday-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
+  {mix0: ['everyday-penny', 'everyday-penny', 'everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'everyday-penny', 'moon-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
   {mix0: ['everyday-penny', 'moon-penny'], mix1: ['everyday-penny', 'moon-penny'], mix2: ['moon-penny', 'star-token'], unique: 'copper-cascade', prize: 'copper-cascade'},
   {mix0: ['everyday-penny', 'rose-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['rose-penny', 'star-token'], unique: 'penny-tree', prize: 'penny-tree'},
   {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token'], unique: 'coin-album', prize: 'coin-album'},
@@ -45,7 +45,7 @@ const CHAPTER_ITEMS = {
 };
 const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS};
 const POOL = Object.entries(DEFS).map(([id, def]) => ({id, ...def}));
-const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse',...Object.keys(CHAPTER_ITEMS)];
+const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse','pressed-heart','lucky-match',...UNIQUES,...Object.keys(CHAPTER_ITEMS)];
 
 function mint(id, x, y, layer) {
   const def = DEFS[id] || DEFS['everyday-penny'];
@@ -83,7 +83,7 @@ function pick(s, rng, wantUnique) {
 }
 function snapshot(s) {
   return {
-    v: 4,
+    v: 5,
     chapter: s.level || 0,
     t: s.t,
     aim: s.aim,
@@ -109,8 +109,8 @@ function plantPrize(coins, level, rng) {
   const layer = 1;
   const L = LAYERS[layer];
   coins.push(mint(id,
-    (L.left + L.right) / 2 + (rng() - 0.5) * 48,
-    L.back + (L.lip - L.back) * 0.42 + (rng() - 0.5) * 18,
+    (L.left + L.right) / 2 + (rng() - 0.5) * 36,
+    L.back + (L.lip - L.back) * 0.68 + (rng() - 0.5) * 12,
     layer));
 }
 function hydrate(blob) {
@@ -271,7 +271,7 @@ function pack(layer, rng, ids) {
     const inset = (row % 2) * (dx * 0.5);
     for (let x = L.left + 22 + inset; x <= L.right - 22; x += dx) {
       const id = ids[out.length % ids.length];
-      out.push(mint(id, x + (rng() - 0.5) * 3, y + (rng() - 0.5) * 2, layer));
+      out.push(mint(id, x + (rng() - 0.5) * 9, y + (rng() - 0.5) * 7, layer));
     }
   }
   return out;
@@ -334,7 +334,7 @@ export default {
   create(level, rng) {
     const roll = rng || Math.random;
     const saved = loadMachine(level);
-    if (saved && saved.pieces && saved.pieces.length >= 40) {
+    if (saved && saved.v >= 5 && saved.pieces && saved.pieces.length >= 40) {
       const s = hydrate(saved);
       s.level = level;
       plantPrize(s.coins, level, roll);
@@ -519,8 +519,14 @@ export default {
     }
     d.text(String(n), px, py + 78, 24, '#fff6d8');
     d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 100, 14, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
-    d.text('treasures', 788, 144, 13, '#ead6a4');
+    const prize = (SETS[s.level] || SETS[0]).prize;
+    d.poly([[742, 48], [838, 52], [834, 148], [738, 142]], '#6b3a3a', '#e8d4a0', 2);
+    d.text('this table', 788, 68, 12, '#ead6a4');
+    d.item(spriteKey(prize), 788, 100, {
+      w: 52,
+      fallback: () => d.star(788, 100, 16, '#f4e2a8'),
+    });
+    d.text(itemName(prize), 788, 136, 12, '#fff0cb');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);
