@@ -5,7 +5,7 @@ This folder is the current playable draft. Call it **Paper Alley Live** when you
 Public door: `doorway.html`  
 Play: `index.html?style=paper&rail=paper#door`
 
-It is the 3D paper alley, Aura’s booth, 26 booth games, and last night’s paper worlds (including Celeste, Marina, and the clockwork vault). The old 2D tent map is not in this folder’s walk anymore.
+It is the 3D paper alley, Aura’s booth, 26 booth games, and last night’s paper worlds (including Celeste, Marina, and the clockwork vault). The walk uses a papercraft sideshow alley map — the old 2D tent map is gone.
 
 Old leftover files were moved out to:
 

@@ -1,13 +1,5 @@
 import * as THREE from './lib/three.module.min.js';
-const cache=new Map(), pending=[];
-let ornamentImage,ornamentLoading=false;
-function ensureOrnament(){
- if(ornamentImage||ornamentLoading)return;
- ornamentLoading=true;
- new THREE.TextureLoader().load('assets/restyle/paper-ornament-atlas.png',texture=>{
-  ornamentImage=texture.image;ornamentLoading=false;for(const paint of pending)paint();pending.length=0;texture.dispose();
- },undefined,()=>{ornamentLoading=false;});
-}
+const cache=new Map();
 // Printed cut-paper ornament: nested frames, scallops, folded diamonds and leaf sprays.
 export function decorativePaper(body='#435637',trim='#d2b073',variant=0){
  const key=[body,trim,variant].join(':');if(cache.has(key))return cache.get(key);
@@ -34,14 +26,6 @@ export function decorativePaper(body='#435637',trim='#d2b073',variant=0){
   c.save();c.translate(256,y);c.scale(side,1);c.beginPath();c.moveTo(0,0);c.bezierCurveTo(30,-38,104,-32,111,0);c.bezierCurveTo(80,26,44,12,53,-5);c.stroke();c.restore();
  }
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;cache.set(key,texture);
- const paint=()=>{
-  const q=((variant%4)+4)%4,w=ornamentImage.width/2,h=ornamentImage.height/2;
-  c.globalCompositeOperation='source-over';c.drawImage(ornamentImage,(q%2)*w,Math.floor(q/2)*h,w,h,0,0,512,768);
-  c.globalCompositeOperation='multiply';c.fillStyle=body;c.fillRect(0,0,512,768);
-  c.globalCompositeOperation='source-over';c.strokeStyle=trim;c.lineWidth=3;c.strokeRect(10,10,492,748);
-  texture.needsUpdate=true;
- };
- if(ornamentImage)paint();else {ensureOrnament();pending.push(paint);}
  return texture;
 }
 export function decorateBoxSurfaces(root,body,trim){

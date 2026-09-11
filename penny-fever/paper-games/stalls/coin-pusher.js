@@ -5,7 +5,7 @@ import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
 const STROKE = 0.42;
-const SHOVE = 118;
+const SHOVE = 78;
 const LAYERS = [
   {left: 258, right: 642, back: 188, lip: 448},
   {left: 228, right: 672, back: 478, lip: 768},
@@ -327,12 +327,12 @@ export default {
             if (c.falling || c.layer !== i) continue;
             if (c.y < plate + c.r) {
               c.y += dPlate;
-              c.vy = Math.max(c.vy, dPlate * 90);
+              c.vy = Math.max(c.vy, dPlate * 80);
             } else {
               const along = clamp((c.y - L.back) / depth, 0, 1);
-              const tide = dPlate * (0.4 + 0.55 * along);
+              const tide = dPlate * (0.06 + 0.16 * along);
               c.y += tide;
-              c.vy = Math.max(c.vy, tide * 70);
+              c.vy = Math.max(c.vy, tide * 40);
             }
           }
         }

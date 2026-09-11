@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=paper-alley-live-2';
-import {phoneLane} from '../phone-lane.js?v=paper-alley-live-24';
+import {phoneLane} from '../phone-lane.js?v=keep-light-1';
 
 function clearParchment(data,w,h){
  const n=w*h,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
@@ -55,15 +55,18 @@ export function wallBounds(data,w,h){
 }
 function elevation(image,column,row=0){
  const sw=Math.floor(image.naturalWidth/2),sh=Math.floor(image.naturalHeight/2);
- const canvas=document.createElement('canvas');canvas.width=sw;canvas.height=sh;
+ const maxEdge=phoneLane?256:384;
+ const scale=Math.min(1,maxEdge/Math.max(sw,sh));
+ const dw=Math.max(1,Math.round(sw*scale)),dh=Math.max(1,Math.round(sh*scale));
+ const canvas=document.createElement('canvas');canvas.width=dw;canvas.height=dh;
  const c=canvas.getContext('2d',{willReadFrequently:true});
- c.drawImage(image,column*sw,row*sh,sw,sh,0,0,sw,sh);
- const pixels=c.getImageData(0,0,sw,sh);clearParchment(pixels.data,sw,sh);c.putImageData(pixels,0,0);
- const box=wallBounds(pixels.data,sw,sh);if(!box)throw Error('Empty wall elevation');
+ c.drawImage(image,column*sw,row*sh,sw,sh,0,0,dw,dh);
+ const pixels=c.getImageData(0,0,dw,dh);clearParchment(pixels.data,dw,dh);c.putImageData(pixels,0,0);
+ const box=wallBounds(pixels.data,dw,dh);if(!box)throw Error('Empty wall elevation');
  const out=document.createElement('canvas');out.width=box.width;out.height=box.height;
  const ctx=out.getContext('2d',{willReadFrequently:true});
  ctx.drawImage(canvas,box.x,box.y,box.width,box.height,0,0,box.width,box.height);
- const profile=topProfile(ctx.getImageData(0,0,out.width,out.height).data,out.width,out.height);
+ const profile=topProfile(ctx.getImageData(0,0,out.width,out.height).data,out.width,out.height,phoneLane?48:64);
  const texture=new THREE.CanvasTexture(out);texture.colorSpace=THREE.SRGBColorSpace;
  texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;
  return {texture,aspect:out.width/out.height,profile};
@@ -71,19 +74,16 @@ function elevation(image,column,row=0){
 export async function loadWallArt(id,{signal,side=0,angled=false}={}){
  const d=WALL_ART[id];if(!d)throw Error('Unknown wall '+id);
  const image=await imageAt(d.source,signal);
+ await new Promise(resolve=>setTimeout(resolve,0));
+ if(signal?.aborted)throw Error('Wall load cancelled');
  // Alley uses the bottom-row three-quarter drawings: left wall → left view,
  // right wall → right view, so the near edge matches the side you are walking.
+ // Skip the reverse face — it is not visible from the aisle and doubled the flood-fill hitch.
  const useAngle=angled&&side;
  const aisleCol=useAngle?(side<0?0:1):0;
  const aisleRow=useAngle?1:0;
  const front=elevation(image,aisleCol,aisleRow);
- try{
-  if(phoneLane)return {front,aisleView:useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front'};
-  await new Promise(resolve=>setTimeout(resolve,0));
-  if(signal?.aborted)throw Error('Wall load cancelled');
-  const back=elevation(image,1,0);
-  return {front,back,aisleView:useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front'};
- }catch(error){front.texture.dispose();throw error;}
+ return {front,aisleView:useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front'};
 }
 export function disposeWallArt(art){
  for(const face of Object.values(art||{}))if(face.texture){

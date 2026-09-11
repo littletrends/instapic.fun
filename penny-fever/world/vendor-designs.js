@@ -18,7 +18,7 @@ const rows = [
 ['catoptromancy','Opal','mirror','mirror','#564362','#c4b5ad',null,'THE LOOKING-GLASS ROOM'],
 ['bent-rings','Ringo','pagoda','rings','#52613d','#d5b666',null,'A LITTLE TWIST OF LUCK'],
 ['plinko','Peggy','gable','pegs','#37675f','#d8be72',null,'DOWN THE GOLDEN PEGS'],
-['fairy-floss','Flossie','cloud','floss','#956379','#ebceb6','fairy-floss-sugar-tent','CLOUDS ON A STICK'],
+['fairy-floss','Flossie','cloud','floss','#956379','#ebceb6',null,'CLOUDS ON A STICK'],
 ['popcorn','Poppy','cart','popcorn','#8b6333','#edd6a0',null,'WARM LITTLE WONDERS'],
 ['duck-pond','Dottie','pond','duck','#467567','#e5c778',null,'THE QUACKING GARDEN'],
 ['skee-ball','Skip','scoreboard','target','#41617b','#d5b18b',null,'ROLL INTO THE GOOD TIMES'],

@@ -1,9 +1,9 @@
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=paper-alley-live-3';
-import {loadWallArt} from './walls/art.js';
+import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=crew-door-2';
+import {loadWallArt} from './walls/art.js?v=keep-light-1';
 import {buildWall} from './walls/models.js?v=paper-alley-live-4';
-import { decorativePaper } from './paper-panels.js?v=reliability-1';
-import { phoneLane } from './phone-lane.js?v=paper-alley-live-24';
+import { decorativePaper } from './paper-panels.js?v=keep-light-1';
+import { phoneLane } from './phone-lane.js?v=keep-light-1';
 export const paperRail=new URLSearchParams(location.search).get('rail')==='paper';
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;
@@ -71,10 +71,7 @@ export function makePaperEntrance(scene){
 
  const midZ=(FOYER_IN+FOYER_OUT)/2,span=FOYER_OUT-FOYER_IN;
  const floor=new THREE.Mesh(new THREE.BoxGeometry(3.0,.06,span+.4),card);floor.position.set(0,-.005,midZ);scene.add(floor);
- const lightStep=phoneLane?3.2:1.6;
- for(let z=FOYER_IN+.45;z<FOYER_OUT-.3;z+=lightStep){
-  const light=new THREE.PointLight(0xffd69b,phoneLane?0.85:1.2,7,2);light.position.set(0,2.85,z);scene.add(light);
- }
+ const light=new THREE.PointLight(0xffd69b,phoneLane?0.7:0.95,14,2);light.position.set(0,2.85,midZ);scene.add(light);
 
  // Folded foyer screens meet both ends so the passage is a paper folder, not two gates with gaps.
  const lo=FOYER_IN+.08,hi=FOYER_OUT-.08,wallZ=(lo+hi)/2,wallSpan=hi-lo,wallX=2.42;
@@ -86,13 +83,6 @@ export function makePaperEntrance(scene){
    wall.name=(side<0?'Left':'Right')+' folded foyer wall';
    scene.add(wall);
   }).catch(error=>console.warn('[Penny Fever foyer]',error.message));
-  if(!phoneLane)for(let i=0;i<5;i++){
-   const fold=new THREE.Mesh(new THREE.PlaneGeometry(.55,3.6),new THREE.MeshBasicMaterial({
-    map:decorativePaper('#5a3a22','#d2b073',i),transparent:true,alphaTest:.08,side:THREE.DoubleSide
-   }));
-   fold.position.set(side*(wallX-.28),1.85,lo+(i+.5)*(wallSpan/5));
-   fold.rotation.y=-side*Math.PI/2+side*(i%2?.32:-.32);
-   scene.add(fold);
-  }
+  // Illustrated foyer walls already fill this passage; extra atlas cards hitch the first step.
  }
 }

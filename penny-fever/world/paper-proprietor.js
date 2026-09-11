@@ -1,6 +1,6 @@
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_WELCOMING_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
 
 const active = new URLSearchParams(location.search).get('rail') === 'paper';
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/';

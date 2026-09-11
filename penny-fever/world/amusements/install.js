@@ -1,9 +1,10 @@
 import * as THREE from '../lib/three.module.min.js';
 import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js?v=paper-alley-live-2';
-import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut} from './cutouts.js?v=paper-alley-live-4';
-import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=paper-alley-live-24';
+import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut,disposePapercutStand} from './cutouts.js?v=keep-light-1';
+import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
 const NEAR=PAPERCUT_NEAR;
+const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
 const HOST_HEIGHT=1.7;
 const HOST_INSET=.7;
@@ -40,11 +41,17 @@ export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
    ?{height:HOST_HEIGHT,maxWidth:1.2,sideWidth:.55,layout:'stand'}
    :{height:Math.max(RIDE_HEIGHT_MIN,(d.height||3.5)*RIDE_SCALE),maxWidth:RIDE_MAX_WIDTH,sideWidth:RIDE_SIDE_WIDTH,layout:'stand'};
  }
+ function release(figure){
+  const job=inflight.find(j=>j.figure===figure);
+  if(job)job.controller.abort();
+  disposePapercutStand(figure);
+  figure.userData.loading=false;
+ }
  async function run(job){
   const {figure,controller}=job,id=figure.userData.amusementId,kind=figure.userData.kind,opts=optsFor(figure);
   try{
    const front=await load(id,{kind,view:'front',signal:controller.signal});
-   if(dead||!active||controller.signal.aborted||!figure.parent){front.texture?.dispose();return;}
+   if(dead||!active||controller.signal.aborted||!figure.parent||figure.userData.papercutStand){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
    figure.userData.needSides=true;
@@ -61,19 +68,24 @@ export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
   if(!cut)return;
   figure.userData.sidesLoading=true;
   const opts=optsFor(figure),controller=new AbortController();
+  const job={figure,controller,sides:true};
+  inflight.push(job);
   try{
    for(const view of PAPERCUT_VIEWS){
     if(view==='front')continue;
-    if(dead||!figure.parent)return;
+    if(dead||!figure.parent||controller.signal.aborted)return;
     const face=await load(id,{kind,view,signal:controller.signal});
-    if(!figure.parent){face.texture?.dispose();return;}
+    if(!figure.parent||figure.userData.papercutStand!==cut||controller.signal.aborted){face.texture?.dispose();return;}
     setPapercutFace(cut,view,face,opts);
     figure.userData.papercutViews=cut.userData.papercutViews;
    }
-   figure.userData.needSides=false;
+   if(figure.userData.papercutStand===cut)figure.userData.needSides=false;
   }catch(error){
    if(!controller.signal.aborted)console.warn('[Penny Fever rides]',id,kind,error.message);
-  }finally{figure.userData.sidesLoading=false;}
+  }finally{
+   figure.userData.sidesLoading=false;
+   const i=inflight.indexOf(job);if(i>=0)inflight.splice(i,1);
+  }
  }
  function start(figure){
   const controller=new AbortController();
@@ -92,6 +104,9 @@ export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
    }
   }
   if(dead||!active)return;
+  for(const figure of figures){
+   if(figure.userData.papercutStand&&Math.abs(figure.position.z-currentZ)>=FAR)release(figure);
+  }
   const queued=figures.filter(f=>!f.userData.papercutStand&&!f.userData.loading)
    .sort((a,b)=>Math.abs(a.position.z-currentZ)-Math.abs(b.position.z-currentZ));
   while(inflight.length<PAPERCUT_INFLIGHT){
@@ -99,11 +114,9 @@ export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
    if(!next||Math.abs(next.position.z-currentZ)>=NEAR)break;
    queued.shift();start(next);
   }
-  const waitingFront=queued[0]&&Math.abs(queued[0].position.z-currentZ)<NEAR;
-  if(!waitingFront){
-   for(const figure of figures){
-    if(figure.userData.needSides&&Math.abs(figure.position.z-currentZ)<SIDE_NEAR)fillSides(figure);
-   }
+  if(inflight.length<PAPERCUT_INFLIGHT){
+   const sideNext=figures.find(f=>f.userData.needSides&&!f.userData.sidesLoading&&Math.abs(f.position.z-currentZ)<SIDE_NEAR);
+   if(sideNext)fillSides(sideNext);
   }
  }
  function pause(){

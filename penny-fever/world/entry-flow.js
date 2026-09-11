@@ -63,7 +63,7 @@
     loading.id = 'worldLoading';
     loading.innerHTML = `<div>
       <p>AURA’S PENNY FEVER</p>
-      <img class="loading-aura" src="assets/restyle/paper-aura-seated.png" alt="Aura keeps you company while the midway opens" width="1024" height="1536" fetchpriority="high">
+      <img class="loading-aura" src="assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png" alt="Aura keeps you company while the midway opens" width="512" height="512">
       <h1 id="worldLoadingMessage" role="status">Lighting the paper midway…</h1>
       <div class="loading-lights" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="loading-reassurance">“I’m right here, darling. We’re getting everything ready.”</p>
@@ -72,6 +72,17 @@
     </div>`;
     document.body.append(loading);
     document.getElementById('reloadMidway').addEventListener('click', () => location.reload());
+    document.querySelectorAll('.cabinet-interior img, #legacyFoyerStubs img').forEach(img => {
+      img.loading = 'lazy';
+      img.decoding = 'async';
+    });
+    if (!/#door$/.test(location.hash) && location.hash) {
+      const doorArt = document.getElementById('doorStageArt');
+      if (doorArt) {
+        doorArt.removeAttribute('fetchpriority');
+        doorArt.loading = 'lazy';
+      }
+    }
     sync();
     if (window.PennyFeverWorld?.started && !window.PennyFeverWorld.paused) {
       root.classList.remove('world-loading');

@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {AMUSEMENT_ART,PAPERCUT_VIEWS,PAPERCUT_SHEET,PAPERCUT_FRAMES,papercutRideSrc,papercutHostSrc} from './catalogue.js?v=paper-alley-live-2';
-import {TEX_LIMIT} from '../phone-lane.js?v=paper-alley-live-24';
+import {TEX_LIMIT} from '../phone-lane.js?v=keep-light-1';
 
 const loader=new THREE.TextureLoader();
 let busy=0;const waiting=[];
@@ -96,4 +96,21 @@ export function billboardPapercut(object,camera){
  const stand=object.userData.papercutStand||object;
  const bearing=Math.atan2(camera.position.x-object.position.x,camera.position.z-object.position.z);
  stand.rotation.y=bearing-object.rotation.y;
+}
+export function disposePapercutStand(figure){
+ const cut=figure?.userData?.papercutStand;
+ if(!cut)return;
+ cut.removeFromParent();
+ cut.traverse(o=>{
+  o.geometry?.dispose();
+  for(const m of Array.isArray(o.material)?o.material:[o.material]){
+   if(!m)continue;
+   m.map?.dispose();
+   m.dispose();
+  }
+ });
+ figure.userData.papercutStand=null;
+ figure.userData.papercutViews=null;
+ figure.userData.needSides=false;
+ figure.userData.sidesLoading=false;
 }

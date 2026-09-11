@@ -1,8 +1,8 @@
 import * as THREE from './lib/three.module.min.js';
-import {paperRail} from './paper-guest-entrance.js';
+import {paperRail} from './paper-guest-entrance.js?v=keep-light-1';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -68,9 +68,6 @@ export function makePaperWalls(scene,len){
  // Illustrated stall walls replace the repeating printed murals.
 }
 export function extendPaperAlley(scene,len){if(!paperRail)return;
- for(let z=5.8;z<len-3;z+=10.72){
-  const light=new THREE.PointLight(0xffd39b,1.3,10,2);light.position.set(0,3.1,z+1);scene.add(light);
- }
  for(let z=1;z<len;z+=5.2)for(const side of [-1,1]){box(scene,.11,3.9,.12,side*5.36,1.95,z,mats.kraft);box(scene,.16,.12,2.5,side*5.38,3.55,z+1.25,mats.red)}
  const sign=label('A PENNY · ANOTHER LAP',4.4,.65);sign.position.set(0,2.7,len+.32);sign.rotation.y=Math.PI;scene.add(sign);
 }

@@ -311,7 +311,7 @@
   const GAME_ASSET = "assets/game/";
   const VISUALS = {
     aura: {
-      welcome: "assets/prepared/welcome-proprietor.webp",
+      welcome: "assets/restyle/paper-aura-seated.png",
       think: "Aura_Reactions/Thinking.webp",
       celebrate: "Aura_Reactions/Celebrating.webp",
       laugh: "Aura_Reactions/Laughing.webp",
@@ -330,7 +330,7 @@
       boil: "Love_Thermometer_States/Boil_Over.webp",
     },
     lookup: {
-      idle: "assets/prepared/lookup-wonder.webp",
+      idle: "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
       rising: "Look_Up_Darling/Needle_Rising.webp",
       success: "Look_Up_Darling/Sky_Reveal.webp",
       fail: "Look_Up_Darling/Failure_Shoes.webp",
@@ -943,8 +943,8 @@
       return;
     }
     tentTransitionBusy = true;
-    $("tentTransitionTitle").textContent = title ? title.textContent : "THE NEXT TENT";
-    $("tentTransitionLine").textContent = line ? line.textContent : "Mind the canvas.";
+    $("tentTransitionTitle").textContent = title ? title.textContent : "THE NEXT BAY";
+    $("tentTransitionLine").textContent = line ? line.textContent : "Mind the boards.";
     overlay.hidden = false;
     document.body.classList.add("tent-is-opening");
     playTentCue();
@@ -3405,7 +3405,7 @@
       "location": "fortuneCard"
     },
     "door_beckon": {
-      "src": "assets/prepared/doorway-beckon.webp",
+      "src": "assets/restyle/paper-aura-seated.png",
       "kind": "still",
       "priority": "P1",
       "location": "discoveryDoor"
@@ -3429,19 +3429,19 @@
       "location": "passCard"
     },
     "lookup_sky": {
-      "src": "assets/prepared/lookup-wonder.webp",
+      "src": "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
       "kind": "still",
       "priority": "P2",
       "location": "lookupCard"
     },
     "foyer_hall": {
-      "src": "assets/prepared/arcade-hall-wide.webp",
+      "src": "assets/restyle/maps/sideshow-alley-map.webp",
       "kind": "still",
       "priority": "P1",
       "location": "arcadeHall"
     },
     "welcome_proprietor": {
-      "src": "assets/prepared/welcome-proprietor.webp",
+      "src": "assets/restyle/paper-aura-seated.png",
       "kind": "still",
       "priority": "P1",
       "location": "auraPortrait"

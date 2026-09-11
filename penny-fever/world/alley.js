@@ -1,18 +1,18 @@
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
-import { mountRestyle, poseRestyle } from "./restyle.js?v=alley-perf-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=alley-perf-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=alley-perf-1";
-import { phoneLane } from "./phone-lane.js?v=alley-perf-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=alley-perf-1";
-import { installIndividualVendors } from "./paper-vendors.js?v=alley-perf-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=alley-perf-1";
+import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-1";
+import { phoneLane } from "./phone-lane.js?v=keep-light-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-1";
+import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService} from "./paper-midway.js?v=keep-light-1";
 import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=paper-alley-live-2";
-import {installWallBackdrops} from "./walls/install.js?v=alley-perf-1";
-import {installPapercutRides} from "./amusements/install.js?v=alley-perf-1";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=alley-perf-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=alley-perf-1";
+import {installWallBackdrops} from "./walls/install.js?v=keep-light-1";
+import {installPapercutRides} from "./amusements/install.js?v=keep-light-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -1563,32 +1563,19 @@ function buildWorld() {
   endSign.position.set(0, 3.4, hallLen + 0.6);
   scene.add(endSign);
 
-  const booth = new THREE.Group();
-  booth.position.set(2.15, 0, 3.1);
-  booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
-  booth.add(makeSign("AURA’S TILL", GOLD));
-  booth.children[1].position.set(0, 1.35, 0.2);
-  const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/restyle/paper-aura-seated.png") }));
-  poster.scale.set(0.55, 0.72, 0.03);
-  poster.position.set(-0.35, 0.85, 0.42);
-  booth.add(poster);
-  booth.visible = !paperRail;
-  scene.add(booth);
-  if (!paperRail) solids.push({ x: 2.15, z: 3.1, r: 0.85 });
-
-  const vendorNote = makeNoteBoard("VENDOR DESK", [
-    "One Grok per doorway — go 3D in the tent.",
-    "Full creative reins. Recreate freely.",
-    "Do NOT touch world/alley.js",
-    "Do NOT touch booth / port 6000",
-    "Own vendors/{id}.js + #cabinet/{id}",
-    "Read ops/ATTN_VENDOR_AGENTS.md",
-  ]);
-  vendorNote.position.set(-2.45, 1.45, 4.2);
-  vendorNote.rotation.y = Math.PI / 2;
-  // Developer instructions stay out of the visitor experience.
-  vendorNote.visible = false;
-  scene.add(vendorNote);
+  if (!paperRail) {
+    const booth = new THREE.Group();
+    booth.position.set(2.15, 0, 3.1);
+    booth.add(meshBox(makeMat(WOOD), 1.2, 1.1, 0.8, 0, 0.55, 0));
+    booth.add(makeSign("AURA’S TILL", GOLD));
+    booth.children[1].position.set(0, 1.35, 0.2);
+    const poster = new THREE.Mesh(geoBox, new THREE.MeshBasicMaterial({ map: artMap("assets/prepared/welcome-proprietor.webp") }));
+    poster.scale.set(0.55, 0.72, 0.03);
+    poster.position.set(-0.35, 0.85, 0.42);
+    booth.add(poster);
+    scene.add(booth);
+    solids.push({ x: 2.15, z: 3.1, r: 0.85 });
+  }
 
   player = makePerson({ kind: "guest", cloth: 0xb08a78, scale: 1.05 });
   player.position.set(paperRail ? -0.6 : 0, 0, paperRail ? -18.2 : -16.2);

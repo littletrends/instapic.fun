@@ -1,11 +1,12 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=paper-alley-live-4';
-import {PAPERCUT_NEAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=paper-alley-live-24';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=keep-light-1';
+import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=keep-light-1';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';
 const NEAR=PAPERCUT_NEAR;
+const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
 
 export function installVendorCutouts(barkers){
@@ -21,11 +22,17 @@ export function installVendorCutouts(barkers){
  }
  const inflight=[];
  let active=true,dead=false,currentZ=14,currentCam=null;
+ function release(figure){
+  const job=inflight.find(j=>j.figure===figure);
+  if(job)job.controller.abort();
+  disposePapercutStand(figure);
+  figure.userData.loading=false;
+ }
  async function run(job){
   const {figure,controller}=job,host=figure.userData.vendorHost,opts={height:1.7,maxWidth:1.2,sideWidth:.55,layout:'stand'};
   try{
    const front=await loadFramedPng(ROOT+host+'/front.png',VENDOR_FRAMES[host].front,{signal:controller.signal});
-   if(dead||!active||controller.signal.aborted||!figure.parent){front.texture?.dispose();return;}
+   if(dead||!active||controller.signal.aborted||!figure.parent||figure.userData.papercutStand){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
    figure.userData.needSides=true;
@@ -42,19 +49,25 @@ export function installVendorCutouts(barkers){
   if(!cut||!VENDOR_FRAMES[host])return;
   figure.userData.sidesLoading=true;
   const opts={height:1.7,maxWidth:1.2,sideWidth:.55,layout:'stand'};
+  const controller=new AbortController();
+  const job={figure,controller,sides:true};
+  inflight.push(job);
   try{
    for(const view of PAPERCUT_VIEWS){
     if(view==='front')continue;
-    if(dead||!figure.parent)return;
-    const face=await loadFramedPng(ROOT+host+'/'+view+'.png',VENDOR_FRAMES[host][view]);
-    if(!figure.parent){face.texture?.dispose();return;}
+    if(dead||!figure.parent||controller.signal.aborted)return;
+    const face=await loadFramedPng(ROOT+host+'/'+view+'.png',VENDOR_FRAMES[host][view],{signal:controller.signal});
+    if(!figure.parent||figure.userData.papercutStand!==cut||controller.signal.aborted){face.texture?.dispose();return;}
     setPapercutFace(cut,view,face,opts);
     figure.userData.papercutViews=cut.userData.papercutViews;
    }
-   figure.userData.needSides=false;
+   if(figure.userData.papercutStand===cut)figure.userData.needSides=false;
   }catch(error){
-   if(error?.message)console.warn('[Penny Fever vendors]',host,error.message);
-  }finally{figure.userData.sidesLoading=false;}
+   if(error?.message&&!controller.signal.aborted)console.warn('[Penny Fever vendors]',host,error.message);
+  }finally{
+   figure.userData.sidesLoading=false;
+   const i=inflight.indexOf(job);if(i>=0)inflight.splice(i,1);
+  }
  }
  function start(figure){
   const controller=new AbortController();
@@ -72,6 +85,9 @@ export function installVendorCutouts(barkers){
    }
   }
   if(dead||!active)return;
+  for(const figure of figures){
+   if(figure.userData.papercutStand&&Math.abs(figure.position.z-currentZ)>=FAR)release(figure);
+  }
   const queued=figures.filter(f=>!f.userData.papercutStand&&!f.userData.loading)
    .sort((a,b)=>Math.abs(a.position.z-currentZ)-Math.abs(b.position.z-currentZ));
   while(inflight.length<PAPERCUT_INFLIGHT){
@@ -79,17 +95,15 @@ export function installVendorCutouts(barkers){
    if(!next||Math.abs(next.position.z-currentZ)>=NEAR)break;
    queued.shift();start(next);
   }
-  const waitingFront=queued[0]&&Math.abs(queued[0].position.z-currentZ)<NEAR;
-  if(!waitingFront){
-   for(const figure of figures){
-    if(figure.userData.needSides&&Math.abs(figure.position.z-currentZ)<SIDE_NEAR)fillSides(figure);
-   }
+  if(inflight.length<PAPERCUT_INFLIGHT){
+   const sideNext=figures.find(f=>f.userData.needSides&&!f.userData.sidesLoading&&Math.abs(f.position.z-currentZ)<SIDE_NEAR);
+   if(sideNext)fillSides(sideNext);
   }
  }
  function pause(){active=false;inflight.slice().forEach(job=>job.controller.abort());}
  function resume(){if(dead)return;active=true;update(currentCam,currentZ);}
  function dispose(){
-  if(dead)return;pause();dead=true;figures.length=0;
+  if(dead)return;pause();figures.forEach(release);dead=true;figures.length=0;
  }
  update(null,14);
  return {update,pause,resume,dispose,figures};

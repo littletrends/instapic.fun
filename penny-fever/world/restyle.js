@@ -41,7 +41,16 @@ function syncWorldSkin(){
  });
 }
 function apply(){
- if(!activeScene)return;restore();const cache=new Map();
+ if(!activeScene)return;restore();
+ if(paperRail){
+  document.body.dataset.restyle=style;
+  document.querySelectorAll('[data-restyle-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.restyleChoice===style)));
+  const note=document.getElementById('restyleLabel');if(note)note.textContent=names[style]+' · Original game';
+  const url=new URL(location.href);url.searchParams.set('style',style);history.replaceState(null,'',url);
+  syncWorldSkin();
+  return;
+ }
+ const cache=new Map();
  base.forEach(b=>{const o=b.mesh,m=b.material;
  // Preserve sky, firefly sprites, translucent light effects, printed wall skins and signs.
  if(Array.isArray(m)||!m||m.side===THREE.BackSide||o.geometry?.type==='PlaneGeometry'||(m.transparent&&m.opacity<.7))return;
@@ -71,7 +80,13 @@ function apply(){
  const url=new URL(location.href);url.searchParams.set('style',style);history.replaceState(null,'',url);
  syncWorldSkin();
 }
-export function mountRestyle(scene,characters){activeScene=scene;base=[];scene.traverse(o=>{if(o.isMesh)base.push({mesh:o,geometry:o.geometry,material:o.material,scale:o.scale.clone()})});people=characters.map(person=>({person,scale:person.scale.clone()}));apply();}
+export function mountRestyle(scene,characters){
+ activeScene=scene;
+ people=characters.map(person=>({person,scale:person.scale.clone()}));
+ if(paperRail){base=[];apply();return;}
+ base=[];scene.traverse(o=>{if(o.isMesh)base.push({mesh:o,geometry:o.geometry,material:o.material,scale:o.scale.clone()})});
+ apply();
+}
 export function notePaperCutout(object){if(!object)return;object.userData.paperCutout=true;object.visible=style==='paper';}
 export function noteLiveBody(object){if(!object)return;object.userData.hideWhenPaper=true;object.visible=style!=='paper';}
 export function refreshRestyle(){if(activeScene)syncWorldSkin();}

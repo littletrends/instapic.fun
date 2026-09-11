@@ -167,7 +167,7 @@
     return 'rewards';
   }
   const bookMeta = [
-    {id:'penny-collector-book', title:'Penny collector book', kicker:'Pennies & tokens', blurb:'Copper wells for every penny, token and little purse.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png'},
+    {id:'penny-collector-book', title:'Penny collector book', kicker:'The whole midway', blurb:'Every keepsake in Penny Fever. Pages wait in silhouette until you bring each one home.', kind:'book', master:true, cover:'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png'},
     {id:'curio-cabinet-album', title:'Curio cabinet album', kicker:'Cabinet of curios', blurb:'Little labelled niches for alley finds and machine guts.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/curio-cabinet-album/front.png'},
     {id:'fortune-journal', title:'Fortune journal', kicker:'Future curios', blurb:'Moon-clasp pages for compasses, keys, bottles and secrets still on their way.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/fortune-journal/front.png'},
     {id:'photo-accordion', title:'Photo accordion', kicker:'Wonders in frames', blurb:'Fold-out frames for peepshows, flickers, lockets and other sights worth keeping.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/photo-accordion/front.png'},

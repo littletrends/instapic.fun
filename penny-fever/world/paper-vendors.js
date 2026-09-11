@@ -1,8 +1,8 @@
 import { installMysticFront, installLoveFront } from './mystic-front.js?v=love-concept-13';
-import { decorativePaper, decorateBoxSurfaces } from './paper-panels.js?v=reliability-1';
+import { decorativePaper, decorateBoxSurfaces } from './paper-panels.js?v=keep-light-1';
 import * as THREE from './lib/three.module.min.js';
 import { VENDOR_DESIGNS } from './vendor-designs.js?v=roomier-6';
-import { paperRail } from './paper-guest-entrance.js';
+import { paperRail } from './paper-guest-entrance.js?v=keep-light-1';
 
 const unit = new THREE.BoxGeometry(1,1,1);
 const materials = new Map(), images = new Map();
@@ -386,51 +386,17 @@ export function installIndividualVendors(stalls,scene) {
   for(const stall of stalls){
     const spec=stall.userData.stall,d=VENDOR_DESIGNS[spec.id];if(!d)continue;
     stall.children.forEach(child=>{child.visible=false;globalThis.PennyFeverRestyle?.noteLiveBody(child);});
-    const shell=new THREE.Group();shell.name=`${d.host}'s ${spec.name}`;
-    globalThis.PennyFeverRestyle?.notePaperCutout(shell);
-    shell.scale.x=1.2;
-    shell.position.z=-.4;
-    stall.add(shell);
-    const paper=wallpaper(d),icon=emblem(d);
-    if(!distinctFront(shell,spec,d,paper,icon)){
-    block(shell,'#30271f',2.7,.12,1.9,0,.06,-.05);
-    block(shell,d.body,2.4,2.7,.11,0,1.42,-.85);
-    for(const x of [-1.22,1.22]){block(shell,d.body,.18,2.85,1.45,x,1.45,-.18);block(shell,d.trim,.06,2.78,.1,x,1.45,.58);}
-    panel(shell,paper,2.05,2.55,0,1.48,-.64);
-    // Open awnings for games and carts; curved frames for intimate parlours.
-    const openFront=['circus','pagoda','cloud','cart','scoreboard','scallop','wave','luggage'].includes(d.shape);
-    if(openFront){
-      for(const x of [-1.13,1.13])block(shell,d.trim,.065,2.4,.065,x,1.38,.58);
-      for(let i=0;i<11;i++)disk(shell,i%2?d.trim:d.body,.10,-1.05+i*.21,2.49,.66);
-    }else arch(shell,d);
-    top(shell,d);
-    block(shell,d.body,1.95,.63,.15,0,.4,.55);block(shell,d.trim,2.16,.09,.61,0,.78,.47);
-    panel(shell,sign(d.invitation,d),1.78,.25,0,.42,.64);
-    panel(shell,sign(spec.name.toUpperCase(),d),2.24,.39,0,2.65,.83);
-    panel(shell,sign(`${d.host.toUpperCase()} · YOUR HOST`,d),1.45,.18,.2,.17,.66);
-    if(d.shape!=='camera' && d.shape!=='tower')panel(shell,icon,.55,.55,0,3.22,.54);
-    panel(shell,decorativePaper(d.body,d.trim,d.index),1.65,2.05,.1,1.55,-.49);
-    panel(shell,icon,.92,.92,.1,1.65,-.46);
-    // Finish the structure before adding equipment, preserving clear game surfaces.
-    decorateBoxSurfaces(shell,d.body,d.trim);
-    attraction(shell,spec,d);
-    }
-    // Illustrated alley walls own the bays; do not plant the old repeating paper cards in front of them.
-    // Raised folded-paper corner sprays cast real layered silhouettes around the artwork.
-    for(const side of [-1,1]){
-      for(let leaf=0;leaf<3;leaf++){
-        const x=side*(1.07-leaf*.08),y=1.02+leaf*.16;
-        polygon(shell,d.trim,[[x,y-.13],[x+side*.075,y],[x,y+.19],[x-side*.06,y]],.69+leaf*.018,.025);
-      }
-      const lantern=new THREE.Group();lantern.position.set(side*1.16,1.86,.73);shell.add(lantern);
-      cyl(lantern,d.trim,.04,.12,.12,0,.19,0,4);
-      cyl(lantern,'#ead1a0',.095,.095,.20,0,.035,0,4);
-      cyl(lantern,d.trim,.12,.04,.08,0,-.10,0,4);
-    }
-    batchBoxes(shell);
-    if(spec.id==='fortune')installMysticFront(shell);
-    if(spec.id==='love')installLoveFront(shell);
-    stall.userData.paperStall=true;stall.userData.vendorDesign=d;
+    // Papercut shopfronts own the bay. A cheap tint card stands in until the cutout streams in.
+    const card=new THREE.Mesh(
+      new THREE.PlaneGeometry(2.2,3.2),
+      new THREE.MeshBasicMaterial({color:d.body,transparent:true,opacity:.28,depthWrite:false})
+    );
+    card.position.set(0,1.65,.18);
+    card.name=`${d.host}'s placeholder`;
+    stall.add(card);
+    stall.userData.paperPlaceholder=card;
+    stall.userData.paperStall=true;
+    stall.userData.vendorDesign=d;
   }
 }
 

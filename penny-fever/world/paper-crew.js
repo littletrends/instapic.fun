@@ -1,6 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
-import { paperRail } from './paper-guest-entrance.js';
-import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=paper-alley-live-3';
+import { paperRail } from './paper-guest-entrance.js?v=keep-light-1';
+import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=crew-door-2';
 
 export const CREW = CREW_IDS.map((id) => id[0].toUpperCase() + id.slice(1));
 
@@ -84,8 +84,11 @@ export function installPaperCrew(npcs) {
       person.userData.crewName = id[0].toUpperCase() + id.slice(1);
       const c = person.userData.paperCrew;
       if (!c) return;
-      c.mat.map = tex(crewArt(id));
-      c.mat.needsUpdate = true;
+      c.wantedArt = crewArt(id);
+      if (c.mat.map) {
+        c.mat.map = tex(c.wantedArt);
+        c.mat.needsUpdate = true;
+      }
     });
     globalThis.PennyFeverRestyle?.refreshRestyle();
   }
@@ -98,6 +101,10 @@ export function updatePaperCrew(npcs, camera) {
     const c = person.userData.paperCrew;
     if (!c || !c.stand.visible) continue;
     if (person.userData.stallId) continue;
+    if (!c.mat.map && c.wantedArt && camera && Math.abs(person.position.z - camera.position.z) < 24) {
+      c.mat.map = tex(c.wantedArt);
+      c.mat.needsUpdate = true;
+    }
     person.scale.z = person.scale.x;
     const dx = person.position.x - c.lastX;
     const dz = person.position.z - c.lastZ;
