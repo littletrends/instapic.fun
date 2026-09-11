@@ -38,7 +38,7 @@ export function keep(id) {
 export function loadMachine() {
   if (!alleyPlay) return null;
   const blob = fever()?.getState?.()?.cashDrop;
-  return blob && blob.v === 1 && Array.isArray(blob.pieces) ? blob : null;
+  return blob && (blob.v === 1 || blob.v === 2) && Array.isArray(blob.pieces) ? blob : null;
 }
 
 export function saveMachine(blob) {
