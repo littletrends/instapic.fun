@@ -1,4 +1,4 @@
-import {dist, done} from '../draw.js';
+import {dist, done} from '../draw.js?v=ink-1';
 import {spriteKey} from '../prizes.js';
 import {swell, bindPrize} from '../chapter-kit.js?v=align-1';
 
@@ -59,7 +59,7 @@ export default {
     d.item(spriteKey('midway-map'), 450, 400, {w: 64, shadow: false, fallback: () => d.star(450, 400, 20)});
     d.text('stamp with the wash', 450, 350, 15, '#5a3a40');
     for (const p of s.patches) {
-      d.circle(p.x, p.y, p.r, p.filled ? '#c4a46acc' : '#efe6c844', p.filled ? '#ead6a8' : '#b89a68', 3);
+      d.circle(p.x, p.y, p.r, p.filled ? '#7a5238cc' : '#6b4e2433', p.filled ? '#3d2818' : '#3d2818', 4);
       if (p.filled) d.item(spriteKey('star-token'), p.x, p.y, {w: 28, shadow: false, fallback: () => {}});
     }
     const b = brushAt(s);

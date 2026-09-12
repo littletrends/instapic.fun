@@ -1,4 +1,4 @@
-import {clamp, dist, done} from '../draw.js';
+import {clamp, dist, done} from '../draw.js?v=ink-1';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend} from '../wallet.js?v=iris-cards-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';

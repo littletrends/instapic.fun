@@ -1,4 +1,4 @@
-import {done} from '../draw.js';
+import {done} from '../draw.js?v=ink-1';
 import {spriteKey} from '../prizes.js';
 import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 

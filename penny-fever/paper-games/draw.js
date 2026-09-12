@@ -14,7 +14,12 @@ export class Draw {
  poly(points,fill,stroke='#e8cb95',width=1.5){this.path(points.map(p=>Array.isArray(p)?{x:p[0],y:p[1]}:p),stroke,width,true,fill);}
  ellipse(x,y,rx,ry,fill,stroke=null,width=1){const c=this.c;c.beginPath();c.ellipse(x,y,Math.max(0,rx),Math.max(0,ry),0,0,TAU);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
  circle(x,y,r,fill,stroke=null,width=1){this.ellipse(x,y,r,r,fill,stroke,width);}
- text(text,x,y,size=20,color='#fff0cb',align='center'){const c=this.c;c.font=`500 ${size}px Georgia,serif`;c.textAlign=align;c.fillStyle=color;c.fillText(String(text),x,y);}
+ text(text,x,y,size=20,color='#3d2818',align='center'){
+  const c=this.c,str=String(text);
+  c.font=`600 ${size}px Georgia,serif`;c.textAlign=align;c.lineJoin='round';c.miterLimit=2;
+  c.strokeStyle='#24160e';c.lineWidth=Math.max(3.4,size*0.22);
+  c.strokeText(str,x,y);c.fillStyle=color;c.fillText(str,x,y);
+ }
  glow(x,y,r,color='#edcd8b'){const g=this.c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color+'55');g.addColorStop(1,color+'00');this.circle(x,y,r,g);}
  ball(x,y,r,color='#ddc082'){this.ellipse(x+5,y+r*.6,r,r*.55,'#071e3440');const g=this.c.createRadialGradient(x-r*.3,y-r*.4,1,x,y,r);g.addColorStop(0,'#fff5d8');g.addColorStop(.35,color);g.addColorStop(1,'#514c55');this.circle(x,y,r,g,'#e6d5b1',1.5);}
  star(x,y,r,fill='#e7c789'){this.poly(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;return[x+Math.cos(a)*rr,y+Math.sin(a)*rr];}),fill,'#f8e4b3',1.3);}

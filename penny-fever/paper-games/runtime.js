@@ -1,5 +1,5 @@
 import {games,byId} from './catalogue.js?v=play-pass-1';
-import {Draw,seeded,clamp} from './draw.js';
+import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
