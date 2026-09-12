@@ -12,7 +12,7 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .doll-torso-preview{display:flex;flex-direction:column;align-items:center;padding:10px 12px 6px;background:#fffaf0;border:1px solid #c4a46a;border-radius:12px}
 .doll-maker-parts{flex:1;min-width:220px}
 .crew-collections .ticket-button{margin-top:10px}
-.doll-books{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 8px}
+.doll-books{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 8px}
 .doll-books button{padding:0;border:2px solid #c4a46a;background:#fffaf0;color:#382816;cursor:pointer;border-radius:8px;overflow:hidden;text-align:left}
 .doll-books button[aria-pressed=true],.doll-books button.is-on{border-color:#435637}
 .doll-books img{display:block;width:100%;height:auto}
@@ -57,6 +57,6 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .crew-book.is-open-album #dollCollection{flex:1;min-height:0;overflow:auto}
 .crew-book.is-open-album .doll-piece-thumb{width:52px;height:70px;flex-basis:52px}
 .crew-book.is-open-album .doll-chip.doll-piece{border-radius:10px;padding:6px 10px 6px 6px}
-@media(max-width:640px){.crew-grid{grid-template-columns:repeat(3,1fr)}.crew-runway{height:240px}.crew-book{padding:18px}.doll-torso-preview{width:100%}.doll-maker-parts{width:100%}.crew-book.is-open-album{height:96dvh;padding:12px}.crew-book.is-open-album .doll-torso-row{flex-direction:column}.crew-book.is-open-album .doll-preview-stage{width:110px;height:146px}}
+@media(max-width:640px){.crew-grid{grid-template-columns:repeat(3,1fr)}.crew-runway{height:240px}.crew-book{padding:18px}.doll-torso-preview{width:100%}.doll-maker-parts{width:100%}.doll-books{grid-template-columns:1fr 1fr}.crew-book.is-open-album{height:96dvh;padding:12px}.crew-book.is-open-album .doll-torso-row{flex-direction:column}.crew-book.is-open-album .doll-preview-stage{width:110px;height:146px}}
 
 .crew-entry{display:flex;align-items:center;gap:14px;text-align:left}.crew-entry > div{flex:1;min-width:0}#chosenCrewPortrait{width:76px;flex:0 0 76px;height:101px;border:1px solid #b49360;border-radius:6px;background-color:#fffaf0;background-size:400% 100%;background-position:0 0;background-repeat:no-repeat}

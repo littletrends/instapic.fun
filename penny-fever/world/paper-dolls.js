@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v8';
+const STORE = 'pf-paper-dolls-v9';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -25,19 +25,31 @@ export const EYE_COLORS = [
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
   { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
-  { id: 'short', label: 'Short curls', fit: 'head' },
+  { id: 'bob', label: 'Bob', fit: 'sheet' },
+  { id: 'curls', label: 'Curls', fit: 'sheet' },
+  { id: 'waves', label: 'Waves', fit: 'sheet' },
 ];
 export const HATS = [
   { id: 'none', label: 'None' },
   { id: 'straw', label: 'Straw hat' },
   { id: 'sailor', label: 'Sailor cap' },
+  { id: 'rain', label: 'Rain hat' },
+  { id: 'crown', label: 'Crown' },
 ];
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
-  { id: 'garden', label: 'Garden party', book: 'garden-party-book' },
-  { id: 'seaside', label: 'Seaside day', book: 'seaside-day-book' },
-  { id: 'winter', label: 'Winter lantern', book: 'winter-lantern-book' },
-  { id: 'moonlight', label: 'Moonlight', book: 'moonlight-wardrobe' },
+  { id: 'garden', label: 'Rose pinafore' },
+  { id: 'seaside', label: 'Sailor set' },
+  { id: 'winter', label: 'Starry coat' },
+  { id: 'moonlight', label: 'Moon pinafore' },
+  { id: 'floss', label: 'Candy stripe' },
+  { id: 'picnic', label: 'Gingham picnic' },
+  { id: 'rain', label: 'Yellow mac' },
+  { id: 'bedtime', label: 'Star pyjamas' },
+  { id: 'midway', label: 'Admit one' },
+  { id: 'sunday', label: 'Sunday best' },
+  { id: 'fortune', label: 'Mystic lilac' },
+  { id: 'ballet', label: 'Ballet wrap' },
 ];
 export const DOLL_PAGES = {
   garden: 'assets/restyle/paper-dolls/pages/garden.jpg',
@@ -50,49 +62,22 @@ export const DOLL_PAGES = {
   'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
 };
 const P = 'assets/restyle/paper-dolls';
+const hair = (id, label) => ({ slot: 'hair', id, label, src: `${P}/hair/${id}.png` });
+const hat = (id, label) => ({ slot: 'hat', id, label, src: `${P}/hats/${id}.png` });
+const clothes = (id, label) => ({ slot: 'outfit', id, label, src: `${P}/outfits/${id}.png` });
 export const COLLECTIONS = [
-  {
-    id: 'garden',
-    label: 'Garden party',
-    book: 'garden-party-book',
-    page: DOLL_PAGES.garden,
-    pieces: [
-      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
-      { slot: 'hat', id: 'straw', label: 'Straw hat', src: `${P}/hats/straw.png` },
-      { slot: 'outfit', id: 'garden', label: 'Rose pinafore', src: `${P}/outfits/garden.png`, includesHat: true },
-    ],
-  },
-  {
-    id: 'seaside',
-    label: 'Seaside day',
-    book: 'seaside-day-book',
-    page: DOLL_PAGES.seaside,
-    pieces: [
-      { slot: 'hair', id: 'short', label: 'Short curls', src: `${P}/hair/short.png` },
-      { slot: 'hat', id: 'sailor', label: 'Sailor cap', src: `${P}/hats/sailor.png` },
-      { slot: 'outfit', id: 'seaside', label: 'Sailor set', src: `${P}/outfits/seaside.png`, includesHat: true },
-    ],
-  },
-  {
-    id: 'winter',
-    label: 'Winter lantern',
-    book: 'winter-lantern-book',
-    page: DOLL_PAGES.winter,
-    pieces: [
-      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
-      { slot: 'outfit', id: 'winter', label: 'Starry coat', src: `${P}/outfits/winter.png` },
-    ],
-  },
-  {
-    id: 'moonlight',
-    label: 'Moonlight',
-    book: 'moonlight-wardrobe',
-    page: DOLL_PAGES.moonlight,
-    pieces: [
-      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
-      { slot: 'outfit', id: 'moonlight', label: 'Moon pinafore', src: `${P}/outfits/moonlight.png` },
-    ],
-  },
+  { id: 'garden', label: 'Garden party', page: DOLL_PAGES.garden, pieces: [hair('pigtails','Pigtails'), hair('bob','Bob'), hat('straw','Straw hat'), clothes('garden','Rose pinafore')] },
+  { id: 'seaside', label: 'Seaside day', page: DOLL_PAGES.seaside, pieces: [hair('curls','Curls'), hair('waves','Waves'), hat('sailor','Sailor cap'), clothes('seaside','Sailor set')] },
+  { id: 'winter', label: 'Winter lantern', page: DOLL_PAGES.winter, pieces: [hair('waves','Waves'), hair('bob','Bob'), clothes('winter','Starry coat')] },
+  { id: 'moonlight', label: 'Moonlight', page: DOLL_PAGES.moonlight, pieces: [hair('waves','Waves'), hair('pigtails','Pigtails'), clothes('moonlight','Moon pinafore')] },
+  { id: 'floss', label: 'Fairy floss', page: `${P}/outfits/floss.png`, pieces: [hair('pigtails','Pigtails'), hair('curls','Curls'), clothes('floss','Candy stripe')] },
+  { id: 'picnic', label: 'Picnic', page: `${P}/outfits/picnic.png`, pieces: [hair('bob','Bob'), hair('pigtails','Pigtails'), clothes('picnic','Gingham')] },
+  { id: 'rain', label: 'Rainy day', page: `${P}/outfits/rain.png`, pieces: [hair('bob','Bob'), hair('waves','Waves'), hat('rain','Rain hat'), clothes('rain','Yellow mac')] },
+  { id: 'bedtime', label: 'Bedtime', page: `${P}/outfits/bedtime.png`, pieces: [hair('waves','Waves'), hair('curls','Curls'), clothes('bedtime','Star pyjamas')] },
+  { id: 'midway', label: 'Admit one', page: `${P}/outfits/midway.png`, pieces: [hair('pigtails','Pigtails'), hair('curls','Curls'), hat('crown','Crown'), clothes('midway','Ticket pinafore')] },
+  { id: 'sunday', label: 'Sunday best', page: `${P}/outfits/sunday.png`, pieces: [hair('bob','Bob'), hair('waves','Waves'), clothes('sunday','Navy pinafore')] },
+  { id: 'fortune', label: 'Iris’s hour', page: `${P}/outfits/fortune.png`, pieces: [hair('waves','Waves'), hair('bob','Bob'), clothes('fortune','Mystic lilac')] },
+  { id: 'ballet', label: 'Ballet', page: `${P}/outfits/ballet.png`, pieces: [hair('bob','Bob'), hair('pigtails','Pigtails'), clothes('ballet','Wrap and tutu')] },
 ];
 export const NOSES = [
   { id: 'none', label: 'None' },
