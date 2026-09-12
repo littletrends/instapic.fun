@@ -8,9 +8,9 @@ const LIP_SPEED = 16;
 const STROKE = 0.42;
 const SHOVE = 78;
 const LAYERS = [
-  {left: 258, right: 642, back: 188, lip: 448},
-  {left: 228, right: 672, back: 478, lip: 768},
-  {left: 202, right: 698, back: 798, lip: 1072},
+  {left: 208, right: 692, back: 312, lip: 458},
+  {left: 192, right: 708, back: 508, lip: 698},
+  {left: 178, right: 722, back: 728, lip: 1006},
 ];
 const SETS = [
   {mix0: ['everyday-penny'], mix1: ['everyday-penny'], mix2: ['everyday-penny', 'moon-penny'], unique: 'coin-sleeve', prize: 'coin-sleeve'},
@@ -86,7 +86,7 @@ function pick(s, rng, wantUnique) {
 }
 function snapshot(s) {
   return {
-    v: 6,
+    v: 7,
     chapter: s.level || 0,
     t: s.t,
     aim: s.aim,
@@ -227,7 +227,7 @@ function spill(s, c) {
 }
 function dropOne(s, id, x) {
   const L = LAYERS[0];
-  const piece = mint(id, clamp(x, L.left + 22, L.right - 22), 132, 0);
+  const piece = mint(id, clamp(x, L.left + 22, L.right - 22), L.back - 22, 0);
   piece.falling = true;
   piece.vy = 240;
   markSeen(s, id);
@@ -378,7 +378,7 @@ export default {
   create(level, rng) {
     const roll = rng || Math.random;
     const saved = loadMachine(level);
-    if (saved && saved.v >= 6 && saved.pieces && saved.pieces.length >= 40) {
+    if (saved && saved.v >= 7 && saved.pieces && saved.pieces.length >= 40) {
       const s = hydrate(saved);
       s.level = level;
       plantPrize(s.coins, level, roll);
@@ -544,52 +544,49 @@ export default {
   draw(s, d) {
     for (let i = 0; i < LAYERS.length; i++) {
       const L = LAYERS[i];
-      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#5a3a228e' : '#6a462c88', '#e4c48a', 3);
-      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18f', 5);
+      d.line({x: L.left + 8, y: L.lip - 2}, {x: L.right - 8, y: L.lip - 2}, '#e8c878aa', 4);
       const extend = s.stroke > 0 && s.stroke < 0.7 ? s.stroke / 0.7 : (s.stroke >= 0.7 ? 1 : 0);
-      const plate = L.back + 18 + extend * SHOVE;
-      d.line({x: L.left + 10, y: plate}, {x: L.right - 10, y: plate}, '#d2b07a', 12);
-      d.line({x: L.left + 10, y: plate - 5}, {x: L.right - 10, y: plate - 5}, '#f3ddb0', 3);
+      const plate = L.back + 16 + extend * SHOVE;
+      d.line({x: L.left + 14, y: plate}, {x: L.right - 14, y: plate}, '#d2b07acc', 10);
+      d.line({x: L.left + 14, y: plate - 4}, {x: L.right - 14, y: plate - 4}, '#f3ddb0cc', 2);
     }
     const order = [...s.coins, ...s.falling].sort((a, b) => a.layer - b.layer || a.y - b.y);
     for (const c of order) {
       d.item(spriteKey(c.id), c.x, c.y, {w: c.w, fallback: () => d.ball(c.x, c.y, c.r, c.color)});
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    const px = 132, py = 148;
-    d.item(spriteKey('penny-purse'), px, py, {w: 148, fallback: () => d.heart(px, py, 44, '#6a7a52')});
-    const heap = Math.min(Math.max(0, n), 36);
+    const px = 118, py = 168;
+    d.item(spriteKey('penny-purse'), px, py, {w: 120, fallback: () => d.heart(px, py, 36, '#6a7a52')});
+    const heap = Math.min(Math.max(0, n), 28);
     for (let i = 0; i < heap; i++) {
       const row = Math.floor(i / 7), col = i % 7;
-      const hx = px - 48 + col * 15 + row * 4;
-      const hy = py + 8 - row * 10 - (col % 2) * 3;
-      d.item(spriteKey('everyday-penny'), hx, hy, {w: 24, shadow: false, fallback: () => d.ball(hx, hy, 9, '#b68445')});
+      const hx = px - 42 + col * 13 + row * 3;
+      const hy = py + 6 - row * 9 - (col % 2) * 2;
+      d.item(spriteKey('everyday-penny'), hx, hy, {w: 20, shadow: false, fallback: () => d.ball(hx, hy, 8, '#b68445')});
     }
-    d.text(String(n), px, py + 78, 24, '#fff6d8');
-    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 100, 14, '#ead6a4');
+    d.text(String(n), px, py + 64, 20, '#fff6d8');
+    d.text(n === 1 ? 'penny' : 'pennies', px, py + 84, 13, '#ead6a4');
     const stacks = alleyPlay && owned('penny-purse') ? keptQty('five-penny-stack') : 0;
     if (stacks) {
-      d.item(spriteKey('five-penny-stack'), px + 58, py + 18, {w: 44, shadow: false, fallback: () => d.ball(px + 58, py + 18, 12, '#b68445')});
-      d.text(stacks === 1 ? '1 stack backed up' : stacks + ' stacks backed up', px, py + 118, 13, '#f0d18f');
+      d.item(spriteKey('five-penny-stack'), px + 48, py + 10, {w: 36, shadow: false, fallback: () => d.ball(px + 48, py + 10, 11, '#b68445')});
+      d.text(stacks === 1 ? '1 stack' : stacks + ' stacks', px, py + 102, 12, '#f0d18f');
     }
     const prize = (SETS[s.level] || SETS[0]).prize;
-    d.poly([[742, 48], [838, 52], [834, 148], [738, 142]], '#6b3a3a', '#e8d4a0', 2);
-    d.text('this table', 788, 68, 12, '#ead6a4');
-    d.item(spriteKey(prize), 788, 100, {
-      w: 52,
-      fallback: () => d.star(788, 100, 16, '#f4e2a8'),
+    d.item(spriteKey(prize), 790, 86, {
+      w: 56,
+      fallback: () => d.star(790, 86, 16, '#f4e2a8'),
     });
-    d.text(itemName(prize), 788, 136, 12, '#fff0cb');
+    d.text(itemName(prize), 790, 128, 12, '#fff0cb');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 780 : px, destY = f.prize ? 90 : py;
+      const destX = f.prize ? 790 : px, destY = f.prize ? 86 : py;
       const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
       d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, (f.w || 32) * (1 - u * 0.4)), fallback: () => d.ball(fx, fy, 10, f.color || '#b68445')});
     }
-    d.poly([[s.aim - 22, 92], [s.aim + 22, 92], [s.aim + 14, 138], [s.aim - 14, 138]], '#8a7450cc', '#ead097', 2);
-    d.text('↓', s.aim, 124, 20, '#fff3d0');
-    if (alleyPlay && !s.started) d.text('trays still', 450, 72, 18, '#f0d6a8');
+    d.poly([[s.aim - 18, 248], [s.aim + 18, 248], [s.aim + 11, 292], [s.aim - 11, 292]], '#8a745099', '#ead097', 2);
+    d.text('↓', s.aim, 278, 18, '#fff3d0');
+    if (alleyPlay && !s.started) d.text('trays still', 450, 292, 16, '#f0d6a8');
   },
   readout: s => {
     const trays = s.coins.filter(c => !c.falling).length;
