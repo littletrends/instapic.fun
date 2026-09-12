@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {WALL_ART,plannedSecrets} from './catalogue.js?v=florence-1';
+import {WALL_ART,plannedSecrets} from './catalogue.js?v=names-1';
 import {disposeWallArt} from './art.js';
 
 export function buildWall(id,art,{width=6.4,height=4.2,depth=.22,fit='contain'}={}){

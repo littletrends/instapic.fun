@@ -18,7 +18,7 @@
     {
       "id": "fortune",
       "group": "stalls",
-      "title": "Mystic Tent",
+      "title": "Iris’s Reading",
       "pairedId": "iris",
       "path": "stalls/fortune"
     },
@@ -46,7 +46,7 @@
     {
       "id": "curios",
       "group": "stalls",
-      "title": "Digger\u2019s Vault",
+      "title": "Clockwork Menagerie",
       "pairedId": "digby",
       "path": "stalls/curios"
     },
@@ -60,7 +60,7 @@
     {
       "id": "lookup",
       "group": "stalls",
-      "title": "Star-Gazing Tent",
+      "title": "A Little Starlight",
       "pairedId": "celeste",
       "path": "stalls/lookup"
     },
@@ -74,7 +74,7 @@
     {
       "id": "snap",
       "group": "stalls",
-      "title": "Flash Booth",
+      "title": "Paper Safari",
       "pairedId": "felix",
       "path": "stalls/snap"
     },
@@ -88,7 +88,7 @@
     {
       "id": "whisper",
       "group": "stalls",
-      "title": "Gossip Booth",
+      "title": "Lost Letter Express",
       "pairedId": "willa",
       "path": "stalls/whisper"
     },
@@ -102,7 +102,7 @@
     {
       "id": "ball-toss",
       "group": "stalls",
-      "title": "Barely-Fit Toss",
+      "title": "Lantern Toss",
       "pairedId": "bess",
       "path": "stalls/ball-toss"
     },
@@ -116,7 +116,7 @@
     {
       "id": "coin-pusher",
       "group": "stalls",
-      "title": "Coin Pusher Shelf",
+      "title": "Copper Falls",
       "pairedId": "copper",
       "path": "stalls/coin-pusher"
     },
@@ -130,7 +130,7 @@
     {
       "id": "pinball",
       "group": "stalls",
-      "title": "Pinball Alley",
+      "title": "Thunder Garden",
       "pairedId": "pip",
       "path": "stalls/pinball"
     },
@@ -144,7 +144,7 @@
     {
       "id": "water-gun",
       "group": "stalls",
-      "title": "Water Gun Duel",
+      "title": "Paper Harbour",
       "pairedId": "marina",
       "path": "stalls/water-gun"
     },
@@ -158,7 +158,7 @@
     {
       "id": "milk-bottles",
       "group": "stalls",
-      "title": "Weighted Bottles",
+      "title": "The Topsy Dairy",
       "pairedId": "mabel",
       "path": "stalls/milk-bottles"
     },
@@ -172,7 +172,7 @@
     {
       "id": "cover-the-spot",
       "group": "stalls",
-      "title": "Cover-the-Spot",
+      "title": "Patchwork Moon",
       "pairedId": "dot",
       "path": "stalls/cover-the-spot"
     },
@@ -186,7 +186,7 @@
     {
       "id": "mutoscope",
       "group": "stalls",
-      "title": "Mutoscope Hood",
+      "title": "The Missing Frames",
       "pairedId": "milo",
       "path": "stalls/mutoscope"
     },
@@ -200,7 +200,7 @@
     {
       "id": "high-striker",
       "group": "stalls",
-      "title": "High Striker",
+      "title": "Bellfoundry",
       "pairedId": "magnus",
       "path": "stalls/high-striker"
     },
@@ -214,7 +214,7 @@
     {
       "id": "catoptromancy",
       "group": "stalls",
-      "title": "Catoptromancy",
+      "title": "Looking-Glass Garden",
       "pairedId": "opal",
       "path": "stalls/catoptromancy"
     },
@@ -228,7 +228,7 @@
     {
       "id": "bent-rings",
       "group": "stalls",
-      "title": "Bent Ring Pegs",
+      "title": "The Ring Orchard",
       "pairedId": "ringo",
       "path": "stalls/bent-rings"
     },
@@ -242,7 +242,7 @@
     {
       "id": "plinko",
       "group": "stalls",
-      "title": "Plinko Pegboard",
+      "title": "Peggy’s Marble Mill",
       "pairedId": "peggy",
       "path": "stalls/plinko"
     },
@@ -256,7 +256,7 @@
     {
       "id": "fairy-floss",
       "group": "stalls",
-      "title": "Fairy Floss Wheel",
+      "title": "Cloud Atelier",
       "pairedId": "flossie",
       "path": "stalls/fairy-floss"
     },
@@ -270,7 +270,7 @@
     {
       "id": "popcorn",
       "group": "stalls",
-      "title": "Popcorn Kettle",
+      "title": "Popcorn Symphony",
       "pairedId": "poppy",
       "path": "stalls/popcorn"
     },
@@ -284,7 +284,7 @@
     {
       "id": "duck-pond",
       "group": "stalls",
-      "title": "Duck Pond Hook",
+      "title": "Duckling Parade",
       "pairedId": "dottie",
       "path": "stalls/duck-pond"
     },
@@ -298,7 +298,7 @@
     {
       "id": "skee-ball",
       "group": "stalls",
-      "title": "Skee-Ball Alley",
+      "title": "Moonbow Alley",
       "pairedId": "skip",
       "path": "stalls/skee-ball"
     },
@@ -312,7 +312,7 @@
     {
       "id": "penny-pitch",
       "group": "stalls",
-      "title": "Penny Pitch",
+      "title": "Wishing Wells",
       "pairedId": "penelope",
       "path": "stalls/penny-pitch"
     },
@@ -326,7 +326,7 @@
     {
       "id": "dunk-tank",
       "group": "stalls",
-      "title": "Dunk the Barker",
+      "title": "Splashworks",
       "pairedId": "duncan",
       "path": "stalls/dunk-tank"
     },
@@ -340,7 +340,7 @@
     {
       "id": "marquee",
       "group": "stalls",
-      "title": "Boardwalk Lights",
+      "title": "Light the Night",
       "pairedId": "lumi",
       "path": "stalls/marquee"
     },
@@ -354,7 +354,7 @@
     {
       "id": "pack",
       "group": "stalls",
-      "title": "Night Kit",
+      "title": "The Impossible Suitcase",
       "pairedId": "kit",
       "path": "stalls/pack"
     },
@@ -368,7 +368,7 @@
     {
       "id": "pass",
       "group": "stalls",
-      "title": "Backstage Flap",
+      "title": "Backstage Run",
       "pairedId": "bea",
       "path": "stalls/pass"
     },
@@ -382,7 +382,7 @@
     {
       "id": "horse-carousel",
       "group": "amusements",
-      "title": "Horse Carousel \u00b7 Florence",
+      "title": "Carousel Waltz · Florence",
       "pairedId": "florence",
       "path": "amusements/horse-carousel"
     },
@@ -396,7 +396,7 @@
     {
       "id": "ferris-wheel",
       "group": "amusements",
-      "title": "Ferris Wheel \u00b7 Jasper",
+      "title": "Pocket Wheel · Jasper",
       "pairedId": "jasper",
       "path": "amusements/ferris-wheel"
     },
@@ -410,7 +410,7 @@
     {
       "id": "helter-skelter",
       "group": "amusements",
-      "title": "Helter-skelter \u00b7 Tilly",
+      "title": "Spiral Slide · Tilly",
       "pairedId": "tilly",
       "path": "amusements/helter-skelter"
     },
@@ -424,7 +424,7 @@
     {
       "id": "chair-swings",
       "group": "amusements",
-      "title": "Chair Swings \u00b7 Hugo",
+      "title": "Flying Chairs · Hugo",
       "pairedId": "hugo",
       "path": "amusements/chair-swings"
     },
@@ -438,7 +438,7 @@
     {
       "id": "funhouse",
       "group": "amusements",
-      "title": "Funhouse \u00b7 Juno",
+      "title": "Laughing Doorway · Juno",
       "pairedId": "juno",
       "path": "amusements/funhouse"
     },
@@ -452,7 +452,7 @@
     {
       "id": "fairground-organ",
       "group": "amusements",
-      "title": "Fairground Organ \u00b7 Otto",
+      "title": "Fairground Organ · Otto",
       "pairedId": "otto",
       "path": "amusements/fairground-organ"
     },
@@ -466,7 +466,7 @@
     {
       "id": "balloon-tree",
       "group": "amusements",
-      "title": "Balloon Tree \u00b7 Nell",
+      "title": "Balloon Garden · Nell",
       "pairedId": "nell",
       "path": "amusements/balloon-tree"
     },
@@ -480,63 +480,63 @@
     {
       "id": "alley-wall-bay",
       "group": "amusements",
-      "title": "Alley Wall Bay \u00b7 Arlo",
+      "title": "Painted Bay · Arlo",
       "pairedId": "arlo",
       "path": "amusements/alley-wall-bay"
     },
     {
       "id": "ticket-booth",
       "group": "aura",
-      "title": "Aura\u2019s ticket booth",
+      "title": "Aura’s ticket booth",
       "pairedId": null,
       "path": "aura/ticket-booth"
     },
     {
       "id": "welcoming",
       "group": "aura",
-      "title": "Aura \u2014 Welcoming",
+      "title": "Aura — Welcoming",
       "pairedId": null,
       "path": "aura/welcoming"
     },
     {
       "id": "thinking",
       "group": "aura",
-      "title": "Aura \u2014 Thinking",
+      "title": "Aura — Thinking",
       "pairedId": null,
       "path": "aura/thinking"
     },
     {
       "id": "pointing",
       "group": "aura",
-      "title": "Aura \u2014 Pointing",
+      "title": "Aura — Pointing",
       "pairedId": null,
       "path": "aura/pointing"
     },
     {
       "id": "laughing",
       "group": "aura",
-      "title": "Aura \u2014 Laughing",
+      "title": "Aura — Laughing",
       "pairedId": null,
       "path": "aura/laughing"
     },
     {
       "id": "celebrating",
       "group": "aura",
-      "title": "Aura \u2014 Celebrating",
+      "title": "Aura — Celebrating",
       "pairedId": null,
       "path": "aura/celebrating"
     },
     {
       "id": "bad-luck",
       "group": "aura",
-      "title": "Aura \u2014 Bad luck",
+      "title": "Aura — Bad luck",
       "pairedId": null,
       "path": "aura/bad-luck"
     },
     {
       "id": "handing-collectible",
       "group": "aura",
-      "title": "Aura \u2014 Handing a collectible",
+      "title": "Aura — Handing a collectible",
       "pairedId": null,
       "path": "aura/handing-collectible"
     }

@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {AMUSEMENT_ART,PAPERCUT_VIEWS,PAPERCUT_SHEET,PAPERCUT_FRAMES,papercutRideSrc,papercutHostSrc} from './catalogue.js?v=florence-1';
+import {AMUSEMENT_ART,PAPERCUT_VIEWS,PAPERCUT_SHEET,PAPERCUT_FRAMES,papercutRideSrc,papercutHostSrc} from './catalogue.js?v=names-1';
 import {TEX_LIMIT} from '../phone-lane.js?v=keep-light-1';
 
 const loader=new THREE.TextureLoader();

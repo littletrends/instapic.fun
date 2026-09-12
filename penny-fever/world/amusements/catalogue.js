@@ -16,25 +16,25 @@ export const AMUSEMENT_ART={
   stallRects:boothRects,hostSource:'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp',
   hostRects:[[0,98,450,910],[450,105,747,910],[748,103,1188,910],[1188,100,1520,910]]
  }),
- 'horse-carousel':definition('horse-carousel','Horse carousel','Florence','01-horse-carousel-turnaround.png',[105,468],[554,940]),
- 'ferris-wheel':definition('ferris-wheel','Ferris wheel','Jasper','02-ferris-wheel-turnaround.png',[65,445],[546,942],{height:5.25}),
- 'helter-skelter':definition('helter-skelter','Helter-skelter','Tilly','03-helter-skelter-turnaround-v2.png',[123,462],[546,951],{
+ 'horse-carousel':definition('horse-carousel','Carousel Waltz','Florence','01-horse-carousel-turnaround.png',[105,468],[554,940]),
+ 'ferris-wheel':definition('ferris-wheel','Pocket Wheel','Jasper','02-ferris-wheel-turnaround.png',[65,445],[546,942],{height:5.25}),
+ 'helter-skelter':definition('helter-skelter','Spiral Slide','Tilly','03-helter-skelter-turnaround-v2.png',[123,462],[546,951],{
   height:4.65,stallRects:[[35,548,372,951],[412,526,751,951],[788,526,1135,951],[1154,526,1506,951]]
  }),
- 'chair-swings':definition('chair-swings','Chair swings','Hugo','04-chair-swings-turnaround-v2.png',[60,431],[529,939]),
- 'funhouse':definition('funhouse','Funhouse','Juno','05-funhouse-turnaround.png',[100,498],[591,970],{
+ 'chair-swings':definition('chair-swings','Flying Chairs','Hugo','04-chair-swings-turnaround-v2.png',[60,431],[529,939]),
+ 'funhouse':definition('funhouse','Laughing Doorway','Juno','05-funhouse-turnaround.png',[100,498],[591,970],{
   height:3.9,depth:2,opening:[.40,.55,.67,.9],treatment:'parlour',
   stallRects:row([[25,371],[412,743],[779,1122],[1144,1506]],591,970)
  }),
- 'fairground-organ':definition('fairground-organ','Fairground organ','Otto','06-fairground-organ-turnaround.png',[106,481],[548,938],{
+ 'fairground-organ':definition('fairground-organ','Fairground Organ','Otto','06-fairground-organ-turnaround.png',[106,481],[548,938],{
   height:3.1,depth:1.35,opening:[.22,.28,.80,.55],treatment:'parlour'
  }),
- 'balloon-tree':definition('balloon-tree','Balloon tree','Nell','07-balloon-tree-turnaround-v4.png',[139,504],[549,946],{
+ 'balloon-tree':definition('balloon-tree','Balloon Garden','Nell','07-balloon-tree-turnaround-v4.png',[139,504],[549,946],{
   height:3.0,
   // Nell's sheet reverses the profile columns; the attraction row does not.
   hostRects:row([[46,378],[1140,1490],[781,1125],[410,751]],139,504)
  }),
- 'alley-wall-bay':definition('alley-wall-bay','Painted alley bay','Arlo','08-alley-wall-bay-turnaround.png',[107,488],[567,949],{
+ 'alley-wall-bay':definition('alley-wall-bay','Painted Bay','Arlo','08-alley-wall-bay-turnaround.png',[107,488],[567,949],{
   height:3.5,depth:.65,opening:[.27,.47,.63,.81],treatment:'awning',
   stallRects:row([[42,388],[420,754],[785,1130],[1148,1501]],567,949)
  })

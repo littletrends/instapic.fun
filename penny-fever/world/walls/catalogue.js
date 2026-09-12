@@ -1,10 +1,10 @@
 import {VENDOR_DESIGNS} from '../vendor-designs.js';
-import {midwayLots} from '../amusements/catalogue.js?v=florence-1';
+import {midwayLots} from '../amusements/catalogue.js?v=names-1';
 
 const rows=[
  {
   "id": "fortune",
-  "name": "Mystic Tent · Iris",
+  "name": "Iris’s Reading · Iris",
   "group": "vendor",
   "theme": "plum and antique gold, crescent moons and star fretwork",
   "secret": "a moon-locked tall door and tiny tunnel hatch",
@@ -26,7 +26,7 @@ const rows=[
  },
  {
   "id": "curios",
-  "name": "Curios · Digby",
+  "name": "Clockwork Menagerie · Digby",
   "group": "vendor",
   "theme": "forest green and aged brass; keys, lock escutcheons and tiny cabinet reliefs",
   "secret": "an oversized keyhole door and disguised little cupboard tunnel",
@@ -37,7 +37,7 @@ const rows=[
  },
  {
   "id": "lookup",
-  "name": "Look Up · Celeste",
+  "name": "A Little Starlight · Celeste",
   "group": "vendor",
   "theme": "midnight blue and gold with silver accents; constellations and celestial circles",
   "secret": "a star-lock observatory door and crescent crawl hatch",
@@ -48,7 +48,7 @@ const rows=[
  },
  {
   "id": "snap",
-  "name": "SNAP · Felix",
+  "name": "Paper Safari · Felix",
   "group": "vendor",
   "theme": "deep teal and brass; Art Nouveau camera iris, flash and film-edge relief motifs",
   "secret": "a shutter-pattern darkroom door and small film-canister hatch",
@@ -59,7 +59,7 @@ const rows=[
  },
  {
   "id": "whisper",
-  "name": "Whisper · Willa",
+  "name": "Lost Letter Express · Willa",
   "group": "vendor",
   "theme": "lavender, plum and faded brass; envelopes, wings and heart seals",
   "secret": "a letter-slot secret door and sealed envelope cupboard",
@@ -70,7 +70,7 @@ const rows=[
  },
  {
   "id": "ball-toss",
-  "name": "Ball Toss · Bess",
+  "name": "Lantern Toss · Bess",
   "group": "vendor",
   "theme": "rust red and cream with gilt trim; circus scallops and three-ball motifs",
   "secret": "a brass ball-lock door and striped low trapdoor",
@@ -81,7 +81,7 @@ const rows=[
  },
  {
   "id": "coin-pusher",
-  "name": "Coin Pusher · Copper",
+  "name": "Copper Falls · Copper",
   "group": "vendor",
   "theme": "dark walnut and burnished copper; pressed pennies and coin channels",
   "secret": "a round coin-lock vault door and little counting-room hatch",
@@ -92,7 +92,7 @@ const rows=[
  },
  {
   "id": "pinball",
-  "name": "Pinball · Pip",
+  "name": "Thunder Garden · Pip",
   "group": "vendor",
   "theme": "indigo and dusty pink with brass relief; lightning bolts and silver pinball tracks",
   "secret": "a lightning-locked service door and small silver-ball hatch",
@@ -103,7 +103,7 @@ const rows=[
  },
  {
   "id": "water-gun",
-  "name": "Water Gun · Marina",
+  "name": "Paper Harbour · Marina",
   "group": "vendor",
   "theme": "petrol blue, teal and aged gold; curling paper waves and droplets",
   "secret": "a wave-wheel lock door and low porthole tunnel",
@@ -114,7 +114,7 @@ const rows=[
  },
  {
   "id": "milk-bottles",
-  "name": "Milk Bottles · Mabel",
+  "name": "The Topsy Dairy · Mabel",
   "group": "vendor",
   "theme": "sage green, aged ivory and gold; milk-bottle silhouettes and dairy scallops",
   "secret": "a milk-churn latch door and tiny delivery hatch",
@@ -125,7 +125,7 @@ const rows=[
  },
  {
   "id": "cover-the-spot",
-  "name": "Cover the Spot · Dot",
+  "name": "Patchwork Moon · Dot",
   "group": "vendor",
   "theme": "dusty brick red, cream and gold; overlapping circle medallions",
   "secret": "a three-disc puzzle-lock door and dotted crawl hatch",
@@ -136,7 +136,7 @@ const rows=[
  },
  {
   "id": "mutoscope",
-  "name": "Mutoscope · Milo",
+  "name": "The Missing Frames · Milo",
   "group": "vendor",
   "theme": "dark tobacco brown and antique brass; film reels and picture frames",
   "secret": "a film-reel lock door and projection-room tunnel hatch",
@@ -147,7 +147,7 @@ const rows=[
  },
  {
   "id": "high-striker",
-  "name": "High Striker · Magnus",
+  "name": "Bellfoundry · Magnus",
   "group": "vendor",
   "theme": "oxblood and brass; bell reliefs and rising scale marks",
   "secret": "a hammer-and-bell lock door and strength-tester service hatch",
@@ -158,7 +158,7 @@ const rows=[
  },
  {
   "id": "catoptromancy",
-  "name": "Looking Glass · Opal",
+  "name": "Looking-Glass Garden · Opal",
   "group": "vendor",
   "theme": "smoky violet and tarnished silver-gold; ornate mirrors and reflected moons",
   "secret": "a mirror-shaped secret door and little silver-framed hatch",
@@ -169,7 +169,7 @@ const rows=[
  },
  {
   "id": "bent-rings",
-  "name": "Bent Rings · Ringo",
+  "name": "The Ring Orchard · Ringo",
   "group": "vendor",
   "theme": "olive green and gold; interlocking ring reliefs and pagoda curls",
   "secret": "a ring puzzle lock door and circular crawl hatch",
@@ -180,7 +180,7 @@ const rows=[
  },
  {
   "id": "plinko",
-  "name": "Plinko · Peggy",
+  "name": "Peggy’s Marble Mill · Peggy",
   "group": "vendor",
   "theme": "deep jade and gold; decorative rows of pegs and falling discs",
   "secret": "a pegboard-pattern hidden door and low disc hatch",
@@ -191,7 +191,7 @@ const rows=[
  },
  {
   "id": "fairy-floss",
-  "name": "Fairy Floss · Flossie",
+  "name": "Cloud Atelier · Flossie",
   "group": "vendor",
   "theme": "muted mauve-pink, faded cream and brass; layered spun-sugar clouds",
   "secret": "a cloud-shaped lock door and sweet-shop tunnel hatch",
@@ -202,7 +202,7 @@ const rows=[
  },
  {
   "id": "popcorn",
-  "name": "Popcorn · Poppy",
+  "name": "Popcorn Symphony · Poppy",
   "group": "vendor",
   "theme": "warm caramel, cream and gold with restrained burgundy accents; kernels and scallops",
   "secret": "a popcorn-box patterned secret door and corn-kernel hatch",
@@ -213,7 +213,7 @@ const rows=[
  },
  {
   "id": "duck-pond",
-  "name": "Duck Pond · Dottie",
+  "name": "Duckling Parade · Dottie",
   "group": "vendor",
   "theme": "pond green, pale gold and soft blue; reeds, ripples and tiny duck reliefs",
   "secret": "a duck-key garden door and low ripple-shaped tunnel",
@@ -224,7 +224,7 @@ const rows=[
  },
  {
   "id": "skee-ball",
-  "name": "Skee Ball · Skip",
+  "name": "Moonbow Alley · Skip",
   "group": "vendor",
   "theme": "slate blue, warm timber and gold; concentric score rings",
   "secret": "a target-lock door and round ball-return hatch",
@@ -235,7 +235,7 @@ const rows=[
  },
  {
   "id": "penny-pitch",
-  "name": "Penny Pitch · Penelope",
+  "name": "Wishing Wells · Penelope",
   "group": "vendor",
   "theme": "terracotta, peach and brass; scalloped plates, leaves and pressed pennies",
   "secret": "a penny-slot garden door and dish-shaped low hatch",
@@ -246,7 +246,7 @@ const rows=[
  },
  {
   "id": "dunk-tank",
-  "name": "Dunk Tank · Duncan",
+  "name": "Splashworks · Duncan",
   "group": "vendor",
   "theme": "turquoise, weathered cream and brass; waves and life-ring motifs",
   "secret": "a life-ring lock door and storm-drain style tunnel hatch",
@@ -257,7 +257,7 @@ const rows=[
  },
  {
   "id": "marquee",
-  "name": "Marquee · Lumi",
+  "name": "Light the Night · Lumi",
   "group": "vendor",
   "theme": "antique olive-gold and dark wood; tiny warm bulb housings and starburst reliefs",
   "secret": "a star-key backstage door and electrician cupboard hatch",
@@ -268,7 +268,7 @@ const rows=[
  },
  {
   "id": "pack",
-  "name": "Pack · Kit",
+  "name": "The Impossible Suitcase · Kit",
   "group": "vendor",
   "theme": "sage green, leather-brown and antique brass; travel trunks and luggage tags",
   "secret": "a suitcase-clasp door and luggage-room tunnel hatch",
@@ -279,7 +279,7 @@ const rows=[
  },
  {
   "id": "pass",
-  "name": "Showman’s Pass · Bea",
+  "name": "Backstage Run · Bea",
   "group": "vendor",
   "theme": "wine-red and old gold; layered velvet-paper curtain swags and tickets",
   "secret": "a ticket-slot locked backstage door and curtain-hidden low hatch",
@@ -290,7 +290,7 @@ const rows=[
  },
  {
   "id": "horse-carousel",
-  "name": "Horse Carousel · Florence",
+  "name": "Carousel Waltz · Florence",
   "group": "amusement",
   "theme": "deep burgundy, evergreen and gold; carved-paper horses and carousel canopy scallops",
   "secret": "a horse-key stable door and small gilded service hatch",
@@ -301,7 +301,7 @@ const rows=[
  },
  {
   "id": "ferris-wheel",
-  "name": "Ferris Wheel · Jasper",
+  "name": "Pocket Wheel · Jasper",
   "group": "amusement",
   "theme": "forest green, ochre and gold; wheel spokes and little gondola reliefs",
   "secret": "a spoke-wheel locked door and low machinery hatch",
@@ -312,7 +312,7 @@ const rows=[
  },
  {
   "id": "helter-skelter",
-  "name": "Helter-skelter · Tilly",
+  "name": "Spiral Slide · Tilly",
   "group": "amusement",
   "theme": "faded vermilion, plum and gold; spiral ribbons and tower crenellations",
   "secret": "a spiral-latch tower door and round tunnel hatch",
@@ -323,7 +323,7 @@ const rows=[
  },
  {
   "id": "chair-swings",
-  "name": "Chair Swings · Hugo",
+  "name": "Flying Chairs · Hugo",
   "group": "amusement",
   "theme": "burgundy, green and gold; hanging chains, hearts and chair silhouettes",
   "secret": "a chain-and-heart locked service door and low hatch",
@@ -334,7 +334,7 @@ const rows=[
  },
  {
   "id": "funhouse",
-  "name": "Funhouse · Juno",
+  "name": "Laughing Doorway · Juno",
   "group": "amusement",
   "theme": "dark green, burgundy and aged gold; theatrical mask reliefs and wavy framing",
   "secret": "a sly smiling mask door and skewed small secret hatch; charming not horror",
@@ -356,7 +356,7 @@ const rows=[
  },
  {
   "id": "balloon-tree",
-  "name": "Balloon Tree · Nell",
+  "name": "Balloon Garden · Nell",
   "group": "amusement",
   "theme": "plum, emerald and burgundy with antique gold; raised balloon clusters and tied ribbons",
   "secret": "a ribbon-lock garden door and little balloon-shaped hatch",
@@ -367,7 +367,7 @@ const rows=[
  },
  {
   "id": "alley-wall-bay",
-  "name": "Painted Alley Bay · Arlo",
+  "name": "Painted Bay · Arlo",
   "group": "amusement",
   "theme": "deep green, rust-red awnings and gilt trim; theatrical window panels",
   "secret": "a key-locked mural door and discreet tunnel behind a low panel",

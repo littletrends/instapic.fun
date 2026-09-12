@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
-import {AMUSEMENT_ART,RIDE_X,PAPERCUT_VIEWS} from './catalogue.js?v=florence-1';
-import {loadPapercutFace,buildPapercut,setPapercutFace,showPapercutView,disposePapercutStand} from './cutouts.js?v=florence-1';
+import {AMUSEMENT_ART,RIDE_X,PAPERCUT_VIEWS} from './catalogue.js?v=names-1';
+import {loadPapercutFace,buildPapercut,setPapercutFace,showPapercutView,disposePapercutStand} from './cutouts.js?v=names-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
 const NEAR=PAPERCUT_NEAR;
