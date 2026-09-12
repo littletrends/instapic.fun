@@ -3,7 +3,7 @@
   // Live draft is Restyled Original paper alley. Naked #alley drops ?rail=paper
   // and used to boot the old 2D tent map. Always pin the current v= so old
   // bookmarks (?v=paper-alley-live-1 vs none) do not keep two cached pages.
-  const LIVE_V = 'doll-face-2';
+  const LIVE_V = 'doll-face-3';
   const live = new URL(location.href);
   if (live.searchParams.get('style') !== 'paper' || live.searchParams.get('rail') !== 'paper' || live.searchParams.get('v') !== LIVE_V) {
     live.searchParams.set('style', 'paper');

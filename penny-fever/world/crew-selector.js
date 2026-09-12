@@ -1,7 +1,7 @@
 import {
   BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_STYLES, EYE_COLORS, NOSES, MOUTHS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-face-2';
+} from './paper-dolls.js?v=doll-face-3';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -16,6 +16,7 @@ const boot = globalThis.__pfDoll || (globalThis.__pfDoll = {
   mode: 'crew',
   draft: blankDraft(),
   previewUrl: '',
+  dollView: 0,
 });
 
 function isCrew(id) {
@@ -71,6 +72,8 @@ function poseDoll(el, id, view) {
 function paintViewLabel() {
   const label = document.getElementById('crewViewLabel');
   if (label) label.textContent = VIEWS[boot.viewIndex % 4];
+  const doll = document.getElementById('dollViewLabel');
+  if (doll) doll.textContent = VIEWS[boot.dollView % 4];
 }
 
 function optionRow(title, key, items, swatch) {
@@ -85,16 +88,21 @@ function paintDraft() {
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
+  const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
     boot.previewUrl = url;
-    const runway = document.getElementById('crewRunwayDoll');
-    if (runway && boot.mode === 'custom') {
-      runway.style.backgroundImage = `url('${url}')`;
-      runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
+    if (stage) {
+      stage.src = url;
+      stage.style.marginLeft = `-${(boot.dollView % 4) * 100}%`;
     }
-    const portrait = document.getElementById('chosenCrewPortrait');
-    if (portrait && boot.selected === MINE_ID) {
-      portrait.style.backgroundImage = `url('${url}')`;
+    if (boot.selected === MINE_ID) {
+      const portrait = document.getElementById('chosenCrewPortrait');
+      if (portrait) portrait.style.backgroundImage = `url('${url}')`;
+      const runway = document.getElementById('crewRunwayDoll');
+      if (runway && !boot.falling) {
+        runway.style.backgroundImage = `url('${url}')`;
+        runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
+      }
     }
   }).catch(() => {});
 }
@@ -102,7 +110,7 @@ function paintDraft() {
 function refresh() {
   const selected = boot.selected;
   document.querySelectorAll('.crew-book [data-crew]').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.crew === selected && boot.mode === 'crew'));
+    b.setAttribute('aria-pressed', String(b.dataset.crew === selected));
   });
   const label = document.getElementById('chosenCrew');
   if (label) label.textContent = `Playing as ${name(selected)}`;
@@ -113,37 +121,32 @@ function refresh() {
   }
   const status = document.getElementById('crewStatus');
   if (status) {
-    status.textContent = boot.mode === 'custom'
-      ? 'This is your paper doll. That’s me keeps it.'
+    status.textContent = selected === MINE_ID
+      ? 'Playing as your cardboard cut-out.'
       : `${name(selected)} is ready for the midway.`;
   }
   const runwayDoll = document.getElementById('crewRunwayDoll');
-  if (runwayDoll && !boot.falling) {
-    if (boot.mode === 'custom') paintDraft();
-    else poseDoll(runwayDoll, boot.selected, boot.viewIndex);
-  }
+  if (runwayDoll && !boot.falling) poseDoll(runwayDoll, boot.selected, boot.viewIndex);
   paintViewLabel();
   paintDraft();
 }
 
 function turn(dir) {
   boot.viewIndex = (boot.viewIndex + dir + 4) % 4;
-  const runwayDoll = document.getElementById('crewRunwayDoll');
-  if (boot.mode === 'custom' && boot.previewUrl && runwayDoll) {
-    runwayDoll.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
-  } else {
-    poseDoll(runwayDoll, boot.selected, boot.viewIndex);
-  }
+  poseDoll(document.getElementById('crewRunwayDoll'), boot.selected, boot.viewIndex);
+  paintViewLabel();
+}
+
+function turnDoll(dir) {
+  boot.dollView = (boot.dollView + dir + 4) % 4;
+  const stage = document.getElementById('dollPreviewImg');
+  if (stage) stage.style.marginLeft = `-${(boot.dollView % 4) * 100}%`;
   paintViewLabel();
 }
 
 function setPart(key, val) {
-  boot.mode = 'custom';
   boot.draft = { ...boot.draft, [key]: val };
   paintDraft();
-  const status = document.getElementById('crewStatus');
-  if (status) status.textContent = 'This is your paper doll. That’s me keeps it.';
-  document.querySelectorAll('.crew-book [data-crew]').forEach(b => b.setAttribute('aria-pressed', 'false'));
 }
 
 export function chooseCrew(id) {
@@ -183,12 +186,12 @@ export function chooseCrew(id) {
 }
 
 function keepMe() {
-  if (boot.mode === 'custom') {
-    keepMine(boot.draft);
-    chooseCrew(MINE_ID);
-  }
-  const book = document.querySelector('dialog.crew-book');
-  book?.close();
+  document.querySelector('dialog.crew-book')?.close();
+}
+
+function keepCutout() {
+  keepMine(boot.draft);
+  chooseCrew(MINE_ID);
 }
 
 function fillArt(root) {
@@ -204,7 +207,7 @@ function openCrewBook(event) {
   if (!book) return;
   fillArt(book);
   boot.viewIndex = 0;
-  boot.mode = 'custom';
+  boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
   boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
   refresh();
   preloadDollArt();
@@ -242,9 +245,9 @@ function mount() {
     book.className = 'crew-book';
     book.setAttribute('aria-labelledby', 'crewTitle');
     book.innerHTML = `<form method="dialog"><button class="crew-close" aria-label="Close character book">×</button></form>
-<p class="crew-kicker">Penny Fever · Paper dolls</p>
-<h2 id="crewTitle">Make your paper doll</h2>
-<p>A cardboard cut-out. Hair sits on the head. Tiny paper dots for a face. No clothes yet.</p>
+<p class="crew-kicker">Penny Fever · The original crew</p>
+<h2 id="crewTitle">Choose your paper doll</h2>
+<p>They take a little runway turn. Pick one and the last doll falls away.</p>
 <div class="crew-runway" aria-hidden="true">
  <div class="crew-runway-board"></div>
  <div class="crew-runway-stage"><div id="crewRunwayDoll" class="crew-runway-doll crew-portrait"></div></div>
@@ -254,30 +257,44 @@ function mount() {
  <span id="crewViewLabel" aria-live="polite">front</span>
  <button type="button" id="crewTurnRight" aria-label="Show next view">Forth ▶</button>
 </div>
-<div class="doll-maker-parts">
-  ${optionRow('Body', 'body', BODIES)}
-  ${optionRow('Skin', 'skin', SKINS, true)}
-  ${optionRow('Hair', 'hair', HAIR_STYLES)}
-  ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
-  ${optionRow('Eyes', 'eyeStyle', EYE_STYLES)}
-  ${optionRow('Eye colour', 'eyes', EYE_COLORS, true)}
-  ${optionRow('Nose', 'nose', NOSES)}
-  ${optionRow('Mouth', 'mouth', MOUTHS)}
-</div>
+<div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
-<summary>Ready-made crew</summary>
-<p>The original six, if you would rather pick a finished doll.</p>
-<div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
+<summary>Cardboard paper doll</summary>
+<p>A separate cut-out — not the original six. Boy or girl silhouette, hair, a tiny paper face. No clothes yet.</p>
+<div class="doll-torso-row">
+  <div class="doll-torso-preview">
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Cardboard doll preview"><img id="dollPreviewImg" alt="Cardboard paper doll"></div>
+    <div class="crew-runway-turn">
+      <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
+      <span id="dollViewLabel">front</span>
+      <button type="button" id="dollPrevForth" aria-label="Show next view">Forth ▶</button>
+    </div>
+  </div>
+  <div class="doll-maker-parts">
+    ${optionRow('Body', 'body', BODIES)}
+    ${optionRow('Skin', 'skin', SKINS, true)}
+    ${optionRow('Hair', 'hair', HAIR_STYLES)}
+    ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
+    ${optionRow('Eyes', 'eyeStyle', EYE_STYLES)}
+    ${optionRow('Eye colour', 'eyes', EYE_COLORS, true)}
+    ${optionRow('Nose', 'nose', NOSES)}
+    ${optionRow('Mouth', 'mouth', MOUTHS)}
+  </div>
+</div>
+<button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
       if (e.target.closest('#crewTurnLeft')) { turn(-1); return; }
       if (e.target.closest('#crewTurnRight')) { turn(1); return; }
+      if (e.target.closest('#dollPrevBack')) { turnDoll(-1); return; }
+      if (e.target.closest('#dollPrevForth')) { turnDoll(1); return; }
       const part = e.target.closest('[data-doll-key]');
       if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
       if (e.target.closest('#crewDone')) { keepMe(); return; }
+      if (e.target.closest('#dollKeep')) { keepCutout(); return; }
       const b = e.target.closest('[data-crew]');
       if (b) chooseCrew(b.dataset.crew);
     });
