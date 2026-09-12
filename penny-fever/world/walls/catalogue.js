@@ -1,5 +1,5 @@
 import {VENDOR_DESIGNS} from '../vendor-designs.js';
-import {AMUSEMENT_PLACES} from '../amusements/catalogue.js?v=paper-alley-live-2';
+import {midwayLots} from '../amusements/catalogue.js?v=alley-lots-1';
 
 const rows=[
  {
@@ -415,12 +415,13 @@ export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
 export const WALL_RADIAL=4.86;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{
- stallStart=14,stallStep=5.2,wallX=WALL_RADIAL,overlap=.18,foyerStart=1.2
+ stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.18,foyerStart=1.2,lots=null
 }={}){
- const sites=Object.values(VENDOR_DESIGNS).map(d=>({
-  id:d.id,side:d.index%2===0?-1:1,z:stallStart+d.index*stallStep
+ const stallIds=Object.values(VENDOR_DESIGNS).sort((a,b)=>a.index-b.index).map(d=>d.id);
+ const sequence=lots||midwayLots(stallIds);
+ const sites=sequence.map((lot,i)=>({
+  id:lot.id,side:lot.side,z:stallStart+i*stallStep
  }));
- for(const [id,x,bay] of AMUSEMENT_PLACES)sites.push({id,side:Math.sign(x),z:stallStart+bay*stallStep});
  sites.push({id:'foyer',side:-1,z:4},{id:'foyer',side:1,z:4},
   {id:'aura-ticket-booth',side:-1,z:6.2});
  const result=[];
@@ -430,7 +431,7 @@ export function wallPlacements(len,{
    const lo=i?(line[i-1].z+site.z)/2:foyerStart;
    const hi=i<line.length-1?(site.z+line[i+1].z)/2:len+1.6;
    const span=hi-lo,width=span*(1+overlap),z=(lo+hi)/2;
-   result.push({...site,z,attractionZ:site.z,width,height:5.4,fit:'width',
+   result.push({...site,z,attractionZ:site.z,width,height:6.2,fit:'width',
     x:side*wallX,yaw:-side*Math.PI/2,side,
     bounds:[z-width/2,z+width/2],key:site.id+'-'+side+'-'+site.z});
   });

@@ -7,14 +7,14 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=booth-till-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-lots-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART} from "./amusements/catalogue.js?v=ride-stagger-1";
-import {installWallBackdrops} from "./walls/install.js?v=ride-stagger-1";
-import {installPapercutRides} from "./amusements/install.js?v=ride-stagger-1";
+import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
+import {installWallBackdrops} from "./walls/install.js?v=alley-lots-1";
+import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=tmpl-webp-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -70,7 +70,7 @@ const BRASS = 0xd4a45a;
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
 const STALL_X = paperRail ? BAY_X : 2.62;
-const STALL_STEP = paperRail ? 5.2 : 2.68;
+const STALL_STEP = paperRail ? 6.6 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
 const WALK_X = AISLE;
@@ -1665,7 +1665,8 @@ function buildWorld() {
   renderer.toneMappingExposure = paperRail ? 1 : 2.05;
   renderer.setClearColor(0x070b16, 1);
 
-  hallLen = STALL_Z0 + STALLS.length * STALL_STEP + 8;
+  const lots = midwayLots(STALLS.map((s) => s.id));
+  hallLen = STALL_Z0 + lots.length * STALL_STEP + 8;
   // Dome must enclose the last stall — radius 90 cut the aisle after Catoptromancy.
   const skyR = Math.max(180, hallLen + 48);
 
@@ -1694,9 +1695,10 @@ function buildWorld() {
   stalls = [];
   solids = [];
   STALLS.forEach((spec, i) => {
-    const side = i % 2 === 0 ? -1 : 1;
+    const lotI = lots.findIndex((l) => l.kind === "stall" && l.id === spec.id);
+    const side = lotI >= 0 ? lots[lotI].side : (i % 2 === 0 ? -1 : 1);
     const x = side * STALL_X;
-    const z = STALL_Z0 + i * STALL_STEP;
+    const z = STALL_Z0 + (lotI >= 0 ? lotI : i) * STALL_STEP;
     const yaw = Math.atan2(-x, -FACE_PULL);
     const s = makeStall(spec, x, z, yaw);
     s.userData.side = side;
@@ -1791,9 +1793,9 @@ function buildWorld() {
     installIndividualVendors(stalls, scene);
     vendorCutouts = installVendorCutouts(barkers);
     stallCutouts = installStallCutouts(stalls);
-    papercutRides = installPapercutRides(scene, STALL_Z0, STALL_STEP);
+    papercutRides = installPapercutRides(scene, STALL_Z0, STALL_STEP, lots);
     extendPaperAlley(scene, hallLen);
-    wallBackdrops = installWallBackdrops(scene, hallLen);
+    wallBackdrops = installWallBackdrops(scene, hallLen, {stallStart: STALL_Z0, stallStep: STALL_STEP, lots});
     installTicketService(player, aura, window.PennyFever);
     curtain.visible = false;
     endSign.visible = false;

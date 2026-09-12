@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
-import {AMUSEMENT_ART,AMUSEMENT_PLACES,PAPERCUT_VIEWS} from './catalogue.js?v=paper-alley-live-2';
-import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut,disposePapercutStand} from './cutouts.js?v=keep-light-1';
+import {AMUSEMENT_ART,RIDE_X,PAPERCUT_VIEWS} from './catalogue.js?v=alley-lots-1';
+import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut,disposePapercutStand} from './cutouts.js?v=alley-lots-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
 const NEAR=PAPERCUT_NEAR;
@@ -9,23 +9,24 @@ const SIDE_NEAR=PAPERCUT_SIDES;
 const HOST_HEIGHT=1.7;
 const HOST_INSET=.7;
 const HOST_ALONG=-.92;
-// Stalls are 3.5 tall. Rides must dwarf them. Side cards fill the centred wall bay
-// without crossing the aisle (1.62) or the wall (4.86).
-const RIDE_SCALE=2;
-const RIDE_HEIGHT_MIN=7;
-const RIDE_MAX_WIDTH=8.6;
-const RIDE_SIDE_WIDTH=2.35;
+// Stalls are 3.5 tall. Rides dwarf them and sit further back (RIDE_X 3.82),
+// so side cards stay out of the aisle (1.62) and short of the wall (4.86).
+const RIDE_SCALE=2.35;
+const RIDE_HEIGHT_MIN=8;
+const RIDE_MAX_WIDTH=9.2;
+const RIDE_SIDE_WIDTH=2.2;
 
 export function amusementYaw(x){return x>0?-Math.PI/2:Math.PI/2;}
 // Local +Z toward the foyer, so fronts greet a guest walking +Z down the alley.
 export const APPROACH_YAW=Math.PI;
 
-export function installPapercutRides(scene,z0,step,{load=loadPapercutFace}={}){
+export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}={}){
  const root=new THREE.Group();root.name='Papercut midway rides';scene.add(root);
  const figures=[];
- for(const [id,x,bay] of AMUSEMENT_PLACES){
-  const d=AMUSEMENT_ART[id];if(!d)continue;
-  const z=z0+bay*step,yaw=amusementYaw(x),side=Math.sign(x)||1;
+ for(const [i,lot] of (lots||[]).entries()){
+  if(lot.kind!=='ride')continue;
+  const id=lot.id,d=AMUSEMENT_ART[id];if(!d)continue;
+  const x=lot.side*(RIDE_X||3.74),z=z0+i*step,yaw=amusementYaw(x),side=lot.side||Math.sign(x)||1;
   const ride=new THREE.Group();ride.name=d.name+' · papercut';ride.position.set(x,0,z);ride.rotation.y=yaw;
   ride.userData={amusementId:id,kind:'ride'};root.add(ride);
   const host=new THREE.Group();host.name=d.host+' · attendant';

@@ -40,13 +40,36 @@ export const AMUSEMENT_ART={
  })
 };
 // Midpoint of the walkable aisle (1.62) and the illustrated walls (4.86), so
-// stalls and rides sit in front of their wall instead of hugging the path.
+// stalls sit in front of their wall instead of hugging the path.
 export const BAY_X=3.24;
+// Rides sit deeper in the wall bay and a fraction of a stall-step along the
+// boards, so they zigzag like the tents instead of standing face-to-face.
+export const RIDE_X=3.74;
 export const AMUSEMENT_PLACES=[
- ['horse-carousel',BAY_X,0],['fairground-organ',-BAY_X,1],['helter-skelter',-BAY_X,3],
- ['ferris-wheel',BAY_X,6],['chair-swings',-BAY_X,9],['funhouse',BAY_X,12],
- ['balloon-tree',-BAY_X,15],['alley-wall-bay',BAY_X,18]
+ ['horse-carousel',RIDE_X,0.4],['fairground-organ',-RIDE_X,1.4],['helter-skelter',-RIDE_X,3.4],
+ ['ferris-wheel',RIDE_X,6.4],['chair-swings',-RIDE_X,9.4],['funhouse',RIDE_X,12.4],
+ ['balloon-tree',-RIDE_X,15.4],['alley-wall-bay',RIDE_X,18.4]
 ];
+// One lot per attraction. Rides are not parked in a tent bay — they get their
+// own Z and their own wall, inserted after stall floor(bay).
+export function midwayLots(stallIds){
+ const rides=AMUSEMENT_PLACES.map(([id,x,bay])=>({id,side:Math.sign(x)||1,after:Math.floor(bay),bay}))
+  .sort((a,b)=>a.bay-b.bay||a.id.localeCompare(b.id));
+ const lots=[];
+ let ri=0;
+ stallIds.forEach((id,i)=>{
+  lots.push({kind:'stall',id,side:i%2===0?-1:1});
+  while(ri<rides.length&&rides[ri].after===i){
+   lots.push({kind:'ride',id:rides[ri].id,side:rides[ri].side});
+   ri++;
+  }
+ });
+ while(ri<rides.length){
+  lots.push({kind:'ride',id:rides[ri].id,side:rides[ri].side});
+  ri++;
+ }
+ return lots;
+}
 export const PAPERCUT_ROOT='assets/restyle/scene-turnarounds-2026-09-09';
 export const PAPERCUT_VIEWS=['front','left','back','right'];
 export const PAPERCUT_SHEET=512;
