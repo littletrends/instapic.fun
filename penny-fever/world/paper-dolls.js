@@ -209,7 +209,8 @@ export async function composeDoll(spec) {
 }
 
 export function bodyStrip(id) {
-  return src('bodies', `${id === 'girl' || id === 'cardboard-girl' ? 'girl' : 'boy'}.png`);
+  const who = id === 'girl' || id === 'cardboard-girl' ? 'girl' : 'boy';
+  return `assets/restyle/paper-dolls/bodies/${who}.png`;
 }
 
 function readStore() {

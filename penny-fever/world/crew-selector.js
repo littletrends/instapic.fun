@@ -1,4 +1,4 @@
-import { BODIES, bodyStrip } from './paper-dolls.js?v=doll-torso-1';
+import { BODIES, bodyStrip } from './paper-dolls.js?v=doll-torso-2';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 export const BLANK_IDS = ['cardboard-boy', 'cardboard-girl'];
@@ -58,17 +58,15 @@ function paintViewLabel() {
   if (label) label.textContent = VIEWS[boot.viewIndex % 4];
 }
 
-function poseTorso(el, body, view) {
-  if (!el) return;
-  el.style.backgroundImage = `url('${bodyStrip(body)}')`;
-  el.style.backgroundPosition = `${(view % 4) * 33.333}% 0`;
-}
-
 function paintTorso() {
   document.querySelectorAll('[data-doll-blank]').forEach(b => {
     b.setAttribute('aria-pressed', String(b.dataset.dollBlank === boot.torso));
   });
-  poseTorso(document.getElementById('dollPreview'), boot.torso, boot.torsoView);
+  const img = document.getElementById('dollPreviewImg');
+  if (img) {
+    img.src = bodyStrip(boot.torso);
+    img.style.marginLeft = `-${(boot.torsoView % 4) * 100}%`;
+  }
   const label = document.getElementById('dollPreviewLabel');
   if (label) label.textContent = VIEWS[boot.torsoView % 4];
 }
@@ -212,9 +210,9 @@ function mount() {
 <summary>The paper-doll collection</summary>
 <p>Male or female cardboard torso. Face and clothes later.</p>
 <div class="doll-torso-row">
-  <div class="doll-torso-picks">${BODIES.map(b => `<button type="button" class="doll-opt" data-doll-blank="${b.id}" aria-pressed="${b.id === 'boy'}"><span class="crew-portrait doll-thumb" style="background-image:url('${bodyStrip(b.id)}')"></span><span>${b.label}</span></button>`).join('')}</div>
+  <div class="doll-torso-picks">${BODIES.map(b => `<button type="button" class="doll-opt" data-doll-blank="${b.id}" aria-pressed="${b.id === 'boy'}"><span class="doll-thumb"><img src="${bodyStrip(b.id)}" alt=""></span><span>${b.label}</span></button>`).join('')}</div>
   <div class="doll-torso-preview">
-    <div id="dollPreview" class="crew-portrait doll-preview-stage" aria-label="Torso preview"></div>
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Torso preview"><img id="dollPreviewImg" src="${bodyStrip('boy')}" alt="Cardboard torso"></div>
     <div class="crew-runway-turn">
       <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
       <span id="dollPreviewLabel">front</span>
