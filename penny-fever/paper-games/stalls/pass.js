@@ -1,7 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=bea-backstage-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const BOOK = 'pennyFever.backstageRun';
 const DUMP_CAP = 8;

@@ -1,6 +1,6 @@
 import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const CABINS = ['pocket-wheel', 'star-token', 'moon-penny', 'ride-ticket', 'gyro-ghost', 'pressed-heart'];
 

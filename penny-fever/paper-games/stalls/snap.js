@@ -1,7 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=felix-safari-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const WIND = {x: 726, y: 992, pull: 50};
 const CLOCK = 48;

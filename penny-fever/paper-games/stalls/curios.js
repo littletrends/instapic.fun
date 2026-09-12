@@ -1,7 +1,7 @@
 import {clamp, dist, lerp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=booth-play-2';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const DUMP_CAP = 24;
 const STROKE = 0.52;

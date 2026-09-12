@@ -1,7 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=ringo-orchard-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const HAND = {x: 450, y: 1030};
 const FLIGHT = 1.12;

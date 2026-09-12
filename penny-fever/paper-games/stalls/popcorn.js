@@ -1,7 +1,7 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=poppy-symphony-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const DUMP_CAP = 8;
 const BOOK = 'pennyFever.poppyKettle';

@@ -1,8 +1,8 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
-const KEYS = ['organ-music-box', 'star-token', 'moon-penny', 'pressed-heart'];
+const KEYS = ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner'];
 
 export default {
   title: 'Calliope Keys',
@@ -10,7 +10,7 @@ export default {
   instructions: 'Notes drift down. Tap or press Space as they cross the bar. Later chapters send more, faster.',
   levels: ['A slow roll', 'The evening waltz', 'A busier score', 'Lantern notes', 'A quick polka', 'The last chord'],
   sprites: KEYS,
-  prizes: ['organ-music-box', 'star-token', 'moon-penny', 'pressed-heart', 'ride-ticket', 'showman-ribbon'],
+  prizes: ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner', 'ride-ticket', 'aura-keepsake'],
   actions: [{id: 'play', label: 'Play · Space'}],
   create(level) {
     const s = {

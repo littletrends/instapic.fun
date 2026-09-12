@@ -1,7 +1,7 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=peggy-mill-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const R = 12;
 const MAX = 720;

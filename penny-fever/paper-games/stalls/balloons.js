@@ -1,6 +1,6 @@
 import {clamp, dist, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const kinds = ['balloon-bouquet', 'autumn-leaf-lantern', 'moon-lantern', 'prize-bag'];
 
@@ -22,7 +22,7 @@ export default {
   instructions: 'Tap the matching balloon as it floats past. The picture at the top is the one to pop. Wrong balloons simply keep flying. Arrows move a little pointer; Space pops whatever is nearest. Fill the garden with the right pops — no timer.',
   levels: ['A quiet afternoon', 'A breeze in the garden', 'The evening release', 'A busy little sky', 'The midnight bunch', 'A garden in a hurry'],
   sprites: kinds,
-  prizes: ['balloon-bouquet', 'prize-bag', 'swing-spinner'],
+  prizes: ['balloon-bouquet', 'prize-bag', 'swing-spinner', 'aura-keepsake', 'laughing-doorway', 'organ-music-box'],
   actions: [{id: 'left', label: 'Pointer left', hold: true}, {id: 'pop', label: 'Pop nearest · Space'}, {id: 'right', label: 'Pointer right', hold: true}],
   create(level) {
     const s = {

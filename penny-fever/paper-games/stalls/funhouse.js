@@ -1,6 +1,6 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const FACES = ['laughing-doorway', 'looking-glass-locket', 'velvet-mask'];
 
@@ -37,8 +37,8 @@ export default {
   intro: 'Juno’s funhouse has two mirrors and one real laugh. Remember the true door after they shuffle.',
   instructions: 'The real doorway flashes. Then the three doors mix. Tap the real laugh. Later chapters shuffle faster and ask for more finds.',
   levels: ['A kind first laugh', 'The mirrors wink', 'A quicker shuffle', 'Four true doors', 'A busy hall', 'The last laugh'],
-  sprites: ['laughing-doorway', 'looking-glass-locket', 'velvet-mask'],
-  prizes: ['laughing-doorway', 'velvet-mask', 'looking-glass-locket', 'secret-door-key', 'pocket-theatre', 'showman-ribbon'],
+  sprites: ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'],
+  prizes: ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'],
   actions: [
     {id: 'd0', label: 'Left door'},
     {id: 'd1', label: 'Middle door'},

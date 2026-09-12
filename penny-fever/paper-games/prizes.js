@@ -195,135 +195,135 @@ export const kits = {
     prizes: ['coin-sleeve', 'copper-cascade', 'penny-tree', 'coin-album', 'treasure-tin', 'five-penny-stack'],
   },
   whisper: {
-    sprites: ['trade-envelope','sealed-secret','return-postcard','message-bottle','charm-pouch'],
+    sprites: ['trade-envelope','sealed-secret','return-postcard','message-bottle','charm-pouch','whisper-charm','secret-keeper','surprise-parcel','stamp-passport','lost-and-found-tag'],
     prizes: ['whisper-charm', 'charm-pouch', 'secret-keeper', 'surprise-parcel', 'stamp-passport', 'lost-and-found-tag'],
   },
   pack: {
-    sprites: ['night-suitcase','ticket-satchel','penny-purse','coin-sleeve','lucky-match','whisper-charm','pocket-observatory'],
+    sprites: ['night-suitcase','ticket-satchel','penny-purse','coin-sleeve','lucky-match','whisper-charm','pocket-observatory','pressed-heart','penny-collector-book','sealed-secret','midnight-invitation'],
     prizes: ['pressed-heart', 'penny-purse', 'penny-collector-book', 'sealed-secret', 'midnight-invitation', 'ticket-satchel'],
   },
   love: {
-    sprites: ['pressed-heart','heart-biscuit','rose-penny','rose-lockbox'],
+    sprites: ['pressed-heart','heart-biscuit','rose-penny','rose-lockbox','rose-hair-bow','rose-press','kindness-heart','friendship-pins','ribbon-gift-box'],
     prizes: ['rose-hair-bow', 'rose-press', 'rose-lockbox', 'kindness-heart', 'friendship-pins', 'ribbon-gift-box'],
   },
   curios: {
-    sprites: ['clockwork-key','cabinet-key','heart-gear','display-dome','clockwork-butterfly'],
+    sprites: ['clockwork-key','cabinet-key','heart-gear','display-dome','clockwork-butterfly','tin-style-robot','crystal-cradle','curio-cabinet-album'],
     prizes: ['clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot', 'crystal-cradle', 'curio-cabinet-album'],
   },
   'duck-pond': {
-    sprites: ['crowned-duck'],
+    sprites: ['crowned-duck','brave-try-ribbon','pond-lily-dish','sleepy-dragon','spooky-pumpkin-friend','crown-turtle'],
     prizes: ['brave-try-ribbon', 'pond-lily-dish', 'crowned-duck', 'sleepy-dragon', 'spooky-pumpkin-friend', 'crown-turtle'],
   },
   fortune: {
-    sprites: ['moon-lantern','fortune-slip','moon-penny','moon-brooch'],
+    sprites: ['moon-lantern','fortune-slip','moon-penny','moon-brooch','fortune-journal','moon-festival-fan','paper-crown'],
     prizes: ['fortune-slip', 'moon-lantern', 'moon-brooch', 'fortune-journal', 'moon-festival-fan', 'paper-crown'],
   },
   'ball-toss': {
-    sprites: ['autumn-leaf-lantern','moon-lantern'],
+    sprites: ['autumn-leaf-lantern','moon-lantern','juggling-bird','patchwork-bear','button-elephant','prize-claim','midway-scarf'],
     prizes: ['juggling-bird', 'patchwork-bear', 'autumn-leaf-lantern', 'button-elephant', 'prize-claim', 'midway-scarf'],
   },
   snap: {
-    sprites: ['memory-camera','shutter-click'],
+    sprites: ['memory-camera','shutter-click','photo-accordion','safari-frame','first-visit-badge','paper-negative'],
     prizes: ['shutter-click', 'photo-accordion', 'memory-camera', 'safari-frame', 'first-visit-badge', 'paper-negative'],
   },
   pinball: {
-    sprites: ['lightning-pin','everyday-penny','star-token','moon-penny','rose-penny','crown-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket','penny-purse'],
+    sprites: ['lightning-pin','everyday-penny','star-token','moon-penny','rose-penny','crown-token','pegboard-star','summer-sun-pin','bullseye-clock','looking-glass-locket','penny-purse','thunder-marble','glass-kicker','flipper-badge','cabinet-spark'],
     prizes: ['lightning-pin', 'thunder-marble', 'glass-kicker', 'flipper-badge', 'bullseye-clock', 'cabinet-spark'],
   },
   'milk-bottles': {
-    sprites: ['message-bottle','mercury-bead','dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant','penny-purse','everyday-penny'],
+    sprites: ['message-bottle','mercury-bead','dairy-calf','lucky-dish','alley-collector-cup','cocoa-cup','crown-hatbox','button-elephant','penny-purse','everyday-penny','cream-churn'],
     prizes: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn'],
   },
   'cover-the-spot': {
-    sprites: ['moon-penny','rose-penny','star-token'],
+    sprites: ['moon-penny','rose-penny','star-token','perfect-circle','pressed-flower-book','felt-moon-disc','spring-seed-packet','garden-party-book','charm-display-case'],
     prizes: ['perfect-circle', 'pressed-flower-book', 'felt-moon-disc', 'spring-seed-packet', 'garden-party-book', 'charm-display-case'],
   },
   mutoscope: {
-    sprites: ['moon-rabbit','singing-bird','dapper-fox','moon-lantern','trade-envelope','cabinet-key'],
+    sprites: ['moon-rabbit','singing-bird','dapper-fox','moon-lantern','trade-envelope','cabinet-key','flicker-book','pocket-peepshow','memory-scrapbook','moonlight-wardrobe','pocket-theatre'],
     prizes: ['flicker-book', 'pocket-peepshow', 'memory-scrapbook', 'moonlight-wardrobe', 'dapper-fox', 'pocket-theatre'],
   },
   'high-striker': {
-    sprites: ['mighty-mallet','bell-of-bravery','mercury-bead'],
+    sprites: ['mighty-mallet','bell-of-bravery','mercury-bead','bell-bracelet','perfect-play-medal','midway-master-crown','foundry-spark'],
     prizes: ['mighty-mallet', 'bell-bracelet', 'bell-of-bravery', 'perfect-play-medal', 'midway-master-crown', 'foundry-spark'],
   },
   catoptromancy: {
-    sprites: ['moon-lantern','star-fragment'],
+    sprites: ['moon-lantern','star-fragment','looking-glass-locket','mirror-shard','folding-mirror','winter-snow-globe','winter-lantern-book','glass-garden-key'],
     prizes: ['looking-glass-locket', 'mirror-shard', 'folding-mirror', 'winter-snow-globe', 'winter-lantern-book', 'glass-garden-key'],
   },
   'bent-rings': {
-    sprites: ['wishing-acorn','lucky-ring-trio'],
+    sprites: ['wishing-acorn','lucky-ring-trio','splash-ring','twig-ring','orchard-circlet','ring-toss-ribbon'],
     prizes: ['lucky-ring-trio', 'splash-ring', 'wishing-acorn', 'twig-ring', 'orchard-circlet', 'ring-toss-ribbon'],
   },
   plinko: {
-    sprites: ['pressed-heart','star-token','moon-penny','lucky-dish'],
+    sprites: ['pressed-heart','star-token','moon-penny','lucky-dish','mill-marble','gate-token','mercury-bead','ticket-punch','stamp-and-inkpad','marble-tin'],
     prizes: ['mill-marble', 'gate-token', 'mercury-bead', 'ticket-punch', 'stamp-and-inkpad', 'marble-tin'],
   },
   'fairy-floss': {
-    sprites: ['fairy-floss','swirl-lolly','pocket-cloud','heart-biscuit'],
-    prizes: ['fairy-floss','pocket-cloud','cloud-jar','toffee-apple','cocoa-cup','birthday-crown-box'],
+    sprites: ['fairy-floss','swirl-lolly','pocket-cloud','heart-biscuit','cloud-jar','toffee-apple','birthday-crown-box'],
+    prizes: ['fairy-floss','pocket-cloud','cloud-jar','toffee-apple','swirl-lolly','birthday-crown-box'],
   },
   popcorn: {
-    sprites: ['popcorn-carton','tiny-kettle','sweet-heat'],
+    sprites: ['popcorn-carton','tiny-kettle','sweet-heat','kettle-corn-bag','lemon-fizz','butter-kernel'],
     prizes: ['popcorn-carton', 'tiny-kettle', 'sweet-heat', 'kettle-corn-bag', 'lemon-fizz', 'butter-kernel'],
   },
   'skee-ball': {
-    sprites: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin','penny-purse','everyday-penny'],
+    sprites: ['moon-penny','star-token','pegboard-star','ride-ticket','ride-stamp-book','summer-sun-pin','penny-purse','everyday-penny','silver-cup-chip','lane-wax','moonbow-stub','score-card'],
     prizes: ['silver-cup-chip', 'lane-wax', 'pegboard-star', 'moonbow-stub', 'score-card', 'summer-sun-pin'],
   },
   'penny-pitch': {
-    sprites: ['everyday-penny','moon-penny'],
+    sprites: ['everyday-penny','moon-penny','well-wish-penny','skipping-stone','well-coin','three-well-plaque','wish-ribbon','well-claim'],
     prizes: ['well-wish-penny', 'skipping-stone', 'well-coin', 'three-well-plaque', 'wish-ribbon', 'well-claim'],
   },
   'dunk-tank': {
-    sprites: ['crowned-duck','mercury-bead'],
+    sprites: ['crowned-duck','mercury-bead','dunk-plate','barker-hat','splash-bead','wet-bell','towel-flag','seltzer-bottle'],
     prizes: ['dunk-plate', 'barker-hat', 'splash-bead', 'wet-bell', 'towel-flag', 'seltzer-bottle'],
   },
   marquee: {
-    sprites: ['marquee-bulb','pocket-marquee','star-token','moon-penny','pressed-heart'],
+    sprites: ['marquee-bulb','pocket-marquee','star-token','moon-penny','pressed-heart','lantern-lighter','midway-map','new-year-star-cracker','marquee-stub'],
     prizes: ['marquee-bulb', 'pocket-marquee', 'lantern-lighter', 'midway-map', 'new-year-star-cracker', 'marquee-stub'],
   },
   pass: {
-    sprites: ['secret-door-key','velvet-mask'],
+    sprites: ['secret-door-key','velvet-mask','cue-script','showman-ribbon','cue-card','stage-door-pass'],
     prizes: ['cue-script', 'velvet-mask', 'secret-door-key', 'showman-ribbon', 'cue-card', 'stage-door-pass'],
   },
   lookup: {
-    sprites: ['star-fragment','star-spectacles','pocket-observatory','moon-rabbit','dapper-fox','moon-lantern'],
+    sprites: ['star-fragment','star-spectacles','pocket-observatory','moon-rabbit','dapper-fox','moon-lantern','sleepy-compass','gyro-ghost'],
     prizes: ['star-fragment', 'pocket-observatory', 'star-spectacles', 'sleepy-compass', 'gyro-ghost', 'moon-rabbit'],
   },
   'water-gun': {
-    sprites: ['little-sailboat','trade-envelope','message-bottle'],
+    sprites: ['little-sailboat','trade-envelope','message-bottle','harbour-washer','seaside-day-book','picnic-parcel','return-postcard'],
     prizes: ['little-sailboat', 'message-bottle', 'harbour-washer', 'seaside-day-book', 'picnic-parcel', 'return-postcard'],
   },
   carousel: {
-    sprites: ['music-carousel','organ-music-box','pocket-wheel','swing-spinner','gyro-ghost','star-token'],
+    sprites: ['music-carousel','organ-music-box','pocket-wheel','swing-spinner','gyro-ghost','star-token','laughing-doorway','ride-explorer-pennant','ride-ticket'],
     prizes: ['music-carousel','organ-music-box','pocket-wheel','laughing-doorway','ride-explorer-pennant','ride-ticket'],
   },
   balloons: {
-    sprites: ['balloon-bouquet','autumn-leaf-lantern','moon-lantern','prize-bag'],
-    prizes: ['balloon-bouquet','prize-bag','swing-spinner','birthday-crown-box','friendship-pins','paper-crown'],
+    sprites: ['balloon-bouquet','autumn-leaf-lantern','moon-lantern','prize-bag','swing-spinner','aura-keepsake','laughing-doorway','organ-music-box'],
+    prizes: ['balloon-bouquet','prize-bag','swing-spinner','aura-keepsake','laughing-doorway','organ-music-box'],
   },
   ferris: {
-    sprites: ['pocket-wheel','star-token','moon-penny','ride-ticket','gyro-ghost','pressed-heart'],
+    sprites: ['pocket-wheel','star-token','moon-penny','ride-ticket','gyro-ghost','pressed-heart','ride-stamp-book','ride-explorer-pennant'],
     prizes: ['pocket-wheel','star-token','moon-penny','ride-ticket','ride-stamp-book','ride-explorer-pennant'],
   },
   helter: {
-    sprites: ['ride-explorer-pennant','star-token','moon-penny','prize-bag'],
-    prizes: ['ride-explorer-pennant','star-token','moon-penny','prize-bag','ride-ticket','first-visit-badge'],
+    sprites: ['ride-explorer-pennant','star-token','moon-penny','prize-bag','ride-ticket','lucky-match'],
+    prizes: ['ride-explorer-pennant','star-token','moon-penny','prize-bag','ride-ticket','lucky-match'],
   },
   swings: {
-    sprites: ['swing-spinner','pressed-heart','star-token','moon-penny','prize-bag','friendship-pins'],
-    prizes: ['swing-spinner','pressed-heart','star-token','prize-bag','friendship-pins','ride-ticket'],
+    sprites: ['swing-spinner','pressed-heart','star-token','moon-penny','prize-bag','friendship-pins','heart-gear','music-carousel','ride-ticket'],
+    prizes: ['swing-spinner','heart-gear','star-token','prize-bag','music-carousel','ride-ticket'],
   },
   funhouse: {
-    sprites: ['laughing-doorway','looking-glass-locket','velvet-mask'],
-    prizes: ['laughing-doorway','velvet-mask','looking-glass-locket','secret-door-key','pocket-theatre','showman-ribbon'],
+    sprites: ['laughing-doorway','looking-glass-locket','velvet-mask','balloon-bouquet','music-carousel','pocket-wheel','organ-music-box','ride-stamp-book'],
+    prizes: ['laughing-doorway','balloon-bouquet','music-carousel','pocket-wheel','organ-music-box','ride-stamp-book'],
   },
   organ: {
-    sprites: ['organ-music-box','star-token','moon-penny','pressed-heart'],
-    prizes: ['organ-music-box','star-token','moon-penny','pressed-heart','ride-ticket','showman-ribbon'],
+    sprites: ['organ-music-box','star-token','moon-penny','pressed-heart','swing-spinner','ride-ticket','aura-keepsake'],
+    prizes: ['organ-music-box','star-token','moon-penny','swing-spinner','ride-ticket','aura-keepsake'],
   },
   mural: {
-    sprites: ['midway-map','stamp-and-inkpad','lantern-lighter','star-token'],
-    prizes: ['midway-map','stamp-and-inkpad','lantern-lighter','ride-stamp-book','first-visit-badge','ride-explorer-pennant'],
+    sprites: ['midway-map','stamp-and-inkpad','lantern-lighter','star-token','ride-stamp-book','pocket-wheel','music-carousel','laughing-doorway','balloon-bouquet','ride-explorer-pennant'],
+    prizes: ['ride-stamp-book','pocket-wheel','music-carousel','laughing-doorway','balloon-bouquet','ride-explorer-pennant'],
   },
 };

@@ -1,6 +1,6 @@
 import {dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 function spots(level) {
   const n = swell(level, 6, 2, 16);
@@ -21,8 +21,8 @@ export default {
   intro: 'Arlo’s alley wall is fading. Stamp the pale patches until the mural comes back.',
   instructions: 'Tap each pale circle to stamp it. Fill the wall. Later chapters ask for more stamps.',
   levels: ['A first wash', 'The evening wall', 'A busier bay', 'Lantern patches', 'A crowded mural', 'The last stamp'],
-  sprites: ['midway-map', 'stamp-and-inkpad', 'lantern-lighter', 'star-token'],
-  prizes: ['midway-map', 'stamp-and-inkpad', 'lantern-lighter', 'ride-stamp-book', 'first-visit-badge', 'ride-explorer-pennant'],
+  sprites: ['ride-stamp-book', 'pocket-wheel', 'music-carousel', 'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant'],
+  prizes: ['ride-stamp-book', 'pocket-wheel', 'music-carousel', 'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant'],
   actions: [],
   create(level) {
     const s = {level, t: 0, patches: spots(level), note: 'Stamp the pale patches.'};

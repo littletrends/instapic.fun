@@ -1,6 +1,6 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const rides = ['music-carousel', 'organ-music-box', 'pocket-wheel', 'swing-spinner', 'gyro-ghost', 'star-token'];
 
@@ -30,7 +30,7 @@ export default {
   instructions: 'Watch the spinning treasures. When the one shown at the top sits under the lantern, tap Stop or press Space. Later chapters spin faster. Misses are free; the carousel simply turns again.',
   levels: ['A gentle first waltz', 'The band picks up', 'Midnight horses', 'A quicker little band', 'Six treasures spinning', 'The last lantern waltz'],
   sprites: rides,
-  prizes: ['music-carousel', 'organ-music-box', 'pocket-wheel'],
+  prizes: ['music-carousel', 'organ-music-box', 'pocket-wheel', 'laughing-doorway', 'ride-explorer-pennant', 'ride-ticket'],
   actions: [{id: 'stop', label: 'Stop · Space'}],
   create(level) {
     const list = rides.slice(0, swell(level, 4, 1, 6));

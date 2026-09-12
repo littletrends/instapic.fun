@@ -1,7 +1,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=arcade-restore-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const R = 11;
 const G = 390;
@@ -19,7 +19,7 @@ const TOKENS = [
   {id: 'star-token', weight: 5, cap: 4},
   {id: 'crown-token', weight: 4, cap: 3},
 ];
-const ONCE = ['lightning-pin', 'pegboard-star', 'summer-sun-pin', 'bullseye-clock', 'looking-glass-locket'];
+const ONCE = ['lightning-pin', 'thunder-marble', 'glass-kicker', 'flipper-badge', 'bullseye-clock', 'cabinet-spark'];
 const SETS = [
   {prize: 'lightning-pin', felt: '#1e3a32cc', wood: '#5a3a28', bumper: '#6a3a58', bat: '#e8b8c4', unique: 1.00},
   {prize: 'thunder-marble', felt: '#24364acc', wood: '#4a3224', bumper: '#5a4a6a', bat: '#d4c4a0', unique: 0.82},
@@ -29,7 +29,7 @@ const SETS = [
   {prize: 'cabinet-spark', felt: '#141820ee', wood: '#2a1814', bumper: '#4a2a48', bat: '#b09088', unique: 0.22},
 ];
 const SPRITES = ['lightning-pin', 'everyday-penny', 'star-token', 'moon-penny', 'rose-penny',
-  'crown-token', 'pegboard-star', 'summer-sun-pin', 'bullseye-clock', 'looking-glass-locket', 'penny-purse'];
+  'crown-token', 'thunder-marble', 'glass-kicker', 'flipper-badge', 'bullseye-clock', 'cabinet-spark', 'penny-purse'];
 
 function seg(a, b) { return {a: {x: a[0], y: a[1]}, b: {x: b[0], y: b[1]}}; }
 function readStore() {

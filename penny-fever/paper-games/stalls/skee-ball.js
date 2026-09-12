@@ -1,7 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=arcade-restore-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const SETS = [
   {prize: 'silver-cup-chip', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,

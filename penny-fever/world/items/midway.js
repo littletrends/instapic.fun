@@ -1,9 +1,9 @@
-import {games} from '../../paper-games/catalogue.js?v=tmpl-webp-1';
-import {kits} from '../../paper-games/prizes.js?v=ride-games-1';
+import {games} from '../../paper-games/catalogue.js?v=penny-door-1';
+import {kits} from '../../paper-games/prizes.js?v=align-1';
 
-const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
-const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.webp`;
-const FALLBACK_ART = id => `paper-games/assets/${id}.webp`;
+const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
+const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.png`;
+const FALLBACK_ART = id => `paper-games/assets/${id}.png`;
 
 export const extras = [
   {
@@ -14,8 +14,8 @@ export const extras = [
     workshop: false,
     extra: true,
     prizes: ['everyday-penny', 'ticket-roll', 'admission-ticket', 'night-suitcase'],
-    cover: 'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.webp',
-    vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp',
+    cover: 'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.png',
+    vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png',
   },
   {
     id: 'collection-gift',

@@ -1,6 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 function point(t) {
   const a = t * 7.2;
@@ -18,7 +18,7 @@ export default {
   instructions: 'A bead slides the spiral. Tap or press Space when it passes through a gold ring. Catch every ring in one run.',
   levels: ['A gentle slide', 'Two more turns', 'A tighter coil', 'The evening drop', 'A busy spiral', 'The last hoop'],
   sprites: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag'],
-  prizes: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'first-visit-badge'],
+  prizes: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'lucky-match'],
   actions: [{id: 'catch', label: 'Catch ring · Space'}],
   create(level) {
     const s = {

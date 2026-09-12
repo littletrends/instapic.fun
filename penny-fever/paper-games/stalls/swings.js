@@ -1,8 +1,8 @@
 import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
-const CHAIRS = ['swing-spinner', 'pressed-heart', 'star-token', 'moon-penny', 'prize-bag', 'friendship-pins'];
+const CHAIRS = ['swing-spinner', 'heart-gear', 'star-token', 'prize-bag', 'music-carousel', 'ride-ticket'];
 
 function snap(s) {
   if (s.cool > 0 || s.result) return;
@@ -32,7 +32,7 @@ export default {
   instructions: 'Chairs fly in a circle. When the one shown at the top is at the front of the oval, tap Catch or press Space.',
   levels: ['A gentle flight', 'The evening spin', 'Lantern chairs', 'A quicker waltz', 'Six little seats', 'The last sweep'],
   sprites: CHAIRS,
-  prizes: ['swing-spinner', 'pressed-heart', 'star-token', 'prize-bag', 'friendship-pins', 'ride-ticket'],
+  prizes: ['swing-spinner', 'heart-gear', 'star-token', 'prize-bag', 'music-carousel', 'ride-ticket'],
   actions: [{id: 'catch', label: 'Catch · Space'}],
   create(level) {
     const list = CHAIRS.slice(0, swell(level, 4, 1, 6));

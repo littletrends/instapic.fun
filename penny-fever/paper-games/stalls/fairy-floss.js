@@ -1,7 +1,7 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=flossie-cloud-1';
-import {pick, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {pick, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const DUMP_CAP = 12;
 const STROKE = 1.25;

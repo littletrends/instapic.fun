@@ -1,7 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend} from '../wallet.js?v=iris-cards-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const BACK = new URL('../assets/tarot-back.png', import.meta.url).href;
 const FACE = new URL('../assets/tarot-face.png', import.meta.url).href;

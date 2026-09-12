@@ -1,7 +1,7 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=lumi-night-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const colours = ['#edc87e', '#a3d7cb', '#e4a4b7'];
 const seals = ['star-token', 'moon-penny', 'pressed-heart'];

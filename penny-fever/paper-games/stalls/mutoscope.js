@@ -1,7 +1,7 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=milo-frames-1';
-import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const R = 11;
 const G = 390;
