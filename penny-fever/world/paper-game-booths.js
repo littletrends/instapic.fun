@@ -4,7 +4,7 @@ import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=copper-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=chrome-1'),gameBase).href,
 }));
 
 // These rooms already charge a penny per throw/crank. Opening the table is free;
@@ -75,7 +75,12 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
-  bar.append(back,title,list,wallet,cash,retry,chest);
+  retry.className='paper-game-retry';
+  const main=doc.createElement('div');main.className='paper-game-bar-main';
+  main.append(back,title,chest);
+  const tools=doc.createElement('div');tools.className='paper-game-bar-tools';
+  tools.append(wallet,cash,retry,list);
+  bar.append(main,tools);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
