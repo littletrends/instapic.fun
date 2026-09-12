@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v6';
+const STORE = 'pf-paper-dolls-v7';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -24,15 +24,8 @@ export const EYE_COLORS = [
 ];
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
-  { id: 'short', label: 'Short curls', fit: 'head' },
   { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
-];
-export const HAIR_COLORS = [
-  { id: 'blonde', label: 'Blonde', rgb: [214, 176, 92] },
-  { id: 'brown', label: 'Brown', rgb: [122, 78, 48] },
-  { id: 'black', label: 'Black', rgb: [32, 24, 20] },
-  { id: 'red', label: 'Auburn', rgb: [164, 68, 40] },
-  { id: 'ink', label: 'Blue-black', rgb: [36, 48, 88] },
+  { id: 'short', label: 'Short curls', fit: 'head' },
 ];
 export const HATS = [
   { id: 'none', label: 'None' },
@@ -79,7 +72,6 @@ export function blankDraft() {
     body: 'girl',
     skin: 'cardboard',
     hair: 'none',
-    hairColor: 'blonde',
     eyes: 'blue',
     outfit: 'none',
     hat: 'none',
@@ -336,15 +328,9 @@ export async function composeDoll(spec) {
   if (eyes?.rgb) recolorEyes(ctx, eyes.rgb);
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
-    const hcan = document.createElement('canvas');
-    hcan.width = W; hcan.height = H;
-    const hctx = hcan.getContext('2d');
-    hctx.drawImage(hairImg, 0, 0, W, H);
-    const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
-    if (hc?.rgb) recolorTo(hctx, hc.rgb);
     const style = HAIR_STYLES.find(h => h.id === spec.hair);
-    if (style?.fit === 'sheet') ctx.drawImage(hcan, 0, 0);
-    else drawLayerOnHead(ctx, bodyImg, hcan);
+    if (style?.fit === 'sheet') ctx.drawImage(hairImg, 0, 0, W, H);
+    else drawLayerOnHead(ctx, bodyImg, hairImg);
   }
   if (spec.hat && spec.hat !== 'none') {
     const hatImg = await load(src('hats', `${spec.hat}.png`));

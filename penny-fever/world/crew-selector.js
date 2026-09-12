@@ -1,7 +1,7 @@
 import {
-  SKINS, EYE_COLORS, HAIR_STYLES, HAIR_COLORS, HATS, OUTFITS, DOLL_PAGES,
+  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, DOLL_PAGES,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-book-1';
+} from './paper-dolls.js?v=doll-layers-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -149,8 +149,6 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
-  if (key === 'hair' && val === 'pigtails') boot.draft.hairColor = 'blonde';
-  if (key === 'hair' && val === 'short') boot.draft.hairColor = 'brown';
   paintDraft();
 }
 
@@ -267,7 +265,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>One girl. Mix skin, eyes, hair and a hat, then pick a set from the albums.</p>
+<p>The body stays. Everything else is a paper layer — hair, hat, dress — like a book of cut-outs.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
@@ -281,9 +279,8 @@ function mount() {
     ${optionRow('Skin', 'skin', SKINS, true)}
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
     ${optionRow('Hair', 'hair', HAIR_STYLES)}
-    ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
     ${optionRow('Hat', 'hat', HATS)}
-    ${optionRow('Set', 'outfit', OUTFITS)}
+    ${optionRow('Dress', 'outfit', OUTFITS)}
   </div>
 </div>
 <div class="doll-books">${OUTFITS.filter(o => o.book).map(o => `<button type="button" data-doll-book="${o.id}" aria-label="${o.label} album"><img src="${DOLL_PAGES[o.id]}" alt=""><strong>${o.label}</strong></button>`).join('')}</div>
