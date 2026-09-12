@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v5';
+const STORE = 'pf-paper-dolls-v6';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -22,6 +22,23 @@ export const EYE_COLORS = [
   { id: 'green', label: 'Green', rgb: [62, 102, 58] },
   { id: 'grey', label: 'Grey', rgb: [96, 104, 112] },
 ];
+export const HAIR_STYLES = [
+  { id: 'none', label: 'None' },
+  { id: 'short', label: 'Short curls', fit: 'head' },
+  { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
+];
+export const HAIR_COLORS = [
+  { id: 'blonde', label: 'Blonde', rgb: [214, 176, 92] },
+  { id: 'brown', label: 'Brown', rgb: [122, 78, 48] },
+  { id: 'black', label: 'Black', rgb: [32, 24, 20] },
+  { id: 'red', label: 'Auburn', rgb: [164, 68, 40] },
+  { id: 'ink', label: 'Blue-black', rgb: [36, 48, 88] },
+];
+export const HATS = [
+  { id: 'none', label: 'None' },
+  { id: 'straw', label: 'Straw hat' },
+  { id: 'sailor', label: 'Sailor cap' },
+];
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
   { id: 'garden', label: 'Garden party', book: 'garden-party-book' },
@@ -29,6 +46,16 @@ export const OUTFITS = [
   { id: 'winter', label: 'Winter lantern', book: 'winter-lantern-book' },
   { id: 'moonlight', label: 'Moonlight', book: 'moonlight-wardrobe' },
 ];
+export const DOLL_PAGES = {
+  garden: 'assets/restyle/paper-dolls/pages/garden.jpg',
+  seaside: 'assets/restyle/paper-dolls/pages/seaside.jpg',
+  winter: 'assets/restyle/paper-dolls/pages/winter.jpg',
+  moonlight: 'assets/restyle/paper-dolls/pages/moonlight.jpg',
+  'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
+  'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',
+  'winter-lantern-book': 'assets/restyle/paper-dolls/pages/winter.jpg',
+  'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
+};
 export const NOSES = [
   { id: 'none', label: 'None' },
   { id: 'button', label: 'Button' },
@@ -55,6 +82,7 @@ export function blankDraft() {
     hairColor: 'blonde',
     eyes: 'blue',
     outfit: 'none',
+    hat: 'none',
     name: 'Paper doll',
   };
 }
@@ -79,6 +107,8 @@ export function preloadDollArt() {
   const urls = [
     src('bodies', 'girl.png'),
     ...OUTFITS.filter(o => o.id !== 'none').map(o => src('outfits', `${o.id}.png`)),
+    ...HAIR_STYLES.filter(h => h.id !== 'none').map(h => src('hair', `${h.id}.png`)),
+    ...HATS.filter(h => h.id !== 'none').map(h => src('hats', `${h.id}.png`)),
   ];
   return Promise.all(urls.map(u => load(u).catch(() => null)));
 }
@@ -304,6 +334,22 @@ export async function composeDoll(spec) {
   if (skin?.rgb) recolorSkinFromMask(ctx, bodyImg, skin.rgb);
   const eyes = EYE_COLORS.find(e => e.id === spec.eyes);
   if (eyes?.rgb) recolorEyes(ctx, eyes.rgb);
+  if (spec.hair && spec.hair !== 'none') {
+    const hairImg = await load(src('hair', `${spec.hair}.png`));
+    const hcan = document.createElement('canvas');
+    hcan.width = W; hcan.height = H;
+    const hctx = hcan.getContext('2d');
+    hctx.drawImage(hairImg, 0, 0, W, H);
+    const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
+    if (hc?.rgb) recolorTo(hctx, hc.rgb);
+    const style = HAIR_STYLES.find(h => h.id === spec.hair);
+    if (style?.fit === 'sheet') ctx.drawImage(hcan, 0, 0);
+    else drawLayerOnHead(ctx, bodyImg, hcan);
+  }
+  if (spec.hat && spec.hat !== 'none') {
+    const hatImg = await load(src('hats', `${spec.hat}.png`));
+    ctx.drawImage(hatImg, 0, 0, W, H);
+  }
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);
   return url;

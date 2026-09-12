@@ -844,8 +844,14 @@ function describe(item) {
     : item.id === 'five-penny-stack' && !entries().find(i => i.id === 'penny-purse')?.owned
       ? 'Win the purse off Copper’s trays first. Then stacks back up in it.'
       : item.hint);
-  text('treasureDetail', item.id === 'moonlight-wardrobe'
-    ? 'A collectible costume book. The six original crew remain free; wearing these outfits will follow.'
+  const dollPage = {
+    'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
+    'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',
+    'winter-lantern-book': 'assets/restyle/paper-dolls/pages/winter.jpg',
+    'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
+  }[item.id];
+  text('treasureDetail', dollPage
+    ? 'Open the album. Dress the girl with this set in Edit character.'
     : item.id === 'night-suitcase'
       ? 'A little home for the things you bring back from the midway.'
       : item.id === 'penny-collector-book'
@@ -901,7 +907,13 @@ async function select(id, punchedOverride) {
   preview.alt = item.name;
   preview.decoding = 'async';
   preview.style.cssText = 'width:100%;height:100%;object-fit:contain;padding:8%;filter:drop-shadow(0 12px 18px #0008)' + (item.owned ? '' : ';filter:grayscale(1) brightness(.55) contrast(1.05) drop-shadow(0 12px 18px #0008)');
-  preview.src = item.asset;
+  const dollPage = {
+    'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
+    'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',
+    'winter-lantern-book': 'assets/restyle/paper-dolls/pages/winter.jpg',
+    'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
+  }[item.id];
+  preview.src = (item.owned && dollPage) ? dollPage : item.asset;
   $('treasureStage').append(preview);
   try {
     const [{loadArt}, {Turntable}] = await Promise.all([needArt(), import('./turntable.js?v=treasure-lite-1')]);

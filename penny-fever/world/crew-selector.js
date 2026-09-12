@@ -1,7 +1,7 @@
 import {
-  SKINS, EYE_COLORS, OUTFITS,
+  SKINS, EYE_COLORS, HAIR_STYLES, HAIR_COLORS, HATS, OUTFITS, DOLL_PAGES,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-sets-1';
+} from './paper-dolls.js?v=doll-book-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -88,6 +88,9 @@ function paintDraft() {
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
+  document.querySelectorAll('[data-doll-book]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.dollBook === spec.outfit));
+  });
   const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
     boot.previewUrl = url;
@@ -146,6 +149,8 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
+  if (key === 'hair' && val === 'pigtails') boot.draft.hairColor = 'blonde';
+  if (key === 'hair' && val === 'short') boot.draft.hairColor = 'brown';
   paintDraft();
 }
 
@@ -262,7 +267,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>One girl doll. Skin, eyes, and a set from the paper-doll albums. Not a replacement for the original six.</p>
+<p>One girl. Mix skin, eyes, hair and a hat, then pick a set from the albums.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
@@ -275,9 +280,13 @@ function mount() {
   <div class="doll-maker-parts">
     ${optionRow('Skin', 'skin', SKINS, true)}
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
+    ${optionRow('Hair', 'hair', HAIR_STYLES)}
+    ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
+    ${optionRow('Hat', 'hat', HATS)}
     ${optionRow('Set', 'outfit', OUTFITS)}
   </div>
 </div>
+<div class="doll-books">${OUTFITS.filter(o => o.book).map(o => `<button type="button" data-doll-book="${o.id}" aria-label="${o.label} album"><img src="${DOLL_PAGES[o.id]}" alt=""><strong>${o.label}</strong></button>`).join('')}</div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
     document.body.append(book);
@@ -286,6 +295,8 @@ function mount() {
       if (e.target.closest('#crewTurnRight')) { turn(1); return; }
       if (e.target.closest('#dollPrevBack')) { turnDoll(-1); return; }
       if (e.target.closest('#dollPrevForth')) { turnDoll(1); return; }
+      const page = e.target.closest('[data-doll-book]');
+      if (page) { setPart('outfit', page.dataset.dollBook); return; }
       const part = e.target.closest('[data-doll-key]');
       if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
       if (e.target.closest('#crewDone')) { keepMe(); return; }

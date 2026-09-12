@@ -12,6 +12,11 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .doll-torso-preview{display:flex;flex-direction:column;align-items:center;padding:10px 12px 6px;background:#fffaf0;border:1px solid #c4a46a;border-radius:12px}
 .doll-maker-parts{flex:1;min-width:220px}
 .crew-collections .ticket-button{margin-top:10px}
+.doll-books{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 8px}
+.doll-books button{padding:0;border:2px solid #c4a46a;background:#fffaf0;color:#382816;cursor:pointer;border-radius:8px;overflow:hidden;text-align:left}
+.doll-books button[aria-pressed=true],.doll-books button.is-on{border-color:#435637}
+.doll-books img{display:block;width:100%;height:auto}
+.doll-books strong{display:block;padding:5px 8px;font:600 12px Georgia}
 .doll-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
 .doll-row strong{width:100%;font:600 11px/1.2 Georgia,serif;letter-spacing:.1em;text-transform:uppercase;color:#6b4e2e;margin-bottom:2px}
 .doll-chip{border:1px solid #c4a46a;background:#fffaf0;color:#382816;padding:6px 10px;border-radius:999px;cursor:pointer;font:13px Georgia}
