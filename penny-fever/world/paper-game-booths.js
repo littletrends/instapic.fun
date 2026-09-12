@@ -63,26 +63,12 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
-  const cash=doc.createElement('button');cash.type='button';cash.className='paper-game-cash';cash.textContent='Cash 5';cash.title='Cash a ticket for five pennies';
-  cash.addEventListener('click',()=>{
-    const PF=window.PennyFever;
-    const got=PF?.cashTicketForPennies?.();
-    if(!got){
-      status.hidden=false;
-      status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
-      return;
-    }
-    status.hidden=false;
-    status.textContent='Five pennies in the purse.';
-    paintWallet();
-    if(frame&&frame.getAttribute('src')==='about:blank') load();
-  });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.textContent='Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
   retry.className='paper-game-retry';
   list.className='paper-game-all';
-  bar.append(back,title,wallet,cash,chest,retry,list);
+  bar.append(back,title,wallet,chest,retry,list);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -102,7 +88,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   if(!pennyPlay){
     if(PF?.spendPennies&&!PF.spendPennies(1)){
       status.hidden=false;
-      status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura.';
+      status.textContent='Need a penny to sit down. Back to the alley, then Aura’s booth to cash a ticket.';
       unload();
       return;
     }
