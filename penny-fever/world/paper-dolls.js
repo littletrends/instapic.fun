@@ -19,7 +19,6 @@ export const SKINS = [
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
   { id: 'short', label: 'Short curls' },
-  { id: 'bob', label: 'Wavy bob' },
   { id: 'pigtails', label: 'Pigtails' },
 ];
 export const HAIR_COLORS = [
@@ -31,9 +30,8 @@ export const HAIR_COLORS = [
 ];
 export const EYE_STYLES = [
   { id: 'none', label: 'None' },
-  { id: 'round', label: 'Round' },
+  { id: 'round', label: 'Dots' },
   { id: 'sleepy', label: 'Sleepy' },
-  { id: 'lash', label: 'Lashes' },
 ];
 export const EYE_COLORS = [
   { id: 'brown', label: 'Brown', rgb: [86, 52, 32] },
@@ -55,8 +53,6 @@ export const MOUTHS = [
 ];
 export const EARS = [
   { id: 'body', label: 'As cut' },
-  { id: 'round', label: 'Round' },
-  { id: 'pointed', label: 'Pointed' },
 ];
 
 export const MINE_ID = 'mine';
@@ -66,11 +62,11 @@ export function blankDraft() {
     id: MINE_ID,
     body: 'girl',
     skin: 'cardboard',
-    hair: 'none',
+    hair: 'pigtails',
     hairColor: 'brown',
     eyeStyle: 'round',
     eyes: 'brown',
-    nose: 'button',
+    nose: 'none',
     mouth: 'smile',
     ears: 'body',
     name: 'Paper doll',
@@ -98,7 +94,6 @@ export function preloadDollArt() {
     src('bodies', 'boy.png'),
     src('bodies', 'girl.png'),
     src('hair', 'short.png'),
-    src('hair', 'bob.png'),
     src('hair', 'pigtails.png'),
   ];
   return Promise.all(urls.map(u => load(u).catch(() => null)));
@@ -153,44 +148,25 @@ function fillPaper(ctx, rgb) {
 
 function drawEyes(ctx, head, side, style, rgb) {
   if (!head || style === 'none' || side === 2) return;
-  const cy = head.y + head.h * 0.46;
-  const eyeR = Math.max(5, head.h * (style === 'sleepy' ? 0.07 : 0.095));
-  const spread = head.w * 0.17;
+  const cy = head.y + head.h * 0.50;
+  const sleepy = style === 'sleepy';
+  const eyeR = Math.max(3, head.h * (sleepy ? 0.028 : 0.036));
+  const spread = head.w * (side === 0 ? 0.13 : 0.08);
   const xs = side === 0 ? [head.x + head.w / 2 - spread, head.x + head.w / 2 + spread]
     : side === 1 ? [head.x + head.w * 0.38]
     : [head.x + head.w * 0.62];
   for (const x of xs) {
-    ctx.save();
-    ctx.translate(x, cy);
-    if (style === 'sleepy') ctx.scale(1, 0.55);
     ctx.beginPath();
-    ctx.ellipse(0, 0, eyeR, eyeR, 0, 0, Math.PI * 2);
-    fillPaper(ctx, [244, 239, 228]);
-    ctx.fill();
-    paperStroke(ctx);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(0, 0, eyeR * 0.55, eyeR * 0.55, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, cy, eyeR * 1.05, eyeR * (sleepy ? 0.55 : 0.95), 0, 0, Math.PI * 2);
     fillPaper(ctx, rgb);
     ctx.fill();
+    ctx.strokeStyle = '#3a2418';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(eyeR * 0.12, 0, eyeR * 0.28, eyeR * 0.28, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a120e';
+    ctx.ellipse(x + eyeR * 0.28, cy - eyeR * 0.22, eyeR * 0.32, eyeR * 0.32, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(248,242,230,0.9)';
     ctx.fill();
-    ctx.restore();
-    if (style === 'lash') {
-      ctx.save();
-      ctx.translate(x, cy);
-      paperStroke(ctx);
-      ctx.strokeStyle = '#3a2418';
-      for (const a of [-0.7, -0.35, 0, 0.35, 0.7]) {
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a - Math.PI / 2) * eyeR, Math.sin(a - Math.PI / 2) * eyeR);
-        ctx.lineTo(Math.cos(a - Math.PI / 2) * eyeR * 1.45, Math.sin(a - Math.PI / 2) * eyeR * 1.45);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
   }
 }
 
@@ -199,18 +175,12 @@ function drawNose(ctx, head, side, style) {
   const cx = side === 0 ? head.x + head.w / 2
     : side === 1 ? head.x + head.w * 0.22
     : head.x + head.w * 0.78;
-  const cy = head.y + head.h * 0.62;
-  const s = Math.max(3, head.h * 0.07);
+  const cy = head.y + head.h * 0.56;
+  const s = Math.max(2, head.h * 0.028);
   ctx.beginPath();
-  if (style === 'button') {
-    ctx.arc(cx, cy, s, 0, Math.PI * 2);
-  } else {
-    ctx.ellipse(cx, cy + s * 0.15, s * 0.38, s * 0.72, 0, 0, Math.PI * 2);
-  }
-  fillPaper(ctx, [196, 138, 110]);
+  ctx.ellipse(cx, cy, s * (style === 'dash' ? 0.45 : 0.85), s * (style === 'dash' ? 1.1 : 0.7), 0, 0, Math.PI * 2);
+  fillPaper(ctx, [168, 118, 88]);
   ctx.fill();
-  paperStroke(ctx);
-  ctx.stroke();
 }
 
 function drawMouth(ctx, head, side, style) {
@@ -218,49 +188,46 @@ function drawMouth(ctx, head, side, style) {
   const cx = side === 0 ? head.x + head.w / 2
     : side === 1 ? head.x + head.w * 0.28
     : head.x + head.w * 0.72;
-  const cy = head.y + head.h * 0.78;
-  const w = head.w * 0.16;
-  paperStroke(ctx);
-  ctx.strokeStyle = '#6b3030';
-  ctx.fillStyle = '#c45a5a';
+  const cy = head.y + head.h * 0.58;
+  const w = head.w * 0.07;
+  ctx.strokeStyle = '#7a3030';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
   ctx.beginPath();
   if (style === 'smile') {
-    ctx.arc(cx, cy - w * 0.15, w, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.arc(cx, cy, w, 0.15 * Math.PI, 0.85 * Math.PI);
     ctx.stroke();
   } else if (style === 'o') {
-    ctx.ellipse(cx, cy, w * 0.38, w * 0.32, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.ellipse(cx, cy + w * 0.2, w * 0.35, w * 0.28, 0, 0, Math.PI * 2);
     ctx.stroke();
   } else {
-    ctx.moveTo(cx - w * 0.55, cy);
-    ctx.lineTo(cx + w * 0.55, cy);
+    ctx.moveTo(cx - w * 0.7, cy);
+    ctx.lineTo(cx + w * 0.7, cy);
     ctx.stroke();
   }
 }
 
-function drawEars(ctx, head, side, style) {
-  if (!head || style === 'body') return;
-  const h = head.h * 0.28;
-  const w = style === 'pointed' ? h * 0.55 : h * 0.72;
-  const cy = head.y + head.h * 0.48;
-  const spots = side === 0 ? [head.x - w * 0.15, head.x + head.w + w * 0.15]
-    : side === 1 ? [head.x + head.w * 0.88]
-    : side === 2 ? [head.x - w * 0.1, head.x + head.w + w * 0.1]
-    : [head.x + head.w * 0.12];
-  for (const x of spots) {
-    ctx.beginPath();
-    if (style === 'pointed') {
-      ctx.moveTo(x, cy - h);
-      ctx.lineTo(x + w * 0.7, cy);
-      ctx.lineTo(x, cy + h * 0.55);
-      ctx.closePath();
-    } else {
-      ctx.ellipse(x, cy, w, h, 0, 0, Math.PI * 2);
-    }
-    fillPaper(ctx, [210, 168, 128]);
-    ctx.fill();
-    paperStroke(ctx);
-    ctx.stroke();
+function drawLayerOnHead(ctx, bodyImg, layerImg) {
+  const body = document.createElement('canvas');
+  body.width = W; body.height = H;
+  const bctx = body.getContext('2d');
+  bctx.drawImage(bodyImg, 0, 0, W, H);
+  const bp = bctx.getImageData(0, 0, W, H).data;
+  const layer = document.createElement('canvas');
+  layer.width = W; layer.height = H;
+  const lctx = layer.getContext('2d');
+  lctx.drawImage(layerImg, 0, 0, W, H);
+  const lp = lctx.getImageData(0, 0, W, H).data;
+  for (let side = 0; side < 4; side++) {
+    const x0 = side * CELL, x1 = x0 + CELL;
+    const head = opaqueBox(bp, x0 + 24, 0, x1 - 24, Math.floor(H * 0.48));
+    const hair = opaqueBox(lp, x0, 0, x1, H);
+    if (!head || !hair) continue;
+    const destW = head.w * 1.18;
+    const destH = hair.h * (destW / hair.w);
+    const dx = head.x + head.w / 2 - destW / 2;
+    const dy = head.y - destH * 0.06;
+    ctx.drawImage(layer, hair.x, hair.y, hair.w, hair.h, dx, dy, destW, destH);
   }
 }
 
@@ -289,12 +256,6 @@ export async function composeDoll(spec) {
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skin = SKINS.find(s => s.id === spec.skin);
   if (skin?.rgb) recolorTo(ctx, skin.rgb);
-  const tmp = document.createElement('canvas');
-  tmp.width = W; tmp.height = H;
-  const t = tmp.getContext('2d');
-  t.drawImage(bodyImg, 0, 0, W, H);
-  const pix = t.getImageData(0, 0, W, H).data;
-  for (let side = 0; side < 4; side++) drawEars(ctx, headBox(pix, side), side, spec.ears || 'body');
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
     const hcan = document.createElement('canvas');
@@ -303,7 +264,7 @@ export async function composeDoll(spec) {
     hctx.drawImage(hairImg, 0, 0, W, H);
     const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
     if (hc?.rgb) recolorTo(hctx, hc.rgb);
-    ctx.drawImage(hcan, 0, 0);
+    drawLayerOnHead(ctx, bodyImg, hcan);
   }
   drawFace(ctx, bodyImg, spec);
   const url = canvas.toDataURL('image/png');

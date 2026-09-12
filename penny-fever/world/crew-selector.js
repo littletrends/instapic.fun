@@ -1,7 +1,7 @@
 import {
-  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_STYLES, EYE_COLORS, NOSES, MOUTHS, EARS,
+  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_STYLES, EYE_COLORS, NOSES, MOUTHS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-face-1';
+} from './paper-dolls.js?v=doll-face-2';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -71,8 +71,6 @@ function poseDoll(el, id, view) {
 function paintViewLabel() {
   const label = document.getElementById('crewViewLabel');
   if (label) label.textContent = VIEWS[boot.viewIndex % 4];
-  const maker = document.getElementById('dollViewLabel');
-  if (maker) maker.textContent = VIEWS[boot.viewIndex % 4];
 }
 
 function optionRow(title, key, items, swatch) {
@@ -87,23 +85,16 @@ function paintDraft() {
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
-  const stage = document.getElementById('dollMakerImg');
   composeDoll(spec).then(url => {
     boot.previewUrl = url;
-    if (stage) {
-      stage.src = url;
-      stage.style.marginLeft = `-${(boot.viewIndex % 4) * 100}%`;
+    const runway = document.getElementById('crewRunwayDoll');
+    if (runway && boot.mode === 'custom') {
+      runway.style.backgroundImage = `url('${url}')`;
+      runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
     }
-    if (boot.mode === 'custom') {
-      const runway = document.getElementById('crewRunwayDoll');
-      if (runway) {
-        runway.style.backgroundImage = `url('${url}')`;
-        runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
-      }
-      const portrait = document.getElementById('chosenCrewPortrait');
-      if (portrait && boot.selected === MINE_ID) {
-        portrait.style.backgroundImage = `url('${url}')`;
-      }
+    const portrait = document.getElementById('chosenCrewPortrait');
+    if (portrait && boot.selected === MINE_ID) {
+      portrait.style.backgroundImage = `url('${url}')`;
     }
   }).catch(() => {});
 }
@@ -143,8 +134,6 @@ function turn(dir) {
   } else {
     poseDoll(runwayDoll, boot.selected, boot.viewIndex);
   }
-  const stage = document.getElementById('dollMakerImg');
-  if (stage) stage.style.marginLeft = `-${(boot.viewIndex % 4) * 100}%`;
   paintViewLabel();
 }
 
@@ -215,10 +204,8 @@ function openCrewBook(event) {
   if (!book) return;
   fillArt(book);
   boot.viewIndex = 0;
-  if (boot.selected === MINE_ID) {
-    boot.mode = 'custom';
-    boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
-  }
+  boot.mode = 'custom';
+  boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
   refresh();
   preloadDollArt();
   try {
@@ -257,7 +244,7 @@ function mount() {
     book.innerHTML = `<form method="dialog"><button class="crew-close" aria-label="Close character book">×</button></form>
 <p class="crew-kicker">Penny Fever · Paper dolls</p>
 <h2 id="crewTitle">Make your paper doll</h2>
-<p>A cardboard cut-out from an old book. Mix the pieces. No clothes yet — just the doll.</p>
+<p>A cardboard cut-out. Hair sits on the head. Tiny paper dots for a face. No clothes yet.</p>
 <div class="crew-runway" aria-hidden="true">
  <div class="crew-runway-board"></div>
  <div class="crew-runway-stage"><div id="crewRunwayDoll" class="crew-runway-doll crew-portrait"></div></div>
@@ -267,26 +254,15 @@ function mount() {
  <span id="crewViewLabel" aria-live="polite">front</span>
  <button type="button" id="crewTurnRight" aria-label="Show next view">Forth ▶</button>
 </div>
-<div class="doll-maker">
-  <div class="doll-maker-preview">
-    <div class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollMakerImg" alt="Your paper doll"></div>
-    <div class="crew-runway-turn">
-      <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
-      <span id="dollViewLabel">front</span>
-      <button type="button" id="dollPrevForth" aria-label="Show next view">Forth ▶</button>
-    </div>
-  </div>
-  <div class="doll-maker-parts">
-    ${optionRow('Body', 'body', BODIES)}
-    ${optionRow('Skin', 'skin', SKINS, true)}
-    ${optionRow('Hair', 'hair', HAIR_STYLES)}
-    ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
-    ${optionRow('Eyes', 'eyeStyle', EYE_STYLES)}
-    ${optionRow('Eye colour', 'eyes', EYE_COLORS, true)}
-    ${optionRow('Nose', 'nose', NOSES)}
-    ${optionRow('Mouth', 'mouth', MOUTHS)}
-    ${optionRow('Ears', 'ears', EARS)}
-  </div>
+<div class="doll-maker-parts">
+  ${optionRow('Body', 'body', BODIES)}
+  ${optionRow('Skin', 'skin', SKINS, true)}
+  ${optionRow('Hair', 'hair', HAIR_STYLES)}
+  ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
+  ${optionRow('Eyes', 'eyeStyle', EYE_STYLES)}
+  ${optionRow('Eye colour', 'eyes', EYE_COLORS, true)}
+  ${optionRow('Nose', 'nose', NOSES)}
+  ${optionRow('Mouth', 'mouth', MOUTHS)}
 </div>
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
 <p id="crewStatus" role="status"></p>
@@ -297,8 +273,8 @@ function mount() {
 </details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
-      if (e.target.closest('#crewTurnLeft') || e.target.closest('#dollPrevBack')) { turn(-1); return; }
-      if (e.target.closest('#crewTurnRight') || e.target.closest('#dollPrevForth')) { turn(1); return; }
+      if (e.target.closest('#crewTurnLeft')) { turn(-1); return; }
+      if (e.target.closest('#crewTurnRight')) { turn(1); return; }
       const part = e.target.closest('[data-doll-key]');
       if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
       if (e.target.closest('#crewDone')) { keepMe(); return; }
