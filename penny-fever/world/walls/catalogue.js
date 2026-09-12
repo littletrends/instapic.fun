@@ -427,16 +427,17 @@ export function wallPlacements(len,{
  const result=[];
  for(const side of [-1,1]){
   const line=sites.filter(p=>p.side===side).sort((a,b)=>a.z-b.z);
-  line.forEach((site,i)=>{
-   const lo=i?(line[i-1].z+site.z)/2:foyerStart;
-   const hi=i<line.length-1?(site.z+line[i+1].z)/2:len+1.6;
-   const span=hi-lo,width=span*(1+overlap),z=(lo+hi)/2;
-   result.push({...site,z,attractionZ:site.z,width,height:6.2,fit:'width',
+  line.forEach((site)=>{
+   const art=WALL_ART[site.id];
+   const width=art?.width||6.4;
+   const height=art?.height||4.2;
+   const z=site.z;
+   result.push({...site,z,attractionZ:site.z,width,height,fit:'contain',
     x:side*wallX,yaw:-side*Math.PI/2,side,
     bounds:[z-width/2,z+width/2],key:site.id+'-'+side+'-'+site.z});
   });
  }
- result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:6.2,fit:'width',yaw:Math.PI});
+ result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:4.2,fit:'contain',yaw:Math.PI});
  return result;
 }
 export function plannedSecrets(id){
