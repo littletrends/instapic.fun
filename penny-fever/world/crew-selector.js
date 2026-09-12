@@ -1,7 +1,7 @@
 import {
   SKINS, EYE_COLORS, COLLECTIONS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-book-2';
+} from './paper-dolls.js?v=doll-book-3';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -161,6 +161,7 @@ function openCollection(id) {
   const col = COLLECTIONS.find(c => c.id === id);
   if (!col) return;
   boot.draft = { ...boot.draft, collection: id };
+  document.querySelector('dialog.crew-book')?.classList.add('is-open-album');
   const home = document.getElementById('dollHome');
   const tray = document.getElementById('dollCollection');
   const title = document.getElementById('dollBookTitle');
@@ -186,6 +187,7 @@ function openCollection(id) {
 
 function closeCollection() {
   boot.draft = { ...boot.draft, collection: null };
+  document.querySelector('dialog.crew-book')?.classList.remove('is-open-album');
   const home = document.getElementById('dollHome');
   const tray = document.getElementById('dollCollection');
   if (home) home.hidden = false;

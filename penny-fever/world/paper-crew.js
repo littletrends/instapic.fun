@@ -1,6 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
 import { paperRail } from './paper-guest-entrance.js?v=keep-light-1';
-import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=doll-book-2';
+import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=doll-book-3';
 
 export const CREW = CREW_IDS.map((id) => id[0].toUpperCase() + id.slice(1));
 
