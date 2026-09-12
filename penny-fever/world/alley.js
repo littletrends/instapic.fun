@@ -2,21 +2,21 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=vendor-face-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-blank-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-blank-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-webp-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-tools-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-webp-1";
+import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
-import {installPapercutRides} from "./amusements/install.js?v=ride-side-1";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=vendor-face-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=alley-webp-1";
+import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
 
-const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
+const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
   { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Three cards. A keepsake is hiding in the deck." },
   { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
@@ -943,6 +943,8 @@ function attachHud() {
           </section>
           <button type="button" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
           <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
+          <button type="button" id="pfTillLoan">Bank loan · +100</button>
+          <button type="button" id="pfTillReset">Reset game</button>
         </div>
         <div class="pf-stall-card-actions">
           <button type="button" id="pfStallCardEnter">Enter</button>
@@ -960,17 +962,12 @@ function attachHud() {
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
       <div class="pf-alley-map" id="pfAlleyMap" hidden>
         <div class="pf-alley-map-bar">
-          <strong>The World</strong>
+          <strong>Sideshow alley</strong>
           <button type="button" id="pfAlleyMapClose">Close</button>
         </div>
         <div class="pf-alley-map-board">
-          <figure class="pf-alley-map-art">
-            <img src="assets/restyle/maps/world-map.webp" alt="Flat world map ringed with ice. Aura’s Penny Fever is pinned on the disc." width="1024" height="1024" loading="lazy" decoding="async">
-            <button type="button" class="pf-world-pin" id="pfAlleyMapYou" data-place="aura">
-              <i aria-hidden="true"></i>
-              <span>Aura’s Penny Fever</span>
-            </button>
-          </figure>
+          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
+          <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
         </div>
         <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
           <div class="pf-alley-map-marks">
@@ -1021,7 +1018,14 @@ function fillAlleyMap() {
 }
 
 function syncAlleyMapYou() {
-  /* World map pin stays on Aura’s Penny Fever. Later parks get their own pins. */
+  const pin = el("pfAlleyMapYou");
+  const map = el("pfAlleyMap");
+  if (!pin || !map || map.hidden || !player) return;
+  const start = FOYER_OUT;
+  const end = Math.max(start + 1, hallLen - 1);
+  const z = player.position.z;
+  const t = z < start ? -0.08 : Math.max(0, Math.min(1, (z - start) / (end - start)));
+  pin.style.bottom = `${28 + t * 48}%`;
 }
 
 function closeAlleyMap() {
@@ -1190,6 +1194,17 @@ function bindHud() {
     tillMessageUntil = performance.now() + 4000;
     paintAuraWallet(el("pfStallCard"));
   });
+  const tillLoan = el("pfTillLoan");
+  const tillReset = el("pfTillReset");
+  if (tillLoan) tillLoan.addEventListener("click", () => {
+    const n = window.PennyFever?.addDemoCoins?.(100) || 0;
+    tillMessage = n ? ("Bank loan · +" + n + " pennies.") : "The till is quiet.";
+    tillMessageUntil = performance.now() + 4000;
+    paintAuraWallet(el("pfStallCard"));
+  });
+  if (tillReset) tillReset.addEventListener("click", () => {
+    window.PennyFever?.resetVisit?.();
+  });
   if (mapOpen) mapOpen.addEventListener("click", () => {
     if (alleyMapOpen) closeAlleyMap();
     else openAlleyMap();
@@ -1200,11 +1215,6 @@ function bindHud() {
     if (!button) return;
     event.preventDefault();
     walkToMapPlace(button.dataset.place);
-  });
-  const worldPin = el("pfAlleyMapYou");
-  if (worldPin) worldPin.addEventListener("click", (event) => {
-    event.preventDefault();
-    walkToMapPlace(worldPin.dataset.place || "aura");
   });
   if (enter) {
     enter.addEventListener("click", (event) => {
@@ -1398,22 +1408,22 @@ function lookCardArt(best, view = "front") {
   const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
   if (best.kind === "stall") {
     return {
-      booth: `${root}/stalls/${best.id}/${v}.webp`,
-      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.webp` : "",
+      booth: `${root}/stalls/${best.id}/${v}.png`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
       role: "host",
     };
   }
   if (best.kind === "ride") {
     const host = (best.hostSlug || best.host || "").toLowerCase();
     return {
-      booth: `${root}/amusements/${best.id}/${v}.webp`,
-      vendor: host ? `${root}/attendants/${host}/${v}.webp` : "",
+      booth: `${root}/amusements/${best.id}/${v}.png`,
+      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
       role: "attendant",
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/${v}.webp`,
-    vendor: `${root}/aura/welcoming/${v}.webp`,
+    booth: `${root}/aura/ticket-booth/${v}.png`,
+    vendor: `${root}/aura/welcoming/${v}.png`,
     role: "proprietor",
   };
 }

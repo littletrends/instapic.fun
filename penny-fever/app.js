@@ -3895,6 +3895,18 @@
     spendTicket,
     addDemoCoins,
     addTickets,
+    resetVisit() {
+      if (!window.confirm("Clear this visit? Pennies, tickets and treasures go back to empty.")) return false;
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith("pennyFever") || key.startsWith("pf-"))) localStorage.removeItem(key);
+        }
+      } catch {}
+      location.reload();
+      return true;
+    },
     stampKeepsake,
     buyPennyRoll,
     buyTicketStrip,
@@ -3948,48 +3960,9 @@
   function livePaperFrame() {
     return document.querySelector(".cabinet-interior.paper-game-cabinet:not([hidden]) iframe.paper-game-frame");
   }
-  function installConstructionLoan() {
-    const btn = document.getElementById("pfBankLoan");
-    if (btn && !btn.dataset.bound) {
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => {
-        const n = addDemoCoins(100);
-        btn.textContent = "Bank loan · +" + n + " · now " + pennies();
-      });
-    }
-    const rest = document.getElementById("pfRestGame");
-    if (!rest || rest.dataset.bound) return;
-    rest.dataset.bound = "1";
-    rest.addEventListener("click", () => {
-      const frame = livePaperFrame();
-      if (frame && frame.contentWindow) {
-        const waking = rest.classList.contains("is-resting");
-        frame.contentWindow.postMessage({
-          channel: "pf-paper-world",
-          type: waking ? "resume" : "pause",
-        }, location.origin);
-        rest.classList.toggle("is-resting", !waking);
-        rest.textContent = waking ? "Rest game" : "Wake game";
-        return;
-      }
-      const world = window.PennyFeverWorld;
-      if (world && world.started) {
-        if (world.paused) {
-          world.resume();
-          rest.classList.remove("is-resting");
-          rest.textContent = "Rest game";
-        } else {
-          world.pause();
-          rest.classList.add("is-resting");
-          rest.textContent = "Wake game";
-        }
-      }
-    });
-  }
-
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => { bind(); installConstructionLoan(); });
+    document.addEventListener("DOMContentLoaded", bind);
   } else {
-    setTimeout(() => { bind(); installConstructionLoan(); }, 0);
+    setTimeout(bind, 0);
   }
 })();

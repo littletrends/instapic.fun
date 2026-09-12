@@ -8,6 +8,25 @@ const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
+const HOUSE={
+ balloons:{seconds:40,title:'The bunch drifted off',detail:'Nell is tying the next handful. Try this garden again.'},
+ carousel:{seconds:40,title:'The waltz ended',detail:'The lantern dimmed before you caught enough treasures.'},
+ ferris:{seconds:40,title:'The wheel slowed',detail:'The crescent waited, and the cabins went home.'},
+ funhouse:{seconds:35,title:'The mirrors went dark',detail:'The real laugh hid in the shuffle.'},
+ helter:{seconds:30,title:'The mat is empty',detail:'The slide ran out before every gold ring was caught.'},
+ mural:{seconds:50,title:'The paint dried',detail:'A few patches still forget the alley wall.'},
+ organ:{seconds:40,title:'The roll finished',detail:'A few notes wandered off the gold bar.'},
+ swings:{seconds:35,title:'The chairs emptied',detail:'The front mat waited, and the waltz ended.'},
+ lookup:{seconds:70,title:'The sky went quiet',detail:'The glasses fogged before every star woke.'},
+ mutoscope:{seconds:50,title:'The reel ran out',detail:'The picture never quite found its last frame.'},
+ curios:{seconds:75,title:'The beetle wound down',detail:'Digby tucks the menagerie in. Another penny, another wander.'},
+ whisper:{seconds:60,title:'Last post',detail:'Willa closes the pigeonholes. The next cabinet waits.'},
+};
+function houseSpec(){
+ if(engine?.house===false)return null;
+ if(engine?.houseSeconds)return{seconds:engine.houseSeconds,title:engine.houseTitle||'The house closes',detail:engine.houseDetail||'This go is over.'};
+ return HOUSE[entry?.id]||null;
+}
 function tellRoom(type,fields={}){if(embedded)window.parent.postMessage({channel:'pf-paper-world',type,...fields},location.origin);}
 if(embedded)document.body.classList.add('is-alley-room');
 function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{...opts,signal:abort.signal});}
@@ -61,6 +80,14 @@ function paintHud(){
   const prize=chapterKeep();
   keep.textContent=prize?('Keep · '+itemName(prize)):'';
  }
+ const clock=$('#hud-house');
+ if(clock){
+  const house=houseSpec();
+  if(house&&state&&state.houseLeft!=null&&playing){
+   clock.hidden=false;
+   clock.textContent=Math.max(0,Math.ceil(state.houseLeft))+'s';
+  }else{clock.hidden=true;clock.textContent='';}
+ }
  if(next){
   const last=!engine?.levels||level>=engine.levels.length-1;
   next.disabled=last;
@@ -77,7 +104,7 @@ function goNextChapter(){
  start();
 }
 function markChapters(){if(!engine?.levels)return;[...$('#chapter').options].forEach((o,i)=>{const prize=engine.prizes?.[i];let tick='';try{if(prize&&window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.[prize])tick=' ✓';}catch{}o.textContent=(i+1)+'. '+engine.levels[i]+tick;});}
-function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#begin').disabled=false;$('#pause').textContent='Pause';}
+function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#begin').disabled=false;$('#pause').textContent='Pause';}
 function start(){if(disposed||!engine||!state||playing)return;if(ended&&!engine.live)reset();ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function swallowWin(r){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
@@ -87,7 +114,7 @@ function swallowWin(r){
  delete state.result;
  return true;
 }
-function tick(now){if(!playing||disposed)return;try{if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;engine.update?.(state,dt,input);stepPrize(state,dt);if(state.prizeDeliver){state.prizeDeliver=false;handPrize();}if(now-paintAt>1000/30){paintAt=now;paint();}if(now-reportAt>350){reportAt=now;const text=engine.readout?.(state)||'';if($('#readout').textContent!==text)$('#readout').textContent=text;}if(state.result){persist();if(swallowWin(state.result)){raf=requestAnimationFrame(tick);return;}if(engine.live&&engine.chapterEnds===false){delete state.result;raf=requestAnimationFrame(tick);return;}ended=true;stop();paint();const r=state.result,list=engine.prizes||kits[entry.id]?.prizes||[],prize=r.prize||list[level]||list[list.length-1];const won=r.won!==false;veil(won?'Chapter complete':(engine.loseTitle||'Not this time'),r.title,r.detail,won?(level<engine.levels.length-1?'Next chapter':'Play chapter again'):(engine.retryButton||'Try this chapter again'),won?prize:null);$('#readout').textContent=engine.readout?.(state)||'';return;}raf=requestAnimationFrame(tick);}catch(e){error(e);}}
+function tick(now){if(!playing||disposed)return;try{if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;engine.update?.(state,dt,input);const house=houseSpec();if(house&&state&&!state.result){if(state.houseLeft==null)state.houseLeft=house.seconds;state.houseLeft-=dt;if(state.houseLeft<=0){state.houseLeft=0;state.result={title:house.title,detail:house.detail,won:false};}}stepPrize(state,dt);if(state.prizeDeliver){state.prizeDeliver=false;handPrize();}if(now-paintAt>1000/30){paintAt=now;paint();}if(now-reportAt>350){reportAt=now;const text=engine.readout?.(state)||'';if($('#readout').textContent!==text)$('#readout').textContent=text;}if(state.result){persist();if(swallowWin(state.result)){raf=requestAnimationFrame(tick);return;}if(engine.live&&engine.chapterEnds===false&&state.result.won!==false){delete state.result;raf=requestAnimationFrame(tick);return;}ended=true;stop();paint();const r=state.result,list=engine.prizes||kits[entry.id]?.prizes||[],prize=r.prize||list[level]||list[list.length-1];const won=r.won!==false;veil(won?'Chapter complete':(engine.loseTitle||'Not this time'),r.title,r.detail,won?(level<engine.levels.length-1?'Next chapter':'Play chapter again'):(engine.retryButton||'Try this chapter again'),won?prize:null);$('#readout').textContent=engine.readout?.(state)||'';return;}raf=requestAnimationFrame(tick);}catch(e){error(e);}}
 function point(e){const b=canvas.getBoundingClientRect();return{x:clamp((e.clientX-b.left)/b.width*900,0,900),y:clamp((e.clientY-b.top)/b.height*1200,0,1200)};}
 function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;canvas.setPointerCapture(e.pointerId);}if(type==='up'||type==='cancel')input.down=false;engine.pointer?.(state,type,p,input);paint();}
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}

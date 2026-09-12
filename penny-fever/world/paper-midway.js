@@ -1,8 +1,8 @@
 import * as THREE from './lib/three.module.min.js';
 import {paperRail} from './paper-guest-entrance.js?v=keep-light-1';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=alley-webp-1';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=ride-stagger-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=alley-webp-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
 import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=booth-till-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
@@ -22,13 +22,13 @@ export function makeVisibleTicketBooth(scene){
  g.add(stub);
  const opts={height:2.85,maxWidth:2.4,sideWidth:1.35,layout:'stand'};
  const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/';
- loadFramedPng(ROOT+'front.webp',AURA_BOOTH_FRAMES.front,{urgent:true}).then(async front=>{
+ loadFramedPng(ROOT+'front.png',AURA_BOOTH_FRAMES.front,{urgent:true}).then(async front=>{
   stub.removeFromParent();
   const cut=buildPapercut({front},opts);g.add(cut);
   g.userData.papercutViews=cut.userData.papercutViews;g.userData.papercutStand=cut;
   for(const view of PAPERCUT_VIEWS){
    if(view==='front')continue;
-   const face=await loadFramedPng(ROOT+view+'.webp',AURA_BOOTH_FRAMES[view],{urgent:true});
+   const face=await loadFramedPng(ROOT+view+'.png',AURA_BOOTH_FRAMES[view],{urgent:true});
    if(!cut.parent){face.texture?.dispose();return;}
    setPapercutFace(cut,view,face,opts);
    g.userData.papercutViews=cut.userData.papercutViews;
@@ -115,7 +115,7 @@ export function paintAuraWallet(root){
   trade.textContent=coins<5?'Need 5 pennies · 1 ticket':'Trade 5 pennies · 1 ticket';
  }
 }
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><section class="aura-counter-wallet" aria-label="Current wallet"><p class="aura-counter-kicker">Your pocket</p><ul id="auraCounterWalletList"></ul></section><div class="aura-counter-actions"><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Square is only for buying packs.</small>';document.body.append(panel);
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><section class="aura-counter-wallet" aria-label="Current wallet"><p class="aura-counter-kicker">Your pocket</p><ul id="auraCounterWalletList"></ul></section><div class="aura-counter-actions"><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button><button type="button" id="auraCounterLoan">Bank loan · +100</button><button type="button" id="auraCounterReset">Reset game</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Square is only for buying packs. Construction: loan and reset live here, not in the tents.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;closeTill();};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
@@ -132,6 +132,16 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
   }
   note.textContent='Need five pennies for a ticket.';
   paintAuraWallet();
+ };
+ panel.querySelector('#auraCounterLoan').onclick=()=>{
+  if(!near())return;
+  const n=apiRef.addDemoCoins?.(100)||0;
+  panel.querySelector('#auraCounterMessage').textContent=n?('Bank loan · +'+n+' pennies.'):'The till is quiet.';
+  paintAuraWallet();
+ };
+ panel.querySelector('#auraCounterReset').onclick=()=>{
+  if(!near())return;
+  apiRef.resetVisit?.();
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
