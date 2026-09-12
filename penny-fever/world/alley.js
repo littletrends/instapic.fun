@@ -3,9 +3,9 @@
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=vendor-face-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-blank-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-blank-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-webp-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";

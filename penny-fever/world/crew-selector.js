@@ -1,4 +1,6 @@
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
+export const BLANK_IDS = ['cardboard-boy', 'cardboard-girl'];
+const BLANK_NAMES = { 'cardboard-boy': 'Boy silhouette', 'cardboard-girl': 'Girl silhouette' };
 const key = 'pf-selected-crew-v1';
 const VIEWS = ['front', 'left', 'back', 'right'];
 const artBase = new URL('../assets/restyle/crew/', import.meta.url);
@@ -9,21 +11,24 @@ const boot = globalThis.__pfDoll || (globalThis.__pfDoll = {
   falling: false,
   hydrated: false,
 });
+function isPlayable(id) {
+  return CREW_IDS.includes(id) || BLANK_IDS.includes(id);
+}
 if (!boot.hydrated) {
   try {
     const saved = localStorage.getItem(key);
-    if (CREW_IDS.includes(saved)) boot.selected = saved;
+    if (isPlayable(saved)) boot.selected = saved;
   } catch {}
   boot.hydrated = true;
 }
 
-export const crewArt = id => new URL(`${CREW_IDS.includes(id) ? id : 'oliver'}-turnaround.png`, artBase).href;
+export const crewArt = id => new URL(`${isPlayable(id) ? id : 'oliver'}-turnaround.png`, artBase).href;
 export const getDoll = () => ({ crew: boot.selected });
 export function onDollChange(fn) {
   boot.listeners.add(fn);
   return () => boot.listeners.delete(fn);
 }
-const name = id => id[0].toUpperCase() + id.slice(1);
+const name = id => BLANK_NAMES[id] || (id[0].toUpperCase() + id.slice(1));
 
 function poseDoll(el, id, view) {
   if (!el) return;
@@ -52,7 +57,11 @@ function refresh() {
     portrait.setAttribute('aria-label', name(selected));
   }
   const status = document.getElementById('crewStatus');
-  if (status) status.textContent = `${name(selected)} is ready for the midway.`;
+  if (status) {
+    status.textContent = BLANK_IDS.includes(selected)
+      ? `${name(selected)} is a cardboard blank. Face and clothes come next.`
+      : `${name(selected)} is ready for the midway.`;
+  }
   const runwayDoll = document.getElementById('crewRunwayDoll');
   if (runwayDoll && !boot.falling) poseDoll(runwayDoll, selected, boot.viewIndex);
   paintViewLabel();
@@ -65,8 +74,8 @@ function turn(dir) {
 }
 
 export function chooseCrew(id) {
-  if (!CREW_IDS.includes(id) || id === boot.selected) {
-    boot.selected = id;
+  if (!isPlayable(id)) return false;
+  if (id === boot.selected) {
     refresh();
     return true;
   }
@@ -160,7 +169,12 @@ function mount() {
  <button type="button" id="crewTurnRight" aria-label="Show next view">Forth ▶</button>
 </div>
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
-<p id="crewStatus" role="status"></p><details class="crew-collections"><summary>The paper-doll collection</summary><p>Coming later: little cardboard costume books, with fold-over tabs, themed outfits and accessories for your crew. Your original six characters will stay free.</p></details>
+<p id="crewStatus" role="status"></p>
+<details class="crew-collections" open>
+<summary>The paper-doll collection</summary>
+<p>Start with a plain cardboard cutout. The original six stay free. Face, clothes and themes come next.</p>
+<div class="crew-grid crew-blank-grid">${BLANK_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Blank</small></button>`).join('')}</div>
+</details>
 <form method="dialog"><button class="ticket-button">That’s me</button></form>`;
     document.body.append(book);
     book.addEventListener('click', e => {
