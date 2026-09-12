@@ -1637,7 +1637,7 @@ function syncStallCard(best) {
     }
     if (hostEl) hostEl.textContent = best.host ? `${best.host} · ${art.role}` : "";
     if (nameEl) nameEl.textContent = best.name || "";
-    if (lineEl) lineEl.textContent = best.line || "";
+    if (lineEl) lineEl.textContent = "";
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
@@ -1680,21 +1680,19 @@ function syncStallCard(best) {
 }
 
 function talkToFocus() {
-  if (!nearest) return;
-  if (nearest.kind === "aura") {
-    chatPinned = true;
-    const pocketChat = el("pfPocketChat");
-    if (pocketChat) {
-      pocketChat.classList.add("is-active");
-      pocketChat.setAttribute("aria-pressed", "true");
-    }
-    return;
-  }
-  if (nearest.kind === "stall" || nearest.kind === "ride") {
-    vendorChatUntil = performance.now() + 6400;
-    const lineEl = el("pfStallCardLine");
-    if (lineEl) lineEl.textContent = nearest.line || "";
-  }
+  const who = nearest;
+  if (!who) return;
+  if (who.kind !== "stall" && who.kind !== "ride" && who.kind !== "aura") return;
+  vendorChatUntil = performance.now() + 7000;
+  const speech = el("pfWorldSpeech");
+  const speechName = el("pfWorldSpeechName");
+  const speechText = el("pfWorldSpeechText");
+  if (!speech || !speechText) return;
+  speech.hidden = false;
+  if (speechName) speechName.textContent = who.host || who.name || "Aura";
+  speechText.textContent = who.line || (who.kind === "aura" ? AURA_LINE : "");
+  speech.classList.toggle("is-left", (who.side || -1) < 0);
+  speech.classList.toggle("is-right", (who.side || -1) >= 0);
 }
 
 function enterNearest() {
