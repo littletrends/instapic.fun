@@ -4,7 +4,7 @@ import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=chrome-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=open-2'),gameBase).href,
 }));
 
 // These rooms already charge a penny per throw/crank. Opening the table is free;
