@@ -374,14 +374,11 @@ export default {
     const set = s.set || SETS[s.level] || SETS[0];
     const leftOn = s.left || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
     const rightOn = s.right || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
-    d.poly([[64, 18], [836, 18], [858, 1184], [42, 1184]], set.wood, '#e6c57a', 4);
-    d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PEGGY’S', 450, 58, 14, '#e8c878');
     d.text('MARBLE MILL', 450, 92, 28, '#fff3d0');
     d.text((s.drops ? String(s.drops).padStart(2, '0') : '00') + ' drops', 450, 122, 16, '#f0d49a');
     const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
     d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
-    d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], set.felt, '#d7b56a', 3);
     d.line({x: s.walls.l, y: 390}, {x: s.walls.l, y: 1030}, '#8a7652', 13);
     d.line({x: s.walls.l - 2, y: 390}, {x: s.walls.l - 2, y: 1030}, '#e6c690', 3);
     d.line({x: s.walls.r, y: 390}, {x: s.walls.r, y: 1030}, '#8a7652', 13);
@@ -438,7 +435,6 @@ export default {
       });
       d.text('↓', s.aim, y - 28, 22, '#fff6d8');
     }
-    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(450, 1148, 14, s.gateSign < 0 ? '#f0d080' : '#3a2a2288', '#c4a46a66', 1);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
@@ -448,7 +444,6 @@ export default {
     const n = alleyPlay ? (pocket() ?? 0) : '∞';
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {
       w: 36, alpha: s.prizeOut ? 0.4 : 1,
       fallback: () => d.star(792, 76, 12, '#f4e2a8'),

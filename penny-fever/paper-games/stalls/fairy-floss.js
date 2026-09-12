@@ -452,7 +452,7 @@ export default {
     }
     d.text(String(n), hx, hy + 72, 22, '#fff6d8');
     d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', hx, hy + 92, 13, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.text('treasures', 788, 144, 13, '#ead6a4');
     const want = chapterPrize(s);
     if (want) d.item(spriteKey(want), 788, 90, {w: 44, fallback: () => d.ball(788, 90, 14, '#c4a46a')});

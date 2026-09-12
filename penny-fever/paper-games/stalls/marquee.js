@@ -397,7 +397,6 @@ export default {
       allOn || actions?.has?.('1') || keys?.has?.('ArrowDown') || keys?.has?.('x') || keys?.has?.('X') || s.flash[1] > .2,
       allOn || actions?.has?.('2') || keys?.has?.('ArrowRight') || keys?.has?.('c') || keys?.has?.('C') || s.flash[2] > .2,
     ];
-    d.poly([[70, 36], [340, 36], [340, 128], [70, 128]], '#161022cc', '#e6c57a', 2);
     d.text('LIGHT THE NIGHT', 205, 66, 16, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 205, 94, 16, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(160 + i * 36, 114, 7, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
@@ -474,7 +473,6 @@ export default {
         fallback: () => d.star(x, y, 8 * (1 - f.t / 1.8), colours[f.lane]),
       });
     }
-    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, on[0] ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(450, 1148, 14, allOn ? '#f0d080' : '#3a2a2288', '#c4a46a66', 1);
     d.circle(690, 1146, 16, on[2] ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
@@ -488,7 +486,6 @@ export default {
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (let i = 0; i < SETS.length; i++) {
       const x = 86, y = 200 + i * 36;

@@ -641,7 +641,7 @@ export default {
     d.ellipse(450, 365, 64, 21, '#3e2d2733', '#bc995e', 3);
     d.text('last velvet', 450, 328, 13, '#ead6a4');
     const prize = prizeOf(s);
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.item(spriteKey(prize), 788, 84, {w: 54, fallback: () => d.star(788, 84, 18)});
     d.text('this call', 788, 144, 13, '#ead6a4');
     for (let i = 0; i < SETS.length; i++) {

@@ -132,7 +132,7 @@ export default {
   action(s, id) { if (id === 'throw') toss(s); },
   key(s, k, down) { if (k === ' ' && down) toss(s); },
   draw(s, d) {
-    d.poly([[70, 108], [250, 108], [250, 292], [70, 292]], '#4a3424cc', '#e4c48a', 2);
+    
     d.text('this dairy', 160, 130, 13, '#ead6a4');
     d.item(spriteKey(s.prize), 160, 188, {w: 84, fallback: () => d.star(160, 188, 28)});
     d.text(itemName(s.prize), 160, 246, 12, '#fff0cb');

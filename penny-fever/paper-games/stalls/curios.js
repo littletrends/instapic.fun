@@ -489,7 +489,7 @@ export default {
     d.item(spriteKey('penny-purse'), px, py, {w: 128, fallback: () => d.heart(px, py, 40, '#6a7a52')});
     d.text(String(n), px, py + 72, 22, '#fff6d8');
     d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 94, 13, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.text('treasures', 788, 144, 13, '#ead6a4');
     const prize = s.prize;
     d.item(spriteKey(prize), 788, 88, {

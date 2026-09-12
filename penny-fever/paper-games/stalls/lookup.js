@@ -383,7 +383,7 @@ export default {
     d.item(spriteKey('penny-purse'), px, py, {w: 120, fallback: () => d.heart(px, py, 36, '#6a7a52')});
     d.text(String(n), px, py + 70, 22, '#fff6d8');
     d.text(n === 1 ? 'penny for the lantern' : 'pennies for the lantern', px, py + 92, 13, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.text('treasures', 788, 144, 13, '#ead6a4');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);

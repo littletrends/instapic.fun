@@ -312,7 +312,6 @@ export default {
   },
   draw(s, d) {
     const set = s.set || SETS[s.level] || SETS[0];
-    d.poly([[70, 36], [340, 36], [340, 118], [70, 118]], '#161022cc', '#e6c57a', 2);
     d.text('PATCHWORK MOON', 205, 68, 16, '#fff3d0');
     d.text(Math.floor(s.coverage * 1000) / 10 + '% covered', 205, 96, 16, s.coverage >= s.need ? '#f0d080' : '#f0d49a');
 
@@ -363,13 +362,11 @@ export default {
     d.circle(NEEDLE.x, springY + 8, 11, '#8a3030', '#f0d0a8', 2);
     d.text('thread', NEEDLE.x, 1162, 12, '#ead6a4');
 
-    d.poly([[118, 1120], [742, 1120], [748, 1172], [112, 1172]], '#2a1c16ee', '#e6c57a', 2);
     const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
     d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], s.prizeOut ? '#2a242888' : '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {
       w: s.prizeOut ? 28 : 36, alpha: s.prizeOut ? 0.4 : 1,
       fallback: () => d.star(792, 76, 12, '#f4e2a8'),

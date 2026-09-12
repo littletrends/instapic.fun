@@ -382,7 +382,7 @@ export default {
   },
   draw(s, d) {
     const set = setOf(s.level);
-    d.poly([[58, 96], [236, 100], [232, 292], [54, 286]], '#4a3424cc', '#e4c48a', 2);
+    
     d.text('this kettle', 146, 122, 13, '#ead6a4');
     d.item(spriteKey(s.prize), 146, 178, {w: 78, fallback: () => d.star(146, 178, 26)});
     d.text(itemName(s.prize), 146, 236, 12, '#fff0cb');
@@ -401,7 +401,7 @@ export default {
     d.item(spriteKey('penny-purse'), px, py, {w: 100, fallback: () => d.heart(px, py, 30, '#6a7a52')});
     d.text(String(n), px, 232, 18, '#fff6d8');
     d.text(n === 1 ? 'penny' : 'pennies', px, 252, 12, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.text('treasures', 788, 144, 13, '#ead6a4');
 
     d.ellipse(450, 651, 88, 19, '#72573b88');

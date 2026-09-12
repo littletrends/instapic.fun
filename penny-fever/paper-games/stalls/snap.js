@@ -337,7 +337,6 @@ export default {
   },
   draw(s, d) {
     const set = s.set || SETS[s.level] || SETS[0];
-    d.poly([[70, 36], [320, 36], [320, 118], [70, 118]], '#161022cc', '#e6c57a', 2);
     d.text('PAPER SAFARI', 195, 68, 16, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 195, 96, 16, '#f0d49a');
     const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
@@ -372,7 +371,6 @@ export default {
     d.item(spriteKey('memory-camera'), p.x + set.hw + 28, p.y + set.hh + 8, {
       w: 54, fallback: () => d.circle(p.x + set.hw + 28, p.y + set.hh + 8, 16, '#6a3a48', '#ead6a4', 2),
     });
-    d.poly([[118, 1020], [782, 1020], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     const n = 4;
     for (let i = 0; i < n; i++) {
       const x = 250 + i * 110;
@@ -399,7 +397,6 @@ export default {
     const purse = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(purse), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);

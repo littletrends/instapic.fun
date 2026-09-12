@@ -535,11 +535,10 @@ export default {
     const bothOn = s.folding || s.both || input?.keys?.has('Shift') || input?.keys?.has('c') || input?.keys?.has('C') || input?.actions?.has('both');
     const leftOn = bothOn || s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
     const rightOn = bothOn || s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
-    d.poly([[70, 36], [360, 36], [360, 118], [70, 118]], '#161022cc', '#e6c57a', 2);
     d.text('LOOKING-GLASS', 215, 68, 16, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 215, 96, 16, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
-    d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], '#14101888', '#d7b56a55', 2);
+
     for (const [side, cx] of [320, 580].entries()) {
       d.ellipse(cx, 710, 112, 250, side ? '#788caa18' : '#e9cfad18', '#d7c7ae55', 2);
       d.arc(cx, 268, 36, Math.PI, 0, bothOn ? '#f0e0b0' : '#e3cfad', 4);
@@ -607,7 +606,6 @@ export default {
       w: 34, angle: Math.atan2(s.ball.vy, s.ball.vx) + Math.PI / 2,
       fallback: () => d.ball(s.ball.x, s.ball.y, R, '#e8d4a0'),
     });
-    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(450, 1148, 14, bothOn ? '#f0d080' : '#3a2a2288', '#c4a46a66', 1);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
@@ -619,7 +617,6 @@ export default {
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);

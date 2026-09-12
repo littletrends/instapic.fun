@@ -546,7 +546,7 @@ export default {
     }
     d.text(String(n), px, py + 72, 22, '#fff6d8');
     d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 92, 13, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    
     d.text('treasures', 788, 144, 13, '#ead6a4');
     const prize = (SETS[s.level] || SETS[0]).prize;
     d.item(spriteKey(prize), 788, 88, {w: 54, fallback: () => d.star(788, 88, 18)});
