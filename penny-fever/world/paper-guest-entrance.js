@@ -1,5 +1,5 @@
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=doll-layers-1';
+import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=rotate-3';
 import {loadWallArt} from './walls/art.js?v=keep-light-1';
 import {buildWall} from './walls/models.js?v=paper-alley-live-4';
 import { decorativePaper } from './paper-panels.js?v=keep-light-1';

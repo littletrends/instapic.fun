@@ -141,7 +141,7 @@ function mount() {
         <div class="shelf-grid" id="shelfGrid"></div>
       </div>
       <div class="found-view" id="foundView" hidden>
-        <p class="shelf-intro" id="foundIntro">Keepsakes you brought home. Turn them back and forth like the paper dolls.</p>
+        <p class="shelf-intro" id="foundIntro">Keepsakes you brought home. Hold and spin, or tap Rotate.</p>
         <div class="found-grid" id="foundGrid"></div>
       </div>
       <div class="pocket-body is-tree-spread" id="treasureSpread" hidden>
@@ -182,9 +182,8 @@ function mount() {
           <p class="pocket-hint" id="treasureHint"></p>
           <p id="treasureDetail"></p>
           <div class="pocket-inspect-turn" id="inspectTurn" hidden>
-            <button type="button" id="inspectBack" aria-label="Show previous view">◀ Back</button>
             <span id="inspectViewLabel" aria-live="polite">front</span>
-            <button type="button" id="inspectForth" aria-label="Show next view">Forth ▶</button>
+            <button type="button" id="inspectRotate" aria-label="Rotate">Rotate</button>
           </div>
           <div class="pocket-inspect-bar">
             <button type="button" id="pocketBack">← Back to the page</button>
@@ -223,11 +222,7 @@ function mount() {
   $('shelfGrid').addEventListener('click', e => {
     const b = e.target.closest('[data-book]'); if (b) openBook(b.dataset.book);
   });
-  $('inspectBack')?.addEventListener('click', () => {
-    if (viewer?.step) viewer.step(-1);
-    else viewer?.turn?.(-Math.PI / 2);
-  });
-  $('inspectForth')?.addEventListener('click', () => {
+  $('inspectRotate')?.addEventListener('click', () => {
     if (viewer?.step) viewer.step(1);
     else viewer?.turn?.(Math.PI / 2);
   });
@@ -505,21 +500,16 @@ function paintFound(all) {
     if (item.turnaround) {
       const bar = document.createElement('div');
       bar.className = 'found-turn';
-      const back = document.createElement('button');
-      back.type = 'button';
-      back.dataset.foundSpin = '-1';
-      back.setAttribute('aria-label', 'Show previous view');
-      back.textContent = '◀ Back';
       const label = document.createElement('span');
       label.className = 'found-view-label';
       label.setAttribute('aria-live', 'polite');
       label.textContent = 'front';
-      const forth = document.createElement('button');
-      forth.type = 'button';
-      forth.dataset.foundSpin = '1';
-      forth.setAttribute('aria-label', 'Show next view');
-      forth.textContent = 'Forth ▶';
-      bar.append(back, label, forth);
+      const rotate = document.createElement('button');
+      rotate.type = 'button';
+      rotate.dataset.foundSpin = '1';
+      rotate.setAttribute('aria-label', 'Rotate');
+      rotate.textContent = 'Rotate';
+      bar.append(label, rotate);
       card.append(stage, bar, name, mark);
     } else {
       card.append(stage, name, mark);
@@ -527,7 +517,7 @@ function paintFound(all) {
     root.append(card);
   }
   text('foundIntro', shown.length
-    ? 'Turn them back and forth like the paper dolls. Tap a figure to look closer. Waiting keepsakes stay in Collection.'
+    ? 'Hold and spin, or tap Rotate. Tap a figure to look closer. Waiting keepsakes stay in Collection.'
     : (q ? 'Nothing found matches that search.' : 'Nothing in the book yet. Win a chapter on the alley — it will appear here.'));
 }
 
@@ -900,7 +890,7 @@ async function select(id, punchedOverride) {
   const inspectLabel = $('inspectViewLabel');
   if (inspectLabel) inspectLabel.textContent = 'front';
   text('treasureHow', canTurn
-    ? (touch ? 'Drag to turn. Back and Forth step the faces.' : 'Drag to turn. Back and Forth step. Arrow keys spin; Home is the front.')
+    ? (touch ? 'Hold and spin, or tap Rotate.' : 'Hold and spin, or tap Rotate. Arrow keys spin; Home is the front.')
     : 'A pressed paper portrait — drag to rock it in the light.');
   text('treasureLoading', '');
   const preview = document.createElement('img');
@@ -916,17 +906,17 @@ async function select(id, punchedOverride) {
   preview.src = (item.owned && dollPage) ? dollPage : item.asset;
   $('treasureStage').append(preview);
   try {
-    const [{loadArt}, {Turntable}] = await Promise.all([needArt(), import('./turntable.js?v=treasure-lite-1')]);
+    const [{loadArt}, {Turntable}] = await Promise.all([needArt(), import('./turntable.js?v=rotate-3')]);
     const art = await loadArt(item);
     if (token !== selectionToken || !dialog.open) return;
     if (item.hinged && item.owned) {
-      const {ObjectViewer} = await import('./viewer.js?v=look-bf-1');
+      const {ObjectViewer} = await import('./viewer.js?v=rotate-3');
       if (token !== selectionToken || !dialog.open) return;
       $('treasureStage').replaceChildren();
       viewer = new ObjectViewer($('treasureStage'));
       viewer.onView = name => { const n = $('inspectViewLabel'); if (n) n.textContent = name; };
       viewer.show(item, art);
-      $('treasureHow').textContent = 'Drag to turn. Back and Forth step. Open lifts the cover.';
+      $('treasureHow').textContent = 'Hold and spin, or tap Rotate. Open lifts the cover.';
     } else {
       $('treasureStage').replaceChildren();
       viewer = new Turntable($('treasureStage'));

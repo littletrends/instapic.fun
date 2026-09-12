@@ -49,7 +49,7 @@ export class Turntable {
     this.item = item; this.art = art; this.grey = grey; this.angle = 0; this.vel = 0;
     this._viewName = '';
     const n = art.faces.length;
-    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Drag to turn, or use Back and Forth.' : '.'));
+    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Hold and spin, or tap Rotate.' : '.'));
     this.draw();
     this.emitView();
   }

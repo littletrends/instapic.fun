@@ -3,9 +3,9 @@
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=names-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-layers-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=rotate-3";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-layers-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=rotate-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=names-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
@@ -929,9 +929,8 @@ function attachHud() {
           <img id="pfStallCardVendor" alt="" draggable="false">
         </div>
         <div class="pf-stall-card-views" id="pfStallCardViews">
-          <button type="button" data-spin="-1" aria-label="Show previous view">◀ Back</button>
           <span id="pfStallCardViewLabel" aria-live="polite">front</span>
-          <button type="button" data-spin="1" aria-label="Show next view">Forth ▶</button>
+          <button type="button" data-spin="1" aria-label="Rotate">Rotate</button>
         </div>
         <p class="pf-stall-card-kicker" id="pfStallCardHost"></p>
         <h2 class="pf-stall-card-name" id="pfStallCardName"></h2>
@@ -953,9 +952,8 @@ function attachHud() {
         </div>
       </div>
       <div class="pf-look-rig" id="pfLookRig" hidden>
-        <button type="button" data-orbit="-1" aria-label="Show previous view">◀ Back</button>
         <span id="pfLookRigLabel" aria-live="polite">front</span>
-        <button type="button" data-orbit="1" aria-label="Show next view">Forth ▶</button>
+        <button type="button" data-orbit="1" aria-label="Rotate">Rotate</button>
       </div>
       <div class="pf-joy" id="pfJoy" aria-hidden="true"><i class="pf-joy-knob" id="pfJoyKnob"></i></div>
       <p class="pf-world-hint" id="pfWorldHint">Walk the boards · tap Look over your head · step toward a booth to open it</p>

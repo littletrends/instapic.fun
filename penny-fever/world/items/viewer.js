@@ -52,7 +52,7 @@ export class Turntable {
     this.item = item; this.art = art; this.grey = grey; this.angle = 0; this.vel = 0;
     this._viewName = '';
     const n = art.faces.length;
-    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Drag to turn, or use Back and Forth.' : '.'));
+    this.host.setAttribute('aria-label', item.name + (n > 1 ? '. Hold and spin, or tap Rotate.' : '.'));
     this.draw();
     this.emitView();
   }
@@ -162,7 +162,7 @@ export class ObjectViewer {
     if(this.object){this.scene.remove(this.object.root);disposeObject(this.object.root);this.object=null;}
     this.item=item;this.art=art;this.opened=false;this.angle=0;this.tilt=0;this.zoom=1;this._viewName='';
     if(this.renderer){this.object=makeObject(item,art);this.scene.add(this.object.root);}
-    this.host.setAttribute('aria-label',`${item.name}. Drag to turn, or use Back and Forth. Home shows the front.`);
+    this.host.setAttribute('aria-label',`${item.name}. Hold and spin, or tap Rotate. Home shows the front.`);
     this.draw();
     this.emitView();
   }

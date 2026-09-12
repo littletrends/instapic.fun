@@ -1,7 +1,7 @@
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, DOLL_PAGES,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-layers-1';
+} from './paper-dolls.js?v=rotate-3';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -256,9 +256,8 @@ function mount() {
  <div class="crew-runway-stage"><div id="crewRunwayDoll" class="crew-runway-doll crew-portrait"></div></div>
 </div>
 <div class="crew-runway-turn">
- <button type="button" id="crewTurnLeft" aria-label="Show previous view">◀ Back</button>
  <span id="crewViewLabel" aria-live="polite">front</span>
- <button type="button" id="crewTurnRight" aria-label="Show next view">Forth ▶</button>
+ <button type="button" id="crewRotate" aria-label="Rotate">Rotate</button>
 </div>
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
@@ -270,9 +269,8 @@ function mount() {
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
     <div class="crew-runway-turn">
-      <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
       <span id="dollViewLabel">front</span>
-      <button type="button" id="dollPrevForth" aria-label="Show next view">Forth ▶</button>
+      <button type="button" id="dollRotate" aria-label="Rotate">Rotate</button>
     </div>
   </div>
   <div class="doll-maker-parts">
@@ -288,10 +286,8 @@ function mount() {
 </details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
-      if (e.target.closest('#crewTurnLeft')) { turn(-1); return; }
-      if (e.target.closest('#crewTurnRight')) { turn(1); return; }
-      if (e.target.closest('#dollPrevBack')) { turnDoll(-1); return; }
-      if (e.target.closest('#dollPrevForth')) { turnDoll(1); return; }
+      if (e.target.closest('#crewRotate')) { turn(1); return; }
+      if (e.target.closest('#dollRotate')) { turnDoll(1); return; }
       const page = e.target.closest('[data-doll-book]');
       if (page) { setPart('outfit', page.dataset.dollBook); return; }
       const part = e.target.closest('[data-doll-key]');
@@ -325,6 +321,30 @@ function mount() {
       const end = e => { if (drag?.id === e.pointerId) drag = null; };
       doll.addEventListener('pointerup', end);
       doll.addEventListener('pointercancel', end);
+    }
+    const preview = book.querySelector('#dollPreview');
+    if (preview) {
+      let drag = null;
+      preview.style.touchAction = 'pan-y';
+      preview.style.cursor = 'ew-resize';
+      preview.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        drag = {id: e.pointerId, x: e.clientX, accum: 0};
+        try { preview.setPointerCapture(e.pointerId); } catch {}
+      });
+      preview.addEventListener('pointermove', e => {
+        if (drag?.id !== e.pointerId) return;
+        const dx = e.clientX - drag.x;
+        drag.x = e.clientX;
+        drag.accum += dx;
+        if (Math.abs(drag.accum) > 42) {
+          turnDoll(drag.accum > 0 ? 1 : -1);
+          drag.accum = 0;
+        }
+      });
+      const end = e => { if (drag?.id === e.pointerId) drag = null; };
+      preview.addEventListener('pointerup', end);
+      preview.addEventListener('pointercancel', end);
     }
   }
 
