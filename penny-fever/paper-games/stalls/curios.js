@@ -486,11 +486,6 @@ export default {
     d.text('winding slot', SLOT.x, SLOT.y + 48, 13, '#ead6a4');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     const px = 132, py = 148;
-    d.item(spriteKey('penny-purse'), px, py, {w: 128, fallback: () => d.heart(px, py, 40, '#6a7a52')});
-    d.text(String(n), px, py + 72, 22, '#fff6d8');
-    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 94, 13, '#ead6a4');
-    
-    d.text('treasures', 788, 144, 13, '#ead6a4');
     const prize = s.prize;
     d.item(spriteKey(prize), 788, 88, {
       w: 44, fallback: () => d.star(788, 88, 14, LOOK[prize] || '#c4a46a'),

@@ -531,10 +531,7 @@ export default {
     for (const c of order) {
       d.item(spriteKey(c.id), c.x, c.y, {w: c.w, fallback: () => d.ball(c.x, c.y, c.r, c.color)});
     }
-    
-    d.text('this case', 160, 130, 13, '#ead6a4');
-    d.item(spriteKey(s.prize), 160, 188, {w: 84, fallback: () => d.star(160, 188, 28)});
-    d.text(itemName(s.prize), 160, 246, 12, '#fff0cb');
+
     d.text(s.won ? 'packed' : 'still unpacked', 160, 272, 12, '#f0d6a8');
     for (let i = 0; i < SETS.length; i++) {
       const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
@@ -545,11 +542,6 @@ export default {
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     const px = 790, py = 168;
-    d.item(spriteKey('penny-purse'), px, py, {w: 92, fallback: () => d.heart(px, py, 28, '#6a7a52')});
-    d.text(String(n), px, 226, 18, '#fff6d8');
-    d.text(n === 1 ? 'penny' : 'pennies', px, 244, 12, '#ead6a4');
-    d.poly([[742, 280], [838, 284], [834, 360], [738, 354]], '#6b3a3a', '#e8d4a0', 2);
-    d.text('keep', 788, 376, 13, '#ead6a4');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);

@@ -441,21 +441,6 @@ export default {
       if (i < s.layer) d.text('✓', x, 1170, 20, '#725b60');
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    const hx = 132, hy = 148;
-    d.item(spriteKey('penny-purse'), hx, hy, {w: 132, fallback: () => d.heart(hx, hy, 40, '#6a7a52')});
-    const heap = Math.min(Math.max(0, n), 28);
-    for (let i = 0; i < heap; i++) {
-      const row = Math.floor(i / 7), col = i % 7;
-      const x = hx - 44 + col * 14 + row * 3;
-      const y = hy + 6 - row * 9 - (col % 2) * 2;
-      d.item(spriteKey('everyday-penny'), x, y, {w: 22, shadow: false, fallback: () => d.ball(x, y, 8, '#b68445')});
-    }
-    d.text(String(n), hx, hy + 72, 22, '#fff6d8');
-    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', hx, hy + 92, 13, '#ead6a4');
-    
-    d.text('treasures', 788, 144, 13, '#ead6a4');
-    const want = chapterPrize(s);
-    if (want) d.item(spriteKey(want), 788, 90, {w: 44, fallback: () => d.ball(788, 90, 14, '#c4a46a')});
     if (alleyPlay && !s.started) d.text('spinner still', 450, 72, 18, '#f0d6a8');
   },
   readout: s => {

@@ -185,10 +185,7 @@ export default {
   draw(s, d) {
     d.path(SHORE, '#d7ffe335', 2, true, '#effcdb22');
     d.ellipse(450, 1088, 268, 28, '#35677155', '#cfb98a', 2);
-    
-    d.text('this harbour', 160, 130, 13, '#ead6a4');
-    d.item(spriteKey(s.prize), 160, 188, {w: 84, fallback: () => d.star(160, 188, 28)});
-    d.text(itemName(s.prize), 160, 246, 12, '#fff0cb');
+
     d.text((s.limit - s.squeezes) + ' squeeze' + (s.limit - s.squeezes === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
     for (let i = 0; i < SETS.length; i++) {
       const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
@@ -198,9 +195,6 @@ export default {
       else d.circle(x, y, 20, '#1a120866');
     }
     const n = alleyPlay ? (pocket() ?? 0) : '∞';
-    d.item(spriteKey('penny-purse'), 790, 160, {w: 92, fallback: () => d.heart(790, 160, 28, '#6a7a52')});
-    d.text(String(n), 790, 218, 18, '#fff6d8');
-    d.text(n === 1 ? 'penny' : 'pennies', 790, 236, 12, '#ead6a4');
     if (s.eddy) {
       const c = d.c; c.save(); c.translate(465, 753); c.rotate(s.t * .4);
       for (let i = 0; i < 8; i++) { c.rotate(Math.PI / 4); d.arc(0, 0, 90, -.4, .6, '#d7ffe335', 3); }

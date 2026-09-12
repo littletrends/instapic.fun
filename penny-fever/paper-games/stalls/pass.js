@@ -652,16 +652,6 @@ export default {
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     const px = 132, py = 148;
-    d.item(spriteKey('penny-purse'), px, py, {w: 132, fallback: () => d.heart(px, py, 40, '#6a7a52')});
-    const heap = Math.min(Math.max(0, n === '∞' ? 0 : n), 28);
-    for (let i = 0; i < heap; i++) {
-      const row = Math.floor(i / 7), col = i % 7;
-      const hx = px - 44 + col * 14 + row * 3;
-      const hy = py + 8 - row * 9 - (col % 2) * 2;
-      d.item(spriteKey('everyday-penny'), hx, hy, {w: 22, shadow: false, fallback: () => d.ball(hx, hy, 8, '#b68445')});
-    }
-    d.text(String(n), px, py + 74, 22, '#fff6d8');
-    d.text(n === 1 ? 'penny for the flies' : 'pennies for the flies', px, py + 96, 13, '#ead6a4');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);

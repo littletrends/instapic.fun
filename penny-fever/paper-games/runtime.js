@@ -1,5 +1,5 @@
 import {games,byId} from './catalogue.js?v=penny-door-1';
-import {Draw,seeded,clamp} from './draw.js';
+import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
@@ -43,7 +43,39 @@ function handPrize(id,from){
   x:from?.x??p?.x??PRIZE_FLY_TO.x,y:from?.y??p?.y??PRIZE_FLY_TO.y,
  });
 }
-function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);}
+function penniesNow(){
+ try{if(embedded&&window.parent?.PennyFever?.pennies)return Number(window.parent.PennyFever.pennies())||0;}catch{}
+ return state?.ammo??0;
+}
+function wonPurse(){
+ try{return Number(window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.['penny-purse']||0)>0;}catch{return false;}
+}
+function paintHud(){
+ const cash=$('#hud-cash'),keep=$('#hud-keep'),next=$('#next-chapter');
+ if(cash){
+  const n=penniesNow();
+  if(embedded) cash.textContent=wonPurse()?(n+' '+(n===1?'penny':'pennies')+' in the purse'):(n+' '+(n===1?'penny':'pennies'));
+  else cash.textContent='Practice';
+ }
+ if(keep){
+  const prize=chapterKeep();
+  keep.textContent=prize?('Keep · '+itemName(prize)):'';
+ }
+ if(next){
+  const last=!engine?.levels||level>=engine.levels.length-1;
+  next.disabled=last;
+  next.textContent=last?'Last chapter':'Next chapter';
+ }
+}
+function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();}
+function goNextChapter(){
+ if(!engine?.levels||level>=engine.levels.length-1)return;
+ persist();
+ level+=1;
+ if($('#chapter'))$('#chapter').value=level;
+ reset();
+ start();
+}
 function markChapters(){if(!engine?.levels)return;[...$('#chapter').options].forEach((o,i)=>{const prize=engine.prizes?.[i];let tick='';try{if(prize&&window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.[prize])tick=' ✓';}catch{}o.textContent=(i+1)+'. '+engine.levels[i]+tick;});}
 function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#begin').disabled=false;$('#pause').textContent='Pause';}
 function start(){if(disposed||!engine||!state||playing)return;if(ended&&!engine.live)reset();ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
@@ -61,7 +93,7 @@ function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(typ
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- engine=(await import(entry.module+'?v=plate-1')).default;
+ engine=(await import(entry.module+'?v=hud-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave');});}
@@ -72,6 +104,7 @@ try{
  const spriteIds=[...new Set([...(engine.sprites||kit.sprites||[]),...engine.prizes])];
  observer=new ResizeObserver(()=>{const b=stage.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(stage);
  listen($('#chapter'),'change',()=>{persist();level=Number($('#chapter').value);reset();});listen($('#restart'),'click',()=>{if(engine.tables){persist();start();return;}reset();});listen($('#pause'),'click',()=>playing?pause():start());
+ listen($('#next-chapter'),'click',goNextChapter);
  listen($('#begin'),'click',()=>{if(!ended){start();return;}const won=state?.result?.won!==false;persist();if(won&&level<engine.levels.length-1){level++;$('#chapter').value=level;reset();return;}reset();if(!won)start();});
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type));
  listen(canvas,'keydown',e=>{if(!playing||e.repeat)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','Escape','z','x','r','c','Shift','Control'].includes(e.key)){e.preventDefault();input.keys.add(e.key);if(e.key==='Escape')pause();else engine.key?.(state,e.key,true,input);paint();}});

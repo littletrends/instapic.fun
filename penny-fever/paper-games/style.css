@@ -4,3 +4,9 @@
 .is-alley-room .play-header{display:none}.is-alley-room .play-layout{padding-top:.35rem}
 @media(max-width:760px){.is-alley-room .notebook{display:none}.is-alley-room .stage{max-width:none;width:100%;aspect-ratio:3/4}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.play-hud{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.45rem .7rem .7rem;background:linear-gradient(#0c141ce8,#0c141c00);color:#f6edd4;font:700 .82rem/1.2 Georgia,serif;pointer-events:none;text-shadow:0 1px 0 #1a1008}
+.play-hud span{display:inline-block}
+.play-advance{display:flex;justify-content:center;margin:.35rem 0 .2rem}
+.play-advance button{min-width:10rem}
+.is-alley-room .play-advance{display:flex}
+.is-alley-room .stage{max-width:none}

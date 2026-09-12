@@ -484,8 +484,6 @@ export default {
       w: 40, fallback: () => d.ball(792, springY, 12, '#c45a4a'),
     });
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
-    d.text(String(n), 86, 108, 18, '#fff6d8');
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (let i = 0; i < SETS.length; i++) {
       const x = 86, y = 200 + i * 36;

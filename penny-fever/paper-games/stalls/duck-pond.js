@@ -535,21 +535,6 @@ export default {
     d.animal(0, 0, 'duck', 1.16, s.t);
     ctx.restore();
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    const px = 118, py = 148;
-    d.item(spriteKey('penny-purse'), px, py, {w: 128, fallback: () => d.heart(px, py, 40, '#6a7a52')});
-    const heap = Math.min(Math.max(0, n === '∞' ? 0 : n), 28);
-    for (let i = 0; i < heap; i++) {
-      const row = Math.floor(i / 7), col = i % 7;
-      const hx = px - 44 + col * 14 + row * 3;
-      const hy = py + 8 - row * 9 - (col % 2) * 3;
-      d.item(spriteKey('everyday-penny'), hx, hy, {w: 22, shadow: false, fallback: () => d.ball(hx, hy, 8, '#b68445')});
-    }
-    d.text(String(n), px, py + 72, 22, '#fff6d8');
-    d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 92, 13, '#ead6a4');
-    
-    d.text('treasures', 788, 144, 13, '#ead6a4');
-    const prize = (SETS[s.level] || SETS[0]).prize;
-    d.item(spriteKey(prize), 788, 88, {w: 54, fallback: () => d.star(788, 88, 18)});
     for (let i = 0; i < SETS.length; i++) {
       const x = 86 + (i % 3) * 44, y = 268 + Math.floor(i / 3) * 50;
       const got = owned(SETS[i].prize) || (s.won && i === s.level);

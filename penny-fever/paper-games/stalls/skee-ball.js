@@ -206,10 +206,7 @@ export default {
   },
   key(s, k, down) { if (k === ' ' && down) roll(s); },
   draw(s, d) {
-    
-    d.text('this moon', 160, 130, 13, '#ead6a4');
-    d.item(spriteKey(s.prize), 160, 188, {w: 84, fallback: () => d.star(160, 188, 28)});
-    d.text(itemName(s.prize), 160, 246, 12, '#fff0cb');
+
     d.text((s.limit - s.throws) + ' roll' + (s.limit - s.throws === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
     for (let i = 0; i < SETS.length; i++) {
       const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
@@ -219,9 +216,6 @@ export default {
       else d.circle(x, y, 20, '#1a120866');
     }
     const n = alleyPlay ? (pocket() ?? 0) : '∞';
-    d.item(spriteKey('penny-purse'), 790, 160, {w: 92, fallback: () => d.heart(790, 160, 28, '#6a7a52')});
-    d.text(String(n), 790, 218, 18, '#fff6d8');
-    d.text(n === 1 ? 'penny' : 'pennies', 790, 236, 12, '#ead6a4');
 
     d.arc(450, 620, 210, Math.PI * 1.12, Math.PI * 1.88, '#c9a56a44', 10);
     d.arc(450, 620, 186, Math.PI * 1.15, Math.PI * 1.85, '#ead6a433', 4);

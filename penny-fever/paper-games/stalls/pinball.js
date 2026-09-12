@@ -564,8 +564,6 @@ export default {
     d.text('Z', 210, 1152, 12, '#fff6d8');
     d.text('X', 690, 1152, 12, '#fff6d8');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
-    d.text(String(n), 86, 108, 18, '#fff6d8');
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);

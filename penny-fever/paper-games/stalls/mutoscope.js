@@ -633,8 +633,6 @@ export default {
     const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
     d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
-    d.text(String(n), 86, 108, 18, '#fff6d8');
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const x of [168, 732]) {
       d.circle(x, 214, 18, '#4a3428', '#d2b07a', 2);
