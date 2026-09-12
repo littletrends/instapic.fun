@@ -1,14 +1,14 @@
 import * as THREE from '../lib/three.module.min.js';
 import {AMUSEMENT_ART,RIDE_X,PAPERCUT_VIEWS} from './catalogue.js?v=alley-webp-1';
-import {loadPapercutFace,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,billboardPapercut,disposePapercutStand} from './cutouts.js?v=alley-webp-1';
+import {loadPapercutFace,buildPapercut,setPapercutFace,showPapercutView,disposePapercutStand} from './cutouts.js?v=alley-webp-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
 const NEAR=PAPERCUT_NEAR;
 const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
 const HOST_HEIGHT=1.7;
-const HOST_AISLE=1.68;
-const HOST_ALONG=-.85;
+const HOST_AISLE=2.28;
+const HOST_ALONG=-1.25;
 // Stalls are 3.5 tall. Rides dwarf them and sit further back (RIDE_X 3.82),
 // so side cards stay out of the aisle (1.62) and short of the wall (4.86).
 const RIDE_SCALE=2.35;
@@ -100,9 +100,9 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
   if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    const host=figure.userData.kind==='host';
-    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:(host?0:papercutViewIndex(figure,look)));
-    if(!host&&figure.userData.billboard)billboardPapercut(figure,currentCam||look);
+    // Hosts face down the alley. Rides keep the aisle face — switching to
+    // left/right pointed the sheet down the walk and hid the stand.
+    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:0);
    }
   }
   if(dead||!active)return;

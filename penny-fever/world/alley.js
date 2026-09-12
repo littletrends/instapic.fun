@@ -11,7 +11,7 @@ import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPa
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-webp-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
-import {installPapercutRides} from "./amusements/install.js?v=aisle-out-1";
+import {installPapercutRides} from "./amusements/install.js?v=ride-side-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=vendor-face-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=alley-webp-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
