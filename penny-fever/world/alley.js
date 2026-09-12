@@ -2,60 +2,49 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=names-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-book-2";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=rotate-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-book-2";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=rotate-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=names-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-tools-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART, midwayLots, papercutRideSrc, papercutHostSrc} from "./amusements/catalogue.js?v=names-1";
-import {installWallBackdrops} from "./walls/install.js?v=names-1";
-import {installPapercutRides} from "./amusements/install.js?v=names-1";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=names-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=names-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=names-1";
+import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
+import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
+import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=iris-ball-1";
 
-const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
+const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
-  { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Want to know what your future holds? Sit down — three cards never lie." },
-  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names in the tester! Find out if it's love, luck, or a lesson." },
-  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Roll up! The beetle's off the tracks — help me put him back on the glow." },
-  { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Come see the sky in a pocket! Brass glasses, live stars, no waiting for night." },
-  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Hold still — the woodland only poses once. Frame it before the light goes!" },
-  { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Letters for the lost! Fold 'em, fly 'em, I'll see they find their box." },
-  { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock the lanterns, take a prize! Everyone's a winner if the sky goes dark." },
-  { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "Hear that tide of copper? One penny shoves a fortune — maybe yours." },
-  { id: "pinball", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "Thunder in the garden! Plunge a penny, bat it about — the house always smiles." },
-  { id: "water-gun", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Sail the paper harbour! Nudge your boat home and I'll pin a prize on you." },
-  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "Dairy's open! Topple my bottles — two throws, three, the shelf or the book." },
-  { id: "cover-the-spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover the moon, don't get greedy. A handful of discs and she's yours." },
-  { id: "mutoscope", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Moving pictures, missing frames! Crank the reel, I'll tell you the story." },
-  { id: "high-striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "Test your arm on the bellfoundry! One strike, one ring, the whole alley hears it." },
-  { id: "catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Don't look away from the glass, love. Two gardens, one reflection — fold it true." },
-  { id: "bent-rings", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "Rings for the orchard! Seat one on a golden branch and wish it stays." },
-  { id: "plinko", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Marble mill's turning! Drop one in, flip the gates, see where she sings." },
-  { id: "fairy-floss", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Sugar clouds this way! Wind it gentle or she'll snap — prize for a perfect puff." },
-  { id: "popcorn", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Hear that kettle? Pump the bellows, catch the pop — symphony in a bag." },
-  { id: "duck-pond", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Ducklings on parade! Paddle the flock home, I'll wrap you a prize." },
-  { id: "skee-ball", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "Moonbow alley! Roll for the hanging moon — a penny a go, a prize if she lands." },
-  { id: "penny-pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Wishing wells are thirsty! Skip a penny, skip two — the fountain remembers." },
-  { id: "dunk-tank", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "Splashworks! Hit the bell, soak the plates — everyone's a winner when she drops." },
-  { id: "marquee", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Light the night with me! Catch the wave of bulbs, take the hanging prize." },
-  { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Impossible suitcase! Tuck the treasures, nestle the unique — we're packing for the moon." },
-  { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Backstage, quick! Slip the scenery, catch the curtain prize before they strike the set." },
+  { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Gaze into the crystal. A keepsake is hiding in the mist." },
+  { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
+  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
+  { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
+  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Frame the hanging prize before the light goes." },
+  { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
+  { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock every lantern in one toss." },
+  { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },
+  { id: "pinball", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
+  { id: "water-gun", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Nudge a little sailboat through a paper harbour." },
+  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "A penny a bead. Two or three throws. The shelf or the book." },
+  { id: "cover-the-spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover the moon. Don’t get greedy." },
+  { id: "mutoscope", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Crank the reel. Light the story." },
+  { id: "high-striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "One penny, one strike. Ring the lit mouth." },
+  { id: "catoptromancy", kind: "tent", art: CUTOUT("catoptromancy"), accent: 0x5a3a8a, line: "Fold the glass. Don’t look away." },
+  { id: "bent-rings", kind: "booth", art: CUTOUT("bent-rings"), accent: 0x8a6a3a, line: "Seat the ring on the wishing branch." },
+  { id: "plinko", kind: "cabinet", art: CUTOUT("plinko"), accent: 0x3a8a8a, line: "Drop a marble. Flip the gates." },
+  { id: "fairy-floss", kind: "tent", art: CUTOUT("fairy-floss"), accent: 0xe8a0c0, line: "Wind the cloud. Don’t snap the sugar." },
+  { id: "popcorn", kind: "booth", art: CUTOUT("popcorn"), accent: 0xe8c45a, line: "Pump the bellows. Catch the pop." },
+  { id: "duck-pond", kind: "booth", art: CUTOUT("duck-pond"), accent: 0x3a8a5a, line: "Paddle the flock home." },
+  { id: "skee-ball", kind: "booth", art: CUTOUT("skee-ball"), accent: 0xc46a3a, line: "A penny a roll. Land the hanging moon." },
+  { id: "penny-pitch", kind: "booth", art: CUTOUT("penny-pitch"), accent: 0xd4a45a, line: "Skip a penny across the wells." },
+  { id: "dunk-tank", kind: "booth", art: CUTOUT("dunk-tank"), accent: 0x3a6aaa, line: "One bead. Clear the plates." },
+  { id: "marquee", kind: "cabinet", art: CUTOUT("marquee"), accent: 0xf0d09a, line: "Wake the night. Catch the hanging prize." },
+  { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Tuck pennies. Nestle the unique." },
+  { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
-const RIDE_LINE = {
-  "horse-carousel": "Roll up for the waltz! Stop the horses when the lantern says it's yours.",
-  "fairground-organ": "Hear the paper roll? Tap the notes as they cross the gold — Otto's listening.",
-  "helter-skelter": "Spiral slide! Catch every gold ring on the way down — miss one, ride again.",
-  "ferris-wheel": "Wheel's turning, cabins kissing the moon! Point yours out, take a prize.",
-  "chair-swings": "Flying chairs! Hold 'em slow, let go over the mat — that's the trick.",
-  funhouse: "Mirrors, laughs, the real doorway! Remember the true one after they shuffle.",
-  "balloon-tree": "Balloons for the garden! Pop the match, I'll pin a posy on you.",
-  "alley-wall-bay": "The wall's fading! Stamp the pale patches, help me remember the bay.",
-};
-const AURA_LINE = "Roll up, roll up! Tickets and pennies this way — first walk's free, then a penny a lap.";
 const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
 for (const spec of STALLS) {
   const g = paperById[spec.id];
@@ -64,6 +53,7 @@ for (const spec of STALLS) {
   spec.hostSlug = String(g.host || "").toLowerCase().replace(/[^a-z]+/g, "");
   spec.name = g.title;
   spec.blurb = g.blurb;
+  spec.line = g.blurb;
 }
 
 const SKIN = 0xf0c4a8;
@@ -970,17 +960,12 @@ function attachHud() {
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
       <div class="pf-alley-map" id="pfAlleyMap" hidden>
         <div class="pf-alley-map-bar">
-          <strong>The World</strong>
+          <strong>Sideshow alley</strong>
           <button type="button" id="pfAlleyMapClose">Close</button>
         </div>
         <div class="pf-alley-map-board">
-          <figure class="pf-alley-map-art">
-            <img src="assets/restyle/maps/world-map.webp" alt="Flat world map ringed with ice. Aura’s Penny Fever is pinned on the disc." width="1024" height="1024" loading="lazy" decoding="async">
-            <button type="button" class="pf-world-pin" id="pfAlleyMapYou" data-place="aura">
-              <i aria-hidden="true"></i>
-              <span>Aura’s Penny Fever</span>
-            </button>
-          </figure>
+          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
+          <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
         </div>
         <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
           <div class="pf-alley-map-marks">
@@ -1031,7 +1016,14 @@ function fillAlleyMap() {
 }
 
 function syncAlleyMapYou() {
-  /* World map pin stays on Aura’s Penny Fever. Later parks get their own pins. */
+  const pin = el("pfAlleyMapYou");
+  const map = el("pfAlleyMap");
+  if (!pin || !map || map.hidden || !player) return;
+  const start = FOYER_OUT;
+  const end = Math.max(start + 1, hallLen - 1);
+  const z = player.position.z;
+  const t = z < start ? -0.08 : Math.max(0, Math.min(1, (z - start) / (end - start)));
+  pin.style.bottom = `${28 + t * 48}%`;
 }
 
 function closeAlleyMap() {
@@ -1221,11 +1213,6 @@ function bindHud() {
     if (!button) return;
     event.preventDefault();
     walkToMapPlace(button.dataset.place);
-  });
-  const worldPin = el("pfAlleyMapYou");
-  if (worldPin) worldPin.addEventListener("click", (event) => {
-    event.preventDefault();
-    walkToMapPlace(worldPin.dataset.place || "aura");
   });
   if (enter) {
     enter.addEventListener("click", (event) => {
@@ -1419,21 +1406,22 @@ function lookCardArt(best, view = "front") {
   const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
   if (best.kind === "stall") {
     return {
-      booth: `${root}/stalls/${best.id}/${v}.webp`,
-      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.webp` : "",
+      booth: `${root}/stalls/${best.id}/${v}.png`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
       role: "host",
     };
   }
   if (best.kind === "ride") {
+    const host = (best.hostSlug || best.host || "").toLowerCase();
     return {
-      booth: papercutRideSrc(best.id, v),
-      vendor: papercutHostSrc(best.host || best.hostSlug, v),
+      booth: `${root}/amusements/${best.id}/${v}.png`,
+      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
       role: "attendant",
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/${v}.webp`,
-    vendor: `${root}/aura/welcoming/${v}.webp`,
+    booth: `${root}/aura/ticket-booth/${v}.png`,
+    vendor: `${root}/aura/welcoming/${v}.png`,
     role: "proprietor",
   };
 }
@@ -1547,7 +1535,7 @@ function auraDeskFocus() {
     name: "Ticket booth",
     host: "Aura",
     hostSlug: "",
-    line: AURA_LINE,
+    line: "Trade pennies for a ticket here. Square is only for buying packs.",
     x: COUNTER.x,
     z: COUNTER.z,
     stallX: COUNTER.x,
@@ -1637,7 +1625,7 @@ function syncStallCard(best) {
     }
     if (hostEl) hostEl.textContent = best.host ? `${best.host} · ${art.role}` : "";
     if (nameEl) nameEl.textContent = best.name || "";
-    if (lineEl) lineEl.textContent = "";
+    if (lineEl) lineEl.textContent = best.line || "";
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
@@ -1680,19 +1668,21 @@ function syncStallCard(best) {
 }
 
 function talkToFocus() {
-  const who = nearest;
-  if (!who) return;
-  if (who.kind !== "stall" && who.kind !== "ride" && who.kind !== "aura") return;
-  vendorChatUntil = performance.now() + 7000;
-  const speech = el("pfWorldSpeech");
-  const speechName = el("pfWorldSpeechName");
-  const speechText = el("pfWorldSpeechText");
-  if (!speech || !speechText) return;
-  speech.hidden = false;
-  if (speechName) speechName.textContent = who.host || who.name || "Aura";
-  speechText.textContent = who.line || (who.kind === "aura" ? AURA_LINE : "");
-  speech.classList.toggle("is-left", (who.side || -1) < 0);
-  speech.classList.toggle("is-right", (who.side || -1) >= 0);
+  if (!nearest) return;
+  if (nearest.kind === "aura") {
+    chatPinned = true;
+    const pocketChat = el("pfPocketChat");
+    if (pocketChat) {
+      pocketChat.classList.add("is-active");
+      pocketChat.setAttribute("aria-pressed", "true");
+    }
+    return;
+  }
+  if (nearest.kind === "stall" || nearest.kind === "ride") {
+    vendorChatUntil = performance.now() + 6400;
+    const lineEl = el("pfStallCardLine");
+    if (lineEl) lineEl.textContent = nearest.line || "";
+  }
 }
 
 function enterNearest() {
@@ -1709,7 +1699,7 @@ function enterNearest() {
     const kind = laps === 0 ? "ticket" : "penny";
     if (PF && typeof PF.admitAlleyLap === "function") {
       if (!PF.admitAlleyLap(kind) && kind === "penny") {
-        tillMessage = "A penny for the next walk. Cash a ticket here for five pennies.";
+        tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
         tillMessageUntil = performance.now() + 7000;
       }
     }
@@ -2098,7 +2088,7 @@ function handleGatePrompt() {
   const kind = laps === 0 ? "ticket" : "penny";
   if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
     if (kind === "penny") {
-      tillMessage = "A penny for the next walk. Cash a ticket here for five pennies.";
+      tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
       tillMessageUntil = performance.now() + 7000;
     }
     return true;
@@ -2225,7 +2215,7 @@ function pickFocus(px, pz) {
       name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
       host: g?.host || art?.host || "",
       hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
-      line: RIDE_LINE[id] || g?.blurb || "Roll up — the ride's waiting.",
+      line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
       stallX: fig.position.x,
@@ -2242,7 +2232,7 @@ function pickFocus(px, pz) {
       name: "Ticket booth",
       host: "Aura",
       hostSlug: "",
-      line: AURA_LINE,
+      line: "Trade pennies for a ticket here. Square is only for buying packs.",
       x: COUNTER.x,
       z: COUNTER.z,
       stallX: COUNTER.x,
@@ -2264,7 +2254,7 @@ function pickFocus(px, pz) {
       id: "aura",
       kind: "aura",
       name: "Ticket booth",
-      line: AURA_LINE,
+      line: "Trade pennies for a ticket here. Square is only for buying packs.",
       x: aura.position.x,
       z: aura.position.z,
       stallX: COUNTER.x,
@@ -2315,7 +2305,7 @@ function pickFocus(px, pz) {
       name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
       host: g?.host || art?.host || "",
       hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
-      line: RIDE_LINE[id] || g?.blurb || "Roll up — the ride's waiting.",
+      line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
       stallX: fig.position.x,
@@ -2391,8 +2381,8 @@ function findNearest() {
       prompt.hidden = false;
       prompt.classList.remove("is-ticket-handoff");
       if (nameEl) nameEl.textContent = best.kind === "stall" && best.host ? best.name : best.name;
-      const playable = best.kind === "stall" || best.kind === "ride";
-      const chatable = best.kind === "stall" || best.kind === "aura" || best.kind === "ride";
+      const playable = best.kind === "stall";
+      const chatable = best.kind === "stall" || best.kind === "aura";
       enter.hidden = !playable;
       enter.textContent = stallEnterLabel(best.id);
       if (chatBtn) {
@@ -2421,12 +2411,12 @@ function findNearest() {
       speech.hidden = true;
     } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
       speech.hidden = true;
-    } else if (best && (best.kind === "stall" || best.kind === "ride") && performance.now() < vendorChatUntil) {
+    } else if (best && best.kind === "stall" && performance.now() < vendorChatUntil) {
       speech.hidden = false;
       if (speechName) speechName.textContent = best.host || best.name;
       speech.classList.add(best.side < 0 ? "is-left" : "is-right");
       speechText.textContent = best.line;
-    } else if (best && (best.kind === "stall" || best.kind === "ride")) {
+    } else if (best && best.kind === "stall") {
       speech.hidden = true;
     } else if (z > hallLen - 6) {
       speech.hidden = false;

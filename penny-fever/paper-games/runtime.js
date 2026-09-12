@@ -1,4 +1,4 @@
-import {games,byId} from './catalogue.js?v=florence-1';
+import {games,byId} from './catalogue.js?v=iris-ball-1';
 import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';
@@ -9,7 +9,7 @@ let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,las
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
 const HOUSE={
- fortune:{seconds:50,title:'The cards rest',detail:'Iris closes the deck. Another penny, another reading.'},
+ fortune:{seconds:50,title:'The glass went quiet',detail:'Iris covers the ball. Another penny, another gaze.'},
  love:{seconds:40,title:'The glass cooled',detail:'Rosalie wipes the tester. Write the names again when you are ready.'},
  curios:{seconds:75,title:'The beetle wound down',detail:'Digby tucks the menagerie in. Another penny, another wander.'},
  lookup:{seconds:70,title:'The sky went quiet',detail:'The glasses fogged before every star woke.'},
@@ -142,7 +142,7 @@ function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(typ
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- engine=(await import(entry.module+'?v=florence-1')).default;
+ engine=(await import(entry.module+'?v=iris-ball-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}

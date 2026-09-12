@@ -1,7 +1,7 @@
 // New paper interiors. A row becomes playable only after its module and art land.
 // The two approved studies retain their own saved implementations.
 const rows = [
-  ['fortune','Iris','Iris’s Reading','Three cards: past, present, future. A keepsake is hiding in the deck.'],
+  ['fortune','Iris','Iris’s Reading','Gaze into the crystal. A keepsake is hiding in the mist.'],
   ['love','Rosalie','Love Tester','Write two names. Count the loves. Read the heat.'],
   ['curios','Digby','Clockwork Menagerie','Reconnect tracks for a wandering clockwork beetle.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
@@ -27,13 +27,13 @@ const rows = [
   ['marquee','Lumi','Light the Night','Conduct a travelling wave of boardwalk lights.'],
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
-  ['carousel','Florence','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
+  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
   ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.'],
-  ['ferris','Jasper','Pocket Wheel','Tap the matching cabin when it kisses the crescent.'],
+  ['ferris','Jasper','Pocket Wheel','Stop the ferris wheel when the matching cabin kisses the crescent.'],
   ['helter','Tilly','Spiral Slide','Catch every gold ring on the way down the paper helter-skelter.'],
-  ['swings','Hugo','Flying Chairs','Hold to slow the chairs, then let go over the prize mat.'],
+  ['swings','Hugo','Chair Waltz','Catch the matching chair as it sweeps over the front mat.'],
   ['funhouse','Juno','Laughing Doorway','Remember the real laugh after the mirrors shuffle.'],
-  ['organ','Otto','Fairground Organ','Tap the organ notes as they cross the gold bar.'],
+  ['organ','Otto','Calliope Keys','Tap the organ notes as they cross the gold bar.'],
   ['mural','Arlo','Painted Bay','Stamp the fading patches until the alley wall remembers.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
@@ -43,7 +43,7 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: `./assets/${id}.webp`,
+  asset: `./assets/${id}.png`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
