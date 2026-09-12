@@ -3,7 +3,7 @@ let midwayApi = null;
 let midwayWait = null;
 let artApi = null;
 function needMidway() {
-  if (!midwayWait) midwayWait = import('./midway.js?v=purse-1').then(m => { midwayApi = m; return m; });
+  if (!midwayWait) midwayWait = import('./midway.js?v=webp-1').then(m => { midwayApi = m; return m; });
   return midwayWait;
 }
 function needArt() {

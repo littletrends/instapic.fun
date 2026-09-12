@@ -331,7 +331,7 @@
       boil: "Love_Thermometer_States/Boil_Over.webp",
     },
     lookup: {
-      idle: "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
+      idle: "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.webp",
       rising: "Look_Up_Darling/Needle_Rising.webp",
       success: "Look_Up_Darling/Sky_Reveal.webp",
       fail: "Look_Up_Darling/Failure_Shoes.webp",
@@ -3457,7 +3457,7 @@
       "location": "passCard"
     },
     "lookup_sky": {
-      "src": "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.png",
+      "src": "assets/restyle/scene-turnarounds-2026-09-09/stalls/lookup/front.webp",
       "kind": "still",
       "priority": "P2",
       "location": "lookupCard"

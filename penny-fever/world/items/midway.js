@@ -1,9 +1,10 @@
 import {games} from '../../paper-games/catalogue.js?v=live-1';
 import {kits} from '../../paper-games/prizes.js?v=mint-1';
 
-const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
-const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.png`;
-const FALLBACK_ART = id => `paper-games/assets/${id}.png`;
+const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
+const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.webp`;
+const FALLBACK_ART = id => `paper-games/assets/${id}.webp`;
+const RIDE_IDS = new Set(['carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
 
 export const extras = [
   {
@@ -14,8 +15,8 @@ export const extras = [
     workshop: false,
     extra: true,
     prizes: ['everyday-penny', 'ticket-roll', 'admission-ticket', 'night-suitcase'],
-    cover: 'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.png',
-    vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png',
+    cover: 'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.webp',
+    vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp',
   },
   {
     id: 'copper-pocket',
@@ -50,7 +51,7 @@ export const stalls = [
     workshop: !!g.workshop,
     extra: false,
     prizes: [...(kits[g.id]?.prizes || [])],
-    cover: g.id === 'carousel' || g.id === 'balloons' ? FALLBACK_ART(g.id) : STALL_ART(g.id),
+    cover: RIDE_IDS.has(g.id) ? FALLBACK_ART(g.id) : STALL_ART(g.id),
     vendor: VENDOR_ART(g.host),
   })),
 ];

@@ -22,13 +22,13 @@ export function makeVisibleTicketBooth(scene){
  g.add(stub);
  const opts={height:2.85,maxWidth:2.4,sideWidth:1.35,layout:'stand'};
  const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/';
- loadFramedPng(ROOT+'front.png',AURA_BOOTH_FRAMES.front,{urgent:true}).then(async front=>{
+ loadFramedPng(ROOT+'front.webp',AURA_BOOTH_FRAMES.front,{urgent:true}).then(async front=>{
   stub.removeFromParent();
   const cut=buildPapercut({front},opts);g.add(cut);
   g.userData.papercutViews=cut.userData.papercutViews;g.userData.papercutStand=cut;
   for(const view of PAPERCUT_VIEWS){
    if(view==='front')continue;
-   const face=await loadFramedPng(ROOT+view+'.png',AURA_BOOTH_FRAMES[view],{urgent:true});
+   const face=await loadFramedPng(ROOT+view+'.webp',AURA_BOOTH_FRAMES[view],{urgent:true});
    if(!cut.parent){face.texture?.dispose();return;}
    setPapercutFace(cut,view,face,opts);
    g.userData.papercutViews=cut.userData.papercutViews;
