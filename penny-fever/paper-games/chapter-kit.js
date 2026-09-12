@@ -3,7 +3,7 @@
 // Call takePrize(s) when the player hits it, or set result.won with a prize id.
 // Override s.chapterPrize.x / s.chapterPrize.y in create if this oval is busy.
 // Do not store the flying prize on s.prize — many stalls already use that as an id string.
-import {spriteKey} from './prizes.js?v=align-1';
+import {spriteKey} from './prizes.js?v=mint-1';
 
 export const pick = (arr, i) => arr[Math.max(0, Math.min(i, arr.length - 1))];
 export const pace = (level, start, step, floor) => Math.max(floor, start - level * step);

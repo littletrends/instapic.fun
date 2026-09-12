@@ -39,7 +39,8 @@
     ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Finish the grand duck parade.',.12,'garden-prizes'],
     ['coin-album','Coin album','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 4 of Copper Falls.',.1,'pennies'],
     ['treasure-tin','Treasure tin','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 5 of Copper Falls.',.1,'gift-wrapping'],
-    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Copper Falls · Copper','Cash a booth ticket at Copper Falls for five spendable pennies. The stack is the keepsake; the count lives in your pocket.',.1,'pennies'],
+    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Aura’s till · Copper Falls','A shared five-penny pack. Cash a booth ticket, or shove a stack off Copper’s trays. You can keep more than one.',.1,'pennies'],
+    ['mint-press','Mint press','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 6 of Copper Falls. The little press that mints the tide.',.1,'game-prizes'],
     ['surprise-parcel','Surprise parcel','Workshop prizes','prize',null,'Lost Letter Express · Willa','Chapter 4 of Lost Letter Express.',.1,'gift-wrapping'],
     ['stamp-passport','Stamp passport','Workshop prizes','prize',null,'Lost Letter Express · Willa','Chapter 5 of Lost Letter Express.',.1,'tickets'],
     ['lost-and-found-tag','Lost-and-found tag','Workshop prizes','prize',null,'Lost Letter Express · Willa','Chapter 6 of Lost Letter Express.',.1,'working-midway'],
@@ -357,7 +358,7 @@
       return [d.id];
     }
     if (state.paperInventory.items[d.id]) {
-      if (['moon-penny','rose-penny','star-token','crown-token'].includes(d.id)) {
+      if (['moon-penny','rose-penny','star-token','crown-token','five-penny-stack'].includes(d.id)) {
         const row = state.paperInventory.items[d.id];
         row.qty = (count(row.qty) || 1) + 1;
         row.at = now;
@@ -371,9 +372,17 @@
   function stampKeepsake(state, id, source, now=Date.now()) {
     if (!object(state) || !id) return false;
     reconcile(state);
-    if (state.paperInventory.items[id]) return false;
     const d = definitions.find(i => i.id === id);
     if (!d || d.kind === 'currency' || d.kind === 'scrip' || d.kind === 'ticket' || d.kind === 'pass') return false;
+    if (state.paperInventory.items[id]) {
+      if (id === 'five-penny-stack') {
+        const row = state.paperInventory.items[id];
+        row.qty = (count(row.qty) || 1) + 1;
+        row.at = now;
+        return true;
+      }
+      return false;
+    }
     state.paperInventory.items[id] = {at: now, source: source || 'pocket', qty: 1};
     return true;
   }

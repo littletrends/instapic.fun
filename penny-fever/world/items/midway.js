@@ -1,5 +1,5 @@
 import {games} from '../../paper-games/catalogue.js?v=penny-door-1';
-import {kits} from '../../paper-games/prizes.js?v=align-1';
+import {kits} from '../../paper-games/prizes.js?v=mint-1';
 
 const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.png`;

@@ -18,7 +18,7 @@ const SETS = [
   {mix0: ['everyday-penny', 'rose-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['rose-penny', 'star-token'], unique: 'penny-tree', prize: 'penny-tree'},
   {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token'], unique: 'coin-album', prize: 'coin-album'},
   {mix0: ['everyday-penny', 'star-token'], mix1: ['moon-penny', 'rose-penny'], mix2: ['star-token', 'crown-token'], unique: 'treasure-tin', prize: 'treasure-tin'},
-  {mix0: ['everyday-penny', 'moon-penny', 'rose-penny'], mix1: ['star-token', 'crown-token'], mix2: ['moon-penny', 'crown-token'], unique: 'five-penny-stack', prize: 'five-penny-stack'},
+  {mix0: ['everyday-penny', 'moon-penny', 'rose-penny'], mix1: ['star-token', 'crown-token'], mix2: ['moon-penny', 'crown-token'], unique: 'mint-press', prize: 'mint-press'},
 ];
 const TOKENS = {
   'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 160, token: true},
@@ -28,6 +28,7 @@ const TOKENS = {
   'crown-token': {r: 16, w: 34, score: 4, color: '#9a4d4a', weight: 4, cap: 3, token: true},
   'pressed-heart': {r: 16, w: 36, score: 2, color: '#c67483', weight: 4, cap: 3, token: true},
   'lucky-match': {r: 14, w: 30, score: 2, color: '#d2a15a', weight: 4, cap: 3, token: true},
+  'five-penny-stack': {r: 20, w: 46, score: 5, color: '#b68445', weight: 3, cap: 4, token: true},
 };
 const UNIQUES = [
   'looking-glass-locket', 'clockwork-butterfly', 'secret-door-key', 'moon-brooch',
@@ -42,11 +43,11 @@ const CHAPTER_ITEMS = {
   'penny-tree': {r: 24, w: 54, score: 0, color: '#8a9a4a', unique: true, prize: true},
   'coin-album': {r: 22, w: 48, score: 0, color: '#9a4d4a', unique: true, prize: true},
   'treasure-tin': {r: 22, w: 48, score: 0, color: '#c4a46a', unique: true, prize: true},
-  'five-penny-stack': {r: 20, w: 46, score: 5, color: '#b68445', unique: true, prize: true, token: true},
+  'mint-press': {r: 24, w: 54, score: 0, color: '#b68445', unique: true, prize: true},
 };
 const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS};
 const POOL = Object.entries(DEFS).map(([id, def]) => ({id, ...def}));
-const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse','pressed-heart','lucky-match',...UNIQUES,...Object.keys(CHAPTER_ITEMS)];
+const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse','pressed-heart','lucky-match','five-penny-stack',...UNIQUES,...Object.keys(CHAPTER_ITEMS)];
 
 function mint(id, x, y, layer) {
   const def = DEFS[id] || DEFS['everyday-penny'];

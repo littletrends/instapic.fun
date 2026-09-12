@@ -68,6 +68,7 @@ export const items = {
   'splash-ring': {collection:'garden-prizes', name:'Splash ring'},
   'wishing-acorn': {collection:'future-curios', name:'Wishing acorn'},
   'five-penny-stack': {collection:'pennies', name:'Five-penny stack'},
+  'mint-press': {collection:'game-prizes', name:'Mint press'},
   'ticket-roll': {collection:'tickets', name:'Ticket roll'},
   'fairy-floss': {collection:'sweet-treats', name:'Fairy floss'},
   'pocket-cloud': {collection:'future-curios', name:'Pocket cloud'},
@@ -191,8 +192,8 @@ export const spriteKey = id => {
 export const itemName = id => items[id]?.name || id;
 export const kits = {
   'coin-pusher': {
-    sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear','coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack'],
-    prizes: ['coin-sleeve', 'copper-cascade', 'penny-tree', 'coin-album', 'treasure-tin', 'five-penny-stack'],
+    sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear','coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack','mint-press'],
+    prizes: ['coin-sleeve', 'copper-cascade', 'penny-tree', 'coin-album', 'treasure-tin', 'mint-press'],
   },
   whisper: {
     sprites: ['trade-envelope','sealed-secret','return-postcard','message-bottle','charm-pouch','whisper-charm','secret-keeper','surprise-parcel','stamp-passport','lost-and-found-tag'],
