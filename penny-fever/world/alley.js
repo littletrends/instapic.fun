@@ -1406,22 +1406,22 @@ function lookCardArt(best, view = "front") {
   const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
   if (best.kind === "stall") {
     return {
-      booth: `${root}/stalls/${best.id}/${v}.png`,
-      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
+      booth: `${root}/stalls/${best.id}/${v}.webp`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.webp` : "",
       role: "host",
     };
   }
   if (best.kind === "ride") {
-    const host = (best.hostSlug || best.host || "").toLowerCase();
+    const host = (best.hostSlug || best.host || "").toLowerCase().replace(/[^a-z]+/g, "");
     return {
-      booth: `${root}/amusements/${best.id}/${v}.png`,
-      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
+      booth: `${root}/amusements/${best.id}/${v}.webp`,
+      vendor: host ? `${root}/attendants/${host}/${v}.webp` : "",
       role: "attendant",
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/${v}.png`,
-    vendor: `${root}/aura/welcoming/${v}.png`,
+    booth: `${root}/aura/ticket-booth/${v}.webp`,
+    vendor: `${root}/aura/welcoming/${v}.webp`,
     role: "proprietor",
   };
 }
