@@ -4,7 +4,7 @@ import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=florence-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=bar-1'),gameBase).href,
 }));
 
 // These rooms already charge a penny per throw/crank. Opening the table is free;
@@ -43,7 +43,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   cabinet.removeAttribute('aria-labelledby');
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
-  const back=doc.createElement('button');back.type='button';back.textContent='← Back to the alley';
+  const back=doc.createElement('button');back.type='button';back.className='paper-game-back';back.textContent='← Alley';
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
@@ -63,7 +63,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
-  const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
+  const cash=doc.createElement('button');cash.type='button';cash.className='paper-game-cash';cash.textContent='Cash 5';cash.title='Cash a ticket for five pennies';
   cash.addEventListener('click',()=>{
     const PF=window.PennyFever;
     const got=PF?.cashTicketForPennies?.();
@@ -78,9 +78,11 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
     if(frame&&frame.getAttribute('src')==='about:blank') load();
   });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
-  chest.innerHTML='<span>🗝</span> Treasures';
+  chest.textContent='Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
-  bar.append(back,title,list,wallet,cash,retry,chest);
+  retry.className='paper-game-retry';
+  list.className='paper-game-all';
+  bar.append(back,title,wallet,cash,chest,retry,list);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
