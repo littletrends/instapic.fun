@@ -79,7 +79,9 @@ html, body {
 .aura-counter-service #auraCounterReset,
 .pf-stall-card-till #pfTillReset { background: #3a2840; }
 
-.development-ribbon {
+.development-ribbon { display: none; }
+html.pf-dev .development-ribbon {
+  display: block;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -91,6 +93,10 @@ html, body {
   background: linear-gradient(90deg, #5c1a2e, #3a2840);
   border-bottom: 1px solid rgba(212, 164, 90, 0.35);
 }
+.workshop-stop { display: none !important; }
+#pfTillLoan, #pfTillReset, #auraCounterLoan, #auraCounterReset, #demoPass, #devReset { display: none !important; }
+html.pf-dev #pfTillLoan, html.pf-dev #pfTillReset, html.pf-dev #auraCounterLoan, html.pf-dev #auraCounterReset { display: inline-block !important; }
+html.pf-dev #demoPass, html.pf-dev #devReset { display: inline-block !important; }
 
 .arcade-shell {
   max-width: 920px;

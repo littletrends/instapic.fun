@@ -3785,7 +3785,7 @@
 
     if ($("mintPack")) $("mintPack").addEventListener("click", mintPack);
 
-    if ($("demoPass")) $("demoPass").addEventListener("click", () => {
+    if ($("demoPass") && document.documentElement.classList.contains("pf-dev")) $("demoPass").addEventListener("click", () => {
       state.showmanPass = true;
       state.passDay = darwinDay();
       grantCurio("showman_ribbon", "alley");
@@ -3799,7 +3799,7 @@
       setAura("celebrate");
     });
 
-    $("devReset").addEventListener("click", () => {
+    if ($("devReset") && document.documentElement.classList.contains("pf-dev")) $("devReset").addEventListener("click", () => {
       abortLoveRun();
       localStorage.removeItem(STORAGE_KEY);
       state = loadState();
