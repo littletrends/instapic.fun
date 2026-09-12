@@ -1,11 +1,10 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v3';
+const STORE = 'pf-paper-dolls-v4';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
 
 export const BODIES = [
-  { id: 'boy', label: 'Boy' },
   { id: 'girl', label: 'Girl' },
 ];
 export const SKINS = [
@@ -16,28 +15,11 @@ export const SKINS = [
   { id: 'brown', label: 'Brown', rgb: [128, 84, 56] },
   { id: 'deep', label: 'Deep', rgb: [78, 50, 36] },
 ];
-export const HAIR_STYLES = [
-  { id: 'none', label: 'None' },
-  { id: 'short', label: 'Short curls', fit: 'head' },
-  { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
-];
-export const HAIR_COLORS = [
-  { id: 'brown', label: 'Brown', rgb: [122, 78, 48] },
-  { id: 'black', label: 'Black', rgb: [32, 24, 20] },
-  { id: 'blonde', label: 'Blonde', rgb: [214, 176, 92] },
-  { id: 'red', label: 'Auburn', rgb: [164, 68, 40] },
-  { id: 'ink', label: 'Blue-black', rgb: [36, 48, 88] },
-];
-export const EYE_STYLES = [
-  { id: 'none', label: 'None' },
-  { id: 'round', label: 'Dots' },
-  { id: 'sleepy', label: 'Sleepy' },
-];
 export const EYE_COLORS = [
+  { id: 'blue', label: 'Blue', rgb: null },
   { id: 'brown', label: 'Brown', rgb: [86, 52, 32] },
   { id: 'hazel', label: 'Hazel', rgb: [110, 78, 36] },
   { id: 'green', label: 'Green', rgb: [62, 102, 58] },
-  { id: 'blue', label: 'Blue', rgb: [70, 110, 158] },
   { id: 'grey', label: 'Grey', rgb: [96, 104, 112] },
 ];
 export const NOSES = [
@@ -62,13 +44,9 @@ export function blankDraft() {
     id: MINE_ID,
     body: 'girl',
     skin: 'cardboard',
-    hair: 'pigtails',
+    hair: 'none',
     hairColor: 'blonde',
-    eyeStyle: 'none',
-    eyes: 'brown',
-    nose: 'none',
-    mouth: 'none',
-    ears: 'body',
+    eyes: 'blue',
     name: 'Paper doll',
   };
 }
@@ -90,13 +68,7 @@ function load(url) {
 }
 
 export function preloadDollArt() {
-  const urls = [
-    src('bodies', 'boy.png'),
-    src('bodies', 'girl.png'),
-    src('hair', 'short.png'),
-    src('hair', 'pigtails.png'),
-  ];
-  return Promise.all(urls.map(u => load(u).catch(() => null)));
+  return load(src('bodies', 'girl.png')).catch(() => null);
 }
 
 function recolorTo(ctx, rgb, {skinOnly=false}={}) {
@@ -111,9 +83,32 @@ function recolorTo(ctx, rgb, {skinOnly=false}={}) {
     if (skinOnly) {
       if (mx > 210 && mx - mn < 45) continue;
       if (r > 150 && g > 110 && b < 90 && r - b > 60) continue;
+      if (b >= r) continue;
+      if (r < g + 6) continue;
     }
     const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 155;
     const lift = 0.22 + lum * 0.9;
+    d[i] = Math.min(255, tr * lift);
+    d[i + 1] = Math.min(255, tg * lift);
+    d[i + 2] = Math.min(255, tb * lift);
+  }
+  ctx.putImageData(data, 0, 0);
+}
+
+function recolorEyes(ctx, rgb) {
+  if (!rgb) return;
+  const data = ctx.getImageData(0, 0, W, H);
+  const d = data.data;
+  const [tr, tg, tb] = rgb;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < 12) continue;
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (b < r + 8 || b <= g) continue;
+    if (mx > 225 && mx - mn < 40) continue;
+    if (mx < 50) continue;
+    const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 140;
+    const lift = 0.35 + lum * 0.85;
     d[i] = Math.min(255, tr * lift);
     d[i + 1] = Math.min(255, tg * lift);
     d[i + 2] = Math.min(255, tb * lift);
@@ -258,30 +253,19 @@ export async function composeDoll(spec) {
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const bodyImg = await load(src('bodies', `${spec.body === 'boy' ? 'boy' : 'girl'}.png`));
+  const bodyImg = await load(src('bodies', 'girl.png'));
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skin = SKINS.find(s => s.id === spec.skin);
   if (skin?.rgb) recolorTo(ctx, skin.rgb, {skinOnly: true});
-  if (spec.hair && spec.hair !== 'none') {
-    const hairImg = await load(src('hair', `${spec.hair}.png`));
-    const hcan = document.createElement('canvas');
-    hcan.width = W; hcan.height = H;
-    const hctx = hcan.getContext('2d');
-    hctx.drawImage(hairImg, 0, 0, W, H);
-    const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
-    if (hc?.rgb) recolorTo(hctx, hc.rgb);
-    const style = HAIR_STYLES.find(h => h.id === spec.hair);
-    if (style?.fit === 'sheet') ctx.drawImage(hcan, 0, 0);
-    else drawLayerOnHead(ctx, bodyImg, hcan);
-  }
+  const eyes = EYE_COLORS.find(e => e.id === spec.eyes);
+  if (eyes?.rgb) recolorEyes(ctx, eyes.rgb);
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);
   return url;
 }
 
-export function bodyStrip(id) {
-  const who = id === 'girl' || id === 'cardboard-girl' ? 'girl' : 'boy';
-  return `assets/restyle/paper-dolls/bodies/${who}.png`;
+export function bodyStrip() {
+  return `assets/restyle/paper-dolls/bodies/girl.png`;
 }
 
 function readStore() {

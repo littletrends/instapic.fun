@@ -1,7 +1,7 @@
 import {
-  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS,
+  SKINS, EYE_COLORS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-crew-1';
+} from './paper-dolls.js?v=doll-girl-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -146,8 +146,6 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
-  if (key === 'hair' && val === 'pigtails') boot.draft.hairColor = 'blonde';
-  if (key === 'hair' && val === 'short') boot.draft.hairColor = 'brown';
   paintDraft();
 }
 
@@ -264,10 +262,10 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>Same felt-doll look as the original six, in a white undershirt. Mix body, skin and hair. Not a replacement for Bluebell and Oliver.</p>
+<p>One girl doll. Skin and eye colour for now — collections will dress her later. Not a replacement for the original six.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
-    <div id="dollPreview" class="doll-preview-stage" aria-label="Cardboard doll preview"><img id="dollPreviewImg" alt="Cardboard paper doll"></div>
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
     <div class="crew-runway-turn">
       <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
       <span id="dollViewLabel">front</span>
@@ -275,10 +273,8 @@ function mount() {
     </div>
   </div>
   <div class="doll-maker-parts">
-    ${optionRow('Body', 'body', BODIES)}
     ${optionRow('Skin', 'skin', SKINS, true)}
-    ${optionRow('Hair', 'hair', HAIR_STYLES)}
-    ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
+    ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
   </div>
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
