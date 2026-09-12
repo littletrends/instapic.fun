@@ -41,10 +41,10 @@ function topicOf(id) { return TOPICS.find(t => t.id === id); }
 function prizeVision(level) { return CHAPTERS[level]?.vision; }
 function prizeItem(level) { return CHAPTERS[level]?.prize; }
 function chipBox(i) {
-  const w = 160, h = 48, gap = 12;
+  const w = 200, h = 64, gap = 16;
   const row = i < 3 ? 0 : 1, col = i < 3 ? i : i - 3, n = row ? 2 : 3;
   const total = n * w + (n - 1) * gap;
-  return {x: 450 - total / 2 + col * (w + gap), y: 318 + row * 56, w, h};
+  return {x: 450 - total / 2 + col * (w + gap), y: 268 + row * 76, w, h};
 }
 function hitChip(p) {
   for (let i = 0; i < TOPICS.length; i++) {
@@ -54,7 +54,7 @@ function hitChip(p) {
   return null;
 }
 function hitBall(p) {
-  return Math.hypot(p.x - 450, p.y - 640) <= 168;
+  return Math.hypot(p.x - 450, p.y - 660) <= 210;
 }
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -141,7 +141,7 @@ function tryCatch(s) {
     s.phase = 'read';
     s.hold = 1.2;
     s.note = g.name + ' fills the glass.';
-    takePrize(s, prizeItem(s.level), {x: 450, y: 640});
+    takePrize(s, prizeItem(s.level), {x: 450, y: 660});
     return;
   }
   s.caught = g;
@@ -234,29 +234,29 @@ export default {
   draw(s, d) {
     const c = d.c;
     const lead = s.topic ? topicOf(s.topic).lead : '';
-    d.text('Iris’s crystal', 450, 168, 15, '#efe6d0');
+    d.text('Iris’s crystal', 450, 148, 28, '#efe6d0');
 
     const showChips = s.phase === 'pick' || s.phase === 'wait' || !s.topic;
     if (showChips) {
-      d.text(s.phase === 'wait' ? 'Ask again, or gaze' : 'What shall she read?', 450, 292, 18, '#fff6d8');
+      d.text(s.phase === 'wait' ? 'Ask again, or gaze' : 'What shall she read?', 450, 232, 32, '#fff6d8');
       TOPICS.forEach((t, i) => {
         const b = chipBox(i);
         const on = s.topic === t.id;
-        roundRect(c, b.x, b.y, b.w, b.h, 12);
+        roundRect(c, b.x, b.y, b.w, b.h, 14);
         c.fillStyle = on ? '#7a4488f2' : '#2a1838ee';
         c.fill();
         c.strokeStyle = on ? '#f0d18f' : '#e8c878cc';
-        c.lineWidth = 2;
+        c.lineWidth = 3;
         c.stroke();
-        d.text(t.label, b.x + b.w / 2, b.y + 32, 17, on ? '#fff6d8' : '#f3e2bd');
+        d.text(t.label, b.x + b.w / 2, b.y + 42, 26, on ? '#fff6d8' : '#f3e2bd');
       });
     } else {
-      d.text(topicOf(s.topic).label + ' · look into the glass', 450, 300, 18, '#fff6d8');
+      d.text(topicOf(s.topic).label + ' · look into the glass', 450, 250, 30, '#fff6d8');
     }
 
-    const cx = 450, cy = 640, r = 168;
-    d.ellipse(cx + 8, 860, 120, 22, '#12233566');
-    roundRect(c, cx - 70, 808, 140, 36, 8);
+    const cx = 450, cy = 660, r = 210;
+    d.ellipse(cx + 8, 900, 140, 26, '#12233566');
+    roundRect(c, cx - 80, 848, 160, 42, 8);
     c.fillStyle = '#4a3058';
     c.fill();
     c.strokeStyle = '#e8c878';
@@ -299,13 +299,13 @@ export default {
       const keep = glimpse.id === prizeVision(s.level);
       if (keep) d.glow(cx, cy, 90 * scale, '#f0d18f');
       const prize = keep ? prizeItem(s.level) : null;
-      if (prize) d.item(spriteKey(prize), cx, cy + 10, {w: 88 * scale, shadow: false, fallback: () => d.star(cx, cy, 28 * scale)});
-      else d.star(cx, cy, 26 * scale, keep ? '#f0d18f' : '#c8b8f0');
-      d.text(glimpse.name, cx, cy + 86, 16, '#fff6d8');
+      if (prize) d.item(spriteKey(prize), cx, cy + 10, {w: 120 * scale, shadow: false, fallback: () => d.star(cx, cy, 36 * scale)});
+      else d.star(cx, cy, 34 * scale, keep ? '#f0d18f' : '#c8b8f0');
+      d.text(glimpse.name, cx, cy + 108, 26, '#fff6d8');
     } else if (s.phase === 'swirl') {
-      d.text('the mist turns', cx, cy + 8, 18, '#efe6d0');
+      d.text('the mist turns', cx, cy + 8, 28, '#efe6d0');
     } else {
-      d.text('the glass waits', cx, cy + 8, 18, '#c8b8d8');
+      d.text('the glass waits', cx, cy + 8, 28, '#c8b8d8');
     }
     c.restore();
 
@@ -315,17 +315,17 @@ export default {
     c.fill();
 
     if (s.phase === 'read' || s.phase === 'wait') {
-      roundRect(c, 130, 900, 640, 150, 18);
+      roundRect(c, 80, 920, 740, 200, 20);
       c.fillStyle = '#1a1028f2';
       c.fill();
       c.strokeStyle = '#e8c878';
-      c.lineWidth = 3;
+      c.lineWidth = 4;
       c.stroke();
       const spoken = s.caught;
-      if (spoken) wrapLine(d, lead + spoken.said, 450, 938, 20, '#fff6d8', 580);
-      wrapLine(d, s.note, 450, spoken ? 1004 : 948, 16, '#f0d18f', 580);
+      if (spoken) wrapLine(d, lead + spoken.said, 450, 968, 26, '#fff6d8', 660);
+      wrapLine(d, s.note, 450, spoken ? 1054 : 988, 22, '#f0d18f', 660);
     } else {
-      d.text(s.note, 450, 980, 16, '#f0d18f');
+      d.text(s.note, 450, 1020, 24, '#f0d18f');
     }
   },
   readout: s => {
