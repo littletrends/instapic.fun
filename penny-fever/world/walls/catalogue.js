@@ -415,29 +415,31 @@ export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
 export const WALL_RADIAL=4.86;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{
- stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.18,foyerStart=1.2,lots=null
+ stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.08,foyerStart=1.2,lots=null
 }={}){
  const stallIds=Object.values(VENDOR_DESIGNS).sort((a,b)=>a.index-b.index).map(d=>d.id);
  const sequence=lots||midwayLots(stallIds);
- const sites=sequence.map((lot,i)=>({
-  id:lot.id,side:lot.side,z:stallStart+i*stallStep
- }));
- sites.push({id:'foyer',side:-1,z:4},{id:'foyer',side:1,z:4},
-  {id:'aura-ticket-booth',side:-1,z:6.2});
- const result=[];
- for(const side of [-1,1]){
-  const line=sites.filter(p=>p.side===side).sort((a,b)=>a.z-b.z);
-  line.forEach((site)=>{
-   const art=WALL_ART[site.id];
-   const width=art?.width||6.4;
-   const height=art?.height||4.2;
-   const z=site.z;
-   result.push({...site,z,attractionZ:site.z,width,height,fit:'contain',
-    x:side*wallX,yaw:-side*Math.PI/2,side,
-    bounds:[z-width/2,z+width/2],key:site.id+'-'+side+'-'+site.z});
-  });
- }
- result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:4.2,fit:'contain',yaw:Math.PI});
+ const width=stallStep*(1+overlap);
+ const height=4.2;
+ const panel=(id,side,z)=>({
+  id,side,z,attractionZ:z,width,height,fit:'width',
+  x:side*wallX,yaw:-side*Math.PI/2,side,
+  bounds:[z-width/2,z+width/2],key:id+'-'+side+'-'+z
+ });
+ const result=[
+  panel('foyer',-1,foyerStart+2.8),
+  panel('foyer',1,foyerStart+2.8),
+  panel('aura-ticket-booth',-1,6.2),
+ ];
+ const lastOnSide={[-1]:'foyer',[1]:'foyer'};
+ sequence.forEach((lot,i)=>{
+  const z=stallStart+i*stallStep;
+  lastOnSide[lot.side]=lot.id;
+  for(const side of [-1,1]){
+   result.push(panel(side===lot.side?lot.id:lastOnSide[side],side,z));
+  }
+ });
+ result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:4.2,fit:'width',yaw:Math.PI});
  return result;
 }
 export function plannedSecrets(id){
