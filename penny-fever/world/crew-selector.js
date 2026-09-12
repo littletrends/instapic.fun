@@ -1,12 +1,7 @@
-import {
-  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_COLORS, OUTFITS,
-  blankDraft, composeDoll, preloadDollArt, bodyStrip,
-  listCustomDolls, getCustomDoll, keepDoll, forgetDoll,
-} from './paper-dolls.js?v=doll-flow-2';
+import { BODIES, bodyStrip } from './paper-dolls.js?v=doll-torso-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 export const BLANK_IDS = ['cardboard-boy', 'cardboard-girl'];
-const BLANK_BODY = { 'cardboard-boy': 'boy', 'cardboard-girl': 'girl' };
 const key = 'pf-selected-crew-v1';
 const VIEWS = ['front', 'left', 'back', 'right'];
 const artBase = new URL('../assets/restyle/crew/', import.meta.url);
@@ -16,11 +11,12 @@ const boot = globalThis.__pfDoll || (globalThis.__pfDoll = {
   viewIndex: 0,
   falling: false,
   hydrated: false,
-  draft: blankDraft(),
+  torso: 'boy',
+  torsoView: 0,
 });
 
 function isPlayable(id) {
-  return CREW_IDS.includes(id) || BLANK_IDS.includes(id) || !!getCustomDoll(id);
+  return CREW_IDS.includes(id);
 }
 if (!boot.hydrated) {
   try {
@@ -33,10 +29,6 @@ if (!boot.hydrated) {
 export const crewArt = id => new URL(`${CREW_IDS.includes(id) ? id : 'oliver'}-turnaround.png`, artBase).href;
 
 export async function artUrl(id) {
-  if (id === '__draft') return composeDoll(boot.draft);
-  const custom = getCustomDoll(id);
-  if (custom) return composeDoll(custom);
-  if (BLANK_IDS.includes(id)) return bodyStrip(BLANK_BODY[id]);
   return crewArt(id);
 }
 
@@ -47,11 +39,6 @@ export function onDollChange(fn) {
 }
 
 function name(id) {
-  if (id === '__draft') return (boot.draft.name || 'New paper doll');
-  if (id === 'cardboard-boy') return 'Boy silhouette';
-  if (id === 'cardboard-girl') return 'Girl silhouette';
-  const custom = getCustomDoll(id);
-  if (custom) return custom.name;
   return id[0].toUpperCase() + id.slice(1);
 }
 
@@ -71,42 +58,19 @@ function paintViewLabel() {
   if (label) label.textContent = VIEWS[boot.viewIndex % 4];
 }
 
-function swatches(list, key, kind) {
-  return list.map(item => {
-    const pressed = boot.draft[key] === item.id;
-    const chip = item.rgb
-      ? `<i class="doll-chip" style="background:rgb(${item.rgb.join(',')})"></i>`
-      : '';
-    const lim = item.limited ? ' limited' : '';
-    return `<button type="button" class="doll-opt${lim}" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="${pressed}">${chip}<span>${item.label}</span></button>`;
-  }).join('');
+function poseTorso(el, body, view) {
+  if (!el) return;
+  el.style.backgroundImage = `url('${bodyStrip(body)}')`;
+  el.style.backgroundPosition = `${(view % 4) * 33.333}% 0`;
 }
 
-function paintBuilder() {
-  const root = document.getElementById('dollBuilder');
-  if (!root) return;
-  root.querySelectorAll('[data-doll-key]').forEach(b => {
-    b.setAttribute('aria-pressed', String(boot.draft[b.dataset.dollKey] === b.dataset.dollVal));
+function paintTorso() {
+  document.querySelectorAll('[data-doll-blank]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.dollBlank === boot.torso));
   });
-  const nameEl = document.getElementById('dollName');
-  if (nameEl && nameEl !== document.activeElement) nameEl.value = boot.draft.name || '';
-}
-
-function paintShelf() {
-  const shelf = document.getElementById('dollShelf');
-  if (!shelf) return;
-  const dolls = listCustomDolls();
-  if (!dolls.length) {
-    shelf.innerHTML = '<p class="doll-empty">No kept dolls yet. Build one below.</p>';
-    return;
-  }
-  shelf.innerHTML = dolls.map(d => `
-    <button type="button" data-crew="${d.id}" aria-pressed="${d.id === boot.selected}">
-      <span class="crew-portrait" data-doll-preview="${d.id}" aria-hidden="true"></span>
-      <strong>${d.name}</strong>
-      <small>Yours</small>
-    </button>`).join('');
-  shelf.querySelectorAll('[data-doll-preview]').forEach(el => poseDoll(el, el.dataset.dollPreview, 0));
+  poseTorso(document.getElementById('dollPreview'), boot.torso, boot.torsoView);
+  const label = document.getElementById('dollPreviewLabel');
+  if (label) label.textContent = VIEWS[boot.torsoView % 4];
 }
 
 function refresh() {
@@ -123,52 +87,31 @@ function refresh() {
     portrait.setAttribute('aria-label', name(selected));
   }
   const status = document.getElementById('crewStatus');
-  if (status) {
-    if (selected === '__draft' || BLANK_IDS.includes(selected)) {
-      status.textContent = 'A cardboard blank. Dial the face and clothes, then keep the doll.';
-    } else if (getCustomDoll(selected)) {
-      status.textContent = `${name(selected)} is in your paper-doll collection.`;
-    } else {
-      status.textContent = `${name(selected)} is ready for the midway.`;
-    }
-  }
+  if (status) status.textContent = `${name(selected)} is ready for the midway.`;
   const runwayDoll = document.getElementById('crewRunwayDoll');
-  if (runwayDoll && !boot.falling) poseDoll(runwayDoll, selected === '__draft' ? '__draft' : selected, boot.viewIndex);
+  if (runwayDoll && !boot.falling) poseDoll(runwayDoll, selected, boot.viewIndex);
   paintViewLabel();
-  paintBuilder();
-  paintShelf();
+  paintTorso();
 }
 
 function turn(dir) {
   boot.viewIndex = (boot.viewIndex + dir + 4) % 4;
-  const id = boot.selected === '__draft' ? '__draft' : boot.selected;
-  poseDoll(document.getElementById('crewRunwayDoll'), id, boot.viewIndex);
+  poseDoll(document.getElementById('crewRunwayDoll'), boot.selected, boot.viewIndex);
   paintViewLabel();
 }
 
-function startDraft(body) {
-  boot.draft = { ...blankDraft(), body };
-  boot.selected = '__draft';
-  boot.viewIndex = 0;
-  const create = document.querySelector('.doll-create');
-  if (create) create.open = true;
-  const col = document.querySelector('.crew-collections');
-  if (col) col.open = true;
-  refresh();
+function turnTorso(dir) {
+  boot.torsoView = (boot.torsoView + dir + 4) % 4;
+  paintTorso();
 }
 
-function setDraft(key, val) {
-  boot.draft = { ...boot.draft, [key]: val };
-  boot.selected = '__draft';
-  refresh();
+function pickTorso(body) {
+  boot.torso = body === 'girl' ? 'girl' : 'boy';
+  boot.torsoView = 0;
+  paintTorso();
 }
 
 export function chooseCrew(id) {
-  if (id === '__draft') {
-    boot.selected = '__draft';
-    refresh();
-    return true;
-  }
   if (!isPlayable(id)) return false;
   if (id === boot.selected) {
     refresh();
@@ -216,7 +159,6 @@ function openCrewBook(event) {
   if (!book) return;
   fillArt(book);
   boot.viewIndex = 0;
-  preloadDollArt().then(() => refresh());
   refresh();
   try {
     if (typeof book.showModal === 'function') {
@@ -266,53 +208,32 @@ function mount() {
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
 <p id="crewStatus" role="status"></p>
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
-<details class="crew-collections">
+<details class="crew-collections" open>
 <summary>The paper-doll collection</summary>
-<p>Dolls you keep live here. The original six stay free.</p>
-<div id="dollShelf" class="crew-grid doll-shelf"></div>
-<details class="doll-create">
-<summary>Create a paper doll</summary>
-<div id="dollBuilder" class="doll-builder">
-  <p>Start with a plain cardboard cutout, then dial face and clothes. The runway above shows the work.</p>
-  <p class="doll-label">Cardboard blank</p>
-  <div class="doll-row">${BODIES.map(b => `<button type="button" class="doll-opt doll-blank" data-doll-blank="${b.id}"><span class="crew-portrait doll-thumb" style="background-image:url('${bodyStrip(b.id)}')"></span><span>${b.label}</span></button>`).join('')}</div>
-  <p class="doll-label">Skin</p>
-  <div class="doll-row">${swatches(SKINS, 'skin')}</div>
-  <p class="doll-label">Hair</p>
-  <div class="doll-row">${swatches(HAIR_STYLES, 'hair')}</div>
-  <div class="doll-row">${swatches(HAIR_COLORS, 'hairColor')}</div>
-  <p class="doll-label">Eyes</p>
-  <div class="doll-row">${swatches(EYE_COLORS, 'eyes')}</div>
-  <p class="doll-label">Outfit</p>
-  <div class="doll-row">${swatches(OUTFITS, 'outfit')}</div>
-  <p class="doll-label">Name and keep</p>
-  <label class="doll-name">Name <input id="dollName" type="text" maxlength="24" placeholder="A paper name"></label>
-  <p class="doll-pay">A souvenir character for this book. Till price comes when souvenir books go on sale.</p>
-  <button type="button" class="ticket-button" id="dollKeep">Keep this doll</button>
+<p>Male or female cardboard torso. Face and clothes later.</p>
+<div class="doll-torso-row">
+  <div class="doll-torso-picks">${BODIES.map(b => `<button type="button" class="doll-opt" data-doll-blank="${b.id}" aria-pressed="${b.id === 'boy'}"><span class="crew-portrait doll-thumb" style="background-image:url('${bodyStrip(b.id)}')"></span><span>${b.label}</span></button>`).join('')}</div>
+  <div class="doll-torso-preview">
+    <div id="dollPreview" class="crew-portrait doll-preview-stage" aria-label="Torso preview"></div>
+    <div class="crew-runway-turn">
+      <button type="button" id="dollPrevBack" aria-label="Show previous view">◀ Back</button>
+      <span id="dollPreviewLabel">front</span>
+      <button type="button" id="dollPrevForth" aria-label="Show next view">Forth ▶</button>
+    </div>
+  </div>
 </div>
-</details>
 </details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
       if (e.target.closest('#crewTurnLeft')) { turn(-1); return; }
       if (e.target.closest('#crewTurnRight')) { turn(1); return; }
+      if (e.target.closest('#dollPrevBack')) { turnTorso(-1); return; }
+      if (e.target.closest('#dollPrevForth')) { turnTorso(1); return; }
       const blank = e.target.closest('[data-doll-blank]');
-      if (blank) { startDraft(blank.dataset.dollBlank); return; }
-      const opt = e.target.closest('[data-doll-key]');
-      if (opt) { setDraft(opt.dataset.dollKey, opt.dataset.dollVal); return; }
-      if (e.target.closest('#dollKeep') || e.target.closest('#crewDone')) {
-        if (boot.selected === '__draft' || e.target.closest('#dollKeep')) {
-          const saved = keepDoll({ ...boot.draft, name: document.getElementById('dollName')?.value });
-          chooseCrew(saved.id);
-        }
-        if (e.target.closest('#crewDone')) book.close();
-        return;
-      }
+      if (blank) { pickTorso(blank.dataset.dollBlank); return; }
+      if (e.target.closest('#crewDone')) { book.close(); return; }
       const b = e.target.closest('[data-crew]');
       if (b) chooseCrew(b.dataset.crew);
-    });
-    book.addEventListener('input', e => {
-      if (e.target.id === 'dollName') boot.draft.name = e.target.value;
     });
     book.addEventListener('close', () => document.getElementById('editCrew')?.focus());
     const doll = book.querySelector('#crewRunwayDoll');
@@ -346,7 +267,6 @@ function mount() {
     opener.addEventListener('click', openCrewBook);
   }
   globalThis.PennyFeverDoll = { open: openCrewBook, close: () => book.close(), get: getDoll };
-  preloadDollArt();
   refresh();
 }
 
