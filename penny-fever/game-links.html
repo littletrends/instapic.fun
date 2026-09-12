@@ -3,7 +3,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f6eddc;color:#34291f;font:17px/1.5 Georgia,serif}main{max-width:1050px;margin:auto;padding:32px 20px 60px}header{border-bottom:2px solid #b09054;padding-bottom:20px;margin-bottom:24px}h1{font-weight:400;font-size:clamp(30px,5vw,48px);margin:14px 0}a{color:#345c51}header p{max-width:720px}ol{padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}li{padding:20px;border:1px solid #c9ae7b;border-radius:14px;background:#fffaf0;display:flex;flex-direction:column;justify-content:space-between}li span{color:#85424b;font:13px Arial,sans-serif;letter-spacing:.08em}h2{font-size:24px;font-weight:400;margin:5px 0}li p{font-size:15px;color:#655440}nav{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}nav a{padding:8px 12px;border:1px solid #557768;border-radius:7px;text-decoration:none}nav .play{background:#34594e;color:#fff7df}a:focus-visible{outline:3px solid #995a8d;outline-offset:3px}.extra{border-top:1px solid #c9ae7b;margin-top:32px;padding-top:20px}small{color:#796244}</style></head>
 <body><main><header><a href="index.html?style=paper&amp;rail=paper#door">← Penny Fever entrance</a><h1>Choose a little paper world</h1><p>Same names as the alley map. <strong>Enter booth</strong> is the live tent: pennies, tickets, treasure book.</p></header><ol id="list"></ol></main>
 <script type="module">
-import {games} from './paper-games/catalogue.js?v=live-1';
+import {games} from './paper-games/catalogue.js?v=florence-1';
 const list=document.getElementById('list');
 const alley='index.html?style=paper&rail=paper#cabinet/';
 const ready=games.filter(g=>g.ready);

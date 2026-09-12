@@ -27,7 +27,7 @@ const rows = [
   ['marquee','Lumi','Light the Night','Conduct a travelling wave of boardwalk lights.'],
   ['pack','Kit','The Impossible Suitcase','Rotate and pack awkward little treasures for a journey.'],
   ['pass','Bea','Backstage Run','Slip through moving scenery to reach the final curtain.'],
-  ['carousel','Calliope','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
+  ['carousel','Florence','Carousel Waltz','Stop the spinning treasures when the matching ride reaches the lantern.'],
   ['balloons','Nell','Balloon Garden','Pop the matching paper balloons as they drift through the garden.'],
   ['ferris','Jasper','Pocket Wheel','Tap the matching cabin when it kisses the crescent.'],
   ['helter','Tilly','Spiral Slide','Catch every gold ring on the way down the paper helter-skelter.'],

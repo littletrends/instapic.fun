@@ -1,7 +1,7 @@
 import * as THREE from '../lib/three.module.min.js';
-import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=live-1';
-import {loadWallArt,disposeWallArt} from './art.js?v=keep-light-1';
-import {buildWall,disposeWall} from './models.js?v=paper-alley-live-4';
+import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=florence-1';
+import {loadWallArt,disposeWallArt} from './art.js?v=florence-1';
+import {buildWall,disposeWall} from './models.js?v=florence-1';
 import {WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
 // Scenery only: never changes player collision, booth entry, wallet or game state.

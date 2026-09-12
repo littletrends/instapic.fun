@@ -1,4 +1,4 @@
-// Shared paper-diorama frame so ride rooms feel like Calliope and Nell’s painted ovals.
+// Shared paper-diorama frame so ride rooms feel like Florence and Nell’s painted ovals.
 export const ROOMS = {
   ferris: {sky: '#1a2240', floor: '#3a2a48', oval: '#efe6d0dd', ink: '#c4a46a', lamp: '#f0d080'},
   helter: {sky: '#16383c', floor: '#1e4038', oval: '#e8f2e6dd', ink: '#7aa08a', lamp: '#d8ecc8'},

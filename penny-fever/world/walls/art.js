@@ -1,5 +1,5 @@
 import * as THREE from '../lib/three.module.min.js';
-import {WALL_ART} from './catalogue.js?v=paper-alley-live-2';
+import {WALL_ART} from './catalogue.js?v=florence-1';
 import {phoneLane} from '../phone-lane.js?v=keep-light-1';
 
 function clearParchment(data,w,h){

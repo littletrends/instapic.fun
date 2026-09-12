@@ -16,7 +16,7 @@ function catchRide(s) {
   s.cool = .45;
   if (s.rides[best] === s.target && error < window) {
     s.caught++; s.note = 'A perfect stop!';
-    if (s.caught >= s.goal) done(s, 'The waltz finds its rest', s.caught + ' matching rides in ' + s.tries + ' stops. Calliope keeps the lantern lit for an encore.');
+    if (s.caught >= s.goal) done(s, 'The waltz finds its rest', s.caught + ' matching rides in ' + s.tries + ' stops. Florence keeps the lantern lit for an encore.');
     else s.target = s.rides[(best + 2 + s.level) % n];
   } else {
     s.note = s.rides[best] === s.target ? 'Almost — wait for the lantern.' : 'That was the wrong ride. Let it come round again.';
@@ -26,7 +26,7 @@ function catchRide(s) {
 
 export default {
   title: 'Carousel Waltz',
-  intro: 'Calliope’s pocket carousel never quite sits still. Stop it when the matching treasure is under the lantern, and the whole little band will keep time with you.',
+  intro: 'Florence’s pocket carousel never quite sits still. Stop it when the matching treasure is under the lantern, and the whole little band will keep time with you.',
   instructions: 'Watch the spinning treasures. When the one shown at the top sits under the lantern, tap Stop or press Space. Later chapters spin faster. Misses are free; the carousel simply turns again.',
   levels: ['A gentle first waltz', 'The band picks up', 'Midnight horses', 'A quicker little band', 'Six treasures spinning', 'The last lantern waltz'],
   sprites: rides,

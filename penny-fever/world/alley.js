@@ -2,19 +2,19 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=cutout-2";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=florence-1";
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-flow-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-flow-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=cutout-2";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=florence-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART, midwayLots, papercutRideSrc, papercutHostSrc} from "./amusements/catalogue.js?v=cutout-2";
-import {installWallBackdrops} from "./walls/install.js?v=live-1";
-import {installPapercutRides} from "./amusements/install.js?v=cutout-2";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=cutout-2";
-import {installStallCutouts} from "./stall-cutouts.js?v=cutout-2";
-import {games as paperGames} from "../paper-games/catalogue.js?v=live-1";
+import {BAY_X, AMUSEMENT_ART, midwayLots, papercutRideSrc, papercutHostSrc} from "./amusements/catalogue.js?v=florence-1";
+import {installWallBackdrops} from "./walls/install.js?v=florence-1";
+import {installPapercutRides} from "./amusements/install.js?v=florence-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=florence-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=florence-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=florence-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
 const STALLS = [
