@@ -212,17 +212,19 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 .pf-world-speech-close {
   position: absolute;
-  top: 0.15rem;
-  right: 0.2rem;
-  width: 2rem;
-  height: 2rem;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 1.85rem;
+  height: 1.85rem;
   margin: 0;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: #f0d09a;
-  font: 700 1.35rem/1 Georgia, serif;
+  border: 1px solid #8a6230;
+  border-radius: 50%;
+  background: #f0d09a;
+  color: #1a0c10;
+  font: 700 1.15rem/1.85rem Georgia, serif;
   cursor: pointer;
+  z-index: 2;
 }
 .pf-world-speech[hidden] { display: none !important; }
 .pf-world-speech.is-anchored { bottom: auto; }
