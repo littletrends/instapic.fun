@@ -1,7 +1,7 @@
 import {
-  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_STYLES, EYE_COLORS, NOSES, MOUTHS,
+  BODIES, SKINS, HAIR_STYLES, HAIR_COLORS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-face-3';
+} from './paper-dolls.js?v=doll-crew-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -146,6 +146,8 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
+  if (key === 'hair' && val === 'pigtails') boot.draft.hairColor = 'blonde';
+  if (key === 'hair' && val === 'short') boot.draft.hairColor = 'brown';
   paintDraft();
 }
 
@@ -261,8 +263,8 @@ function mount() {
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
-<summary>Cardboard paper doll</summary>
-<p>A separate cut-out — not the original six. Boy or girl silhouette, hair, a tiny paper face. No clothes yet.</p>
+<summary>Make a doll</summary>
+<p>Same felt-doll look as the original six, in a white undershirt. Mix body, skin and hair. Not a replacement for Bluebell and Oliver.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Cardboard doll preview"><img id="dollPreviewImg" alt="Cardboard paper doll"></div>
@@ -277,10 +279,6 @@ function mount() {
     ${optionRow('Skin', 'skin', SKINS, true)}
     ${optionRow('Hair', 'hair', HAIR_STYLES)}
     ${optionRow('Hair colour', 'hairColor', HAIR_COLORS, true)}
-    ${optionRow('Eyes', 'eyeStyle', EYE_STYLES)}
-    ${optionRow('Eye colour', 'eyes', EYE_COLORS, true)}
-    ${optionRow('Nose', 'nose', NOSES)}
-    ${optionRow('Mouth', 'mouth', MOUTHS)}
   </div>
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>

@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v2';
+const STORE = 'pf-paper-dolls-v3';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -9,7 +9,7 @@ export const BODIES = [
   { id: 'girl', label: 'Girl' },
 ];
 export const SKINS = [
-  { id: 'cardboard', label: 'Cardboard', rgb: null },
+  { id: 'cardboard', label: 'Natural', rgb: null },
   { id: 'fair', label: 'Fair', rgb: [236, 198, 170] },
   { id: 'peach', label: 'Peach', rgb: [224, 172, 132] },
   { id: 'tan', label: 'Tan', rgb: [186, 132, 90] },
@@ -18,8 +18,8 @@ export const SKINS = [
 ];
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
-  { id: 'short', label: 'Short curls' },
-  { id: 'pigtails', label: 'Pigtails' },
+  { id: 'short', label: 'Short curls', fit: 'head' },
+  { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
 ];
 export const HAIR_COLORS = [
   { id: 'brown', label: 'Brown', rgb: [122, 78, 48] },
@@ -63,11 +63,11 @@ export function blankDraft() {
     body: 'girl',
     skin: 'cardboard',
     hair: 'pigtails',
-    hairColor: 'brown',
-    eyeStyle: 'round',
+    hairColor: 'blonde',
+    eyeStyle: 'none',
     eyes: 'brown',
     nose: 'none',
-    mouth: 'smile',
+    mouth: 'none',
     ears: 'body',
     name: 'Paper doll',
   };
@@ -99,14 +99,20 @@ export function preloadDollArt() {
   return Promise.all(urls.map(u => load(u).catch(() => null)));
 }
 
-function recolorTo(ctx, rgb) {
+function recolorTo(ctx, rgb, {skinOnly=false}={}) {
   if (!rgb) return;
   const data = ctx.getImageData(0, 0, W, H);
   const d = data.data;
   const [tr, tg, tb] = rgb;
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] < 12) continue;
-    const lum = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 155;
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (skinOnly) {
+      if (mx > 210 && mx - mn < 45) continue;
+      if (r > 150 && g > 110 && b < 90 && r - b > 60) continue;
+    }
+    const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 155;
     const lift = 0.22 + lum * 0.9;
     d[i] = Math.min(255, tr * lift);
     d[i + 1] = Math.min(255, tg * lift);
@@ -223,10 +229,10 @@ function drawLayerOnHead(ctx, bodyImg, layerImg) {
     const head = opaqueBox(bp, x0 + 24, 0, x1 - 24, Math.floor(H * 0.48));
     const hair = opaqueBox(lp, x0, 0, x1, H);
     if (!head || !hair) continue;
-    const destW = head.w * 1.18;
+    const destW = head.w * 1.05;
     const destH = hair.h * (destW / hair.w);
     const dx = head.x + head.w / 2 - destW / 2;
-    const dy = head.y - destH * 0.06;
+    const dy = head.y - head.h * 0.12;
     ctx.drawImage(layer, hair.x, hair.y, hair.w, hair.h, dx, dy, destW, destH);
   }
 }
@@ -255,7 +261,7 @@ export async function composeDoll(spec) {
   const bodyImg = await load(src('bodies', `${spec.body === 'boy' ? 'boy' : 'girl'}.png`));
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skin = SKINS.find(s => s.id === spec.skin);
-  if (skin?.rgb) recolorTo(ctx, skin.rgb);
+  if (skin?.rgb) recolorTo(ctx, skin.rgb, {skinOnly: true});
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
     const hcan = document.createElement('canvas');
@@ -264,9 +270,10 @@ export async function composeDoll(spec) {
     hctx.drawImage(hairImg, 0, 0, W, H);
     const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
     if (hc?.rgb) recolorTo(hctx, hc.rgb);
-    drawLayerOnHead(ctx, bodyImg, hcan);
+    const style = HAIR_STYLES.find(h => h.id === spec.hair);
+    if (style?.fit === 'sheet') ctx.drawImage(hcan, 0, 0);
+    else drawLayerOnHead(ctx, bodyImg, hcan);
   }
-  drawFace(ctx, bodyImg, spec);
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);
   return url;
