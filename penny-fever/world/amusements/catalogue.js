@@ -16,7 +16,7 @@ export const AMUSEMENT_ART={
   stallRects:boothRects,hostSource:'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp',
   hostRects:[[0,98,450,910],[450,105,747,910],[748,103,1188,910],[1188,100,1520,910]]
  }),
- 'horse-carousel':definition('horse-carousel','Horse carousel','Florence','01-horse-carousel-turnaround.png',[105,468],[554,940]),
+ 'horse-carousel':definition('horse-carousel','Horse carousel','Calliope','01-horse-carousel-turnaround.png',[105,468],[554,940]),
  'ferris-wheel':definition('ferris-wheel','Ferris wheel','Jasper','02-ferris-wheel-turnaround.png',[65,445],[546,942],{height:5.25}),
  'helter-skelter':definition('helter-skelter','Helter-skelter','Tilly','03-helter-skelter-turnaround-v2.png',[123,462],[546,951],{
   height:4.65,stallRects:[[35,548,372,951],[412,526,751,951],[788,526,1135,951],[1154,526,1506,951]]

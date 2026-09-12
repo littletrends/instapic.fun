@@ -385,7 +385,7 @@ function stallHay(stall, items) {
 }
 
 function expandAll() {
-  stalls().filter(s => !s.workshop).forEach(s => expanded.add(s.id));
+  stalls().forEach(s => expanded.add(s.id));
   render();
 }
 
@@ -619,8 +619,7 @@ function paintTree(all) {
   root.replaceChildren();
   const groups = [
     {label: 'Booth', list: stalls().filter(s => s.extra)},
-    {label: 'Games', list: stalls().filter(s => !s.extra && !s.workshop)},
-    {label: 'Workshop', list: stalls().filter(s => s.workshop)},
+    {label: 'Games', list: stalls().filter(s => !s.extra)},
   ];
   for (const group of groups) {
     const shown = [];
@@ -693,7 +692,7 @@ function paintStall(all, id) {
   const stall = stallById(id);
   if (!stall) { focus = null; render(); return; }
   const {items, have, total} = stallStats(all, stall);
-  text('pocketAlbumKicker', stall.workshop ? 'Workshop' : stall.extra ? 'Booth' : stall.host);
+  text('pocketAlbumKicker', stall.extra ? 'Booth' : stall.host);
   text('pocketAlbumTitle', stall.title);
   text('pocketAlbumBlurb', stall.blurb);
   $('pocketAlbumBar').style.width = (total ? Math.round(have / total * 100) : 0) + '%';

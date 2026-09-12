@@ -1,5 +1,5 @@
 import {VENDOR_DESIGNS} from '../vendor-designs.js';
-import {midwayLots} from '../amusements/catalogue.js?v=alley-lots-1';
+import {midwayLots} from '../amusements/catalogue.js?v=live-1';
 
 const rows=[
  {
@@ -290,7 +290,7 @@ const rows=[
  },
  {
   "id": "horse-carousel",
-  "name": "Horse Carousel · Florence",
+  "name": "Horse Carousel · Calliope",
   "group": "amusement",
   "theme": "deep burgundy, evergreen and gold; carved-paper horses and carousel canopy scallops",
   "secret": "a horse-key stable door and small gilded service hatch",

@@ -9,12 +9,12 @@ import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-flow-1
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-tools-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
-import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
+import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=live-1";
+import {installWallBackdrops} from "./walls/install.js?v=live-1";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=live-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -1701,7 +1701,7 @@ function enterNearest() {
     const kind = laps === 0 ? "ticket" : "penny";
     if (PF && typeof PF.admitAlleyLap === "function") {
       if (!PF.admitAlleyLap(kind) && kind === "penny") {
-        tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
+        tillMessage = "A penny for the next walk. Cash a ticket here for five pennies.";
         tillMessageUntil = performance.now() + 7000;
       }
     }
@@ -2090,7 +2090,7 @@ function handleGatePrompt() {
   const kind = laps === 0 ? "ticket" : "penny";
   if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
     if (kind === "penny") {
-      tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
+      tillMessage = "A penny for the next walk. Cash a ticket here for five pennies.";
       tillMessageUntil = performance.now() + 7000;
     }
     return true;

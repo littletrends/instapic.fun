@@ -27,7 +27,7 @@ function snap(s) {
 }
 
 export default {
-  title: 'Chair Waltz',
+  title: 'Flying Chairs',
   intro: 'Hugo’s chair-o-planes fly a little too happily. Hold to slow the flight, then let go when the matching chair is over the front mat.',
   instructions: 'Hold Catch or Space to brake. Release when the chair shown at the top is over the pink mat. Misses are free.',
   levels: ['A gentle flight', 'The evening spin', 'Lantern chairs', 'A quicker waltz', 'Six little seats', 'The last sweep'],

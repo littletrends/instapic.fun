@@ -1,10 +1,10 @@
-import {games} from '../paper-games/catalogue.js?v=penny-door-1';
+import {games} from '../paper-games/catalogue.js?v=live-1';
 import {spriteKey} from '../paper-games/prizes.js?v=purse-1';
 import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=house-clock-2'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=live-1'),gameBase).href,
 }));
 
 // These rooms already charge a penny per throw/crank. Opening the table is free;
@@ -100,7 +100,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   if(!pennyPlay){
     if(PF?.spendPennies&&!PF.spendPennies(1)){
       status.hidden=false;
-      status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura. Workshop practice stays free.';
+      status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura.';
       unload();
       return;
     }
