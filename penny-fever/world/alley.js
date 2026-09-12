@@ -45,6 +45,7 @@ const STALLS = [
   { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Tuck pennies. Nestle the unique." },
   { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
+const AURA_LINE = "Roll up, roll up! Tickets and pennies this way. First walk's free, then a penny a lap.";
 const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
 for (const spec of STALLS) {
   const g = paperById[spec.id];
@@ -53,7 +54,6 @@ for (const spec of STALLS) {
   spec.hostSlug = String(g.host || "").toLowerCase().replace(/[^a-z]+/g, "");
   spec.name = g.title;
   spec.blurb = g.blurb;
-  spec.line = g.blurb;
 }
 
 const SKIN = 0xf0c4a8;
@@ -1544,7 +1544,7 @@ function auraDeskFocus() {
     name: "Ticket booth",
     host: "Aura",
     hostSlug: "",
-    line: "Trade pennies for a ticket here. Square is only for buying packs.",
+    line: AURA_LINE,
     x: COUNTER.x,
     z: COUNTER.z,
     stallX: COUNTER.x,
@@ -1663,7 +1663,7 @@ function syncStallCard(best) {
       }
     }
     if (chat) {
-      chat.hidden = best.kind === "aura";
+      chat.hidden = false;
       chat.textContent = "Chat";
     }
     const back = el("pfStallCardBack");
@@ -2247,7 +2247,7 @@ function pickFocus(px, pz) {
       name: "Ticket booth",
       host: "Aura",
       hostSlug: "",
-      line: "Trade pennies for a ticket here. Square is only for buying packs.",
+      line: AURA_LINE,
       x: COUNTER.x,
       z: COUNTER.z,
       stallX: COUNTER.x,
@@ -2269,7 +2269,7 @@ function pickFocus(px, pz) {
       id: "aura",
       kind: "aura",
       name: "Ticket booth",
-      line: "Trade pennies for a ticket here. Square is only for buying packs.",
+      line: AURA_LINE,
       x: aura.position.x,
       z: aura.position.z,
       stallX: COUNTER.x,
@@ -2426,25 +2426,17 @@ function findNearest() {
       speech.hidden = true;
     } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
       speech.hidden = true;
-    } else if (best && best.kind === "stall" && performance.now() < vendorChatUntil) {
+    } else if ((best?.kind === "stall" || best?.kind === "ride" || best?.kind === "aura" || nearest?.kind === "aura") && performance.now() < vendorChatUntil) {
+      const who = best?.line ? best : nearest;
       speech.hidden = false;
-      if (speechName) speechName.textContent = best.host || best.name;
-      speech.classList.add(best.side < 0 ? "is-left" : "is-right");
-      speechText.textContent = best.line;
-    } else if (best && best.kind === "stall") {
-      speech.hidden = true;
+      if (speechName) speechName.textContent = who.host || who.name || "Aura";
+      speech.classList.toggle("is-left", (who.side || -1) < 0);
+      speech.classList.toggle("is-right", (who.side || -1) >= 0);
+      speechText.textContent = who.line || AURA_LINE;
     } else if (z > hallLen - 6) {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura";
       speechText.textContent = "The walk is done. A penny to come round again.";
-    } else if (ticketPassed() && dAura < 2.4) {
-      speech.hidden = false;
-      if (speechName) speechName.textContent = "Aura";
-      speechText.textContent = "First fortune is free. Everything else is a pretend penny. Follow the lights.";
-    } else if (chatPinned) {
-      speech.hidden = false;
-      if (speechName) speechName.textContent = "Aura";
-      speechText.textContent = "Ask me at any tent. I know which machines lie and which merely cheat.";
     } else {
       speech.hidden = true;
     }
