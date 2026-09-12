@@ -159,43 +159,6 @@ function setPart(key, val) {
   paintDraft();
 }
 
-function openCollection(id) {
-  const col = COLLECTIONS.find(c => c.id === id);
-  if (!col) return;
-  boot.draft = { ...boot.draft, collection: id };
-  document.querySelector('dialog.crew-book')?.classList.add('is-open-album');
-  const home = document.getElementById('dollHome');
-  const tray = document.getElementById('dollCollection');
-  const title = document.getElementById('dollBookTitle');
-  const pieces = document.getElementById('dollBookPieces');
-  if (home) home.hidden = true;
-  if (tray) tray.hidden = false;
-  if (title) title.textContent = col.label;
-  if (pieces) {
-    const slots = [...new Set(col.pieces.map(p => p.slot))];
-    const slotName = { hair: 'Hair', hat: 'Hat', outfit: 'Clothes' };
-    pieces.innerHTML = slots.map(slot => {
-      const items = [{ id: 'none', label: 'None', src: '' }, ...col.pieces.filter(p => p.slot === slot)];
-      return `<div class="doll-row"><strong>${slotName[slot] || slot}</strong>${items.map(item => {
-        const thumb = item.src
-          ? `<span class="doll-piece-thumb"><img src="${item.src}" alt=""></span>`
-          : '';
-        return `<button type="button" class="doll-chip doll-piece" data-doll-key="${slot}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
-      }).join('')}</div>`;
-    }).join('');
-  }
-  paintDraft();
-}
-
-function closeCollection() {
-  boot.draft = { ...boot.draft, collection: null };
-  document.querySelector('dialog.crew-book')?.classList.remove('is-open-album');
-  const home = document.getElementById('dollHome');
-  const tray = document.getElementById('dollCollection');
-  if (home) home.hidden = false;
-  if (tray) tray.hidden = true;
-}
-
 export function chooseCrew(id) {
   if (!isPlayable(id)) return false;
   boot.mode = isCrew(id) ? 'crew' : 'custom';
