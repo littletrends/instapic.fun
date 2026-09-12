@@ -415,7 +415,7 @@ export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
 export const WALL_RADIAL=4.86;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{
- stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.08,foyerStart=1.2,lots=null
+ stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.1,foyerStart=1.2,lots=null
 }={}){
  const stallIds=Object.values(VENDOR_DESIGNS).sort((a,b)=>a.index-b.index).map(d=>d.id);
  const sequence=lots||midwayLots(stallIds);
@@ -426,18 +426,17 @@ export function wallPlacements(len,{
   x:side*wallX,yaw:-side*Math.PI/2,side,
   bounds:[z-width/2,z+width/2],key:id+'-'+side+'-'+z
  });
+ const FILL='alley-wall-bay';
  const result=[
-  panel('foyer',-1,foyerStart+2.8),
-  panel('foyer',1,foyerStart+2.8),
-  panel('aura-ticket-booth',-1,6.2),
+  panel('foyer',-1,stallStart-2*stallStep),
+  panel('foyer',1,stallStart-2*stallStep),
+  panel('aura-ticket-booth',-1,stallStart-stallStep),
+  panel('foyer',1,stallStart-stallStep),
  ];
- const lastOnSide={[-1]:'foyer',[1]:'foyer'};
  sequence.forEach((lot,i)=>{
   const z=stallStart+i*stallStep;
-  lastOnSide[lot.side]=lot.id;
-  for(const side of [-1,1]){
-   result.push(panel(side===lot.side?lot.id:lastOnSide[side],side,z));
-  }
+  result.push(panel(lot.id,lot.side,z));
+  result.push(panel(FILL,-lot.side,z));
  });
  result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:4.2,fit:'width',yaw:Math.PI});
  return result;
