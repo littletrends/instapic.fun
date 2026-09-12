@@ -2,7 +2,7 @@ import {
   BODIES, SKINS, HAIR_STYLES, HAIR_COLORS, EYE_COLORS, OUTFITS,
   blankDraft, composeDoll, preloadDollArt, bodyStrip,
   listCustomDolls, getCustomDoll, keepDoll, forgetDoll,
-} from './paper-dolls.js?v=doll-flow-1';
+} from './paper-dolls.js?v=doll-flow-2';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 export const BLANK_IDS = ['cardboard-boy', 'cardboard-girl'];
@@ -150,6 +150,10 @@ function startDraft(body) {
   boot.draft = { ...blankDraft(), body };
   boot.selected = '__draft';
   boot.viewIndex = 0;
+  const create = document.querySelector('.doll-create');
+  if (create) create.open = true;
+  const col = document.querySelector('.crew-collections');
+  if (col) col.open = true;
   refresh();
 }
 
@@ -261,30 +265,33 @@ function mount() {
 </div>
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
 <p id="crewStatus" role="status"></p>
-<details class="crew-collections" open>
+<form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
+<details class="crew-collections">
 <summary>The paper-doll collection</summary>
-<p>The original six stay free. A new doll starts as plain cardboard. Dial the rest, then keep it in this book.</p>
+<p>Dolls you keep live here. The original six stay free.</p>
 <div id="dollShelf" class="crew-grid doll-shelf"></div>
+<details class="doll-create">
+<summary>Create a paper doll</summary>
 <div id="dollBuilder" class="doll-builder">
-  <h3>Build a doll</h3>
-  <p class="doll-label">1 · Cardboard blank</p>
-  <div class="doll-row">${BODIES.map(b => `<button type="button" class="doll-opt" data-doll-blank="${b.id}"><span class="crew-portrait" style="background-image:url('${bodyStrip(b.id)}')"></span><span>${b.label}</span></button>`).join('')}</div>
-  <p class="doll-label">2 · Skin</p>
+  <p>Start with a plain cardboard cutout, then dial face and clothes. The runway above shows the work.</p>
+  <p class="doll-label">Cardboard blank</p>
+  <div class="doll-row">${BODIES.map(b => `<button type="button" class="doll-opt doll-blank" data-doll-blank="${b.id}"><span class="crew-portrait doll-thumb" style="background-image:url('${bodyStrip(b.id)}')"></span><span>${b.label}</span></button>`).join('')}</div>
+  <p class="doll-label">Skin</p>
   <div class="doll-row">${swatches(SKINS, 'skin')}</div>
-  <p class="doll-label">3 · Hair</p>
+  <p class="doll-label">Hair</p>
   <div class="doll-row">${swatches(HAIR_STYLES, 'hair')}</div>
   <div class="doll-row">${swatches(HAIR_COLORS, 'hairColor')}</div>
-  <p class="doll-label">4 · Eyes</p>
+  <p class="doll-label">Eyes</p>
   <div class="doll-row">${swatches(EYE_COLORS, 'eyes')}</div>
-  <p class="doll-label">5 · Outfit</p>
+  <p class="doll-label">Outfit</p>
   <div class="doll-row">${swatches(OUTFITS, 'outfit')}</div>
-  <p class="doll-label">6 · Name and keep</p>
+  <p class="doll-label">Name and keep</p>
   <label class="doll-name">Name <input id="dollName" type="text" maxlength="24" placeholder="A paper name"></label>
-  <p class="doll-pay">A souvenir character for your paper-doll book. Till price comes when souvenir books go on sale — keep it here for now.</p>
+  <p class="doll-pay">A souvenir character for this book. Till price comes when souvenir books go on sale.</p>
   <button type="button" class="ticket-button" id="dollKeep">Keep this doll</button>
 </div>
 </details>
-<form method="dialog"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>`;
+</details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
       if (e.target.closest('#crewTurnLeft')) { turn(-1); return; }

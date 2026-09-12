@@ -91,12 +91,52 @@ function recolorTo(ctx, rgb) {
   const [tr, tg, tb] = rgb;
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] < 12) continue;
-    const lum = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 140;
-    d[i] = Math.min(255, tr * lum);
-    d[i + 1] = Math.min(255, tg * lum);
-    d[i + 2] = Math.min(255, tb * lum);
+    const lum = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 155;
+    const lift = 0.22 + lum * 0.9;
+    d[i] = Math.min(255, tr * lift);
+    d[i + 1] = Math.min(255, tg * lift);
+    d[i + 2] = Math.min(255, tb * lift);
   }
   ctx.putImageData(data, 0, 0);
+}
+
+function opaqueBox(pix, x0, y0, x1, y1) {
+  let t = H, b = 0, l = W, r = 0, n = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      if (pix[(y * W + x) * 4 + 3] < 40) continue;
+      n++;
+      if (y < t) t = y;
+      if (y > b) b = y;
+      if (x < l) l = x;
+      if (x > r) r = x;
+    }
+  }
+  return n ? { x: l, y: t, w: r - l + 1, h: b - t + 1 } : null;
+}
+
+function drawLayerOnHead(ctx, bodyImg, layerImg) {
+  const body = document.createElement('canvas');
+  body.width = W; body.height = H;
+  const bctx = body.getContext('2d');
+  bctx.drawImage(bodyImg, 0, 0, W, H);
+  const bp = bctx.getImageData(0, 0, W, H).data;
+  const layer = document.createElement('canvas');
+  layer.width = W; layer.height = H;
+  const lctx = layer.getContext('2d');
+  lctx.drawImage(layerImg, 0, 0, W, H);
+  const lp = lctx.getImageData(0, 0, W, H).data;
+  for (let side = 0; side < 4; side++) {
+    const x0 = side * CELL, x1 = x0 + CELL;
+    const head = opaqueBox(bp, x0 + 24, 0, x1 - 24, Math.floor(H * 0.48));
+    const hair = opaqueBox(lp, x0, 0, x1, H);
+    if (!head || !hair) continue;
+    const destW = Math.min(CELL * 0.92, head.w * 1.55);
+    const destH = hair.h * (destW / hair.w);
+    const dx = head.x + head.w / 2 - destW / 2;
+    const dy = head.y - destH * 0.18;
+    ctx.drawImage(layer, hair.x, hair.y, hair.w, hair.h, dx, dy, destW, destH);
+  }
 }
 
 function paintEyes(ctx, bodyImg, rgb) {
@@ -109,23 +149,14 @@ function paintEyes(ctx, bodyImg, rgb) {
   for (let side = 0; side < 4; side++) {
     if (side === 2) continue;
     const x0 = side * CELL;
-    let top = H, left = W, right = 0, bottom = 0;
-    for (let y = 0; y < H * 0.55; y++) {
-      for (let x = x0 + 40; x < x0 + CELL - 40; x++) {
-        if (pix[(y * W + x) * 4 + 3] < 40) continue;
-        if (y < top) top = y;
-        if (y > bottom) bottom = y;
-        if (x < left) left = x;
-        if (x > right) right = x;
-      }
-    }
-    if (right <= left) continue;
-    const cx = (left + right) / 2;
-    const cy = top + (bottom - top) * 0.42;
-    const eyeR = Math.max(5, (bottom - top) * 0.07);
-    const irisR = eyeR * 0.55;
-    const spread = (right - left) * 0.16;
-    const spots = side === 0 ? [cx - spread, cx + spread] : side === 1 ? [cx - spread * 0.35] : [cx + spread * 0.35];
+    const head = opaqueBox(pix, x0 + 28, 0, x0 + CELL - 28, Math.floor(H * 0.42));
+    if (!head) continue;
+    const cx = head.x + head.w / 2;
+    const cy = head.y + head.h * 0.46;
+    const eyeR = Math.max(4, head.h * 0.09);
+    const irisR = eyeR * 0.52;
+    const spread = head.w * 0.16;
+    const spots = side === 0 ? [cx - spread, cx + spread] : side === 1 ? [cx - spread * 0.55] : [cx + spread * 0.55];
     for (const x of spots) {
       ctx.beginPath();
       ctx.fillStyle = '#f4efe4';
@@ -137,7 +168,7 @@ function paintEyes(ctx, bodyImg, rgb) {
       ctx.fill();
       ctx.beginPath();
       ctx.fillStyle = '#1a120e';
-      ctx.arc(x + eyeR * 0.08, cy, irisR * 0.45, 0, Math.PI * 2);
+      ctx.arc(x + eyeR * 0.1, cy, irisR * 0.42, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -155,6 +186,11 @@ export async function composeDoll(spec) {
   if (skin?.rgb) recolorTo(ctx, skin.rgb);
   const eyes = EYE_COLORS.find(e => e.id === spec.eyes);
   if (eyes?.rgb) paintEyes(ctx, bodyImg, eyes.rgb);
+  if (spec.outfit && spec.outfit !== 'none') {
+    const file = `${spec.body || 'boy'}-${spec.outfit}.png`;
+    const clothes = await load(src('outfits', file));
+    ctx.drawImage(clothes, 0, 0, W, H);
+  }
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
     const hcan = document.createElement('canvas');
@@ -163,12 +199,7 @@ export async function composeDoll(spec) {
     hctx.drawImage(hairImg, 0, 0, W, H);
     const hc = HAIR_COLORS.find(c => c.id === spec.hairColor);
     if (hc?.rgb) recolorTo(hctx, hc.rgb);
-    ctx.drawImage(hcan, 0, 0);
-  }
-  if (spec.outfit && spec.outfit !== 'none') {
-    const file = `${spec.body || 'boy'}-${spec.outfit}.png`;
-    const clothes = await load(src('outfits', file));
-    ctx.drawImage(clothes, 0, 0, W, H);
+    drawLayerOnHead(ctx, bodyImg, hcan);
   }
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);
