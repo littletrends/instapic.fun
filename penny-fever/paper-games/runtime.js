@@ -9,23 +9,45 @@ let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,las
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
 const HOUSE={
- balloons:{seconds:40,title:'The bunch drifted off',detail:'Nell is tying the next handful. Try this garden again.'},
- carousel:{seconds:40,title:'The waltz ended',detail:'The lantern dimmed before you caught enough treasures.'},
- ferris:{seconds:40,title:'The wheel slowed',detail:'The crescent waited, and the cabins went home.'},
- funhouse:{seconds:35,title:'The mirrors went dark',detail:'The real laugh hid in the shuffle.'},
- helter:{seconds:30,title:'The mat is empty',detail:'The slide ran out before every gold ring was caught.'},
- mural:{seconds:50,title:'The paint dried',detail:'A few patches still forget the alley wall.'},
- organ:{seconds:40,title:'The roll finished',detail:'A few notes wandered off the gold bar.'},
- swings:{seconds:35,title:'The chairs emptied',detail:'The front mat waited, and the waltz ended.'},
- lookup:{seconds:70,title:'The sky went quiet',detail:'The glasses fogged before every star woke.'},
- mutoscope:{seconds:50,title:'The reel ran out',detail:'The picture never quite found its last frame.'},
+ fortune:{seconds:50,title:'The cards rest',detail:'Iris closes the deck. Another penny, another reading.'},
+ love:{seconds:40,title:'The glass cooled',detail:'Rosalie wipes the tester. Write the names again when you are ready.'},
  curios:{seconds:75,title:'The beetle wound down',detail:'Digby tucks the menagerie in. Another penny, another wander.'},
+ lookup:{seconds:70,title:'The sky went quiet',detail:'The glasses fogged before every star woke.'},
+ snap:{seconds:45,title:'The shutter slept',detail:'Felix winds a fresh plate. Try this woodland again.'},
  whisper:{seconds:60,title:'Last post',detail:'Willa closes the pigeonholes. The next cabinet waits.'},
+ 'ball-toss':{seconds:35,title:'The lanterns stay lit',detail:'Bess collects the rings. One more penny for another toss.'},
+ 'coin-pusher':{seconds:90,title:'Copper banks the trays',detail:'The falls sleep until the next penny. This shift is over.'},
+ pinball:{seconds:75,title:'The table went dark',detail:'Pip kills the lights. Plunge another penny when you want the garden back.'},
+ 'water-gun':{seconds:45,title:'The harbour stills',detail:'Marina ties the boats. Try the channel again.'},
+ 'milk-bottles':{seconds:40,title:'The dairy closes',detail:'Mabel restacks the bottles. Another penny, another throw.'},
+ 'cover-the-spot':{seconds:40,title:'The moons drifted',detail:'Dot gathers the discs. Cover them again next go.'},
+ mutoscope:{seconds:50,title:'The reel ran out',detail:'The picture never quite found its last frame.'},
+ 'high-striker':{seconds:30,title:'The bronze stays quiet',detail:'Magnus resets the hammer. Ring it on the next penny.'},
+ catoptromancy:{seconds:50,title:'The gardens fogged',detail:'Opal polishes the glass. Step through again when it clears.'},
+ 'bent-rings':{seconds:40,title:'The orchard emptied',detail:'Ringo collects the rings. Another toss when you are ready.'},
+ plinko:{seconds:50,title:'The mill stopped',detail:'Peggy locks the gates. Drop another marble next chapter.'},
+ 'fairy-floss':{seconds:50,title:'The spinner went quiet',detail:'Flossie winds a fresh cloud. Try the atelier again.'},
+ popcorn:{seconds:50,title:'The kettle slept',detail:'Poppy banks the kernels. The symphony waits for another penny.'},
+ 'duck-pond':{seconds:55,title:'The parade went home',detail:'Dottie gathers the ducklings. Lead them again next go.'},
+ 'skee-ball':{seconds:40,title:'The moonbow faded',detail:'Skip racks the balls. One more penny for another roll.'},
+ 'penny-pitch':{seconds:40,title:'The wells went still',detail:'Penelope scoops the pennies. Skip them again next chapter.'},
+ 'dunk-tank':{seconds:35,title:'The seat stays dry',detail:'Duncan wrings the splash. Aim again when you are ready.'},
+ marquee:{seconds:45,title:'The boardwalk dimmed',detail:'Lumi kills the wave. Conduct the lights on the next penny.'},
+ pack:{seconds:80,title:'The suitcase snapped shut',detail:'Kit latches the lid. Pack again when you have another penny.'},
+ pass:{seconds:60,title:'The curtain fell',detail:'Bea closes the fly loft. Slip through again next call.'},
+ carousel:{seconds:40,title:'The waltz ended',detail:'The lantern dimmed before you caught enough treasures.'},
+ balloons:{seconds:40,title:'The bunch drifted off',detail:'Nell is tying the next handful. Try this garden again.'},
+ ferris:{seconds:40,title:'The wheel slowed',detail:'The crescent waited, and the cabins went home.'},
+ helter:{seconds:30,title:'The mat is empty',detail:'The slide ran out before every gold ring was caught.'},
+ swings:{seconds:35,title:'The chairs emptied',detail:'The front mat waited, and the waltz ended.'},
+ funhouse:{seconds:35,title:'The mirrors went dark',detail:'The real laugh hid in the shuffle.'},
+ organ:{seconds:40,title:'The roll finished',detail:'A few notes wandered off the gold bar.'},
+ mural:{seconds:50,title:'The paint dried',detail:'A few patches still forget the alley wall.'},
 };
+const HOUSE_FALLBACK={seconds:45,title:'The house closes',detail:'This go is over. Try the chapter again.'};
 function houseSpec(){
- if(engine?.house===false)return null;
- if(engine?.houseSeconds)return{seconds:engine.houseSeconds,title:engine.houseTitle||'The house closes',detail:engine.houseDetail||'This go is over.'};
- return HOUSE[entry?.id]||null;
+ if(engine?.houseSeconds)return{seconds:engine.houseSeconds,title:engine.houseTitle||HOUSE_FALLBACK.title,detail:engine.houseDetail||HOUSE_FALLBACK.detail};
+ return HOUSE[entry?.id]||HOUSE_FALLBACK;
 }
 function tellRoom(type,fields={}){if(embedded)window.parent.postMessage({channel:'pf-paper-world',type,...fields},location.origin);}
 if(embedded)document.body.classList.add('is-alley-room');
