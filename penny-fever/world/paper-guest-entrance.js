@@ -1,5 +1,5 @@
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, crewArt } from './crew-selector.js?v=doll-blank-1';
+import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=doll-flow-1';
 import {loadWallArt} from './walls/art.js?v=keep-light-1';
 import {buildWall} from './walls/models.js?v=paper-alley-live-4';
 import { decorativePaper } from './paper-panels.js?v=keep-light-1';
@@ -8,7 +8,7 @@ export const paperRail=new URLSearchParams(location.search).get('rail')==='paper
 // Outer arch on the pier; inner arch one stall-bay before the first vendor.
 export const FOYER_IN=-7.35;
 export const FOYER_OUT=.8;
-function guestArt(spec){return crewArt(spec?.crew);}
+function guestArt(spec){return artUrl(spec?.crew);}
 export function installCrewGuest(player){
  if(!paperRail)return;
  const originals=[...player.children];
@@ -19,7 +19,7 @@ export function installCrewGuest(player){
   const t=loader.load(src);t.colorSpace=THREE.SRGBColorSpace;maps[src]=t;return t;
  }
 
- const mat=new THREE.MeshBasicMaterial({map:tex(guestArt(getDoll())),transparent:true,alphaTest:.12,side:THREE.DoubleSide});
+ const mat=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.12,side:THREE.DoubleSide});
  const stand=new THREE.Group(),views=[];
  for(let side=0;side<4;side++){
   const view=new THREE.Group();
@@ -31,7 +31,12 @@ export function installCrewGuest(player){
  originals.forEach(o=>{o.visible=false;globalThis.PennyFeverRestyle?.noteLiveBody(o);});
  player.add(stand);globalThis.PennyFeverRestyle?.notePaperCutout(stand);
  player.userData.paperGuest={stand,views,lastX:player.position.x,lastZ:player.position.z,phase:0};
- function wear(){mat.map=tex(guestArt(getDoll()));mat.needsUpdate=true;}
+ function wear(){
+  Promise.resolve(guestArt(getDoll())).then(src=>{
+   if(!src)return;
+   mat.map=tex(src);mat.needsUpdate=true;
+  }).catch(()=>{});
+ }
  onDollChange(wear);wear();
  globalThis.PennyFeverRestyle?.refreshRestyle();
 }
