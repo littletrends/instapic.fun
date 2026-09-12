@@ -7,8 +7,8 @@ const NEAR=PAPERCUT_NEAR;
 const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
 const HOST_HEIGHT=1.7;
-const HOST_INSET=.7;
-const HOST_ALONG=-.92;
+const HOST_AISLE=1.68;
+const HOST_ALONG=-.85;
 // Stalls are 3.5 tall. Rides dwarf them and sit further back (RIDE_X 3.82),
 // so side cards stay out of the aisle (1.62) and short of the wall (4.86).
 const RIDE_SCALE=2.35;
@@ -30,7 +30,7 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
   const ride=new THREE.Group();ride.name=d.name+' · papercut';ride.position.set(x,0,z);ride.rotation.y=yaw;
   ride.userData={amusementId:id,kind:'ride'};root.add(ride);
   const host=new THREE.Group();host.name=d.host+' · attendant';
-  host.position.set(x-side*HOST_INSET,0,z+HOST_ALONG);host.rotation.y=APPROACH_YAW;
+  host.position.set(side*HOST_AISLE,0,z+HOST_ALONG);host.rotation.y=APPROACH_YAW;
   host.userData={amusementId:id,kind:'host',host:d.host};root.add(host);
   figures.push(ride,host);
  }

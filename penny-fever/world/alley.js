@@ -11,7 +11,7 @@ import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPa
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-webp-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
-import {installPapercutRides} from "./amusements/install.js?v=vendor-face-1";
+import {installPapercutRides} from "./amusements/install.js?v=aisle-out-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=vendor-face-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=alley-webp-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
@@ -69,7 +69,7 @@ const BRASS = 0xd4a45a;
 
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
-const STALL_X = paperRail ? BAY_X : 2.62;
+const STALL_X = paperRail ? 2.52 : 2.62;
 const STALL_STEP = paperRail ? 6.6 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
 const AISLE = 1.62;
@@ -1747,9 +1747,8 @@ function buildWorld() {
     dressBarker(b, spec.accent);
     const side = s.userData.side;
     if (paperRail) {
-      // Barker out front at the corner, leaving the guest's approach clear.
-      s.updateMatrixWorld(true);
-      b.position.copy(s.localToWorld(new THREE.Vector3(-side * 1.2, 0, .85)));
+      // Out on the boards like Aura, not tucked into the wall bay.
+      b.position.set(side * 1.68, 0, s.position.z - 0.85);
       b.rotation.y = Math.PI;
     } else {
       b.position.set(s.userData.doorX + side * 0.1, 0, s.userData.doorZ);
