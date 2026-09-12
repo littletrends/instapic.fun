@@ -1,7 +1,7 @@
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-tray-1';
+} from './paper-dolls.js?v=doll-wheel-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -97,6 +97,10 @@ function paintDraft() {
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
+  const skinWheel = document.getElementById('skinWheel');
+  const eyesWheel = document.getElementById('eyesWheel');
+  if (skinWheel && spec.skinHex) skinWheel.value = spec.skinHex;
+  if (eyesWheel && spec.eyesHex) eyesWheel.value = spec.eyesHex;
 
   const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
@@ -155,7 +159,16 @@ function turnDoll(dir) {
 }
 
 function setPart(key, val) {
-  boot.draft = { ...boot.draft, [key]: val };
+  const next = { ...boot.draft, [key]: val };
+  if (key === 'skin') next.skinHex = '';
+  if (key === 'eyes') next.eyesHex = '';
+  boot.draft = next;
+  paintDraft();
+}
+
+function setWheel(kind, hex) {
+  if (kind === 'skin') boot.draft = { ...boot.draft, skin: 'custom', skinHex: hex };
+  if (kind === 'eyes') boot.draft = { ...boot.draft, eyes: 'custom', eyesHex: hex };
   paintDraft();
 }
 
@@ -282,7 +295,9 @@ function mount() {
   </div>
   <div class="doll-maker-parts">
     ${optionRow('Skin', 'skin', SKINS, true)}
+    <label class="doll-wheel">Any skin <input type="color" id="skinWheel" value="#e0ac84" aria-label="Skin colour wheel"></label>
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
+    <label class="doll-wheel">Any eyes <input type="color" id="eyesWheel" value="#488ac4" aria-label="Eye colour wheel"></label>
   </div>
 </div>
 <div class="doll-tray">
@@ -303,6 +318,8 @@ function mount() {
       const b = e.target.closest('[data-crew]');
       if (b) chooseCrew(b.dataset.crew);
     });
+    book.querySelector('#skinWheel')?.addEventListener('input', e => setWheel('skin', e.target.value));
+    book.querySelector('#eyesWheel')?.addEventListener('input', e => setWheel('eyes', e.target.value));
     book.addEventListener('close', () => document.getElementById('editCrew')?.focus());
     const doll = book.querySelector('#crewRunwayDoll');
     if (doll) {

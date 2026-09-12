@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v9';
+const STORE = 'pf-paper-dolls-v10';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -11,16 +11,20 @@ export const SKINS = [
   { id: 'cardboard', label: 'Natural', rgb: null },
   { id: 'fair', label: 'Fair', rgb: [236, 198, 170] },
   { id: 'peach', label: 'Peach', rgb: [224, 172, 132] },
+  { id: 'golden', label: 'Golden', rgb: [210, 154, 96] },
   { id: 'tan', label: 'Tan', rgb: [186, 132, 90] },
+  { id: 'olive', label: 'Olive', rgb: [168, 124, 78] },
   { id: 'brown', label: 'Brown', rgb: [128, 84, 56] },
   { id: 'deep', label: 'Deep', rgb: [78, 50, 36] },
 ];
 export const EYE_COLORS = [
-  { id: 'blue', label: 'Blue', rgb: null },
+  { id: 'blue', label: 'Blue', rgb: [72, 138, 196] },
   { id: 'brown', label: 'Brown', rgb: [86, 52, 32] },
   { id: 'hazel', label: 'Hazel', rgb: [110, 78, 36] },
   { id: 'green', label: 'Green', rgb: [62, 102, 58] },
   { id: 'grey', label: 'Grey', rgb: [96, 104, 112] },
+  { id: 'amber', label: 'Amber', rgb: [176, 112, 36] },
+  { id: 'violet', label: 'Violet', rgb: [96, 72, 150] },
 ];
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
@@ -28,6 +32,9 @@ export const HAIR_STYLES = [
   { id: 'bob', label: 'Bob', fit: 'sheet' },
   { id: 'curls', label: 'Curls', fit: 'sheet' },
   { id: 'waves', label: 'Waves', fit: 'sheet' },
+  { id: 'bun', label: 'Bun', fit: 'sheet' },
+  { id: 'braid', label: 'Braid', fit: 'sheet' },
+  { id: 'pixie', label: 'Pixie', fit: 'sheet' },
 ];
 export const HATS = [
   { id: 'none', label: 'None' },
@@ -35,6 +42,9 @@ export const HATS = [
   { id: 'sailor', label: 'Sailor cap' },
   { id: 'rain', label: 'Rain hat' },
   { id: 'crown', label: 'Crown' },
+  { id: 'cowboy', label: 'Cowboy hat' },
+  { id: 'witchhat', label: 'Witch hat' },
+  { id: 'flower', label: 'Flower crown' },
 ];
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
@@ -50,6 +60,14 @@ export const OUTFITS = [
   { id: 'sunday', label: 'Sunday best' },
   { id: 'fortune', label: 'Mystic lilac' },
   { id: 'ballet', label: 'Ballet wrap' },
+  { id: 'cowgirl', label: 'Star dungarees' },
+  { id: 'circus', label: 'Ringmaster' },
+  { id: 'witch', label: 'Plum pinafore' },
+  { id: 'sundae', label: 'Cherry soda' },
+  { id: 'detective', label: 'Trench coat' },
+  { id: 'princess', label: 'Blue sash' },
+  { id: 'mechanic', label: 'Dungarees' },
+  { id: 'florist', label: 'Garden apron' },
 ];
 export const DOLL_PAGES = {
   garden: 'assets/restyle/paper-dolls/pages/garden.jpg',
@@ -78,6 +96,14 @@ export const COLLECTIONS = [
   { id: 'sunday', label: 'Sunday best', page: `${P}/outfits/sunday.png`, pieces: [hair('bob','Bob'), hair('waves','Waves'), clothes('sunday','Navy pinafore')] },
   { id: 'fortune', label: 'Iris’s hour', page: `${P}/outfits/fortune.png`, pieces: [hair('waves','Waves'), hair('bob','Bob'), clothes('fortune','Mystic lilac')] },
   { id: 'ballet', label: 'Ballet', page: `${P}/outfits/ballet.png`, pieces: [hair('bob','Bob'), hair('pigtails','Pigtails'), clothes('ballet','Wrap and tutu')] },
+  { id: 'cowgirl', label: 'Cowgirl', page: `${P}/outfits/cowgirl.png`, pieces: [hair('braid','Braid'), hair('bun','Bun'), hat('cowboy','Cowboy hat'), clothes('cowgirl','Star dungarees')] },
+  { id: 'circus', label: 'Circus', page: `${P}/outfits/circus.png`, pieces: [hair('pixie','Pixie'), hair('curls','Curls'), clothes('circus','Ringmaster')] },
+  { id: 'witch', label: 'Witching hour', page: `${P}/outfits/witch.png`, pieces: [hair('waves','Waves'), hair('bun','Bun'), hat('witchhat','Witch hat'), clothes('witch','Plum pinafore')] },
+  { id: 'sundae', label: 'Soda shop', page: `${P}/outfits/sundae.png`, pieces: [hair('pigtails','Pigtails'), hair('curls','Curls'), clothes('sundae','Cherry soda')] },
+  { id: 'detective', label: 'Clue hunt', page: `${P}/outfits/detective.png`, pieces: [hair('bob','Bob'), hair('pixie','Pixie'), clothes('detective','Trench coat')] },
+  { id: 'princess', label: 'Paper princess', page: `${P}/outfits/princess.png`, pieces: [hair('bun','Bun'), hair('waves','Waves'), hat('flower','Flower crown'), clothes('princess','Blue sash')] },
+  { id: 'mechanic', label: 'Fix-it', page: `${P}/outfits/mechanic.png`, pieces: [hair('pixie','Pixie'), hair('braid','Braid'), clothes('mechanic','Dungarees')] },
+  { id: 'florist', label: 'Flower stall', page: `${P}/outfits/florist.png`, pieces: [hair('braid','Braid'), hair('bun','Bun'), hat('flower','Flower crown'), clothes('florist','Garden apron')] },
 ];
 export const NOSES = [
   { id: 'none', label: 'None' },
@@ -101,8 +127,10 @@ export function blankDraft() {
     id: MINE_ID,
     body: 'girl',
     skin: 'cardboard',
+    skinHex: '',
     hair: 'none',
     eyes: 'blue',
+    eyesHex: '',
     outfit: 'none',
     hat: 'none',
     collection: null,
@@ -160,33 +188,57 @@ function recolorTo(ctx, rgb, {skinOnly=false}={}) {
   ctx.putImageData(data, 0, 0);
 }
 
+function isIrisPixel(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  if (mx > 230 && mx - mn < 28) return false;
+  if (mx < 40) return false;
+  const blueish = b > r + 4 && b > g - 6 && b > 55;
+  const greenish = g > r + 8 && g > b && g > 50 && mx - mn > 18;
+  const brownish = r > g + 8 && r > b + 16 && r > 50 && g > 20 && b < 90;
+  return blueish || greenish || brownish;
+}
+
 function recolorEyes(ctx, rgb) {
   if (!rgb) return;
   const data = ctx.getImageData(0, 0, W, H);
   const d = data.data;
   const [tr, tg, tb] = rgb;
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] < 12) continue;
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    if (b < r + 8 || b <= g) continue;
-    if (mx > 225 && mx - mn < 40) continue;
-    if (mx < 50) continue;
-    const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 140;
-    const lift = 0.35 + lum * 0.85;
-    d[i] = Math.min(255, tr * lift);
-    d[i + 1] = Math.min(255, tg * lift);
-    d[i + 2] = Math.min(255, tb * lift);
+  for (let side = 0; side < 4; side++) {
+    const x0 = side * CELL, x1 = x0 + CELL;
+    const y0 = Math.floor(H * 0.16), y1 = Math.floor(H * 0.42);
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0 + 40; x < x1 - 40; x++) {
+        const i = (y * W + x) * 4;
+        if (d[i + 3] < 12) continue;
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        if (!isIrisPixel(r, g, b)) continue;
+        const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 140;
+        const lift = 0.38 + lum * 0.8;
+        d[i] = Math.min(255, tr * lift);
+        d[i + 1] = Math.min(255, tg * lift);
+        d[i + 2] = Math.min(255, tb * lift);
+      }
+    }
   }
   ctx.putImageData(data, 0, 0);
 }
 
+function hexRgb(hex) {
+  const h = String(hex || '').replace('#', '');
+  if (h.length !== 6) return null;
+  const n = parseInt(h, 16);
+  if (Number.isNaN(n)) return null;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
 function isSkinPixel(r, g, b) {
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-  if (mx > 210 && mx - mn < 45) return false;
+  if (mx > 248 && mx - mn < 16) return false;
+  if (r > 150 && g > 110 && b < 90 && r - b > 70 && g > b + 30) return false;
   if (b >= r) return false;
-  if (r < g + 6) return false;
-  if ((r + g + b) / 3 < 95) return false;
+  if (r < g + 4) return false;
+  if (r - b < 18) return false;
+  if ((r + g + b) / 3 < 70) return false;
   return true;
 }
 
@@ -353,10 +405,10 @@ export async function composeDoll(spec) {
   const wear = spec.outfit && spec.outfit !== 'none' ? spec.outfit : null;
   const wearImg = wear ? await load(src('outfits', `${wear}.png`)) : bodyImg;
   ctx.drawImage(wearImg, 0, 0, W, H);
-  const skin = SKINS.find(s => s.id === spec.skin);
-  if (skin?.rgb) recolorSkinFromMask(ctx, bodyImg, skin.rgb);
-  const eyes = EYE_COLORS.find(e => e.id === spec.eyes);
-  if (eyes?.rgb) recolorEyes(ctx, eyes.rgb);
+  const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
+  if (skinRgb) recolorSkinFromMask(ctx, bodyImg, skinRgb);
+  const eyeRgb = hexRgb(spec.eyesHex) || EYE_COLORS.find(e => e.id === spec.eyes)?.rgb;
+  if (eyeRgb) recolorEyes(ctx, eyeRgb);
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
     const style = HAIR_STYLES.find(h => h.id === spec.hair);

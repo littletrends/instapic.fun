@@ -29,6 +29,8 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .doll-chip[aria-pressed=true]{border:2px solid #435637;background:#e4e9da}
 .doll-chip.is-swatch{width:30px;height:30px;padding:0;border-radius:50%;text-indent:-99px;overflow:hidden;background:var(--swatch,#c4a06a);border:2px solid #fffaf0;box-shadow:0 0 0 1px #c4a46a}
 .doll-chip.is-swatch[aria-pressed=true]{box-shadow:0 0 0 3px #435637}
+.doll-wheel{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;font:13px Georgia;color:#6b4e2e}
+.doll-wheel input[type=color]{width:42px;height:28px;padding:0;border:1px solid #c4a46a;background:#fffaf0;cursor:pointer}
 .doll-preview-stage{width:120px;height:160px;overflow:hidden;background:#f3e6c8;border:1px solid #d4b882;border-radius:8px;filter:drop-shadow(0 6px 8px #0003)}
 .doll-preview-stage img{display:block;height:100%;width:400%;max-width:none;object-fit:fill}
 .crew-book button:focus-visible{outline:3px solid #853f50;outline-offset:3px}
