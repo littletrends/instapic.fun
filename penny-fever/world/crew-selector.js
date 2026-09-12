@@ -1,7 +1,7 @@
 import {
-  SKINS, EYE_COLORS, COLLECTIONS,
+  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-book-4';
+} from './paper-dolls.js?v=doll-tray-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -83,14 +83,21 @@ function optionRow(title, key, items, swatch) {
   }).join('')}</div>`;
 }
 
+function layerRow(title, key, items, folder) {
+  return `<div class="doll-row doll-layer-row"><strong>${title}</strong>${items.map(item => {
+    const thumb = item.id === 'none' || !folder
+      ? ''
+      : `<span class="doll-piece-thumb"><img src="assets/restyle/paper-dolls/${folder}/${item.id}.png" alt=""></span>`;
+    return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
+  }).join('')}</div>`;
+}
+
 function paintDraft() {
   const spec = boot.draft;
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
-  document.querySelectorAll('[data-doll-book]').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.dollBook === spec.collection));
-  });
+
   const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
     boot.previewUrl = url;
@@ -149,11 +156,6 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
-  if (key === 'outfit') {
-    const col = COLLECTIONS.find(c => c.id === boot.draft.collection);
-    const piece = col?.pieces.find(p => p.slot === 'outfit' && p.id === val);
-    if (piece?.includesHat) boot.draft.hat = 'none';
-  }
   paintDraft();
 }
 
@@ -255,8 +257,6 @@ function openCrewBook(event) {
   boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
   boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
   refresh();
-  if (boot.draft.collection) openCollection(boot.draft.collection);
-  else closeCollection();
   preloadDollArt();
   try {
     if (typeof book.showModal === 'function') {
@@ -308,7 +308,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>The girl stays. Open a collection to mix and match that theme — hair, hat, clothes — like a paper-doll book.</p>
+<p>The girl stays. Mix layers underneath: hair, hats, clothes.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
@@ -322,13 +322,10 @@ function mount() {
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
   </div>
 </div>
-<div id="dollHome">
-  <div class="doll-books">${COLLECTIONS.map(o => `<button type="button" data-doll-book="${o.id}" aria-label="Open ${o.label}"><img src="${o.page}" alt=""><strong>${o.label}</strong></button>`).join('')}</div>
-</div>
-<div id="dollCollection" hidden>
-  <button type="button" id="dollBookBack">← Albums</button>
-  <h3 id="dollBookTitle"></h3>
-  <div id="dollBookPieces" class="doll-maker-parts"></div>
+<div class="doll-tray">
+  ${layerRow('Hair', 'hair', HAIR_STYLES, 'hair')}
+  ${layerRow('Hats', 'hat', HATS, 'hats')}
+  ${layerRow('Clothes', 'outfit', OUTFITS, 'outfits')}
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
@@ -336,9 +333,6 @@ function mount() {
     book.addEventListener('click', e => {
       if (e.target.closest('#crewRotate')) { turn(1); return; }
       if (e.target.closest('#dollRotate')) { turnDoll(1); return; }
-      if (e.target.closest('#dollBookBack')) { closeCollection(); return; }
-      const page = e.target.closest('[data-doll-book]');
-      if (page) { openCollection(page.dataset.dollBook); return; }
       const part = e.target.closest('[data-doll-key]');
       if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
       if (e.target.closest('#crewDone')) { keepMe(); return; }
