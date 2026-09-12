@@ -2,8 +2,8 @@ import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend} from '../wallet.js?v=iris-cards-1';
 
-const BACK = new URL('../assets/tarot-back.webp', import.meta.url).href;
-const FACE = new URL('../assets/tarot-face.webp', import.meta.url).href;
+const BACK = new URL('../assets/tarot-back.png', import.meta.url).href;
+const FACE = new URL('../assets/tarot-face.png', import.meta.url).href;
 const art = {back: null, face: null};
 function loadArt() {
   [['back', BACK], ['face', FACE]].forEach(([k, src]) => {
@@ -48,7 +48,7 @@ const MAJORS = [
 ];
 const CHAPTERS = [
   {prize: 'fortune-slip', card: 'moon', title: 'A first whisper'},
-  {prize: 'moon-penny', card: 'star', title: 'A coin in the sky'},
+  {prize: 'moon-lantern', card: 'star', title: 'A coin in the sky'},
   {prize: 'moon-brooch', card: 'priestess', title: 'The priestess keepsake'},
   {prize: 'fortune-journal', card: 'hermit', title: 'The hermit’s book'},
   {prize: 'moon-festival-fan', card: 'wheel', title: 'The turning fan'},
@@ -268,10 +268,10 @@ function mark(c, id, x, y) {
 export default {
   title: 'Iris’s Reading',
   intro: alleyPlay
-    ? 'Iris keeps a carnival tarot in the mystic tent. A booth ticket sits you down. The first spread of each chapter is included; another reading costs a penny. Three cards — past, present, future. One card in the deck has this chapter’s keepsake printed in it. It may take a few sittings to appear.'
+    ? 'Iris keeps a carnival tarot in the mystic tent. A penny sits you down. The first spread of each chapter is included; another reading costs a penny. Three cards — past, present, future. One card in the deck has this chapter’s keepsake printed in it. It may take a few sittings to appear.'
     : 'Iris’s workshop tarot. Choose a question, shuffle, and read past, present and future. A keepsake is printed on one card each chapter. Practice readings are free.',
   instructions: alleyPlay
-    ? 'Pick a question. Shuffle. Turn the three cards. If the keepsake card is in the spread, it is yours. Miss it and pay a penny to shuffle again. The fifth sitting of a chapter, Iris helps. Cash a booth ticket at Copper Falls if the purse is empty.'
+    ? 'Pick a question. Shuffle. Turn the three cards. If the keepsake card is in the spread, it is yours. Miss it and pay a penny to shuffle again. The fifth sitting of a chapter, Iris helps. Cash a ticket on the bar for five pennies if the purse is empty.'
     : 'Pick a question, shuffle, and turn the three cards. The keepsake is hiding in the deck.',
   levels: CHAPTERS.map(c => c.title),
   sprites: ['fortune-slip', 'moon-penny', 'moon-brooch', 'fortune-journal', 'moon-festival-fan', 'paper-crown', 'moon-lantern'],

@@ -15,9 +15,9 @@ const SETS = [
     felt: '#241c28cc', wood: '#3a2218', lamp: '#e4a4b7'},
   {prize: 'midway-map', clock: 34, travel: 2.45, window: .24, spawn: .74, need: 7, drift: .45, chord: .22,
     felt: '#182028ee', wood: '#2a1c16', lamp: '#edc87e'},
-  {prize: 'aura-keepsake', clock: 30, travel: 2.2, window: .21, spawn: .64, need: 8, drift: .7, chord: .32,
+  {prize: 'new-year-star-cracker', clock: 30, travel: 2.2, window: .21, spawn: .64, need: 8, drift: .7, chord: .32,
     felt: '#141820ee', wood: '#241818', lamp: '#a3d7cb'},
-  {prize: 'ride-ticket', clock: 26, travel: 2.0, window: .18, spawn: .54, need: 9, drift: 1, chord: .42,
+  {prize: 'marquee-stub', clock: 26, travel: 2.0, window: .18, spawn: .54, need: 9, drift: 1, chord: .42,
     felt: '#10141cee', wood: '#1c1412', lamp: '#e4a4b7'},
 ];
 const PATTERNS = [

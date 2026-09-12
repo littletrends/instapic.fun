@@ -16,10 +16,10 @@ const BOOK = 'pennyFever.lookingGlassGarden';
 const SETS = [
   {prize: 'looking-glass-locket', felt: '#2a2438cc', wood: '#4a3a48', bumper: '#6a5a88', bat: '#e8d4b0', hedge: '#6a7a62'},
   {prize: 'mirror-shard', felt: '#243038cc', wood: '#3a3228', bumper: '#5a6a88', bat: '#d4e0e8', hedge: '#5a7a78'},
-  {prize: 'star-fragment', felt: '#2a2030cc', wood: '#3a2a28', bumper: '#7a5a78', bat: '#f0d080', hedge: '#6a6a52'},
+  {prize: 'folding-mirror', felt: '#2a2030cc', wood: '#3a2a28', bumper: '#7a5a78', bat: '#f0d080', hedge: '#6a6a52'},
   {prize: 'winter-snow-globe', felt: '#1c2838cc', wood: '#2a2830', bumper: '#4a6a88', bat: '#e0e8f0', hedge: '#4a6a68'},
   {prize: 'winter-lantern-book', felt: '#241828cc', wood: '#3a2420', bumper: '#6a4a58', bat: '#e8c4a0', hedge: '#5a5a3a'},
-  {prize: 'sleepy-compass', felt: '#141820ee', wood: '#2a1818', bumper: '#4a3a58', bat: '#c4b0a8', hedge: '#3a4a42'},
+  {prize: 'glass-garden-key', felt: '#141820ee', wood: '#2a1818', bumper: '#4a3a58', bat: '#c4b0a8', hedge: '#3a4a42'},
 ];
 const SPRITES = ['moon-lantern', 'star-fragment', 'looking-glass-locket', 'mirror-shard',
   'winter-snow-globe', 'winter-lantern-book', 'sleepy-compass', 'penny-purse', 'everyday-penny'];

@@ -10,7 +10,7 @@ export default {
   instructions: 'Hold just behind the boat to push it away from your hand. Let go to refill the tank. Space or Anchor holds the boat still while you aim. Collect every letter, then settle in the golden berth. Arrows also steer a gentle jet. Bumps are free; nothing is timed unless you want a seal.',
   levels: COURSES.map(c => c.name),
   sprites: ['little-sailboat', 'trade-envelope', 'message-bottle'],
-  prizes: ['little-sailboat', 'message-bottle', 'splash-ring', 'picnic-parcel', 'seaside-day-book', 'stamp-passport'],
+  prizes: ['little-sailboat', 'message-bottle', 'harbour-washer', 'seaside-day-book', 'picnic-parcel', 'return-postcard'],
   actions: [
     {id: 'left', label: '←', hold: true}, {id: 'up', label: '↑', hold: true},
     {id: 'down', label: '↓', hold: true}, {id: 'right', label: '→', hold: true},

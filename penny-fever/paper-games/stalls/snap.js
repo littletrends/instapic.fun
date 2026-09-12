@@ -8,9 +8,9 @@ const SETS = [
   {prize: 'shutter-click', felt: '#2a3c2ccc', wood: '#5a3a28', sky: '#7a9a78', clock: 48, dart: 0.28, sway: 22, hide: 0, kinds: ['rabbit'], hw: 100, hh: 76, need: 0.68},
   {prize: 'photo-accordion', felt: '#24362acc', wood: '#4a3224', sky: '#6a8a72', clock: 42, dart: 0.38, sway: 30, hide: 0.08, kinds: ['rabbit', 'bird'], hw: 94, hh: 72, need: 0.68},
   {prize: 'memory-camera', felt: '#243038cc', wood: '#3a2a22', sky: '#5a6a78', clock: 38, dart: 0.48, sway: 38, hide: 0.12, kinds: ['fox', 'bird'], hw: 88, hh: 68, need: 0.70},
-  {prize: 'ride-stamp-book', felt: '#1c3228cc', wood: '#4a2818', sky: '#4a6a68', clock: 34, dart: 0.58, sway: 46, hide: 0.16, kinds: ['duck', 'rabbit'], hw: 82, hh: 64, need: 0.72},
+  {prize: 'safari-frame', felt: '#1c3228cc', wood: '#4a2818', sky: '#4a6a68', clock: 34, dart: 0.58, sway: 46, hide: 0.16, kinds: ['duck', 'rabbit'], hw: 82, hh: 64, need: 0.72},
   {prize: 'first-visit-badge', felt: '#241828cc', wood: '#3a1c18', sky: '#3a3a52', clock: 30, dart: 0.68, sway: 52, hide: 0.22, kinds: ['rabbit', 'fox', 'bird', 'duck'], hw: 76, hh: 60, need: 0.74},
-  {prize: 'pocket-theatre', felt: '#141820ee', wood: '#2a1814', sky: '#1c2438', clock: 26, dart: 0.80, sway: 60, hide: 0.30, kinds: ['fox', 'duck', 'bird'], hw: 70, hh: 56, need: 0.76},
+  {prize: 'paper-negative', felt: '#141820ee', wood: '#2a1814', sky: '#1c2438', clock: 26, dart: 0.80, sway: 60, hide: 0.30, kinds: ['fox', 'duck', 'bird'], hw: 70, hh: 56, need: 0.76},
 ];
 const SPRITES = ['memory-camera', 'shutter-click', 'photo-accordion', 'ride-stamp-book',
   'first-visit-badge', 'pocket-theatre', 'penny-purse', 'everyday-penny'];

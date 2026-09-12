@@ -3,15 +3,15 @@ import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=arcade-restore-1';
 
 const SETS = [
-  {prize: 'moon-penny', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,
+  {prize: 'silver-cup-chip', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,
     cue: 'A gentle roll into the nearest moon. Softer than a medium skip.'},
-  {prize: 'star-token', target: ['30'], r10: 64, r30: 50, r50: 38, r100: 32,
+  {prize: 'lane-wax', target: ['30'], r10: 64, r30: 50, r50: 38, r100: 32,
     cue: 'A medium lift. Let it kiss the silver cup in the middle.'},
   {prize: 'pegboard-star', target: ['50'], r10: 58, r30: 42, r50: 38, r100: 30,
     cue: 'A stronger roll into the high 50. Too little and it drops short.'},
-  {prize: 'ride-ticket', target: ['100'], r10: 52, r30: 38, r50: 32, r100: 34,
+  {prize: 'moonbow-stub', target: ['100'], r10: 52, r30: 38, r50: 32, r100: 34,
     cue: 'Steer for either 100 moon. Power and a little English.'},
-  {prize: 'ride-stamp-book', target: ['left'], r10: 50, r30: 36, r50: 30, r100: 28,
+  {prize: 'score-card', target: ['left'], r10: 50, r30: 36, r50: 30, r100: 28,
     cue: 'The left-hand 100 only. Hold the angle; do not over-skip.'},
   {prize: 'summer-sun-pin', target: ['needle'], r10: 46, r30: 32, r50: 28, r100: 26, needle: true,
     cue: 'The gold moon at the very top, above the 50. Straight roll, lots of lift.'},

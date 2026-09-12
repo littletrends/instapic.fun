@@ -21,7 +21,7 @@ export default {
   instructions: 'Tap a glass to give it a notch, or drag it around. Light every star and the sky bell, then Send the comet. Arrows choose a glass; Left/Right or ↶↷ turn it. Z undoes, X offers a hint, Space sends when the path is ready. No timer, no lost lives.',
   levels: CHAPTERS.map(c => c.title),
   sprites: ['star-fragment', 'star-spectacles', 'pocket-observatory', 'moon-rabbit', 'dapper-fox', 'moon-lantern'],
-  prizes: ['star-fragment', 'pocket-observatory', 'star-spectacles', 'sleepy-compass', 'midnight-invitation', 'star-fragment'],
+  prizes: ['star-fragment', 'pocket-observatory', 'star-spectacles', 'sleepy-compass', 'gyro-ghost', 'moon-rabbit'],
   actions: [
     {id: 'left', label: '↶ Turn'},
     {id: 'right', label: '↷ Turn'},

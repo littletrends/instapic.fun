@@ -11,7 +11,7 @@ const COLORS = ['#b7747c', '#85978c', '#b8a079'];
 const SETS = [
   {prize: 'perfect-circle', r: 118, clock: 48, need: 0.992, spin: 0, felt: '#3a2a24cc', wood: '#5a3a28', cloth: '#6a3a48'},
   {prize: 'pressed-flower-book', r: 118, clock: 42, need: 0.992, spin: 0.07, felt: '#2a3228cc', wood: '#4a3224', cloth: '#5a4a38'},
-  {prize: 'lucky-dish', r: 125, clock: 38, need: 0.993, spin: 0.11, felt: '#243038cc', wood: '#3a2a22', cloth: '#4a3a58'},
+  {prize: 'felt-moon-disc', r: 125, clock: 38, need: 0.993, spin: 0.11, felt: '#243038cc', wood: '#3a2a22', cloth: '#4a3a58'},
   {prize: 'spring-seed-packet', r: 126, clock: 34, need: 0.993, spin: 0.15, felt: '#1c2a24cc', wood: '#4a2818', cloth: '#3a5a48'},
   {prize: 'garden-party-book', r: 134, clock: 30, need: 0.994, spin: 0.2, felt: '#241820cc', wood: '#3a1c18', cloth: '#6a3a38'},
   {prize: 'charm-display-case', r: 130, clock: 26, need: 0.994, spin: 0.26, felt: '#141820ee', wood: '#2a1814', cloth: '#4a2a48'},

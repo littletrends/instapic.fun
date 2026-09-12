@@ -17,7 +17,7 @@ const SETS = [
   {prize: 'pocket-peepshow', ball: 'singing-bird', felt: '#241c18cc', wood: '#4a3224', bumper: '#7a4a3a', bat: '#d4c4a0', unique: 0.82},
   {prize: 'memory-scrapbook', ball: 'dapper-fox', felt: '#1c1814cc', wood: '#3a2a22', bumper: '#5a3a48', bat: '#e0b070', unique: 0.68},
   {prize: 'moonlight-wardrobe', ball: 'moon-lantern', felt: '#18141ccc', wood: '#4a2818', bumper: '#8a5030', bat: '#f0c090', unique: 0.50},
-  {prize: 'charm-display-case', ball: 'trade-envelope', felt: '#1c1418cc', wood: '#3a1c18', bumper: '#6a2a38', bat: '#c89090', unique: 0.34},
+  {prize: 'dapper-fox', ball: 'trade-envelope', felt: '#1c1418cc', wood: '#3a1c18', bumper: '#6a2a38', bat: '#c89090', unique: 0.34},
   {prize: 'pocket-theatre', ball: 'cabinet-key', felt: '#141218ee', wood: '#2a1814', bumper: '#4a2a48', bat: '#b09088', unique: 0.22},
 ];
 const FRAMES = [

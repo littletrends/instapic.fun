@@ -9,7 +9,7 @@ const SETS = [
   {prize: 'alley-collector-cup', throws: 2, towers: [{x: 300, y: 850, n: 4}, {x: 620, y: 720, n: 3}]},
   {prize: 'cocoa-cup', throws: 3, towers: [{x: 250, y: 840, n: 3}, {x: 450, y: 700, n: 4}, {x: 650, y: 840, n: 3}]},
   {prize: 'crown-hatbox', throws: 3, towers: [{x: 270, y: 860, n: 4}, {x: 450, y: 620, n: 3}, {x: 640, y: 860, n: 4}]},
-  {prize: 'button-elephant', throws: 3, towers: [{x: 320, y: 870, n: 5}, {x: 620, y: 720, n: 4}]},
+  {prize: 'cream-churn', throws: 3, towers: [{x: 320, y: 870, n: 5}, {x: 620, y: 720, n: 4}]},
 ];
 
 function topple(b, vx = 80) {

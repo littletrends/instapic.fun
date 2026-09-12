@@ -21,11 +21,11 @@ const TOKENS = [
 const ONCE = ['lightning-pin', 'pegboard-star', 'summer-sun-pin', 'bullseye-clock', 'looking-glass-locket'];
 const SETS = [
   {prize: 'lightning-pin', felt: '#1e3a32cc', wood: '#5a3a28', bumper: '#6a3a58', bat: '#e8b8c4', unique: 1.00},
-  {prize: 'star-token', felt: '#24364acc', wood: '#4a3224', bumper: '#5a4a6a', bat: '#d4c4a0', unique: 0.82},
-  {prize: 'pegboard-star', felt: '#2a2438cc', wood: '#3a2a22', bumper: '#7a3a4a', bat: '#e0b070', unique: 0.68},
-  {prize: 'summer-sun-pin', felt: '#1c3228cc', wood: '#4a2818', bumper: '#8a5030', bat: '#f0c090', unique: 0.50},
+  {prize: 'thunder-marble', felt: '#24364acc', wood: '#4a3224', bumper: '#5a4a6a', bat: '#d4c4a0', unique: 0.82},
+  {prize: 'glass-kicker', felt: '#2a2438cc', wood: '#3a2a22', bumper: '#7a3a4a', bat: '#e0b070', unique: 0.68},
+  {prize: 'flipper-badge', felt: '#1c3228cc', wood: '#4a2818', bumper: '#8a5030', bat: '#f0c090', unique: 0.50},
   {prize: 'bullseye-clock', felt: '#241820cc', wood: '#3a1c18', bumper: '#6a2a38', bat: '#c89090', unique: 0.34},
-  {prize: 'looking-glass-locket', felt: '#141820ee', wood: '#2a1814', bumper: '#4a2a48', bat: '#b09088', unique: 0.22},
+  {prize: 'cabinet-spark', felt: '#141820ee', wood: '#2a1814', bumper: '#4a2a48', bat: '#b09088', unique: 0.22},
 ];
 const SPRITES = ['lightning-pin', 'everyday-penny', 'star-token', 'moon-penny', 'rose-penny',
   'crown-token', 'pegboard-star', 'summer-sun-pin', 'bullseye-clock', 'looking-glass-locket', 'penny-purse'];
