@@ -35,7 +35,7 @@ export function loadFramedPng(url,rect,{signal,urgent=false}={}){
   if(signal?.aborted){fail(new Error('Papercut load cancelled'));return;}
   const abort=()=>fail(new Error('Papercut load cancelled'));
   signal?.addEventListener('abort',abort,{once:true});
-  timer=setTimeout(()=>fail(new Error('Papercut artwork timed out')),15000);
+  timer=setTimeout(()=>fail(new Error('Papercut artwork timed out')),30000);
   loader.load(url,texture=>{
    if(settled){texture.dispose();return;}
    if(signal?.aborted){texture.dispose();fail(new Error('Papercut load cancelled'));return;}

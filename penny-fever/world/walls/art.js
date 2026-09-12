@@ -21,7 +21,7 @@ function imageAt(url,signal){
    if(error){image.src='';reject(error);}else resolve(image);
   };
   const abort=()=>done(new Error('Wall load cancelled'));
-  const timer=setTimeout(()=>done(new Error('Wall artwork timed out')),15000);
+  const timer=setTimeout(()=>done(new Error('Wall artwork timed out')),30000);
   image.onload=()=>done();image.onerror=()=>done(new Error('Wall artwork unavailable: '+url));
   signal?.addEventListener('abort',abort,{once:true});
   if(signal?.aborted){abort();return;}
