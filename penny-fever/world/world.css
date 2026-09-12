@@ -202,13 +202,27 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   z-index: 16;
   transform: translate(-50%, 0);
   width: min(92%, 420px);
-  padding: 0.7rem 0.9rem;
+  padding: 0.7rem 2.1rem 0.7rem 0.9rem;
   border-radius: 16px 16px 4px 16px;
   background: rgba(18, 8, 14, 0.94);
   border: 1px solid rgba(212, 164, 90, 0.55);
   color: #fff6ec;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
+}
+.pf-world-speech-close {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.2rem;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f0d09a;
+  font: 700 1.35rem/1 Georgia, serif;
+  cursor: pointer;
 }
 .pf-world-speech[hidden] { display: none !important; }
 .pf-world-speech.is-anchored { bottom: auto; }

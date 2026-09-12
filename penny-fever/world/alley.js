@@ -907,6 +907,7 @@ function attachHud() {
         </div>
       </div>
       <div class="pf-world-speech" id="pfWorldSpeech" hidden>
+        <button type="button" class="pf-world-speech-close" id="pfWorldSpeechClose" aria-label="Close chat">×</button>
         <b id="pfWorldSpeechName">Aura</b>
         <p id="pfWorldSpeechText"></p>
       </div>
@@ -1238,6 +1239,14 @@ function bindHud() {
   if (stallChat) stallChat.addEventListener("click", (event) => {
     event.preventDefault();
     talkToFocus();
+  });
+  const speechClose = el("pfWorldSpeechClose");
+  if (speechClose) speechClose.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    vendorChatUntil = 0;
+    const speech = el("pfWorldSpeech");
+    if (speech) speech.hidden = true;
   });
   if (stallBack) stallBack.addEventListener("click", (event) => {
     event.preventDefault();
