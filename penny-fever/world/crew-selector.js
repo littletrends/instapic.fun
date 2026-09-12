@@ -1,7 +1,7 @@
 import {
-  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, DOLL_PAGES,
+  SKINS, EYE_COLORS, COLLECTIONS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=rotate-3';
+} from './paper-dolls.js?v=doll-book-2';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -89,7 +89,7 @@ function paintDraft() {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
   });
   document.querySelectorAll('[data-doll-book]').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.dollBook === spec.outfit));
+    b.setAttribute('aria-pressed', String(b.dataset.dollBook === spec.collection));
   });
   const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
@@ -149,7 +149,47 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   boot.draft = { ...boot.draft, [key]: val };
+  if (key === 'outfit') {
+    const col = COLLECTIONS.find(c => c.id === boot.draft.collection);
+    const piece = col?.pieces.find(p => p.slot === 'outfit' && p.id === val);
+    if (piece?.includesHat) boot.draft.hat = 'none';
+  }
   paintDraft();
+}
+
+function openCollection(id) {
+  const col = COLLECTIONS.find(c => c.id === id);
+  if (!col) return;
+  boot.draft = { ...boot.draft, collection: id };
+  const home = document.getElementById('dollHome');
+  const tray = document.getElementById('dollCollection');
+  const title = document.getElementById('dollBookTitle');
+  const pieces = document.getElementById('dollBookPieces');
+  if (home) home.hidden = true;
+  if (tray) tray.hidden = false;
+  if (title) title.textContent = col.label;
+  if (pieces) {
+    const slots = [...new Set(col.pieces.map(p => p.slot))];
+    const slotName = { hair: 'Hair', hat: 'Hat', outfit: 'Clothes' };
+    pieces.innerHTML = slots.map(slot => {
+      const items = [{ id: 'none', label: 'None', src: '' }, ...col.pieces.filter(p => p.slot === slot)];
+      return `<div class="doll-row"><strong>${slotName[slot] || slot}</strong>${items.map(item => {
+        const thumb = item.src
+          ? `<span class="doll-piece-thumb"><img src="${item.src}" alt=""></span>`
+          : '';
+        return `<button type="button" class="doll-chip doll-piece" data-doll-key="${slot}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
+      }).join('')}</div>`;
+    }).join('');
+  }
+  paintDraft();
+}
+
+function closeCollection() {
+  boot.draft = { ...boot.draft, collection: null };
+  const home = document.getElementById('dollHome');
+  const tray = document.getElementById('dollCollection');
+  if (home) home.hidden = false;
+  if (tray) tray.hidden = true;
 }
 
 export function chooseCrew(id) {
@@ -213,6 +253,8 @@ function openCrewBook(event) {
   boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
   boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
   refresh();
+  if (boot.draft.collection) openCollection(boot.draft.collection);
+  else closeCollection();
   preloadDollArt();
   try {
     if (typeof book.showModal === 'function') {
@@ -264,7 +306,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>The body stays. Everything else is a paper layer — hair, hat, dress — like a book of cut-outs.</p>
+<p>The girl stays. Open a collection to mix and match that theme — hair, hat, clothes — like a paper-doll book.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
@@ -276,20 +318,25 @@ function mount() {
   <div class="doll-maker-parts">
     ${optionRow('Skin', 'skin', SKINS, true)}
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
-    ${optionRow('Hair', 'hair', HAIR_STYLES)}
-    ${optionRow('Hat', 'hat', HATS)}
-    ${optionRow('Dress', 'outfit', OUTFITS)}
   </div>
 </div>
-<div class="doll-books">${OUTFITS.filter(o => o.book).map(o => `<button type="button" data-doll-book="${o.id}" aria-label="${o.label} album"><img src="${DOLL_PAGES[o.id]}" alt=""><strong>${o.label}</strong></button>`).join('')}</div>
+<div id="dollHome">
+  <div class="doll-books">${COLLECTIONS.map(o => `<button type="button" data-doll-book="${o.id}" aria-label="Open ${o.label}"><img src="${o.page}" alt=""><strong>${o.label}</strong></button>`).join('')}</div>
+</div>
+<div id="dollCollection" hidden>
+  <button type="button" id="dollBookBack">← Albums</button>
+  <h3 id="dollBookTitle"></h3>
+  <div id="dollBookPieces" class="doll-maker-parts"></div>
+</div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
     document.body.append(book);
     book.addEventListener('click', e => {
       if (e.target.closest('#crewRotate')) { turn(1); return; }
       if (e.target.closest('#dollRotate')) { turnDoll(1); return; }
+      if (e.target.closest('#dollBookBack')) { closeCollection(); return; }
       const page = e.target.closest('[data-doll-book]');
-      if (page) { setPart('outfit', page.dataset.dollBook); return; }
+      if (page) { openCollection(page.dataset.dollBook); return; }
       const part = e.target.closest('[data-doll-key]');
       if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
       if (e.target.closest('#crewDone')) { keepMe(); return; }

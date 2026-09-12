@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v7';
+const STORE = 'pf-paper-dolls-v8';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -49,6 +49,51 @@ export const DOLL_PAGES = {
   'winter-lantern-book': 'assets/restyle/paper-dolls/pages/winter.jpg',
   'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
 };
+const P = 'assets/restyle/paper-dolls';
+export const COLLECTIONS = [
+  {
+    id: 'garden',
+    label: 'Garden party',
+    book: 'garden-party-book',
+    page: DOLL_PAGES.garden,
+    pieces: [
+      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
+      { slot: 'hat', id: 'straw', label: 'Straw hat', src: `${P}/hats/straw.png` },
+      { slot: 'outfit', id: 'garden', label: 'Rose pinafore', src: `${P}/outfits/garden.png`, includesHat: true },
+    ],
+  },
+  {
+    id: 'seaside',
+    label: 'Seaside day',
+    book: 'seaside-day-book',
+    page: DOLL_PAGES.seaside,
+    pieces: [
+      { slot: 'hair', id: 'short', label: 'Short curls', src: `${P}/hair/short.png` },
+      { slot: 'hat', id: 'sailor', label: 'Sailor cap', src: `${P}/hats/sailor.png` },
+      { slot: 'outfit', id: 'seaside', label: 'Sailor set', src: `${P}/outfits/seaside.png`, includesHat: true },
+    ],
+  },
+  {
+    id: 'winter',
+    label: 'Winter lantern',
+    book: 'winter-lantern-book',
+    page: DOLL_PAGES.winter,
+    pieces: [
+      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
+      { slot: 'outfit', id: 'winter', label: 'Starry coat', src: `${P}/outfits/winter.png` },
+    ],
+  },
+  {
+    id: 'moonlight',
+    label: 'Moonlight',
+    book: 'moonlight-wardrobe',
+    page: DOLL_PAGES.moonlight,
+    pieces: [
+      { slot: 'hair', id: 'pigtails', label: 'Pigtails', src: `${P}/hair/pigtails.png` },
+      { slot: 'outfit', id: 'moonlight', label: 'Moon pinafore', src: `${P}/outfits/moonlight.png` },
+    ],
+  },
+];
 export const NOSES = [
   { id: 'none', label: 'None' },
   { id: 'button', label: 'Button' },
@@ -75,6 +120,7 @@ export function blankDraft() {
     eyes: 'blue',
     outfit: 'none',
     hat: 'none',
+    collection: null,
     name: 'Paper doll',
   };
 }
