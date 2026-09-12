@@ -1579,6 +1579,9 @@ function closeStallCard() {
   stallCardPinned = false;
   stallCardId = "";
   lookZoom = 1;
+  vendorChatUntil = 0;
+  const speech = el("pfWorldSpeech");
+  if (speech) speech.hidden = true;
   const card = el("pfStallCard");
   if (card) card.hidden = true;
   const till = el("pfStallCardTill");
@@ -1625,7 +1628,7 @@ function syncStallCard(best) {
     }
     if (hostEl) hostEl.textContent = best.host ? `${best.host} · ${art.role}` : "";
     if (nameEl) nameEl.textContent = best.name || "";
-    if (lineEl) lineEl.textContent = best.line || "";
+    if (lineEl) lineEl.textContent = "";
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
@@ -1668,21 +1671,24 @@ function syncStallCard(best) {
 }
 
 function talkToFocus() {
-  if (!nearest) return;
-  if (nearest.kind === "aura") {
-    chatPinned = true;
-    const pocketChat = el("pfPocketChat");
-    if (pocketChat) {
-      pocketChat.classList.add("is-active");
-      pocketChat.setAttribute("aria-pressed", "true");
-    }
+  const who = nearest;
+  if (!who) return;
+  if (who.kind !== "stall" && who.kind !== "ride" && who.kind !== "aura") return;
+  const speech = el("pfWorldSpeech");
+  const speechName = el("pfWorldSpeechName");
+  const speechText = el("pfWorldSpeechText");
+  if (!speech || !speechText) return;
+  if (!speech.hidden && performance.now() < vendorChatUntil) {
+    vendorChatUntil = 0;
+    speech.hidden = true;
     return;
   }
-  if (nearest.kind === "stall" || nearest.kind === "ride") {
-    vendorChatUntil = performance.now() + 6400;
-    const lineEl = el("pfStallCardLine");
-    if (lineEl) lineEl.textContent = nearest.line || "";
-  }
+  vendorChatUntil = performance.now() + 12000;
+  speech.hidden = false;
+  if (speechName) speechName.textContent = who.host || who.name || "Aura";
+  speechText.textContent = who.line || (who.kind === "aura" ? AURA_LINE : "");
+  speech.classList.toggle("is-left", (who.side || -1) < 0);
+  speech.classList.toggle("is-right", (who.side || -1) >= 0);
 }
 
 function enterNearest() {
@@ -2467,9 +2473,15 @@ function updateHudAnchor() {
 
   const speech = el("pfWorldSpeech");
   if (speech && !speech.hidden) {
-    speech.classList.add("is-anchored");
-    speech.style.left = `${clamp(head.x, 170, w - 170)}px`;
-    speech.style.top = `${clamp(head.y - 10, 64, h - 240)}px`;
+    if (stallCardOpen) {
+      speech.classList.remove("is-anchored");
+      speech.style.left = "";
+      speech.style.top = "";
+    } else {
+      speech.classList.add("is-anchored");
+      speech.style.left = `${clamp(head.x, 170, w - 170)}px`;
+      speech.style.top = `${clamp(head.y - 10, 64, h - 240)}px`;
+    }
   }
 
   const chip = el("pfPassChip");
