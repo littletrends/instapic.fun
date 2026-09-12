@@ -1,6 +1,6 @@
 import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell} from '../chapter-kit.js';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const CHAIRS = ['swing-spinner', 'pressed-heart', 'star-token', 'moon-penny', 'prize-bag', 'friendship-pins'];
 
@@ -36,10 +36,12 @@ export default {
   actions: [{id: 'catch', label: 'Catch · Space'}],
   create(level) {
     const list = CHAIRS.slice(0, swell(level, 4, 1, 6));
-    return {
+    const s = {
       level, t: 0, spin: 0, cool: 0, caught: 0, tries: 0, goal: swell(level, 3, 1, 8),
       chairs: list, target: list[0], note: 'Wait for the matching chair at the front.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     s.t += dt; s.cool = Math.max(0, s.cool - dt);

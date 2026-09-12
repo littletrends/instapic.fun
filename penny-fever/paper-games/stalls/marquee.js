@@ -1,6 +1,7 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=lumi-night-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const colours = ['#edc87e', '#a3d7cb', '#e4a4b7'];
 const seals = ['star-token', 'moon-penny', 'pressed-heart'];
@@ -167,6 +168,7 @@ function claim(s, n) {
   if (!s.paid.includes(s.prize)) s.paid.push(s.prize);
   fly(s, s.prize, p.x, p.y, true);
   if (alleyPlay && s.prize) keep(s.prize, 'marquee');
+  takePrize(s, s.prize);
   writeBook(s);
   s.note = itemName(s.prize) + ' — you snagged it off the marquee!';
   done(s, 'The boardwalk keeps a light',
@@ -272,6 +274,7 @@ export default {
         : 'Wake the night. Catch the hanging prize.',
     };
     seatLane(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input = {keys: new Set(), actions: new Set()}) {

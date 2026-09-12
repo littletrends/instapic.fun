@@ -49,4 +49,24 @@ body .cabinet-interior.paper-game-cabinet {
 .paper-game-frame{display:block;flex:1;width:100%;min-height:70vh;height:100%;border:0;background:#132831;}
 .paper-game-status{margin:0;padding:10px 16px;font:15px/1.4 Georgia,serif;background:#263c40;}
 .paper-game-status[hidden]{display:none;}
+.paper-game-treasure{margin-left:auto;}
+.paper-game-treasure.is-prize-catch,
+#pfPocketChest.is-prize-catch{
+ animation:pf-prize-catch .7s ease;
+}
+@keyframes pf-prize-catch{
+ 0%{transform:scale(1)}
+ 35%{transform:scale(1.16);color:#fff6ec;box-shadow:0 0 18px #f4d590aa}
+ 100%{transform:scale(1)}
+}
+.pf-prize-fly{
+ position:fixed;z-index:5000;pointer-events:none;width:72px;height:72px;object-fit:contain;
+ filter:drop-shadow(0 8px 14px #0008);
+ transform:scale(1.15) rotate(0deg);opacity:1;
+ transition:transform .62s cubic-bezier(.2,.75,.2,1),opacity .62s ease;
+}
+@media(prefers-reduced-motion:reduce){
+ .paper-game-treasure.is-prize-catch,#pfPocketChest.is-prize-catch{animation:none}
+ .pf-prize-fly{transition:transform .4s ease,opacity .4s ease}
+}
 @media(max-width:600px){.paper-game-bar{gap:6px;padding:6px;}.paper-game-bar h1{order:4;flex-basis:100%;font-size:14px;}.paper-game-bar a{display:none}.paper-game-bar button,.paper-game-bar a{font-size:13px;padding:6px 8px;}}

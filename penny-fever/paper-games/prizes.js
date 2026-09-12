@@ -192,7 +192,7 @@ export const itemName = id => items[id]?.name || id;
 export const kits = {
   'coin-pusher': {
     sprites: ['everyday-penny','penny-purse','moon-penny','rose-penny','star-token','crown-token','heart-gear','coin-sleeve','copper-cascade','penny-tree','coin-album','treasure-tin','five-penny-stack'],
-    prizes: ['fairy-floss', 'pocket-cloud', 'cloud-jar', 'toffee-apple', 'swirl-lolly', 'birthday-crown-box'],
+    prizes: ['coin-sleeve', 'copper-cascade', 'penny-tree', 'coin-album', 'treasure-tin', 'five-penny-stack'],
   },
   whisper: {
     sprites: ['trade-envelope','sealed-secret','return-postcard','message-bottle','charm-pouch'],

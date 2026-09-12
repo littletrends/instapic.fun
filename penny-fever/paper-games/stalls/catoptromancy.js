@@ -1,6 +1,7 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=opal-glass-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const R = 11;
 const G = 390;
@@ -127,6 +128,7 @@ function stamp(s) {
   if (!s.paid.includes(prize)) s.paid.push(prize);
   if (!s.seen.includes(prize)) s.seen.push(prize);
   if (alleyPlay) keep(prize, 'catoptromancy');
+  takePrize(s, prize);
   fly(s, prize, s.prizeSpot.x, s.prizeSpot.y, true);
   writeBook(s);
   s.note = itemName(prize) + ' — you struck it from the glass!';
@@ -316,6 +318,7 @@ export default {
       set, ...built,
     };
     seatLane(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {

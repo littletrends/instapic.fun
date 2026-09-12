@@ -1,6 +1,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=arcade-restore-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const R = 11;
 const G = 390;
@@ -138,6 +139,7 @@ function pay(s, id, x, y) {
     s.specials++;
     s.tokens[id] = (s.tokens[id] || 0) + 1;
     if (alleyPlay) keep(id, 'pinball');
+    if (id === chapterPrize(s)) takePrize(s, id, {x, y});
     s.note = itemName(id) + (unique ? ' — a rare from the glass!' : ' into the treasure book.');
   }
   fly(s, id, x, y, special);
@@ -339,6 +341,7 @@ export default {
       set, ...built,
     };
     seatLane(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {

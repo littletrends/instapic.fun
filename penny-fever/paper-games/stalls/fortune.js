@@ -1,6 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend} from '../wallet.js?v=iris-cards-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const BACK = new URL('../assets/tarot-back.png', import.meta.url).href;
 const FACE = new URL('../assets/tarot-face.png', import.meta.url).href;
@@ -149,6 +150,8 @@ function finishIfFound(s) {
   s.foundSlot = slot;
   s.hold = 1.15;
   s.note = 'A keepsake was printed in the ' + SLOTS[slot] + '.';
+  const box = cardBox(slot);
+  takePrize(s, prizeItem(s.level), {x: box.x + box.w / 2, y: box.y + box.h / 2});
 }
 
 function wrapLine(d, text, x, y, size, color, maxW) {
@@ -281,11 +284,13 @@ export default {
     {id: 'again', label: alleyPlay ? 'Another reading · 1 penny' : 'Another reading'},
   ],
   create(level) {
-    return {
+    const s = {
       level, t: 0, topic: null, phase: 'pick', reads: 0, hand: null,
       anim: 0, hold: 0, won: false, foundSlot: -1,
       note: 'Ask the tent something. Then shuffle.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     s.t += dt;

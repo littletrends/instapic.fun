@@ -1,6 +1,6 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell} from '../chapter-kit.js';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 function point(t) {
   const a = t * 7.2;
@@ -21,11 +21,13 @@ export default {
   prizes: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'first-visit-badge'],
   actions: [{id: 'catch', label: 'Catch ring · Space'}],
   create(level) {
-    return {
+    const s = {
       level, t: 0, u: 0, caught: 0, runs: 0,
       rings: ringsFor(level).map(u => ({u, got: false})),
       note: 'Tap as the bead passes a ring.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     if (s.result) return;

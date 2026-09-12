@@ -1,6 +1,6 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell} from '../chapter-kit.js';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const KEYS = ['organ-music-box', 'star-token', 'moon-penny', 'pressed-heart'];
 
@@ -13,11 +13,13 @@ export default {
   prizes: ['organ-music-box', 'star-token', 'moon-penny', 'pressed-heart', 'ride-ticket', 'showman-ribbon'],
   actions: [{id: 'play', label: 'Play · Space'}],
   create(level) {
-    return {
+    const s = {
       level, t: 0, notes: [], spawn: 0.2, hit: 0, miss: 0,
       goal: swell(level, 8, 3, 22),
       note: 'Play the gold bar.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     if (s.result) return;

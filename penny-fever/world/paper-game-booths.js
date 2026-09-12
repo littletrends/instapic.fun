@@ -1,9 +1,22 @@
-import {games} from '../paper-games/catalogue.js?v=tmpl-webp-1';
+import {games} from '../paper-games/catalogue.js?v=penny-door-1';
+import {spriteKey} from '../paper-games/prizes.js?v=prize-fly-1';
+import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=tmpl-webp-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=prize-fly-1'),gameBase).href,
 }));
+
+// These rooms already charge a penny per throw/crank. Opening the table is free;
+// the purse is spent inside. Sit-down rooms (rides, Iris, Rosalie) cost one penny
+// to load. Workshop play.html without room=alley stays free and writes nothing.
+const PENNY_TABLE=new Set([
+ 'coin-pusher','pinball','milk-bottles','skee-ball','ball-toss','bent-rings',
+ 'catoptromancy','cover-the-spot','curios','duck-pond','dunk-tank','fairy-floss',
+ 'high-striker','lookup','marquee','mutoscope','pack','pass','penny-pitch',
+ 'plinko','popcorn','snap','water-gun','whisper',
+]);
+function isPennyTable(id){return PENNY_TABLE.has(id);}
 
 // Existing room routing owns the alley pause and return position. The game itself
 // owns its canvas, controls and lifecycle; leaving destroys just that iframe.
@@ -29,10 +42,13 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
-  const retry=doc.createElement('button');retry.type='button';retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':'Play again · 1 ticket';
-  if(pennyPlay){retry.disabled=true;retry.title=game.id==='coin-pusher'?'Leave and come back — the trays are as you left them.':game.id==='pinball'?'Leave and come back — the table remembers what it has already paid.':game.id==='milk-bottles'?'Leave and come back — the dairy is waiting.':'Leave and come back — the moons are waiting.';}
-  else retry.addEventListener('click',()=>load(true));
+  const pennyPlay=isPennyTable(game.id);
+  const retry=doc.createElement('button');retry.type='button';
+  retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':pennyPlay?'The table waits':'Play again · 1 penny';
+  if(pennyPlay){
+    retry.disabled=true;
+    retry.title='Leave and come back — this table remembers. Pennies are spent on each play.';
+  }else retry.addEventListener('click',()=>load(true));
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
     const PF=window.PennyFever;
@@ -42,25 +58,24 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
-  let cash;
-  if(pennyPlay){
-    cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
-    cash.addEventListener('click',()=>{
-      const PF=window.PennyFever;
-      const got=PF?.cashTicketForPennies?.();
-      if(!got){
-        status.hidden=false;
-        status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
-        return;
-      }
+  const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
+  cash.addEventListener('click',()=>{
+    const PF=window.PennyFever;
+    const got=PF?.cashTicketForPennies?.();
+    if(!got){
       status.hidden=false;
-      status.textContent=game.id==='pinball'?'A five-penny stack for the table.':game.id==='milk-bottles'?'A five-penny stack for the dairy.':game.id==='skee-ball'?'A five-penny stack for the moonbow.':'A five-penny stack for the falls.';
-      paintWallet();
-      if(frame&&frame.getAttribute('src')==='about:blank') load();
-    });
-  }
-  if(cash) bar.append(back,title,list,wallet,cash,retry);
-  else bar.append(back,title,list,wallet,retry);
+      status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
+      return;
+    }
+    status.hidden=false;
+    status.textContent='Five pennies in the purse.';
+    paintWallet();
+    if(frame&&frame.getAttribute('src')==='about:blank') load();
+  });
+  const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
+  chest.innerHTML='<span>🗝</span> Treasures';
+  chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
+  bar.append(back,title,list,wallet,cash,retry,chest);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -76,10 +91,14 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
   const PF=window.PennyFever;
-  const pennyPlay=game.id==='coin-pusher'||game.id==='pinball'||game.id==='milk-bottles'||game.id==='skee-ball';
-  if(!pennyPlay && PF?.spendTicket && !PF.spendTicket(game.id)){
-    status.hidden=false;
-    status.textContent='No booth ticket in the pocket — still opening so you can look around. Buy a strip from Aura’s roll for a proper play.';
+  const pennyPlay=isPennyTable(game.id);
+  if(!pennyPlay){
+    if(PF?.spendPennies&&!PF.spendPennies(1)){
+      status.hidden=false;
+      status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura. Workshop practice stays free.';
+      unload();
+      return;
+    }
   }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};
@@ -91,23 +110,68 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   onReset(){if(room()&&!room().hidden)load(true);else unload();}};
 }
 
-function listenForPrizes(){
- if(listenForPrizes.bound)return;
- listenForPrizes.bound=true;
+function flyToTreasure(item, canvasX, canvasY){
+ if(!item)return;
+ const room=document.querySelector('.cabinet-interior.paper-game-cabinet:not([hidden])');
+ const chest=room?.querySelector('.paper-game-treasure')||document.getElementById('pfPocketChest');
+ if(!chest)return;
+ const frame=room?.querySelector('iframe.paper-game-frame');
+ const fr=frame?.getBoundingClientRect();
+ const startX=fr?fr.left+((Number(canvasX)||868)/900)*fr.width:window.innerWidth*0.72;
+ const startY=fr?fr.top+((Number(canvasY)||42)/1200)*fr.height:72;
+ const img=document.createElement('img');
+ img.className='pf-prize-fly';
+ img.alt='';
+ img.src=frontUrl(spriteKey(item));
+ img.style.left=Math.round(startX-36)+'px';
+ img.style.top=Math.round(startY-36)+'px';
+ document.body.append(img);
+ const dest=chest.getBoundingClientRect();
+ const dx=dest.left+dest.width/2-startX;
+ const dy=dest.top+dest.height/2-startY;
+ const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+ requestAnimationFrame(()=>{
+  img.style.transform=reduce
+   ?`translate(${dx}px,${dy}px) scale(.2)`
+   :`translate(${dx}px,${dy}px) scale(.18) rotate(420deg)`;
+  img.style.opacity='0.12';
+ });
+ chest.classList.add('is-prize-catch');
+ document.getElementById('pfPocketChest')?.classList.add('is-prize-catch');
+ setTimeout(()=>{img.remove();chest.classList.remove('is-prize-catch');document.getElementById('pfPocketChest')?.classList.remove('is-prize-catch');},760);
+}
+
+function listenForRoom(){
+ if(listenForRoom.bound)return;
+ listenForRoom.bound=true;
  window.addEventListener('message',event=>{
   if(event.origin!==location.origin)return;
   const data=event.data;
-  if(!data||data.channel!=='pf-paper-world'||data.type!=='prize')return;
+  if(!data||data.channel!=='pf-paper-world')return;
+  if(data.type==='open'&&data.id){
+   location.hash='cabinet/'+data.id;
+   return;
+  }
+  if(data.type==='leave'){
+   const live=new URL(location.href);
+   live.searchParams.set('style','paper');
+   live.searchParams.set('rail','paper');
+   live.hash='alley';
+   location.href=live.href;
+   return;
+  }
+  if(data.type!=='prize')return;
   const PF=window.PennyFever, model=window.PennyFeverInventoryModel;
+  if(data.fly) flyToTreasure(data.item, data.x, data.y);
   if(!PF?.getState||!model?.recordPaperPrize)return;
   const earned=model.recordPaperPrize(PF.getState(),{item:data.item,stall:data.stall,chapter:data.chapter});
   if(!earned.length)return;
   PF.saveState?.();
-  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned,celebrate:data.celebrate===true}}));
+  window.dispatchEvent(new CustomEvent('pennyfever:inventoryaward',{detail:{ids:earned,celebrate:false}}));
  });
 }
 export function registerPaperGameBooths(PF,doc=globalThis.document,nav=globalThis.location){
- listenForPrizes();
+ listenForRoom();
  const vendors=paperGameRooms.map(game=>createPaperGameVendor(game,doc,nav));
  vendors.forEach(vendor=>{
   PF.registerVendor(vendor);
@@ -121,7 +185,10 @@ if(typeof window!=='undefined'){
  const install=()=>{
   if(installed||!window.PennyFever?.registerVendor)return false;
   installed=true;const vendors=registerPaperGameBooths(window.PennyFever);
-  const showHash=()=>{const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];vendors.find(v=>v.id===id)?.onShow();};
+  const showHash=()=>{
+    const id=location.hash.match(/^#cabinet\/([^/]+)/)?.[1];
+    vendors.forEach(v=>{if(v.id===id)v.onShow();else v.onLeave();});
+  };
   window.addEventListener('hashchange',showHash);
   window.addEventListener('pagehide',()=>vendors.forEach(v=>v.onLeave()));
   window.addEventListener('pageshow',event=>{if(event.persisted)showHash();});

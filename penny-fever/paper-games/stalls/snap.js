@@ -1,6 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=felix-safari-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const WIND = {x: 726, y: 992, pull: 50};
 const CLOCK = 48;
@@ -149,6 +150,7 @@ function claim(s) {
   s.score += 2500;
   s.prizeSpot.flash = 0.45;
   if (alleyPlay) keep(prize, 'snap');
+  takePrize(s, prize);
   fly(s, prize, s.prizeSpot.x, s.prizeSpot.y, true);
   s.note = itemName(prize) + ' — you snapped it off the branch!';
   done(s, 'A moment worth keeping',
@@ -230,6 +232,7 @@ export default {
       set,
     };
     hangPrize(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {

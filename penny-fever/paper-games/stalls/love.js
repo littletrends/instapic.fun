@@ -1,6 +1,7 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend} from '../wallet.js?v=loves-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const LOVES = ['L', 'O', 'V', 'E', 'S'];
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -142,6 +143,7 @@ function maybeWin(s) {
   s.won = true;
   s.hold = 1.2;
   s.phase = 'result';
+  takePrize(s, ch.prize, {x: 720, y: 878});
   s.note = pity && !hitNeed
     ? 'Rosalie blots the page. A valentine anyway.'
     : 'A valentine in the heat.';
@@ -150,10 +152,10 @@ function maybeWin(s) {
 export default {
   title: 'Love Tester',
   intro: alleyPlay
-    ? 'Rosalie’s old-school tester. Write two names. Count L O V E S, add the neighbours, and read the heat. A booth ticket sits you down. The first sitting of each chapter is included; another name costs a penny. Warmer chapters want a higher % — or she helps on the fifth try.'
+    ? 'Rosalie’s old-school tester. Write two names. Count L O V E S, add the neighbours, and read the heat. A penny sits you down. The first sitting of each chapter is included; another name costs a penny. Warmer chapters want a higher % — or she helps on the fifth try.'
     : 'Write two names. Count the loves. Add the neighbours until a percent remains. Workshop sittings are free.',
   instructions: alleyPlay
-    ? 'Tap a name plate, type with the paper keys, or pick a suggestion. Read the names. If the % is warm enough for this chapter, the valentine is yours. Miss it and pay a penny to try another pair. Cash a booth ticket at Copper Falls if the purse is empty.'
+    ? 'Tap a name plate, type with the paper keys, or pick a suggestion. Read the names. If the % is warm enough for this chapter, the valentine is yours. Miss it and pay a penny to try another pair. Cash a ticket on the bar for five pennies if the purse is empty.'
     : 'Type two names and read them. Later chapters want a warmer percent.',
   levels: CHAPTERS.map(c => c.title),
   sprites: ['pressed-heart', 'rose-hair-bow', 'rose-press', 'rose-lockbox', 'kindness-heart', 'friendship-pins', 'ribbon-gift-box'],
@@ -163,11 +165,13 @@ export default {
     {id: 'again', label: alleyPlay ? 'Another sitting · 1 penny' : 'Another sitting'},
   ],
   create(level) {
-    return {
+    const s = {
       level, t: 0, you: crewName(), them: '', focus: 1, phase: 'edit',
       reads: 0, lastKey: '', counts: null, rows: null, pct: 0, reveal: 0, hold: 0,
       won: false, note: 'Who shall we ask about?',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     s.t += dt;

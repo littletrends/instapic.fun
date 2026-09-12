@@ -1,21 +1,33 @@
 import {done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {swell} from '../chapter-kit.js';
+import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const FACES = ['laughing-doorway', 'looking-glass-locket', 'velvet-mask'];
 
+function shuffleInPlace(list) {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  return list;
+}
+
+function clearWait(s) {
+  if (s.wait) { clearTimeout(s.wait); s.wait = 0; }
+}
+
 function deal(s) {
-  s.doors = ['looking-glass-locket', 'laughing-doorway', 'velvet-mask'];
-  s.real = 1;
-  s.flash = 0.9;
+  clearWait(s);
+  s.doors = shuffleInPlace(FACES.slice());
+  s.real = s.doors.indexOf('laughing-doorway');
+  s.flash = Math.max(0.55, 0.95 - s.level * 0.06);
   s.shuffled = false;
   s.locked = false;
   s.note = 'Watch the real doorway — then pick it.';
 }
 
 function shuffleDoors(s) {
-  const order = [0, 1, 2].sort(() => Math.random() - 0.5);
-  s.doors = order.map(i => s.doors[i]);
+  shuffleInPlace(s.doors);
   s.real = s.doors.indexOf('laughing-doorway');
   s.shuffled = true;
 }
@@ -33,10 +45,12 @@ export default {
     {id: 'd2', label: 'Right door'},
   ],
   create(level) {
-    const s = {level, t: 0, found: 0, goal: swell(level, 3, 1, 8), doors: [], real: 0, flash: 0, shuffled: false, locked: false, note: ''};
+    const s = {level, t: 0, found: 0, goal: swell(level, 3, 1, 8), doors: [], real: 0, flash: 0, shuffled: false, locked: false, wait: 0, note: ''};
     deal(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
+  dispose(s) { clearWait(s); },
   update(s, dt) {
     s.t += dt;
     const was = s.flash;
@@ -59,10 +73,10 @@ export default {
       s.found++;
       s.note = 'The real laugh!';
       if (s.found >= s.goal) done(s, 'Through the real door', s.found + ' true doorways.');
-      else setTimeout(() => deal(s), 500);
+      else s.wait = setTimeout(() => deal(s), 500);
     } else {
       s.note = 'A mirror. Watch again.';
-      setTimeout(() => deal(s), 700);
+      s.wait = setTimeout(() => deal(s), 700);
     }
   },
   key(s, k, down) {

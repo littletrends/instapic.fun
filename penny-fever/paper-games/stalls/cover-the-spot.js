@@ -1,6 +1,7 @@
 import {clamp, dist, done, TAU} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=dot-moon-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const CX = 450;
 const CY = 640;
@@ -135,6 +136,7 @@ function claim(s) {
   s.drag = false;
   if (prize) {
     if (alleyPlay) keep(prize, 'cover-the-spot');
+    takePrize(s, prize);
     fly(s, prize, CX, CY);
     s.note = itemName(prize) + ' — stitched off the hanging quilt!';
   } else s.note = 'Not a glimmer escaped.';
@@ -196,6 +198,7 @@ export default {
     s.clockMax = set.clock;
     s.clock = set.clock;
     evaluate(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {

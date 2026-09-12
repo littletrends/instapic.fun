@@ -1,6 +1,6 @@
 import {clamp, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell} from '../chapter-kit.js';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const rides = ['music-carousel', 'organ-music-box', 'pocket-wheel', 'swing-spinner', 'gyro-ghost', 'star-token'];
 
@@ -34,10 +34,12 @@ export default {
   actions: [{id: 'stop', label: 'Stop · Space'}],
   create(level) {
     const list = rides.slice(0, swell(level, 4, 1, 6));
-    return {
+    const s = {
       level, t: 0, spin: 0, cool: 0, caught: 0, tries: 0, goal: swell(level, 3, 1, 8),
       rides: list, target: list[0], note: 'Wait for the matching ride to reach the lantern.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     s.t += dt; s.cool = Math.max(0, s.cool - dt);

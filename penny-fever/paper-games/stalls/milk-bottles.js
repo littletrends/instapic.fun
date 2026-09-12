@@ -1,6 +1,7 @@
 import {clamp, segmentDistance, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=booth-play-2';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const start = {x: 450, y: 1050};
 const SETS = [
@@ -76,11 +77,13 @@ export default {
   prizes: SETS.map(s => s.prize),
   actions: [{id: 'throw', label: alleyPlay ? 'Throw · 1 penny' : 'Throw mercury bead'}],
   create(level) {
-    return {
+    const s = {
       ...build(level),
       level, aim: {x: 450, y: 770}, ball: null, throws: 0, t: 0, settle: 0, won: false, lost: false,
       note: alleyPlay ? 'A penny a bead. ' + (SETS[level] || SETS[0]).throws + ' throws this dairy.' : 'Limited practice beads. Clear the dairy.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt, input) {
     s.t += dt;
@@ -111,6 +114,7 @@ export default {
       if (s.settle > 1.1) {
         s.won = true;
         if (alleyPlay && s.prize) keep(s.prize, 'milk-bottles');
+        takePrize(s, s.prize);
         done(s, 'Not a bottle left standing',
           itemName(s.prize) + ' flies into the treasure book.', {prize: s.prize, won: true});
       }

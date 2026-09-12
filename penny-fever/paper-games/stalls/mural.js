@@ -1,6 +1,6 @@
 import {dist, done} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {swell} from '../chapter-kit.js';
+import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 function spots(level) {
   const n = swell(level, 6, 2, 16);
@@ -25,7 +25,9 @@ export default {
   prizes: ['midway-map', 'stamp-and-inkpad', 'lantern-lighter', 'ride-stamp-book', 'first-visit-badge', 'ride-explorer-pennant'],
   actions: [],
   create(level) {
-    return {level, t: 0, patches: spots(level), note: 'Stamp the pale patches.'};
+    const s = {level, t: 0, patches: spots(level), note: 'Stamp the pale patches.'};
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt) {
     s.t += dt;

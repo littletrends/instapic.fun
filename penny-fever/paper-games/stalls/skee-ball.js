@@ -1,6 +1,7 @@
 import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=arcade-restore-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const SETS = [
   {prize: 'silver-cup-chip', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,
@@ -95,6 +96,7 @@ function judge(s) {
     s.won = true;
     fly(s, s.prize, hole.x, hole.y, true);
     if (alleyPlay && s.prize) keep(s.prize, 'skee-ball');
+    takePrize(s, s.prize);
     done(s, 'The moon caught it',
       itemName(s.prize) + ' flies into the treasure book.',
       {prize: s.prize, won: true});
@@ -141,7 +143,7 @@ export default {
   ],
   create(level) {
     const built = build(level);
-    return {
+    const s = {
       ...built,
       level, t: 0, angle: 0, power: 390, ball: null, throws: 0, drag: false,
       won: false, lost: false, landed: null, settle: 0, fly: [],
@@ -149,6 +151,8 @@ export default {
         ? 'One penny. One roll. ' + built.cue
         : 'One practice roll. ' + built.cue,
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt, input) {
     s.t += dt;

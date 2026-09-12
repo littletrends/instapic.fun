@@ -1,6 +1,6 @@
 import {clamp, dist, done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
-import {pace, swell} from '../chapter-kit.js';
+import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const kinds = ['balloon-bouquet', 'autumn-leaf-lantern', 'moon-lantern', 'prize-bag'];
 
@@ -25,11 +25,13 @@ export default {
   prizes: ['balloon-bouquet', 'prize-bag', 'swing-spinner'],
   actions: [{id: 'left', label: 'Pointer left', hold: true}, {id: 'pop', label: 'Pop nearest · Space'}, {id: 'right', label: 'Pointer right', hold: true}],
   create(level) {
-    return {
+    const s = {
       level, t: 0, aim: 450, floaters: [], spawned: 0, popped: 0, misses: 0,
       goal: swell(level, 8, 3, 22), delay: .2, target: kinds[0],
       note: 'Pop only the matching balloon.',
     };
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    return s;
   },
   update(s, dt, input) {
     s.t += dt; s.delay -= dt;

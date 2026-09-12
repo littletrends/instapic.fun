@@ -1,6 +1,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=copper-edge-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=prize-fly-1';
 
 const DUMP_CAP = 24;
 const LIP_SPEED = 16;
@@ -162,6 +163,7 @@ function payout(s, c) {
     if (c.id !== 'everyday-penny') s.specials++;
     if (alleyPlay && c.score) credit(c.score);
   }
+  if (wonChapter) takePrize(s, chapter.prize, {x: c.x, y: c.y});
   if (alleyPlay) {
     if (wonChapter) keep(chapter.prize);
     else if (c.id !== 'everyday-penny') keep(c.id);
@@ -338,10 +340,12 @@ export default {
       const s = hydrate(saved);
       s.level = level;
       plantPrize(s.coins, level, roll);
+      bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
       return s;
     }
     const s = fresh(level, roll);
     persist(s);
+    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {
