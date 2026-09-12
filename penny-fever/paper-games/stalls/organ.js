@@ -5,12 +5,12 @@ import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 const KEYS = ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner'];
 
 export default {
-  title: 'Calliope Keys',
+  title: 'Fairground Organ',
   intro: 'Otto’s fairground organ unrolls a paper score. Tap when a note crosses the gold bar.',
   instructions: 'Notes drift down. Tap or press Space as they cross the bar. Later chapters send more, faster.',
   levels: ['A slow roll', 'The evening waltz', 'A busier score', 'Lantern notes', 'A quick polka', 'The last chord'],
   sprites: KEYS,
-  prizes: ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner', 'ride-ticket', 'aura-keepsake'],
+  prizes: ['organ-music-box', 'star-token', 'pressed-heart', 'lucky-match', 'marquee-bulb', 'pocket-marquee'],
   actions: [{id: 'play', label: 'Play · Space'}],
   create(level) {
     const s = {

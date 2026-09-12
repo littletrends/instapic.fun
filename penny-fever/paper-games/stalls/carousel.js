@@ -30,7 +30,7 @@ export default {
   instructions: 'Watch the spinning treasures. When the one shown at the top sits under the lantern, tap Stop or press Space. Later chapters spin faster. Misses are free; the carousel simply turns again.',
   levels: ['A gentle first waltz', 'The band picks up', 'Midnight horses', 'A quicker little band', 'Six treasures spinning', 'The last lantern waltz'],
   sprites: rides,
-  prizes: ['music-carousel', 'organ-music-box', 'pocket-wheel', 'laughing-doorway', 'ride-explorer-pennant', 'ride-ticket'],
+  prizes: ['music-carousel', 'gyro-ghost', 'ticket-satchel', 'first-visit-badge', 'ride-explorer-pennant', 'aura-keepsake'],
   actions: [{id: 'stop', label: 'Stop · Space'}],
   create(level) {
     const list = rides.slice(0, swell(level, 4, 1, 6));

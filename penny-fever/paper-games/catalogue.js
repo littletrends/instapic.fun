@@ -33,7 +33,7 @@ const rows = [
   ['helter','Tilly','Spiral Slide','Catch every gold ring on the way down the paper helter-skelter.'],
   ['swings','Hugo','Chair Waltz','Catch the matching chair as it sweeps over the front mat.'],
   ['funhouse','Juno','Laughing Doorway','Remember the real laugh after the mirrors shuffle.'],
-  ['organ','Otto','Calliope Keys','Tap the organ notes as they cross the gold bar.'],
+  ['organ','Otto','Fairground Organ','Tap the organ notes as they cross the gold bar.'],
   ['mural','Arlo','Painted Bay','Stamp the fading patches until the alley wall remembers.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);

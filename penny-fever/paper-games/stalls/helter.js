@@ -14,11 +14,11 @@ function ringsFor(level) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s helter-skelter is a paper spiral. Catch every gold ring on the way down — miss one and she sends you back to the top.',
-  instructions: 'A bead slides the spiral. Tap or press Space when it passes through a gold ring. Catch every ring in one run.',
+  intro: 'Tilly’s helter-skelter is a paper spiral. Catch the gold rings on the way down. Miss one and keep going — she’ll send you down again for the ones you skipped.',
+  instructions: 'A bead slides the spiral. Tap or press Space when it passes through a gold ring. Caught rings stay caught if you ride again.',
   levels: ['A gentle slide', 'Two more turns', 'A tighter coil', 'The evening drop', 'A busy spiral', 'The last hoop'],
   sprites: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag'],
-  prizes: ['ride-explorer-pennant', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'lucky-match'],
+  prizes: ['lucky-match', 'star-token', 'splash-ring', 'brave-try-ribbon', 'prize-bag', 'first-visit-badge'],
   actions: [{id: 'catch', label: 'Catch ring · Space'}],
   create(level) {
     const s = {
@@ -34,11 +34,10 @@ export default {
     s.t += dt;
     s.u = clamp(s.u + pace(s.level, 0.22, 0.02, 0.12) * dt, 0, 1);
     if (s.u >= 1) {
-      if (s.rings.every(r => r.got)) done(s, 'Right to the sawdust', 'Every ring on one slide.');
+      if (s.rings.every(r => r.got)) done(s, 'Right to the sawdust', 'Every ring on the slide.');
       else {
-        s.u = 0; s.caught = 0; s.runs++;
-        s.rings.forEach(r => { r.got = false; });
-        s.note = 'Off the slide. From the top again.';
+        s.u = 0; s.runs++;
+        s.note = 'Again for the rings you skipped.';
       }
     }
   },
