@@ -43,7 +43,7 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   workshop: flag === 'workshop',
   ready: Boolean(direct)||built.has(id),
   restyle: restyled.has(id),
-  asset: `./assets/${id}.png`,
+  asset: `./assets/${id}.webp`,
   module: `./stalls/${id}.js`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));

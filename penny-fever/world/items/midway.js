@@ -1,4 +1,4 @@
-import {games} from '../../paper-games/catalogue.js?v=ride-games-1';
+import {games} from '../../paper-games/catalogue.js?v=tmpl-webp-1';
 import {kits} from '../../paper-games/prizes.js?v=ride-games-1';
 
 const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;

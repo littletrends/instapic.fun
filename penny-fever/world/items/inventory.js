@@ -1,5 +1,5 @@
 import {loadArt,paintIcon} from './art.js?v=pocket-book-1';
-import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=found-turn-1';
+import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=tmpl-webp-1';
 
 const model = globalThis.PennyFeverInventoryModel;
 const studio = document.body.dataset.objectStudio === 'true';

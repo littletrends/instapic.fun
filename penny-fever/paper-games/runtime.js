@@ -1,4 +1,4 @@
-import {games,byId} from './catalogue.js?v=iris-cards-1';
+import {games,byId} from './catalogue.js?v=tmpl-webp-1';
 import {Draw,seeded,clamp} from './draw.js';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js';
@@ -35,7 +35,7 @@ function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(typ
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- engine=(await import(entry.module+'?v=loves-1')).default;
+ engine=(await import(entry.module+'?v=tmpl-webp-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':'A booth ticket from Aura’s roll starts this stall. Cash tickets for pennies at Copper Falls, Pip’s tables, Mabel’s dairy or Skip’s moonbow. Workshop play from the paper-games list stays free.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave');});}
@@ -61,7 +61,7 @@ try{
   if(d.type==='resume'&&!playing&&!ended)start();
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
- const img=$('#backdrop');img.src=entry.asset;img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ const img=$('#backdrop');img.decoding='async';img.fetchPriority='high';img.src=entry.asset;img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
  if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;if(engine.tables){$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.textContent='Table · each chapter is a new set';}else if(engine.live){$('#chapter').disabled=true;$('#chapter').hidden=true;$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.hidden=true;}tellRoom('ready',{title:engine.title});}
  loadSprites(spriteIds.map(spriteKey)).then(art=>{if(disposed||!draw)return;draw.art=art;paint();});
 }catch(e){error(e);}
