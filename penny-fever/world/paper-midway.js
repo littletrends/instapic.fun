@@ -1,8 +1,8 @@
 import * as THREE from './lib/three.module.min.js';
 import {paperRail} from './paper-guest-entrance.js?v=keep-light-1';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=ride-stagger-1';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=cutout-2';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=cutout-2';
 import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=booth-till-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};

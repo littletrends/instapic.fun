@@ -1,7 +1,7 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=alley-webp-1';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=cutout-2';
 import {VENDOR_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=alley-webp-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=cutout-2';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=keep-light-1';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';

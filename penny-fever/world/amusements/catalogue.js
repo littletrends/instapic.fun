@@ -92,4 +92,11 @@ export const PAPERCUT_FRAMES={
   host:{front:[96,30,319,450],left:[129,30,253,450],back:[100,30,311,450],right:[128,30,255,450]}}
 };
 export function papercutRideSrc(id,view){return `${PAPERCUT_ROOT}/amusements/${id}/${view}.webp`;}
-export function papercutHostSrc(host,view){return `${PAPERCUT_ROOT}/attendants/${host.toLowerCase()}/${view}.webp`;}
+// Display names can change; the attendant folders stay the original art ids.
+const HOST_ART_FOLDER={calliope:'florence',florence:'florence'};
+export function papercutHostSrc(host,view){
+ const slug=String(host||'').toLowerCase().replace(/[^a-z]+/g,'');
+ if(!slug)return '';
+ const folder=HOST_ART_FOLDER[slug]||slug;
+ return `${PAPERCUT_ROOT}/attendants/${folder}/${view}.webp`;
+}
