@@ -1584,6 +1584,8 @@ function syncStallCard(best) {
       chat.hidden = best.kind === "aura";
       chat.textContent = "Chat";
     }
+    const back = el("pfStallCardBack");
+    if (back) back.textContent = best.kind === "aura" ? "Enter the sideshow alley" : "Back to the alley";
     const till = el("pfStallCardTill");
     if (till) till.hidden = best.kind !== "aura";
     if (best.kind === "aura") paintAuraWallet(el("pfStallCard"));
