@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v4';
+const STORE = 'pf-paper-dolls-v5';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -21,6 +21,13 @@ export const EYE_COLORS = [
   { id: 'hazel', label: 'Hazel', rgb: [110, 78, 36] },
   { id: 'green', label: 'Green', rgb: [62, 102, 58] },
   { id: 'grey', label: 'Grey', rgb: [96, 104, 112] },
+];
+export const OUTFITS = [
+  { id: 'none', label: 'Undershirt', book: null },
+  { id: 'garden', label: 'Garden party', book: 'garden-party-book' },
+  { id: 'seaside', label: 'Seaside day', book: 'seaside-day-book' },
+  { id: 'winter', label: 'Winter lantern', book: 'winter-lantern-book' },
+  { id: 'moonlight', label: 'Moonlight', book: 'moonlight-wardrobe' },
 ];
 export const NOSES = [
   { id: 'none', label: 'None' },
@@ -47,6 +54,7 @@ export function blankDraft() {
     hair: 'none',
     hairColor: 'blonde',
     eyes: 'blue',
+    outfit: 'none',
     name: 'Paper doll',
   };
 }
@@ -68,7 +76,11 @@ function load(url) {
 }
 
 export function preloadDollArt() {
-  return load(src('bodies', 'girl.png')).catch(() => null);
+  const urls = [
+    src('bodies', 'girl.png'),
+    ...OUTFITS.filter(o => o.id !== 'none').map(o => src('outfits', `${o.id}.png`)),
+  ];
+  return Promise.all(urls.map(u => load(u).catch(() => null)));
 }
 
 function recolorTo(ctx, rgb, {skinOnly=false}={}) {
@@ -109,6 +121,37 @@ function recolorEyes(ctx, rgb) {
     if (mx < 50) continue;
     const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 140;
     const lift = 0.35 + lum * 0.85;
+    d[i] = Math.min(255, tr * lift);
+    d[i + 1] = Math.min(255, tg * lift);
+    d[i + 2] = Math.min(255, tb * lift);
+  }
+  ctx.putImageData(data, 0, 0);
+}
+
+function isSkinPixel(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  if (mx > 210 && mx - mn < 45) return false;
+  if (b >= r) return false;
+  if (r < g + 6) return false;
+  if ((r + g + b) / 3 < 95) return false;
+  return true;
+}
+
+function recolorSkinFromMask(ctx, maskImg, rgb) {
+  if (!rgb) return;
+  const tmp = document.createElement('canvas');
+  tmp.width = W; tmp.height = H;
+  const t = tmp.getContext('2d');
+  t.drawImage(maskImg, 0, 0, W, H);
+  const mask = t.getImageData(0, 0, W, H).data;
+  const data = ctx.getImageData(0, 0, W, H);
+  const d = data.data;
+  const [tr, tg, tb] = rgb;
+  for (let i = 0; i < d.length; i += 4) {
+    if (mask[i + 3] < 12 || d[i + 3] < 12) continue;
+    if (!isSkinPixel(mask[i], mask[i + 1], mask[i + 2])) continue;
+    const lum = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 155;
+    const lift = 0.22 + lum * 0.9;
     d[i] = Math.min(255, tr * lift);
     d[i + 1] = Math.min(255, tg * lift);
     d[i + 2] = Math.min(255, tb * lift);
@@ -254,9 +297,11 @@ export async function composeDoll(spec) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const bodyImg = await load(src('bodies', 'girl.png'));
-  ctx.drawImage(bodyImg, 0, 0, W, H);
+  const wear = spec.outfit && spec.outfit !== 'none' ? spec.outfit : null;
+  const wearImg = wear ? await load(src('outfits', `${wear}.png`)) : bodyImg;
+  ctx.drawImage(wearImg, 0, 0, W, H);
   const skin = SKINS.find(s => s.id === spec.skin);
-  if (skin?.rgb) recolorTo(ctx, skin.rgb, {skinOnly: true});
+  if (skin?.rgb) recolorSkinFromMask(ctx, bodyImg, skin.rgb);
   const eyes = EYE_COLORS.find(e => e.id === spec.eyes);
   if (eyes?.rgb) recolorEyes(ctx, eyes.rgb);
   const url = canvas.toDataURL('image/png');

@@ -1,7 +1,7 @@
 import {
-  SKINS, EYE_COLORS,
+  SKINS, EYE_COLORS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-girl-1';
+} from './paper-dolls.js?v=doll-sets-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -262,7 +262,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>One girl doll. Skin and eye colour for now — collections will dress her later. Not a replacement for the original six.</p>
+<p>One girl doll. Skin, eyes, and a set from the paper-doll albums. Not a replacement for the original six.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
@@ -275,6 +275,7 @@ function mount() {
   <div class="doll-maker-parts">
     ${optionRow('Skin', 'skin', SKINS, true)}
     ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
+    ${optionRow('Set', 'outfit', OUTFITS)}
   </div>
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
