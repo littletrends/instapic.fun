@@ -840,6 +840,7 @@ const api = {
   pose,
   warp,
   step,
+  stepOut,
 };
 
 window.PennyFeverWorld = api;
@@ -1059,10 +1060,71 @@ function playIdFor(id) {
   return RIDE_GAMES[id] || id;
 }
 
+function aisleX(side) {
+  return (side || 1) * Math.min(WALK_X - 0.35, 0.95);
+}
+
+function boothPose(id) {
+  if (!id) return null;
+  const playId = playIdFor(id);
+  const stall = stalls?.find((x) => x.userData.stall?.id === playId || x.userData.stall?.id === id);
+  if (stall) {
+    const side = Math.sign(stall.position.x) || 1;
+    return { id: playId, x: aisleX(side), z: stall.position.z, yaw: 0 };
+  }
+  const rideKey = Object.keys(RIDE_GAMES).find((key) => RIDE_GAMES[key] === playId) || id;
+  const ride = papercutRides?.figures?.find((f) => {
+    if (f.userData.kind !== "ride") return false;
+    const aid = f.userData.amusementId;
+    return aid === rideKey || aid === id || aid === playId || RIDE_GAMES[aid] === playId;
+  });
+  if (ride) {
+    const side = Math.sign(ride.position.x) || 1;
+    return { id: playId, x: aisleX(side), z: ride.position.z, yaw: 0 };
+  }
+  return null;
+}
+
+function rememberAlleySpot(id) {
+  const pose = boothPose(id) || (player && Number.isFinite(player.position.z) ? {
+    id: id || "",
+    x: player.position.x,
+    z: player.position.z,
+    yaw: camYaw,
+  } : (id ? { id } : null));
+  if (!pose) return;
+  try { sessionStorage.setItem("pf-alley-spot", JSON.stringify(pose)); } catch { /* private mode */ }
+}
+
+function restoreAlleySpot() {
+  try {
+    const spot = JSON.parse(sessionStorage.getItem("pf-alley-spot") || "null");
+    if (!spot) return false;
+    const pose = Number.isFinite(Number(spot.z)) ? spot : boothPose(spot.id);
+    if (!pose || !Number.isFinite(Number(pose.z))) return false;
+    if (player) warp(Number(pose.x) || 0, Number(pose.z), Number.isFinite(Number(pose.yaw)) ? Number(pose.yaw) : 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function stepOut(id) {
+  const pose = boothPose(id);
+  if (pose) {
+    try { sessionStorage.setItem("pf-alley-spot", JSON.stringify(pose)); } catch { /* private mode */ }
+    if (player) warp(pose.x, pose.z, pose.yaw);
+    return true;
+  }
+  rememberAlleySpot(id);
+  return restoreAlleySpot();
+}
+
 function enterStallById(id) {
   if (!id) return false;
   id = playIdFor(id);
   if (!document.getElementById("cabinet-" + id)) return false;
+  rememberAlleySpot(id);
   closeStallCard();
   closeAlleyMap();
   location.hash = "cabinet/" + id;
@@ -2590,6 +2652,7 @@ function startNow() {
     return false;
   }
   if (!el("pfWorld")) return false;
+  const fresh = !scene;
   if (!scene) {
     try {
       buildWorld();
@@ -2604,10 +2667,6 @@ function startNow() {
   api.ok = true;
   api.started = true;
   api.paused = false;
-  camYaw = 0;
-  glanceYaw = 0;
-  viewBlend = 0;
-  lookZoom = 1;
   document.body.classList.add("is-in-world");
   document.body.classList.remove("is-world-map");
   closeAlleyMap();
@@ -2618,8 +2677,16 @@ function startNow() {
   stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
-  if ((location.hash || "").replace(/^#/, "") === "booth") {
-    warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  if (fresh) {
+    camYaw = 0;
+    glanceYaw = 0;
+    viewBlend = 0;
+    lookZoom = 1;
+    if ((location.hash || "").replace(/^#/, "") === "booth") {
+      warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+    } else {
+      restoreAlleySpot();
+    }
   }
   loop();
   window.dispatchEvent(new Event("pf-world-ready"));

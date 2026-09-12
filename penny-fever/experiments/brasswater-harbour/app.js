@@ -230,7 +230,10 @@ on($('exit'), 'click', (event) => {
   dispose();
   if (window.parent !== window) {
     event.preventDefault();
-    try { window.parent.location.hash = 'alley'; } catch (_) { /* stay on this page */ }
+    try {
+      window.parent.PennyFeverWorld?.stepOut?.('water-gun');
+      window.parent.location.hash = 'alley';
+    } catch (_) { /* stay on this page */ }
   }
 });
 on(window, 'pagehide', e => { if (e.persisted) { setPaused(true); cancelFrame(); } else dispose(); });

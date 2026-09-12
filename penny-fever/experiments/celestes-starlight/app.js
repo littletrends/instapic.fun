@@ -201,7 +201,10 @@ on($('exit'), 'click', (event) => {
   leaving(event);
   if (window.parent !== window && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
     event.preventDefault();
-    try { window.parent.location.hash = 'alley'; } catch (_) { /* stay here */ }
+    try {
+      window.parent.PennyFeverWorld?.stepOut?.('lookup');
+      window.parent.location.hash = 'alley';
+    } catch (_) { /* stay here */ }
   }
 });
 on($('harbour-link'), 'click', leaving);

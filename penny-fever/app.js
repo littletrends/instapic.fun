@@ -825,8 +825,10 @@
           setTimeout(() => returnedDoor.classList.remove("alley-returned"), 1200);
         }
       }
-      if (window.PennyFeverWorld && typeof window.PennyFeverWorld.start === "function") {
-        window.PennyFeverWorld.start();
+      const world = window.PennyFeverWorld;
+      if (world) {
+        if (world.started && typeof world.resume === "function") world.resume();
+        else if (typeof world.start === "function") world.start();
       }
       return "foyer";
     }
@@ -867,13 +869,17 @@
     // fallback
     const foyer = $("foyer");
     if (foyer) { foyer.hidden = false; foyer.inert = false; }
-    if (window.PennyFeverWorld && typeof window.PennyFeverWorld.start === "function") {
-      window.PennyFeverWorld.start();
+    const world = window.PennyFeverWorld;
+    if (world) {
+      if (world.started && typeof world.resume === "function") world.resume();
+      else if (typeof world.start === "function") world.start();
     }
     return "foyer";
   }
 
   function goArcade() {
+    const slug = (location.hash || "").match(/^#cabinet\/([^/]+)/)?.[1];
+    try { window.PennyFeverWorld?.stepOut?.(slug); } catch (_) { /* alley not ready */ }
     location.hash = "alley";
   }
 

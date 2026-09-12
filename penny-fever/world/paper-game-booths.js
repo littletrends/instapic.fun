@@ -4,7 +4,7 @@ import {frontUrl} from '../paper-games/sprites.js';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=open-2'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=step-out-1'),gameBase).href,
 }));
 
 // These rooms already charge a penny per throw/crank. Opening the table is free;
@@ -17,6 +17,18 @@ const PENNY_TABLE=new Set([
  'plinko','popcorn','snap','water-gun','whisper',
 ]);
 function isPennyTable(id){return PENNY_TABLE.has(id);}
+
+function leavePaperGame(id, nav=globalThis.location){
+  try{window.PennyFeverWorld?.stepOut?.(id);}catch{/* world not ready */}
+  const hash=String(nav.hash||'').replace(/^#/,'');
+  if(hash==='alley'||hash==='foyer'||hash==='arcade'||hash==='booth'){
+    const world=window.PennyFeverWorld;
+    if(world?.started)world.resume();
+    else world?.start?.();
+    return;
+  }
+  nav.hash='alley';
+}
 
 // Existing room routing owns the alley pause and return position. The game itself
 // owns its canvas, controls and lifecycle; leaving destroys just that iframe.
@@ -32,14 +44,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
   const back=doc.createElement('button');back.type='button';back.textContent='← Back to the alley';
-  back.addEventListener('click',()=>{
-    const live=new URL(nav.href);
-    live.searchParams.set('style','paper');
-    live.searchParams.set('rail','paper');
-    live.searchParams.set('v','paper-alley-live-1');
-    live.hash='alley';
-    nav.href=live.href;
-  });
+  back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
   const pennyPlay=isPennyTable(game.id);
@@ -158,11 +163,8 @@ function listenForRoom(){
    return;
   }
   if(data.type==='leave'){
-   const live=new URL(location.href);
-   live.searchParams.set('style','paper');
-   live.searchParams.set('rail','paper');
-   live.hash='alley';
-   location.href=live.href;
+   const id=data.id||location.hash.match(/^#cabinet\/([^/]+)/)?.[1];
+   leavePaperGame(id);
    return;
   }
   if(data.type!=='prize')return;
