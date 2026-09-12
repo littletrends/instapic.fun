@@ -188,8 +188,10 @@ export async function composeDoll(spec) {
   if (eyes?.rgb) paintEyes(ctx, bodyImg, eyes.rgb);
   if (spec.outfit && spec.outfit !== 'none') {
     const file = `${spec.body || 'boy'}-${spec.outfit}.png`;
-    const clothes = await load(src('outfits', file));
-    ctx.drawImage(clothes, 0, 0, W, H);
+    try {
+      const clothes = await load(src('outfits', file));
+      ctx.drawImage(clothes, 0, 0, W, H);
+    } catch {}
   }
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));

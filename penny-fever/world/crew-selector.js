@@ -205,7 +205,7 @@ export function chooseCrew(id) {
 
 function fillArt(root) {
   root.querySelectorAll('[data-crew-art]').forEach(el => {
-    if (!el.style.backgroundImage) el.style.backgroundImage = `url('${el.dataset.crewArt}')`;
+    el.style.backgroundImage = `url('${el.dataset.crewArt}')`;
   });
 }
 
