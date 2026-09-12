@@ -959,12 +959,17 @@ function attachHud() {
       <div class="pf-world-loop-veil" id="pfWorldLoopVeil" aria-hidden="true"><span>THE NIGHT BENDS ROUND…</span></div>
       <div class="pf-alley-map" id="pfAlleyMap" hidden>
         <div class="pf-alley-map-bar">
-          <strong>Sideshow alley</strong>
+          <strong>The World</strong>
           <button type="button" id="pfAlleyMapClose">Close</button>
         </div>
         <div class="pf-alley-map-board">
-          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
-          <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
+          <figure class="pf-alley-map-art">
+            <img src="assets/restyle/maps/world-map.webp" alt="Flat world map ringed with ice. Aura’s Penny Fever is pinned on the disc." width="1024" height="1024" loading="lazy" decoding="async">
+            <button type="button" class="pf-world-pin" id="pfAlleyMapYou" data-place="aura">
+              <i aria-hidden="true"></i>
+              <span>Aura’s Penny Fever</span>
+            </button>
+          </figure>
         </div>
         <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
           <div class="pf-alley-map-marks">
@@ -1015,14 +1020,7 @@ function fillAlleyMap() {
 }
 
 function syncAlleyMapYou() {
-  const pin = el("pfAlleyMapYou");
-  const map = el("pfAlleyMap");
-  if (!pin || !map || map.hidden || !player) return;
-  const start = FOYER_OUT;
-  const end = Math.max(start + 1, hallLen - 1);
-  const z = player.position.z;
-  const t = z < start ? -0.08 : Math.max(0, Math.min(1, (z - start) / (end - start)));
-  pin.style.bottom = `${28 + t * 48}%`;
+  /* World map pin stays on Aura’s Penny Fever. Later parks get their own pins. */
 }
 
 function closeAlleyMap() {
@@ -1140,6 +1138,11 @@ function bindHud() {
     if (!button) return;
     event.preventDefault();
     walkToMapPlace(button.dataset.place);
+  });
+  const worldPin = el("pfAlleyMapYou");
+  if (worldPin) worldPin.addEventListener("click", (event) => {
+    event.preventDefault();
+    walkToMapPlace(worldPin.dataset.place || "aura");
   });
   if (enter) {
     enter.addEventListener("click", (event) => {
