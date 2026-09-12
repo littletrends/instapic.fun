@@ -1,7 +1,57 @@
-import {loadArt,paintIcon} from './art.js?v=pocket-book-1';
-import {stalls, stallById, stallForItem, stallItems, stallStats} from './midway.js?v=tmpl-webp-1';
-
 const model = globalThis.PennyFeverInventoryModel;
+let midwayApi = null;
+let midwayWait = null;
+let artApi = null;
+function needMidway() {
+  if (!midwayWait) midwayWait = import('./midway.js?v=treasure-lite-1').then(m => { midwayApi = m; return m; });
+  return midwayWait;
+}
+function needArt() {
+  return artApi || (artApi = import('./art.js?v=treasure-lite-1'));
+}
+const stalls = () => midwayApi?.stalls || [];
+const stallById = id => midwayApi?.stallById(id) || null;
+const stallForItem = id => midwayApi?.stallForItem(id) || null;
+const stallStats = (all, stall) => midwayApi ? midwayApi.stallStats(all, stall) : {items: [], have: 0, total: 0};
+
+let picWatch = null;
+function watchPics() {
+  picWatch?.disconnect();
+  picWatch = new IntersectionObserver(changes => {
+    for (const change of changes) {
+      if (!change.isIntersecting) continue;
+      const img = change.target;
+      picWatch.unobserve(img);
+      const src = img.dataset.src;
+      if (src) { img.src = src; img.removeAttribute('data-src'); }
+    }
+  }, {rootMargin: '160px 0px', threshold: 0.01});
+}
+function lazyPic(img, src, eager = false) {
+  img.decoding = 'async';
+  img.draggable = false;
+  if (eager) {
+    img.loading = 'eager';
+    img.src = src;
+    return img;
+  }
+  img.loading = 'lazy';
+  img.dataset.src = src;
+  picWatch?.observe(img);
+  return img;
+}
+function kickPics() {
+  requestAnimationFrame(() => {
+    dialog?.querySelectorAll('img[data-src]').forEach(img => {
+      const box = img.getBoundingClientRect();
+      if (box.width && box.bottom > -40 && box.top < (window.innerHeight + 160)) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        picWatch?.unobserve(img);
+      }
+    });
+  });
+}
 const studio = document.body.dataset.objectStudio === 'true';
 const iconCache = new Map();
 let dialog, viewer, current = null, focus = null, bookId = null, tab = 'collection', filter = 'all', paintingTree = false;
@@ -258,6 +308,8 @@ function mount() {
   });
   globalThis.PennyFeverInventory = {open, celebrate, close: () => dialog.close()};
   updateLaunch();
+  const idle = globalThis.requestIdleCallback || (fn => setTimeout(fn, 1400));
+  idle(() => needMidway());
   const preview = new URLSearchParams(location.search).get('treasures');
   if (studio) open();
   else if (preview != null) {
@@ -333,7 +385,7 @@ function stallHay(stall, items) {
 }
 
 function expandAll() {
-  stalls.filter(s => !s.workshop).forEach(s => expanded.add(s.id));
+  stalls().filter(s => !s.workshop).forEach(s => expanded.add(s.id));
   render();
 }
 
@@ -357,6 +409,7 @@ function inspectFocusCover() {
 
 function render() {
   if (!dialog.open) return;
+  watchPics();
   const all = entries();
   const filled = all.filter(i => i.owned).length;
   const pennies = all.find(i => i.id === 'everyday-penny')?.quantity || 0;
@@ -387,21 +440,19 @@ function render() {
   $('treasureItems').classList.toggle('is-chapters', onGames);
   $('treasureItems').classList.toggle('is-album', onBook);
 
-  if (onFound) {
-    paintFound(all);
-    return;
-  }
-  if (onShelf) {
-    paintShelf(all);
-    return;
-  }
-  if (onGames) {
-    paintTree(all);
-    if (focus?.kind === 'stall') paintStall(all, focus.id);
-    else paintIdle();
-    return;
-  }
-  paintBook(all);
+  if (onFound) paintFound(all);
+  else if (onShelf) paintShelf(all);
+  else if (onGames) {
+    if (!midwayApi) {
+      needMidway().then(() => { if (dialog.open && tab === 'games') render(); });
+      paintIdle();
+    } else {
+      paintTree(all);
+      if (focus?.kind === 'stall') paintStall(all, focus.id);
+      else paintIdle();
+    }
+  } else paintBook(all);
+  kickPics();
 }
 
 const TURN_VIEWS = ['front', 'left', 'back', 'right'];
@@ -444,10 +495,8 @@ function paintFound(all) {
     img.alt = item.name;
     img.width = 220;
     img.height = 280;
-    img.loading = 'lazy';
-    img.draggable = false;
-    img.src = itemFace(item, 0);
     img.onerror = () => { img.onerror = null; img.src = item.asset; };
+    lazyPic(img, itemFace(item, 0));
     stage.append(img);
     const name = document.createElement('strong');
     name.textContent = item.name;
@@ -504,7 +553,8 @@ function paintShelf(all) {
     const well = document.createElement('span');
     well.className = 'shelf-cover';
     const img = document.createElement('img');
-    img.src = book.cover; img.alt = ''; img.width = 220; img.height = 220; img.loading = 'lazy';
+    img.alt = ''; img.width = 160; img.height = 160;
+    lazyPic(img, book.cover);
     well.append(img);
     const name = document.createElement('strong');
     name.textContent = book.title;
@@ -532,6 +582,8 @@ function paintBook(all) {
     ? have + ' of ' + group.length + ' found' + (have === group.length ? ' · complete' : '')
     : 'Pages still being bound');
   const cover = $('bookCover');
+  cover.decoding = 'async';
+  cover.loading = 'eager';
   cover.src = book.cover;
   cover.alt = book.title;
   $('bookCoverBtn').classList.remove('is-missing');
@@ -548,6 +600,8 @@ function paintIdle() {
   $('pocketAlbumBar').style.width = '0';
   text('pocketAlbumCount', 'Pick a game in the list');
   const cover = $('stallCover');
+  cover.decoding = 'async';
+  cover.loading = 'lazy';
   cover.src = 'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png';
   cover.alt = 'Penny collector book';
   $('stallCoverBtn').classList.toggle('is-missing', !bookOwned(entries()));
@@ -564,9 +618,9 @@ function paintTree(all) {
   paintingTree = true;
   root.replaceChildren();
   const groups = [
-    {label: 'Booth', list: stalls.filter(s => s.extra)},
-    {label: 'Games', list: stalls.filter(s => !s.extra && !s.workshop)},
-    {label: 'Workshop', list: stalls.filter(s => s.workshop)},
+    {label: 'Booth', list: stalls().filter(s => s.extra)},
+    {label: 'Games', list: stalls().filter(s => !s.extra && !s.workshop)},
+    {label: 'Workshop', list: stalls().filter(s => s.workshop)},
   ];
   for (const group of groups) {
     const shown = [];
@@ -595,9 +649,8 @@ function paintTree(all) {
         mug.alt = '';
         mug.width = 40;
         mug.height = 56;
-        mug.loading = 'lazy';
-        mug.src = row.stall.vendor;
         mug.onerror = () => mug.remove();
+        lazyPic(mug, row.stall.vendor);
         sum.append(mug);
       }
       const name = document.createElement('span');
@@ -648,6 +701,8 @@ function paintStall(all, id) {
     ? have + ' of ' + total + (stall.extra ? ' found' : ' chapters') + (have === total && total ? ' · complete' : '')
     : 'Prizes still being bound');
   const cover = $('stallCover');
+  cover.decoding = 'async';
+  cover.loading = 'lazy';
   cover.src = stall.vendor || stall.cover;
   cover.alt = stall.host + ' · ' + stall.title;
   cover.onerror = () => { cover.onerror = null; cover.src = stall.cover; };
@@ -667,14 +722,14 @@ function paintSlots(shown, opts = {}) {
   root.replaceChildren();
   const queue = []; let running = 0;
   function pump() {
-    while (running < 3 && queue.length) {
+    while (running < 2 && queue.length) {
       const {canvas, item} = queue.shift(); running++;
-      loadArt(item).then(art => {
+      needArt().then(api => api.loadArt(item).then(art => {
         const icon = document.createElement('canvas');
-        paintIcon(icon, art, item.punched ? 2 : 0);
+        api.paintIcon(icon, art, item.punched ? 2 : 0);
         iconCache.set(item.id + ':' + !!item.punched, icon);
         if (token === listToken && canvas.isConnected) canvas.getContext('2d').drawImage(icon, 0, 0);
-      }).catch(() => {}).finally(() => { running--; if (token === listToken) pump(); });
+      })).catch(() => {}).finally(() => { running--; if (token === listToken) pump(); });
     }
   }
   const scrollRoot = root.closest('.pocket-page') || root;
@@ -746,8 +801,8 @@ function paintSlots(shown, opts = {}) {
     if (item.turnaround && item.asset) {
       const img = document.createElement('img');
       img.className = 'slot-art';
-      img.alt = ''; img.width = 96; img.height = 96; img.loading = 'lazy';
-      img.src = item.asset;
+      img.alt = ''; img.width = 96; img.height = 96;
+      lazyPic(img, item.asset);
       well.append(img);
     } else {
       const c = document.createElement('canvas');
@@ -833,20 +888,27 @@ async function select(id, punchedOverride) {
   text('treasureHow', canTurn
     ? (touch ? 'Drag to turn. Back and Forth step the faces.' : 'Drag to turn. Back and Forth step. Arrow keys spin; Home is the front.')
     : 'A pressed paper portrait — drag to rock it in the light.');
-  text('treasureLoading', item.owned ? 'Unwrapping your keepsake…' : 'The outline is here. Win it, and the colour comes in.');
+  text('treasureLoading', '');
+  const preview = document.createElement('img');
+  preview.alt = item.name;
+  preview.decoding = 'async';
+  preview.style.cssText = 'width:100%;height:100%;object-fit:contain;padding:8%;filter:drop-shadow(0 12px 18px #0008)' + (item.owned ? '' : ';filter:grayscale(1) brightness(.55) contrast(1.05) drop-shadow(0 12px 18px #0008)');
+  preview.src = item.asset;
+  $('treasureStage').append(preview);
   try {
+    const [{loadArt}, {Turntable}] = await Promise.all([needArt(), import('./turntable.js?v=treasure-lite-1')]);
     const art = await loadArt(item);
     if (token !== selectionToken || !dialog.open) return;
     if (item.hinged && item.owned) {
       const {ObjectViewer} = await import('./viewer.js?v=look-bf-1');
       if (token !== selectionToken || !dialog.open) return;
+      $('treasureStage').replaceChildren();
       viewer = new ObjectViewer($('treasureStage'));
       viewer.onView = name => { const n = $('inspectViewLabel'); if (n) n.textContent = name; };
       viewer.show(item, art);
       $('treasureHow').textContent = 'Drag to turn. Back and Forth step. Open lifts the cover.';
     } else {
-      const {Turntable} = await import('./viewer.js?v=look-bf-1');
-      if (token !== selectionToken || !dialog.open) return;
+      $('treasureStage').replaceChildren();
       viewer = new Turntable($('treasureStage'));
       viewer.onView = name => { const n = $('inspectViewLabel'); if (n) n.textContent = name; };
       viewer.show(item, art, !item.owned);
@@ -897,6 +959,7 @@ function open(id) {
     }
     $('treasureSave').hidden = globalThis.PennyFeverSavePersisted !== false;
     text('treasureSave', 'Your browser could not save this change. Keep this tab open to retain this visit.');
+    needMidway();
     if (!studio && model.reconcile(state())) globalThis.PennyFever?.saveState();
   }
   hideInspect();
@@ -907,7 +970,7 @@ function open(id) {
     render();
     if (item) select(item.id);
   } else {
-    render();
+    requestAnimationFrame(() => { if (dialog.open) render(); });
   }
   return true;
 }

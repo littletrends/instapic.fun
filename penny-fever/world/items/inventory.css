@@ -6,6 +6,7 @@
 .treasure-book::backdrop{background:#120c0ad4}
 .treasure-book[open],.treasure-book:modal,.treasure-book.is-open{display:flex;flex-direction:column;max-width:min(1180px,96vw);max-height:94dvh}
 .treasure-book[hidden],.treasure-book [hidden]{display:none!important}
+.treasure-book img[data-src]{background:radial-gradient(ellipse at 50% 58%,#efe4c8 0%,#e4d0a8 72%)}
 .treasure-book button,.treasure-book input,.treasure-book select{font:inherit}
 .treasure-book button{border:1px solid #ad8b53;background:#fff8e9;color:#3d2c1f;border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px;box-shadow:none}
 .treasure-book button:hover{background:#e9d9b6}
