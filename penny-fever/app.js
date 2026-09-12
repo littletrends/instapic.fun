@@ -736,7 +736,7 @@
     if (tickets() < 1) return 0;
     state.playTickets = tickets() - 1;
     const added = addDemoCoins(PENNY_STACK);
-    stampKeepsake("five-penny-stack", "cash-drop");
+    if (state.paperInventory?.items?.['penny-purse']) stampKeepsake("five-penny-stack", "cash-drop");
     return added;
   }
 

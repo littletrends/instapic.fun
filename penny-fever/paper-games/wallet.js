@@ -13,6 +13,16 @@ export function owned(id) {
   try { return !!fever()?.getState?.()?.paperInventory?.items?.[id]; } catch { return false; }
 }
 
+export function keptQty(id) {
+  if (!id) return 0;
+  try {
+    const row = fever()?.getState?.()?.paperInventory?.items?.[id];
+    if (!row) return 0;
+    const n = Number(row.qty);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  } catch { return 0; }
+}
+
 export function pocket() {
   if (!alleyPlay) return null;
   const n = Number(fever()?.getState?.()?.demoCoins);

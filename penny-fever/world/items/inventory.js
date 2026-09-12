@@ -3,7 +3,7 @@ let midwayApi = null;
 let midwayWait = null;
 let artApi = null;
 function needMidway() {
-  if (!midwayWait) midwayWait = import('./midway.js?v=mint-1').then(m => { midwayApi = m; return m; });
+  if (!midwayWait) midwayWait = import('./midway.js?v=purse-1').then(m => { midwayApi = m; return m; });
   return midwayWait;
 }
 function needArt() {
@@ -835,7 +835,16 @@ function describe(item) {
     ? (chapter ? stall.host + ' · ' + stall.title + ' · chapter ' + chapter : stall.host + ' · ' + stall.title)
     : item.source);
   text('treasureStatus', item.owned ? item.status : 'Not found yet. Win it on the alley — the book will keep the place.');
-  text('treasureHint', item.hint);
+  const stacks = item.id === 'penny-purse'
+    ? (entries().find(i => i.id === 'five-penny-stack')?.quantity || 0)
+    : 0;
+  text('treasureHint', item.id === 'penny-purse' && item.owned
+    ? (stacks
+      ? stacks + (stacks === 1 ? ' five-penny stack' : ' five-penny stacks') + ' backed up in the purse.'
+      : 'The purse is yours. Five-penny stacks you cash or shove will back up in here.')
+    : item.id === 'five-penny-stack' && !entries().find(i => i.id === 'penny-purse')?.owned
+      ? 'Win the purse off Copper’s trays first. Then stacks back up in it.'
+      : item.hint);
   text('treasureDetail', item.id === 'moonlight-wardrobe'
     ? 'A collectible costume book. The six original crew remain free; wearing these outfits will follow.'
     : item.id === 'night-suitcase'

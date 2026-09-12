@@ -25,7 +25,7 @@
     ['penny-tree','Penny tree','Workshop prizes','prize',null,'Copper Falls · Copper','Settle the crowded mint at Copper Falls.',.14,'game-prizes'],
     ['charm-pouch','Charm pouch','Workshop prizes','prize',null,'Lost Letter Express · Willa','Cross the winds at Lost Letter Express.',.08,'gift-wrapping'],
     ['secret-keeper','Secret keeper','Workshop prizes','prize',null,'Lost Letter Express · Willa','Finish the late-night express.',.12,'parlour-prizes'],
-    ['penny-purse','Penny purse','Workshop prizes','prize',null,'Copper Falls · Copper','The purse on Copper Falls. It holds every spendable penny you carry.',.1,'pennies'],
+    ['penny-purse','Penny purse','Workshop prizes','prize',null,'Copper Falls · Copper','Win the purse off Copper’s trays. Spendable pennies live here. After it is yours, five-penny stacks back up inside it.',.1,'pennies'],
     ['penny-collector-book','Penny collector book','Workshop prizes','prize',null,'Impossible Suitcase · Kit','Close the midnight expedition.',.12,'collector-books'],
     ['rose-hair-bow','Rose hair bow','Workshop prizes','prize',null,'Love Tester · Rosalie','Chapter 1 of Love Tester.',.08,'wearables'],
     ['rose-press','Rose press','Workshop prizes','prize',null,'Love Tester · Rosalie','Chapter 2 of Love Tester.',.1,'parlour-prizes'],
@@ -39,7 +39,7 @@
     ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Finish the grand duck parade.',.12,'garden-prizes'],
     ['coin-album','Coin album','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 4 of Copper Falls.',.1,'pennies'],
     ['treasure-tin','Treasure tin','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 5 of Copper Falls.',.1,'gift-wrapping'],
-    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Aura’s till · Copper Falls','A shared five-penny pack. Cash a booth ticket, or shove a stack off Copper’s trays. You can keep more than one.',.1,'pennies'],
+    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Aura’s till · Copper Falls','A shared pack of five pennies. Cash a ticket, or shove a stack off Copper’s flood table. Once you have the purse, stacks back up in it.',.1,'pennies'],
     ['mint-press','Mint press','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 6 of Copper Falls. The little press that mints the tide.',.1,'game-prizes'],
     ['surprise-parcel','Surprise parcel','Workshop prizes','prize',null,'Lost Letter Express · Willa','Chapter 4 of Lost Letter Express.',.1,'gift-wrapping'],
     ['stamp-passport','Stamp passport','Workshop prizes','prize',null,'Lost Letter Express · Willa','Chapter 5 of Lost Letter Express.',.1,'tickets'],
@@ -357,6 +357,7 @@
       reconcile(state);
       return [d.id];
     }
+    if (d.id === 'five-penny-stack' && !state.paperInventory.items['penny-purse']) return [];
     if (state.paperInventory.items[d.id]) {
       if (['moon-penny','rose-penny','star-token','crown-token','five-penny-stack'].includes(d.id)) {
         const row = state.paperInventory.items[d.id];
@@ -374,6 +375,7 @@
     reconcile(state);
     const d = definitions.find(i => i.id === id);
     if (!d || d.kind === 'currency' || d.kind === 'scrip' || d.kind === 'ticket' || d.kind === 'pass') return false;
+    if (id === 'five-penny-stack' && !state.paperInventory.items['penny-purse']) return false;
     if (state.paperInventory.items[id]) {
       if (id === 'five-penny-stack') {
         const row = state.paperInventory.items[id];

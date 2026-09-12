@@ -1,6 +1,6 @@
-import {clamp} from '../draw.js?v=ink-1';
+import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, loadMachine, saveMachine} from '../wallet.js?v=copper-edge-1';
+import {alleyPlay, pocket, spend, credit, keep, owned, keptQty, loadMachine, saveMachine} from '../wallet.js?v=purse-stacks-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const DUMP_CAP = 24;
@@ -18,7 +18,7 @@ const SETS = [
   {mix0: ['everyday-penny', 'rose-penny'], mix1: ['everyday-penny', 'rose-penny'], mix2: ['rose-penny', 'star-token'], unique: 'penny-tree', prize: 'penny-tree'},
   {mix0: ['everyday-penny', 'crown-token'], mix1: ['everyday-penny', 'star-token'], mix2: ['crown-token'], unique: 'coin-album', prize: 'coin-album'},
   {mix0: ['everyday-penny', 'star-token'], mix1: ['moon-penny', 'rose-penny'], mix2: ['star-token', 'crown-token'], unique: 'treasure-tin', prize: 'treasure-tin'},
-  {mix0: ['everyday-penny', 'moon-penny', 'rose-penny'], mix1: ['star-token', 'crown-token'], mix2: ['moon-penny', 'crown-token'], unique: 'mint-press', prize: 'mint-press'},
+  {mix0: ['everyday-penny', 'moon-penny', 'rose-penny'], mix1: ['star-token', 'crown-token'], mix2: ['moon-penny', 'crown-token', 'five-penny-stack'], unique: 'mint-press', prize: 'mint-press'},
 ];
 const TOKENS = {
   'everyday-penny': {r: 15, w: 32, score: 1, color: '#b68445', weight: 52, cap: 160, token: true},
@@ -45,7 +45,8 @@ const CHAPTER_ITEMS = {
   'treasure-tin': {r: 22, w: 48, score: 0, color: '#c4a46a', unique: true, prize: true},
   'mint-press': {r: 24, w: 54, score: 0, color: '#b68445', unique: true, prize: true},
 };
-const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS};
+const PURSE = {r: 24, w: 56, score: 0, color: '#6a7a52', unique: true, prize: true};
+const DEFS = {...TOKENS, ...UNIQUE, ...CHAPTER_ITEMS, 'penny-purse': PURSE};
 const POOL = Object.entries(DEFS).map(([id, def]) => ({id, ...def}));
 const SPRITES = ['everyday-penny','moon-penny','rose-penny','star-token','crown-token','heart-gear','penny-purse','pressed-heart','lucky-match','five-penny-stack',...UNIQUES,...Object.keys(CHAPTER_ITEMS)];
 
@@ -115,6 +116,27 @@ function plantPrize(coins, level, rng) {
     L.back + (L.lip - L.back) * 0.42 + (rng() - 0.5) * 18,
     layer));
 }
+function plantPurse(coins, rng) {
+  if (alleyPlay && owned('penny-purse')) return;
+  if (coins.some(c => !c.falling && c.id === 'penny-purse')) return;
+  const L = LAYERS[0];
+  coins.push(mint('penny-purse',
+    L.left + 70 + rng() * 40,
+    L.back + (L.lip - L.back) * 0.55,
+    0));
+}
+function plantStacks(coins, level, rng) {
+  if (level < 5) return;
+  const L = LAYERS[1];
+  let n = 0;
+  for (const c of coins) if (!c.falling && c.id === 'five-penny-stack') n++;
+  for (let i = n; i < 3; i++) {
+    coins.push(mint('five-penny-stack',
+      L.left + 70 + i * 88 + (rng() - 0.5) * 10,
+      L.back + 64 + (rng() - 0.5) * 14,
+      1));
+  }
+}
 function hydrate(blob) {
   const coins = (blob.pieces || []).map(p => {
     const c = mint(p.id, p.x, p.y, p.layer | 0);
@@ -127,6 +149,8 @@ function hydrate(blob) {
   });
   if (coins.length < 40) topUp(coins, Math.random);
   plantPrize(coins, blob.chapter || 0, Math.random);
+  plantPurse(coins, Math.random);
+  plantStacks(coins, blob.chapter || 0, Math.random);
   return {
     level: blob.chapter || 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
@@ -153,12 +177,15 @@ function flyHome(s, c) {
   s.fly = s.fly || [];
   s.fly.push({
     id: c.id, x: c.x, y: c.y, w: c.w, color: c.color, t: 0, dur: 0.62,
-    prize: !!(c.prize || (c.id !== 'everyday-penny')),
+    prize: !!(c.prize && c.id !== 'five-penny-stack' && c.id !== 'everyday-penny'),
   });
 }
 function payout(s, c) {
   const chapter = SETS[s.level] || SETS[0];
   const wonChapter = c.id === chapter.prize || c.id === chapter.unique;
+  const wonPurse = c.id === 'penny-purse';
+  const wonStack = c.id === 'five-penny-stack';
+  const hasPurse = owned('penny-purse') || s.paid.includes('penny-purse');
   if (c.token || c.score) {
     s.score += c.score;
     if (c.id !== 'everyday-penny') s.specials++;
@@ -167,16 +194,24 @@ function payout(s, c) {
   if (wonChapter) takePrize(s, chapter.prize, {x: c.x, y: c.y});
   if (alleyPlay) {
     if (wonChapter) keep(chapter.prize);
+    else if (wonPurse) keep('penny-purse');
+    else if (wonStack) { if (hasPurse) keep('five-penny-stack'); }
     else if (c.id !== 'everyday-penny') keep(c.id);
   }
-  if (c.prize && !s.paid.includes(c.id)) s.paid.push(c.id);
+  if ((c.prize || wonPurse) && !s.paid.includes(c.id)) s.paid.push(c.id);
   flyHome(s, c);
   s.dirty = true;
   s.note = wonChapter
     ? itemName(chapter.prize) + ' shoved off the lip — into the treasure book!'
-    : c.id !== 'everyday-penny'
-      ? itemName(c.id) + ' into the treasure book!'
-      : 'A penny into the purse.';
+    : wonPurse
+      ? 'The purse is yours. Five-penny stacks will back up in it.'
+      : wonStack
+        ? (hasPurse
+          ? 'A five-penny stack backed up in the purse.'
+          : 'Five pennies in the pocket. Win the purse, and stacks will back up in it.')
+        : c.id !== 'everyday-penny'
+          ? itemName(c.id) + ' into the treasure book!'
+          : 'A penny into the purse.';
 }
 function spill(s, c) {
   if (c.layer >= 2) {
@@ -301,6 +336,8 @@ function fresh(level, rng) {
   ];
   const seen = [];
   plantPrize(coins, level, rng);
+  plantPurse(coins, rng);
+  plantStacks(coins, level, rng);
   const prizeId = set.unique || set.prize;
   if (prizeId) seen.push(prizeId);
   if (level >= 3) {
@@ -313,7 +350,11 @@ function fresh(level, rng) {
     level, t: 0, coins, aim: 450, ammo, total: ammo, score: 0, specials: 0,
     cooldown: 0, settle: 0, falling: [], dropped: 0, started: !alleyPlay,
     queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0, fly: [],
-    note: alleyPlay ? 'The prize is in the tide. Shove it off a lip to keep it.' : 'Drop a penny from the purse.',
+    note: alleyPlay
+      ? (owned('penny-purse')
+        ? 'Shove the table prize off a lip. Five-penny stacks back up in the purse.'
+        : 'Shove the purse off a lip to keep it. Then five-penny stacks will back up in it.')
+      : 'Drop a penny from the purse.',
   };
 }
 
@@ -325,7 +366,7 @@ export default {
   tableDetail: 'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.',
   intro: 'Six tables, each a new set. The bank lets a little copper go so you stay. Dump the purse and the table usually wins. Walk away when the lip still looks kind — that table keeps until you come back.',
   instructions: alleyPlay
-    ? 'Each chapter is a different cabinet. Drop a penny: the plate shoves once. Sit still and nothing falls. Leave and that chapter’s trays wait. Dump it all and the bank has the longer breath. Cash a booth ticket for a five-penny stack if the purse is empty.'
+    ? 'Each chapter is a different cabinet. Drop a penny: the plate shoves once. Win the purse off the trays — after that, five-penny stacks you shove or cash back up inside it. Chapter 6 runs packs of five in the flood. Cash a booth ticket for five pennies if the pocket is empty.'
     : 'Each chapter is a new set. One shove per drop. Workshop scores never enter your wallet.',
   levels: ['The copper tide', 'Moon mint', 'The crowded mint', 'A tide of crowns', 'The midnight mint', 'Pennies in a flood'],
   sprites: SPRITES,
@@ -341,6 +382,8 @@ export default {
       const s = hydrate(saved);
       s.level = level;
       plantPrize(s.coins, level, roll);
+      plantPurse(s.coins, roll);
+      plantStacks(s.coins, level, roll);
       bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
       return s;
     }
@@ -524,6 +567,11 @@ export default {
     }
     d.text(String(n), px, py + 78, 24, '#fff6d8');
     d.text(n === 1 ? 'penny in the purse' : 'pennies in the purse', px, py + 100, 14, '#ead6a4');
+    const stacks = alleyPlay && owned('penny-purse') ? keptQty('five-penny-stack') : 0;
+    if (stacks) {
+      d.item(spriteKey('five-penny-stack'), px + 58, py + 18, {w: 44, shadow: false, fallback: () => d.ball(px + 58, py + 18, 12, '#b68445')});
+      d.text(stacks === 1 ? '1 stack backed up' : stacks + ' stacks backed up', px, py + 118, 13, '#f0d18f');
+    }
     const prize = (SETS[s.level] || SETS[0]).prize;
     d.poly([[742, 48], [838, 52], [834, 148], [738, 142]], '#6b3a3a', '#e8d4a0', 2);
     d.text('this table', 788, 68, 12, '#ead6a4');

@@ -18,6 +18,17 @@ export const extras = [
     vendor: 'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png',
   },
   {
+    id: 'copper-pocket',
+    host: 'Copper',
+    title: 'The purse',
+    blurb: 'Win the purse off Copper’s trays. After that, five-penny stacks you cash or shove back up inside it.',
+    workshop: false,
+    extra: true,
+    prizes: ['penny-purse', 'five-penny-stack'],
+    cover: STALL_ART('coin-pusher'),
+    vendor: VENDOR_ART('Copper'),
+  },
+  {
     id: 'collection-gift',
     host: 'The midway',
     title: 'Collection reward',
