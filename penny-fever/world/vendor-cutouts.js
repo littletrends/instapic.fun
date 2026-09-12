@@ -81,7 +81,7 @@ export function installVendorCutouts(barkers){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
     figure.scale.z=figure.scale.x;
-    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:papercutViewIndex(figure,look));
+    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:0);
    }
   }
   if(dead||!active)return;

@@ -2,7 +2,7 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=alley-webp-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=vendor-face-1";
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
@@ -11,8 +11,8 @@ import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPa
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-webp-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
-import {installPapercutRides} from "./amusements/install.js?v=alley-webp-1";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=alley-webp-1";
+import {installPapercutRides} from "./amusements/install.js?v=vendor-face-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=vendor-face-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=alley-webp-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
 
@@ -2072,7 +2072,8 @@ function updateCrowd(dt) {
   barkers.forEach((b) => {
     const lx = player.position.x - b.position.x;
     const lz = player.position.z - b.position.z;
-    if (!(paperRail && b.userData.papercutStand)) b.rotation.y = Math.atan2(lx, lz);
+    if (paperRail) b.rotation.y = Math.PI;
+    else b.rotation.y = Math.atan2(lx, lz);
     const pitching = !!(nearest && nearest.atCounter && nearest.id === b.userData.stallId);
     animatePerson(b, dt, false, pitching || Math.hypot(lx, lz) < 1.6);
   });

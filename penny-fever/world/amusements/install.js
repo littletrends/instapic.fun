@@ -100,8 +100,9 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
   if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:papercutViewIndex(figure,look));
-    if(figure.userData.billboard)billboardPapercut(figure,currentCam||look);
+    const host=figure.userData.kind==='host';
+    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:(host?0:papercutViewIndex(figure,look)));
+    if(!host&&figure.userData.billboard)billboardPapercut(figure,currentCam||look);
    }
   }
   if(dead||!active)return;
