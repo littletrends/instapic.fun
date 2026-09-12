@@ -9,6 +9,7 @@ html{height:100%}
 .is-alley-room .play-header,.is-alley-room .notebook,.is-alley-room .play-hud,.is-alley-room .readout{display:none}
 .is-alley-room .play-layout{display:flex;height:100%;max-width:none;margin:0;padding:0;gap:0}
 .is-alley-room .world-column{display:flex;flex-direction:column;width:100%;height:100%;min-height:0}
-.is-alley-room .stage{flex:1;width:100%;max-width:none;min-height:0;height:auto;aspect-ratio:unset;border:0;border-radius:0;box-shadow:none}
-.is-alley-room .play-foot{flex:none}
+.is-alley-room .stage{flex:0 1 auto;width:100%;max-width:min(100%,calc((100dvh - 7.5rem)*.75));margin:0 auto;min-height:0;aspect-ratio:3/4;border:0;border-radius:0;box-shadow:none}
+.is-alley-room .stage>img{object-fit:fill}
+.is-alley-room .play-foot{flex:none;padding:.4rem .5rem .6rem}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

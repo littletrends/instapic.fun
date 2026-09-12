@@ -72,7 +72,7 @@ body .cabinet-interior.paper-game-cabinet {
 @media(max-width:720px){
  .paper-game-bar{gap:6px;padding:5px 8px;}
  .paper-game-bar h1{font-size:13px;}
- .paper-game-all,.paper-game-retry{display:none;}
+ .paper-game-all,.paper-game-retry,.paper-game-cash{display:none;}
  .paper-game-bar button{font-size:12px;padding:6px 8px;}
- .paper-game-wallet{font-size:12px;}
+ .paper-game-wallet{font-size:12px;max-width:9.5rem;overflow:hidden;text-overflow:ellipsis;}
 }
