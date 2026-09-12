@@ -1,6 +1,6 @@
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=alley-webp-1';
 import {STALL_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=keep-light-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=alley-webp-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=keep-light-1';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/stalls/';
@@ -40,7 +40,7 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
  async function run(job){
   const {figure,controller}=job,id=figure.userData.stall.id,opts=optsFor(id);
   try{
-   const front=await load(ROOT+id+'/front.png',STALL_FRAMES[id].front,{signal:controller.signal});
+   const front=await load(ROOT+id+'/front.webp',STALL_FRAMES[id].front,{signal:controller.signal});
    if(dead||!active||controller.signal.aborted||!figure.parent||figure.userData.papercutStand){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    cut.position.z=.2;
@@ -67,7 +67,7 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
    for(const view of PAPERCUT_VIEWS){
     if(view==='front')continue;
     if(dead||!figure.parent||controller.signal.aborted)return;
-    const face=await load(ROOT+id+'/'+view+'.png',STALL_FRAMES[id][view],{signal:controller.signal});
+    const face=await load(ROOT+id+'/'+view+'.webp',STALL_FRAMES[id][view],{signal:controller.signal});
     if(!figure.parent||figure.userData.papercutStand!==cut||controller.signal.aborted){face.texture?.dispose();return;}
     setPapercutFace(cut,view,face,opts);
     figure.userData.papercutViews=cut.userData.papercutViews;

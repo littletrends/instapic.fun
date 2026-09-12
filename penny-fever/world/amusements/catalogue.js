@@ -3,7 +3,7 @@ const row=(xs,t,b)=>xs.map(([l,r])=>[l,t,r,b]);
 const xs=[[28,388],[411,755],[783,1137],[1152,1507]];
 const definition=(id,name,host,file,top,bottom,extra={})=>({
  id,name,host,file,
- source:'assets/restyle/scene-turnarounds-2026-09-09/amusements/'+id+'/front.png',
+ source:'assets/restyle/scene-turnarounds-2026-09-09/amusements/'+id+'/front.webp',
  hostRects:row(xs,...top),stallRects:row(xs,...bottom),height:3.5,depth:1.7,
  body:'#374333',trim:'#b78b48',opening:[.23,.35,.77,.79],flip:true,treatment:'parlour',...extra
 });
@@ -12,8 +12,8 @@ const boothRects=[[16,25,524,810],[545,25,895,810],[916,25,1372,810],[1382,25,17
 export const AMUSEMENT_ART={
  'aura-ticket-booth':definition('aura-ticket-booth','Aura’s ticket booth','Aura','aura-ticket-booth-turnaround.png',[0,1],[0,1],{
   height:3.25,depth:1.5,opening:[.25,.46,.75,.735],treatment:'awning',
-  source:'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.png',
-  stallRects:boothRects,hostSource:'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png',
+  source:'assets/restyle/scene-turnarounds-2026-09-09/aura/ticket-booth/front.webp',
+  stallRects:boothRects,hostSource:'assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp',
   hostRects:[[0,98,450,910],[450,105,747,910],[748,103,1188,910],[1188,100,1520,910]]
  }),
  'horse-carousel':definition('horse-carousel','Horse carousel','Florence','01-horse-carousel-turnaround.png',[105,468],[554,940]),
@@ -91,5 +91,5 @@ export const PAPERCUT_FRAMES={
  'alley-wall-bay':{ride:{front:[71,44,370,436],left:[76,35,359,445],back:[95,54,322,426],right:[73,30,365,450]},
   host:{front:[96,30,319,450],left:[129,30,253,450],back:[100,30,311,450],right:[128,30,255,450]}}
 };
-export function papercutRideSrc(id,view){return `${PAPERCUT_ROOT}/amusements/${id}/${view}.png`;}
-export function papercutHostSrc(host,view){return `${PAPERCUT_ROOT}/attendants/${host.toLowerCase()}/${view}.png`;}
+export function papercutRideSrc(id,view){return `${PAPERCUT_ROOT}/amusements/${id}/${view}.webp`;}
+export function papercutHostSrc(host,view){return `${PAPERCUT_ROOT}/attendants/${host.toLowerCase()}/${view}.webp`;}

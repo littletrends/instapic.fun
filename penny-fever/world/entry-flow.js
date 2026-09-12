@@ -63,7 +63,7 @@
     loading.id = 'worldLoading';
     loading.innerHTML = `<div>
       <p>AURA’S PENNY FEVER</p>
-      <img class="loading-aura" src="assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.png" alt="Aura keeps you company while the midway opens" width="512" height="512">
+      <img class="loading-aura" src="assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp" alt="Aura keeps you company while the midway opens" width="512" height="512">
       <h1 id="worldLoadingMessage" role="status">Lighting the paper midway…</h1>
       <div class="loading-lights" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="loading-reassurance">“I’m right here, darling. We’re getting everything ready.”</p>

@@ -1,6 +1,6 @@
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=alley-webp-1';
 import {AURA_WELCOMING_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=keep-light-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=alley-webp-1';
 
 const active = new URLSearchParams(location.search).get('rail') === 'paper';
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/';
@@ -11,7 +11,7 @@ export function installPaperProprietor(aura) {
   const originalChildren = [...aura.children];
   originalChildren.forEach(child=>{child.visible=false;globalThis.PennyFeverRestyle?.noteLiveBody(child);});
   const opts={height:1.7,maxWidth:1.2,sideWidth:.55,layout:'stand'};
-  loadFramedPng(ROOT+'front.png',AURA_WELCOMING_FRAMES.front,{urgent:true}).then(async front=>{
+  loadFramedPng(ROOT+'front.webp',AURA_WELCOMING_FRAMES.front,{urgent:true}).then(async front=>{
     const cut=buildPapercut({front},opts);
     aura.add(cut);
     aura.userData.paperProprietor=cut;
@@ -21,7 +21,7 @@ export function installPaperProprietor(aura) {
     globalThis.PennyFeverRestyle?.refreshRestyle();
     for(const view of PAPERCUT_VIEWS){
       if(view==='front')continue;
-      const face=await loadFramedPng(ROOT+view+'.png',AURA_WELCOMING_FRAMES[view],{urgent:true});
+      const face=await loadFramedPng(ROOT+view+'.webp',AURA_WELCOMING_FRAMES[view],{urgent:true});
       if(!cut.parent){face.texture?.dispose();return;}
       setPapercutFace(cut,view,face,opts);
       aura.userData.papercutViews=cut.userData.papercutViews;

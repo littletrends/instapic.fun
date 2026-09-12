@@ -2,21 +2,21 @@
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
-import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
+import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=alley-webp-1";
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=keep-light-2";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=keep-light-2";
 import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-lots-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-webp-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
-import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
+import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-webp-1";
 import {installWallBackdrops} from "./walls/install.js?v=alley-lots-1";
-import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
-import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
+import {installPapercutRides} from "./amusements/install.js?v=alley-webp-1";
+import {installVendorCutouts} from "./vendor-cutouts.js?v=alley-webp-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=alley-webp-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=penny-door-1";
 
-const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
+const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
 const STALLS = [
   { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Three cards. A keepsake is hiding in the deck." },
   { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
@@ -1333,22 +1333,22 @@ function lookCardArt(best, view = "front") {
   const v = ["front", "left", "back", "right"].includes(view) ? view : "front";
   if (best.kind === "stall") {
     return {
-      booth: `${root}/stalls/${best.id}/${v}.png`,
-      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.png` : "",
+      booth: `${root}/stalls/${best.id}/${v}.webp`,
+      vendor: best.hostSlug ? `${root}/vendors/${best.hostSlug}/${v}.webp` : "",
       role: "host",
     };
   }
   if (best.kind === "ride") {
     const host = (best.hostSlug || best.host || "").toLowerCase();
     return {
-      booth: `${root}/amusements/${best.id}/${v}.png`,
-      vendor: host ? `${root}/attendants/${host}/${v}.png` : "",
+      booth: `${root}/amusements/${best.id}/${v}.webp`,
+      vendor: host ? `${root}/attendants/${host}/${v}.webp` : "",
       role: "attendant",
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/${v}.png`,
-    vendor: `${root}/aura/welcoming/${v}.png`,
+    booth: `${root}/aura/ticket-booth/${v}.webp`,
+    vendor: `${root}/aura/welcoming/${v}.webp`,
     role: "proprietor",
   };
 }

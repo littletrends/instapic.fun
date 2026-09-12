@@ -1,7 +1,7 @@
 import {VENDOR_DESIGNS} from './vendor-designs.js';
-import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=paper-alley-live-2';
+import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=alley-webp-1';
 import {VENDOR_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=keep-light-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=alley-webp-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=keep-light-1';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/vendors/';
@@ -31,7 +31,7 @@ export function installVendorCutouts(barkers){
  async function run(job){
   const {figure,controller}=job,host=figure.userData.vendorHost,opts={height:1.7,maxWidth:1.2,sideWidth:.55,layout:'stand'};
   try{
-   const front=await loadFramedPng(ROOT+host+'/front.png',VENDOR_FRAMES[host].front,{signal:controller.signal});
+   const front=await loadFramedPng(ROOT+host+'/front.webp',VENDOR_FRAMES[host].front,{signal:controller.signal});
    if(dead||!active||controller.signal.aborted||!figure.parent||figure.userData.papercutStand){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
@@ -56,7 +56,7 @@ export function installVendorCutouts(barkers){
    for(const view of PAPERCUT_VIEWS){
     if(view==='front')continue;
     if(dead||!figure.parent||controller.signal.aborted)return;
-    const face=await loadFramedPng(ROOT+host+'/'+view+'.png',VENDOR_FRAMES[host][view],{signal:controller.signal});
+    const face=await loadFramedPng(ROOT+host+'/'+view+'.webp',VENDOR_FRAMES[host][view],{signal:controller.signal});
     if(!figure.parent||figure.userData.papercutStand!==cut||controller.signal.aborted){face.texture?.dispose();return;}
     setPapercutFace(cut,view,face,opts);
     figure.userData.papercutViews=cut.userData.papercutViews;
