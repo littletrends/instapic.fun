@@ -742,8 +742,10 @@
 
   function tradePenniesForTicket() {
     if (pennies() < PENNY_STACK) return false;
-    if (!spendPennies(PENNY_STACK)) return false;
-    addTickets(1);
+    state.demoCoins = pennies() - PENNY_STACK;
+    state.playTickets = tickets() + 1;
+    saveState(state);
+    refreshNightBoard();
     stampKeepsake("ticket-roll", "aura-till");
     return true;
   }
