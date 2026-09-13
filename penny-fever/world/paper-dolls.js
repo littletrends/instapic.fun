@@ -1,5 +1,5 @@
 const ROOT = new URL('../assets/restyle/paper-dolls/', import.meta.url);
-const STORE = 'pf-paper-dolls-v10';
+const STORE = 'pf-paper-dolls-v11';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
@@ -45,6 +45,10 @@ export const HATS = [
   { id: 'cowboy', label: 'Cowboy hat' },
   { id: 'witchhat', label: 'Witch hat' },
   { id: 'flower', label: 'Flower crown' },
+  { id: 'chefhat', label: 'Chef hat' },
+  { id: 'piratehat', label: 'Pirate hat' },
+  { id: 'beret', label: 'Beret' },
+  { id: 'postiecap', label: 'Postie cap' },
 ];
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
@@ -68,6 +72,22 @@ export const OUTFITS = [
   { id: 'princess', label: 'Blue sash' },
   { id: 'mechanic', label: 'Dungarees' },
   { id: 'florist', label: 'Garden apron' },
+  { id: 'ranch', label: 'Ranch day' },
+  { id: 'library', label: 'Library cardigan' },
+  { id: 'birthday', label: 'Birthday dress' },
+  { id: 'kimono', label: 'Festival kimono' },
+  { id: 'chef', label: 'Little chef' },
+  { id: 'explorer', label: 'Explorer' },
+  { id: 'soccer', label: 'Green kit' },
+  { id: 'icecream', label: 'Ice-cream parlour' },
+  { id: 'artist', label: 'Paint smock' },
+  { id: 'conductor', label: 'Conductor' },
+  { id: 'postie', label: 'Postie' },
+  { id: 'school', label: 'School day' },
+  { id: 'iceskate', label: 'Ice skate' },
+  { id: 'scientist', label: 'Lab coat' },
+  { id: 'bee', label: 'Honeybee' },
+  { id: 'pirate', label: 'Pirate pinafore' },
 ];
 export const DOLL_PAGES = {
   garden: 'assets/restyle/paper-dolls/pages/garden.jpg',
@@ -104,6 +124,22 @@ export const COLLECTIONS = [
   { id: 'princess', label: 'Paper princess', page: `${P}/outfits/princess.png`, pieces: [hair('bun','Bun'), hair('waves','Waves'), hat('flower','Flower crown'), clothes('princess','Blue sash')] },
   { id: 'mechanic', label: 'Fix-it', page: `${P}/outfits/mechanic.png`, pieces: [hair('pixie','Pixie'), hair('braid','Braid'), clothes('mechanic','Dungarees')] },
   { id: 'florist', label: 'Flower stall', page: `${P}/outfits/florist.png`, pieces: [hair('braid','Braid'), hair('bun','Bun'), hat('flower','Flower crown'), clothes('florist','Garden apron')] },
+  { id: 'ranch', label: 'Ranch day', page: `${P}/outfits/ranch.png`, pieces: [hair('braid','Braid'), hat('cowboy','Cowboy hat'), clothes('ranch','Ranch day')] },
+  { id: 'library', label: 'Library', page: `${P}/outfits/library.png`, pieces: [hair('bob','Bob'), clothes('library','Library cardigan')] },
+  { id: 'birthday', label: 'Birthday', page: `${P}/outfits/birthday.png`, pieces: [hair('pigtails','Pigtails'), clothes('birthday','Birthday dress')] },
+  { id: 'kimono', label: 'Festival', page: `${P}/outfits/kimono.png`, pieces: [hair('bun','Bun'), clothes('kimono','Festival kimono')] },
+  { id: 'chef', label: 'Little chef', page: `${P}/outfits/chef.png`, pieces: [hair('pixie','Pixie'), hat('chefhat','Chef hat'), clothes('chef','Little chef')] },
+  { id: 'explorer', label: 'Explorer', page: `${P}/outfits/explorer.png`, pieces: [hair('braid','Braid'), clothes('explorer','Explorer')] },
+  { id: 'soccer', label: 'Green kit', page: `${P}/outfits/soccer.png`, pieces: [hair('pixie','Pixie'), clothes('soccer','Green kit')] },
+  { id: 'icecream', label: 'Ice-cream parlour', page: `${P}/outfits/icecream.png`, pieces: [hair('pigtails','Pigtails'), clothes('icecream','Ice-cream parlour')] },
+  { id: 'artist', label: 'Paint smock', page: `${P}/outfits/artist.png`, pieces: [hair('bob','Bob'), hat('beret','Beret'), clothes('artist','Paint smock')] },
+  { id: 'conductor', label: 'Conductor', page: `${P}/outfits/conductor.png`, pieces: [hair('bob','Bob'), clothes('conductor','Conductor')] },
+  { id: 'postie', label: 'Postie', page: `${P}/outfits/postie.png`, pieces: [hair('bob','Bob'), hat('postiecap','Postie cap'), clothes('postie','Postie')] },
+  { id: 'school', label: 'School day', page: `${P}/outfits/school.png`, pieces: [hair('bob','Bob'), clothes('school','School day')] },
+  { id: 'iceskate', label: 'Ice skate', page: `${P}/outfits/iceskate.png`, pieces: [hair('bun','Bun'), clothes('iceskate','Ice skate')] },
+  { id: 'scientist', label: 'Lab coat', page: `${P}/outfits/scientist.png`, pieces: [hair('pixie','Pixie'), clothes('scientist','Lab coat')] },
+  { id: 'bee', label: 'Honeybee', page: `${P}/outfits/bee.png`, pieces: [hair('pigtails','Pigtails'), clothes('bee','Honeybee')] },
+  { id: 'pirate', label: 'Pirate', page: `${P}/outfits/pirate.png`, pieces: [hair('waves','Waves'), hat('piratehat','Pirate hat'), clothes('pirate','Pirate pinafore')] },
 ];
 export const NOSES = [
   { id: 'none', label: 'None' },
