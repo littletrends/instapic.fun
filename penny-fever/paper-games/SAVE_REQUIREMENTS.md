@@ -1,5 +1,27 @@
 # Exact-state saving build checklist
 
+## Disabled pilot candidate update — 13 September 2026
+
+The three-pilot charging adapter adds authoritative snapshots for Balloon Garden,
+Fortune and Copper Falls without editing their engine modules. The legacy-hook
+audit below still describes the default, unflagged build; it is not superseded for
+the other 31 games.
+
+- Balloon Garden: engine input/timer/balloon state retained across fixture frame
+  return; one ticket at Begin, no recharge on resume, explicit terminal records.
+- Fortune: topic/chapter/parade/RNG/timing frozen at valid gaze; midnight and
+  resumed daily reservations covered by server and browser fixtures.
+- Copper Falls: six persistent tables, companion-save selection, individually
+  recorded bulk drops, deterministic RNG/motion and deduplicated delayed payouts.
+  Paid motion is not terminated by the house timer.
+- Evidence: 30 backend tests, intercepted Chromium smoke test and migration/client
+  Node checks. Some edge cases use constructed engine snapshots. These are not
+  live 3D routing, production service or every-chapter playthrough tests.
+- Deployment: disabled and unpublished. Full evidence and activation gates:
+  MotherPC `motherpc_server/PENNY_PILOT_RELEASE_CANDIDATE.md`.
+
+## Original live-source audit
+
 Audited 2026-09-13 against the working live-source checkout on MotherPC.
 These are build requirements, not a claim that the features are implemented or deployed.
 Update this checklist when a game changes; recheck the code rather than trusting an old status.

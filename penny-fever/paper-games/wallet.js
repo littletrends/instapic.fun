@@ -1,4 +1,5 @@
 /* Same-origin alley iframe talks to the live pocket. Workshop play stays free. */
+import {pilotSession} from '../charging/flags.mjs';
 const inPage = typeof window !== 'undefined';
 const params = inPage ? new URLSearchParams(window.location.search) : new URLSearchParams();
 export const alleyPlay = inPage && window.parent !== window && params.get('room') === 'alley';
@@ -25,12 +26,14 @@ export function keptQty(id) {
 
 export function pocket() {
   if (!alleyPlay) return null;
+  if (pilotSession(params.get('stall'))) return window.PennyFeverPilotWallet?.pennies ?? 0;
   const n = Number(fever()?.getState?.()?.demoCoins);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
 }
 
 export function spend(amount = 1) {
   if (!alleyPlay) return true;
+  if (pilotSession(params.get('stall'))) return false;
   const api = fever();
   if (!api?.spendPennies) return false;
   return !!api.spendPennies(amount);
@@ -38,6 +41,7 @@ export function spend(amount = 1) {
 
 export function credit(amount) {
   if (!alleyPlay) return 0;
+  if (pilotSession(params.get('stall'))) return 0;
   const api = fever();
   if (!api?.addDemoCoins) return 0;
   return api.addDemoCoins(amount) || 0;

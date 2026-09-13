@@ -20,11 +20,14 @@ export async function migrateBrowser({enabled = false, storage = globalThis.loca
     if (!record) {
       const original = readOriginal();
       JSON.parse(original);
-      record = {status: 'prepared', key: uuid(), token: `${uuid()}.${uuid()}`, original};
+      const localSaves = {};
+      const copper = storage.getItem('pennyFever.cashDrop');
+      if (copper !== null) localSaves['pennyFever.cashDrop'] = copper;
+      record = {status: 'prepared', key: uuid(), token: `${uuid()}.${uuid()}`, original, localSaves};
       storage.setItem(MIGRATION_KEY, JSON.stringify(record));
     }
     if (record.status === 'imported') return record;
-    const receipt = await prepare(record.key, JSON.parse(record.original), record.token);
+    const receipt = await prepare(record.key, JSON.parse(record.original), record.token, record.localSaves || {});
     record.receipt = receipt;
     storage.setItem(MIGRATION_KEY, JSON.stringify(record));
     const imported = await commit(receipt.player, receipt.receipt, receipt.digest, record.token);

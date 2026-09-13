@@ -1,4 +1,22 @@
-# Disabled ledger transport checkpoint — 13 September 2026
+# Disabled three-pilot candidate — 13 September 2026
+
+The original transport checkpoint below is retained as history. The three actual
+engine adapters, guarded runtime/shell integration, migration receipts and Square
+log reconciliation are now implemented and tested in isolated fixtures.
+
+All release flags remain OFF. No publication, running-server registration, real
+payment or production wallet import has occurred. Do not activate this candidate.
+
+Current design, evidence and production-validation gates are documented in the
+MotherPC repository at `motherpc_server/PENNY_PILOT_RELEASE_CANDIDATE.md`.
+The worker reuses existing engine code with seeded replay; it does not retune
+prototype gameplay, rewards, stars or treasure rates.
+
+Current tests: 30 backend scenarios, one intercepted Chromium smoke scenario,
+plus migration/client/pennies/conversion Node checks. The browser scenario uses
+fixture-only traffic, not a local workshop build or the running live service.
+
+## Original foundation checkpoint
 
 `pilot-client.mjs` is not imported by gameplay. It is a transport foundation, not
 a completed game adapter. It defaults to disabled and practice mode; only explicit

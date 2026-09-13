@@ -1,5 +1,15 @@
 # Charging implementation stages
 
+## Current checkpoint — 13 September 2026
+
+The user subsequently approved a disabled three-pilot candidate without bulk
+migration. Migration guards, the actual Balloon/Fortune/Copper engine adapters
+and reviewed Square entitlement reconciliation are now implemented. Every release
+flag remains off and no publication or production import has occurred. See
+`../charging/README.md` and the MotherPC repository's
+`motherpc_server/PENNY_PILOT_RELEASE_CANDIDATE.md` for current evidence and required
+production validation. The earlier sequencing below is retained as history.
+
 Started 2026-09-13. Follow the accepted live-charge audit and the user's clarified
 Fortune reservation, explicit-abandonment and per-action record specification.
 Implement and verify one stage at a time; do not tune rewards.

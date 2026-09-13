@@ -15,7 +15,11 @@ export function createPilotClient({enabled = false, practice = true, game, playe
       body: JSON.stringify(record.command),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `ledger_http_${response.status}`);
+    if (!response.ok) {
+      if (['insufficient_funds', 'stale_or_closed_play', 'resume_frozen_attempt',
+        'valid_topic_required', 'raw_ledger_commands_disabled_for_pilots'].includes(result.error)) storage.removeItem(storageKey);
+      throw new Error(result.error || `ledger_http_${response.status}`);
+    }
     storage.removeItem(storageKey);
     return result;
   }
@@ -41,6 +45,15 @@ export function createPilotClient({enabled = false, practice = true, game, playe
   return {
     active,
     command,
+    async current() {
+      if (!active) return null;
+      const response = await transport(`${base}/pilots/${encodeURIComponent(game)}`, {
+        cache: 'no-store', headers: {Authorization: `Bearer ${token}`},
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `ledger_http_${response.status}`);
+      return result;
+    },
     async recoverRequest() {
       if (!active) return {active: false, practice};
       const pending = storage.getItem(storageKey);

@@ -1,6 +1,7 @@
 import {games} from '../paper-games/catalogue.js?v=iris-ball-1';
 import {spriteKey} from '../paper-games/prizes.js?v=purse-1';
 import {frontUrl} from '../paper-games/sprites.js';
+import {pilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
@@ -33,7 +34,7 @@ function leavePaperGame(id, nav=globalThis.location){
 // Existing room routing owns the alley pause and return position. The game itself
 // owns its canvas, controls and lifecycle; leaving destroys just that iframe.
 export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThis.location){
- let stage,frame,status,timer;
+ let stage,frame,status,timer,pilotWallet;
  const room=()=>doc.getElementById('cabinet-'+game.id);
  function prepare(){
   const cabinet=room();if(!cabinet)throw new Error('Missing cabinet '+game.id);
@@ -47,7 +48,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const pennyPlay=isPennyTable(game.id);
+  const pennyPlay=isPennyTable(game.id)||!!pilotSession(game.id);
   const retry=doc.createElement('button');retry.type='button';
   retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':pennyPlay?'The table waits':'Play again · 1 penny';
   if(pennyPlay){
@@ -57,11 +58,15 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
     const PF=window.PennyFever;
-    const n=Number(PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
-    const t=Number(PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
+    const n=Number(pilotWallet?.pennies??PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
+    const t=Number(pilotWallet?.tickets??PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
     wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies');
   };
   paintWallet();
+  window.addEventListener('pennyfever:pilotwallet',event=>{
+    if(event.detail?.game!==game.id||!pilotSession(game.id))return;
+    pilotWallet=event.detail.wallet;paintWallet();
+  });
   window.addEventListener('pennyfever:statechange',paintWallet);
   const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
   cash.addEventListener('click',()=>{
@@ -97,7 +102,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
   const PF=window.PennyFever;
   const pennyPlay=isPennyTable(game.id);
-  if(!pennyPlay){
+  if(!pennyPlay&&!pilotSession(game.id)){
     if(PF?.spendPennies&&!PF.spendPennies(1)){
       status.hidden=false;
       status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura. Workshop practice stays free.';
