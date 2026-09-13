@@ -53,6 +53,7 @@ export function closeTill() {
   till.hidden = true;
   if (backdrop) backdrop.hidden = true;
   document.body.classList.remove('has-aura-till');
+  window.dispatchEvent(new Event('pf-till-closed'));
 }
 
 function showTill() {

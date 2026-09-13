@@ -85,24 +85,14 @@ function pick(s, rng, wantUnique) {
   return options[options.length - 1].id;
 }
 function snapshot(s) {
-  return {
-    v: 7,
+  return JSON.parse(JSON.stringify({
+    ...s,
+    v: 8,
     chapter: s.level || 0,
-    t: s.t,
-    aim: s.aim,
-    dropped: s.dropped,
-    score: s.score,
-    specials: s.specials,
-    restock: s.restock,
-    queue: s.queue,
-    stroke: 0,
-    seen: s.seen.slice(),
-    paid: s.paid.slice(),
-    pieces: s.coins.filter(c => !c.falling).map(c => ({
-      id: c.id, x: +c.x.toFixed(2), y: +c.y.toFixed(2),
-      vx: +c.vx.toFixed(2), vy: +c.vy.toFixed(2), layer: c.layer,
-    })),
-  };
+    savedAt: Date.now(),
+    coins: undefined,
+    pieces: s.coins.map(c => ({...c})),
+  }));
 }
 function plantPrize(coins, level, rng) {
   const set = SETS[level] || SETS[0];
@@ -138,19 +128,22 @@ function plantStacks(coins, level, rng) {
   }
 }
 function hydrate(blob) {
+  if (blob.v >= 8) {
+    const {pieces, chapter, v, savedAt, ...state} = blob;
+    return {
+      ...state,
+      level: chapter || 0,
+      coins: pieces.map(piece => ({...mint(piece.id, piece.x, piece.y, piece.layer), ...piece})),
+      dirty: false,
+      saveAt: state.t || 0,
+    };
+  }
   const coins = (blob.pieces || []).map(p => {
     const c = mint(p.id, p.x, p.y, p.layer | 0);
-    const L = LAYERS[c.layer] || LAYERS[2];
-    c.x = clamp(c.x, L.left + c.r + 2, L.right - c.r - 2);
-    c.y = clamp(c.y, L.back + c.r + 4, L.lip - c.r - 3);
-    c.vx = 0;
-    c.vy = 0;
+    c.vx = p.vx || 0;
+    c.vy = p.vy || 0;
     return c;
   });
-  if (coins.length < 40) topUp(coins, Math.random);
-  plantPrize(coins, blob.chapter || 0, Math.random);
-  plantPurse(coins, Math.random);
-  plantStacks(coins, blob.chapter || 0, Math.random);
   return {
     level: blob.chapter || 0, t: blob.t || 0, coins, aim: blob.aim || 450, ammo: 0, total: 0,
     score: blob.score || 0, specials: blob.specials || 0, cooldown: 0, settle: 0,
@@ -378,12 +371,9 @@ export default {
   create(level, rng) {
     const roll = rng || Math.random;
     const saved = loadMachine(level);
-    if (saved && saved.v >= 7 && saved.pieces && saved.pieces.length >= 40) {
+    if (saved && saved.v >= 7 && Array.isArray(saved.pieces)) {
       const s = hydrate(saved);
       s.level = level;
-      plantPrize(s.coins, level, roll);
-      plantPurse(s.coins, roll);
-      plantStacks(s.coins, level, roll);
       bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
       return s;
     }

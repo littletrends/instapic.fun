@@ -330,7 +330,7 @@ function matchesQuery(item, q) {
 
 function interior(all, id) {
   const book = model.books.find(b => b.id === id);
-  if (book?.master) return all.filter(i => i.id !== id);
+  if (book?.master) return all;
   return all.filter(i => i.book === id && i.id !== id);
 }
 
@@ -556,7 +556,7 @@ function paintShelf(all) {
     root.append(b);
   }
   text('shelfIntro', shown
-    ? 'Open a book. Empty places wait for the keepsakes you bring home.'
+    ? 'The Penny collector book lists every keepsake, including the books themselves. Themed books show parts of that same collection; their totals do not add together.'
     : 'Nothing on the shelf matches that search.');
 }
 

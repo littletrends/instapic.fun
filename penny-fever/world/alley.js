@@ -858,6 +858,7 @@ let focus = null;
 let vendorChatUntil = 0;
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
+let ticketDeskReturn = null;
 let stallCardPinned = false;
 let alleyMapOpen = false;
 let stallCardId = "";
@@ -873,7 +874,25 @@ let loopingAlley = false;
 let loopTimer = 0;
 let loopOpenTimer = 0;
 let gatePromptActive = false;
-let chatPinned = false;
+let guidanceText = "";
+let guidanceIndex = 0;
+const GUIDANCE_LINES = [
+  "Your admission stub is for Aura to punch at the entrance. It is separate from the play tickets in your pocket. Tap Chat for another tip.",
+  "Tickets and pennies are different pocket balances. Check each stall’s price before you play. Tap Chat for another tip.",
+  "Aura can trade five pennies for one ticket. Open Ticket Desk for trading or to buy a pack through Square. Tap Chat for another tip.",
+  "Not sure where to begin? Open Map, pick a stall that catches your eye, and walk over to see what it offers. Tap Chat for another tip.",
+  "Try finding your first keepsake. Open Treasures to browse your books and see the empty places waiting to be filled. Tap Chat for another tip.",
+];
+try {
+  const savedGuidanceIndex = Number(localStorage.getItem("pf-guidance-next"));
+  if (Number.isInteger(savedGuidanceIndex) && savedGuidanceIndex >= 0) guidanceIndex = savedGuidanceIndex % GUIDANCE_LINES.length;
+} catch {}
+function closeGuidance() {
+  guidanceText = "";
+  const button = el("pfPocketChat");
+  button?.classList.remove("is-active");
+  button?.setAttribute("aria-expanded", "false");
+}
 let pendingTillCashIn = false;
 let tillMessage = "";
 let tillMessageUntil = 0;
@@ -897,7 +916,7 @@ function attachHud() {
           <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
           <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
           <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
-          <button type="button" id="pfPocketChat"><span>💬</span>Chat</button>
+          <button type="button" id="pfPocketChat" aria-expanded="false" aria-controls="pfWorldSpeech"><span>💬</span>Chat</button>
           <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">
@@ -1161,6 +1180,14 @@ function walkToMapPlace(place) {
 }
 
 function bindHud() {
+  const home = el("pfWorldHome");
+  if (home) home.addEventListener("click", (event) => {
+    if (!window.confirm("Leave Penny Fever and return to instapic.fun? Choose Cancel to stay in the game.")) {
+      event.preventDefault();
+      return;
+    }
+    rememberAlleySpot();
+  });
   const leave = el("pfWorldLeave");
   const enter = el("pfWorldEnter");
   const pocketScrip = el("pfPocketScrip");
@@ -1174,6 +1201,14 @@ function bindHud() {
   const mapLegend = el("pfAlleyMapLegend");
   if (leave) leave.addEventListener("click", (event) => {
     event.preventDefault();
+    if (!ticketDeskReturn && player) {
+      ticketDeskReturn = {
+        x: player.position.x,
+        z: player.position.z,
+        yaw: camYaw,
+        card: stallCardOpen && nearest ? { ...nearest } : null,
+      };
+    }
     openBoothCard(auraDeskFocus());
   });
   const passChip = el("pfPassChip");
@@ -1184,14 +1219,18 @@ function bindHud() {
   const tillTickets = el("pfTillTickets");
   const tillTrade = el("pfTillTrade");
   if (tillTickets) tillTickets.addEventListener("click", () => {
-    closeStallCard();
+    if (!ticketDeskReturn) closeStallCard();
     openTill({pin: true});
+  });
+  window.addEventListener("pf-till-closed", () => {
+    if (ticketDeskReturn) closeStallCard();
   });
   if (tillTrade) tillTrade.addEventListener("click", () => {
     const ok = window.PennyFever?.tradePenniesForTicket?.();
     tillMessage = ok ? "One booth ticket from five pennies." : "Need five pennies for a ticket.";
     tillMessageUntil = performance.now() + 4000;
     paintAuraWallet(el("pfStallCard"));
+    if (ok && ticketDeskReturn) closeStallCard();
   });
   const tillLoan = el("pfTillLoan");
   const tillReset = el("pfTillReset");
@@ -1245,6 +1284,7 @@ function bindHud() {
     event.preventDefault();
     event.stopPropagation();
     vendorChatUntil = 0;
+    closeGuidance();
     const speech = el("pfWorldSpeech");
     if (speech) speech.hidden = true;
   });
@@ -1283,9 +1323,12 @@ function bindHud() {
     window.PennyFeverDoll?.open();
   });
   if (pocketChat) pocketChat.addEventListener("click", () => {
-    chatPinned = !chatPinned;
-    pocketChat.classList.toggle("is-active", chatPinned);
-    pocketChat.setAttribute("aria-pressed", String(chatPinned));
+    guidanceText = GUIDANCE_LINES[guidanceIndex];
+    guidanceIndex = (guidanceIndex + 1) % GUIDANCE_LINES.length;
+    try { localStorage.setItem("pf-guidance-next", String(guidanceIndex)); } catch {}
+    vendorChatUntil = 0;
+    pocketChat.classList.add("is-active");
+    pocketChat.setAttribute("aria-expanded", "true");
   });
   if (pocketChest) pocketChest.addEventListener("click", () => {
     window.PennyFeverInventory?.open();
@@ -1597,7 +1640,12 @@ function closeStallCard() {
   if (till) till.hidden = true;
   const joy = el("pfJoy");
   if (joy) joy.hidden = false;
-  if (player && Math.abs(player.position.x) > 0.35) player.position.x *= 0.2;
+  if (ticketDeskReturn) {
+    const destination = ticketDeskReturn;
+    ticketDeskReturn = null;
+    warp(destination.x, destination.z, destination.yaw);
+    if (destination.card) openBoothCard(destination.card);
+  } else if (player && Math.abs(player.position.x) > 0.35) player.position.x *= 0.2;
 }
 
 function syncStallCard(best) {
@@ -1680,6 +1728,7 @@ function syncStallCard(best) {
 }
 
 function talkToFocus() {
+  closeGuidance();
   const who = nearest;
   if (!who) return;
   if (who.kind !== "stall" && who.kind !== "ride" && who.kind !== "aura") return;
@@ -2422,6 +2471,10 @@ function findNearest() {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura";
       speechText.textContent = tillMessage;
+    } else if (guidanceText) {
+      speech.hidden = false;
+      if (speechName) speechName.textContent = "Aura · a little guidance";
+      speechText.textContent = guidanceText;
     } else if (el("pfPassChip") && !el("pfPassChip").hidden) {
       speech.hidden = true;
     } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
@@ -2719,6 +2772,7 @@ function startNow() {
 }
 
 function pause() {
+  closeGuidance();
   closeAlleyMap();
   api.paused = true;
   keys = {};

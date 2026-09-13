@@ -73,7 +73,7 @@ function readLocal() {
 }
 
 function validTable(blob) {
-  return blob && Array.isArray(blob.pieces) && blob.pieces.length > 0;
+  return blob && Array.isArray(blob.pieces) && (blob.v >= 8 || blob.pieces.length > 0);
 }
 
 function tableFromStore(store, chapter) {
@@ -87,7 +87,12 @@ function tableFromStore(store, chapter) {
 export function loadMachine(chapter = 0) {
   const a = tableFromStore(fever()?.getState?.()?.cashDrop, chapter);
   const b = tableFromStore(readLocal(), chapter);
-  if (a && b) return (Number(a.dropped) || 0) >= (Number(b.dropped) || 0) ? a : b;
+  if (a && b) {
+    const savedA = Number(a.savedAt) || 0;
+    const savedB = Number(b.savedAt) || 0;
+    if (savedA !== savedB) return savedA > savedB ? a : b;
+    return (Number(a.dropped) || 0) >= (Number(b.dropped) || 0) ? a : b;
+  }
   return a || b;
 }
 
