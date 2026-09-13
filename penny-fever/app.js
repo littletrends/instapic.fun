@@ -208,6 +208,17 @@
   }
 
   function saveState(s) {
+    const migrationRaw = localStorage.getItem('pennyFever.ledger.migration.v1');
+    if (migrationRaw) {
+      const migration = JSON.parse(migrationRaw);
+      const original = JSON.parse(migration.original);
+      if (!['prepared', 'imported'].includes(migration.status) ||
+          s.demoCoins !== original.demoCoins || s.playTickets !== original.playTickets) {
+        s.demoCoins = original.demoCoins;
+        s.playTickets = original.playTickets;
+        throw new Error('Ledger migration has locked this legacy wallet. No balance was saved.');
+      }
+    }
     window.PennyFeverInventoryModel?.reconcile(s);
     let persisted = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
