@@ -1155,6 +1155,8 @@ function enterStallById(id) {
 
 function walkToMapPlace(place) {
   if (!player) return;
+  closeStallCard();
+  closeAlleyMap();
   if (place === "pier") {
     closeAlleyMap();
     return warp(0, FOYER_IN + 1.2, 0);
@@ -1168,6 +1170,7 @@ function walkToMapPlace(place) {
     if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
     return warp(0, hallLen - 2.4, 0);
   }
+  if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
   const s = stalls?.find((x) => x.userData.stall?.id === place);
   if (s) {
     const side = Math.sign(s.position.x) || 1;
@@ -1176,7 +1179,6 @@ function walkToMapPlace(place) {
     const ride = papercutRides?.figures?.find((f) => f.userData.amusementId === place);
     if (ride) warp((Math.sign(ride.position.x) || 1) * 0.28, ride.position.z, 0);
   }
-  enterStallById(place);
 }
 
 function bindHud() {
@@ -2475,12 +2477,12 @@ function findNearest() {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura · a little guidance";
       speechText.textContent = guidanceText;
-    } else if (el("pfPassChip") && !el("pfPassChip").hidden) {
+    } else if (el("pfPassChip") && !el("pfPassChip").hidden && performance.now() >= vendorChatUntil) {
       speech.hidden = true;
-    } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump)) {
+    } else if (!ticketPassed() && (dAura < 2.6 || api.gateBump) && performance.now() >= vendorChatUntil) {
       speech.hidden = true;
     } else if ((best?.kind === "stall" || best?.kind === "ride" || best?.kind === "aura" || nearest?.kind === "aura") && performance.now() < vendorChatUntil) {
-      const who = best?.line ? best : nearest;
+      const who = stallCardPinned ? nearest : best?.line ? best : nearest;
       speech.hidden = false;
       if (speechName) speechName.textContent = who.host || who.name || "Aura";
       speech.classList.toggle("is-left", (who.side || -1) < 0);
