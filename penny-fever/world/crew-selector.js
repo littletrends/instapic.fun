@@ -1,7 +1,7 @@
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
-} from './paper-dolls.js?v=doll-wheel-1';
+} from './paper-dolls.js?v=doll-clean-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';

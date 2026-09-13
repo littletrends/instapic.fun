@@ -402,13 +402,15 @@ export async function composeDoll(spec) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const bodyImg = await load(src('bodies', 'girl.png'));
-  const wear = spec.outfit && spec.outfit !== 'none' ? spec.outfit : null;
-  const wearImg = wear ? await load(src('outfits', `${wear}.png`)) : bodyImg;
-  ctx.drawImage(wearImg, 0, 0, W, H);
+  ctx.drawImage(bodyImg, 0, 0, W, H);
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
   if (skinRgb) recolorSkinFromMask(ctx, bodyImg, skinRgb);
   const eyeRgb = hexRgb(spec.eyesHex) || EYE_COLORS.find(e => e.id === spec.eyes)?.rgb;
   if (eyeRgb) recolorEyes(ctx, eyeRgb);
+  if (spec.outfit && spec.outfit !== 'none') {
+    const wearImg = await load(src('outfits', `${spec.outfit}.png`));
+    ctx.drawImage(wearImg, 0, 0, W, H);
+  }
   if (spec.hair && spec.hair !== 'none') {
     const hairImg = await load(src('hair', `${spec.hair}.png`));
     const style = HAIR_STYLES.find(h => h.id === spec.hair);
