@@ -1,12 +1,16 @@
 #pfPaperMap {box-sizing:border-box;max-width:1100px;min-height:100vh;margin:auto;padding:24px;color:#382a20;background:#eddbb5;font:18px/1.5 Georgia,serif;border:8px double #785439}
 #pfPaperMap[hidden] {display:none}
 #pfPaperMap header {text-align:center}
+#paperMapTools {position:sticky;top:0;z-index:10;background:#eddbb5;padding:8px 0 12px;border-bottom:2px solid #785439;max-height:45vh;overflow-y:auto;text-align:center;box-shadow:0 4px 5px #382a2020}
+#paperPocket {margin:0 0 8px}
+#paperAdvice:empty {display:none}
+#pfPaperMap #paperMapTools button,#pfPaperMap #paperMapTools nav a {font-size:16px;padding:8px 10px}
 #pfPaperMap h1 {font-size:clamp(28px,6vw,48px);margin:8px}
 #pfPaperMap nav,#paperBoothActions {display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 #pfPaperMap button,#pfPaperMap nav a {font:inherit;color:#382a20;background:#fff0d0;border:2px solid #785439;border-radius:5px;padding:12px;cursor:pointer}
 #pfPaperMap button:focus-visible,#pfPaperMap a:focus-visible {outline:3px solid #823448;outline-offset:3px}
 #paperStalls {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:24px}
-#pfPaperMap .paper-map-stall {min-height:95px;border:4px double #785439;box-shadow:3px 4px 0 #b59b77}
+#pfPaperMap .paper-map-stall {min-height:95px;border:4px double #785439;box-shadow:3px 4px 0 #b59b77;scroll-margin-top:48vh}
 #paperAdvice {text-align:center}
 #paperBooth {box-sizing:border-box;width:min(92vw,550px);max-height:85vh;overflow:auto;color:#382a20;background:#fff0d0;border:6px double #785439;padding:24px;font:18px/1.5 Georgia,serif}
 #paperBooth::backdrop {background:#21190dcc}

@@ -877,11 +877,11 @@ let gatePromptActive = false;
 let guidanceText = "";
 let guidanceIndex = 0;
 const GUIDANCE_LINES = [
-  "Your admission stub is for Aura to punch at the entrance. It is separate from the play tickets in your pocket. Tap Chat for another tip.",
-  "Tickets and pennies are different pocket balances. Check each stall’s price before you play. Tap Chat for another tip.",
-  "Aura can trade five pennies for one ticket. Open Ticket Desk for trading or to buy a pack through Square. Tap Chat for another tip.",
-  "Not sure where to begin? Open Map, pick a stall that catches your eye, and walk over to see what it offers. Tap Chat for another tip.",
-  "Try finding your first keepsake. Open Treasures to browse your books and see the empty places waiting to be filled. Tap Chat for another tip.",
+  "Your admission stub is for Aura to punch at the entrance. It is separate from the play tickets in your pocket. Tap Aura’s Tips for another tip.",
+  "Tickets and pennies are different pocket balances. Check each stall’s price before you play. Tap Aura’s Tips for another tip.",
+  "Aura can trade five pennies for one ticket. Open Ticket Desk for trading or to buy a pack through Square. Tap Aura’s Tips for another tip.",
+  "Not sure where to begin? Open Map, pick a stall that catches your eye, and walk over to see what it offers. Tap Aura’s Tips for another tip.",
+  "Try finding your first keepsake. Open Treasures to browse your books and see the empty places waiting to be filled. Tap Aura’s Tips for another tip.",
 ];
 try {
   const savedGuidanceIndex = Number(localStorage.getItem("pf-guidance-next"));
@@ -916,7 +916,7 @@ function attachHud() {
           <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
           <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
           <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
-          <button type="button" id="pfPocketChat" aria-expanded="false" aria-controls="pfWorldSpeech"><span>💬</span>Chat</button>
+          <button type="button" id="pfPocketChat" aria-expanded="false" aria-controls="pfWorldSpeech"><span>💬</span>Aura’s Tips</button>
           <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">

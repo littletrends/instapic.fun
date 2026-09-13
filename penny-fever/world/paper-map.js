@@ -5,12 +5,14 @@ const root = document.createElement('main');
 root.id = 'pfPaperMap';
 root.hidden = true;
 root.innerHTML = `<header><p>AURA’S PENNY FEVER</p><h1>The paper midway</h1>
-  <p>A little folded map. Choose a host, then step inside.</p>
+  <p>A little folded map. Choose a host, then step inside.</p></header>
+  <div id="paperMapTools">
   <p id="paperPocket" role="status"></p>
   <nav aria-label="Paper midway"><button data-action="aura">Ticket Desk</button>
-  <button data-action="chat">Chat</button><button data-action="treasures">Treasures</button>
-  <a href="#door">Doorway</a><a href="../index.html" data-action="home">Home</a></nav></header>
-  <p id="paperAdvice" role="status"></p><section id="paperStalls" aria-label="Sideshow hosts"></section>
+  <button data-action="chat">Aura’s Tips</button><button data-action="treasures">Treasures</button>
+  <a href="#door">Doorway</a><a href="../index.html" data-action="home">Home</a></nav>
+  <p id="paperAdvice" role="status"></p></div>
+  <section id="paperStalls" aria-label="Sideshow hosts"></section>
   <dialog id="paperBooth"><h2 id="paperBoothTitle"></h2><p id="paperBoothText"></p>
   <div id="paperBoothActions"></div><form method="dialog"><button>Back to the map</button></form></dialog>`;
 document.body.append(root);
@@ -43,13 +45,22 @@ function showBooth(title, description) {
   find('paperBoothActions').replaceChildren();
   if (!booth.open) booth.showModal();
 }
-function aura() {
+function enterStall(game) {
+  if (!api()?.getState?.()?.admitPassed) { aura(game); return; }
+  booth.close();
+  location.hash = 'cabinet/' + game.id;
+}
+function aura(destination = null) {
   showBooth('Aura’s ticket desk', 'Show your admission ticket, trade pennies, or choose a pack. Your place on the map will wait.');
   action('Show ticket / pay for the next lap', () => {
     const state = api()?.getState?.();
     if (!state) return;
     const admitted = state.admitPassed || api().admitAlleyLap((Number(state.alleyLaps) || 0) === 0 ? 'ticket' : 'penny');
     find('paperBoothText').textContent = admitted ? 'Punched! Choose a host and enjoy the midway.' : 'You need a penny for the next lap.';
+    if (admitted && destination) {
+      showBooth('Your ticket is punched!', `${destination.host} is waiting at ${destination.title}. Ready to continue?`);
+      action(`Continue to ${destination.title}`, () => enterStall(destination));
+    }
     pocket();
   });
   action('Trade 5 pennies for 1 ticket', () => {
@@ -69,11 +80,7 @@ for (const game of games.filter(game => game.ready && !game.workshop)) {
   button.textContent = `${game.host} · ${game.title}`;
   button.onclick = () => {
     showBooth(`${game.host} · ${game.title}`, game.blurb);
-    action('Enter stall', () => {
-      if (!api()?.getState?.()?.admitPassed) { aura(); return; }
-      booth.close();
-      location.hash = 'cabinet/' + game.id;
-    });
+    action('Enter stall', () => enterStall(game));
   };
   find('paperStalls').append(button);
 }
