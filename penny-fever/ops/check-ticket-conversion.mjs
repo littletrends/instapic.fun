@@ -15,6 +15,7 @@ for (const showmanPass of [false, true]) {
     const state = {demoCoins: balance, playTickets: 3, showmanPass, passDay: '2026-09-13', paperInventory: {items: {}}};
     const saves = [];
     const context = vm.createContext({
+      localStorage: {getItem: () => null},
       state,
       PENNY_STACK: 5,
       saveState(value) { saves.push(JSON.parse(JSON.stringify(value))); },

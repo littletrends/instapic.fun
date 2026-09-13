@@ -1,7 +1,7 @@
 import {games} from '../paper-games/catalogue.js?v=iris-ball-1';
 import {spriteKey} from '../paper-games/prizes.js?v=purse-1';
 import {frontUrl} from '../paper-games/sprites.js';
-import {pilotSession} from '../charging/flags.mjs';
+import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
@@ -57,6 +57,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   }else retry.addEventListener('click',()=>load(true));
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
+    if(pilotSession(game.id)&&!pilotWallet){wallet.textContent='Private test wallet · awaiting server';return;}
     const PF=window.PennyFever;
     const n=Number(pilotWallet?.pennies??PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
     const t=Number(pilotWallet?.tickets??PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
@@ -70,6 +71,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   window.addEventListener('pennyfever:statechange',paintWallet);
   const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
   cash.addEventListener('click',()=>{
+    if(pilotSession(game.id)){status.hidden=false;status.textContent='Test balances only. Legacy conversion is paused.';return;}
     const PF=window.PennyFever;
     const got=PF?.cashTicketForPennies?.();
     if(!got){
@@ -91,18 +93,28 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   frame.src='about:blank';
   stage.append(bar,status,frame);cabinet.append(stage);
  }
+ let loadRevision=0;
  function unload(){
+  loadRevision++;
   clearTimeout(timer);timer=null;
   if(!frame)return;
   frame.onload=frame.onerror=null;
   if(frame.getAttribute('src')!=='about:blank')frame.src='about:blank';
  }
- function load(restart=false){
+ async function load(restart=false){
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
+  const revision=++loadRevision;
+  let session;
+  try { session=await resolvePilotSession(game.id); }
+  catch(reason){
+   if(revision===loadRevision){status.hidden=false;status.textContent='Private play paused: '+reason.message;}
+   return;
+  }
+  if(revision!==loadRevision)return;
   const PF=window.PennyFever;
   const pennyPlay=isPennyTable(game.id);
-  if(!pennyPlay&&!pilotSession(game.id)){
+  if(!pennyPlay&&!session){
     if(PF?.spendPennies&&!PF.spendPennies(1)){
       status.hidden=false;
       status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura. Workshop practice stays free.';

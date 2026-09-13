@@ -1,5 +1,12 @@
 # Disabled three-pilot candidate — 13 September 2026
 
+Private-gate implementation checkpoint: the frontend now resolves authenticated
+capabilities for explicitly configured test identities, with isolated outbox and
+award receipts and no legacy-wallet fallback. Defaults remain off. See MotherPC
+`motherpc_server/PENNY_PRIVATE_GATE_IMPLEMENTATION.md` for the current integration,
+test evidence and future deployment steps. The older checkpoint notes below are
+historical, not a statement that this gate has been deployed or browser-validated.
+
 The original transport checkpoint below is retained as history. The three actual
 engine adapters, guarded runtime/shell integration, migration receipts and Square
 log reconciliation are now implemented and tested in isolated fixtures.

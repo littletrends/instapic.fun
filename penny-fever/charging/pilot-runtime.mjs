@@ -35,6 +35,13 @@ export async function runPilot(entry, session) {
   }
 
   function deliverAwards(rows) {
+    if (session.privateTest) {
+      const key = `pennyFever.privateTest.awards.v1:${session.playerId}`;
+      const receipts = JSON.parse(localStorage.getItem(key) || '{}');
+      for (const award of rows) receipts[award.receipt] = award;
+      localStorage.setItem(key, JSON.stringify(receipts));
+      return;
+    }
     const api = window.parent.PennyFever;
     const model = window.parent.PennyFeverInventoryModel;
     const legacy = api?.getState?.();

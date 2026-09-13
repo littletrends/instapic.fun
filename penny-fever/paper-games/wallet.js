@@ -48,6 +48,7 @@ export function credit(amount) {
 }
 
 export function keep(id, stall = 'coin-pusher', opts = {}) {
+  if (alleyPlay && pilotSession(params.get('stall'))) return false;
   if (!alleyPlay || !id) return false;
   try {
     const PF = fever();
@@ -89,6 +90,7 @@ function tableFromStore(store, chapter) {
 }
 
 export function loadMachine(chapter = 0) {
+  if (alleyPlay && pilotSession(params.get('stall'))) return null;
   const a = tableFromStore(fever()?.getState?.()?.cashDrop, chapter);
   const b = tableFromStore(readLocal(), chapter);
   if (a && b) {
@@ -101,6 +103,7 @@ export function loadMachine(chapter = 0) {
 }
 
 export function saveMachine(blob, chapter = 0) {
+  if (alleyPlay && pilotSession(params.get('stall'))) return;
   if (!blob) return;
   const key = String(chapter);
   const prev = fever()?.getState?.()?.cashDrop;

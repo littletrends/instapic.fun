@@ -3,10 +3,16 @@ import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {pilotSession} from '../charging/flags.mjs';
+import {resolvePilotSession} from '../charging/flags.mjs';
 const pilotParams = new URLSearchParams(location.search);
-const pilot = window.parent !== window && pilotParams.get('room') === 'alley' ? pilotSession(pilotParams.get('stall')) : null;
-if (pilot) {
+let pilot = null, privateError = null;
+try {
+ if (window.parent !== window && pilotParams.get('room') === 'alley') pilot = await resolvePilotSession(pilotParams.get('stall'));
+} catch (reason) { privateError = reason; }
+if (privateError) {
+ document.querySelector('#error').textContent = privateError.message;
+ document.querySelector('#begin').disabled = true;
+} else if (pilot) {
  await (await import('../charging/pilot-runtime.mjs')).runPilot(byId[pilotParams.get('stall')], pilot);
 } else {
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
