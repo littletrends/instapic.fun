@@ -790,6 +790,11 @@
     const onLove = hash === "cabinet/love" || hash === "cabinet/love/play" || hash === "cabinet/love/result";
     if (!onLove) abortLoveRun();
     hideAllViews(nextSlug);
+    if (hash === "paper-map") return "paper-map";
+    if (/^(foyer|arcade|alley|booth)$/.test(hash) && new URLSearchParams(location.search).get("paperMap") === "1") {
+      location.replace("#paper-map");
+      return "paper-map";
+    }
     if (!hash || hash === "door") {
       const door = $("discoveryDoor");
       if (door) { door.hidden = false; door.inert = false; }

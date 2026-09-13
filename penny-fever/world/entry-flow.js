@@ -12,6 +12,17 @@
     history.replaceState(null, '', live);
   }
   const root = document.documentElement;
+  try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (!context) {
+      live.searchParams.set('paperMap', '1');
+      history.replaceState(null, '', live);
+    } else context.getExtension('WEBGL_lose_context')?.loseContext();
+  } catch {
+    live.searchParams.set('paperMap', '1');
+    history.replaceState(null, '', live);
+  }
   let timer;
   let startupError = '';
   const inAlley = () => /^#(foyer|arcade|alley|booth)$/.test(location.hash);
@@ -29,6 +40,11 @@
   }, true);
   function sync() {
     clearTimeout(timer);
+    if (inAlley() && new URLSearchParams(location.search).get('paperMap') === '1') {
+      root.classList.remove('world-loading');
+      location.replace('#paper-map');
+      return;
+    }
     const alley = inAlley();
     const world = window.PennyFeverWorld;
     if (alley && world?.started) {
@@ -55,6 +71,10 @@
     root.classList.remove('world-loading');
   });
   window.addEventListener('pf-world-error', () => {
+    const fallback = new URL(location.href);
+    fallback.searchParams.set('paperMap', '1');
+    history.replaceState(null, '', fallback);
+    location.hash = 'paper-map';
     clearTimeout(timer);
     const message = document.getElementById('worldLoadingMessage');
     document.getElementById('worldLoading')?.classList.add('loading-failed');
@@ -70,6 +90,7 @@
       <div class="loading-lights" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="loading-reassurance">“I’m right here, darling. We’re getting everything ready.”</p>
       <a href="#door">Back to the entrance</a>
+      <a href="?paperMap=1#paper-map">Use the paper map</a>
       <button type="button" class="ticket-button" id="reloadMidway">Reload the midway</button>
     </div>`;
     document.body.append(loading);

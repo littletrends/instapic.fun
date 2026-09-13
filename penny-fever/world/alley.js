@@ -2701,6 +2701,7 @@ function loop() {
 
 let pendingStart = false;
 function start() {
+  if (new URLSearchParams(location.search).get("paperMap") === "1") return false;
   if (pendingStart) return true;
   pendingStart = true;
   // Let the loading screen paint before synchronous scene construction begins.
@@ -2793,6 +2794,7 @@ function pause() {
 }
 
 function resume() {
+  if (new URLSearchParams(location.search).get("paperMap") === "1") return false;
   if (document.documentElement.dataset.pfEnterFromDoor === "1") return start();
   if (!scene) return start();
   if (!api.started) return start();
