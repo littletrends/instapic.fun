@@ -3651,6 +3651,7 @@
     if (giveTicket) {
       giveTicket.addEventListener("click", () => {
         if (!state.admitTicket && !state.admitPassed && !(Number(state.alleyLaps) || 0)) return;
+        document.documentElement.dataset.pfEnterFromDoor = "1";
         showFoyer(false);
       });
     }

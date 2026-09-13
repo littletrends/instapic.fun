@@ -2698,12 +2698,16 @@ function startNow() {
   stallCutouts?.resume();
   clock.getDelta();
   cancelAnimationFrame(raf);
-  if (fresh) {
+  const enteringFromDoor = document.documentElement.dataset.pfEnterFromDoor === "1";
+  delete document.documentElement.dataset.pfEnterFromDoor;
+  if (fresh || enteringFromDoor) {
     camYaw = 0;
     glanceYaw = 0;
     viewBlend = 0;
     lookZoom = 1;
-    if ((location.hash || "").replace(/^#/, "") === "booth") {
+    if (enteringFromDoor) {
+      warp(paperRail ? -0.6 : 0, paperRail ? -18.2 : -16.2, 0);
+    } else if ((location.hash || "").replace(/^#/, "") === "booth") {
       warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
     } else {
       restoreAlleySpot();
@@ -2733,6 +2737,7 @@ function pause() {
 }
 
 function resume() {
+  if (document.documentElement.dataset.pfEnterFromDoor === "1") return start();
   if (!scene) return start();
   if (!api.started) return start();
   api.paused = false;
