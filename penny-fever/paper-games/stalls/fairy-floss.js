@@ -232,8 +232,7 @@ export default {
     }
     c.beginPath();
     c.arc(CX, CY, BOWL_R + 18, 0, Math.PI * 2);
-    c.fillStyle = '#3a1830ee';
-    c.fill();
+    // The illustrated template supplies the surface; keep the gameplay outline.
     c.strokeStyle = '#e8c878';
     c.lineWidth = 6;
     c.stroke();

@@ -2,7 +2,7 @@ import {TAU, clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=ritual-3';
 import {
   boardRide, sealAttempt, recordFind, recordTreasure, settleArrival, logAction, prefersReducedMotion,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=phone-layout-1';
 
 const RIDE = 'carousel';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];

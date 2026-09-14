@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=phone-layout-1';
 
 const RIDE = 'mural';
 const TREASURES = ['painted-bay', 'pocket-wheel', 'music-carousel', 'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant'];
@@ -118,7 +118,6 @@ export default {
     if (type === 'up' || type === 'cancel') s.painting = false;
   },
   draw(s, d) {
-    d.poly([[40, 140], [860, 140], [860, 820], [40, 820]], '#3a2418', '#d2a65b', 4);
     const panel = s.panels[Math.min(s.panel, s.panels.length - 1)];
     d.text(panel ? panel.label : 'gallery', 450, 210, 36, '#f0d09a');
     if (panel) {
@@ -138,8 +137,6 @@ export default {
       d.circle(x, 900, 48, on ? p.color : '#2a1814', '#f0d09a', 3);
       d.text(p.glyph, x, 908, 28, '#fff6d8');
     });
-    d.poly([[80, 1000], [820, 1000], [820, 1160], [80, 1160]], s.painting ? '#6b2030' : '#3a2418', '#f0d09a', 3);
-    d.text(s.painting ? 'painting' : 'hold Paint in the frame', 450, 1084, 28, '#fff6d8');
     drawHud(d, s, {goal: s.goal, count: s.restored, label: 'panels'});
   },
   readout: s => s.note || '',

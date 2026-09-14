@@ -304,8 +304,7 @@ export default {
     if (board) {
       const {size, originX, originY, crateY} = layoutOf(board);
       roundRect(c, originX - 12, originY - 12, board.cols * size + 24, board.rows * size + 24, 14);
-      c.fillStyle = '#3a2418ee';
-      c.fill();
+      // The illustrated template supplies the surface; keep the gameplay outline.
       c.strokeStyle = '#e8c878';
       c.lineWidth = 3;
       c.stroke();

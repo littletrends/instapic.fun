@@ -288,7 +288,6 @@ export default {
   draw(s, d) {
     const ch = DUNCAN_CHAPTERS[s.level];
     const c = d.c;
-    d.poly([[70, 86], [830, 86], [830, 1180], [70, 1180]], '#14363eee', '#d4b07a', 3);
     d.text('Pressure Drop', 450, 116, 26, '#efe6d0');
     d.text(ch.title, 450, 146, 18, '#9ed0c4');
 

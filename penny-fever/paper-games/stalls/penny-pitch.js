@@ -299,7 +299,6 @@ export default {
   draw(s, d) {
     const ch = PENELOPE_CHAPTERS[s.level];
     const c = d.c;
-    d.poly([[70, 90], [830, 90], [830, 1180], [70, 1180]], '#3a1828ee', '#d4a07a', 3);
     d.text('Dish Garden', 450, 118, 26, '#efe6d0');
     d.text(ch.title, 450, 148, 18, '#e2b98c');
 
@@ -308,8 +307,6 @@ export default {
       [80 + clothX * 0.08, 260], [820 + clothX * 0.08, 260],
       [860 + clothX * 0.2, 1080], [40 + clothX * 0.2, 1080],
     ];
-    d.poly(cloth, '#6a2438', '#e8c49a', 4);
-    d.poly([[120 + clothX * 0.1, 300], [780 + clothX * 0.1, 300], [810 + clothX * 0.18, 1020], [90 + clothX * 0.18, 1020]], '#7a2e44', '#f0d0a822', 1);
     for (let i = 0; i < 6; i++) {
       const y = 360 + i * 110;
       d.line({x: 140 + clothX * 0.12, y}, {x: 760 + clothX * 0.12, y}, '#e8c49a33', 1);

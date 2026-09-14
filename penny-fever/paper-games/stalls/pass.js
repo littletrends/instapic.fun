@@ -245,7 +245,7 @@ export default {
         for (let x = 0; x < s.stage.cols; x++) {
           const cell = s.stage.cells[y][x];
           const px = o.x + x * CELL, py = o.y + y * CELL;
-          let fill = cell.kind === 'wall' ? '#1a1014' : cell.kind === 'door' ? '#e8c878' : cell.kind === 'start' ? '#4a2a38' : '#3a2030';
+          let fill = cell.kind === 'wall' ? '#1a1014' : cell.kind === 'door' ? '#e8c878' : cell.kind === 'start' ? '#4a2a38' : '#3a203026';
           const cur = s.stage.curtains.find(cu => cu.row === y && cu.cols.includes(x));
           if (cur && !curtainOpen(cur, s.stage.t)) fill = '#6a2038';
           const trap = s.stage.traps.find(tr => tr.x === x && tr.y === y);

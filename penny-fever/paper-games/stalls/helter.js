@@ -2,7 +2,7 @@ import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=phone-layout-1';
 
 const RIDE = 'helter';
 const TREASURES = ['spiral-tower', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'lucky-match'];
@@ -82,7 +82,6 @@ export default {
     if (k === 'ArrowRight') s.dest = 1;
   },
   draw(s, d) {
-    d.ellipse(450, 600, 380, 500, '#4a1824');
     d.poly([[120, 80], [780, 80], [700, 1180], [200, 1180]], '#6b2030', '#d2a65b', 3);
     const warn = s.forks.find(f => !f.done && s.t > f.t - f.warn);
     if (warn) {

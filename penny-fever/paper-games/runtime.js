@@ -1,11 +1,12 @@
 import {games,byId} from './catalogue.js?v=briefs-2';
-import {Draw,seeded,clamp} from './draw.js?v=ink-1';
+import {Draw,seeded,clamp} from './draw.js?v=phone-layout-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=ritual-3';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
 import {isClosed} from './stall-entry.js?v=entry-2';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
+let menuResume=false;
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
@@ -53,6 +54,9 @@ function houseSpec(){
 function tellRoom(type,fields={}){if(embedded)window.parent.postMessage({channel:'pf-paper-world',type,...fields},location.origin);}
 if(embedded)document.body.classList.add('is-alley-room');
 function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{...opts,signal:abort.signal});}
+function closeMenu(){document.body.classList.remove('menu-open');$('#menu-toggle').setAttribute('aria-expanded','false');if(menuResume){menuResume=false;start();}}
+listen($('#menu-toggle'),'click',()=>{if(document.body.classList.contains('menu-open')){closeMenu();return;}menuResume=playing;pause();document.body.classList.add('menu-open');$('#menu-toggle').setAttribute('aria-expanded','true');$('#menu-close').focus();});
+listen($('#menu-close'),'click',closeMenu);
 function error(e){playing=false;cancelAnimationFrame(raf);$('#error').textContent='This workshop room could not open: '+e.message;$('#veil-title').textContent='The room needs attention';$('#veil-detail').textContent='Please try another paper world. Your Instapic sessions are not involved.';$('#begin').disabled=true;$('#pause').disabled=true;$('#veil').hidden=false;tellRoom('error');}
 function showPrize(id){
  const img=$('#veil-prize'),cap=$('#veil-prize-name');
@@ -94,21 +98,9 @@ function wonPurse(){
 }
 function paintHud(){
  const cash=$('#hud-cash'),keep=$('#hud-keep'),next=$('#next-chapter');
- if(cash){
-  const n=penniesNow();
-  if(embedded) cash.textContent=wonPurse()?(n+' '+(n===1?'penny':'pennies')+' in the purse'):(n+' '+(n===1?'penny':'pennies'));
-  else cash.textContent='Practice';
- }
- if(keep){
-  const prize=chapterKeep();
-  keep.textContent=prize?('Chapter treasure · '+itemName(prize)):'';
- }
- const mode=$('#hud-mode');
- if(mode){
-  const practice=!!state?.practice;
-  mode.hidden=!practice;
-  mode.textContent=practice?'Practice — no items awarded':'';
- }
+ if(cash)cash.textContent=(!embedded||state?.practice)?'Practice':'Paid play';
+ if(keep){const live=draw?.liveStatus;keep.textContent=state?.treasureCollected||state?.prizePosted?'Treasure ✓':state?.treasureRevealed?'Treasure!':live?live.count+'/'+live.goal+' '+live.label:'Ch '+(level+1);}
+ const mode=$('#hud-mode');if(mode)mode.hidden=true;
  const clock=$('#hud-house');
  if(clock){
   const house=houseSpec();
@@ -124,7 +116,7 @@ function paintHud(){
  }
 }
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();}
-function goNextChapter(){
+function goNextChapter(){menuResume=false;closeMenu();
  if(!engine?.levels||level>=engine.levels.length-1)return;
  persist();
  level+=1;
@@ -133,7 +125,7 @@ function goNextChapter(){
  start();
 }
 function markChapters(){if(!engine?.levels)return;[...$('#chapter').options].forEach((o,i)=>{const prize=engine.prizes?.[i];let tick='';try{if(prize&&window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.[prize])tick=' ✓';}catch{}o.textContent=(i+1)+'. '+engine.levels[i]+tick;});}
-function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#begin').disabled=false;$('#pause').textContent='Pause';}
+function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#veil-detail').textContent=engine.instructions.split(/(?<=[.!?])\s+/).slice(0,2).join(' ').replace(/First (chapter )?ride.*$/,'').trim();$('#begin').textContent='Start';$('#begin').disabled=false;$('#pause').textContent='Pause';}
 function start(){if(disposed||!engine||!state||playing)return;if(ended&&!engine.live)reset();ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
@@ -168,8 +160,8 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=ride-seek-5')).default;
- document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
+ engine=(await import(entry.module+'?v=phone-layout-1')).default;
+ document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#compact-title').textContent=engine.title;$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions.split(/(?<=[.!?])\s+/).slice(0,2).join(' ');canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
  if(embedded){const ret=document.querySelector('.play-header a[target="_parent"]');if(ret)listen(ret,'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
@@ -178,8 +170,8 @@ try{
  const kit=kits[entry.id]||{sprites:[],prizes:[]};
  engine.prizes=(kit.prizes&&kit.prizes.length)?kit.prizes:(engine.prizes||[]);
  const spriteIds=[...new Set([...(engine.sprites||kit.sprites||[]),...engine.prizes])];
- observer=new ResizeObserver(()=>{const b=stage.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(stage);
- listen($('#chapter'),'change',()=>{persist();level=Number($('#chapter').value);reset();});listen($('#restart'),'click',()=>{if(engine.tables){persist();start();return;}reset();});listen($('#pause'),'click',()=>playing?pause():start());
+ observer=new ResizeObserver(()=>{const b=canvas.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(canvas);
+ listen($('#chapter'),'change',()=>{menuResume=false;closeMenu();persist();level=Number($('#chapter').value);reset();});listen($('#restart'),'click',()=>{menuResume=false;closeMenu();if(engine.tables){persist();start();return;}reset();});listen($('#pause'),'click',()=>{menuResume=false;closeMenu();playing?pause():start();});
  listen($('#next-chapter'),'click',goNextChapter);
  listen($('#begin'),'click',()=>{if(!ended){start();return;}const won=state?.result?.won!==false;const stay=state?.result?.advance===false;persist();if(won&&!stay&&level<engine.levels.length-1){level++;$('#chapter').value=level;reset();return;}reset();if(!won)start();});
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type));
@@ -197,18 +189,20 @@ try{
   paint();
  });
  listen(window,'keyup',e=>{input.keys.delete(e.key);if(playing)engine.key?.(state,e.key,false,input);});
- for(const a of engine.actions||[]){const b=document.createElement('button');b.textContent=a.label;$('#actions').append(b);if(a.hold){listen(b,'pointerdown',e=>{if(!playing)return;b.setPointerCapture(e.pointerId);input.actions.add(a.id);engine.action?.(state,a.id,true,input);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])listen(b,ev,()=>{input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);});listen(b,'keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();input.actions.add(a.id);if(playing)engine.action?.(state,a.id,true,input);}});listen(b,'keyup',e=>{if(e.key===' '||e.key==='Enter'){input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);}});}else listen(b,'click',()=>{if(playing){engine.action?.(state,a.id,true,input);paint();}});}
+ for(const a of engine.actions||[]){const b=document.createElement('button');b.textContent=a.label.replace(/ · (Space|Enter|Z|X)$/,'');b.dataset.action=a.id;const menuAction=a.id==='again'||a.id==='hint';(menuAction?$('#menu-actions'):$('#actions')).append(b);if(a.hold){listen(b,'pointerdown',e=>{if(!playing)return;b.setPointerCapture(e.pointerId);input.actions.add(a.id);engine.action?.(state,a.id,true,input);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])listen(b,ev,()=>{input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);});listen(b,'keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();input.actions.add(a.id);if(playing)engine.action?.(state,a.id,true,input);}});listen(b,'keyup',e=>{if(e.key===' '||e.key==='Enter'){input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);}});}else listen(b,'click',()=>{if(menuAction){closeMenu();if(!playing)start();}if(playing){engine.action?.(state,a.id,true,input);paint();}});}
+ const count=$('#actions').children.length;$('#actions').style.setProperty('--control-columns',Math.min(3,Math.max(1,count)));
  listen(document,'visibilitychange',()=>{if(document.hidden)pause();});
  if(!embedded)listen(window,'blur',pause);
  listen(window,'message',e=>{
   if(e.origin!==location.origin)return;
   const d=e.data;
   if(!d||d.channel!=='pf-paper-world')return;
+  if(d.type==='menu')$('#menu-toggle').click();
   if(d.type==='pause')pause();
   if(d.type==='resume'&&!playing&&!ended)start();
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
- const img=$('#backdrop');img.src=entry.asset;img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ const img=$('#backdrop');img.src=entry.asset;try{await img.decode();}catch{throw new Error('The illustrated background could not load. Please reload.');}
  if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;if(engine.tables){$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.textContent='Table · each chapter is a new set';}else if(engine.live){$('#chapter').disabled=true;$('#chapter').hidden=true;$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.hidden=true;}tellRoom('ready',{title:engine.title});}
  loadSprites(spriteIds.map(spriteKey)).then(art=>{if(disposed||!draw)return;draw.art=art;paint();});
  }

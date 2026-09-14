@@ -244,7 +244,7 @@ export default {
         for (let x = 0; x < s.run.cols; x++) {
           const px = o.x + x * CELL, py = o.y + y * CELL;
           const kind = cellAt(s.run, x, y);
-          const fill = kind === '#' ? '#3a2a18' : kind === 'C' ? '#c6b15a' : kind === 'D' ? '#e8c878' : kind === 'm' ? '#6a5438' : kind === 'k' ? '#c45a6a55' : kind === 'R' ? '#7a8a5a' : '#2a4030';
+          const fill = kind === '#' ? '#3a2a18' : kind === 'C' ? '#c6b15a' : kind === 'D' ? '#e8c878' : kind === 'm' ? '#6a5438' : kind === 'k' ? '#c45a6a55' : kind === 'R' ? '#7a8a5a' : '#2a403026';
           roundRect(c, px + 2, py + 2, CELL - 4, CELL - 4, 6);
           c.fillStyle = fill;
           c.fill();

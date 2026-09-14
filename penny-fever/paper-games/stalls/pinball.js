@@ -526,13 +526,11 @@ export default {
     const set = s.set || SETS[s.level] || SETS[0];
     const leftOn = s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
     const rightOn = s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
-    d.poly([[64, 18], [836, 18], [858, 1184], [42, 1184]], set.wood, '#e6c57a', 4);
     d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
     d.text('THUNDER GARDEN', 450, 92, 28, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 450, 128, 26, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
-    d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], set.felt, '#d7b56a', 3);
     for (const r of s.rails) {
       d.line(r.a, r.b, '#4a3a28', 14);
       d.line(r.a, r.b, '#e6c57a', 3);

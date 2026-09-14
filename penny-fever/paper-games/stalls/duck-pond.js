@@ -239,7 +239,7 @@ export default {
         for (let x = 0; x < s.pond.cols; x++) {
           const cell = s.pond.cells[y][x];
           const px = o.x + x * CELL, py = o.y + y * CELL;
-          const fill = cell.type === 'bank' ? '#3a4a30' : cell.type === 'home' ? '#e8c878' : cell.type === 'pad' ? '#6aaa6a' : cell.type === 'gate' ? '#8a6a4a' : cell.type === 'current' ? '#5a8aaa' : cell.type === 'hook' ? '#8a6a38' : cell.type === 'bridge' ? '#a4845a' : cell.type === 'rescue' ? '#7a6aaa' : '#3a6a78';
+          const fill = cell.type === 'bank' ? '#3a4a30' : cell.type === 'home' ? '#e8c878' : cell.type === 'pad' ? '#6aaa6a' : cell.type === 'gate' ? '#8a6a4a' : cell.type === 'current' ? '#5a8aaa' : cell.type === 'hook' ? '#8a6a38' : cell.type === 'bridge' ? '#a4845a' : cell.type === 'rescue' ? '#7a6aaa' : '#3a6a7826';
           roundRect(c, px + 3, py + 3, CELL - 6, CELL - 6, 10);
           c.fillStyle = fill;
           c.fill();

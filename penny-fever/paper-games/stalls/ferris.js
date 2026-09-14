@@ -2,7 +2,7 @@ import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=phone-layout-1';
 
 const RIDE = 'ferris';
 const TREASURES = ['pocket-wheel', 'star-token', 'moon-penny', 'ride-ticket', 'ride-stamp-book', 'ride-explorer-pennant'];

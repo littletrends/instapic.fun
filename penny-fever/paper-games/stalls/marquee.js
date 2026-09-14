@@ -224,8 +224,7 @@ export default {
       d.text('in the lantern', 800, 202, 14, '#ead6a4');
     }
     roundRect(c, 80, 200, 740, 860, 18);
-    c.fillStyle = `rgba(8, 16, 14, ${0.92 - glow * 0.35})`;
-    c.fill();
+    // The illustrated template supplies the surface; keep the gameplay outline.
     c.strokeStyle = '#e8c878';
     c.lineWidth = 4;
     c.stroke();

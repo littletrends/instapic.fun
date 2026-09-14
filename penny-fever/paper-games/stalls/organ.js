@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=phone-layout-1';
 
 const RIDE = 'organ';
 const TREASURES = ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner', 'ride-ticket', 'aura-keepsake'];
@@ -140,8 +140,6 @@ export default {
     }
   },
   draw(s, d) {
-    d.ellipse(450, 520, 420, 280, '#2a1814');
-    d.poly([[80, 200], [820, 200], [780, 820], [120, 820]], '#4a1824', '#d2a65b', 4);
     for (let i = 0; i < 7; i++) {
       const x = 180 + i * 90;
       const h = 120 + (i % 3) * 40;

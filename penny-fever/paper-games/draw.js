@@ -7,14 +7,14 @@ export function seeded(seed=41){return()=>{seed=(Math.imul(seed,1664525)+1013904
 export function done(s,title,detail,extra={}){s.result={title,detail,...extra};}
 export class Draw {
  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d');if(!this.c)throw Error('Canvas is unavailable.');this.art={};this.resize(450,600,1);}
- resize(w,h,r=1){r=clamp(r,1,1.5);this.canvas.width=Math.max(1,Math.round(w*r));this.canvas.height=Math.max(1,Math.round(h*r));}
+ resize(w,h,r=1){this.cssWidth=w;this.cssHeight=h;r=clamp(r,1,2);this.canvas.width=Math.max(1,Math.round(w*r));this.canvas.height=Math.max(1,Math.round(h*r));}
  clear(){const c=this.c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,this.canvas.width,this.canvas.height);c.setTransform(this.canvas.width/W,0,0,this.canvas.height/H,0,0);c.lineCap='round';c.lineJoin='round';}
  line(a,b,color='#edcf94',width=2){const c=this.c;c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
  path(points,color='#edcf94',width=2,close=false,fill=null){if(!points.length)return;const c=this.c;c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));if(close)c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(color){c.strokeStyle=color;c.lineWidth=width;c.stroke();}}
  poly(points,fill,stroke='#e8cb95',width=1.5){this.path(points.map(p=>Array.isArray(p)?{x:p[0],y:p[1]}:p),stroke,width,true,fill);}
  ellipse(x,y,rx,ry,fill,stroke=null,width=1){const c=this.c;c.beginPath();c.ellipse(x,y,Math.max(0,rx),Math.max(0,ry),0,0,TAU);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
  circle(x,y,r,fill,stroke=null,width=1){this.ellipse(x,y,r,r,fill,stroke,width);}
- text(text,x,y,size=20,color='#fff0cb',align='center'){const c=this.c;c.font=`500 ${size}px Georgia,serif`;c.textAlign=align;c.fillStyle=color;c.fillText(String(text),x,y);}
+ text(text,x,y,size=20,color='#fff0cb',align='center'){const c=this.c;size=Math.max(size,12*900/(this.cssWidth||450),12*1200/(this.cssHeight||600));c.font=`600 ${size}px Georgia,serif`;c.textAlign=align;c.fillStyle=color;const hex=/^#[0-9a-f]{6}$/i.test(color)?color.slice(1):null;const light=hex?(parseInt(hex.slice(0,2),16)*.299+parseInt(hex.slice(2,4),16)*.587+parseInt(hex.slice(4,6),16)*.114)>145:true;c.save();c.strokeStyle=light?'#241820d9':'#fff3ddd9';c.lineWidth=Math.max(2,size*.10);c.strokeText(String(text),x,y,align==='center'?Math.max(100,Math.min(x,900-x)*2-20):Math.max(100,900-x-20));c.restore();c.fillText(String(text),x,y,align==='center'?Math.max(100,Math.min(x,900-x)*2-20):Math.max(100,900-x-20));}
  glow(x,y,r,color='#edcd8b'){const g=this.c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color+'55');g.addColorStop(1,color+'00');this.circle(x,y,r,g);}
  ball(x,y,r,color='#ddc082'){this.ellipse(x+5,y+r*.6,r,r*.55,'#071e3440');const g=this.c.createRadialGradient(x-r*.3,y-r*.4,1,x,y,r);g.addColorStop(0,'#fff5d8');g.addColorStop(.35,color);g.addColorStop(1,'#514c55');this.circle(x,y,r,g,'#e6d5b1',1.5);}
  star(x,y,r,fill='#e7c789'){this.poly(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;return[x+Math.cos(a)*rr,y+Math.sin(a)*rr];}),fill,'#f8e4b3',1.3);}
@@ -34,7 +34,7 @@ export class Draw {
   c.drawImage(img,-w/2,-h/2,w,h);c.restore();return true;
  }
  item(id,x,y,opts={}){
-  if(this.sprite(this.art?.[id],x,y,opts))return true;
+  const base=opts.w||96;const factor=Math.max(1,Math.min(1.8,44*900/(this.cssWidth||450)/base));opts={...opts,w:base*factor,...(opts.h?{h:opts.h*factor}:{})};if(this.sprite(this.art?.[id],x,y,opts))return true;
   opts.fallback?.(this,x,y,opts);return false;
  }
  dispose(){this.canvas.width=1;this.canvas.height=1;this.art=null;}

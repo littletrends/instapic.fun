@@ -80,3 +80,10 @@ body .cabinet-interior.paper-game-cabinet {
  .paper-game-wallet{font-size:14px;white-space:nowrap;}
  .paper-game-bar button,.paper-game-bar a,.paper-game-till>summary{font-size:15px;padding:8px 10px;}
 }
+
+/* Keep outer navigation compact so the illustrated game owns the viewport. */
+.paper-game-room{min-height:0;overflow:hidden}
+.paper-game-frame{min-height:0;height:0;flex:1}
+.paper-game-bar{flex:0 0 48px;position:relative;padding:2px 8px;flex-wrap:nowrap}
+.paper-game-till[open]{position:absolute;right:6px;top:3px;max-height:calc(100dvh - 12px);overflow:auto;min-width:240px}
+.paper-game-status:not([hidden]){position:absolute;bottom:8px;left:8px;right:8px;z-index:4;pointer-events:none}

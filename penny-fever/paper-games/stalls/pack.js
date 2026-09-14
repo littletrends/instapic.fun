@@ -255,8 +255,7 @@ export default {
     if (s.pack) {
       const o = origin(s.pack);
       roundRect(c, o.x - 18, o.y - 24, s.pack.w * CELL + 36, s.pack.h * CELL + 48, 16);
-      c.fillStyle = '#2a3a28ee';
-      c.fill();
+      // The illustrated template supplies the surface; keep the gameplay outline.
       c.strokeStyle = '#c6a267';
       c.lineWidth = 5;
       c.stroke();

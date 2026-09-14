@@ -272,7 +272,6 @@ export default {
   },
   draw(s, d) {
     const ch = RINGO_CHAPTERS[s.level];
-    d.poly([[70, 40], [830, 40], [850, 1160], [50, 1160]], '#1a2a1cee', '#c6a267', 3);
     d.text('Ring Raiders', 450, 88, 28, '#efe6d0');
     d.text(ch.title, 450, 122, 18, '#d2b98c');
     if (!s.won) {

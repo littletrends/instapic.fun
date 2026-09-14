@@ -306,7 +306,6 @@ export default {
     const ch = SKIP_CHAPTERS[s.level];
     const c = d.c;
     const skies = ['#3a2438', '#24344a', '#1a2040', '#1c2a48', '#141018', '#241838'];
-    d.poly([[70, 90], [830, 90], [830, 1180], [70, 1180]], skies[s.level] + 'ee', '#d4b07a', 3);
     d.text('Moonbow Skee-Ball', 450, 118, 26, '#efe6d0');
     d.text(ch.title, 450, 148, 18, '#d2b98c');
 

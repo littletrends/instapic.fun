@@ -93,9 +93,11 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   chest.innerHTML='<span>🗝</span> Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
   const till=doc.createElement('details');till.className='paper-game-till';
-  const tillSum=doc.createElement('summary');tillSum.textContent='Till';
-  till.append(tillSum,buy,cash,retry,list);
-  bar.append(back,title,wallet,chest,till);
+  const tillSum=doc.createElement('summary');tillSum.textContent='Alley menu';
+  const help=doc.createElement('button');help.type='button';help.textContent='Game menu / Help';help.addEventListener('click',()=>{till.open=false;frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'menu'},location.origin);});
+  till.addEventListener('toggle',()=>{if(till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'pause'},location.origin);});
+  till.append(tillSum,help,back,wallet,chest,buy,cash,retry,list);
+  bar.append(title,till);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';

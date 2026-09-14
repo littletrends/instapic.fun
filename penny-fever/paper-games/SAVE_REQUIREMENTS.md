@@ -105,3 +105,13 @@ may exist and must be examined before implementing a replacement.
 6. Switch between chapters and verify each retains its own state.
 7. Test completed, empty, partially paid and old-version saves, plus unavailable storage.
 8. Record test results and deployment status here. A hook alone is not completion.
+
+## Presentation-only pass — 14 September 2026
+
+See `TEMPLATE_VISIBILITY_AUDIT.md` for all 34 game review statuses and evidence. The overlay cleanup changes drawing surfaces and backdrop readiness only. The 33 open games passed opening/reload checks and 198 chapter initial render checks; these do not certify exact-state save restoration or paid outcomes. Existing gameplay/save methods were preserved. Remaining presentation changes are prepared, not published by this task; Felix remains closed.
+
+## Phone presentation pass — 14 September 2026
+
+All open games: shared viewport/control/menu changes and render-only ride cleanup are covered by `PHONE_LAYOUT_REVIEW.md`. 33 opening checks and 99 viewport/control checks passed. Existing engine save/charge APIs remain; no claim of exact-state restore completion. The return/reload/browser-close, per-chapter state, wallet and payout checks above remain required. This agent has not published the pass; concurrent commits briefly included then reverted play.html; the required shell markup and supporting changes are now pending together in the shared working tree.
+
+Publication update — 14 September 2026: user authorized publishing the combined phone layout and backdrop cleanup. Browser evidence and remaining save checks are unchanged.

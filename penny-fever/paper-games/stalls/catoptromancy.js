@@ -241,8 +241,7 @@ export default {
 
     c.beginPath();
     c.ellipse(CX, 620, 310, 360, 0, 0, Math.PI * 2);
-    c.fillStyle = '#241828ee';
-    c.fill();
+    // The illustrated template supplies the surface; keep the gameplay outline.
     c.strokeStyle = '#c8a0d8';
     c.lineWidth = 6;
     c.stroke();

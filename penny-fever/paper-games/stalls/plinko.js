@@ -260,14 +260,12 @@ export default {
   draw(s, d) {
     const ch = PEGGY_CHAPTERS[s.level];
     const mill = s.mill;
-    d.poly([[48, 16], [852, 16], [870, 1184], [30, 1184]], '#3a2a18ee', '#e6c57a', 4);
     d.text('Marble Mill', 450, 72, 28, '#fff3d0');
     d.text(ch.title, 450, 104, 18, '#d2b98c');
     if (!s.won) {
       d.item(spriteKey(ch.prize), 800, 88, {w: 58, fallback: () => d.star(800, 88, 18)});
       d.text('waiting', 800, 136, 12, '#ead6a4');
     }
-    d.poly([[150, 170], [750, 170], [770, 1080], [130, 1080]], '#1e3a32cc', '#d7b56a', 3);
     d.line({x: 168, y: 220}, {x: 732, y: 220}, '#e6c57a', 6);
     d.text('rail', 450, 208, 12, '#ead6a4');
     if (mill) {

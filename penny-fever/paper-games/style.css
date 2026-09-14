@@ -8,3 +8,47 @@
 .is-alley-room .play-header{display:none}.is-alley-room .play-layout{padding-top:.35rem}
 @media(max-width:760px){.is-alley-room .notebook{display:none}.is-alley-room .stage{max-width:none;width:100%;aspect-ratio:3/4}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Phone-first game shell: the canvas has its own space between status and controls. */
+.game-page{height:100vh;height:100dvh;overflow:hidden;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);display:flex;flex-direction:column}
+.game-page *{box-sizing:border-box}
+.game-page .play-header{display:none}
+.game-menu-bar{display:flex;align-items:center;gap:8px;flex:0 0 48px;padding:2px 8px}
+#compact-title{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:16px}
+.game-page button,.game-page select{min-height:44px;font:600 15px/1.15 system-ui,sans-serif;touch-action:manipulation}
+.game-menu-bar button{padding:8px 12px}
+.game-page .play-layout{flex:1;min-height:0;width:100%;max-width:1500px;grid-template-columns:minmax(0,1fr) 240px;gap:12px;padding:0 8px 6px;margin:0 auto}
+.game-page .world-column{min-height:0;min-width:0;display:flex;justify-content:center}
+.game-page .stage{max-width:none;width:100%;height:100%;aspect-ratio:auto;display:grid;grid-template-rows:36px minmax(0,1fr) auto;border-radius:12px;isolation:isolate}
+.game-page .stage>img{z-index:-1;object-fit:fill}
+.game-page .stage>canvas{position:relative;inset:auto;grid-row:2;width:100%;height:100%;min-height:0;outline:none}
+.game-page .play-hud{position:relative;inset:auto;grid-row:1;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:6px;margin:3px 6px;padding:2px 7px;background:#241b20e8;border-radius:6px;font:600 12px/1.15 system-ui,sans-serif;overflow:hidden}
+.game-page .play-hud span{padding:0;border:0;background:none;white-space:nowrap}
+.game-page .play-hud [hidden]{display:none}
+.game-page .control-dock{grid-row:3;padding:4px 6px 6px;background:#241b20d9;color:#fff2d9}
+.game-page .readout{margin:0 0 4px;font:500 14px/1.2 system-ui,sans-serif;min-height:17px;max-height:34px;overflow:hidden;text-align:center}
+.game-page .actions{display:grid;grid-template-columns:repeat(var(--control-columns,3),minmax(0,1fr));gap:5px;margin:0}
+.game-page .actions button{min-width:0;width:100%;min-height:48px;padding:6px 3px;font-size:15px;user-select:none;touch-action:none}
+.game-page .notebook{min-height:0;overflow:auto;padding:12px;font-size:15px}
+.game-page .notebook h1{font-size:24px}.game-page .notebook h2{font-size:19px}
+.game-page .veil{z-index:4;padding:12px;backdrop-filter:none}
+.game-page .veil>div{max-width:360px;max-height:100%;overflow:auto;padding:20px}
+.game-page .veil h2{font-size:26px;line-height:1.15;margin:8px 0}
+.game-page .veil p{font-size:16px;line-height:1.35}
+.game-page .veil button{min-width:150px;min-height:48px}
+.game-page #menu-close{display:none}
+@media(max-width:760px){
+ .game-page .play-layout{display:flex;flex-direction:column;padding:0 3px 3px;gap:0}
+ .game-page .world-column{flex:1;width:100%}
+ .game-page .notebook{display:none!important}
+ .game-page.menu-open .notebook{display:block!important;position:fixed;inset:48px 6px max(6px,env(safe-area-inset-bottom));z-index:10;background:#203039;border:1px solid #c3a775;border-radius:12px;overflow:auto}
+ .game-page #menu-close{display:block;width:100%}
+ .game-page .stage{max-width:none!important;width:100%!important;aspect-ratio:auto!important}
+}
+
+.game-page .play-layout{align-items:stretch}
+
+@media(min-width:761px){.game-page .world-column{max-width:950px;width:100%;justify-self:center}.game-page .stage{max-width:950px}}
+
+.game-page.is-alley-room .game-menu-bar{display:none}
+@media(max-width:760px){.game-page.is-alley-room.menu-open .notebook{top:6px}}

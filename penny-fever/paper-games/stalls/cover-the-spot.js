@@ -246,8 +246,7 @@ export default {
     }
 
     roundRect(c, 110, 250, 680, 640, 28);
-    c.fillStyle = '#2a1c16ee';
-    c.fill();
+    // The illustrated template supplies the surface; keep the gameplay outline.
     c.strokeStyle = '#e8c878';
     c.lineWidth = 5;
     c.stroke();

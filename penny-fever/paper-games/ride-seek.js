@@ -236,13 +236,8 @@ export function finishRide(s, {rideId, treasureId, challengeOk, completionFind})
 }
 
 export function drawHud(d, s, {goal, count, label}) {
-  const lap = Math.min(1, (s.progress ?? 0));
-  d.poly([[30, 18], [870, 18], [870, s.practice ? 168 : 138], [30, s.practice ? 168 : 138]], '#122335d8', '#d2a65b', 2);
-  d.arc(78, 86, 32, -Math.PI / 2, -Math.PI / 2 + lap * Math.PI * 2, '#f0d09a', 7);
-  d.text(s.practice ? 'Practice' : 'Paid ride', 450, 62, 30, '#f0d09a');
-  d.text((count ?? 0) + ' / ' + goal + ' ' + (label || 'complete'), 450, 102, 26, '#fff6d8');
-  if (s.practice) d.text('Practice — no items awarded', 450, 142, 22, '#e8d0a0');
-  if (s.treasureCollected) d.text('Chapter treasure caught', 450, s.practice ? 176 : 142, 24, '#f4d590');
+  // The shared shell owns live status; keep the illustrated field unobstructed.
+  d.liveStatus = {goal, count: count ?? 0, label: label || 'complete'};
 }
 
 export {hasOwn};
