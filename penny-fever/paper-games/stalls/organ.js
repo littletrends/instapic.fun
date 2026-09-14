@@ -94,7 +94,7 @@ export default {
   create(level, rng) {
     const list = phrases(level);
     return makeRideState(level, rng, {
-      phrases: list, gate: 0, correct: 0, goal: list.length, phase: 'demo', phaseT: 0,
+      phrases: list, phrase: list[0], gate: 0, correct: 0, goal: list.length, phase: 'demo', phaseT: 0,
       heard: 0, typed: [], tries: 0, flash: -1, scroll: 0, treasureId: TREASURES[level] || TREASURES[0],
     });
   },
@@ -106,7 +106,7 @@ export default {
     s.scroll += dt * 80;
     s.phaseT += dt;
     s.progress = (s.gate + Math.min(1, s.phaseT / 6)) / Math.max(1, s.goal);
-    if (s.phase === 'demo') {
+    if (s.phase === 'demo' && s.phrase) {
       s.heard = Math.min(s.phrase.length, Math.floor(s.phaseT / 0.7));
       if (s.phaseT > s.phrase.length * 0.7 + 0.45) {
         s.phase = 'reply';
@@ -147,10 +147,11 @@ export default {
       const h = 120 + (i % 3) * 40;
       d.ellipse(x, 360, 22, h, '#d2a65b', '#f0d09a', 2);
     }
-    const demoI = s.phase === 'demo' ? Math.min(s.phrase.length - 1, Math.floor(s.phaseT / 0.7)) : -1;
+    const phrase = s.phrase || s.phrases?.[0] || [0, 1, 2];
+    const demoI = s.phase === 'demo' ? Math.min(phrase.length - 1, Math.floor((s.phaseT || 0) / 0.7)) : -1;
     KEYS.forEach((k, i) => {
       const x = 180 + i * (KEY_W + 24);
-      const lit = s.flash === i || demoI >= 0 && s.phrase[demoI] === i;
+      const lit = s.flash === i || demoI >= 0 && phrase[demoI] === i;
       d.poly([[x - 90, KEY_Y - 70], [x + 90, KEY_Y - 70], [x + 90, KEY_Y + 70], [x - 90, KEY_Y + 70]], lit ? k.color : '#3a2418', '#f0d09a', 3);
       d.text(k.glyph, x, KEY_Y - 8, 42, '#fff6d8');
       d.text(k.name, x, KEY_Y + 36, 16, '#f0d09a');
