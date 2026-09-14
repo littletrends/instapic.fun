@@ -139,3 +139,7 @@ all six chapters through centre taps, both close controls, Treasure Book return,
 unchanged sitting snapshots after alley exit/re-entry. Artwork and JavaScript checks
 passed. This polish does not certify cross-device sync, unavailable-storage recovery,
 or every browser-close/payment-interruption case in the broader acceptance checklist.
+
+Deployment: published as `8b1722b` on 15 September 2026 (Pages run
+`34908293764`, successful). The same phone-sized browser checks passed against
+https://instapic.fun, including the map image, changing chats and exact return state.
