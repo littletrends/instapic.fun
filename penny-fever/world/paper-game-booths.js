@@ -1,12 +1,11 @@
-import {games} from '../paper-games/catalogue.js?v=ride-seek-2';
+import {games} from '../paper-games/catalogue.js?v=ride-seek-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
 import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-3';
-import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-5'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-1'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
@@ -55,23 +54,16 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
       :'Pennies are spent on each play. Leave and come back — this table remembers.';
   }
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
-  let pilotWallet;
   const paintWallet=()=>{
-    if(pilotSession(game.id)&&!pilotWallet){wallet.textContent='Private test wallet · awaiting server';return;}
     const PF=window.PennyFever;
-    const n=Number(pilotWallet?.pennies??PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
-    const t=Number(pilotWallet?.tickets??PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
+    const n=Number(PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
+    const t=Number(PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
     wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies');
   };
   paintWallet();
-  window.addEventListener('pennyfever:pilotwallet',event=>{
-    if(event.detail?.game!==game.id||!pilotSession(game.id))return;
-    pilotWallet=event.detail.wallet;paintWallet();
-  });
   window.addEventListener('pennyfever:statechange',paintWallet);
   const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
   cash.addEventListener('click',()=>{
-    if(pilotSession(game.id)){status.hidden=false;status.textContent='Test balances only. Legacy conversion is paused.';return;}
     const PF=window.PennyFever;
     const got=PF?.cashTicketForPennies?.();
     if(!got){
@@ -100,23 +92,25 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
-  bar.append(back,title,list,wallet,buy,cash,retry,chest);
+  const till=doc.createElement('details');till.className='paper-game-till';
+  const tillSum=doc.createElement('summary');tillSum.textContent='Till';
+  till.append(tillSum,buy,cash,retry,list);
+  bar.append(back,title,wallet,chest,till);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
   stage.append(bar,status,frame);cabinet.append(stage);
  }
- let loadRevision=0;
  function unload(){
-  loadRevision++;
   clearTimeout(timer);timer=null;
   if(!frame)return;
   frame.onload=frame.onerror=null;
   if(frame.getAttribute('src')!=='about:blank')frame.src='about:blank';
  }
- async function load(restart=false){
+ function load(restart=false){
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
+  const PF=window.PennyFever;
   const door=doorKind(game.id);
   if(door==='closed'||isClosed(game.id)){
     unload();
@@ -124,16 +118,6 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
     status.textContent='Felix’s Instapic photo booth is closed for maintenance. Come back later.';
     return;
   }
-  const revision=++loadRevision;
-  let session;
-  try { session=await resolvePilotSession(game.id); }
-  catch(reason){
-   if(revision===loadRevision){status.hidden=false;status.textContent='Private play paused: '+reason.message;}
-   return;
-  }
-  if(revision!==loadRevision)return;
-  const PF=window.PennyFever;
-  if(!session){
   if(door==='ticket'){
     if(!hasSat(game.id)){
       if(doorLock)return;
@@ -155,7 +139,6 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
       unload();
       return;
     }
-  }
   }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};

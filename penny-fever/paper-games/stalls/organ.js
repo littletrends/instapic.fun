@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-1';
+} from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'organ';
 const TREASURES = ['organ-music-box', 'star-token', 'moon-penny', 'swing-spinner', 'ride-ticket', 'aura-keepsake'];

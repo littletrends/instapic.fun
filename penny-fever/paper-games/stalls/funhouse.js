@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-1';
+} from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'funhouse';
 const TREASURES = ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'];
@@ -92,9 +92,9 @@ export default {
   draw(s, d) {
     const room = s.rooms[Math.min(s.room, s.rooms.length - 1)];
     d.poly([[80, 160], [820, 160], [820, 900], [80, 900]], '#3a1820', '#d2a65b', 4);
-    d.text('clue', 450, 220, 18, '#e8d0a0');
-    d.text(room.clue.glyph, 450, 300, 64, room.clue.color);
-    d.text(room.clue.name, 450, 360, 22, '#f0d09a');
+    d.text('clue', 450, 210, 22, '#e8d0a0');
+    d.text(room.clue.glyph, 450, 310, 92, room.clue.color);
+    d.text(room.clue.name, 450, 380, 32, '#f0d09a');
     if (s.treasure && !s.treasure.taken && s.treasureRevealed) {
       d.glow(450, 430, 40, '#f4d590');
       d.item(spriteKey(s.treasure.id), 450, 430, {w: 58, shadow: false, fallback: () => d.heart(450, 430, 16)});
@@ -104,8 +104,8 @@ export default {
     room.doors.forEach((door, i) => {
       const x = 100 + i * w + w / 2;
       d.poly([[x - w * 0.38, 620], [x + w * 0.38, 620], [x + w * 0.38, 880], [x - w * 0.38, 880]], '#4a2418', '#f0d09a', 3);
-      d.text(door.clue.glyph, x, 740, 40, door.clue.color);
-      d.text(door.id, x, 820, 16, '#e8d0a0');
+      d.text(door.clue.glyph, x, 730, 56, door.clue.color);
+      d.text(door.id, x, 820, 24, '#e8d0a0');
     });
     drawHud(d, s, {goal: s.goal, count: s.picks, label: 'rooms'});
   },

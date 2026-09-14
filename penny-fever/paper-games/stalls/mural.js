@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-1';
+} from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'mural';
 const TREASURES = ['painted-bay', 'pocket-wheel', 'music-carousel', 'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant'];
@@ -120,9 +120,9 @@ export default {
   draw(s, d) {
     d.poly([[40, 140], [860, 140], [860, 820], [40, 820]], '#3a2418', '#d2a65b', 4);
     const panel = s.panels[Math.min(s.panel, s.panels.length - 1)];
-    d.text(panel ? panel.label : 'gallery', 450, 220, 28, '#f0d09a');
+    d.text(panel ? panel.label : 'gallery', 450, 210, 36, '#f0d09a');
     if (panel) {
-      d.text('recipe  ♥  +  ★', 450, 270, 18, '#e8d0a0');
+      d.text('recipe  ♥  +  ★', 450, 268, 28, '#fff6d8');
       const inFrame = s.t > panel.t && s.t < panel.t + 3.2;
       d.poly([[300, 320], [600, 320], [600, 700], [300, 700]], panel.restored ? '#6b2030' : '#2a1814', inFrame ? '#f4d590' : '#b78b48', inFrame ? 8 : 3);
       if (panel.restored) d.text('awake', 450, 500, 24, '#f4d590');
@@ -139,7 +139,7 @@ export default {
       d.text(p.glyph, x, 908, 28, '#fff6d8');
     });
     d.poly([[80, 1000], [820, 1000], [820, 1160], [80, 1160]], s.painting ? '#6b2030' : '#3a2418', '#f0d09a', 3);
-    d.text(s.painting ? 'painting' : 'hold Paint in the frame', 450, 1084, 20, '#f0d09a');
+    d.text(s.painting ? 'painting' : 'hold Paint in the frame', 450, 1084, 28, '#fff6d8');
     drawHud(d, s, {goal: s.goal, count: s.restored, label: 'panels'});
   },
   readout: s => s.note || '',

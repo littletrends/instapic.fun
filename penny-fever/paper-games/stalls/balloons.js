@@ -2,7 +2,7 @@ import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=ride-seek-1';
+} from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'balloons';
 const TREASURES = ['balloon-bouquet', 'prize-bag', 'swing-spinner', 'aura-keepsake', 'laughing-doorway', 'organ-music-box'];
@@ -97,7 +97,7 @@ export default {
       d.item(spriteKey(s.treasure.id), 300, ty, {w: 64, shadow: false, fallback: () => d.star(300, ty, 16)});
     }
     d.poly([[80, 980], [820, 980], [820, 1160], [80, 1160]], s.holding ? '#6b2030' : '#3a2418', '#f0d09a', 3);
-    d.text(s.holding ? 'rising' : 'hold bellows to rise', 450, 1070, 22, '#f0d09a');
+    d.text(s.holding ? 'rising' : 'hold bellows to rise', 450, 1070, 30, '#fff6d8');
     drawHud(d, s, {goal: s.goal, count: s.passed, label: 'arches'});
   },
   readout: s => s.note || '',
