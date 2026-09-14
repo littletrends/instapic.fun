@@ -1,3 +1,4 @@
+import {phoneArt} from '../phone-art.js';
 import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=names-1';
 import {phoneLane} from '../phone-lane.js?v=keep-light-1';
@@ -73,7 +74,7 @@ function elevation(image,column,row=0){
 }
 export async function loadWallArt(id,{signal,side=0,angled=false}={}){
  const d=WALL_ART[id];if(!d)throw Error('Unknown wall '+id);
- const image=await imageAt(d.source,signal);
+ const image=await imageAt(phoneArt(d.source),signal);
  await new Promise(resolve=>setTimeout(resolve,0));
  if(signal?.aborted)throw Error('Wall load cancelled');
  // Alley uses the bottom-row three-quarter drawings: left wall → left view,

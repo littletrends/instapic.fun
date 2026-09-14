@@ -1,3 +1,4 @@
+import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine,
@@ -37,7 +38,7 @@ if (!boot.hydrated) {
   boot.hydrated = true;
 }
 
-export const crewArt = id => new URL(`${isCrew(id) ? id : 'oliver'}-turnaround.webp`, artBase).href;
+export const crewArt = id => phoneArt(new URL(`${isCrew(id) ? id : 'oliver'}-turnaround.webp`, artBase).href);
 
 export async function artUrl(id) {
   if (id === MINE_ID) {

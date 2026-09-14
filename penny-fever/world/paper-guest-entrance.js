@@ -1,7 +1,8 @@
+import {phoneArt} from './phone-art.js';
 import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=phone-startup-1';
-import {loadWallArt} from './walls/art.js?v=keep-light-1';
+import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=phone-images-2';
+import {loadWallArt} from './walls/art.js?v=phone-images-2';
 import {buildWall} from './walls/models.js?v=paper-alley-live-4';
 import { decorativePaper } from './paper-panels.js?v=keep-light-1';
 import { phoneLane } from './phone-lane.js?v=keep-light-1';
@@ -60,7 +61,7 @@ export function makePaperEntrance(scene){
  const card=new THREE.MeshStandardMaterial({color:0xa88c61,roughness:1,metalness:0});
  const trim=new THREE.MeshStandardMaterial({color:0x765431,roughness:1,metalness:0});
  const loader=new THREE.TextureLoader();
- const arch=loadTextureWithRetry(loader,'assets/restyle/paper-entrance-cutout.webp');arch.colorSpace=THREE.SRGBColorSpace;
+ const arch=loadTextureWithRetry(loader,phoneArt('assets/restyle/paper-entrance-cutout.webp'));arch.colorSpace=THREE.SRGBColorSpace;
  const gate=new THREE.Mesh(new THREE.PlaneGeometry(9.4,5.33),new THREE.MeshBasicMaterial({map:arch,transparent:true,alphaTest:.15,side:THREE.DoubleSide}));
  gate.position.set(0,2.65,FOYER_IN);gate.rotation.y=Math.PI;scene.add(gate);
 

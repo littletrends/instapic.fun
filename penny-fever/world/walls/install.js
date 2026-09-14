@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=names-1';
-import {loadWallArt,disposeWallArt} from './art.js?v=names-1';
+import {loadWallArt,disposeWallArt} from './art.js?v=phone-images-2';
 import {buildWall,disposeWall} from './models.js?v=names-1';
 import {WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 
