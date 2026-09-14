@@ -1,4 +1,4 @@
-import {done, TAU} from '../draw.js?v=ink-1';
+import {done, TAU} from '../draw.js';
 import {spriteKey} from '../prizes.js';
 import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
@@ -14,62 +14,42 @@ function snap(s) {
     if (aligned < error) { error = aligned; best = i; }
   }
   s.cool = 0.4;
-  const window = pace(s.level, 0.26, 0.024, 0.12);
+  const window = pace(s.level, 0.24, 0.026, 0.11);
   if (s.chairs[best] === s.target && error < window) {
     s.caught++;
     s.note = 'A chair over the mat.';
     if (s.caught >= s.goal) done(s, 'The swings hold still', s.caught + ' chairs over the prize mat.');
     else s.target = s.chairs[(best + 2 + s.level) % n];
   } else {
-    s.note = s.chairs[best] === s.target ? 'Almost — brake longer, then let go.' : 'Wrong chair. Hold to slow them, let go over the mat.';
+    s.note = s.chairs[best] === s.target ? 'Almost — wait for the front.' : 'Wrong chair. Let them fly.';
   }
   s.tries++;
 }
 
 export default {
-  title: 'Flying Chairs',
-  intro: 'Hugo’s chair-o-planes fly a little too happily. Hold to slow the flight, then let go when the matching chair is over the front mat.',
-  instructions: 'Hold Catch or Space to brake. Release when the chair shown at the top is over the pink mat. Misses are free.',
-  levels: ['A gentle flight', 'The evening spin', 'Lantern chairs', 'A quicker waltz', 'Six little seats', 'The last sweep'],
+  title: 'Skyward Swings',
+  intro: 'Hugo’s chair-o-planes fly a little too happily. Catch the matching chair when it sweeps over the front mat.',
+  instructions: 'Chairs fly in a circle. When the one shown at the top is at the front of the oval, tap Catch or press Space.',
+  levels: ['A gentle flight', 'The evening spin', 'Lantern chairs', 'A higher flight', 'Six little seats', 'The last sweep'],
   sprites: CHAIRS,
-  prizes: ['swing-spinner', 'friendship-pins', 'heart-gear', 'kindness-heart', 'rose-hair-bow', 'ribbon-gift-box'],
-  actions: [{id: 'catch', label: 'Hold to brake', hold: true}],
+  prizes: ['swing-spinner', 'heart-gear', 'star-token', 'prize-bag', 'music-carousel', 'ride-ticket'],
+  actions: [{id: 'catch', label: 'Catch · Space'}],
   create(level) {
     const list = CHAIRS.slice(0, swell(level, 4, 1, 6));
     const s = {
       level, t: 0, spin: 0, cool: 0, caught: 0, tries: 0, goal: swell(level, 3, 1, 8),
-      chairs: list, target: list[0], holding: false, note: 'Hold to slow, let go over the mat.',
+      chairs: list, target: list[0], note: 'Wait for the matching chair at the front.',
     };
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt) {
     s.t += dt; s.cool = Math.max(0, s.cool - dt);
-    s.spin += swell(s.level, 0.62, 0.24, 1.7) * (s.holding ? 0.28 : 1) * dt;
+    s.spin += swell(s.level, 0.62, 0.24, 1.7) * dt;
   },
-  pointer(s, type) {
-    if (s.result) return;
-    if (type === 'down') s.holding = true;
-    if (type === 'up' || type === 'cancel') {
-      if (s.holding) snap(s);
-      s.holding = false;
-    }
-  },
-  action(s, id, on) {
-    if (id !== 'catch' || s.result) return;
-    if (on === false) {
-      if (s.holding) snap(s);
-      s.holding = false;
-    } else s.holding = true;
-  },
-  key(s, k, down) {
-    if (k !== ' ') return;
-    if (down) s.holding = true;
-    else {
-      if (s.holding) snap(s);
-      s.holding = false;
-    }
-  },
+  pointer(s, type) { if (type === 'down') snap(s); },
+  action(s, id) { if (id === 'catch') snap(s); },
+  key(s, k, down) { if (k === ' ' && down) snap(s); },
   draw(s, d) {
     const cx = 450, cy = 740, r = 188, n = s.chairs.length;
     d.item(spriteKey(s.target), cx, 430, {w: 64, shadow: false, fallback: () => d.star(cx, 430, 20)});

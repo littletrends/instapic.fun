@@ -1,683 +1,352 @@
-import {clamp, done} from '../draw.js?v=ink-1';
+import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=willa-post-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  WILLA_CHAPTERS, makeRelay, threeCards, isWillaWin, resultNumber, ordinaryFor, NPC_NAMES,
+} from '../whisper-run.js?v=run-1';
 
-const BOOK = 'pennyFever.lostLetter';
-const DUMP_CAP = 24;
-const LIP_SPEED = 16;
-const STROKE = 0.42;
-const SHOVE = 74;
-const FAN_COOL = 0.9;
-const SHELVES = [
-  {left: 250, right: 650, back: 248, lip: 478},
-  {left: 226, right: 674, back: 508, lip: 758},
-  {left: 204, right: 696, back: 792, lip: 1058},
-];
-const SETS = [
-  {mix0: ['trade-envelope'], mix1: ['trade-envelope'], mix2: ['trade-envelope'], unique: 'whisper-charm', prize: 'whisper-charm'},
-  {mix0: ['trade-envelope', 'sealed-secret'], mix1: ['trade-envelope'], mix2: ['trade-envelope', 'sealed-secret'], unique: 'charm-pouch', prize: 'charm-pouch'},
-  {mix0: ['trade-envelope', 'return-postcard'], mix1: ['trade-envelope', 'sealed-secret'], mix2: ['return-postcard'], unique: 'secret-keeper', prize: 'secret-keeper'},
-  {mix0: ['trade-envelope', 'message-bottle'], mix1: ['sealed-secret', 'return-postcard'], mix2: ['message-bottle', 'trade-envelope'], unique: 'surprise-parcel', prize: 'surprise-parcel'},
-  {mix0: ['trade-envelope', 'sealed-secret', 'return-postcard'], mix1: ['message-bottle', 'sealed-secret'], mix2: ['return-postcard', 'sealed-secret'], unique: 'stamp-passport', prize: 'stamp-passport'},
-  {mix0: ['trade-envelope', 'message-bottle'], mix1: ['sealed-secret', 'return-postcard', 'trade-envelope'], mix2: ['message-bottle', 'return-postcard'], unique: 'lost-and-found-tag', prize: 'lost-and-found-tag'},
-];
-const MAIL = {
-  'trade-envelope': {r: 17, w: 38, color: '#e8d4a8', symbol: '♥', weight: 48, cap: 90},
-  'sealed-secret': {r: 17, w: 40, color: '#c4b0c8', symbol: '★', weight: 8, cap: 8},
-  'return-postcard': {r: 16, w: 36, color: '#d4c090', symbol: '☾', weight: 7, cap: 6},
-  'message-bottle': {r: 17, w: 40, color: '#a8b8a0', symbol: '✧', weight: 5, cap: 4},
-};
-const CHAPTER_ITEMS = {
-  'whisper-charm': {r: 21, w: 48, color: '#c090a0', symbol: '♡', unique: true, prize: true},
-  'charm-pouch': {r: 21, w: 48, color: '#c09088', symbol: '❀', unique: true, prize: true},
-  'secret-keeper': {r: 22, w: 50, color: '#9a7a9a', symbol: '✦', unique: true, prize: true},
-  'surprise-parcel': {r: 22, w: 50, color: '#c4a46a', symbol: '▣', unique: true, prize: true},
-  'stamp-passport': {r: 21, w: 48, color: '#8a9a6a', symbol: '✉', unique: true, prize: true},
-  'lost-and-found-tag': {r: 20, w: 46, color: '#b68445', symbol: '⌂', unique: true, prize: true},
-};
-const DEFS = {...MAIL, ...CHAPTER_ITEMS};
-const POOL = Object.entries(MAIL).map(([id, def]) => ({id, ...def}));
-const SPRITES = [
-  'everyday-penny', 'penny-purse', 'trade-envelope', 'sealed-secret', 'return-postcard',
-  'message-bottle', 'charm-pouch', 'whisper-charm', 'secret-keeper', 'surprise-parcel',
-  'stamp-passport', 'lost-and-found-tag',
-];
-const ISLANDS = [
-  {x: 168, y: 156, symbol: '♥'},
-  {x: 450, y: 108, symbol: '★'},
-  {x: 732, y: 156, symbol: '☾'},
-];
+const BOOK = 'pennyFever.whisperRun';
+const GROUND = 900;
+const MESS_W = 36, MESS_H = 48;
 
-function symbolOf(id) {
-  return DEFS[id]?.symbol || '♥';
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
 }
-function islandFor(level) {
-  return ISLANDS[level % ISLANDS.length];
-}
-function mint(id, x, y, layer) {
-  const def = DEFS[id] || DEFS['trade-envelope'];
-  return {
-    id, x, y, layer, vx: 0, vy: 0,
-    r: def.r, w: def.w, color: def.color,
-    unique: !!def.unique, prize: !!def.prize, falling: false,
-  };
-}
-function counts(mail) {
-  const n = {};
-  for (const c of mail) if (!c.falling) n[c.id] = (n[c.id] || 0) + 1;
-  return n;
-}
-function pickMail(s, rng) {
-  const on = counts(s.mail);
-  const options = POOL.filter(def => !def.cap || (on[def.id] || 0) < def.cap);
-  const pool = options.length ? options : POOL;
-  let total = 0;
-  for (const o of pool) total += o.weight;
-  let roll = rng() * total;
-  for (const o of pool) {
-    roll -= o.weight;
-    if (roll <= 0) return o.id;
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
   }
-  return pool[pool.length - 1].id;
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
 }
-function snapshot(s) {
-  return {
-    v: 1,
-    chapter: s.level || 0,
-    t: s.t,
-    aim: s.aim,
-    dropped: s.dropped,
-    score: s.score,
-    restock: s.restock,
-    queue: s.queue,
-    seen: s.seen.slice(),
-    paid: s.paid.slice(),
-    claim: s.claim ? {id: s.claim.id, x: +s.claim.x.toFixed(2), y: +s.claim.y.toFixed(2), vx: +s.claim.vx.toFixed(2), vy: +s.claim.vy.toFixed(2)} : null,
-    pieces: s.mail.filter(c => !c.falling).map(c => ({
-      id: c.id, x: +c.x.toFixed(2), y: +c.y.toFixed(2),
-      vx: +c.vx.toFixed(2), vy: +c.vy.toFixed(2), layer: c.layer,
-    })),
+function rng(seed) {
+  let s = (Number(seed) || 1) >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
   };
 }
-function plantPrize(mail, level, rng) {
-  const set = SETS[level] || SETS[0];
-  const id = set.unique || set.prize;
-  if (!id) return;
-  if (mail.some(c => !c.falling && (c.id === id || c.id === set.prize))) return;
-  const layer = 1;
-  const L = SHELVES[layer];
-  mail.push(mint(id,
-    (L.left + L.right) / 2 + (rng() - 0.5) * 48,
-    L.back + (L.lip - L.back) * 0.42 + (rng() - 0.5) * 18,
-    layer));
-}
-function readStore() {
-  if (typeof localStorage === 'undefined') return {v: 1, tables: {}};
+
+function emptyBook() { return {v: 1, paid: {}, sittings: {}}; }
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
-    if (blob && blob.v === 1 && blob.tables) return blob;
-  } catch { /* ignore */ }
-  return {v: 1, tables: {}};
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
 }
-function loadPost(chapter = 0) {
-  const row = readStore().tables[String(chapter)];
-  if (row && Array.isArray(row.pieces) && row.pieces.length) return row;
-  return null;
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
 }
 function persist(s) {
-  if (!s || typeof localStorage === 'undefined') return;
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase, seed: s.seed, charged: !!s.charged, relay: s.relay,
+    cards: s.cards, mx: s.mx, my: s.my, vx: s.vx, vy: s.vy,
+    won: !!s.won, note: s.note, resultN: s.resultN || 0, fortune: s.fortune,
+  };
+  writeBook(book);
+}
+
+function platforms(level) {
+  const list = [
+    {x: 40, y: GROUND, w: 820, h: 24},
+    {x: 80, y: 720, w: 280, h: 20},
+    {x: 520, y: 720, w: 300, h: 20},
+  ];
+  if (level >= 2) list.push({x: 300, y: 560, w: 300, h: 20});
+  return list;
+}
+function ladders(level) {
+  const list = [{x: 200, y: 720, h: GROUND - 720}];
+  if (level >= 2) list.push({x: 640, y: 560, h: 160});
+  return list;
+}
+function npcSpot(i, n) {
+  const t = n <= 1 ? 0.72 : i / Math.max(1, n - 1);
+  return {x: 140 + t * 640, y: GROUND - 10};
+}
+
+function beginRun(s) {
+  if (s.phase === 'flash' || s.phase === 'run' || s.phase === 'pick') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
   try {
-    const store = readStore();
-    store.tables[String(s.level || 0)] = snapshot(s);
-    localStorage.setItem(BOOK, JSON.stringify(store));
-  } catch { /* quota */ }
-  s.dirty = false;
-  s.saveAt = s.t;
+    if (!s.charged) {
+      if (!takeAttempt('whisper', s.level)) { s.note = retryNote(); return; }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 11 + s.level * 29;
+    }
+    s.relay = makeRelay(s.level, s.seed);
+    s.cards = null;
+    s.phase = 'flash';
+    s.flashLeft = s.relay.flash;
+    s.mx = 80; s.my = GROUND; s.vx = 0; s.vy = 0;
+    s.axis = 0; s.jump = false; s.won = s.won && chapterPaid(s.level);
+    s.fortune = ''; s.resultN = 0; s.prizeKept = false;
+    s.note = 'Read it. Then it vanishes.';
+    persist(s);
+  } finally { s.chargeLock = false; }
 }
-function hydrate(blob) {
-  const mail = (blob.pieces || []).map(p => {
-    const c = mint(p.id, p.x, p.y, p.layer | 0);
-    const L = SHELVES[c.layer] || SHELVES[2];
-    c.x = clamp(c.x, L.left + c.r + 2, L.right - c.r - 2);
-    c.y = clamp(c.y, L.back + c.r + 4, L.lip - c.r - 3);
-    c.vx = 0;
-    c.vy = 0;
-    return c;
-  });
-  if (mail.length < 28) topUp(mail, Math.random);
-  plantPrize(mail, blob.chapter || 0, Math.random);
-  const claim = blob.claim ? {
-    id: blob.claim.id, x: blob.claim.x, y: blob.claim.y,
-    vx: blob.claim.vx || 0, vy: blob.claim.vy || -420,
-    w: (DEFS[blob.claim.id] || {}).w || 48,
-    color: (DEFS[blob.claim.id] || {}).color || '#c090a0',
-    r: (DEFS[blob.claim.id] || {}).r || 21,
-  } : null;
-  return {
-    level: blob.chapter || 0, t: blob.t || 0, mail, aim: blob.aim || 450, ammo: 0, total: 0,
-    score: blob.score || 0, cooldown: 0, coolFan: 0, gust: 0, dropped: blob.dropped || 0,
-    started: false, queue: blob.queue || 0, restock: blob.restock || 0,
-    seen: blob.seen || [], paid: blob.paid || [], dirty: false, saveAt: 0, stroke: 0, fly: [],
-    claim, pendingWin: null,
-    note: claim ? 'A secret is still on the breeze. Trim it home.' : 'The pigeonholes waited. Stamp postage to wake them.',
-  };
+
+function openCards(s) {
+  s.cards = threeCards(s.relay.current, rng(s.seed + s.relay.step * 97 + 3));
+  s.phase = 'pick';
+  s.note = (NPC_NAMES[s.relay.step] || 'A friend') + ' offers three whispers.';
+  persist(s);
 }
-function startStroke(s) {
-  s.stroke = 0.001;
-  s.started = true;
-}
-function flyHome(s, c, dest) {
-  s.fly = s.fly || [];
-  s.fly.push({
-    id: c.id, x: c.x, y: c.y, w: c.w, color: c.color, t: 0, dur: 0.72,
-    destX: dest.x, destY: dest.y, prize: !!c.prize,
-  });
-}
-function seat(s, id, layer, rng) {
-  const L = SHELVES[layer];
-  const c = mint(id, L.left + 36 + rng() * (L.right - L.left - 72), L.back + 40 + rng() * 36, layer);
-  c.vx = 0; c.vy = 0; c.falling = false;
-  s.mail.push(c);
-  s.dirty = true;
-  return c;
-}
-function launchSecret(s, c) {
-  const island = islandFor(s.level);
-  const toward = (island.x - c.x) * 0.35;
-  s.claim = {
-    id: c.id, x: c.x, y: Math.min(c.y, 980),
-    vx: clamp(toward, -160, 160), vy: -560,
-    w: c.w, color: c.color, r: c.r,
-  };
-  s.note = 'A secret caught the breeze — trim Left/Right to the glowing letterbox.';
-  s.dirty = true;
-}
-function deliverOrdinary(s, c) {
-  const island = ISLANDS[(c.x < 380 ? 0 : c.x > 520 ? 2 : 1)];
-  flyHome(s, c, island);
-  s.score += 1;
-  s.dirty = true;
-  s.note = c.id === 'trade-envelope'
-    ? 'A letter took the scenic route home.'
-    : itemName(c.id) + ' delivered.';
-}
-function claimSecret(s) {
-  const set = SETS[s.level] || SETS[0];
-  const prize = set.prize;
-  const letter = s.claim;
-  s.claim = null;
-  if (alleyPlay) keep(prize, 'whisper');
-  takePrize(s, prize);
-  if (!s.paid.includes(prize)) s.paid.push(prize);
-  flyHome(s, {id: prize, x: letter.x, y: letter.y, w: letter.w, color: letter.color, prize: true}, {x: 792, y: 86});
-  s.pendingWin = {prize, at: s.t};
-  s.note = itemName(prize) + ' found its island — into the treasure book!';
-  s.dirty = true;
-}
-function returnSecret(s, note) {
-  const letter = s.claim;
-  s.claim = null;
-  if (!letter) return;
-  const c = mint(letter.id, letter.x, letter.y, 1);
-  const L = SHELVES[1];
-  c.x = clamp(letter.x, L.left + c.r + 8, L.right - c.r - 8);
-  c.y = L.back + c.r + 16;
-  c.falling = false;
-  s.mail.push(c);
-  s.note = note || 'The breeze brought the secret back. Shove it off again.';
-  s.dirty = true;
-}
-function spill(s, c) {
-  if (c.layer >= 2) {
-    if (c.prize || c.unique) launchSecret(s, c);
-    else deliverOrdinary(s, c);
-    return false;
-  }
-  c.layer += 1;
-  c.falling = true;
-  c.vy = 80;
-  c.vx *= 0.4;
-  s.note = c.prize ? itemName(c.id) + ' dropped a pigeonhole.' : 'The post moved down a shelf.';
-  return true;
-}
-function dropOne(s, id, x) {
-  const L = SHELVES[0];
-  const piece = mint(id, clamp(x, L.left + 22, L.right - 22), 168, 0);
-  piece.falling = true;
-  piece.vy = 240;
-  s.mail.push(piece);
-  s.dirty = true;
-}
-function stamp(s) {
-  if (s.claim) {
-    s.note = 'Willa is watching that secret. Trim it home first.';
+
+function pickCard(s, i) {
+  if (s.phase !== 'pick' || !s.cards || !s.cards[i]) return;
+  s.relay.current = s.cards[i];
+  s.relay.log.push(s.cards[i]);
+  s.relay.step += 1;
+  s.cards = null;
+  if (s.relay.step >= s.relay.npcs) {
+    finishRun(s);
     return;
   }
-  if (s.cooldown > 0) return;
+  s.phase = 'run';
+  s.mx = 80; s.my = GROUND; s.vx = 0; s.vy = 0;
+  s.note = 'Carry it to ' + (NPC_NAMES[s.relay.step] || 'the next') + '.';
+  persist(s);
+}
+
+function finishRun(s) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  s.phase = 'result';
+  s.charged = false;
+  const faithful = s.relay.current === s.relay.original;
+  s.fortune = faithful
+    ? 'The secret arrived intact: “' + s.relay.original + '”'
+    : 'Sent: “' + s.relay.original + '”  Delivered: “' + s.relay.current + '”';
+  const prize = WILLA_CHAPTERS[s.level].prize;
+  const win = isWillaWin(s.level, n) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
   if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny for postage. Cash a booth ticket for a five-penny stack.';
-      return;
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'whisper');
+    if (win) {
+      keep(prize, 'whisper');
+      markPaid(s.level);
+      s.won = true;
     }
-    s.started = true;
-    s.dropped = (s.dropped || 0) + 1;
-  } else {
-    if (s.ammo <= 0) return;
-    s.ammo--;
-    if (s.ammo === 0) s.settle = 10;
-  }
-  s.cooldown = 0.28;
-  dropOne(s, 'trade-envelope', s.aim);
-  startStroke(s);
-  s.restock += 1;
-  s.note = 'Postage stamped. The press shoves.';
+  } else if (win) s.won = true;
+  if (win) takePrize(s, prize, {x: 720, y: 200});
+  s.hold = 1.2;
+  s.note = s.fortune;
+  persist(s);
 }
-function dump(s) {
-  if (s.claim) {
-    s.note = 'Finish the secret on the breeze first.';
-    return;
-  }
-  if (s.cooldown > 0 && s.queue > 0) return;
-  const have = alleyPlay ? (pocket() || 0) : s.ammo;
-  const take = Math.min(DUMP_CAP, Math.max(0, have | 0));
-  if (take < 1) {
-    s.note = alleyPlay ? 'The satchel is empty. Cash a ticket for a five-penny stack.' : 'No practice postage left.';
-    return;
-  }
-  if (alleyPlay) {
-    if (!spend(take)) {
-      s.note = 'Need pennies in the pocket.';
-      return;
-    }
-    s.started = true;
-  } else {
-    s.ammo -= take;
-    if (s.ammo === 0) s.settle = 10;
-  }
-  s.queue += take;
-  s.dropped = (s.dropped || 0) + take;
-  s.cooldown = 0.08;
-  startStroke(s);
-  s.note = take === 1 ? 'One stamp from the satchel.' : take + ' letters dumped from the satchel.';
+
+function onLadder(s) {
+  return ladders(s.level).some(l => Math.abs(s.mx - l.x) < 28 && s.my <= GROUND && s.my >= l.y - 4);
 }
-function fan(s) {
-  if (s.coolFan > 0) return;
-  if (!s.started && !s.claim) {
-    s.note = 'Stamp postage first — the cabinet is still.';
-    return;
+function standOn(s) {
+  for (const p of platforms(s.level)) {
+    if (s.mx > p.x && s.mx < p.x + p.w && s.my <= p.y + 8 && s.my >= p.y - 18 && s.vy >= 0) return p.y;
   }
-  s.coolFan = FAN_COOL;
-  const dir = Math.sin(s.t * 0.7) >= 0 ? 1 : -1;
-  const burst = dir * (240 + s.level * 28);
-  if (s.claim) s.claim.vx += dir * 90;
-  for (const c of s.mail) {
-    if (c.falling) continue;
-    const L = SHELVES[c.layer] || SHELVES[2];
-    const along = clamp((c.y - L.back) / (L.lip - L.back || 1), 0, 1);
-    c.vx += burst * (0.35 + 0.65 * along);
-  }
-  s.note = dir > 0 ? 'A gust to the right — the scenic route.' : 'A gust to the left — the scenic route.';
-  s.dirty = true;
-}
-function restock(s, rng) {
-  const on = counts(s.mail);
-  const letters = on['trade-envelope'] || 0;
-  if (letters < 36 && rng() < 0.4) seat(s, 'trade-envelope', 0, rng);
-  if (s.restock > 0 && s.restock % 7 === 0) {
-    const id = pickMail(s, rng);
-    if (id && id !== 'trade-envelope') {
-      seat(s, id, rng() < 0.55 ? 0 : 1, rng);
-      s.note = itemName(id) + ' settled at the back of a pigeonhole.';
-    }
-    const set = SETS[s.level] || SETS[0];
-    const hasPrize = s.mail.some(c => !c.falling && (c.id === set.prize || c.id === set.unique)) || (s.claim && (s.claim.id === set.prize || s.claim.id === set.unique));
-    if (!hasPrize) plantPrize(s.mail, s.level, rng);
-  }
-}
-function pack(layer, rng, ids) {
-  const L = SHELVES[layer];
-  const out = [];
-  const dx = 38, dy = 34;
-  let row = 0;
-  for (let y = L.back + 44; y <= L.lip - 18; y += dy, row++) {
-    const inset = (row % 2) * (dx * 0.5);
-    for (let x = L.left + 24 + inset; x <= L.right - 24; x += dx) {
-      const id = ids[out.length % ids.length];
-      out.push(mint(id, x + (rng() - 0.5) * 3, y + (rng() - 0.5) * 2, layer));
-    }
-  }
-  return out;
-}
-function topUp(mail, rng) {
-  const packed = [
-    ...pack(0, rng, ['trade-envelope']),
-    ...pack(1, rng, ['trade-envelope']),
-    ...pack(2, rng, ['trade-envelope']),
-  ];
-  for (const p of packed) {
-    const L = SHELVES[p.layer];
-    if (p.y > L.lip - 48) continue;
-    if (mail.some(c => c.layer === p.layer && Math.hypot(c.x - p.x, c.y - p.y) < c.r + p.r + 2)) continue;
-    mail.push(p);
-  }
-}
-function fresh(level, rng) {
-  const set = SETS[level] || SETS[0];
-  const mail = [
-    ...pack(0, rng, set.mix0),
-    ...pack(1, rng, set.mix1),
-    ...pack(2, rng, set.mix2),
-  ];
-  const seen = [];
-  plantPrize(mail, level, rng);
-  const prizeId = set.unique || set.prize;
-  if (prizeId) seen.push(prizeId);
-  const ammo = 12 + level * 3;
-  return {
-    level, t: 0, mail, aim: 450, ammo, total: ammo, score: 0,
-    cooldown: 0, coolFan: 0, gust: 0, dropped: 0, started: !alleyPlay,
-    queue: 0, restock: 0, seen, paid: [], dirty: !!alleyPlay, saveAt: 0, stroke: 0, fly: [],
-    claim: null, pendingWin: null, settle: 0,
-    note: alleyPlay
-      ? 'The secret is in the pigeonholes. Stamp postage to shove it, then trim it home.'
-      : 'Stamp a practice letter. Shove the secret off a lip, then fly it to the glowing island.',
-  };
+  return null;
 }
 
 export default {
-  title: 'Lost Letter Express',
+  title: 'Whisper Run',
   live: alleyPlay,
   tables: true,
-  chapterEnds: false,
-  tableDetail: 'A new set of pigeonholes. Walk away whenever you like — this chapter’s mail keeps. Dump the satchel and the office is patient.',
-  intro: 'Willa’s Lost Letter Express. Six cabinets of waiting mail. A penny stamps postage and the press shoves the pigeonholes. The chapter’s secret sits in the tide — shove it off a lip, then trim it through the breeze to the glowing island.',
-  instructions: alleyPlay
-    ? 'Aim the stamp, then drop a penny of postage: the press shoves once. Fan the breeze to slide mail sideways. Sit still and nothing falls. When the secret leaves a lip, trim Left/Right to the glowing letterbox. Leave and that chapter’s mail waits. Dump the satchel if you dare. Cash a booth ticket for a five-penny stack if the purse is empty.'
-    : 'Each chapter is a new cabinet. One shove per practice stamp. Fan the breeze. Fly the secret to the glowing island. Workshop scores never enter your wallet.',
-  levels: ['The morning post', 'Crosswinds', 'The late-night express', 'A gale of envelopes', 'Islands adrift', 'The last bottle home'],
-  sprites: SPRITES,
-  prizes: SETS.map(set => set.prize),
-  actions: [
-    {id: 'stamp', label: alleyPlay ? 'Stamp postage · 1 penny' : 'Stamp a practice letter'},
-    {id: 'fan', label: 'Fan the breeze'},
-    {id: 'dump', label: alleyPlay ? 'Dump the satchel' : 'Dump the rest'},
-  ],
+  chapterEnds: true,
   persist,
-  create(level, rng) {
-    const roll = rng || Math.random;
-    const saved = loadPost(level);
-    if (saved && saved.pieces && saved.pieces.length >= 28) {
-      const s = hydrate(saved);
-      s.level = level;
-      if (!alleyPlay) {
-        s.ammo = 12 + level * 3;
-        s.total = s.ammo;
-        s.started = true;
-      }
-      plantPrize(s.mail, level, roll);
-      bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
-      return s;
-    }
-    const s = fresh(level, roll);
-    persist(s);
+  intro: alleyPlay
+    ? 'Willa shows a whisper, then it vanishes. Cross the board to each friend and pick the phrase you remember. A wrong card muddles the secret — it does not end the run. A ticket sits you down; first try of each chapter is included.'
+    : 'Read the whisper, cross, pick a card. Wrong cards keep going. Workshop writes nothing.',
+  instructions: alleyPlay
+    ? 'Left/right to run, jump to climb. At a friend, tap a card. The whole chain is one sitting.'
+    : 'Move, jump, pick a card. Practice writes nothing.',
+  levels: WILLA_CHAPTERS.map(c => c.title),
+  sprites: ['whisper-charm', 'charm-pouch', 'secret-keeper', 'surprise-parcel', 'stamp-passport', 'lost-and-found-tag', 'moon-penny', 'star-token', 'everyday-penny'],
+  prizes: WILLA_CHAPTERS.map(c => c.prize),
+  actions: [
+    {id: 'go', label: 'Start the run · Space'},
+    {id: 'jump', label: 'Jump'},
+    {id: 'again', label: alleyPlay ? 'Another run · 1 penny' : 'Another run'},
+  ],
+  create(level) {
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
+    const s = {
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 3) * 5003,
+      relay: saved.relay || null, cards: saved.cards || null,
+      mx: saved.mx || 80, my: saved.my || GROUND, vx: saved.vx || 0, vy: saved.vy || 0,
+      charged: !!saved.charged, won: !!saved.won || chapterPaid(level),
+      note: saved.note || 'Willa has a whisper. Start when you are ready.',
+      resultN: saved.resultN || 0, fortune: saved.fortune || '', hold: 0,
+      axis: 0, jump: false, flashLeft: 0,
+    };
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt, input) {
     s.t += dt;
-    s.cooldown = Math.max(0, s.cooldown - dt);
-    s.coolFan = Math.max(0, s.coolFan - dt);
-    const axis = (input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0);
-    if (!s.claim) s.aim = clamp(s.aim + axis * 230 * dt, 270, 630);
-
-    if (s.pendingWin && !s.result && s.t - s.pendingWin.at > 0.7) {
-      const prize = s.pendingWin.prize;
-      s.pendingWin = null;
-      done(s, 'A secret found its way', itemName(prize) + ' is Willa’s to keep no longer — it is yours.', {prize, won: true});
-    }
-
-    if (s.claim) {
-      const p = s.claim;
-      const trim = axis;
-      const wind = Math.sin(s.t * 0.65) * (22 + s.level * 10);
-      p.vx += (wind + trim * 150) * dt;
-      p.vy += 92 * dt;
-      p.vx *= Math.exp(-0.08 * dt);
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      const island = islandFor(s.level);
-      if (Math.hypot(p.x - island.x, p.y - island.y) < 52) {
-        claimSecret(s);
-      } else if (p.x < 40 || p.x > 860 || p.y < 40 || p.y > 1188) {
-        returnSecret(s, 'The breeze brought it back. Shove it off again, then trim sooner.');
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (s.phase === 'flash') {
+      s.flashLeft -= dt;
+      if (s.flashLeft <= 0) {
+        s.phase = 'run';
+        s.note = 'The whisper is gone. Find ' + (NPC_NAMES[0] || 'a friend') + '.';
+        persist(s);
       }
     }
-
-    if (s.queue > 0 && s.cooldown <= 0 && !s.claim) {
-      dropOne(s, 'trade-envelope', s.aim + (Math.random() - 0.5) * 18);
-      s.queue--;
-      s.restock += 1;
-      s.cooldown = 0.09;
-      s.started = true;
-    }
-
-    if (s.fly) {
-      for (const f of s.fly) f.t += dt;
-      s.fly = s.fly.filter(f => f.t < f.dur);
-    }
-
-    if (alleyPlay && !s.started) {
-      if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
-      return;
-    }
-
-    const breeze = Math.sin(s.t * 0.7) * (14 + s.level * 7);
-    const shoving = s.stroke > 0 && s.stroke < 0.7;
-    if (s.stroke > 0) {
-      const was = s.stroke;
-      s.stroke += dt / STROKE;
-      const t = clamp(s.stroke, 0, 1);
-      const extend = t < 0.7 ? t / 0.7 : 1;
-      const prev = was < 0.7 ? was / 0.7 : 1;
-      if (extend > prev) {
-        const dPlate = (extend - prev) * SHOVE;
-        for (let i = 0; i < SHELVES.length; i++) {
-          const L = SHELVES[i];
-          const plate = L.back + 22 + extend * SHOVE;
-          const depth = L.lip - L.back || 1;
-          for (const c of s.mail) {
-            if (c.falling || c.layer !== i) continue;
-            if (c.y < plate + c.r) {
-              c.y += dPlate;
-              c.vy = Math.max(c.vy, dPlate * 80);
-            } else {
-              const along = clamp((c.y - L.back) / depth, 0, 1);
-              const tide = dPlate * (0.06 + 0.16 * along);
-              c.y += tide;
-              c.vy = Math.max(c.vy, tide * 40);
-            }
-          }
-        }
+    if (s.phase === 'run') {
+      const keys = input?.keys || new Set();
+      const left = keys.has('ArrowLeft') || keys.has('a') || s.axis < 0;
+      const right = keys.has('ArrowRight') || keys.has('d') || s.axis > 0;
+      const up = keys.has('ArrowUp') || keys.has('w') || keys.has(' ') || s.jump;
+      s.axis = 0; s.jump = false;
+      const climb = onLadder(s);
+      if (climb && up) { s.vy = -180; s.vx = 0; }
+      else {
+        s.vx = (right ? 1 : 0) - (left ? 1 : 0);
+        s.vx *= 220;
+        s.vy += 980 * dt;
+        if (up && standOn(s) != null) s.vy = -420;
       }
-      if (s.stroke >= 1) s.stroke = 0;
+      s.mx = clamp(s.mx + s.vx * dt, 50, 850);
+      s.my += s.vy * dt;
+      const floor = standOn(s);
+      if (floor != null && s.vy >= 0) { s.my = floor; s.vy = 0; }
+      if (s.my > GROUND) { s.my = GROUND; s.vy = 0; }
+      const npc = npcSpot(s.relay.step, s.relay.npcs);
+      if (Math.hypot(s.mx - npc.x, s.my - npc.y) < 50) openCards(s);
     }
-
-    const busy = s.queue > 0 || s.stroke > 0 || s.claim || s.mail.some(c => c.falling || c.vx * c.vx + c.vy * c.vy > 2.2);
-    if (!busy) {
-      for (const c of s.mail) { c.vx = 0; c.vy = 0; }
-      if (s.dirty && s.t - s.saveAt > 1.2) persist(s);
-      return;
-    }
-
-    if (s.restock && s.restock % 7 === 0) {
-      restock(s, Math.random);
-      s.restock += 0.001;
-    }
-
-    for (let step = 0; step < 3; step++) {
-      const h = dt / 3;
-      for (const c of s.mail) {
-        const L = SHELVES[c.layer] || SHELVES[2];
-        if (c.falling) {
-          c.vy += 980 * h;
-          c.x += c.vx * h;
-          c.y += c.vy * h;
-          let hit = false;
-          for (const o of s.mail) {
-            if (o === c || o.falling || o.layer !== c.layer) continue;
-            const dx = o.x - c.x, dy = o.y - c.y, dd = Math.hypot(dx, dy), need = c.r + o.r;
-            if (dd >= need || dd < 0.001) continue;
-            hit = true;
-            const nx = dx / dd, ny = dy / dd, overlap = need - dd;
-            c.x -= nx * overlap; c.y -= ny * overlap;
-            const j = Math.max(0, c.vy) * 0.62;
-            o.vx += nx * j * 0.35;
-            o.vy += Math.max(j * 0.85, ny * j);
-            c.vy *= 0.28;
-            c.vx *= 0.45;
-          }
-          if (hit && c.vy < 70) {
-            c.falling = false;
-            c.vy = Math.max(c.vy, 18);
-          } else if (!hit && c.y >= L.back + c.r + 10) {
-            c.falling = false;
-            c.y = L.back + c.r + 10;
-            c.vx = 0;
-            c.vy = 0;
-          }
-          c.x = clamp(c.x, L.left + c.r, L.right - c.r);
-          continue;
-        }
-        c.x += (c.vx + breeze * 0.35) * h;
-        c.y += c.vy * h;
-        c.vx *= Math.exp(-7.2 * h);
-        c.vy *= Math.exp(-6.4 * h);
-        if (c.x < L.left + c.r) { c.x = L.left + c.r; c.vx = Math.abs(c.vx) * 0.2; }
-        if (c.x > L.right - c.r) { c.x = L.right - c.r; c.vx = -Math.abs(c.vx) * 0.2; }
-        if (c.y < L.back + c.r) { c.y = L.back + c.r; c.vy = Math.max(0, c.vy); }
-        if (c.y + c.r > L.lip && !shoving && c.vy < LIP_SPEED) {
-          c.y = L.lip - c.r;
-          c.vy = 0;
-        }
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'The whisper arrived',
+          itemName(WILLA_CHAPTERS[s.level].prize) + ' — ' + s.fortune,
+          {prize: WILLA_CHAPTERS[s.level].prize, won: true});
       }
-      const groups = [[], [], []];
-      for (const c of s.mail) if (!c.falling && groups[c.layer]) groups[c.layer].push(c);
-      for (const group of groups) {
-        for (let pass = 0; pass < 2; pass++) {
-          for (let i = 0; i < group.length; i++) for (let j = i + 1; j < group.length; j++) {
-            const a = group[i], b = group[j], dx = b.x - a.x, dy = b.y - a.y, dd = Math.hypot(dx, dy), need = a.r + b.r;
-            if (dd >= need || dd < 0.001) continue;
-            const nx = dx / dd, ny = dy / dd, overlap = need - dd;
-            a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
-            b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
-            const relative = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-            if (relative < 0) {
-              const impulse = -relative * 0.58;
-              a.vx -= nx * impulse; a.vy -= ny * impulse;
-              b.vx += nx * impulse; b.vy += ny * impulse;
-            }
-          }
-        }
-      }
-    }
-
-    const stay = [];
-    for (const c of s.mail) {
-      if (c.falling) { stay.push(c); continue; }
-      const L = SHELVES[c.layer];
-      if (c.y + c.r > L.lip && (shoving || c.vy >= LIP_SPEED)) {
-        if (!spill(s, c)) continue;
-      }
-      stay.push(c);
-    }
-    s.mail = stay;
-    if (s.dirty && s.t - s.saveAt > 1.4) persist(s);
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (s.claim) return;
-    if (type === 'move' || type === 'down') s.aim = clamp(p.x, 270, 630);
-    if (type === 'up') stamp(s);
+    if (type === 'up' || type === 'cancel') { s.axis = 0; return; }
+    if (type !== 'down' && type !== 'move') return;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      if (type === 'down') beginRun(s);
+      return;
+    }
+    if (s.phase === 'pick' && type === 'down' && s.cards) {
+      s.cards.forEach((_, i) => {
+        const b = {x: 70, y: 430 + i * 110, w: 760, h: 96};
+        if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) pickCard(s, i);
+      });
+      return;
+    }
+    if (s.phase === 'run') {
+      if (p.y < 520) s.jump = true;
+      else s.axis = p.x < 450 ? -1 : 1;
+    }
   },
   action(s, id) {
-    if (id === 'stamp') stamp(s);
-    if (id === 'dump') dump(s);
-    if (id === 'fan') fan(s);
+    if (id === 'go' || id === 'again') {
+      if (s.phase === 'result') { s.phase = 'idle'; s.note = 'Another whisper when you are ready.'; persist(s); return; }
+      beginRun(s);
+    }
+    if (id === 'jump') s.jump = true;
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === ' ') stamp(s);
-    if (k === 'Enter' || k === 'd' || k === 'D') dump(s);
-    if (k === 'f' || k === 'F') fan(s);
+    if (k === 'Enter') this.action(s, 'go');
+    if (k === ' ' && s.phase === 'run') s.jump = true;
+    if (s.phase === 'pick' && k >= '1' && k <= '3') pickCard(s, Number(k) - 1);
   },
   draw(s, d) {
-    const island = islandFor(s.level);
-    for (const box of ISLANDS) {
-      const glow = s.claim && box === island;
-      const y = box.y + Math.sin(s.t * 0.8 + box.x) * 6;
-      if (glow) d.glow(box.x, y, 58, '#ffe2a8');
-      d.item(spriteKey('charm-pouch'), box.x, y, {
-        w: glow ? 54 : 42, alpha: glow ? 1 : 0.55, shadow: false,
-        fallback: () => {
-          d.poly([[box.x - 28, y + 22], [box.x - 28, y - 16], [box.x, y - 36], [box.x + 28, y - 16], [box.x + 28, y + 22]], glow ? '#b79bb8' : '#8a7480aa', '#ecd5a6', 2);
-          d.text(box.symbol, box.x, y, 16);
-        },
+    const ch = WILLA_CHAPTERS[s.level];
+    const c = d.c;
+    d.text('Whisper Run', 450, 118, 28, '#efe6d0');
+    d.text(ch.title + ' · ' + ch.npcs + (ch.npcs === 1 ? ' friend' : ' friends'), 450, 154, 20, '#d2b98c');
+    if (!s.won) {
+      d.item(spriteKey(ch.prize), 800, 148, {w: 66, fallback: () => d.star(800, 148, 22)});
+      d.text('waiting', 800, 202, 14, '#ead6a4');
+    }
+
+    platforms(s.level).forEach(p => {
+      roundRect(c, p.x, p.y, p.w, p.h, 6);
+      c.fillStyle = '#3a2a18ee';
+      c.fill();
+      c.strokeStyle = '#e8c878';
+      c.stroke();
+    });
+    ladders(s.level).forEach(l => {
+      c.strokeStyle = '#c6a267';
+      c.lineWidth = 4;
+      c.beginPath(); c.moveTo(l.x - 10, l.y); c.lineTo(l.x - 10, l.y + l.h); c.stroke();
+      c.beginPath(); c.moveTo(l.x + 10, l.y); c.lineTo(l.x + 10, l.y + l.h); c.stroke();
+    });
+
+    if (s.relay) {
+      for (let i = 0; i < s.relay.npcs; i++) {
+        const n = npcSpot(i, s.relay.npcs);
+        const live = i === s.relay.step && s.phase === 'run';
+        d.circle(n.x, n.y - 36, 22, live ? '#f0d18fcc' : '#3a2a18ee', '#e8c878', 2);
+        d.text(NPC_NAMES[i] || '?', n.x, n.y - 30, 14, '#fff6d8');
+      }
+    }
+    d.circle(80, GROUND - 36, 22, '#5a2038ee', '#e8c878', 2);
+    d.text('Willa', 80, GROUND - 30, 14, '#fff6d8');
+
+    if (s.phase === 'run' || s.phase === 'flash') {
+      roundRect(c, s.mx - MESS_W / 2, s.my - MESS_H, MESS_W, MESS_H, 8);
+      c.fillStyle = '#c45a6aee';
+      c.fill();
+    }
+
+    if (s.phase === 'flash' && s.relay) wrapLine(d, s.relay.original, 450, 280, 26, '#fff6d8', 720);
+    if (s.phase === 'pick' && s.cards) {
+      s.cards.forEach((text, i) => {
+        const y = 430 + i * 110;
+        roundRect(c, 70, y, 760, 96, 12);
+        c.fillStyle = '#3a2a18ee';
+        c.fill();
+        c.strokeStyle = '#e8c878';
+        c.lineWidth = 3;
+        c.stroke();
+        wrapLine(d, (i + 1) + '.  ' + text, 450, y + 44, 22, '#fff6d8', 700);
       });
-      d.text(box.symbol, box.x, y + 32, 14, glow ? '#fff1d2' : '#d7c4a066');
     }
-    for (let i = 0; i < 5; i++) {
-      const x = 300 + i * 70, y = 214 + Math.sin(s.t + i) * 8;
-      const wind = Math.sin(s.t * 0.7) * (18 + s.level * 6);
-      d.path([{x: x - wind, y}, {x, y: y - 7}, {x: x + wind, y}], '#9d829e66', 3);
-    }
-    for (let i = 0; i < SHELVES.length; i++) {
-      const L = SHELVES[i];
-      d.poly([[L.left, L.back], [L.right, L.back], [L.right + 10, L.lip], [L.left - 10, L.lip]], i === 2 ? '#4a32408e' : '#5a3a5088', '#e4c48a', 3);
-      d.line({x: L.left + 6, y: L.lip - 2}, {x: L.right - 6, y: L.lip - 2}, '#f0d18f', 5);
-      const extend = s.stroke > 0 && s.stroke < 0.7 ? s.stroke / 0.7 : (s.stroke >= 0.7 ? 1 : 0);
-      const plate = L.back + 18 + extend * SHOVE;
-      d.line({x: L.left + 10, y: plate}, {x: L.right - 10, y: plate}, '#c4a070', 12);
-      d.line({x: L.left + 10, y: plate - 5}, {x: L.right - 10, y: plate - 5}, '#f3ddb0', 3);
-    }
-    const order = [...s.mail].sort((a, b) => a.layer - b.layer || a.y - b.y);
-    for (const c of order) {
-      d.item(spriteKey(c.id), c.x, c.y, {
-        w: c.w,
-        fallback: () => {
-          if (c.id === 'message-bottle') d.bottle(c.x, c.y, c.w / 54);
-          else if (c.unique) d.star(c.x, c.y, c.r * 0.9, c.color);
-          else d.envelope(c.x, c.y, c.r, c.color, symbolOf(c.id));
-        },
-      });
-    }
-    const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    for (const f of (s.fly || [])) {
-      const u = Math.min(1, f.t / f.dur);
-      const e = 1 - (1 - u) * (1 - u);
-      const fx = f.x + (f.destX - f.x) * e, fy = f.y + (f.destY - f.y) * e;
-      d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, (f.w || 32) * (1 - u * 0.4)), fallback: () => d.envelope(fx, fy, 12, f.color || '#e8d4a8')});
-    }
-    if (s.claim) {
-      const p = s.claim;
-      d.glow(p.x, p.y, 46, '#ffe2a8');
-      d.item(spriteKey(p.id), p.x, p.y, {
-        w: (p.w || 48) + 6,
-        fallback: () => d.star(p.x, p.y, p.r || 20, p.color || '#c090a0'),
-      });
-    }
-    if (!s.claim) {
-      d.poly([[s.aim - 22, 88], [s.aim + 22, 88], [s.aim + 14, 134], [s.aim - 14, 134]], '#8a7450cc', '#ead097', 2);
-      d.text('✉', s.aim, 118, 18, '#fff3d0');
-    }
-    if (alleyPlay && !s.started) d.text('pigeonholes still', 450, 72, 18, '#f0d6a8');
+    wrapLine(d, s.note, 450, 980, 22, '#f0d18f', 720);
   },
   readout: s => {
-    const waiting = s.mail.filter(c => !c.falling).length;
-    const n = alleyPlay ? pocket() : s.ammo;
-    const secret = s.claim ? ' · secret on the breeze' : '';
-    if (alleyPlay) {
-      return (n == null ? '0' : n) + (n === 1 ? ' penny' : ' pennies') + ' for postage · ' + waiting + ' in the pigeonholes · ' + s.score + ' delivered' + (s.queue ? ' · dumping ' + s.queue : '') + secret + ' · ' + s.note;
-    }
-    return n + ' / ' + s.total + ' practice stamps · ' + waiting + ' in the pigeonholes · ' + s.score + ' delivered' + (s.ammo === 0 ? ' · settling' : '') + secret + ' · ' + s.note;
+    const n = alleyPlay ? pocket() : null;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    return purse + ' · ' + s.note;
   },
 };

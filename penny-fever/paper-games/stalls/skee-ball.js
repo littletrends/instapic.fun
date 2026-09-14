@@ -1,280 +1,387 @@
-import {clamp, dist, done} from '../draw.js?v=ink-1';
+import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep, owned} from '../wallet.js?v=arcade-restore-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  SKIP_CHAPTERS, makeLane, makeBall, stepBall, markedHole, advanceMark,
+  resultNumber, isSkipWin, ordinaryFor, shutterOpen,
+} from '../moonbow.js?v=skip-1';
 
-const SETS = [
-  {prize: 'silver-cup-chip', target: ['10'], r10: 78, r30: 52, r50: 40, r100: 34,
-    cue: 'A gentle roll into the nearest moon. Softer than a medium skip.'},
-  {prize: 'lane-wax', target: ['30'], r10: 64, r30: 50, r50: 38, r100: 32,
-    cue: 'A medium lift. Let it kiss the silver cup in the middle.'},
-  {prize: 'pegboard-star', target: ['50'], r10: 58, r30: 42, r50: 38, r100: 30,
-    cue: 'A stronger roll into the high 50. Too little and it drops short.'},
-  {prize: 'moonbow-stub', target: ['100'], r10: 52, r30: 38, r50: 32, r100: 34,
-    cue: 'Steer for either 100 moon. Power and a little English.'},
-  {prize: 'score-card', target: ['left'], r10: 50, r30: 36, r50: 30, r100: 28,
-    cue: 'The left-hand 100 only. Hold the angle; do not over-skip.'},
-  {prize: 'summer-sun-pin', target: ['needle'], r10: 46, r30: 32, r50: 28, r100: 26, needle: true,
-    cue: 'The gold moon at the very top, above the 50. Straight roll, lots of lift.'},
-];
+const BOOK = 'pennyFever.moonbowLane';
+const FOOT = {x: 450, y: 1040};
 
-function wanted(set, hole) {
-  return set.target.includes(String(hole.score)) || set.target.includes(hole.id);
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
+}
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
+  }
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
 }
 
-function build(level) {
-  const set = SETS[level] || SETS[0];
-  const holes = [
-    {x: 450, y: 700, r: set.r10, score: 10, id: '10', name: 'nearest moon'},
-    {x: 450, y: 565, r: set.r30, score: 30, id: '30', name: 'silver cup'},
-    {x: 450, y: 445, r: set.r50, score: 50, id: '50', name: 'high 50'},
-    {x: 310, y: 470, r: set.r100, score: 100, id: 'left', name: 'left-hand 100'},
-    {x: 590, y: 470, r: set.r100, score: 100, id: 'right', name: 'right-hand 100'},
-  ];
-  if (set.needle) holes.push({x: 450, y: 338, r: 26, score: 200, id: 'needle', name: 'the needle at the top'});
-  for (const h of holes) h.want = wanted(set, h);
-  const hung = holes.filter(h => h.want).map(h => h.name).join(' or ');
-  return {holes, prize: set.prize, limit: 1, hung, cue: set.cue};
+function emptyBook() { return {v: 1, paid: {}, sittings: {}}; }
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
 }
-
-function roll(s) {
-  if (s.ball || s.won || s.lost) return;
-  if (s.throws >= s.limit) {
-    s.note = 'That moon is spent. Another penny for another roll.';
-    return;
-  }
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny in the purse. Bank loan, or cash a ticket.';
-      return;
-    }
-  }
-  s.ball = {
-    x: 450, y: 1030, z: 0,
-    vx: Math.sin(s.angle) * s.power,
-    vy: -Math.cos(s.angle) * s.power,
-    vz: 0, air: false, age: 0,
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
+}
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase, seed: s.seed, charged: !!s.charged, ballsLeft: s.ballsLeft,
+    lane: s.lane, ball: s.ball, placeX: s.placeX, angle: s.angle, power: s.power,
+    won: !!s.won, note: s.note, resultN: s.resultN || 0, markedHit: !!s.markedHit,
+    score: s.score || 0, reduced: !!s.reduced,
   };
-  s.throws++;
-  s.drag = false;
-  s.note = alleyPlay
-    ? 'Throw ' + s.throws + ' of ' + s.limit + ' · a penny a roll. Find ' + s.hung + '.'
-    : 'Practice roll. Find ' + s.hung + '.';
+  writeBook(book);
+}
+function reducedMotion() {
+  try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
 }
 
-function settle(s, hole) {
-  if (s.won || s.lost) return;
-  if (hole) {
-    s.ball = {x: hole.x, y: hole.y, z: 6, vx: 0, vy: 0, vz: 0, air: true, age: 0, sunk: true};
-    s.landed = hole;
-  } else {
+function loadedPrize(s) {
+  const n = resultNumber(s.seed);
+  if (isSkipWin(s.level, n) && !chapterPaid(s.level) && !s.won) return SKIP_CHAPTERS[s.level].prize;
+  return ordinaryFor(n);
+}
+
+function beginSitting(s) {
+  if (s.phase === 'rolling' || s.phase === 'aim') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (!takeAttempt('skee-ball', s.level)) {
+        s.note = retryNote();
+        return;
+      }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 17;
+    }
+    s.lane = makeLane(s.level, s.seed);
+    s.ballsLeft = s.lane.balls;
+    s.phase = 'aim';
     s.ball = null;
-    s.landed = {miss: true};
+    s.markedHit = false;
+    s.resultN = 0;
+    s.prizeKept = false;
+    s.score = s.score || 0;
+    s.reduced = reducedMotion();
+    s.placeX = 450;
+    s.angle = 0;
+    s.power = 390;
+    const prize = loadedPrize(s);
+    s.loaded = prize;
+    s.note = 'Five wooden balls. Land one in the marked moon for ' + itemName(prize) + '.';
+    persist(s);
+  } finally {
+    s.chargeLock = false;
   }
-  s.settle = 0;
 }
 
-function fly(s, id, x, y, prize) {
-  s.fly.push({id, x, y, t: 0, dur: 0.7, prize: !!prize});
+function release(s) {
+  if (s.phase !== 'aim' || s.ball || !s.lane) return;
+  if (s.ballsLeft <= 0) return;
+  s.lane.freezeT = s.t;
+  s.ball = makeBall(s.placeX, s.angle, s.power);
+  s.phase = 'rolling';
+  s.note = 'Rolling…';
+  persist(s);
 }
-function drip(s, hole) {
-  if (!hole || !alleyPlay) return;
-  if (hole.score >= 50) {
-    keep('star-token', 'skee-ball');
-    fly(s, 'star-token', hole.x, hole.y, true);
-    s.note = 'A star from the silver — not the hanging moon.';
-  } else if (hole.score >= 30 && Math.random() < 0.28) {
-    credit(1);
-    fly(s, 'everyday-penny', hole.x, hole.y, false);
-    s.note = 'A penny back. The hanging moon still waits.';
+
+function finishSitting(s, markedHit, hole) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  s.phase = 'result';
+  s.charged = false;
+  s.markedHit = !!markedHit;
+  s.ball = null;
+  const prize = SKIP_CHAPTERS[s.level].prize;
+  const win = markedHit && isSkipWin(s.level, n) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
+  if (alleyPlay) {
+    if (markedHit) {
+      if (drop === 'everyday-penny') credit(1);
+      else keep(drop, 'skee-ball');
+    }
+    if (win) {
+      keep(prize, 'skee-ball');
+      markPaid(s.level);
+      s.won = true;
+    }
+  } else if (win) s.won = true;
+  if (win) {
+    const mark = hole || markedHole(s.lane);
+    takePrize(s, prize, mark ? {x: mark.x, y: mark.y} : {x: 450, y: 500});
   }
+  s.hold = 1.2;
+  if (win) s.note = 'The moonbow takes ' + itemName(prize) + '.';
+  else if (markedHit) s.note = 'The marked moon kept a small light. The unique still waits.';
+  else s.note = 'Five balls gone. The marked moon kept its secret.';
+  persist(s);
 }
-function judge(s) {
-  if (s.won || s.lost) return;
-  const hole = s.landed && !s.landed.miss ? s.landed : null;
-  if (hole && hole.want) {
-    s.won = true;
-    fly(s, s.prize, hole.x, hole.y, true);
-    if (alleyPlay && s.prize) keep(s.prize, 'skee-ball');
-    takePrize(s, s.prize);
-    done(s, 'The moon caught it',
-      itemName(s.prize) + ' flies into the treasure book.',
-      {prize: s.prize, won: true});
-    s.note = itemName(s.prize) + ' is yours.';
+
+function afterBall(s, event, hole) {
+  if (event === 'sunk' && hole?.marked) {
+    finishSitting(s, true, hole);
     return;
   }
-  drip(s, hole);
-  s.lost = true;
-  const detail = hole
-    ? 'It found the ' + hole.name + '. Skip wanted ' + s.hung + '. Another penny for another roll.'
-    : 'It rolled past the moons. Another penny for another roll.';
-  done(s, hole ? 'Not that moon' : 'Past the moonbow', detail, {won: false});
-  if (!s.note || s.note.indexOf('star') < 0 && s.note.indexOf('penny back') < 0) s.note = detail;
+  if (event === 'sunk' && hole) {
+    s.score += hole.score;
+    if (alleyPlay && hole.score >= 50) {
+      keep('star-token', 'skee-ball');
+      s.note = 'A star from a silver cup. The marked moon still waits.';
+    } else if (alleyPlay && hole.score >= 30) {
+      credit(1);
+      s.note = 'A penny back. Aim for the marked moon.';
+    } else s.note = hole.name + ' · ' + hole.score + '. The marked moon still waits.';
+  } else s.note = 'Past the moons. Try the next ball.';
+  s.ballsLeft -= 1;
+  s.ball = null;
+  if (s.lane) {
+    s.lane.freezeT = null;
+    advanceMark(s.lane);
+  }
+  if (s.ballsLeft <= 0) finishSitting(s, false, null);
+  else {
+    s.phase = 'aim';
+    persist(s);
+  }
 }
 
 export default {
-  title: 'Moonbow Alley',
+  title: 'Moonbow Skee-Ball',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
-  loseTitle: 'The moonbow still waits',
-  retryButton: 'Roll this moon again',
+  persist,
+  houseSeconds: 90,
+  houseTitle: 'The moonbow faded',
+  houseDetail: 'Skip racks the balls. Another penny for another five-ball sitting.',
   intro: alleyPlay
-    ? 'Skip’s moonbow alley. Six moons, one keepsake each. A penny a roll. Land the hanging moon and the prize is yours. Silver cups sometimes drip a star; the thirty can toss a penny back. Cash a booth ticket for a five-penny stack.'
-    : 'Workshop moonbow. One practice roll. Land the hanging moon to finish the chapter.',
+    ? 'Skip’s Moonbow Skee-Ball. One penny buys five wooden balls. Slide, swipe, and land a ball in the marked celestial ring to collect tonight’s sealed reward. The unique only drops on that ring and tonight’s numbers.'
+    : 'Five practice balls. Land one in the marked moon. Workshop rolls write nothing.',
   instructions: alleyPlay
-    ? 'Pull back to set lift, drift left or right for English, then release. Or Left/Right for angle, Up/Down for power, Space to roll. One penny a roll. Only the hanging moon stamps this chapter. Stars can drip from the silver cups. Cash a booth ticket for a five-penny stack.'
-    : 'One practice roll. Pull back for lift, drift for English, and land in the hanging moon to finish the chapter.',
-  liveTitle: 'Moonbow Alley',
-  liveDetail: alleyPlay
-    ? 'A penny a roll. Hit the hanging moon for this chapter’s prize. Stars live in the silver cups.'
-    : 'One practice roll. Hit the hanging moon.',
-  liveButton: 'Step up to the moonbow',
+    ? 'Drag along the foot to place the ball, swipe up to roll. One penny for the whole five-ball sitting. Only the marked moon holds the unique.'
+    : 'Place, swipe up, land the marked moon. Practice writes nothing.',
   tableDetail: alleyPlay
-    ? 'A penny a roll. Only the hanging moon stamps this chapter’s prize. Silver cups sometimes drip a star. Cash a booth ticket for a five-penny stack.'
-    : 'One practice roll. Land the hanging moon.',
-  levels: ['The moonbow bowls', 'The narrow silver cups', 'Two high moons', 'The shrinking silver', 'Tight little moons', 'A needle of moonlight'],
-  sprites: ['moon-penny', 'star-token', 'pegboard-star', 'ride-ticket', 'ride-stamp-book', 'summer-sun-pin', 'penny-purse', 'everyday-penny'],
-  prizes: SETS.map(s => s.prize),
+    ? 'One penny, five balls. Sink the marked moon to collect the sealed reward. Walk away whenever you like.'
+    : 'A practice lane. Five balls. Land the marked moon.',
+  levels: SKIP_CHAPTERS.map(c => c.title),
+  sprites: ['silver-cup-chip', 'lane-wax', 'pegboard-star', 'moonbow-stub', 'score-card', 'summer-sun-pin', 'moon-penny', 'star-token', 'everyday-penny'],
+  prizes: SKIP_CHAPTERS.map(c => c.prize),
   actions: [
-    {id: 'less', label: 'Softer roll'},
-    {id: 'roll', label: alleyPlay ? 'Roll · 1 penny' : 'Roll moon penny'},
-    {id: 'more', label: 'Stronger roll'},
+    {id: 'play', label: alleyPlay ? 'Step up · 1 penny' : 'Step up'},
+    {id: 'roll', label: 'Roll · Space'},
+    {id: 'again', label: alleyPlay ? 'Another sitting · 1 penny' : 'Another sitting'},
   ],
   create(level) {
-    const built = build(level);
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const s = {
-      ...built,
-      level, t: 0, angle: 0, power: 390, ball: null, throws: 0, drag: false,
-      won: false, lost: false, landed: null, settle: 0, fly: [],
-      note: alleyPlay
-        ? 'One penny. One roll. ' + built.cue
-        : 'One practice roll. ' + built.cue,
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 1) * 4099,
+      lane: saved.lane || null, ball: saved.ball || null,
+      charged: !!saved.charged, ballsLeft: saved.ballsLeft || 0,
+      placeX: saved.placeX || 450, angle: saved.angle || 0, power: saved.power || 390,
+      won: !!saved.won || chapterPaid(level), hold: 0, reduced: !!saved.reduced,
+      resultN: saved.resultN || 0, markedHit: !!saved.markedHit, score: saved.score || 0,
+      drag: null, fly: [],
+      note: saved.note || (SKIP_CHAPTERS[level] || SKIP_CHAPTERS[0]).title + '. Step up when you are ready.',
     };
+    if ((s.phase === 'aim' || s.phase === 'rolling') && !s.lane) s.lane = makeLane(level, s.seed);
+    if (s.lane) s.loaded = loadedPrize(s);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt, input) {
     s.t += dt;
-    for (const f of s.fly) f.t += dt;
-    s.fly = (s.fly || []).filter(f => f.t < f.dur);
-    if (s.landed && !s.won && !s.lost) {
-      s.settle += dt;
-      if (s.ball && s.ball.sunk) s.ball.z = Math.max(0, 6 - s.settle * 10);
-      if (s.settle > 0.7) judge(s);
-      return;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    const keys = input?.keys || new Set();
+    if (s.phase === 'aim' && !s.ball) {
+      const dx = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+      const dy = (keys.has('ArrowUp') ? 1 : 0) - (keys.has('ArrowDown') ? 1 : 0);
+      s.placeX = clamp(s.placeX + dx * 220 * dt, s.lane?.left + 24 || 320, s.lane?.right - 24 || 580);
+      s.power = clamp(s.power + dy * 180 * dt, 240, 560);
+      s.angle = clamp(s.angle + dx * 0.35 * dt, -0.55, 0.55);
     }
-    if (!s.ball) {
-      s.angle = clamp(s.angle + ((input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0)) * .42 * dt, -.5, .5);
-      s.power = clamp(s.power + ((input.keys.has('ArrowUp') ? 1 : 0) - (input.keys.has('ArrowDown') ? 1 : 0)) * 120 * dt, 240, 550);
-      return;
+    if (s.phase === 'rolling' && s.ball && s.lane) {
+      const ev = stepBall(s.lane, s.ball, dt, s.t);
+      if (ev.event === 'sunk' || ev.event === 'miss') afterBall(s, ev.event, ev.hole);
     }
-    const p = s.ball;
-    p.age += dt;
-    for (let i = 0; i < 4; i++) {
-      const h = dt / 4;
-      p.x += p.vx * h; p.y += p.vy * h;
-      if (!p.air) {
-        if (p.x < 303 || p.x > 597) { p.x = clamp(p.x, 303, 597); p.vx *= -.65; }
-        if (p.y <= 820) { p.air = true; p.z = 5; p.vz = Math.abs(p.vy) * .45; }
-      } else {
-        p.vz -= 500 * h; p.z += p.vz * h;
-        if (p.vz < 0 && p.z < 20) {
-          const bowl = s.holes.find(b => dist(b, p) < Math.max(10, b.r - 4));
-          if (bowl) { settle(s, bowl); return; }
-        }
-        if (p.z < 0) { settle(s, null); return; }
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'The moonbow caught it',
+          itemName(SKIP_CHAPTERS[s.level].prize) + ' rolls into Skip’s drawer.',
+          {prize: SKIP_CHAPTERS[s.level].prize, won: true});
       }
-      if (p.y < 340 || p.x < 180 || p.x > 720 || p.age > 6) { settle(s, null); return; }
-    }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (s.ball || s.won || s.lost) return;
-    if (type === 'down' && dist(p, {x: 450, y: 1030}) < 85) s.drag = true;
-    if (type === 'move' && s.drag) {
-      s.power = clamp(250 + (p.y - 1030) * 1.8, 240, 550);
-      s.angle = clamp((450 - p.x) / 200, -.5, .5);
+    if (s.result || s.phase === 'rolling') return;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      if (type === 'down' && p.y > 860) beginSitting(s);
+      return;
     }
-    if (type === 'up' && s.drag) roll(s);
-    if (type === 'cancel') s.drag = false;
+    if (s.phase !== 'aim') return;
+    if (type === 'down' && p.y > 820) {
+      s.drag = {x0: p.x, y0: p.y, x: p.x, y: p.y};
+      s.placeX = clamp(p.x, s.lane.left + 24, s.lane.right - 24);
+    }
+    if (type === 'move' && s.drag) {
+      s.drag.x = p.x;
+      s.drag.y = p.y;
+      s.placeX = clamp(p.x, s.lane.left + 24, s.lane.right - 24);
+      s.angle = clamp((p.x - s.drag.x0) / 210, -0.55, 0.55);
+      s.power = clamp(240 + Math.max(0, s.drag.y0 - p.y) * 1.5, 240, 560);
+    }
+    if (type === 'up' && s.drag) {
+      const dy = p.y - s.drag.y0;
+      const dx = p.x - s.drag.x0;
+      s.drag = null;
+      if (dy < -36) {
+        s.angle = clamp(dx / 210, -0.55, 0.55);
+        s.power = clamp(240 + Math.hypot(dx, dy) * 1.15, 240, 560);
+        release(s);
+      }
+    }
+    if (type === 'cancel') s.drag = null;
   },
   action(s, id) {
-    if (id === 'roll') roll(s);
-    if (s.ball || s.won || s.lost) return;
-    if (id === 'less') s.power = clamp(s.power - 20, 240, 550);
-    if (id === 'more') s.power = clamp(s.power + 20, 240, 550);
-  },
-  key(s, k, down) { if (k === ' ' && down) roll(s); },
-  draw(s, d) {
-
-    d.text((s.limit - s.throws) + ' roll' + (s.limit - s.throws === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
-    for (let i = 0; i < SETS.length; i++) {
-      const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
-      const got = owned(SETS[i].prize) || (s.won && i === s.level);
-      d.item(spriteKey(SETS[i].prize), x, y, {w: 36, fallback: () => d.star(x, y, 12)});
-      if (got) d.text('✓', x + 14, y - 10, 16, '#f6e2a2');
-      else d.circle(x, y, 20, '#1a120866');
-    }
-    const n = alleyPlay ? (pocket() ?? 0) : '∞';
-
-    d.arc(450, 620, 210, Math.PI * 1.12, Math.PI * 1.88, '#c9a56a44', 10);
-    d.arc(450, 620, 186, Math.PI * 1.15, Math.PI * 1.85, '#ead6a433', 4);
-
-    const aim = s.holes.find(h => h.want);
-    if (aim && aim.id === 'needle') {
-      d.line({x: 450, y: 430}, {x: 450, y: aim.y + aim.r + 8}, '#f0d49a', 3);
-      d.text('↑ THE NEEDLE', 450, aim.y - aim.r - 28, 16, '#fff4d0');
-      d.text('AIM HERE', 450, aim.y - aim.r - 10, 13, '#f0d49a');
-    } else if (aim) {
-      d.text('AIM HERE', aim.x, aim.y - aim.r - 18, 14, '#fff4d0');
-    }
-
-    for (const b of s.holes) {
-      d.ellipse(b.x + 5, b.y + 12, b.r + 8, (b.r + 8) * .72, '#283c4d55');
-      d.ellipse(b.x, b.y, b.r, b.r * .72, b.want ? '#3a4a38' : '#314052', b.want ? '#f0d49a' : '#dbbe88', b.want ? 9 : 7);
-      d.ellipse(b.x, b.y + 8, b.r - 14, (b.r - 14) * .67, '#706551', '#ae966c', 2);
-      if (b.want) {
-        d.glow(b.x, b.y, b.r + 18, '#f0d49a');
-        d.item(spriteKey(s.prize), b.x, b.y - 2, {
-          w: Math.min(42, b.r), shadow: false, fallback: () => d.star(b.x, b.y, 14),
-        });
-      } else if (b.score >= 50) {
-        d.item(spriteKey('star-token'), b.x, b.y, {
-          w: 22, shadow: false, fallback: () => d.text(b.score, b.x, b.y + 8, 21, '#e5cc98'),
-        });
+    if (id === 'play' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Step up when you are ready.';
+        persist(s);
+        return;
       }
-      d.text(b.score, b.x, b.y + (b.want || b.score >= 50 ? 22 : 8), 18, b.want ? '#fff4d0' : '#e5cc98');
+      beginSitting(s);
+    }
+    if (id === 'roll') {
+      if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
+      else release(s);
+    }
+  },
+  key(s, k, down) {
+    if (!down) return;
+    if (k === ' ' || k === 'Enter') this.action(s, 'roll');
+  },
+  draw(s, d) {
+    const ch = SKIP_CHAPTERS[s.level];
+    const c = d.c;
+    const skies = ['#3a2438', '#24344a', '#1a2040', '#1c2a48', '#141018', '#241838'];
+    d.poly([[70, 90], [830, 90], [830, 1180], [70, 1180]], skies[s.level] + 'ee', '#d4b07a', 3);
+    d.text('Moonbow Skee-Ball', 450, 118, 26, '#efe6d0');
+    d.text(ch.title, 450, 148, 18, '#d2b98c');
+
+    const lane = s.lane;
+    const left = lane?.left || 292, right = lane?.right || 608;
+    d.poly([[left - 18, 1068], [right + 18, 1068], [right - 10, 330], [left + 10, 330]], '#1a2740', '#c9a46a', 5);
+    d.poly([[left, 1048], [right, 1048], [right - 16, 348], [left + 16, 348]], '#243656', '#8ec8e822', 1);
+    for (let y = 1000; y > 360; y -= 36) {
+      const u = (y - 360) / 640;
+      d.line({x: left + 10 + (1 - u) * 8, y}, {x: right - 10 - (1 - u) * 8, y}, '#d7c08a22', 1);
+    }
+    d.line({x: left, y: 1048}, {x: left + 16, y: 348}, '#e0c27a', 6);
+    d.line({x: right, y: 1048}, {x: right - 16, y: 348}, '#e0c27a', 6);
+    if (lane?.wax) {
+      for (const p of lane.wax) {
+        d.poly([[p.x, p.y], [p.x + p.w, p.y], [p.x + p.w, p.y + p.h], [p.x, p.y + p.h]],
+          p.kind === 'gloss' ? '#9ad4f433' : '#2a243888', '#e8d6a844', 1);
+      }
+    }
+    if (lane?.banks) {
+      for (const b of lane.banks) d.line(b.a, b.b, '#d7b36a', 8);
     }
 
-    d.poly([[290, 1060], [610, 1060], [610, 870], [575, 804], [325, 804], [290, 870]], '#687b8d', '#d1b486', 4);
-    d.poly([[300, 870], [600, 870], [575, 804], [325, 804]], '#a3a5a0', '#edcea0', 2);
-    for (let x = 325; x <= 575; x += 50) d.line({x, y: 1050}, {x, y: 866}, '#b3b29b55', 1);
-    d.line({x: 300, y: 1050}, {x: 300, y: 872}, '#e4c798', 5);
-    d.line({x: 600, y: 1050}, {x: 600, y: 872}, '#e4c798', 5);
-
-    const p = s.ball || {x: 450, y: 1030, z: 0};
-    d.ellipse(p.x + 4, p.y + 8, 17, 9, '#1f344766');
-    d.item(spriteKey('moon-penny'), p.x, p.y - p.z, {
-      w: p.sunk ? 26 : 34, fallback: () => d.ball(p.x, p.y - p.z, p.sunk ? 13 : 17, '#b28b62'),
-    });
-    if (!s.ball && !s.won && !s.lost && s.throws < s.limit) {
-      const end = {x: 450 + Math.sin(s.angle) * 135, y: 1030 - Math.cos(s.angle) * 135};
-      d.line({x: 450, y: 1000}, end, '#efd09b', 3);
-      d.ring(end.x, end.y, 14, '#a17955', 2);
-      d.text('LIFT ' + Math.round((s.power - 240) / 310 * 100) + '%', 450, 1110, 17, '#f0d9ae');
+    const loaded = s.loaded || ch.prize;
+    for (const h of (lane?.holes || [])) {
+      const open = shutterOpen(lane, h, s.t);
+      d.ellipse(h.x + 4, h.y + 10, h.r + 6, (h.r + 6) * 0.7, '#08182866');
+      d.ellipse(h.x, h.y, h.r, h.r * 0.7, h.marked ? '#3a4a28' : '#243044', h.marked ? '#f0d49a' : '#c9a66a', h.marked ? 8 : 5);
+      d.ellipse(h.x, h.y + 6, Math.max(8, h.r - 14), Math.max(6, (h.r - 14) * 0.65), '#0a1420');
+      if (h.marked) {
+        d.glow(h.x, h.y, h.r + 22, '#f0d49a');
+        d.item(spriteKey(loaded), h.x, h.y - 2, {w: Math.min(40, h.r), shadow: false, fallback: () => d.star(h.x, h.y, 12)});
+        d.text('marked', h.x, h.y + h.r * 0.7 + 16, 13, '#fff4d0');
+      } else d.text(String(h.score), h.x, h.y + 6, 16, '#e5cc98');
+      if (h.shutter && !open) {
+        c.save();
+        c.beginPath();
+        c.ellipse(h.x, h.y, h.r - 2, (h.r - 2) * 0.7, 0, 0, Math.PI * 2);
+        c.fillStyle = '#c4a46ad0';
+        c.fill();
+        c.restore();
+        d.text('gate', h.x, h.y + 4, 12, '#3a2a14');
+      }
     }
-    for (const f of (s.fly || [])) {
-      const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 160 : 790, destY = f.prize ? 188 : 160;
-      d.item(spriteKey(f.id), f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, {
-        w: 28 * (1 - u * 0.35),
-        fallback: () => d.star(f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, 10, '#f4e2a8'),
+
+    const balls = s.phase === 'idle' || s.phase === 'result' ? 0 : s.ballsLeft;
+    for (let i = 0; i < 5; i++) {
+      const x = 110 + i * 28;
+      d.circle(x, 200, 10, i < balls ? '#c48a52' : '#2a2438', '#e8c878', 1);
+    }
+
+    const p = s.ball || (s.phase === 'aim' ? {x: s.placeX, y: FOOT.y, z: 0, trail: []} : null);
+    if (p) {
+      if (!s.reduced && p.trail) {
+        p.trail.forEach((q, i) => d.circle(q.x, q.y, 3, i % 2 ? '#fff6d855' : '#e8c87844'));
+      }
+      d.ellipse(p.x + 4, p.y + 8, 16, 8, '#08182866');
+      d.item(spriteKey('moon-penny'), p.x, p.y - (p.z || 0), {
+        w: p.sunk ? 24 : 32, fallback: () => d.ball(p.x, p.y - (p.z || 0), p.sunk ? 12 : 16, '#c48a52'),
       });
     }
+    if (s.phase === 'aim' && !s.ball) {
+      const end = {x: s.placeX + Math.sin(s.angle) * 90, y: FOOT.y - Math.cos(s.angle) * 90};
+      d.line({x: s.placeX, y: FOOT.y - 8}, end, '#efd09b', 3);
+      d.ring(end.x, end.y, 10, '#a17955', 2);
+    }
+
+    wrapLine(d, s.note, 450, 1124, 18, '#f0d18f', 720);
+    const n = alleyPlay ? pocket() : null;
+    if (n == null) d.text('practice', 450, 1180, 14, '#ead6a4');
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice rolls' : n + (n === 1 ? ' penny' : ' pennies') + ' in the purse';
-    return s.throws + '/' + s.limit + ' rolls · ' + purse + ' · ' + s.note;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    const balls = s.phase === 'aim' || s.phase === 'rolling' ? s.ballsLeft + '/5 balls' : s.phase;
+    return purse + ' · ' + balls + ' · ' + s.note;
   },
 };

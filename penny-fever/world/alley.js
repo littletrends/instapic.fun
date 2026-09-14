@@ -14,7 +14,8 @@ import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=florence-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=briefs-2";
+import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=entry-2";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -22,7 +23,7 @@ const STALLS = [
   { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
   { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
   { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
-  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Frame the hanging prize before the light goes." },
+  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Instapic photo booth — come back later." },
   { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
   { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock every lantern in one toss." },
   { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },
@@ -815,16 +816,7 @@ function paintPocketHud() {
   if (ticketCount) ticketCount.textContent = String(pocketTickets());
 }
 function stallEnterLabel(id) {
-  id = playIdFor(id);
-  if (id === "fortune") return "Sit for a reading · 1 penny";
-  if (id === "coin-pusher") return "The trays · pennies";
-  if (id === "pinball") return "The table · pennies";
-  if (id === "milk-bottles") return "The dairy · pennies";
-  if (id === "skee-ball") return "The moonbow · pennies";
-  if (id === "love") return "Enter · 1 penny";
-  const sitDown = new Set(["carousel", "balloons", "ferris", "helter", "swings", "funhouse", "organ", "mural"]);
-  if (sitDown.has(id)) return "Enter · 1 penny";
-  return "Enter · pennies";
+  return enterLabel(playIdFor(id));
 }
 
 const api = {
@@ -1145,6 +1137,7 @@ function stepOut(id) {
 function enterStallById(id) {
   if (!id) return false;
   id = playIdFor(id);
+  if (isClosed(id)) return false;
   if (!document.getElementById("cabinet-" + id)) return false;
   rememberAlleySpot(id);
   closeStallCard();
@@ -1691,13 +1684,18 @@ function syncStallCard(best) {
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
-        enter.disabled = false;
-        enter.textContent = stallEnterLabel(best.id);
+        if (isClosed(best.id)) {
+          enter.disabled = true;
+          enter.textContent = "Closed for maintenance";
+        } else {
+          enter.disabled = false;
+          enter.textContent = stallEnterLabel(best.id);
+        }
       } else if (best.kind === "ride") {
         const open = !!document.getElementById("cabinet-" + playIdFor(best.id));
         enter.hidden = !open;
-        enter.disabled = false;
-        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : "Not open yet";
+        enter.disabled = !open;
+        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : "Ride closed for maintenance";
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;

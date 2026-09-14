@@ -1,397 +1,303 @@
-import {clamp, dist, done, TAU} from '../draw.js?v=ink-1';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=dot-moon-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  DOT_CHAPTERS, makeDeal, stepDeal, chooseCover, hitCover, coverHidden,
+  fakeId, coverRadius, coverLabel, resultNumber, isDotWin, ordinaryFor, spotCover,
+} from '../vanishing-spot.js?v=spot-1';
 
-const CX = 450;
-const CY = 640;
-const CLOCK = 48;
-const NEEDLE = {x: 792, y: 1008, pull: 56};
-const PATCHES = ['moon-penny', 'rose-penny', 'star-token'];
-const COLORS = ['#b7747c', '#85978c', '#b8a079'];
-const SETS = [
-  {prize: 'perfect-circle', r: 118, clock: 48, need: 0.992, spin: 0, felt: '#3a2a24cc', wood: '#5a3a28', cloth: '#6a3a48'},
-  {prize: 'pressed-flower-book', r: 118, clock: 42, need: 0.992, spin: 0.07, felt: '#2a3228cc', wood: '#4a3224', cloth: '#5a4a38'},
-  {prize: 'felt-moon-disc', r: 125, clock: 38, need: 0.993, spin: 0.11, felt: '#243038cc', wood: '#3a2a22', cloth: '#4a3a58'},
-  {prize: 'spring-seed-packet', r: 126, clock: 34, need: 0.993, spin: 0.15, felt: '#1c2a24cc', wood: '#4a2818', cloth: '#3a5a48'},
-  {prize: 'garden-party-book', r: 134, clock: 30, need: 0.994, spin: 0.2, felt: '#241820cc', wood: '#3a1c18', cloth: '#6a3a38'},
-  {prize: 'charm-display-case', r: 130, clock: 26, need: 0.994, spin: 0.26, felt: '#141820ee', wood: '#2a1814', cloth: '#4a2a48'},
-];
-const SHAPES = [
-  () => 134,
-  a => 1 / Math.sqrt(Math.cos(a) ** 2 / 156 ** 2 + Math.sin(a) ** 2 / 118 ** 2),
-  a => 126 + 13 * Math.cos(5 * a),
-  a => 124 + 16 * Math.cos(6 * a),
-  a => 148 / (Math.abs(Math.cos(a)) + Math.abs(Math.sin(a))),
-  a => 1 / Math.sqrt(Math.cos(a) ** 2 / 140 ** 2 + Math.sin(a) ** 2 / 105 ** 2) + 18 * Math.cos(a - .5),
-];
-const SPRITES = ['moon-penny', 'rose-penny', 'star-token', 'perfect-circle', 'pressed-flower-book',
-  'lucky-dish', 'spring-seed-packet', 'garden-party-book', 'charm-display-case', 'penny-purse'];
+const BOOK = 'pennyFever.vanishingSpot';
+const CX = 450, CY = 640;
 
-function radius(level, a) {
-  return (SHAPES[level] || SHAPES[0])(a);
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
 }
-function sampleMoon(level) {
-  const samples = [];
-  for (let y = 500; y <= 780; y += 8) for (let x = 280; x <= 620; x += 8) {
-    const a = Math.atan2(y - CY, x - CX);
-    if (Math.hypot(x - CX, y - CY) <= radius(level, a)) samples.push({x: x - CX, y: y - CY});
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
   }
-  for (let i = 0; i < 360; i++) {
-    const a = i * TAU / 360, r = radius(level, a);
-    samples.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
-  }
-  return samples;
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
 }
-function world(p, spin) {
-  const c = Math.cos(spin), n = Math.sin(spin);
-  return {x: CX + p.x * c - p.y * n, y: CY + p.x * n + p.y * c};
+
+function emptyBook() {
+  return {v: 1, paid: {}, sittings: {}};
 }
-function evaluate(s) {
-  const spin = s.spin || 0;
-  s.uncovered = s.samples.filter(p => {
-    const q = world(p, spin);
-    return !s.discs.some(c => dist(c, q) <= c.r + 1.25);
-  });
-  s.coverage = s.samples.length ? 1 - s.uncovered.length / s.samples.length : 0;
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
 }
-function chapterPrize(s) {
-  return SETS[s.level]?.prize || null;
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
 }
-function canAfford(s) {
-  if (!alleyPlay) return s.ammo > 0;
-  return (pocket() || 0) >= 1;
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
 }
-function seatIdle(s) {
-  s.mode = 'idle';
-  s.charge = 0;
-  s.charging = false;
-  s.pointerThread = false;
-  s.clock = s.clockMax;
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
 }
-function beginThread(s) {
-  if (s.won || s.mode !== 'idle' || s.charging) return;
-  if (!canAfford(s)) {
-    s.note = alleyPlay
-      ? 'Need a penny to thread the needle. Cash a booth ticket for a five-penny stack.'
-      : 'Practice threads are spent.';
-    return;
-  }
-  s.charging = true;
-  s.charge = 0.12;
+
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase, seed: s.seed, charged: !!s.charged, deal: s.deal,
+    won: !!s.won, note: s.note, resultN: s.resultN || 0, reduced: !!s.reduced,
+  };
+  writeBook(book);
 }
-function releaseThread(s) {
-  if (s.mode !== 'idle' || !s.charging) { s.charging = false; return; }
-  const power = s.charge;
-  s.charging = false;
-  s.charge = 0;
-  if (power < 0.1) {
-    s.note = 'A timid thread. Draw the needle a little further.';
-    return;
-  }
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny to thread the needle. Cash a booth ticket for a five-penny stack.';
-      return;
+
+function reducedMotion() {
+  try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+}
+
+function beginWatch(s) {
+  if (s.phase === 'show' || s.phase === 'shuffle' || s.phase === 'pick' || s.phase === 'reveal') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (!takeAttempt('cover-the-spot', s.level)) {
+        s.note = retryNote();
+        return;
+      }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 17;
     }
-  } else s.ammo--;
-  s.mode = 'live';
-  s.clock = s.clockMax;
-  s.sessions++;
-  evaluate(s);
-  s.note = power > 0.72
-    ? 'A firm stitch started. Pin the scraps before the moonlight turns.'
-    : 'The needle is in. Cover every glimmer, then stitch.';
-}
-function drain(s) {
-  s.mode = 'dead';
-  s.deadAt = s.t;
-  s.charging = false;
-  s.charge = 0;
-  s.drag = false;
-  s.note = alleyPlay
-    ? 'The moonlight slipped. Another penny to thread again — your scraps stay put.'
-    : (s.ammo > 0 ? 'Time. Thread again; the patches keep their places.' : 'Practice threads spent.');
-}
-function fly(s, id, x, y) {
-  s.fly.push({id, x, y, t: 0, dur: 0.7});
-}
-function claim(s) {
-  if (s.won || s.mode !== 'live') {
-    if (!s.won && s.mode !== 'live') s.note = 'Thread the needle first. The quilt only takes a stitch while the clock is live.';
-    return;
+    s.deal = makeDeal(s.level, s.seed);
+    s.phase = 'show';
+    s.resultN = 0;
+    s.prizeKept = false;
+    s.reduced = reducedMotion();
+    s.note = 'The gold spot lifts. Keep your eye on ' + coverLabel(s.deal.spotId) + '.';
+    persist(s);
+  } finally {
+    s.chargeLock = false;
   }
-  evaluate(s);
-  if (s.coverage < s.need) {
-    s.clock = Math.max(0, s.clock - 2.2);
-    const left = (100 * (1 - s.coverage)).toFixed(1);
-    s.note = 'Still ' + left + '% moonlight. A hasty stitch costs time.';
-    if (s.clock <= 0) drain(s);
-    return;
-  }
-  const prize = chapterPrize(s);
-  s.won = true;
-  s.prizeOut = true;
-  s.wonAt = s.t;
-  s.drag = false;
-  if (prize) {
-    if (alleyPlay) keep(prize, 'cover-the-spot');
-    takePrize(s, prize);
-    fly(s, prize, CX, CY);
-    s.note = itemName(prize) + ' — stitched off the hanging quilt!';
-  } else s.note = 'Not a glimmer escaped.';
 }
-function finish(s) {
-  const prize = chapterPrize(s);
-  done(s, 'Not a glimmer escaped',
-    itemName(prize) + ' is stitched into the treasure book.',
-    {prize, won: true});
+
+function pickCover(s, id) {
+  if (s.phase !== 'pick' || !s.deal) return;
+  chooseCover(s.deal, id);
+  if (s.deal.phase !== 'reveal') return;
+  s.phase = 'reveal';
+  finishWatch(s);
+}
+
+function finishWatch(s) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  s.phase = 'result';
+  s.charged = false;
+  const prize = DOT_CHAPTERS[s.level].prize;
+  const hit = !!(s.deal && s.deal.correct);
+  const win = hit && isDotWin(s.level, n) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'cover-the-spot');
+    if (win) {
+      keep(prize, 'cover-the-spot');
+      markPaid(s.level);
+      s.won = true;
+    }
+  } else if (win) s.won = true;
+  if (win) takePrize(s, prize, {x: CX, y: CY});
+  s.hold = 1.2;
+  if (!hit) {
+    s.note = 'It was under ' + coverLabel(spotCover(s.deal)) + '. The spot slipped.';
+  } else {
+    s.note = win
+      ? 'You kept the little one.'
+      : 'Tracked true. An ordinary token this sitting.';
+  }
+  persist(s);
 }
 
 export default {
-  title: 'Patchwork Moon',
+  title: 'Vanishing Spot',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
+  houseSeconds: 90,
+  houseTitle: 'The covers went still',
+  houseDetail: 'Dot gathers the tokens. Watch again when you are ready.',
+  persist,
   intro: alleyPlay
-    ? 'Dot’s six quilt tables. A penny threads the needle and starts the clock. Cover this moon’s hanging prize with the three catalogue scraps, then stitch before the light turns. Time out, and another penny lets you keep sewing from where you left the patches.'
-    : 'Workshop moons. Thread the needle, cover the glimmer, stitch the hanging prize. The clock is practice pressure.',
+    ? 'Dot’s vanishing spot. A gold dot hides under a cover, then the covers shuffle on fair tracks. Tap the cover that still holds it. A ticket sits you down; the first try of each chapter is included. Extra shuffles are a penny. The unique only drops on a true track and tonight’s numbers.'
+    : 'Watch the gold spot. Track its cover. Workshop shuffles are free and write nothing.',
   instructions: alleyPlay
-    ? 'Hold Thread and release (one penny). Drag scraps, Next patch or Z to choose, X to pin a scrap so it stays, arrows to nudge. Stitch (Space) when every glimmer is gone. A hasty stitch costs clock. Later moons turn while you work. Cash a booth ticket for a five-penny stack.'
-    : 'Hold Thread. Drag, pin, nudge, then Stitch. Later moons turn.',
-  liveTitle: 'Patchwork Moon',
-  liveDetail: alleyPlay
-    ? 'A penny threads the needle. Cover the moonlight, stitch the hanging prize. The clock is running.'
-    : 'Thread the needle. Cover the moonlight. Stitch the prize.',
-  liveButton: 'Step up to the quilt',
-  tableDetail: alleyPlay
-    ? 'A penny threads the needle. Cover this moon and stitch the hanging prize into the book. Time runs out — another penny, same scraps. Walk away whenever you like.'
-    : 'Cover the moonlight and stitch. Practice threads only.',
-  levels: ['The round moon', 'A stretched moon', 'Five petals turning', 'Six petals in a hurry', 'A diamond that will not sit', 'The offset moon that will not wait'],
-  sprites: SPRITES,
-  prizes: SETS.map(t => t.prize),
+    ? 'Watch the lift. Follow the cover — paths may cross, climb, flash a false dot, or duck a curtain, but identities never teleport. Tap the right cover at the end. Another shuffle after the first is a penny.'
+    : 'Watch, then tap the cover. Practice writes nothing.',
+  levels: DOT_CHAPTERS.map(c => c.title),
+  sprites: ['perfect-circle', 'pressed-flower-book', 'felt-moon-disc', 'spring-seed-packet', 'garden-party-book', 'charm-display-case', 'moon-penny', 'star-token', 'everyday-penny', 'rose-penny'],
+  prizes: DOT_CHAPTERS.map(c => c.prize),
   actions: [
-    {id: 'next', label: 'Next patch · Z'},
-    {id: 'pin', label: 'Pin / unpin · X'},
-    {id: 'thread', label: alleyPlay ? 'Thread · 1 penny' : 'Thread the needle', hold: true},
-    {id: 'stitch', label: 'Stitch the quilt · Space'},
+    {id: 'watch', label: 'Watch the spot · Space'},
+    {id: 'again', label: alleyPlay ? 'Another shuffle · 1 penny' : 'Another shuffle'},
   ],
   create(level) {
-    const set = SETS[level] || SETS[0];
-    const prize = set.prize;
-    const discs = PATCHES.map((id, i) => ({
-      x: 250 + i * 200, y: 1000, r: set.r, id, pinned: false,
-    }));
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const s = {
-      level, t: 0, mode: 'idle', charge: 0, charging: false, pointerThread: false,
-      selected: 0, drag: false, offset: {x: 0, y: 0}, coverage: 0, uncovered: [],
-      sessions: 0, fly: [], spin: 0, won: false, prizeOut: alleyPlay && owned(prize),
-      ammo: alleyPlay ? 0 : Math.max(4, 9 - level),
-      clockMax: set.clock || Math.max(26, CLOCK - level * 4),
-      clock: set.clock || Math.max(26, CLOCK - level * 4),
-      need: set.need, spinSpeed: set.spin, prize, set,
-      samples: sampleMoon(level), discs,
-      note: alleyPlay
-        ? 'A penny threads the needle. Cover the moonlight, then stitch the hanging prize.'
-        : 'Thread the needle. Cover the moonlight, then stitch.',
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 1) * 4099,
+      deal: saved.deal || null, charged: !!saved.charged,
+      won: !!saved.won || chapterPaid(level), hold: 0, reduced: !!saved.reduced,
+      resultN: saved.resultN || 0,
+      note: saved.note || (DOT_CHAPTERS[level] || DOT_CHAPTERS[0]).title + '. Watch when you are ready.',
     };
-    s.clockMax = set.clock;
-    s.clock = set.clock;
-    evaluate(s);
+    if ((s.phase === 'show' || s.phase === 'shuffle' || s.phase === 'pick') && !s.deal) {
+      s.deal = makeDeal(level, s.seed);
+    }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
-  update(s, dt, input) {
+  update(s, dt) {
     s.t += dt;
-    for (const f of s.fly) f.t += dt;
-    s.fly = s.fly.filter(f => f.t < f.dur);
-    if (s.won) {
-      if (!s.result && s.t - (s.wonAt || s.t) > 0.55) finish(s);
-      return;
-    }
-    if (s.mode === 'live') {
-      s.clock = Math.max(0, (s.clock ?? s.clockMax) - dt);
-      if (s.spinSpeed) {
-        s.spin += s.spinSpeed * dt;
-        evaluate(s);
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if ((s.phase === 'show' || s.phase === 'shuffle') && s.deal) {
+      stepDeal(s.deal, dt, s.reduced);
+      if (s.deal.phase === 'shuffle' && s.phase === 'show') {
+        s.phase = 'shuffle';
+        s.note = 'Track it. Covers keep their names.';
+        persist(s);
       }
-      if (s.clock <= 0) {
-        drain(s);
-        s.note = alleyPlay
-          ? 'The moon turned past the scraps. Another penny to thread again.'
-          : 'Time. Thread the needle again.';
+      if (s.deal.phase === 'pick') {
+        s.phase = 'pick';
+        s.note = 'Tap the cover that hid the spot.';
+        persist(s);
       }
     }
-    const holdThread = s.pointerThread || input.actions.has('thread') || input.keys.has('Enter');
-    if (s.mode === 'idle') {
-      if (holdThread) beginThread(s);
-      if (s.charging) {
-        if (holdThread && !s.pointerThread) s.charge = clamp(s.charge + dt * 1.35, 0, 1);
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'The little one stayed found',
+          itemName(DOT_CHAPTERS[s.level].prize) + ' — kept from under the cover.',
+          {prize: DOT_CHAPTERS[s.level].prize, won: true});
       }
-      if (s.charging && !holdThread) releaseThread(s);
-    } else if (s.mode === 'dead') {
-      if (s.t - s.deadAt > 0.8) seatIdle(s);
-    }
-    if (s.mode !== 'live') return;
-    const c = s.discs[s.selected];
-    if (c && !c.pinned && !s.drag) {
-      const dx = (input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0);
-      const dy = (input.keys.has('ArrowDown') ? 1 : 0) - (input.keys.has('ArrowUp') ? 1 : 0);
-      if (dx || dy) {
-        c.x = clamp(c.x + dx * 150 * dt, 190, 710);
-        c.y = clamp(c.y + dy * 150 * dt, 360, 1040);
-        evaluate(s);
-      }
-    }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (s.won) return;
-    if (type === 'down') {
-      if (s.mode === 'idle' && p.x > 700 && p.y > 860) {
-        s.pointerThread = true;
-        beginThread(s);
-        s.charge = clamp((p.y - NEEDLE.y) / NEEDLE.pull, 0.12, 1);
-        return;
-      }
-      if (s.mode === 'live') {
-        for (let i = 2; i >= 0; i--) {
-          if (dist(p, s.discs[i]) <= s.discs[i].r) {
-            s.selected = i;
-            if (!s.discs[i].pinned) {
-              s.drag = true;
-              s.offset = {x: s.discs[i].x - p.x, y: s.discs[i].y - p.y};
-            } else s.note = 'That scrap is pinned. Unpin it (X) to move it.';
-            break;
-          }
-        }
-      }
-    }
-    if (type === 'move' && s.pointerThread && s.mode === 'idle') {
-      s.charge = clamp((p.y - NEEDLE.y) / NEEDLE.pull, 0.12, 1);
-    }
-    if (type === 'move' && s.drag && s.mode === 'live') {
-      const c = s.discs[s.selected];
-      if (c && !c.pinned) {
-        c.x = clamp(p.x + s.offset.x, 190, 710);
-        c.y = clamp(p.y + s.offset.y, 360, 1040);
-        evaluate(s);
-      }
-    }
-    if (type === 'up' || type === 'cancel') {
-      if (s.pointerThread) { s.pointerThread = false; releaseThread(s); }
-      if (s.drag && type === 'up') evaluate(s);
-      s.drag = false;
-    }
-  },
-  action(s, id, down) {
-    if (id === 'thread') {
-      if (down) beginThread(s);
-      else releaseThread(s);
+    if (type !== 'down' || s.result) return;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      beginWatch(s);
       return;
     }
-    if (down === false) return;
-    if (id === 'next') s.selected = (s.selected + 1) % 3;
-    if (id === 'pin') {
-      const c = s.discs[s.selected];
-      if (c) {
-        c.pinned = !c.pinned;
-        if (c.pinned && s.drag && s.selected === s.discs.indexOf(c)) s.drag = false;
-        s.note = c.pinned ? 'Pinned. That scrap will not wander.' : 'Unpinned. Drag or nudge it.';
-      }
+    if (s.phase === 'pick' && s.deal) {
+      const id = hitCover(s.deal, p.x, p.y);
+      if (id >= 0) pickCover(s, id);
     }
-    if (id === 'stitch') claim(s);
+  },
+  action(s, id) {
+    if (id === 'watch' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Watch again when you are ready.';
+        persist(s);
+        return;
+      }
+      beginWatch(s);
+    }
   },
   key(s, k, down) {
-    if ((k === 'z' || k === 'Z') && down) s.selected = (s.selected + 1) % 3;
-    if ((k === 'x' || k === 'X') && down) this.action(s, 'pin', true);
-    if (k === 'Enter') {
-      if (down) beginThread(s);
-      else releaseThread(s);
+    if (!down) return;
+    if (s.phase === 'pick' && k >= '1' && k <= '9') {
+      pickCover(s, Number(k) - 1);
+      return;
     }
-    if ((k === ' ' || k === 'Spacebar') && down) claim(s);
+    if (k === ' ' || k === 'Enter') {
+      if (s.phase === 'idle' || s.phase === 'result') this.action(s, 'watch');
+    }
   },
   draw(s, d) {
-    const set = s.set || SETS[s.level] || SETS[0];
-    d.text('PATCHWORK MOON', 205, 68, 16, '#fff3d0');
-    d.text(Math.floor(s.coverage * 1000) / 10 + '% covered', 205, 96, 16, s.coverage >= s.need ? '#f0d080' : '#f0d49a');
-
-    const edge = Array.from({length: 180}, (_, i) => {
-      const a = i * TAU / 180, r = radius(s.level, a);
-      return world({x: Math.cos(a) * r, y: Math.sin(a) * r}, s.spin || 0);
-    });
-    d.path(edge, '#c69d58', 5, true, '#f2d696');
-    if (s.prize && !s.prizeOut) {
-      d.item(spriteKey(s.prize), CX, CY, {
-        w: s.coverage >= s.need ? 52 : 36, alpha: s.mode === 'live' ? 0.55 : 0.28,
-        fallback: () => d.star(CX, CY, 16, '#f4e2a8'),
-      });
-      if (s.coverage >= s.need && s.mode === 'live') d.text('stitch', CX, CY + 28, 12, '#f0d6a8');
+    const ch = DOT_CHAPTERS[s.level];
+    const c = d.c;
+    d.text('Vanishing Spot', 450, 118, 28, '#efe6d0');
+    d.text(ch.title, 450, 154, 20, '#d2b98c');
+    if (!s.won) {
+      d.item(spriteKey(ch.prize), 800, 148, {w: 70, fallback: () => d.star(800, 148, 24)});
+      d.text('waiting', 800, 202, 14, '#ead6a4');
     }
 
-    for (const [i, c] of s.discs.entries()) {
-      d.circle(c.x + 7, c.y + 10, c.r, '#77595830');
-      d.circle(c.x, c.y, c.r, COLORS[i] + '55', '#f4ddba', 3);
-      d.item(spriteKey(c.id), c.x, c.y, {
-        w: c.r * 1.55, shadow: false,
-        fallback: () => {
-          d.circle(c.x, c.y, c.r, COLORS[i], '#f4ddba', 3);
-          d.circle(c.x, c.y, c.r - 12, null, '#ecd2ad', 1);
-          d.text(i + 1, c.x, c.y + 8, 25, '#faeccc');
-        },
-      });
-      if (i === s.selected) d.ring(c.x, c.y, c.r + 5, '#956643', 2);
-      if (c.pinned) {
-        d.circle(c.x + c.r * 0.62, c.y - c.r * 0.62, 8, '#c45a6a', '#f0d6a0', 2);
-        d.line({x: c.x + c.r * 0.62, y: c.y - c.r * 0.62}, {x: c.x + c.r * 0.62 + 6, y: c.y - c.r * 0.62 - 14}, '#ead6a4', 2);
-      }
-    }
-    if (s.mode === 'live') {
-      for (let i = 0; i < s.uncovered.length; i += 3) {
-        const q = world(s.uncovered[i], s.spin || 0);
-        d.circle(q.x, q.y, 2, '#fff7d5');
-      }
-    }
+    roundRect(c, 110, 250, 680, 640, 28);
+    c.fillStyle = '#2a1c16ee';
+    c.fill();
+    c.strokeStyle = '#e8c878';
+    c.lineWidth = 5;
+    c.stroke();
 
-    const springY = NEEDLE.y + (s.mode === 'idle' ? s.charge * NEEDLE.pull : 0);
-    d.poly([[748, 900], [844, 900], [850, 1148], [742, 1148]], '#3a2a22cc', '#d2b07a', 2);
-    d.line({x: NEEDLE.x, y: springY + 10}, {x: NEEDLE.x, y: 1128}, '#c5d0d6', 4);
     for (let i = 0; i < 6; i++) {
-      const cy = springY + 18 + i * ((1124 - springY - 18) / 6);
-      d.line({x: NEEDLE.x - 8, y: cy}, {x: NEEDLE.x + 8, y: cy}, '#d2b07a', 2);
+      const x = 190 + (i % 3) * 210;
+      const y = 330 + Math.floor(i / 3) * 118;
+      d.circle(x, y, 34, '#3a2a22cc', '#c6a267', 2);
     }
-    d.circle(NEEDLE.x, springY + 8, 11, '#8a3030', '#f0d0a8', 2);
-    d.text('thread', NEEDLE.x, 1162, 12, '#ead6a4');
 
-    const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
-    d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
-    const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    d.item(spriteKey(set.prize), 792, 76, {
-      w: s.prizeOut ? 28 : 36, alpha: s.prizeOut ? 0.4 : 1,
-      fallback: () => d.star(792, 76, 12, '#f4e2a8'),
-    });
-    for (let i = 0; i < SETS.length; i++) {
-      const x = 168 + i * 44, y = 154;
-      const got = owned(SETS[i].prize) || (s.prizeOut && i === s.level);
-      d.item(spriteKey(SETS[i].prize), x, y, {w: 26, fallback: () => d.star(x, y, 9)});
-      if (got) d.text('✓', x + 10, y - 8, 12, '#f6e2a2');
+    if (ch.curtain) {
+      roundRect(c, 300, 280, 300, 300, 8);
+      c.fillStyle = '#4a2038aa';
+      c.fill();
+      d.text('curtain', 450, 320, 14, '#ead6a4');
     }
-    for (const f of s.fly) {
-      const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
-      d.item(spriteKey(f.id), f.x + (792 - f.x) * e, f.y + (76 - f.y) * e, {
-        w: 28 * (1 - u * 0.35),
-        fallback: () => d.star(f.x + (792 - f.x) * e, f.y + (76 - f.y) * e, 10, '#f4e2a8'),
-      });
+
+    if (s.deal) {
+      const r = coverRadius(s.deal.covers.length);
+      const ordered = s.deal.covers.slice().sort((a, b) => (a.z || 0) - (b.z || 0));
+      for (const cover of ordered) {
+        const hidden = coverHidden(s.deal, cover.id, s.reduced);
+        const y = cover.y - (cover.lift || 0);
+        if (hidden) {
+          d.circle(cover.x, y, r, '#24101888', '#6a4a38', 1);
+          continue;
+        }
+        d.circle(cover.x + 6, y + 8, r, '#00000033');
+        d.circle(cover.x, y, r, '#6a3a48ee', '#f0d18f', 3);
+        d.circle(cover.x, y, r - 10, '#5a3040cc', '#ead6a4', 1);
+        d.text(coverLabel(cover.id), cover.x, y + 8, 22, '#fff6d8');
+        const showSpot = (s.deal.phase === 'show' && cover.id === s.deal.spotId)
+          || (s.deal.phase === 'reveal' && cover.id === s.deal.spotId)
+          || fakeId(s.deal) === cover.id;
+        if (showSpot) {
+          d.glow(cover.x, y + 18, 28, '#f4d590');
+          d.circle(cover.x, y + 18, 10, '#f4d080', '#fff6d8', 2);
+        }
+      }
+    } else {
+      d.text('Watch', CX, CY + 40, 32, '#ead6a4');
     }
+
+    wrapLine(d, s.note, 450, 960, 22, '#f0d18f', 720);
+    const n = alleyPlay ? pocket() : null;
+    if (n == null) d.text('practice', 450, 1160, 16, '#ead6a4');
   },
   readout: s => {
-    const n = alleyPlay ? pocket() : s.ammo;
-    const purse = (n == null ? '0' : n) + (alleyPlay ? (n === 1 ? ' penny' : ' pennies') : ' practice');
-    const mode = s.mode === 'live' ? (s.coverage >= s.need ? 'ready to stitch' : 'moonlight still showing')
-      : s.mode === 'idle' ? (s.charging ? 'needle drawn' : 'thread the needle')
-        : 'the light slipped';
-    const clock = s.mode === 'live' ? Math.ceil(Math.max(0, s.clock)) + 's' : 'clock ready';
-    const pin = s.discs[s.selected]?.pinned ? 'pinned' : 'patch ' + (s.selected + 1);
-    return purse + ' · ' + clock + ' · ' + (Math.floor(s.coverage * 1000) / 10) + '% · '
-      + (s.prizeOut ? 'prize kept' : 'stitch the prize') + ' · ' + pin + ' · ' + mode + ' · ' + s.note;
+    const n = alleyPlay ? pocket() : null;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    return purse + ' · ' + s.note;
   },
 };

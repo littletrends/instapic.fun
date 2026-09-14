@@ -1,215 +1,429 @@
-import {clamp, done} from '../draw.js?v=ink-1';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=magnus-foundry-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  MAGNUS_CHAPTERS, STRIKES, BASE_Y, PLATE_X, PLATE_HALF,
+  calledForStrike, sweetAt, resistAt, resolveStrike,
+  resultNumber, magnusUnique, ordinaryFor,
+} from '../perfect-strike.js?v=strike-1';
 
-const SETS = [
-  {prize: 'mighty-mallet', bell: 780, window: 38, drift: 0, decoys: [], heat: 0},
-  {prize: 'bell-bracelet', bell: 680, window: 30, drift: 0, decoys: [820], heat: 0},
-  {prize: 'bell-of-bravery', bell: 600, window: 26, drift: 16, decoys: [780, 700], heat: .35},
-  {prize: 'perfect-play-medal', bell: 560, window: 22, drift: 20, decoys: [800, 700, 640], heat: .55},
-  {prize: 'midway-master-crown', bell: 520, window: 20, drift: 26, decoys: [820, 720, 640, 580], heat: .75},
-  {prize: 'foundry-spark', bell: 500, window: 17, drift: 30, decoys: [830, 740, 660, 590], heat: 1},
-];
+const BOOK = 'pennyFever.perfectStrike';
+const PIVOT = {x: 450, y: 1008};
 
-function peak(s) { return 1000 - (70 + 460 * (-s.angle / 1.45)); }
-function mark(s) {
-  if (!s.drift) return s.bell;
-  return clamp(s.bell + Math.sin(s.t * (1.12 + s.level * .14)) * s.drift, 480, 860);
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
 }
-function build(level) {
-  const set = SETS[level] || SETS[0];
-  return {
-    prize: set.prize, bell: set.bell, window: set.window, drift: set.drift,
-    decoys: set.decoys.slice(), heat: set.heat, limit: 1,
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
+  }
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
+}
+
+function emptyBook() {
+  return {v: 1, paid: {}, sittings: {}};
+}
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
+}
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
+}
+
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase === 'rise' || s.phase === 'pull' ? 'play' : s.phase,
+    seed: s.seed, charged: !!s.charged, strikesLeft: s.strikesLeft,
+    index: s.index, acc: s.acc, correctHits: s.correctHits,
+    puckY: s.puckY, won: !!s.won, note: s.note, resultN: s.resultN || 0,
+    reduced: !!s.reduced, t: s.t,
   };
+  writeBook(book);
 }
-function strike(s) {
-  if (s.flying || s.won || s.lost) return;
-  if (s.throws >= s.limit) {
-    s.note = 'That swing is spent. Another penny for another strike.';
+
+function reducedMotion() {
+  try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+}
+
+function callNote(s) {
+  const ch = MAGNUS_CHAPTERS[s.level];
+  const id = calledForStrike(s.level, s.seed, s.index);
+  const bell = ch.bells.find(b => b.id === id);
+  const name = bell ? bell.label : id;
+  if (ch.peal) return 'Peal ' + (s.index + 1) + ': ring ' + name + '.';
+  return 'Magnus calls ' + name + '.';
+}
+
+function beginSit(s) {
+  if (s.phase === 'play' || s.phase === 'pull' || s.phase === 'rise') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (!takeAttempt('high-striker', s.level)) {
+        s.note = retryNote();
+        return;
+      }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 19;
+    }
+    s.phase = 'play';
+    s.strikesLeft = STRIKES;
+    s.index = 0;
+    s.acc = 0;
+    s.correctHits = 0;
+    s.pull = 0;
+    s.holding = false;
+    s.drag = false;
+    s.contactX = PLATE_X;
+    s.puckY = BASE_Y - 40;
+    s.targetY = s.puckY;
+    s.flash = 0;
+    s.lastRang = null;
+    s.resultN = 0;
+    s.prizeKept = false;
+    s.reduced = reducedMotion();
+    s.note = callNote(s) + ' Three strikes. Aim. Time. Ring the called bell.';
+    persist(s);
+  } finally {
+    s.chargeLock = false;
+  }
+}
+
+function strikeNow(s) {
+  if (s.phase !== 'play' && s.phase !== 'pull') return;
+  if (s.strikesLeft <= 0) return;
+  const hit = resolveStrike({
+    level: s.level, seed: s.seed, pull: s.pull, contactX: s.contactX,
+    t: s.t, index: s.index, acc: s.acc, reduced: s.reduced,
+  });
+  s.holding = false;
+  s.drag = false;
+  s.phase = 'play';
+  if (hit.cancelled) {
+    s.pull = 0;
+    s.note = 'A longer pull — ease back to cancel.';
     return;
   }
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny in the purse. Bank loan, or cash a ticket.';
-      return;
-    }
+  s.strikesLeft -= 1;
+  s.last = hit;
+  s.acc = MAGNUS_CHAPTERS[s.level].add && !hit.overshoot ? hit.lift : 0;
+  s.targetY = hit.puckY;
+  s.phase = 'rise';
+  s.rise = 0;
+  s.flash = 0;
+  if (hit.correct) s.correctHits += 1;
+  s.lastRang = hit.rang;
+  if (hit.correct) s.note = 'The called bell rings.';
+  else if (hit.overshoot) s.note = 'Too much. It flew past.';
+  else if (hit.undershoot) s.note = 'Too little. Short of the bronze.';
+  else if (hit.rang) s.note = 'Wrong bell. Magnus wanted the called mouth.';
+  else s.note = 'Between the mouths.';
+  persist(s);
+}
+
+function afterStrike(s) {
+  s.phase = 'play';
+  s.pull = 0;
+  s.index += 1;
+  if (!MAGNUS_CHAPTERS[s.level].add || s.last?.overshoot) {
+    s.puckY = BASE_Y - 40;
+    s.targetY = s.puckY;
+  } else {
+    s.puckY = s.targetY;
   }
-  s.flying = true;
-  s.y = 1000;
-  s.vy = -Math.sqrt(1000 * (1000 - peak(s)));
-  s.throws++;
-  s.judged = false;
-  s.hit = false;
-  s.swing = s.angle;
-  s.angle = -.1;
-  s.hold = false;
-  s.drag = false;
-  s.note = alleyPlay ? 'A penny on the clapper. The tower will tell.' : 'The practice hammer flies.';
+  const n = resultNumber(s.seed);
+  if (magnusUnique(s.level, n, s.correctHits) && !chapterPaid(s.level) && !s.won) {
+    finishSit(s);
+    return;
+  }
+  if (s.strikesLeft <= 0) {
+    finishSit(s);
+    return;
+  }
+  s.note = callNote(s) + ' ' + s.strikesLeft + ' left.';
+  persist(s);
+}
+
+function finishSit(s) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  s.phase = 'result';
+  s.charged = false;
+  const prize = MAGNUS_CHAPTERS[s.level].prize;
+  const win = magnusUnique(s.level, n, s.correctHits) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'high-striker');
+    if (win) {
+      keep(prize, 'high-striker');
+      markPaid(s.level);
+      s.won = true;
+    }
+  } else if (win) s.won = true;
+  const called = MAGNUS_CHAPTERS[s.level].bells.find(b => b.id === calledForStrike(s.level, s.seed, Math.max(0, s.index - 1)))
+    || MAGNUS_CHAPTERS[s.level].bells[0];
+  if (win) takePrize(s, prize, {x: 560, y: called.y});
+  s.hold = 1.2;
+  s.note = s.correctHits
+    ? 'Called bell rang ' + s.correctHits + (s.correctHits === 1 ? ' time.' : ' times.')
+    : 'The called bell stayed quiet.';
+  persist(s);
 }
 
 export default {
-  title: 'Bellfoundry',
+  title: 'Perfect Strike',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
-  intro: 'Magnus does not want brute force. One penny, one strike. Land the mercury weight on the lit mouth and the foundry keepsake is yours. Miss the bronze and he keeps the bell.',
+  persist,
+  intro: alleyPlay
+    ? 'Magnus’s Perfect Strike. Hard isn’t enough. Ring it right. A penny buys three strikes. Pull, time the sweet spot, and hit the called bell. The unique only drops on a true ring and tonight’s numbers.'
+    : 'Hard isn’t enough. Ring it right. Pull, time the plate, ring the called bell. Workshop strikes are free and write nothing.',
   instructions: alleyPlay
-    ? 'Lift the mallet until the peak pointer kisses the glowing mouth, then release (one penny a swing). The prize only rings if that single strike lands on the lit bell. A miss means another penny. Drag the head, hold Lift then release, or Up/Down and Space.'
-    : 'One practice swing. Land the mercury weight on the lit bell to finish the chapter. Drag the mallet head, or Up/Down and Space.',
-  tableDetail: alleyPlay
-    ? 'Six foundry mouths. A penny a swing. Ring the lit bell and Magnus stamps the keepsake. Walk away whenever you like — the book keeps what you won.'
-    : 'A practice foundry. Ring the lit bell to finish the chapter.',
-  levels: ['The apprentice peal', 'Bracelet height', 'A restless clapper', 'Four mouths, one true', 'A wandering peal', 'The grand foundry'],
-  sprites: ['mighty-mallet', 'bell-of-bravery', 'mercury-bead', 'bell-bracelet', 'perfect-play-medal', 'midway-master-crown', 'ride-explorer-pennant', 'penny-purse', 'everyday-penny'],
-  prizes: SETS.map(s => s.prize),
+    ? 'Sit for a penny — three strikes. Pull the hammer (or hold Pull). Release on the sweet spot. Too little falls short; too much flies past.'
+    : 'Pull and release. Practice writes nothing.',
+  levels: MAGNUS_CHAPTERS.map(c => c.title),
+  sprites: ['mighty-mallet', 'bell-bracelet', 'bell-of-bravery', 'perfect-play-medal', 'midway-master-crown', 'foundry-spark', 'moon-penny', 'star-token', 'everyday-penny'],
+  prizes: MAGNUS_CHAPTERS.map(c => c.prize),
   actions: [
-    {id: 'lift', label: alleyPlay ? 'Lift · 1 penny on release' : 'Hold to lift · release to strike', hold: true},
-    {id: 'strike', label: alleyPlay ? 'Strike · 1 penny' : 'Strike the clapper'},
+    {id: 'sit', label: alleyPlay ? 'Sit · 1 penny' : 'Sit down'},
+    {id: 'pull', label: 'Hold to pull', hold: true},
+    {id: 'again', label: alleyPlay ? 'Another sitting · 1 penny' : 'Another sitting'},
   ],
   create(level) {
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const s = {
-      ...build(level),
-      level, t: 0, angle: -.1, swing: 0, hold: false, drag: false, flying: false,
-      y: 1000, vy: 0, throws: 0, judged: false, hit: false, flash: 0,
-      won: false, lost: false,
-      note: alleyPlay ? 'One penny. One strike. Kiss the lit mouth, or the prize stays.' : 'One practice swing. Ring the lit mouth.',
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 2) * 2711,
+      charged: !!saved.charged, strikesLeft: saved.strikesLeft ?? STRIKES,
+      index: saved.index || 0, acc: saved.acc || 0, correctHits: saved.correctHits || 0,
+      puckY: saved.puckY || BASE_Y - 40, targetY: saved.puckY || BASE_Y - 40,
+      pull: 0, holding: false, drag: false, contactX: PLATE_X,
+      won: !!saved.won || chapterPaid(level), hold: 0, reduced: !!saved.reduced,
+      note: saved.note || (MAGNUS_CHAPTERS[level] || MAGNUS_CHAPTERS[0]).title + '. Sit when you are ready.',
+      resultN: saved.resultN || 0, rise: 0, flash: 0, last: null, lastRang: null,
     };
+    if (s.phase === 'pull' || s.phase === 'rise') s.phase = 'play';
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt, input) {
     s.t += dt;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    const holdBtn = !!(input?.actions && input.actions.has('pull'));
+    if ((s.phase === 'play' || s.phase === 'pull') && (s.holding || holdBtn) && !s.drag) {
+      s.phase = 'pull';
+      s.pull = Math.min(1, s.pull + dt * 0.7);
+      s.holding = true;
+    }
+    if (s.phase === 'rise') {
+      s.rise += dt;
+      const u = Math.min(1, s.rise / 0.42);
+      const e = u * u * (3 - 2 * u);
+      s.puckY = (BASE_Y - 40) * (1 - e) + s.targetY * e;
+      if (s.last?.correct) s.flash = 1;
+      if (s.rise > 0.55) afterStrike(s);
+    }
     s.flash = Math.max(0, s.flash - dt);
-    s.swing += (0 - s.swing) * Math.min(1, dt * 15);
-    if (s.won || s.lost) return;
-    if (!s.flying) {
-      const lift = s.hold || input.actions.has('lift');
-      const up = input.keys.has('ArrowUp');
-      const down = input.keys.has('ArrowDown');
-      s.angle = clamp(s.angle + ((lift || up) ? -.64 : down ? .64 : 0) * dt, -1.45, 0);
-      if (s.heat && s.angle < -1.16) {
-        s.angle = clamp(s.angle + Math.sin(s.t * 7.4) * s.heat * .55 * dt, -1.45, 0);
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'Hard was not enough. It rang right.',
+          itemName(MAGNUS_CHAPTERS[s.level].prize) + ' — ' + s.note,
+          {prize: MAGNUS_CHAPTERS[s.level].prize, won: true});
       }
-      return;
-    }
-    const old = s.vy;
-    s.vy += 500 * dt;
-    s.y += s.vy * dt;
-    if (old < 0 && s.vy >= 0 && !s.judged) {
-      s.judged = true;
-      const target = mark(s);
-      const error = Math.abs(s.y - target);
-      if (error < s.window) {
-        s.hit = true;
-        s.flash = 1.4;
-        s.note = 'The foundry answers.';
-      } else {
-        s.hit = false;
-        s.note = s.y < target ? 'Over the mouth. Too much muscle.' : 'Short of the bronze. A little more lift.';
-      }
-    }
-    if (s.y < 1000) return;
-    s.y = 1000;
-    s.flying = false;
-    if (!s.judged) return;
-    if (s.hit) {
-      s.won = true;
-      if (alleyPlay && s.prize) keep(s.prize, 'high-striker');
-      takePrize(s, s.prize);
-      done(s, 'A note fit for the foundry',
-        itemName(s.prize) + ' flies into the treasure book.',
-        {prize: s.prize, won: true});
-    } else {
-      s.lost = true;
-      done(s, 'The bronze stays quiet',
-        alleyPlay
-          ? 'That swing is spent. Another penny for another strike.'
-          : 'The clapper never kissed the mouth. Try this foundry again.',
-        {won: false});
-    }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (s.flying || s.won || s.lost) return;
-    if (type === 'down' && p.x > 400 && p.y > 720) s.drag = true;
-    if (type === 'move' && s.drag) s.angle = clamp(Math.atan2(p.y - 980, p.x - 440), -1.45, 0);
-    if (type === 'up' && s.drag) { s.drag = false; strike(s); }
-    if (type === 'cancel') { s.drag = false; s.hold = false; }
+    if (s.result) return;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      if (type === 'down') beginSit(s);
+      return;
+    }
+    if (s.phase === 'rise') return;
+    if (type === 'cancel') {
+      s.drag = false;
+      s.holding = false;
+      s.pull = 0;
+      s.phase = 'play';
+      return;
+    }
+    if (type === 'down' && p.y > 780) {
+      s.drag = true;
+      s.phase = 'pull';
+      s.contactX = Math.max(PLATE_X - PLATE_HALF, Math.min(PLATE_X + PLATE_HALF, p.x));
+      const back = Math.max(0, p.y - PIVOT.y);
+      s.pull = Math.min(1, back / 160);
+    }
+    if (type === 'move' && s.drag) {
+      s.contactX = Math.max(PLATE_X - PLATE_HALF, Math.min(PLATE_X + PLATE_HALF, p.x));
+      const back = Math.max(0, p.y - (PIVOT.y - 20));
+      s.pull = Math.min(1, back / 170);
+    }
+    if (type === 'up' && s.drag) {
+      s.drag = false;
+      strikeNow(s);
+    }
   },
   action(s, id, pressed) {
-    if (id === 'lift') { s.hold = pressed; if (!pressed) strike(s); }
-    if (id === 'strike' && pressed) strike(s);
-  },
-  key(s, k, down) { if (k === ' ' && down) strike(s); },
-  draw(s, d) {
-
-    d.text((s.limit - s.throws) + ' strike' + (s.limit - s.throws === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
-    for (let i = 0; i < SETS.length; i++) {
-      const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
-      const got = owned(SETS[i].prize) || (s.won && i === s.level);
-      d.item(spriteKey(SETS[i].prize), x, y, {w: 36, fallback: () => d.star(x, y, 12)});
-      if (got) d.text('✓', x + 14, y - 10, 16, '#f6e2a2');
-      else d.circle(x, y, 20, '#1a120866');
+    if (id === 'sit' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Sit again when you are ready.';
+        persist(s);
+        return;
+      }
+      if (pressed !== false) beginSit(s);
     }
-    const n = alleyPlay ? (pocket() ?? 0) : '∞';
+    if (id === 'pull') {
+      if (s.phase === 'idle' || s.phase === 'result' || s.phase === 'rise') return;
+      if (pressed) {
+        s.holding = true;
+        s.phase = 'pull';
+      } else if (s.holding) {
+        s.holding = false;
+        strikeNow(s);
+      }
+    }
+  },
+  key(s, k, down) {
+    if (k === ' ' || k === 'Enter') {
+      if (s.phase === 'idle' || s.phase === 'result') {
+        if (down) this.action(s, 'sit', true);
+        return;
+      }
+      if (down && (s.phase === 'play' || s.phase === 'pull')) {
+        s.holding = true;
+        s.phase = 'pull';
+      }
+      if (!down && s.holding) {
+        s.holding = false;
+        strikeNow(s);
+      }
+    }
+  },
+  draw(s, d) {
+    const ch = MAGNUS_CHAPTERS[s.level];
+    const c = d.c;
+    d.text('Perfect Strike', 450, 108, 28, '#efe6d0');
+    d.text('Hard Isn\'t Enough. Ring It Right.', 450, 140, 16, '#d2b98c');
+    d.text(ch.title, 450, 168, 18, '#ead6a4');
+    if (!s.won) {
+      d.item(spriteKey(ch.prize), 800, 148, {w: 66, fallback: () => d.star(800, 148, 22)});
+      d.text('waiting', 800, 202, 14, '#ead6a4');
+    }
 
-    d.poly([[365, 390], [405, 390], [405, 1010], [365, 1010]], '#985d46', '#dcb477', 3);
-    d.line({x: 385, y: 408}, {x: 385, y: 990}, '#e4c68e', 4);
-    for (let y = 430; y < 1000; y += 35) d.line({x: 372, y}, {x: 385, y}, '#c59c67', 2);
+    const crooked = s.level === 2;
+    const mastX = crooked ? 430 : 385;
+    d.poly([[mastX - 18, 240], [mastX + 18, 240], [mastX + 22, BASE_Y], [mastX - 22, BASE_Y]], '#6a4530', '#e8c878', 3);
+    d.line({x: mastX, y: 250}, {x: mastX, y: BASE_Y - 8}, '#e4c68e', 4);
 
-    const target = mark(s);
-    const bellAt = (y, lit, rung) => {
-      d.line({x: 405, y: y - 25}, {x: 497, y: y - 25}, '#967144', 4);
-      if (lit) d.glow(492, y, 55, '#e9c67e');
-      d.item(spriteKey('bell-of-bravery'), 492, y, {
-        w: rung ? 58 : lit ? 54 : 46, alpha: rung ? 1 : lit ? .95 : .55,
+    const called = calledForStrike(s.level, s.seed, s.index);
+    for (const bell of ch.bells) {
+      const lit = bell.id === called;
+      const rung = s.lastRang === bell.id && s.flash > 0;
+      d.line({x: mastX + 12, y: bell.y - 20}, {x: mastX + 108, y: bell.y - 20}, '#967144', 4);
+      if (lit) d.glow(mastX + 108, bell.y, 48, '#e9c67e');
+      d.item(spriteKey('bell-of-bravery'), mastX + 108, bell.y, {
+        w: rung ? 58 : lit ? 52 : 42, alpha: lit ? 1 : 0.62,
         fallback: () => {
-          d.poly([[470, y + 11], [477, y - 21], [490, y - 34], [504, y - 21], [513, y + 11]],
-            rung || lit ? '#f1d18c' : '#b79358', '#eac88a', 3);
-          d.ellipse(492, y + 12, 26, 6, '#8d724b', '#eec889', 2);
-          d.ball(492, y + 19, 5, '#d8b16b');
+          d.poly([[mastX + 84, bell.y + 12], [mastX + 92, bell.y - 22], [mastX + 108, bell.y - 34], [mastX + 124, bell.y - 22], [mastX + 132, bell.y + 12]],
+            lit ? '#f1d18c' : '#b79358', '#eac88a', 3);
         },
       });
-    };
-    for (const y of s.decoys) bellAt(y, false, false);
-    bellAt(target, !s.lost, s.hit || s.won);
-    if (!s.lost) {
-      d.item(spriteKey(s.prize), 575, target, {
-        w: 42, alpha: s.won ? 1 : .9,
-        fallback: () => d.star(575, target, 14),
-      });
+      d.text(bell.label, mastX + 168, bell.y + 4, 14, lit ? '#fff6d8' : '#cbb890');
+      if (lit && !s.won) {
+        d.item(spriteKey(ch.prize), mastX + 210, bell.y, {w: 36, fallback: () => d.star(mastX + 210, bell.y, 12)});
+      }
     }
 
-    if (!s.flying && !s.won && !s.lost && s.throws < s.limit) {
-      const py = peak(s);
-      d.poly([[340, py], [355, py - 8], [355, py + 8]], '#f2d39b', '#967240');
-      d.text('peak', 310, py + 5, 15, '#785541');
+    if (s.level === 3) {
+      roundRect(c, 70, 320, 28, 420, 8);
+      c.fillStyle = '#3a2a18ee';
+      c.fill();
+      const h = 40 + s.acc * 360;
+      roundRect(c, 74, 732 - h, 20, h, 6);
+      c.fillStyle = '#e8c878cc';
+      c.fill();
+      d.text('lift', 84, 760, 12, '#ead6a4');
+    }
+    if (s.level === 4) {
+      const r = resistAt(s.level, s.index);
+      d.line({x: 120, y: 280}, {x: 120, y: 520}, '#c6a267', 4);
+      d.circle(120, 300 + (1.3 - r) * 160, 22, '#8a6a3a', '#e8c878', 3);
+      d.text('weight', 120, 560, 13, '#ead6a4');
     }
 
-    d.item(spriteKey('mercury-bead'), 385, s.y, {
-      w: 38, fallback: () => d.ball(385, s.y, 18, '#b7b4a5'),
-    });
-    d.ellipse(410, 1015, 72, 20, '#a77d54', '#edca8b', 4);
-    d.line({x: 385, y: 1000}, {x: 480, y: 1000}, '#d5b37d', 12);
-    const angle = s.flying ? s.swing : s.angle;
-    const head = {x: 440 + Math.cos(angle) * 180, y: 980 + Math.sin(angle) * 180};
-    d.line({x: 440, y: 980}, head, '#775336', 14);
-    d.line({x: 440, y: 975}, {x: head.x, y: head.y - 5}, '#b28a56', 4);
+    d.ball(mastX, s.puckY, 16, '#b7b4a5');
+
+    const sweet = sweetAt(s.level, s.t, s.reduced);
+    const plateY = 1000;
+    const skew = crooked ? 28 : 0;
+    d.poly([[PLATE_X - PLATE_HALF, plateY + 18], [PLATE_X + PLATE_HALF, plateY + 18], [PLATE_X + PLATE_HALF - skew, plateY - 10], [PLATE_X - PLATE_HALF + skew, plateY - 10]], '#8a6a3a', '#e8c878', 3);
+    d.ellipse(sweet, plateY, 22, 10, '#f0d18fcc', '#fff6d8', 2);
+    d.text('sweet', sweet, plateY - 22, 13, '#fff6d8');
+
+    const angle = -0.18 - s.pull * 1.15;
+    const head = {x: PIVOT.x + Math.cos(angle) * 170, y: PIVOT.y + Math.sin(angle) * 170};
+    d.line(PIVOT, head, '#775336', 14);
     d.item(spriteKey('mighty-mallet'), head.x, head.y, {
-      w: 92, angle: angle + Math.PI / 2,
+      w: 88, angle: angle + Math.PI / 2,
       fallback: () => {
-        const c = d.c; c.save(); c.translate(head.x, head.y); c.rotate(angle + Math.PI / 2);
-        d.poly([[-40, -23], [40, -23], [40, 23], [-40, 23]], '#a7784c', '#e0bc83', 3);
-        for (const x of [-23, 23]) d.line({x, y: -24}, {x, y: 24}, '#dcc39b', 7);
-        d.star(0, 0, 14); c.restore();
+        c.save(); c.translate(head.x, head.y); c.rotate(angle + Math.PI / 2);
+        d.poly([[-36, -20], [36, -20], [36, 20], [-36, 20]], '#a7784c', '#e0bc83', 3);
+        c.restore();
       },
     });
-    if (s.flash) d.arc(492, target || 500, 65, 0, Math.PI * 2, '#f5d69a88', 2);
+
+    for (let i = 0; i < STRIKES; i++) {
+      d.circle(330 + i * 36, 210, 9, i < s.strikesLeft ? '#e8c878' : '#3a2a18aa', '#c6a267', 1);
+    }
+
+    wrapLine(d, s.note, 450, 1124, 20, '#f0d18f', 720);
+    const n = alleyPlay ? pocket() : null;
+    if (n == null) d.text('practice', 450, 1180, 16, '#ead6a4');
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice swings' : n + (n === 1 ? ' penny' : ' pennies') + ' in the purse';
-    return (s.hit || s.won ? 'rung' : 'quiet') + ' · ' + s.throws + '/' + s.limit + ' strikes · ' + purse + ' · ' + s.note;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    return purse + ' · ' + s.note;
   },
 };

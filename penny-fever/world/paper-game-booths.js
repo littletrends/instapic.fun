@@ -1,23 +1,16 @@
-import {games} from '../paper-games/catalogue.js?v=florence-1';
-import {spriteKey} from '../paper-games/prizes.js?v=purse-1';
+import {games} from '../paper-games/catalogue.js?v=briefs-2';
+import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
+import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-2';
 import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=type-up-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-1'),gameBase).href,
 }));
 
-// These rooms already charge a penny per throw/crank. Opening the table is free;
-// the purse is spent inside. Sit-down rooms (rides, Iris, Rosalie) cost one penny
-// to load. Workshop play.html without room=alley stays free and writes nothing.
-const PENNY_TABLE=new Set([
- 'coin-pusher','pinball','milk-bottles','skee-ball','ball-toss','bent-rings',
- 'catoptromancy','cover-the-spot','curios','duck-pond','dunk-tank','fairy-floss',
- 'high-striker','lookup','marquee','mutoscope','pack','pass','penny-pitch',
- 'plinko','popcorn','snap','water-gun','whisper',
-]);
-function isPennyTable(id){return PENNY_TABLE.has(id);}
+// Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
+// Workshop play.html without room=alley stays free and writes nothing.
 
 function leavePaperGame(id, nav=globalThis.location){
   try{window.PennyFeverWorld?.stepOut?.(id);}catch{/* world not ready */}
@@ -34,7 +27,7 @@ function leavePaperGame(id, nav=globalThis.location){
 // Existing room routing owns the alley pause and return position. The game itself
 // owns its canvas, controls and lifecycle; leaving destroys just that iframe.
 export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThis.location){
- let stage,frame,status,timer,pilotWallet;
+ let stage,frame,status,timer,doorLock=false;
  const room=()=>doc.getElementById('cabinet-'+game.id);
  function prepare(){
   const cabinet=room();if(!cabinet)throw new Error('Missing cabinet '+game.id);
@@ -48,14 +41,21 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const pennyPlay=isPennyTable(game.id)||!!pilotSession(game.id);
+  const door=doorKind(game.id);
   const retry=doc.createElement('button');retry.type='button';
-  retry.textContent=game.id==='coin-pusher'?'The trays stay':game.id==='pinball'?'The spring waits':game.id==='milk-bottles'?'The dairy waits':game.id==='skee-ball'?'The moon waits':pennyPlay?'The table waits':'Play again · 1 penny';
-  if(pennyPlay){
+  retry.textContent=door==='closed'?'Come back later':door==='ticket'?'The tent waits':door==='free'?'The table waits':'Play again · 1 penny';
+  if(door==='penny'){
+    retry.addEventListener('click',()=>load(true));
+  }else{
     retry.disabled=true;
-    retry.title='Leave and come back — this table remembers. Pennies are spent on each play.';
-  }else retry.addEventListener('click',()=>load(true));
+    retry.title=door==='closed'
+      ?'Felix’s Instapic photo booth is closed for maintenance.'
+      :door==='ticket'
+      ?'Your sitting is saved. First try of each chapter is included; extra goes cost a penny inside.'
+      :'Pennies are spent on each play. Leave and come back — this table remembers.';
+  }
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
+  let pilotWallet;
   const paintWallet=()=>{
     if(pilotSession(game.id)&&!pilotWallet){wallet.textContent='Private test wallet · awaiting server';return;}
     const PF=window.PennyFever;
@@ -84,10 +84,23 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
     paintWallet();
     if(frame&&frame.getAttribute('src')==='about:blank') load();
   });
+  const buy=doc.createElement('button');buy.type='button';buy.textContent='Buy a ticket · 5 pennies';
+  buy.addEventListener('click',()=>{
+    const PF=window.PennyFever;
+    if(!PF?.tradePenniesForTicket?.()){
+      status.hidden=false;
+      status.textContent='Need five pennies for a ticket. Buy a pack from Aura.';
+      return;
+    }
+    status.hidden=false;
+    status.textContent='A ticket for a sitting.';
+    paintWallet();
+    if(frame&&frame.getAttribute('src')==='about:blank') load();
+  });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
   chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
-  bar.append(back,title,list,wallet,cash,retry,chest);
+  bar.append(back,title,list,wallet,buy,cash,retry,chest);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -104,6 +117,13 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
  async function load(restart=false){
   prepare();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
+  const door=doorKind(game.id);
+  if(door==='closed'||isClosed(game.id)){
+    unload();
+    status.hidden=false;
+    status.textContent='Felix’s Instapic photo booth is closed for maintenance. Come back later.';
+    return;
+  }
   const revision=++loadRevision;
   let session;
   try { session=await resolvePilotSession(game.id); }
@@ -113,14 +133,29 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   }
   if(revision!==loadRevision)return;
   const PF=window.PennyFever;
-  const pennyPlay=isPennyTable(game.id);
-  if(!pennyPlay&&!session){
+  if(!session){
+  if(door==='ticket'){
+    if(!hasSat(game.id)){
+      if(doorLock)return;
+      doorLock=true;
+      if(!PF?.spendTicket||!PF.spendTicket(game.id)){
+        doorLock=false;
+        status.hidden=false;
+        status.textContent='Need a ticket to sit down. Buy a strip from Aura, or cash five pennies for a ticket at her booth.';
+        unload();
+        return;
+      }
+      markSat(game.id);
+      doorLock=false;
+    }
+  }else if(door==='penny'){
     if(PF?.spendPennies&&!PF.spendPennies(1)){
       status.hidden=false;
       status.textContent='Need a penny to sit down. Cash a ticket here for five, or buy a roll from Aura. Workshop practice stays free.';
       unload();
       return;
     }
+  }
   }
   unload();status.hidden=false;status.textContent='Opening '+game.title+'…';
   frame.onload=()=>{clearTimeout(timer);status.hidden=true;};

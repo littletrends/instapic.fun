@@ -1,6 +1,7 @@
-import {clamp, dist, done} from '../draw.js?v=ink-1';
+import {clamp, dist, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=felix-safari-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const WIND = {x: 726, y: 992, pull: 50};
@@ -99,8 +100,8 @@ function releaseWind(s) {
     return;
   }
   if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny to wind a plate.';
+    if (!takeAttempt('snap', s.level)) {
+      s.note = retryNote();
       return;
     }
   } else s.ammo--;
@@ -190,7 +191,7 @@ function shutter(s) {
 }
 
 export default {
-  title: 'Paper Safari',
+  title: 'Instapic Photo Booth',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
@@ -250,7 +251,9 @@ export default {
       s.clock = Math.max(0, (s.clock ?? s.clockMax) - dt);
       if (s.clock <= 0) drain(s);
     }
-    const holdWind = s.pointerWind || input.actions.has('wind') || (s.mode === 'lane' && input.keys.has(' '));
+    const keys = input?.keys || new Set();
+    const actions = input?.actions || new Set();
+    const holdWind = s.pointerWind || actions.has('wind') || (s.mode === 'lane' && keys.has(' '));
     if (s.mode === 'lane') {
       if (holdWind) beginWind(s);
       if (s.charging) {
@@ -260,8 +263,8 @@ export default {
     } else if (s.mode === 'dead') {
       if (s.t - s.deadAt > 0.8) seatLane(s);
     }
-    const dx = (input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0);
-    const dy = (input.keys.has('ArrowDown') ? 1 : 0) - (input.keys.has('ArrowUp') ? 1 : 0);
+    const dx = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+    const dy = (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0);
     if (s.mode !== 'dead') {
       s.camera.x = clamp(s.camera.x + dx * 240 * dt, 220, 680);
       s.camera.y = clamp(s.camera.y + dy * 240 * dt, 250, 960);
@@ -270,7 +273,7 @@ export default {
     if (moved > 8) s.focus *= 0.72;
     s.prevCam = {x: s.camera.x, y: s.camera.y};
     if (s.mode === 'live') {
-      const holdFocus = s.holding || input.actions.has('focus') || input.keys.has(' ');
+      const holdFocus = s.holding || actions.has('focus') || keys.has(' ');
       if (holdFocus) s.holding = true;
       const t = subject(s);
       const gain = 0.88 - s.level * 0.05;
@@ -337,6 +340,7 @@ export default {
   },
   draw(s, d) {
     const set = s.set || SETS[s.level] || SETS[0];
+    d.poly([[70, 36], [320, 36], [320, 118], [70, 118]], '#161022cc', '#e6c57a', 2);
     d.text('PAPER SAFARI', 195, 68, 16, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 195, 96, 16, '#f0d49a');
     const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
@@ -371,6 +375,7 @@ export default {
     d.item(spriteKey('memory-camera'), p.x + set.hw + 28, p.y + set.hh + 8, {
       w: 54, fallback: () => d.circle(p.x + set.hw + 28, p.y + set.hh + 8, 16, '#6a3a48', '#ead6a4', 2),
     });
+    d.poly([[118, 1020], [782, 1020], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     const n = 4;
     for (let i = 0; i < n; i++) {
       const x = 250 + i * 110;
@@ -395,6 +400,9 @@ export default {
     d.circle(WIND.x, springY + 28, 15, s.charging ? '#f0d080' : '#8a3030', '#f0d0a8', 2);
     d.text('wind', WIND.x, 1162, 11, '#ead6a4');
     const purse = alleyPlay ? (pocket() ?? 0) : s.ammo;
+    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
+    d.text(String(purse), 86, 108, 18, '#fff6d8');
+    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);

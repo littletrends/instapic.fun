@@ -1,13 +1,40 @@
-import {clamp, done} from '../draw.js?v=ink-1';
+import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
-  CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds,
+  CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
 } from '../../experiments/celestes-starlight/model.js';
 
 const BOOK = 'pennyFever.littleStarlight';
 const GLASS = ['I', 'II', 'III', 'IV', 'V'];
+const FLIGHT_SPEED = 410;
+const FLIGHT_EXTRA = 25;
+function span(a, b, step = 1) {
+  const out = [];
+  for (let n = a; n <= b; n += step) out.push(n);
+  return out;
+}
+export const SKY = [
+  {wins: span(1, 50), speed: 8, clue: 'Tonight favours numbers below fifty.', disturb: 1, memory: 0},
+  {wins: span(2, 80, 2), speed: 11, clue: 'Even lights under eighty.', disturb: 1, memory: 0},
+  {wins: span(3, 90, 3), speed: 14, clue: 'Count by threes.', disturb: 1, memory: 0},
+  {wins: span(76, 100), speed: 17, clue: 'The high numbers — seventy-six and up.', disturb: 2, memory: 0},
+  {wins: span(5, 100, 5), speed: 20, clue: 'The fives.', disturb: 2, memory: 2.6},
+  {wins: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47], speed: 24, clue: 'The lonely primes.', disturb: 2, memory: 1.8},
+];
+export function skyNumber(counterT, speed) {
+  return 1 + (((Math.floor(Math.max(0, counterT) * speed) % 100) + 100) % 100);
+}
+export function contactFromLaunch(counterT, pathLength, speed) {
+  const travel = (Math.max(0, pathLength) + FLIGHT_EXTRA) / FLIGHT_SPEED;
+  return skyNumber(counterT + travel, speed);
+}
+export function isWinningNumber(level, n) {
+  const sky = SKY[level] || SKY[0];
+  return sky.wins.includes(n);
+}
 const SETS = [
   {prize: 'star-fragment', creature: 'moon-rabbit'},
   {prize: 'pocket-observatory', creature: 'dapper-fox'},
@@ -18,7 +45,7 @@ const SETS = [
 ];
 const SPRITES = [
   'star-fragment', 'star-spectacles', 'pocket-observatory', 'moon-rabbit', 'dapper-fox', 'moon-lantern',
-  'sleepy-compass', 'midnight-invitation', 'aura-keepsake', 'everyday-penny', 'penny-purse',
+  'sleepy-compass', 'midnight-invitation', 'aura-keepsake', 'everyday-penny', 'penny-purse', 'moon-penny', 'star-token', 'gyro-ghost',
 ];
 
 function readStore() {
@@ -40,10 +67,20 @@ function readSky(level) {
     paid: !!row.paid,
     keptLit: Array.isArray(row.keptLit) ? row.keptLit.map(Boolean) : null,
     bellLit: !!row.bellLit,
+    counterT: Number(row.counterT) || 0,
+    launchId: row.launchId || 0,
+    contactNumber: Number(row.contactNumber) || 0,
+    flying: !!row.flying,
+    flight: Number(row.flight) || 0,
+    launchCounterT: Number(row.launchCounterT) || 0,
+    frozen: row.frozen && typeof row.frozen === 'object' ? row.frozen : null,
+    needAlign: !!row.needAlign,
+    lastStrike: Number(row.lastStrike) || 0,
+    clueUntil: Number(row.clueUntil) || 0,
   };
 }
 function persist(s) {
-  if (!s || typeof localStorage === 'undefined') return;
+  if (!s || typeof localStorage === 'undefined' || !alleyPlay) return;
   try {
     const store = readStore();
     store.skies[String(s.level || 0)] = {
@@ -55,17 +92,52 @@ function persist(s) {
       paid: !!s.paid,
       keptLit: (s.keptLit || []).slice(),
       bellLit: !!s.bellLit,
+      counterT: s.counterT || 0,
+      launchId: s.launchId || 0,
+      contactNumber: s.contactNumber || 0,
+      flying: s.phase === 'flying',
+      flight: s.flight || 0,
+      launchCounterT: s.launchCounterT || 0,
+      frozen: s.frozenRay ? {
+        length: s.frozenRay.length,
+        solved: !!s.frozenRay.solved,
+        receiverLit: !!s.frozenRay.receiverLit,
+        loop: !!s.frozenRay.loop,
+        blocked: s.frozenRay.blocked || null,
+        lit: (s.frozenRay.lit || []).slice(),
+        segments: (s.frozenRay.segments || []).map(seg => ({a: seg.a.slice(), b: seg.b.slice()})),
+      } : null,
+      needAlign: !!s.needAlign,
+      lastStrike: s.lastStrike || 0,
+      clueUntil: s.clueUntil || 0,
     };
     localStorage.setItem(BOOK, JSON.stringify(store));
     s.dirty = false;
     s.saveAt = s.t;
   } catch { /* quota */ }
 }
+function skyReady(s) {
+  return !!(s.bellLit && (s.keptLit || []).length && s.keptLit.every(Boolean));
+}
+function skyClue(s) {
+  const sky = SKY[s.level] || SKY[0];
+  if (!skyReady(s) || s.paid) return '';
+  if (sky.memory && s.t > (s.clueUntil || 0)) return 'Remember tonight’s numbers.';
+  return sky.clue;
+}
 function guidance(s) {
-  if (s.won || s.paid) return itemName(s.prize) + ' already left this sky. The glasses still wait.';
-  if (s.phase === 'flying') return 'A penny of starlight is on the path.';
-  if (s.bellLit && (s.keptLit || []).every(Boolean)) return 'The constellation remembers. Feed a penny to shove the keepsake.';
-  if (s.ray?.solved) return 'The path is true. Feed a penny into the lantern and shove the keepsake off the bell.';
+  if (s.won || s.paid) return itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.';
+  if (s.phase === 'flying') {
+    return s.contactNumber
+      ? 'The comet is travelling. Time the bell — it will strike on a number from 1 to 100.'
+      : 'A penny of starlight is on the path.';
+  }
+  if (skyReady(s)) {
+    if (s.needAlign) return 'The last glass drifted. Line the light to the bell again, then feed another comet.';
+    const clue = skyClue(s);
+    return (clue ? clue + ' ' : '') + 'The numbered bell is awake. Feed a penny when you can time the strike.';
+  }
+  if (s.ray?.solved) return 'The path is true. Feed a penny into the lantern.';
   if (s.ray?.loop) return 'The light is going round in circles. Turn a glass, then feed another penny.';
   if (s.ray?.blocked === 'moon') return 'The moon is in the way. Guide the light around it before you spend another penny.';
   if (s.ray?.receiverLit) return 'The sky bell is lit. A few hanging stars still need your light.';
@@ -80,68 +152,136 @@ function emptyNote() {
     : 'Practice starlight is spent. The glasses still wait.';
 }
 function feed(s) {
-  if (!s || s.won || s.phase === 'flying' || s.gesture || s.drag) return;
-  if (s.cooldown > 0) return;
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = emptyNote();
-      return;
+  if (!s || s.phase === 'flying' || s.phase === 'won' || s.gesture || s.drag) return;
+  if (s.cooldown > 0 || s.launchLock) return;
+  s.launchLock = true;
+  try {
+    if (alleyPlay) {
+      if (!takeAttempt('lookup', s.level)) {
+        s.note = emptyNote();
+        return;
+      }
+      s.started = true;
+      s.dropped = (s.dropped || 0) + 1;
+    } else {
+      if (s.ammo <= 0) {
+        s.note = emptyNote();
+        return;
+      }
+      s.ammo--;
     }
-    s.started = true;
-    s.dropped = (s.dropped || 0) + 1;
-  } else {
-    if (s.ammo <= 0) {
-      s.note = emptyNote();
-      return;
-    }
-    s.ammo--;
+    const sky = SKY[s.level] || SKY[0];
+    s.frozenRay = s.ray;
+    s.launchId = (s.launchId || 0) + 1;
+    s.launchCounterT = s.counterT || 0;
+    s.contactNumber = s.frozenRay?.receiverLit
+      ? contactFromLaunch(s.launchCounterT, s.frozenRay.length || 0, sky.speed)
+      : 0;
+    s.phase = 'flying';
+    s.flight = 0;
+    s.cooldown = 0.28;
+    s.dirty = true;
+    s.note = s.contactNumber
+      ? 'Comet away. The bell is cycling — time the strike.'
+      : 'A penny of starlight rides the glasses.';
+    persist(s);
+  } finally {
+    if (s.phase !== 'flying') s.launchLock = false;
   }
-  s.frozenRay = s.ray;
-  s.phase = 'flying';
-  s.flight = 0;
-  s.cooldown = 0.28;
-  s.dirty = true;
-  s.note = s.ray?.solved
-    ? 'A penny of starlight — the path is true.'
-    : 'A penny of starlight rides the glasses.';
 }
-function claim(s) {
+function ordinaryDrop(n) {
+  if (n % 10 === 0) return 'star-token';
+  if (n % 2 === 0) return 'moon-penny';
+  return 'everyday-penny';
+}
+function disturbPath(s) {
+  const last = Math.max(0, (s.angles || []).length - 1);
+  const steps = (SKY[s.level] || SKY[0]).disturb || 1;
+  const dir = (s.dropped || 1) % 2 ? 1 : -1;
+  if (s.angles && s.angles.length) {
+    s.angles[last] = norm(s.angles[last] + STEP * dir * steps);
+    if (steps > 1 && last > 0) s.angles[last - 1] = norm(s.angles[last - 1] + STEP * -dir);
+  }
+  s.needAlign = true;
+  refresh(s);
+}
+function ordinary(s, n) {
+  const drop = ordinaryDrop(n);
+  const c = CHAPTERS[s.chapter];
+  const [rx, ry] = c.receiver;
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'lookup');
+  }
+  takePrize(s, drop, {x: rx, y: ry});
+  s.fly = s.fly || [];
+  s.fly.push({id: drop, x: rx, y: ry, t: 0, dur: 0.55, prize: false});
+}
+function claim(s, n) {
   const prize = s.prize;
   const c = CHAPTERS[s.chapter];
   const [rx, ry] = c.receiver;
   s.paid = true;
   s.won = true;
   s.phase = 'won';
-  s.settle = 0.9;
+  s.settle = 1.1;
   s.bellLit = true;
   s.keptLit = c.stars.map(() => true);
+  s.lastStrike = n;
+  s.needAlign = false;
   if (alleyPlay) keep(prize, 'lookup');
   takePrize(s, prize, {x: rx, y: ry - 36});
   s.fly = s.fly || [];
   s.fly.push({id: prize, x: rx, y: ry - 36, t: 0, dur: 0.72, prize: true});
-  s.note = itemName(prize) + ' shoved from the sky bell — into the treasure book!';
+  s.note = 'THE COMET STRUCK ON ' + n + '. ' + n + ' was written in tonight’s stars. ' + itemName(prize) + ' FOUND.';
   s.dirty = true;
   persist(s);
 }
 function land(s) {
   const ray = s.frozenRay || s.ray;
+  const contact = s.contactNumber || 0;
   s.phase = 'playing';
   s.flight = 0;
-  if (!ray) return;
-  s.keptLit = s.keptLit || CHAPTERS[s.chapter].stars.map(() => false);
-  for (let i = 0; i < ray.lit.length; i++) if (ray.lit[i]) s.keptLit[i] = true;
-  if (ray.receiverLit) s.bellLit = true;
-  const complete = s.keptLit.every(Boolean) && s.bellLit;
-  if (complete && !s.paid) {
-    claim(s);
+  s.launchLock = false;
+  if (!ray) {
+    s.contactNumber = 0;
+    s.frozenRay = null;
     return;
   }
-  if (s.paid) s.note = 'This sky already gave its keepsake. The glasses still wait.';
+  s.keptLit = s.keptLit || CHAPTERS[s.chapter].stars.map(() => false);
+  for (let i = 0; i < (ray.lit || []).length; i++) if (ray.lit[i]) s.keptLit[i] = true;
+  if (ray.receiverLit) {
+    s.bellLit = true;
+    if (!s.clueUntil && (SKY[s.level] || SKY[0]).memory) s.clueUntil = s.t + (SKY[s.level].memory || 0);
+  }
+  const complete = s.keptLit.every(Boolean) && s.bellLit;
+  if (complete && ray.receiverLit && contact) {
+    s.lastStrike = contact;
+    if (isWinningNumber(s.level, contact) && !s.paid) {
+      claim(s, contact);
+      s.contactNumber = 0;
+      s.frozenRay = null;
+      return;
+    }
+    if (isWinningNumber(s.level, contact) && s.paid) {
+      s.note = 'THE COMET STRUCK ON ' + contact + '. This sky already gave its keepsake.';
+      ordinary(s, contact);
+    } else {
+      s.note = 'THE COMET STRUCK ON ' + contact + '. A beautiful light — but the keepsake still hangs.';
+      ordinary(s, contact);
+      disturbPath(s);
+    }
+  } else if (s.paid) s.note = 'This sky already gave its keepsake. The glasses still wait.';
   else if (ray.loop) s.note = 'The light went round in circles. The penny is gone.';
   else if (ray.blocked === 'moon') s.note = 'The moon swallowed the penny. Turn a glass.';
   else if (ray.receiverLit && !s.keptLit.every(Boolean)) s.note = 'The sky bell rang, but some stars still sleep.';
   else s.note = guidance(s);
+  if (complete && !s.needAlign && s.ray?.solved) s.needAlign = false;
+  if (s.ray?.solved) s.needAlign = false;
+  s.contactNumber = 0;
+  s.frozenRay = null;
   s.dirty = true;
+  persist(s);
 }
 function hydrate(level, saved) {
   const s = createGame(level);
@@ -166,6 +306,15 @@ function hydrate(level, saved) {
   s.started = !alleyPlay || s.dropped > 0;
   s.dirty = false;
   s.saveAt = 0;
+  s.counterT = saved.counterT || 0;
+  s.launchId = saved.launchId || 0;
+  s.launchLock = false;
+  s.needAlign = !!saved.needAlign;
+  s.lastStrike = saved.lastStrike || 0;
+  s.clueUntil = saved.clueUntil || 0;
+  s.contactNumber = 0;
+  s.launchCounterT = 0;
+  s.frozenRay = null;
   if (saved.angles && saved.angles.length === c.mirrors.length) {
     s.angles = saved.angles.map(a => Number(a) || 0);
     s.selected = clamp(saved.selected | 0, 0, s.angles.length - 1);
@@ -177,11 +326,28 @@ function hydrate(level, saved) {
     s.bellLit = true;
   }
   refresh(s);
+  if (saved.flying && saved.frozen) {
+    s.frozenRay = {
+      length: saved.frozen.length || 0,
+      solved: !!saved.frozen.solved,
+      receiverLit: !!saved.frozen.receiverLit,
+      loop: !!saved.frozen.loop,
+      blocked: saved.frozen.blocked || null,
+      lit: Array.isArray(saved.frozen.lit) ? saved.frozen.lit.slice() : [],
+      segments: Array.isArray(saved.frozen.segments) ? saved.frozen.segments : [],
+    };
+    s.phase = 'flying';
+    s.flight = saved.flight || 0;
+    s.launchCounterT = saved.launchCounterT || s.counterT;
+    s.contactNumber = saved.contactNumber || contactFromLaunch(s.launchCounterT, s.frozenRay.length, (SKY[s.level] || SKY[0]).speed);
+    s.launchLock = true;
+  }
   s.note = s.paid
-    ? itemName(s.prize) + ' already left this sky. Feed pennies if you like — the glasses wait.'
+    ? itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.'
     : alleyPlay
       ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then feed a penny of starlight.'
       : 'Turn the glasses, then feed a practice penny along the path.';
+  if (s.phase === 'flying') s.note = 'The comet is still travelling.';
   return s;
 }
 
@@ -191,18 +357,18 @@ export default {
   tables: true,
   chapterEnds: true,
   intro: alleyPlay
-    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the sky bell. Feed pennies into the lantern; each penny is a comet that rides whatever path the glasses currently make. Light every star and the bell, and the unique shoves into the treasure book. Walk away — this sky waits.'
+    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turn the glasses for free. Each penny is a comet. Wake the stars, then time the 1–100 bell — only tonight’s numbers drop the unique. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
     : 'Celeste’s workshop sky. Turn the brass glasses, then feed practice pennies along the path. Workshop scores never enter your wallet.',
   instructions: alleyPlay
-    ? 'Tap a glass to give it a notch, or drag it around. Arrows choose a glass; Left/Right or ↶↷ turn it. Each penny fed into the lantern sends a comet down the current path. Stars the comet wakes remember. When every star and the sky bell remember, the hanging keepsake shoves into the book. Z undoes, X offers a hint, Space feeds a penny. Leave and the glasses keep.'
-    : 'Turn the glasses, then feed a practice penny. Light every star and the sky bell to finish the chapter. Workshop play is free.',
+    ? 'Tap or drag a glass (free). Space feeds one penny and launches a comet along the current path. Stars stay remembered. When the numbered bell is awake, time the comet so it strikes a winning number. After a miss the last glass drifts — line it up again. Z undo, X hint.'
+    : 'Turn the glasses, then feed a practice penny. Light the stars, then time the numbered bell. Workshop play is free and writes nothing.',
   tableDetail: alleyPlay
-    ? 'This sky hangs one keepsake. Turn the glasses (free), then feed a penny of starlight. Walk away whenever you like — the glasses and the stars that already remember will wait.'
+    ? 'Glasses are free. A penny launches one comet. The unique hangs until a winning strike. Walk away — the sky waits.'
     : 'Turn the glasses, then feed a practice penny. This sky keeps while you are here.',
   liveTitle: 'A Little Starlight',
   liveDetail: alleyPlay
-    ? 'A penny of starlight rides the glasses. Shove this sky’s keepsake off the bell to keep it.'
-    : 'Turn the glasses. Feed a practice penny. Wake the constellation.',
+    ? 'Wake the constellation, then time the numbered bell. A winning strike drops this sky’s keepsake.'
+    : 'Turn the glasses. Feed a practice penny. Wake the constellation, then time the bell.',
   liveButton: 'Step up to the lantern',
   levels: CHAPTERS.map(c => c.title),
   sprites: SPRITES,
@@ -239,14 +405,20 @@ export default {
       }
       return;
     }
+    const sky = SKY[s.level] || SKY[0];
+    s.counterT = (s.counterT || 0) + Math.min(dt, 0.1);
+    s.skyFace = skyNumber(s.counterT, sky.speed);
     if (s.phase === 'flying') {
-      s.flight += Math.min(dt, 0.1) * 410;
-      if (s.flight >= (s.frozenRay?.length || 0) + 25) land(s);
+      s.flight += Math.min(dt, 0.1) * FLIGHT_SPEED;
+      if (s.flight >= (s.frozenRay?.length || 0) + FLIGHT_EXTRA) land(s);
       return;
     }
+    if (s.needAlign && s.ray?.solved) s.needAlign = false;
     if (s.phase === 'playing' && !s.gesture) {
-      const pick = (input.keys.has('ArrowRight') || input.actions.has('right') ? 1 : 0)
-        - (input.keys.has('ArrowLeft') || input.actions.has('left') ? 1 : 0);
+      const keys = input?.keys || new Set();
+      const actions = input?.actions || new Set();
+      const pick = (keys.has('ArrowRight') || actions.has('right') ? 1 : 0)
+        - (keys.has('ArrowLeft') || actions.has('left') ? 1 : 0);
       if (pick && nudge(s, s.selected, pick)) {
         s.dirty = true;
         s.note = guidance(s);
@@ -341,15 +513,22 @@ export default {
     });
     const [rx, ry] = c.receiver;
     const bellOn = !!(ray?.receiverLit || s.bellLit);
-    if (bellOn) d.glow(rx, ry, 70);
+    const ready = skyReady(s);
+    if (bellOn) d.glow(rx, ry, ready ? 90 : 70, ready ? '#f0d18f' : '#ffe8a6');
     d.item(spriteKey('pocket-observatory'), rx, ry, {
       w: 70, shadow: false,
       fallback: () => { d.circle(rx, ry, 28, '#121f3e', '#caac6f', 3); d.star(rx, ry, 16, bellOn ? '#ffe8a6' : '#635e68'); },
     });
+    if (ready) {
+      const face = s.phase === 'flying' && s.contactNumber ? s.skyFace : (s.skyFace || 1);
+      d.text(String(face).padStart(2, '0'), rx, ry + 8, 36, '#fff6d8');
+      const clue = skyClue(s);
+      if (clue) d.text(clue, rx, ry + 86, 16, '#f0d18f');
+    }
     if (!s.paid) {
-      d.item(spriteKey(s.prize), rx, ry - 58, {
-        w: 52, shadow: false,
-        fallback: () => d.star(rx, ry - 58, 18, '#e7c789'),
+      d.item(spriteKey(s.prize), rx, ry - 72, {
+        w: 58, shadow: false,
+        fallback: () => d.star(rx, ry - 72, 20, '#e7c789'),
       });
     }
     const [sx, sy] = c.source;
@@ -380,12 +559,20 @@ export default {
     }
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     const px = 132, py = 148;
+    d.item(spriteKey('penny-purse'), px, py, {w: 120, fallback: () => d.heart(px, py, 36, '#6a7a52')});
+    d.text(String(n), px, py + 70, 22, '#fff6d8');
+    d.text(n === 1 ? 'penny for the lantern' : 'pennies for the lantern', px, py + 92, 13, '#ead6a4');
+    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
+    d.text('treasures', 788, 144, 13, '#ead6a4');
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);
       const destX = f.prize ? 780 : px, destY = f.prize ? 90 : py;
       const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
       d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, 44 * (1 - u * 0.4)), fallback: () => d.star(fx, fy, 12, '#e7c789')});
+    }
+    if (s.lastStrike && s.phase !== 'flying') {
+      d.text(s.paid ? ('Struck on ' + s.lastStrike + ' — keepsake found') : ('Struck on ' + s.lastStrike), 450, 108, 20, '#f0d18f');
     }
     if (s.phase === 'won') {
       d.item(spriteKey(s.creature || 'moon-rabbit'), 450, 620, {w: 160, fallback: () => d.star(450, 620, 40)});

@@ -39,6 +39,23 @@ export function spend(amount = 1) {
   return !!api.spendPennies(amount);
 }
 
+export function tickets() {
+  if (!alleyPlay) return null;
+  try {
+    const api = fever();
+    const n = Number(api?.tickets?.() ?? api?.getState?.()?.playTickets);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  } catch { return 0; }
+}
+
+export function spendTicket(kind) {
+  if (!alleyPlay) return true;
+  if (pilotSession(params.get('stall'))) return false;
+  const api = fever();
+  if (!api?.spendTicket) return false;
+  return !!api.spendTicket(kind);
+}
+
 export function credit(amount) {
   if (!alleyPlay) return 0;
   if (pilotSession(params.get('stall'))) return 0;
@@ -78,7 +95,7 @@ function readLocal() {
 }
 
 function validTable(blob) {
-  return blob && Array.isArray(blob.pieces) && (blob.v >= 8 || blob.pieces.length > 0);
+  return blob && Array.isArray(blob.pieces) && blob.pieces.length > 0;
 }
 
 function tableFromStore(store, chapter) {
@@ -93,12 +110,7 @@ export function loadMachine(chapter = 0) {
   if (alleyPlay && pilotSession(params.get('stall'))) return null;
   const a = tableFromStore(fever()?.getState?.()?.cashDrop, chapter);
   const b = tableFromStore(readLocal(), chapter);
-  if (a && b) {
-    const savedA = Number(a.savedAt) || 0;
-    const savedB = Number(b.savedAt) || 0;
-    if (savedA !== savedB) return savedA > savedB ? a : b;
-    return (Number(a.dropped) || 0) >= (Number(b.dropped) || 0) ? a : b;
-  }
+  if (a && b) return (Number(a.dropped) || 0) >= (Number(b.dropped) || 0) ? a : b;
   return a || b;
 }
 

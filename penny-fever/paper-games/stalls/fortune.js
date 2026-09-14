@@ -1,61 +1,17 @@
-import {clamp, done, TAU} from '../draw.js';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend} from '../wallet.js?v=iris-ball-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  IRIS_CHAPTERS, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
+  caughtOf, fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
+} from '../fortune-globe.js?v=catch-1';
 
-const TOPICS = [
-  {id: 'love', label: 'Love', lead: 'In the heart — '},
-  {id: 'work', label: 'Work', lead: 'In the day’s work — '},
-  {id: 'family', label: 'Family', lead: 'At home — '},
-  {id: 'health', label: 'Health', lead: 'In the body — '},
-  {id: 'mystery', label: 'Mystery', lead: 'The glass says — '},
-];
-const GLIMPSES = [
-  {id: 'moon', name: 'The Moon', said: 'not everything that shimmers is the path.'},
-  {id: 'star', name: 'The Star', said: 'a small light after the noise. Follow it.'},
-  {id: 'sun', name: 'The Sun', said: 'warmth, and a truth you can say out loud.'},
-  {id: 'wheel', name: 'The Wheel', said: 'the turn is already underway.'},
-  {id: 'hermit', name: 'The Lantern', said: 'a light of your own is enough tonight.'},
-  {id: 'priestess', name: 'The Veil', said: 'wait for the quiet answer, not the loud one.'},
-  {id: 'world', name: 'The Circle', said: 'a circle closes. You may step through.'},
-  {id: 'tower', name: 'The Fall', said: 'a structure falls. What was true remains.'},
-];
-const CHAPTERS = [
-  {prize: 'fortune-slip', vision: 'moon', title: 'A first whisper'},
-  {prize: 'moon-lantern', vision: 'star', title: 'A coin in the sky'},
-  {prize: 'moon-brooch', vision: 'priestess', title: 'The veil keepsake'},
-  {prize: 'fortune-journal', vision: 'hermit', title: 'The lantern’s book'},
-  {prize: 'moon-festival-fan', vision: 'wheel', title: 'The turning fan'},
-  {prize: 'paper-crown', vision: 'world', title: 'The last crown'},
-];
+const BOOK = 'pennyFever.fortuneCatcher';
+const CX = 450, CY = 640;
+const TAU = Math.PI * 2;
 
-function mix(list) {
-  const a = list.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-function topicOf(id) { return TOPICS.find(t => t.id === id); }
-function prizeVision(level) { return CHAPTERS[level]?.vision; }
-function prizeItem(level) { return CHAPTERS[level]?.prize; }
-function chipBox(i) {
-  const w = 200, h = 64, gap = 16;
-  const row = i < 3 ? 0 : 1, col = i < 3 ? i : i - 3, n = row ? 2 : 3;
-  const total = n * w + (n - 1) * gap;
-  return {x: 450 - total / 2 + col * (w + gap), y: 268 + row * 76, w, h};
-}
-function hitChip(p) {
-  for (let i = 0; i < TOPICS.length; i++) {
-    const b = chipBox(i);
-    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return TOPICS[i].id;
-  }
-  return null;
-}
-function hitBall(p) {
-  return Math.hypot(p.x - 450, p.y - 660) <= 210;
-}
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -76,262 +32,269 @@ function wrapLine(d, text, x, y, size, color, maxW) {
     if (line && c.measureText(trial).width > maxW) {
       d.text(line, x, ly, size, color);
       line = word;
-      ly += size + 7;
+      ly += size + 8;
     } else line = trial;
   }
   if (line) d.text(line, x, ly, size, color);
   return ly;
 }
 
-function buildParade(s) {
-  const keepId = prizeVision(s.level);
-  const prize = GLIMPSES.find(g => g.id === keepId) || GLIMPSES[0];
-  const rest = mix(GLIMPSES.filter(g => g.id !== keepId));
-  s.reads += 1;
-  const pity = s.reads >= 5;
-  const n = 4 + s.level;
-  let parade;
-  if (pity) {
-    parade = [rest[0], rest[1], prize];
-    s.note = 'Iris steadies the glass for you.';
-  } else {
-    parade = mix([prize, ...rest]).slice(0, n);
-    if (!parade.some(g => g.id === keepId)) parade[n - 2] = prize;
-    s.note = s.reads === 1 ? 'Look into the ball. Tap when the keepsake swims forward.' : 'A penny on the cloth. Gaze again.';
-  }
-  s.parade = parade;
-  s.cursor = 0;
-  s.dwell = 0;
-  s.hold = 0;
-  s.caught = null;
+function emptyBook() {
+  return {v: 1, paid: {}, sittings: {}};
+}
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
+}
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
 }
 
-function gaze(s) {
-  if (s.result || s.won || s.phase === 'swirl' || s.phase === 'seek') return;
-  if (!s.topic) { s.note = 'Ask the tent something first.'; return; }
-  if (s.reads > 0) {
-    if (alleyPlay && (pocket() || 0) < 1) {
-      s.note = 'A penny for another gaze. Cash a ticket at Copper Falls for a five-penny stack.';
-      return;
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase, seed: s.seed, charged: !!s.charged, flashLeft: s.flashLeft,
+    globe: s.globe, fortune: s.fortune, resultN: s.resultN || 0,
+    won: !!s.won, note: s.note, reduced: !!s.reduced,
+  };
+  writeBook(book);
+}
+
+function reducedMotion() {
+  try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+}
+
+function beginGaze(s) {
+  if (s.phase === 'flash' || s.phase === 'spin') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (!takeAttempt('fortune', s.level)) {
+        s.note = retryNote();
+        return;
+      }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 17;
     }
-    if (alleyPlay && !spend(1)) {
-      s.note = 'Need a penny for another gaze.';
-      return;
+    s.globe = makeGlobe(s.level, s.seed);
+    s.phase = 'flash';
+    s.flashLeft = s.globe.flashSecs;
+    s.fortune = '';
+    s.resultN = 0;
+    s.prizeKept = false;
+    s.reduced = reducedMotion();
+    const names = s.globe.flash.map(symbolName).join(' · ');
+    s.note = s.globe.hide
+      ? 'Remember: ' + names
+      : 'Catch: ' + names;
+    persist(s);
+  } finally {
+    s.chargeLock = false;
+  }
+}
+
+function brake(s) {
+  if (s.phase !== 'spin' || !s.globe) return;
+  const i = nextLiveRing(s.globe);
+  if (i < 0) return;
+  brakeRing(s.globe, i);
+  if (allStopped(s.globe)) finishGaze(s);
+  else s.note = 'Ring ' + (i + 1) + ' holds. Brake the next.';
+  persist(s);
+}
+
+function finishGaze(s) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  const caught = caughtOf(s.globe);
+  s.fortune = fortuneFor(caught);
+  s.phase = 'result';
+  s.charged = false;
+  const prize = IRIS_CHAPTERS[s.level].prize;
+  const hit = allMatch(s.globe);
+  const win = hit && isIrisWin(s.level, n) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'fortune');
+    if (win) {
+      keep(prize, 'fortune');
+      markPaid(s.level);
+      s.won = true;
     }
-  }
-  buildParade(s);
-  s.phase = 'swirl';
-  s.anim = 0;
-}
-
-function currentGlimpse(s) {
-  if (!s.parade || !s.parade.length) return null;
-  return s.parade[Math.min(s.cursor, s.parade.length - 1)];
-}
-
-function tryCatch(s) {
-  if (s.won || s.result || s.phase !== 'seek') return;
-  const g = currentGlimpse(s);
-  if (!g) return;
-  const keepId = prizeVision(s.level);
-  const front = s.dwell > 0.12 && s.dwell < 0.92;
-  if (g.id === keepId && front) {
-    s.won = true;
-    s.caught = g;
-    s.phase = 'read';
-    s.hold = 1.2;
-    s.note = g.name + ' fills the glass.';
-    takePrize(s, prizeItem(s.level), {x: 450, y: 660});
-    return;
-  }
-  s.caught = g;
-  s.phase = 'wait';
-  s.note = 'A glimpse, not the keepsake. Gaze again if you like.';
+  } else if (win) s.won = true;
+  if (win) takePrize(s, prize, {x: CX, y: CY});
+  s.hold = 1.2;
+  if (!hit) s.note = 'A near miss — ' + caught.map(symbolName).join(' · ') + '. ' + s.fortune;
+  else s.note = s.fortune;
+  persist(s);
 }
 
 export default {
-  title: 'Iris’s Reading',
+  title: 'Catch the Fortune',
+  live: alleyPlay,
+  tables: true,
+  chapterEnds: true,
+  persist,
   intro: alleyPlay
-    ? 'Iris keeps a crystal ball in the mystic tent. A penny sits you down. Gaze into the glass. The chapter’s keepsake swims in the mist — tap when it comes forward. Miss it and another gaze costs a penny. The fifth sitting, Iris steadies the ball. Cash a ticket on the bar for five pennies if the purse is empty.'
-    : 'Iris’s workshop crystal. Choose a question, gaze, and tap when the keepsake fills the glass. Practice readings are free.',
+    ? 'Iris’s fortune globe. It flashes a sign. Brake the rings so the remembered symbols sit in the reading window. A ticket sits you down; the first try of each chapter is included. Extra gazes are a penny. The unique only drops on a true catch and tonight’s numbers.'
+    : 'The globe flashes. Brake each ring. Workshop gazes are free and write nothing.',
   instructions: alleyPlay
-    ? 'Pick a question. Gaze. Tap the ball when the keepsake is largest in the glass. Wrong glimpses are only a reading. Fifth sitting, Iris holds it still.'
-    : 'Pick a question, gaze, and tap the ball when the keepsake swims forward.',
-  levels: CHAPTERS.map(c => c.title),
-  sprites: ['fortune-slip', 'moon-penny', 'moon-brooch', 'fortune-journal', 'moon-festival-fan', 'paper-crown', 'moon-lantern'],
-  prizes: CHAPTERS.map(c => c.prize),
+    ? 'Watch the flash. Tap the globe (or Space) to brake the live ring. Rings stop in order. A miss is still a fortune. Another gaze after the first is a penny.'
+    : 'Watch, then tap to brake. Practice writes nothing.',
+  levels: IRIS_CHAPTERS.map(c => c.title),
+  sprites: ['fortune-slip', 'moon-lantern', 'moon-brooch', 'fortune-journal', 'moon-festival-fan', 'paper-crown', 'moon-penny', 'star-token', 'everyday-penny'],
+  prizes: IRIS_CHAPTERS.map(c => c.prize),
   actions: [
     {id: 'gaze', label: 'Gaze · Space'},
+    {id: 'brake', label: 'Brake the ring'},
     {id: 'again', label: alleyPlay ? 'Another gaze · 1 penny' : 'Another gaze'},
   ],
   create(level) {
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const s = {
-      level, t: 0, topic: null, phase: 'pick', reads: 0,
-      parade: null, cursor: 0, dwell: 0, anim: 0, hold: 0,
-      won: false, caught: null,
-      note: 'Ask the tent something. Then gaze.',
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 1) * 4099,
+      globe: saved.globe || null, flashLeft: saved.flashLeft || 0,
+      charged: !!saved.charged, fortune: saved.fortune || '', resultN: saved.resultN || 0,
+      won: !!saved.won || chapterPaid(level), hold: 0, hidden: false, reduced: !!saved.reduced,
+      note: saved.note || (IRIS_CHAPTERS[level] || IRIS_CHAPTERS[0]).title + '. Gaze when you are ready.',
     };
+    if (s.phase === 'flash' || s.phase === 'spin') {
+      if (!s.globe) s.globe = makeGlobe(level, s.seed);
+    }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt) {
     s.t += dt;
-    if (s.phase === 'swirl') {
-      s.anim += dt;
-      if (s.anim >= 0.9) {
-        s.phase = 'seek';
-        s.cursor = 0;
-        s.dwell = 0;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (s.phase === 'flash') {
+      s.flashLeft -= dt;
+      if (s.flashLeft <= 0) {
+        s.phase = 'spin';
+        s.note = 'Brake the rings. Tap the globe.';
+        persist(s);
       }
     }
-    if (s.phase === 'seek' && s.parade) {
-      const span = s.reads >= 5 ? 1.35 : 0.72;
-      s.dwell += dt;
-      if (s.dwell >= span) {
-        s.dwell = 0;
-        s.cursor += 1;
-        if (s.cursor >= s.parade.length) {
-          s.phase = 'wait';
-          s.note = 'The mist closed. Gaze again if you like.';
-        }
-      }
-    }
-    if (s.won && !s.result) {
+    if (s.phase === 'spin' && s.globe) stepGlobe(s.globe, dt, s.reduced);
+    if (s.won && s.hold > 0 && !s.result) {
       s.hold -= dt;
       if (s.hold <= 0) {
-        const prize = prizeItem(s.level);
-        done(s, 'A keepsake in the glass',
-          itemName(prize) + ' swam up in the ball. Iris covers the cloth.',
-          {prize, celebrate: false});
+        done(s, 'Iris caught a fortune',
+          itemName(IRIS_CHAPTERS[s.level].prize) + ' — ' + s.fortune,
+          {prize: IRIS_CHAPTERS[s.level].prize, won: true});
       }
-    }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (type !== 'down' || s.result || s.won) return;
-    if (s.phase === 'pick' || s.phase === 'wait') {
-      const topic = hitChip(p);
-      if (topic) {
-        s.topic = topic;
-        s.note = 'A question of ' + topicOf(topic).label.toLowerCase() + '. Gaze when you are ready.';
-        return;
-      }
+    if (type !== 'down' || s.result) return;
+    const inGlobe = Math.hypot(p.x - CX, p.y - CY) <= 230;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      if (inGlobe) beginGaze(s);
+      return;
     }
-    if (s.phase === 'seek' && hitBall(p)) tryCatch(s);
-    if ((s.phase === 'pick' || s.phase === 'wait') && s.topic && hitBall(p)) gaze(s);
+    if (s.phase === 'spin' && inGlobe) brake(s);
   },
   action(s, id) {
-    if (id === 'gaze' || id === 'again') gaze(s);
+    if (id === 'gaze' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Gaze again when you are ready.';
+        persist(s);
+        return;
+      }
+      beginGaze(s);
+    }
+    if (id === 'brake') brake(s);
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === ' ') gaze(s);
-    if (k === '1') { s.topic = 'love'; s.note = 'A question of love.'; }
-    if (k === '2') { s.topic = 'work'; s.note = 'A question of work.'; }
-    if (k === '3') { s.topic = 'family'; s.note = 'A question of family.'; }
-    if (k === '4') { s.topic = 'health'; s.note = 'A question of health.'; }
-    if (k === '5') { s.topic = 'mystery'; s.note = 'Whatever the glass knows.'; }
+    if (k === ' ' || k === 'Enter') {
+      if (s.phase === 'spin') brake(s);
+      else this.action(s, 'gaze');
+    }
   },
   draw(s, d) {
+    const ch = IRIS_CHAPTERS[s.level];
     const c = d.c;
-    const lead = s.topic ? topicOf(s.topic).lead : '';
-    d.text('Iris’s crystal', 450, 148, 28, '#efe6d0');
-
-    const showChips = s.phase === 'pick' || s.phase === 'wait' || !s.topic;
-    if (showChips) {
-      d.text(s.phase === 'wait' ? 'Ask again, or gaze' : 'What shall she read?', 450, 232, 32, '#fff6d8');
-      TOPICS.forEach((t, i) => {
-        const b = chipBox(i);
-        const on = s.topic === t.id;
-        roundRect(c, b.x, b.y, b.w, b.h, 14);
-        c.fillStyle = on ? '#7a4488f2' : '#2a1838ee';
-        c.fill();
-        c.strokeStyle = on ? '#f0d18f' : '#e8c878cc';
-        c.lineWidth = 3;
-        c.stroke();
-        d.text(t.label, b.x + b.w / 2, b.y + 42, 26, on ? '#fff6d8' : '#f3e2bd');
-      });
-    } else {
-      d.text(topicOf(s.topic).label + ' · look into the glass', 450, 250, 30, '#fff6d8');
+    d.text('Catch the Fortune', 450, 118, 28, '#efe6d0');
+    d.text(ch.title, 450, 154, 20, '#d2b98c');
+    if (!s.won) {
+      d.item(spriteKey(ch.prize), 800, 148, {w: 70, fallback: () => d.star(800, 148, 24)});
+      d.text('waiting', 800, 202, 14, '#ead6a4');
     }
 
-    const cx = 450, cy = 660, r = 210;
-    d.ellipse(cx + 8, 900, 140, 26, '#12233566');
-    roundRect(c, cx - 80, 848, 160, 42, 8);
-    c.fillStyle = '#4a3058';
+    c.beginPath();
+    c.arc(CX, CY, 228, 0, TAU);
+    c.fillStyle = '#2a1838ee';
     c.fill();
     c.strokeStyle = '#e8c878';
+    c.lineWidth = 6;
+    c.stroke();
+    c.beginPath();
+    c.arc(CX, CY, 214, 0, TAU);
+    c.strokeStyle = '#c6a267';
     c.lineWidth = 2;
     c.stroke();
 
-    const g = c.createRadialGradient(cx - 40, cy - 50, 20, cx, cy, r);
-    g.addColorStop(0, '#c8b8f0cc');
-    g.addColorStop(0.45, '#6a4a98aa');
-    g.addColorStop(1, '#241038ee');
-    c.beginPath();
-    c.arc(cx, cy, r, 0, TAU);
-    c.fillStyle = g;
+    roundRect(c, CX - 54, CY - 236, 108, 36, 8);
+    c.fillStyle = '#f0d18fcc';
     c.fill();
-    c.strokeStyle = '#f0d18fcc';
-    c.lineWidth = 4;
-    c.stroke();
+    d.text('window', CX, CY - 212, 14, '#3a2a18');
 
-    c.save();
-    c.beginPath();
-    c.arc(cx, cy, r - 8, 0, TAU);
-    c.clip();
-    const mist = s.phase === 'swirl' ? 1 : s.phase === 'seek' ? 0.35 : 0.18;
-    for (let i = 0; i < 18; i++) {
-      const a = s.t * (0.4 + i * 0.03) + i;
-      d.circle(
-        cx + Math.cos(a) * (40 + (i % 5) * 18),
-        cy + Math.sin(a * 1.3) * (30 + (i % 4) * 16),
-        18 + (i % 3) * 8,
-        `rgba(240,220,255,${0.04 + mist * 0.08})`,
-      );
+    const showFlash = s.phase === 'flash' || (s.phase === 'spin' && s.globe && !s.globe.hide);
+    if (s.globe && showFlash) {
+      const names = s.globe.flash.map(symbolName);
+      names.forEach((name, i) => {
+        d.text(name, CX, CY - 40 + i * 36, 28, '#fff6d8');
+      });
+    } else if (s.phase === 'idle') {
+      d.text('Gaze', CX, CY, 32, '#ead6a4');
     }
-    const glimpse = (s.phase === 'seek' || s.phase === 'read' || (s.phase === 'wait' && s.caught))
-      ? (s.phase === 'seek' ? currentGlimpse(s) : s.caught)
-      : null;
-    if (glimpse) {
-      const span = s.reads >= 5 ? 1.35 : 0.72;
-      const u = s.phase === 'seek' ? clamp(s.dwell / span, 0, 1) : 1;
-      const scale = s.phase === 'seek' ? (0.55 + Math.sin(u * Math.PI) * 0.55) : 1;
-      const keep = glimpse.id === prizeVision(s.level);
-      if (keep) d.glow(cx, cy, 90 * scale, '#f0d18f');
-      const prize = keep ? prizeItem(s.level) : null;
-      if (prize) d.item(spriteKey(prize), cx, cy + 10, {w: 120 * scale, shadow: false, fallback: () => d.star(cx, cy, 36 * scale)});
-      else d.star(cx, cy, 34 * scale, keep ? '#f0d18f' : '#c8b8f0');
-      d.text(glimpse.name, cx, cy + 108, 26, '#fff6d8');
-    } else if (s.phase === 'swirl') {
-      d.text('the mist turns', cx, cy + 8, 28, '#efe6d0');
-    } else {
-      d.text('the glass waits', cx, cy + 8, 28, '#c8b8d8');
-    }
-    c.restore();
 
-    c.beginPath();
-    c.ellipse(cx - 48, cy - 70, 36, 16, -0.5, 0, TAU);
-    c.fillStyle = '#ffffff33';
-    c.fill();
-
-    if (s.phase === 'read' || s.phase === 'wait') {
-      roundRect(c, 80, 920, 740, 200, 20);
-      c.fillStyle = '#1a1028f2';
-      c.fill();
-      c.strokeStyle = '#e8c878';
-      c.lineWidth = 4;
-      c.stroke();
-      const spoken = s.caught;
-      if (spoken) wrapLine(d, lead + spoken.said, 450, 968, 26, '#fff6d8', 660);
-      wrapLine(d, s.note, 450, spoken ? 1054 : 988, 22, '#f0d18f', 660);
-    } else {
-      d.text(s.note, 450, 1020, 24, '#f0d18f');
+    if (s.globe && (s.phase === 'spin' || s.phase === 'result' || s.phase === 'flash')) {
+      s.globe.rings.forEach((ring, r) => {
+        const rad = 168 - r * 46;
+        c.beginPath();
+        c.arc(CX, CY, rad, 0, TAU);
+        c.strokeStyle = ring.stopped ? '#c8e878' : '#e8c878';
+        c.lineWidth = ring.stopped ? 5 : 3;
+        c.stroke();
+        ring.glyphs.forEach((id, i) => {
+          const a = ring.angle + (i / ring.n) * TAU - Math.PI / 2;
+          const x = CX + Math.cos(a) * rad;
+          const y = CY + Math.sin(a) * rad;
+          const inWindow = slotAt(ring.angle, ring.n) === i;
+          d.text(symbolName(id).slice(0, 4), x, y + 6, inWindow ? 16 : 13, inWindow ? '#fff6d8' : '#cbb890');
+        });
+      });
     }
+
+    wrapLine(d, s.note, 450, 920, 22, '#f0d18f', 720);
+    if (s.phase === 'result' && s.fortune) wrapLine(d, s.fortune, 450, 1020, 20, '#fff6d8', 700);
+    const n = alleyPlay ? pocket() : null;
+    if (n == null) d.text('practice', 450, 1160, 16, '#ead6a4');
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
-    const sits = s.reads + (s.reads === 1 ? ' sitting' : ' sittings');
-    return purse + ' · ' + sits + ' · ' + s.note;
+    return purse + ' · ' + s.note;
   },
 };

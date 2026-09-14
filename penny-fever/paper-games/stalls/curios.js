@@ -1,520 +1,340 @@
-import {clamp, dist, lerp, done} from '../draw.js?v=ink-1';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  makePuzzle, proveUnique, resultNumber, isCabinetWin, ordinaryFor, CABINET_PRIZES,
+} from '../cabinet-puzzles.js?v=ritual-2';
 
-const DUMP_CAP = 24;
-const STROKE = 0.52;
-const BOOK = 'pennyFever.clockworkMenagerie';
-const VECTORS = [{x: 0, y: -1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}];
-const HOME = {x: 382, y: 268};
-const SLOT = {x: 168, y: 978};
-const SETS = [
-  {prize: 'clockwork-key', mix: ['heart-gear', 'cabinet-key'], path: [12, 8, 4, 5, 1]},
-  {prize: 'display-dome', mix: ['heart-gear', 'clockwork-key', 'cabinet-key'], path: [12, 13, 9, 5, 4, 0, 1]},
-  {prize: 'clockwork-butterfly', mix: ['heart-gear', 'cabinet-key'], path: [12, 8, 9, 10, 6, 2, 1]},
-  {prize: 'tin-style-robot', mix: ['heart-gear', 'cabinet-key', 'clockwork-key'], path: [12, 13, 14, 15, 11, 7, 3, 2, 1]},
-  {prize: 'crystal-cradle', mix: ['heart-gear', 'display-dome', 'cabinet-key'], path: [12, 13, 14, 10, 9, 5, 1]},
-  {prize: 'curio-cabinet-album', mix: ['heart-gear', 'clockwork-butterfly', 'cabinet-key'], path: [12, 8, 9, 13, 14, 10, 6, 2, 1]},
-];
-const LOOK = {
-  'clockwork-key': '#c4a46a', 'cabinet-key': '#b89758', 'heart-gear': '#c67483',
-  'display-dome': '#9eb8c4', 'clockwork-butterfly': '#d2b07a', 'tin-style-robot': '#8a9a8a',
-  'crystal-cradle': '#b8a0c4', 'curio-cabinet-album': '#c4a46a',
-};
-const SPRITES = [
-  'clockwork-key', 'cabinet-key', 'heart-gear', 'display-dome', 'clockwork-butterfly',
-  'tin-style-robot', 'crystal-cradle', 'curio-cabinet-album', 'penny-purse', 'everyday-penny',
+const BOOK = 'pennyFever.cabinetThatLies';
+const LEVELS = [
+  'Three drawers, one honest card',
+  'Two cards, four drawers',
+  'One of the cards is lying',
+  'The curtain moves a moth',
+  'The looking-glass reverses',
+  'Three voices, one truth',
 ];
 
-function centre(i) {
-  return {x: 247.5 + (i % 4) * 135, y: 520 + Math.floor(i / 4) * 128};
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
 }
-function direction(a, b) {
-  if (b === a - 4) return 0;
-  if (b === a + 1) return 1;
-  if (b === a + 4) return 2;
-  return 3;
-}
-function ports(tile) { return tile.base.map(p => (p + tile.rot) % 4); }
-function mint(id, tile, unique) {
-  const c = centre(tile);
-  return {
-    id, tile, unique: !!unique, prize: !!unique,
-    x: c.x, y: c.y, ox: c.x, oy: c.y, tx: c.x, ty: c.y, slide: 1,
-    color: LOOK[id] || '#c4a46a',
-  };
-}
-function at(p) { return {x: lerp(p.ox, p.tx, p.slide), y: lerp(p.oy, p.ty, p.slide)}; }
-
-function trace(tiles) {
-  const walk = [];
-  let i = 12, enter = 3, lip = false;
-  const seen = new Set();
-  while (!seen.has(i)) {
-    seen.add(i);
-    const p = ports(tiles[i]);
-    if (!p.includes(enter)) break;
-    walk.push(i);
-    const out = p.find(x => x !== enter);
-    if (i === 1 && out === 0) { lip = true; break; }
-    const r = Math.floor(i / 4), col = i % 4;
-    const nr = r + VECTORS[out].y, nc = col + VECTORS[out].x;
-    if (nr < 0 || nr > 3 || nc < 0 || nc > 3) break;
-    i = nr * 4 + nc;
-    enter = (out + 2) % 4;
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
   }
-  return {walk, lip};
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
+}
+function hit(p, b) {
+  return b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
+}
+function drawerBox(i, n) {
+  const w = n > 3 ? 160 : 200, h = 150, gap = 18;
+  const total = n * w + (n - 1) * gap;
+  return {x: 450 - total / 2 + i * (w + gap), y: 560, w, h};
+}
+function clueBox(i) {
+  return {x: 80, y: 240 + i * 78, w: 740, h: 68};
 }
 
-function readStore() {
-  if (typeof localStorage === 'undefined') return {v: 1, tables: {}};
+function emptyBook() {
+  return {v: 1, tables: {}};
+}
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
     if (blob && blob.v === 1 && blob.tables) return blob;
-  } catch { /* ignore */ }
-  return {v: 1, tables: {}};
-}
-function snapshot(s) {
-  return {
-    tiles: s.tiles.map(t => ({base: t.base.slice(), rot: t.rot})),
-    pieces: s.pieces.filter(p => p.tile >= 0).map(p => ({id: p.id, tile: p.tile, unique: !!p.unique})),
-    dropped: s.dropped, score: s.score, paid: s.paid.slice(), seen: s.seen.slice(),
-    selected: s.selected, restock: s.restock | 0,
-  };
+  } catch {}
+  return emptyBook();
 }
 function persist(s) {
-  if (!s) return;
+  if (!alleyPlay || typeof localStorage === 'undefined' || !s) return;
   try {
-    if (typeof localStorage === 'undefined') return;
-    const store = readStore();
-    store.tables[String(s.level || 0)] = snapshot(s);
-    localStorage.setItem(BOOK, JSON.stringify(store));
-  } catch { /* quota */ }
-  s.dirty = false;
-  s.saveAt = s.t;
-}
-
-function plant(s, rng) {
-  const set = SETS[s.level] || SETS[0];
-  const used = new Set(s.pieces.filter(p => p.tile >= 0).map(p => p.tile));
-  if (!s.paid.includes(set.prize) && !s.pieces.some(p => p.id === set.prize && p.tile >= 0)) {
-    let tile = set.path[Math.max(1, Math.floor(set.path.length / 2))];
-    if (used.has(tile) || tile === 1) tile = set.path.find(i => i !== 1 && i !== 12 && !used.has(i)) ?? set.path[1];
-    s.pieces.push(mint(set.prize, tile, true));
-    used.add(tile);
-    if (!s.seen.includes(set.prize)) s.seen.push(set.prize);
-  }
-  const want = 3 + s.level;
-  const fillers = s.pieces.filter(p => !p.unique && p.tile >= 0).length;
-  for (let n = fillers; n < want; n++) {
-    const empties = [];
-    for (let i = 0; i < 16; i++) if (!used.has(i) && i !== 1) empties.push(i);
-    if (!empties.length) break;
-    const tile = empties[Math.floor(rng() * empties.length)];
-    const id = set.mix[n % set.mix.length];
-    s.pieces.push(mint(id, tile, false));
-    used.add(tile);
-  }
-}
-
-function hydrate(blob, level, rng) {
-  const set = SETS[level] || SETS[0];
-  const tiles = (blob.tiles || []).map(t => ({
-    base: Array.isArray(t.base) ? t.base.slice() : [0, 1],
-    rot: (t.rot | 0) % 4,
-  }));
-  if (tiles.length !== 16) return null;
-  const pieces = (blob.pieces || []).map(p => mint(p.id, p.tile | 0, !!p.unique || p.id === set.prize));
-  const s = {
-    level, t: 0, tiles, pieces, path: set.path.slice(), prize: set.prize,
-    selected: blob.selected ?? 12, running: false, beetle: {x: SLOT.x, y: SLOT.y - 40},
-    walk: [], route: [], lip: false, stroke: 0, queue: 0, cooldown: 0,
-    dropped: blob.dropped || 0, score: blob.score || 0,
-    paid: Array.isArray(blob.paid) ? blob.paid.slice() : [],
-    seen: Array.isArray(blob.seen) ? blob.seen.slice() : [],
-    restock: blob.restock || 0, ammo: alleyPlay ? 0 : 12 + level * 3,
-    total: alleyPlay ? 0 : 12 + level * 3, started: !alleyPlay,
-    fly: [], dirty: false, saveAt: 0, angle: 0,
-    note: alleyPlay ? 'The garden waited. Feed a penny to wind the works.' : 'Turn the discs, then wind the traveller.',
-  };
-  plant(s, rng);
-  return s;
-}
-
-function fresh(level, rng) {
-  const set = SETS[level] || SETS[0];
-  const path = set.path;
-  const tiles = Array.from({length: 16}, () => ({base: [0, 1], rot: Math.floor(rng() * 4)}));
-  path.forEach((i, n) => {
-    tiles[i] = {
-      base: [n ? direction(i, path[n - 1]) : 3, n < path.length - 1 ? direction(i, path[n + 1]) : 0],
-      rot: 1 + Math.floor(rng() * 3),
+    const book = readBook();
+    book.tables[String(s.level)] = {
+      seed: s.seed, phase: s.phase, opened: (s.opened || []).slice(),
+      cluesOpen: (s.cluesOpen || []).slice(),
+      curtain: !!s.curtain, glass: !!s.glass,
+      curtainSeen: !!s.curtainSeen, glassSeen: !!s.glassSeen,
+      inspect: s.inspect, choice: s.choice, mistakes: s.mistakes, hints: s.hints,
+      paid: !!s.paid, won: !!s.won, resultN: s.resultN || 0,
+      charged: !!s.charged, launchId: s.launchId || 0,
     };
-  });
-  const ammo = 12 + level * 3;
-  const s = {
-    level, t: 0, tiles, pieces: [], path: path.slice(), prize: set.prize,
-    selected: 12, running: false, beetle: {x: SLOT.x, y: SLOT.y - 40},
-    walk: [], route: [], lip: false, stroke: 0, queue: 0, cooldown: 0,
-    dropped: 0, score: 0, paid: [], seen: [], restock: 0,
-    ammo: alleyPlay ? 0 : ammo, total: ammo, started: !alleyPlay,
-    fly: [], dirty: !!alleyPlay, saveAt: 0, angle: -Math.PI / 2,
-    note: alleyPlay
-      ? 'The unique sits in the garden. Turn the rails, then feed a penny to shove.'
-      : 'Turn the discs so the glow kisses the door, then wind.',
-  };
-  plant(s, rng);
-  return s;
+    localStorage.setItem(BOOK, JSON.stringify(book));
+  } catch {}
 }
 
-function rotate(s, i) {
-  if (s.stroke > 0 || i < 0 || i > 15) return;
-  s.selected = i;
-  s.tiles[i].rot = (s.tiles[i].rot + 1) % 4;
-  s.dirty = true;
-  const {walk, lip} = trace(s.tiles);
-  const on = s.pieces.some(p => p.unique && p.tile >= 0 && walk.includes(p.tile));
-  if (lip && on) s.note = 'The unique sits on a railway that kisses the door. Wind the works.';
-  else if (lip) s.note = 'The railway reaches the door — but the unique is off the rails.';
-  else if (on) s.note = 'The unique is on the glow, yet the door is turned away.';
-  else s.note = 'Turn the rails. The glow is the shove.';
+function emptyNote() {
+  return alleyPlay ? 'A penny to open the cabinet.' : 'Open a practice mystery.';
 }
 
-function flyHome(s, piece, from) {
-  s.fly = s.fly || [];
-  s.fly.push({
-    id: piece.id, x: from.x, y: from.y, t: 0, dur: 0.7,
-    prize: !!piece.unique, color: piece.color,
-  });
+function beginMystery(s) {
+  if (s.phase === 'mystery') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (alleyPlay) {
+        if (!takeAttempt('curios', s.level)) { s.note = retryNote(); return; }
+      }
+      s.charged = true;
+      s.launchId = (s.launchId || 0) + 1;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 97;
+    }
+    s.puzzle = makePuzzle(s.level, s.seed);
+    s.phase = 'mystery';
+    s.opened = [];
+    s.cluesOpen = s.puzzle.clues.map((_, i) => i === 0);
+    s.curtain = false;
+    s.glass = false;
+    s.curtainSeen = false;
+    s.glassSeen = false;
+    s.inspect = -1;
+    s.choice = -1;
+    s.mistakes = 0;
+    s.hints = 0;
+    s.prizeKept = false;
+    s.note = s.puzzle.rule;
+    persist(s);
+  } finally {
+    s.chargeLock = false;
+  }
 }
 
-function payout(s, piece, from) {
-  const prize = (SETS[s.level] || SETS[0]).prize;
-  const won = piece.id === prize || piece.unique;
-  flyHome(s, piece, from);
-  s.dirty = true;
-  if (won && !s.paid.includes(prize)) {
-    s.paid.push(prize);
-    if (alleyPlay) keep(prize, 'curios');
-    takePrize(s, prize);
-    done(s, 'A most satisfactory little expedition',
-      itemName(prize) + ' shoved through the keyhole — into the treasure book!',
-      {prize, won: true});
-    s.note = itemName(prize) + ' through the door — into the treasure book!';
+function inspectDrawer(s, drawer) {
+  if (s.phase !== 'mystery' || s.choice >= 0 || !s.puzzle) return;
+  const d = s.puzzle.drawers[drawer];
+  if (!d) return;
+  if (s.inspect === drawer) {
+    accuse(s, drawer);
     return;
   }
-  s.score += 1;
-  s.note = won
-    ? itemName(prize) + ' already lives in the book. Digby caught it again.'
-    : itemName(piece.id) + ' tumbled into Digby’s catching tray.';
+  s.inspect = drawer;
+  s.note = 'The ' + d.label + ' drawer. ' + d.color + ' handle, ' + d.emblem + ' mark. Tap again to name it.';
+  persist(s);
 }
 
-function planShove(s) {
-  const {walk, lip} = trace(s.tiles);
-  const byTile = new Map();
-  for (const p of s.pieces) if (p.tile >= 0) byTile.set(p.tile, p);
-  const occupied = new Set(byTile.keys());
-  const moves = [];
-  for (let i = walk.length - 1; i >= 0; i--) {
-    const tile = walk[i];
-    const piece = byTile.get(tile);
-    if (!piece) continue;
-    if (i === walk.length - 1 && lip && tile === 1) {
-      moves.push({piece, from: tile, to: -1, claim: true});
-      occupied.delete(tile);
-      continue;
-    }
-    if (i === walk.length - 1) continue;
-    const dest = walk[i + 1];
-    if (occupied.has(dest)) continue;
-    moves.push({piece, from: tile, to: dest, claim: false});
-    occupied.delete(tile);
-    occupied.add(dest);
-  }
-  return {walk, lip, moves};
-}
-
-function startWind(s) {
-  const plan = planShove(s);
-  s.walk = plan.walk;
-  s.lip = plan.lip;
-  s.stroke = 0.001;
-  s.started = true;
-  const route = plan.walk.map(centre);
-  route.unshift({x: SLOT.x, y: SLOT.y - 18});
-  if (plan.lip) route.push(HOME);
-  s.route = route;
-  s.beetle = {...route[0]};
-  for (const m of plan.moves) {
-    const from = centre(m.from);
-    m.piece.ox = from.x;
-    m.piece.oy = from.y;
-    m.piece.slide = 0;
-    if (m.claim) {
-      m.piece.tx = HOME.x;
-      m.piece.ty = HOME.y;
-      m.piece.tile = -1;
-      payout(s, m.piece, from);
-    } else {
-      const to = centre(m.to);
-      m.piece.tx = to.x;
-      m.piece.ty = to.y;
-      m.piece.tile = m.to;
-    }
-  }
-  s.pieces = s.pieces.filter(p => p.tile >= 0);
-  if (!plan.moves.length) {
-    s.note = plan.lip
-      ? 'The railway kisses the door, but nothing sat on the rails to shove.'
-      : 'A penny into the works — that track does not reach the door.';
-  } else if (!plan.moves.some(m => m.claim) && plan.lip) {
-    s.note = 'The traveller shoved the garden one bed toward the door.';
-  } else if (!plan.lip) {
-    s.note = 'The works shoved, then jammed. Turn a disc.';
-  }
-  s.dirty = true;
-}
-
-function restock(s, rng) {
-  const set = SETS[s.level] || SETS[0];
-  const used = new Set(s.pieces.filter(p => p.tile >= 0).map(p => p.tile));
-  const empties = [12, 13, 14, 15].filter(i => !used.has(i));
-  if (!empties.length) return;
-  const id = set.mix[Math.floor(rng() * set.mix.length)];
-  s.pieces.push(mint(id, empties[Math.floor(rng() * empties.length)], false));
-  s.note = itemName(id) + ' settled at the back of the garden.';
-  s.dirty = true;
-}
-
-function bumpRestock(s) {
-  s.restock += 1;
-  if (s.restock % 7 === 0) restock(s, Math.random);
-}
-
-function drop(s) {
-  if (s.stroke > 0 || s.cooldown > 0) return;
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny in the purse.';
-      return;
-    }
-    s.started = true;
-    s.dropped = (s.dropped || 0) + 1;
-  } else {
-    if (s.ammo <= 0) {
-      s.note = 'No practice pennies left. The garden still waits.';
-      return;
-    }
-    s.ammo--;
-  }
-  s.cooldown = 0.22;
-  bumpRestock(s);
-  startWind(s);
-}
-
-function dump(s) {
-  if (s.cooldown > 0 && s.queue > 0) return;
-  const have = alleyPlay ? (pocket() || 0) : s.ammo;
-  const take = Math.min(DUMP_CAP, Math.max(0, have | 0));
-  if (take < 1) {
-    s.note = alleyPlay ? 'The purse is empty.' : 'No practice pennies left.';
+function accuse(s, drawer) {
+  if (s.phase !== 'mystery' || s.choice >= 0 || s.chargeLock) return;
+  if (!s.puzzle || drawer < 0 || drawer >= s.puzzle.drawers.length) return;
+  if (s.puzzle.kind === 'memory' && !s.curtainSeen) {
+    s.note = 'Pull the curtain before you name a drawer.';
     return;
   }
-  if (alleyPlay) {
-    if (!spend(take)) {
-      s.note = 'Need pennies in the pocket.';
-      return;
-    }
-    s.started = true;
-  } else {
-    s.ammo -= take;
+  if (s.puzzle.kind === 'mirror' && !s.glassSeen) {
+    s.note = 'Slide the looking-glass first.';
+    return;
   }
-  s.queue += take;
-  s.dropped = (s.dropped || 0) + take;
-  s.cooldown = 0.08;
-  s.note = take === 1 ? 'One penny into the winding slot.' : take + ' pennies dumped into the works.';
+  s.choice = drawer;
+  s.phase = 'reveal';
+  const ok = drawer === s.puzzle.solution;
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  const prize = CABINET_PRIZES[s.level];
+  if (!ok) {
+    s.mistakes += 1;
+    s.note = 'The ' + s.puzzle.drawers[drawer].label + ' drawer is empty. The curiosity was ' + s.puzzle.drawers[s.puzzle.solution].label + '.';
+    s.charged = false;
+    persist(s);
+    return;
+  }
+  const drop = ordinaryFor(n);
+  const win = isCabinetWin(s.level, n) && !s.paid;
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'curios');
+    if (win) {
+      keep(prize, 'curios');
+      s.paid = true;
+      s.won = true;
+    }
+  } else if (win) s.won = true;
+  if (win) takePrize(s, prize, {x: 450, y: 200});
+  s.note = 'THE DRAWER WAS TRUE. Result ' + n + (win ? '. ' + itemName(prize) + ' FOUND.' : '. A beautiful find — the unique still waits.');
+  s.hold = 1.2;
+  s.charged = false;
+  persist(s);
 }
 
 export default {
-  title: 'Clockwork Menagerie',
+  title: 'The Cabinet That Lies',
   live: alleyPlay,
   tables: true,
-  chapterEnds: false,
-  tableDetail: 'A new garden in Digby’s cabinet. Walk away whenever you like — this chapter keeps. The unique waits on the brass beds until you shove it through the door.',
-  intro: 'Digby’s cabinet is alive. Six gardens, six exhibits. Feed a penny into the winding slot and the brass traveller shoves everything on the connected railway one bed toward the keyhole door. The chapter’s unique sits among the gears. Shove it through and it goes in the treasure book. Walk away — that garden waits.',
+  chapterEnds: true,
+  intro: alleyPlay
+    ? 'A living sideshow cabinet. Several drawers. Several clues. Something is lying. A penny opens one mystery. Solve it for a 1–100 result; tonight’s numbers release this chapter’s curiosity. Wrong drawers never secretly move the answer.'
+    : 'Inspect the clues, then name the drawer. Workshop mysteries are free and write nothing.',
   instructions: alleyPlay
-    ? 'Tap a disc to turn it. The glow is the shove. Each penny winds the traveller once — sit still and nothing falls. Leave and the garden keeps. Dump the purse for a longer wind. The unique through the keyhole stamps the book.'
-    : 'Tap a disc to turn it. Wind the traveller to shove curios along the glow. Workshop scores never enter your wallet.',
-  levels: [
-    'The runaway key',
-    'Under the display dome',
-    'Bring the butterfly home',
-    'The tin traveller',
-    'Crystal in the lower beds',
-    'The cabinet’s long way home',
-  ],
-  sprites: SPRITES,
-  prizes: SETS.map(set => set.prize),
+    ? 'Open a clue card. Tap a drawer to inspect, tap again to accuse. A penny starts a new mystery. The unique only drops on a correct drawer and a winning number.'
+    : 'Read the cards, inspect a drawer, tap again to name it. Practice writes nothing.',
+  levels: LEVELS,
+  sprites: ['clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot', 'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny'],
+  prizes: CABINET_PRIZES.slice(),
   actions: [
-    {id: 'rotate', label: 'Turn chosen disc'},
-    {id: 'wind', label: alleyPlay ? 'Wind · 1 penny' : 'Wind the traveller'},
-    {id: 'dump', label: alleyPlay ? 'Dump the purse' : 'Dump the rest'},
+    {id: 'open', label: alleyPlay ? 'Open a mystery · 1 penny' : 'Open a practice mystery'},
+    {id: 'hint', label: 'A small hint'},
+    {id: 'curtain', label: 'Pull the curtain'},
+    {id: 'glass', label: 'Slide the looking-glass'},
   ],
   persist,
-  create(level, rng) {
-    const roll = rng || Math.random;
-    const saved = readStore().tables[String(level)];
-    if (saved && Array.isArray(saved.tiles) && saved.tiles.length === 16) {
-      const s = hydrate(saved, level, roll);
-      if (s) {
-        bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
-        return s;
-      }
-    }
-    const s = fresh(level, roll);
-    persist(s);
+  create(level) {
+    const saved = alleyPlay ? (readBook().tables[String(level)] || {}) : {};
+    const s = {
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 1) * 7919,
+      puzzle: saved.seed ? makePuzzle(level, saved.seed) : null,
+      opened: saved.opened || [], cluesOpen: saved.cluesOpen || [],
+      curtain: !!saved.curtain, glass: !!saved.glass,
+      curtainSeen: !!saved.curtainSeen, glassSeen: !!saved.glassSeen,
+      inspect: saved.inspect ?? -1,
+      choice: saved.choice ?? -1, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
+      paid: !!saved.paid, won: !!saved.won, resultN: saved.resultN || 0,
+      charged: !!saved.charged, launchId: saved.launchId || 0, hold: 0,
+      note: saved.phase === 'mystery' ? 'The cabinet is still waiting.' : 'A penny opens a mystery.',
+    };
+    if (s.phase === 'mystery' && !s.puzzle) s.puzzle = makePuzzle(level, s.seed);
+    if (s.puzzle && !proveUnique(s.puzzle)) s.puzzle = makePuzzle(level, s.seed);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.paid && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt) {
     s.t += dt;
-    s.cooldown = Math.max(0, s.cooldown - dt);
-    if (s.queue > 0 && s.stroke <= 0 && s.cooldown <= 0) {
-      s.queue--;
-      bumpRestock(s);
-      s.cooldown = 0.1;
-      startWind(s);
-    }
-    if (s.stroke > 0) {
-      s.stroke += dt / STROKE;
-      const t = clamp(s.stroke, 0, 1);
-      const route = s.route || [];
-      if (route.length > 1) {
-        const u = t * (route.length - 1);
-        const i = Math.min(route.length - 2, Math.floor(u));
-        const f = u - i;
-        const a = route[i], b = route[i + 1];
-        s.beetle = {x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f)};
-        s.angle = Math.atan2(b.y - a.y, b.x - a.x);
-      }
-      for (const p of s.pieces) {
-        if (p.slide < 1) p.slide = Math.min(1, p.slide + dt / STROKE);
-      }
-      if (s.stroke >= 1) {
-        s.stroke = 0;
-        for (const p of s.pieces) {
-          p.slide = 1;
-          p.ox = p.tx;
-          p.oy = p.ty;
-        }
-        s.dirty = true;
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'The cabinet told the truth, once',
+          itemName(CABINET_PRIZES[s.level]) + ' — result ' + s.resultN + '.',
+          {prize: CABINET_PRIZES[s.level], won: true});
       }
     }
-    for (const f of (s.fly || [])) f.t += dt;
-    s.fly = (s.fly || []).filter(f => f.t < f.dur);
-    if (s.dirty && s.t - (s.saveAt || 0) > 1.2) persist(s);
   },
   pointer(s, type, p) {
-    if (type !== 'down') return;
-    const i = s.tiles.findIndex((_, n) => dist(p, centre(n)) < 56);
-    if (i >= 0) { rotate(s, i); return; }
-    if (dist(p, SLOT) < 54 || dist(p, {x: SLOT.x, y: SLOT.y - 36}) < 48) drop(s);
+    if (type !== 'down' || s.result) return;
+    if (s.phase === 'idle') return;
+    if (s.puzzle) {
+      s.puzzle.clues.forEach((_, i) => {
+        if (hit(p, clueBox(i))) {
+          s.cluesOpen[i] = true;
+          persist(s);
+        }
+      });
+      if (s.phase === 'mystery') {
+        s.puzzle.drawers.forEach((_, i) => {
+          if (hit(p, drawerBox(i, s.puzzle.drawers.length))) inspectDrawer(s, i);
+        });
+      }
+    }
   },
   action(s, id) {
-    if (id === 'wind') drop(s);
-    if (id === 'dump') dump(s);
-    if (id === 'rotate') rotate(s, s.selected);
+    if (id === 'open') beginMystery(s);
+    if (id === 'hint' && s.puzzle) {
+      s.hints += 1;
+      if (s.puzzle.kind === 'memory' && s.puzzle.memory) {
+        s.note = 'A whisper: it started in the ' + s.puzzle.drawers[s.puzzle.memory.from].label + ' drawer.';
+      } else if (s.puzzle.kind === 'mirror') {
+        s.note = 'A whisper: the mark is a mirror. Name the opposite drawer.';
+      } else {
+        s.note = 'A whisper: the rule is still “' + s.puzzle.rule + '”';
+      }
+      persist(s);
+    }
+    if (id === 'curtain' && s.puzzle?.kind === 'memory') {
+      s.curtain = !s.curtain;
+      s.curtainSeen = true;
+      s.note = s.curtain ? 'The curtain is closed. The moth has moved.' : 'The curtain is open. Remember the first drawer.';
+      persist(s);
+    } else if (id === 'curtain') {
+      s.note = 'This chapter has no curtain.';
+    }
+    if (id === 'glass' && s.puzzle?.kind === 'mirror') {
+      s.glass = !s.glass;
+      s.glassSeen = true;
+      s.note = s.glass ? 'The glass is over the cabinet. Left is right.' : 'The glass is set aside.';
+      persist(s);
+    } else if (id === 'glass' && s.puzzle && s.puzzle.kind !== 'mirror') {
+      s.note = 'This chapter has no looking-glass.';
+    }
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === ' ') drop(s);
-    if (k === 'Enter' || k === 'd' || k === 'D') dump(s);
-    if (k === 'r' || k === 'R') rotate(s, s.selected);
-    const step = {ArrowLeft: -1, ArrowRight: 1, ArrowUp: -4, ArrowDown: 4}[k];
-    if (step) s.selected = clamp(s.selected + step, 0, 15);
+    if (k === ' ') this.action(s, 'open');
+    if (s.phase === 'mystery' && s.puzzle && k >= '1' && k <= '4') inspectDrawer(s, Number(k) - 1);
   },
   draw(s, d) {
-    const {walk, lip} = trace(s.tiles);
-    const onFlow = new Set(walk);
-    for (let i = 0; i < 16; i++) {
-      const c = centre(i), tile = s.tiles[i], hot = onFlow.has(i);
-      d.circle(c.x, c.y, 52, hot ? '#8a6a3858' : '#79664055', hot ? '#f0d18f' : '#c5ab7488', hot ? 2.4 : 1.5);
-      if (i === s.selected) d.ring(c.x, c.y, 56, '#f9d99a', 3);
-      for (const p of ports(tile)) {
-        const v = VECTORS[p];
-        d.line(c, {x: c.x + v.x * 67.5, y: c.y + v.y * 64}, '#322f24aa', 11);
-        d.line(c, {x: c.x + v.x * 67.5, y: c.y + v.y * 64}, hot ? '#f3ddb0' : '#d1b577', hot ? 5 : 4);
-      }
-      d.circle(c.x, c.y, 7, hot ? '#f3ddb0' : '#e1c181');
+    const prize = CABINET_PRIZES[s.level];
+    d.text('The Cabinet That Lies', 450, 118, 28, '#efe6d0');
+    d.text(LEVELS[s.level], 450, 154, 20, '#d2b98c');
+    if (!s.paid) {
+      d.item(spriteKey(prize), 780, 138, {w: 70, fallback: () => d.star(780, 138, 24)});
+      d.text('waiting', 780, 192, 14, '#ead6a4');
     }
-    d.glow(HOME.x, HOME.y, lip ? 64 : 44, lip ? '#f6e2a2' : '#f3e0a8');
-    d.item(spriteKey('display-dome'), HOME.x, HOME.y, {
-      w: 78,
-      fallback: () => { d.ring(HOME.x, HOME.y, 32); d.text('DOOR', HOME.x, HOME.y + 48, 13); },
-    });
-    if (lip) d.text('the lip is kind', HOME.x, HOME.y - 52, 13, '#f0d6a8');
-    for (const p of s.pieces) {
-      const pos = at(p);
-      const w = p.unique ? 54 : 42;
-      if (p.unique) d.glow(pos.x, pos.y, 36);
-      d.item(spriteKey(p.id), pos.x, pos.y, {
-        w,
-        fallback: () => p.unique ? d.star(pos.x, pos.y, 16, p.color) : d.ball(pos.x, pos.y, w * 0.38, p.color),
-      });
-    }
-    const b = s.beetle;
     const c = d.c;
-    c.save(); c.translate(b.x, b.y); c.rotate(s.angle || 0);
-    d.item(spriteKey('clockwork-butterfly'), 0, 0, {
-      w: 48, shadow: false,
-      fallback: () => {
-        for (let i = 0; i < 3; i++) {
-          const x = -12 + i * 11, wiggle = Math.sin(s.t * 20 + i) * 5;
-          d.line({x, y: -6}, {x: x + wiggle - 8, y: -22}, '#cba760', 3);
-          d.line({x, y: 6}, {x: x - wiggle - 8, y: 22}, '#cba760', 3);
-        }
-        d.ellipse(0, 0, 22, 15, '#b39951', '#f5d899', 2);
-        d.circle(22, 0, 8, '#526044', '#e6c27b', 2);
-      },
-    });
-    c.restore();
-    d.poly([[SLOT.x - 46, SLOT.y - 28], [SLOT.x + 46, SLOT.y - 22], [SLOT.x + 40, SLOT.y + 36], [SLOT.x - 40, SLOT.y + 30]], '#5a3a228e', '#e4c48a', 2);
-    d.item(spriteKey('everyday-penny'), SLOT.x, SLOT.y, {
-      w: 36, fallback: () => d.ball(SLOT.x, SLOT.y, 14, '#b68445'),
-    });
-    d.text('winding slot', SLOT.x, SLOT.y + 48, 13, '#ead6a4');
-    const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
-    const px = 132, py = 148;
-    const prize = s.prize;
-    d.item(spriteKey(prize), 788, 88, {
-      w: 44, fallback: () => d.star(788, 88, 14, LOOK[prize] || '#c4a46a'),
-    });
-    if (s.paid.includes(prize)) d.text('✓', 818, 70, 16, '#f6e2a2');
-    for (const f of (s.fly || [])) {
-      const u = Math.min(1, f.t / f.dur);
-      const e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 788 : px, destY = f.prize ? 88 : py;
-      const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
-      d.item(spriteKey(f.id), fx, fy, {
-        w: Math.max(18, 40 * (1 - u * 0.4)),
-        fallback: () => d.ball(fx, fy, 10, f.color || '#b68445'),
-      });
+    if (!s.puzzle || s.phase === 'idle') {
+      wrapLine(d, s.note, 450, 520, 24, '#f0d18f', 700);
+      return;
     }
-    if (alleyPlay && !s.started) d.text('the garden waits', 450, 72, 18, '#f0d6a8');
+    wrapLine(d, s.puzzle.rule, 450, 196, 20, '#f0d18f', 760);
+    s.puzzle.clues.forEach((clue, i) => {
+      const b = clueBox(i);
+      const open = s.cluesOpen[i];
+      roundRect(c, b.x, b.y, b.w, b.h, 10);
+      c.fillStyle = open ? '#3a2a18ee' : '#241810ee';
+      c.fill();
+      c.strokeStyle = '#e8c878';
+      c.lineWidth = 2;
+      c.stroke();
+      d.text(open ? clue.text : 'Clue card ' + (i + 1) + ' — tap to slide up', b.x + b.w / 2, b.y + 42, 18, open ? '#fff6d8' : '#ead6a4');
+    });
+    const n = s.puzzle.drawers.length;
+    s.puzzle.drawers.forEach((drawer, i) => {
+      let show = i;
+      if (s.puzzle.kind === 'mirror' && s.glass) show = n - 1 - i;
+      const b = drawerBox(i, n);
+      const chosen = s.choice === i;
+      const inspecting = s.inspect === i && s.phase === 'mystery';
+      const truth = s.phase === 'reveal' && s.puzzle.solution === i;
+      roundRect(c, b.x, b.y, b.w, b.h, 12);
+      c.fillStyle = truth ? '#3a4830ee' : chosen ? '#483018ee' : inspecting ? '#3a3020ee' : '#2a2018ee';
+      c.fill();
+      c.strokeStyle = truth ? '#c8e878' : inspecting ? '#f0d18f' : '#e8c878';
+      c.lineWidth = inspecting || truth ? 4 : 3;
+      c.stroke();
+      const label = s.puzzle.drawers[show] ? s.puzzle.drawers[show].label : drawer.label;
+      d.text(label, b.x + b.w / 2, b.y + 48, 22, '#fff6d8');
+      d.text(drawer.emblem, b.x + b.w / 2, b.y + 86, 16, '#ead6a4');
+      if (s.puzzle.kind === 'mirror' && s.glass && i === s.puzzle.glassMark) {
+        d.star(b.x + b.w / 2, b.y + 118, 12, '#f0d18f');
+      }
+      if (s.puzzle.kind === 'memory' && s.puzzle.memory) {
+        const mothHere = s.curtain ? i === s.puzzle.memory.to : i === s.puzzle.memory.from;
+        if (mothHere) d.text('moth', b.x + b.w / 2, b.y + 118, 16, '#f0d18f');
+      }
+    });
+    wrapLine(d, s.note, 450, 760, 22, '#fff6d8', 760);
+    if (s.resultN) d.text('Result ' + s.resultN, 450, 1080, 28, '#f0d18f');
   },
   readout: s => {
-    const {walk, lip} = trace(s.tiles);
-    const n = alleyPlay ? pocket() : s.ammo;
-    const beds = s.pieces.filter(p => p.tile >= 0).length;
-    const unique = s.pieces.find(p => p.unique && p.tile >= 0);
-    const on = unique && walk.includes(unique.tile);
-    const purse = alleyPlay
-      ? (n == null ? '0' : n) + (n === 1 ? ' penny' : ' pennies') + ' in the purse'
-      : n + ' / ' + s.total + ' in the purse';
-    const door = lip ? 'door open' : 'door turned away';
-    const seat = on ? 'unique on the rails' : (unique ? 'unique off the rails' : 'unique kept');
-    return purse + ' · ' + beds + ' in the garden · ' + door + ' · ' + seat
-      + (s.queue ? ' · winding ' + s.queue : '') + ' · ' + s.note;
+    const n = alleyPlay ? pocket() : null;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    return purse + ' · ' + s.mistakes + ' wrong drawers · ' + s.hints + ' hints · ' + s.note;
   },
 };

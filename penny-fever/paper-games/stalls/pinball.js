@@ -1,6 +1,7 @@
-import {clamp} from '../draw.js?v=ink-1';
+import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=arcade-restore-1';
+import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const R = 11;
@@ -11,7 +12,7 @@ const REST = 0.46;
 const UP = -0.64;
 const LANE = {x: 726, y: 992, pull: 50};
 const GATE = seg([666, 422], [708, 422]);
-const BOOK = 'pennyFever.thunderGarden';
+const BOOK = 'pennyFever.pinballAlley';
 const TOKENS = [
   {id: 'everyday-penny', weight: 52, cap: 0},
   {id: 'moon-penny', weight: 7, cap: 6},
@@ -52,6 +53,7 @@ function readTable(level) {
     score: row.score || 0, balls: row.balls || 0,
     wonPennies: row.wonPennies || 0, specials: row.specials || 0,
     tokens: row.tokens && typeof row.tokens === 'object' ? {...row.tokens} : {},
+    hits: row.hits || 0, mark: row.mark || 0, credit: row.credit || 0,
   };
 }
 function writeBook(s) {
@@ -61,6 +63,7 @@ function writeBook(s) {
     store.tables[String(s.level || 0)] = {
       seen: s.seen, paid: s.paid, score: s.score, balls: s.balls,
       wonPennies: s.wonPennies, specials: s.specials, tokens: s.tokens,
+      hits: s.hits || 0, mark: s.mark || 0, credit: s.credit || 0,
     };
     localStorage.setItem(BOOK, JSON.stringify(store));
   } catch { /* quota */ }
@@ -145,16 +148,26 @@ function pay(s, id, x, y) {
   fly(s, id, x, y, special);
   writeBook(s);
 }
+function loosenMark(level) {
+  return [6, 8, 10, 12, 14, 16][level] || 10;
+}
 function dropFromHit(s, kind, x, y) {
   const rng = Math.random();
   const d = drought(s);
-  const u = (SETS[s.level]?.unique || 1) * d;
   const jackpot = s.lights.every(Boolean);
+  if (kind === 'bumper' || kind === 'target' || kind === 'saucer') {
+    s.hits = (s.hits || 0) + 1;
+    if (!s.mark) s.mark = loosenMark(s.level);
+    if (s.hits >= s.mark) {
+      const id = pickUnique(s);
+      if (id) pay(s, id, x, y);
+    } else s.note = 'The unique shifted. It is working loose.';
+    writeBook(s);
+  }
   if (kind === 'bumper') {
     s.score += 120;
     if (rng < 0.08 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.08 * d + 0.022 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.08 * d + 0.022 * d + 0.002 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
   } else if (kind === 'sling') {
     s.score += 40;
     if (rng < 0.04 * d) pay(s, 'everyday-penny', x, y);
@@ -162,15 +175,10 @@ function dropFromHit(s, kind, x, y) {
     s.score += kind === 'target' ? 250 : 80;
     if (rng < 0.22 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.32 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.32 * d + 0.012 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
   } else if (kind === 'saucer') {
     s.score += jackpot ? 1400 : 800;
-    if (jackpot && rng < 0.18 * u) {
-      const prize = pickUnique(s) || pickToken(s);
-      pay(s, prize, x, y);
-    } else if (rng < 0.48 * d) pay(s, 'everyday-penny', x, y);
+    if (rng < 0.48 * d) pay(s, 'everyday-penny', x, y);
     else if (rng < 0.78 * d) pay(s, pickToken(s), x, y);
-    else if (rng < 0.78 * d + 0.07 * u) { const id = pickUnique(s); if (id) pay(s, id, x, y); }
     if (jackpot) s.lights = [false, false, false];
   }
 }
@@ -266,11 +274,15 @@ function releasePlunger(s) {
     return;
   }
   if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny to launch. Cash a booth ticket for a five-penny stack.';
-      s.ball.y = LANE.y;
-      return;
+    if ((s.credit || 0) < 1) {
+      if (!takeAttempt('pinball', s.level)) {
+        s.note = retryNote();
+        s.ball.y = LANE.y;
+        return;
+      }
+      s.credit = 3;
     }
+    s.credit -= 1;
   } else s.ammo--;
   s.mode = 'live';
   s.balls++;
@@ -287,7 +299,7 @@ function drain(s) {
   s.combo = 0;
   s.stuck = 0;
   s.note = alleyPlay
-    ? 'Drained. Another penny for another ball — the table always has the last word.'
+    ? ((s.credit || 0) > 0 ? 'Drained. ' + s.credit + ' ball' + (s.credit === 1 ? '' : 's') + ' left on this penny.' : 'Drained. Another penny for three more balls.')
     : (s.ammo > 0 ? 'Drained. Pull the spring for another practice ball.' : 'Practice balls spent.');
 }
 function inShooter(p) { return p.x > 690; }
@@ -301,29 +313,29 @@ function shouldDrain(s, p) {
 }
 
 export default {
-  title: 'Thunder Garden',
+  title: 'Pinball Alley',
   live: alleyPlay,
   tables: true,
   intro: alleyPlay
-    ? 'Six old-school pin tables. A penny from the purse pulls the spring. Tap the flippers to keep the silver ball alive. Bumpers rain small wins; stars and hearts cap out; the table’s own prize almost never leaves the glass. The house smiles, then takes the ball.'
+    ? 'Six different tables. One penny is three balls. The unique is trapped on the glass — qualifying hits loosen it across visits until it falls.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge (or drag the spring) and release to shoot. Tap Left and Right — or the two sides of the glass — for the flippers. Z and X work on a keyboard. Each ball costs a penny. Hits often score, sometimes drip a penny or a star, and almost never a unique. Drain, and the house waits for another penny. Cash a booth ticket for a five-penny stack.'
+    ? 'Hold Plunge and release. Left and Right flippers (Z/X). One penny buys three balls. Hits on the trapped unique loosen it. Cash a ticket for five pennies if the purse is empty.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
-  liveTitle: 'Thunder Garden',
+  liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
-    ? 'Hold the plunger, let go, then tap the flippers. A penny a ball. Small wins feel generous. The rare things stay rare.'
+    ? 'Hold the plunger, let go, then tap the flippers. One penny, three balls. Loosen the unique.'
     : 'Pull the spring and tap the flippers.',
   liveButton: 'Step up to the table',
   tableDetail: alleyPlay
-    ? 'A penny a ball. Hold the plunger, let go, then tap the flippers. Small wins drip back; stars and hearts cap out; this cabinet’s prize almost never leaves the glass.'
+    ? 'One penny, three balls. Qualifying hits loosen this table’s unique. It stays loose when you leave.'
     : 'A different cabinet. Pull the spring, tap the bats. Practice balls stay in the workshop.',
   levels: ['First ball', 'A hungrier drain', 'Lights in a hurry', 'The tight outlanes', 'Storm on the glass', 'The house never blinks'],
   sprites: SPRITES,
   prizes: SETS.map(t => t.prize),
   actions: [
     {id: 'left', label: 'Left flipper · Z', hold: true},
-    {id: 'plunge', label: alleyPlay ? 'Plunge · 1 penny' : 'Plunge', hold: true},
+    {id: 'plunge', label: alleyPlay ? 'Plunge · 3 balls / penny' : 'Plunge', hold: true},
     {id: 'right', label: 'Right flipper · X', hold: true},
   ],
   persist(s) { writeBook(s); },
@@ -336,8 +348,9 @@ export default {
       left: false, right: false, combo: 0, lights: [false, false, false],
       balls: book.balls, score: book.score, wonPennies: book.wonPennies, specials: book.specials,
       seen: book.seen, paid: book.paid, tokens: book.tokens, fly: [], trail: [], stuck: 0,
+      hits: book.hits || 0, mark: book.mark || loosenMark(level), credit: book.credit || 0,
       ammo: alleyPlay ? 0 : Math.max(4, 9 - level),
-      note: alleyPlay ? 'A penny pulls the spring.' : 'Pull the spring.',
+      note: alleyPlay ? 'One penny is three balls. Loosen the unique on the glass.' : 'Pull the spring.',
       set, ...built,
     };
     seatLane(s);
@@ -351,9 +364,11 @@ export default {
     for (const t of s.targets) t.cool = Math.max(0, t.cool - dt);
     for (const sl of s.slings) sl.cool = Math.max(0, sl.cool - dt);
     s.saucer.cool = Math.max(0, s.saucer.cool - dt);
-    const wantL = s.left || input.actions.has('left') || input.keys.has('z') || input.keys.has('Z') || input.keys.has('ArrowLeft');
-    const wantR = s.right || input.actions.has('right') || input.keys.has('x') || input.keys.has('X') || input.keys.has('ArrowRight');
-    const holdPlunge = s.pointerPlunge || input.actions.has('plunge') || input.keys.has(' ');
+    const keys = input?.keys || new Set();
+    const actions = input?.actions || new Set();
+    const wantL = s.left || actions.has('left') || keys.has('z') || keys.has('Z') || keys.has('ArrowLeft');
+    const wantR = s.right || actions.has('right') || keys.has('x') || keys.has('X') || keys.has('ArrowRight');
+    const holdPlunge = s.pointerPlunge || actions.has('plunge') || keys.has(' ');
     if (s.mode === 'lane') {
       if (holdPlunge) beginCharge(s);
       if (s.charging) {
@@ -511,10 +526,13 @@ export default {
     const set = s.set || SETS[s.level] || SETS[0];
     const leftOn = s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
     const rightOn = s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
+    d.poly([[64, 18], [836, 18], [858, 1184], [42, 1184]], set.wood, '#e6c57a', 4);
+    d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
     d.text('THUNDER GARDEN', 450, 92, 28, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 450, 128, 26, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
+    d.poly([[118, 186], [782, 186], [798, 1116], [102, 1116]], set.felt, '#d7b56a', 3);
     for (const r of s.rails) {
       d.line(r.a, r.b, '#4a3a28', 14);
       d.line(r.a, r.b, '#e6c57a', 3);
@@ -559,11 +577,15 @@ export default {
       w: 32, angle: Math.atan2(s.ball.vy, s.ball.vx) + Math.PI / 2,
       fallback: () => d.ball(s.ball.x, s.ball.y, R, '#c5d0d6'),
     });
+    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.text('Z', 210, 1152, 12, '#fff6d8');
     d.text('X', 690, 1152, 12, '#fff6d8');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
+    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
+    d.text(String(n), 86, 108, 18, '#fff6d8');
+    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);

@@ -1,247 +1,409 @@
-import {clamp, segmentDistance, dist, done} from '../draw.js?v=ink-1';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep, owned} from '../wallet.js?v=marina-harbour-1';
+import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+  MARINA_CHAPTERS, GUNS, LANES, BURSTS, MIN_PRESSURE, BURST_LIFE,
+  makeFleet, stepFleet, boatPose, fireBurst, advanceBurst, waterPoint,
+  occluded, resultNumber, marinaUnique, ordinaryFor,
+} from '../fleet.js?v=fleet-1';
 
-const nozzle = {x: 450, y: 1050};
-const G = 470;
-const HALF = G / 2;
-const SHORE = [
-  {x: 260, y: 232}, {x: 655, y: 232}, {x: 733, y: 395}, {x: 750, y: 880},
-  {x: 639, y: 1040}, {x: 315, y: 1040}, {x: 200, y: 880}, {x: 177, y: 535}, {x: 250, y: 355},
-];
-const SETS = [
-  {prize: 'little-sailboat', throws: 1, towers: [{x: 450, y: 840, n: 4}]},
-  {prize: 'message-bottle', throws: 1, towers: [{x: 310, y: 840, n: 3}, {x: 600, y: 840, n: 3}]},
-  {prize: 'harbour-washer', throws: 1, towers: [{x: 300, y: 850, n: 4}, {x: 620, y: 720, n: 3}], ferry: true},
-  {prize: 'seaside-day-book', throws: 1, towers: [{x: 250, y: 840, n: 3}, {x: 450, y: 700, n: 4}, {x: 650, y: 840, n: 3}]},
-  {prize: 'picnic-parcel', throws: 1, towers: [{x: 270, y: 860, n: 4}, {x: 450, y: 620, n: 3}, {x: 640, y: 860, n: 4}], eddy: true},
-  {prize: 'return-postcard', throws: 1, towers: [{x: 320, y: 870, n: 5}, {x: 620, y: 720, n: 4}], ferry: true, eddy: true},
-];
+const BOOK = 'pennyFever.waterFleet';
 
-function topple(b, vx = 80) {
-  if (b.fallen) return;
-  b.fallen = true;
-  b.vx = vx;
-  b.vy = -70;
-  b.w = (vx >= 0 ? 1 : -1) * (1.4 + Math.abs(vx) * .01);
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
 }
-function ferryPose(t) {
-  const x = 450 + Math.sin(t * .47) * 168;
-  return {x, y: 655, a: {x: x - 52, y: 655}, b: {x: x + 52, y: 655}};
+function wrapLine(d, text, x, y, size, color, maxW) {
+  const c = d.c;
+  c.font = `500 ${size}px Georgia,serif`;
+  const words = String(text).split(' ');
+  let line = '', ly = y;
+  for (const word of words) {
+    const trial = line ? line + ' ' + word : word;
+    if (line && c.measureText(trial).width > maxW) {
+      d.text(line, x, ly, size, color);
+      line = word;
+      ly += size + 8;
+    } else line = trial;
+  }
+  if (line) d.text(line, x, ly, size, color);
+  return ly;
 }
-function squeeze(s) {
-  if (s.jet || s.won || s.lost) return;
-  if (s.squeezes >= s.limit) {
-    s.note = 'That burst is spent. Another penny for another squeeze.';
+function gunHit(p, g) {
+  return Math.abs(p.x - g.x) < 48 && p.y > g.y - 70;
+}
+
+function emptyBook() {
+  return {v: 1, paid: {}, sittings: {}};
+}
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
+}
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
+}
+
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase === 'burst' || s.phase === 'pump' ? 'play' : s.phase,
+    seed: s.seed, charged: !!s.charged, burstsLeft: s.burstsLeft,
+    gun: s.gun, uniqueHit: !!s.uniqueHit, hits: s.hits,
+    fleet: s.fleet, won: !!s.won, note: s.note, resultN: s.resultN || 0,
+    reduced: !!s.reduced,
+  };
+  writeBook(book);
+}
+
+function reducedMotion() {
+  try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+}
+
+function beginSit(s) {
+  if (s.phase === 'play' || s.phase === 'pump' || s.phase === 'burst') return;
+  if (s.chargeLock) return;
+  s.chargeLock = true;
+  try {
+    if (!s.charged) {
+      if (!takeAttempt('water-gun', s.level)) {
+        s.note = retryNote();
+        return;
+      }
+      s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 23;
+    }
+    s.fleet = makeFleet(s.level, s.seed);
+    s.phase = 'play';
+    s.burstsLeft = BURSTS;
+    s.gun = 2;
+    s.pressure = 0;
+    s.holding = false;
+    s.burst = null;
+    s.uniqueHit = false;
+    s.hits = 0;
+    s.resultN = 0;
+    s.prizeKept = false;
+    s.reduced = reducedMotion();
+    s.note = 'Ten bursts. Hold a gun, lead the marked boat, release.';
+    persist(s);
+  } finally {
+    s.chargeLock = false;
+  }
+}
+
+function fireNow(s) {
+  if (s.phase !== 'play' && s.phase !== 'pump') return;
+  if (s.burst || s.burstsLeft <= 0) return;
+  const ch = MARINA_CHAPTERS[s.level];
+  const burst = fireBurst(s.gun, s.pressure, ch.wind);
+  s.holding = false;
+  s.pressure = 0;
+  if (!burst) {
+    s.note = 'Hold to build pressure. A tap falls short.';
+    s.phase = 'play';
     return;
   }
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny in the purse. Bank loan, or cash a ticket.';
+  s.burst = burst;
+  s.burstsLeft -= 1;
+  s.phase = 'burst';
+  s.note = 'Burst ' + (BURSTS - s.burstsLeft) + ' of ' + BURSTS + '.';
+  persist(s);
+}
+
+function afterBurst(s) {
+  const b = s.burst;
+  s.burst = null;
+  s.phase = 'play';
+  if (b?.uniqueHit) {
+    s.uniqueHit = true;
+    s.hits += 1;
+    s.note = 'The marked boat takes the splash.';
+    const n = resultNumber(s.seed);
+    if (marinaUnique(s.level, n, true) && !chapterPaid(s.level) && !s.won) {
+      finishSit(s, true);
       return;
     }
+  } else if (b?.hit != null) {
+    s.hits += 1;
+    s.note = b.decoyHit ? 'A decoy. The marked boat is still out.' : 'A boat, but not the marked cargo.';
+  } else {
+    s.note = b?.decoyHit ? 'The decoy took it.' : 'Water and no hull. ' + s.burstsLeft + ' left.';
   }
-  const t = .7;
-  const vx = (s.aim.x - nozzle.x) / t;
-  const vy = (s.aim.y - nozzle.y - HALF * t * t) / t;
-  s.jet = {x: nozzle.x, y: nozzle.y, vx, vy};
-  s.spray = [];
-  s.squeezes++;
-  s.note = 'Burst ' + s.squeezes + ' of ' + s.limit + ' · a penny a squeeze.';
+  if (s.burstsLeft <= 0) finishSit(s, false);
+  else persist(s);
 }
-function build(level) {
-  const set = SETS[level] || SETS[0];
-  const bottles = [];
-  const towers = set.towers.map(t => ({...t}));
-  for (const tower of towers) {
-    let below = [];
-    for (let row = 0; row < tower.n; row++) {
-      const ids = [];
-      for (let i = 0; i < tower.n - row; i++) {
-        const id = bottles.length;
-        ids.push(id);
-        const x = tower.x + (i - (tower.n - row - 1) / 2) * 51;
-        const y = tower.y - row * 77;
-        bottles.push({
-          id, restX: x, restY: y, x, y,
-          angle: 0, w: 0, vx: 0, vy: 0, fallen: false,
-          support: row ? [below[i], below[i + 1]] : [],
-          kind: row === tower.n - 1 ? 'boat' : 'bottle',
-        });
-      }
-      below = ids;
+
+function finishSit(s, fromUnique) {
+  const n = resultNumber(s.seed);
+  s.resultN = n;
+  s.phase = 'result';
+  s.charged = false;
+  const prize = MARINA_CHAPTERS[s.level].prize;
+  const win = marinaUnique(s.level, n, s.uniqueHit) && !chapterPaid(s.level) && !s.won;
+  const drop = ordinaryFor(n);
+  if (alleyPlay) {
+    if (drop === 'everyday-penny') credit(1);
+    else keep(drop, 'water-gun');
+    if (win) {
+      keep(prize, 'water-gun');
+      markPaid(s.level);
+      s.won = true;
     }
+  } else if (win) s.won = true;
+  if (win) {
+    const boat = s.fleet?.boats.find(b => b.unique);
+    const pose = boat ? boatPose(boat, s.fleet.t, MARINA_CHAPTERS[s.level]) : {x: 450, y: 500};
+    takePrize(s, prize, {x: pose.x, y: pose.y});
   }
-  return {bottles, towers, prize: set.prize, limit: set.throws, ferry: !!set.ferry, eddy: !!set.eddy};
+  s.hold = 1.2;
+  if (fromUnique && win) s.note = 'The cargo hatch opens.';
+  else if (s.uniqueHit) s.note = 'You soaked the marked boat.';
+  else s.note = 'The marked boat kept its cargo.';
+  persist(s);
 }
 
 export default {
-  title: 'Paper Harbour',
+  title: 'Water-Gun Fleet',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
-  intro: 'Marina’s paper harbour. One penny, one squeeze of the brass hose. The jet must send every boat off its quay in that single burst. Leave one at berth and she keeps the prize.',
+  persist,
+  intro: alleyPlay
+    ? 'Marina’s paper harbour. A penny fills the tank with ten bursts. Hold a gun, lead the marked boat, release. The unique only drops if that cargo takes a hit and tonight’s numbers agree.'
+    : 'Five guns. Hold to pressure, release one burst. Hit the marked boat. Workshop tanks are free and write nothing.',
   instructions: alleyPlay
-    ? 'Aim the hose and squeeze (one penny a burst). Lead the tide. The prize only sails if the whole quay goes over in that one jet. A leftover boat means try again — another penny. Arrows aim, Space squeezes. Later berths hide a post ferry and a harbour eddy.'
-    : 'One squeeze. Clear every boat from the quay in that burst to finish the chapter. Lead the tide; later berths add a ferry and an eddy.',
-  tableDetail: alleyPlay
-    ? 'One penny. One squeeze. The whole quay must go over in that burst, or Marina keeps the prize. Lead the tide. Wait for the post ferry. The eddy will bend a jet if you let it.'
-    : 'One practice burst. Clear every boat from the quay.',
-  levels: ['The quiet quay', 'Twin berths', 'The post ferry', 'Three little harbours', 'Tide and eddy', 'The grand harbour'],
-  sprites: ['little-sailboat', 'trade-envelope', 'message-bottle', 'splash-ring', 'seaside-day-book', 'picnic-parcel', 'stamp-passport', 'penny-purse', 'everyday-penny'],
-  prizes: SETS.map(s => s.prize),
-  actions: [{id: 'squeeze', label: alleyPlay ? 'Squeeze · 1 penny' : 'Squeeze the brass hose'}],
+    ? 'Sit for a penny — ten bursts. Tap a gun, hold to pressure, release. Lead the moving boat. Only the marked target opens the hatch.'
+    : 'Choose a gun, hold, release. Practice writes nothing.',
+  levels: MARINA_CHAPTERS.map(c => c.title),
+  sprites: ['little-sailboat', 'message-bottle', 'harbour-washer', 'seaside-day-book', 'picnic-parcel', 'return-postcard', 'moon-penny', 'star-token', 'everyday-penny'],
+  prizes: MARINA_CHAPTERS.map(c => c.prize),
+  actions: [
+    {id: 'sit', label: alleyPlay ? 'Sit · 1 penny' : 'Sit down'},
+    {id: 'pump', label: 'Hold to pressure', hold: true},
+    {id: 'again', label: alleyPlay ? 'Another tank · 1 penny' : 'Another tank'},
+  ],
   create(level) {
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const s = {
-      ...build(level),
-      level, aim: {x: 450, y: 770}, jet: null, spray: [], squeezes: 0, t: 0, settle: 0, won: false, lost: false,
-      note: alleyPlay ? 'One penny. One squeeze. All off the quay, or the prize stays.' : 'One practice burst. Clear the quay.',
+      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 4) * 2207,
+      charged: !!saved.charged, burstsLeft: saved.burstsLeft ?? BURSTS,
+      gun: saved.gun ?? 2, uniqueHit: !!saved.uniqueHit, hits: saved.hits || 0,
+      fleet: saved.fleet || null, won: !!saved.won || chapterPaid(level),
+      note: saved.note || (MARINA_CHAPTERS[level] || MARINA_CHAPTERS[0]).title + '. Sit when you are ready.',
+      resultN: saved.resultN || 0, reduced: !!saved.reduced,
+      pressure: 0, holding: false, burst: null, hold: 0,
     };
+    if (s.phase === 'pump' || s.phase === 'burst') s.phase = 'play';
+    if ((s.phase === 'play') && !s.fleet) s.fleet = makeFleet(level, s.seed);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    if (s.won && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
   update(s, dt, input) {
     s.t += dt;
-    const dx = (input.keys.has('ArrowRight') ? 1 : 0) - (input.keys.has('ArrowLeft') ? 1 : 0);
-    const dy = (input.keys.has('ArrowDown') ? 1 : 0) - (input.keys.has('ArrowUp') ? 1 : 0);
-    s.aim.x = clamp(s.aim.x + dx * 220 * dt, 220, 680);
-    s.aim.y = clamp(s.aim.y + dy * 220 * dt, 430, 900);
-    const tide = 6 + s.level * 3.2;
-    for (const b of s.bottles) {
-      if (!b.fallen) {
-        b.x = b.restX + Math.sin(s.t * 1.35 + b.id * 1.1) * tide;
-        b.y = b.restY + Math.cos(s.t * .9 + b.id * .7) * tide * .32;
-        if (b.support.some(i => s.bottles[i].fallen)) topple(b, (b.x < 450 ? -1 : 1) * 45);
-      } else {
-        b.vy += 460 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.angle += b.w * dt;
-        if (b.y > 1060) { b.y = 1060; b.vy = -Math.abs(b.vy) * .22; b.vx *= .8; b.w *= .85; }
-        b.x = clamp(b.x, 185, 715);
-      }
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (s.fleet && (s.phase === 'play' || s.phase === 'pump' || s.phase === 'burst')) {
+      stepFleet(s.fleet, dt, s.reduced);
     }
-    if (s.jet) {
-      const p = s.jet, old = {x: p.x, y: p.y};
-      p.vy += G * dt;
-      if (s.eddy && dist(p, {x: 465, y: 753}) < 96) {
-        const a = 2.1 * dt, c = Math.cos(a), n = Math.sin(a);
-        const vx = p.vx * c - p.vy * n, vy = p.vx * n + p.vy * c;
-        p.vx = vx; p.vy = vy;
-      }
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      s.spray.push({x: p.x, y: p.y, r: 7});
-      if (s.spray.length > 16) s.spray.shift();
-      if (s.ferry) {
-        const f = ferryPose(s.t);
-        if (segmentDistance(p, f.a, f.b) < 22) {
-          s.note = 'The post ferry took the splash. Wait for a clear lane.';
-          s.jet = null;
-        }
-      }
-      if (s.jet) {
-        const hit = s.bottles.find(b => !b.fallen && segmentDistance({x: b.x, y: b.y - 36}, old, p) < (b.kind === 'boat' ? 40 : 36));
-        if (hit) {
-          const shove = p.vx * .55 + (p.x < hit.x ? 90 : -90);
-          topple(hit, shove);
-          for (const b of s.bottles) if (!b.fallen && dist({x: hit.x, y: hit.y - 30}, {x: b.x, y: b.y - 30}) < 46)
-            topple(b, shove * .5 + (b.x < hit.x ? -36 : 36));
-          p.vx *= .58; p.vy *= .42;
-          s.note = hit.kind === 'boat' ? 'The little boat is off its berth.' : 'A crate takes the splash.';
-        }
-        if (p.y > 1100 || p.y < 310 || p.x < 150 || p.x > 750) s.jet = null;
-      }
+    const pumping = s.holding || !!(input?.actions && input.actions.has('pump'));
+    if ((s.phase === 'play' || s.phase === 'pump') && pumping && !s.burst) {
+      s.phase = 'pump';
+      s.pressure = Math.min(1, s.pressure + dt * 0.85);
     }
-    for (const drop of s.spray) drop.r *= .92;
-    for (const a of s.bottles) if (a.fallen && Math.abs(a.vx) > 20)
-      for (const b of s.bottles) if (!b.fallen && dist({x: a.x, y: a.y - 30}, {x: b.x, y: b.y - 30}) < 43)
-        topple(b, a.vx * .65);
-    if (!s.won && !s.lost && s.bottles.every(b => b.fallen)) {
-      s.settle += dt;
-      if (s.settle > 1.1) {
-        const clean = s.squeezes === 1;
-        s.won = clean;
-        s.lost = !clean;
-        if (alleyPlay && s.prize && clean) keep(s.prize, 'water-gun');
-        if (clean) takePrize(s, s.prize);
-        done(s,
-          clean ? 'Not a boat left at berth' : 'They drifted — but not in one burst',
-          clean
-            ? itemName(s.prize) + ' sails into the treasure book.'
-            : 'The prize wanted a single clean jet. Another penny for another squeeze.',
-          {prize: clean ? s.prize : null, won: clean});
+    if (s.phase === 'burst' && s.burst) {
+      let left = dt;
+      const step = 1 / 120;
+      while (left > 0 && s.burst?.live) {
+        const h = Math.min(step, left);
+        advanceBurst(s.burst, h, s.fleet);
+        left -= h;
       }
-    } else if (!s.won && !s.lost && !s.jet && s.squeezes >= s.limit && s.bottles.some(b => !b.fallen)) {
-      s.lost = true;
-      const left = s.bottles.filter(b => !b.fallen).length;
-      done(s, 'The quay still holds',
-        left + ' boat' + (left === 1 ? '' : 's') + ' still at berth. Another penny for another squeeze.', {won: false});
+      if (!s.burst.live) afterBurst(s);
     }
+    if (s.won && s.hold > 0 && !s.result) {
+      s.hold -= dt;
+      if (s.hold <= 0) {
+        done(s, 'The cargo hatch opened',
+          itemName(MARINA_CHAPTERS[s.level].prize) + ' — ' + s.note,
+          {prize: MARINA_CHAPTERS[s.level].prize, won: true});
+      }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (type === 'move' || type === 'down') s.aim = {x: clamp(p.x, 220, 680), y: clamp(p.y, 430, 900)};
-    if (type === 'up') squeeze(s);
+    if (s.result) return;
+    if (s.phase === 'idle' || s.phase === 'result') {
+      if (type === 'down') beginSit(s);
+      return;
+    }
+    if (s.phase === 'burst') return;
+    if (type === 'cancel') {
+      s.holding = false;
+      s.pressure = 0;
+      s.phase = 'play';
+      return;
+    }
+    if (type === 'down') {
+      const g = GUNS.find(gun => gunHit(p, gun));
+      if (g) s.gun = g.id;
+      s.holding = true;
+      s.phase = 'pump';
+      return;
+    }
+    if (type === 'move' && s.holding) {
+      const g = GUNS.find(gun => gunHit(p, gun));
+      if (g) s.gun = g.id;
+    }
+    if (type === 'up' && s.holding) {
+      s.holding = false;
+      fireNow(s);
+    }
   },
-  action(s, id) { if (id === 'squeeze') squeeze(s); },
-  key(s, k, down) { if (k === ' ' && down) squeeze(s); },
+  action(s, id, pressed) {
+    if (id === 'sit' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Another tank when you are ready.';
+        persist(s);
+        return;
+      }
+      if (pressed !== false) beginSit(s);
+    }
+    if (id === 'pump') {
+      if (s.phase === 'idle' || s.phase === 'result' || s.phase === 'burst') return;
+      if (pressed) {
+        s.holding = true;
+        s.phase = 'pump';
+      } else if (s.holding) {
+        s.holding = false;
+        fireNow(s);
+      }
+    }
+  },
+  key(s, k, down) {
+    if (k >= '1' && k <= '5' && down && (s.phase === 'play' || s.phase === 'pump')) {
+      s.gun = Number(k) - 1;
+      return;
+    }
+    if (k === ' ' || k === 'Enter') {
+      if (s.phase === 'idle' || s.phase === 'result') {
+        if (down) this.action(s, 'sit', true);
+        return;
+      }
+      if (down && (s.phase === 'play' || s.phase === 'pump')) {
+        s.holding = true;
+        s.phase = 'pump';
+      }
+      if (!down && s.holding) {
+        s.holding = false;
+        fireNow(s);
+      }
+    }
+  },
   draw(s, d) {
-    d.path(SHORE, '#d7ffe335', 2, true, '#effcdb22');
-    d.ellipse(450, 1088, 268, 28, '#35677155', '#cfb98a', 2);
+    const ch = MARINA_CHAPTERS[s.level];
+    const c = d.c;
+    d.text('Water-Gun Fleet', 450, 112, 28, '#efe6d0');
+    d.text(ch.title, 450, 148, 20, '#d2b98c');
+    if (!s.won) {
+      d.item(spriteKey(ch.prize), 800, 148, {w: 66, fallback: () => d.star(800, 148, 22)});
+      d.text('waiting', 800, 202, 14, '#ead6a4');
+    }
 
-    d.text((s.limit - s.squeezes) + ' squeeze' + (s.limit - s.squeezes === 1 ? '' : 's') + ' left', 160, 272, 12, '#f0d6a8');
-    for (let i = 0; i < SETS.length; i++) {
-      const x = 92 + (i % 3) * 52, y = 330 + Math.floor(i / 3) * 58;
-      const got = owned(SETS[i].prize) || (s.won && i === s.level);
-      d.item(spriteKey(SETS[i].prize), x, y, {w: 36, fallback: () => d.star(x, y, 12)});
-      if (got) d.text('✓', x + 14, y - 10, 16, '#f6e2a2');
-      else d.circle(x, y, 20, '#1a120866');
+    LANES.forEach((y, i) => {
+      d.line({x: 40, y}, {x: 860, y}, i === 1 ? '#7aa7a455' : '#7aa7a433', 2);
+    });
+    if (ch.hide) {
+      roundRect(c, 380, 280, 140, 420, 12);
+      c.fillStyle = '#243a44cc';
+      c.fill();
+      d.text('pier', 450, 500, 14, '#ead6a4');
     }
-    const n = alleyPlay ? (pocket() ?? 0) : '∞';
-    if (s.eddy) {
-      const c = d.c; c.save(); c.translate(465, 753); c.rotate(s.t * .4);
-      for (let i = 0; i < 8; i++) { c.rotate(Math.PI / 4); d.arc(0, 0, 90, -.4, .6, '#d7ffe335', 3); }
-      c.restore();
-    }
-    if (s.ferry) {
-      const f = ferryPose(s.t);
-      d.ellipse(f.x, f.y + 16, 60, 22, '#113f4940');
-      d.poly([[f.x - 48, f.y], [f.x + 48, f.y - 18], [f.x + 48, f.y + 18]], '#974d43', '#eac389', 2);
-      d.text('POST', f.x, f.y + 4, 12);
-    }
-    for (const t of s.towers) {
-      const w = t.n * 30 + 24;
-      d.line({x: t.x - w, y: t.y + 7}, {x: t.x + w, y: t.y + 7}, '#9b7c57', 18);
-      d.line({x: t.x - w, y: t.y}, {x: t.x + w, y: t.y}, '#e1c294', 5);
-      for (const x of [t.x - w + 14, t.x + w - 14]) d.line({x, y: t.y + 12}, {x, y: 970}, '#9d8b69', 10);
-    }
-    for (const b of s.bottles) {
-      if (b.kind === 'boat') {
-        d.item(spriteKey('little-sailboat'), b.x, b.y - 18, {
-          w: 52, angle: b.angle,
-          fallback: () => { d.ellipse(b.x, b.y, 24, 12, '#174f54', '#eac389', 2); d.line({x: b.x, y: b.y}, {x: b.x, y: b.y - 36}, '#ebc581', 3); },
+
+    if (s.fleet) {
+      for (const boat of s.fleet.boats) {
+        const pose = boatPose(boat, s.fleet.t, ch);
+        const hid = occluded(pose.x, ch);
+        const alpha = hid ? 0.28 : 1;
+        c.save();
+        c.globalAlpha = alpha;
+        if (boat.unique) d.glow(pose.x, pose.y, 46, '#e8c878');
+        d.item(spriteKey(boat.unique ? ch.prize : (boat.decoy ? 'message-bottle' : 'little-sailboat')), pose.x, pose.y, {
+          w: boat.w, fallback: () => {
+            d.ellipse(pose.x, pose.y + 10, boat.w * 0.45, 12, '#174f54', '#eac389', 2);
+            d.line({x: pose.x, y: pose.y + 8}, {x: pose.x, y: pose.y - boat.w * 0.5}, '#ebc581', 3);
+          },
         });
-      } else {
-        d.item(spriteKey('message-bottle'), b.x, b.y - 32, {
-          w: 48, angle: b.angle,
-          fallback: () => d.bottle(b.x, b.y, 1, '#e5e5cc', b.angle),
-        });
+        if (boat.unique) d.text('cargo', pose.x, pose.y - 36, 13, '#fff6d8');
+        c.restore();
       }
     }
-    for (const drop of s.spray) d.circle(drop.x, drop.y, Math.max(2, drop.r), '#d4fff288');
-    if (s.jet) d.circle(s.jet.x, s.jet.y, 9, '#e7fff0cc', '#9ad4c4', 1);
-    else if (!s.won && !s.lost && s.squeezes < s.limit) {
-      const t = .7, vx = (s.aim.x - nozzle.x) / t, vy = (s.aim.y - nozzle.y - HALF * t * t) / t;
-      for (let i = 1; i <= 14; i++) {
-        const u = t * i / 14;
-        d.circle(nozzle.x + vx * u, nozzle.y + vy * u + HALF * u * u, 2.2, '#7aa7a499');
+
+    if (s.burst) {
+      const gun = GUNS[s.burst.gun];
+      const pts = [];
+      for (let i = 1; i <= 10; i++) {
+        const u = s.burst.age * i / 10;
+        pts.push(waterPoint(gun, s.burst.pressure, u, s.burst.wind));
       }
-      d.poly([[nozzle.x - 18, nozzle.y + 8], [nozzle.x + 18, nozzle.y + 8], [nozzle.x + 10, nozzle.y - 10], [nozzle.x - 10, nozzle.y - 10]], '#8a6a3a', '#eac389', 2);
-      d.circle(nozzle.x, nozzle.y - 14, 8, '#c9a15a', '#f0d6a8', 2);
-      d.ring(s.aim.x, s.aim.y, 17, '#7aa7a4', 2);
+      pts.forEach(pt => d.circle(pt.x, pt.y, 5, '#d4fff288'));
+      d.circle(s.burst.x, s.burst.y, 8, '#e7fff0cc', '#9ad4c4', 1);
+    } else if (s.phase === 'pump' || s.phase === 'play') {
+      const gun = GUNS[s.gun];
+      if (s.pressure > 0.05) {
+        const aim = waterPoint(gun, s.pressure, BURST_LIFE, ch.wind);
+        d.circle(aim.x1, aim.y1, 6, '#7aa7a466');
+      }
     }
+
+    for (const g of GUNS) {
+      const sel = g.id === s.gun;
+      d.poly([[g.x - 16, g.y + 10], [g.x + 16, g.y + 10], [g.x + 8, g.y - 18], [g.x - 8, g.y - 18]], sel ? '#c9a15a' : '#8a6a3a', '#eac389', 2);
+      d.circle(g.x, g.y - 22, sel ? 10 : 8, sel ? '#f0d18f' : '#c9a15a', '#f0d6a8', 2);
+      d.text(String(g.id + 1), g.x, g.y + 28, 14, sel ? '#fff6d8' : '#cbb890');
+    }
+
+    roundRect(c, 70, 200, 18, 90, 6);
+    c.fillStyle = '#243a44ee';
+    c.fill();
+    const ph = s.pressure * 82;
+    roundRect(c, 73, 286 - ph, 12, ph, 4);
+    c.fillStyle = '#9ad4c4';
+    c.fill();
+    d.text('psi', 79, 310, 12, '#ead6a4');
+
+    d.text(s.burstsLeft + ' left', 160, 188, 16, '#f0d6a8');
+
+    wrapLine(d, s.note, 450, 1110, 20, '#f0d18f', 720);
+    const n = alleyPlay ? pocket() : null;
+    if (n == null) d.text('practice', 450, 1176, 16, '#ead6a4');
   },
   readout: s => {
-    const down = s.bottles.filter(b => b.fallen).length;
     const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice bursts' : n + (n === 1 ? ' penny' : ' pennies') + ' in the purse';
-    return down + ' / ' + s.bottles.length + ' off the quay · ' + s.squeezes + '/' + s.limit + ' squeezes · ' + purse + ' · ' + s.note;
+    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    return purse + ' · ' + s.note;
   },
 };

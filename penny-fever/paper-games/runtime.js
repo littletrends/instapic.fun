@@ -1,32 +1,20 @@
-import {games,byId} from './catalogue.js?v=florence-1';
+import {games,byId} from './catalogue.js?v=briefs-2';
 import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
-import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';
+import {kits,spriteKey,itemName} from './prizes.js?v=ritual-3';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {resolvePilotSession} from '../charging/flags.mjs';
-const pilotParams = new URLSearchParams(location.search);
-let pilot = null, privateError = null;
-try {
- if (window.parent !== window && pilotParams.get('room') === 'alley') pilot = await resolvePilotSession(pilotParams.get('stall'));
-} catch (reason) { privateError = reason; }
-if (privateError) {
- document.querySelector('#error').textContent = privateError.message;
- document.querySelector('#begin').disabled = true;
-} else if (pilot) {
- await (await import('../charging/pilot-runtime.mjs')).runPilot(byId[pilotParams.get('stall')], pilot);
-} else {
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
 const HOUSE={
- fortune:{seconds:50,title:'The glass went quiet',detail:'Iris covers the ball. Another penny, another gaze.'},
- love:{seconds:40,title:'The glass cooled',detail:'Rosalie wipes the tester. Write the names again when you are ready.'},
- curios:{seconds:75,title:'The beetle wound down',detail:'Digby tucks the menagerie in. Another penny, another wander.'},
- lookup:{seconds:70,title:'The sky went quiet',detail:'The glasses fogged before every star woke.'},
+ fortune:{seconds:100,title:'The globe went still',detail:'Iris covers the glass. Another gaze when you are ready.'},
+ love:{seconds:240,title:'The tester slept',detail:'Rosalie blots the page. Another sitting when you are ready.'},
+ curios:{seconds:180,title:'The cabinet closed',detail:'The drawers latch. Another mystery when you have a penny.'},
+ lookup:{seconds:150,title:'The sky went quiet',detail:'Celeste covers the lantern. Another sitting when you are ready.'},
  snap:{seconds:45,title:'The shutter slept',detail:'Felix winds a fresh plate. Try this woodland again.'},
- whisper:{seconds:60,title:'Last post',detail:'Willa closes the pigeonholes. The next cabinet waits.'},
+ whisper:{seconds:180,title:'The whisper slept',detail:'Willa folds the last envelope. Another run when you are ready.'},
  'ball-toss':{seconds:35,title:'The lanterns stay lit',detail:'Bess collects the rings. One more penny for another toss.'},
  'coin-pusher':{seconds:90,title:'Copper banks the trays',detail:'The falls sleep until the next penny. This shift is over.'},
  pinball:{seconds:75,title:'The table went dark',detail:'Pip kills the lights. Plunge another penny when you want the garden back.'},
@@ -51,7 +39,7 @@ const HOUSE={
  balloons:{seconds:40,title:'The bunch drifted off',detail:'Nell is tying the next handful. Try this garden again.'},
  ferris:{seconds:40,title:'The wheel slowed',detail:'The crescent waited, and the cabins went home.'},
  helter:{seconds:30,title:'The mat is empty',detail:'The slide ran out before every gold ring was caught.'},
- swings:{seconds:35,title:'The chairs emptied',detail:'The front mat waited, and the waltz ended.'},
+ swings:{seconds:35,title:'The chairs emptied',detail:'The front mat waited, and the flight ended.'},
  funhouse:{seconds:35,title:'The mirrors went dark',detail:'The real laugh hid in the shuffle.'},
  organ:{seconds:40,title:'The roll finished',detail:'A few notes wandered off the gold bar.'},
  mural:{seconds:50,title:'The paint dried',detail:'A few patches still forget the alley wall.'},
@@ -154,7 +142,7 @@ function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(typ
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- engine=(await import(entry.module+'?v=type-up-1')).default;
+ engine=(await import(entry.module+'?v=briefs-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
@@ -186,4 +174,3 @@ try{
  if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;if(engine.tables){$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.textContent='Table · each chapter is a new set';}else if(engine.live){$('#chapter').disabled=true;$('#chapter').hidden=true;$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.hidden=true;}tellRoom('ready',{title:engine.title});}
  loadSprites(spriteIds.map(spriteKey)).then(art=>{if(disposed||!draw)return;draw.art=art;paint();});
 }catch(e){error(e);}
-}
