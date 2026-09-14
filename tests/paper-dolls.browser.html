@@ -14,6 +14,22 @@ async function pixels(url) {
 }
 const at = (p,x,y) => [...p.slice((y*1536+x)*4,(y*1536+x)*4+4)];
 try {
+  const original=await pixels(new URL('../penny-fever/assets/restyle/paper-dolls/bodies/girl.png',location.href).href);
+  const neutral=await pixels(await composeDoll(blankDraft()));
+  for(let i=0;i<original.length;i+=4) if(original[i+3]===255) {
+    assert(original[i]===neutral[i] && original[i+1]===neutral[i+1] && original[i+2]===neutral[i+2], 'Default blue changed the original printed artwork');
+  }
+  for(const spec of [{}, {skin:'deep'}, {skin:'tan',eyes:'brown'}, {skin:'deep',eyes:'green'}, {outfit:'garden',skin:'deep'}]) {
+    const frame=await pixels(await composeDoll({...blankDraft(),...spec}));
+    for(const [x,y] of [[184,118],[233,116],[528,119],[1371,118]]) {
+      const [r,g,b,a]=at(frame,x,y);
+      assert(a===255 && Math.max(r,g,b)<65, 'Pupil became transparent or brightly tinted');
+    }
+    for(const [x,y] of [[172,125],[247,122]]) {
+      if(spec.skin) assert(at(frame,x,y)[0] < at(neutral,x,y)[0]-20, 'Skin around the eye was left as a pale ring');
+    }
+  }
+  report.push('PASS: dark opaque pupils, unchanged default artwork/highlights, and tinted eyelid skin');
   for (const outfit of OUTFITS) {
     const base = {...blankDraft(), outfit:outfit.id};
     const natural=await pixels(await composeDoll(base));

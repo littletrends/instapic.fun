@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><base href="../penny-fever/">
+<link rel="stylesheet" href="world/crew-selector.css">
+<div id="discoveryDoor"><div class="door-crew"></div></div>
+<pre id="testResult">RUNNING</pre>
+<script type="module">
+import {composeDoll,blankDraft} from './world/paper-dolls.js?v=doll-face-speed-2';
+import './world/crew-selector.js?v=doll-face-speed-2';
+const assert=(ok,message)=>{if(!ok)throw new Error(message);};
+const waitFor=async fn=>{for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview');};
+try {
+  await waitFor(()=>globalThis.PennyFeverDoll);
+  performance.clearResourceTimings();
+  globalThis.PennyFeverDoll.open();
+  const book=document.querySelector('.crew-book');
+  const details=book.querySelector('.crew-collections');
+  details.open=true; details.scrollIntoView();
+  const preview=document.getElementById('dollPreviewImg');
+  await waitFor(()=>preview.src.startsWith('data:') && preview.complete && preview.naturalWidth>0);
+  assert(book.querySelectorAll('img[data-doll-src]').length>0,'Offscreen thumbnails were all requested on open');
+  const tray=book.querySelector('.doll-tray'); tray.scrollIntoView();
+  await waitFor(()=>book.querySelector('.doll-piece-thumb img[src]'));
+  const first=book.querySelector('.doll-piece-thumb img[src]');
+  await waitFor(()=>first.complete && first.naturalWidth>0);
+  const requests=performance.getEntriesByType('resource').map(r=>r.name);
+  assert(!requests.some(url=>/paper-dolls\/(hair-clean|hats-clean|outfits)\//.test(url)),'Thumbnail tray downloaded full-size layers');
+  const thumbs=book.querySelectorAll('.doll-piece-thumb img[src]');
+  assert([...thumbs].every(img=>img.src.includes('/thumbnails/')&&img.naturalWidth<=384),'Oversized thumbnail');
+  // Rapid wheel changes must settle on the last choice, without an older render winning.
+  const wheel=document.getElementById('skinWheel');
+  for(const value of ['#ae7251','#a96942','#be8860']){wheel.value=value;wheel.dispatchEvent(new Event('input',{bubbles:true}));}
+  const expected=await composeDoll({...blankDraft(),skin:'custom',skinHex:'#be8860'});
+  await waitFor(()=>preview.src===expected);
+  book.close();
+  document.getElementById('testResult').textContent='PASS: preview loads; offscreen thumbnails deferred; no full-size layers requested by tray; latest colour wins';
+  document.documentElement.dataset.result='pass';
+} catch(e){document.getElementById('testResult').textContent='FAIL: '+e.message;document.documentElement.dataset.result='fail';}
+</script>

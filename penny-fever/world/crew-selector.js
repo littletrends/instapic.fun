@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine,
-} from './paper-dolls.js?v=doll-alpha-colour-1';
+} from './paper-dolls.js?v=doll-face-speed-2';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -88,27 +88,35 @@ function layerRow(title, key, items, folder) {
   return `<div class="doll-row doll-layer-row"><strong>${title}</strong>${items.map(item => {
     const thumb = item.id === 'none' || !folder
       ? ''
-      : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/${folder}/${item.id}.png" loading="lazy" decoding="async" alt=""></span>`;
+      : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/thumbnails/${folder}/${item.id}.webp" loading="lazy" fetchpriority="low" decoding="async" alt=""></span>`;
     return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
   }).join('')}</div>`;
 }
 
 let draftPaintVersion = 0;
-function paintDraft() {
-  const paintVersion = ++draftPaintVersion;
-  const spec = boot.draft;
-  document.querySelectorAll('[data-doll-key]').forEach(b => {
-    b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
+let draftFrame = 0;
+let draftRendering = false;
+let draftWaiting = false;
+function queueDraftRender() {
+  if (draftRendering) { draftWaiting = true; return; }
+  if (!draftFrame) draftFrame = requestAnimationFrame(() => {
+    draftFrame = 0;
+    renderDraft();
   });
-  const skinWheel = document.getElementById('skinWheel');
-  const eyesWheel = document.getElementById('eyesWheel');
-  if (skinWheel && spec.skinHex) skinWheel.value = spec.skinHex;
-  if (eyesWheel && spec.eyesHex) eyesWheel.value = spec.eyesHex;
+}
 
-  const stage = document.getElementById('dollPreviewImg');
-  composeDoll(spec).then(url => {
+async function renderDraft() {
+  draftRendering = true;
+  draftWaiting = false;
+  const paintVersion = draftPaintVersion;
+  const spec = boot.draft;
+  const preview = document.getElementById('dollPreview');
+  preview?.setAttribute('aria-busy', 'true');
+  try {
+    const url = await composeDoll(spec);
     if (paintVersion !== draftPaintVersion) return;
     boot.previewUrl = url;
+    const stage = document.getElementById('dollPreviewImg');
     if (stage) {
       stage.src = url;
       stage.style.marginLeft = `-${(boot.dollView % 4) * 100}%`;
@@ -122,7 +130,31 @@ function paintDraft() {
         runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
       }
     }
-  }).catch(() => {});
+    const status = document.getElementById('dollRenderStatus');
+    if (status) status.textContent = '';
+  } catch {
+    const status = document.getElementById('dollRenderStatus');
+    if (status) status.textContent = 'Couldn’t load that piece. Please choose it again.';
+  } finally {
+    preview?.setAttribute('aria-busy', 'false');
+    draftRendering = false;
+    if (draftWaiting) queueDraftRender();
+  }
+}
+function paintDraft() {
+  ++draftPaintVersion;
+  const spec = boot.draft;
+  document.querySelectorAll('[data-doll-key]').forEach(b => {
+    b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
+  });
+  const skinWheel = document.getElementById('skinWheel');
+  const eyesWheel = document.getElementById('eyesWheel');
+  if (skinWheel && spec.skinHex) skinWheel.value = spec.skinHex;
+  if (eyesWheel && spec.eyesHex) eyesWheel.value = spec.eyesHex;
+
+  const status = document.getElementById('dollRenderStatus');
+  if (status && !boot.previewUrl) status.textContent = 'Loading your doll…';
+  queueDraftRender();
 }
 
 function refresh() {
@@ -251,6 +283,26 @@ function openCrewBook(event) {
   }
 }
 
+let dollThumbnailObserver;
+function observeDollThumbnails(book) {
+  const loadThumb = img => {
+    img.src = img.dataset.dollSrc;
+    delete img.dataset.dollSrc;
+  };
+  if (!('IntersectionObserver' in window)) {
+    book.querySelectorAll('img[data-doll-src]').forEach(loadThumb);
+    return;
+  }
+  if (!dollThumbnailObserver) dollThumbnailObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      if (entry.target.dataset.dollSrc) loadThumb(entry.target);
+      dollThumbnailObserver.unobserve(entry.target);
+    });
+  }, {root: book, rootMargin: '100px'});
+  book.querySelectorAll('img[data-doll-src]').forEach(img => dollThumbnailObserver.observe(img));
+}
+
 function mount() {
   const door = document.getElementById('discoveryDoor');
   if (!door) return;
@@ -291,7 +343,7 @@ function mount() {
 <p>The girl stays. Mix layers underneath: hair, hats, clothes.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
-    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div>
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div><p id="dollRenderStatus" role="status"></p>
     <div class="crew-runway-turn">
       <span id="dollViewLabel">front</span>
       <button type="button" id="dollRotate" aria-label="Rotate">Rotate</button>
@@ -324,11 +376,8 @@ function mount() {
     });
     book.querySelector('.crew-collections').addEventListener('toggle', e => {
       if (!e.currentTarget.open) return;
-      book.querySelectorAll('img[data-doll-src]').forEach(img => {
-        img.src = img.dataset.dollSrc;
-        delete img.dataset.dollSrc;
-      });
       paintDraft();
+      observeDollThumbnails(book);
     });
     book.querySelector('#skinWheel')?.addEventListener('input', e => setWheel('skin', e.target.value));
     book.querySelector('#eyesWheel')?.addEventListener('input', e => setWheel('eyes', e.target.value));

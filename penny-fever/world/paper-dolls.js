@@ -182,11 +182,13 @@ function load(url) {
   if (images.has(url)) return images.get(url);
   const job = new Promise((resolve, reject) => {
     const img = new Image();
+    img.fetchPriority = 'high';
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(url));
     img.src = url;
   });
   images.set(url, job);
+  job.catch(() => images.delete(url));
   return job;
 }
 
@@ -230,43 +232,69 @@ function skinRegion(ctx) {
   ctx.fillRect(510,355,92,157); ctx.fillRect(875,355,60,157); ctx.fillRect(960,355,60,157); ctx.fillRect(1297,355,100,157);
   ctx.globalCompositeOperation = 'destination-out';
   const oval = (x,y,rx,ry) => {ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();};
-  // Eye whites, mouth, brows and brass joints keep their printed colours.
-  for(const e of [[181,115,16,17],[237,114,16,17],[528,118,7,17],[1373,118,7,17],
-    [209,150,18,4],[176,89,15,4],[239,86,15,4],
-    [140,257,7,8],[278,257,7,8],[175,399,8,9],[242,399,8,9],
+  // Brass joints stay printed. Facial details are selected from their actual
+  // pixel colours below, not large ovals that leave pale rings on dark skin.
+  for(const e of [[140,257,7,8],[278,257,7,8],[175,399,8,9],[242,399,8,9],
     [574,261,8,8],[557,399,6,8],[579,475,8,8],
     [879,257,8,8],[1020,257,8,8],[918,397,8,8],[984,397,8,8],
     [1333,261,8,8],[1350,399,7,8],[1318,475,8,8]]) oval(...e);
   ctx.globalCompositeOperation = 'source-over';
 }
 
-function colourDoll(ctx, skinRgb, eyeRgb) {
+let cachedSkinMask;
+function getSkinMask() {
+  if (cachedSkinMask) return cachedSkinMask;
   const reference = document.createElement('canvas');
   reference.width = W; reference.height = H;
   const ref = reference.getContext('2d');
   skinRegion(ref);
-  const mask = ref.getImageData(0,0,W,H).data;
+  cachedSkinMask = ref.getImageData(0,0,W,H).data;
+  return cachedSkinMask;
+}
+
+function smooth(lo, hi, value) {
+  const t = Math.max(0, Math.min(1, (value-lo)/(hi-lo)));
+  return t*t*(3-2*t);
+}
+
+function colourDoll(ctx, skinRgb, eyeRgb) {
+  if (!skinRgb && !eyeRgb) return;
+  const mask = skinRgb ? getSkinMask() : null;
   const result = ctx.getImageData(0, 0, W, H), d = result.data;
   for (let i = 0; i < d.length; i += 4) {
     if (!d[i + 3]) continue;
     const x = (i / 4) % W, y = Math.floor(i / 4 / W);
     const r = d[i], g = d[i+1], b = d[i+2];
     if (eyeRgb && irisWeight(x, y, r, g, b)) {
-      const shade = (r*.3 + g*.59 + b*.11) / 116;
-      for (let c = 0; c < 3; c++) d[i+c] = Math.min(255, eyeRgb[c] * shade);
+      // Change the iris pigment without brightening its dark rim, pupil or
+      // specular highlights. The default blue bypasses recolouring entirely.
+      const blue = [72, 138, 196];
+      for (let c = 0; c < 3; c++) d[i+c] = Math.min(255, d[i+c] * eyeRgb[c] / blue[c]);
       continue;
     }
     if (!skinRgb || !mask[i+3]) continue;
     // Match the uncoloured artwork's peach skin, before any tint is applied.
     // Soft chroma edges preserve texture; neutral cloth and brown shoes stay put.
-    const smooth = (lo,hi,v) => { const t=Math.max(0,Math.min(1,(v-lo)/(hi-lo))); return t*t*(3-2*t); };
     const red = Math.max(1,r);
-    const coverage = mask[i+3]/255 * (y < 178 ? 1 :
+    const localX = x % CELL;
+    const pose = Math.floor(x / CELL);
+    const facialDetail = pose === 0
+      ? (y >= 79 && y <= 132 && localX >= 158 && localX <= 257)
+        || (y >= 142 && y <= 160 && localX >= 187 && localX <= 232)
+      : pose === 1 ? y >= 96 && y <= 151 && localX < 155
+      : pose === 3 ? y >= 96 && y <= 151 && localX > 206 : false;
+    const faceSkin = facialDetail ? smooth(5, 16, r-g) * smooth(4, 13, g-b)
+      * smooth(.34, .48, b/red) : 1;
+    const coverage = mask[i+3]/255 * (y < 178 ? faceSkin :
       smooth(y>435?.58:.40,y>435?.70:.52,g/red)
       * (1-smooth(.84,.89,g/red)) * smooth(12,25,r-b));
     const base = [235, 184, 148];
+    const light = r*.3 + g*.59 + b*.11;
+    const baseLight = 195.34;
+    const detail = (light-baseLight) * (light>baseLight ? .8 : .65);
     for (let c = 0; c < 3; c++) {
-      const tinted = Math.min(255, skinRgb[c] * d[i+c] / base[c]);
+      const warmth = (d[i+c]-light - (base[c]-baseLight)) * .3;
+      const tinted = Math.max(0, Math.min(255, skinRgb[c] + detail + warmth));
       d[i+c] += (tinted - d[i+c]) * coverage;
     }
   }
@@ -413,15 +441,21 @@ function drawFace(ctx, bodyImg, spec) {
 }
 
 export async function composeDoll(spec) {
-  const key = JSON.stringify(spec);
+  const key = JSON.stringify([spec.skin, spec.skinHex, spec.eyes, spec.eyesHex, spec.outfit, spec.hair, spec.hat]);
   if (strips.has(key)) return strips.get(key);
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   const bodyImg = await load(src('bodies', 'girl.png'));
+  // The source cutout accidentally made the black pupils transparent. Restore
+  // their dark backing before drawing the art, retaining its iris and highlights.
+  ctx.fillStyle = '#101820';
+  for (const [x,y,rx,ry] of [[184,118,8,9],[233,116,8,9],[528,119,3,9],[1371,118,3,9]]) {
+    ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2); ctx.fill();
+  }
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
-  const eyeRgb = hexRgb(spec.eyesHex) || EYE_COLORS.find(e => e.id === spec.eyes)?.rgb;
+  const eyeRgb = hexRgb(spec.eyesHex) || (spec.eyes === 'blue' ? null : EYE_COLORS.find(e => e.id === spec.eyes)?.rgb);
   if (spec.outfit && spec.outfit !== 'none') {
     const wearImg = await load(src('outfits', `${spec.outfit}.png`));
     ctx.drawImage(wearImg, 0, 0, W, H);
@@ -446,6 +480,7 @@ export async function composeDoll(spec) {
   }
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);
+  while (strips.size > 12) strips.delete(strips.keys().next().value);
   return url;
 }
 
