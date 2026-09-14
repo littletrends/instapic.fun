@@ -1,7 +1,7 @@
 import {TAU, clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=ritual-3';
 import {
-  boardRide, sealAttempt, recordFind, recordTreasure, settleArrival, logAction, prefersReducedMotion, drawHud,
+  boardRide, sealAttempt, recordFind, recordTreasure, settleArrival, logAction, prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'carousel';
@@ -12,15 +12,6 @@ const LOOK_X = 900 * 0.15;
 const LOOK_Y = 1200 * 0.10;
 const RECENTER_MS = 0.25;
 const GOAL = 3;
-const RIDE_ART = new URL('../../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.webp', import.meta.url).href;
-const rideArt = {img: null, ok: false};
-function loadRideArt() {
-  if (rideArt.img || typeof Image === 'undefined') return;
-  const img = new Image();
-  img.onload = () => { rideArt.ok = true; };
-  img.src = RIDE_ART;
-  rideArt.img = img;
-}
 const SPOTS = [
   {id: 'saddle', label: 'a saddle flap', x: 620, y: 640},
   {id: 'canopy', label: 'the canopy fringe', x: 450, y: 220},
@@ -146,7 +137,6 @@ export default {
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
   create(level, rng) {
-    loadRideArt();
     const rand = typeof rng === 'function' ? rng : Math.random;
     const reduced = prefersReducedMotion();
     const s = {
@@ -224,47 +214,58 @@ export default {
     if (type === 'cancel') s.drag = null;
   },
   draw(s, d) {
-    const look = {x: s.lookX, y: s.lookY};
-    const bob = Math.sin(s.t * 2.2) * (s.reduced ? 2 : 7);
-    d.ellipse(450, 600, 520, 620, '#1a1218');
-    d.ellipse(450, 1180, 560, 220, '#120c0a');
-    if (rideArt.ok && rideArt.img) {
-      const img = rideArt.img;
-      const w = 980, h = w * (img.naturalHeight || 1) / (img.naturalWidth || 1);
-      d.c.save();
-      d.c.drawImage(img, 450 - w / 2 + look.x * 0.7, 430 - h / 2 + look.y * 0.55 + bob, w, h);
-      d.c.restore();
-    } else {
-      const cx = 450 + look.x, cy = 560 + look.y;
-      d.ellipse(cx, cy + 220, 340, 90, '#3a2418');
-      d.poly([[cx - 240, cy - 260], [cx + 240, cy - 260], [cx + 280, cy - 20], [cx - 280, cy - 20]], '#6b2030', '#d2a65b', 3);
-      d.ellipse(cx, cy - 300, 250, 52, '#4a1824', '#f0d09a', 3);
+    const cx = 450 + s.lookX, cy = 640 + s.lookY;
+    d.ellipse(450, 1180, 520, 220, '#1a1410');
+    d.ellipse(cx, cy + 210, 340, 90, '#3a2418');
+    d.ellipse(cx, cy + 200, 318, 78, '#5a3a22', '#d2a65b', 3);
+    d.poly([[cx - 210, cy - 280], [cx + 210, cy - 280], [cx + 250, cy - 40], [cx - 250, cy - 40]], '#6b2030', '#d2a65b', 3);
+    for (let i = 0; i < 8; i++) {
+      const a = -Math.PI + i * Math.PI / 7;
+      d.line({x: cx, y: cy - 40}, {x: cx + Math.cos(a) * 240, y: cy - 40 + Math.sin(a) * 70}, '#d2a65b', 2);
     }
-    const youX = 450, youY = 980 + bob;
-    d.ellipse(youX + 8, youY + 58, 90, 22, '#12233588');
-    d.poly([[youX - 110, youY + 20], [youX + 120, youY - 10], [youX + 130, youY + 48], [youX - 100, youY + 70]], '#f7efe0', '#b78b48', 3);
-    d.poly([[youX + 70, youY - 36], [youX + 150, youY - 18], [youX + 138, youY + 22], [youX + 78, youY + 18]], '#f7efe0', '#b78b48', 3);
-    d.circle(youX + 132, youY - 8, 28, '#f7efe0', '#b78b48', 2);
-    d.poly([[youX - 30, youY - 18], [youX + 46, youY - 24], [youX + 50, youY + 18], [youX - 34, youY + 24]], '#6b2030', '#d2a65b', 2);
-    d.text('you', youX, youY + 8, 22, '#f0d09a');
+    d.ellipse(cx, cy - 300, 230, 48, '#4a1824', '#f0d09a', 3);
+    d.circle(cx, cy - 40, 18, '#d2a65b', '#f8e4b3', 2);
+    d.line({x: cx, y: cy - 40}, {x: cx, y: cy + 200}, '#c4a46a', 8);
+    const n = 6;
+    for (let i = 1; i < n; i++) {
+      const h = horsePoint(i, n, s.angle, cx, cy + 40, 250, 220);
+      const bob = Math.sin(s.angle * 2 + i) * 10;
+      d.ellipse(h.x + 6, h.y + 28 + bob, 34 * h.scale, 12, '#12233555');
+      d.poly([
+        [h.x - 36 * h.scale, h.y + bob],
+        [h.x + 40 * h.scale, h.y - 8 + bob],
+        [h.x + 48 * h.scale, h.y + 18 + bob],
+        [h.x - 28 * h.scale, h.y + 22 + bob],
+      ], '#f3e2bd', '#b78b48', 2);
+      d.circle(h.x + 40 * h.scale, h.y - 4 + bob, 11 * h.scale, '#f3e2bd', '#b78b48', 1.5);
+    }
+    const you = horsePoint(0, n, 0, cx, cy + 110, 0, 0);
+    const bob = Math.sin(s.t * 2.2) * (s.reduced ? 3 : 8);
+    d.poly([[you.x - 70, you.y + 40 + bob], [you.x + 80, you.y + 20 + bob], [you.x + 88, you.y + 70 + bob], [you.x - 60, you.y + 78 + bob]], '#f7efe0', '#b78b48', 3);
+    d.circle(you.x + 78, you.y + 28 + bob, 22, '#f7efe0', '#b78b48', 2);
+    d.poly([[you.x - 10, you.y + 8 + bob], [you.x + 36, you.y + 8 + bob], [you.x + 40, you.y + 36 + bob], [you.x - 14, you.y + 38 + bob]], '#6b2030', '#d2a65b', 2);
+    d.item(spriteKey('music-carousel'), cx, cy - 40, {w: 92, shadow: false, fallback: () => d.star(cx, cy - 40, 16)});
+    const look = {x: s.lookX, y: s.lookY};
     s.finds?.forEach(row => {
       if (!visibleAt(row, s.t)) return;
-      d.glow(row.x + look.x, row.y + look.y, 64, '#ffe6a4');
-      d.item(spriteKey(row.id), row.x + look.x, row.y + look.y, {w: 78, shadow: false, fallback: () => d.star(row.x + look.x, row.y + look.y, 20)});
+      d.glow(row.x + look.x, row.y + look.y, 46, '#ffe6a4');
+      d.item(spriteKey(row.id), row.x + look.x, row.y + look.y, {w: 56, shadow: false, fallback: () => d.star(row.x + look.x, row.y + look.y, 14)});
     });
     s.decoys?.forEach(row => {
       if (!visibleAt(row, s.t)) return;
-      d.glow(row.x + look.x, row.y + look.y, 36, '#c9b8ff');
-      d.star(row.x + look.x, row.y + look.y, 16, '#e8d8ff');
+      d.glow(row.x + look.x, row.y + look.y, 30, '#c9b8ff');
+      d.star(row.x + look.x, row.y + look.y, 12, '#e8d8ff');
     });
     if (s.treasure && visibleAt(s.treasure, s.t)) {
-      d.glow(s.treasure.x + look.x, s.treasure.y + look.y, 78, '#f4d590');
-      d.item(spriteKey(s.treasure.id), s.treasure.x + look.x, s.treasure.y + look.y, {w: 92, shadow: false, fallback: () => d.heart(s.treasure.x + look.x, s.treasure.y + look.y, 22)});
+      d.glow(s.treasure.x + look.x, s.treasure.y + look.y, 58, '#f4d590');
+      d.item(spriteKey(s.treasure.id), s.treasure.x + look.x, s.treasure.y + look.y, {w: 72, shadow: false, fallback: () => d.heart(s.treasure.x + look.x, s.treasure.y + look.y, 18)});
     }
-    if (s.t < 4 && !s.drag) d.text('Drag to look · tap a glint', 450, 210, 28, '#fff6d8');
-    s.progress = Math.min(1, s.t / ((TAU / chapterTune(s.level).speed) * chapterTune(s.level).laps) || 1);
+    const lap = Math.min(1, s.t / ((TAU / chapterTune(s.level).speed) * chapterTune(s.level).laps) || 1);
+    d.arc(70, 70, 28, -Math.PI / 2, -Math.PI / 2 + lap * TAU, '#f0d09a', 6);
+    d.text(s.practice ? 'Practice' : 'Paid waltz', 450, 64, 22, '#f0d09a');
     const found = s.collected.filter(row => row.kind === 'ordinary').length;
-    drawHud(d, s, {goal: GOAL, count: found, label: 'finds'});
+    d.text(found + ' / ' + GOAL + ' finds', 450, 96, 18, '#e8d0a0');
+    if (s.treasureCollected) d.text('Keepsake caught', 450, 124, 16, '#f4d590');
   },
   readout: s => s.note || '',
 };
