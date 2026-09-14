@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=iris-ball-1';
+import {games} from '../paper-games/catalogue.js?v=florence-1';
 import {mountTill, openTill} from './ticket-till.js?v=booth-till-1';
 
 const root = document.createElement('main');

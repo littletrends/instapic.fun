@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=iris-ball-1';
+import {games} from '../paper-games/catalogue.js?v=florence-1';
 import {spriteKey} from '../paper-games/prizes.js?v=purse-1';
 import {frontUrl} from '../paper-games/sprites.js';
 import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';

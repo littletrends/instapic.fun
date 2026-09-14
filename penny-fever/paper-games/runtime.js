@@ -1,4 +1,4 @@
-import {games,byId} from './catalogue.js?v=iris-ball-1';
+import {games,byId} from './catalogue.js?v=florence-1';
 import {Draw,seeded,clamp} from './draw.js?v=ink-1';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=mint-1';

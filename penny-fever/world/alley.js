@@ -14,7 +14,7 @@ import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=iris-ball-1";
+import {games as paperGames} from "../paper-games/catalogue.js?v=florence-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -2279,8 +2279,8 @@ function pickFocus(px, pz) {
       id,
       kind: "ride",
       name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
-      host: g?.host || art?.host || "",
-      hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
+      host: art?.host || g?.host || "",
+      hostSlug: String(art?.host || g?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
       line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
@@ -2369,8 +2369,8 @@ function pickFocus(px, pz) {
       id,
       kind: "ride",
       name: g?.title || art?.name || (fig.name || id).replace(" · papercut", ""),
-      host: g?.host || art?.host || "",
-      hostSlug: String(g?.host || art?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
+      host: art?.host || g?.host || "",
+      hostSlug: String(art?.host || g?.host || "").toLowerCase().replace(/[^a-z]+/g, ""),
       line: g?.blurb || "The ride faces the aisle.",
       x: fig.position.x,
       z: fig.position.z,
