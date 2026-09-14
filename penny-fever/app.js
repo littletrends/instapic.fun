@@ -394,6 +394,9 @@
 
   function setArt(id, relative) {
     const el = $(id);
+    if (relative === 'assets/restyle/paper-aura-seated.webp' && matchMedia('(max-width: 920px)').matches) {
+      relative = 'assets/restyle/phone/paper-aura-seated.webp';
+    }
     if (el && relative) el.src = relative.startsWith("assets/") ? relative : artPath(relative);
   }
 
@@ -3676,8 +3679,7 @@
         paintAdmitDesk();
         const w = $("doorWhisper");
         if (w) w.textContent = "“That’s the stub. Find me at the palace door — I don’t let anyone past without it.”";
-        const art = $("doorStageArt");
-        if (art) art.src = "assets/restyle/paper-aura-seated.webp";
+        // The responsive doorway picture already shows Aura with the ticket.
       });
     }
     if (giveTicket) {

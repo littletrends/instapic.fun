@@ -2,7 +2,7 @@ import { installMysticFront, installLoveFront } from './mystic-front.js?v=love-c
 import { decorativePaper, decorateBoxSurfaces } from './paper-panels.js?v=keep-light-1';
 import * as THREE from './lib/three.module.min.js';
 import { VENDOR_DESIGNS } from './vendor-designs.js?v=roomier-6';
-import { paperRail } from './paper-guest-entrance.js?v=phone-images-2';
+import { paperRail } from './paper-guest-entrance.js?v=phone-images-3';
 
 const unit = new THREE.BoxGeometry(1,1,1);
 const materials = new Map(), images = new Map();

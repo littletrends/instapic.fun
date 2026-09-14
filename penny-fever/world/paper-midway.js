@@ -1,5 +1,5 @@
 import * as THREE from './lib/three.module.min.js';
-import {paperRail} from './paper-guest-entrance.js?v=phone-images-2';
+import {paperRail} from './paper-guest-entrance.js?v=phone-images-3';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=names-1';
