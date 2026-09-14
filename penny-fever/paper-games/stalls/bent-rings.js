@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   RINGO_CHAPTERS, makeWave, stepWave, makeRing, stepRing, isRingoWin, resultNumber,
   ordinaryFor, uniquePeg, LAUNCH_Y, FIELD,
-} from '../ring-raiders.js?v=raid-1';
+} from '../ring-raiders.js?v=raid-2';
 
 const BOOK = 'pennyFever.ringRaiders';
 

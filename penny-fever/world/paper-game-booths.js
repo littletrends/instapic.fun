@@ -6,7 +6,7 @@ import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-3'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-4'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
