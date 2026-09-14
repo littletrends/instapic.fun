@@ -7,3 +7,5 @@ The live alley uses the existing wallet bridge: first gaze is practice with no r
 Chapter snapshots and selected chapter save locally every second and on pause/exit. The new engine uses `pennyFever.irisTent1.v2`; old engine saves remain untouched, and already-owned collection prizes prevent repeat chapter awards. Previous engine motion is not migrated.
 
 Validation: Chromium mobile 390×844 loaded all required art; old play URL redirects here; practice, one-penny play, charged-round resume, controlled winning catch and reward deduplication passed with a mock parent purse. No JavaScript exceptions. No real player funds were used.
+
+Startup optimization: same-dimension WebP delivery cuts the required Tent 1 image payload from 6,649,970 to 1,120,730 bytes (83.1%). Original PNG artwork is retained. Browser checks passed after conversion, including all art loading, play/purse/prize flow and return navigation.

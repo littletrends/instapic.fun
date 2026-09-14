@@ -1,4 +1,4 @@
-import { games, byId } from "./catalogue.js";
+import { games, byId } from "./catalogue.js?v=health-1";
 import { Draw, clamp } from "./draw.js";
 
 const $ = s => document.querySelector(s);
@@ -46,8 +46,8 @@ function error(e) {
 function showIris(on) {
   const img = $("#veil-iris");
   if (!img) return;
-  if (on && draw?.art?.iris) img.src = draw.art.iris.src || "./assets/ui/iris.png";
-  else if (on) img.src = "./assets/ui/iris.png";
+  if (on && draw?.art?.iris) img.src = draw.art.iris.src || "./assets/ui/iris.webp";
+  else if (on) img.src = "./assets/ui/iris.webp";
 }
 function showPrize(src, name) {
   const img = $("#veil-prize"), cap = $("#veil-prize-name");
@@ -284,7 +284,7 @@ listen($("#menu-close"), "click", closeMenu);
 
 try {
   if (!entry?.ready) throw Error("Choose an available game from the catalogue.");
-  engine = (await import(entry.module)).default;
+  engine = (await import(entry.module+"?v=health-1")).default;
   level = engine.selectedChapter?.() || 0;
   document.title = engine.title + " · Penny Fever";
   $("#title").textContent = engine.title;

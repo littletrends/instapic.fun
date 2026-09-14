@@ -7,7 +7,7 @@ const built = new Set(["fortune"]);
 export const games = rows.map(([id, host, title, blurb]) => ({
   id, host, title, blurb,
   ready: built.has(id),
-  asset: `./assets/${id}.png`,
+  asset: `./assets/${id}.webp`,
   module: `./stalls/${id}.js`,
 }));
 

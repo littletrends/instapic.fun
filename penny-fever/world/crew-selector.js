@@ -1,6 +1,6 @@
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
-  MINE_ID, blankDraft, composeDoll, keepMine, getMine, preloadDollArt,
+  MINE_ID, blankDraft, composeDoll, keepMine, getMine,
 } from './paper-dolls.js?v=doll-sets-3';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
@@ -87,7 +87,7 @@ function layerRow(title, key, items, folder) {
   return `<div class="doll-row doll-layer-row"><strong>${title}</strong>${items.map(item => {
     const thumb = item.id === 'none' || !folder
       ? ''
-      : `<span class="doll-piece-thumb"><img src="assets/restyle/paper-dolls/${folder}/${item.id}.png" alt=""></span>`;
+      : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/${folder}/${item.id}.png" loading="lazy" decoding="async" alt=""></span>`;
     return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
   }).join('')}</div>`;
 }
@@ -142,7 +142,7 @@ function refresh() {
   const runwayDoll = document.getElementById('crewRunwayDoll');
   if (runwayDoll && !boot.falling) poseDoll(runwayDoll, boot.selected, boot.viewIndex);
   paintViewLabel();
-  paintDraft();
+  if (document.querySelector("dialog.crew-book[open] .crew-collections[open]")) paintDraft();
 }
 
 function turn(dir) {
@@ -233,7 +233,7 @@ function openCrewBook(event) {
   boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
   boot.draft = { ...blankDraft(), ...(getMine() || boot.draft) };
   refresh();
-  preloadDollArt();
+
   try {
     if (typeof book.showModal === 'function') {
       if (!book.open) book.showModal();
@@ -317,6 +317,14 @@ function mount() {
       if (e.target.closest('#dollKeep')) { keepCutout(); return; }
       const b = e.target.closest('[data-crew]');
       if (b) chooseCrew(b.dataset.crew);
+    });
+    book.querySelector('.crew-collections').addEventListener('toggle', e => {
+      if (!e.currentTarget.open) return;
+      book.querySelectorAll('img[data-doll-src]').forEach(img => {
+        img.src = img.dataset.dollSrc;
+        delete img.dataset.dollSrc;
+      });
+      paintDraft();
     });
     book.querySelector('#skinWheel')?.addEventListener('input', e => setWheel('skin', e.target.value));
     book.querySelector('#eyesWheel')?.addEventListener('input', e => setWheel('eyes', e.target.value));

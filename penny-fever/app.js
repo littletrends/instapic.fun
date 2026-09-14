@@ -330,7 +330,7 @@
   const GAME_ASSET = "assets/game/";
   const VISUALS = {
     aura: {
-      welcome: "assets/restyle/paper-aura-seated.png",
+      welcome: "assets/restyle/paper-aura-seated.webp",
       think: "Aura_Reactions/Thinking.webp",
       celebrate: "Aura_Reactions/Celebrating.webp",
       laugh: "Aura_Reactions/Laughing.webp",
@@ -3465,7 +3465,7 @@
       "location": "fortuneCard"
     },
     "door_beckon": {
-      "src": "assets/restyle/paper-aura-seated.png",
+      "src": "assets/restyle/paper-aura-seated.webp",
       "kind": "still",
       "priority": "P1",
       "location": "discoveryDoor"
@@ -3501,7 +3501,7 @@
       "location": "arcadeHall"
     },
     "welcome_proprietor": {
-      "src": "assets/restyle/paper-aura-seated.png",
+      "src": "assets/restyle/paper-aura-seated.webp",
       "kind": "still",
       "priority": "P1",
       "location": "auraPortrait"
@@ -3677,7 +3677,7 @@
         const w = $("doorWhisper");
         if (w) w.textContent = "“That’s the stub. Find me at the palace door — I don’t let anyone past without it.”";
         const art = $("doorStageArt");
-        if (art) art.src = "assets/restyle/paper-aura-seated.png";
+        if (art) art.src = "assets/restyle/paper-aura-seated.webp";
       });
     }
     if (giveTicket) {
