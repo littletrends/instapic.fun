@@ -1,9 +1,12 @@
 # Exact-state saving build checklist
 
-## Tent 1 replacement — 14 September 2026
+## Current Fortune and Copper Falls engines — 14 September 2026
 
-Fortune now routes to `experiments/iris-tent-1/`; the legacy engine audit below no longer describes its active implementation. The Acer replacement saves each chapter and selection locally on a one-second interval and on pause/exit. Browser fixtures verified charged-round resume and result reward deduplication. Prior Fortune engine snapshots remain stored but are not migrated; owned collection treasures remain recognized. The disabled charging pilot has not been revalidated against this replacement.
+The live replacements use `stalls/fortune.js` and `stalls/coin-pusher.js` through the standard `play.html` route. They share `cabinet-runtime.js`, `cabinet-draw.js` and `cabinet.css`. There is no separate experiment deployment for these games.
 
+Fortune keeps its existing `pennyFever.irisTent1.v2` saves. Copper Falls saves full coin positions, velocities, falling flags, active drop/push/settle phase, paid counts and selected chapter in `pennyFever.copperFalls.v6`. Both persist every second and on pause/exit; Copper also saves after drops and collections. The older Copper engine's different tray layout remains in its original storage key and is not migrated. Owned collection treasures are retained and recognized.
+
+The disabled charging pilot has not been revalidated against these replacements. Legacy audit rows below describe previous engines, not these active versions.
 
 ## Disabled pilot candidate update — 13 September 2026
 

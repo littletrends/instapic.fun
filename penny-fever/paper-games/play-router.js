@@ -1,6 +1,12 @@
-const params = new URLSearchParams(location.search);
-if (params.get('stall') === 'fortune') {
-  location.replace('../experiments/iris-tent-1/play.html?' + params);
+const id = new URLSearchParams(location.search).get('stall');
+if (id === 'fortune' || id === 'coin-pusher') {
+  const sheet = document.querySelector('link[href^="style.css"]');
+  await new Promise((resolve, reject) => {
+    sheet.onload = resolve;
+    sheet.onerror = () => reject(new Error('The game cabinet style could not load.'));
+    sheet.href = 'cabinet.css?v=live-cabinets-1';
+  });
+  await import('./cabinet-runtime.js?v=live-cabinets-1');
 } else {
   await import('./runtime.js?v=phone-layout-1');
 }
