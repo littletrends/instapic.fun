@@ -126,3 +126,15 @@ h2{font-size:1.25rem}
   .game-page .stage{max-width:920px}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Iris has one play control: the heart of her globe. */
+.fortune-game .game-menu-bar{justify-content:center}
+.fortune-game .game-menu-bar button{flex:1;max-width:240px}
+.fortune-game .play-layout{display:flex;justify-content:center}
+.fortune-game .world-column{flex:1}
+.fortune-game .notebook{display:none!important}
+.fortune-game.menu-open .notebook{display:block!important;position:fixed;inset:52px 8px 8px;z-index:10;max-width:600px;margin:auto;border:1px solid #c3a775;border-radius:12px}
+.fortune-game #menu-close{display:block;width:100%}
+.fortune-game .veil-iris{max-height:170px;width:140px;object-fit:contain}
+
+.fortune-game .game-menu-bar button{padding:8px 4px;font-size:14px;white-space:nowrap}

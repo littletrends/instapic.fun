@@ -215,8 +215,20 @@ export function snapAngle(angle, n) {
 
 export function makeGlobe(level, seed) {
   const ch = IRIS_CHAPTERS[level] || IRIS_CHAPTERS[0];
-  const roll = rng(seed);
-  const pool = SYMBOLS.map(s => s.id);
+  // Mix adjacent gaze seeds so the first remembered sign does not repeat for hundreds of turns.
+  let mixed = (Number(seed) || 1) >>> 0;
+  mixed = Math.imul(mixed ^ (mixed >>> 16), 0x21f0aaad);
+  mixed = Math.imul(mixed ^ (mixed >>> 15), 0x735a2d97);
+  const roll = rng((mixed ^ (mixed >>> 15)) >>> 0);
+  const chapterSymbols = [
+    ['moon','star','key','eye'],
+    ['moon','bottle','moth','star','hand'],
+    ['key','crown','eye','hand','star','bottle'],
+    ['moon','moth','eye','bottle','crown','hand'],
+    ['moon','star','eye','key','moth','crown','bottle'],
+    SYMBOLS.map(s => s.id),
+  ];
+  const pool = [...new Set([...(chapterSymbols[level] || chapterSymbols[0]), ...SYMBOLS.map(s => s.id)])];
   const flash = [];
   for (let i = 0; i < ch.rings; i++) {
     let pick = pool[Math.floor(roll() * pool.length)];

@@ -127,7 +127,7 @@ function paintHud() {
   }
   if (next) {
     const lastCh = !engine?.levels || level >= engine.levels.length - 1;
-    next.disabled = lastCh;
+    next.disabled = !state || lastCh;
     next.textContent = lastCh ? "Last chapter" : "Next chapter";
   }
 }
@@ -288,12 +288,23 @@ listen($("#menu-close"), "click", closeMenu);
 
 try {
   if (!entry?.ready) throw Error("Choose an available game from the catalogue.");
-  engine = (await import(entry.module+"?v=live-cabinets-1")).default;
+  engine = (await import(entry.module+"?v=fortune-polish-1")).default;
   level = engine.selectedChapter?.() || 0;
   document.title = engine.title + " · Penny Fever";
   $("#title").textContent = engine.title;
   $("#host").textContent = entry.host + "’s paper world";
   $("#compact-title").textContent = engine.title;
+  if (id === 'fortune') {
+    document.body.classList.add('fortune-game');
+    if (embedded) { back.remove(); $('#compact-title').remove(); }
+    const treasures=document.createElement('button');treasures.textContent='Treasures';treasures.id='treasures';
+    listen(treasures,'click',()=>{persist();pause();tellRoom('treasures');});
+    const bar=document.querySelector('.game-menu-bar');
+    if (embedded) bar.insertBefore(treasures,$('#menu-toggle'));
+    bar.insertBefore($('#next-chapter'),$('#menu-toggle'));
+    $('#menu-toggle').textContent='Help';
+    $('#menu-close').textContent='× Close help';
+  }
   $("#intro").textContent = engine.intro;
   $("#mode-note").textContent = engine.modeNote || "First play is practice and keeps nothing. Paid play uses your alley purse. Standalone practice has a separate purse.";
   $("#instructions").textContent = engine.instructions;
@@ -368,7 +379,7 @@ try {
   listen(window, "keydown", e => {
     if (!playing || e.repeat) return;
     const tag = e.target?.tagName;
-    if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
+    if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "A") return;
     const k = e.key;
     const gameKey = k.length === 1 || ["Enter", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(k);
     if (!gameKey) return;
@@ -417,7 +428,7 @@ try {
   listen(window, "message", e => {
     if(e.origin !== location.origin || e.source !== window.parent || e.data?.channel !== "pf-paper-world") return;
     if(e.data.type === "pause") pause();
-    if(e.data.type === "resume") start();
+    if(e.data.type === "resume" && !document.body.classList.contains("menu-open")) start();
     if(e.data.type === "menu") $("#menu-toggle").click();
   });
   const saveTimer = setInterval(persist, 1000);

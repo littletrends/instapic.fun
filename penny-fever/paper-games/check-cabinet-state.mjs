@@ -21,3 +21,22 @@ cash=0;s=copper.create(5);assert.equal(cash,0,'live empty purse not refilled');s
 cash=10;reject=true;copper.drop(s,1);assert.equal(s.tray.coins.length,n,'failed debit does not mint coins');reject=false;
 let f=iris.create(0);const d=debits.length;iris.action(f,'gaze');assert(f.practice);assert.equal(debits.length,d);iris.persist(f);let rf=iris.create(0);assert.equal(rf.phase,f.phase);assert.equal(rf.charged,true);assert.equal(JSON.stringify(rf.globe),JSON.stringify(f.globe));
 console.log('PASS: Copper free practice, quarter/half purse drops, six trays, exact paid-motion resume, one credit/prize payout, no automatic live refill, failed debit; Iris save retained.');
+
+const {makeGlobe}=await import('./fortune-globe.js?v=fortune-polish-1');
+assert(new Set(Array.from({length:12},(_,i)=>makeGlobe(0,4100+i).flash[0])).size>3,'adjacent gazes vary their remembered sign');
+const irisSnapshots=[];
+for(let level=0;level<6;level++){
+  const q=iris.create(level);cash=40;
+  if(q.phase==='idle')iris.pointer(q,'down',{x:450,y:428});
+  iris.update(q,3);iris.persist(q);
+  const restored=iris.create(level);
+  assert.deepEqual(restored.globe,q.globe);assert.equal(restored.clock,q.clock);assert.equal(restored.phase,q.phase);
+  assert.equal(restored.globe.rings.length,[1,2,2,2,2,3][level]);
+  assert(restored.globe.rings.every(r=>r.n===8),'eight slots retained');
+  irisSnapshots.push(JSON.stringify(q.globe));
+}
+for(let level=0;level<6;level++)assert.equal(JSON.stringify(iris.create(level).globe),irisSnapshots[level]);
+const finished=iris.create(5);while(finished.phase==='spin')iris.pointer(finished,'down',{x:450,y:428});
+iris.persist(finished);const savedResult=iris.create(5);assert.equal(savedResult.fortune,finished.fortune);assert.equal(savedResult.note,finished.note);assert.equal(savedResult.practice,finished.practice);
+const idle=iris.create(4);idle.phase='idle';idle.charged=false;const beforeDebit=debits.length;iris.pointer(idle,'down',{x:450,y:1020});assert.equal(idle.phase,'idle');assert.equal(debits.length,beforeDebit,'removed lower controls cannot charge');
+console.log('PASS: six Iris chapter snapshots, centre-only input, varied signs, eight-slot rules and reading persistence.');

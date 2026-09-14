@@ -5,7 +5,7 @@ import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/st
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=briefs-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=fortune-polish-1'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
@@ -96,8 +96,15 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   const tillSum=doc.createElement('summary');tillSum.textContent='Alley menu';
   const help=doc.createElement('button');help.type='button';help.textContent='Game menu / Help';help.addEventListener('click',()=>{till.open=false;frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'menu'},location.origin);});
   till.addEventListener('toggle',()=>{if(till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'pause'},location.origin);});
-  till.append(tillSum,help,back,wallet,chest,buy,cash,retry,list);
-  bar.append(title,till);
+  const closeTill=doc.createElement('button');closeTill.type='button';closeTill.textContent='×';
+  closeTill.setAttribute('aria-label','Close alley menu');closeTill.className='paper-game-menu-close';
+  closeTill.addEventListener('click',()=>{till.open=false;tillSum.focus();});
+  till.addEventListener('toggle',()=>{if(!till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);});
+  till.append(tillSum,closeTill,help,wallet,chest,buy,cash,retry,list);
+  if(game.id==='fortune') {
+    cabinet.classList.add('fortune-room');back.textContent='← Alley';
+    bar.append(back,title,till);
+  } else {till.append(back);bar.append(title,till);}
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -190,6 +197,15 @@ function listenForRoom(){
   if(event.origin!==location.origin)return;
   const data=event.data;
   if(!data||data.channel!=='pf-paper-world')return;
+  if(data.type==='treasures'){
+   const frame=document.querySelector('#cabinet-'+data.id+' iframe.paper-game-frame');
+   if(frame?.contentWindow===event.source && window.PennyFeverInventory?.open()){
+    document.querySelector('dialog.treasure-book')?.addEventListener('close',()=>{
+     frame.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);
+    },{once:true});
+   }
+   return;
+  }
   if(data.type==='open'&&data.id){
    location.hash='cabinet/'+data.id;
    return;

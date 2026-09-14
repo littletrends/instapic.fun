@@ -851,6 +851,17 @@ let viewBlend = 0;
 let nearest = null;
 let focus = null;
 let vendorChatUntil = 0;
+let vendorChatText = '', vendorChatId = '';
+let irisChatIndex = 0;
+const irisChats = [
+  'Come closer, darling. The glass has been saving a little light for you.',
+  'Watch the sign I show you, then catch it in the glow at the top of each ring.',
+  'Tap the heart of the globe to gaze. Tap again when you want a ring to stop.',
+  'The outer ring goes first. Give each little circle its own moment.',
+  'Your first gaze is practice. After that, each new gaze costs one penny.',
+  'A missed sign still has a story. Read what the glass leaves for you.',
+  'Six chapters, six treasures. Your Treasure Book will keep them safe.',
+];
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
 let ticketDeskReturn = null;
@@ -979,7 +990,7 @@ function attachHud() {
           <button type="button" id="pfAlleyMapClose">Close</button>
         </div>
         <div class="pf-alley-map-board">
-          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1296" height="1728" loading="lazy" decoding="async">
+          <img src="assets/restyle/maps/sideshow-alley-map.webp" alt="Papercraft map of the sideshow alley" width="1024" height="1024" loading="lazy" decoding="async">
           <i class="pf-alley-map-you" id="pfAlleyMapYou" aria-hidden="true"></i>
         </div>
         <div class="pf-alley-map-legend" id="pfAlleyMapLegend">
@@ -988,11 +999,11 @@ function attachHud() {
             <button type="button" data-place="aura">Aura’s booth</button>
             <button type="button" data-place="end">End of the walk</button>
           </div>
-          <div class="pf-alley-map-rides" id="pfAlleyMapRides"></div>
           <div class="pf-alley-map-cols">
             <div id="pfAlleyMapLeft"></div>
             <div id="pfAlleyMapRight"></div>
           </div>
+          <div class="pf-alley-map-rides" id="pfAlleyMapRides"></div>
         </div>
       </div>
     </div>
@@ -1739,7 +1750,7 @@ function talkToFocus() {
   const speechName = el("pfWorldSpeechName");
   const speechText = el("pfWorldSpeechText");
   if (!speech || !speechText) return;
-  if (!speech.hidden && performance.now() < vendorChatUntil) {
+  if (who.id !== "fortune" && !speech.hidden && performance.now() < vendorChatUntil) {
     vendorChatUntil = 0;
     speech.hidden = true;
     return;
@@ -1747,7 +1758,9 @@ function talkToFocus() {
   vendorChatUntil = performance.now() + 12000;
   speech.hidden = false;
   if (speechName) speechName.textContent = who.host || who.name || "Aura";
-  speechText.textContent = who.line || (who.kind === "aura" ? AURA_LINE : "");
+  vendorChatId = who.id || who.kind;
+  vendorChatText = who.id === 'fortune' ? irisChats[irisChatIndex++ % irisChats.length] : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
+  speechText.textContent = vendorChatText;
   speech.classList.toggle("is-left", (who.side || -1) < 0);
   speech.classList.toggle("is-right", (who.side || -1) >= 0);
 }
@@ -2488,7 +2501,7 @@ function findNearest() {
       if (speechName) speechName.textContent = who.host || who.name || "Aura";
       speech.classList.toggle("is-left", (who.side || -1) < 0);
       speech.classList.toggle("is-right", (who.side || -1) >= 0);
-      speechText.textContent = who.line || AURA_LINE;
+      speechText.textContent = vendorChatId === (who.id || who.kind) ? vendorChatText : (who.line || AURA_LINE);
     } else if (z > hallLen - 6) {
       speech.hidden = false;
       if (speechName) speechName.textContent = "Aura";

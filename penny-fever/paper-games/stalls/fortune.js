@@ -2,7 +2,7 @@ import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=entr
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   caughtOf, fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
-} from "../fortune-globe.js?v=live-cabinets-1";
+} from "../fortune-globe.js?v=fortune-polish-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -165,25 +165,14 @@ function finishGaze(s) {
 function tokenSize(ringCount, ringIndex) {
   if (ringCount === 1) return 96;
   if (ringCount === 2) return ringIndex === 0 ? 78 : 68;
-  return [72, 60, 50][ringIndex] || 52;
+  return [60, 48, 40][ringIndex] || 52;
 }
 function ringRadius(ringCount, ringIndex) {
   if (ringCount === 1) return R * 0.62;
   if (ringCount === 2) return [R * 0.72, R * 0.46][ringIndex];
-  return [R * 0.76, R * 0.54, R * 0.33][ringIndex];
+  return [R * 0.84, R * 0.63, R * 0.43][ringIndex];
 }
 
-function uiButtons(s) {
-  const last = s.level >= IRIS_CHAPTERS.length - 1;
-  return [
-    { id: "gaze", label: s.phase === "result" ? "Gaze again" : "Gaze", x: 40, y: 978, w: 400, h: 90, on: s.phase === "idle" || s.phase === "result" },
-    { id: "brake", label: "Stop the ring", x: 460, y: 978, w: 400, h: 90, on: s.phase === "spin" },
-    { id: "next-chapter", label: last ? "Last chapter" : "Next chapter", x: 170, y: 1084, w: 560, h: 86, on: !last },
-  ];
-}
-function hitButton(s, p) {
-  return uiButtons(s).find(b => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) || null;
-}
 function roundPath(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -196,11 +185,11 @@ export default {
   canvasControls: true,
   houseSeconds: 0,
   intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. First gaze is a Practice Penny. Later gazes cost one penny. Iris reads a fortune from the hidden 1–100 — you never see the number, and it is not the clock.",
-  instructions: "Watch the flash. Tap Stop the ring (or the globe) to halt the live ring. Rings stop from the outside in. Align the remembered signs in the glow. Brake means put the brakes on the wheel — not break the glass.",
+  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. Your first gaze is practice; later gazes cost one penny.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   images: {
     globe: "./assets/fortune/globe.webp",
-    host: "./assets/fortune/ui/iris.webp",
+    host: "../assets/restyle/scene-turnarounds-2026-09-09/vendors/iris/front.webp",
     slip: "./assets/fortune/ui/fortune-slip.webp",
     penny: "./assets/fortune/ui/practice-penny.webp",
     key: "./assets/fortune/symbols/key.webp",
@@ -243,7 +232,7 @@ export default {
       flashLeft: resume ? (saved.flashLeft || 0) : 0,
       clock: resume ? (saved.clock || 0) : 0,
       charged: resume ? !!saved.charged : false,
-      practice: resume ? !!saved.practice : false,
+      practice: !!saved.practice,
       fortune: saved.fortune || "",
       resultN: saved.resultN || 0,
       ordinary: saved.ordinary || null,
@@ -251,9 +240,10 @@ export default {
       won: !!saved.won || chapterOwned(level),
       hold: 0, click: 0, requestNext: false,
       reduced: !!saved.reduced || reducedMotion(),
-      note: resume ? (saved.note || "Stop the rings.") : "Gaze when you are ready.",
+      note: saved.note || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
     if ((s.phase === "flash" || s.phase === "spin") && !s.globe) s.globe = makeGlobe(level, s.seed);
+    s.preview = makeGlobe(level, s.seed);
     return s;
   },
   update(s, dt) {
@@ -287,12 +277,7 @@ export default {
   },
   pointer(s, type, p) {
     if (type !== "down") return;
-    const btn = hitButton(s, p);
-    if (btn) {
-      this.action(s, btn.id);
-      return;
-    }
-    const inGlobe = Math.hypot(p.x - CX, p.y - CY) <= R + 28;
+    const inGlobe = Math.hypot(p.x - CX, p.y - CY) <= 82;
     if (!inGlobe) return;
     if (s.phase === "idle" || s.phase === "result") beginGaze(s);
     else if (s.phase === "spin") brake(s);
@@ -330,6 +315,16 @@ export default {
       d.circle(CX, CY, R + 8, "#1a1024", "#e8c878", 6);
     }
 
+    const accents=['#edce88','#a8d7db','#ddb2ef','#a9c8f0','#e9adbd','#e7df9a'];
+    c.save();c.strokeStyle=accents[s.level];c.lineWidth=2;c.globalAlpha=.75;
+    const petals=6+s.level*2;
+    for(let i=0;i<petals;i++){
+      const a=i*TAU/petals;c.beginPath();
+      c.moveTo(CX+Math.cos(a)*(R+5),CY+Math.sin(a)*(R+5));
+      c.lineTo(CX+Math.cos(a+.045)*(R+16),CY+Math.sin(a+.045)*(R+16));
+      c.lineTo(CX+Math.cos(a+.09)*(R+5),CY+Math.sin(a+.09)*(R+5));c.stroke();
+    }
+    c.restore();
     // Catch glow at 12 o'clock — a bright notch, not a letterbox.
     const pulse = 0.55 + 0.45 * Math.sin(s.t * 3.4);
     d.glow(CX, CY - R + 8, 90 + pulse * 18, "#ffe7a0");
@@ -351,9 +346,10 @@ export default {
     c.arc(CX, CY, R - 12, 0, TAU);
     c.clip();
 
-    if (s.globe && (s.phase === "spin" || s.phase === "result" || (s.phase === "flash" && !s.globe.hide))) {
-      const nRings = s.globe.rings.length;
-      s.globe.rings.forEach((ring, ri) => {
+    const visibleGlobe = s.globe || s.preview;
+    if (visibleGlobe && s.phase !== 'flash') {
+      const nRings = visibleGlobe.rings.length;
+      visibleGlobe.rings.forEach((ring, ri) => {
         const rad = ringRadius(nRings, ri);
         c.beginPath();
         c.arc(CX, CY, rad, 0, TAU);
@@ -391,8 +387,18 @@ export default {
         if (img) d.sprite(img, x, CY, { w: 128, h: 128 });
       });
       d.text(s.globe.hide ? "REMEMBER" : "CATCH THIS", CX, CY + 96, 22, "#fff4c4");
-    } else if (s.phase === "idle") {
-      d.text("Gaze", CX, CY + 10, 36, "#ead6a4");
+    }
+    if (s.phase !== 'flash') {
+      const accent = ['#edce88','#a8d7db','#ddb2ef','#a9c8f0','#e9adbd','#e7df9a'][s.level];
+      d.circle(CX, CY, 76, '#24152eee', accent, 3);
+      c.save();c.textAlign='center';c.fillStyle=accent;
+      c.font='600 23px Georgia,serif';
+      c.fillText(s.phase==='spin' ? 'STOP' : 'TAP',CX,CY-21);
+      c.font='600 32px Georgia,serif';
+      const ring=nextLiveRing(s.globe || s.preview)+1;
+      c.fillText(s.phase==='spin' ? (['1st','2nd','3rd'][ring-1]+' Ring') : 'GAZE',CX,CY+18);
+      if(s.phase==='result'){c.font='italic 22px Georgia,serif';c.fillText('again',CX,CY+45);}
+      c.restore();
     }
     c.restore();
 
@@ -434,24 +440,20 @@ export default {
       c.lineWidth = 3;
       c.stroke();
       d.text(hit ? "CAUGHT" : "NOT THIS CATCH", CX, 762, 30, hit ? "#d8f08a" : "#f0b0b0");
-      d.wrap(s.fortune, CX, 808, 26, "#fff6d8", 680, 10);
+      c.save();c.font='italic 34px "Palatino Linotype", "Book Antiqua", Georgia, serif';
+      c.fillStyle='#fff1d1';c.textAlign='center';
+      const words=s.fortune.split(' ');let line='',y=815;
+      for(const word of words){const trial=line ? line+' '+word : word;if(line && c.measureText(trial).width>660){c.fillText(line,CX,y);line=word;y+=42;}else line=trial;}
+      if(line)c.fillText(line,CX,y);c.restore();
       const sub = !hit
         ? s.note
         : (s.practice ? "Practice — treasure drawer locked." : (s.won ? "Chapter treasure kept." : (ORDINARY_NAME[s.ordinary] || "A small keepsake.")));
       d.text(sub, CX, 922, 18, "#d2b98c");
-    } else if (s.note) {
+    } else if (s.note && s.phase !== "idle") {
       d.wrap(s.note, CX, 780, 24, "#fff0c8", 700, 8);
     }
 
-    uiButtons(s).forEach(b => {
-      roundPath(c, b.x, b.y, b.w, b.h, 16);
-      c.fillStyle = b.on ? "#5a3a28" : "#2a2226";
-      c.fill();
-      c.strokeStyle = b.on ? "#f0d18f" : "#6a5a50";
-      c.lineWidth = b.on ? 3 : 1.5;
-      c.stroke();
-      d.text(b.label, b.x + b.w / 2, b.y + b.h / 2 + 8, b.id === "next-chapter" ? 26 : 24, b.on ? "#fff6d8" : "#8a7a70");
-    });
+
   },
   readout(s) {
     const book = readBook();

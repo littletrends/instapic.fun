@@ -123,3 +123,19 @@ See `TEMPLATE_VISIBILITY_AUDIT.md` for all 34 game review statuses and evidence.
 All open games: shared viewport/control/menu changes and render-only ride cleanup are covered by `PHONE_LAYOUT_REVIEW.md`. 33 opening checks and 99 viewport/control checks passed. Existing engine save/charge APIs remain; no claim of exact-state restore completion. The return/reload/browser-close, per-chapter state, wallet and payout checks above remain required. This agent has not published the pass; concurrent commits briefly included then reverted play.html; the required shell markup and supporting changes are now pending together in the shared working tree.
 
 Publication update — 14 September 2026: user authorized publishing the combined phone layout and backdrop cleanup. Browser evidence and remaining save checks are unchanged.
+
+## Catch the Fortune polish — 15 September 2026
+
+Prepared for publication: centre-only Gaze/Stop input, six chapter previews and motifs,
+varied seeded signs, matching alley Iris art, reading typography, and the two-row
+embedded navigation with Treasure Book access. Existing v2 sitting snapshots restore
+without regenerating saved rings. Eight symbol slots and the prize/timing rules remain.
+
+Validation: `node paper-games/check-cabinet-state.mjs` passes six-chapter full-ring,
+phase and clock restoration, result text/practice persistence, variation across adjacent
+seeds, and removal of lower-button charging. Existing Copper wallet/payout tests pass.
+Phone-sized Chromium browser checks passed map image/order, successive Iris chats,
+all six chapters through centre taps, both close controls, Treasure Book return, and
+unchanged sitting snapshots after alley exit/re-entry. Artwork and JavaScript checks
+passed. This polish does not certify cross-device sync, unavailable-storage recovery,
+or every browser-close/payment-interruption case in the broader acceptance checklist.
