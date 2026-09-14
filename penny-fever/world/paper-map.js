@@ -1,4 +1,5 @@
-import {games} from '../paper-games/catalogue.js?v=florence-1';
+import {games} from '../paper-games/catalogue.js?v=briefs-2';
+import {isClosed} from '../paper-games/stall-entry.js?v=entry-2';
 import {mountTill, openTill} from './ticket-till.js?v=booth-till-1';
 
 const root = document.createElement('main');
@@ -21,7 +22,7 @@ const booth = find('paperBooth');
 booth.setAttribute('aria-labelledby', 'paperBoothTitle');
 const api = () => window.PennyFever;
 const advice = [
-  'Your admission stub is for Aura to punch. Your play tickets and pennies are separate balances.',
+  'Aura punches your walk at the palace door. Play tickets and pennies are a separate pocket.',
   'Check a stall’s price before playing. Aura trades five pennies for one ticket, or sells packs through Square.',
   'Choose a host on the map to read about their stall. Enter only when you are ready.',
   'Find a keepsake, then open Treasures to see where it belongs in your books.',
@@ -46,6 +47,10 @@ function showBooth(title, description) {
   if (!booth.open) booth.showModal();
 }
 function enterStall(game) {
+  if (isClosed(game.id)) {
+    showBooth(`${game.host} · ${game.title}`, 'Closed for maintenance. Come back later.');
+    return;
+  }
   if (!api()?.getState?.()?.admitPassed) { aura(game); return; }
   booth.close();
   location.hash = 'cabinet/' + game.id;
@@ -80,7 +85,8 @@ for (const game of games.filter(game => game.ready && !game.workshop)) {
   button.textContent = `${game.host} · ${game.title}`;
   button.onclick = () => {
     showBooth(`${game.host} · ${game.title}`, game.blurb);
-    action('Enter stall', () => enterStall(game));
+    if (isClosed(game.id)) action('Closed for maintenance', () => enterStall(game));
+    else action('Enter stall', () => enterStall(game));
   };
   find('paperStalls').append(button);
 }
