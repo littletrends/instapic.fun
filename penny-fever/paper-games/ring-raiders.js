@@ -118,11 +118,11 @@ export function makeWave(level, seed) {
 }
 
 export function livePegs(wave) {
-  return (wave.pegs || []).filter(p => !p.looped);
+  return (wave?.pegs || []).filter(p => !p.looped);
 }
 
 export function uniquePeg(wave) {
-  return (wave.pegs || []).find(p => p.unique && !p.looped) || null;
+  return (wave?.pegs || []).find(p => p.unique && !p.looped) || null;
 }
 
 export function stepWave(wave, dt, reduced) {

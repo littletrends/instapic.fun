@@ -86,7 +86,7 @@ function finishWave(s, why) {
     }
   } else if (win) s.won = true;
   if (win) {
-    const u = (s.wave.pegs || []).find(p => p.unique);
+    const u = (s.wave?.pegs || []).find(p => p.unique);
     takePrize(s, prize, u ? {x: u.x, y: u.y} : {x: 450, y: 520});
   }
   s.hold = 1.15;
@@ -207,7 +207,7 @@ export default {
         finishWave(s, 'Looped the unique.');
       } else if (!s.ring.live) {
         s.ring = null;
-        s.wave.flying = false;
+        if (s.wave) s.wave.flying = false;
         if (s.wave.uniqueLooped) finishWave(s, 'Looped the unique.');
         else if (s.wave.ringsLeft <= 0) finishWave(s, 'No rings left.');
         else { s.phase = 'aim'; persist(s); }
