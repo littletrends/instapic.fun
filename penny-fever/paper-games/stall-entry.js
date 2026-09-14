@@ -21,9 +21,13 @@ export const PENNY_TENTS = [
 /** Felix: Instapic photo booth — paper sign, not a playable tent yet. */
 export const CLOSED_TENTS = ['snap'];
 
+/** All eight Ride & Seek attractions. Door is free; first attempt of each chapter is unpaid practice. */
+export const RIDE_SEEKS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
+
 const TICKET_SET = new Set(TICKET_TENTS);
 const PENNY_SET = new Set(PENNY_TENTS);
 const CLOSED_SET = new Set(CLOSED_TENTS);
+const RIDE_SET = new Set(RIDE_SEEKS);
 
 const PENNY_DOOR_LABEL = {
   'coin-pusher': 'The trays · pennies',
@@ -43,6 +47,7 @@ export function isClosed(id) {
 
 export function entryFor(id) {
   if (CLOSED_SET.has(id)) return {door: 'closed', inside: 'none', firstChapterFree: false};
+  if (RIDE_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
   if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: false};
   if (TICKET_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-penny', firstChapterFree: true};
   return {door: 'penny', inside: 'penny', firstChapterFree: false};
@@ -56,7 +61,10 @@ export function enterLabel(id) {
   const door = doorKind(id);
   if (door === 'closed') return 'Closed for maintenance';
   if (door === 'ticket') return 'Sit down · 1 ticket';
-  if (door === 'free') return PENNY_DOOR_LABEL[id] || 'Enter · pennies';
+  if (door === 'free') {
+    if (RIDE_SET.has(id)) return 'Board · first go free';
+    return PENNY_DOOR_LABEL[id] || 'Enter · pennies';
+  }
   return 'Enter · 1 penny';
 }
 

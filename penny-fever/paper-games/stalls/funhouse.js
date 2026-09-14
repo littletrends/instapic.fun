@@ -1,102 +1,113 @@
-import {done} from '../draw.js';
-import {spriteKey} from '../prizes.js';
-import {swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {spriteKey} from '../prizes.js?v=ritual-3';
+import {
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+} from '../ride-seek.js?v=ride-seek-1';
 
-const FACES = ['laughing-doorway', 'looking-glass-locket', 'velvet-mask'];
+const RIDE = 'funhouse';
+const TREASURES = ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'];
+const CLUES = [
+  {glyph: '♥', color: '#c45a3a', name: 'heart'},
+  {glyph: '★', color: '#d2a65b', name: 'star'},
+  {glyph: '●', color: '#3a7aaa', name: 'moon'},
+];
 
-function shuffleInPlace(list) {
-  for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [list[i], list[j]] = [list[j], list[i]];
-  }
-  return list;
-}
-
-function clearWait(s) {
-  if (s.wait) { clearTimeout(s.wait); s.wait = 0; }
-}
-
-function deal(s) {
-  clearWait(s);
-  s.doors = shuffleInPlace(FACES.slice());
-  s.real = s.doors.indexOf('laughing-doorway');
-  s.flash = Math.max(0.55, 0.95 - s.level * 0.06);
-  s.shuffled = false;
-  s.locked = false;
-  s.note = 'Watch the real doorway — then pick it.';
-}
-
-function shuffleDoors(s) {
-  shuffleInPlace(s.doors);
-  s.real = s.doors.indexOf('laughing-doorway');
-  s.shuffled = true;
+function roomsFor(level) {
+  const n = 3 + Math.min(3, level);
+  return Array.from({length: n}, (_, i) => {
+    const clue = CLUES[i % CLUES.length];
+    const doors = [
+      {id: 'left', clue: CLUES[i % CLUES.length], correct: true},
+      {id: 'right', clue: CLUES[(i + 1) % CLUES.length], correct: false},
+    ];
+    if (level >= 1) doors.push({id: 'middle', clue: CLUES[(i + 2) % CLUES.length], correct: false});
+    return {clue, doors, done: false};
+  });
 }
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Juno’s funhouse has two mirrors and one real laugh. Remember the true door after they shuffle.',
-  instructions: 'The real doorway flashes. Then the three doors mix. Tap the real laugh. Later chapters shuffle faster and ask for more finds.',
-  levels: ['A kind first laugh', 'The mirrors wink', 'A quicker shuffle', 'Four true doors', 'A busy hall', 'The last laugh'],
-  sprites: ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'],
-  prizes: ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'],
-  actions: [
-    {id: 'd0', label: 'Left door'},
-    {id: 'd1', label: 'Middle door'},
-    {id: 'd2', label: 'Right door'},
-  ],
-  create(level) {
-    const s = {level, t: 0, found: 0, goal: swell(level, 3, 1, 8), doors: [], real: 0, flash: 0, shuffled: false, locked: false, wait: 0, note: ''};
-    deal(s);
-    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
-    return s;
+  intro: 'Juno’s funhouse carries you from room to room. Read the clue, then choose the door that matches.',
+  instructions: 'A clue appears. Tap the matching door. Wrong doors detour, then return. First chapter ride is free practice and keeps nothing.',
+  levels: ['Two Doors', 'Mirror Joke', 'Rotating Hall', 'Upside Corridor', 'Shadow Rides', 'The Last Laugh'],
+  sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
+  prizes: TREASURES,
+  houseSeconds: 80,
+  create(level, rng) {
+    const rooms = roomsFor(level);
+    return makeRideState(level, rng, {
+      rooms, room: 0, picks: 0, goal: rooms.length, wait: 0, treasureId: TREASURES[level] || TREASURES[0],
+    });
   },
-  dispose(s) { clearWait(s); },
   update(s, dt) {
+    if (s.result || s.broke) return;
+    if (ensureBoarded(s, RIDE, s.treasureId, ['last-room'])) {
+      s.note = s.practice ? 'Practice — match the clue on each door. Nothing is kept.' : 'Match the clue. Choose a door.';
+    }
+    if (s.result) return;
     s.t += dt;
-    const was = s.flash;
-    s.flash = Math.max(0, s.flash - dt);
-    if (was > 0 && s.flash === 0 && !s.shuffled) shuffleDoors(s);
-  },
-  pointer(s, type, p) {
-    if (type !== 'down' || s.flash > 0 || s.locked || s.result) return;
-    const xs = [250, 450, 650];
-    let i = 0, best = 99;
-    xs.forEach((x, n) => { const d = Math.abs(p.x - x); if (d < best) { best = d; i = n; } });
-    if (best < 90) this.action(s, 'd' + i);
-  },
-  action(s, id) {
-    if (s.flash > 0 || s.locked || s.result) return;
-    const i = Number(String(id).slice(1));
-    if (!(i >= 0 && i < 3)) return;
-    s.locked = true;
-    if (i === s.real) {
-      s.found++;
-      s.note = 'The real laugh!';
-      if (s.found >= s.goal) done(s, 'Through the real door', s.found + ' true doorways.');
-      else s.wait = setTimeout(() => deal(s), 500);
-    } else {
-      s.note = 'A mirror. Watch again.';
-      s.wait = setTimeout(() => deal(s), 700);
+    s.progress = (s.room + (s.wait > 0 ? 0.5 : 0)) / s.goal;
+    if (s.wait > 0) {
+      s.wait -= dt;
+      if (s.wait <= 0) {
+        if (s.room >= s.goal) finishRide(s, {rideId: RIDE, treasureId: s.treasureId, challengeOk: s.picks >= s.goal, completionFind: 'star-token'});
+      }
     }
   },
-  key(s, k, down) {
-    if (!down) return;
-    if (k === 'ArrowLeft' || k === '1') this.action(s, 'd0');
-    if (k === 'ArrowDown' || k === '2' || k === ' ') this.action(s, 'd1');
-    if (k === 'ArrowRight' || k === '3') this.action(s, 'd2');
+  pointer(s, type, p) {
+    if (type === 'up' || type === 'cancel') s.tapping = false;
+    if (type !== 'down' || s.tapping || s.wait > 0 || s.result) return;
+    s.tapping = true;
+    const room = s.rooms[s.room];
+    if (!room) return;
+    if (s.treasure && !s.treasure.taken && s.room === s.goal - 1 && Math.hypot(p.x - 450, p.y - 360) < 70) {
+      s.treasure.taken = true;
+      recordTreasure(s, s.treasure.id);
+      s.note = 'The real laugh — the keepsake is yours.';
+      return;
+    }
+    const n = room.doors.length;
+    const w = 700 / n;
+    const i = Math.floor((p.x - 100) / w);
+    const door = room.doors[i];
+    if (!door) return;
+    logAction(s, 'door', {room: s.room, door: door.id});
+    if (door.correct) {
+      s.picks += 1;
+      recordFind(s, ['everyday-penny', 'star-token', 'moon-penny'][s.picks % 3], RIDE);
+      s.note = 'The room giggles and lets you through.';
+      s.room += 1;
+      if (s.eligible && s.room === s.goal - 1) {
+        s.treasure = {id: s.treasureId, taken: false};
+        s.treasureRevealed = true;
+      }
+      if (s.room >= s.goal) {
+        s.wait = 0.4;
+        finishRide(s, {rideId: RIDE, treasureId: s.treasureId, challengeOk: s.picks >= s.goal, completionFind: 'star-token'});
+      }
+    } else {
+      s.note = 'A joke door. Back you come — look again.';
+      s.wait = 0.8;
+    }
   },
   draw(s, d) {
-    d.text(s.flash > 0 ? 'watch the laugh' : 'pick the real door', 450, 390, 16, '#5a3a40');
-    const xs = [250, 450, 650];
-    xs.forEach((x, i) => {
-      const real = i === s.real;
-      const show = s.flash > 0 ? (real ? 'laughing-doorway' : s.doors[i]) : s.doors[i];
-      if (s.flash > 0 && real) d.glow(x, 700, 70, '#ffe0d0');
-      d.item(spriteKey(show), x, 700, {
-        w: 110, fallback: () => d.poly([[x - 40, 580], [x + 40, 580], [x + 40, 820], [x - 40, 820]], '#d4a0b8', '#f0d0c8', 2),
-      });
+    const room = s.rooms[Math.min(s.room, s.rooms.length - 1)];
+    d.poly([[80, 160], [820, 160], [820, 900], [80, 900]], '#3a1820', '#d2a65b', 4);
+    d.text('clue', 450, 220, 18, '#e8d0a0');
+    d.text(room.clue.glyph, 450, 300, 64, room.clue.color);
+    d.text(room.clue.name, 450, 360, 22, '#f0d09a');
+    if (s.treasure && !s.treasure.taken && s.treasureRevealed) {
+      d.glow(450, 430, 40, '#f4d590');
+      d.item(spriteKey(s.treasure.id), 450, 430, {w: 58, shadow: false, fallback: () => d.heart(450, 430, 16)});
+    }
+    const n = room.doors.length;
+    const w = 700 / n;
+    room.doors.forEach((door, i) => {
+      const x = 100 + i * w + w / 2;
+      d.poly([[x - w * 0.38, 620], [x + w * 0.38, 620], [x + w * 0.38, 880], [x - w * 0.38, 880]], '#4a2418', '#f0d09a', 3);
+      d.text(door.clue.glyph, x, 740, 40, door.clue.color);
+      d.text(door.id, x, 820, 16, '#e8d0a0');
     });
-    d.text(s.found + ' / ' + s.goal, 450, 1090, 20, '#5a3a40');
+    drawHud(d, s, {goal: s.goal, count: s.picks, label: 'rooms'});
   },
-  readout: s => s.found + ' / ' + s.goal + ' doors · ' + s.note,
+  readout: s => s.note || '',
 };

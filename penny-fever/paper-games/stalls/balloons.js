@@ -1,87 +1,104 @@
-import {clamp, dist, done, TAU} from '../draw.js';
-import {spriteKey} from '../prizes.js';
-import {pace, swell, bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {clamp} from '../draw.js';
+import {spriteKey} from '../prizes.js?v=ritual-3';
+import {
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+} from '../ride-seek.js?v=ride-seek-1';
 
-const kinds = ['balloon-bouquet', 'autumn-leaf-lantern', 'moon-lantern', 'prize-bag'];
+const RIDE = 'balloons';
+const TREASURES = ['balloon-bouquet', 'prize-bag', 'swing-spinner', 'aura-keepsake', 'laughing-doorway', 'organ-music-box'];
 
-function spawn(s) {
-  if (s.floaters.length >= 5) return;
-  const id = kinds[(s.spawned + s.level) % kinds.length];
-  s.floaters.push({
-    id, x: 280 + (s.spawned % 5) * 85, y: 980,
-    vx: (s.spawned % 2 ? 1 : -1) * swell(s.level, 20, 8, 52),
-    vy: -(swell(s.level, 70, 12, 120) + (s.spawned % 3) * 8),
-    a: 0, popped: false,
-  });
-  s.spawned++;
+function arches(level) {
+  const n = 6;
+  return Array.from({length: n}, (_, i) => ({
+    t: 6 + i * 6.2,
+    height: 0.25 + (i % 2) * 0.45,
+    band: 0.22,
+    passed: false,
+  }));
 }
 
 export default {
   title: 'Balloon Garden',
-  intro: 'Nell has let a handful of paper balloons loose in the garden. Pop only the one she calls, and let the others drift on.',
-  instructions: 'Tap the matching balloon as it floats past. The picture at the top is the one to pop. Wrong balloons simply keep flying. Arrows move a little pointer; Space pops whatever is nearest. Fill the garden with the right pops — no timer.',
-  levels: ['A quiet afternoon', 'A breeze in the garden', 'The evening release', 'A busy little sky', 'The midnight bunch', 'A garden in a hurry'],
-  sprites: kinds,
-  prizes: ['balloon-bouquet', 'prize-bag', 'swing-spinner', 'aura-keepsake', 'laughing-doorway', 'organ-music-box'],
-  actions: [{id: 'left', label: 'Pointer left', hold: true}, {id: 'pop', label: 'Pop nearest · Space'}, {id: 'right', label: 'Pointer right', hold: true}],
-  create(level) {
-    const s = {
-      level, t: 0, aim: 450, floaters: [], spawned: 0, popped: 0, misses: 0,
-      goal: swell(level, 8, 3, 22), delay: .2, target: kinds[0],
-      note: 'Pop only the matching balloon.',
-    };
-    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
-    return s;
+  intro: 'Nell’s Balloon Tree carries the basket. Hold the bellows to rise, release to drift down, and thread the branch arches.',
+  instructions: 'Hold the lower bellows to add lift. Release to descend. A ribbon shows where you will be in a moment. Pass four of six arches. First chapter ride is free practice and keeps nothing.',
+  levels: ['First Float', 'Ribbon Breeze', 'Lantern Boughs', 'Crosswind Crown', 'Runaway Bouquet', 'The Midnight Canopy'],
+  sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
+  prizes: TREASURES,
+  houseSeconds: 80,
+  actions: [{id: 'bellows', label: 'Bellows · hold', hold: true}],
+  create(level, rng) {
+    return makeRideState(level, rng, {
+      height: 0.35, vel: 0, holding: false, passed: 0, goal: 4,
+      arches: arches(level), treasureId: TREASURES[level] || TREASURES[0], orbit: 0,
+    });
   },
   update(s, dt, input) {
-    s.t += dt; s.delay -= dt;
-    const axis = (input.actions.has('right') || input.keys.has('ArrowRight') ? 1 : 0)
-      - (input.actions.has('left') || input.keys.has('ArrowLeft') ? 1 : 0);
-    s.aim = clamp(s.aim + axis * 280 * dt, 260, 640);
-    if (s.delay <= 0) { spawn(s); s.delay = pace(s.level, 1.15, .14, .52); }
-    if (s.popped % 3 === 0) s.target = kinds[(Math.floor(s.popped / 3) + s.level) % kinds.length];
-    for (const b of s.floaters) {
-      if (b.popped) { b.vy += 280 * dt; b.a += dt * 4; }
-      else { b.x += b.vx * dt; b.y += b.vy * dt; b.a = Math.sin(s.t * 2 + b.x) * .12; }
-      if (b.x < 250) { b.x = 250; b.vx = Math.abs(b.vx); }
-      if (b.x > 650) { b.x = 650; b.vx = -Math.abs(b.vx); }
+    if (s.result || s.broke) return;
+    if (ensureBoarded(s, RIDE, s.treasureId, ['low', 'high'])) {
+      s.note = s.practice ? 'Practice — thread four arches. Nothing is kept.' : 'Hold to rise. Release to drift.';
     }
-    s.floaters = s.floaters.filter(b => b.y > 320 && b.y < 1040);
-    if (s.popped >= s.goal) done(s, 'The garden is full of little pops', s.popped + ' matching balloons, ' + s.misses + ' wanderers left to drift. Nell is tying the next bunch.');
+    if (s.result) return;
+    const hold = s.holding || input?.actions?.has?.('bellows') || (input?.down && input.pointer?.y > 900);
+    s.t += dt;
+    s.orbit += dt * 0.35;
+    const lift = hold ? 1.35 : -0.85;
+    s.vel += lift * dt;
+    s.vel *= 0.9;
+    s.height = clamp(s.height + s.vel * dt, 0.08, 0.92);
+    s.progress = Math.min(1, s.t / 45);
+    s.arches.forEach(a => {
+      if (a.passed || s.t < a.t || s.t > a.t + 0.7) return;
+      if (Math.abs(s.height - a.height) <= a.band) {
+        a.passed = true;
+        s.passed += 1;
+        recordFind(s, ['everyday-penny', 'star-token', 'moon-penny'][s.passed % 3], RIDE);
+        s.note = 'Through the bough — ' + s.passed + ' / ' + s.goal + '.';
+        logAction(s, 'arch', {height: s.height});
+      }
+    });
+    if (s.eligible && !s.treasure && s.t > 12) {
+      s.treasure = {id: s.treasureId, height: s.spawnId === 'low' ? 0.28 : 0.72, t: 24, taken: false};
+    }
+    if (s.treasure && !s.treasure.taken && s.t > s.treasure.t && s.t < s.treasure.t + 1.6) {
+      s.treasureRevealed = true;
+      if (Math.abs(s.height - s.treasure.height) < 0.18) {
+        s.treasure.taken = true;
+        recordTreasure(s, s.treasure.id);
+        s.note = 'The bouquet is yours.';
+      }
+    }
+    if (s.t >= 45) finishRide(s, {rideId: RIDE, treasureId: s.treasureId, challengeOk: s.passed >= s.goal, completionFind: 'star-token'});
+  },
+  action(s, id, on) {
+    if (id === 'bellows') s.holding = !!on;
   },
   pointer(s, type, p) {
-    if (type !== 'down') return;
-    s.aim = p.x;
-    const hit = s.floaters.filter(b => !b.popped).sort((a, b) => dist(p, a) - dist(p, b))[0];
-    if (hit && dist(p, hit) < 48) {
-      hit.popped = true;
-      if (hit.id === s.target) { s.popped++; s.note = 'A lovely pop.'; }
-      else { s.misses++; s.note = 'Let that one go. Watch the picture at the top.'; }
-    }
+    if (type === 'down' && p.y > 900) s.holding = true;
+    if (type === 'up' || type === 'cancel') s.holding = false;
   },
-  action(s, id) {
-    if (id !== 'pop') return;
-    const hit = s.floaters.filter(b => !b.popped).sort((a, b) => Math.abs(a.x - s.aim) - Math.abs(b.x - s.aim))[0];
-    if (hit && Math.abs(hit.x - s.aim) < 70) {
-      hit.popped = true;
-      if (hit.id === s.target) { s.popped++; s.note = 'A lovely pop.'; }
-      else { s.misses++; s.note = 'Let that one go.'; }
-    }
-  },
-  key(s, k, down) { if (k === ' ' && down) this.action(s, 'pop'); },
   draw(s, d) {
-    d.item(spriteKey(s.target), 450, 236, {w: 68, shadow: false, fallback: () => d.circle(450, 236, 24, '#e2a0b4')});
-    d.text('pop this', 450, 186, 15, '#5a3a48');
-    d.line({x: s.aim, y: 360}, {x: s.aim, y: 980}, '#6a3a5044', 2);
-    for (const b of s.floaters) {
-      const c = d.c; c.save(); c.translate(b.x, b.y); c.rotate(b.a);
-      d.item(spriteKey(b.id), 0, 0, {
-        w: 58, alpha: b.popped ? 0.4 : 1,
-        fallback: () => d.circle(0, 0, 22, '#e4a4b7', '#f6d78a', 2),
-      });
-      c.restore();
+    d.ellipse(450, 1100, 480, 180, '#1a3020');
+    d.poly([[380, 200], [520, 200], [560, 900], [340, 900]], '#3a2418', '#6b2030', 3);
+    const predict = clamp(s.height + s.vel * 1.0, 0.08, 0.92);
+    const y = 860 - s.height * 620;
+    const py = 860 - predict * 620;
+    d.line({x: 120, y: py}, {x: 780, y: py}, '#f4d59088', 3);
+    s.arches.forEach(a => {
+      if (s.t < a.t - 2.5 || s.t > a.t + 0.7) return;
+      const ay = 860 - a.height * 620;
+      d.ellipse(620, ay, 70, 50, null, a.passed ? '#8a8' : '#f0d09a', 5);
+    });
+    d.circle(450, y - 80, 70, '#c45a3a', '#d2a65b', 3);
+    d.circle(500, y - 100, 54, '#6b2030', '#d2a65b', 3);
+    d.circle(400, y - 96, 50, '#d2a65b', '#f0d09a', 3);
+    d.poly([[420, y], [480, y], [500, y + 70], [400, y + 70]], '#f3e2bd', '#b78b48', 2);
+    if (s.treasure && s.treasureRevealed && !s.treasure.taken) {
+      const ty = 860 - s.treasure.height * 620;
+      d.item(spriteKey(s.treasure.id), 300, ty, {w: 64, shadow: false, fallback: () => d.star(300, ty, 16)});
     }
-    d.text(s.popped + ' / ' + s.goal, 450, 1092, 20, '#5a3a48');
+    d.poly([[80, 980], [820, 980], [820, 1160], [80, 1160]], s.holding ? '#6b2030' : '#3a2418', '#f0d09a', 3);
+    d.text(s.holding ? 'rising' : 'hold bellows to rise', 450, 1070, 22, '#f0d09a');
+    drawHud(d, s, {goal: s.goal, count: s.passed, label: 'arches'});
   },
-  readout: s => s.popped + ' / ' + s.goal + ' matching · ' + s.note,
+  readout: s => s.note || '',
 };

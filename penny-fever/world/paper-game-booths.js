@@ -1,7 +1,7 @@
-import {games} from '../paper-games/catalogue.js?v=briefs-2';
+import {games} from '../paper-games/catalogue.js?v=ride-seek-2';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
-import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-2';
+import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-3';
 import {pilotSession,resolvePilotSession} from '../charging/flags.mjs';
 
 const gameBase=new URL('../paper-games/',import.meta.url);

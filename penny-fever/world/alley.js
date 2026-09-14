@@ -14,8 +14,8 @@ import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
-import {games as paperGames} from "../paper-games/catalogue.js?v=briefs-2";
-import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=entry-2";
+import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
+import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=entry-3";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
