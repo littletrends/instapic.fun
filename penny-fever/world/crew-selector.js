@@ -37,7 +37,7 @@ if (!boot.hydrated) {
   boot.hydrated = true;
 }
 
-export const crewArt = id => new URL(`${isCrew(id) ? id : 'oliver'}-turnaround.png`, artBase).href;
+export const crewArt = id => new URL(`${isCrew(id) ? id : 'oliver'}-turnaround.webp`, artBase).href;
 
 export async function artUrl(id) {
   if (id === MINE_ID) {

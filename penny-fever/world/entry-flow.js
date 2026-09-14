@@ -3,7 +3,7 @@
   // Live draft is Restyled Original paper alley. Naked #alley drops ?rail=paper
   // and used to boot the old 2D tent map. Always pin the current v= so old
   // bookmarks (?v=paper-alley-live-1 vs none) do not keep two cached pages.
-  const LIVE_V = 'rotate-3';
+  const LIVE_V = 'phone-startup-1';
   const live = new URL(location.href);
   if (live.searchParams.get('style') !== 'paper' || live.searchParams.get('rail') !== 'paper' || live.searchParams.get('v') !== LIVE_V) {
     live.searchParams.set('style', 'paper');
@@ -81,6 +81,8 @@
     if (message) message.textContent = 'The 3D midway could not open. Please return to the entrance and try again.';
   });
   document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('paper-original-rail');
+    document.body.dataset.restyle = 'paper';
     const loading = document.createElement('section');
     loading.id = 'worldLoading';
     loading.innerHTML = `<div>

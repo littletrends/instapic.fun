@@ -1,13 +1,14 @@
+import {loadTextureWithRetry} from './texture-retry.js';
 /* Penny Fever 3D carnival — PF only. Never booth/port 6000.
  * Imagine files are the art bible (palace, hall, Aura lock). Runtime is code. */
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=doll-tray-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=phone-startup-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=doll-tray-1";
-import { installIndividualVendors } from "./paper-vendors.js?v=keep-light-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-tools-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-startup-1";
+import { installIndividualVendors } from "./paper-vendors.js?v=phone-startup-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=phone-startup-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-bay-2";
@@ -90,7 +91,9 @@ const loader = new THREE.TextureLoader();
 function canGL() {
   try {
     const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+    const context = c.getContext("webgl2") || c.getContext("webgl");
+    context?.getExtension("WEBGL_lose_context")?.loseContext();
+    return !!context;
   } catch {
     return false;
   }
@@ -155,7 +158,7 @@ function starTex() {
 }
 
 function artMap(url) {
-  const t = loader.load(url);
+  const t = loadTextureWithRetry(loader,url);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   return t;
@@ -570,7 +573,7 @@ function makePalace(group) {
   group.add(meshBox(makeMat(0x1a100c), 0.2, 3.05, 0.28, 1.05, 1.52, frontZ + 0.08));
   group.add(meshBox(makeMat(0x1a100c), 2.3, 0.18, 0.28, 0, 3.02, frontZ + 0.08));
 
-  const facadeMap = artMap("assets/restyle/paper-entrance-cutout.png");
+  const facadeMap = artMap("assets/restyle/paper-entrance-cutout.webp");
   const facade = new THREE.Mesh(
     new THREE.PlaneGeometry(7.6, 11.4),
     new THREE.MeshBasicMaterial({ map: facadeMap, side: THREE.DoubleSide })
@@ -578,7 +581,7 @@ function makePalace(group) {
   facade.position.set(0.1, 5.65, frontZ);
   facade.rotation.y = Math.PI;
   group.add(facade);
-  loadImage("assets/restyle/paper-entrance-cutout.png").then((img) => {
+  loadImage("assets/restyle/paper-entrance-cutout.webp").then((img) => {
     facade.material = new THREE.MeshBasicMaterial({
       map: punchPalaceFacade(img),
       transparent: true,

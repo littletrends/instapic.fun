@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {loadTextureWithRetry} from '../world/texture-retry.js';
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+let calls=0,retired=0;
+const loader={load(url,ok,progress,fail){const source={image:{src:url},dispose(){retired++}};queueMicrotask(()=>++calls===1?fail():ok(source));return source;}};
+const texture=loadTextureWithRetry(loader,'entrance.webp',{retryDelay:0});
+await wait(20);
+assert.equal(calls,2);assert.equal(texture.image.src,'entrance.webp');assert.equal(retired,2);
+let afterDispose=0;
+const failing={load(url,ok,progress,fail){afterDispose++;queueMicrotask(fail);return {dispose(){}};}};
+const cancelled=loadTextureWithRetry(failing,'cancel.webp',{retryDelay:10});
+cancelled.dispose();await wait(25);assert.equal(afterDispose,1);
+texture.dispose();
+console.log('PASS: a failed image retries successfully; disposed textures stop retrying.');

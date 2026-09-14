@@ -1,6 +1,7 @@
+import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from './lib/three.module.min.js';
-import { paperRail } from './paper-guest-entrance.js?v=keep-light-1';
-import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=doll-tray-1';
+import { paperRail } from './paper-guest-entrance.js?v=phone-startup-1';
+import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=phone-startup-1';
 
 export const CREW = CREW_IDS.map((id) => id[0].toUpperCase() + id.slice(1));
 
@@ -9,7 +10,7 @@ const maps = {};
 function crewTex(src) {
   if (!src) return null;
   if (maps[src]) return maps[src];
-  const t = loader.load(src);
+  const t = loadTextureWithRetry(loader,src);
   t.colorSpace = THREE.SRGBColorSpace;
   maps[src] = t;
   return t;
