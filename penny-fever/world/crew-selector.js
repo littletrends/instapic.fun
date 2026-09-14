@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, keepMine, getMine,
-} from './paper-dolls.js?v=doll-sets-3';
+} from './paper-dolls.js?v=doll-alpha-colour-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -93,7 +93,9 @@ function layerRow(title, key, items, folder) {
   }).join('')}</div>`;
 }
 
+let draftPaintVersion = 0;
 function paintDraft() {
+  const paintVersion = ++draftPaintVersion;
   const spec = boot.draft;
   document.querySelectorAll('[data-doll-key]').forEach(b => {
     b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
@@ -105,6 +107,7 @@ function paintDraft() {
 
   const stage = document.getElementById('dollPreviewImg');
   composeDoll(spec).then(url => {
+    if (paintVersion !== draftPaintVersion) return;
     boot.previewUrl = url;
     if (stage) {
       stage.src = url;
@@ -302,8 +305,8 @@ function mount() {
   </div>
 </div>
 <div class="doll-tray">
-  ${layerRow('Hair', 'hair', HAIR_STYLES, 'hair')}
-  ${layerRow('Hats', 'hat', HATS, 'hats')}
+  ${layerRow('Hair', 'hair', HAIR_STYLES, 'hair-clean')}
+  ${layerRow('Hats', 'hat', HATS, 'hats-clean')}
   ${layerRow('Clothes', 'outfit', OUTFITS, 'outfits')}
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>

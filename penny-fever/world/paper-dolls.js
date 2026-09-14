@@ -100,8 +100,8 @@ export const DOLL_PAGES = {
   'moonlight-wardrobe': 'assets/restyle/paper-dolls/pages/moonlight.jpg',
 };
 const P = 'assets/restyle/paper-dolls';
-const hair = (id, label) => ({ slot: 'hair', id, label, src: `${P}/hair/${id}.png` });
-const hat = (id, label) => ({ slot: 'hat', id, label, src: `${P}/hats/${id}.png` });
+const hair = (id, label) => ({ slot: 'hair', id, label, src: `${P}/hair-clean/${id}.png` });
+const hat = (id, label) => ({ slot: 'hat', id, label, src: `${P}/hats-clean/${id}.png` });
 const clothes = (id, label) => ({ slot: 'outfit', id, label, src: `${P}/outfits/${id}.png` });
 export const COLLECTIONS = [
   { id: 'garden', label: 'Garden party', page: DOLL_PAGES.garden, pieces: [hair('pigtails','Pigtails'), hair('bob','Bob'), hat('straw','Straw hat'), clothes('garden','Rose pinafore')] },
@@ -194,69 +194,83 @@ export function preloadDollArt() {
   const urls = [
     src('bodies', 'girl.png'),
     ...OUTFITS.filter(o => o.id !== 'none').map(o => src('outfits', `${o.id}.png`)),
-    ...HAIR_STYLES.filter(h => h.id !== 'none').map(h => src('hair', `${h.id}.png`)),
-    ...HATS.filter(h => h.id !== 'none').map(h => src('hats', `${h.id}.png`)),
+    ...HAIR_STYLES.filter(h => h.id !== 'none').map(h => src('hair-clean', `${h.id}.png`)),
+    ...HATS.filter(h => h.id !== 'none').map(h => src('hats-clean', `${h.id}.png`)),
   ];
   return Promise.all(urls.map(u => load(u).catch(() => null)));
 }
 
-function recolorTo(ctx, rgb, {skinOnly=false}={}) {
-  if (!rgb) return;
-  const data = ctx.getImageData(0, 0, W, H);
-  const d = data.data;
-  const [tr, tg, tb] = rgb;
+// These masks always read the original artwork, never previously tinted pixels.
+// In particular, brown skin must not become an eye-colour selection.
+function irisWeight(x, y, r, g, b) {
+  if (y < 98 || y > 136) return 0;
+  const eyes = [[182, 116, 13, 16], [236, 114, 13, 16],
+    [527, 118, 6, 16], [1372, 119, 6, 16]];
+  if (!eyes.some(([cx, cy, rx, ry]) => ((x-cx)/rx)**2 + ((y-cy)/ry)**2 <= 1)) return 0;
+  return b > r + 4 && b >= g - 6 && b > 55 ? 1 : 0;
+}
+
+function skinRegion(ctx) {
+  ctx.fillStyle = '#fff';
+  const polygon = points => {
+    ctx.beginPath(); points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); ctx.fill();
+  };
+  // The four poses share one fixed registration. These regions describe exposed
+  // skin, not a colour-key: shadowed skin and antialiased edges remain covered.
+  for (const [x,w] of [[125,170],[495,150],[870,160],[1250,160]]) ctx.fillRect(x,0,w,177);
+  for (const [x,w] of [[194,32],[548,39],[935,34],[1314,43]]) ctx.fillRect(x,160,w,31);
+  polygon([[140,239],[161,250],[135,295],[112,329],[77,329],[97,286]]);
+  polygon([[264,239],[285,239],[307,280],[340,329],[308,329],[278,289]]);
+  polygon([[552,234],[592,234],[604,345],[531,345],[537,297]]);
+  polygon([[872,240],[895,247],[866,290],[841,329],[815,329],[838,284]]);
+  polygon([[1000,240],[1024,239],[1041,279],[1080,329],[1047,329],[1020,289]]);
+  polygon([[1314,234],[1358,234],[1367,345],[1308,345]]);
+  ctx.fillRect(138,355,60,157);
+  ctx.fillRect(217,355,65,157);
+  ctx.fillRect(510,355,92,157); ctx.fillRect(875,355,60,157); ctx.fillRect(960,355,60,157); ctx.fillRect(1297,355,100,157);
+  ctx.globalCompositeOperation = 'destination-out';
+  const oval = (x,y,rx,ry) => {ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();};
+  // Eye whites, mouth, brows and brass joints keep their printed colours.
+  for(const e of [[181,115,16,17],[237,114,16,17],[528,118,7,17],[1373,118,7,17],
+    [209,150,18,4],[176,89,15,4],[239,86,15,4],
+    [140,257,7,8],[278,257,7,8],[175,399,8,9],[242,399,8,9],
+    [574,261,8,8],[557,399,6,8],[579,475,8,8],
+    [879,257,8,8],[1020,257,8,8],[918,397,8,8],[984,397,8,8],
+    [1333,261,8,8],[1350,399,7,8],[1318,475,8,8]]) oval(...e);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function colourDoll(ctx, skinRgb, eyeRgb) {
+  const reference = document.createElement('canvas');
+  reference.width = W; reference.height = H;
+  const ref = reference.getContext('2d');
+  skinRegion(ref);
+  const mask = ref.getImageData(0,0,W,H).data;
+  const result = ctx.getImageData(0, 0, W, H), d = result.data;
   for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] < 12) continue;
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    if (skinOnly) {
-      if (mx > 210 && mx - mn < 45) continue;
-      if (r > 150 && g > 110 && b < 90 && r - b > 60) continue;
-      if (b >= r) continue;
-      if (r < g + 6) continue;
+    if (!d[i + 3]) continue;
+    const x = (i / 4) % W, y = Math.floor(i / 4 / W);
+    const r = d[i], g = d[i+1], b = d[i+2];
+    if (eyeRgb && irisWeight(x, y, r, g, b)) {
+      const shade = (r*.3 + g*.59 + b*.11) / 116;
+      for (let c = 0; c < 3; c++) d[i+c] = Math.min(255, eyeRgb[c] * shade);
+      continue;
     }
-    const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 155;
-    const lift = 0.22 + lum * 0.9;
-    d[i] = Math.min(255, tr * lift);
-    d[i + 1] = Math.min(255, tg * lift);
-    d[i + 2] = Math.min(255, tb * lift);
-  }
-  ctx.putImageData(data, 0, 0);
-}
-
-function isIrisPixel(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-  if (mx > 230 && mx - mn < 28) return false;
-  if (mx < 40) return false;
-  const blueish = b > r + 4 && b > g - 6 && b > 55;
-  const greenish = g > r + 8 && g > b && g > 50 && mx - mn > 18;
-  const brownish = r > g + 8 && r > b + 16 && r > 50 && g > 20 && b < 90;
-  return blueish || greenish || brownish;
-}
-
-function recolorEyes(ctx, rgb) {
-  if (!rgb) return;
-  const data = ctx.getImageData(0, 0, W, H);
-  const d = data.data;
-  const [tr, tg, tb] = rgb;
-  for (let side = 0; side < 4; side++) {
-    const x0 = side * CELL, x1 = x0 + CELL;
-    const y0 = Math.floor(H * 0.16), y1 = Math.floor(H * 0.42);
-    for (let y = y0; y < y1; y++) {
-      for (let x = x0 + 40; x < x1 - 40; x++) {
-        const i = (y * W + x) * 4;
-        if (d[i + 3] < 12) continue;
-        const r = d[i], g = d[i + 1], b = d[i + 2];
-        if (!isIrisPixel(r, g, b)) continue;
-        const lum = (0.3 * r + 0.59 * g + 0.11 * b) / 140;
-        const lift = 0.38 + lum * 0.8;
-        d[i] = Math.min(255, tr * lift);
-        d[i + 1] = Math.min(255, tg * lift);
-        d[i + 2] = Math.min(255, tb * lift);
-      }
+    if (!skinRgb || !mask[i+3]) continue;
+    // Match the uncoloured artwork's peach skin, before any tint is applied.
+    // Soft chroma edges preserve texture; neutral cloth and brown shoes stay put.
+    const smooth = (lo,hi,v) => { const t=Math.max(0,Math.min(1,(v-lo)/(hi-lo))); return t*t*(3-2*t); };
+    const red = Math.max(1,r);
+    const coverage = mask[i+3]/255 * (y < 178 ? 1 :
+      smooth(y>435?.58:.40,y>435?.70:.52,g/red)
+      * (1-smooth(.84,.89,g/red)) * smooth(12,25,r-b));
+    const base = [235, 184, 148];
+    for (let c = 0; c < 3; c++) {
+      const tinted = Math.min(255, skinRgb[c] * d[i+c] / base[c]);
+      d[i+c] += (tinted - d[i+c]) * coverage;
     }
   }
-  ctx.putImageData(data, 0, 0);
+  ctx.putImageData(result, 0, 0);
 }
 
 function hexRgb(hex) {
@@ -265,39 +279,6 @@ function hexRgb(hex) {
   const n = parseInt(h, 16);
   if (Number.isNaN(n)) return null;
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function isSkinPixel(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-  if (mx > 248 && mx - mn < 16) return false;
-  if (r > 150 && g > 110 && b < 90 && r - b > 70 && g > b + 30) return false;
-  if (b >= r) return false;
-  if (r < g + 4) return false;
-  if (r - b < 18) return false;
-  if ((r + g + b) / 3 < 70) return false;
-  return true;
-}
-
-function recolorSkinFromMask(ctx, maskImg, rgb) {
-  if (!rgb) return;
-  const tmp = document.createElement('canvas');
-  tmp.width = W; tmp.height = H;
-  const t = tmp.getContext('2d');
-  t.drawImage(maskImg, 0, 0, W, H);
-  const mask = t.getImageData(0, 0, W, H).data;
-  const data = ctx.getImageData(0, 0, W, H);
-  const d = data.data;
-  const [tr, tg, tb] = rgb;
-  for (let i = 0; i < d.length; i += 4) {
-    if (mask[i + 3] < 12 || d[i + 3] < 12) continue;
-    if (!isSkinPixel(mask[i], mask[i + 1], mask[i + 2])) continue;
-    const lum = (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]) / 155;
-    const lift = 0.22 + lum * 0.9;
-    d[i] = Math.min(255, tr * lift);
-    d[i + 1] = Math.min(255, tg * lift);
-    d[i + 2] = Math.min(255, tb * lift);
-  }
-  ctx.putImageData(data, 0, 0);
 }
 
 function opaqueBox(pix, x0, y0, x1, y1) {
@@ -440,22 +421,28 @@ export async function composeDoll(spec) {
   const bodyImg = await load(src('bodies', 'girl.png'));
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
-  if (skinRgb) recolorSkinFromMask(ctx, bodyImg, skinRgb);
   const eyeRgb = hexRgb(spec.eyesHex) || EYE_COLORS.find(e => e.id === spec.eyes)?.rgb;
-  if (eyeRgb) recolorEyes(ctx, eyeRgb);
   if (spec.outfit && spec.outfit !== 'none') {
     const wearImg = await load(src('outfits', `${spec.outfit}.png`));
     ctx.drawImage(wearImg, 0, 0, W, H);
   }
+  colourDoll(ctx, skinRgb, eyeRgb);
   if (spec.hair && spec.hair !== 'none') {
-    const hairImg = await load(src('hair', `${spec.hair}.png`));
+    const hairImg = await load(src('hair-clean', `${spec.hair}.png`));
     const style = HAIR_STYLES.find(h => h.id === spec.hair);
     if (style?.fit === 'sheet') ctx.drawImage(hairImg, 0, 0, W, H);
     else drawLayerOnHead(ctx, bodyImg, hairImg);
   }
   if (spec.hat && spec.hat !== 'none') {
-    const hatImg = await load(src('hats', `${spec.hat}.png`));
-    ctx.drawImage(hatImg, 0, 0, W, H);
+    const hatImg = await load(src('hats-clean', `${spec.hat}.png`));
+    if (spec.hat === 'witchhat') {
+      // The tall hat's repair master includes extra framing around each pose.
+      // Register it to the existing head without moving the doll or outfit.
+      for (let side=0; side<4; side++) {
+        ctx.drawImage(hatImg, side*hatImg.width/4, 0, hatImg.width/4, hatImg.height,
+          side*CELL + 57.6 + [8,0,-4,0][side], -45, CELL*.7, H*.7);
+      }
+    } else ctx.drawImage(hatImg, 0, 0, W, H);
   }
   const url = canvas.toDataURL('image/png');
   strips.set(key, url);

@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Paper doll colour and alpha regression checks</title>
+<pre id="result">RUNNING</pre>
+<script type="module">
+import {composeDoll, blankDraft, OUTFITS, HAIR_STYLES, HATS} from '../penny-fever/world/paper-dolls.js';
+const report = [];
+const assert = (ok, message) => { if (!ok) throw new Error(message); };
+async function pixels(url) {
+  const image = new Image(); await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url;});
+  const canvas = document.createElement('canvas'); canvas.width=1536; canvas.height=512;
+  canvas.getContext('2d').drawImage(image,0,0,1536,512);
+  return canvas.getContext('2d').getImageData(0,0,1536,512).data;
+}
+const at = (p,x,y) => [...p.slice((y*1536+x)*4,(y*1536+x)*4+4)];
+try {
+  for (const outfit of OUTFITS) {
+    const base = {...blankDraft(), outfit:outfit.id};
+    const natural=await pixels(await composeDoll(base));
+    const dark=await pixels(await composeDoll({...base,skin:'deep'}));
+    for(let i=3;i<natural.length;i+=4) assert(natural[i]===dark[i],`${outfit.id}: tint changed alpha`);
+    assert(at(dark,210,60)[0] < at(natural,210,60)[0]-70,`${outfit.id}: outfit overwrote skin colour`);
+    assert(JSON.stringify(at(dark,210,225))===JSON.stringify(at(natural,210,225)),`${outfit.id}: tint changed torso clothing`);
+  }
+  report.push(`PASS: all ${OUTFITS.length} outfits retain skin colour, clothing and exact alpha`);
+  const green=await pixels(await composeDoll({...blankDraft(),skin:'deep',eyes:'green',outfit:'garden'}));
+  const violet=await pixels(await composeDoll({...blankDraft(),skin:'deep',eyes:'violet',outfit:'garden'}));
+  let changed=0;
+  for(let i=0;i<green.length;i+=4) {
+    assert(green[i+3]===violet[i+3],'Eye colour changed alpha');
+    if(green[i]===violet[i] && green[i+1]===violet[i+1] && green[i+2]===violet[i+2]) continue;
+    changed++;
+    const x=i/4%1536,y=Math.floor(i/4/1536);
+    assert(y>=98 && y<=136 && ((x>=169&&x<=195)||(x>=223&&x<=249)||(x>=521&&x<=533)||(x>=1366&&x<=1378)),`Eye colour leaked onto skin at ${x},${y}`);
+  }
+  assert(changed>30,'Eye colour did not change the irises');
+  report.push('PASS: eye colour affects only the irises, including on dark skin');
+  for(const [folder,list] of [['hair-clean',HAIR_STYLES],['hats-clean',HATS]]) for(const item of list.filter(x=>x.id!=='none')) {
+    const url=new URL(`../penny-fever/assets/restyle/paper-dolls/${folder}/${item.id}.png`,location.href);
+    const p=await pixels(url.href);
+    for(let y=390;y<512;y++) for(let x=0;x<1536;x++) assert(p[(y*1536+x)*4+3]<=8,`${item.id}: leftover body pixels below accessory`);
+    for(const x of [182,236,527,1372]) {const [r,g,b,a]=at(p,x,118); assert(!(a>16 && b>r*1.25 && g>r*.9 && b>=g-6),`${item.id}: baked blue eye remains in accessory`);}
+  }
+  report.push('PASS: all 18 accessories have no baked blue eyes or lower-body remnants');
+  result.textContent=report.join('\n')+'\nPASS';document.documentElement.dataset.result='pass';
+} catch(error) {result.textContent=report.join('\n')+'\nFAIL: '+error.message;document.documentElement.dataset.result='fail';}
+</script>
