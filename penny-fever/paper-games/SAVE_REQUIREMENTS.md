@@ -1,5 +1,10 @@
 # Exact-state saving build checklist
 
+## Tent 1 replacement — 14 September 2026
+
+Fortune now routes to `experiments/iris-tent-1/`; the legacy engine audit below no longer describes its active implementation. The Acer replacement saves each chapter and selection locally on a one-second interval and on pause/exit. Browser fixtures verified charged-round resume and result reward deduplication. Prior Fortune engine snapshots remain stored but are not migrated; owned collection treasures remain recognized. The disabled charging pilot has not been revalidated against this replacement.
+
+
 ## Disabled pilot candidate update — 13 September 2026
 
 The three-pilot charging adapter adds authoritative snapshots for Balloon Garden,

@@ -1,7 +1,7 @@
 // New paper interiors. A row becomes playable only after its module and art land.
 // The two approved studies retain their own saved implementations.
 const rows = [
-  ['fortune','Iris','Catch the Fortune','The globe flashes a sign. Brake the rings before it fades.'],
+  ['fortune','Iris','Catch the Fortune','Remember the sign. Stop the spinning rings in the glow.','../experiments/iris-tent-1/play.html?stall=fortune&room=alley&v=acer-tent1-1'],
   ['love','Rosalie','Love Tester','Write the names. Count the letters. Add them down.'],
   ['curios','Digby','The Cabinet That Lies','Several drawers. Several clues. Something is lying.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
