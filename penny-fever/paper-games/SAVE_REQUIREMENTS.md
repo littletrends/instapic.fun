@@ -143,3 +143,13 @@ or every browser-close/payment-interruption case in the broader acceptance check
 Deployment: published as `8b1722b` on 15 September 2026 (Pages run
 `34908293764`, successful). The same phone-sized browser checks passed against
 https://instapic.fun, including the map image, changing chats and exact return state.
+
+## Chapter and collection navigation — 15 September 2026
+
+Fortune's previous/next arrows persist the current chapter before restoring the
+selected chapter. Treasure Book return closes the overlay and resumes the same
+iframe; it does not reload or begin another paid turn. Node cabinet checks passed,
+and phone/desktop browser checks passed previous/next boundaries, collection-tree
+expansion, shelf-to-tree selection, image pages and saved-globe equality across a
+Treasure Book visit. Publication is included with this navigation update. The broader
+browser-close/payment-interruption limitations above are unchanged.

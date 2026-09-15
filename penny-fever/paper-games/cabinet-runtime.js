@@ -128,7 +128,9 @@ function paintHud() {
   if (next) {
     const lastCh = !engine?.levels || level >= engine.levels.length - 1;
     next.disabled = !state || lastCh;
-    next.textContent = lastCh ? "Last chapter" : "Next chapter";
+    next.textContent = id === 'fortune' ? '›' : (lastCh ? 'Last chapter' : 'Next chapter');
+    const prev=$('#previous-chapter');if(prev)prev.disabled=!state || level===0;
+    const label=$('#chapter-position');if(label)label.textContent='Ch '+(level+1);
   }
 }
 function paint() {
@@ -168,16 +170,17 @@ function start() {
   canvas.focus({ preventScroll: true });
   raf = requestAnimationFrame(tick);
 }
-function goNextChapter() {
+function goChapter(delta) {
   menuResume = false;
   closeMenu();
-  if (!engine?.levels || level >= engine.levels.length - 1) return;
+  if (!engine?.levels || level + delta < 0 || level + delta >= engine.levels.length) return;
   persist();
-  level += 1;
+  level += delta;
   if ($("#chapter")) $("#chapter").value = level;
   reset();
   start();
 }
+function goNextChapter() { goChapter(1); }
 function tick(now) {
   if (!playing || disposed) return;
   try {
@@ -301,7 +304,13 @@ try {
     listen(treasures,'click',()=>{persist();pause();tellRoom('treasures');});
     const bar=document.querySelector('.game-menu-bar');
     if (embedded) bar.insertBefore(treasures,$('#menu-toggle'));
-    bar.insertBefore($('#next-chapter'),$('#menu-toggle'));
+    const chapterNav=document.createElement('div');chapterNav.className='chapter-nav';
+    chapterNav.setAttribute('role','group');chapterNav.setAttribute('aria-label','Choose chapter');
+    const prev=document.createElement('button');prev.id='previous-chapter';prev.textContent='‹';prev.setAttribute('aria-label','Previous chapter');
+    listen(prev,'click',()=>goChapter(-1));
+    const position=document.createElement('span');position.id='chapter-position';position.setAttribute('aria-live','polite');
+    $('#next-chapter').setAttribute('aria-label','Next chapter');
+    chapterNav.append(prev,position,$('#next-chapter'));bar.insertBefore(chapterNav,$('#menu-toggle'));
     $('#menu-toggle').textContent='Help';
     $('#menu-close').textContent='× Close help';
   }

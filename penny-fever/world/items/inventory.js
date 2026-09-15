@@ -3,7 +3,7 @@ let midwayApi = null;
 let midwayWait = null;
 let artApi = null;
 function needMidway() {
-  if (!midwayWait) midwayWait = import('./midway.js?v=florence-1').then(m => { midwayApi = m; return m; });
+  if (!midwayWait) midwayWait = import('./midway.js?v=collection-nav-1').then(m => { midwayApi = m; return m; });
   return midwayWait;
 }
 function needArt() {
@@ -56,6 +56,7 @@ const studio = document.body.dataset.objectStudio === 'true';
 const iconCache = new Map();
 let dialog, viewer, current = null, focus = null, bookId = null, tab = 'collection', filter = 'all', paintingTree = false;
 const expanded = new Set();
+const collectionExpanded = new Set();
 let selectionToken = 0, listToken = 0, opener, resumeWorld = false, openedHash = '', observer;
 const $ = id => document.getElementById(id);
 function bindDragTurn(root, onStep, cardSel) {
@@ -120,6 +121,7 @@ function mount() {
           <h1 id="treasureTitle">Treasures</h1>
           <p id="treasureCount"></p>
         </div>
+        <button type="button" data-return-game hidden>← Back to game</button>
         <button type="button" class="pocket-close" id="closeTreasures" aria-label="Close treasures">Close ×</button>
       </header>
       <p id="treasureSave" class="pocket-save" role="status" hidden></p>
@@ -186,6 +188,7 @@ function mount() {
             <button type="button" id="inspectRotate" aria-label="Rotate">Rotate</button>
           </div>
           <div class="pocket-inspect-bar">
+            <button type="button" data-return-game hidden>← Back to game</button>
             <button type="button" id="pocketBack">← Back to the page</button>
             <button type="button" id="treasureOpen" aria-expanded="false" hidden>Open</button>
             <button type="button" id="treasurePunch" hidden>Show punched ticket</button>
@@ -195,6 +198,31 @@ function mount() {
       </div>
     </div>`;
   document.body.append(dialog);
+  const layout=document.createElement('div');layout.id='collectionLayout';
+  const sidebar=document.createElement('nav');sidebar.id='collectionSidebar';sidebar.setAttribute('aria-label','Collection books and items');
+  const dropdown=document.createElement('details');dropdown.id='collectionDropdown';dropdown.open=true;
+  const menuTitle=document.createElement('summary');menuTitle.textContent='Collection menu';
+  const tree=document.createElement('div');tree.id='collectionBookTree';dropdown.append(menuTitle,tree);sidebar.append(dropdown);
+  const pages=document.createElement('div');pages.id='collectionPages';
+  $('treasureShelf').before(layout);layout.append(sidebar,pages);
+  pages.append($('treasureShelf'),$('foundView'),$('treasureSpread'));
+  $('treasureSpread').querySelector('.is-right').prepend($('bookPane'));
+  dialog.querySelectorAll('[data-return-game]').forEach(b=>b.addEventListener('click',()=>dialog.close()));
+  tree.addEventListener('click',e=>{
+    const summary=e.target.closest('summary[data-collection-book]');
+    if(summary){
+      e.preventDefault();const id=summary.dataset.collectionBook;
+      if(collectionExpanded.has(id)){collectionExpanded.delete(id);render();}
+      else openBook(id);
+      $('collectionBookTree').querySelector(`[data-collection-book="${id}"]`)?.focus();
+      return;
+    }
+    const button=e.target.closest('button[data-collection-item]');
+    if(button){
+      const id=button.dataset.collectionItem;
+      if(model.books.some(b=>b.id===id))openBook(id);else select(id);
+    }
+  });
 
   $('closeTreasures').addEventListener('click', () => dialog.close());
   $('pocketBack').addEventListener('click', hideInspect);
@@ -353,6 +381,9 @@ function bookStats(all, id) {
 function openBook(id) {
   tab = 'collection';
   bookId = id;
+  collectionExpanded.add(id);
+  const master=model.books.find(b=>b.master);if(master)collectionExpanded.add(master.id);
+  if($('collectionDropdown'))$('collectionDropdown').open=true;
   hideInspect();
   render();
   const page = $('treasureItems')?.closest('.pocket-page');
@@ -418,6 +449,9 @@ function render() {
   const onShelf = !onFound && tab === 'collection' && !bookId;
   const onBook = !onFound && tab === 'collection' && !!bookId;
   const onGames = !onFound && tab === 'games';
+  $('collectionSidebar').hidden = tab !== 'collection';
+  $('collectionLayout').classList.toggle('has-collection-tree',tab==='collection');
+  if(tab==='collection')paintCollectionTree(all);
   $('treasureShelf').hidden = !onShelf;
   $('foundView').hidden = !onFound;
   $('treasureSpread').hidden = onShelf || onFound;
@@ -519,6 +553,28 @@ function paintFound(all) {
   text('foundIntro', shown.length
     ? 'Hold and spin, or tap Rotate. Tap a figure to look closer. Waiting keepsakes stay in Collection.'
     : (q ? 'Nothing found matches that search.' : 'Nothing in the book yet. Win a chapter on the alley — it will appear here.'));
+}
+
+function paintCollectionTree(all) {
+  const root=$('collectionBookTree');root.replaceChildren();
+  const master=model.books.find(b=>b.master);
+  function branch(book,parent){
+    const section=document.createElement('details');section.open=collectionExpanded.has(book.id);
+    const summary=document.createElement('summary');summary.dataset.collectionBook=book.id;summary.textContent=book.title;
+    if(book.id===bookId)summary.setAttribute('aria-current','page');section.append(summary);parent.append(section);return section;
+  }
+  const trunk=master?branch(master,root):root;
+  for(const book of model.books.filter(b=>!b.master)){
+    const section=branch(book,trunk);
+    for(const item of bookItems(all,book.id)){
+      const button=document.createElement('button');button.type='button';button.dataset.collectionItem=item.id;button.textContent=item.name;
+      section.append(button);
+    }
+  }
+  const assigned=new Set(model.books.filter(b=>!b.master).flatMap(b=>interior(all,b.id).map(i=>i.id)));
+  for(const item of visibleItems(all).filter(i=>!assigned.has(i.id) && !model.books.some(b=>b.id===i.id))){
+    const button=document.createElement('button');button.type='button';button.dataset.collectionItem=item.id;button.textContent=item.name;trunk.append(button);
+  }
 }
 
 function paintShelf(all) {
@@ -953,6 +1009,7 @@ function open(id) {
   if (!dialog || (!studio && /\/play$/.test(location.hash))) return false;
   if (!dialog.open) {
     opener = document.activeElement; openedHash = location.hash;
+    dialog.querySelectorAll('[data-return-game]').forEach(b=>{b.hidden=!/^#cabinet\//.test(openedHash);});
     const world = globalThis.PennyFeverWorld;
     resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
     if (resumeWorld) world.pause();
@@ -993,6 +1050,9 @@ function close() {
     globalThis.PennyFeverWorld?.resume();
   }
   resumeWorld = false;
+  if(location.hash===openedHash && /^#cabinet\//.test(openedHash)){
+    document.querySelector('.cabinet-interior.paper-game-cabinet:not([hidden]) iframe')?.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);
+  }
   if (opener?.isConnected) opener.focus();
 }
 
