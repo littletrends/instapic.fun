@@ -191,7 +191,7 @@ Validation: phone-sized Chromium rendered all six chapter layouts and captured d
 
 ## Milky Splash sliding controls — 15 September 2026
 
-Prepared for live publication: transparent board/header/footer let the original template show; banana has saturated yellow milk and vanilla ivory milk with a plum cap. Swap, rejected-swap return and post-match refill positions animate without changing resolved board data. Input is blocked during the short slide. Reduced motion resolves immediately. Accepted board state persists before animation finishes; reloading shows the committed board rather than rerolling or refunding a move. Presentation animation itself is not persisted.
+Published as `9440adb`; Pages run `34929579498` succeeded. Transparent board/header/footer let the original template show; banana has saturated yellow milk and vanilla ivory milk with a plum cap. Swap, rejected-swap return and post-match refill positions animate without changing resolved board data. Input is blocked during the short slide. Reduced motion resolves immediately. Accepted board state persists before animation finishes; reloading shows the committed board rather than rerolling or refunding a move. Presentation animation itself is not persisted.
 
 Mabel opts into the shared chapter arrows. Saves add current chapter and remaining house time; switching chapters/restoring does not renew the timer or debit a penny. Beginning another purchased/included move allowance retains the existing 160-second allowance. Play replaces the Sit label.
 
