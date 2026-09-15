@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-stable-preview-3';
+} from './paper-dolls.js?v=doll-fit-pause-4';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';

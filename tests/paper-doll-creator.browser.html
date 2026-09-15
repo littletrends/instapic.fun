@@ -3,8 +3,8 @@
 <div id="discoveryDoor"><div class="door-crew"></div></div>
 <pre id="testResult">RUNNING</pre>
 <script type="module">
-import {composeDollCanvas,blankDraft} from './world/paper-dolls.js?v=doll-stable-preview-3';
-import './world/crew-selector.js?v=doll-stable-preview-3';
+import {composeDollCanvas,blankDraft} from './world/paper-dolls.js?v=doll-fit-pause-4';
+import './world/crew-selector.js?v=doll-fit-pause-4';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 let waitStep=0;
 const waitFor=async fn=>{waitStep++;for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview step '+waitStep);};

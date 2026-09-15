@@ -21,3 +21,11 @@ Additional checks: `tests/paper-doll-creator.browser.html` exercises the phone-s
 The editor now draws a single pose onto a fixed 384×512 canvas, retaining the previous frame until the next composition succeeds. This avoids PNG encoding and a second image decode on every edit, plus the oversized CSS sprite image. Selected layers load concurrently, failed requests can retry, and a 12-second timeout prevents an indefinitely stalled render queue. Three rendered sheets are cached; PNG exports remain available for saved portraits and world characters.
 
 The creator regression also checks all four rotations and deliberately delays/fails an accessory request, verifies the old preview survives, and retries successfully. It passes at a 390×844 mobile viewport. A fresh Chromium run of the previous live version did not reproduce the persistent blank reported on the user's phone; this change removes the vulnerable preview replacement path.
+
+## TODO: accessory fit redo — temporarily paused, 2026-09-15
+
+User requested a quick cleanup without spending image-generation usage. No images were generated or edited for this pass. Reviewed all seven hairstyles with all eleven hats in all four poses using the existing browser compositor.
+
+Temporarily hidden from the creator and collection pieces: straw, sailor, rain, cowboy, witchhat, chefhat, piratehat, beret and postiecap. Solid hats fail to cover hair consistently (especially buns, curls and side-view fringes); witchhat also sits too low across the eyes in profile. Its prior scale/offset workaround is insufficient. Waves hair is also paused: side views expose a conspicuous scalp crescent and the fringe projects too far forward. The other six hairstyles, paper crown and flower crown remain available.
+
+Existing PNG masters and thumbnails are retained. Saved choices and renderer inputs fall back to no hat/no hair for paused pieces, retaining clothes, colours and other choices. Restore later by repairing four-pose registration and designing hair-under-hat masks or compatible fitted variants. Check every retained hairstyle against each restored hat, front/left/back/right, with no scalp gaps, hair above solid crowns or brims covering eyes; then remove IDs from PAUSED_HAIR/PAUSED_HATS in world/paper-dolls.js. Do not regenerate art until a later user request allows it.

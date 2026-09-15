@@ -28,6 +28,16 @@ export const EYE_COLORS = [
   { id: 'amber', label: 'Amber', rgb: [176, 112, 36] },
   { id: 'violet', label: 'Violet', rgb: [96, 72, 150] },
 ];
+// TODO accessory-fit: redo these existing masters later; no image generation now.
+// Solid hats intersect hair in side/back views; waves exposes scalp at the sides.
+// Full review and restoration checklist: assets/restyle/paper-dolls/TRANSPARENCY-REPAIR.md
+const PAUSED_HAIR = new Set(['waves']);
+const PAUSED_HATS = new Set(['straw', 'sailor', 'rain', 'cowboy', 'witchhat', 'chefhat', 'piratehat', 'beret', 'postiecap']);
+function availableSpec(spec) {
+  return {...spec, hair: PAUSED_HAIR.has(spec.hair) ? 'none' : spec.hair,
+    hat: PAUSED_HATS.has(spec.hat) ? 'none' : spec.hat};
+}
+
 export const HAIR_STYLES = [
   { id: 'none', label: 'None' },
   { id: 'pigtails', label: 'Pigtails', fit: 'sheet' },
@@ -37,7 +47,7 @@ export const HAIR_STYLES = [
   { id: 'bun', label: 'Bun', fit: 'sheet' },
   { id: 'braid', label: 'Braid', fit: 'sheet' },
   { id: 'pixie', label: 'Pixie', fit: 'sheet' },
-];
+].filter(item => !PAUSED_HAIR.has(item.id));
 export const HATS = [
   { id: 'none', label: 'None' },
   { id: 'straw', label: 'Straw hat' },
@@ -51,7 +61,7 @@ export const HATS = [
   { id: 'piratehat', label: 'Pirate hat' },
   { id: 'beret', label: 'Beret' },
   { id: 'postiecap', label: 'Postie cap' },
-];
+].filter(item => !PAUSED_HATS.has(item.id));
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
   { id: 'garden', label: 'Rose pinafore' },
@@ -142,7 +152,9 @@ export const COLLECTIONS = [
   { id: 'scientist', label: 'Lab coat', page: `${P}/outfits/scientist.png`, pieces: [hair('pixie','Pixie'), clothes('scientist','Lab coat')] },
   { id: 'bee', label: 'Honeybee', page: `${P}/outfits/bee.png`, pieces: [hair('pigtails','Pigtails'), clothes('bee','Honeybee')] },
   { id: 'pirate', label: 'Pirate', page: `${P}/outfits/pirate.png`, pieces: [hair('waves','Waves'), hat('piratehat','Pirate hat'), clothes('pirate','Pirate pinafore')] },
-];
+].map(collection => ({...collection, pieces: collection.pieces.filter(piece =>
+  !(piece.slot === 'hair' && PAUSED_HAIR.has(piece.id)) &&
+  !(piece.slot === 'hat' && PAUSED_HATS.has(piece.id)))}));
 export const NOSES = [
   { id: 'none', label: 'None' },
   { id: 'button', label: 'Button' },
@@ -450,6 +462,7 @@ function visualKey(spec) {
 // The editor uses the sheet directly: no PNG encoding, data URL parsing or
 // second image decode on each phone edit. Repeated callers share the same job.
 export function composeDollCanvas(spec) {
+  spec = availableSpec(spec);
   const key = visualKey(spec);
   if (renderedSheets.has(key)) return Promise.resolve(renderedSheets.get(key));
   if (pendingSheets.has(key)) return pendingSheets.get(key);
@@ -463,6 +476,7 @@ export function composeDollCanvas(spec) {
 }
 
 export async function composeDoll(spec) {
+  spec = availableSpec(spec);
   const key = visualKey(spec);
   if (strips.has(key)) return strips.get(key);
   const canvas = await composeDollCanvas(spec);
@@ -529,11 +543,12 @@ function writeStore(data) {
 }
 
 export function getMine() {
-  return readStore().mine || null;
+  const saved = readStore().mine;
+  return saved ? availableSpec(saved) : null;
 }
 
 export function keepMine(spec) {
-  const saved = { ...blankDraft(), ...spec, id: MINE_ID, at: Date.now() };
+  const saved = { ...blankDraft(), ...availableSpec(spec), id: MINE_ID, at: Date.now() };
   writeStore({ mine: saved });
   strips.clear();
   return saved;
