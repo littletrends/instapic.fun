@@ -15,3 +15,9 @@ Close-up review on a white background revealed that the original body PNG has tr
 The 54 tray thumbnails are generated with `python3 tools/build-doll-thumbnails.py` using ImageMagick. They are 384×128 WebP strips with alpha, totalling 524,546 bytes instead of 19,300,918 bytes of full-size masters. Only visible thumbnails load; selected full-size layers retain priority. Preview requests coalesce to the latest choice and the composed-image cache is bounded.
 
 Additional checks: `tests/paper-doll-creator.browser.html` exercises the phone-sized creator, deferred thumbnail requests and rapid colour changes. The colour regression checks now verify opaque dark pupils, unchanged default printed pixels/highlights and coloured eyelid skin.
+
+## Follow-up: preview disappearing after phone edits
+
+The editor now draws a single pose onto a fixed 384×512 canvas, retaining the previous frame until the next composition succeeds. This avoids PNG encoding and a second image decode on every edit, plus the oversized CSS sprite image. Selected layers load concurrently, failed requests can retry, and a 12-second timeout prevents an indefinitely stalled render queue. Three rendered sheets are cached; PNG exports remain available for saved portraits and world characters.
+
+The creator regression also checks all four rotations and deliberately delays/fails an accessory request, verifies the old preview survives, and retries successfully. It passes at a 390×844 mobile viewport. A fresh Chromium run of the previous live version did not reproduce the persistent blank reported on the user's phone; this change removes the vulnerable preview replacement path.

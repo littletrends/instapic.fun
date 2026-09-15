@@ -3,6 +3,8 @@ const STORE = 'pf-paper-dolls-v11';
 const W = 1536, H = 512, CELL = 384;
 const images = new Map();
 const strips = new Map();
+const renderedSheets = new Map();
+const pendingSheets = new Map();
 
 export const BODIES = [
   { id: 'girl', label: 'Girl' },
@@ -183,8 +185,9 @@ function load(url) {
   const job = new Promise((resolve, reject) => {
     const img = new Image();
     img.fetchPriority = 'high';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(url));
+    const timer = setTimeout(() => { img.src = ''; reject(new Error('Doll image timed out: ' + url)); }, 12000);
+    img.onload = () => { clearTimeout(timer); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); reject(new Error(url)); };
     img.src = url;
   });
   images.set(url, job);
@@ -440,13 +443,45 @@ function drawFace(ctx, bodyImg, spec) {
   }
 }
 
+function visualKey(spec) {
+  return JSON.stringify([spec.skin, spec.skinHex, spec.eyes, spec.eyesHex, spec.outfit, spec.hair, spec.hat]);
+}
+
+// The editor uses the sheet directly: no PNG encoding, data URL parsing or
+// second image decode on each phone edit. Repeated callers share the same job.
+export function composeDollCanvas(spec) {
+  const key = visualKey(spec);
+  if (renderedSheets.has(key)) return Promise.resolve(renderedSheets.get(key));
+  if (pendingSheets.has(key)) return pendingSheets.get(key);
+  const job = renderDollSheet({...spec}).then(canvas => {
+    renderedSheets.set(key, canvas);
+    while (renderedSheets.size > 3) renderedSheets.delete(renderedSheets.keys().next().value);
+    return canvas;
+  }).finally(() => pendingSheets.delete(key));
+  pendingSheets.set(key, job);
+  return job;
+}
+
 export async function composeDoll(spec) {
-  const key = JSON.stringify([spec.skin, spec.skinHex, spec.eyes, spec.eyesHex, spec.outfit, spec.hair, spec.hat]);
+  const key = visualKey(spec);
   if (strips.has(key)) return strips.get(key);
+  const canvas = await composeDollCanvas(spec);
+  const url = canvas.toDataURL('image/png');
+  strips.set(key, url);
+  while (strips.size > 6) strips.delete(strips.keys().next().value);
+  return url;
+}
+
+async function renderDollSheet(spec) {
+  const [bodyImg, wearImg, hairImg, hatImg] = await Promise.all([
+    load(src('bodies', 'girl.png')),
+    spec.outfit && spec.outfit !== 'none' ? load(src('outfits', `${spec.outfit}.png`)) : null,
+    spec.hair && spec.hair !== 'none' ? load(src('hair-clean', `${spec.hair}.png`)) : null,
+    spec.hat && spec.hat !== 'none' ? load(src('hats-clean', `${spec.hat}.png`)) : null,
+  ]);
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-  const bodyImg = await load(src('bodies', 'girl.png'));
   // The source cutout accidentally made the black pupils transparent. Restore
   // their dark backing before drawing the art, retaining its iris and highlights.
   ctx.fillStyle = '#101820';
@@ -456,19 +491,16 @@ export async function composeDoll(spec) {
   ctx.drawImage(bodyImg, 0, 0, W, H);
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
   const eyeRgb = hexRgb(spec.eyesHex) || (spec.eyes === 'blue' ? null : EYE_COLORS.find(e => e.id === spec.eyes)?.rgb);
-  if (spec.outfit && spec.outfit !== 'none') {
-    const wearImg = await load(src('outfits', `${spec.outfit}.png`));
+  if (wearImg) {
     ctx.drawImage(wearImg, 0, 0, W, H);
   }
   colourDoll(ctx, skinRgb, eyeRgb);
-  if (spec.hair && spec.hair !== 'none') {
-    const hairImg = await load(src('hair-clean', `${spec.hair}.png`));
+  if (hairImg) {
     const style = HAIR_STYLES.find(h => h.id === spec.hair);
     if (style?.fit === 'sheet') ctx.drawImage(hairImg, 0, 0, W, H);
     else drawLayerOnHead(ctx, bodyImg, hairImg);
   }
-  if (spec.hat && spec.hat !== 'none') {
-    const hatImg = await load(src('hats-clean', `${spec.hat}.png`));
+  if (hatImg) {
     if (spec.hat === 'witchhat') {
       // The tall hat's repair master includes extra framing around each pose.
       // Register it to the existing head without moving the doll or outfit.
@@ -478,10 +510,7 @@ export async function composeDoll(spec) {
       }
     } else ctx.drawImage(hatImg, 0, 0, W, H);
   }
-  const url = canvas.toDataURL('image/png');
-  strips.set(key, url);
-  while (strips.size > 12) strips.delete(strips.keys().next().value);
-  return url;
+  return canvas;
 }
 
 export function bodyStrip() {

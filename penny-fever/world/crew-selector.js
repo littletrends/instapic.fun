@@ -1,8 +1,8 @@
 import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
-  MINE_ID, blankDraft, composeDoll, keepMine, getMine,
-} from './paper-dolls.js?v=doll-face-speed-2';
+  MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
+} from './paper-dolls.js?v=doll-stable-preview-3';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -105,6 +105,16 @@ function queueDraftRender() {
   });
 }
 
+function paintPreviewSheet() {
+  const canvas = document.getElementById('dollPreviewCanvas');
+  if (!canvas || !boot.previewSheet) return;
+  const context = canvas.getContext('2d');
+  const view = ((Number(boot.dollView) || 0) % 4 + 4) % 4;
+  // Fixed one-pose canvas avoids CSS sprite offsets and oversized image layers.
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(boot.previewSheet, view*384, 0, 384, 512, 0, 0, canvas.width, canvas.height);
+}
+
 async function renderDraft() {
   draftRendering = true;
   draftWaiting = false;
@@ -113,15 +123,14 @@ async function renderDraft() {
   const preview = document.getElementById('dollPreview');
   preview?.setAttribute('aria-busy', 'true');
   try {
-    const url = await composeDoll(spec);
+    const sheet = await composeDollCanvas(spec);
     if (paintVersion !== draftPaintVersion) return;
-    boot.previewUrl = url;
-    const stage = document.getElementById('dollPreviewImg');
-    if (stage) {
-      stage.src = url;
-      stage.style.marginLeft = `-${(boot.dollView % 4) * 100}%`;
-    }
+    boot.previewSheet = sheet;
+    paintPreviewSheet();
     if (boot.selected === MINE_ID) {
+      const url = await composeDoll(spec);
+      if (paintVersion !== draftPaintVersion) return;
+      boot.previewUrl = url;
       const portrait = document.getElementById('chosenCrewPortrait');
       if (portrait) portrait.style.backgroundImage = `url('${url}')`;
       const runway = document.getElementById('crewRunwayDoll');
@@ -153,7 +162,7 @@ function paintDraft() {
   if (eyesWheel && spec.eyesHex) eyesWheel.value = spec.eyesHex;
 
   const status = document.getElementById('dollRenderStatus');
-  if (status && !boot.previewUrl) status.textContent = 'Loading your doll…';
+  if (status) status.textContent = boot.previewSheet ? 'Updating your doll…' : 'Loading your doll…';
   queueDraftRender();
 }
 
@@ -189,8 +198,7 @@ function turn(dir) {
 
 function turnDoll(dir) {
   boot.dollView = (boot.dollView + dir + 4) % 4;
-  const stage = document.getElementById('dollPreviewImg');
-  if (stage) stage.style.marginLeft = `-${(boot.dollView % 4) * 100}%`;
+  paintPreviewSheet();
   paintViewLabel();
 }
 
@@ -343,7 +351,7 @@ function mount() {
 <p>The girl stays. Mix layers underneath: hair, hats, clothes.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
-    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><img id="dollPreviewImg" alt="Paper doll"></div><p id="dollRenderStatus" role="status"></p>
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><canvas id="dollPreviewCanvas" width="384" height="512" role="img" aria-label="Your paper doll"></canvas></div><p id="dollRenderStatus" role="status"></p>
     <div class="crew-runway-turn">
       <span id="dollViewLabel">front</span>
       <button type="button" id="dollRotate" aria-label="Rotate">Rotate</button>

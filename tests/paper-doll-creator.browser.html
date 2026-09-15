@@ -1,12 +1,13 @@
-<!doctype html><meta charset="utf-8"><base href="../penny-fever/">
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base href="../penny-fever/">
 <link rel="stylesheet" href="world/crew-selector.css">
 <div id="discoveryDoor"><div class="door-crew"></div></div>
 <pre id="testResult">RUNNING</pre>
 <script type="module">
-import {composeDoll,blankDraft} from './world/paper-dolls.js?v=doll-face-speed-2';
-import './world/crew-selector.js?v=doll-face-speed-2';
+import {composeDollCanvas,blankDraft} from './world/paper-dolls.js?v=doll-stable-preview-3';
+import './world/crew-selector.js?v=doll-stable-preview-3';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
-const waitFor=async fn=>{for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview');};
+let waitStep=0;
+const waitFor=async fn=>{waitStep++;for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview step '+waitStep);};
 try {
   await waitFor(()=>globalThis.PennyFeverDoll);
   performance.clearResourceTimings();
@@ -14,8 +15,9 @@ try {
   const book=document.querySelector('.crew-book');
   const details=book.querySelector('.crew-collections');
   details.open=true; details.scrollIntoView();
-  const preview=document.getElementById('dollPreviewImg');
-  await waitFor(()=>preview.src.startsWith('data:') && preview.complete && preview.naturalWidth>0);
+  const preview=document.getElementById('dollPreviewCanvas');
+  const visible=()=>preview.getContext('2d').getImageData(0,0,384,512).data.some((v,i)=>i%4===3&&v>200);
+  await waitFor(()=>visible());
   assert(book.querySelectorAll('img[data-doll-src]').length>0,'Offscreen thumbnails were all requested on open');
   const tray=book.querySelector('.doll-tray'); tray.scrollIntoView();
   await waitFor(()=>book.querySelector('.doll-piece-thumb img[src]'));
@@ -28,10 +30,34 @@ try {
   // Rapid wheel changes must settle on the last choice, without an older render winning.
   const wheel=document.getElementById('skinWheel');
   for(const value of ['#ae7251','#a96942','#be8860']){wheel.value=value;wheel.dispatchEvent(new Event('input',{bubbles:true}));}
-  const expected=await composeDoll({...blankDraft(),skin:'custom',skinHex:'#be8860'});
-  await waitFor(()=>preview.src===expected);
+  const expected=await composeDollCanvas({...blankDraft(),skin:'custom',skinHex:'#be8860'});
+  const crop=document.createElement('canvas');crop.width=384;crop.height=512;
+  crop.getContext('2d').drawImage(expected,0,0,384,512,0,0,384,512);
+  await waitFor(()=>preview.toDataURL()===crop.toDataURL());
+  for(let view=0;view<4;view++) {
+    assert(visible(), 'A rotated preview is blank');
+    document.getElementById('dollRotate').click();
+  }
+  // A delayed/failed selected layer must not clear the last visible preview.
+  const previous=preview.toDataURL();
+  const NativeImage=window.Image;
+  const imageSrc=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+  window.Image=function(){const img=new NativeImage();Object.defineProperty(img,'src',{
+    get(){return imageSrc.get.call(img);},set(url){
+      if(String(url).includes('/hair-clean/bun.png')) setTimeout(()=>img.dispatchEvent(new Event('error')),300);
+      else imageSrc.set.call(img,url);
+    }});return img;};
+  book.querySelector('[data-doll-key="hair"][data-doll-val="bun"]').click();
+  await waitFor(()=>document.getElementById('dollPreview').getAttribute('aria-busy')==='true');
+  assert(preview.toDataURL()===previous,'Starting an edit cleared the preview');
+  await waitFor(()=>document.getElementById('dollRenderStatus').textContent.includes('Couldn’t load'));
+  assert(preview.toDataURL()===previous,'A failed edit cleared the preview');
+  window.Image=NativeImage;
+  book.querySelector('[data-doll-key="hair"][data-doll-val="bun"]').click();
+  await waitFor(()=>document.getElementById('dollRenderStatus').textContent==='');
+  assert(visible(),'Retry left a blank preview');
   book.close();
-  document.getElementById('testResult').textContent='PASS: preview loads; offscreen thumbnails deferred; no full-size layers requested by tray; latest colour wins';
+  document.getElementById('testResult').textContent='PASS: preview stays visible through edits, four rotations, delayed failure and retry; thumbnails deferred; latest colour wins';
   document.documentElement.dataset.result='pass';
 } catch(e){document.getElementById('testResult').textContent='FAIL: '+e.message;document.documentElement.dataset.result='fail';}
 </script>
