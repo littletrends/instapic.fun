@@ -57,7 +57,7 @@ const CUSHION_HALF = Math.PI / 6.5; // narrower so ladder snap stays clearable
 /** Long lead warning before the first teach-cushion ring (Bunting Bend). */
 const CUSHION_WARN_SECS = 8.0; // clearer teach window (Aura Ch2 FAIL)
 /** Lead time to show exit symbol before tunnel darkness (Tunnel Turn). */
-const TUNNEL_WARN_SECS = 5.8;
+const TUNNEL_WARN_SECS = 7.5; // clearer symbol window before dark
 /** Seconds before commit when the tunnel ring goes dark (symbol stays readable). */
 const TUNNEL_DARK_SECS = 2.4;
 
@@ -138,24 +138,22 @@ function tunnelExitKind(ring) {
 
 function chapterPlan(level, rng) {
   // Ch2 gets MORE time (Aura FAIL: practice ended at 2/3). Ch3 soft — never stack max speed + darkness.
-  const haste = level === 2
-    ? 1.02
-    : level === 1
-      ? 0.92 // slower than Ch1 so a competent first play can land 3 ladders
-      : 1 + Math.min(0.2, level * 0.035);
-  const baseSecs = level === 1 ? 52 : RIDE_SECONDS;
+  const haste = (level === 1 || level === 2)
+    ? 0.92 // Ch2/Ch3 slower than Ch1 so a competent first play can land 3 ladders
+    : 1 + Math.min(0.2, level * 0.035);
+  const baseSecs = (level === 1 || level === 2) ? 52 : RIDE_SECONDS;
   const duration = baseSecs / haste;
-  // Ch2: 6 rings for recoverable 3 ladders; Ch1/Ch3: 5 rings.
-  const fracs = level === 1
+  // Ch2/Ch3: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
+  const fracs = (level === 1 || level === 2)
     ? [0.12, 0.26, 0.40, 0.54, 0.68, 0.82]
     : [0.14, 0.30, 0.46, 0.62, 0.78];
   const times = fracs.map((f) => f * duration);
-  const treasureRing = level === 1 ? 3 : 2;
+  const treasureRing = (level === 1 || level === 2) ? 3 : 2;
   const bunting = level >= 1; // Ch2+ denser bunting art flag for draw
   // Ch2: ONE teach cushion only (clearer window); later rings are clean ladder/snake.
   const cushionIdx = level === 1 ? new Set([0]) : null;
-  // Ch3: tunnels on some rings — teach on first tunnel alone; no 3-way / keepsake yet.
-  const tunnelIdx = level === 2 ? new Set([0, 3]) : null; // teach on 0, refresh on 3 — keep 3 ladders fair
+  // Ch3: ONE teach tunnel only (symbol before dark); later rings clean — keep 3 ladders fair.
+  const tunnelIdx = level === 2 ? new Set([0]) : null;
   const rings = times.map((t, i) => {
     let start;
     let cushion = null;
