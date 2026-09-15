@@ -36,6 +36,8 @@ const CREAM = '#efe6d0';
 const INK = '#f0d18f';
 const MOUTH_R = 56;
 const CLIMB_SECS = 3.6;
+const READY_SECS = 1.2;
+const HOLD_SECS = 2.4;
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
@@ -119,10 +121,12 @@ function startClimb(s, idx) {
     return;
   }
   s.noteIndex = idx;
-  s.phase = 'climb';
+  s.phase = 'ready';
+  s.phaseT = 0;
   s.climb = 0;
   s.livePipe = notes[idx].pipe;
   s.tapped = false;
+  s.holdT = 0;
   s.note = 'TAP the glowing pipe.';
   logAction(s, 'climb', {i: idx, pipe: s.livePipe});
 }
@@ -179,7 +183,7 @@ function drawNoteShape(d, shape, x, y, r, fill, stroke) {
 function drawCockpit(d, s) {
   // Light pipe bank on the court — no full cover.
   PIPES.forEach((pipe) => {
-    const live = s.livePipe === pipe.i && (s.phase === 'climb' || s.phase === 'hit' || s.phase === 'cough');
+    const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'hit' || s.phase === 'cough');
     d.poly([
       [pipe.x - 16, pipe.topY],
       [pipe.x + 16, pipe.topY],
@@ -192,7 +196,7 @@ function drawCockpit(d, s) {
 
 function drawMouths(d, s) {
   PIPES.forEach((pipe) => {
-    const live = s.livePipe === pipe.i && s.phase === 'climb' && !s.tapped;
+    const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb') && !s.tapped;
     const inWindow = live && s.climb >= HIT_MIN && s.climb <= HIT_MAX;
     const r = MOUTH_R * (inWindow ? 1.08 : 1);
     if (d.c) {
@@ -281,7 +285,7 @@ function drawChamber(d, s) {
 export default {
   title: 'Calliope Keys',
   intro: 'Otto’s organ is the cockpit. Notes climb the brass. TAP the glowing pipe mouth.',
-  instructions: 'Tap the pipe that is glowing as the note reaches its mouth. Sound is optional — shape and colour mark each pipe. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss takes the ordinary corridor.',
+  instructions: 'Tap the glowing pipe. The mouth lights before the note climbs; TAP it then, or as the note arrives. Sound is optional — shape and colour mark each pipe. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss takes the ordinary corridor.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -325,9 +329,19 @@ export default {
     if (s.shake > 0) s.shake = Math.max(0, s.shake - dt * 2.2);
     if (s.phase === 'chamber') s.door = Math.min(1, (s.door || 0) + dt * 1.8);
 
-    if (s.phase === 'climb') {
-      s.climb += dt / (CLIMB_SECS * t);
-      if (s.climb > HIT_MAX + 0.12 && !s.tapped) missClimb(s);
+    if (s.phase === 'ready') {
+      s.phaseT += dt;
+      if (s.phaseT >= READY_SECS * t) {
+        s.phase = 'climb';
+        s.climb = 0;
+      }
+    } else if (s.phase === 'climb') {
+      if (s.climb < 1) s.climb += dt / (CLIMB_SECS * t);
+      if (s.climb >= 1) {
+        s.climb = 1;
+        s.holdT = (s.holdT || 0) + dt;
+        if (s.holdT > HOLD_SECS * t && !s.tapped) missClimb(s);
+      }
     } else if (s.phase === 'hit') {
       s.phaseT += dt;
       if (s.phaseT > 0.35 * t) startClimb(s, s.noteIndex + 1);
@@ -397,7 +411,7 @@ export default {
       }
       return;
     }
-    if (s.phase !== 'climb' || s.tapped) return;
+    if ((s.phase !== 'ready' && s.phase !== 'climb') || s.tapped) return;
     const mouth = hitMouth(p);
     if (mouth < 0) return;
     logAction(s, 'key', {pipe: mouth, live: s.livePipe});
