@@ -88,3 +88,17 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
   .crew-book select,.crew-book input,.crew-book button,.crew-book summary{font-size:16px}
   .crew-book select,.crew-book button,.crew-book summary{touch-action:manipulation}
 }
+
+/* Original stage is the reliable phone default: no background canvas loads. */
+.crew-runway:not([data-scene="original"]) .crew-runway-board{display:none}
+.crew-runway[data-scene="original"]{height:280px;aspect-ratio:auto;background:linear-gradient(#cbb892 0 18%,#ead6b1 18% 100%)}
+.crew-runway[data-scene="original"] #crewDisplayScene{display:none}
+.crew-runway[data-scene="original"] .crew-runway-stage{inset:12px 12px 48px;padding:0}
+.crew-runway[data-scene="original"] .crew-runway-doll{width:min(180px,46%)}
+.is-phone-display .crew-background-menu,.is-phone-display #crewDisplayStatus{display:none}
+.doll-set-name{display:block;margin-top:12px;font-size:16px}
+#dollSetName{width:100%;max-width:260px;min-height:40px;box-sizing:border-box;font:16px Georgia;padding:8px;border:1px solid #987345;border-radius:6px;background:#fffaf0;color:#382816}
+#dollSaveStatus{max-width:260px;font-size:14px}
+.doll-torso-preview{box-sizing:border-box;max-width:100%}
+.crew-grid strong{overflow-wrap:anywhere}
+@media(max-width:640px){.crew-runway[data-scene="original"]{height:240px}}

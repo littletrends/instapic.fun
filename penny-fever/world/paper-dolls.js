@@ -617,3 +617,31 @@ export function forgetMine() {
   writeStore({ mine: null });
   strips.clear();
 }
+
+
+// Named sets are separate snapshots; keeping/editing the current doll never
+// overwrites them. Stored locally like the existing doll and penny wallet.
+const SETS_STORE = 'pf-doll-sets-v1';
+export function getDollSets() {
+  try { const sets=JSON.parse(localStorage.getItem(SETS_STORE)||'[]');
+    return Array.isArray(sets) ? sets.filter(set=>set && typeof set.id==='string' && set.id.startsWith('doll-set-') && typeof set.name==='string') : [];
+  } catch { return []; }
+}
+export function getDollSet(id) { return getDollSets().find(set=>set.id===id) || null; }
+export function saveDollSet(spec, name, wallet) {
+  name=String(name||'').trim().slice(0,32);
+  if (!name) throw new Error('Name your doll set first.');
+  const sets=getDollSets();
+  if (sets.some(set=>set.name.toLowerCase()===name.toLowerCase())) throw new Error('That name is already saved. Choose it above, or use a new name.');
+  if (!wallet?.spendPennies || !wallet?.addDemoCoins) throw new Error('Your penny pocket is still loading. Please try again.');
+  const saved=availableSpec({...blankDraft(),...Object.fromEntries(Object.keys(blankDraft()).map(key=>[key,spec[key] ?? blankDraft()[key]])),
+    id:'doll-set-'+(globalThis.crypto?.randomUUID?.() || Date.now().toString(36)+Math.random().toString(36).slice(2)),name,at:Date.now()});
+  const payload=JSON.stringify([...sets,saved]);
+  // Check storage before charging; refund if the final write fails.
+  try {localStorage.setItem(SETS_STORE+'-pending',payload);localStorage.removeItem(SETS_STORE+'-pending');}
+  catch {throw new Error('This browser couldn’t save the doll. No pennies were spent.');}
+  if (!wallet.spendPennies(5,{allowPass:false})) throw new Error('You need 5 pennies to save this doll set.');
+  try {localStorage.setItem(SETS_STORE,payload);}
+  catch {wallet.addDemoCoins(5);throw new Error('The doll couldn’t be saved. Your 5 pennies were returned.');}
+  return saved;
+}

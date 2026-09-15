@@ -686,11 +686,11 @@
     return true;
   }
 
-  function spendPennies(amount) {
+  function spendPennies(amount, {allowPass = true} = {}) {
     if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     const need = Math.max(0, Math.floor(Number(amount) || 0));
     if (!need) return true;
-    if (state.showmanPass && state.passDay === darwinDay()) return true;
+    if (allowPass && state.showmanPass && state.passDay === darwinDay()) return true;
     if ((state.demoCoins || 0) < need) return false;
     state.demoCoins -= need;
     saveState(state);

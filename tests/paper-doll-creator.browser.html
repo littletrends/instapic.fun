@@ -3,8 +3,8 @@
 <div id="discoveryDoor"><div class="door-crew"></div></div>
 <pre id="testResult">RUNNING</pre>
 <script type="module">
-import {composeDollCanvas,blankDraft,keepMine,getMine} from './world/paper-dolls.js?v=doll-iphone-touch-11';
-import './world/crew-selector.js?v=doll-iphone-touch-11';
+import {composeDollCanvas,blankDraft,keepMine,getMine,getDollSets} from './world/paper-dolls.js?v=doll-saved-sets-12';
+import './world/crew-selector.js?v=doll-saved-sets-12';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 let waitStep=0;
 const waitFor=async fn=>{waitStep++;for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview step '+waitStep);};
@@ -13,7 +13,7 @@ try {
   performance.clearResourceTimings();
   globalThis.PennyFeverDoll.open();
   const book=document.querySelector('.crew-book');
-  assert(document.querySelector('#crewBackground').value==='travel-stage','Travel case should be the default');
+  assert(document.querySelector('#crewBackground').value==='original','Original display should be the default');
   assert(!document.querySelector('#crewBackground option[value="doll-display-stand"]'),'Display stand should be removed');
   const rect=book.getBoundingClientRect(),vv=window.visualViewport;
   if(vv) assert(rect.left>=vv.offsetLeft-1 && rect.right<=vv.offsetLeft+vv.width+1,'Character window is outside the visible phone screen');
@@ -80,10 +80,27 @@ try {
   keepMine(__pfDoll.draft);
   assert(getMine().addon==='library' && getMine().footwear==='seaside','Clothing choices did not survive saving');
   assert(visible(),'Clothing edits blanked the preview');
+  assert(document.querySelector('.doll-torso-preview #dollKeep'),'Keep button should be beneath the custom preview');
+  let balance=10,charges=0;
+  window.PennyFever={spendPennies(amount,options){assert(amount===5 && options.allowPass===false,'Wrong saved-set charge');if(balance<amount)return false;balance-=amount;charges++;return true;},addDemoCoins(amount){balance+=amount;}};
+  document.getElementById('dollSetName').value='Rose <doll>';
+  const saveButton=document.getElementById('dollSaveSet');saveButton.click();saveButton.click();
+  await waitFor(()=>!saveButton.disabled);
+  assert(charges===1 && balance===5 && getDollSets().length===1,'Save should charge exactly once');
+  const saved=getDollSets()[0];
+  const card=book.querySelector('[data-saved-doll]');
+  assert(card.querySelector('strong').textContent==='Rose <doll>' && !card.querySelector('doll'),'Saved name must be plain text');
+  saveButton.click();await waitFor(()=>!saveButton.disabled);
+  assert(charges===1 && getDollSets().length===1,'Duplicate save charged again');
+  card.click();await waitFor(()=>__pfDoll.selected===saved.id);
+  assert(charges===1 && __pfDoll.draft.addon==='library','Selecting a saved set should restore it for free');
+  document.getElementById('dollSetName').value='Second doll';
+  balance=4;saveButton.click();await waitFor(()=>!saveButton.disabled);
+  assert(charges===1 && getDollSets().length===1,'Insufficient pennies should not save or charge');
   sections[0].querySelector('summary').click();
   assert(!sections[0].open && visible(),'Collapsing items changed the doll');
   book.close();
-  document.getElementById('testResult').textContent='PASS: preview stays visible through edits, four rotations, delayed failure and retry; thumbnails deferred; latest colour wins; separate clothing and cardigan save correctly';
+  document.getElementById('testResult').textContent='PASS: preview stays visible through edits, four rotations, delayed failure and retry; thumbnails deferred; latest colour wins; separate clothing and cardigan save correctly; named sets charge once and select free';
   document.documentElement.dataset.result='pass';
 } catch(e){document.getElementById('testResult').textContent='FAIL: '+e.message;document.documentElement.dataset.result='fail';}
 </script>

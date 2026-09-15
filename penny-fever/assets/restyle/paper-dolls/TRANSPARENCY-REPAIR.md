@@ -37,3 +37,9 @@ The creator now offers Tops, Bottoms, Dresses & dungarees, Full outfits, Add-ons
 The compositor reuses bounded, cached layers and loads selected masters concurrently. Saved dolls migrate their original shoes, sailor separates and cardigan choice. The cardigan regression verifies the dress below y=320 is unchanged and the phone test checks independent choices, dress switching and save/load.
 
 TODO: expand individually fitted tops/trousers and dedicated item thumbnails later. Soccer/pyjama trial separations exposed sleeve/cuff/waist registration mismatches, so they remain complete outfits. The UI explicitly labels costumes that stay together. Review all four views before adding more separates; do not blindly crop every sheet into top and bottom. Existing original masters are retained for future repair.
+
+## Original phone display and named doll sets — 2026-09-15
+
+Phones use the original CSS platform with the scenery canvas hidden and no scenery downloads; desktop users can select a background. This is the fallback for the remaining iPhone compositing issue. Keep this cut-out is under the custom preview and remains free. Name this doll set / Save doll set charges 5 pennies through the shared wallet (purchases do not consume the showman pass's free-play exemption). Sets are local snapshots in pf-doll-sets-v1 and appear in the character grid. Selecting an existing set is free. Duplicate names are rejected, double clicks are locked, storage is checked before charging, and failed final writes refund the pennies. Existing current-doll storage remains separate.
+
+Checked: phone creator edit/rotation/retry tests, exact one-time charge, insufficient funds, duplicate names, name text escaping, free selection, storage-failure refund, pass purchase deduction, and saved-card rendering after page reload. No images generated.
