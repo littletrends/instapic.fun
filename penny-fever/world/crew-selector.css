@@ -69,9 +69,9 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .doll-item-section>summary:focus-visible{outline:2px solid #6b4e2e;outline-offset:2px}
 .doll-item-section>.doll-layer-row{padding:0 10px 10px;margin:0}
 
-.crew-runway{height:320px;background:radial-gradient(ellipse at center,#fffaf0,#e0cda9)}
-#crewDisplayScene{position:absolute;width:100%;height:100%;object-fit:contain;inset:0;pointer-events:none}
-.crew-runway-stage{inset:12px 12px 72px}
+.crew-runway{isolation:isolate;height:320px;background:radial-gradient(ellipse at center,#fffaf0,#e0cda9)}
+#crewDisplayScene{z-index:0;position:absolute;width:100%;height:100%;object-fit:contain;inset:0;pointer-events:none}
+.crew-runway-stage{z-index:1;inset:12px 12px 72px}
 .crew-runway-doll{width:145px;max-width:46%}
 .crew-runway[data-scene="travel-stage"] .crew-runway-doll{width:110px}
 .crew-runway[data-scene="travel-stage"] .crew-runway-stage{bottom:78px}
