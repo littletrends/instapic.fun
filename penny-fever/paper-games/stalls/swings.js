@@ -1,7 +1,7 @@
 /*
  * Skyward Swings (Hugo) — Ride & Seek stall
  *
- * SHIPPED: Ch1 Lit Reach + Ch2 Ribbon Round. UNFINISHED 3–6.
+ * SHIPPED: Ch1 Lit Reach + Ch2 Ribbon Round + Ch3 Star Circles. UNFINISHED 4–6.
  *   Rainbow Islands pop energy on a Tempest circle. Chair carousel auto-orbits
  *   Hugo’s tower. ONE verb: HOLD to stretch radius outward; RELEASE tucks in.
  *   Vertical drag has no gameplay meaning; chair height is visual only.
@@ -16,10 +16,12 @@
  *   Ch2 Ribbon Round: three bands (inner / middle / outer); GOAL 3; ~52 s;
  *     ONE teach ribbon gate alone (long warn ~7.5 s) then two normal bubbles;
  *     soft ribbon miss pushes one band inward — never aborts paid ride.
+ *   Ch3 Star Circles: three bands; GOAL 3; ~52 s; ONE smooth-line teach alone —
+ *     short outer-band sequence (long warn ~7.5 s) + coaching “Hold the line”;
+ *     later a single POP on another band. Soft leave mid-sequence coaches +
+ *     soft-push — never aborts. Light streak juice under verb chrome.
  *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
- *   3 Star Circles — sequences that reward holding a smooth line, not frantic
- *     switching
  *   4 Cloud Waltz — clouds hide objects but shadows show the band first
  *   5 Bell Flight — bell pitch / symbol maps to the three bands
  *   6 The Midnight Waltz — combine taught patterns; treasure gets one full
@@ -51,11 +53,14 @@ const OMEGA = 0.84;       // rad/s — lit windows stay identical in reduced mot
 const TAU = Math.PI * 2;
 const GOAL_CH1 = 4;
 const GOAL_CH2 = 3;
+const GOAL_CH3 = 3;
 const CATCH_HALF = 0.34;  // rad sweep window (~0.40 s at OMEGA)
 const APPROACH = 1.55;    // rad of visible approach (~1.8 s) — Ch1 / normal bubbles
 const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
+const LINE_WARN_SEC = 7.5;   // Ch3 smooth-line teach long warn (helter Tunnel Turn bar)
 const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
 const FINISH_THETA_CH2 = 6.85 * TAU; // ~51.5 s first-play window for 3/3
+const FINISH_THETA_CH3 = 6.85 * TAU; // ~51.5 s — helter Ch3 ~52 s bar
 const FLASH_SEC = 0.28;   // POP bloom
 const MISS_FLASH = 0.22;
 const FLY_DUR = 0.62;
@@ -72,6 +77,7 @@ const COOL = '#8ec8e8';
 const CREAM = '#fff6d8';
 const RIBBON = '#c45a7a';
 const RIBBON_SOFT = '#e88aaa';
+const LINE_CREAM = '#ffe6a4'; // streak juice — Cream Tap feel, under chrome
 
 const SPAWNS = ['inner', 'outer'];
 
@@ -98,6 +104,19 @@ function ch2Bubbles() {
   ];
 }
 
+/**
+ * Chapter 3 Star Circles: ONE smooth-line teach alone — short outer-band
+ * pair (long warn on first) so the player HOLDs and keeps the line; then one
+ * normal inner POP. GOAL 3. Soft leave mid-sequence never aborts.
+ */
+function ch3Bubbles() {
+  return [
+    {theta: 1.45 * TAU, band: 2, taken: false, line: true, teach: true}, // outer — long warn teach
+    {theta: 2.20 * TAU, band: 2, taken: false, line: true}, // outer — keep the line
+    {theta: 4.40 * TAU, band: 0, taken: false}, // inner — later single on another band
+  ];
+}
+
 function reducedOf(s) {
   if (typeof prefersReducedMotion === 'function') {
     try { if (prefersReducedMotion()) return true; } catch { /* fall through */ }
@@ -116,6 +135,10 @@ function pageHidden() {
 
 function isThree(s) {
   return !!(s && s.threeBand);
+}
+
+function isStarCircles(s) {
+  return !!(s && s.starCircles);
 }
 
 function finishThetaOf(s) {
@@ -170,6 +193,9 @@ function bandLabel(band, three) {
 function approachOf(bubble) {
   if (bubble && bubble.ribbon && bubble.teach) {
     return RIBBON_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s long warn
+  }
+  if (bubble && bubble.line && bubble.teach) {
+    return LINE_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s smooth-line teach
   }
   return APPROACH;
 }
@@ -279,9 +305,11 @@ function pushBurst(s, x, y, cool) {
 function spawnTreasure(s) {
   if (!s.eligible || s.treasure) return;
   const three = isThree(s);
-  // Ch2: middle band (practiced on ribbon). Ch1: spawn lane inner/outer.
+  // Ch3: outer (practiced smooth line). Ch2: middle (ribbon). Ch1: spawn lane.
   let band;
-  if (three) {
+  if (isStarCircles(s)) {
+    band = 2;
+  } else if (three) {
     band = 1;
   } else {
     band = s.spawnId === 'inner' ? 0 : 1;
@@ -317,14 +345,23 @@ function tryPopBubble(s, bubble, i) {
     passed: s.passed,
     pop: true,
     ribbon: !!bubble.ribbon,
+    line: !!bubble.line,
   });
   const p = orbitPoint(bubble.theta, bandRadius(bubble.band, isThree(s)));
   pushFly(s, findId, p.x, p.y, false);
   pushBurst(s, p.x, p.y, false);
   s.popFlash = FLASH_SEC;
-  if (bubble.ribbon) {
+  if (bubble.line) {
+    s.lineStreak = (s.lineStreak || 0) + 1;
+    if (s.lineStreak >= 2) s.streakJuice = 0.55; // Cream Tap feel — light only
+    s.note = s.lineStreak >= 2
+      ? 'Line held! ' + s.passed + ' / ' + s.goal
+      : 'POP! Hold the line — ' + s.passed + ' / ' + s.goal;
+  } else if (bubble.ribbon) {
+    s.lineStreak = 0;
     s.note = 'Ribbon POP! ' + s.passed + ' / ' + s.goal;
   } else {
+    s.lineStreak = 0;
     s.note = 'POP! ' + s.passed + ' / ' + s.goal;
   }
   s.notePinUntil = s.t + 1.6;
@@ -353,6 +390,7 @@ function tickFx(s, dt) {
   if (s.leanCue > 0) s.leanCue = Math.max(0, s.leanCue - dt);
   if (s.screenFlash > 0) s.screenFlash = Math.max(0, s.screenFlash - dt);
   if (s.popFlash > 0) s.popFlash = Math.max(0, s.popFlash - dt);
+  if (s.streakJuice > 0) s.streakJuice = Math.max(0, s.streakJuice - dt);
   s.bubbles.forEach((b) => {
     if (b.flash > 0) b.flash = Math.max(0, b.flash - dt);
     if (b.missFlash > 0) b.missFlash = Math.max(0, b.missFlash - dt);
@@ -479,6 +517,41 @@ function drawRibbonGate(d, s, bubble, bank, lit, flash, miss) {
   drawStar(d, x, y, 9 + depth * 2, lit ? CREAM : '#f8d0e0', lit ? GREEN : RIBBON);
   d.text('ribbon', x, y + 30 + depth * 3, 14, lit ? GREEN_SOFT : RIBBON_SOFT);
   d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 13, lit ? GREEN_SOFT : '#ead6a4');
+}
+
+/** Smooth-line teach guide — cream dashes on the held band (under verb chrome). */
+function drawLineGuide(d, s, bank) {
+  if (!isStarCircles(s)) return;
+  const live = s.bubbles.filter((b) => b.line && !b.taken && !b.missed);
+  if (!live.length) return;
+  const teach = live.find((b) => b.teach) || live[0];
+  const ahead = aheadOf(s, teach.theta);
+  const warn = approachOf(teach);
+  // Show while any line bubble is in/near approach, or streak juice is hot
+  const inTeach = live.some((b) => {
+    const a = aheadOf(s, b.theta);
+    return a <= approachOf(b) + 0.4 && a > -CATCH_HALF;
+  });
+  if (!inTeach && !(s.streakJuice > 0)) return;
+  const rr = bandRadius(teach.band, true);
+  const ramp = inTeach ? clamp(1 - Math.max(0, ahead) / Math.max(0.01, warn), 0, 1) : 0.5;
+  const juice = s.streakJuice > 0 ? s.streakJuice / 0.55 : 0;
+  for (let i = 0; i < 10; i++) {
+    const a = s.theta - 0.15 + i * 0.12;
+    const p = orbitPoint(a, rr);
+    const pulse = 0.55 + 0.45 * Math.sin(s.t * 6 + i);
+    d.circle(
+      p.x + bank * 0.25, p.y,
+      2.2 + ramp * 1.4 + juice * 1.2 * pulse,
+      juice > 0 ? LINE_CREAM : '#f4d590aa',
+      juice > 0 ? CREAM : GOLD_DIM,
+      1,
+    );
+  }
+  if (juice > 0) {
+    const chair = orbitPoint(s.theta, radiusAt(s.radiusU));
+    d.glow(chair.x + bank, chair.y, 36 + juice * 20, LINE_CREAM); // 6-digit only
+  }
 }
 
 function drawChain(d, ax, ay, bx, by, player) {
@@ -632,6 +705,9 @@ function missNote(bubble, three) {
   if (bubble.ribbon) {
     return 'Ribbon miss — soft push inward; HOLD/RELEASE to the middle band';
   }
+  if (bubble.line) {
+    return 'Left the line — soft push; HOLD and stay on the outer band';
+  }
   const label = bandLabel(bubble.band, three);
   if (label === 'outer') return 'Missed the outer bubble — HOLD to stretch out';
   if (label === 'middle') return 'Missed the middle bubble — HOLD briefly, then RELEASE';
@@ -639,7 +715,7 @@ function missNote(bubble, three) {
 }
 
 function updateRibbonCoach(s) {
-  if (!isThree(s)) return;
+  if (!isThree(s) || isStarCircles(s)) return;
   const teach = s.bubbles.find((b) => b.ribbon && b.teach && !b.taken && !b.missed);
   if (!teach) return;
   const ahead = aheadOf(s, teach.theta);
@@ -654,10 +730,63 @@ function updateRibbonCoach(s) {
   }
 }
 
+/** Ch3: long warn coaching for the smooth-line teach sequence (outer alone). */
+function updateLineCoach(s) {
+  if (!isStarCircles(s)) return;
+  const live = s.bubbles.filter((b) => b.line && !b.taken && !b.missed);
+  const active = live.find((b) => {
+    const ahead = aheadOf(s, b.theta);
+    return ahead <= approachOf(b) && ahead > -CATCH_HALF;
+  });
+  if (!active) return;
+  if (s.notePinUntil != null && s.t < s.notePinUntil) return;
+  const warn = approachOf(active);
+  if (isLinedUp(s, active.band, active.theta, warn)) {
+    s.note = active.teach
+      ? 'Hold the line — stay on this band'
+      : 'Keep the line — stay on the outer band';
+  } else {
+    s.note = 'Hold the line — HOLD to the outer band and stay';
+  }
+}
+
+/**
+ * Soft fail mid-sequence: leave the teach band during an active line window
+ * after having been lined up → coaching (+ optional soft-push debounce).
+ * Bubble stays live so the player can recover. Ride never aborts.
+ */
+function updateLineSoftLeave(s) {
+  if (!isStarCircles(s)) return;
+  const live = s.bubbles.filter((b) => b.line && !b.taken && !b.missed);
+  const active = live.find((b) => {
+    const ahead = aheadOf(s, b.theta);
+    return ahead <= approachOf(b) && ahead > -CATCH_HALF;
+  });
+  if (!active) {
+    s.lineWasLit = false;
+    return;
+  }
+  const onBand = currentBand(s.radiusU, true) === active.band;
+  if (onBand) {
+    s.lineWasLit = true;
+    return;
+  }
+  if (!s.lineWasLit) return;
+  if (s.lineSoftUntil != null && s.t < s.lineSoftUntil) return;
+  s.lineWasLit = false;
+  s.lineStreak = 0;
+  s.lineSoftUntil = s.t + 2.0;
+  softPushInward(s);
+  s.screenFlash = 0.12;
+  logAction(s, 'line-leave', {band: active.band});
+  s.note = 'Hold the line — stay on this band';
+  s.notePinUntil = s.t + 2.8;
+}
+
 export default {
   title: 'Skyward Swings',
   intro: 'Swing wide. Catch the night. HOLD to stretch out — RELEASE to tuck in. Burst the star-bubbles.',
-  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. Ribbon Round adds a middle band — ease through it for the ribbon gate. First ride is free practice.',
+  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. Ribbon Round adds a middle band — ease through it for the ribbon gate. Star Circles rewards holding a smooth flight line on one band. First ride is free practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -666,6 +795,8 @@ export default {
   create(level, rng) {
     const reduced = typeof prefersReducedMotion === 'function' ? prefersReducedMotion() : false;
     const ch2 = level === 1;
+    const ch3 = level === 2;
+    const three = ch2 || ch3;
     return makeRideState(level, rng, {
       theta: -0.35,
       radiusU: 0,
@@ -677,10 +808,11 @@ export default {
       holdAction: false,
       backgrounded: false,
       passed: 0,
-      goal: ch2 ? GOAL_CH2 : GOAL_CH1,
-      threeBand: ch2,
-      finishTheta: ch2 ? FINISH_THETA_CH2 : FINISH_THETA_CH1,
-      bubbles: ch2 ? ch2Bubbles() : ch1Bubbles(),
+      goal: ch3 ? GOAL_CH3 : (ch2 ? GOAL_CH2 : GOAL_CH1),
+      threeBand: three,
+      starCircles: ch3,
+      finishTheta: ch3 ? FINISH_THETA_CH3 : (ch2 ? FINISH_THETA_CH2 : FINISH_THETA_CH1),
+      bubbles: ch3 ? ch3Bubbles() : (ch2 ? ch2Bubbles() : ch1Bubbles()),
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
       camBank: 0,
       pointer: null,
@@ -690,7 +822,11 @@ export default {
       leanCue: 0,
       screenFlash: 0,
       popFlash: 0,
-      coachUntil: ch2 ? 6 : 5,
+      streakJuice: 0,
+      lineStreak: 0,
+      lineWasLit: false,
+      lineSoftUntil: 0,
+      coachUntil: ch3 ? 7 : (ch2 ? 6 : 5),
       notePinUntil: 0,
       pushUntil: 0,
     });
@@ -699,10 +835,12 @@ export default {
     if (s.result || s.broke) return;
 
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWNS)) {
-      s.note = isThree(s)
-        ? 'Ribbon Round — HOLD out · RELEASE in · middle is the ease'
-        : 'HOLD to stretch out · RELEASE to tuck in';
-      s.coachUntil = s.t + (isThree(s) ? 6 : 5);
+      s.note = isStarCircles(s)
+        ? 'Star Circles — HOLD the line · stay on one band'
+        : (isThree(s)
+          ? 'Ribbon Round — HOLD out · RELEASE in · middle is the ease'
+          : 'HOLD to stretch out · RELEASE to tuck in');
+      s.coachUntil = s.t + (isStarCircles(s) ? 7 : (isThree(s) ? 6 : 5));
     }
     if (s.result) return;
 
@@ -745,18 +883,22 @@ export default {
         bubble.missFlash = MISS_FLASH;
         bubble.lit = false;
         s.screenFlash = 0.14;
-        logAction(s, bubble.ribbon ? 'ribbon-miss' : 'bubble-miss', {band: bubble.band, i});
-        if (bubble.ribbon) {
+        const missType = bubble.ribbon ? 'ribbon-miss' : (bubble.line ? 'line-miss' : 'bubble-miss');
+        logAction(s, missType, {band: bubble.band, i});
+        if (bubble.ribbon || bubble.line) {
           softPushInward(s);
         }
+        if (bubble.line) s.lineStreak = 0;
         s.note = missNote(bubble, three);
-        s.notePinUntil = s.t + (bubble.ribbon ? 3.2 : 2.8);
+        s.notePinUntil = s.t + (bubble.ribbon || bubble.line ? 3.2 : 2.8);
         const p = orbitPoint(bubble.theta, bandRadius(bubble.band, three));
         pushBurst(s, p.x, p.y, true);
       }
     });
 
+    updateLineSoftLeave(s);
     updateRibbonCoach(s);
+    updateLineCoach(s);
     spawnTreasure(s);
     if (s.treasure && !s.treasure.taken && s.theta >= s.treasure.warnTheta) {
       s.treasure.lit = isLinedUp(s, s.treasure.band, s.treasure.sweepTheta)
@@ -827,6 +969,7 @@ export default {
     }
 
     drawBandShadows(d, s);
+    drawLineGuide(d, s, bank);
     drawCanopyHub(d, s);
 
     // Decorative sister chairs — carousel read, not gameplay.
@@ -868,7 +1011,13 @@ export default {
       const py = p.y;
       drawBubble(d, px, py, depth, lit, bubble.flash || 0, bubble.missFlash || 0);
       if (!bubble.taken && !(bubble.missFlash > 0) && !(bubble.flash > 0)) {
-        d.text(bandLabel(bubble.band, three), px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : '#ead6a4');
+        const label = bubble.line
+          ? (bubble.teach ? 'hold the line' : 'keep the line')
+          : bandLabel(bubble.band, three);
+        d.text(label, px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : (bubble.line ? LINE_CREAM : '#ead6a4'));
+        if (bubble.line) {
+          d.text(bandLabel(bubble.band, three), px, py + 44 + depth * 4, 12, lit ? GREEN_SOFT : '#ead6a4');
+        }
       }
     });
 
@@ -933,15 +1082,17 @@ export default {
     const early = (s.t || 0) < (s.coachUntil != null ? s.coachUntil : 5);
     const verb = s.holding ? 'RELEASE' : 'HOLD';
     const verbSub = s.holding
-      ? (three ? 'tuck in · ease past middle' : 'tuck in')
-      : (three ? 'stretch out · ease through middle' : 'stretch out');
-    const coach = s.note || (three
-      ? 'HOLD out · RELEASE in · middle for the ribbon'
-      : 'HOLD to stretch out · RELEASE to tuck in');
+      ? (isStarCircles(s) ? 'tuck in · leave the line' : (three ? 'tuck in · ease past middle' : 'tuck in'))
+      : (isStarCircles(s) ? 'stretch out · hold the line' : (three ? 'stretch out · ease through middle' : 'stretch out'));
+    const coach = s.note || (isStarCircles(s)
+      ? 'HOLD the line · stay on the outer band'
+      : (three
+        ? 'HOLD out · RELEASE in · middle for the ribbon'
+        : 'HOLD to stretch out · RELEASE to tuck in'));
 
     // Sticky miss coaching plate (playtest: settle was burying the miss verb)
     const missPinned = (s.notePinUntil != null) && (s.t < s.notePinUntil)
-      && /Missed|Ribbon miss/.test(s.note || '');
+      && /Missed|Ribbon miss|Left the line|Hold the line/.test(s.note || '');
     if (missPinned) {
       d.poly(
         [[160, 760], [740, 760], [728, 848], [172, 848]],
@@ -952,17 +1103,20 @@ export default {
       d.text(s.note, 450, 810, 18, CREAM);
     }
 
-    // Big in-court verb plate — loudest thing early / until first POP / during ribbon teach.
-    const teachRibbon = three && s.bubbles.some((b) => b.ribbon && b.teach && !b.taken && !b.missed
+    // Big in-court verb plate — loudest early / until first POP / during ribbon or line teach.
+    const teachRibbon = three && !isStarCircles(s) && s.bubbles.some((b) => b.ribbon && b.teach && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -CATCH_HALF);
-    if (!missPinned && (early || s.holding || (s.passed || 0) < 1 || teachRibbon)) {
+    const teachLine = isStarCircles(s) && s.bubbles.some((b) => b.line && !b.taken && !b.missed
+      && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -CATCH_HALF);
+    const teachLoud = teachRibbon || teachLine;
+    if (!missPinned && (early || s.holding || (s.passed || 0) < 1 || teachLoud)) {
       d.poly(
         [[200, 820], [700, 820], [688, 920], [212, 920]],
         s.holding ? '#6b2030ee' : '#2a1838ee',
         s.holding ? GOLD : '#e8c878',
-        early || teachRibbon ? 4 : 2.5,
+        early || teachLoud ? 4 : 2.5,
       );
-      d.text(verb, 450, 858, early || teachRibbon ? 42 : 34, CREAM);
+      d.text(verb, 450, 858, early || teachLoud ? 42 : 34, CREAM);
       d.text(verbSub, 450, 898, 18, '#f0d18f');
     }
 
@@ -976,16 +1130,16 @@ export default {
     d.text(s.holding ? 'RELEASE · tuck in' : 'HOLD · stretch out', 450, 1110, 26, CREAM);
     d.text(coach, 450, 1152, 16, '#f0d18f');
     if (s.practice) {
-      // Practice badge — pulse louder during ribbon teach
-      const pulse = teachRibbon ? (0.7 + 0.3 * Math.sin((s.t || 0) * 5)) : 1;
+      // Practice badge — pulse louder during ribbon / line teach
+      const pulse = teachLoud ? (0.7 + 0.3 * Math.sin((s.t || 0) * 5)) : 1;
       const a = Math.floor(pulse * 238).toString(16).padStart(2, '0');
       d.poly(
         [[320, 70], [580, 70], [568, 132], [332, 132]],
         '#2a1838' + a,
-        teachRibbon ? RIBBON_SOFT : '#ead6a4',
-        teachRibbon ? 3 : 2,
+        teachLine ? LINE_CREAM : (teachRibbon ? RIBBON_SOFT : '#ead6a4'),
+        teachLoud ? 3 : 2,
       );
-      d.text('PRACTICE', 450, 108, teachRibbon ? 26 : 22, CREAM);
+      d.text('PRACTICE', 450, 108, teachLoud ? 26 : 22, CREAM);
     }
 
     drawHud(d, s, {goal: s.goal, count: s.passed, label: 'bubbles'});
