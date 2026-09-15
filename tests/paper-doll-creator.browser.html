@@ -3,8 +3,8 @@
 <div id="discoveryDoor"><div class="door-crew"></div></div>
 <pre id="testResult">RUNNING</pre>
 <script type="module">
-import {composeDollCanvas,blankDraft,keepMine,getMine} from './world/paper-dolls.js?v=doll-folders-6';
-import './world/crew-selector.js?v=doll-folders-6';
+import {composeDollCanvas,blankDraft,keepMine,getMine} from './world/paper-dolls.js?v=doll-display-7';
+import './world/crew-selector.js?v=doll-display-7';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 let waitStep=0;
 const waitFor=async fn=>{waitStep++;for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview step '+waitStep);};
@@ -20,6 +20,7 @@ try {
   await waitFor(()=>visible());
   assert(book.querySelectorAll('img[data-doll-src]').length>0,'Offscreen thumbnails were all requested on open');
   const tray=book.querySelector('.doll-tray'); tray.scrollIntoView();
+  assert([...tray.querySelectorAll('[data-doll-val=none]')].every(button=>button.textContent.trim()==='None'),'Clear choices must all say None');
   const sections=[...tray.querySelectorAll('.doll-item-section')];
   assert(sections.length===8 && sections.every(section=>!section.open),'Item sections should start collapsed');
   sections[0].querySelector('summary').click();

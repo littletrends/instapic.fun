@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-folders-6';
+} from './paper-dolls.js?v=doll-display-7';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -89,7 +89,7 @@ function layerRow(title, key, items, folder) {
     const thumb = item.id === 'none' || !folder
       ? ''
       : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/thumbnails/${folder}/${item.id}.webp" loading="lazy" fetchpriority="low" decoding="async" alt=""></span>`;
-    return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
+    return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.id === 'none' ? 'None' : item.label}</button>`;
   }).join('')}</div></details>`;
 }
 
@@ -274,6 +274,7 @@ function openCrewBook(event) {
   if (!document.querySelector('dialog.crew-book')) mount();
   const book = document.querySelector('dialog.crew-book');
   if (!book) return;
+  if (!book.querySelector('.crew-runway').dataset.scene) paintDisplay(book.querySelector('#crewBackground').value);
   fillArt(book);
   boot.viewIndex = 0;
   boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
@@ -283,6 +284,7 @@ function openCrewBook(event) {
   try {
     if (typeof book.showModal === 'function') {
       if (!book.open) book.showModal();
+
     } else {
       book.setAttribute('open', '');
       book.classList.add('is-open');
@@ -313,6 +315,50 @@ function observeDollThumbnails(book) {
   book.querySelectorAll('img[data-doll-src]').forEach(img => dollThumbnailObserver.observe(img));
 }
 
+const DISPLAY_SCENES = [
+  {id:'doll-display-stand',label:'Display stand'},
+  {id:'travel-stage',label:'Travel theatre'},
+  {id:'fold-out-bedroom',label:'Bedroom'},
+];
+const displayImages = new Map();
+let displayVersion = 0;
+async function paintDisplay(id) {
+  const scene = DISPLAY_SCENES.find(item=>item.id===id) || DISPLAY_SCENES[0];
+  const version = ++displayVersion;
+  const canvas = document.getElementById('crewDisplayScene');
+  if (!canvas) return;
+  try {
+    if (!displayImages.has(scene.id)) {
+      const job = new Promise((resolve,reject)=>{
+        const img = new Image();
+        img.onload=()=>resolve(img); img.onerror=reject;
+        img.src=`assets/restyle/game-sprites/doll-accessories/${scene.id}/front.png`;
+      });
+      displayImages.set(scene.id,job);
+      job.catch(()=>displayImages.delete(scene.id));
+    }
+    const img = await displayImages.get(scene.id);
+    if (version !== displayVersion) return;
+    const buffer=document.createElement('canvas');buffer.width=420;buffer.height=320;
+    const ctx=buffer.getContext('2d');
+    const scale=Math.min(400/img.naturalWidth,310/img.naturalHeight);
+    const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+    ctx.drawImage(img,(420-w)/2,320-h,w,h);
+    // Existing prize masters use a cyan key; remove it only in the display
+    // canvas, leaving source artwork untouched and avoiding new image generation.
+    const pixels=ctx.getImageData(0,0,420,320),d=pixels.data;
+    for(let i=0;i<d.length;i+=4) if(d[i+1]>d[i]+65 && d[i+2]>d[i]+65) d[i+3]=0;
+    ctx.putImageData(pixels,0,0);
+    const target=canvas.getContext('2d');target.clearRect(0,0,420,320);target.drawImage(buffer,0,0);
+    canvas.closest('.crew-runway').dataset.scene=scene.id;
+    document.getElementById('crewBackground').value=scene.id;
+    document.getElementById('crewDisplayStatus').textContent='';
+    try {localStorage.setItem('pf-doll-display-v1',scene.id);}catch{}
+  } catch {
+    document.getElementById('crewDisplayStatus').textContent='Couldn’t load that background. Please choose it again.';
+  }
+}
+
 function mount() {
   const door = document.getElementById('discoveryDoor');
   if (!door) return;
@@ -338,13 +384,14 @@ function mount() {
 <h2 id="crewTitle">Choose your paper doll</h2>
 <p>They take a little runway turn. Pick one and the last doll falls away.</p>
 <div class="crew-runway" aria-hidden="true">
- <div class="crew-runway-board"></div>
+ <canvas id="crewDisplayScene" width="420" height="320"></canvas>
  <div class="crew-runway-stage"><div id="crewRunwayDoll" class="crew-runway-doll crew-portrait"></div></div>
 </div>
 <div class="crew-runway-turn">
  <span id="crewViewLabel" aria-live="polite">front</span>
  <button type="button" id="crewRotate" aria-label="Rotate">Rotate</button>
 </div>
+<label class="crew-background-menu">Background <select id="crewBackground">${DISPLAY_SCENES.map(scene=>`<option value="${scene.id}">${scene.label}</option>`).join('')}</select></label><p id="crewDisplayStatus" role="status"></p>
 <div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
 <form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
 <p id="crewStatus" role="status"></p>
@@ -379,6 +426,10 @@ function mount() {
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
     document.body.append(book);
+    book.querySelector('#crewBackground').addEventListener('change',e=>paintDisplay(e.target.value));
+    let background='doll-display-stand';
+    try {background=localStorage.getItem('pf-doll-display-v1') || background;}catch{}
+    book.querySelector('#crewBackground').value=DISPLAY_SCENES.some(scene=>scene.id===background)?background:'doll-display-stand';
     book.addEventListener('click', e => {
       if (e.target.closest('#crewRotate')) { turn(1); return; }
       if (e.target.closest('#dollRotate')) { turnDoll(1); return; }

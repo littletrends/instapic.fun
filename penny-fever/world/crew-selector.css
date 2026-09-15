@@ -68,3 +68,15 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .doll-item-section>summary{cursor:pointer;padding:12px;font:600 15px/1.3 Georgia,serif;color:#6b4e2e;min-height:44px;box-sizing:border-box}
 .doll-item-section>summary:focus-visible{outline:2px solid #6b4e2e;outline-offset:2px}
 .doll-item-section>.doll-layer-row{padding:0 10px 10px;margin:0}
+
+.crew-runway{height:320px;background:radial-gradient(ellipse at center,#fffaf0,#e0cda9)}
+#crewDisplayScene{position:absolute;width:100%;height:100%;object-fit:contain;inset:0;pointer-events:none}
+.crew-runway-stage{inset:12px 12px 72px}
+.crew-runway-doll{width:145px;max-width:46%}
+.crew-runway[data-scene="travel-stage"] .crew-runway-doll{width:110px}
+.crew-runway[data-scene="travel-stage"] .crew-runway-stage{bottom:78px}
+.crew-runway[data-scene="fold-out-bedroom"] .crew-runway-doll{width:125px}
+.crew-runway[data-scene="fold-out-bedroom"] .crew-runway-stage{bottom:42px}
+.crew-background-menu{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 12px;font-size:14px}
+.crew-background-menu select{max-width:70%;min-height:40px;padding:6px 10px;border:1px solid #987345;border-radius:6px;background:#fffaf0;color:#382816;font:inherit}
+.crew-book.is-open-album .crew-background-menu,.crew-book.is-open-album #crewDisplayStatus{display:none}
