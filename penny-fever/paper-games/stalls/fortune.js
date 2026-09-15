@@ -152,9 +152,8 @@ function finishGaze(s) {
       s.ordinary = "star-token";
       keep("star-token", "fortune");
     } else {
-      s.ordinary = ordinaryFor(n);
-      if (s.ordinary === "everyday-penny") credit(1);
-      else keep(s.ordinary, "fortune");
+      s.ordinary = "everyday-penny";
+      credit(1);
     }
   } else if (treasureOk) {
     markOwned(s.level);

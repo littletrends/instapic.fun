@@ -165,7 +165,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+(entry.id==='pinball'?'?v=pip-spring-1':entry.id==='milk-bottles'?'?v=milk-cow-1':'?v=first-prize-1'))).default;
+ engine=(await import(entry.module+(entry.id==='pinball'?'?v=pip-moon-1':entry.id==='milk-bottles'?'?v=milk-cow-1':'?v=first-prize-1'))).default;
  if(entry.id==='pinball')document.body.classList.add('pinball-game');
  if(engine.selectedChapter)level=engine.selectedChapter();
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#compact-title').textContent=engine.title;$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.fullInstructions?engine.instructions:engine.instructions.split(/(?<=[.!?])\s+/).slice(0,2).join(' ');canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);

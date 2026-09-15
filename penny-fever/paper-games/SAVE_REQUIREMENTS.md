@@ -293,3 +293,5 @@ Deployment: published as `6896672`; Pages run `34951229256` succeeded. Live pinb
 ## Iris catch tokens and Mabel cow flavour — 15 September 2026
 
 A clean Iris catch that does not pay the chapter bonus now always awards a star token, with copy “Star token collected. Bonus still locked.” The first successful catch of a chapter still collects the bonus (`fortuneCatch`). Misses no longer spend that guarantee. Mabel’s prize cow keeps the flavour of the bottle it sits on (gold/yellow cows count as banana) and can be swapped into a matching flavour line. Ordinary delivery routes are unchanged because unique flavour only adds those cow-colour swaps.
+
+Iris star tokens require a full green catch. A slipped gaze credits an everyday penny only and never a star token. Pip Storm Glass (chapter 5) moon bumpers sit slightly left of the shooter lane so a hit no longer dumps the ball down the reload chute; layout version 3 refreshes saved bumper positions.
