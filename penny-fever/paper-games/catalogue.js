@@ -27,14 +27,14 @@ const rows = [
   ['marquee','Lumi','Marquee Glowball','Paddle a star-ball. Light the board. Hit the prize lantern.'],
   ['pack','Kit','The Impossible Suitcase','Pack the list. Strap the layers. Unique in the tag.'],
   ['pass','Bea','Opening Night','Guide the key through the wings to the portrait door.'],
-  ['carousel','Florence','Carousel Waltz','Ride the horse. Look around. Tap what you find before the waltz ends.'],
-  ['balloons','Nell','Balloon Garden','Hold the bellows to rise, release to drift, and thread the Balloon Tree’s arches.'],
-  ['ferris','Jasper','Pocket Wheel','Move the brass lens, focus, then tap what you find as the gondola rises.'],
-  ['helter','Tilly','Spiral Slide','Swipe lanes on the way down and catch what tumbles before the mat.'],
-  ['swings','Hugo','Skyward Swings','Lean the chair in or out and pass through the star rings.'],
-  ['funhouse','Juno','Laughing Doorway','Read the room, then choose the door the clue is laughing at.'],
-  ['organ','Otto','Calliope Keys','Watch the notes, tap the brass keys, and ride the paper roll through the organ.'],
-  ['mural','Arlo','Painted Bay','Mix the pigments and hold Paint as the stencil passes the roller.'],
+  ['carousel','Florence','Carousel Waltz','Tap the crest when it lines up — Mario circle, horse locked.'],
+  ['balloons','Nell','Balloon Garden','Pop the glowing balloons to clear the path.'],
+  ['ferris','Jasper','Pocket Wheel','Snap in the glow as you climb the wheel.'],
+  ['helter','Tilly','Spiral Slide','Turn the ring — ladder vs snake spiral.'],
+  ['swings','Hugo','Skyward Swings','Hold until green lined-up, then pop.'],
+  ['funhouse','Juno','Laughing Doorway','Shut the punchline — Pac-Man chase through doors.'],
+  ['organ','Otto','Calliope Keys','Tap the glowing pipe mouth — no Simon.'],
+  ['mural','Arlo','Painted Bay','Splash faded patches until the flood fills.'],
 ];
 const built = new Set(['fortune','love','curios','snap','whisper','ball-toss','coin-pusher','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','duck-pond','skee-ball','penny-pitch','dunk-tank','marquee','pack','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
 const restyled = new Set(['coin-pusher','whisper','pack','love','curios','duck-pond','fortune','ball-toss','snap','pinball','lookup','water-gun','milk-bottles','cover-the-spot','mutoscope','high-striker','catoptromancy','bent-rings','plinko','fairy-floss','popcorn','skee-ball','penny-pitch','dunk-tank','marquee','pass','carousel','balloons','ferris','helter','swings','funhouse','organ','mural']);
