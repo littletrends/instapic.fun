@@ -91,7 +91,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
-  chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
+  chest.addEventListener('click',()=>window.PennyFeverInventory?.openGame(game.id));
   const till=doc.createElement('details');till.className='paper-game-till';
   const tillSum=doc.createElement('summary');tillSum.textContent='Alley menu';
   const help=doc.createElement('button');help.type='button';help.textContent='Game menu / Help';help.addEventListener('click',()=>{till.open=false;frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'menu'},location.origin);});
@@ -199,7 +199,7 @@ function listenForRoom(){
   if(!data||data.channel!=='pf-paper-world')return;
   if(data.type==='treasures'){
    const frame=document.querySelector('#cabinet-'+data.id+' iframe.paper-game-frame');
-   if(frame?.contentWindow===event.source && window.PennyFeverInventory?.open()){
+   if(frame?.contentWindow===event.source && window.PennyFeverInventory?.openGame(data.id)){
     document.querySelector('dialog.treasure-book')?.addEventListener('close',()=>{
      frame.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);
     },{once:true});

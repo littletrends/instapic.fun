@@ -285,3 +285,12 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
  .pocket-header:has([data-return-game]:not([hidden])){display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}
  .pocket-header:has([data-return-game]:not([hidden]))>div{grid-row:1/3}
 }
+
+@media(max-width:680px){
+ #collectionPages .pocket-body.is-tree-spread.has-stall{grid-template-columns:126px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ #collectionPages .pocket-body.is-tree-spread.has-stall .treasure-tree{display:block;padding:4px}
+ .has-stall .treasure-tree summary{font-size:12px;padding:9px 4px;gap:3px}
+ .has-stall .treasure-tree .tree-vendor{display:none}
+ .has-stall .treasure-tree .tree-prize{font-size:12px;grid-template-columns:minmax(0,1fr);padding:8px 4px 8px 12px;gap:2px;min-height:44px}
+ #collectionPages .has-stall .tree-stall-head{display:block}
+}

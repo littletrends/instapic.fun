@@ -329,7 +329,7 @@ function mount() {
     if (!$('pocketInspect').hidden) { e.preventDefault(); hideInspect(); }
     else if (bookId || focus) { e.preventDefault(); goBack(); }
   });
-  globalThis.PennyFeverInventory = {open, celebrate, close: () => dialog.close()};
+  globalThis.PennyFeverInventory = {open, openGame, celebrate, close: () => dialog.close()};
   updateLaunch();
   const idle = globalThis.requestIdleCallback || (fn => setTimeout(fn, 1400));
   idle(() => needMidway());
@@ -1003,6 +1003,23 @@ let spinPrize = false;
 function celebrate(id) {
   spinPrize = true;
   open(id);
+}
+
+function openGame(id) {
+  tab = 'games'; bookId = null; filter = 'all';
+  focus = {kind:'stall', id}; expanded.clear(); expanded.add(id);
+  $('treasureSearch').value = '';
+  dialog.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='all')));
+  const opened = open();
+  if (opened) needMidway().then(()=>{
+    if (!dialog.open || tab!=='games' || focus?.id!==id) return;
+    render();
+    requestAnimationFrame(()=>{
+      const row=[...$('treasureTree').querySelectorAll('[data-stall]')].find(n=>n.dataset.stall===id);
+      if(row)$('treasureTree').scrollTop = row.offsetTop - $('treasureTree').offsetTop;
+    });
+  });
+  return opened;
 }
 
 function open(id) {
