@@ -1,5 +1,5 @@
 /*
- * Spiral Slide (helter) — Chapter 1 First Spiral ONLY.
+ * Spiral Slide (helter) — Chapter 1 First Spiral + Chapter 2 Bunting Bend.
  * Locked remix: Snakes & Ladders on a helter + Helix/Tempest DNA.
  * ONE verb: TURN the ring (drag/swipe around the tower) so a ladder faces you
  * (boost/safe) or a snake faces you (soft dump/redirect — never abort paid ride).
@@ -7,8 +7,12 @@
  * translucent overlays only, no solid court overpaint.
  * Tagline: Choose your spiral. Catch what tumbles.
  *
- * Unfinished chapters 2–6:
- *   2 Bunting Bend — cushions / rolled mats as obstacles, taught separately
+ * Implemented:
+ *   1 First Spiral — TURN / ladder / snake core
+ *   2 Bunting Bend — burgundy cushions / rolled mats on some ring arcs;
+ *     taught alone (long warn) before later chapters mix more hazards
+ *
+ * Unfinished chapters 3–6:
  *   3 Tunnel Turn — short tunnels; warning symbol shows exit notch before darkness
  *   4 Three-Way Tower — three notches that reconnect; landmark colours + tiny map
  *   5 Runaway Keepsake — treasure hops rings only after visible bounce + arrow
@@ -47,6 +51,10 @@ const FX_CAP = 48;
 /** Angular half-width that counts as "facing you" at the bottom notch. */
 const FACE_SNAP = Math.PI / 2.4;
 const NUDGE = Math.PI / 10;
+/** Angular half-width of a cushion / rolled-mat obstacle on a ring arc. */
+const CUSHION_HALF = Math.PI / 6.5; // narrower so ladder snap stays clearable
+/** Long lead warning before the first teach-cushion ring (Bunting Bend). */
+const CUSHION_WARN_SECS = 6.5;
 
 function angNorm(a) {
   let x = a % TAU;
@@ -80,16 +88,56 @@ function facingTight(theta) {
   return Math.min(angDist(theta, 0), angDist(theta, Math.PI)) <= FACE_SNAP;
 }
 
+/** Local cushion angle whose world face is "you" (bottom) when theta ≈ -local. */
+function cushionFaceTheta(ring) {
+  if (!ring || !ring.cushion) return null;
+  return angNorm(-ring.cushion.local);
+}
+
+function cushionFaceDist(ring, theta) {
+  const faceAt = cushionFaceTheta(ring);
+  if (faceAt == null) return Infinity;
+  return angDist(theta, faceAt);
+}
+
+function cushionBlocking(ring, theta) {
+  if (!ring || !ring.cushion) return false;
+  const half = ring.cushion.half || CUSHION_HALF;
+  return cushionFaceDist(ring, theta) <= half;
+}
+
 function chapterPlan(level, rng) {
-  const haste = 1 + Math.min(0.2, level * 0.035);
+  // Ch2 slightly faster than Ch1; later chapters keep a soft haste cap.
+  const haste = level >= 1
+    ? 1.04 + Math.min(0.10, (level - 1) * 0.03)
+    : 1 + Math.min(0.2, level * 0.035);
   const duration = RIDE_SECONDS / haste;
-  // Five rings spaced through the descent; GOAL stays 3 ladders — recoverable after a snake.
+  // Five+ rings spaced through the descent; GOAL stays 3 ladders — recoverable after a snake/cushion.
   const times = [0.14, 0.30, 0.46, 0.62, 0.78].map((f) => f * duration);
   const treasureRing = 2;
+  const bunting = level >= 1; // Ch2+ denser bunting art flag for draw
+  // Ch2: cushions on some arcs only — taught on the first cushion ring; no tunnels / 3-way yet.
+  const cushionIdx = level >= 1 ? new Set([0, 3]) : null; // teach on 0, one refresh on 3 — keep 3 ladders fair
   const rings = times.map((t, i) => {
     let start;
-    if (i === 0) {
-      // First ring: clearly off-ladder but within ~90° so one short drag teaches TURN.
+    let cushion = null;
+    if (cushionIdx && cushionIdx.has(i)) {
+      // Offset from ladder so TURN can clear cushion toward ladder (they rotate together).
+      const mag = Math.PI * (0.40 + rng() * 0.12); // ~72°–94° from ladder
+      const side = rng() < 0.5 ? 1 : -1;
+      let loc = side * mag;
+      while (loc > Math.PI) loc -= TAU;
+      while (loc < -Math.PI) loc += TAU;
+      const teach = i === 0; // first cushion ring alone gets the long warn + coaching
+      cushion = {local: loc, half: CUSHION_HALF, teach};
+      if (teach) {
+        // Start with cushion nearly facing you — TURN clear of it toward the ladder.
+        start = -loc + (rng() - 0.5) * 0.08;
+      } else {
+        start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
+      }
+    } else if (i === 0) {
+      // First ring (Ch1, or Ch2 non-cushion): clearly off-ladder but within ~90° so one short drag teaches TURN.
       const mag = Math.PI * (0.38 + rng() * 0.10); // ~68°–86°
       start = (rng() < 0.5 ? mag : -mag);
     } else {
@@ -106,9 +154,10 @@ function chapterPlan(level, rng) {
       glintId: ORDINARY[i % ORDINARY.length],
       findTaken: false,
       hasTreasure: false,
+      cushion,
     };
   });
-  return {duration, rings, treasureRing};
+  return {duration, rings, treasureRing, denserBunting: bunting};
 }
 
 function pushFx(s, item) {
@@ -166,6 +215,12 @@ function turnRing(s, delta) {
   if (!ring) return;
   ring.targetTheta = angNorm(ring.targetTheta + delta);
   s.turnedOnce = true;
+  if (cushionBlocking(ring, ring.targetTheta)) {
+    s.note = 'Cushion facing you — TURN clear of it toward the ladder.';
+    s.statusCopy = 'Cushion ahead';
+    logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face: 'cushion'});
+    return;
+  }
   const face = facingKind(ring.targetTheta);
   s.note = face === 'ladder'
     ? 'Ladder facing you — hold for the drop.'
@@ -212,17 +267,44 @@ function spawnTreasure(s) {
 function commitRing(s, ring) {
   // Ease toward target so the last TURN counts.
   // Forgiving snap: if within FACE_SNAP of ladder, lock to ladder (carnival fair).
+  // Cushion soft-redirect wins if cushion still covers the face after snap.
   let theta = ring.targetTheta;
-  if (angDist(theta, 0) <= FACE_SNAP) theta = 0;
+  let snappedLadder = false;
+  if (angDist(theta, 0) <= FACE_SNAP) { theta = 0; snappedLadder = true; }
   else if (angDist(theta, Math.PI) <= FACE_SNAP) theta = Math.PI;
   ring.targetTheta = theta;
   ring.theta = theta;
+  const y = ringScreenY(s, ring);
+
+  // Ladder snap beats cushion — carnival fair; cushions teach redirect, not soft-lock.
+  if (!snappedLadder && cushionBlocking(ring, ring.theta)) {
+    // Soft redirect — ride always continues; never abort paid ride.
+    ring.done = true;
+    ring.result = 'cushion';
+    logAction(s, 'commit', {ring: ring.i, face: 'cushion', theta: Math.round(ring.theta * 1000) / 1000});
+    logAction(s, 'cushion', {ring: ring.i});
+    s.note = 'Cushion bump! Soft redirect — TURN clear toward the ladder next time.';
+    s.statusCopy = 'Cushion bump';
+    s.phaseFlash = 0.85;
+    s.phaseFlashLabel = 'Cushion';
+    s.snakeSlide = 0.9;
+    s.matPulse = 0.35;
+    s.t = Math.max(0, s.t - 1.2);
+    pushSparks(s, CX, y, true);
+    pushRingFx(s, CX, y, true);
+    pushLabel(s, CX, y - 36, 'cushion!', true);
+    if (ring.hasTreasure && s.treasure && !s.treasure.taken) {
+      s.treasureRevealed = true;
+      s.note = 'Cushion soft-dumped the keepsake past you — ride continues.';
+    }
+    return;
+  }
+
   const face = facingKind(ring.theta);
   ring.done = true;
   ring.result = face;
   logAction(s, 'commit', {ring: ring.i, face, theta: Math.round(ring.theta * 1000) / 1000});
 
-  const y = ringScreenY(s, ring);
   if (face === 'ladder') {
     s.hits += 1;
     if (!ring.findTaken) {
@@ -293,8 +375,21 @@ function teachWindow(s, preview) {
 
 function coachingLine(s, preview, ring) {
   if (s.statusCopy && (s.matPulse > 0 || s.phaseFlash > 0.2)) return s.statusCopy;
+  // Ch2 teach: long warn on the first cushion ring before mixing other hazards.
+  if (ring && !ring.done && ring.cushion && ring.cushion.teach) {
+    const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
+    if (preview || lead <= CUSHION_WARN_SECS) {
+      if (cushionBlocking(ring, ring.targetTheta)) {
+        return 'Cushion ahead — TURN clear of it toward the ladder.';
+      }
+      return 'Cushion ahead — TURN clear of it toward the ladder.';
+    }
+  }
   if (!s.turnedOnce) return 'TURN the ring so the ladder faces you.';
   if (ring && !ring.done) {
+    if (cushionBlocking(ring, ring.targetTheta)) {
+      return 'Cushion ahead — TURN clear of it toward the ladder.';
+    }
     const face = facingKind(ring.targetTheta);
     if (face === 'ladder' && facingTight(ring.targetTheta)) {
       return 'Ladder faces you — drop through when it arrives.';
@@ -396,6 +491,39 @@ function drawSnakeNotch(d, x, y, rx, ry, ang, highlight) {
   d.circle(pts[8][0], pts[8][1], highlight ? 5 : 3.5, col, stroke, 1);
 }
 
+function drawCushion(d, x, y, rx, ry, ang, highlight, rolled) {
+  // Burgundy cushion / rolled mat on a ring arc — paper-cut oval + soft strap.
+  const px = x + Math.cos(ang) * rx;
+  const py = y + Math.sin(ang) * ry;
+  const tx = -Math.sin(ang);
+  const ty = Math.cos(ang);
+  const nx = Math.cos(ang);
+  const ny = Math.sin(ang);
+  const fill = highlight ? '#6b2030ee' : '#6b2030bb';
+  const stroke = highlight ? '#d2a65bcc' : '#b78b4888';
+  const hw = highlight ? 22 : 18;
+  const hh = rolled ? (highlight ? 14 : 11) : (highlight ? 16 : 13);
+  d.ellipse(px + nx * 4, py + ny * 4, hw, hh, fill, stroke, highlight ? 2.2 : 1.5);
+  // Cream piping
+  d.ellipse(px + nx * 4, py + ny * 4, hw * 0.55, hh * 0.45, '#f3e2bd55', '#f3e2bd66', 1);
+  if (rolled) {
+    // Rolled-mat bands
+    for (const u of [-0.35, 0, 0.35]) {
+      const bx = px + nx * 4 + tx * hw * u * 0.85;
+      const by = py + ny * 4 + ty * hw * u * 0.85;
+      d.line(
+        {x: bx - nx * hh * 0.7, y: by - ny * hh * 0.7},
+        {x: bx + nx * hh * 0.7, y: by + ny * hh * 0.7},
+        '#f3e2bd99', 1.4,
+      );
+    }
+  } else {
+    // Cushion tassels
+    d.circle(px + nx * 4 + tx * hw * 0.7, py + ny * 4 + ty * hw * 0.7, 3.2, '#f3e2bdcc', '#d2a65b88', 1);
+    d.circle(px + nx * 4 - tx * hw * 0.7, py + ny * 4 - ty * hw * 0.7, 3.2, '#f3e2bdcc', '#d2a65b88', 1);
+  }
+}
+
 function drawRingToy(d, s, ring, clock, teach) {
   if (ring.done && ringScreenY(s, ring) < TOWER_TOP + 20) return;
   const y = ringScreenY(s, ring);
@@ -422,19 +550,44 @@ function drawRingToy(d, s, ring, clock, teach) {
   const ladderAng = theta + flourish + Math.PI / 2; // when theta=0, ladder at bottom
   const snakeAng = theta + Math.PI + flourish + Math.PI / 2;
 
-  drawLadderNotch(d, CX, y, rx, ry, ladderAng, active && face === 'ladder' && tight);
-  drawSnakeNotch(d, CX, y, rx, ry, snakeAng, active && face === 'snake');
+  drawLadderNotch(d, CX, y, rx, ry, ladderAng, active && face === 'ladder' && tight && !cushionBlocking(ring, ring.targetTheta));
+  drawSnakeNotch(d, CX, y, rx, ry, snakeAng, active && face === 'snake' && !cushionBlocking(ring, ring.targetTheta));
+
+  // Cushion / rolled mat on some Ch2 ring arcs.
+  if (ring.cushion) {
+    const cAng = theta + ring.cushion.local + flourish + Math.PI / 2;
+    const cBlock = active && cushionBlocking(ring, ring.targetTheta);
+    const rolled = (ring.i % 2) === 1;
+    drawCushion(d, CX, y, rx, ry, cAng, cBlock || !!(ring.cushion.teach && active), rolled);
+    if (active && (cBlock || ring.cushion.teach)) {
+      const warnPulse = 0.5 + 0.5 * Math.sin(clock * 4.5);
+      const warnA = Math.floor((0.35 + warnPulse * 0.4) * 255).toString(16).padStart(2, '0');
+      d.ellipse(
+        CX + Math.cos(cAng) * rx,
+        y + Math.sin(cAng) * ry,
+        34 + warnPulse * 8, 18 + warnPulse * 4,
+        null, '#c67483' + warnA, 2,
+      );
+    }
+  }
 
   // Facing marker at bottom of ring ("you").
   if (active) {
-    d.glow(CX, y + ry, 28 + pulse * 12, face === 'ladder' ? '#ffe6a4' : '#c67483');
-    d.text(face === 'ladder' ? 'ladder' : 'snake', CX, y + ry + 22, 14, face === 'ladder' ? '#f4d590' : '#e8b0b0');
+    const blocked = cushionBlocking(ring, ring.targetTheta);
+    const glowCol = blocked ? '#c67483' : (face === 'ladder' ? '#ffe6a4' : '#c67483');
+    d.glow(CX, y + ry, 28 + pulse * 12, glowCol);
+    const label = blocked ? 'cushion' : (face === 'ladder' ? 'ladder' : 'snake');
+    const labelCol = blocked ? '#e8b0b0' : (face === 'ladder' ? '#f4d590' : '#e8b0b0');
+    d.text(label, CX, y + ry + 22, 14, labelCol);
   }
 
   // Result stamp after commit.
   if (ring.done) {
-    const stamp = ring.result === 'ladder' ? '▲ ladder' : '∿ snake';
-    d.text(stamp, CX, y - ry - 14, 14, ring.result === 'ladder' ? '#f4d590aa' : '#c67483aa');
+    const stamp = ring.result === 'ladder' ? '▲ ladder'
+      : ring.result === 'cushion' ? '▣ cushion' : '∿ snake';
+    const stampCol = ring.result === 'ladder' ? '#f4d590aa'
+      : ring.result === 'cushion' ? '#c67483aa' : '#c67483aa';
+    d.text(stamp, CX, y - ry - 14, 14, stampCol);
   }
 
   // Treasure sits on the ladder segment ahead (fair, on a ladder notch).
@@ -451,11 +604,23 @@ function drawRingToy(d, s, ring, clock, teach) {
   }
 }
 
-function drawBunting(d, y) {
-  for (let i = 0; i < 7; i++) {
-    const x = 160 + i * 95;
+function drawBunting(d, y, denser) {
+  const n = denser ? 11 : 7;
+  const span = denser ? 62 : 95;
+  const start = denser ? 130 : 160;
+  for (let i = 0; i < n; i++) {
+    const x = start + i * span;
     const col = i % 2 ? '#6b2030aa' : '#f3e2bdaa';
-    d.poly([[x, y], [x + 28, y], [x + 14, y + 26]], col, '#d2a65b66', 1);
+    const h = denser ? 22 + (i % 3) * 4 : 26;
+    d.poly([[x, y], [x + (denser ? 22 : 28), y], [x + (denser ? 11 : 14), y + h]], col, '#d2a65b66', 1);
+  }
+  if (denser) {
+    // Second scallop row — denser Ch2 carnival feel
+    for (let i = 0; i < n - 1; i++) {
+      const x = start + span * 0.5 + i * span;
+      const col = i % 2 ? '#f3e2bd88' : '#6b203088';
+      d.poly([[x, y + 18], [x + 18, y + 18], [x + 9, y + 36]], col, '#d2a65b44', 1);
+    }
   }
 }
 
@@ -512,8 +677,12 @@ function drawBottomStrip(d, s, preview, ring) {
   if (s.practice && s.turnedOnce) {
     d.text('nothing is kept', 450, 1156, 13, '#ead6a488');
   } else if (ring && !ring.done) {
-    const face = facingKind(ring.targetTheta);
-    d.text(face === 'ladder' ? 'facing: ladder' : 'facing: snake', 450, 1156, 13, '#f0d09acc');
+    if (cushionBlocking(ring, ring.targetTheta)) {
+      d.text('facing: cushion', 450, 1156, 13, '#e8b0b0cc');
+    } else {
+      const face = facingKind(ring.targetTheta);
+      d.text(face === 'ladder' ? 'facing: ladder' : 'facing: snake', 450, 1156, 13, '#f0d09acc');
+    }
   }
 }
 
@@ -544,8 +713,8 @@ function drawMat(d, s, clock) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral.',
-  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder.',
+  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -560,6 +729,7 @@ export default {
       rings: plan.rings,
       planTreasureRing: plan.treasureRing,
       duration: plan.duration,
+      denserBunting: !!plan.denserBunting,
       camBank: 0,
       towerY: 520,
       drag: null,
@@ -576,6 +746,7 @@ export default {
       challengeOkFlash: false,
       snakeSlide: 0,
       ringFlourish: 0,
+      cushionWarned: false,
     });
   },
   update(s, dt) {
@@ -597,7 +768,11 @@ export default {
       s.turnedOnce = false;
       s.snakeSlide = 0;
       s.ringFlourish = 0;
-      s.note = 'TURN the ring so the ladder faces you.';
+      s.cushionWarned = false;
+      const teachCush = (s.rings || []).find((r) => r.cushion && r.cushion.teach);
+      s.note = teachCush
+        ? 'Cushion ahead — TURN clear of it toward the ladder.'
+        : 'TURN the ring so the ladder faces you.';
       // Fair treasure spawn: always on a ladder segment of an authored ring.
       if (s.eligible) {
         const preferred = ['ring-2', 'ring-1', 'ring-3', 'ring-0', 'ring-4'];
@@ -651,6 +826,21 @@ export default {
       if (tr && s.t >= tr.t - 4) s.treasureRevealed = true;
     }
 
+    // Ch2 teach loop: long warn before the first cushion ring commits.
+    const liveRing = activeRing(s);
+    if (liveRing && liveRing.cushion && liveRing.cushion.teach && !liveRing.done) {
+      if (s.t >= liveRing.t - CUSHION_WARN_SECS) {
+        if (!s.cushionWarned) {
+          s.cushionWarned = true;
+          s.statusCopy = 'Cushion ahead';
+          s.phaseFlash = 0.7;
+          s.phaseFlashLabel = 'Cushion';
+          logAction(s, 'cushion-warn', {ring: liveRing.i, lead: CUSHION_WARN_SECS});
+        }
+        s.note = 'Cushion ahead — TURN clear of it toward the ladder.';
+      }
+    }
+
     // One discrete commit per ring when the mat reaches it (Helix-style drop through).
     s.rings.forEach((ring) => {
       if (!ring.done && s.t >= ring.t) commitRing(s, ring);
@@ -700,7 +890,7 @@ export default {
     // Soft oval vignette only — do not hide helter.png court.
     d.ellipse(CX + bank * 0.15, 640, 390, 520, '#4a182414');
 
-    drawBunting(d, 150);
+    drawBunting(d, 150, !!s.denserBunting);
     drawTowerHint(d, s);
 
     if (preview) {
