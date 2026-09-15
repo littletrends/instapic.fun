@@ -3,10 +3,11 @@
  * LOCKED remix: organ as cockpit. Notes climb brass pipes. TAP the live mouth.
  * Tempest lanes + piano-tile timing + instrument-panel clarity. Not Simon-says.
  *
- * SHIPPED: Chapter 1 Three Bright Notes.
- * UNFINISHED: Bell and Pipe · Paper Roll · Echo Chamber · Broken Bar · The Grand Calliope
+ * SHIPPED: Chapter 1 Three Bright Notes · Chapter 2 Bell and Pipe.
+ * UNFINISHED: Paper Roll · Echo Chamber · Broken Bar · The Grand Calliope
  *
  * organ.png is the court behind the canvas. Do not paint a full-screen background.
+ * draw.glow() — 6-digit hex only (#rrggbb).
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -34,16 +35,19 @@ const TAU = Math.PI * 2;
 const GOLD = '#e8c878';
 const CREAM = '#efe6d0';
 const INK = '#f0d18f';
+const BELL_GLOW = '#e8c070'; // 6-digit only for d.glow
 const MOUTH_R = 56;
 const CLIMB_SECS = 3.6;
 const READY_SECS = 1.6;
 const HOLD_SECS = 3.8;
+const BELL_WARN_SECS = 3.4; // Ch2 teach: long warn with bell alone before climb
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
 const CHAMBER_SECS = 8.5;
 const BYPASS_SECS = 2.2;
 const RIDE_SECS = 48;
+const CH2_SECS = 52;
 
 const PIPES = [
   {i: 0, x: 250, mouthY: 760, topY: 250, label: 'Do', shape: 'circle', fill: '#c9a227', glow: '#ffe6a4'},
@@ -67,7 +71,9 @@ function reduced(s) {
 }
 
 function tempo(s) {
-  return reduced(s) ? 1.35 : 1;
+  // Ch2 slightly slower so a competent first play can land 3/3 (~50s).
+  const ch2 = (s.level === 1) ? 1.12 : 1;
+  return (reduced(s) ? 1.35 : 1) * ch2;
 }
 
 function ch1Notes() {
@@ -79,9 +85,20 @@ function ch1Notes() {
   ];
 }
 
+function ch2Notes() {
+  // Deepen TAP. ONE teach hazard alone: a ringing bell on a wrong mouth.
+  // Later climbs stay clean — no mixing hazards (helter Ch2 bar).
+  return [
+    {pipe: 1, bell: 0, teach: true, at: 0.15}, // live Mi; bell decoy on Do
+    {pipe: 0, at: 0.15},
+    {pipe: 2, at: 0.15},
+  ];
+}
+
 function chapterNotes(level) {
-  // Ch2–6: one easy climb stub so the ride still exits.
   if (level <= 0) return ch1Notes();
+  if (level === 1) return ch2Notes();
+  // Ch3–6 stubs until asked.
   return [{pipe: level % 3, at: 0.2}];
 }
 
@@ -106,6 +123,12 @@ function notePos(pipe, climb) {
   };
 }
 
+function readySecs(s) {
+  const note = s.notes[s.noteIndex];
+  if (note && note.teach && !s.bellTaught) return BELL_WARN_SECS;
+  return READY_SECS;
+}
+
 function startClimb(s, idx) {
   const notes = s.notes;
   if (idx !== s.noteIndex) s.misses = 0;
@@ -113,6 +136,7 @@ function startClimb(s, idx) {
   if (idx >= notes.length) {
     s.phase = s.hits >= s.goal ? 'chamber' : 'bypass';
     s.phaseT = 0;
+    s.bellPipe = -1;
     if (s.phase === 'chamber') openChamber(s);
     else {
       s.note = 'The ordinary corridor carries you on.';
@@ -120,21 +144,28 @@ function startClimb(s, idx) {
     }
     return;
   }
+  const note = notes[idx];
   s.noteIndex = idx;
   s.phase = 'ready';
   s.phaseT = 0;
   s.climb = 0;
-  s.livePipe = notes[idx].pipe;
+  s.livePipe = note.pipe;
+  s.bellPipe = (note.teach && note.bell != null) ? note.bell : -1;
   s.tapped = false;
   s.holdT = 0;
-  s.note = 'TAP the glowing pipe.';
-  logAction(s, 'climb', {i: idx, pipe: s.livePipe});
+  if (s.bellPipe >= 0 && !s.bellTaught) {
+    s.note = 'Bell rings beside — TAP the climbing pipe, not the bell.';
+  } else {
+    s.note = 'TAP the glowing pipe.';
+  }
+  logAction(s, 'climb', {i: idx, pipe: s.livePipe, bell: s.bellPipe});
 }
 
 function openChamber(s) {
   s.phase = 'chamber';
   s.phaseT = 0;
   s.door = 0;
+  s.bellPipe = -1;
   s.chamberFindTaken = false;
   s.note = 'TAP what you see inside.';
   logAction(s, 'open', {gate: 'chamber-0'});
@@ -144,13 +175,17 @@ function openChamber(s) {
   }
 }
 
-function missClimb(s) {
+function missClimb(s, reason) {
   s.misses += 1;
-  logAction(s, 'miss', {pipe: s.livePipe, misses: s.misses});
+  logAction(s, 'miss', {pipe: s.livePipe, misses: s.misses, reason: reason || 'miss'});
   s.phase = 'cough';
   s.phaseT = 0;
   s.shake = reduced(s) ? 0.2 : 0.55;
-  if (s.practice) {
+  if (reason === 'bell') {
+    s.retrySame = true;
+    s.skipAhead = false;
+    s.note = 'That was the bell — TAP the climbing pipe.';
+  } else if (s.practice) {
     // Practice stays on this pipe until TAP lands — teach the verb.
     s.retrySame = true;
     s.skipAhead = false;
@@ -169,6 +204,8 @@ function hitClimb(s) {
   s.hits += 1;
   s.tapped = true;
   s.flash = 0.35;
+  if (s.bellPipe >= 0) s.bellTaught = true;
+  s.bellPipe = -1;
   s.note = 'Open.';
   logAction(s, 'tap', {pipe: s.livePipe, hits: s.hits});
   s.phase = 'hit';
@@ -181,16 +218,29 @@ function drawNoteShape(d, shape, x, y, r, fill, stroke) {
   else d.poly([[x, y - r], [x + r * 0.95, y + r * 0.75], [x - r * 0.95, y + r * 0.75]], fill, stroke, 2);
 }
 
+function drawBellMark(d, x, y, r) {
+  // Simple calliope bell — shape only, no 8-digit glow.
+  d.ellipse(x, y - 6, r * 0.55, r * 0.4, '#d2a65b', GOLD, 2);
+  d.poly([
+    [x - r * 0.7, y - 2],
+    [x + r * 0.7, y - 2],
+    [x + r * 0.55, y + r * 0.55],
+    [x - r * 0.55, y + r * 0.55],
+  ], '#c9a227', GOLD, 2);
+  d.circle(x, y + r * 0.7, 4, '#efe6d0', GOLD, 1);
+}
+
 function drawCockpit(d, s) {
   // Light pipe bank on the court — no full cover.
   PIPES.forEach((pipe) => {
     const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'hit' || s.phase === 'cough');
+    const bell = s.bellPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough');
     d.poly([
       [pipe.x - 16, pipe.topY],
       [pipe.x + 16, pipe.topY],
       [pipe.x + 22, pipe.mouthY],
       [pipe.x - 22, pipe.mouthY],
-    ], live ? pipe.fill + 'cc' : '#b78b4833', GOLD, live ? 5 : 1.5);
+    ], live ? pipe.fill + 'cc' : (bell ? '#c9a22766' : '#b78b4833'), GOLD, live ? 5 : (bell ? 3 : 1.5));
     d.ellipse(pipe.x, pipe.topY, 14, 7, '#d2a65bcc', GOLD, 1);
   });
 }
@@ -198,21 +248,28 @@ function drawCockpit(d, s) {
 function drawMouths(d, s) {
   PIPES.forEach((pipe) => {
     const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
+    const bell = s.bellPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const inWindow = live && s.climb >= HIT_MIN && s.climb <= HIT_MAX;
-    const r = MOUTH_R * (inWindow ? 1.08 : 1);
+    const r = MOUTH_R * (inWindow ? 1.08 : (bell ? 1.04 : 1));
     if (d.c) {
       roundRect(d.c, pipe.x - r, pipe.mouthY - r, r * 2, r * 2, 18);
-      d.c.fillStyle = live ? pipe.fill : '#3a2418ee';
+      d.c.fillStyle = live ? pipe.fill : (bell ? '#5a3a18ee' : '#3a2418ee');
       d.c.fill();
       d.c.strokeStyle = GOLD;
-      d.c.lineWidth = live ? 5 : 3;
+      d.c.lineWidth = live ? 5 : (bell ? 4 : 3);
       d.c.stroke();
     } else {
-      d.circle(pipe.x, pipe.mouthY, r, live ? pipe.fill : '#3a2418ee', GOLD, 3);
+      d.circle(pipe.x, pipe.mouthY, r, live ? pipe.fill : (bell ? '#5a3a18ee' : '#3a2418ee'), GOLD, 3);
     }
     if (live) d.glow(pipe.x, pipe.mouthY, r + 24, pipe.glow);
-    drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, pipe.fill, '#f8e4b3');
-    d.text(live ? 'TAP' : pipe.label, pipe.x, pipe.mouthY + r - 14, 16, CREAM);
+    if (bell) d.glow(pipe.x, pipe.mouthY, r + 20, BELL_GLOW);
+    if (bell) {
+      drawBellMark(d, pipe.x, pipe.mouthY - 4, 20);
+      d.text('BELL', pipe.x, pipe.mouthY + r - 14, 15, CREAM);
+    } else {
+      drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, pipe.fill, '#f8e4b3');
+      d.text(live ? 'TAP' : pipe.label, pipe.x, pipe.mouthY + r - 14, 16, CREAM);
+    }
   });
 }
 
@@ -224,19 +281,6 @@ function drawClimbingNote(d, s) {
   d.glow(p.x, p.y, 18 * p.scale, pipe.glow);
 }
 
-function drawPractice(d, s) {
-  if (!s.practice) return;
-  if (d.c) {
-    roundRect(d.c, 300, 176, 300, 44, 12);
-    d.c.fillStyle = '#3a2418ee';
-    d.c.fill();
-    d.c.strokeStyle = GOLD;
-    d.c.lineWidth = 3;
-    d.c.stroke();
-  }
-  d.text('PRACTICE', 450, 206, 22, CREAM);
-}
-
 function drawCoach(d, s) {
   if (d.c) {
     roundRect(d.c, 50, 900, 800, 64, 12);
@@ -246,10 +290,15 @@ function drawCoach(d, s) {
     d.c.lineWidth = 2;
     d.c.stroke();
   }
-  const line = s.phase === 'chamber' ? 'TAP what you see inside.'
-    : s.phase === 'bypass' ? 'The ordinary corridor.'
-    : 'TAP the glowing pipe.';
-  d.text(line, 450, 938, 22, CREAM);
+  let line = 'TAP the glowing pipe.';
+  if (s.phase === 'chamber') line = 'TAP what you see inside.';
+  else if (s.phase === 'bypass') line = 'The ordinary corridor.';
+  else if (s.bellPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
+    line = 'Bell rings beside — TAP the climbing pipe.';
+  } else if (s.note && s.note.indexOf('bell') >= 0) {
+    line = s.note;
+  }
+  d.text(line, 450, 938, 20, CREAM);
 }
 
 function drawChamber(d, s) {
@@ -292,7 +341,12 @@ function tryTap(s, mouth) {
     return;
   }
   if ((s.phase !== 'ready' && s.phase !== 'climb') || s.tapped) return;
-  logAction(s, 'key', {pipe: mouth, live: s.livePipe});
+  logAction(s, 'key', {pipe: mouth, live: s.livePipe, bell: s.bellPipe});
+  // Soft fail: tapping the teach bell coughs and retries — never aborts alone.
+  if (s.bellPipe >= 0 && mouth === s.bellPipe) {
+    missClimb(s, 'bell');
+    return;
+  }
   if (mouth !== s.livePipe) {
     missClimb(s);
     return;
@@ -303,8 +357,8 @@ function tryTap(s, mouth) {
 
 export default {
   title: 'Calliope Keys',
-  intro: 'Otto’s organ is the cockpit. Notes climb the brass. TAP the glowing pipe mouth.',
-  instructions: 'Tap the glowing pipe. The mouth lights before the note climbs; TAP it then, or as the note arrives. Sound is optional — shape and colour mark each pipe. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss takes the ordinary corridor.',
+  intro: 'Otto’s organ is the cockpit. Notes climb the brass. TAP the glowing pipe mouth. From chapter 2, a calliope bell may ring on a wrong mouth — TAP the climbing pipe, not the bell.',
+  instructions: 'Tap the glowing pipe. The mouth lights before the note climbs; TAP it then, or as the note arrives. Sound is optional — shape and colour mark each pipe. From chapter 2 (Bell and Pipe), one teach bell rings beside the live climb — soft cough if you TAP the bell; keep TAP on the climbing pipe. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss on a paid ride takes the ordinary corridor.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -316,6 +370,8 @@ export default {
       notes,
       noteIndex: -1,
       livePipe: -1,
+      bellPipe: -1,
+      bellTaught: false,
       climb: 0,
       tapped: false,
       hits: 0,
@@ -329,14 +385,16 @@ export default {
       retrySame: false,
       skipAhead: false,
       chamberFindTaken: false,
-      duration: RIDE_SECS + level * 2,
-      stubChapter: level > 0,
+      duration: (level === 1 ? CH2_SECS : RIDE_SECS) + level * 2,
+      stubChapter: level > 1,
     });
   },
   update(s, dt) {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, spawnIds())) {
-      s.note = 'TAP the glowing pipe.';
+      s.note = s.level === 1
+        ? 'Bell rings beside — TAP the climbing pipe, not the bell.'
+        : 'TAP the glowing pipe.';
       if (s.eligible && !s.spawnId) s.spawnId = 'chamber-0';
       startClimb(s, 0);
     }
@@ -350,7 +408,7 @@ export default {
 
     if (s.phase === 'ready') {
       s.phaseT += dt;
-      if (s.phaseT >= READY_SECS * t) {
+      if (s.phaseT >= readySecs(s) * t) {
         s.phase = 'climb';
         s.climb = 0;
       }

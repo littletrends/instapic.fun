@@ -12,11 +12,13 @@
  * Chapters:
  *   1 First Float — shipped + PASS (path-clear). GOAL 4 of 6, forgiving
  *     POP window, no wind hazard. Do not regress level===0.
- *   2 Ribbon Breeze — wind-ribbon teach on the FIRST lit blocker only
- *     (long warn, freeze drift in POP window, soft dump, later clean POP).
- *     GOAL 3 of 5. Aura FAIL retune: wider HOLD→POP fairness.
- *   3–6 unfinished (names kept — do not implement systems yet):
- *     3 Lantern Boughs
+ *   2 Ribbon Breeze — PASS (b0969e7 fairness). Wind-ribbon teach on the
+ *     FIRST lit blocker only (long warn, freeze drift in POP window, soft
+ *     dump, later clean POP). GOAL 3 of 5. Aura FAIL retune: wider HOLD→POP.
+ *   3 Lantern Boughs — lantern height-band teach on the FIRST lit blocker
+ *     (retune2: wider band, slower orbit, mid-ish later balloons, longer ride;
+ *     soft dump; later clean POP). GOAL 3 of 5. No wind ribbon (taught alone).
+ *   4–6 unfinished (names kept — do not implement systems yet):
  *     4 Crosswind Crown
  *     5 Runaway Bouquet
  *     6 The Midnight Canopy
@@ -76,13 +78,16 @@ const HOLD_ACCEL = 1.75; // faster reach to high path
 const RELEASE_ACCEL = -1.2;
 const VEL_DAMP = 0.86;
 
-// Ch1 locked: POP 4 of 6, ~65s. Ch2: POP 3 of 5, ~52s (helter Ch2 haste bar).
+// Ch1 locked: POP 4 of 6, ~65s. Ch2/Ch3: POP 3 of 5, ~52–56s (helter haste bar).
 const BLOCKER_COUNT_CH1 = 6;
 const BLOCKER_COUNT_CH2 = 5;
+const BLOCKER_COUNT_CH3 = 5;
 const GOAL_CH1 = 4;
 const GOAL_CH2 = 3;
+const GOAL_CH3 = 3;
 const RIDE_SECS_CH1 = 65;
 const RIDE_SECS_CH2 = 56; // Aura FAIL retune
+const RIDE_SECS_CH3 = 72; // fairness retune2: teach + 2 clean with margin
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
 const POP_NEAR_ANG = 1.25; // Ch1 very wide orbit window
@@ -93,6 +98,10 @@ const WIND_WARN_SECS = 8.5;
 const WIND_AMP = 0.06; // gentler — HOLD→POP can land
 const WIND_RATE = 0.65;
 
+/** Long lead warning before the first lantern-band teach blocker (Lantern Boughs). */
+const LANTERN_WARN_SECS = 9.0; // longer lantern teach warn
+const LANTERN_BAND_HALF = 0.36; // retune2: near-full mid band for teach POP
+
 const SPAWN_IDS = ['low-path', 'high-path'];
 
 const LATEX = ['#e8a0b8', '#7eb8b0', '#f0d09a', '#c9a0d8', '#8ec8e8', '#f4b890'];
@@ -101,22 +110,33 @@ function isCh2(level) {
   return (level | 0) === 1;
 }
 
+function isCh3(level) {
+  return (level | 0) === 2;
+}
+
 function chapterGoal(level) {
-  return isCh2(level) ? GOAL_CH2 : GOAL_CH1;
+  if (isCh3(level)) return GOAL_CH3;
+  if (isCh2(level)) return GOAL_CH2;
+  return GOAL_CH1;
 }
 
 function chapterBlockerCount(level) {
-  return isCh2(level) ? BLOCKER_COUNT_CH2 : BLOCKER_COUNT_CH1;
+  if (isCh3(level)) return BLOCKER_COUNT_CH3;
+  if (isCh2(level)) return BLOCKER_COUNT_CH2;
+  return BLOCKER_COUNT_CH1;
 }
 
 function chapterRideSecs(level) {
-  return isCh2(level) ? RIDE_SECS_CH2 : RIDE_SECS_CH1;
+  if (isCh3(level)) return RIDE_SECS_CH3;
+  if (isCh2(level)) return RIDE_SECS_CH2;
+  return RIDE_SECS_CH1;
 }
 
 function orbitSpeed(level, reduced) {
-  // Ch1 very slow weave. Ch2 slightly slower still (helter Ch2 haste ~0.92).
+  // Ch1 very slow weave. Ch2/Ch3 slightly slower still (helter haste ~0.92).
   let base;
-  if (isCh2(level)) base = 0.085; // wider time-in-window
+  if (isCh3(level)) base = 0.065; // retune2: more time-in-window for 3/3
+  else if (isCh2(level)) base = 0.085; // wider time-in-window
   else base = 0.11 + Math.min(0.02, level * 0.006);
   return reduced ? base * 0.62 : base;
 }
@@ -177,20 +197,26 @@ function buildBlockers(level) {
   const start = -0.25;
   return Array.from({length: count}, (_, i) => {
     // First target is mid-height (easy first POP), then alternate.
+    const mid = (LOW_PATH + HIGH_PATH) * 0.5;
+    // Ch3 later balloons stay near mid — small climb/drop, not full HIGH/LOW swing.
     const high = i === 0 ? false : (i % 2 === 1);
-    const h = i === 0 ? (LOW_PATH + HIGH_PATH) * 0.5 : (high ? HIGH_PATH : LOW_PATH);
+    let h;
+    if (i === 0) h = mid;
+    else if (isCh3(level)) h = mid + (high ? 0.05 : -0.05);
+    else h = high ? HIGH_PATH : LOW_PATH;
     const ang = start + ((i + 1) / (count + 1)) * span;
     const decoys = [
       {ox: -38, oy: 10, r: 18, col: LATEX[(i * 2) % LATEX.length]},
       {ox: 36, oy: 14, r: 16, col: LATEX[(i * 2 + 1) % LATEX.length]},
       {ox: 4, oy: -28, r: 14, col: LATEX[(i + 3) % LATEX.length]},
     ];
+    const fairHalf = (isCh2(level) || isCh3(level));
     const b = {
       id: 'block-' + (i + 1),
       angle: ang,
       height: h,
       path: high ? 'high-path' : 'low-path',
-      half: (isCh2(level) ? POP_HALF + 0.10 : POP_HALF) + Math.max(0, 0.02 - level * 0.004),
+      half: (isCh3(level) ? POP_HALF + 0.16 : (fairHalf ? POP_HALF + 0.10 : POP_HALF)) + Math.max(0, 0.02 - level * 0.004),
       decoys,
       cleared: false,
       missed: false,
@@ -207,16 +233,28 @@ function buildBlockers(level) {
       b.baseHeight = h;
       b.windDumped = false;
     }
+    // Ch3: ONE teach hazard alone — lantern height band on the FIRST lit blocker.
+    // No wind ribbon (helter teaches tunnel alone without re-teaching cushion).
+    if (isCh3(level) && i === 0) {
+      b.teach = true;
+      b.lantern = true;
+      b.bandHalf = LANTERN_BAND_HALF;
+      b.lanternDumped = false;
+      // Mid band = start height — first POP teaches band without a long climb.
+      const mid = (LOW_PATH + HIGH_PATH) * 0.5;
+      b.height = mid;
+      b.path = 'low-path';
+    }
     return b;
   });
 }
 
 function nextLit(s) {
   // Soft-brush "missed" still allows POP until well past — Ch1 must not eat the target.
-  // Wind-dumped teach blocker is skipped so later clean targets stay reachable.
+  // Soft-dumped teach blockers are skipped so later clean targets stay reachable.
   return (s.blockers || []).find((b) => {
     if (b.cleared) return false;
-    if (b.windDumped) return false;
+    if (b.windDumped || b.lanternDumped) return false;
     const ad = angDist(s.angle, b.angle);
     if (b.missed && ad > POP_NEAR_ANG + 0.35) return false;
     return true;
@@ -296,7 +334,7 @@ function softContactCluster(s) {
   // Soft brush against an uncleared cluster you are weaving past —
   // disturb lift only; never confiscate finds or abort paid flight.
   for (const b of s.blockers) {
-    if (b.cleared || b.softBump || b.windDumped) continue;
+    if (b.cleared || b.softBump || b.windDumped || b.lanternDumped) continue;
     const prev = s.prevAngle;
     const crossed = prev < b.angle && s.angle >= b.angle;
     if (!crossed) continue;
@@ -373,6 +411,47 @@ function softWindDump(s) {
   }
 }
 
+/** Ch3: long warn + coaching for the lantern height-band teach (first lit only). */
+function updateLanternBand(s, dt) {
+  if (!isCh3(s.level)) return;
+  const speed = orbitSpeed(s.level, s.reduced);
+  for (const b of s.blockers || []) {
+    if (!b.teach || !b.lantern || b.cleared || b.lanternDumped) continue;
+
+    const lead = forwardAng(s.angle, b.angle) / Math.max(0.04, speed);
+    if (lead <= LANTERN_WARN_SECS && lead > 0.05) {
+      if (!s.lanternWarned) {
+        s.lanternWarned = true;
+        logAction(s, 'lantern-warn', {id: b.id, lead: LANTERN_WARN_SECS});
+      }
+      if (!earlyClarity(s) && !s.hasPoppedOnce) {
+        s.note = 'Lantern band — match height, then POP.';
+      }
+    }
+  }
+}
+
+/** Soft dump when lantern teach target passes without POP — ride continues. */
+function softLanternDump(s) {
+  if (!isCh3(s.level)) return;
+  for (const b of s.blockers || []) {
+    if (!b.teach || !b.lantern || b.cleared || b.lanternDumped) continue;
+    const past = forwardAng(b.angle, s.angle);
+    if (past < POP_NEAR_ANG + 0.45) continue; // keep teach POP-able longer
+    if (s.angle < b.angle && past > Math.PI) continue;
+    b.lanternDumped = true;
+    b.missed = true;
+    b.missFlash = FLASH_SEC;
+    s.vel *= 0.62;
+    const pos = basketPos(b.angle, b.height);
+    pushBurst(s, pos.x, pos.y, true);
+    logAction(s, 'lantern-dump', {id: b.id});
+    // Soft fail — never abort paid / never confiscate. Later clean targets still count.
+    s.note = 'Passed the lantern — soft dump; ride continues. Cleared '
+      + (s.cleared || 0) + ' / ' + s.goal + '.';
+  }
+}
+
 function earlyClarity(s) {
   return !s.hasPoppedOnce && (s.t || 0) <= 5;
 }
@@ -403,21 +482,29 @@ function attemptPop(s) {
 
   const ad = angDist(s.angle, lit.angle);
   let dh = Math.abs(s.height - lit.height);
-  // Ch1: after 3 clears, open the door for the 4th POP. Ch2: clutch after 2 for the 3rd.
-  const clutchNeed = isCh2(s.level) ? 1 : 3; // Ch2 clutch earlier
+  // Ch1: after 3 clears, open the door for the 4th POP. Ch2/Ch3: clutch earlier for 3/3.
+  const fair = isCh2(s.level) || isCh3(s.level);
+  const ch3 = isCh3(s.level);
+  const clutchNeed = fair ? 1 : 3;
   const clutch = (s.cleared || 0) >= clutchNeed;
-  const ch2 = isCh2(s.level);
-  const nearLim = POP_NEAR_ANG + (clutch ? 0.45 : (ch2 ? 0.25 : 0));
-  const halfLim = lit.half + (clutch ? 0.14 : (ch2 ? 0.06 : 0));
+  const nearLim = POP_NEAR_ANG + (clutch ? 0.50 : (ch3 ? 0.38 : (fair ? 0.25 : 0)));
+  const halfLim = lit.half + (clutch ? 0.16 : (ch3 ? 0.10 : (fair ? 0.06 : 0)));
   const near = ad <= nearLim;
-  // Forgiveness snap — Ch2 teach gets a bigger magnet once near.
-  const windSnap = (lit.teach && !lit.windDumped) ? 0.12 : (ch2 ? 0.04 : 0);
-  const snapBand = halfLim + 0.18 + windSnap;
+  const isLanternTeach = !!(lit.teach && lit.lantern && !lit.lanternDumped);
+  const isWindTeach = !!(lit.teach && lit.windAmp != null && !lit.windDumped);
+  // Forgiveness snap — teach hazards get a bigger magnet once near.
+  const teachSnap = isLanternTeach ? 0.22 : (isWindTeach ? 0.12 : (ch3 ? 0.10 : (fair ? 0.04 : 0)));
+  const bandHalf = isLanternTeach ? (lit.bandHalf || LANTERN_BAND_HALF) : halfLim;
+  const snapBand = (isLanternTeach ? bandHalf : halfLim) + 0.28 + teachSnap;
   if (near && dh <= snapBand) {
-    s.height = s.height + (lit.height - s.height) * (clutch || lit.teach ? 0.92 : (ch2 ? 0.8 : 0.72));
+    const pull = isLanternTeach ? 0.98 : (clutch || lit.teach || ch3 ? 0.94 : (fair ? 0.8 : 0.72));
+    s.height = s.height + (lit.height - s.height) * pull;
     dh = Math.abs(s.height - lit.height);
   }
-  const heightOk = dh <= halfLim + (lit.teach ? 0.08 : 0);
+  // Lantern teach: readable band with Ch3 forgiveness pad.
+  const heightOk = isLanternTeach
+    ? dh <= bandHalf + 0.10
+    : dh <= halfLim + (lit.teach ? 0.08 : (ch3 ? 0.06 : 0));
 
   if (near && heightOk) {
     lit.cleared = true;
@@ -426,28 +513,35 @@ function attemptPop(s) {
     s.hasPoppedOnce = true;
     const art = ORDINARY[(s.cleared - 1) % ORDINARY.length];
     recordFind(s, art, RIDE);
-    logAction(s, 'pop', {id: lit.id, ok: true, path: lit.path, teach: !!lit.teach});
+    logAction(s, 'pop', {id: lit.id, ok: true, path: lit.path, teach: !!lit.teach, lantern: !!lit.lantern});
     const pos = basketPos(lit.angle, lit.height);
     pushBurst(s, pos.x, pos.y, false);
     s.note = s.cleared >= s.goal
       ? 'Path clear! Landing branch ahead.'
-      : (lit.teach
-        ? ('POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.')
-        : ('POP! Cleared ' + s.cleared + ' / ' + s.goal + '.'));
+      : (isLanternTeach
+        ? ('POP in the lantern band! Cleared ' + s.cleared + ' / ' + s.goal + '.')
+        : (isWindTeach
+          ? ('POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.')
+          : ('POP! Cleared ' + s.cleared + ' / ' + s.goal + '.')));
     return;
   }
 
   // Soft miss / bounce — wrong timing, wrong height, or decoy brush.
+  // Soft miss never aborts paid / never confiscates; path stays blocked.
   s.vel *= 0.55;
   if (!heightOk && near) s.vel += (s.height > lit.height ? -0.18 : 0.18);
   lit.missFlash = FLASH_SEC * 0.7;
   const pos = basketPos(lit.angle, lit.height);
   pushBurst(s, pos.x, pos.y, true);
-  logAction(s, 'pop', {id: lit.id, ok: false, near, heightOk});
+  logAction(s, 'pop', {id: lit.id, ok: false, near, heightOk, lantern: !!lit.lantern});
   if (!near) {
     s.note = 'Too far — wait for the glow. Cleared ' + s.cleared + ' / ' + s.goal + '.';
   } else if (!heightOk) {
-    if (lit.teach) {
+    if (isLanternTeach) {
+      s.note = s.height < lit.height
+        ? 'Outside lantern band — HOLD to rise into it, then POP.'
+        : 'Outside lantern band — release to drift into it, then POP.';
+    } else if (isWindTeach) {
       s.note = 'Wind drifted it — HOLD or release to match, then POP.';
     } else {
       s.note = lit.path === 'high-path'
@@ -496,6 +590,38 @@ function wrapLine(d, text, x, y, size, color, maxW) {
   }
   if (line) d.text(line, x, ly, size, color);
   return ly;
+}
+
+function drawLanternBand(d, b, angleNow, t) {
+  if (!b.teach || !b.lantern || b.cleared || b.lanternDumped) return;
+  let da = b.angle - angleNow;
+  while (da < -Math.PI) da += Math.PI * 2;
+  while (da > Math.PI) da -= Math.PI * 2;
+  if (da < -0.5 || da > 1.7) return;
+
+  const pos = basketPos(b.angle, b.height);
+  const half = b.bandHalf || LANTERN_BAND_HALF;
+  // Band edges in screen space (height * 210 matches heightToY scale).
+  const yHi = pos.y - half * 210;
+  const yLo = pos.y + half * 210;
+  const pulse = 0.55 + 0.45 * Math.sin((t || 0) * 3.2);
+
+  // Readable horizontal lantern band brackets (code overlays only).
+  const x0 = pos.x - 46;
+  const x1 = pos.x + 46;
+  d.line({x: x0, y: yHi}, {x: x1, y: yHi}, '#f0c070aa', 2.2);
+  d.line({x: x0, y: yLo}, {x: x1, y: yLo}, '#f0c070aa', 2.2);
+  d.line({x: x0, y: yHi}, {x: x0, y: yLo}, '#f0c07066', 1.4);
+  d.line({x: x1, y: yHi}, {x: x1, y: yLo}, '#f0c07066', 1.4);
+  // Soft lantern corner ticks
+  for (const [tx, ty] of [[x0, yHi], [x1, yHi], [x0, yLo], [x1, yLo]]) {
+    d.circle(tx, ty, 3.2 + pulse * 1.2, '#f0c070cc', '#ffe6a4', 1);
+  }
+  // Warm lantern glow on teach target — 6-digit #rrggbb only.
+  d.glow(pos.x, pos.y - 6, 34 + pulse * 8, '#f0c070');
+  if (da < 0.95 && da > -0.2) {
+    d.text('band', pos.x, yHi - 14, 14, '#f0c070');
+  }
 }
 
 function drawWindRibbon(d, b, angleNow, t) {
@@ -548,6 +674,12 @@ function drawCluster(d, b, angleNow, isLit) {
     return;
   }
 
+  if (b.lanternDumped) {
+    if (b.missFlash > 0) d.glow(pos.x, pos.y, 36, '#f0c070');
+    d.circle(pos.x, pos.y, b.r * 0.7, '#f0c07055', '#f0c07088', 1.2);
+    return;
+  }
+
   // Decoy latex (not the gate). Soft paper circles — no trunk/ellipse overpaint.
   for (const dec of b.decoys) {
     const dx = pos.x + dec.ox;
@@ -568,7 +700,7 @@ function drawCluster(d, b, angleNow, isLit) {
     d.circle(pos.x, pos.y, b.r, '#f0d09acc', '#d2a65b', 2);
     d.circle(pos.x - 6, pos.y - 8, 5, '#ffffffaa', null, 0);
     if (da < 0.9 && da > -0.25) {
-      d.text(b.teach ? 'POP · wind' : 'POP', pos.x, pos.y - b.r - 18, 18, '#ffe6a4');
+      d.text(b.lantern ? 'POP · band' : (b.teach ? 'POP · wind' : 'POP'), pos.x, pos.y - b.r - 18, 18, '#ffe6a4');
     }
   } else {
     d.circle(pos.x, pos.y, b.r * 0.85, '#e8a0b888', '#d2a65b88', 1.5);
@@ -735,15 +867,18 @@ function drawObjective(d, s) {
   }
 
   const g = s.goal || chapterGoal(s.level);
-  const line = (isCh2(s.level) ? 'Ribbon Breeze · ' : '') + 'Cleared ' + (s.cleared || 0) + ' / ' + g;
+  const prefix = isCh3(s.level)
+    ? 'Lantern Boughs · '
+    : (isCh2(s.level) ? 'Ribbon Breeze · ' : '');
+  const line = prefix + 'Cleared ' + (s.cleared || 0) + ' / ' + g;
   d.text(line, 450, s.practice ? 168 : 148, 22, '#ffe6a4');
   if (s.note) wrapLine(d, s.note, 450, s.practice ? 198 : 178, 16, '#f0d18f', 720);
 }
 
 export default {
   title: 'Balloon Garden',
-  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. From Ribbon Breeze, a wind ribbon drifts the first lit balloon — POP early or match height with HOLD.',
-  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Chapter 2 (Ribbon Breeze): one wind ribbon on the first glowing balloon — long warn, soft dump if it drifts past; later balloons are clean POP.',
+  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. Ribbon Breeze drifts the first lit balloon on a wind ribbon; Lantern Boughs asks you to match a visible height band, then POP.',
+  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Ch2 Ribbon Breeze: one wind ribbon on the first glow — long warn, soft dump if it drifts past. Ch3 Lantern Boughs: one lantern height band on the first glow — match height, then POP; soft miss / soft dump; later balloons are clean POP.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -776,6 +911,7 @@ export default {
       popFlash: 0,
       popCooldown: 0,
       windWarned: false,
+      lanternWarned: false,
       _pointerMode: null,
     });
   },
@@ -813,6 +949,8 @@ export default {
 
     updateWindRibbon(s, dt);
     softWindDump(s);
+    updateLanternBand(s, dt);
+    softLanternDump(s);
     softContactCluster(s);
     // Live "NOW" coaching when in the POP window.
     if (!s.result && !earlyClarity(s)) {
@@ -820,13 +958,21 @@ export default {
       if (lit) {
         const ad = angDist(s.angle, lit.angle);
         const dh = Math.abs(s.height - lit.height);
-        const halfPad = lit.teach ? 0.1 : 0.06;
-        if (ad <= POP_NEAR_ANG && dh <= lit.half + halfPad) {
-          s.note = lit.teach
-            ? 'NOW — POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.'
-            : 'NOW — POP! Cleared ' + s.cleared + ' / ' + s.goal + '.';
-        } else if (ad <= POP_NEAR_ANG && dh > lit.half) {
-          if (lit.teach) {
+        const isLanternTeach = !!(lit.teach && lit.lantern);
+        const isWindTeach = !!(lit.teach && lit.windAmp != null);
+        const heightLim = isLanternTeach
+          ? (lit.bandHalf || LANTERN_BAND_HALF)
+          : lit.half + (lit.teach ? 0.1 : 0.06);
+        if (ad <= POP_NEAR_ANG && dh <= heightLim) {
+          s.note = isLanternTeach
+            ? 'NOW — POP in the lantern band! Cleared ' + s.cleared + ' / ' + s.goal + '.'
+            : (isWindTeach
+              ? 'NOW — POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.'
+              : 'NOW — POP! Cleared ' + s.cleared + ' / ' + s.goal + '.');
+        } else if (ad <= POP_NEAR_ANG && dh > heightLim) {
+          if (isLanternTeach) {
+            s.note = 'Lantern near — match height into the band, then POP.';
+          } else if (isWindTeach) {
             s.note = 'Wind near — match height, then POP.';
           } else {
             s.note = lit.path === 'high-path'
@@ -899,7 +1045,8 @@ export default {
 
     const lit = nextLit(s);
     (s.blockers || []).forEach((b) => {
-      if (b.teach) drawWindRibbon(d, b, s.angle, s.t || 0);
+      if (b.teach && b.lantern) drawLanternBand(d, b, s.angle, s.t || 0);
+      else if (b.teach) drawWindRibbon(d, b, s.angle, s.t || 0);
       drawCluster(d, b, s.angle, lit && b.id === lit.id);
     });
 
