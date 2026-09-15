@@ -41,15 +41,15 @@ for(let level=0;level<6;level++){
  s=fresh(level);launch(s);s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert(s.saucer.hold>0);
  tick(s,35);assert.equal(s.saucer.hold,0);assert(Math.hypot(s.ball.x-s.saucer.x,s.ball.y-s.saucer.y)>30);
  s.saucer.armed=false;s.saucer.cool=0;s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert.equal(s.saucer.hold,0,'pocket cannot farm recaptures');
- // Force frequent impacts over the entire allowance: returns remain bounded.
+ // Force frequent impacts: collectible duplicates stack; live currency stays bounded.
  for(let frame=0;frame<6100&&s.mode==='live';frame++){
   const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);
  }
  assert(!s.cabinetOn);assert.equal(s.houseLeft,0);assert.equal(s.credit,2);
- assert(s.ballPennies<=2&&s.ballTokens<=1);assert(s.wonPennies<=2);
+ assert(s.ballPennies<=2&&s.ballTokens>6);assert(s.wonPennies<=2);assert(Object.entries(s.tokens).some(([id,n])=>['moon-penny','rose-penny','star-token','crown-token'].includes(id)&&n>6),'collectibles exceed old lifetime caps');
  const earned=s.score;tick(s,60);assert.equal(s.score,earned,'dark cabinet cannot score');
  launch(s);assert.equal(s.houseLeft,100);assert(s.cabinetOn);assert.equal(s.credit,1);
- console.log('Chapter '+(level+1)+': timed bonus, pocket release, 100s cutoff and bounded returns pass.');
+ console.log('Chapter '+(level+1)+': timed bonus, pocket release, 100s cutoff and stacking collectibles and bounded currency pass.');
 }
 assert.equal(layouts.size,6);assert.equal(windows.size,6);assert.equal(e.houseSeconds,100);
 // Saved timers, payout limits and locks survive a return; same-ball relaunch

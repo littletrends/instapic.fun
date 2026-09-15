@@ -5,7 +5,7 @@ import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/st
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=iris-pack-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=pip-items-1'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).

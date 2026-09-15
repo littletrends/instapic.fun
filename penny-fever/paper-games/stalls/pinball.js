@@ -145,7 +145,7 @@ function fly(s, id, x, y, prize) {
 }
 function pay(s, id, x, y) {
   const token = TOKENS.find(t => t.id === id);
-  if (token?.cap && (s.tokens[id] || 0) >= token.cap) id = 'everyday-penny';
+  // Collectible duplicates accumulate; they never convert into live currency.
   if (ONCE.includes(id) && (s.paid.includes(id) || s.seen.includes(id))) id = pickToken(s);
   else if (ONCE.includes(id)) { s.seen.push(id); s.paid.push(id); }
   const unique = ONCE.includes(id);
@@ -169,11 +169,12 @@ function pay(s, id, x, y) {
 function loosenMark(level) {
   return [6, 8, 10, 12, 14, 16][level] || 10;
 }
+function bumperItem(s,b){return ['moon-penny','rose-penny','star-token','crown-token'][(s.bumpers.indexOf(b)+s.level)%4];}
 function ordinaryReturn(s, id, x, y) {
-  // A physical bounce still scores, but cannot repeatedly empty the purse.
-  if (s.t < s.rewardAt || (id==='everyday-penny' ? s.ballPennies>=2 : s.ballTokens>=1)) return;
-  if(id==='everyday-penny')s.ballPennies++;else s.ballTokens++;
-  s.rewardAt=s.t+8;
+  if(id==='everyday-penny'){
+    if(s.t<s.rewardAt || s.ballPennies>=2)return;
+    s.ballPennies++;s.rewardAt=s.t+8;
+  }else s.ballTokens++;
   pay(s,id,x,y);
 }
 function dropFromHit(s, kind, x, y) {
@@ -187,9 +188,10 @@ function dropFromHit(s, kind, x, y) {
   }
   const jackpot=s.lights.every(Boolean);
   s.score+=({bumper:120,sling:40,target:250,roll:80,saucer:jackpot?1400:800})[kind]||0;
-  const rng=random(s),chance=({bumper:.025,sling:0,target:.06,roll:.04,saucer:.16})[kind]||0;
-  if(rng<chance)ordinaryReturn(s,'everyday-penny',x,y);
-  else if(rng<chance+({bumper:.006,target:.012,roll:.008,saucer:.04})[kind])ordinaryReturn(s,pickToken(s),x,y);
+  if(kind==='bumper'){
+    const b=s.bumpers.find(b=>b.x===x&&b.y===y);
+    if(b)ordinaryReturn(s,bumperItem(s,b),x,y);
+  }else if(kind==='saucer')ordinaryReturn(s,'everyday-penny',x,y);
   if(kind==='saucer'&&jackpot)s.lights=[false,false,false];
   writeBook(s);
 }
@@ -367,7 +369,7 @@ export default {
     ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter bonus. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Small returns are limited to two pennies and one token per ball, spaced at least eight seconds apart. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
@@ -592,11 +594,7 @@ export default {
     d.text(String(s.score).padStart(6, '0')+'  ·  '+(s.cabinetOn?Math.min(100,Math.floor(100-s.houseLeft)+1)+'/100':'LIGHTS OUT'),450,128,23,'#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
     const c=d.c;c.save();c.translate(-204,0);c.scale(1.35,1);
-    const felt=c.createLinearGradient(0,190,0,1148);felt.addColorStop(0,set.felt);felt.addColorStop(1,'#102b2ff2');
-    d.poly([[210,200],[640,200],[720,188],[758,228],[758,1148],[228,1148]],felt,'#715333',8);
-    // The glass has a calm playing surface over the illustrated cabinet template.
-    d.path([{x:260,y:680},{x:270,y:270},{x:610,y:240},{x:640,y:660}],'#c5e4cc20',24);
-    d.text(['THUNDER GARDEN','MOONLIT BUMPERS','LANTERN LANES','BRASS ORCHARD','STORM GLASS','MIDNIGHT SPARK'][s.level],440,590,21,'#d3c293');
+    d.text(['THUNDER GARDEN','MOONLIT BUMPERS','LANTERN LANES','BRASS ORCHARD','STORM GLASS','MIDNIGHT SPARK'][s.level],440,925,18,'#d3c293');
     for (const r of s.rails) {
       d.line(r.a, r.b, '#4a3a28', 14);
       d.line(r.a, r.b, '#e6c57a', 3);
@@ -606,10 +604,8 @@ export default {
     for (const post of s.posts) d.circle(post.x, post.y, post.r, '#8a6a48', '#f0d6a0', 2);
     for (const b of s.bumpers) {
       if (b.flash > 0) d.glow(b.x, b.y, 68, '#f0d49a');
-      d.circle(b.x, b.y, b.r + 3, set.bumper, '#f0d6a0', 3);
-      d.circle(b.x, b.y, Math.max(8, b.r - 10), b.flash > 0 ? '#f0d080' : '#3a2438', '#ead6a4', 2);
-      d.item(spriteKey('star-token'), b.x, b.y, {
-        w: b.flash > 0 ? 40 : 30, alpha: 0.95,
+      d.item(spriteKey(bumperItem(s,b)), b.x, b.y, {
+        w: (b.r*2+8)*(b.flash>0?1.12:1), alpha: 1,
         fallback: () => d.star(b.x, b.y, 12, '#f4e2a8'),
       });
     }
@@ -619,7 +615,7 @@ export default {
     for (const r of s.rolls) {
       d.ellipse(r.x, r.y, 16, 8, r.on ? '#f0d08055' : '#00000033', r.on ? '#f0d080' : '#c4a46a', 2);
     }
-    d.circle(s.saucer.x, s.saucer.y, 20, '#3a2a38cc', s.lights.every(Boolean) ? '#f0d080' : '#b89668', 3);
+    d.item(spriteKey('everyday-penny'),s.saucer.x,s.saucer.y,{w:46,fallback:()=>d.circle(s.saucer.x,s.saucer.y,20,'#b89668','#f0d080',3)});
     d.path(s.trail, '#f0d6a844', 4);
     for (const f of s.flippers) {
       const c = Math.cos(f.a), sn = Math.sin(f.a);

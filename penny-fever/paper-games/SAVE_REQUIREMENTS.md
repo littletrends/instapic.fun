@@ -271,3 +271,9 @@ Copper adds 5-penny packs on the cabinet and in the alley menu. Packing spends f
 Validation: `node paper-games/check-cabinet-state.mjs` and `node paper-games/check-first-prizes.mjs`. Publishing deferred until requested.
 
 Treasures inspect for Everyday penny and Five-penny stack now packs and unpacks the same live `pennyPacks` wallet. The 5-pack is always listed (quantity is parked packs, not a Copper prize). Convert works in the book, on Copper’s cabinet, and in the alley menu.
+
+## Pip pictured collectible bumpers — 15 September 2026
+
+At the user's request, the added felt/backing and painted bumper discs are removed so the existing cabinet template is the playing background. Bumpers display Moon/Rose pennies and Star/Crown tokens; each qualifying bumper hit awards its pictured item. Duplicate collectibles accumulate without the previous per-ball or chapter token caps, and never convert into live pennies. The holding pocket displays an Everyday penny and is the ordinary currency source, retaining the two-penny per-ball cap and eight-second spacing. Timer, pocket rearm/ejection, bonus winning seconds, saves and paid balls are unchanged. The cabinet score remains a cumulative score without unlock/redemption mechanics.
+
+Evidence: Pip state checks pass duplicate collectible counts beyond old caps, currency bounds, all 600 bonus windows, timer and saved-ball regressions; practice and first-prize suites pass. Chromium phone tests pass touch, Treasures return/exact reload, bonus impact, lights-out and prepaid relaunch; phone art inspected. Deployment pending.
