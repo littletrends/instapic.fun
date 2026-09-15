@@ -1,7 +1,7 @@
-import {firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
+import {firstPrizeEligible, prizeAttempts} from '../first-prize.js?v=first-prize-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=entry-1';
+import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=entry-1';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
@@ -35,6 +35,7 @@ const SPRITES = ['lightning-pin', 'everyday-penny', 'star-token', 'moon-penny', 
 
 function seg(a, b) { return {a: {x: a[0], y: a[1]}, b: {x: b[0], y: b[1]}}; }
 function readStore() {
+  if(!alleyPlay)return {v:2,tables:{}};
   if (typeof localStorage === 'undefined') return {v: 2, tables: {}};
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
@@ -55,19 +56,42 @@ function readTable(level) {
     wonPennies: row.wonPennies || 0, specials: row.specials || 0,
     tokens: row.tokens && typeof row.tokens === 'object' ? {...row.tokens} : {},
     hits: row.hits || 0, mark: row.mark || 0, credit: row.credit || 0,
+    snapshot: row.snapshot?.v===1 ? row.snapshot : null,
   };
 }
 function writeBook(s) {
-  if (typeof localStorage === 'undefined' || !s) return;
+  if (!alleyPlay || typeof localStorage === 'undefined' || !s) return;
   try {
     const store = readStore();
+    store.currentChapter=s.level;
     store.tables[String(s.level || 0)] = {
       seen: s.seen, paid: s.paid, score: s.score, balls: s.balls,
       wonPennies: s.wonPennies, specials: s.specials, tokens: s.tokens,
       hits: s.hits || 0, mark: s.mark || 0, credit: s.credit || 0,
+      snapshot: snapshotOf(s),
     };
     localStorage.setItem(BOOK, JSON.stringify(store));
   } catch { /* quota */ }
+}
+
+const SNAPSHOT_FIELDS=['t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver'];
+function snapshotOf(s){
+ const snap={v:1};
+ for(const key of SNAPSHOT_FIELDS)if(s[key]!==undefined)snap[key]=s[key];
+ // A held, unlaunched spring is input, not a paid ball in motion.
+ if(s.mode==='lane')snap.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
+ return JSON.parse(JSON.stringify(snap));
+}
+function random(s){s.rngState=(Math.imul(s.rngState>>>0,1664525)+1013904223)>>>0;return s.rngState/4294967296;}
+function releaseInput(s){
+ s.left=false;s.right=false;s.pointerPlunge=false;s.dragPlunge=false;s.charging=false;s.charge=0;s.touches={};
+ if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
+}
+function prizeStatus(s){
+ if(!pickUnique(s))return 'Treasure collected';
+ if(prizeAttempts('pinball',s.level)<=1)return 'Prize ready · hit a bumper';
+ const left=Math.max(0,s.mark-s.hits);
+ return left?left+' hits to release prize':'Prize ready';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
   const dx = b.x - a.x, dy = b.y - a.y, t = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1), 0, 1);
@@ -105,7 +129,7 @@ function pickToken(s) {
   });
   let total = 0;
   for (const t of options) total += t.weight;
-  let roll = Math.random() * total;
+  let roll = random(s) * total;
   for (const t of options) {
     roll -= t.weight;
     if (roll <= 0) return t.id;
@@ -118,7 +142,7 @@ function chapterPrize(s) {
 function pickUnique(s) {
   const prize = chapterPrize(s);
   if (!prize) return null;
-  if (ONCE.includes(prize) && (s.seen.includes(prize) || s.paid.includes(prize))) return null;
+  if (ONCE.includes(prize) && (s.seen.includes(prize) || s.paid.includes(prize) || owned(prize))) return null;
   const token = TOKENS.find(t => t.id === prize);
   if (token?.cap && (s.tokens[prize] || 0) >= token.cap) return null;
   return prize;
@@ -143,17 +167,17 @@ function pay(s, id, x, y) {
     s.specials++;
     s.tokens[id] = (s.tokens[id] || 0) + 1;
     if (alleyPlay) keep(id, 'pinball');
-    if (id === chapterPrize(s)) takePrize(s, id, {x, y});
+    if (id === chapterPrize(s)) takePrize(s, id, {x:x*1.35-204, y});
     s.note = itemName(id) + (unique ? ' — a rare from the glass!' : ' into the treasure book.');
   }
-  fly(s, id, x, y, special);
+  if(id!==chapterPrize(s))fly(s, id, x, y, special);
   writeBook(s);
 }
 function loosenMark(level) {
   return [6, 8, 10, 12, 14, 16][level] || 10;
 }
 function dropFromHit(s, kind, x, y) {
-  const rng = Math.random();
+  const rng = random(s);
   const d = drought(s);
   const jackpot = s.lights.every(Boolean);
   if (kind === 'bumper' || kind === 'target' || kind === 'saucer') {
@@ -250,8 +274,9 @@ function seatLane(s) {
   s.trail = [];
 }
 function canAfford(s) {
+  if(s.activeBall)return true;
   if (!alleyPlay) return s.ammo > 0;
-  return (pocket() || 0) >= 1;
+  return !!s.activeBall || (s.credit||0)>0 || (pocket() || 0) >= 1;
 }
 function beginCharge(s) {
   if (s.mode !== 'lane' || s.charging) return;
@@ -274,7 +299,7 @@ function releasePlunger(s) {
     s.note = 'A timid pull. Draw the spring further back.';
     return;
   }
-  if (alleyPlay) {
+  if (!s.activeBall && alleyPlay) {
     if ((s.credit || 0) < 1) {
       if (!takeAttempt('pinball', s.level)) {
         s.note = retryNote();
@@ -282,11 +307,13 @@ function releasePlunger(s) {
         return;
       }
       s.credit = 3;
+      if(firstPrizeEligible('pinball',s.level))s.mark=Math.min(s.mark,s.hits+1);
     }
     s.credit -= 1;
-  } else s.ammo--;
+  } else if(!s.activeBall)s.ammo--;
   s.mode = 'live';
-  s.balls++;
+  if(!s.activeBall)s.balls++;
+  s.activeBall=true;
   s.ball.vx = -18 - power * 28;
   s.ball.vy = -460 - power * 760;
   s.note = power > 0.72 ? 'A strong plunge.' : 'The silver ball is in play.';
@@ -294,6 +321,7 @@ function releasePlunger(s) {
 }
 function drain(s) {
   s.mode = 'dead';
+  s.activeBall=false;
   s.deadAt = s.t;
   s.charging = false;
   s.charge = 0;
@@ -302,6 +330,7 @@ function drain(s) {
   s.note = alleyPlay
     ? ((s.credit || 0) > 0 ? 'Drained. ' + s.credit + ' ball' + (s.credit === 1 ? '' : 's') + ' left on this penny.' : 'Drained. Another penny for three more balls.')
     : (s.ammo > 0 ? 'Drained. Pull the spring for another practice ball.' : 'Practice balls spent.');
+  writeBook(s);
 }
 function inShooter(p) { return p.x > 690; }
 function shouldDrain(s, p) {
@@ -316,12 +345,22 @@ function shouldDrain(s, p) {
 export default {
   title: 'Pinball Alley',
   live: alleyPlay,
+  chapterNavigation:true,
+  fullInstructions:true,
+  houseSeconds:false,
+  selectedChapter(){return Math.max(0,Math.min(5,Number(readStore().currentChapter)||0));},
+  releaseInput,
+  cancelAction(s,id){if(id==='plunge'){s.pointerPlunge=false;s.dragPlunge=false;s.charging=false;s.charge=0;if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};}else if(id==='left'||id==='right')s[id]=false;},
+  hud(s){return {cash:alleyPlay?(pocket()||0)+' pennies':'Practice',keep:(s.mode==='live'?'Ball in play · ':'')+(alleyPlay?Math.max(0,s.credit||0)+' ready':s.ammo+' ready')};},
+  actionStates(s,input){return {left:s.left||input.actions.has('left')||input.keys.has('z')||input.keys.has('ArrowLeft'),right:s.right||input.actions.has('right')||input.keys.has('x')||input.keys.has('ArrowRight'),plunge:s.charging};},
+  actionEnabled(s){return {plunge:s.mode==='lane'&&canAfford(s)};},
+  actionLabels(s){return {plunge:s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
   intro: alleyPlay
-    ? 'Six different tables. One penny is three balls. The unique is trapped on the glass — qualifying hits loosen it across visits until it falls.'
+    ? 'Six tables, three balls for one penny. The first paid set makes the chapter prize ready for a bumper, target or saucer hit. Your ball, remaining balls and table stay saved when you leave. There is no house timer.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge and release. Left and Right flippers (Z/X). One penny buys three balls. Hits on the trapped unique loosen it. Cash a ticket for five pennies if the purse is empty.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Hit bumpers and targets for score and small returns, and light all three lamps for the saucer jackpot. The first paid set has its treasure ready to collect on a qualifying hit.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
@@ -329,7 +368,7 @@ export default {
     : 'Pull the spring and tap the flippers.',
   liveButton: 'Step up to the table',
   tableDetail: alleyPlay
-    ? 'One penny, three balls. Qualifying hits loosen this table’s unique. It stays loose when you leave.'
+    ? 'One penny, three balls. The first paid set has the chapter treasure ready. Your ball and unused balls stay saved; no timer cuts them short.'
     : 'A different cabinet. Pull the spring, tap the bats. Practice balls stay in the workshop.',
   levels: ['First ball', 'A hungrier drain', 'Lights in a hurry', 'The tight outlanes', 'Storm on the glass', 'The house never blinks'],
   sprites: SPRITES,
@@ -345,7 +384,7 @@ export default {
     const set = SETS[level] || SETS[0];
     const built = layout(level);
     const s = {
-      level, t: 0, mode: 'lane', charge: 0, charging: false, pointerPlunge: false,
+      level, t: 0, mode: 'lane', activeBall:false, charge: 0, charging: false, pointerPlunge: false, touches:{}, rngState:(level+1)*4099,
       left: false, right: false, combo: 0, lights: [false, false, false],
       balls: book.balls, score: book.score, wonPennies: book.wonPennies, specials: book.specials,
       seen: book.seen, paid: book.paid, tokens: book.tokens, fly: [], trail: [], stuck: 0,
@@ -355,10 +394,14 @@ export default {
       set, ...built,
     };
     seatLane(s);
+    if(book.snapshot){for(const key of SNAPSHOT_FIELDS)if(book.snapshot[key]!==undefined)s[key]=JSON.parse(JSON.stringify(book.snapshot[key]));}
+    releaseInput(s);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
   },
   update(s, dt, input) {
+    if(!Number.isFinite(dt)||dt<=0)return;
+    dt=Math.min(dt,.05);
     s.t += dt;
     const hunger = 1 + s.level * 0.055;
     for (const b of s.bumpers) { b.cool = Math.max(0, b.cool - dt); b.flash = Math.max(0, b.flash - dt); }
@@ -373,7 +416,7 @@ export default {
     if (s.mode === 'lane') {
       if (holdPlunge) beginCharge(s);
       if (s.charging) {
-        if (holdPlunge && !s.pointerPlunge) s.charge = clamp(s.charge + dt * 1.28, 0, 1);
+        if (holdPlunge && !s.dragPlunge) s.charge = clamp(s.charge + dt * 1.28, 0, 1);
         s.ball.x = LANE.x;
         s.ball.y = LANE.y + s.charge * LANE.pull;
       }
@@ -394,6 +437,11 @@ export default {
       });
       if (s.mode !== 'live') continue;
       const p = s.ball;
+      if(s.saucer.hold>0){
+        s.saucer.hold-=h;p.x=s.saucer.x;p.y=s.saucer.y;p.vx=0;p.vy=0;
+        if(s.saucer.hold<=0){p.vx=(random(s)-.5)*240;p.vy=380;}
+        continue;
+      }
       p.vy += G * hunger * h;
       p.vx *= Math.exp(-0.016 * h);
       p.x += p.vx * h; p.y += p.vy * h;
@@ -457,10 +505,6 @@ export default {
         s.combo = 0;
         s.rolls.forEach(r => { r.on = false; });
       }
-      if (s.saucer.hold > 0) {
-        s.saucer.hold -= h;
-        if (s.saucer.hold <= 0) { p.vx = (Math.random() - 0.5) * 240; p.vy = 380; }
-      }
       const speed = Math.hypot(p.vx, p.vy);
       if (speed > MAX) { p.vx *= MAX / speed; p.vy *= MAX / speed; }
       if (shouldDrain(s, p)) drain(s);
@@ -478,34 +522,35 @@ export default {
       if (s.trail.length > 14) s.trail.shift();
       const pos = s.stuckPos || {x: s.ball.x, y: s.ball.y, t: s.t};
       if (Math.hypot(s.ball.x - pos.x, s.ball.y - pos.y) > 18) s.stuckPos = {x: s.ball.x, y: s.ball.y, t: s.t};
-      else if (s.t - pos.t > 1.35 && !inShooter(s.ball)) {
-        if (s.ball.y > 980) drain(s);
-        else {
-          s.ball.vx += (440 - s.ball.x) * 0.9;
-          s.ball.vy = -300;
-          s.stuckPos = {x: s.ball.x, y: s.ball.y, t: s.t};
-        }
+      else if (s.t - pos.t > 1.35 && !inShooter(s.ball) && !(s.ball.y>950&&(wantL||wantR))) {
+        s.ball.vx += (440 - s.ball.x) * 0.9;
+        s.ball.vy = -300;
+        s.stuckPos = {x: s.ball.x, y: s.ball.y, t: s.t};
       }
     }
     for (const f of s.fly) f.t += dt;
     s.fly = s.fly.filter(f => f.t < f.dur);
+    s.saveClock=(s.saveClock||0)+dt;if(s.saveClock>=.5){s.saveClock=0;writeBook(s);}
   },
   pointer(s, type, p) {
-    if (type === 'down') {
-      if (s.mode === 'lane' && p.x > 640) {
-        s.pointerPlunge = true;
-        beginCharge(s);
-        s.charge = clamp((p.y - LANE.y) / LANE.pull, 0.05, 1);
-      } else if (p.x < 450) s.left = true;
-      else s.right = true;
+    const id=String(p.pointerId??'primary');p={...p,x:(p.x+204)/1.35};s.touches ||= {};
+    if(type==='down'){
+      const role=s.mode==='lane'&&p.x>690&&p.x<780&&p.y>850&&p.y<1120?'plunge':p.x<450?'left':'right';
+      s.touches[id]=role;
+      if(role==='plunge'){s.pointerPlunge=true;s.dragPlunge=false;s.plungeY=p.y;beginCharge(s);}
     }
-    if (type === 'move' && s.pointerPlunge && s.mode === 'lane') {
-      s.charge = clamp((p.y - LANE.y) / LANE.pull, 0.05, 1);
+    const role=s.touches[id];
+    if(type==='move'&&role==='plunge'&&s.mode==='lane'&&Math.abs(p.y-s.plungeY)>5){
+      s.dragPlunge=true;s.charge=clamp((p.y-s.plungeY)/100,0.05,1);
     }
-    if (type === 'up' || type === 'cancel') {
-      if (s.pointerPlunge) { s.pointerPlunge = false; releasePlunger(s); }
-      s.left = false; s.right = false;
+    if(type==='up'||type==='cancel'){
+      delete s.touches[id];
+      if(role==='plunge'){
+        s.pointerPlunge=false;s.dragPlunge=false;
+        if(type==='up')releasePlunger(s);else this.cancelAction(s,'plunge');
+      }
     }
+    s.left=Object.values(s.touches).includes('left');s.right=Object.values(s.touches).includes('right');
   },
   action(s, id, down) {
     if (id === 'left') s.left = !!down;
@@ -529,9 +574,15 @@ export default {
     const rightOn = s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
     d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
-    d.text('THUNDER GARDEN', 450, 92, 28, '#fff3d0');
+    d.text('PINBALL ALLEY', 450, 90, 34, '#fff3d0');
     d.text(String(s.score).padStart(6, '0'), 450, 128, 26, '#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
+    const c=d.c;c.save();c.translate(-204,0);c.scale(1.35,1);
+    const felt=c.createLinearGradient(0,190,0,1148);felt.addColorStop(0,set.felt);felt.addColorStop(1,'#102b2ff2');
+    d.poly([[210,200],[640,200],[720,188],[758,228],[758,1148],[228,1148]],felt,'#715333',8);
+    // The glass has a calm playing surface over the illustrated cabinet template.
+    d.path([{x:260,y:680},{x:270,y:270},{x:610,y:240},{x:640,y:660}],'#c5e4cc20',24);
+    d.text(['THUNDER GARDEN','MOONLIT BUMPERS','LANTERN LANES','BRASS ORCHARD','STORM GLASS','MIDNIGHT SPARK'][s.level],440,590,21,'#d3c293');
     for (const r of s.rails) {
       d.line(r.a, r.b, '#4a3a28', 14);
       d.line(r.a, r.b, '#e6c57a', 3);
@@ -572,34 +623,35 @@ export default {
       d.line({x: LANE.x - 9, y: cy}, {x: LANE.x + 9, y: cy}, '#d2b07a', 2);
     }
     d.circle(LANE.x, springY + 28, 15, '#8a3030', '#f0d0a8', 2);
-    d.item(spriteKey('lightning-pin'), s.ball.x, s.ball.y, {
-      w: 32, angle: Math.atan2(s.ball.vy, s.ball.vx) + Math.PI / 2,
-      fallback: () => d.ball(s.ball.x, s.ball.y, R, '#c5d0d6'),
-    });
+    if(pickUnique(s)){
+      d.glow(615,320,39,'#f2d17f');
+      d.item(spriteKey(set.prize),615,320,{w:50,fallback:()=>d.star(615,320,19,'#f5d58b')});
+      d.text('CHAPTER PRIZE',615,361,12,'#ffe8a6');
+    }
+    d.ball(s.ball.x,s.ball.y,R+1,'#c5d5e2');
+    c.restore();
     d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
-    d.text('Z', 210, 1152, 12, '#fff6d8');
-    d.text('X', 690, 1152, 12, '#fff6d8');
+    d.text('LEFT', 210, 1152, 12, '#fff6d8');
+    d.text('RIGHT', 690, 1152, 12, '#fff6d8');
     const n = alleyPlay ? (pocket() ?? 0) : s.ammo;
     d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
     d.text(String(n), 86, 108, 18, '#fff6d8');
     d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
-    d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
+    d.item(spriteKey(set.prize), 792, 76, {w: 44, alpha:pickUnique(s)?1:.45, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
+    d.text(pickUnique(s)?'PRIZE':'KEPT',792,132,16,'#f4e2a8');
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64;
-      d.item(spriteKey(f.id), f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, {
+      const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64,startX=f.x*1.35-204;
+      d.item(spriteKey(f.id), startX + (destX - startX) * e, f.y + (destY - f.y) * e, {
         w: 28 * (1 - u * 0.35),
-        fallback: () => d.ball(f.x + (destX - f.x) * e, f.y + (destY - f.y) * e, 9, '#d2b07a'),
+        fallback: () => d.ball(startX + (destX - startX) * e, f.y + (destY - f.y) * e, 9, '#d2b07a'),
       });
     }
   },
   readout: s => {
-    const n = alleyPlay ? pocket() : s.ammo;
-    const purse = (n == null ? '0' : n) + (alleyPlay ? (n === 1 ? ' penny' : ' pennies') : ' practice');
-    const mode = s.mode === 'live' ? 'ball in play' : s.mode === 'lane' ? (s.charging ? 'spring drawn' : 'pull the spring') : 'drained';
-    return purse + ' · ' + s.score + ' · ' + s.wonPennies + ' won back · ' + s.specials + ' specials · ' + mode + ' · ' + s.note;
+    return prizeStatus(s)+' · '+(s.mode==='live'?Math.max(0,s.credit||0)+' balls ready':s.note);
   },
 };
 
