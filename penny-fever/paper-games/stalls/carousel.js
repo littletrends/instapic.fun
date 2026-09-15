@@ -2,18 +2,24 @@
  * Amusement 1 — Florence — Carousel Waltz (Ride & Seek)
  * Tagline: Round and round, the secrets change.
  *
- * SHIPPED: Chapter 1 First Turn — TAP-on-crest remix.
+ * SHIPPED: Chapter 1 First Turn + Chapter 2 Painted Ponies — TAP-on-crest remix.
  *   Board one mount fixed center-front (Tempest rim lane). Orbiting horses
  *   carry crest platforms; glints rotate past like Mario platforms on a circle.
  *   ONE verb: TAP on the crest window (“almost… NOW”) — never free-look hunting.
  *   Practice lap teaches crest TAP (no keepsakes), then two searchable laps.
  *   Challenge: ~3 ordinary finds. Eligible treasure ≥2.5 s crest window; tap
- *   collects; ride never pauses. No false items in ch1. Paper 1-layer 2D.
+ *   collects; ride never pauses. Paper 1-layer 2D.
  *   Burgundy/gold paper-cut horses; ripples on collect; reduced-motion slower
  *   spin, same crest windows.
  *
+ *   Ch1 First Turn — no false items; any crest glint is the collect target.
+ *   Ch2 Painted Ponies — same crest TAP. Only the heart-marked pony is valid.
+ *     Teach alone: long warn before the first marked window (no decoys yet).
+ *     Later crest passes may show decoy marks (crescent/star); TAP decoy =
+ *     soft fail (note + logAction miss), ride continues, never abort.
+ *     ~52 s searchable-friendly timing; GOAL=3 reachable on competent first play.
+ *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures/levels):
- *   2 Painted Ponies — three repeating saddle-symbol clues; follow the correct flap
  *   3 Mirror Round — one learnable reflection rule; false reflections cannot be collected
  *   4 Carriage Windows — door/window opens twice (teach pass, then collect pass)
  *   5 Midnight Canopy — vertical look for canopy treasures; then speed may rise
@@ -46,7 +52,11 @@ const HIT_R = 72;
 const HORSE_N = 6;
 const COLLECT_FLASH = 0.55;
 const TEACH = 'TAP on the crest';
+const TEACH_MARKED = 'TAP the heart-marked pony';
 const VERB_SEC = 5;
+/** Ch2 long warn before first searchable marked window (helter cushion teach). */
+const CH2_MARK_WARN = 8.0;
+const CH2_TEACH_CHROME = 7.0;
 /** Tiny cosmetic sway only — NOT a named LOOK skill. */
 const SWAY_X = 10;
 const SWAY_Y = 6;
@@ -69,6 +79,16 @@ function ch1Speed(reduced) {
   // Slow waltz. Reduced-motion keeps the same crest windows, only slows spin.
   const base = 0.38;
   return reduced ? base * 0.72 : base;
+}
+
+function ch2Speed(reduced) {
+  // Slightly slower than Ch1 → ~52 s ride (helter Ch2 time budget).
+  const base = 0.36;
+  return reduced ? base * 0.72 : base;
+}
+
+function rideSpeed(s) {
+  return (s.level === 1) ? ch2Speed(s.reduced) : ch1Speed(s.reduced);
 }
 
 function lapSeconds(speed) {
@@ -183,6 +203,9 @@ function scheduleCh1(s) {
   s.sparks = [];
   s.flash = 0;
   s.decoys = []; // none in ch1
+  s.horseMarks = null;
+  s.ch2Taught = false;
+  s.firstMarked = null;
   s.treasure = null;
 
   if (s.eligible && s.spawnId) {
@@ -209,6 +232,156 @@ function scheduleCh1(s) {
       taken: false,
     };
   }
+}
+
+/**
+ * Ch2 Painted Ponies — same crest TAP as Ch1.
+ * Hazard: only heart-marked pony finds collect. Decoy crest glints (crescent/star)
+ * soft-fail on TAP. First marked window teaches alone; decoys unlock after first
+ * successful marked collect. ~52 s ride; GOAL=3 + recovery.
+ */
+function scheduleCh2(s) {
+  const speed = ch2Speed(s.reduced);
+  const lap = lapSeconds(speed);
+  const crestHalf = crestHalfFromSec(speed, 3.2);
+  s.crestHalf = crestHalf;
+  s.crestSec = (2 * crestHalf) / speed;
+  s.ch2Taught = false;
+  s.markedMark = 'heart';
+
+  // Persistent saddle marks: heart = valid; crescent/star = decoy ponies.
+  s.horseMarks = {
+    1: 'heart',
+    2: 'heart',
+    3: 'crescent',
+    4: 'heart',
+    5: 'star',
+  };
+
+  // Practice glint — crest TAP only, same as Ch1 (no keepsakes / no mark hazard).
+  const practiceHorse = 5;
+  const practiceCrestT = (TAU - (practiceHorse * TAU) / HORSE_N) / speed;
+  const practiceFrom = Math.max(0.2, practiceCrestT - crestHalf / speed);
+  const practiceUntil = practiceCrestT + crestHalf / speed;
+  s.practiceGlint = {
+    kind: 'practice',
+    id: 'practice-crest',
+    spot: 'pole',
+    horse: practiceHorse,
+    from: practiceFrom,
+    until: practiceUntil,
+    taken: false,
+  };
+
+  function crestPass(horse, lapFrac) {
+    const targetT = lap * lapFrac;
+    const phase = (horse * TAU) / HORSE_N;
+    let k = Math.round((targetT * speed + phase) / TAU);
+    if (k < 1) k = 1;
+    let crestT = (k * TAU - phase) / speed;
+    if (crestT < lap * 1.02) {
+      k += 1;
+      crestT = (k * TAU - phase) / speed;
+    }
+    if (crestT > lap * 2.92) {
+      crestT = Math.min(crestT, lap * 2.85);
+    }
+    const halfT = crestHalf / speed;
+    return {crestT, from: crestT - halfT, until: crestT + halfT, horse};
+  }
+
+  // Three ordinary + recovery on HEART-marked horses only.
+  // First window teaches alone (no overlapping decoys).
+  const p0 = crestPass(1, 1.18);
+  const p1 = crestPass(2, 1.68);
+  const p2 = crestPass(4, 2.22);
+  const p3 = crestPass(1, 2.62); // recovery
+
+  const finds = [
+    {kind: 'ordinary', id: ORDINARY[0], spot: 'saddle', horse: p0.horse, mark: 'heart', from: p0.from, until: p0.until, taken: false, teach: true},
+    {kind: 'ordinary', id: ORDINARY[1], spot: 'mane', horse: p1.horse, mark: 'heart', from: p1.from, until: p1.until, taken: false},
+    {kind: 'ordinary', id: ORDINARY[2], spot: 'bridle', horse: p2.horse, mark: 'heart', from: p2.from, until: p2.until, taken: false},
+    {kind: 'ordinary', id: ORDINARY[0], spot: 'panel', horse: p3.horse, mark: 'heart', from: p3.from, until: p3.until, taken: false},
+  ];
+  s.finds = finds;
+  s.goal = GOAL;
+  s.found = 0;
+  s.lapsTotal = 3;
+  s.lapSec = lap;
+  s.rideEnd = lap * 3; // ~52 s at ch2Speed
+  s.ripples = [];
+  s.sparks = [];
+  s.flash = 0;
+  s.firstMarked = finds[0];
+
+  // Decoy crest glints AFTER the teach window — live only once ch2Taught.
+  const halfT = crestHalf / speed;
+  function decoyNear(horse, nearFind, mark, spotId) {
+    // Offset so decoy crest overlaps the find's crest pass (same NOW feel).
+    const crestT = (nearFind.from + nearFind.until) / 2;
+    // Nudge decoy horse crest toward that time.
+    const phase = (horse * TAU) / HORSE_N;
+    let k = Math.round((crestT * speed + phase) / TAU);
+    if (k < 1) k = 1;
+    let dt = (k * TAU - phase) / speed;
+    if (Math.abs(dt - crestT) > halfT * 1.2) {
+      k += (dt < crestT) ? 1 : -1;
+      if (k < 1) k = 1;
+      dt = (k * TAU - phase) / speed;
+    }
+    return {
+      kind: 'decoy',
+      id: 'decoy-' + mark,
+      spot: spotId,
+      horse,
+      mark,
+      from: dt - halfT,
+      until: dt + halfT,
+      taken: false,
+      afterTeach: true,
+    };
+  }
+
+  s.decoys = [
+    decoyNear(3, finds[1], 'crescent', 'panel'),
+    decoyNear(5, finds[1], 'star', 'pole'),
+    decoyNear(3, finds[2], 'crescent', 'bridle'),
+    decoyNear(5, finds[2], 'star', 'canopy'),
+    decoyNear(3, finds[3], 'crescent', 'saddle'),
+  ];
+
+  s.treasure = null;
+  if (s.eligible && s.spawnId) {
+    const spot = SPOTS.find((row) => row.id === s.spawnId) || SPOTS[0];
+    const horse = spot.horse;
+    // Prefer a heart-marked horse for treasure if spawn horse is a decoy type.
+    const treasureHorse = (s.horseMarks[horse] === 'heart') ? horse : 2;
+    const tp = crestPass(treasureHorse, 1.95);
+    const tHalf = Math.max(2.5 / 2, crestHalf / speed);
+    let crestT = tp.crestT;
+    for (const f of finds) {
+      if (f.horse !== treasureHorse) continue;
+      const mid = (f.from + f.until) / 2;
+      if (Math.abs(mid - crestT) < 0.5) crestT += lap * 0.35;
+    }
+    if (crestT + tHalf > lap * 2.95) crestT = lap * 2.95 - tHalf;
+    if (crestT - tHalf < lap * 1.05) crestT = lap * 1.05 + tHalf;
+    s.treasure = {
+      id: s.treasureId,
+      spot: spot.id,
+      horse: treasureHorse,
+      mark: 'heart',
+      from: crestT - tHalf,
+      until: crestT + tHalf,
+      taken: false,
+    };
+  }
+}
+
+function scheduleForLevel(s) {
+  // 0 → Ch1; 1 → Ch2; unfinished 2–5 stub as Ch1 until authored.
+  if (s.level === 1) scheduleCh2(s);
+  else scheduleCh1(s);
 }
 
 /** Resolve a hotspot to screen coords — no free-look offset on targeting. */
@@ -275,7 +448,13 @@ function collectOrdinary(s, find, scr) {
   find.taken = true;
   s.found += 1;
   recordFind(s, find.id, RIDE);
-  logAction(s, 'collect', {id: find.spot, kind: 'ordinary', art: find.id});
+  logAction(s, 'collect', {id: find.spot, kind: 'ordinary', art: find.id, mark: find.mark || null});
+  if (s.level === 1 && find.mark === 'heart') {
+    if (!s.ch2Taught) {
+      s.ch2Taught = true;
+      logAction(s, 'teach', {kind: 'marked-pony'});
+    }
+  }
   if (scr) {
     addRipple(s, scr.x, scr.y);
     spawnSparks(s, scr.x, scr.y, 12);
@@ -285,9 +464,32 @@ function collectOrdinary(s, find, scr) {
   }
   s.note = s.found >= s.goal
     ? 'Three finds — ride the horse home.'
-    : (s.found + ' of ' + s.goal + ' ordinary finds.');
+    : (s.level === 1
+      ? (s.found + ' of ' + s.goal + ' — heart-marked ponies.')
+      : (s.found + ' of ' + s.goal + ' ordinary finds.'));
   s.statusKind = 'found';
   return true;
+}
+
+function decoysLive(s) {
+  // Soft-hazard decoys only after the teach-alone marked collect.
+  return s.level === 1 && !!s.ch2Taught;
+}
+
+function softFailDecoy(s, decoy, scr) {
+  logAction(s, 'miss', {
+    reason: 'decoy',
+    mark: decoy.mark || 'wrong',
+    horse: decoy.horse,
+    x: scr ? Math.round(scr.x) : 0,
+    y: scr ? Math.round(scr.y) : 0,
+  });
+  s.note = 'Wrong mark — ' + TEACH_MARKED + '. Ride continues.';
+  s.statusKind = 'miss';
+  s.decoyFlash = 0.55;
+  s.decoyFlashX = scr ? scr.x : CX;
+  s.decoyFlashY = scr ? scr.y : CY;
+  return 'miss';
 }
 
 function collectTreasure(s, scr) {
@@ -323,6 +525,32 @@ function collectPractice(s, scr) {
   s.note = 'Crest TAP felt — searchable laps next. Nothing kept.';
   s.statusKind = 'practice';
   return true;
+}
+
+/** Saddle symbol — heart valid; crescent/star decoys. glow() uses 6-digit hex only. */
+function drawSaddleMark(d, x, y, sc, mark, lit) {
+  const glowR = (lit ? 22 : 14) * sc;
+  if (mark === 'heart') {
+    if (lit) d.glow(x, y, glowR, '#ffe6a4');
+    d.heart(x, y, 8.5 * sc, '#d2a65b');
+    d.heart(x, y - 0.5 * sc, 5.5 * sc, '#ffe6a4');
+    return;
+  }
+  if (mark === 'crescent') {
+    if (lit) d.glow(x, y, glowR, '#c8d0e0');
+    // Outline crescent: outer arc + inner cut stroke (readable on saddle or glint).
+    d.circle(x, y, 8 * sc, null, '#c8d0e0', 2.4);
+    d.circle(x + 3.4 * sc, y - 1.4 * sc, 6.4 * sc, null, '#2a2038', 2.6);
+    d.circle(x + 3.4 * sc, y - 1.4 * sc, 5.2 * sc, null, '#c8d0e0', 1.2);
+    return;
+  }
+  if (mark === 'star') {
+    if (lit) d.glow(x, y, glowR, '#f4d590');
+    d.star(x, y, 8 * sc);
+    d.circle(x, y, 9.5 * sc, null, '#d2a65b', 1.4);
+    return;
+  }
+  d.heart(x, y, 6 * sc, '#d2a65b');
 }
 
 function drawHorseSafe(d, h, bob, you, t, reduced) {
@@ -377,7 +605,9 @@ function drawHorseSafe(d, h, bob, you, t, reduced) {
     [x + 26 * sc, y + 12 * sc],
     [x - 12 * sc, y + 14 * sc],
   ], '#6b2030', '#d2a65b', 2);
-  d.heart(x + 6 * sc, y + 2 * sc, (you ? 7 : 5.5) * sc, '#d2a65b');
+  // Ch2: saddle mark (heart = valid; crescent/star = decoy). Ch1: default gold heart.
+  if (h.mark) drawSaddleMark(d, x + 6 * sc, y + 2 * sc, sc, h.mark, !!(h.front || you));
+  else d.heart(x + 6 * sc, y + 2 * sc, (you ? 7 : 5.5) * sc, '#d2a65b');
 
   if (h.front || you) {
     d.glow(x + 10 * sc, y - 4 * sc, 28 * sc, '#ffe6a4');
@@ -591,6 +821,56 @@ function drawPracticeLegend(d, s) {
   d.text(TEACH + ' · almost… NOW · nothing kept', 450, y + 30, 18, '#ffe6a4');
 }
 
+/** Ch2 teach-alone chrome — long warn / coaching for the heart mark. No LOOK verb. */
+function drawCh2MarkChrome(d, s) {
+  if (s.level !== 1) return;
+  if (s.ch2Taught) return;
+  const t = s.t || 0;
+  const lap0 = s.practice && Math.floor(t / (s.lapSec || 1)) === 0;
+
+  // Practice: after crest-TAP verb, briefly show the heart mark (seconds ~5–8).
+  let show = false;
+  let fade = 1;
+  if (lap0 && t >= VERB_SEC && t < VERB_SEC + CH2_TEACH_CHROME) {
+    show = true;
+    const end = VERB_SEC + CH2_TEACH_CHROME;
+    fade = t < end - 0.6 ? 1 : Math.max(0, (end - t) / 0.6);
+  }
+
+  // Searchable: long warn before first marked window (helter cushion pattern).
+  const first = s.firstMarked;
+  if (!s.practice && first && !first.taken) {
+    const lead = first.from - t;
+    if (lead <= CH2_MARK_WARN && t <= first.until + 0.2) {
+      show = true;
+      fade = lead > 0 ? 1 : Math.max(0.35, 1 - (t - first.from) / Math.max(0.4, first.until - first.from));
+    }
+  }
+
+  // Also first ~7 s of searchable if teach window is later.
+  if (!s.practice && !s.ch2Taught && t < CH2_TEACH_CHROME) {
+    show = true;
+    fade = t < CH2_TEACH_CHROME - 0.6 ? 1 : Math.max(0, (CH2_TEACH_CHROME - t) / 0.6);
+  }
+
+  if (!show || fade < 0.05) return;
+
+  const y = 820;
+  d.poly(
+    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
+    `rgba(12,10,18,${0.86 * fade})`,
+    '#d2a65b',
+    3,
+  );
+  const hx = 200;
+  const hy = y + 58;
+  d.glow(hx, hy, 36, '#ffe6a4');
+  d.heart(hx, hy, 18, '#d2a65b');
+  d.heart(hx, hy - 1, 11, '#ffe6a4');
+  d.text(TEACH_MARKED, 520, y + 52, 24, `rgba(255,230,164,${fade})`);
+  d.text('Gold heart saddle — decoys come later', 520, y + 92, 16, `rgba(240,208,154,${fade})`);
+}
+
 function drawStatusStrip(d, s) {
   if (s.practice && (s.t || 0) < VERB_SEC) return;
   const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
@@ -598,15 +878,21 @@ function drawStatusStrip(d, s) {
   let label = 'searching';
   let color = '#f0d09a';
   let fill = '#1a1220ee';
-  const anyCrest =
+  const anyMarked =
     (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) ||
     (s.treasure && itemInCrestWindow(s.treasure, s)) ||
     (s.finds || []).some((row) => itemInCrestWindow(row, s));
+  const anyDecoy = decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s));
+  const anyCrest = anyMarked || anyDecoy;
 
-  if (anyCrest) {
-    label = 'almost… NOW — TAP';
+  if (anyMarked) {
+    label = s.level === 1 ? 'almost… NOW — heart TAP' : 'almost… NOW — TAP';
     color = '#ffe6a4';
     fill = '#3a2018ee';
+  } else if (anyDecoy) {
+    label = 'decoy crest — skip wrong marks';
+    color = '#c8d0e0';
+    fill = '#1a2030ee';
   } else if (s.practice && lapIdx === 0) {
     label = 'practice · wait for the crest';
     color = '#ead6a4';
@@ -642,39 +928,56 @@ function drawSparksAndFlash(d, s) {
 }
 
 function tryCrestTap(s, p) {
-  // Treasure first while in crest.
+  const crestPad = (scr) => scr && Math.hypot(p.x - CX, p.y - (CY + 48)) < 110;
+
+  // Treasure first while in crest (always heart-valid).
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
     const scr = spotScreen(s.treasure.spot, s, s.treasure.horse);
-    if (hitItem(scr, p) || (scr && Math.hypot(p.x - CX, p.y - (CY + 48)) < 110)) {
+    if (hitItem(scr, p) || crestPad(scr)) {
       collectTreasure(s, scr);
       return 'collect';
     }
   }
 
-  // Practice glint (lap 0 teach) — no keepsake.
+  // Practice glint (lap 0 teach) — no keepsake; crest TAP only.
   if (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) {
     const scr = spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse);
-    if (hitItem(scr, p) || (scr && Math.hypot(p.x - CX, p.y - (CY + 48)) < 110)) {
+    if (hitItem(scr, p) || crestPad(scr)) {
       collectPractice(s, scr);
       return 'collect';
     }
   }
 
+  // Marked ordinary finds (Ch2 heart / Ch1 any).
   const find = (s.finds || []).find((row) => {
     if (!itemInCrestWindow(row, s)) return false;
     const scr = spotScreen(row.spot, s, row.horse);
-    return hitItem(scr, p) || (scr && Math.hypot(p.x - CX, p.y - (CY + 48)) < 110);
+    return hitItem(scr, p) || crestPad(scr);
   });
   if (find) {
     collectOrdinary(s, find, spotScreen(find.spot, s, find.horse));
     return 'collect';
   }
 
+  // Ch2 decoy soft-fail — never abort ride / never finishRide early.
+  if (decoysLive(s)) {
+    const decoy = (s.decoys || []).find((row) => {
+      if (row.taken) return false;
+      if (!itemInCrestWindow(row, s)) return false;
+      const scr = spotScreen(row.spot, s, row.horse);
+      return hitItem(scr, p) || crestPad(scr);
+    });
+    if (decoy) {
+      return softFailDecoy(s, decoy, spotScreen(decoy.spot, s, decoy.horse));
+    }
+  }
+
   // Early / late: an active glint exists but is outside crest → miss.
   const early = (s.finds || []).find((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
   const earlyTr = s.treasure && itemActive(s.treasure, s.t) && !itemInCrestWindow(s.treasure, s);
   const earlyPr = s.practiceGlint && itemActive(s.practiceGlint, s.t) && !itemInCrestWindow(s.practiceGlint, s);
-  if (early || earlyTr || earlyPr) {
+  const earlyDec = decoysLive(s) && (s.decoys || []).some((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
+  if (early || earlyTr || earlyPr || earlyDec) {
     logAction(s, 'miss', {reason: 'crest', x: Math.round(p.x), y: Math.round(p.y)});
     s.note = 'Almost… wait for NOW.';
     s.statusKind = 'miss';
@@ -685,8 +988,8 @@ function tryCrestTap(s, p) {
 
 export default {
   title: 'Carousel Waltz',
-  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW, and let Florence’s carousel bring you home.',
-  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. First Turn starts with a free practice lap that keeps nothing; a paid waltz costs one penny from boarding to return. Find three ordinary keepsakes before the final rotation ends.',
+  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies adds one rule: only the gold heart-marked pony counts.',
+  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Find three ordinary keepsakes before the final rotation ends.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -717,6 +1020,11 @@ export default {
       playerHorse: 0,
       crestHalf: 0.6,
       practiceGlint: null,
+      horseMarks: null,
+      decoys: [],
+      ch2Taught: false,
+      firstMarked: null,
+      decoyFlash: 0,
     });
   },
 
@@ -725,20 +1033,26 @@ export default {
 
     const spawnIds = SPOTS.map((row) => row.id);
     if (ensureBoarded(s, RIDE, s.treasureId, spawnIds)) {
-      scheduleCh1(s);
+      scheduleForLevel(s);
       s.scheduled = true;
       s.introShown = true;
       s.statusKind = s.practice ? 'practice' : 'searching';
-      s.note = s.practice
-        ? 'PRACTICE — TAP on the crest when it pulses NOW. Nothing is kept.'
-        : (s.eligible
+      if (s.practice) {
+        s.note = 'PRACTICE — TAP on the crest when it pulses NOW. Nothing is kept.';
+      } else if (s.level === 1) {
+        s.note = s.eligible
+          ? 'Painted Ponies — TAP the heart-marked pony. A keepsake hides this waltz.'
+          : 'Painted Ponies — TAP the heart-marked pony. Three finds finish the ride.';
+      } else {
+        s.note = s.eligible
           ? 'A keepsake hides this waltz. TAP on the crest.'
-          : 'Watch the crest. Three NOW taps finish the ride.');
+          : 'Watch the crest. Three NOW taps finish the ride.';
+      }
     }
     if (s.result) return;
     if (!s.scheduled) return;
 
-    const speed = ch1Speed(s.reduced);
+    const speed = rideSpeed(s);
     s.t += dt;
     s.angle += speed * dt;
     s.progress = Math.min(1, (s.t || 0) / (s.rideEnd || 1));
@@ -755,6 +1069,16 @@ export default {
       if (s.practice && lapIdx === 0) s.statusKind = 'practice';
       else if (s.found >= s.goal) s.statusKind = 'found';
       else s.statusKind = 'searching';
+    }
+
+    // Ch2 long warn before first marked window (teach alone).
+    if (s.level === 1 && !s.practice && !s.ch2Taught && s.firstMarked && !s.firstMarked.taken) {
+      const lead = s.firstMarked.from - (s.t || 0);
+      if (lead <= CH2_MARK_WARN && lead > -0.05 && !s.ch2WarnLogged) {
+        s.ch2WarnLogged = true;
+        logAction(s, 'mark-warn', {lead: CH2_MARK_WARN});
+        s.note = TEACH_MARKED + ' — gold heart on the saddle.';
+      }
     }
 
     // Reveal eligible treasure when its crest window opens (ride never pauses).
@@ -782,6 +1106,7 @@ export default {
       s.sparks = next;
     }
     if (s.flash > 0) s.flash = Math.max(0, s.flash - dt);
+    if ((s.decoyFlash || 0) > 0) s.decoyFlash = Math.max(0, s.decoyFlash - dt);
 
     if (s.t >= (s.rideEnd || lapSeconds(speed) * 3)) {
       if (s.treasure && s.eligible && s.t >= s.treasure.from && !s.treasure.taken) {
@@ -850,6 +1175,7 @@ export default {
     const order = [];
     for (let i = 1; i < HORSE_N; i++) {
       const h = horsePoint(i, HORSE_N, s.angle || 0, cx, cy + 40, 250, 220);
+      if (s.horseMarks && s.horseMarks[i]) h.mark = s.horseMarks[i];
       order.push({i, h});
     }
     order.sort((a, b) => a.h.scale - b.h.scale);
@@ -890,12 +1216,48 @@ export default {
       if (!scr) return;
       if (scr.crest > 0.02) drawNowTelegraph(d, scr, t, false);
       else drawApproachGlint(d, scr, t, false);
+      // Heart cue on the collectable glint (Ch2).
+      if (row.mark === 'heart') {
+        d.glow(scr.x, scr.y - 22, 18, '#ffe6a4');
+        d.heart(scr.x, scr.y - 22, 9, '#d2a65b');
+      }
       d.item(spriteKey(row.id), scr.x, scr.y, {
         w: 56,
         shadow: false,
         fallback: () => d.star(scr.x, scr.y, 14),
       });
     });
+
+    // Ch2 decoy crest glints — wrong marks; soft-fail on TAP (after teach).
+    if (decoysLive(s)) {
+      (s.decoys || []).forEach((row) => {
+        if (!itemActive(row, s.t)) return;
+        const scr = spotScreen(row.spot, s, row.horse);
+        if (!scr) return;
+        const pulse = 1 + 0.08 * Math.sin(t * 7);
+        if (scr.crest > 0.02) {
+          d.glow(scr.x, scr.y, 44 * pulse, '#c8d0e0');
+          if (scr.crest > 0.35) {
+            d.poly(
+              [[scr.x - 48, scr.y - 64], [scr.x + 48, scr.y - 64], [scr.x + 48, scr.y - 32], [scr.x - 48, scr.y - 32]],
+              'rgba(26,32,48,0.88)',
+              '#c8d0e0',
+              2,
+            );
+            d.text('SKIP', scr.x, scr.y - 40, 18, '#c8d0e0');
+          }
+        } else {
+          d.glow(scr.x, scr.y, 28 * pulse, '#c8d0e0');
+        }
+        drawSaddleMark(d, scr.x, scr.y, 1.35, row.mark || 'crescent', scr.crest > 0.02);
+      });
+    }
+
+    if ((s.decoyFlash || 0) > 0) {
+      const k = s.decoyFlash / 0.55;
+      d.glow(s.decoyFlashX || CX, s.decoyFlashY || CY, 24 + 40 * k, '#c8d0e0');
+      d.text('soft miss', s.decoyFlashX || CX, (s.decoyFlashY || CY) - 36, 16, `rgba(200,208,224,${k})`);
+    }
 
     if (s.treasure && itemActive(s.treasure, s.t)) {
       const scr = spotScreen(s.treasure.spot, s, s.treasure.horse);
@@ -933,6 +1295,7 @@ export default {
     drawPracticeBadge(d, s);
     drawVerbChrome(d, s);
     drawPracticeLegend(d, s);
+    drawCh2MarkChrome(d, s);
     drawStatusStrip(d, s);
 
     drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
