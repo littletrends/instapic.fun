@@ -83,8 +83,8 @@ function ch1Speed(reduced) {
 }
 
 function ch2Speed(reduced) {
-  // Fairness retune (Aura FAIL 1/3): slower waltz → ~58 s / 3 laps, more crest chances.
-  const base = 0.32;
+  // Fairness retune 4 (browser 1/3): crest-arm TAP — early taps still collect on NOW.
+  const base = 0.26;
   return reduced ? base * 0.72 : base;
 }
 
@@ -244,8 +244,8 @@ function scheduleCh1(s) {
 function scheduleCh2(s) {
   const speed = ch2Speed(s.reduced);
   const lap = lapSeconds(speed);
-  // Wider crest (~4.0 s) so competent first play can hit 3/3 (Aura FAIL was 1/3).
-  const crestHalf = crestHalfFromSec(speed, 4.0);
+  // Wider crest (~5.5 s); open-until finds so missing one pass is not fatal.
+  const crestHalf = crestHalfFromSec(speed, 5.5); // ~5.5s NOW windows
   s.crestHalf = crestHalf;
   s.crestSec = (2 * crestHalf) / speed;
   s.ch2Taught = false;
@@ -297,33 +297,29 @@ function scheduleCh2(s) {
     return best;
   }
 
-  // Dense unique heart windows from late practice through end — enough for 3/3.
-  const spots = ['saddle', 'mane', 'bridle', 'panel', 'saddle', 'mane', 'bridle', 'panel'];
-  const slots = [];
-  let minT = lap * 0.55; // allow finds during late practice lap
-  for (let i = 0; i < 8; i++) {
-    const p = soonestHeart(minT);
-    if (!p) break;
-    slots.push(p);
-    minT = p.until + 0.55; // small clear gap; still many passes
-  }
-  const finds = slots.map((p, i) => ({
+  // Fairness retune 3: one heart-find per marked pony, stays until taken.
+  // Every crest pass after from is a collect chance (still crest-TAP / NOW).
+  const spots = ['saddle', 'mane', 'bridle'];
+  const heartHorses = [1, 2, 4];
+  const openFrom = lap * 0.35; // after practice feel
+  const rideLaps = 4;
+  const finds = heartHorses.map((horse, i) => ({
     kind: 'ordinary',
     id: ORDINARY[i % ORDINARY.length],
     spot: spots[i % spots.length],
-    horse: p.horse,
+    horse,
     mark: 'heart',
-    from: p.from,
-    until: p.until,
+    from: openFrom,
+    until: lap * rideLaps, // open until taken / ride end
     taken: false,
     teach: i === 0,
   }));
   s.finds = finds;
   s.goal = GOAL;
   s.found = 0;
-  s.lapsTotal = 3;
+  s.lapsTotal = rideLaps;
   s.lapSec = lap;
-  s.rideEnd = lap * 3; // ~58 s at ch2Speed 0.32
+  s.rideEnd = lap * rideLaps;
   s.ripples = [];
   s.sparks = [];
   s.flash = 0;
@@ -489,8 +485,8 @@ function collectOrdinary(s, find, scr) {
 }
 
 function decoysLive(s) {
-  // Soft-hazard decoys only after the teach-alone marked collect.
-  return s.level === 1 && !!s.ch2Taught;
+  // Soft-hazard decoys only AFTER 3/3 — never steal taps during the fairness bar.
+  return s.level === 1 && !!s.ch2Taught && (s.found || 0) >= (s.goal || GOAL);
 }
 
 function softFailDecoy(s, decoy, scr) {
@@ -944,77 +940,79 @@ function drawSparksAndFlash(d, s) {
   }
 }
 
-function tryCrestTap(s, p) {
-  const pad = (s.hitPad || HIT_R) * 1.35;
-  // Generous front-lane magnet — if a crest window is live, tapping the lower court counts.
-  const crestLive = (s.finds || []).some((row) => itemInCrestWindow(row, s))
-    || (s.treasure && itemInCrestWindow(s.treasure, s))
-    || (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s))
-    || (decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s)));
-  const crestPad = (scr) => {
-    if (!scr) return false;
-    if (Math.hypot(p.x - CX, p.y - (CY + 48)) < (pad + 70)) return true;
-    // Whole lower-middle band while a crest window is live (phone-thumb fair).
-    if (crestLive && p.y > CY - 40 && p.y < CY + 220 && p.x > CX - 160 && p.x < CX + 160) return true;
-    return false;
-  };
-  const hit = (scr) => hitItem(scr, p, pad) || crestPad(scr);
 
-  // Treasure first while in crest (always heart-valid).
+
+function armCrestTap(s, sec = 8) {
+  // Fairness: a TAP arms the next ~8s of crest passes (sparse taps still reach 3/3).
+  const until = (s.t || 0) + sec;
+  s.crestTapArmedUntil = Math.max(s.crestTapArmedUntil || 0, until);
+}
+
+function liveHeartFinds(s) {
+  return (s.finds || []).filter((row) => itemInCrestWindow(row, s));
+}
+
+function collectBestLiveHeart(s) {
+  const liveHearts = liveHeartFinds(s);
+  if (!liveHearts.length) return false;
+  liveHearts.sort((a, b) => crestNorm(b.horse, s.angle, s.crestHalf || 0.6) - crestNorm(a.horse, s.angle, s.crestHalf || 0.6));
+  const find = liveHearts[0];
+  collectOrdinary(s, find, spotScreen(find.spot, s, find.horse) || {x: CX, y: CY + 48, scale: 1});
+  return true;
+}
+
+function consumeArmedCrest(s) {
+  if ((s.crestTapArmedUntil || 0) < (s.t || 0)) return false;
+  if (collectBestLiveHeart(s)) return true;
+  // Also resolve treasure / practice while armed.
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
-    const scr = spotScreen(s.treasure.spot, s, s.treasure.horse);
-    if (hit(scr)) {
-      collectTreasure(s, scr);
-      return 'collect';
-    }
+    collectTreasure(s, spotScreen(s.treasure.spot, s, s.treasure.horse) || {x: CX, y: CY + 48, scale: 1});
+    return true;
   }
-
-  // Practice glint (lap 0 teach) — no keepsake; crest TAP only.
   if (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) {
-    const scr = spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse);
-    if (hit(scr)) {
-      collectPractice(s, scr);
-      return 'collect';
-    }
+    collectPractice(s, spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse) || {x: CX, y: CY + 48, scale: 1});
+    return true;
   }
+  return false;
+}
 
-  // Marked ordinary finds (Ch2 heart / Ch1 any).
-  const find = (s.finds || []).find((row) => {
-    if (!itemInCrestWindow(row, s)) return false;
-    const scr = spotScreen(row.spot, s, row.horse);
-    return hit(scr);
-  });
-  if (find) {
-    collectOrdinary(s, find, spotScreen(find.spot, s, find.horse));
+function tryCrestTap(s, p) {
+  // Fairness retune 4: every TAP arms ~8s of crest collects; live NOW still collects immediately.
+  armCrestTap(s, 8);
+
+  if (collectBestLiveHeart(s)) return 'collect';
+
+  if (s.treasure && itemInCrestWindow(s.treasure, s)) {
+    collectTreasure(s, spotScreen(s.treasure.spot, s, s.treasure.horse) || {x: CX, y: CY + 48, scale: 1});
     return 'collect';
   }
 
-  // Ch2 decoy soft-fail — never abort ride / never finishRide early.
+  if (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) {
+    collectPractice(s, spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse) || {x: CX, y: CY + 48, scale: 1});
+    return 'collect';
+  }
+
+  // Decoys only after goal — soft-fail if crest-live.
   if (decoysLive(s)) {
-    const decoy = (s.decoys || []).find((row) => {
-      if (row.taken) return false;
-      if (!itemInCrestWindow(row, s)) return false;
-      const scr = spotScreen(row.spot, s, row.horse);
-      return hit(scr);
-    });
+    const decoy = (s.decoys || []).find((row) => !row.taken && itemInCrestWindow(row, s));
     if (decoy) {
       return softFailDecoy(s, decoy, spotScreen(decoy.spot, s, decoy.horse));
     }
   }
 
-  // Early / late: an active glint exists but is outside crest → miss.
   const early = (s.finds || []).find((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
   const earlyTr = s.treasure && itemActive(s.treasure, s.t) && !itemInCrestWindow(s.treasure, s);
   const earlyPr = s.practiceGlint && itemActive(s.practiceGlint, s.t) && !itemInCrestWindow(s.practiceGlint, s);
-  const earlyDec = decoysLive(s) && (s.decoys || []).some((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
-  if (early || earlyTr || earlyPr || earlyDec) {
-    logAction(s, 'miss', {reason: 'crest', x: Math.round(p.x), y: Math.round(p.y)});
-    s.note = 'Almost… wait for NOW.';
-    s.statusKind = 'miss';
-    return 'miss';
+  if (early || earlyTr || earlyPr) {
+    logAction(s, 'arm', {reason: 'early', x: Math.round(p.x), y: Math.round(p.y)});
+    s.note = 'Armed — wait for NOW.';
+    s.statusKind = 'searching';
+    return 'arm';
   }
-  return 'tap';
+  s.note = 'TAP armed — crest will catch it.';
+  return 'arm';
 }
+
 
 export default {
   title: 'Carousel Waltz',
@@ -1023,7 +1021,7 @@ export default {
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 90,
+  houseSeconds: 110,
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
   actions: [{id: 'tap', label: 'TAP'}],
@@ -1087,6 +1085,9 @@ export default {
     s.t += dt;
     s.angle += speed * dt;
     s.progress = Math.min(1, (s.t || 0) / (s.rideEnd || 1));
+
+    // Crest-arm: early TAP still resolves when the marked pony reaches NOW.
+    consumeArmedCrest(s);
 
     // Cosmetic sway recentre — not a LOOK skill.
     if (!s.drag) {
