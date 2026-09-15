@@ -10,11 +10,11 @@
  * SHIPPED:
  *   Ch1 First Look — Aura PASS. Slow spokes, fat glow, release-while-lit SNAP
  *     hit-reg LOCKED (do not regress isTap-free release / chrome / actions).
- *   Ch2 Gondola Secrets — distinct cabin emblems; ONE luggage teach-hazard
- *     alone (soft fail if SNAPped — ride continues); reachable 3/3 ~50s.
+ *   Ch2 Gondola Secrets — Aura PASS (9464867). Emblems + luggage soft-hazard.
+ *   Ch3 Rooftop Trail — ordered roof clues 1→2→3 (next arms after SNAP);
+ *     ONE chimney teach-hazard alone (soft fail); reachable 3/3 ~55s.
  *
  * UNFINISHED CHAPTERS (keep names; do not rename treasures):
- *   3 Rooftop Trail — three roof targets in order; next arms after prior SNAP
  *   4 Cloud Crossing — clouds occlude glow; armed state does not reset
  *   5 Ferris at Midnight — moonlight markings; practice preview once
  *   6 The Highest View — Tempest depth rings + decoys/balloons; ≤2 depths
@@ -57,28 +57,39 @@ const LENS_Y_MAX = HUD_BOT - LENS_R - 8;
 
 const RIDE_SECS = 48;
 const RIDE_SECS_CH2 = 56; // helter-bar: recoverable 3/3 on first play
+const RIDE_SECS_CH3 = 64;
 const GOAL = 3;
 const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
 const CLARITY_SECS = 5;
 const TEACH = 'Aim the lens, then SNAP (button or release).';
 const TEACH_CH2 = 'Emblems only — luggage is a soft dump.';
+const TEACH_CH3 = 'Roofs in order — chimney is a soft dump.';
 const GLOW_PAD_CH1 = 36; // Ch1 attested
 const GLOW_PAD_CH2 = 28; // slightly tighter, still first-play fair
+const GLOW_PAD_CH3 = 28;
 const RETICLE_CH1 = 56;
 const RETICLE_CH2 = 48;
+const RETICLE_CH3 = 48;
 const LUGGAGE_WARN = 7.5; // teach hazard alone with long warn (helter Ch2 bar)
+const CHIMNEY_WARN = 6.5; // Ch3 teach hazard alone — leave more trail time
 
 function rideSecs(level) {
-  return level === 1 ? RIDE_SECS_CH2 : RIDE_SECS;
+  if (level === 1) return RIDE_SECS_CH2;
+  if (level === 2) return RIDE_SECS_CH3;
+  return RIDE_SECS;
 }
 
 function glowPad(level) {
-  return level === 1 ? GLOW_PAD_CH2 : GLOW_PAD_CH1;
+  if (level === 1) return GLOW_PAD_CH2;
+  if (level === 2) return GLOW_PAD_CH3;
+  return GLOW_PAD_CH1;
 }
 
 function reticleR(level) {
-  return level === 1 ? RETICLE_CH2 : RETICLE_CH1;
+  if (level === 1) return RETICLE_CH2;
+  if (level === 2) return RETICLE_CH3;
+  return RETICLE_CH1;
 }
 
 function wheelSpin(level, reduced) {
@@ -88,10 +99,11 @@ function wheelSpin(level, reduced) {
 }
 
 function climbSpeed(level, reduced) {
-  // Ch1 attested slow. Ch2 a touch quicker but still 3/3-reachable (~50s).
+  // Ch1 attested slow. Ch2/Ch3 still 3/3-reachable on first play.
   let base = 0.020;
   if (level === 1) base = 0.022;
-  else if (level >= 2) base = 0.040;
+  else if (level === 2) base = 0.017;
+  else if (level >= 3) base = 0.036;
   return reduced ? base * 0.65 : base;
 }
 
@@ -114,7 +126,19 @@ function ch2Targets() {
 }
 
 function chapterTargets(level) {
-  return level === 1 ? ch2Targets() : ch1Targets();
+  if (level === 1) return ch2Targets();
+  if (level === 2) return ch3Targets();
+  return ch1Targets();
+}
+
+/** Ch3 — ordered rooftop trail + ONE chimney teach-hazard (soft fail). */
+function ch3Targets() {
+  return [
+    {id: 'chimney', label: 'chimney', spoke: -0.7, size: 30, kind: 'hazard', art: null},
+    {id: 'roof-1', label: 'roof clue 1', spoke: 0.5, size: 34, kind: 'ordinary', trail: 0, art: ORDINARY[0]},
+    {id: 'roof-2', label: 'roof clue 2', spoke: 2.1, size: 34, kind: 'ordinary', trail: 1, art: ORDINARY[1]},
+    {id: 'roof-3', label: 'roof clue 3', spoke: -2.3, size: 34, kind: 'ordinary', trail: 2, art: ORDINARY[2]},
+  ];
 }
 /** Ch1 gallery targets — large silhouettes on distinct spokes. */
 function ch1Targets() {
@@ -207,8 +231,64 @@ function scheduleCh2(s) {
   attachTreasureHost(s);
 }
 
+function scheduleCh3(s) {
+  // Ordered trail: chimney teach alone, then roof 1→2→3 arms after each SNAP.
+  const rows = ch3Targets();
+  s.trailStep = 0;
+  s.targets = rows.map((row) => {
+    const isHaz = row.kind === 'hazard';
+    const trail = row.trail;
+    return {
+      ...row,
+      climb: 0,
+      alive: true,
+      snapped: false,
+      missed: false,
+      open: isHaz ? 0.4 : (CHIMNEY_WARN + 0.8), // roofs wait; arming gates climb
+      active: false,
+      armed: isHaz ? true : (trail === 0), // only first roof armed after hazard phase
+      teach: isHaz,
+      forceExit: isHaz ? (CHIMNEY_WARN + 0.6) : null,
+    };
+  });
+  // Arm only roof-1 after hazard window — set opens so first roof starts then.
+  for (const row of s.targets) {
+    if (row.trail === 0) {
+      row.open = CHIMNEY_WARN + 0.5;
+      row.armed = true;
+    }
+    if (row.trail === 1 || row.trail === 2) {
+      row.open = 999; // unlocked when previous snapped
+      row.armed = false;
+    }
+  }
+  s.goal = GOAL;
+  s.found = 0;
+  s.glowId = null;
+  s.rideSecs = rideSecs(2);
+  s.hazardWarned = false;
+  s.treasure = null;
+  attachTreasureHost(s);
+}
+
+function armNextRoof(s) {
+  if (s.level !== 2) return;
+  s.trailStep = (s.trailStep || 0) + 1;
+  const next = (s.targets || []).find(o => o.trail === s.trailStep && !o.snapped);
+  if (!next) return;
+  next.armed = true;
+  next.open = s.t; // available immediately
+  next.active = true;
+  next.climb = 0;
+  next.alive = true;
+  next.missed = false;
+  next.snapped = false;
+  s.note = 'Roof clue ' + (s.trailStep + 1) + ' — SNAP in order.';
+}
+
 function scheduleRide(s) {
   if (s.level === 1) scheduleCh2(s);
+  else if (s.level === 2) scheduleCh3(s);
   else scheduleCh1(s);
 }
 
@@ -258,6 +338,19 @@ function snapTarget(s, target) {
     return true;
   }
 
+  // Ch3: only the armed roof clue counts; unarmed = soft dump (wrong order).
+  if (s.level === 2 && target.trail != null && !target.armed) {
+    s.didSnapOnce = true;
+    spawnSparks(s, target.x, target.y, 6);
+    // Respawn unarmed clue softly — does not consume the trail step.
+    target.snapped = false;
+    target.alive = true;
+    target.climb = Math.min(0.35, target.climb);
+    logAction(s, 'soft-fail', {id: target.id, kind: 'order'});
+    s.note = 'Wrong roof — follow the trail order.';
+    return true;
+  }
+
   s.found += 1;
   s.didSnapOnce = true;
   const art = target.art || ORDINARY[(s.found - 1) % ORDINARY.length];
@@ -272,11 +365,12 @@ function snapTarget(s, target) {
     logAction(s, 'collect', {id: target.id, kind: 'treasure', verb: 'snap'});
     s.note = 'Keepsake snapped — Jasper will stamp the card.';
   } else {
-    const teach = s.level === 1 ? TEACH_CH2 : TEACH;
+    const teach = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : TEACH);
     s.note = s.found >= s.goal
       ? 'Three snaps — the gondola carries you home.'
       : (s.found + ' / ' + s.goal + ' · ' + teach);
   }
+  if (s.level === 2 && target.trail != null) armNextRoof(s);
   return true;
 }
 
@@ -287,7 +381,9 @@ function missTarget(s, target) {
   logAction(s, 'miss', {id: target.id, kind: target.kind || 'ordinary'});
   if (s.glowId === target.id) s.glowId = null;
   if (target.kind === 'hazard') {
-    s.note = 'Luggage passed — now SNAP the cabin emblems.';
+    s.note = s.level === 2
+      ? 'Chimney passed — SNAP roof clue 1 next.'
+      : 'Luggage passed — now SNAP the cabin emblems.';
     s.hazardWarned = true;
   } else {
     s.note = 'It reached the gondola — watch the next spoke.';
@@ -380,6 +476,19 @@ function drawTarget(d, s, t) {
       [t.x + r * 0.12, t.y + r * 0.7],
       [t.x - r * 0.12, t.y + r * 0.7],
     ], inSweet ? '#f4d590ee' : '#c9a04acc', '#d2a65b', 2);
+  } else if (isHaz && t.id === 'chimney') {
+    d.poly([
+      [t.x - r * 0.35, t.y - r * 0.9],
+      [t.x + r * 0.35, t.y - r * 0.9],
+      [t.x + r * 0.45, t.y + r * 0.6],
+      [t.x - r * 0.45, t.y + r * 0.6],
+    ], inSweet ? '#a05050dd' : '#5a4030cc', '#d2a65b', 2);
+    d.poly([
+      [t.x - r * 0.55, t.y - r * 0.95],
+      [t.x + r * 0.55, t.y - r * 0.95],
+      [t.x + r * 0.35, t.y - r * 0.55],
+      [t.x - r * 0.35, t.y - r * 0.55],
+    ], inSweet ? '#c07070dd' : '#6b5040cc', '#d2a65b', 2);
   } else if (isHaz) {
     // Luggage trunk — teach hazard (skip / soft dump).
     d.poly([
@@ -389,6 +498,15 @@ function drawTarget(d, s, t) {
       [t.x - r * 0.85, t.y + r * 0.55],
     ], inSweet ? '#a05050dd' : '#6b4030cc', '#d2a65b', 2);
     d.line({x: t.x - r * 0.85, y: t.y}, {x: t.x + r * 0.85, y: t.y}, '#d2a65b', 2);
+  } else if (t.id && String(t.id).startsWith('roof-')) {
+    d.poly([
+      [t.x - r, t.y],
+      [t.x, t.y - r * 0.95],
+      [t.x + r, t.y],
+      [t.x + r * 0.75, t.y + r * 0.55],
+      [t.x - r * 0.75, t.y + r * 0.55],
+    ], inSweet ? '#f4d590ee' : '#c9a04acc', '#d2a65b', 2);
+    if (t.armed) d.text(String((t.trail || 0) + 1), t.x, t.y + 6, 18, '#ffe6a4');
   } else {
     d.poly([
       [t.x, t.y - r],
@@ -397,8 +515,11 @@ function drawTarget(d, s, t) {
       [t.x - r * 0.55, t.y + r * 0.2],
     ], inSweet ? '#f4d590ee' : '#e8d0a0bb', '#d2a65b', 2);
   }
-  if (inSweet || t.climb < 0.25 || (isHaz && t.teach)) {
-    d.text(isHaz ? 'luggage — skip' : t.label, t.x, t.y - r - 16, 14, isHaz ? '#f0a0a0' : (inSweet ? '#ffe6a4' : '#f0d09a'));
+  if (inSweet || t.climb < 0.25 || (isHaz && t.teach) || (t.armed && t.trail != null)) {
+    const tag = isHaz
+      ? (t.id === 'chimney' ? 'chimney — skip' : 'luggage — skip')
+      : t.label;
+    d.text(tag, t.x, t.y - r - 16, 14, isHaz ? '#f0a0a0' : (inSweet ? '#ffe6a4' : '#f0d09a'));
   }
   if (s.treasure && s.treasure.spot === t.id && !s.treasure.taken && t.alive) {
     d.item(spriteKey(s.treasure.id), t.x, t.y - r - 36, {
@@ -473,7 +594,7 @@ function trySnap(s, via) {
 export default {
   title: 'Pocket Wheel',
   intro: 'Rise above the midway. Look closer. Targets climb the spokes — SNAP them in Jasper’s brass glow before they reach your gondola.',
-  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: cabin emblems only — luggage is a soft dump (ride continues). First ride is practice.',
+  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: emblems only — luggage soft-dumps. Ch3: roofs in order 1→2→3 — chimney soft-dumps. First ride is practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -509,7 +630,7 @@ export default {
     if (ensureBoarded(s, RIDE, s.treasureId, chapterTargets(s.level).filter(o => o.kind !== 'hazard').map(o => o.id))) {
       scheduleRide(s);
       s.scheduled = true;
-      s.note = s.level === 1 ? TEACH_CH2 : TEACH;
+      s.note = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : TEACH);
     }
     if (s.result) return;
     if (!s.scheduled) return;
@@ -523,19 +644,27 @@ export default {
     s.angle += spin * dt;
     const climb = climbSpeed(s.level, s.reduced);
 
-    // Ch2 teach: long warn while luggage approaches alone.
-    if (s.level === 1 && !s.hazardWarned) {
+    // Ch2/Ch3 teach: long warn while the single hazard approaches alone.
+    if ((s.level === 1 || s.level === 2) && !s.hazardWarned) {
       const haz = (s.targets || []).find(o => o.kind === 'hazard' && o.alive);
-      if (haz && s.t >= haz.open && s.t < LUGGAGE_WARN) {
-        s.note = 'Luggage climbing — do not SNAP it.';
+      const warnUntil = s.level === 2 ? CHIMNEY_WARN : LUGGAGE_WARN;
+      if (haz && s.t >= haz.open && s.t < warnUntil) {
+        s.note = s.level === 2
+          ? 'Chimney climbing — do not SNAP it.'
+          : 'Luggage climbing — do not SNAP it.';
       }
       if (haz && !haz.alive) s.hazardWarned = true;
-      if (!haz || s.t >= LUGGAGE_WARN) s.hazardWarned = true;
+      if (!haz || s.t >= warnUntil) s.hazardWarned = true;
     }
 
     let glow = null;
     for (const t of s.targets) {
       if (!t.alive) continue;
+      if (s.level === 2 && t.trail != null && !t.armed) {
+        // Waiting for prior roof SNAP — visible but not climbing yet.
+        t.active = false;
+        continue;
+      }
       if (s.t >= t.open) t.active = true;
       if (!t.active) continue;
       const spoke = t.spoke + s.angle * 0.15; // slight field drift
@@ -544,7 +673,7 @@ export default {
       t.y = pos.y;
       const lit = inGlow(s.lensX, s.lensY, t.x, t.y, s.level);
       // Crawl-while-lit (attested Ch1 feel; keeps SNAP hittable — not a dwell meter).
-      const rate = lit ? climb * 0.08 : climb;
+      const rate = lit ? climb * (s.level === 2 ? 0.05 : 0.08) : climb;
       t.climb = Math.min(1, t.climb + rate * dt);
       pos = spokePos(spoke, t.climb);
       t.x = pos.x;
@@ -558,16 +687,21 @@ export default {
         continue;
       }
       if (lit || inGlow(s.lensX, s.lensY, t.x, t.y, s.level)) {
-        // Prefer real emblems over the luggage hazard when both sit in the glow.
-        if (!glow || (glow.kind === 'hazard' && t.kind !== 'hazard')) glow = t;
+        // Prefer real finds over hazards; Ch3 unarmed roofs never take the glow.
+        if (s.level === 2 && t.trail != null && !t.armed) {
+          /* skip */
+        } else if (!glow || (glow.kind === 'hazard' && t.kind !== 'hazard')) {
+          glow = t;
+        }
       }
     }
     const prev = s.glowId;
     s.glowId = glow ? glow.id : null;
     if (s.glowId && s.glowId !== prev) {
       logAction(s, 'glow-ready', {id: s.glowId, kind: glow.kind || 'ordinary'});
-      if (glow.kind === 'hazard') s.note = 'Luggage in the glow — skip it!';
-      else s.note = 'In the glow — SNAP!';
+      if (glow.kind === 'hazard') {
+        s.note = s.level === 2 ? 'Chimney in the glow — skip it!' : 'Luggage in the glow — skip it!';
+      } else s.note = 'In the glow — SNAP!';
     }
 
     if (s.sparks && s.sparks.length) {
