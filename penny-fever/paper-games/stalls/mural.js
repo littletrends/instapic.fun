@@ -8,6 +8,7 @@
  *   1 First Wash — SPLASH any 2 of 3 patches (lantern, balloons, horse)
  *   2 Lantern Row — medallion match; ONE decoy soft-wash taught alone;
  *     then 3 matching SPLASHes (~50s first-play). Soft fails never abort.
+ *     On goal, guardWinClock so dry-out cannot beat Practice complete.
  *
  * Unfinished:
  *   3 Carousel Frieze — horse patch only in the window
@@ -64,10 +65,10 @@ function chapterPlan(level, reduced) {
     ];
     return {
       goal: 3,
-      house: 55,
-      dwell: reduced ? 9.2 : 7.4,
-      speed: reduced ? 58 : 82,
-      warn: 8.0,
+      house: 62,
+      dwell: reduced ? 7.5 : 6.0,
+      speed: reduced ? 70 : 96,
+      warn: 4.5,
       target,
       panels,
       foldMedallion: true,
@@ -120,9 +121,18 @@ function closeRide(s) {
   });
 }
 
+function guardWinClock(s) {
+  // Runtime dry-out sets result with won:false while !result.
+  // After goal, keep enough clock for discovery + arrive so Practice complete wins.
+  if (s.restored < s.goal || s.result) return;
+  const need = (s.discoverySecs || 1.55) + 3.2;
+  if (s.houseLeft == null || s.houseLeft < need) s.houseLeft = need;
+}
+
 function maybeArrive(s) {
   if (s.arriving || s.result) return;
   if (s.restored >= s.goal) {
+    guardWinClock(s);
     s.arriving = true;
     s.arriveAt = s.t + 0.55;
   }
@@ -149,15 +159,15 @@ function spawnAt(s, idx) {
   row.held = false;
   row.dwell = 0;
   row.wash = 0;
-  row.world = s.scroll + 720;
+  row.world = s.scroll + 680;
   s.medalOpen = 1;
   if (row.teach) {
     s.warnLeft = s.warn;
     s.note = 'Wrong colour washes away — wait for ' + (s.target?.glyph || '♥') + '.';
-  } else if (s.target) {
-    s.note = 'SPLASH the ' + s.target.glyph + ' match.';
   } else {
-    s.note = 'SPLASH inside the frame.';
+    s.warnLeft = 0;
+    if (s.target) s.note = 'SPLASH the ' + s.target.glyph + ' match.';
+    else s.note = 'SPLASH inside the frame.';
   }
 }
 
@@ -182,6 +192,11 @@ function missPanel(s, row) {
   row.held = false;
   row.dwell = 0;
   row.retries = (row.retries || 0) + 1;
+  // Teach decoy seats once — miss or soft-wash both spend it so it cannot loop the clock dry.
+  if (!row.match || row.teach) {
+    row.spent = true;
+    s.warnLeft = 0;
+  }
   s.note = 'Missed — another patch is rolling in.';
   spawnAt(s, nextPending(s));
 }
@@ -192,8 +207,9 @@ function softWash(s, panel) {
   panel.held = false;
   panel.dwell = 0;
   panel.spent = true;
+  s.warnLeft = 0;
   s.paused = true;
-  s.softUntil = s.t + 1.1;
+  s.softUntil = s.t + 0.75;
   logAction(s, 'wash', {id: panel.id, colour: panel.colour});
   s.note = 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♥') + '.';
   s.juice = true;
@@ -221,6 +237,7 @@ function splash(s, panel) {
   logAction(s, 'splash', {id: panel.id, n: s.restored, colour: panel.colour});
   logAction(s, 'restore', {id: panel.id});
   s.note = 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
+  if (s.restored >= s.goal) guardWinClock(s);
   if (s.eligible && s.spawnId === panel.id && !s.treasure) {
     s.treasure = {
       id: s.treasureId,
@@ -360,7 +377,7 @@ export default {
     const plan = chapterPlan(level, reduced);
     const panels = plan.panels.map((p, i) => ({
       ...p,
-      world: i === 0 ? 900 : 5000,
+      world: i === 0 ? (p.teach ? 5000 : 900) : 5000,
       restored: false,
       retries: 0,
       dwell: 0,
@@ -380,9 +397,9 @@ export default {
       scroll: 0,
       speed: plan.speed,
       dwellMax: plan.dwell,
-      discoverySecs: level === 1 ? 2.2 : 2.6,
+      discoverySecs: level === 1 ? 1.55 : 2.6,
       warn: plan.warn,
-      warnLeft: 0,
+      warnLeft: plan.panels[0]?.teach ? plan.warn : 0,
       softUntil: 0,
       restored: 0,
       goal: plan.goal,
@@ -409,6 +426,7 @@ export default {
     if (s.result) return;
     s.t += dt;
     s.progress = Math.min(1, s.restored / Math.max(1, s.goal));
+    if (s.restored >= s.goal) guardWinClock(s);
 
     if (s.warnLeft > 0) s.warnLeft = Math.max(0, s.warnLeft - dt);
     if (s.medalOpen > 0 && s.foldMedallion) {
@@ -446,6 +464,7 @@ export default {
     if (s.discovery > 0) {
       s.discovery -= dt;
       if (s.discovery <= 0) {
+        s.discovery = 0;
         s.paused = false;
         s.liveId = null;
         if (s.restored >= s.goal) maybeArrive(s);
