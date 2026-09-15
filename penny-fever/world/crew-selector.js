@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-display-7';
+} from './paper-dolls.js?v=doll-travel-phone-10';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -269,6 +269,20 @@ function fillArt(root) {
   });
 }
 
+function positionCrewBook() {
+  const book=document.querySelector('dialog.crew-book[open]');
+  const viewport=window.visualViewport;
+  if (!book || !viewport) return;
+  // Mobile layout viewports may be wider than the visible screen (overflow,
+  // zoom or the keyboard). Centre on the visible viewport, not that page width.
+  book.style.left=`${viewport.offsetLeft+viewport.width/2}px`;
+  book.style.top=`${viewport.offsetTop+viewport.height/2}px`;
+  book.style.width=`${Math.min(860,viewport.width*.92)}px`;
+  book.style.maxHeight=`${viewport.height*.9}px`;
+}
+window.visualViewport?.addEventListener('resize',positionCrewBook);
+window.visualViewport?.addEventListener('scroll',positionCrewBook);
+
 function openCrewBook(event) {
   if (event) event.preventDefault();
   if (!document.querySelector('dialog.crew-book')) mount();
@@ -293,6 +307,7 @@ function openCrewBook(event) {
     book.setAttribute('open', '');
     book.classList.add('is-open');
   }
+  positionCrewBook();
 }
 
 let dollThumbnailObserver;
@@ -316,7 +331,6 @@ function observeDollThumbnails(book) {
 }
 
 const DISPLAY_SCENES = [
-  {id:'doll-display-stand',label:'Display stand'},
   {id:'travel-stage',label:'Travel theatre'},
   {id:'fold-out-bedroom',label:'Bedroom'},
 ];
@@ -427,9 +441,9 @@ function mount() {
 </details>`;
     document.body.append(book);
     book.querySelector('#crewBackground').addEventListener('change',e=>paintDisplay(e.target.value));
-    let background='doll-display-stand';
+    let background='travel-stage';
     try {background=localStorage.getItem('pf-doll-display-v1') || background;}catch{}
-    book.querySelector('#crewBackground').value=DISPLAY_SCENES.some(scene=>scene.id===background)?background:'doll-display-stand';
+    book.querySelector('#crewBackground').value=DISPLAY_SCENES.some(scene=>scene.id===background)?background:'travel-stage';
     book.addEventListener('click', e => {
       if (e.target.closest('#crewRotate')) { turn(1); return; }
       if (e.target.closest('#dollRotate')) { turnDoll(1); return; }
