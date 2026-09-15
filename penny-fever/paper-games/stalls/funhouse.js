@@ -4,6 +4,10 @@
  * Chapter 2 Mirror Joke: implemented — same verb SHUT THE PUNCHLINE with ONE
  *   new hazard taught alone: the mirror lies (reflection swaps/reverses door
  *   punchlines; truth is oval SETUP + real door labels, not the glass).
+ * Chapter 3 Upside Down: implemented — same verb SHUT THE PUNCHLINE with ONE
+ *   new hazard taught alone: the room rotates; mark door positions before the
+ *   turn; punchlines travel with door objects as they swap places; memory
+ *   solves which physical door still finishes the SETUP after the spin.
  *
  * Locked lane: Pac-Man chase energy × Door Door SHUT × Finish the Joke comedy.
  * Primary verb: SHUT — slam the punchline door that finishes the setup so
@@ -13,8 +17,7 @@
  * NOT wink / look-direction Simon.
  *
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
- * Unfinished chapters (reuse Ch2 graph until authored):
- *   3 Upside Down     — doors move when the room rotates; remember positions
+ * Unfinished chapters (reuse Ch3 graph until authored):
  *   4 Shrinking Hall  — perspective: floor tiles / shadows prove near vs far
  *   5 Midway Echoes   — distorted versions of the other five rides as clues
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
@@ -27,7 +30,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=mirror-ch2-1';
+} from './funhouse-rooms.js?v=upside-ch3-2';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -57,6 +60,43 @@ function hitCircle(p, x, y, r) {
 
 function hitDoor(p, door) {
   return Math.abs(p.x - door.x) <= door.w / 2 && Math.abs(p.y - door.y) <= door.h / 2;
+}
+
+function spinDur(room) {
+  if (room?.teachRotate) return PHASE_SECONDS.spinTeach ?? 1.05;
+  return PHASE_SECONDS.spin ?? 0.85;
+}
+
+/** Live door views — punchlines travel with door objects as they swap places. */
+function doorViews(s, room) {
+  const raw = room?.doors || [];
+  if (!room?.rotate || raw.length < 2) return raw;
+  const left = raw.find(row => row.id === 'left');
+  const right = raw.find(row => row.id === 'right');
+  if (!left || !right) return raw;
+
+  let u = 0;
+  if (s.phase === 'spin') u = clamp((s.spinT || 0) / spinDur(room), 0, 1);
+  else if (s.spun) u = 1;
+  // Smoothstep paper slide; slight arc reads as a turn.
+  const ease = u * u * (3 - 2 * u);
+  const arc = Math.sin(ease * Math.PI) * -22;
+  const swapped = ease >= 0.5;
+
+  return [
+    {
+      ...left,
+      id: swapped ? 'right' : 'left',
+      x: left.x + (right.x - left.x) * ease,
+      y: left.y + arc,
+    },
+    {
+      ...right,
+      id: swapped ? 'left' : 'right',
+      x: right.x + (left.x - right.x) * ease,
+      y: right.y + arc,
+    },
+  ];
 }
 
 function spawnFaces(s, room) {
@@ -92,7 +132,7 @@ function updateFaces(s, dt, room) {
   const reduced = s.reduced;
   const px = s.player?.x ?? 450;
   const py = s.player?.y ?? 720;
-  const chasing = s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'choose';
+  const chasing = s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'spin' || s.phase === 'choose';
   const speed = reduced ? FACE_SPEED * 0.45 : FACE_SPEED;
 
   for (const f of faces) {
@@ -118,7 +158,7 @@ function updateFaces(s, dt, room) {
         s.tagStun = TAG_STUN;
         s.note = 'Giggle bump! Still SHUT a punchline.';
         // Comedy shove toward stage center-ish, slight wrong-door feel.
-        const wrong = (room.doors || []).find(d => !d.correct);
+        const wrong = doorViews(s, room).find(d => !d.correct);
         if (wrong && s.player) {
           const sx = Math.sign(wrong.x - s.player.x) || 1;
           s.player.x = clamp(s.player.x + sx * 18, STAGE.xMin + 40, STAGE.xMax - 40);
@@ -147,6 +187,8 @@ function enterRoom(s, id) {
   s.doorPress = null;
   s.inspectPulse = 0;
   s.tagStun = 0;
+  s.spinT = 0;
+  s.spun = false;
   s.faces = [];
   s.player = {x: 450, y: 720};
   if (room.kind === 'main' && !s.seenMain[room.id]) {
@@ -283,12 +325,22 @@ function leaveRide(s) {
   });
 }
 
-function doorByAction(room, id) {
-  if (!room?.doors) return null;
-  if (id === 'left' || id === 'right') {
-    return room.doors.find(row => row.id === id) || null;
-  }
-  return null;
+function doorByAction(s, room, id) {
+  if (!room) return null;
+  if (id !== 'left' && id !== 'right') return null;
+  // Match visual side after rotate settle (punchlines travel with doors).
+  return doorViews(s, room).find(row => row.id === id) || null;
+}
+
+function beginSpin(s, room) {
+  s.phase = 'spin';
+  s.phaseT = 0;
+  s.spinT = 0;
+  s.spun = false;
+  s.doorPress = null;
+  s.note = room.teachRotate
+    ? 'MARKED — the room turns…'
+    : 'Room turns…';
 }
 
 function diamond(d, x, y, size, fill, stroke) {
@@ -341,6 +393,26 @@ function drawSetupProp(d, room, t, pulse) {
     d.circle(x + 16, y - 6, 7, BURGUNDY);
     d.arc(x, y + 12, 16, 0.15, Math.PI - 0.15, BURGUNDY, 2.6);
     d.text('KNOCK', x, y - 52, 18, INK);
+  } else if (prop === 'spin') {
+    d.ellipse(x + 3, y + 22, 54, 14, '#12233533');
+    d.ellipse(x, y, 50, 50, WOOD, GOLD, 3);
+    d.ellipse(x, y, 34, 34, BURGUNDY, GOLD, 2);
+    d.ellipse(x, y, 14, 14, CREAM, GOLD, 2);
+    d.arc(x, y, 42, -0.4, Math.PI * 1.2, INK, 2.4);
+    d.text('spin', x, y - 66, 16, INK);
+  } else if (prop === 'turn') {
+    d.ellipse(x + 3, y + 20, 54, 14, '#12233533');
+    d.poly([[x - 48, y - 8], [x + 48, y - 18], [x + 42, y + 22], [x - 42, y + 28]],
+      BURGUNDY, GOLD, 2.4);
+    d.path([{x: x - 30, y: y + 4}, {x: x + 28, y: y - 4}], GOLD, 2, false);
+    d.text('turn', x, y - 52, 16, INK);
+  } else if (prop === 'flip') {
+    d.ellipse(x + 3, y + 20, 56, 16, '#12233533');
+    d.ellipse(x, y, 58, 48, CREAM, GOLD, 3);
+    d.circle(x - 16, y - 6, 7, BURGUNDY);
+    d.circle(x + 16, y - 6, 7, BURGUNDY);
+    d.arc(x, y + 12, 16, 0.15, Math.PI - 0.15, BURGUNDY, 2.6);
+    d.text('UPSIDE', x, y - 52, 17, INK);
   } else {
     d.ellipse(x, y, 44, 36, CREAM, GOLD, 2);
   }
@@ -555,6 +627,24 @@ function drawJoke(d, room, t) {
     d.ellipse(430, 640, 22, 14, '#ffffff66');
     d.ellipse(470, 680, 26, 16, '#ffffff55');
     d.text('fog', 450, 780, 22, INK);
+  } else if (room.joke === 'dizzy') {
+    d.ellipse(450, 700 + bounce * 0.3, 70, 18, '#12233533');
+    d.ellipse(450, 660, 54, 54, WOOD, GOLD, 3);
+    d.arc(450, 660, 38, t * 4, t * 4 + Math.PI * 1.4, INK, 3);
+    d.text('dizzy', 450, 760, 22, INK);
+  } else if (room.joke === 'whirl') {
+    d.ellipse(450, 700, 80, 18, '#12233533');
+    for (let i = 0; i < 3; i++) {
+      const rr = 28 + i * 14;
+      d.arc(450, 660, rr, t * 3 + i, t * 3 + i + Math.PI * 1.2, i % 2 ? GOLD : BURGUNDY, 2.4);
+    }
+    d.text('whirl', 450, 780, 22, INK);
+  } else if (room.joke === 'topsy') {
+    d.ellipse(450, 700, 70, 18, '#12233533');
+    d.poly([[410, 720 + bounce], [490, 720 + bounce], [470, 620 + bounce], [430, 620 + bounce]],
+      WOOD, GOLD, 2.4);
+    d.ellipse(450, 640 + bounce, 36, 22, CREAM, GOLD, 2);
+    d.text('topsy', 450, 780, 22, INK);
   } else {
     d.poly([[410, 620], [490, 620], [490, 760], [410, 760]], WOOD, GOLD, 2);
     d.ellipse(450, 620, 40, 16, WOOD, GOLD, 2);
@@ -640,6 +730,23 @@ function drawClarityChrome(s, d) {
     drawChip(d, coach, 214, room.teach ? 15 : 14);
   }
 
+  // Ch3 coach — rotate hazard alone; no mirror restack.
+  if (room.rotate && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
+    let coach = 'MARK — then the room turns';
+    let size = 14;
+    if (s.phase === 'spin') {
+      coach = 'ROOM TURNS';
+      size = 16;
+    } else if (room.teachRotate && (s.phase === 'reveal' || s.phase === 'inspect')) {
+      coach = 'MARK THE DOORS — then the room turns';
+      size = 15;
+    } else if (s.phase === 'choose') {
+      coach = room.teachRotate ? 'REMEMBER — then SHUT' : 'REMEMBER — SHUT THE PUNCHLINE';
+      size = room.teachRotate ? 15 : 14;
+    }
+    drawChip(d, coach, 214, size);
+  }
+
   if (s.phase === 'choose') {
     drawChip(d, 'hold a door to SHUT · ← →', 1118, 16);
   }
@@ -709,7 +816,13 @@ function drawRoom(s, d) {
       drawCutoutProp(d, spot, taken, t);
     });
     drawMirror(d, room, s, t);
-    (room.doors || []).forEach(door => drawDoor(d, door, s));
+    const views = doorViews(s, room);
+    views.forEach(door => drawDoor(d, door, s));
+    if (room.rotate && s.phase === 'spin') {
+      const pulse = 0.55 + 0.45 * Math.sin((t || 0) * 5);
+      d.glow(450, 780, 70 + pulse * 16, '#f4d590');
+      drawChip(d, 'TURN', 780, 18);
+    }
     drawPlayer(d, s);
     (s.faces || []).forEach(f => drawLaughFace(d, f, t));
   }
@@ -736,7 +849,7 @@ function drawRoom(s, d) {
 function tryActionDoor(s, id) {
   if (s.result || s.broke || s.phase !== 'choose') return;
   const room = roomOf(s.graph, s.roomId);
-  const door = doorByAction(room, id);
+  const door = doorByAction(s, room, id);
   if (door) pickDoor(s, door);
 }
 
@@ -764,8 +877,8 @@ export default {
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
-    // Ch2 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
-    const houseSecs = level === 1 ? 52 : 90;
+    // Ch2/Ch3 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
+    const houseSecs = (level === 1 || level === 2) ? 52 : 90;
     return makeRideState(level, rng, {
       graph,
       roomId: graph.start,
@@ -792,6 +905,8 @@ export default {
       faces: [],
       player: {x: 450, y: 720},
       tagStun: 0,
+      spinT: 0,
+      spun: false,
       houseSeconds: houseSecs,
     });
   },
@@ -799,18 +914,24 @@ export default {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       s.reduced = s.reduced || !!prefersReducedMotion?.();
-      // Runtime seeds houseLeft from export (90); override Ch2 to ~52s fair clock.
-      if (s.level === 1) s.houseLeft = s.houseSeconds || 52;
+      // Runtime seeds houseLeft from export (90); override Ch2/Ch3 to ~52s fair clock.
+      if (s.level === 1 || s.level === 2) s.houseLeft = s.houseSeconds || 58;
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
       if (s.practice) {
-        s.note = startRoom?.teach
-          ? 'Free practice · nothing kept. MIRROR LIES — SHUT THE PUNCHLINE.'
-          : 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
+        if (startRoom?.teachRotate) {
+          s.note = 'Free practice · nothing kept. MARK THE DOORS — then SHUT THE PUNCHLINE.';
+        } else if (startRoom?.teach) {
+          s.note = 'Free practice · nothing kept. MIRROR LIES — SHUT THE PUNCHLINE.';
+        } else {
+          s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
+        }
+      } else if (startRoom?.teachRotate) {
+        s.note = 'MARK THE DOORS — then the room turns. SHUT THE PUNCHLINE.';
+      } else if (startRoom?.teach) {
+        s.note = 'MIRROR LIES — SHUT the door that finishes the SETUP.';
       } else {
-        s.note = startRoom?.teach
-          ? 'MIRROR LIES — SHUT the door that finishes the SETUP.'
-          : 'SHUT THE PUNCHLINE.';
+        s.note = 'SHUT THE PUNCHLINE.';
       }
     }
     if (s.result) return;
@@ -864,14 +985,40 @@ export default {
           s.note = room.inspectNote
             || (room.mirror
               ? 'Glass swaps punchlines — read the real doors, then SHUT.'
-              : 'Read the punchline doors — then SHUT.');
+              : (room.rotate
+                ? 'Mark the punchline doors — then the room turns.'
+                : 'Read the punchline doors — then SHUT.'));
           maybeRevealTreasure(s, room);
         }
       }
     } else if (s.phase === 'inspect') {
       maybeRevealTreasure(s, room);
       const inspectNeed = reduced ? 0.45 : (room.inspectSec ?? PHASE_SECONDS.inspect);
-      if (s.phaseT >= inspectNeed) startChoose(s, room);
+      if (s.phaseT >= inspectNeed) {
+        if (room.rotate) {
+          if (reduced) {
+            s.spun = true;
+            s.spinT = spinDur(room);
+            startChoose(s, room);
+            if (room.teachRotate) s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
+          } else {
+            beginSpin(s, room);
+          }
+        } else {
+          startChoose(s, room);
+        }
+      }
+    } else if (s.phase === 'spin') {
+      s.spinT += dt;
+      const need = spinDur(room);
+      if (s.spinT >= need) {
+        s.spun = true;
+        s.spinT = need;
+        startChoose(s, room);
+        if (room.teachRotate) {
+          s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
+        }
+      }
     } else if (s.phase === 'choose') {
       s.choiceLeft = Math.max(0, s.choiceLeft - dt);
       maybeRevealTreasure(s, room);
@@ -933,7 +1080,7 @@ export default {
       }
     }
     if (s.phase !== 'choose') return;
-    const door = (room.doors || []).find(row => hitDoor(p, row));
+    const door = doorViews(s, room).find(row => hitDoor(p, row));
     if (door) pickDoor(s, door);
   },
   key(s, k, down) {

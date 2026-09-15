@@ -3,9 +3,11 @@
  * Chapter 1 Two Doors — SHUT THE PUNCHLINE (unchanged).
  * Chapter 2 Mirror Joke — implemented: one hazard taught alone (the mirror lies;
  *   reflection swaps/reverses door punchlines; truth is oval SETUP + real doors).
+ * Chapter 3 Upside Down — implemented: one hazard taught alone (room rotates;
+ *   mark door positions before the turn; punchlines travel with door objects as
+ *   they swap places; memory solves which physical door still finishes the SETUP).
  *
- * Unfinished chapters (reuse Ch2 graph until authored):
- *   3 Upside Down     — doors move when the room rotates; remember positions
+ * Unfinished chapters (reuse Ch3 graph until authored):
  *   4 Shrinking Hall  — perspective: floor tiles / shadows prove near vs far
  *   5 Midway Echoes   — distorted versions of the other five rides as clues
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
@@ -44,9 +46,12 @@ export const PHASE_SECONDS = {
   inspect: 0.85,
   transition: 0.72,
   detourReveal: 1.55,
+  /** Brief paper slide/swap after inspect on rotate rooms. */
+  spin: 0.85,
+  spinTeach: 1.05,
 };
 
-/** Eligible treasure spawn ids — Ch1 + Ch2 last rooms share last-laugh. */
+/** Eligible treasure spawn ids — Ch1–Ch3 last rooms share last-laugh. */
 export const SPAWN_IDS = ['last-laugh'];
 
 /** Oval stage clamp for chase faces / player paper sprite. */
@@ -263,8 +268,8 @@ export const CHAPTER2 = {
       title: 'Looking Gallery',
       mirror: true,
       /* Same hazard, shorter teach — no new stack. */
-      revealSec: 1.25,
-      inspectSec: 1.0,
+      revealSec: 1.05,
+      inspectSec: 0.85,
       setup: 'What do you call a funny looking-glass?',
       setupProp: 'pane',
       caption: 'Same lie. SHUT the door that finishes the SETUP.',
@@ -350,8 +355,161 @@ export const CHAPTER2 = {
   },
 };
 
+/**
+ * Chapter 3 — Upside Down.
+ * ONE new hazard taught alone on the first main room: the room rotates.
+ * Mark door positions before the turn; punchline plates stay on the door objects
+ * as they visually swap places (left↔right). Memory solves which physical door
+ * still finishes the SETUP. Soft fails only — detour → rejoin. Never abort.
+ * No mirror restack — Ch3 focuses on rotate only. NOT wink / look-direction Simon.
+ */
+export const CHAPTER3 = {
+  id: 'upside-down',
+  start: 'foyer',
+  mainCount: 3,
+  rooms: {
+    foyer: {
+      id: 'foyer',
+      kind: 'main',
+      title: 'Spin Foyer',
+      teachRotate: true,
+      rotate: true,
+      /* Long clear coaching window — teach rotate alone (helter Ch3 bar). */
+      revealSec: 2.35,
+      inspectSec: 2.15,
+      setup: 'Why did the funhouse tip the foyer?',
+      setupProp: 'spin',
+      caption: 'MARK THE DOORS — then the room turns. SHUT the punchline after.',
+      revealNote: 'MARK THE DOORS — then the room turns.',
+      inspectNote: 'Punchlines ride with the doors. Mark them — then wait for the spin.',
+      chooseNote: 'REMEMBER — then SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'gallery', {
+          correct: true,
+          punchline: 'For a punchline flip!',
+          label: 'Punchline flip',
+        }),
+        door('right', 'dizzy', {
+          correct: false,
+          punchline: 'More spinning!',
+          label: 'More spinning',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'spin', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. Mark which door finishes it — then the room turns.'},
+        {id: 'spin-find', kind: 'find', prop: 'cushion', x: 300, y: 630, r: 40, find: 'star-token',
+          flavor: 'A star token under a paper cushion — not the punchline.'},
+        {id: 'ribbon', kind: 'flavor', prop: 'panel', x: 600, y: 620, r: 34,
+          flavor: 'Pretty paper. Mark the punchline doors before they swap.'},
+      ],
+      faces: 1,
+    },
+    dizzy: {
+      id: 'dizzy',
+      kind: 'detour',
+      title: 'Dizzy Joke',
+      joke: 'dizzy',
+      caption: 'The room spins a polite circle, then points you onward.',
+      revealNote: 'Wrong punchline — a dizzy gag. Gallery waits ahead.',
+      rejoin: 'gallery',
+    },
+    gallery: {
+      id: 'gallery',
+      kind: 'main',
+      title: 'Turn Gallery',
+      rotate: true,
+      /* Same hazard, shorter — no new stack (no mirror teach). */
+      revealSec: 1.05,
+      inspectSec: 0.85,
+      setup: 'What do you call a hallway that flips?',
+      setupProp: 'turn',
+      caption: 'Same spin. MARK — then SHUT the door that finishes the SETUP.',
+      revealNote: 'Room turns again — mark the punchlines first.',
+      inspectNote: 'Doors will swap. Remember which finishes the SETUP.',
+      chooseNote: 'REMEMBER — SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'whirl', {
+          correct: false,
+          punchline: 'A soft tumble',
+          label: 'Soft tumble',
+        }),
+        door('right', 'last-court', {
+          correct: true,
+          punchline: 'A flip gag!',
+          label: 'Flip gag',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'turn', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. Mark the finishing door before the spin.'},
+        {id: 'panel', kind: 'find', prop: 'panel', x: 590, y: 636, r: 42, find: 'moon-penny',
+          flavor: 'A moon penny behind a sliding paper panel.'},
+        {id: 'tassel', kind: 'flavor', prop: 'cushion', x: 310, y: 630, r: 36,
+          flavor: 'A velvet tassel. Soft — not the punchline.'},
+      ],
+      faces: 1,
+    },
+    whirl: {
+      id: 'whirl',
+      kind: 'detour',
+      title: 'Whirl Hall',
+      joke: 'whirl',
+      caption: 'A paper whirl bows — then ushers you on.',
+      revealNote: 'Whirl gag. Last court is just ahead.',
+      rejoin: 'last-court',
+    },
+    'last-court': {
+      id: 'last-court',
+      kind: 'main',
+      title: 'Last Spin Court',
+      rotate: true,
+      last: true,
+      setup: 'Knock knock. Who\'s there? Upside.',
+      setupProp: 'flip',
+      caption: 'Final spin once — then the laughing door.',
+      revealNote: 'One more turn — MARK, then SHUT the last laugh.',
+      inspectNote: 'If a keepsake is here, it sits in the open — tap it.',
+      chooseNote: 'SHUT THE LAST LAUGH',
+      doors: [
+        door('left', 'exit', {
+          correct: true,
+          lastLaugh: true,
+          punchline: 'Upside who? — exit!',
+          label: 'Upside who? — exit',
+        }),
+        door('right', 'topsy', {
+          correct: false,
+          punchline: 'Stay dizzy',
+          label: 'Stay dizzy',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'flip', x: 450, y: 540, r: 70,
+          flavor: 'Upside who? Mark the laughing door — then the room turns once.'},
+        {id: 'mouth', kind: 'flavor', prop: 'mouth', x: 268, y: 700, r: 40,
+          flavor: 'A comedy mouth. It only laughs for the true punchline.'},
+        {id: 'court-cushion', kind: 'flavor', prop: 'cushion', x: 600, y: 640, r: 38,
+          flavor: 'A court cushion. Soft landing, no secret.'},
+      ],
+      treasure: {spawnId: 'last-laugh', x: 450, y: 470, r: 58},
+      faces: 1,
+    },
+    topsy: {
+      id: 'topsy',
+      kind: 'detour',
+      title: 'Topsy Joke',
+      joke: 'topsy',
+      caption: 'Topsy-turvy admits the gag, then clears the way back.',
+      revealNote: 'Not the last laugh. Back to the court — finish the joke.',
+      rejoin: 'last-court',
+    },
+  },
+};
+
 export function chapterGraph(level) {
-  // level 0 = Ch1; level ≥1 uses Ch2 until Ch3+ are authored.
+  // level 0 = Ch1; level 1 = Ch2; level ≥2 = Ch3 until Ch4+ are authored.
+  if (level >= 2) return CHAPTER3;
   if (level >= 1) return CHAPTER2;
   return CHAPTER1;
 }
