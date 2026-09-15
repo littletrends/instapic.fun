@@ -63,3 +63,8 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 @media(max-width:640px){.crew-grid{grid-template-columns:repeat(3,1fr)}.crew-runway{height:240px}.crew-book{padding:18px}.doll-torso-preview{width:100%}.doll-maker-parts{width:100%}.doll-books{grid-template-columns:1fr 1fr}.crew-book.is-open-album{height:96dvh;padding:12px}.crew-book.is-open-album .doll-torso-row{flex-direction:column}.crew-book.is-open-album .doll-preview-stage{width:110px;height:146px}}
 
 .crew-entry{display:flex;align-items:center;gap:14px;text-align:left}.crew-entry > div{flex:1;min-width:0}#chosenCrewPortrait{width:76px;flex:0 0 76px;height:101px;border:1px solid #b49360;border-radius:6px;background-color:#fffaf0;background-size:400% 100%;background-position:0 0;background-repeat:no-repeat}
+
+.doll-item-section{margin:0 0 8px;border:1px solid #d4b882;border-radius:8px;background:#fffaf0}
+.doll-item-section>summary{cursor:pointer;padding:12px;font:600 15px/1.3 Georgia,serif;color:#6b4e2e;min-height:44px;box-sizing:border-box}
+.doll-item-section>summary:focus-visible{outline:2px solid #6b4e2e;outline-offset:2px}
+.doll-item-section>.doll-layer-row{padding:0 10px 10px;margin:0}

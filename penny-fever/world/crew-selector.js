@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-clothing-slots-5';
+} from './paper-dolls.js?v=doll-folders-6';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -85,12 +85,12 @@ function optionRow(title, key, items, swatch) {
 }
 
 function layerRow(title, key, items, folder) {
-  return `<div class="doll-row doll-layer-row"><strong>${title}</strong>${items.map(item => {
+  return `<details class="doll-item-section"><summary>${title}</summary><div class="doll-row doll-layer-row">${items.map(item => {
     const thumb = item.id === 'none' || !folder
       ? ''
       : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/thumbnails/${folder}/${item.id}.webp" loading="lazy" fetchpriority="low" decoding="async" alt=""></span>`;
     return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.label}</button>`;
-  }).join('')}</div>`;
+  }).join('')}</div></details>`;
 }
 
 let draftPaintVersion = 0;
