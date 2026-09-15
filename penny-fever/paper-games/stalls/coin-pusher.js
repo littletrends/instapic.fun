@@ -102,6 +102,12 @@ function seedPile(level) {
   return coins;
 }
 
+const pennyCount = coins => coins.reduce((n,c)=>n+(c.kind === "treasure" ? 0 : (c.count || 1)),0);
+function ledger(tray) {
+  // Older saves start accounting from their current layout; never reseed them.
+  return tray.ledger ||= {starting:pennyCount(tray.coins), dropped:0, returned:0};
+}
+
 function freshTray(level) {
   const ch = CHAPTERS[level];
   return {
@@ -128,7 +134,7 @@ function persistState(s) {
   const book = readBook();
   book.selected = s.level;
   const session = {};
-  for (const key of ['t','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle']) session[key] = s[key];
+  for (const key of ['t','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle','handful']) session[key] = s[key];
   const tray = {...s.tray, coins:s.tray.coins.map(c=>({...c})), session};
   if (s.practice) book.practice = {level:s.level, tray};
   else book.trays[String(s.level)] = tray;
@@ -163,13 +169,8 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
       c.vy = Math.max(c.vy, 40);
     }
     if (!c.falling && c.y + c.r > FRONT - 3) {
-      if (c.vy > 28) {
-        c.falling = true;
-        c.vy = Math.max(c.vy, 80);
-      } else {
-        c.y = FRONT - c.r - 5;
-        c.vy = 0;
-      }
+      c.falling = true;
+      c.vy = Math.max(c.vy, 80);
     }
     if (c.x - c.r < wallsL) { c.x = wallsL + c.r; c.vx = Math.abs(c.vx) * 0.25; }
     if (c.x + c.r > wallsR) { c.x = wallsR - c.r; c.vx = -Math.abs(c.vx) * 0.25; }
@@ -200,9 +201,10 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
         if (a.falling || b.falling) continue;
         const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, min = a.r + b.r + 0.6;
         if (d < min) {
-          const nx = dx / d, ny = dy / d, overlap = (min - d) / 2;
-          a.x -= nx * overlap; a.y -= ny * overlap;
-          b.x += nx * overlap; b.y += ny * overlap;
+          const nx = dx / d, ny = dy / d, overlap = min - d;
+          const ma = a.kind==='treasure'?2:Math.sqrt(a.count||1), mb = b.kind==='treasure'?2:Math.sqrt(b.count||1);
+          a.x -= nx * overlap * mb/(ma+mb); a.y -= ny * overlap * mb/(ma+mb);
+          b.x += nx * overlap * ma/(ma+mb); b.y += ny * overlap * ma/(ma+mb);
           const va = a.vx * nx + a.vy * ny, vb = b.vx * nx + b.vy * ny;
           const diff = (vb - va) * 0.4;
           a.vx += diff * nx; a.vy += diff * ny;
@@ -215,15 +217,15 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
 
 function uiButtons(s) {
   const n = s.practice ? 1 : pursePennies();
-  const q = Math.max(1, Math.floor(n / 4));
-  const h = Math.max(1, Math.floor(n / 2));
+  const q = n ? Math.max(1, Math.floor(n / 4)) : 0;
+  const h = n ? Math.max(1, Math.floor(n / 2)) : 0;
   const can = s.phase === 'idle' && !s.busy;
-  const capped=count=>Math.min(60,count);
+
   return [
     {id:'drop1',label:s.practice?'Practice drop':'Drop 1 penny',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
-    {id:'drop14',label:'¼ purse · '+capped(q),x:460,y:942,w:410,h:84,count:capped(q),on:can&&!s.practice&&n>=1},
-    {id:'drop12',label:'½ purse · '+capped(h),x:30,y:1036,w:410,h:84,count:capped(h),on:can&&!s.practice&&n>=1},
-    {id:'dropall',label:(n>60?'Drop 60 pennies':'Drop purse · '+n),x:460,y:1036,w:410,h:84,count:capped(n),on:can&&!s.practice&&n>=1},
+    {id:'drop14',label:'¼ purse · '+q,x:460,y:942,w:410,h:84,count:q,on:can&&!s.practice&&n>=1},
+    {id:'drop12',label:'½ purse · '+h,x:30,y:1036,w:410,h:84,count:h,on:can&&!s.practice&&n>=1},
+    {id:'dropall',label:('Full purse · '+n),x:460,y:1036,w:410,h:84,count:n,on:can&&!s.practice&&n>=1},
   ];
 }
 function hitButton(s, p) {
@@ -255,10 +257,11 @@ function collectOff(s) {
     }
     if (c.falling && c.y > FRONT + 90) {
       if (c.kind === "treasure") treasureWon = true;
-      else penniesWon += 1;
+      else penniesWon += c.count || 1;
       clink(320 + Math.random() * 80, 0.08, 0.06);
     } else remaining.push(c);
   }
+  ledger(s.tray).returned += penniesWon;
   s.tray.coins = remaining;
   if (!penniesWon && !treasureWon) return;
   if (!s.practice) {
@@ -318,6 +321,7 @@ export default {
     const book = readBook();
     const practice = !book.practiceUsed;
     const tray = practice ? (book.practice?.level === level ? book.practice.tray : {...freshTray(level), mark:999}) : loadTray(level);
+    ledger(tray);
     tray.coins = tray.coins.map(c=>({vx:0,vy:0,falling:false,...c}));
     if (alleyPlay && owned(CHAPTERS[level].prize)) {
       tray.treasureOwned = true;
@@ -340,7 +344,7 @@ export default {
       busy: false,
       note: practice
         ? "Complimentary first drop. Watch the hopper, then tap Drop."
-        : "The tray is as you left it. One penny, one push.",
+        : "The tray is as you left it. One handful, one push.",
       ...(tray.session || {}),
     };
   },
@@ -355,11 +359,21 @@ export default {
       if (s.slider < 0) { s.slider = 0; s.sliderDir = 1; }
       s.dropX = LEFT + 18 + s.slider * (RIGHT - LEFT - 36);
     }
+    if(s.phase==='push'){
+      const advance=Math.max(0,Math.sin(Math.min(1,s.cycle+dt*.85)*Math.PI)-Math.sin(s.cycle*Math.PI));
+      const shove=2*Math.sqrt(s.handful||1)*advance;
+      for(const coin of s.tray.coins)if(!coin.falling){
+        const lane=Math.exp(-Math.pow((coin.x-s.dropX)/85,2));
+        coin.y+=shove*lane;
+        coin.vy=Math.max(coin.vy,shove*lane/Math.max(dt,.001));
+      }
+    }
     const pusherY = BACK - 8 + (s.phase === "push" ? Math.sin(s.cycle * Math.PI) * (ch.push || 70) : 0);
     const steps = 5;
     const h = dt / steps;
     const pegs = s.pegs || pegsFor(ch);
     for (let i = 0; i < steps; i++) resolveCoins(s.tray.coins, ch, pegs, pusherY, h);
+    collectOff(s);
     if (s.phase === "drop") {
       const still = s.tray.coins.some(c => c.falling && c.y < FRONT - 20);
       if (!still) {
@@ -371,7 +385,6 @@ export default {
     }
     if (s.phase === "push") {
       s.cycle += dt * 0.85;
-      collectOff(s);
       if (s.cycle >= 1) {
         s.cycle = 0;
         s.phase = "settle";
@@ -380,7 +393,6 @@ export default {
     }
     if (s.phase === "settle") {
       s.settle -= dt;
-      collectOff(s);
       if (s.settle <= 0) {
         s.phase = "idle";
         s.busy = false;
@@ -411,7 +423,8 @@ export default {
       s.note = "Wait for the shelf to finish.";
       return;
     }
-    let n = Math.max(1, count | 0);
+    let n = Math.floor(Number(count));
+    if (!Number.isSafeInteger(n) || n < 1) return;
     if (s.practice) n = 1;
     else {
       const have = pursePennies();
@@ -419,23 +432,26 @@ export default {
         s.note = "Purse is empty. Knock some over the lip.";
         return;
       }
-      n = Math.min(n, have, 60);
+      n = Math.min(n, have);
       if (!purseDebit(n)) { s.note = "The purse could not pay for that drop."; return; }
       s.tray.paidCount += n;
     }
+    ledger(s.tray).dropped += n;
+    s.handful = n;
     s.busy = true;
     s.lastWin = 0;
     const stamp = Date.now();
-    for (let i = 0; i < n; i++) {
-      const col = i % 5, row = (i / 5) | 0;
+    // A whole handful lands together. Counted stacks retain every penny and
+    // leave room for a growing pile rather than flooding a single flat layer.
+    const stacks = Math.min(n, 24), cols = Math.min(stacks, 6);
+    for (let i = 0; i < stacks; i++) {
+      const col = i % cols, row = Math.floor(i / cols);
+      const count = Math.floor(n / stacks) + (i < n % stacks ? 1 : 0);
       s.tray.coins.push({
-        id: "d" + stamp + "-" + i,
-        kind: "penny",
-        x: s.dropX + (col - 2) * 14 + (Math.random() - 0.5) * 6,
-        y: BACK - 36 - row * 16,
-        vx: (Math.random() - 0.5) * 50,
-        vy: 90 + Math.random() * 40,
-        r: COIN_R, falling: true,
+        id: "d" + stamp + "-" + i, kind: "penny", count,
+        x: Math.max(LEFT+32,Math.min(RIGHT-32,s.dropX+(col-(cols-1)/2)*15)),
+        y: BACK-36-row*3,
+        vx: 0, vy: 120, r: COIN_R, falling: true,
       });
     }
     s.phase = "drop";
@@ -447,7 +463,10 @@ export default {
   action(s, id, count) {
     if (id === "next-chapter") s.requestNext = true;
     if (id === "drop1" || id === "drop") this.drop(s, 1);
-    if (id === "drop14" || id === "drop12" || id === "dropall") this.drop(s, count);
+    if (id === "drop14" || id === "drop12" || id === "dropall") {
+      const purse=pursePennies();
+      this.drop(s,id==='dropall'?purse:Math.max(1,Math.floor(purse/(id==='drop14'?4:2))));
+    }
   },
   key(s, k, down) {
     if (!down) return;
@@ -481,9 +500,15 @@ export default {
 
     for (const coin of s.tray.coins) {
       const img = coin.kind === "treasure" ? d.art[ch.prize] : (coin.kind === "star" ? d.art.star : d.art.penny);
+      if((coin.count||1)>1){
+        for(let layer=1;layer<=Math.min(4,coin.count-1);layer++)
+          d.circle(coin.x,coin.y-layer*3,coin.r,"#b87333","#7a4a18",1);
+      }
       if (img) d.sprite(img, coin.x, coin.y, { w: coin.r * 2.15, h: coin.r * 2.15 });
       else d.circle(coin.x, coin.y, coin.r, coin.kind === "treasure" ? "#e8c878" : "#b87333", "#7a4a18", 2);
     }
+
+    d.text(pennyCount(s.tray.coins)+" pennies in machine",450,810,17,"#fff0c8");
 
     // locked treasure in the crown shelf
     if (!s.tray.treasureOn && !s.tray.treasureOwned) {

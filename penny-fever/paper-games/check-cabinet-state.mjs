@@ -56,3 +56,37 @@ for(let level=0;level<6;level++){
  copper.persist(tray);const restore=copper.create(level);assert.deepEqual(restore.tray.coins,tray.tray.coins);assert.equal(restore.phase,tray.phase);
 }
 console.log('PASS: all six Copper trays keep their saved state and their pegs inside the bed.');
+
+const sumPennies=coins=>coins.reduce((n,c)=>n+(c.kind==='treasure'?0:c.count||1),0);
+for(let level=0;level<6;level++)for(const [button,spent] of [['drop1',1],['drop14',75],['drop12',150],['dropall',300]]){
+ mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=300;
+ const game=copper.create(level), starting=sumPennies(game.tray.coins);
+ assert.equal(starting,[24,21,21,10,10,8][level]);
+ copper.action(game,button);
+ assert.equal(cash,300-spent);assert.equal(sumPennies(game.tray.coins),starting+spent);
+ assert.equal(game.tray.ledger.dropped,spent);
+ const incoming=game.tray.coins.filter(c=>c.id.startsWith('d'));
+ assert(Math.max(...incoming.map(c=>c.y))-Math.min(...incoming.map(c=>c.y))<=9,'handful lands together');
+ for(let frame=0;frame<600;frame++){
+  copper.update(game,1/60);
+  assert.equal(sumPennies(game.tray.coins)+game.tray.ledger.returned,starting+spent);
+  assert.equal(cash,300-spent+game.tray.ledger.returned);
+  if(frame===8){copper.persist(game);const restored=copper.create(level);assert.deepEqual(restored.tray.coins,JSON.parse(JSON.stringify(game.tray.coins)));assert.deepEqual(restored.tray.ledger,game.tray.ledger);assert.equal(restored.phase,game.phase);}
+  if(!game.busy)break;
+ }
+ assert(!game.busy,'handful completes');
+ assert(game.tray.coins.every(c=>Number.isFinite(c.x)&&Number.isFinite(c.y)));
+ if(button==='dropall')console.log(`Chapter ${level+1}: starting ${starting}, dropped ${spent}, returned ${game.tray.ledger.returned}, retained ${sumPennies(game.tray.coins)}`);
+}
+console.log('PASS: all six chapters × four drop sizes, 300-penny full purse, simultaneous landing, exact accounting and mid-drop restoration.');
+for(const amount of [1,300,3000]){
+ mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));delete inventory.items['coin-sleeve'];cash=amount;
+ const game=copper.create(0);game.tray.treasureOn=true;
+ game.tray.coins.push({id:'treasure',kind:'treasure',x:450,y:570,vx:0,vy:0,r:24,falling:false});
+ copper.drop(game,amount);
+ for(let i=0;i<600;i++)copper.update(game,1/60);
+ assert.equal(sumPennies(game.tray.coins)+game.tray.ledger.returned,24+amount);
+ if(amount===1)assert(!game.tray.treasureOwned,'small drop does not guarantee the hanging prize');
+ else assert(game.tray.treasureOwned,'aimed haul can push the hanging prize over');
+}
+console.log('PASS: aimed full haul moves a hanging prize where one penny does not; 3,000-penny accounting.');
