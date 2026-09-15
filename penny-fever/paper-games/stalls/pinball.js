@@ -1,10 +1,13 @@
-import {firstPrizeEligible, prizeAttempts} from '../first-prize.js?v=first-prize-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=entry-1';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
+// Winning windows are whole elapsed seconds, including second 100.
+const WIN_SECONDS = [[7,18,31,46,63,82,97],[9,24,39,58,76,94],[12,29,48,69,91],[16,37,61,88],[21,52,84],[27,59,100]];
+const BALL_SECONDS = 100;
+const LAYOUT_VERSION = 2;
 const R = 11;
 const G = 390;
 const MAX = 940;
@@ -74,7 +77,7 @@ function writeBook(s) {
   } catch { /* quota */ }
 }
 
-const SNAPSHOT_FIELDS=['t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver'];
+const SNAPSHOT_FIELDS=['houseLeft','cabinetOn','layoutVersion','rewardAt','ballPennies','ballTokens','t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver'];
 function snapshotOf(s){
  const snap={v:1};
  for(const key of SNAPSHOT_FIELDS)if(s[key]!==undefined)snap[key]=s[key];
@@ -89,9 +92,7 @@ function releaseInput(s){
 }
 function prizeStatus(s){
  if(!pickUnique(s))return 'Treasure collected';
- if(prizeAttempts('pinball',s.level)<=1)return 'Prize ready · hit a bumper';
- const left=Math.max(0,s.mark-s.hits);
- return left?left+' hits to release prize':'Prize ready';
+ return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
   const dx = b.x - a.x, dy = b.y - a.y, t = clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1), 0, 1);
@@ -113,14 +114,6 @@ function bounceCircle(p, c, r, kick) {
   const speed = Math.max(kick, Math.hypot(p.vx, p.vy) * 1.02);
   p.vx = nx * speed; p.vy = ny * speed;
   return true;
-}
-function drought(s) {
-  let m = 1;
-  if (s.wonPennies >= 12) m *= 0.55;
-  if (s.wonPennies >= 24) m *= 0.4;
-  if (s.specials >= 6) m *= 0.5;
-  if (s.specials >= 10) m *= 0.35;
-  return m;
 }
 function pickToken(s) {
   const options = TOKENS.filter(t => {
@@ -176,37 +169,31 @@ function pay(s, id, x, y) {
 function loosenMark(level) {
   return [6, 8, 10, 12, 14, 16][level] || 10;
 }
-function dropFromHit(s, kind, x, y) {
-  const rng = random(s);
-  const d = drought(s);
-  const jackpot = s.lights.every(Boolean);
-  if (kind === 'bumper' || kind === 'target' || kind === 'saucer') {
-    s.hits = (s.hits || 0) + 1;
-    if (!s.mark) s.mark = loosenMark(s.level);
-    if (firstPrizeEligible('pinball',s.level) || s.hits >= s.mark) {
-      const id = pickUnique(s);
-      if (id) pay(s, id, x, y);
-    } else s.note = 'The unique shifted. It is working loose.';
-    writeBook(s);
-  }
-  if (kind === 'bumper') {
-    s.score += 120;
-    if (rng < 0.08 * d) pay(s, 'everyday-penny', x, y);
-    else if (rng < 0.08 * d + 0.022 * d) pay(s, pickToken(s), x, y);
-  } else if (kind === 'sling') {
-    s.score += 40;
-    if (rng < 0.04 * d) pay(s, 'everyday-penny', x, y);
-  } else if (kind === 'target' || kind === 'roll') {
-    s.score += kind === 'target' ? 250 : 80;
-    if (rng < 0.22 * d) pay(s, 'everyday-penny', x, y);
-    else if (rng < 0.32 * d) pay(s, pickToken(s), x, y);
-  } else if (kind === 'saucer') {
-    s.score += jackpot ? 1400 : 800;
-    if (rng < 0.48 * d) pay(s, 'everyday-penny', x, y);
-    else if (rng < 0.78 * d) pay(s, pickToken(s), x, y);
-    if (jackpot) s.lights = [false, false, false];
-  }
+function ordinaryReturn(s, id, x, y) {
+  // A physical bounce still scores, but cannot repeatedly empty the purse.
+  if (s.t < s.rewardAt || (id==='everyday-penny' ? s.ballPennies>=2 : s.ballTokens>=1)) return;
+  if(id==='everyday-penny')s.ballPennies++;else s.ballTokens++;
+  s.rewardAt=s.t+8;
+  pay(s,id,x,y);
 }
+function dropFromHit(s, kind, x, y) {
+  if(!s.cabinetOn || s.mode!=='live')return;
+  const second=Math.min(100,Math.floor(BALL_SECONDS-s.houseLeft+1e-7)+1);
+  if(kind==='bumper'){
+    s.hits++;
+    if(WIN_SECONDS[s.level].includes(second)){
+      const id=pickUnique(s);if(id)pay(s,id,x,y);
+    }
+  }
+  const jackpot=s.lights.every(Boolean);
+  s.score+=({bumper:120,sling:40,target:250,roll:80,saucer:jackpot?1400:800})[kind]||0;
+  const rng=random(s),chance=({bumper:.025,sling:0,target:.06,roll:.04,saucer:.16})[kind]||0;
+  if(rng<chance)ordinaryReturn(s,'everyday-penny',x,y);
+  else if(rng<chance+({bumper:.006,target:.012,roll:.008,saucer:.04})[kind])ordinaryReturn(s,pickToken(s),x,y);
+  if(kind==='saucer'&&jackpot)s.lights=[false,false,false];
+  writeBook(s);
+}
+
 function layout(level) {
   const pinch = Math.min(14, level * 2);
   const rails = [
@@ -230,33 +217,28 @@ function layout(level) {
     {kick: {x: 120, y: -310}, cool: 0, segs: [seg([328, 742], [362, 868]), seg([328, 742], [328, 868])]},
     {kick: {x: -120, y: -310}, cool: 0, segs: [seg([540, 742], [506, 868]), seg([540, 742], [540, 868])]},
   ];
-  const bumpers = [
-    {x: 338, y: 372, r: 34, cool: 0, flash: 0},
-    {x: 542, y: 372, r: 34, cool: 0, flash: 0},
-    {x: 440, y: 518, r: 36, cool: 0, flash: 0},
+  const patterns = [
+    [[338,372,34],[542,372,34],[440,540,36]],
+    [[470,345,32],[570,475,34],[425,620,30],[305,500,28]],
+    [[315,360,28],[425,445,30],[535,535,32],[390,650,26]],
+    [[305,370,30],[575,370,30],[335,575,32],[545,575,32]],
+    [[470,365,26],[580,480,28],[455,565,30],[330,645,28],[560,680,22]],
+    [[320,375,28],[450,455,30],[575,555,28],[355,575,26],[455,710,24]],
   ];
-  if (level >= 1) bumpers.push({x: 440, y: 300, r: 22, cool: 0, flash: 0});
-  if (level >= 3) bumpers.push({x: 330, y: 620, r: 24, cool: 0, flash: 0}, {x: 550, y: 620, r: 24, cool: 0, flash: 0});
-  if (level >= 4) bumpers.push({x: 440, y: 680, r: 20, cool: 0, flash: 0});
+  const bumpers=patterns[level].map(([x,y,r])=>({x,y,r,cool:0,flash:0}));
   const posts = [
     {x: 440, y: 888, r: 9, kick: 220},
     {x: 318, y: 700, r: 8, kick: 180},
     {x: 562, y: 700, r: 8, kick: 180},
   ];
   if (level >= 2) posts.push({x: 440, y: 760, r: 7, kick: 160});
-  const targets = [
-    {x: 236, y: 448, on: false, cool: 0},
-    {x: 236, y: 518, on: false, cool: 0},
-    {x: 236, y: 588, on: false, cool: 0},
-  ];
-  const rolls = [
-    {x: 320, y: 248, on: false},
-    {x: 440, y: 248, on: false},
-    {x: 560, y: 248, on: false},
-  ];
+  const targetPatterns=[[[236,448],[236,518],[236,588]],[[630,420],[630,510],[630,600]],[[236,470],[630,610],[236,650]],[[236,440],[630,440],[440,690]],[[630,360],[236,470],[630,620]],[[236,480],[630,420],[236,670]]];
+  const targets=targetPatterns[level].map(([x,y])=>({x,y,on:false,cool:0}));
+  const rolls=[300,440,590].map((x,i)=>({x,y:235+(level%3)*12+(i%2)*12,on:false}));
+  const [sx,sy]=[[440,268],[320,300],[560,290],[440,250],[330,275],[540,275]][level];
   return {
     rails, slings, bumpers, posts, targets, rolls,
-    saucer: {x: 440, y: 268, cool: 0, hold: 0},
+    saucer: {x:sx,y:sy,cool:0,hold:0,armed:true},
     flippers: [
       {x: 292, y: 1008, a: REST, w: 0, sign: 1},
       {x: 576, y: 1008, a: Math.PI - REST, w: 0, sign: -1},
@@ -264,7 +246,22 @@ function layout(level) {
     outL: 276 - pinch, outR: 618 + pinch,
   };
 }
+function refreshLayout(s){
+  if(s.layoutVersion===LAYOUT_VERSION)return;
+  const built=layout(s.level);
+  for(const key of ['bumpers','targets','rolls','saucer'])s[key]=built[key];
+  s.layoutVersion=LAYOUT_VERSION;
+}
+function ejectSaucer(s){
+  const p=s.ball, cup=s.saucer;
+  p.x=cup.x;p.y=cup.y+56;
+  while(p.y<740 && [...s.bumpers,...s.posts].some(b=>Math.hypot(p.x-b.x,p.y-b.y)<b.r+R+8))p.y+=16;
+  p.vx=cup.x<440?180:-180;p.vy=400;
+  cup.hold=0;cup.armed=false;cup.cool=2;
+  s.stuckPos={x:p.x,y:p.y,t:s.t};
+}
 function seatLane(s) {
+  if(!s.activeBall)refreshLayout(s);
   s.mode = 'lane';
   s.charge = 0;
   s.charging = false;
@@ -307,12 +304,12 @@ function releasePlunger(s) {
         return;
       }
       s.credit = 3;
-      if(firstPrizeEligible('pinball',s.level))s.mark=Math.min(s.mark,s.hits+1);
     }
     s.credit -= 1;
   } else if(!s.activeBall)s.ammo--;
   s.mode = 'live';
-  if(!s.activeBall)s.balls++;
+  if(!s.activeBall){s.balls++;s.houseLeft=BALL_SECONDS;s.ballPennies=0;s.ballTokens=0;s.rewardAt=s.t+3;s.saucer.hold=0;s.saucer.armed=true;}
+  s.cabinetOn=true;
   s.activeBall=true;
   s.ball.vx = -18 - power * 28;
   s.ball.vy = -460 - power * 760;
@@ -322,6 +319,7 @@ function releasePlunger(s) {
 function drain(s) {
   s.mode = 'dead';
   s.activeBall=false;
+  s.cabinetOn=false;s.lights=[false,false,false];s.saucer.hold=0;
   s.deadAt = s.t;
   s.charging = false;
   s.charge = 0;
@@ -344,10 +342,19 @@ function shouldDrain(s, p) {
 
 export default {
   title: 'Pinball Alley',
+  winningSeconds:level=>WIN_SECONDS[level].slice(),
   live: alleyPlay,
   chapterNavigation:true,
   fullInstructions:true,
-  houseSeconds:false,
+  houseSeconds:BALL_SECONDS,
+  // The engine counts each physics substep so an impact uses its exact second.
+  clockRuns:()=>false,
+  onTimeout(s){
+    if(!s.activeBall)return;
+    s.houseLeft=0;drain(s);
+    s.note='100 seconds — lights out. Launch the next ball.';
+    writeBook(s);
+  },
   selectedChapter(){return Math.max(0,Math.min(5,Number(readStore().currentChapter)||0));},
   releaseInput,
   cancelAction(s,id){if(id==='plunge'){s.pointerPlunge=false;s.dragPlunge=false;s.charging=false;s.charge=0;if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};}else if(id==='left'||id==='right')s[id]=false;},
@@ -357,20 +364,20 @@ export default {
   actionLabels(s){return {plunge:s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
   intro: alleyPlay
-    ? 'Six tables, three balls for one penny. The first paid set makes the chapter prize ready for a bumper, target or saucer hit. Your ball, remaining balls and table stay saved when you leave. There is no house timer.'
+    ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter bonus. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Hit bumpers and targets for score and small returns, and light all three lamps for the saucer jackpot. The first paid set has its treasure ready to collect on a qualifying hit.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Small returns are limited to two pennies and one token per ball, spaced at least eight seconds apart. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
-    ? 'Hold the plunger, let go, then tap the flippers. One penny, three balls. Loosen the unique.'
+    ? 'Hold the plunger, let go, then tap the flippers. One penny, three balls. Each ball lasts up to 100 seconds.'
     : 'Pull the spring and tap the flippers.',
   liveButton: 'Step up to the table',
   tableDetail: alleyPlay
-    ? 'One penny, three balls. The first paid set has the chapter treasure ready. Your ball and unused balls stay saved; no timer cuts them short.'
+    ? 'One penny, three balls. Each ball gets 100 seconds. Bounce on a winning second for the bonus. When the lights go out, launch again; unused balls stay saved.'
     : 'A different cabinet. Pull the spring, tap the bats. Practice balls stay in the workshop.',
-  levels: ['First ball', 'A hungrier drain', 'Lights in a hurry', 'The tight outlanes', 'Storm on the glass', 'The house never blinks'],
+  levels: ['Thunder Garden', 'Moonlit Bumpers', 'Lantern Lanes', 'Brass Orchard', 'Storm Glass', 'Midnight Spark'],
   sprites: SPRITES,
   prizes: SETS.map(t => t.prize),
   actions: [
@@ -384,17 +391,18 @@ export default {
     const set = SETS[level] || SETS[0];
     const built = layout(level);
     const s = {
-      level, t: 0, mode: 'lane', activeBall:false, charge: 0, charging: false, pointerPlunge: false, touches:{}, rngState:(level+1)*4099,
+      level,houseLeft:BALL_SECONDS,cabinetOn:false,layoutVersion:LAYOUT_VERSION,rewardAt:0,ballPennies:0,ballTokens:0, t: 0, mode: 'lane', activeBall:false, charge: 0, charging: false, pointerPlunge: false, touches:{}, rngState:(level+1)*4099,
       left: false, right: false, combo: 0, lights: [false, false, false],
       balls: book.balls, score: book.score, wonPennies: book.wonPennies, specials: book.specials,
       seen: book.seen, paid: book.paid, tokens: book.tokens, fly: [], trail: [], stuck: 0,
       hits: book.hits || 0, mark: book.mark || loosenMark(level), credit: book.credit || 0,
       ammo: alleyPlay ? 0 : Math.max(4, 9 - level),
-      note: alleyPlay ? 'One penny is three balls. Loosen the unique on the glass.' : 'Pull the spring.',
+      note: alleyPlay ? 'Launch a ball: 100 seconds. Match a winning second with a bumper hit.' : 'Pull the spring.',
       set, ...built,
     };
     seatLane(s);
     if(book.snapshot){for(const key of SNAPSHOT_FIELDS)if(book.snapshot[key]!==undefined)s[key]=JSON.parse(JSON.stringify(book.snapshot[key]));}
+    if(book.snapshot?.layoutVersion==null&&book.snapshot){s.layoutVersion=1;s.cabinetOn=!!s.activeBall;s.saucer.armed=s.saucer.hold<=0;if(!s.activeBall)refreshLayout(s);}
     releaseInput(s);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     return s;
@@ -436,10 +444,15 @@ export default {
         f.a += change;
       });
       if (s.mode !== 'live') continue;
+      if(s.houseLeft<=0){this.onTimeout(s);continue;}
       const p = s.ball;
+      // Count only time with the ball in play, including a held pocket ball.
+      s.houseLeft=Math.max(0,s.houseLeft-h);
+      if(s.houseLeft<=0){this.onTimeout(s);continue;}
+      if(!s.saucer.armed && p.y>s.saucer.y+200)s.saucer.armed=true;
       if(s.saucer.hold>0){
         s.saucer.hold-=h;p.x=s.saucer.x;p.y=s.saucer.y;p.vx=0;p.vy=0;
-        if(s.saucer.hold<=0){p.vx=(random(s)-.5)*240;p.vy=380;}
+        if(s.saucer.hold<=0)ejectSaucer(s);
         continue;
       }
       p.vy += G * hunger * h;
@@ -480,7 +493,7 @@ export default {
         if (t.cool > 0) continue;
         if (Math.hypot(p.x - t.x, p.y - t.y) < 22) {
           t.on = true; t.cool = 0.45;
-          p.vx = Math.abs(p.vx) * 0.7 + 90;
+          p.vx = (t.x>440?-1:1)*(Math.abs(p.vx)*.7+90);
           dropFromHit(s, 'target', t.x, t.y);
           if (s.targets.every(x => x.on)) {
             s.lights = [true, true, true];
@@ -496,8 +509,9 @@ export default {
           s.lights[s.rolls.indexOf(r)] = true;
         }
       }
-      if (s.saucer.cool === 0 && Math.hypot(p.x - s.saucer.x, p.y - s.saucer.y) < 24) {
-        s.saucer.cool = 1.25;
+      if (s.saucer.armed && s.saucer.cool === 0 && Math.hypot(p.x - s.saucer.x, p.y - s.saucer.y) < 24) {
+        s.saucer.armed=false;
+        s.saucer.cool = 2;
         s.saucer.hold = 0.38;
         p.vx *= 0.08; p.vy *= 0.08;
         p.x = s.saucer.x; p.y = s.saucer.y;
@@ -575,7 +589,7 @@ export default {
     d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
     d.text('PINBALL ALLEY', 450, 90, 34, '#fff3d0');
-    d.text(String(s.score).padStart(6, '0'), 450, 128, 26, '#f0d49a');
+    d.text(String(s.score).padStart(6, '0')+'  ·  '+(s.cabinetOn?Math.min(100,Math.floor(100-s.houseLeft)+1)+'/100':'LIGHTS OUT'),450,128,23,'#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
     const c=d.c;c.save();c.translate(-204,0);c.scale(1.35,1);
     const felt=c.createLinearGradient(0,190,0,1148);felt.addColorStop(0,set.felt);felt.addColorStop(1,'#102b2ff2');
@@ -629,6 +643,7 @@ export default {
       d.text('CHAPTER PRIZE',615,361,12,'#ffe8a6');
     }
     d.ball(s.ball.x,s.ball.y,R+1,'#c5d5e2');
+    if(!s.cabinetOn)d.poly([[210,200],[640,200],[720,188],[758,228],[758,1148],[228,1148]],'#06091299');
     c.restore();
     d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);

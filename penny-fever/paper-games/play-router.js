@@ -8,5 +8,5 @@ if (id === 'fortune' || id === 'coin-pusher') {
   });
   await import('./cabinet-runtime.js?v=first-prize-1');
 } else {
-  await import('./runtime.js?v=pip-pass-1');
+  await import('./runtime.js?v=pip-clock-1');
 }

@@ -62,6 +62,8 @@ for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
  const s=pinball.create(level);pinball.action(s,'plunge',true);s.charge=.8;pinball.action(s,'plunge',false);assert.equal(cash,19);
  const b=s.bumpers[0];s.ball.x=b.x+1;s.ball.y=b.y;s.ball.vx=0;s.ball.vy=0;pinball.update(s,.001);
- assert(s.hits>=1);assert(awards.includes(pinball.prizes[level]),'first qualifying hit releases first-ball prize');
+ assert(s.hits>=1);assert(!awards.includes(pinball.prizes[level]),'first basic hit is not an automatic bonus');
+ s.houseLeft=101-pinball.winningSeconds(level)[0]-.2;b.cool=0;s.ball={x:b.x+1,y:b.y,vx:0,vy:0};pinball.update(s,.001);
+ assert(awards.includes(pinball.prizes[level]),'first ball can release bonus on a winning-second impact');
 }
-console.log('PASS: pinball first paid ball releases each chapter prize on a qualifying hit.');
+console.log('PASS: pinball first paid ball has each chapter bonus available on a winning-second impact.');

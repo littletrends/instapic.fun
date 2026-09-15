@@ -27,21 +27,47 @@ assert.equal(debits,beforeDebit,'this frozen segment should not debit another se
 const tables=[];for(let level=0;level<6;level++){const q=e.create(level);q.score=100+level;q.credit=level%3;e.persist(q);tables.push(q.score);assert.equal(e.selectedChapter(),level);}for(let level=0;level<6;level++)assert.equal(e.create(level).score,tables[level]);
 // Original v2 rows retain credits and owned items when upgraded.
 memory.set(key,JSON.stringify({v:2,tables:{'2':{credit:2,score:1234,hits:4,mark:10,balls:5,seen:['glass-kicker'],paid:['glass-kicker'],tokens:{},specials:1}}}));cash=0;s=e.create(2);assert.equal(s.credit,2);assert.equal(s.score,1234);assert(s.seen.includes('glass-kicker'));launch(s);assert.equal(s.credit,1);assert.equal(cash,0);
-// Seeded outcomes repeat from the same paid state; first-ball prize is reachable.
+// Every chapter has different physical geometry and winning seconds. A first
+// launch makes the treasure available, but a normal early hit must not award it.
+const layouts=new Set(),windows=new Set();
 for(let level=0;level<6;level++){
- s=fresh(level);launch(s);let firstAt=null;
- for(let i=0;i<1800;i++){
-  tick(s,1,s.ball.y>850?['left','right']:[]);
-  if(s.hits&&firstAt===null)firstAt=s.t;
-  if(awards.includes(e.prizes[level])||s.mode==='dead')break;
+ s=fresh(level);launch(s);
+ layouts.add(JSON.stringify([s.bumpers,s.targets,s.saucer]));windows.add(JSON.stringify(e.winningSeconds(level)));
+ const hit=(second)=>{s.houseLeft=101-second-.2;s.mode='live';s.cabinetOn=true;const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);};
+ hit(1);assert(!awards.includes(e.prizes[level]),'ordinary first hit cannot release bonus');
+ hit(e.winningSeconds(level)[0]);assert(awards.includes(e.prizes[level]),'winning second releases chapter '+(level+1));
+ e.persist(s);const count=awards.length;r=e.create(level);tick(r);assert.equal(awards.length,count);
+ // Every pocket must eject, and cannot recapture until the lower field is reached.
+ s=fresh(level);launch(s);s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert(s.saucer.hold>0);
+ tick(s,35);assert.equal(s.saucer.hold,0);assert(Math.hypot(s.ball.x-s.saucer.x,s.ball.y-s.saucer.y)>30);
+ s.saucer.armed=false;s.saucer.cool=0;s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert.equal(s.saucer.hold,0,'pocket cannot farm recaptures');
+ // Force frequent impacts over the entire allowance: returns remain bounded.
+ for(let frame=0;frame<6100&&s.mode==='live';frame++){
+  const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);
  }
- assert(awards.includes(e.prizes[level]),'chapter '+(level+1)+' first launch must reach a qualifying prize hit');
- e.persist(s);const count=awards.length;const back=e.create(level);tick(back);assert.equal(awards.length,count,'restored hit cannot duplicate treasure');
- console.log('Chapter '+(level+1)+': first qualifying prize hit at '+firstAt.toFixed(2)+'s; two prepaid balls retained.');
+ assert(!s.cabinetOn);assert.equal(s.houseLeft,0);assert.equal(s.credit,2);
+ assert(s.ballPennies<=2&&s.ballTokens<=1);assert(s.wonPennies<=2);
+ const earned=s.score;tick(s,60);assert.equal(s.score,earned,'dark cabinet cannot score');
+ launch(s);assert.equal(s.houseLeft,100);assert(s.cabinetOn);assert.equal(s.credit,1);
+ console.log('Chapter '+(level+1)+': timed bonus, pocket release, 100s cutoff and bounded returns pass.');
 }
-assert.equal(e.houseSeconds,false,'paid balls have no house timeout');
-console.log('PASS: prepaid balls with empty purse, free same-ball relaunch, cancelled-input protection, independent fingers, exact trajectory/RNG/targets restore, six chapter saves, legacy credits, reachable first prizes and no duplicate prize on restore.');
+assert.equal(layouts.size,6);assert.equal(windows.size,6);assert.equal(e.houseSeconds,100);
+// Saved timers, payout limits and locks survive a return; same-ball relaunch
+// does not renew time, and menus (no update calls) cannot advance the clock.
+s=fresh();launch(s);s.houseLeft=12.5;s.ballPennies=2;s.ballTokens=1;s.rewardAt=s.t+7;s.saucer.armed=false;e.persist(s);r=e.create(0);
+assert.equal(r.houseLeft,12.5);assert.equal(r.ballPennies,2);assert.equal(r.ballTokens,1);assert.equal(r.saucer.armed,false);
+r.ball={x:726,y:1020,vx:0,vy:10};tick(r);const remaining=r.houseLeft;assert.equal(r.mode,'lane');tick(r,60);assert.equal(r.houseLeft,remaining);launch(r);assert.equal(r.houseLeft,remaining);
+// Old active saves retain their trajectory until the next ball, then migrate.
+s=fresh(1);launch(s);e.persist(s);let old=JSON.parse(memory.get(key));delete old.tables['1'].snapshot.layoutVersion;delete old.tables['1'].snapshot.houseLeft;old.tables['1'].snapshot.bumpers=[{x:440,y:300,r:22,cool:0,flash:0}];memory.set(key,JSON.stringify(old));r=e.create(1);assert.equal(r.bumpers.length,1);assert.equal(r.houseLeft,100);r.saucer={x:440,y:268,cool:0,hold:.01,armed:false};r.ball={x:440,y:268,vx:0,vy:0};tick(r,3);assert(r.ball.y>340,'legacy obstructed pocket ejects past bumper');r.houseLeft=.001;tick(r);tick(r,60);assert.equal(r.layoutVersion,2);assert.equal(r.bumpers.length,4);assert.equal(r.credit,2);
+console.log('PASS: six layouts/windows; exact timer/payout restore; free same-ball relaunch; legacy active ball migration and obstructed pocket recovery.');
 
 // A rejected charge cannot consume a ball or record a first prize attempt.
 s=fresh();reject=true;e.action(s,'plunge',true);tick(s,42,['plunge']);const denied=debits;e.action(s,'plunge',false);assert.equal(debits,denied);assert.equal(s.credit,0);assert.equal(s.balls,0);assert.equal(s.mode,'lane');assert(!s.activeBall);reject=false;
 console.log('PASS: failed debit leaves the shooter ball and allowance untouched.');
+
+// All 100 impact windows per chapter, including the full final second.
+for(let level=0;level<6;level++)for(let second=1;second<=100;second++){
+ const q=fresh(level);launch(q);q.houseLeft=101-second-.5;const b=q.bumpers[0];q.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(q);
+ assert.equal(awards.includes(e.prizes[level]),e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
+}
+console.log('PASS: all 600 winning/non-winning second windows, including second 100.');
