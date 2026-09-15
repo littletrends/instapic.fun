@@ -1,5 +1,5 @@
 /*
- * Spiral Slide (helter) — Chapter 1 First Spiral + Chapter 2 Bunting Bend.
+ * Spiral Slide (helter) — Chapters 1–3 (First Spiral, Bunting Bend, Tunnel Turn).
  * Locked remix: Snakes & Ladders on a helter + Helix/Tempest DNA.
  * ONE verb: TURN the ring (drag/swipe around the tower) so a ladder faces you
  * (boost/safe) or a snake faces you (soft dump/redirect — never abort paid ride).
@@ -11,9 +11,10 @@
  *   1 First Spiral — TURN / ladder / snake core
  *   2 Bunting Bend — burgundy cushions / rolled mats on some ring arcs;
  *     taught alone (long warn) before later chapters mix more hazards
+ *   3 Tunnel Turn — short tunnels; warning symbol shows exit notch before darkness;
+ *     taught alone (no new cushion teach on Ch3); dim ring art in dark, symbol stays
  *
- * Unfinished chapters 3–6:
- *   3 Tunnel Turn — short tunnels; warning symbol shows exit notch before darkness
+ * Unfinished chapters 4–6:
  *   4 Three-Way Tower — three notches that reconnect; landmark colours + tiny map
  *   5 Runaway Keepsake — treasure hops rings only after visible bounce + arrow
  *   6 The Impossible Descent — do not stack max speed + darkness + tiny intercept; widen final collision
@@ -54,7 +55,11 @@ const NUDGE = Math.PI / 10;
 /** Angular half-width of a cushion / rolled-mat obstacle on a ring arc. */
 const CUSHION_HALF = Math.PI / 6.5; // narrower so ladder snap stays clearable
 /** Long lead warning before the first teach-cushion ring (Bunting Bend). */
-const CUSHION_WARN_SECS = 6.5;
+const CUSHION_WARN_SECS = 8.0; // clearer teach window (Aura Ch2 FAIL)
+/** Lead time to show exit symbol before tunnel darkness (Tunnel Turn). */
+const TUNNEL_WARN_SECS = 5.8;
+/** Seconds before commit when the tunnel ring goes dark (symbol stays readable). */
+const TUNNEL_DARK_SECS = 2.4;
 
 function angNorm(a) {
   let x = a % TAU;
@@ -106,22 +111,63 @@ function cushionBlocking(ring, theta) {
   return cushionFaceDist(ring, theta) <= half;
 }
 
+/**
+ * Tunnel phase relative to the active clock.
+ * clear → warn (symbol lit, notches visible) → dark (dim notches, symbol stays) → past.
+ */
+function tunnelLead(s, ring) {
+  if (!ring || !ring.tunnel) return Infinity;
+  // During preview, approach from -PREVIEW_SECS so the exit symbol can teach early.
+  const t = s.launched ? s.t : -PREVIEW_SECS + (s.previewT || 0);
+  return ring.t - t;
+}
+
+function tunnelPhase(s, ring) {
+  if (!ring || !ring.tunnel || ring.done) return 'none';
+  const lead = tunnelLead(s, ring);
+  if (lead > TUNNEL_WARN_SECS) return 'clear';
+  if (lead > TUNNEL_DARK_SECS) return 'warn';
+  if (lead > -0.05) return 'dark';
+  return 'past';
+}
+
+function tunnelExitKind(ring) {
+  if (!ring || !ring.tunnel) return 'ladder';
+  return ring.tunnel.exit === 'snake' ? 'snake' : 'ladder';
+}
+
 function chapterPlan(level, rng) {
-  // Ch2 slightly faster than Ch1; later chapters keep a soft haste cap.
-  const haste = level >= 1
-    ? 1.04 + Math.min(0.10, (level - 1) * 0.03)
-    : 1 + Math.min(0.2, level * 0.035);
-  const duration = RIDE_SECONDS / haste;
-  // Five+ rings spaced through the descent; GOAL stays 3 ladders — recoverable after a snake/cushion.
-  const times = [0.14, 0.30, 0.46, 0.62, 0.78].map((f) => f * duration);
-  const treasureRing = 2;
+  // Ch2 gets MORE time (Aura FAIL: practice ended at 2/3). Ch3 soft — never stack max speed + darkness.
+  const haste = level === 2
+    ? 1.02
+    : level === 1
+      ? 0.92 // slower than Ch1 so a competent first play can land 3 ladders
+      : 1 + Math.min(0.2, level * 0.035);
+  const baseSecs = level === 1 ? 52 : RIDE_SECONDS;
+  const duration = baseSecs / haste;
+  // Ch2: 6 rings for recoverable 3 ladders; Ch1/Ch3: 5 rings.
+  const fracs = level === 1
+    ? [0.12, 0.26, 0.40, 0.54, 0.68, 0.82]
+    : [0.14, 0.30, 0.46, 0.62, 0.78];
+  const times = fracs.map((f) => f * duration);
+  const treasureRing = level === 1 ? 3 : 2;
   const bunting = level >= 1; // Ch2+ denser bunting art flag for draw
-  // Ch2: cushions on some arcs only — taught on the first cushion ring; no tunnels / 3-way yet.
-  const cushionIdx = level >= 1 ? new Set([0, 3]) : null; // teach on 0, one refresh on 3 — keep 3 ladders fair
+  // Ch2: ONE teach cushion only (clearer window); later rings are clean ladder/snake.
+  const cushionIdx = level === 1 ? new Set([0]) : null;
+  // Ch3: tunnels on some rings — teach on first tunnel alone; no 3-way / keepsake yet.
+  const tunnelIdx = level === 2 ? new Set([0, 3]) : null; // teach on 0, refresh on 3 — keep 3 ladders fair
   const rings = times.map((t, i) => {
     let start;
     let cushion = null;
-    if (cushionIdx && cushionIdx.has(i)) {
+    let tunnel = null;
+    if (tunnelIdx && tunnelIdx.has(i)) {
+      // Safe exit is always the ladder notch; symbol teaches which notch before darkness.
+      const teach = i === 0;
+      tunnel = {exit: 'ladder', teach};
+      // Start clearly off-ladder so the player must TURN using the exit symbol.
+      const mag = Math.PI * (0.42 + rng() * 0.12); // ~76°–97°
+      start = (rng() < 0.5 ? mag : -mag);
+    } else if (cushionIdx && cushionIdx.has(i)) {
       // Offset from ladder so TURN can clear cushion toward ladder (they rotate together).
       const mag = Math.PI * (0.40 + rng() * 0.12); // ~72°–94° from ladder
       const side = rng() < 0.5 ? 1 : -1;
@@ -155,6 +201,7 @@ function chapterPlan(level, rng) {
       findTaken: false,
       hasTreasure: false,
       cushion,
+      tunnel,
     };
   });
   return {duration, rings, treasureRing, denserBunting: bunting};
@@ -222,6 +269,21 @@ function turnRing(s, delta) {
     return;
   }
   const face = facingKind(ring.targetTheta);
+  const phase = tunnelPhase(s, ring);
+  if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
+    const exit = tunnelExitKind(ring);
+    if (face === exit && facingTight(ring.targetTheta)) {
+      s.note = 'Exit notch faces you — hold through the tunnel.';
+      s.statusCopy = phase === 'dark' ? 'Tunnel exit set' : 'Exit ready';
+    } else {
+      s.note = exit === 'ladder'
+        ? 'Tunnel symbol: TURN so the cream ladder faces you.'
+        : 'Tunnel symbol: TURN so the snake notch faces you.';
+      s.statusCopy = phase === 'dark' ? 'Dark — follow symbol' : 'Tunnel symbol';
+    }
+    logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face, tunnel: phase});
+    return;
+  }
   s.note = face === 'ladder'
     ? 'Ladder facing you — hold for the drop.'
     : 'Snake facing you — TURN toward the ladder.';
@@ -289,7 +351,7 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Cushion';
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
-    s.t = Math.max(0, s.t - 1.2);
+    s.t = Math.max(0, s.t - 0.45);
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'cushion!', true);
@@ -343,7 +405,7 @@ function commitRing(s, ring) {
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
     // Tiny soft slide-back on the descent clock (still finishes).
-    s.t = Math.max(0, s.t - 1.4);
+    s.t = Math.max(0, s.t - 0.6);
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'slide-back', true);
@@ -375,6 +437,21 @@ function teachWindow(s, preview) {
 
 function coachingLine(s, preview, ring) {
   if (s.statusCopy && (s.matPulse > 0 || s.phaseFlash > 0.2)) return s.statusCopy;
+  // Ch3 teach: exit symbol before darkness on the first tunnel ring (taught alone).
+  if (ring && !ring.done && ring.tunnel && ring.tunnel.teach) {
+    const phase = tunnelPhase(s, ring);
+    if (preview || phase === 'warn' || phase === 'dark') {
+      const exit = tunnelExitKind(ring);
+      if (phase === 'dark') {
+        return exit === 'ladder'
+          ? 'Dark tunnel — follow the symbol; TURN ladder to face you.'
+          : 'Dark tunnel — follow the symbol; TURN snake to face you.';
+      }
+      return exit === 'ladder'
+        ? 'Tunnel ahead — symbol shows ladder exit. TURN before darkness.'
+        : 'Tunnel ahead — symbol shows snake exit. TURN before darkness.';
+    }
+  }
   // Ch2 teach: long warn on the first cushion ring before mixing other hazards.
   if (ring && !ring.done && ring.cushion && ring.cushion.teach) {
     const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
@@ -387,6 +464,17 @@ function coachingLine(s, preview, ring) {
   }
   if (!s.turnedOnce) return 'TURN the ring so the ladder faces you.';
   if (ring && !ring.done) {
+    const phase = tunnelPhase(s, ring);
+    if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
+      const exit = tunnelExitKind(ring);
+      const face = facingKind(ring.targetTheta);
+      if (face === exit && facingTight(ring.targetTheta)) {
+        return 'Exit notch faces you — hold through the tunnel.';
+      }
+      return phase === 'dark'
+        ? 'Dark — follow the exit symbol and TURN.'
+        : 'Symbol shows the exit — TURN before darkness.';
+    }
     if (cushionBlocking(ring, ring.targetTheta)) {
       return 'Cushion ahead — TURN clear of it toward the ladder.';
     }
@@ -524,6 +612,32 @@ function drawCushion(d, x, y, rx, ry, ang, highlight, rolled) {
   }
 }
 
+/** Warning glyph showing which notch is the safe tunnel exit — stays readable in darkness. */
+function drawTunnelSymbol(d, x, y, exit, highlight, clock) {
+  const pulse = highlight ? (0.55 + 0.45 * Math.sin(clock * 4.8)) : 0.75;
+  const fillA = Math.floor((0.55 + pulse * 0.4) * 255).toString(16).padStart(2, '0');
+  const strokeA = Math.floor((0.65 + pulse * 0.3) * 255).toString(16).padStart(2, '0');
+  d.ellipse(x, y, 46 + pulse * 6, 28 + pulse * 3, '#1a1010' + fillA, '#d2a65b' + strokeA, highlight ? 2.6 : 1.8);
+  if (exit === 'ladder') {
+    // Cream ladder chevron / arrow glyph
+    d.poly([
+      [x - 14, y + 6],
+      [x, y - 12],
+      [x + 14, y + 6],
+      [x + 7, y + 6],
+      [x + 7, y + 12],
+      [x - 7, y + 12],
+      [x - 7, y + 6],
+    ], '#f3e2bdee', '#d2a65bcc', 1.6);
+    d.text('ladder', x, y + 22, 12, '#f4d590');
+  } else {
+    // Snake S glyph
+    d.text('∿', x, y + 2, 28, '#e8b0b0');
+    d.text('snake', x, y + 22, 12, '#e8b0b0');
+  }
+  d.text('exit', x, y - 22, 11, '#ead6a4cc');
+}
+
 function drawRingToy(d, s, ring, clock, teach) {
   if (ring.done && ringScreenY(s, ring) < TOWER_TOP + 20) return;
   const y = ringScreenY(s, ring);
@@ -533,15 +647,22 @@ function drawRingToy(d, s, ring, clock, teach) {
   const face = facingKind(ring.targetTheta);
   const tight = facingTight(ring.targetTheta);
   const active = !ring.done && ring === activeRing(s);
+  const phase = tunnelPhase(s, ring);
+  const inTunnel = active && ring.tunnel && (phase === 'warn' || phase === 'dark');
+  const dark = active && ring.tunnel && phase === 'dark';
   const pulse = (teach && active) ? (0.55 + 0.45 * Math.sin(clock * 5)) : (active ? (0.35 + 0.25 * Math.sin(clock * 3.5)) : 0);
   const reduced = reducedMotion(s);
   const flourish = (!reduced && (s.ringFlourish || 0) > 0 && ring.done) ? s.ringFlourish * 8 : 0;
 
-  // Gold rail ring — translucent, never solid court overpaint.
-  const fillA = active ? '28' : '14';
-  const stroke = active ? '#d2a65bcc' : '#d2a65b66';
-  d.ellipse(CX, y, rx, ry, '#5a3a22' + fillA, stroke, active ? 3.2 : 1.8);
-  if (active && pulse > 0) {
+  // Gold rail ring — translucent, never solid court overpaint. Dim in tunnel darkness.
+  const fillA = dark ? '10' : (active ? '28' : '14');
+  const stroke = dark ? '#d2a65b44' : (active ? '#d2a65bcc' : '#d2a65b66');
+  d.ellipse(CX, y, rx, ry, (dark ? '#1a1010' : '#5a3a22') + fillA, stroke, active ? 3.2 : 1.8);
+  if (dark) {
+    // Soft darkness veil — keep helter.png readable beneath.
+    d.ellipse(CX, y, rx + 8, ry + 10, '#0a060888', '#1a101066', 1.5);
+  }
+  if (active && pulse > 0 && !dark) {
     d.ellipse(CX, y, rx + 6 + pulse * 10, ry + 3 + pulse * 4, null, '#ffe6a4' + Math.floor(pulse * 160).toString(16).padStart(2, '0'), 2);
   }
 
@@ -550,8 +671,11 @@ function drawRingToy(d, s, ring, clock, teach) {
   const ladderAng = theta + flourish + Math.PI / 2; // when theta=0, ladder at bottom
   const snakeAng = theta + Math.PI + flourish + Math.PI / 2;
 
-  drawLadderNotch(d, CX, y, rx, ry, ladderAng, active && face === 'ladder' && tight && !cushionBlocking(ring, ring.targetTheta));
-  drawSnakeNotch(d, CX, y, rx, ry, snakeAng, active && face === 'snake' && !cushionBlocking(ring, ring.targetTheta));
+  // Warn phase: notches still clear. Darkness: hide notch art — symbol carries the teach.
+  if (!dark) {
+    drawLadderNotch(d, CX, y, rx, ry, ladderAng, active && face === 'ladder' && tight && !cushionBlocking(ring, ring.targetTheta));
+    drawSnakeNotch(d, CX, y, rx, ry, snakeAng, active && face === 'snake' && !cushionBlocking(ring, ring.targetTheta));
+  }
 
   // Cushion / rolled mat on some Ch2 ring arcs.
   if (ring.cushion) {
@@ -571,12 +695,24 @@ function drawRingToy(d, s, ring, clock, teach) {
     }
   }
 
+  // Tunnel exit warning symbol — readable before and during darkness.
+  if (inTunnel) {
+    const exit = tunnelExitKind(ring);
+    drawTunnelSymbol(d, CX, y - ry - 36, exit, true, clock);
+  }
+
   // Facing marker at bottom of ring ("you").
   if (active) {
     const blocked = cushionBlocking(ring, ring.targetTheta);
-    const glowCol = blocked ? '#c67483' : (face === 'ladder' ? '#ffe6a4' : '#c67483');
+    const exit = ring.tunnel ? tunnelExitKind(ring) : null;
+    const matchedExit = exit && face === exit && tight;
+    const glowCol = blocked ? '#c67483'
+      : (inTunnel && matchedExit) ? '#ffe6a4'
+      : (inTunnel && !matchedExit) ? '#c67483'
+      : (face === 'ladder' ? '#ffe6a4' : '#c67483');
     d.glow(CX, y + ry, 28 + pulse * 12, glowCol);
-    const label = blocked ? 'cushion' : (face === 'ladder' ? 'ladder' : 'snake');
+    let label = blocked ? 'cushion' : (face === 'ladder' ? 'ladder' : 'snake');
+    if (inTunnel && !blocked) label = dark ? ('dark · ' + label) : label;
     const labelCol = blocked ? '#e8b0b0' : (face === 'ladder' ? '#f4d590' : '#e8b0b0');
     d.text(label, CX, y + ry + 22, 14, labelCol);
   }
@@ -677,7 +813,14 @@ function drawBottomStrip(d, s, preview, ring) {
   if (s.practice && s.turnedOnce) {
     d.text('nothing is kept', 450, 1156, 13, '#ead6a488');
   } else if (ring && !ring.done) {
-    if (cushionBlocking(ring, ring.targetTheta)) {
+    const phase = tunnelPhase(s, ring);
+    if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
+      const exit = tunnelExitKind(ring);
+      d.text(
+        (phase === 'dark' ? 'dark · ' : '') + 'exit symbol: ' + exit,
+        450, 1156, 13, '#f0d09acc',
+      );
+    } else if (cushionBlocking(ring, ring.targetTheta)) {
       d.text('facing: cushion', 450, 1156, 13, '#e8b0b0cc');
     } else {
       const face = facingKind(ring.targetTheta);
@@ -713,8 +856,8 @@ function drawMat(d, s, clock) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder.',
-  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness.',
+  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -747,6 +890,7 @@ export default {
       snakeSlide: 0,
       ringFlourish: 0,
       cushionWarned: false,
+      tunnelWarned: false,
     });
   },
   update(s, dt) {
@@ -769,10 +913,14 @@ export default {
       s.snakeSlide = 0;
       s.ringFlourish = 0;
       s.cushionWarned = false;
+      s.tunnelWarned = false;
+      const teachTun = (s.rings || []).find((r) => r.tunnel && r.tunnel.teach);
       const teachCush = (s.rings || []).find((r) => r.cushion && r.cushion.teach);
-      s.note = teachCush
-        ? 'Cushion ahead — TURN clear of it toward the ladder.'
-        : 'TURN the ring so the ladder faces you.';
+      s.note = teachTun
+        ? 'Tunnel ahead — watch the exit symbol before darkness.'
+        : teachCush
+          ? 'Cushion ahead — TURN clear of it toward the ladder.'
+          : 'TURN the ring so the ladder faces you.';
       // Fair treasure spawn: always on a ladder segment of an authored ring.
       if (s.eligible) {
         const preferred = ['ring-2', 'ring-1', 'ring-3', 'ring-0', 'ring-4'];
@@ -838,6 +986,31 @@ export default {
           logAction(s, 'cushion-warn', {ring: liveRing.i, lead: CUSHION_WARN_SECS});
         }
         s.note = 'Cushion ahead — TURN clear of it toward the ladder.';
+      }
+    }
+
+    // Ch3 teach loop: exit symbol before darkness on the first tunnel ring.
+    if (liveRing && liveRing.tunnel && !liveRing.done) {
+      const phase = tunnelPhase(s, liveRing);
+      const exit = tunnelExitKind(liveRing);
+      if (phase === 'warn' || phase === 'dark') {
+        if (liveRing.tunnel.teach && !s.tunnelWarned && phase === 'warn') {
+          s.tunnelWarned = true;
+          s.statusCopy = 'Tunnel symbol';
+          s.phaseFlash = 0.75;
+          s.phaseFlashLabel = 'Tunnel';
+          logAction(s, 'tunnel-warn', {ring: liveRing.i, exit, lead: TUNNEL_WARN_SECS});
+        }
+        if (phase === 'dark' && liveRing.tunnel.teach) {
+          s.note = exit === 'ladder'
+            ? 'Dark tunnel — follow the symbol; TURN ladder to face you.'
+            : 'Dark tunnel — follow the symbol; TURN snake to face you.';
+          if (s.statusCopy !== 'Tunnel exit set') s.statusCopy = 'Dark — follow symbol';
+        } else if (liveRing.tunnel.teach) {
+          s.note = exit === 'ladder'
+            ? 'Tunnel ahead — symbol shows ladder exit. TURN before darkness.'
+            : 'Tunnel ahead — symbol shows snake exit. TURN before darkness.';
+        }
       }
     }
 
