@@ -36,8 +36,8 @@ const CREAM = '#efe6d0';
 const INK = '#f0d18f';
 const MOUTH_R = 56;
 const CLIMB_SECS = 3.6;
-const READY_SECS = 1.2;
-const HOLD_SECS = 2.4;
+const READY_SECS = 1.6;
+const HOLD_SECS = 3.2;
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
@@ -196,7 +196,7 @@ function drawCockpit(d, s) {
 
 function drawMouths(d, s) {
   PIPES.forEach((pipe) => {
-    const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb') && !s.tapped;
+    const live = s.livePipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const inWindow = live && s.climb >= HIT_MIN && s.climb <= HIT_MAX;
     const r = MOUTH_R * (inWindow ? 1.08 : 1);
     if (d.c) {
@@ -280,6 +280,24 @@ function drawChamber(d, s) {
       w: 68, shadow: false, fallback: () => d.star(cx, cy - 50, 18, '#ffe6a4'),
     });
   }
+}
+
+function tryTap(s, mouth) {
+  if (s.result || s.broke || mouth < 0) return;
+  // Cough on the live pipe still scores — guest is answering the cough.
+  if (s.phase === 'cough' && mouth === s.livePipe && !s.tapped) {
+    logAction(s, 'key', {pipe: mouth, live: s.livePipe, recover: true});
+    hitClimb(s);
+    return;
+  }
+  if ((s.phase !== 'ready' && s.phase !== 'climb') || s.tapped) return;
+  logAction(s, 'key', {pipe: mouth, live: s.livePipe});
+  if (mouth !== s.livePipe) {
+    missClimb(s);
+    return;
+  }
+  // Live mouth TAP always scores — timing window is juice, not a trap.
+  hitClimb(s);
 }
 
 export default {
@@ -411,23 +429,14 @@ export default {
       }
       return;
     }
-    if ((s.phase !== 'ready' && s.phase !== 'climb') || s.tapped) return;
-    const mouth = hitMouth(p);
-    if (mouth < 0) return;
-    logAction(s, 'key', {pipe: mouth, live: s.livePipe});
-    if (mouth !== s.livePipe) {
-      missClimb(s);
-      return;
-    }
-    // If the mouth is live, TAP scores — window is juice, not a trap.
-    hitClimb(s);
+    tryTap(s, hitMouth(p));
   },
   action(s, id) {
     const m = String(id || '').match(/^p(\d)$/);
     if (!m) return;
     const pipe = PIPES[Number(m[1])];
     if (!pipe) return;
-    this.pointer(s, 'down', {x: pipe.x, y: pipe.mouthY});
+    tryTap(s, pipe.i);
   },
   key(s, k, down) {
     if (!down || s.result || s.broke) return;
