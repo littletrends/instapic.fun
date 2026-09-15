@@ -1,4 +1,4 @@
-import {drawMilkySplash, splashSwap} from '../milky-splash-art.js?v=milk-art-1';
+import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-slide-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
@@ -7,9 +7,10 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, isMabelWin, resultNumber,
   ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique,
-} from '../milky-splash.js?v=milk-art-1';
+} from '../milky-splash.js?v=milk-slide-1';
 
 const BOOK = 'pennyFever.milkySplash';
+const HOUSE_SECONDS=160;
 
 function emptyBook() {
   return {v: 1, paid: {}, sittings: {}};
@@ -50,7 +51,9 @@ function boardBlob(board) {
 function persist(s) {
   if (!alleyPlay || !s) return;
   const book = readBook();
+  book.currentChapter=s.level;
   book.sittings[String(s.level)] = {
+    houseLeft:s.houseLeft,
     phase: s.phase, seed: s.seed, charged: !!s.charged,
     board: boardBlob(s.board), resultN: s.resultN || 0,
     won: !!s.won, note: s.note, reduced: !!s.reduced,
@@ -131,6 +134,7 @@ function beginPlay(s) {
         return;
       }
       s.charged = true;
+      s.houseLeft=HOUSE_SECONDS;
       if (!waiting) {
         s.seed = (s.seed || (s.level + 1) * 4099) + 1 + s.level * 17;
         s.board = makeBoard(s.level, s.seed);
@@ -155,30 +159,33 @@ function beginPlay(s) {
 }
 
 function trySwap(s, a, b) {
-  if (s.phase !== 'play' || s.lock || s.result) return;
+  if (s.phase !== 'play' || s.lock || s.result || isSliding(s)) return;
+  const before=s.board.cells.map(row=>row.slice());
   const res = applySwap(s.board, a.c, a.r, b.c, b.r);
+  if(res.ok||res.reason==='no-match')splashSwap(s,a,b,before,res.ok);
   if (!res.ok) {
     s.note = res.reason === 'no-match' ? 'No splash — the bottles bounce home.' : 'Those two will not trade.';
     s.selected = null;
     return;
   }
-  splashSwap(s,a,b);
   s.selected = null;
   s.note = s.board.unique
     ? (s.board.movesLeft + ' moves. Walk the sealed bottle down.')
     : (s.board.movesLeft + ' moves left.');
-  if (s.board.delivered) finishWin(s);
-  else if (s.board.movesLeft <= 0) restSitting(s);
+  if (!isSliding(s)&&s.board.delivered) finishWin(s);
+  else if (!isSliding(s)&&s.board.movesLeft <= 0) restSitting(s);
   else persist(s);
 }
 
 export default {
   title: 'Milky Splash!',
+  chapterNavigation:true,
+  selectedChapter(){return Math.max(0,Math.min(5,Number(readBook().currentChapter)||0));},
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
   persist,
-  houseSeconds: 160,
+  houseSeconds: HOUSE_SECONDS,
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
@@ -191,19 +198,19 @@ export default {
   sprites: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn', 'moon-penny', 'star-token', 'everyday-penny'],
   prizes: MABEL_CHAPTERS.map(c => c.prize),
   actions: [
-    {id: 'play', label: alleyPlay ? 'Sit · Space' : 'Sit at the dairy'},
-    {id: 'again', label: alleyPlay ? 'Another tray · 1 penny' : 'Another tray'},
+    {id: 'play', label: 'Play'},
+    {id: 'again', label: alleyPlay ? 'Play again · 1 penny' : 'Play again'},
   ],
   create(level) {
     const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const seed = saved.seed || (level + 1) * 4099;
     const s = {
-      level, t: 0, phase: saved.phase || 'idle', seed,
+      level, t: 0, houseLeft:saved.houseLeft, phase: saved.phase || 'idle', seed,
       board: saved.board ? revive(saved.board, level, seed) : null,
       charged: !!saved.charged, resultN: saved.resultN || 0,
       won: !!saved.won || chapterPaid(level), hold: 0, reduced: !!saved.reduced,
       selected: saved.selected || null, lock: false,
-      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Sit when you are ready.',
+      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Press Play when you are ready.',
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeBoard(level, s.seed);
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
@@ -214,7 +221,10 @@ export default {
     s.t += dt;
     if (typeof document !== 'undefined' && document.hidden) return;
     if (s.phase === 'play' && s.board) {
-      if (s.board.delivered && !s.won) finishWin(s);
+      if(!isSliding(s)){
+        if (s.board.delivered && !s.won) finishWin(s);
+        else if(s.board.movesLeft<=0)restSitting(s);
+      }
     }
     if (s.won && s.hold > 0 && !s.result) {
       s.hold -= dt;
@@ -226,7 +236,7 @@ export default {
     } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
-    if (s.result) return;
+    if (s.result || isSliding(s)) return;
     if (s.phase === 'idle' || s.phase === 'result' || s.phase === 'rest') {
       if (type === 'down') beginPlay(s);
       return;
@@ -255,7 +265,7 @@ export default {
       if (s.phase === 'result') {
         s.phase = 'idle';
         if (!(s.board && locateUnique(s.board) && !s.board.delivered)) s.board = null;
-        s.note = 'Sit again when you are ready.';
+        s.note = 'Press Play again when you are ready.';
         persist(s);
         return;
       }
