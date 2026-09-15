@@ -83,7 +83,7 @@ function ch1Speed(reduced) {
 }
 
 function ch2Speed(reduced) {
-  // Fairness retune 5 (Aura FAIL 2/3): longer arm + re-arm on collect; earlier opens.
+  // Fairness retune 6 (Aura FAIL 2/3×2): sticky crest-arm until goal after first TAP.
   const base = 0.24;
   return reduced ? base * 0.72 : base;
 }
@@ -299,10 +299,10 @@ function scheduleCh2(s) {
 
   // Fairness retune 3: one heart-find per marked pony, stays until taken.
   // Every crest pass after from is a collect chance (still crest-TAP / NOW).
-  const spots = ['saddle', 'mane', 'bridle'];
-  const heartHorses = [1, 2, 4];
-  const openFrom = lap * 0.22; // earlier searchable window (Aura 2/3 needed one more chance)
-  const rideLaps = 4;
+  const spots = ['saddle', 'mane', 'bridle', 'panel'];
+  const heartHorses = [1, 2, 4, 1]; // 4th is spare — goal stays 3
+  const openFrom = lap * 0.12; // searchable ASAP after board (third heart before waltz end)
+  const rideLaps = 3; // ~fairness-bar length; sticky arm covers 3/3 inside it
   const finds = heartHorses.map((horse, i) => ({
     kind: 'ordinary',
     id: ORDINARY[i % ORDINARY.length],
@@ -468,7 +468,7 @@ function collectOrdinary(s, find, scr) {
       logAction(s, 'teach', {kind: 'marked-pony'});
     }
     // Chain fairness: each heart collect re-arms so a 2/3 run still reaches 3/3.
-    if (s.found < (s.goal || GOAL)) armCrestTap(s, 14);
+    if (s.found < (s.goal || GOAL)) armCrestTap(s, 20);
   }
   if (scr) {
     addRipple(s, scr.x, scr.y);
@@ -944,8 +944,9 @@ function drawSparksAndFlash(d, s) {
 
 
 
-function armCrestTap(s, sec = 14) {
-  // Fairness retune 5: longer arm (~14s) so sparse taps cover the third crest.
+function armCrestTap(s, sec = 20) {
+  // Fairness retune 6: sticky until GOAL — first TAP arms every later heart crest.
+  s.crestTapSticky = true;
   const until = (s.t || 0) + sec;
   s.crestTapArmedUntil = Math.max(s.crestTapArmedUntil || 0, until);
 }
@@ -964,7 +965,8 @@ function collectBestLiveHeart(s) {
 }
 
 function consumeArmedCrest(s) {
-  if ((s.crestTapArmedUntil || 0) < (s.t || 0)) return false;
+  const sticky = !!s.crestTapSticky && (s.found || 0) < (s.goal || GOAL);
+  if (!sticky && (s.crestTapArmedUntil || 0) < (s.t || 0)) return false;
   if (collectBestLiveHeart(s)) return true;
   // Also resolve treasure / practice while armed.
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
@@ -979,8 +981,8 @@ function consumeArmedCrest(s) {
 }
 
 function tryCrestTap(s, p) {
-  // Fairness retune 5: every TAP arms ~14s; collect also re-arms so 2/3 chains to 3/3.
-  armCrestTap(s, 14);
+  // Fairness retune 6: sticky crest-arm until 3/3 after first TAP; timed arm backup 20s.
+  armCrestTap(s, 20);
 
   if (collectBestLiveHeart(s)) return 'collect';
 
@@ -1023,7 +1025,7 @@ export default {
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 110,
+  houseSeconds: 120,
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
   actions: [{id: 'tap', label: 'TAP'}],
@@ -1142,7 +1144,15 @@ export default {
     if (s.flash > 0) s.flash = Math.max(0, s.flash - dt);
     if ((s.decoyFlash || 0) > 0) s.decoyFlash = Math.max(0, s.decoyFlash - dt);
 
-    if (s.t >= (s.rideEnd || lapSeconds(speed) * 3)) {
+    // Fairness: seal a win as soon as 3/3 lands (don't bleed into a late miss veil).
+    if (!s.result && (s.found || 0) >= (s.goal || GOAL) && (s.t || 0) > 0.4) {
+      finishRide(s, {
+        rideId: RIDE,
+        treasureId: s.treasureId,
+        challengeOk: true,
+        completionFind: 'star-token',
+      });
+    } else if (s.t >= (s.rideEnd || lapSeconds(speed) * 3)) {
       if (s.treasure && s.eligible && s.t >= s.treasure.from && !s.treasure.taken) {
         s.treasureRevealed = true;
       }
