@@ -169,4 +169,4 @@ Copper v6 saves and existing fixed paid-count prize thresholds are unchanged. Sh
 
 Evidence: Node cabinet checks pass practice exclusion, wallet drop sizes, all six tray snapshots, exact paid-motion restore, deduplicated rewards, empty/failed debit handling, Iris controls and Copper peg bounds. Chromium checks pass Copper practice, paid drop, chapter selection, game-specific Treasures return, and exact frozen tray/wallet equality after reload. Phone (390×844) and desktop (1280×900) screenshots captured. Shared navigation mounts without reported script/network errors in all 33 available games. These opening checks do not certify their gameplay or exact saves. Cross-device sync, unavailable storage and every browser-close/payment-interruption case remain outside this pass.
 
-Deployment: prepared for the current authorized live update; publication verification follows in the release report.
+Deployment: published as `20313a0` on 15 September 2026; Pages run `34923888461` succeeded. Live Chromium Copper checks passed practice, paid motion, game-specific Treasure return and exact frozen tray/wallet equality after reload, with phone and desktop captures.
