@@ -24,7 +24,7 @@ export const IRIS_CHAPTERS = [
   { id: "crossing", title: "The Crossing Sign", rings: 2, flash: 1.8, hide: false, opposite: true, decoys: false, prize: "moon-brooch" },
   { id: "fading", title: "The Fading Sign", rings: 2, flash: 0.9, hide: true, opposite: false, decoys: false, prize: "fortune-journal" },
   { id: "false", title: "The False Sign", rings: 2, flash: 1.6, hide: true, opposite: true, decoys: true, prize: "moon-festival-fan" },
-  { id: "mystery", title: "The Mystery Sign", rings: 3, flash: 2.4, hide: true, opposite: true, decoys: true, prize: "looking-glass-locket" },
+  { id: "mystery", title: "The Mystery Sign", rings: 3, flash: 2.4, hide: true, opposite: true, decoys: true, prize: "paper-crown" },
 ];
 
 export const PRIZE_NAMES = {
@@ -33,7 +33,7 @@ export const PRIZE_NAMES = {
   "moon-brooch": "Moon brooch",
   "fortune-journal": "Fortune journal",
   "moon-festival-fan": "Moon festival fan",
-  "looking-glass-locket": "Looking-glass locket",
+  "paper-crown": "Paper crown",
 };
 
 function span(a, b, step = 1) {

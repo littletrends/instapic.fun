@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const rows = [
-    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Spend these at Copper Falls and Pip’s pin tables. Cash a booth ticket at either for a five-penny stack.',.07,'pennies'],
+    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Loose pennies in your pocket. Pack five into a 5-pack to keep them out of Copper’s machine. Open a pack here when you want them back.',.07,'pennies'],
     ['ticket-roll','Ticket roll','Essentials','scrip',null,'Aura’s ticket booth','Booth tickets torn from Aura’s brass roll. One ticket enters a stall. Cash one at Copper Falls or Pip’s tables for five pennies.',.08,'tickets'],
     ['admission-ticket','Admission ticket','Essentials','ticket',null,'Aura’s ticket booth','Take a ticket from Aura. Its punched heart remembers your entry.',.025,'tickets'],
     ['showman-pass','Showman pass','Essentials','pass',null,'Backstage · Bea','The demo Showman pass lasts until midnight in Darwin.',.06,'tickets'],
@@ -39,7 +39,7 @@
     ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Finish the grand duck parade.',.12,'garden-prizes'],
     ['coin-album','Coin album','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 4 of Copper Falls.',.1,'pennies'],
     ['treasure-tin','Treasure tin','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 5 of Copper Falls.',.1,'gift-wrapping'],
-    ['five-penny-stack','Five-penny stack','Workshop prizes','prize',null,'Aura’s till · Copper Falls','A shared pack of five pennies. Cash a ticket, or shove a stack off Copper’s flood table. Once you have the purse, stacks back up in it.',.1,'pennies'],
+    ['five-penny-stack','Five-penny stack','Essentials','currency',null,'Aura’s till · Copper Falls','Five pennies packed away. They stay out of a full-purse drop. Pack or open them here, at Copper Falls, or in the alley menu.',.1,'pennies'],
     ['mint-press','Mint press','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 6 of Copper Falls. The little press that mints the tide.',.1,'game-prizes'],
     ['surprise-parcel','Surprise parcel','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 4 of Whisper Run.',.1,'gift-wrapping'],
     ['stamp-passport','Stamp passport','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 5 of Whisper Run.',.1,'tickets'],
@@ -311,7 +311,10 @@
   function entries(state={},today=day()) {
     return definitions.map(d=>{
       let owned=false,quantity=0,status='Not collected yet',at=null;
-      if (d.kind==='currency') { owned=true; quantity=count(state.demoCoins); status=`${quantity} ${quantity===1?'penny':'pennies'} in your pocket`; }
+      if (d.kind==='currency' && d.id==='five-penny-stack') {
+        owned=true; quantity=count(state.pennyPacks);
+        status=quantity?`${quantity} ${quantity===1?'pack':'packs'} · 5 pennies each, out of play`:'No 5-packs parked. Pack five loose pennies to keep them out of the machine.';
+      } else if (d.kind==='currency') { owned=true; quantity=count(state.demoCoins); status=`${quantity} ${quantity===1?'penny':'pennies'} in your pocket`; }
       if (d.kind==='scrip') { owned=true; quantity=count(state.playTickets); status=`${quantity} booth ${quantity===1?'ticket':'tickets'} on the roll`; }
       if (d.kind==='ticket') { owned=!!(state.admitTicket||state.admitPassed||state.alleyLaps); quantity=owned?1:0; status=state.admitPassed?'Punched · this lap':state.admitTicket?'Ready to show Aura':state.alleyLaps?'Used · first walk':'Take a ticket at the door'; }
       if (d.kind==='pass') { owned=!!state.showmanPass && state.passDay===today; quantity=owned?1:0; status=owned?'Active until midnight Darwin':'No active Showman pass'; }

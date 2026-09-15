@@ -3,8 +3,8 @@ import {takeAttempt} from '../stall-entry.js?v=first-prize-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
-  caughtOf, fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
-} from "../fortune-globe.js?v=first-prize-1";
+  fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
+} from "../fortune-globe.js?v=iris-pack-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -15,11 +15,6 @@ const LOWER_CY = 1084;
 const RESULT_ACTION = {x: 250, y: 916, w: 400, h: 76};
 const R = 248;
 const START_PENNIES = 12;
-const ORDINARY_NAME = {
-  "moon-penny": "Moon Penny",
-  "star-token": "Star token",
-  "everyday-penny": "Everyday penny",
-};
 
 function emptyBook() {
   return { v: 2, practiceUsed: false, pennies: START_PENNIES, paid: {}, sittings: {} };
@@ -160,11 +155,13 @@ function finishGaze(s) {
     const slipped = s.globe.rings.map((ring, i) => ring.slipped ? "ring " + (i + 1) : null).filter(Boolean).join(" and ");
     s.note = "Near miss — " + slipped + " slipped.";
   } else if (s.practice) {
-    s.note = "Practice catch. Treasure drawer locked.";
-  } else if (s.won) {
-    s.note = "Treasure caught.";
+    s.note = "Practice — bonus stays locked.";
+  } else if (treasureOk) {
+    s.note = "Bonus unlocked.";
+  } else if (chapterOwned(s.level)) {
+    s.note = "Already unlocked.";
   } else {
-    s.note = "A small keepsake.";
+    s.note = "Bonus locked — better luck next time.";
   }
   persist(s);
 }
@@ -204,8 +201,8 @@ export default {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
-  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Ticket entry includes the first gaze in each chapter and its prize opportunity. Later gazes cost one penny. Iris reads a fortune from the hidden 1–100 — you never see the number, and it is not the clock.",
-  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. Ticket entry includes the first gaze in each chapter, with its treasure available to catch. Later gazes cost one penny.",
+  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Catching the signs always reads a fortune. The chapter bonus only unlocks on some catches — LOCKED means the bonus stayed shut, UNLOCKED means it is yours. Ticket entry includes the first gaze in each chapter, and that first gaze can unlock the bonus.",
+  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. A clean catch reads a fortune. UNLOCKED means the chapter bonus opened; LOCKED means this catch did not release it — try another gaze. Later gazes cost one penny.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   images: {
     globe: "./assets/fortune/globe.webp",
@@ -228,7 +225,7 @@ export default {
     "moon-brooch": "./assets/fortune/prizes/moon-brooch.webp",
     "fortune-journal": "./assets/fortune/prizes/fortune-journal.webp",
     "moon-festival-fan": "./assets/fortune/prizes/moon-festival-fan.webp",
-    "looking-glass-locket": "./assets/fortune/prizes/looking-glass-locket.webp",
+    "paper-crown": "./assets/fortune/prizes/paper-crown.webp",
   },
   actions: [],
   persist,
@@ -438,7 +435,7 @@ export default {
       d.glow(px, py, 70, s.won ? "#c8e878" : "#e8c878");
       d.sprite(prizeImg, px, py, { w: 118, h: 118 });
       c.restore();
-      const plabel = chapterOwned(s.level) || s.won ? "Kept" : (s.practice ? "Locked" : PRIZE_NAMES[prizeId]);
+      const plabel = chapterOwned(s.level) || s.won ? "Unlocked" : "Locked";
       d.text(plabel, px, py + 78, 16, "#fff0c8");
     }
     if (s.practice && s.phase !== "idle") {
@@ -449,25 +446,25 @@ export default {
 
     if (s.phase === "result" && s.fortune) {
       const hit = !!s.caught;
+      const unlocked = hit && (s.won || chapterOwned(s.level)) && !s.practice;
+      const banner = !hit ? "NOT THIS CATCH" : (unlocked ? "UNLOCKED" : "LOCKED");
+      const ink = !hit ? "#f0b0b0" : (unlocked ? "#d8f08a" : "#ead6a4");
       roundPath(c, 70, 720, 760, 284, 18);
       c.fillStyle = "rgba(28, 18, 24, 0.94)";
       c.fill();
-      c.strokeStyle = hit ? "#c8e878" : "#e09090";
+      c.strokeStyle = !hit ? "#e09090" : (unlocked ? "#c8e878" : "#e8c878");
       c.lineWidth = 3;
       c.stroke();
-      d.text(hit ? "CAUGHT" : "NOT THIS CATCH", CX, 762, 30, hit ? "#d8f08a" : "#f0b0b0");
+      d.text(banner, CX, 762, 30, ink);
       c.save();c.font='italic 34px "Palatino Linotype", "Book Antiqua", Georgia, serif';
       c.fillStyle='#fff1d1';c.textAlign='center';
       const words=s.fortune.split(' ');let line='',y=815;
       for(const word of words){const trial=line ? line+' '+word : word;if(line && c.measureText(trial).width>660){c.fillText(line,CX,y);line=word;y+=42;}else line=trial;}
       if(line)c.fillText(line,CX,y);c.restore();
-      const sub = !hit
-        ? s.note
-        : (s.practice ? "Practice — treasure drawer locked." : (s.won ? "Chapter treasure kept." : (ORDINARY_NAME[s.ordinary] || "A small keepsake.")));
-      d.text(sub, CX, 898, 18, "#d2b98c");
+      d.text(s.note, CX, 898, 18, "#d2b98c");
       const b = RESULT_ACTION, last = s.level === IRIS_CHAPTERS.length-1;
       roundPath(c,b.x,b.y,b.w,b.h,16);
-      c.fillStyle='#452a50';c.fill();c.strokeStyle=hit?'#c8e878':'#edce88';c.lineWidth=2;c.stroke();
+      c.fillStyle='#452a50';c.fill();c.strokeStyle=unlocked?'#c8e878':(hit?'#e8c878':'#edce88');c.lineWidth=2;c.stroke();
       d.text(hit ? (last ? 'Last chapter' : 'Next chapter') : 'Try again',CX,b.y+48,28,hit&&last?'#b5a58c':'#fff1d1');
     } else if (s.note && s.phase !== "idle") {
       d.wrap(s.note, CX, 780, 24, "#fff0c8", 700, 8);

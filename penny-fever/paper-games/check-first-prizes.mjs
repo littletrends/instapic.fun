@@ -47,14 +47,18 @@ console.log('PASS: all six Mabel first boards, exact return state, and uncharged
 const lookup=await import('./stalls/lookup.js?v=first-prize-1');
 for(let level=0;level<6;level++){memory.clear();cash=20;entry.takeAttempt('lookup',level);for(let n=1;n<=100;n++)assert(lookup.isWinningNumber(level,n));}
 console.log('PASS: telescope first-attempt eligibility across six chapters.');
-const iris=(await import('./stalls/fortune.js?v=first-prize-1')).default;
+const iris=(await import('./stalls/fortune.js?v=iris-pack-1')).default;
+const {IRIS_CHAPTERS}=await import('./fortune-globe.js?v=iris-pack-1');
+assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
  const s=iris.create(level);iris.action(s,'gaze');assert(!s.practice);assert.equal(cash,20);iris.update(s,3);
  for(let i=0;i<s.globe.rings.length;i++){
   const r=s.globe.rings[i];r.angle=r.glyphs.indexOf(s.globe.flash[i])*Math.PI*2/r.n;iris.pointer(s,'down',{x:450,y:428});
  }
- assert(s.won,'first matched gaze awards treasure');assert(awards.length);iris.persist(s);const qty=awards.length;iris.create(level);assert.equal(awards.length,qty);
+ assert(s.won,'first matched gaze awards treasure');assert.equal(s.note,'Bonus unlocked.');
+ assert(awards.includes(IRIS_CHAPTERS[level].prize));
+ iris.persist(s);const qty=awards.length;iris.create(level);assert.equal(awards.length,qty);
 }
 console.log('PASS: all six Iris included gazes award a correctly caught prize and retain it across reload.');
 const pinball=(await import('./stalls/pinball.js?v=first-prize-1')).default;

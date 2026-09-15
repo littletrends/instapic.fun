@@ -64,6 +64,30 @@ export function credit(amount) {
   return api.addDemoCoins(amount) || 0;
 }
 
+export function packs() {
+  if (!alleyPlay) return 0;
+  try {
+    const n = Number(fever()?.pennyPacks?.() ?? fever()?.getState?.()?.pennyPacks);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  } catch { return 0; }
+}
+
+export function packFive() {
+  if (!alleyPlay) return false;
+  if (pilotSession(params.get('stall'))) return false;
+  const api = fever();
+  if (!api?.packFivePennies) return false;
+  return !!api.packFivePennies();
+}
+
+export function unpackFive() {
+  if (!alleyPlay) return false;
+  if (pilotSession(params.get('stall'))) return false;
+  const api = fever();
+  if (!api?.unpackFivePennies) return false;
+  return !!api.unpackFivePennies();
+}
+
 export function keep(id, stall = 'coin-pusher', opts = {}) {
   if (alleyPlay && pilotSession(params.get('stall'))) return false;
   if (!alleyPlay || !id) return false;

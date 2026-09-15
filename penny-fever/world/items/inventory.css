@@ -10,6 +10,11 @@
 .treasure-book button,.treasure-book input,.treasure-book select{font:inherit}
 .treasure-book button{border:1px solid #ad8b53;background:#fff8e9;color:#3d2c1f;border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px;box-shadow:none}
 .treasure-book button:hover{background:#e9d9b6}
+.treasure-book .penny-convert{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.treasure-book .penny-convert[hidden]{display:none!important}
+.treasure-book .penny-convert button{flex:1;min-width:140px;min-height:44px;background:#7b345a;color:#fff8e9;border-color:#5a2440}
+.treasure-book .penny-convert button:hover{background:#5a2440}
+.treasure-book .penny-convert button:disabled{opacity:.45;background:#fff8e9;color:#8a7460;border-color:#c9ae7b}
 .treasure-book :focus-visible{outline:3px solid #7b345a;outline-offset:3px}
 body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none}
 

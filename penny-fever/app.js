@@ -154,6 +154,7 @@
       lastFortune: null,
       curios: {},
       demoCoins: 3,
+      pennyPacks: 0,
       playTickets: 3,
       admitTicket: false,
       admitPassed: false,
@@ -716,6 +717,28 @@
     return Math.max(0, Math.floor(Number(state.demoCoins) || 0));
   }
 
+  function pennyPacks() {
+    return Math.max(0, Math.floor(Number(state.pennyPacks) || 0));
+  }
+
+  function packFivePennies() {
+    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
+    if (pennies() < PENNY_STACK) return false;
+    if (!spendPennies(PENNY_STACK, {allowPass: false})) return false;
+    state.pennyPacks = pennyPacks() + 1;
+    saveState(state);
+    refreshNightBoard();
+    return true;
+  }
+
+  function unpackFivePennies() {
+    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
+    if (pennyPacks() < 1) return false;
+    state.pennyPacks = pennyPacks() - 1;
+    addDemoCoins(PENNY_STACK);
+    return true;
+  }
+
   function tickets() {
     return Math.max(0, Math.floor(Number(state.playTickets) || 0));
   }
@@ -763,7 +786,6 @@
     if (tickets() < 1) return 0;
     state.playTickets = tickets() - 1;
     const added = addDemoCoins(PENNY_STACK);
-    if (state.paperInventory?.items?.['penny-purse']) stampKeepsake("five-penny-stack", "cash-drop");
     return added;
   }
 
@@ -3924,6 +3946,9 @@
     hasAdmitTicket: () => !!state.admitTicket,
     ticketPassed: () => !!state.admitPassed,
     pennies,
+    pennyPacks,
+    packFivePennies,
+    unpackFivePennies,
     tickets,
     spendDemoCoin,
     spendPennies,

@@ -3,7 +3,7 @@ let midwayApi = null;
 let midwayWait = null;
 let artApi = null;
 function needMidway() {
-  if (!midwayWait) midwayWait = import('./midway.js?v=collection-nav-1').then(m => { midwayApi = m; return m; });
+  if (!midwayWait) midwayWait = import('./midway.js?v=iris-pack-1').then(m => { midwayApi = m; return m; });
   return midwayWait;
 }
 function needArt() {
@@ -185,6 +185,10 @@ function mount() {
           <p id="treasureLoading" role="status"></p>
           <p class="pocket-hint" id="treasureHint"></p>
           <p id="treasureDetail"></p>
+          <div class="penny-convert" id="pennyConvert" hidden>
+            <button type="button" id="pennyPackBtn">Pack 5 pennies</button>
+            <button type="button" id="pennyUnpackBtn">Open a 5-pack</button>
+          </div>
           <div class="pocket-inspect-turn" id="inspectTurn" hidden>
             <span id="inspectViewLabel" aria-live="polite">front</span>
             <button type="button" id="inspectRotate" aria-label="Rotate">Rotate</button>
@@ -235,6 +239,8 @@ function mount() {
   $('pocketInspect').querySelector('.pocket-card').prepend($('pocketInspect').querySelector('.pocket-inspect-bar'));
   $('closeTreasures').addEventListener('click', () => dialog.close());
   $('pocketBack').addEventListener('click', hideInspect);
+  $('pennyPackBtn')?.addEventListener('click', () => convertPennies(false));
+  $('pennyUnpackBtn')?.addEventListener('click', () => convertPennies(true));
   $('shelfBack').addEventListener('click', goBack);
   $('bookCoverBtn').addEventListener('click', () => { if (bookId) select(bookId); });
   $('stallCoverBtn').addEventListener('click', inspectFocusCover);
@@ -452,10 +458,11 @@ function render() {
   const all = entries();
   const filled = all.filter(i => i.owned).length;
   const pennies = all.find(i => i.id === 'everyday-penny')?.quantity || 0;
+  const packs = all.find(i => i.id === 'five-penny-stack')?.quantity || 0;
   const tix = all.find(i => i.id === 'ticket-roll')?.quantity || 0;
   text('treasureCount', studio
     ? all.length + ' individual paper objects'
-    : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies'));
+    : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies') + (packs ? ' · ' + packs + (packs === 1 ? ' pack' : ' packs') : ''));
 
   dialog.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
   dialog.querySelectorAll('[data-look-collection]').forEach(b=>{b.hidden=tab!=='games';});
@@ -877,7 +884,8 @@ function paintSlots(shown, opts = {}) {
     name.textContent = item.name;
     const mark = document.createElement('em');
     mark.textContent = item.owned
-      ? (item.kind === 'currency' ? item.quantity + (item.quantity === 1 ? ' penny' : ' pennies')
+      ? (item.id === 'five-penny-stack' ? item.quantity + (item.quantity === 1 ? ' pack' : ' packs')
+        : item.kind === 'currency' ? item.quantity + (item.quantity === 1 ? ' penny' : ' pennies')
         : item.kind === 'scrip' ? item.quantity + (item.quantity === 1 ? ' ticket' : ' tickets')
         : item.quantity > 1 ? '×' + item.quantity
         : 'Found')
@@ -885,6 +893,39 @@ function paintSlots(shown, opts = {}) {
     button.append(well, name, mark);
     root.append(button);
   }
+}
+
+function paintConvert(item) {
+  const box = $('pennyConvert');
+  if (!box) return;
+  const convert = !studio && (item?.id === 'everyday-penny' || item?.id === 'five-penny-stack');
+  box.hidden = !convert;
+  if (!convert) return;
+  const pennies = Number(globalThis.PennyFever?.pennies?.() ?? state().demoCoins) || 0;
+  const packs = Number(globalThis.PennyFever?.pennyPacks?.() ?? state().pennyPacks) || 0;
+  const packBtn = $('pennyPackBtn');
+  const unpackBtn = $('pennyUnpackBtn');
+  packBtn.disabled = pennies < 5;
+  unpackBtn.disabled = packs < 1;
+  packBtn.textContent = pennies < 5 ? 'Need 5 pennies to pack' : 'Pack 5 pennies';
+  unpackBtn.textContent = packs < 1 ? 'No 5-packs to open' : 'Open a 5-pack · ' + packs;
+}
+
+function convertPennies(openPack) {
+  const PF = globalThis.PennyFever;
+  const ok = openPack ? PF?.unpackFivePennies?.() : PF?.packFivePennies?.();
+  if (!ok) {
+    text('treasureDetail', openPack
+      ? 'No 5-packs to open.'
+      : 'Need five loose pennies to pack.');
+    paintConvert(current);
+    return;
+  }
+  if (current) {
+    const item = entries().find(i => i.id === current.id);
+    if (item) { current = item; describe(item); }
+  }
+  render();
 }
 
 function describe(item) {
@@ -895,16 +936,18 @@ function describe(item) {
     ? (chapter ? stall.host + ' · ' + stall.title + ' · chapter ' + chapter : stall.host + ' · ' + stall.title)
     : item.source);
   text('treasureStatus', item.owned ? item.status : 'Not found yet. Win it on the alley — the book will keep the place.');
-  const stacks = item.id === 'penny-purse'
-    ? (entries().find(i => i.id === 'five-penny-stack')?.quantity || 0)
-    : 0;
-  text('treasureHint', item.id === 'penny-purse' && item.owned
-    ? (stacks
-      ? stacks + (stacks === 1 ? ' five-penny stack' : ' five-penny stacks') + ' backed up in the purse.'
-      : 'The purse is yours. Five-penny stacks you cash or shove will back up in here.')
-    : item.id === 'five-penny-stack' && !entries().find(i => i.id === 'penny-purse')?.owned
-      ? 'Win the purse off Copper’s trays first. Then stacks back up in it.'
-      : item.hint);
+  const packs = Number(globalThis.PennyFever?.pennyPacks?.() ?? state().pennyPacks) || 0;
+  const pennies = Number(globalThis.PennyFever?.pennies?.() ?? state().demoCoins) || 0;
+  text('treasureHint', item.id === 'everyday-penny'
+    ? (pennies + (pennies === 1 ? ' penny' : ' pennies') + ' loose · ' + packs + (packs === 1 ? ' pack' : ' packs') + ' parked. Pack five to keep them out of Copper’s dump.')
+    : item.id === 'five-penny-stack'
+      ? (packs ? packs + (packs === 1 ? ' pack' : ' packs') + ' parked. Open one for five loose pennies.' : 'No packs parked. Pack five loose pennies from Everyday penny, Copper Falls, or the alley menu.')
+      : item.id === 'penny-purse' && item.owned
+        ? (packs
+          ? packs + (packs === 1 ? ' five-penny pack' : ' five-penny packs') + ' parked out of the droppable purse.'
+          : 'The purse is yours. Pack five pennies to keep a bundle out of a full dump.')
+        : item.hint);
+  paintConvert(item);
   const dollPage = {
     'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
     'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',

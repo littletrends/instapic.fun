@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 const mem=new Map();globalThis.localStorage={getItem:k=>mem.get(k)??null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k)};
 globalThis.document={hidden:false};globalThis.location={origin:'http://localhost'};
-let cash=24,debits=[],credits=[],awards=[],reject=false;const inventory={items:{}};
+let cash=24,debits=[],credits=[],awards=[],reject=false,packed=0;const inventory={items:{}};
 globalThis.CustomEvent=class {constructor(type,init){this.type=type;this.detail=init?.detail}};
-globalThis.window={location:{search:'?stall=coin-pusher&room=alley'},parent:{PennyFever:{getState:()=>({demoCoins:cash,paperInventory:inventory}),spendPennies:n=>{if(reject||cash<n)return false;cash-=n;debits.push(n);return true},addDemoCoins:n=>{cash+=n;credits.push(n);return cash},saveState(){}},PennyFeverInventoryModel:{recordPaperPrize:(s,p)=>{if(inventory.items[p.item])return [];inventory.items[p.item]={qty:1};awards.push(p.item);return [p.item]}},dispatchEvent(){}}};
+globalThis.window={location:{search:'?stall=coin-pusher&room=alley'},parent:{PennyFever:{getState:()=>({demoCoins:cash,pennyPacks:packed,paperInventory:inventory}),spendPennies:n=>{if(reject||cash<n)return false;cash-=n;debits.push(n);return true},addDemoCoins:n=>{cash+=n;credits.push(n);return cash},pennyPacks:()=>packed,packFivePennies(){if(reject||cash<5)return false;cash-=5;packed+=1;debits.push(5);return true},unpackFivePennies(){if(packed<1)return false;packed-=1;cash+=5;credits.push(5);return true},saveState(){}},PennyFeverInventoryModel:{recordPaperPrize:(s,p)=>{if(inventory.items[p.item])return [];inventory.items[p.item]={qty:1};awards.push(p.item);return [p.item]}},dispatchEvent(){}}};
 const base=new URL('./',import.meta.url).href;
 const copper=(await import(base+'stalls/coin-pusher.js')).default;
 const iris=(await import(base+'stalls/fortune.js')).default;
@@ -118,3 +118,42 @@ for(let level=0;level<6;level++){
  assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,0,'owned prize does not repeat');
 }
 console.log('PASS: first paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');
+
+const {IRIS_CHAPTERS,isIrisWin}=await import('./fortune-globe.js?v=iris-pack-1');
+assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
+assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,paper-crown');
+assert(!IRIS_CHAPTERS.some(c=>c.prize==='looking-glass-locket'));
+inventory.items={};awards=[];mem.clear();cash=20;
+let gaze=iris.create(0);iris.action(gaze,'gaze');iris.update(gaze,3);
+for(let i=0;i<gaze.globe.rings.length;i++){
+  const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
+}
+assert.equal(gaze.note,'Bonus unlocked.');assert(gaze.won);assert(awards.includes('fortune-slip'));
+gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');gaze.clock=80;iris.update(gaze,3);
+for(let i=0;i<gaze.globe.rings.length;i++){
+  const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
+}
+assert.equal(gaze.note,'Already unlocked.');
+inventory.items={};awards=[];mem.clear();cash=20;
+gaze=iris.create(1);iris.action(gaze,'gaze');
+gaze.charged=false;gaze.phase='idle';iris.action(gaze,'gaze');
+iris.update(gaze,3);
+gaze.clock=81;
+assert(!isIrisWin(1,81),'second paid gaze uses the ordinary 1–100 gate');
+for(let i=0;i<gaze.globe.rings.length;i++){
+  const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
+}
+assert.equal(gaze.note,'Bonus locked — better luck next time.');assert(!gaze.won);assert(!awards.includes('moon-lantern'));
+console.log('PASS: Iris chapter 6 is paper-crown; UNLOCKED / LOCKED / already-unlocked copy.');
+
+mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];
+let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;
+assert(copper.action(bank,'pack5')===undefined);assert.equal(cash,35);assert.equal(packed,1);
+copper.action(bank,'pack5');copper.action(bank,'pack5');assert.equal(cash,25);assert.equal(packed,3);
+const loose=cash;copper.action(bank,'dropall');assert.equal(debits.at(-1),loose);assert.equal(cash,0);assert.equal(packed,3);
+for(let i=0;i<600&&bank.busy;i++)copper.update(bank,1/60);
+const afterDrop=cash;assert(afterDrop>=0);assert.equal(packed,3,'packs stay out of the machine during a dump');
+copper.action(bank,'unpack5');assert.equal(packed,2);assert.equal(cash,afterDrop+5);
+reject=true;const beforePack=packed;copper.action(bank,'pack5');assert.equal(packed,beforePack);reject=false;
+cash=4;copper.action(bank,'pack5');assert.equal(packed,2,'cannot pack fewer than five pennies');
+console.log('PASS: Copper 5-packs keep pennies out of a full-purse drop and unpack restores them.');

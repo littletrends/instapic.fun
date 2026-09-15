@@ -1,5 +1,5 @@
 import {alleyPlay, keep, owned} from '../wallet.js?v=entry-1';
-import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty } from "../cabinet-wallet.js?v=live-cabinets-1";
+import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive } from "../cabinet-wallet.js?v=iris-pack-1";
 
 const BOOK = alleyPlay ? "pennyFever.copperFalls.v6" : "pennyFever.copperFalls.practice.v6";
 const TAU = Math.PI * 2;
@@ -217,15 +217,25 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
 
 function uiButtons(s) {
   const n = s.practice ? 1 : pursePennies();
+  const packed = s.practice ? 0 : pursePacks();
   const q = n ? Math.max(1, Math.floor(n / 4)) : 0;
   const h = n ? Math.max(1, Math.floor(n / 2)) : 0;
   const can = s.phase === 'idle' && !s.busy;
-
+  if (s.practice) {
+    return [
+      {id:'drop1',label:'Practice drop',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
+      {id:'drop14',label:'¼ purse · 1',x:460,y:942,w:410,h:84,count:1,on:false},
+      {id:'drop12',label:'½ purse · 1',x:30,y:1036,w:410,h:84,count:1,on:false},
+      {id:'dropall',label:'Drop purse · 1',x:460,y:1036,w:410,h:84,count:1,on:false},
+    ];
+  }
   return [
-    {id:'drop1',label:s.practice?'Practice drop':'Drop 1 penny',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
-    {id:'drop14',label:'¼ purse · '+q,x:460,y:942,w:410,h:84,count:q,on:can&&!s.practice&&n>=1},
-    {id:'drop12',label:'½ purse · '+h,x:30,y:1036,w:410,h:84,count:h,on:can&&!s.practice&&n>=1},
-    {id:'dropall',label:('Full purse · '+n),x:460,y:1036,w:410,h:84,count:n,on:can&&!s.practice&&n>=1},
+    {id:'pack5',label:n>=5?'Pack 5 pennies':'Need 5 to pack',x:30,y:888,w:410,h:64,on:can&&n>=5},
+    {id:'unpack5',label:packed?('Open 5-pack · '+packed):'No 5-packs yet',x:460,y:888,w:410,h:64,on:can&&packed>=1},
+    {id:'drop1',label:'Drop 1 penny',x:30,y:960,w:410,h:72,count:1,on:can&&n>=1},
+    {id:'drop14',label:'¼ purse · '+q,x:460,y:960,w:410,h:72,count:q,on:can&&n>=1},
+    {id:'drop12',label:'½ purse · '+h,x:30,y:1040,w:410,h:72,count:h,on:can&&n>=1},
+    {id:'dropall',label:'Drop purse · '+n,x:460,y:1040,w:410,h:72,count:n,on:can&&n>=1},
   ];
 }
 function hitButton(s, p) {
@@ -299,8 +309,8 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. The chapter prize is not a timer: by the first paid penny it unlatches onto the bed, then you still have to push it over the edge.",
-  instructions: "Aim the hopper, then dump 1, ¼, ½ or the whole purse. One dump, one shove. Build a wide pile behind what you want. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
+  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. Pack five pennies to keep a bundle out of the machine; Drop purse only dumps what is still loose. The chapter prize unlatches on the first paid penny, then you still have to push it over the edge.",
+  instructions: "Aim the hopper, then drop 1, ¼, ½ or the loose purse. Pack 5 pennies into a 5-pack to keep them out of play; open a pack when you want them back. One dump, one shove. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
   levels: CHAPTERS.map(c => c.title),
   images: {
     cabinet: "./assets/coin-pusher/pusher/cabinet.webp",
@@ -320,8 +330,9 @@ export default {
   },
   hud(s) {
     const n = pursePennies();
+    const packed = s?.practice ? 0 : pursePacks();
     const ch = CHAPTERS[s?.level || 0];
-    const cash = s?.practice ? "Practice" : (n + (n === 1 ? " penny" : " pennies"));
+    const cash = s?.practice ? "Practice" : (n + (n === 1 ? " penny" : " pennies") + (packed ? " · " + packed + (packed === 1 ? " pack" : " packs") : ""));
     const keep = s?.tray?.treasureOwned ? "Treasure ✓" : ("Ch " + ((s?.level || 0) + 1) + " · " + ch.title);
     return { cash, keep };
   },
@@ -478,6 +489,22 @@ export default {
   },
   action(s, id, count) {
     if (id === "next-chapter") s.requestNext = true;
+    if (id === "pack5") {
+      if (s.practice || s.busy || s.phase !== "idle") return;
+      if (pursePackFive()) {
+        s.note = "Five pennies packed. They stay out of the machine.";
+        persistState(s);
+      } else s.note = "Need five loose pennies to pack.";
+      return;
+    }
+    if (id === "unpack5") {
+      if (s.practice || s.busy || s.phase !== "idle") return;
+      if (purseUnpackFive()) {
+        s.note = "Five pennies back in the purse.";
+        persistState(s);
+      } else s.note = "No 5-packs to open.";
+      return;
+    }
     if (id === "drop1" || id === "drop") this.drop(s, 1);
     if (id === "drop14" || id === "drop12" || id === "dropall") {
       const purse=pursePennies();
@@ -526,7 +553,7 @@ export default {
       else d.circle(coin.x, coin.y, coin.r, coin.kind === "treasure" ? "#e8c878" : "#b87333", "#7a4a18", 2);
     }
 
-    d.text(pennyCount(s.tray.coins)+" pennies in machine",450,810,17,"#fff0c8");
+    d.text(pennyCount(s.tray.coins)+" pennies in machine",450,798,17,"#fff0c8");
 
     // locked treasure in the crown shelf
     if (!s.tray.treasureOn && !s.tray.treasureOwned) {
@@ -547,8 +574,8 @@ export default {
     c.fillRect(LEFT, FRONT, RIGHT - LEFT, 18);
     d.text("Collection lip", 450, FRONT + 32, 14, "#e8c878");
 
-    d.wrap(s.note, 450, 848, 20, "#fff0c8", 700, 8);
-    d.text(prizeStatus(s),450,918,18,"#c8e878");
+    d.wrap(s.note, 450, 822, 18, "#fff0c8", 700, 8);
+    d.text(prizeStatus(s),450,872,16,"#c8e878");
 
     uiButtons(s).forEach(b => {
       c.beginPath();
@@ -563,6 +590,8 @@ export default {
   },
   readout(s) {
     const n = pursePennies();
-    return (s.practice ? "practice" : n + " pennies") + " · " + prizeStatus(s) + (s.note ? " · " + s.note : "");
+    const packed = s.practice ? 0 : pursePacks();
+    const purse = s.practice ? "practice" : (n + " pennies" + (packed ? " · " + packed + " packed" : ""));
+    return purse + " · " + prizeStatus(s) + (s.note ? " · " + s.note : "");
   },
 };
