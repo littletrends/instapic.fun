@@ -1,13 +1,13 @@
-import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-slide-1';
+import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-fixes-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
-import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
+import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
-  MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, isMabelWin, resultNumber,
-  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique,
-} from '../milky-splash.js?v=milk-slide-1';
+  MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, resultNumber,
+  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard,
+} from '../milky-splash.js?v=milk-fixes-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -28,7 +28,7 @@ function writeBook(book) {
   try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
 }
 function chapterPaid(level) {
-  return !!(readBook().paid && readBook().paid[String(level)]);
+  return !!readBook().paid?.[String(level)] || owned(MABEL_CHAPTERS[level].prize);
 }
 function markPaid(level) {
   if (!alleyPlay) return;
@@ -44,6 +44,7 @@ function boardBlob(board) {
     cells: board.cells, moves: board.moves, movesLeft: board.movesLeft,
     unique: board.unique, delivered: !!board.delivered, sourOn: !!board.sourOn,
     pool: board.pool, collected: board.collected, rngSeed: board.rngSeed || board.seed,
+    sourTurns:board.sourTurns||0, reshuffled:!!board.reshuffled,
     rng: board.rng ? {s: board.rng.s} : undefined,
   };
 }
@@ -53,7 +54,7 @@ function persist(s) {
   const book = readBook();
   book.currentChapter=s.level;
   book.sittings[String(s.level)] = {
-    houseLeft:s.houseLeft,
+    houseLeft:s.houseLeft, result:s.result||null, hold:s.hold||0, rewardCommitted:!!s.rewardCommitted,
     phase: s.phase, seed: s.seed, charged: !!s.charged,
     board: boardBlob(s.board), resultN: s.resultN || 0,
     won: !!s.won, note: s.note, reduced: !!s.reduced,
@@ -71,55 +72,38 @@ function revive(blob, level, seed) {
   return makeBoard(level, seed);
 }
 
-function finishWin(s) {
-  if (s.won || s.phase === 'result') return;
-  const n = s.resultN || resultNumber(s.seed);
-  s.resultN = n;
-  const prize = MABEL_CHAPTERS[s.level].prize;
-  const delivered = isDelivered(s.board);
-  const win = delivered && isMabelWin(s.level, n) && !chapterPaid(s.level) && !s.won;
-  const drop = ordinaryFor(n);
-  s.phase = 'result';
-  s.charged = false;
-  if (alleyPlay) {
-    if (drop === 'everyday-penny') credit(1);
-    else keep(drop, 'milk-bottles');
-    if (win) {
-      keep(prize, 'milk-bottles');
-      markPaid(s.level);
-      s.won = true;
-    }
-  } else if (win) s.won = true;
-  if (win) takePrize(s, prize, cellCenter(s.board, s.board.unique.c, s.board.unique.r));
-  s.hold = 1.2;
-  s.note = win
-    ? 'The sealed bottle opens in Mabel’s crate.'
-    : delivered
-      ? 'Into the crate — but tonight’s numbers kept the unique.'
-      : 'The dairy settles.';
-  persist(s);
+function ordinaryReward(s){
+ if(s.rewardCommitted)return;
+ s.rewardCommitted=true;
+ const drop=ordinaryFor(s.resultN||resultNumber(s.seed));
+ persist(s);
+ if(alleyPlay){if(drop==='everyday-penny')credit(1);else keep(drop,'milk-bottles');}
 }
-
-function restSitting(s, why) {
-  const n = s.resultN || resultNumber(s.seed);
-  s.resultN = n;
-  const waiting = !!(s.board && locateUnique(s.board) && !s.board.delivered);
-  s.charged = false;
-  if (waiting) {
-    s.phase = 'rest';
-    s.note = why || 'Moves gone. The sealed bottle waits in the crate-run. A penny for more swaps.';
-    persist(s);
-    return;
-  }
-  const drop = ordinaryFor(n);
-  s.phase = 'result';
-  if (alleyPlay) {
-    if (drop === 'everyday-penny') credit(1);
-    else keep(drop, 'milk-bottles');
-  }
-  s.hold = 0.8;
-  s.note = why || 'Moves gone. Ordinary dairy, no unique tonight.';
-  persist(s);
+function finishWin(s){
+ if(s.phase==='result'||!isDelivered(s.board))return;
+ const prize=MABEL_CHAPTERS[s.level].prize;
+ // Seeing the earned bottle is the eligibility decision. Never roll again on delivery.
+ const win=!chapterPaid(s.level);
+ s.phase='result';s.charged=false;s.won=win;s.resultN ||= resultNumber(s.seed);
+ ordinaryReward(s);
+ if(win){
+  if(alleyPlay){keep(prize,'milk-bottles');markPaid(s.level);}
+  const u=s.board.unique||{c:0,r:s.board.rows-1};
+  takePrize(s,prize,cellCenter(s.board,u.c,u.r));
+ }
+ s.hold=win?1.8:0;
+ s.note=win?'The sealed bottle opens in Mabel’s crate.':'This treasure is already in your collection.';
+ if(!win)done(s,'Delivery complete',s.note,{won:false,prize:null,settle:true});
+ persist(s);
+}
+function restSitting(s,why){
+ if(s.phase!=='play')return;
+ s.resultN ||= resultNumber(s.seed);s.charged=false;
+ const waiting=!!(s.board&&locateUnique(s.board)&&!s.board.delivered);
+ s.phase=waiting?'rest':'result';s.hold=0;
+ s.note=why||(waiting?'Moves used. Your bottle stays here. Play buys more moves.':'Moves used. This tray is complete.');
+ if(!waiting){ordinaryReward(s);done(s,'Tray complete',s.note,{won:false,prize:null,settle:true});}
+ persist(s);
 }
 
 function beginPlay(s) {
@@ -135,17 +119,19 @@ function beginPlay(s) {
       }
       s.charged = true;
       s.houseLeft=HOUSE_SECONDS;
+      delete s.result;
       if (!waiting) {
-        s.seed = (s.seed || (s.level + 1) * 4099) + 1 + s.level * 17;
-        s.board = makeBoard(s.level, s.seed);
+        s.seed = (s.seed || (s.level + 1) * 4099) + 1;
+        s.board = makeBoard(s.level, s.seed,{allowUnique:!chapterPaid(s.level)});
         s.resultN = resultNumber(s.seed);
-        s.won = s.won && chapterPaid(s.level);
+        s.won = false;s.rewardCommitted=false;
         s.prizeKept = false;
       } else {
         refillMoves(s.board);
       }
     }
     s.phase = 'play';
+    s.pointerCell=null;
     s.selected = null;
     s.reduced = reducedMotion();
     const u = locateUnique(s.board);
@@ -164,12 +150,12 @@ function trySwap(s, a, b) {
   const res = applySwap(s.board, a.c, a.r, b.c, b.r);
   if(res.ok||res.reason==='no-match')splashSwap(s,a,b,before,res.ok);
   if (!res.ok) {
-    s.note = res.reason === 'no-match' ? 'No splash — the bottles bounce home.' : 'Those two will not trade.';
+    s.note = res.reason === 'no-match' ? 'No splash — the bottles bounce home.' : (s.board.cells[a.r]?.[a.c]?.kind==='unique'||s.board.cells[b.r]?.[b.c]?.kind==='unique'?'Move the prize bottle with a matching swap, or match below it.':'Those two will not trade.');
     s.selected = null;
     return;
   }
   s.selected = null;
-  s.note = s.board.unique
+  s.note = s.board.reshuffled ? 'Mabel reshuffled the bottles. No extra move spent.' : s.board.unique
     ? (s.board.movesLeft + ' moves. Walk the sealed bottle down.')
     : (s.board.movesLeft + ' moves left.');
   if (!isSliding(s)&&s.board.delivered) finishWin(s);
@@ -186,10 +172,15 @@ export default {
   chapterEnds: true,
   persist,
   houseSeconds: HOUSE_SECONDS,
+  clockRuns:s=>s.phase==='play'&&!isSliding(s),
+  onTimeout(s){restSitting(s,'Time is up. Your board is saved. Press Play for another allowance.');},
+  retryAttempt(s){this.action(s,'again');},
+  retryButton:alleyPlay?'Play again · 1 penny':'Play again',
+  playLabel:s=>alleyPlay&&['rest','result'].includes(s.phase)?'Play again · 1 penny':'Play',
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket sits you down; the first try of each chapter is included. Extra sittings are a penny — one charge, a full move tray. If a sealed unique appears, match it down into the crate. The board waits if moves run out.'
+    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. If a sealed unique appears, match it down into the crate. The board waits if moves run out.'
     : 'Swap neighbouring bottles. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
     ? 'Tap two neighbours to swap. Only a real match spends a move. Cascades are free. The unique is a sealed bottle — splash the dairy beneath it until it drops into Mabel’s crate.'
@@ -208,18 +199,27 @@ export default {
       level, t: 0, houseLeft:saved.houseLeft, phase: saved.phase || 'idle', seed,
       board: saved.board ? revive(saved.board, level, seed) : null,
       charged: !!saved.charged, resultN: saved.resultN || 0,
-      won: !!saved.won || chapterPaid(level), hold: 0, reduced: !!saved.reduced,
+      won: !!saved.won && !!saved.board?.delivered, hold:saved.hold||0, result:saved.result||null, rewardCommitted:saved.rewardCommitted??(saved.phase==='result'), reduced: !!saved.reduced,
       selected: saved.selected || null, lock: false,
       note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Press Play when you are ready.',
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeBoard(level, s.seed);
+    if(s.board&&!s.board.delivered)repairBoard(s.board);
+    if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
+    if(s.board?.delivered&&chapterPaid(level)&&s.phase==='play'){s.phase='result';s.won=true;s.charged=false;s.hold=0;}
+    if(s.phase==='result'&&!s.result&&s.hold<=0){
+      done(s,s.won?'Treasure collected':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
+    }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     if (s.won && s.chapterPrize) s.chapterPrize.field = false;
+    persist(s);
     return s;
   },
   update(s, dt) {
     s.t += dt;
     if (typeof document !== 'undefined' && document.hidden) return;
+    s.saveClock=(s.saveClock||0)+dt;
+    if(s.saveClock>=1){s.saveClock=0;persist(s);}
     if (s.phase === 'play' && s.board) {
       if(!isSliding(s)){
         if (s.board.delivered && !s.won) finishWin(s);
@@ -231,13 +231,18 @@ export default {
       if (s.hold <= 0) {
         done(s, 'The crate takes the unique',
           itemName(MABEL_CHAPTERS[s.level].prize) + ' — sealed bottle delivered.',
-          {prize: MABEL_CHAPTERS[s.level].prize, won: true});
+          {prize: MABEL_CHAPTERS[s.level].prize, won: true, settle:true});
+        persist(s);
       }
     } else if (s.phase === 'result' && !s.won && s.hold > 0) s.hold -= dt;
   },
   pointer(s, type, p) {
+    if(type==='cancel'){s.pointerCell=null;s.selected=null;return;}
     if (s.result || isSliding(s)) return;
-    if (s.phase === 'idle' || s.phase === 'result' || s.phase === 'rest') {
+    if (s.phase === 'rest' || s.phase === 'result') {
+      s.note=alleyPlay?'Press Play for another move allowance · 1 penny.':'Press Play for another move allowance.';return;
+    }
+    if (s.phase === 'idle') {
       if (type === 'down') beginPlay(s);
       return;
     }
@@ -263,11 +268,8 @@ export default {
   action(s, id) {
     if (id === 'play' || id === 'again') {
       if (s.phase === 'result') {
-        s.phase = 'idle';
-        if (!(s.board && locateUnique(s.board) && !s.board.delivered)) s.board = null;
-        s.note = 'Press Play again when you are ready.';
-        persist(s);
-        return;
+        s.phase='idle';delete s.result;s.hold=0;
+        if(!(s.board&&locateUnique(s.board)&&!s.board.delivered))s.board=null;
       }
       beginPlay(s);
     }

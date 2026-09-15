@@ -1,4 +1,4 @@
-import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-slide-1';
+import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-fixes-1';
 import {spriteKey} from './prizes.js';
 
 const effects=new WeakMap();
@@ -52,6 +52,7 @@ export function drawMilkySplash(s,d,chapter){
  text(c,'MABEL’S LITTLE DAIRY',450,59,19,'#937482');
  text(c,'Milky Splash!',450,109,47,'#b84179',900);
  text(c,chapter.title,450,150,23,'#754563');
+ if(real?.sourOn&&real.cells.some(row=>row.some(cell=>cell?.kind==='sour')))text(c,'Sour spreads in '+(3-(real.sourTurns||0)%3)+' moves',450,185,18,'#587238');
  box(c,72,122,130,46,18,'#fffaf0');text(c,real?real.movesLeft+' moves':'Match 3',137,153,22,'#a84073');
  box(c,710,122,116,46,18,'#fffaf0');text(c,'Ch '+(s.level+1),768,153,22,'#a84073');
  // The existing illustrated template remains the board background.

@@ -8,3 +8,5 @@
 .game-page.standard-game .notebook{display:none!important}
 .game-page.standard-game.menu-open .notebook{display:block!important;position:fixed;inset:52px 8px 8px;z-index:10;max-width:600px;margin:auto;border:1px solid #c3a775;border-radius:12px}
 .game-page.standard-game #menu-close{display:block;width:100%}
+
+.game-page.standard-game.is-alley-room .game-menu-bar{display:flex}

@@ -102,19 +102,6 @@ function isHoleCell(ch, c, r) {
   return false;
 }
 
-function columnSegments(board, c) {
-  const segs = [];
-  let start = 0;
-  for (let r = 0; r <= board.rows; r++) {
-    const hole = r < board.rows && board.cells[r][c]?.kind === 'hole';
-    if (r === board.rows || hole) {
-      if (r > start) segs.push([start, r - 1]);
-      start = r + 1;
-    }
-  }
-  return segs;
-}
-
 export function layoutOf(board) {
   const cols = board?.cols || 5, rows = board?.rows || 6;
   const size = Math.min(120, Math.floor(700 / cols), Math.floor(760 / rows));
@@ -175,28 +162,26 @@ function adjacent(c1, r1, c2, r2) {
 }
 
 function swappable(cell) {
-  return !!(cell && (cell.kind === 'milk' || cell.kind === 'special'));
+  return !!(cell && (cell.kind === 'milk' || cell.kind === 'special' || cell.kind === 'unique'));
 }
 
+function specialSwap(a,b){
+ return !!(a&&b&&((a.kind==='special'&&a.special==='cream'&&flavourId(b))||(b.kind==='special'&&b.special==='cream'&&flavourId(a))||(a.kind==='special'&&b.kind==='special')));
+}
+function swapMatches(board,c1,r1,c2,r2){
+ return findMatches(board).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2));
+}
 export function legalMoves(board) {
-  const moves = [];
-  for (let r = 0; r < board.rows; r++) {
-    for (let c = 0; c < board.cols; c++) {
-      for (const [dc, dr] of [[1, 0], [0, 1]]) {
-        const c2 = c + dc, r2 = r + dr;
-        if (c2 >= board.cols || r2 >= board.rows) continue;
-        if (!swappable(cellAt(board, c, r)) || !swappable(cellAt(board, c2, r2))) continue;
-        const a = board.cells[r][c], b = board.cells[r2][c2];
-        board.cells[r][c] = b;
-        board.cells[r2][c2] = a;
-        const ok = findMatches(board).length > 0;
-        board.cells[r][c] = a;
-        board.cells[r2][c2] = b;
-        if (ok) moves.push({c1: c, r1: r, c2, r2});
-      }
-    }
-  }
-  return moves;
+ const moves=[];
+ for(let r=0;r<board.rows;r++)for(let c=0;c<board.cols;c++)for(const [dc,dr] of [[1,0],[0,1]]){
+  const c2=c+dc,r2=r+dr,a=cellAt(board,c,r),b=cellAt(board,c2,r2);
+  if(!swappable(a)||!swappable(b))continue;
+  setCell(board,c,r,b);setCell(board,c2,r2,a);
+  const ok=specialSwap(a,b)||swapMatches(board,c,r,c2,r2);
+  setCell(board,c,r,a);setCell(board,c2,r2,b);
+  if(ok)moves.push({c1:c,r1:r,c2,r2});
+ }
+ return moves;
 }
 
 export function locateUnique(board) {
@@ -248,39 +233,25 @@ export function spawnUnique(board, col) {
   return board;
 }
 
+function anchored(cell){return !!cell&&['hole','crate','weighted','sour'].includes(cell.kind);}
+function fallSegments(board,c){
+ const segments=[];let start=0;
+ for(let r=0;r<=board.rows;r++)if(r===board.rows||anchored(cellAt(board,c,r))){
+  if(r>start)segments.push([start,r-1]);start=r+1;
+ }
+ return segments;
+}
 function gravity(board) {
-  for (let c = 0; c < board.cols; c++) {
-    for (const [a, b] of columnSegments(board, c)) {
-      const kept = [];
-      for (let r = a; r <= b; r++) {
-        const cell = board.cells[r][c];
-        if (cell && cell.kind !== 'hole') kept.push(cell);
-        board.cells[r][c] = null;
-      }
-      let r = b;
-      for (let i = kept.length - 1; i >= 0; i--, r--) board.cells[r][c] = kept[i];
-    }
-  }
+ for(let c=0;c<board.cols;c++)for(const [a,b] of fallSegments(board,c)){
+  const kept=[];
+  for(let r=a;r<=b;r++){if(board.cells[r][c])kept.push(board.cells[r][c]);board.cells[r][c]=null;}
+  let r=b;for(let i=kept.length-1;i>=0;i--,r--)board.cells[r][c]=kept[i];
+ }
 }
-
-export function settleBoard(board) {
-  gravity(board);
-  locateUnique(board);
-  if (isDelivered(board)) board.delivered = true;
-  return board;
-}
-
-function refill(board) {
-  const ids = board.pool;
-  const roll = board.roll;
-  for (let c = 0; c < board.cols; c++) {
-    const segs = columnSegments(board, c);
-    const top = segs[0];
-    if (!top || top[0] !== 0) continue;
-    for (let r = top[0]; r <= top[1]; r++) {
-      if (!board.cells[r][c]) board.cells[r][c] = milk(ids[Math.floor(roll() * ids.length)]);
-    }
-  }
+export function settleBoard(board){gravity(board);locateUnique(board);if(isDelivered(board))board.delivered=true;return board;}
+function refill(board){
+ for(let c=0;c<board.cols;c++)for(const [a,b] of fallSegments(board,c))for(let r=a;r<=b;r++)
+  if(!board.cells[r][c])board.cells[r][c]=milk(board.pool[Math.floor(board.roll()*board.pool.length)]);
 }
 
 function damageAround(board, hits) {
@@ -302,58 +273,37 @@ function damageAround(board, hits) {
   }
 }
 
-function activateSpecials(board, hits) {
-  for (const h of hits) {
-    const cell = cellAt(board, h.c, h.r);
-    if (!cell || cell.kind !== 'special') continue;
-    if (cell.special === 'shaken') {
-      const axis = cell.axis === 'col' ? 'col' : 'row';
-      if (axis === 'row') {
-        for (let c = 0; c < board.cols; c++) {
-          const t = cellAt(board, c, h.r);
-          if (t && t.kind !== 'unique' && t.kind !== 'hole') setCell(board, c, h.r, null);
-        }
-      } else {
-        for (let r = 0; r < board.rows; r++) {
-          const t = cellAt(board, h.c, r);
-          if (t && t.kind !== 'unique' && t.kind !== 'hole') setCell(board, h.c, r, null);
-        }
-      }
-    } else if (cell.special === 'fizzy') {
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-        const t = cellAt(board, h.c + dc, h.r + dr);
-        if (t && t.kind !== 'unique' && t.kind !== 'hole') setCell(board, h.c + dc, h.r + dr, null);
-      }
-    } else if (cell.special === 'cream') {
-      const flav = cell.flavour;
-      for (let r = 0; r < board.rows; r++) for (let c = 0; c < board.cols; c++) {
-        const t = cellAt(board, c, r);
-        if (t && t.flavour === flav && t.kind !== 'unique') setCell(board, c, r, null);
-      }
-    }
+function activateSpecials(board,hits){
+ const affected=new Map(hits.map(h=>[h.r+','+h.c,h]));const queue=hits.slice(),seen=new Set();
+ const add=(c,r)=>{const cell=cellAt(board,c,r);if(!cell||cell.kind==='unique'||cell.kind==='hole')return;const key=r+','+c;if(!affected.has(key)){const h={c,r};affected.set(key,h);queue.push(h);}};
+ while(queue.length){
+  const h=queue.shift(),cell=cellAt(board,h.c,h.r),key=h.r+','+h.c;
+  if(cell?.kind!=='special'||seen.has(key))continue;seen.add(key);
+  if(cell.special==='shaken'){
+   if(cell.axis==='col')for(let r=0;r<board.rows;r++)add(h.c,r);
+   else for(let c=0;c<board.cols;c++)add(c,h.r);
+  }else if(cell.special==='fizzy'){
+   for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)add(h.c+dc,h.r+dr);
+  }else if(cell.special==='cream'){
+   for(let r=0;r<board.rows;r++)for(let c=0;c<board.cols;c++)if(flavourId(cellAt(board,c,r))===cell.flavour)add(c,r);
   }
+ }
+ return [...affected.values()];
 }
-
-function promoteSpecials(board, hits) {
-  if (hits.length < 4) return null;
-  const byRow = new Map(), byCol = new Map();
-  for (const h of hits) {
-    byRow.set(h.r, (byRow.get(h.r) || 0) + 1);
-    byCol.set(h.c, (byCol.get(h.c) || 0) + 1);
-  }
-  const row4 = [...byRow.entries()].find(([, n]) => n >= 4);
-  const col4 = [...byCol.entries()].find(([, n]) => n >= 4);
-  const row5 = [...byRow.entries()].find(([, n]) => n >= 5);
-  const col5 = [...byCol.entries()].find(([, n]) => n >= 5);
-  const pick = hits.find(h => flavourId(cellAt(board, h.c, h.r))) || hits[0];
-  const flav = flavourId(cellAt(board, pick.c, pick.r));
-  if (!flav) return null;
-  if (row5 || col5) setCell(board, pick.c, pick.r, {kind: 'special', flavour: flav, special: 'cream'});
-  else if (row4) setCell(board, pick.c, pick.r, {kind: 'special', flavour: flav, special: 'shaken', axis: 'row'});
-  else if (col4) setCell(board, pick.c, pick.r, {kind: 'special', flavour: flav, special: 'shaken', axis: 'col'});
-  else if (hits.length >= 5) setCell(board, pick.c, pick.r, {kind: 'special', flavour: flav, special: 'fizzy'});
-  else return null;
-  return pick;
+function promotions(board,hits){
+ const remaining=new Map(hits.map(h=>[h.r+','+h.c,h])),out=[];
+ while(remaining.size){
+  const first=remaining.values().next().value,flavour=flavourId(cellAt(board,first.c,first.r)),group=[],queue=[first];remaining.delete(first.r+','+first.c);
+  while(queue.length){const h=queue.shift();group.push(h);for(const [dc,dr] of [[1,0],[-1,0],[0,1],[0,-1]]){
+   const key=(h.r+dr)+','+(h.c+dc),other=remaining.get(key);
+   if(other&&flavourId(cellAt(board,other.c,other.r))===flavour){remaining.delete(key);queue.push(other);}
+  }}
+  let row=0,col=0;for(const h of group){let n=1;while(group.some(p=>p.r===h.r&&p.c===h.c+n))n++;row=Math.max(row,n);n=1;while(group.some(p=>p.c===h.c&&p.r===h.r+n))n++;col=Math.max(col,n);}
+  let special=null,axis;
+  if(row>=5||col>=5)special='cream';else if(row>=3&&col>=3)special='fizzy';else if(row>=4||col>=4){special='shaken';axis=row>=4?'row':'col';}
+  if(special){const pick=group.find(h=>cellAt(board,h.c,h.r)?.kind==='milk');if(pick)out.push({...pick,cell:{kind:'special',flavour,special,...(axis?{axis}:{})}});}
+ }
+ return out;
 }
 
 function collectHits(board, hits) {
@@ -367,39 +317,30 @@ function collectHits(board, hits) {
   }
 }
 
-export function resolveBoard(board) {
-  let guard = 0;
-  while (guard++ < 36) {
-    const hits = findMatches(board);
-    if (!hits.length) break;
-    const kept = promoteSpecials(board, hits);
-    activateSpecials(board, hits);
-    damageAround(board, hits);
-    collectHits(board, hits.filter(h => !(kept && h.c === kept.c && h.r === kept.r)));
-    gravity(board);
-    refill(board);
-    locateUnique(board);
-  }
-  if (isDelivered(board)) board.delivered = true;
-  return board;
+export function resolveBoard(board){
+ let guard=0;
+ while(guard++<36){
+  const hits=findMatches(board);if(!hits.length)break;
+  const created=promotions(board,hits),affected=activateSpecials(board,hits);
+  damageAround(board,affected);collectHits(board,affected);
+  // New specials survive this match; only pre-existing specials activate.
+  for(const p of created)setCell(board,p.c,p.r,p.cell);
+  gravity(board);refill(board);locateUnique(board);
+ }
+ if(findMatches(board).length)ensureMoves(board);
+ if(isDelivered(board))board.delivered=true;
+ return board;
 }
-
-function spreadSour(board) {
-  if (!board.sourOn) return;
-  const sour = [];
-  for (let r = 0; r < board.rows; r++) for (let c = 0; c < board.cols; c++) {
-    if (board.cells[r][c]?.kind === 'sour') sour.push({c, r});
-  }
-  const born = [];
-  for (const s of sour) {
-    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-    const pick = dirs[Math.floor(board.roll() * dirs.length)];
-    const t = cellAt(board, s.c + pick[0], s.r + pick[1]);
-    if (t && t.kind === 'milk') born.push({c: s.c + pick[0], r: s.r + pick[1]});
-  }
-  for (const b of born) {
-    if (cellAt(board, b.c, b.r)?.kind === 'milk') setCell(board, b.c, b.r, {kind: 'sour', hp: 1});
-  }
+function spreadSour(board){
+ if(!board.sourOn)return;
+ board.sourTurns=(board.sourTurns||0)+1;
+ if(board.sourTurns%3)return;
+ const cap=(MABEL_CHAPTERS[board.level]?.sour||0)+3;
+ if(countKind(board,'sour')>=cap)return;
+ const targets=[];
+ for(let r=0;r<board.rows;r++)for(let c=0;c<board.cols;c++)if(cellAt(board,c,r)?.kind==='sour')
+  for(const [dc,dr] of [[1,0],[-1,0],[0,1],[0,-1]])if(cellAt(board,c+dc,r+dr)?.kind==='milk')targets.push({c:c+dc,r:r+dr});
+ if(targets.length){const p=targets[Math.floor(board.roll()*targets.length)];setCell(board,p.c,p.r,{kind:'sour',hp:1});}
 }
 
 export function reshuffle(board) {
@@ -418,32 +359,58 @@ export function reshuffle(board) {
   return board;
 }
 
-function ensureMoves(board) {
-  let n = 0;
-  while (legalMoves(board).length === 0 && n++ < 24) {
-    reshuffle(board);
-    if (findMatches(board).length) resolveBoard(board);
+function ensureMoves(board){
+ if(!findMatches(board).length&&legalMoves(board).length)return board;
+ // Shuffle only ordinary/special bottles: obstacles and earned treasure stay put.
+ for(let i=0;i<48;i++){reshuffle(board);if(!findMatches(board).length&&legalMoves(board).length){board.reshuffled=true;return board;}}
+ // Dense old sour saves can have no usable patch. Open the smallest 2x3 patch
+ // without touching a hole or treasure, then plant a deterministic legal swap.
+ const patches=[];
+ for(const [w,h] of [[3,2],[2,3]])for(let r=0;r<=board.rows-h;r++)for(let c=0;c<=board.cols-w;c++){
+  const slots=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++)slots.push({c:c+x,r:r+y});
+  if(slots.some(p=>['hole','unique'].includes(cellAt(board,p.c,p.r)?.kind)))continue;
+  patches.push({w,h,c,r,slots,cost:slots.filter(p=>anchored(cellAt(board,p.c,p.r))).length});
+ }
+ patches.sort((a,b)=>a.cost-b.cost);const patch=patches[0];
+ if(!patch)throw Error('This saved board has no playable dairy space.');
+ for(const p of patch.slots)if(anchored(cellAt(board,p.c,p.r)))setCell(board,p.c,p.r,milk(board.pool[0]));
+ for(let attempt=0;attempt<100;attempt++){
+  for(let r=0;r<board.rows;r++)for(let c=0;c<board.cols;c++){
+   const cell=cellAt(board,c,r);if(!flavourId(cell))continue;
+   const choices=board.pool.filter(f=>!(flavourId(cellAt(board,c-1,r))===f&&flavourId(cellAt(board,c-2,r))===f)&&!(flavourId(cellAt(board,c,r-1))===f&&flavourId(cellAt(board,c,r-2))===f));
+   cell.flavour=choices[Math.floor(board.roll()*choices.length)];
   }
-  return board;
+  const [a,b,c]=shuffle(board.roll,board.pool),pattern=[[a,b,a],[b,a,c]];
+  for(let y=0;y<2;y++)for(let x=0;x<3;x++){
+   const col=patch.c+(patch.w===3?x:y),row=patch.r+(patch.w===3?y:x);
+   cellAt(board,col,row).flavour=pattern[y][x];
+  }
+  if(!findMatches(board).length&&legalMoves(board).length){board.reshuffled=true;locateUnique(board);return board;}
+ }
+ throw Error('The dairy could not arrange a legal swap.');
 }
-
-export function applySwap(board, c1, r1, c2, r2) {
-  if (!board || !adjacent(c1, r1, c2, r2)) return {ok: false, reason: 'apart'};
-  const a = cellAt(board, c1, r1), b = cellAt(board, c2, r2);
-  if (!swappable(a) || !swappable(b)) return {ok: false, reason: 'stuck'};
-  setCell(board, c1, r1, b);
-  setCell(board, c2, r2, a);
-  if (!findMatches(board).length) {
-    setCell(board, c1, r1, a);
-    setCell(board, c2, r2, b);
-    return {ok: false, reason: 'no-match'};
-  }
-  board.movesLeft = Math.max(0, (board.movesLeft || 0) - 1);
-  resolveBoard(board);
-  if (board.sourOn) spreadSour(board);
-  if (legalMoves(board).length === 0) ensureMoves(board);
-  if (isDelivered(board)) board.delivered = true;
-  return {ok: true, delivered: !!board.delivered, movesLeft: board.movesLeft};
+export function repairBoard(board){refill(board);ensureMoves(board);locateUnique(board);return board;}
+export function applySwap(board,c1,r1,c2,r2){
+ if(!board||!adjacent(c1,r1,c2,r2))return {ok:false,reason:'apart'};
+ if(board.movesLeft<=0||board.delivered)return {ok:false,reason:'finished'};
+ const a=cellAt(board,c1,r1),b=cellAt(board,c2,r2);
+ if(!swappable(a)||!swappable(b))return {ok:false,reason:'stuck'};
+ setCell(board,c1,r1,b);setCell(board,c2,r2,a);
+ const combo=specialSwap(a,b);
+ if(!combo&&!swapMatches(board,c1,r1,c2,r2)){setCell(board,c1,r1,a);setCell(board,c2,r2,b);return {ok:false,reason:'no-match'};}
+ board.reshuffled=false;
+ board.movesLeft--;
+ if(combo){
+  // Cream takes the partner's flavour; this is part of the committed swap.
+  if(a.special==='cream'&&flavourId(b))a.flavour=b.flavour;
+  if(b.special==='cream'&&flavourId(a))b.flavour=a.flavour;
+  const bothCream=a.special==='cream'&&b.special==='cream';
+  const triggers=bothCream?board.cells.flatMap((row,r)=>row.map((cell,c)=>({cell,c,r})).filter(p=>p.cell&&p.cell.kind!=='unique'&&p.cell.kind!=='hole').map(({c,r})=>({c,r}))):[{c:c1,r:r1},{c:c2,r:r2}];
+  const hits=activateSpecials(board,triggers);damageAround(board,hits);collectHits(board,hits);gravity(board);refill(board);
+ }
+ resolveBoard(board);spreadSour(board);ensureMoves(board);locateUnique(board);
+ if(isDelivered(board))board.delivered=true;
+ return {ok:true,delivered:!!board.delivered,movesLeft:board.movesLeft};
 }
 
 export function refillMoves(board) {
@@ -475,7 +442,7 @@ function placeObstacles(board, ch, roll) {
   }
 }
 
-export function makeBoard(level, seed) {
+export function makeBoard(level, seed, {allowUnique=true}={}) {
   const ch = MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0];
   const rng = rngBox(seed);
   const roll = () => rollOf(rng);
@@ -500,14 +467,14 @@ export function makeBoard(level, seed) {
   const board = {
     level, seed, cols: ch.cols, rows: ch.rows, cells,
     moves: ch.moves, movesLeft: ch.moves,
-    unique: null, delivered: false, sourOn: ch.sour > 0,
+    unique: null, delivered: false, sourOn: ch.sour > 0, sourTurns:0, reshuffled:false,
     pool: ids, collected: {},
     rngSeed: seed, rng,
   };
   board.roll = () => rollOf(board.rng);
   placeObstacles(board, ch, roll);
   if (findMatches(board).length) resolveBoard(board);
-  if (isMabelWin(level, resultNumber(seed))) spawnUnique(board);
+  if (allowUnique && isMabelWin(level, resultNumber(seed))) spawnUnique(board);
   ensureMoves(board);
   locateUnique(board);
   return board;
