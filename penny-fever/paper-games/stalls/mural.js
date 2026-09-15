@@ -4,18 +4,18 @@
  * Verb: SPLASH. The mural rolls past; splash faded patches on the wall;
  * they FILL/flood. No mix-then-HOLD PAINT chrome.
  *
- * SHIPPED: Ch1 First Wash — three patches (lantern, balloons, horse).
- * Splash any two as they pass. Pre-dipped ♥+★ (mix waits for Ch2).
- * ≥3.2s discovery after flood; treasure is a real glint in restored art
- * only when eligible && spawnId === that panel.
- * mural.png is the hero court (transparent clear; no full-screen fill).
+ * Implemented:
+ *   1 First Wash — SPLASH any 2 of 3 patches (lantern, balloons, horse)
+ *   2 Lantern Row — medallion match; ONE decoy soft-wash taught alone;
+ *     then 3 matching SPLASHes (~50s first-play). Soft fails never abort.
  *
  * Unfinished:
- *  2 Lantern Row — three colours; splash the medallion match
- *  3 Carousel Frieze — horse patch only in the window
- *  4 Evening Panorama — splash floods into neighbours
- *  5 Midway Memories — remembered fragments in order
- *  6 The Living Bay — long Sunday route; panorama wakes
+ *   3 Carousel Frieze — horse patch only in the window
+ *   4 Evening Panorama — splash floods into neighbours
+ *   5 Midway Memories — remembered fragments in order
+ *   6 The Living Bay — long Sunday route; panorama wakes
+ *
+ * Hard rule: d.glow() takes 6-digit #rrggbb only.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -39,17 +39,54 @@ const MOTIFS = [
   {id: 'balloons', label: 'Balloons'},
   {id: 'horse', label: 'Horse'},
 ];
+const COLOURS = {
+  burgundy: {id: 'burgundy', glyph: '♥', name: 'Burgundy', color: '#6b2030'},
+  gold: {id: 'gold', glyph: '★', name: 'Gold', color: '#d2a65b'},
+  green: {id: 'green', glyph: '●', name: 'Green', color: '#3a6a4a'},
+};
 
-const GOAL = 2;
-const DISCOVERY = 2.6;
-const CURTAIN = 0.9;
-const DWELL = 8.5;
-const HOUSE = 120;
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
 const GOLD = '#d2a65b';
 const BURG = '#6b2030';
 const CREAM = '#fff6d8';
 const MIX = '#8a4060';
+const CURTAIN = 0.9;
+
+function chapterPlan(level, reduced) {
+  if (level === 1) {
+    // Lantern Row — deepen SPLASH with one teach decoy, then 3 matches.
+    const target = COLOURS.burgundy;
+    const panels = [
+      {id: 'decoy-star', motif: 'balloons', colour: 'gold', match: false, teach: true},
+      {id: 'match-lantern', motif: 'lantern', colour: 'burgundy', match: true},
+      {id: 'match-horse', motif: 'horse', colour: 'burgundy', match: true},
+      {id: 'match-balloons', motif: 'balloons', colour: 'burgundy', match: true},
+    ];
+    return {
+      goal: 3,
+      house: 55,
+      dwell: reduced ? 9.2 : 7.4,
+      speed: reduced ? 58 : 82,
+      warn: 8.0,
+      target,
+      panels,
+      foldMedallion: true,
+    };
+  }
+  // First Wash
+  return {
+    goal: 2,
+    house: 70,
+    dwell: reduced ? 9.5 : 8.5,
+    speed: reduced ? 64 : 88,
+    warn: 0,
+    target: null,
+    foldMedallion: false,
+    panels: MOTIFS.map((m) => ({
+      id: m.id, motif: m.id, colour: 'burgundy', match: true, teach: false,
+    })),
+  };
+}
 
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -92,12 +129,11 @@ function maybeArrive(s) {
 }
 
 function nextPending(s) {
-  // Ch1 keeps offering unrestored patches until goal or house clock.
   const n = s.panels.length;
   for (let i = 0; i < n; i++) {
     const idx = (s.index + 1 + i) % n;
     const row = s.panels[idx];
-    if (!row.restored) return idx;
+    if (!row.restored && !row.spent) return idx;
   }
   return -1;
 }
@@ -110,11 +146,19 @@ function spawnAt(s, idx) {
   }
   s.index = idx;
   const row = s.panels[idx];
-  row.done = false;
   row.held = false;
   row.dwell = 0;
+  row.wash = 0;
   row.world = s.scroll + 720;
-  s.note = 'SPLASH inside the frame.';
+  s.medalOpen = 1;
+  if (row.teach) {
+    s.warnLeft = s.warn;
+    s.note = 'Wrong colour washes away — wait for ' + (s.target?.glyph || '♥') + '.';
+  } else if (s.target) {
+    s.note = 'SPLASH the ' + s.target.glyph + ' match.';
+  } else {
+    s.note = 'SPLASH inside the frame.';
+  }
 }
 
 function advance(s) {
@@ -122,7 +166,15 @@ function advance(s) {
     maybeArrive(s);
     return;
   }
-  spawnAt(s, nextPending(s));
+  let idx = nextPending(s);
+  if (idx < 0) {
+    // Recycle unmatched match-patches only (never re-teach spent decoys).
+    s.panels.forEach((row) => {
+      if (row.match && !row.restored) row.spent = false;
+    });
+    idx = nextPending(s);
+  }
+  spawnAt(s, idx);
 }
 
 function missPanel(s, row) {
@@ -130,13 +182,32 @@ function missPanel(s, row) {
   row.held = false;
   row.dwell = 0;
   row.retries = (row.retries || 0) + 1;
-  s.note = 'Missed — another patch is rolling in. SPLASH the frame.';
-  // Recycle: send this one to the back and bring the next unrestored.
+  s.note = 'Missed — another patch is rolling in.';
   spawnAt(s, nextPending(s));
+}
+
+function softWash(s, panel) {
+  // Soft fail — never aborts the ride. Spend the decoy so it does not loop forever.
+  panel.wash = 1;
+  panel.held = false;
+  panel.dwell = 0;
+  panel.spent = true;
+  s.paused = true;
+  s.softUntil = s.t + 1.1;
+  logAction(s, 'wash', {id: panel.id, colour: panel.colour});
+  s.note = 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♥') + '.';
+  s.juice = true;
 }
 
 function splash(s, panel) {
   if (!panel || panel.restored || panel.flooding) return;
+  if (s.warnLeft > 0 && panel.teach) {
+    // Still in teach warn — treat as soft if they tap early on decoy.
+  }
+  if (!panel.match) {
+    softWash(s, panel);
+    return;
+  }
   panel.restored = true;
   panel.flood = 0.001;
   panel.flooding = true;
@@ -144,10 +215,10 @@ function splash(s, panel) {
   s.restored += 1;
   s.juice = true;
   s.paused = true;
-  s.discovery = DISCOVERY;
+  s.discovery = s.discoverySecs;
   s.liveId = panel.id;
   recordFind(s, ORDINARY[s.restored % ORDINARY.length], RIDE);
-  logAction(s, 'splash', {id: panel.id, n: s.restored});
+  logAction(s, 'splash', {id: panel.id, n: s.restored, colour: panel.colour});
   logAction(s, 'restore', {id: panel.id});
   s.note = 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
   if (s.eligible && s.spawnId === panel.id && !s.treasure) {
@@ -212,6 +283,12 @@ function drawMotif(d, id, x, y, faded, flood, t) {
   else drawLantern(d, x, y, faded, flood, t);
 }
 
+function drawColourMark(d, colourId, x, y) {
+  const col = COLOURS[colourId] || COLOURS.burgundy;
+  d.circle(x, y, 22, col.color, GOLD, 2);
+  d.text(col.glyph, x, y + 8, 22, CREAM);
+}
+
 function drawPracticeBadge(d, s) {
   if (!s.boarded) return;
   const c = d.c;
@@ -229,7 +306,16 @@ function drawPracticeBadge(d, s) {
 }
 
 function drawCoach(d, s) {
-  if (!s.boarded || s.result || s.juice || s.t >= 5.2) return;
+  if (!s.boarded || s.result) return;
+  let line = null;
+  if (s.warnLeft > 0) {
+    line = 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
+  } else if (!s.juice && s.t < 5.2 && s.level === 0) {
+    line = 'SPLASH the faded patch';
+  } else if (!s.juice && s.t < 6.5 && s.level === 1) {
+    line = 'SPLASH only the ' + (s.target?.glyph || '♥') + ' match';
+  }
+  if (!line) return;
   const c = d.c;
   c.save();
   roundRect(c, 90, 248, 720, 58, 14);
@@ -239,63 +325,102 @@ function drawCoach(d, s) {
   c.lineWidth = 3;
   c.stroke();
   c.restore();
-  d.text('SPLASH the faded patch', 450, 286, 28, CREAM);
+  d.text(line, 450, 286, 26, CREAM);
+}
+
+function drawMedallion(d, s) {
+  if (!s.target) return;
+  const open = clamp(s.medalOpen ?? 1, 0, 1);
+  if (open <= 0.02) return;
+  const x = 780;
+  const y = 250;
+  const c = d.c;
+  c.save();
+  c.globalAlpha = open;
+  d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
+  d.circle(x, y, 36, s.target.color, GOLD, 2);
+  d.text(s.target.glyph, x, y + 10, 28, CREAM);
+  d.text('match', x, y + 62, 14, GOLD);
+  c.restore();
 }
 
 export default {
   title: 'Painted Bay',
-  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake.',
-  instructions: 'SPLASH the faded patch when it sits in the frame. Restore any two of three. First ride is free practice and keeps nothing.',
+  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. From Lantern Row, match the medallion colour; a wrong splash only washes soft.',
+  instructions: 'SPLASH the faded patch when it sits in the frame. Chapter 1: restore any two of three. Chapter 2 (Lantern Row): splash only the medallion match — a wrong colour soft-washes and the ride continues. First ride of each chapter is free practice and keeps nothing.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
-  houseSeconds: HOUSE,
+  houseSeconds: 70,
   houseTitle: 'The paint dried',
   houseDetail: 'The bay went still before the wall woke. Try this chapter again.',
   actions: [],
   create(level, rng) {
     const reduced = prefersReducedMotion();
-    const panels = MOTIFS.map((m, i) => ({
-      ...m,
+    const plan = chapterPlan(level, reduced);
+    const panels = plan.panels.map((p, i) => ({
+      ...p,
       world: i === 0 ? 900 : 5000,
       restored: false,
-      done: false,
       retries: 0,
       dwell: 0,
       held: false,
       flood: 0,
       flooding: false,
       bloom: 0,
+      wash: 0,
+      spent: false,
     }));
+    const spawnIds = panels.filter((p) => p.match).map((p) => p.id);
     return makeRideState(level, rng, {
       reduced,
       panels,
+      spawnIds,
       index: 0,
       scroll: 0,
-      speed: reduced ? 64 : 88,
+      speed: plan.speed,
+      dwellMax: plan.dwell,
+      discoverySecs: level === 1 ? 2.2 : 2.6,
+      warn: plan.warn,
+      warnLeft: 0,
+      softUntil: 0,
       restored: 0,
-      goal: GOAL,
+      goal: plan.goal,
+      target: plan.target,
+      foldMedallion: plan.foldMedallion,
+      medalOpen: 1,
       paused: false,
       discovery: 0,
       liveId: null,
       arriving: false,
       arriveAt: 0,
       juice: false,
+      houseStamp: plan.house,
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
-      note: 'SPLASH the faded patch.',
+      note: level === 1 ? 'SPLASH only the ♥ match.' : 'SPLASH the faded patch.',
     });
   },
   update(s, dt) {
     if (s.result || s.broke) return;
-    if (ensureBoarded(s, RIDE, s.treasureId, MOTIFS.map((m) => m.id))) {
-      s.note = 'SPLASH the faded patch.';
+    if (ensureBoarded(s, RIDE, s.treasureId, s.spawnIds || s.panels.map((p) => p.id))) {
+      if (s.houseStamp && s.houseLeft != null) s.houseLeft = s.houseStamp;
+      s.note = s.level === 1 ? 'SPLASH only the ♥ match.' : 'SPLASH the faded patch.';
     }
     if (s.result) return;
     s.t += dt;
-    s.progress = Math.min(1, (s.index + (s.panels[s.index]?.dwell || 0) / DWELL) / 3);
+    s.progress = Math.min(1, s.restored / Math.max(1, s.goal));
+
+    if (s.warnLeft > 0) s.warnLeft = Math.max(0, s.warnLeft - dt);
+    if (s.medalOpen > 0 && s.foldMedallion) {
+      // Fold away before / as the patch seats.
+      const live = s.panels[s.index];
+      if (live && (live.held || inWindow(live, s.scroll))) s.medalOpen = Math.max(0, s.medalOpen - dt / 0.7);
+      else if (s.medalOpen < 1) s.medalOpen = Math.min(1, s.medalOpen + dt / 0.35);
+    }
 
     s.panels.forEach((row) => {
       if (row.bloom > 0) row.bloom = Math.max(0, row.bloom - dt * 0.7);
+      if (row.wash > 0) row.wash = Math.max(0, row.wash - dt * 0.9);
       if (row.flooding) {
         row.flood = Math.min(1, row.flood + dt / 0.55);
         if (row.flood >= 1) row.flooding = false;
@@ -309,11 +434,19 @@ export default {
 
     if (s.t < CURTAIN) return;
 
+    if (s.softUntil && s.t < s.softUntil) return;
+    if (s.softUntil && s.t >= s.softUntil) {
+      s.softUntil = 0;
+      s.paused = false;
+      // Recycle the decoy / wrong splash and continue.
+      advance(s);
+      return;
+    }
+
     if (s.discovery > 0) {
       s.discovery -= dt;
       if (s.discovery <= 0) {
         s.paused = false;
-        const live = s.panels.find((row) => row.id === s.liveId);
         s.liveId = null;
         if (s.restored >= s.goal) maybeArrive(s);
         else advance(s);
@@ -330,12 +463,18 @@ export default {
       advance(s);
       return;
     }
+    // Teach warn: hold decoy off-frame until warn drains, then seat it.
+    if (live.teach && s.warnLeft > 0) {
+      live.world = s.scroll + 820;
+      s.paused = true;
+      return;
+    }
     if (inWindow(live, s.scroll) || live.held) {
       live.held = true;
       live.world = s.scroll + FRAME.x;
       live.dwell += dt;
       s.paused = true;
-      if (live.dwell >= DWELL) missPanel(s, live);
+      if (live.dwell >= s.dwellMax) missPanel(s, live);
     } else {
       s.paused = false;
       s.scroll += dt * s.speed;
@@ -353,15 +492,13 @@ export default {
         return;
       }
     }
-    if (s.discovery > 0 || s.arriving) return;
+    if (s.discovery > 0 || s.arriving || (s.softUntil && s.t < s.softUntil)) return;
     const live = s.panels[s.index];
     if (live && !live.restored && (live.held || inWindow(live, s.scroll)) && inFrame(p)) {
       splash(s, live);
     }
   },
   draw(s, d) {
-    // mural.png owns the court.
-
     d.poly([[120, 168], [780, 168], [772, 186], [128, 186]], '#6b203088', GOLD, 2);
     d.poly([[110, 742], [790, 742], [808, 776], [92, 776]], '#6b203066', GOLD, 2);
 
@@ -369,23 +506,30 @@ export default {
     d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#6b2030aa', GOLD, 2.5);
     d.text('painter’s platform', 450, 724 + bob, 13, GOLD);
 
+    drawMedallion(d, s);
+
     const fx = FRAME.x, fy = FRAME.y, fw = FRAME.w, fh = FRAME.h;
     const live = s.panels[s.index] && !s.panels[s.index].restored ? s.panels[s.index] : null;
     d.poly(
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#f4d590' : GOLD, live ? 6 : 3,
     );
-    d.text('splash here', fx, fy + fh / 2 + 20, 14, live ? CREAM : GOLD);
+    d.text(live && !live.match ? 'soft wash if you splash' : 'splash here', fx, fy + fh / 2 + 20, 14, live ? CREAM : GOLD);
 
     s.panels.forEach((row) => {
       const x = screenX(row, s.scroll);
       if (x < -80 || x > 980) return;
       const faded = !row.restored;
-      drawMotif(d, row.id, x, FRAME.y, faded, row.flood || 0, s.t);
-      if (live && live.id === row.id && !s.discovery) {
+      drawMotif(d, row.motif || row.id, x, FRAME.y, faded, row.flood || 0, s.t);
+      if (s.level >= 1) drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
+      if (row.wash > 0) {
+        d.glow(x, FRAME.y, 70, '#8ab4c8');
+        d.text('wash', x, FRAME.y, 22, '#c8e0f0');
+      }
+      if (live && live.id === row.id && !s.discovery && !(s.softUntil && s.t < s.softUntil)) {
         d.circle(FRAME.x, FRAME.y, 110, '#6b203066', CREAM, 5);
-        d.text('SPLASH', FRAME.x, FRAME.y + 12, 40, CREAM);
-        d.text('tap here', FRAME.x, FRAME.y + 48, 18, GOLD);
+        d.text(live.match ? 'SPLASH' : 'DECOY', FRAME.x, FRAME.y + 12, 36, CREAM);
+        d.text(live.match ? 'tap here' : 'soft fail', FRAME.x, FRAME.y + 48, 18, GOLD);
       }
     });
 
@@ -420,8 +564,8 @@ export default {
       c.strokeStyle = GOLD;
       c.lineWidth = 3;
       c.stroke();
-      d.text('SPLASH', 450, top + 220, 44, CREAM);
-      d.text('the faded patch', 450, top + 268, 22, GOLD);
+      d.text('SPLASH', 450, top + 210, 44, CREAM);
+      d.text(s.level === 1 ? 'match the medallion' : 'the faded patch', 450, top + 262, 22, GOLD);
       c.restore();
     }
 
