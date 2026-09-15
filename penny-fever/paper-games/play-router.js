@@ -8,5 +8,5 @@ if (id === 'fortune' || id === 'coin-pusher') {
   });
   await import('./cabinet-runtime.js?v=iris-miss-1');
 } else {
-  await import('./runtime.js?v=pip-moon-1');
+  await import('./runtime.js?v=remix-alley-1');
 }
