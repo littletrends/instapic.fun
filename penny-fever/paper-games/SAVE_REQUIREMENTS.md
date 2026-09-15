@@ -286,4 +286,6 @@ The spring can be pulled while the same active ball descends the shooter lane. P
 
 User's final terminology is **Locked / Collected**, superseding Unlocked and Kept for chapter bonus ownership. Updated Pip, Iris, Copper, Mabel and shared result/HUD wording; Iris's old saved status strings normalize to Collected. Existing internal receipt fields and award rules retain their names and behavior. The standard is recorded in stalls/AGENTS.md for future games.
 
-Evidence: Pip tests pass precharge during descent, no teleport, held landing, early release/cancel, exact returning-ball restore and unchanged debit/credit/timer; all prior 600 bonus-window, pocket, stacking and timer checks pass. First-prize, Mabel-state and Copper/Iris cabinet suites pass. Chromium phone touch check passes pre-pull before landing, hold across landing and same-ball relaunch; existing touch, Treasures/reload and lights-out checks also pass. Publication pending.
+Evidence: Pip tests pass precharge during descent, no teleport, held landing, early release/cancel, exact returning-ball restore and unchanged debit/credit/timer; all prior 600 bonus-window, pocket, stacking and timer checks pass. First-prize, Mabel-state and Copper/Iris cabinet suites pass. Chromium phone touch check passes pre-pull before landing, hold across landing and same-ball relaunch; existing touch, Treasures/reload and lights-out checks also pass.
+
+Deployment: published as `6896672`; Pages run `34951229256` succeeded. Live pinball is serving returning-ball precharge and LOCKED/COLLECTED labels.
