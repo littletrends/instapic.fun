@@ -1,5 +1,5 @@
 import {alleyPlay, keep, owned} from '../wallet.js?v=entry-1';
-import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive } from "../cabinet-wallet.js?v=iris-pack-1";
+import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive, packAll as pursePackAll } from "../cabinet-wallet.js?v=copper-warn-1";
 
 const BOOK = alleyPlay ? "pennyFever.copperFalls.v6" : "pennyFever.copperFalls.practice.v6";
 const TAU = Math.PI * 2;
@@ -215,12 +215,27 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
   }
 }
 
+function shouldWarn(s, id, n) {
+  if (s.practice || s.phase !== 'idle' || s.busy) return false;
+  if (id === 'dropall') return n >= 10;
+  if (id === 'drop12' || id === 'drop14') return n >= 25;
+  return false;
+}
+
 function uiButtons(s) {
   const n = s.practice ? 1 : pursePennies();
   const packed = s.practice ? 0 : pursePacks();
   const q = n ? Math.max(1, Math.floor(n / 4)) : 0;
   const h = n ? Math.max(1, Math.floor(n / 2)) : 0;
-  const can = s.phase === 'idle' && !s.busy;
+  const can = s.phase === 'idle' && !s.busy && !s.warn;
+  if (s.warn) {
+    const dump = s.warn.n;
+    return [
+      {id:'warn-pack',label:'Pack them first',x:30,y:888,w:840,h:64,on:true},
+      {id:'warn-dump',label:'Dump anyway · '+dump,x:30,y:960,w:410,h:72,on:true},
+      {id:'warn-keep',label:'Keep them',x:460,y:960,w:410,h:72,on:true},
+    ];
+  }
   if (s.practice) {
     return [
       {id:'drop1',label:'Practice drop',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
@@ -309,8 +324,8 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. Pack five pennies to keep a bundle out of the machine; Drop purse only dumps what is still loose. The chapter prize unlatches on the first paid penny, then you still have to push it over the edge.",
-  instructions: "Aim the hopper, then drop 1, ¼, ½ or the loose purse. Pack 5 pennies into a 5-pack to keep them out of play; open a pack when you want them back. One dump, one shove. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
+  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. Pack five pennies to keep a bundle out of the machine; Drop purse only dumps what is still loose, and a big dump asks once before it falls. The chapter prize unlatches on the first paid penny, then you still have to push it over the edge.",
+  instructions: "Aim the hopper, then drop 1, ¼, ½ or the loose purse. Pack 5 pennies into a 5-pack to keep them out of play; open a pack when you want them back. A large dump warns first — packed coins stay safe. One dump, one shove. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
   levels: CHAPTERS.map(c => c.title),
   images: {
     cabinet: "./assets/coin-pusher/pusher/cabinet.webp",
@@ -446,6 +461,7 @@ export default {
     }
   },
   drop(s, count) {
+    if (s.warn) return;
     if (s.busy || s.phase !== "idle") {
       s.note = "Wait for the shelf to finish.";
       return;
@@ -488,6 +504,7 @@ export default {
     persistState(s);
   },
   action(s, id, count) {
+    if (s.warn && id !== "warn-pack" && id !== "warn-dump" && id !== "warn-keep" && id !== "next-chapter") return;
     if (id === "next-chapter") s.requestNext = true;
     if (id === "pack5") {
       if (s.practice || s.busy || s.phase !== "idle") return;
@@ -505,10 +522,36 @@ export default {
       } else s.note = "No 5-packs to open.";
       return;
     }
+    if (id === "warn-keep") {
+      s.warn = null;
+      s.note = "Still in the purse. Pack 5 to keep a bundle out of the machine.";
+      return;
+    }
+    if (id === "warn-pack") {
+      const n = pursePackAll();
+      s.warn = null;
+      s.note = n
+        ? ("Packed " + n + (n === 1 ? " pack" : " packs") + ". Those stay out of the machine.")
+        : "Need five loose pennies to pack.";
+      persistState(s);
+      return;
+    }
+    if (id === "warn-dump") {
+      const n = s.warn?.n;
+      s.warn = null;
+      if (n) this.drop(s, n);
+      return;
+    }
     if (id === "drop1" || id === "drop") this.drop(s, 1);
     if (id === "drop14" || id === "drop12" || id === "dropall") {
       const purse=pursePennies();
-      this.drop(s,id==='dropall'?purse:Math.max(1,Math.floor(purse/(id==='drop14'?4:2))));
+      const n=id==='dropall'?purse:Math.max(1,Math.floor(purse/(id==='drop14'?4:2)));
+      if (shouldWarn(s, id, n)) {
+        s.warn = {id, n};
+        s.note = "Pack a few first? The tray keeps more than it pays back.";
+        return;
+      }
+      this.drop(s, n);
     }
   },
   key(s, k, down) {
@@ -574,8 +617,23 @@ export default {
     c.fillRect(LEFT, FRONT, RIGHT - LEFT, 18);
     d.text("Collection lip", 450, FRONT + 32, 14, "#e8c878");
 
-    d.wrap(s.note, 450, 822, 18, "#fff0c8", 700, 8);
-    d.text(prizeStatus(s),450,872,16,"#c8e878");
+    if (s.warn) {
+      c.fillStyle = "rgba(10, 6, 8, 0.72)";
+      c.fillRect(0, 150, 900, 730);
+      c.beginPath();
+      if (c.roundRect) c.roundRect(70, 210, 760, 430, 22); else c.rect(70, 210, 760, 430);
+      c.fillStyle = "rgba(36, 22, 18, 0.96)";
+      c.fill();
+      c.strokeStyle = "#e8c878";
+      c.lineWidth = 3;
+      c.stroke();
+      d.text("Pack a few first?", 450, 270, 32, "#fff1d1");
+      d.wrap("That's " + s.warn.n + " loose pennies. The tray is greedier than it looks — packed 5-packs stay in your pocket.", 450, 330, 22, "#f0d18f", 680, 10);
+      d.wrap("Dump anyway if you mean it. Copper will not send a second warning.", 450, 470, 18, "#ead6a4", 640, 8);
+    } else {
+      d.wrap(s.note, 450, 822, 18, "#fff0c8", 700, 8);
+      d.text(prizeStatus(s),450,872,16,"#c8e878");
+    }
 
     uiButtons(s).forEach(b => {
       c.beginPath();

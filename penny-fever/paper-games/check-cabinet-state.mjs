@@ -63,6 +63,7 @@ for(let level=0;level<6;level++)for(const [button,spent] of [['drop1',1],['drop1
  const game=copper.create(level), starting=sumPennies(game.tray.coins);
  assert.equal(starting,[24,21,21,10,10,8][level]);
  copper.action(game,button);
+ if(game.warn)copper.action(game,'warn-dump');
  assert.equal(cash,300-spent);assert.equal(sumPennies(game.tray.coins),starting+spent);
  assert.equal(game.tray.ledger.dropped,spent);
  const incoming=game.tray.coins.filter(c=>c.id.startsWith('d'));
@@ -150,10 +151,27 @@ mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;d
 let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;
 assert(copper.action(bank,'pack5')===undefined);assert.equal(cash,35);assert.equal(packed,1);
 copper.action(bank,'pack5');copper.action(bank,'pack5');assert.equal(cash,25);assert.equal(packed,3);
-const loose=cash;copper.action(bank,'dropall');assert.equal(debits.at(-1),loose);assert.equal(cash,0);assert.equal(packed,3);
+const loose=cash;copper.action(bank,'dropall');if(bank.warn)copper.action(bank,'warn-dump');assert.equal(debits.at(-1),loose);assert.equal(cash,0);assert.equal(packed,3);
 for(let i=0;i<600&&bank.busy;i++)copper.update(bank,1/60);
 const afterDrop=cash;assert(afterDrop>=0);assert.equal(packed,3,'packs stay out of the machine during a dump');
 copper.action(bank,'unpack5');assert.equal(packed,2);assert.equal(cash,afterDrop+5);
 reject=true;const beforePack=packed;copper.action(bank,'pack5');assert.equal(packed,beforePack);reject=false;
 cash=4;copper.action(bank,'pack5');assert.equal(packed,2,'cannot pack fewer than five pennies');
 console.log('PASS: Copper 5-packs keep pennies out of a full-purse drop and unpack restores them.');
+
+mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=1700;packed=0;debits=[];
+let warn=copper.create(0);warn.practice=false;warn.phase='idle';warn.busy=false;
+copper.action(warn,'dropall');
+assert.equal(cash,1700);assert.equal(debits.length,0);assert.equal(warn.warn.n,1700);
+copper.action(warn,'warn-keep');assert(!warn.warn);assert.equal(cash,1700);
+copper.action(warn,'dropall');copper.action(warn,'warn-pack');
+assert.equal(packed,340);assert.equal(cash,0);assert(!warn.warn);
+assert.match(warn.note,/Packed 340 packs/);
+mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=48;packed=0;debits=[];
+warn=copper.create(0);warn.practice=false;warn.phase='idle';warn.busy=false;
+copper.action(warn,'dropall');assert.equal(warn.warn.n,48);
+copper.action(warn,'warn-dump');assert.equal(debits.at(-1),48);assert.equal(cash,0);assert(!warn.warn);
+mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=24;debits=[];
+const quiet=copper.create(0);quiet.practice=false;quiet.phase='idle';quiet.busy=false;
+copper.action(quiet,'drop1');assert.equal(debits.at(-1),1);assert(!quiet.warn,'single pennies skip the warning');
+console.log('PASS: Copper warns before a big dump; pack-first parks the purse; dump-anyway spends once; singles stay quiet.');

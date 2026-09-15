@@ -24,3 +24,8 @@ export function unpackFive() {
   credit(5);
   return true;
 }
+export function packAll() {
+  let n = 0;
+  while (pennies() >= 5 && packFive()) n += 1;
+  return n;
+}
