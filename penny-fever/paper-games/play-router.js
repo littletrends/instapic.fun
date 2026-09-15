@@ -8,5 +8,5 @@ if (id === 'fortune' || id === 'coin-pusher') {
   });
   await import('./cabinet-runtime.js?v=first-prize-1');
 } else {
-  await import('./runtime.js?v=first-prize-1');
+  await import('./runtime.js?v=milk-delivery-1');
 }

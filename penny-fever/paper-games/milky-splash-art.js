@@ -1,4 +1,4 @@
-import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-fixes-1';
+import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-delivery-1';
 import {spriteKey} from './prizes.js';
 
 const effects=new WeakMap();
@@ -20,7 +20,7 @@ function bottleArt(flavour,special='',kind='milk'){
  const key=flavour.id+':'+special+':'+kind;if(bottles.has(key))return bottles.get(key);
  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=144;const c=canvas.getContext('2d');
  const colour=kind==='sour'?'#94aa45':kind==='weighted'?'#8693a5':kind==='unique'?'#f4c65a':flavour.id==='banana'?'#f2b91c':flavour.id==='vanilla'?'#eee9e3':flavour.fill;
- const ink=flavour.id==='vanilla'?'#74503e':flavour.id==='banana'?'#87501c':colour;
+ const ink=kind==='unique'?'#795116':flavour.id==='vanilla'?'#74503e':flavour.id==='banana'?'#87501c':colour;
  const cap=flavour.id==='vanilla'?'#87618d':colour;
  c.fillStyle='#573d4920';c.beginPath();c.ellipse(64,132,39,8,0,0,Math.PI*2);c.fill();
  c.save();c.shadowColor='#52304b44';c.shadowBlur=7;c.shadowOffsetY=4;
@@ -79,23 +79,24 @@ export function drawMilkySplash(s,d,chapter){
   if(!cell)continue;
   const selected=s.selected?.c===col&&s.selected?.r===r;
   if(selected){box(c,x+2,y+2,size-4,size-4,12,'#fff0af','#c96aa3');}
-  if(cell.kind==='crate'){crate(c,x+size*.13,y+size*.15,size*.74,size*.7,cell.hp===1);continue;}
+  if(cell.kind==='crate'){crate(c,x+size*.13,y+size*.15,size*.74,size*.7);continue;}
   const image=bottleArt(flavourOf(cell.flavour),cell.special==='shaken'?cell.axis:cell.special,cell.kind);
   const bob=selected&&!s.reduced?Math.sin(s.t*7)*2:0;
   c.drawImage(image,x+size*.09,y-size*.03+bob,size*.82,size*.94);
   if(cell.kind==='unique'){
-   d.item(spriteKey(chapter.prize),x+size/2,y+size*.58,{w:size*.35,fallback:()=>text(c,'★',x+size/2,y+size*.65,size*.28,'#9c692d')});
-   box(c,x+3,y+3,size-6,size-6,12,null,'#d7a437');
+   d.item(spriteKey(chapter.prize),x+size/2,y+size*.58,{w:size*.58,fallback:()=>text(c,'★',x+size/2,y+size*.65,size*.28,'#9c692d')});
+   box(c,x+2,y+2,size-4,size-4,12,null,'#d7a437');
+   text(c,'PRIZE ↓',x+size/2,y+size*.91,size*.17,'#795116',900);
   }
   if(cell.kind==='weighted'&&cell.hp===1){text(c,'╱',x+size/2,y+size*.7,size*.35,'#fff');}
  }
  c.restore();
  crate(c,originX-10,crateY+8,width+20,56);
  box(c,450-136,crateY+18,272,35,9,'#fff3d6');
- text(c,board.delivered?'DELIVERY RECEIVED ✓':'MABEL’S DELIVERY CRATE',450,crateY+42,18,'#83573f');
- if(real&&fx&&age>=0&&age<.6&&!s.reduced){
+ text(c,board.delivered?'DELIVERY RECEIVED ✓':'DELIVER THE GOLD PRIZE HERE',450,crateY+42,18,'#83573f');
+ if(real&&fx&&fx.accepted&&age>=0&&age<.6&&!s.reduced){
   c.save();c.globalAlpha=1-age/.6;
-  for(const cell of [fx.a,fx.b])for(let i=0;i<8;i++){
+  for(const cell of [fx.a,fx.b].filter(p=>['milk','special'].includes(fx.before[p.r][p.c]?.kind)))for(let i=0;i<8;i++){
    const a=i*Math.PI/4,dist=age*size*1.4;
    c.fillStyle=i%2?'#fff9e8':'#f19abc';c.beginPath();c.ellipse(originX+(cell.c+.5)*size+Math.cos(a)*dist,originY+(cell.r+.5)*size+Math.sin(a)*dist+age*age*50,4,7,a,0,Math.PI*2);c.fill();
   }c.restore();
@@ -109,6 +110,6 @@ export function drawMilkySplash(s,d,chapter){
  const words=String(s.note||'Swap neighbours. Match three bottles.').split(' ');let line='',lines=[];
  for(const word of words){if((line+' '+word).length>57){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);
  lines.slice(0,2).forEach((line,i)=>text(c,line,450,1095+i*27,22,'#754563',600));
- if(lines.length<2)text(c,'SWAP  •  MATCH  •  SPLASH',450,1137,17,'#b37392');
+ text(c,'Wooden crates break. Gold treasure drops.',450,1170,21,'#754563');
  c.restore();
 }

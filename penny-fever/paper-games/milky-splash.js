@@ -1,3 +1,4 @@
+import {DELIVERY_LAYOUTS} from './milky-deliveries.js?v=milk-delivery-1';
 import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
@@ -500,4 +501,17 @@ export function countKind(board, kind) {
   let n = 0;
   for (const row of board.cells) for (const cell of row) if (cell?.kind === kind) n++;
   return n;
+}
+
+/** Start with a visible unowned treasure on a layout with a tested delivery route.
+ * No solver runs on the player's device. Ordinary replays retain random layouts.
+ */
+export function makeDeliveryBoard(level, seed, {allowUnique=true}={}) {
+ if(!allowUnique)return makeBoard(level,seed,{allowUnique:false});
+ const layouts=DELIVERY_LAYOUTS[level]||DELIVERY_LAYOUTS[0];
+ const plan=layouts[Math.abs(Math.trunc(Number(seed)||0))%layouts.length];
+ const board=makeBoard(level,plan.seed,{allowUnique:false});
+ spawnUnique(board,plan.col);
+ repairBoard(board);
+ return board;
 }

@@ -1,14 +1,14 @@
-import {prizeAttempts, recordPrizeAttempt, firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
-import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-fixes-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
+import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-delivery-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
-  MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, resultNumber,
+  MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
   ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique,
-} from '../milky-splash.js?v=first-prize-1';
+} from '../milky-splash.js?v=milk-delivery-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -123,7 +123,7 @@ function beginPlay(s) {
       delete s.result;
       if (!waiting) {
         s.seed = (s.seed || (s.level + 1) * 4099) + 1;
-        s.board = makeBoard(s.level, s.seed,{allowUnique:!chapterPaid(s.level)});
+        s.board = makeDeliveryBoard(s.level, s.seed,{allowUnique:!chapterPaid(s.level)});
         s.resultN = resultNumber(s.seed);
         s.won = false;s.rewardCommitted=false;
         s.prizeKept = false;
@@ -181,10 +181,10 @@ export default {
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. The first board of each chapter holds its uncollected treasure. Match it down into the crate. The board waits if moves run out.'
+    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. Every board holds the chapter’s treasure until you collect it. Match it down into the crate. The board waits if moves run out.'
     : 'Swap neighbouring bottles. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
-    ? 'Tap two neighbours to swap. Only a real match spends a move. Cascades are free. The unique is a sealed bottle — splash the dairy beneath it until it drops into Mabel’s crate.'
+    ? 'Tap two neighbours to swap. Only a real match spends a move. Cascades are free. The gold PRIZE bottle must reach the bottom delivery crate. Match beneath it to make it fall. Wooden crates are obstacles: an adjacent match breaks them; they do not need delivering. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
     : 'Tap two neighbours. Practice writes nothing.',
   levels: MABEL_CHAPTERS.map(c => c.title),
   sprites: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn', 'moon-penny', 'star-token', 'everyday-penny'],
@@ -204,11 +204,19 @@ export default {
       selected: saved.selected || null, lock: false,
       note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Press Play when you are ready.',
     };
-    if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeBoard(level, s.seed);
+    if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeDeliveryBoard(level, s.seed,{allowUnique:!chapterPaid(level)});
     // Honour an in-progress paid/included legacy board without buying another allowance.
     if(alleyPlay&&s.charged&&s.phase==='play'&&!prizeAttempts('milk-bottles',level))recordPrizeAttempt('milk-bottles',level);
     if(s.board&&!s.board.delivered){
-      if(alleyPlay&&s.phase==='play'&&firstPrizeEligible('milk-bottles',level)&&!chapterPaid(level))spawnUnique(s.board);
+      if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)){
+        spawnUnique(s.board);
+        // A completed empty legacy tray never offered its prize. Restore one
+        // allowance without charging or paying its ordinary reward twice.
+        if(s.phase==='result'||s.phase==='rest'||s.board.movesLeft<=0){
+          refillMoves(s.board);s.houseLeft=HOUSE_SECONDS;s.phase='play';s.charged=true;s.hold=0;delete s.result;
+          s.note='Your missing treasure is ready. This move allowance is included.';
+        }
+      }
       repairBoard(s.board);
     }
     if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
@@ -289,7 +297,7 @@ export default {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
     const moves = s.board ? s.board.movesLeft + ' moves' : 'idle';
-    const u = s.board && locateUnique(s.board) ? (s.board.delivered ? 'delivered' : 'sealed on board') : 'no unique';
+    const u = chapterPaid(s.level) ? 'chapter treasure collected' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'delivered' : 'gold treasure on board') : 'treasure ready when you play';
     return purse + ' · ' + moves + ' · ' + u + ' · ' + s.note;
   },
 };
