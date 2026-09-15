@@ -37,7 +37,7 @@ const INK = '#f0d18f';
 const MOUTH_R = 56;
 const CLIMB_SECS = 3.6;
 const READY_SECS = 1.6;
-const HOLD_SECS = 3.2;
+const HOLD_SECS = 3.8;
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
@@ -150,13 +150,14 @@ function missClimb(s) {
   s.phase = 'cough';
   s.phaseT = 0;
   s.shake = reduced(s) ? 0.2 : 0.55;
-  if (s.misses <= 1) {
+  if (s.practice) {
+    // Practice stays on this pipe until TAP lands — teach the verb.
+    s.retrySame = true;
+    s.skipAhead = false;
+    s.note = 'The pipes cough — TAP that mouth again.';
+  } else if (s.misses <= 1) {
     s.retrySame = true;
     s.note = 'The pipes cough — TAP that mouth again.';
-  } else if (s.practice) {
-    s.retrySame = false;
-    s.skipAhead = true;
-    s.note = 'The pipes cough — next note.';
   } else {
     s.retrySame = false;
     s.skipAhead = false;
