@@ -8,6 +8,9 @@
  *   new hazard taught alone: the room rotates; mark door positions before the
  *   turn; punchlines travel with door objects as they swap places; memory
  *   solves which physical door still finishes the SETUP after the spin.
+ * Chapter 4 Shrinking Hall: implemented — same verb SHUT THE PUNCHLINE with ONE
+ *   new hazard taught alone: perspective / near vs far; floor tiles prove depth;
+ *   SHUT the NEAR punchline that finishes the SETUP (not the tiny far decoy).
  *
  * Locked lane: Pac-Man chase energy × Door Door SHUT × Finish the Joke comedy.
  * Primary verb: SHUT — slam the punchline door that finishes the setup so
@@ -17,8 +20,7 @@
  * NOT wink / look-direction Simon.
  *
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
- * Unfinished chapters (reuse Ch3 graph until authored):
- *   4 Shrinking Hall  — perspective: floor tiles / shadows prove near vs far
+ * Unfinished chapters (reuse Ch4 graph until authored):
  *   5 Midway Echoes   — distorted versions of the other five rides as clues
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
  */
@@ -30,7 +32,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=upside-ch3-2';
+} from './funhouse-rooms.js?v=shrink-ch4-1';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -67,9 +69,27 @@ function spinDur(room) {
   return PHASE_SECONDS.spin ?? 0.85;
 }
 
-/** Live door views — punchlines travel with door objects as they swap places. */
+/** Live door views — rotate swap, or shrink near/far scale + hitboxes. */
 function doorViews(s, room) {
   const raw = room?.doors || [];
+  if (room?.shrink) {
+    // Near = full/correct scale (bigger hitbox); far = tiny decoy higher + inset.
+    return raw.map(row => {
+      const near = !!row.near;
+      const scale = near ? 1.08 : 0.55;
+      const yLift = near ? 8 : -52;
+      const xPull = near ? 0 : (row.id === 'left' ? 42 : -42);
+      return {
+        ...row,
+        x: row.x + xPull,
+        y: row.y + yLift,
+        w: row.w * scale,
+        h: row.h * scale,
+        scale,
+        near,
+      };
+    });
+  }
   if (!room?.rotate || raw.length < 2) return raw;
   const left = raw.find(row => row.id === 'left');
   const right = raw.find(row => row.id === 'right');
@@ -413,6 +433,35 @@ function drawSetupProp(d, room, t, pulse) {
     d.circle(x + 16, y - 6, 7, BURGUNDY);
     d.arc(x, y + 12, 16, 0.15, Math.PI - 0.15, BURGUNDY, 2.6);
     d.text('UPSIDE', x, y - 52, 17, INK);
+  } else if (prop === 'depth') {
+    d.ellipse(x + 3, y + 22, 54, 14, '#12233533');
+    // Perspective diamond stack — near large, far tiny.
+    d.poly([[x - 48, y + 28], [x + 48, y + 28], [x + 28, y - 8], [x - 28, y - 8]],
+      BURGUNDY, GOLD, 2.2);
+    d.poly([[x - 22, y - 4], [x + 22, y - 4], [x + 12, y - 36], [x - 12, y - 36]],
+      WOOD, GOLD, 2);
+    d.poly([[x - 8, y - 34], [x + 8, y - 34], [x + 4, y - 52], [x - 4, y - 52]],
+      CREAM, GOLD, 1.6);
+    d.text('depth', x, y - 68, 16, INK);
+  } else if (prop === 'hall') {
+    d.ellipse(x + 3, y + 20, 54, 14, '#12233533');
+    d.path([{x: x - 50, y: y + 30}, {x: x - 12, y: y - 50}], GOLD, 2.4, false);
+    d.path([{x: x + 50, y: y + 30}, {x: x + 12, y: y - 50}], GOLD, 2.4, false);
+    d.path([{x: x - 12, y: y - 50}, {x: x + 12, y: y - 50}], GOLD, 2, false);
+    for (let i = 0; i < 4; i++) {
+      const u = i / 3;
+      const ww = 48 - u * 34;
+      const yy = y + 26 - u * 70;
+      d.path([{x: x - ww, y: yy}, {x: x + ww, y: yy}], i % 2 ? BURGUNDY : GOLD, 1.8, false);
+    }
+    d.text('hall', x, y - 66, 16, INK);
+  } else if (prop === 'near') {
+    d.ellipse(x + 3, y + 20, 56, 16, '#12233533');
+    d.ellipse(x, y, 58, 48, CREAM, GOLD, 3);
+    d.circle(x - 16, y - 6, 7, BURGUNDY);
+    d.circle(x + 16, y - 6, 7, BURGUNDY);
+    d.arc(x, y + 12, 16, 0.15, Math.PI - 0.15, BURGUNDY, 2.6);
+    d.text('NEAR', x, y - 52, 18, INK);
   } else {
     d.ellipse(x, y, 44, 36, CREAM, GOLD, 2);
   }
@@ -537,16 +586,18 @@ function drawDoor(d, door, s) {
     d.ellipse(x, y - 18 + slide, 38, 26, BURGUNDY, INK, 2);
     d.ellipse(x, y - 10 + slide, 24, 14, '#1a1010');
   }
-  // Punchline words (primary, large) + side as secondary
+  // Punchline words (primary, large) + side as secondary — plate scales with door (near/far).
   const side = door.id === 'left' ? 'LEFT' : door.id === 'right' ? 'RIGHT' : '';
   const tag = punchlineTag(door);
   const long = tag.length > 14;
-  const plateH = long ? 82 : 68;
+  const sc = door.scale || 1;
+  const plateW = Math.max(36, 84 * sc);
+  const plateH = (long ? 82 : 68) * Math.max(0.55, Math.min(1.1, sc));
   d.poly(
-    [[x - 84, y + hh - plateH], [x + 84, y + hh - plateH], [x + 84, y + hh - 6], [x - 84, y + hh - 6]],
+    [[x - plateW, y + hh - plateH], [x + plateW, y + hh - plateH], [x + plateW, y + hh - 6], [x - plateW, y + hh - 6]],
     s.phase === 'choose' ? '#2a1818f2' : '#2a181888', GOLD, 2.6,
   );
-  const size = s.phase === 'choose' ? (long ? 17 : 20) : (long ? 14 : 16);
+  const size = (s.phase === 'choose' ? (long ? 17 : 20) : (long ? 14 : 16)) * Math.max(0.7, Math.min(1.05, sc));
   if (long) {
     const mid = Math.ceil(tag.length / 2);
     let split = tag.lastIndexOf(' ', mid);
@@ -645,6 +696,23 @@ function drawJoke(d, room, t) {
       WOOD, GOLD, 2.4);
     d.ellipse(450, 640 + bounce, 36, 22, CREAM, GOLD, 2);
     d.text('topsy', 450, 780, 22, INK);
+  } else if (room.joke === 'tiny') {
+    d.ellipse(450, 700, 70, 18, '#12233533');
+    d.poly([[435, 640 + bounce], [465, 640 + bounce], [465, 700 + bounce], [435, 700 + bounce]],
+      WOOD, GOLD, 2);
+    d.ellipse(450, 640 + bounce, 16, 10, WOOD, GOLD, 2);
+    d.text('tiny', 450, 760, 22, INK);
+  } else if (room.joke === 'echo') {
+    d.ellipse(450, 700, 80, 18, '#12233533');
+    for (let i = 0; i < 3; i++) {
+      d.arc(450, 660, 24 + i * 16, -0.6, 0.6, i % 2 ? GOLD : BURGUNDY, 2.2);
+    }
+    d.text('echo', 450, 780, 22, INK);
+  } else if (room.joke === 'vanish') {
+    d.ellipse(450, 700, 70, 18, '#12233533');
+    d.ellipse(450, 660 + bounce * 0.3, 40, 50, '#6b203055', GOLD, 2);
+    d.ellipse(450, 660, 22, 28, '#2a181866', GOLD, 1.6);
+    d.text('vanish', 450, 780, 22, INK);
   } else {
     d.poly([[410, 620], [490, 620], [490, 760], [410, 760]], WOOD, GOLD, 2);
     d.ellipse(450, 620, 40, 16, WOOD, GOLD, 2);
@@ -747,6 +815,20 @@ function drawClarityChrome(s, d) {
     drawChip(d, coach, 214, size);
   }
 
+  // Ch4 coach — shrink/near-far hazard alone; no mirror or rotate restack.
+  if (room.shrink && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
+    let coach = 'NEAR vs FAR — SHUT the near punchline';
+    let size = 14;
+    if (room.teachShrink && (s.phase === 'reveal' || s.phase === 'inspect')) {
+      coach = 'MARK THE SETUP → WHICH IS NEAR?';
+      size = 15;
+    } else if (s.phase === 'choose') {
+      coach = room.teachShrink ? 'SHUT THE NEAR PUNCHLINE' : 'SHUT THE NEAR PUNCHLINE';
+      size = room.teachShrink ? 15 : 14;
+    }
+    drawChip(d, coach, 214, size);
+  }
+
   if (s.phase === 'choose') {
     drawChip(d, 'hold a door to SHUT · ← →', 1118, 16);
   }
@@ -792,6 +874,48 @@ function drawFlies(d, s) {
   }
 }
 
+/** Perspective floor tiles — prove near (large) vs far (tiny) on shrink rooms. */
+function drawPerspectiveFloor(d, room, s, t) {
+  if (!room?.shrink || room.kind !== 'main') return;
+  const teachPulse = room.teachShrink && (s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'choose')
+    ? 0.45 + 0.35 * Math.sin((t || 0) * 3.6)
+    : 0;
+  // Vanishing lines toward upper center of the oval stage.
+  const vpX = 450, vpY = 520;
+  for (let i = -3; i <= 3; i++) {
+    if (i === 0) continue;
+    const x0 = 450 + i * 78;
+    d.path([{x: x0, y: 900}, {x: vpX + i * 8, y: vpY}], '#d2a65b66', 1.6, false);
+  }
+  // Horizontal tile bands — wider near, narrower far.
+  for (let row = 0; row < 5; row++) {
+    const u = row / 4;
+    const yy = 880 - u * 280;
+    const half = 250 - u * 170;
+    d.path([{x: 450 - half, y: yy}, {x: 450 + half, y: yy}], row % 2 ? '#6b203055' : '#d2a65b55', 2, false);
+    // Soft tile diamonds that shrink with depth.
+    const tiles = 5 - row;
+    for (let c = 0; c < tiles; c++) {
+      const tx = 450 - half + (c + 0.5) * (half * 2 / tiles);
+      const sz = 10 - row * 1.4;
+      diamond(d, tx, yy - 6, Math.max(4, sz), row % 2 ? BURGUNDY : GOLD, '#f8e4b3');
+    }
+  }
+  // Door-base shadows sized by near/far.
+  for (const door of doorViews(s, room)) {
+    const near = !!door.near;
+    const sw = (door.w || 168) * (near ? 0.55 : 0.28);
+    const sh = near ? 18 : 10;
+    d.ellipse(door.x + 4, door.y + (door.h || 268) * 0.42, sw, sh, '#12233544');
+    if (near && teachPulse > 0.05) {
+      d.glow(door.x, door.y - 10, 50 + teachPulse * 14, '#f4d590');
+    }
+  }
+  if (room.teachShrink && (s.phase === 'reveal' || s.phase === 'inspect')) {
+    drawChip(d, 'NEAR = correct scale', 860, 13);
+  }
+}
+
 function drawRoom(s, d) {
   const room = roomOf(s.graph, s.roomId);
   const t = s.t;
@@ -816,6 +940,7 @@ function drawRoom(s, d) {
       drawCutoutProp(d, spot, taken, t);
     });
     drawMirror(d, room, s, t);
+    drawPerspectiveFloor(d, room, s, t);
     const views = doorViews(s, room);
     views.forEach(door => drawDoor(d, door, s));
     if (room.rotate && s.phase === 'spin') {
@@ -877,8 +1002,8 @@ export default {
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
-    // Ch2/Ch3 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
-    const houseSecs = (level === 1 || level === 2) ? 52 : 90;
+    // Ch2/Ch3/Ch4 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
+    const houseSecs = (level === 1 || level === 2 || level === 3) ? 52 : 90;
     return makeRideState(level, rng, {
       graph,
       roomId: graph.start,
@@ -914,18 +1039,22 @@ export default {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       s.reduced = s.reduced || !!prefersReducedMotion?.();
-      // Runtime seeds houseLeft from export (90); override Ch2/Ch3 to ~52s fair clock.
-      if (s.level === 1 || s.level === 2) s.houseLeft = s.houseSeconds || 58;
+      // Runtime seeds houseLeft from export (90); override Ch2/Ch3/Ch4 to ~52s fair clock.
+      if (s.level === 1 || s.level === 2 || s.level === 3) s.houseLeft = s.houseSeconds || 58;
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
       if (s.practice) {
-        if (startRoom?.teachRotate) {
+        if (startRoom?.teachShrink) {
+          s.note = 'Free practice · nothing kept. MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
+        } else if (startRoom?.teachRotate) {
           s.note = 'Free practice · nothing kept. MARK THE DOORS — then SHUT THE PUNCHLINE.';
         } else if (startRoom?.teach) {
           s.note = 'Free practice · nothing kept. MIRROR LIES — SHUT THE PUNCHLINE.';
         } else {
           s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
         }
+      } else if (startRoom?.teachShrink) {
+        s.note = 'MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
       } else if (startRoom?.teachRotate) {
         s.note = 'MARK THE DOORS — then the room turns. SHUT THE PUNCHLINE.';
       } else if (startRoom?.teach) {
@@ -987,7 +1116,9 @@ export default {
               ? 'Glass swaps punchlines — read the real doors, then SHUT.'
               : (room.rotate
                 ? 'Mark the punchline doors — then the room turns.'
-                : 'Read the punchline doors — then SHUT.'));
+                : (room.shrink
+                  ? 'Floor tiles prove depth — SHUT the NEAR punchline.'
+                  : 'Read the punchline doors — then SHUT.')));
           maybeRevealTreasure(s, room);
         }
       }

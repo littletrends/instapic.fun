@@ -6,9 +6,11 @@
  * Chapter 3 Upside Down — implemented: one hazard taught alone (room rotates;
  *   mark door positions before the turn; punchlines travel with door objects as
  *   they swap places; memory solves which physical door still finishes the SETUP).
+ * Chapter 4 Shrinking Hall — implemented: one hazard taught alone (perspective /
+ *   near vs far); floor tiles prove depth; SHUT the NEAR punchline that finishes
+ *   the SETUP (not the tiny far decoy). No mirror or rotate restack.
  *
- * Unfinished chapters (reuse Ch3 graph until authored):
- *   4 Shrinking Hall  — perspective: floor tiles / shadows prove near vs far
+ * Unfinished chapters (reuse Ch4 graph until authored):
  *   5 Midway Echoes   — distorted versions of the other five rides as clues
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
  *
@@ -507,8 +509,167 @@ export const CHAPTER3 = {
   },
 };
 
+
+/**
+ * Chapter 4 — Shrinking Hall.
+ * ONE new hazard taught alone on the first main room: perspective / near vs far.
+ * Floor tiles / shadows prove which door is near (correct scale) vs far (tiny decoy).
+ * Correct = NEAR door that finishes the SETUP. Soft fails only — detour → rejoin.
+ * No mirror or rotate restack — Ch4 focuses on shrink only. NOT wink / look-direction Simon.
+ */
+export const CHAPTER4 = {
+  id: 'shrinking-hall',
+  start: 'foyer',
+  mainCount: 3,
+  rooms: {
+    foyer: {
+      id: 'foyer',
+      kind: 'main',
+      title: 'Shrink Foyer',
+      teachShrink: true,
+      shrink: true,
+      /* Long clear coaching window — teach near/far alone. */
+      revealSec: 2.35,
+      inspectSec: 2.15,
+      setup: 'Why did the hallway shrink the punchline?',
+      setupProp: 'depth',
+      caption: 'MARK THE SETUP — WHICH IS NEAR? SHUT the near punchline.',
+      revealNote: 'MARK THE SETUP — WHICH IS NEAR?',
+      inspectNote: 'Floor tiles prove depth. Near door matches SETUP — far is a tiny decoy.',
+      chooseNote: 'SHUT THE NEAR PUNCHLINE',
+      doors: [
+        door('left', 'gallery', {
+          correct: true,
+          near: true,
+          punchline: 'So the gag stayed close!',
+          label: 'Gag stayed close',
+        }),
+        door('right', 'tiny', {
+          correct: false,
+          near: false,
+          punchline: 'So it looked farther!',
+          label: 'Looked farther',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'depth', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. The near door finishes it — not the tiny far decoy.'},
+        {id: 'shrink-find', kind: 'find', prop: 'cushion', x: 300, y: 630, r: 40, find: 'star-token',
+          flavor: 'A star token under a paper cushion — not the punchline.'},
+        {id: 'ribbon', kind: 'flavor', prop: 'panel', x: 600, y: 620, r: 34,
+          flavor: 'Pretty paper. Read the floor — which door is near?'},
+      ],
+      faces: 1,
+    },
+    tiny: {
+      id: 'tiny',
+      kind: 'detour',
+      title: 'Tiny Joke',
+      joke: 'tiny',
+      caption: 'A polite tiny door peeps, then points you onward.',
+      revealNote: 'Wrong punchline — a tiny gag. Depth gallery waits ahead.',
+      rejoin: 'gallery',
+    },
+    gallery: {
+      id: 'gallery',
+      kind: 'main',
+      title: 'Depth Gallery',
+      shrink: true,
+      /* Same hazard, shorter — no new stack (no mirror/rotate teach). */
+      revealSec: 1.05,
+      inspectSec: 0.85,
+      setup: 'What do you call a joke that walks away?',
+      setupProp: 'hall',
+      caption: 'Same depth rule. SHUT the NEAR door that finishes the SETUP.',
+      revealNote: 'Near vs far again — trust the floor tiles.',
+      inspectNote: 'Tiny far decoy may look tempting. SHUT the near punchline.',
+      chooseNote: 'SHUT THE NEAR PUNCHLINE',
+      doors: [
+        door('left', 'echo', {
+          correct: false,
+          near: false,
+          punchline: 'A distant giggle',
+          label: 'Distant giggle',
+        }),
+        door('right', 'last-court', {
+          correct: true,
+          near: true,
+          punchline: 'A close call!',
+          label: 'Close call',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'hall', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. Near finishes it — far only looks matching.'},
+        {id: 'panel', kind: 'find', prop: 'panel', x: 590, y: 636, r: 42, find: 'moon-penny',
+          flavor: 'A moon penny behind a sliding paper panel.'},
+        {id: 'tassel', kind: 'flavor', prop: 'cushion', x: 310, y: 630, r: 36,
+          flavor: 'A velvet tassel. Soft — not the punchline.'},
+      ],
+      faces: 1,
+    },
+    echo: {
+      id: 'echo',
+      kind: 'detour',
+      title: 'Echo Alcove',
+      joke: 'echo',
+      caption: 'An echo bows from far away — then ushers you on.',
+      revealNote: 'Echo gag. Last hall court is just ahead.',
+      rejoin: 'last-court',
+    },
+    'last-court': {
+      id: 'last-court',
+      kind: 'main',
+      title: 'Last Hall Court',
+      shrink: true,
+      last: true,
+      setup: 'Knock knock. Who\'s there? Near.',
+      setupProp: 'near',
+      caption: 'Final depth once — SHUT the near laughing door.',
+      revealNote: 'One more depth check — SHUT the NEAR last laugh.',
+      inspectNote: 'If a keepsake is here, it sits in the open — tap it.',
+      chooseNote: 'SHUT THE LAST LAUGH',
+      doors: [
+        door('left', 'exit', {
+          correct: true,
+          near: true,
+          lastLaugh: true,
+          punchline: 'Near who? — exit!',
+          label: 'Near who? — exit',
+        }),
+        door('right', 'vanish', {
+          correct: false,
+          near: false,
+          punchline: 'Stay tiny',
+          label: 'Stay tiny',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'near', x: 450, y: 540, r: 70,
+          flavor: 'Near who? The near laughing door finishes the gag — not the far decoy.'},
+        {id: 'mouth', kind: 'flavor', prop: 'mouth', x: 268, y: 700, r: 40,
+          flavor: 'A comedy mouth. It only laughs for the true punchline.'},
+        {id: 'court-cushion', kind: 'flavor', prop: 'cushion', x: 600, y: 640, r: 38,
+          flavor: 'A court cushion. Soft landing, no secret.'},
+      ],
+      treasure: {spawnId: 'last-laugh', x: 450, y: 470, r: 58},
+      faces: 1,
+    },
+    vanish: {
+      id: 'vanish',
+      kind: 'detour',
+      title: 'Vanish Joke',
+      joke: 'vanish',
+      caption: 'The far door vanishes into a soft gag, then clears the way back.',
+      revealNote: 'Not the last laugh. Back to the court — finish the joke.',
+      rejoin: 'last-court',
+    },
+  },
+};
+
 export function chapterGraph(level) {
-  // level 0 = Ch1; level 1 = Ch2; level ≥2 = Ch3 until Ch4+ are authored.
+  // level 0 = Ch1; level 1 = Ch2; level 2 = Ch3; level ≥3 = Ch4 until Ch5+ are authored.
+  if (level >= 3) return CHAPTER4;
   if (level >= 2) return CHAPTER3;
   if (level >= 1) return CHAPTER2;
   return CHAPTER1;
