@@ -117,7 +117,7 @@ function columnSegments(board, c) {
 
 export function layoutOf(board) {
   const cols = board?.cols || 5, rows = board?.rows || 6;
-  const size = Math.min(92, Math.floor(700 / cols), Math.floor(760 / rows));
+  const size = Math.min(120, Math.floor(700 / cols), Math.floor(760 / rows));
   const originX = (900 - cols * size) / 2;
   const originY = 210;
   return {size, originX, originY, crateY: originY + rows * size + 8};

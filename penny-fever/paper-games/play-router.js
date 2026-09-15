@@ -8,5 +8,5 @@ if (id === 'fortune' || id === 'coin-pusher') {
   });
   await import('./cabinet-runtime.js?v=copper-prize-four-1');
 } else {
-  await import('./runtime.js?v=copper-pass-1');
+  await import('./runtime.js?v=milk-art-1');
 }

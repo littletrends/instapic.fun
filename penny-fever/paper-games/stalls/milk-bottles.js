@@ -1,41 +1,15 @@
+import {drawMilkySplash, splashSwap} from '../milky-splash-art.js?v=milk-art-1';
 import {done} from '../draw.js';
-import {spriteKey, itemName} from '../prizes.js';
+import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, isMabelWin, resultNumber,
-  ordinaryFor, flavourOf, cellFromPoint, cellCenter, refillMoves, locateUnique, layoutOf,
-} from '../milky-splash.js?v=splash-1';
+  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique,
+} from '../milky-splash.js?v=milk-art-1';
 
 const BOOK = 'pennyFever.milkySplash';
-
-function roundRect(c, x, y, w, h, r) {
-  const rr = Math.min(r, w / 2, h / 2);
-  c.beginPath();
-  c.moveTo(x + rr, y);
-  c.arcTo(x + w, y, x + w, y + h, rr);
-  c.arcTo(x + w, y + h, x, y + h, rr);
-  c.arcTo(x, y, x + w, y, rr);
-  c.arcTo(x, y, x + w, y, rr);
-  c.closePath();
-}
-function wrapLine(d, text, x, y, size, color, maxW) {
-  const c = d.c;
-  c.font = `500 ${size}px Georgia,serif`;
-  const words = String(text).split(' ');
-  let line = '', ly = y;
-  for (const word of words) {
-    const trial = line ? line + ' ' + word : word;
-    if (line && c.measureText(trial).width > maxW) {
-      d.text(line, x, ly, size, color);
-      line = word;
-      ly += size + 8;
-    } else line = trial;
-  }
-  if (line) d.text(line, x, ly, size, color);
-  return ly;
-}
 
 function emptyBook() {
   return {v: 1, paid: {}, sittings: {}};
@@ -188,6 +162,7 @@ function trySwap(s, a, b) {
     s.selected = null;
     return;
   }
+  splashSwap(s,a,b);
   s.selected = null;
   s.note = s.board.unique
     ? (s.board.movesLeft + ' moves. Walk the sealed bottle down.')
@@ -291,89 +266,7 @@ export default {
     if (!down) return;
     if (k === ' ' || k === 'Enter') this.action(s, 'play');
   },
-  draw(s, d) {
-    const ch = MABEL_CHAPTERS[s.level];
-    const c = d.c;
-    d.text('Milky Splash!', 450, 108, 28, '#efe6d0');
-    d.text(ch.title, 450, 142, 18, '#d2b98c');
-    if (!s.won) {
-      d.item(spriteKey(ch.prize), 800, 132, {w: 64, fallback: () => d.star(800, 132, 22)});
-      d.text('waiting', 800, 184, 13, '#ead6a4');
-    }
-    const board = s.board;
-    if (board) {
-      const {size, originX, originY, crateY} = layoutOf(board);
-      roundRect(c, originX - 12, originY - 12, board.cols * size + 24, board.rows * size + 24, 14);
-      // The illustrated template supplies the surface; keep the gameplay outline.
-      c.strokeStyle = '#e8c878';
-      c.lineWidth = 3;
-      c.stroke();
-      for (let r = 0; r < board.rows; r++) {
-        for (let col = 0; col < board.cols; col++) {
-          const cell = board.cells[r][col];
-          const x = originX + col * size, y = originY + r * size;
-          const sel = s.selected && s.selected.c === col && s.selected.r === r;
-          if (!cell || cell.kind === 'hole') {
-            if (cell?.kind === 'hole') {
-              roundRect(c, x + 6, y + 6, size - 12, size - 12, 8);
-              c.fillStyle = '#1a120866';
-              c.fill();
-            }
-            continue;
-          }
-          if (cell.kind === 'crate') {
-            roundRect(c, x + 8, y + 10, size - 16, size - 20, 6);
-            c.fillStyle = '#8a6238';
-            c.fill();
-            c.strokeStyle = '#e8c878';
-            c.stroke();
-            d.text('crate', x + size / 2, y + size / 2 + 4, 11, '#fff6d8');
-            continue;
-          }
-          if (cell.kind === 'weighted') {
-            d.bottle(x + size / 2, y + size * 0.72, size / 54, '#9a8a78', 0);
-            d.text('w', x + size / 2, y + size * 0.42, 14, '#fff6d8');
-            continue;
-          }
-          if (cell.kind === 'sour') {
-            d.bottle(x + size / 2, y + size * 0.72, size / 54, '#7a9a48', 0);
-            d.text('sour', x + size / 2, y + size * 0.4, 11, '#fff6d8');
-            continue;
-          }
-          if (cell.kind === 'unique') {
-            d.glow(x + size / 2, y + size / 2, size * 0.6, '#f0d18f');
-            d.bottle(x + size / 2, y + size * 0.72, size / 48, '#f4e8c0', 0);
-            d.item(spriteKey(ch.prize), x + size / 2, y + size * 0.42, {
-              w: size * 0.55, fallback: () => d.star(x + size / 2, y + size * 0.42, 12),
-            });
-            continue;
-          }
-          const flav = flavourOf(cell.flavour);
-          d.bottle(x + size / 2, y + size * 0.74, size / 52, flav.fill, 0);
-          d.text(flav.mark, x + size / 2, y + size * 0.42, sel ? 20 : 16, flav.ink);
-          if (cell.kind === 'special') d.text(cell.special === 'cream' ? 'gold' : 'fizz', x + size / 2, y + size * 0.58, 10, '#fff6d8');
-          if (sel) {
-            c.strokeStyle = '#fff6d8';
-            c.lineWidth = 3;
-            roundRect(c, x + 4, y + 4, size - 8, size - 8, 8);
-            c.stroke();
-          }
-        }
-      }
-      roundRect(c, originX, crateY, board.cols * size, 54, 8);
-      c.fillStyle = '#6a4228ee';
-      c.fill();
-      c.strokeStyle = '#e8c878';
-      c.stroke();
-      d.text(board.delivered ? 'crate · taken' : 'Mabel’s crate', 450, crateY + 34, 16, '#fff6d8');
-      d.text(board.movesLeft + ' moves', 160, 142, 16, '#f0d18f');
-    } else {
-      d.text('Sit', 450, 640, 32, '#ead6a4');
-    }
-    wrapLine(d, s.note, 450, 1088, 20, '#f0d18f', 720);
-    const n = alleyPlay ? pocket() : null;
-    if (n == null) d.text('practice', 450, 1168, 16, '#ead6a4');
-  },
+  draw(s,d){drawMilkySplash(s,d,MABEL_CHAPTERS[s.level]);},
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
