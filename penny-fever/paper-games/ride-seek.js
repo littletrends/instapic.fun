@@ -1,9 +1,8 @@
-import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Shared Ride & Seek contract for all eight amusements. */
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=entry-1';
-import {hasUsedFirst, takeAttempt} from './stall-entry.js?v=first-prize-1';
+import {hasUsedFirst, takeAttempt} from './stall-entry.js?v=entry-3';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 export const BOOK_KEY = 'pennyFever.rideSeek';
@@ -82,7 +81,7 @@ export function sealAttempt({rng, chapter, practice, treasureId, rideId, spawnId
   }
   const roll = Math.min(100, Math.max(1, Math.floor((rng?.() ?? Math.random()) * 100) + 1));
   const alreadyOwned = slotOwned(slot);
-  const eligible = !practice && !alreadyOwned && (firstPrizeEligible(rideId,chapter) || roll <= eligibilityPercent(chapter));
+  const eligible = !practice && !alreadyOwned && roll <= eligibilityPercent(chapter);
   const spawnId = eligible && spawnIds?.length
     ? spawnIds[Math.floor((rng?.() ?? Math.random()) * spawnIds.length)]
     : null;
@@ -237,8 +236,13 @@ export function finishRide(s, {rideId, treasureId, challengeOk, completionFind})
 }
 
 export function drawHud(d, s, {goal, count, label}) {
-  // The shared shell owns live status; keep the illustrated field unobstructed.
-  d.liveStatus = {goal, count: count ?? 0, label: label || 'complete'};
+  const lap = Math.min(1, (s.progress ?? 0));
+  d.poly([[30, 18], [870, 18], [870, s.practice ? 168 : 138], [30, s.practice ? 168 : 138]], '#122335d8', '#d2a65b', 2);
+  d.arc(78, 86, 32, -Math.PI / 2, -Math.PI / 2 + lap * Math.PI * 2, '#f0d09a', 7);
+  d.text(s.practice ? 'Practice' : 'Paid ride', 450, 62, 30, '#f0d09a');
+  d.text((count ?? 0) + ' / ' + goal + ' ' + (label || 'complete'), 450, 102, 26, '#fff6d8');
+  if (s.practice) d.text('Practice — no items awarded', 450, 142, 22, '#e8d0a0');
+  if (s.treasureCollected) d.text('Chapter treasure caught', 450, s.practice ? 176 : 142, 24, '#f4d590');
 }
 
 export {hasOwn};

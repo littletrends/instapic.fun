@@ -1,143 +1,384 @@
+/**
+ * Painted Bay — Arlo (mural / alley-wall-bay)
+ * LOCKED remix: Crush Roller + Paperboy in carnival clothes.
+ * Verb: SPLASH. The mural rolls past; splash faded patches on the wall;
+ * they FILL/flood. No mix-then-HOLD PAINT chrome.
+ *
+ * SHIPPED: Ch1 First Wash — three patches (lantern, balloons, horse).
+ * Splash any two as they pass. Pre-dipped ♥+★ (mix waits for Ch2).
+ * ≥3.2s discovery after flood; treasure is a real glint in restored art
+ * only when eligible && spawnId === that panel.
+ * mural.png is the hero court (transparent clear; no full-screen fill).
+ *
+ * Unfinished:
+ *  2 Lantern Row — three colours; splash the medallion match
+ *  3 Carousel Frieze — horse patch only in the window
+ *  4 Evening Panorama — splash floods into neighbours
+ *  5 Midway Memories — remembered fragments in order
+ *  6 The Living Bay — long Sunday route; panorama wakes
+ */
+import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=first-prize-1';
+  prefersReducedMotion,
+} from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'mural';
-const TREASURES = ['painted-bay', 'pocket-wheel', 'music-carousel', 'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant'];
-const PIGMENTS = [
-  {id: 'burgundy', name: 'Burgundy heart', glyph: '♥', color: '#6b2030'},
-  {id: 'gold', name: 'Gold star', glyph: '★', color: '#d2a65b'},
-  {id: 'green', name: 'Green moon', glyph: '●', color: '#3a6a4a'},
+const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
+const TREASURES = [
+  'painted-bay', 'pocket-wheel', 'music-carousel',
+  'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant',
+];
+const LEVELS = [
+  'First Wash', 'Lantern Row', 'Carousel Frieze',
+  'Evening Panorama', 'Midway Memories', 'The Living Bay',
 ];
 const MOTIFS = [
-  {id: 'lantern', label: 'lantern', pair: ['burgundy', 'gold']},
-  {id: 'balloons', label: 'balloons', pair: ['burgundy', 'gold']},
-  {id: 'horse', label: 'horse', pair: ['burgundy', 'gold']},
+  {id: 'lantern', label: 'Lantern'},
+  {id: 'balloons', label: 'Balloons'},
+  {id: 'horse', label: 'Horse'},
 ];
 
-function pairOk(selected, pair) {
-  if (selected.length !== 2) return false;
-  return pair.every(id => selected.includes(id));
+const GOAL = 2;
+const DISCOVERY = 3.2;
+const CURTAIN = 1.15;
+const RETRY = 1;
+const HOUSE = 80;
+const FRAME = {x: 450, y: 488, w: 260, h: 220};
+const GOLD = '#d2a65b';
+const BURG = '#6b2030';
+const CREAM = '#fff6d8';
+const MIX = '#8a4060';
+
+function roundRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.arcTo(x + w, y, x + w, y + h, rr);
+  c.arcTo(x + w, y + h, x, y + h, rr);
+  c.arcTo(x, y + h, x, y, rr);
+  c.arcTo(x, y, x + w, y, rr);
+  c.closePath();
+}
+
+function screenX(panel, scroll) {
+  return panel.world - scroll;
+}
+
+function inWindow(panel, scroll) {
+  return Math.abs(screenX(panel, scroll) - FRAME.x) < FRAME.w * 0.55;
+}
+
+function hitPatch(p, panel, scroll) {
+  const x = screenX(panel, scroll);
+  const y = FRAME.y;
+  return Math.hypot(p.x - x, p.y - y) < 92;
+}
+
+function closeRide(s) {
+  finishRide(s, {
+    rideId: RIDE,
+    treasureId: s.treasureId,
+    challengeOk: s.restored >= s.goal,
+    completionFind: 'star-token',
+  });
+}
+
+function maybeArrive(s) {
+  if (s.arriving || s.result) return;
+  const leftover = s.panels.some((row) => !row.restored && !row.done && row.retries <= RETRY);
+  if (s.restored >= s.goal || !leftover) {
+    s.arriving = true;
+    s.arriveAt = s.t + 0.9;
+  }
+}
+
+function splash(s, panel) {
+  if (!panel || panel.restored || panel.flooding) return;
+  panel.restored = true;
+  panel.flood = 0.001;
+  panel.flooding = true;
+  panel.bloom = 1;
+  s.restored += 1;
+  s.juice = true;
+  s.paused = true;
+  s.discovery = DISCOVERY;
+  s.liveId = panel.id;
+  recordFind(s, ORDINARY[s.restored % ORDINARY.length], RIDE);
+  logAction(s, 'splash', {id: panel.id, n: s.restored});
+  logAction(s, 'restore', {id: panel.id});
+  s.note = 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
+  if (s.eligible && s.spawnId === panel.id && !s.treasure) {
+    s.treasure = {
+      id: s.treasureId,
+      taken: false,
+      panel: panel.id,
+      x: FRAME.x,
+      y: FRAME.y - 24,
+    };
+    s.treasureRevealed = true;
+    s.note = 'A real glint in the wet paint — tap it.';
+  }
+}
+
+function drawLantern(d, x, y, faded, flood, t) {
+  const a = faded ? 0.28 : 0.92;
+  const c = d.c;
+  c.save();
+  c.globalAlpha = a + flood * 0.7;
+  d.line({x, y: y - 78}, {x, y: y - 50}, GOLD, 3);
+  d.poly([[x - 26, y - 48], [x + 26, y - 48], [x + 34, y + 36], [x - 34, y + 36]], faded ? '#6b203044' : MIX, GOLD, 2);
+  d.poly([[x - 18, y - 64], [x + 18, y - 64], [x + 12, y - 48], [x - 12, y - 48]], BURG, GOLD, 2);
+  if (!faded || flood > 0.4) d.glow(x, y - 4, 48 + flood * 30, '#f4d590');
+  d.ellipse(x, y - 6, 12, 16, flood > 0.3 ? '#fff6d8' : '#d2a65b55', GOLD, 1);
+  c.restore();
+}
+
+function drawBalloons(d, x, y, faded, flood, t) {
+  const c = d.c;
+  c.save();
+  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  const bob = faded ? 0 : Math.sin(t * 2.2) * 5;
+  [[-32, -8, '#e8a0b8'], [0, -24, '#7eb8b0'], [30, -4, '#f0d09a']].forEach(([dx, dy, col], i) => {
+    const b = bob * (i === 1 ? 1 : 0.6);
+    d.ellipse(x + dx, y + dy + b, 20, 26, faded ? col + '55' : col, GOLD, 2);
+  });
+  d.line({x: x - 32, y: y + 16}, {x, y: y + 62}, GOLD, 1.5);
+  d.line({x, y: y + 4}, {x, y: y + 62}, GOLD, 1.5);
+  d.line({x: x + 30, y: y + 20}, {x, y: y + 62}, GOLD, 1.5);
+  if (flood > 0.4) d.glow(x, y - 10, 40, '#f4d590');
+  c.restore();
+}
+
+function drawHorse(d, x, y, faded, flood, t) {
+  const c = d.c;
+  c.save();
+  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  const g = faded ? 0 : Math.sin(t * 4.2) * 4;
+  d.poly([
+    [x - 64, y + 10 + g], [x + 52, y - 8], [x + 72, y + 22 + g], [x - 48, y + 34],
+  ], faded ? '#f7efe044' : '#f7efe0cc', GOLD, 2);
+  d.circle(x + 64, y - 2 + g * 0.4, 16, faded ? '#f7efe044' : '#f7efe0cc', GOLD, 2);
+  d.poly([[x - 10, y - 8], [x + 24, y - 8], [x + 28, y + 16], [x - 14, y + 18]], BURG, GOLD, 1.5);
+  if (flood > 0.4) d.glow(x, y, 36, '#f4d590');
+  c.restore();
+}
+
+function drawMotif(d, id, x, y, faded, flood, t) {
+  if (id === 'balloons') drawBalloons(d, x, y, faded, flood, t);
+  else if (id === 'horse') drawHorse(d, x, y, faded, flood, t);
+  else drawLantern(d, x, y, faded, flood, t);
+}
+
+function drawPracticeBadge(d, s) {
+  if (!s.boarded) return;
+  const c = d.c;
+  const label = s.practice ? 'PRACTICE' : 'PAID';
+  const w = s.practice ? 168 : 110;
+  c.save();
+  roundRect(c, 28, 178, w, 42, 12);
+  c.fillStyle = s.practice ? '#6b2030ee' : '#2a1c18ee';
+  c.fill();
+  c.strokeStyle = GOLD;
+  c.lineWidth = 2.5;
+  c.stroke();
+  c.restore();
+  d.text(label, 28 + w / 2, 207, 20, CREAM);
+}
+
+function drawCoach(d, s) {
+  if (!s.boarded || s.result || s.juice || s.t >= 5.2) return;
+  const c = d.c;
+  c.save();
+  roundRect(c, 90, 248, 720, 58, 14);
+  c.fillStyle = '#1a1210ee';
+  c.fill();
+  c.strokeStyle = GOLD;
+  c.lineWidth = 3;
+  c.stroke();
+  c.restore();
+  d.text('SPLASH the faded patch', 450, 286, 28, CREAM);
 }
 
 export default {
   title: 'Painted Bay',
-  intro: 'Arlo’s platform rolls along the living mural. Mix two pigments, then hold Paint as the stencil passes.',
-  instructions: 'Tap two pigment buttons, then hold Paint while the stencil sits in the roller frame. Two restored panels finish Chapter 1. First ride is free practice and keeps nothing.',
-  levels: ['First Wash', 'Lantern Row', 'Carousel Frieze', 'Evening Panorama', 'Midway Memories', 'The Living Bay'],
-  sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
+  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake.',
+  instructions: 'SPLASH the faded patch when it sits in the frame. Restore any two of three. First ride is free practice and keeps nothing.',
+  levels: LEVELS,
+  sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
-  houseSeconds: 80,
-  actions: [
-    {id: 'burgundy', label: '♥ Burgundy'},
-    {id: 'gold', label: '★ Gold'},
-    {id: 'clear', label: 'Clear mix'},
-    {id: 'paint', label: 'Paint · hold', hold: true},
-  ],
+  houseSeconds: HOUSE,
+  houseTitle: 'The paint dried',
+  houseDetail: 'The bay went still before the wall woke. Try this chapter again.',
+  actions: [],
   create(level, rng) {
-    const pigments = level === 0 ? PIGMENTS.slice(0, 2) : PIGMENTS;
-    const panels = MOTIFS.slice(0, 3).map((m, i) => ({
+    const reduced = prefersReducedMotion();
+    const gap = reduced ? 720 : 640;
+    const panels = MOTIFS.map((m, i) => ({
       ...m,
-      pair: level === 0 ? ['burgundy', 'gold'] : [pigments[i % pigments.length].id, pigments[(i + 1) % pigments.length].id],
-      restored: false, retries: 0, t: 8 + i * 12,
+      world: 980 + i * gap,
+      restored: false,
+      done: false,
+      retries: 0,
+      flood: 0,
+      flooding: false,
+      bloom: 0,
     }));
     return makeRideState(level, rng, {
-      pigments, panels, selected: [], painting: false, hold: 0, restored: 0, goal: 2,
-      panel: 0, discovery: 0, treasureId: TREASURES[level] || TREASURES[0], x: 0,
+      reduced,
+      panels,
+      scroll: 0,
+      speed: reduced ? 108 : 168,
+      restored: 0,
+      goal: GOAL,
+      paused: false,
+      discovery: 0,
+      liveId: null,
+      arriving: false,
+      arriveAt: 0,
+      juice: false,
+      treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
+      note: 'SPLASH the faded patch.',
     });
   },
-  update(s, dt, input) {
+  update(s, dt) {
     if (s.result || s.broke) return;
-    if (ensureBoarded(s, RIDE, s.treasureId, s.panels.map(p => p.id))) {
-      s.note = s.practice ? 'Practice — restore two panels. Nothing is kept.' : 'Mix, then hold Paint in the frame.';
+    if (ensureBoarded(s, RIDE, s.treasureId, MOTIFS.map((m) => m.id))) {
+      s.note = 'SPLASH the faded patch.';
     }
     if (s.result) return;
     s.t += dt;
-    s.x += dt * 42;
-    s.progress = Math.min(1, s.t / 44);
-    const panel = s.panels[s.panel];
+    s.progress = Math.min(1, s.scroll / (s.panels[2].world + 200));
+
+    s.panels.forEach((row) => {
+      if (row.bloom > 0) row.bloom = Math.max(0, row.bloom - dt * 0.7);
+      if (row.flooding) {
+        row.flood = Math.min(1, row.flood + dt / 0.55);
+        if (row.flood >= 1) row.flooding = false;
+      }
+    });
+
+    if (s.arriving) {
+      if (s.t >= s.arriveAt) closeRide(s);
+      return;
+    }
+
+    if (s.t < CURTAIN) return;
+
     if (s.discovery > 0) {
       s.discovery -= dt;
       if (s.discovery <= 0) {
-        s.panel += 1;
-        s.hold = 0;
-        if (s.panel >= s.panels.length) {
-          finishRide(s, {rideId: RIDE, treasureId: s.treasureId, challengeOk: s.restored >= s.goal, completionFind: 'star-token'});
-        }
+        s.paused = false;
+        const live = s.panels.find((row) => row.id === s.liveId);
+        if (live) live.done = true;
+        s.liveId = null;
+        maybeArrive(s);
       }
       return;
     }
-    if (!panel) return;
-    const inFrame = s.t > panel.t && s.t < panel.t + 3.2;
-    const painting = s.painting || input?.actions?.has?.('paint');
-    if (inFrame && painting && pairOk(s.selected, panel.pair)) {
-      s.hold += dt;
-      if (s.hold >= 0.85 && !panel.restored) {
-        panel.restored = true;
-        s.restored += 1;
-        recordFind(s, ['everyday-penny', 'star-token', 'moon-penny'][s.restored % 3], RIDE);
-        s.note = 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
-        logAction(s, 'restore', {id: panel.id});
-        s.discovery = 3.1;
-        if (s.eligible && (s.spawnId === panel.id || (!s.treasure && s.restored === 1))) {
-          s.treasure = {id: s.treasureId, taken: false};
-          s.treasureRevealed = true;
+
+    if (!s.paused) s.scroll += dt * s.speed;
+
+    s.panels.forEach((row) => {
+      if (row.restored || row.done) return;
+      const x = screenX(row, s.scroll);
+      if (x < FRAME.x - FRAME.w * 0.7) {
+        row.retries += 1;
+        if (row.retries <= RETRY) {
+          row.world = s.scroll + 780;
+          s.note = 'One more pass — SPLASH the patch.';
+        } else {
+          row.done = true;
+          maybeArrive(s);
         }
       }
-    } else if (!painting) s.hold = Math.max(0, s.hold - dt * 0.5);
-    if (s.t > panel.t + 3.4 && !panel.restored) {
-      panel.retries += 1;
-      if (panel.retries <= 1 && s.level === 0) {
-        panel.t = s.t + 2.2;
-        s.note = 'One more pass at this panel.';
-      } else {
-        s.panel += 1;
-        s.hold = 0;
-        if (s.panel >= s.panels.length) {
-          finishRide(s, {rideId: RIDE, treasureId: s.treasureId, challengeOk: s.restored >= s.goal, completionFind: 'star-token'});
-        }
-      }
-    }
-  },
-  action(s, id, on) {
-    if (id === 'clear') s.selected = [];
-    else if (id === 'paint') s.painting = !!on;
-    else if (PIGMENTS.some(p => p.id === id) && on !== false) {
-      if (s.selected.includes(id)) s.selected = s.selected.filter(x => x !== id);
-      else if (s.selected.length < 2) s.selected = s.selected.concat(id);
-    }
+    });
   },
   pointer(s, type, p) {
-    if (type === 'down' && s.treasure && !s.treasure.taken && s.discovery > 0 && Math.hypot(p.x - 450, p.y - 420) < 70) {
-      s.treasure.taken = true;
-      recordTreasure(s, s.treasure.id);
-      s.note = 'A real miniature in the wet paint.';
+    if (s.result || s.broke || !s.boarded) return;
+    if (type !== 'down') return;
+    if (s.treasure && !s.treasure.taken && s.discovery > 0) {
+      if (Math.hypot(p.x - s.treasure.x, p.y - s.treasure.y) < 64) {
+        s.treasure.taken = true;
+        recordTreasure(s, s.treasure.id);
+        logAction(s, 'treasure', {id: s.treasure.id});
+        s.note = 'A real miniature in the wet paint.';
+        return;
+      }
     }
-    if (type === 'down' && p.y > 980) s.painting = true;
-    if (type === 'up' || type === 'cancel') s.painting = false;
+    if (s.discovery > 0 || s.arriving) return;
+    const live = s.panels.find((row) => !row.restored && !row.done && inWindow(row, s.scroll));
+    if (live && hitPatch(p, live, s.scroll)) splash(s, live);
   },
   draw(s, d) {
-    const panel = s.panels[Math.min(s.panel, s.panels.length - 1)];
-    d.text(panel ? panel.label : 'gallery', 450, 210, 36, '#f0d09a');
-    if (panel) {
-      d.text('recipe  ♥  +  ★', 450, 268, 28, '#fff6d8');
-      const inFrame = s.t > panel.t && s.t < panel.t + 3.2;
-      d.poly([[300, 320], [600, 320], [600, 700], [300, 700]], panel.restored ? '#6b2030' : '#2a1814', inFrame ? '#f4d590' : '#b78b48', inFrame ? 8 : 3);
-      if (panel.restored) d.text('awake', 450, 500, 24, '#f4d590');
-      if (s.hold > 0) d.arc(450, 510, 80, -Math.PI / 2, -Math.PI / 2 + Math.min(1, s.hold / 0.85) * Math.PI * 2, '#f4d590', 6);
-    }
-    if (s.treasure && !s.treasure.taken && s.discovery > 0) {
-      d.glow(450, 420, 48, '#f4d590');
-      d.item(spriteKey(s.treasure.id), 450, 420, {w: 68, shadow: false, fallback: () => d.star(450, 420, 16)});
-    }
-    s.pigments.forEach((p, i) => {
-      const x = 200 + i * 250;
-      const on = s.selected.includes(p.id);
-      d.circle(x, 900, 48, on ? p.color : '#2a1814', '#f0d09a', 3);
-      d.text(p.glyph, x, 908, 28, '#fff6d8');
+    // mural.png owns the court.
+
+    d.poly([[120, 168], [780, 168], [772, 186], [128, 186]], '#6b203088', GOLD, 2);
+    d.poly([[110, 742], [790, 742], [808, 776], [92, 776]], '#6b203066', GOLD, 2);
+
+    const bob = s.reduced ? 0 : Math.sin(s.t * 1.3) * 3;
+    d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#6b2030aa', GOLD, 2.5);
+    d.text('painter’s platform', 450, 724 + bob, 13, GOLD);
+
+    const fx = FRAME.x, fy = FRAME.y, fw = FRAME.w, fh = FRAME.h;
+    const live = s.panels.find((row) => !row.restored && !row.done && inWindow(row, s.scroll));
+    d.poly(
+      [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
+      null, live ? '#f4d590' : GOLD, live ? 6 : 3,
+    );
+    d.text('splash here', fx, fy + fh / 2 + 20, 14, live ? CREAM : GOLD);
+
+    s.panels.forEach((row) => {
+      const x = screenX(row, s.scroll);
+      if (x < -80 || x > 980) return;
+      const faded = !row.restored;
+      drawMotif(d, row.id, x, FRAME.y, faded, row.flood || 0, s.t);
+      if (live && live.id === row.id && !s.discovery) {
+        d.circle(x, FRAME.y, 86, null, CREAM, 3);
+        d.text('SPLASH', x, FRAME.y + 8, 28, CREAM);
+      }
     });
-    drawHud(d, s, {goal: s.goal, count: s.restored, label: 'panels'});
+
+    if (s.treasure && !s.treasure.taken && s.discovery > 0) {
+      const pulse = 1 + Math.sin(s.t * 4) * 0.1;
+      d.glow(s.treasure.x, s.treasure.y, 40 * pulse, '#ffe6a4');
+      d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
+        w: 64 * pulse, shadow: false,
+        fallback: (dd, x, y) => dd.star(x, y, 16, '#ffe6a4'),
+      });
+    }
+
+    if (s.arriving || s.result) {
+      const c = d.c;
+      c.save();
+      c.strokeStyle = GOLD;
+      c.lineWidth = 5;
+      roundRect(c, 120, 220, 660, 500, 16);
+      c.stroke();
+      d.text('Gallery', 450, 250, 22, GOLD);
+      c.restore();
+    }
+
+    const u = clamp(s.t / CURTAIN, 0, 1);
+    if (u < 1) {
+      const top = 150 - u * u * 420;
+      const c = d.c;
+      c.save();
+      roundRect(c, 130, top, 640, 520, 18);
+      c.fillStyle = '#4a1830ee';
+      c.fill();
+      c.strokeStyle = GOLD;
+      c.lineWidth = 3;
+      c.stroke();
+      d.text('SPLASH', 450, top + 220, 44, CREAM);
+      d.text('the faded patch', 450, top + 268, 22, GOLD);
+      c.restore();
+    }
+
+    drawPracticeBadge(d, s);
+    drawCoach(d, s);
+    drawHud(d, s, {goal: s.goal, count: s.restored, label: 'patches'});
   },
-  readout: s => s.note || '',
+  readout: (s) => s.note || '',
 };

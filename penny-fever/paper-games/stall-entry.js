@@ -1,4 +1,3 @@
-import {recordPrizeAttempt} from './first-prize.js?v=first-prize-1';
 /** Per-stall door and retry charges. Flip a row later without rewriting the game. */
 
 import {alleyPlay, spend} from './wallet.js?v=entry-1';
@@ -124,15 +123,8 @@ export function takeAttempt(stallId, chapter) {
   const spec = entryFor(stallId);
   if (spec.inside === 'none') return true;
   if (spec.inside === 'first-free-then-penny') {
-    if (claimFirstChapter(stallId, chapter)) {
-      if (!RIDE_SET.has(stallId)) recordPrizeAttempt(stallId, chapter);
-      return true;
-    }
-    const ok=spend(1);
-    if(ok)recordPrizeAttempt(stallId,chapter);
-    return ok;
+    if (claimFirstChapter(stallId, chapter)) return true;
+    return spend(1);
   }
-  const ok=spend(1);
-  if(ok)recordPrizeAttempt(stallId,chapter);
-  return ok;
+  return spend(1);
 }
