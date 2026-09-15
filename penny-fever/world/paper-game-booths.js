@@ -31,12 +31,12 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
  function prepare(){
   const cabinet=room();if(!cabinet)throw new Error('Missing cabinet '+game.id);
   if(stage)return;
-  cabinet.classList.add('paper-game-cabinet');
+  cabinet.classList.add('paper-game-cabinet','standard-game-room');
   cabinet.setAttribute('aria-label',game.host+' — '+game.title);
   cabinet.removeAttribute('aria-labelledby');
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
-  const back=doc.createElement('button');back.type='button';back.textContent='← Back to the alley';
+  const back=doc.createElement('button');back.type='button';back.textContent='← Back to alley';
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
@@ -58,7 +58,8 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
     const PF=window.PennyFever;
     const n=Number(PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
     const t=Number(PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
-    wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies');
+    const packed=Number(PF?.pennyPacks?.()??PF?.getState?.()?.pennyPacks)||0;
+    wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies')+(packed?(' · '+packed+' '+(packed===1?'pack':'packs')):'');
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
@@ -89,13 +90,43 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
     paintWallet();
     if(frame&&frame.getAttribute('src')==='about:blank') load();
   });
+  const pack=doc.createElement('button');pack.type='button';pack.textContent='Pack 5 pennies';
+  pack.addEventListener('click',()=>{
+    const PF=window.PennyFever;
+    if(!PF?.packFivePennies?.()){
+      status.hidden=false;
+      status.textContent='Need five loose pennies to pack. Packed coins stay out of Copper’s machine.';
+      return;
+    }
+    status.hidden=false;
+    status.textContent='Five pennies packed. Open the pack when you want them back.';
+    paintWallet();
+  });
+  const unpack=doc.createElement('button');unpack.type='button';unpack.textContent='Open a 5-pack';
+  unpack.addEventListener('click',()=>{
+    const PF=window.PennyFever;
+    if(!PF?.unpackFivePennies?.()){
+      status.hidden=false;
+      status.textContent='No 5-packs to open.';
+      return;
+    }
+    status.hidden=false;
+    status.textContent='Five pennies back in the purse.';
+    paintWallet();
+  });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
-  chest.addEventListener('click',()=>window.PennyFeverInventory?.open());
+  chest.addEventListener('click',()=>window.PennyFeverInventory?.openGame(game.id));
   const till=doc.createElement('details');till.className='paper-game-till';
-  const tillSum=doc.createElement('summary');tillSum.textContent='Till';
-  till.append(tillSum,buy,cash,retry,list);
-  bar.append(back,title,wallet,chest,till);
+  const tillSum=doc.createElement('summary');tillSum.textContent='Alley menu';
+  const help=doc.createElement('button');help.type='button';help.textContent='Game menu / Help';help.addEventListener('click',()=>{till.open=false;frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'menu'},location.origin);});
+  till.addEventListener('toggle',()=>{if(till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'pause'},location.origin);});
+  const closeTill=doc.createElement('button');closeTill.type='button';closeTill.textContent='×';
+  closeTill.setAttribute('aria-label','Close alley menu');closeTill.className='paper-game-menu-close';
+  closeTill.addEventListener('click',()=>{till.open=false;tillSum.focus();});
+  till.addEventListener('toggle',()=>{if(!till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);});
+  till.append(tillSum,closeTill,help,wallet,chest,buy,cash,pack,unpack,retry,list);
+  bar.append(back,title,till);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -188,6 +219,15 @@ function listenForRoom(){
   if(event.origin!==location.origin)return;
   const data=event.data;
   if(!data||data.channel!=='pf-paper-world')return;
+  if(data.type==='treasures'){
+   const frame=document.querySelector('#cabinet-'+data.id+' iframe.paper-game-frame');
+   if(frame?.contentWindow===event.source && window.PennyFeverInventory?.openGame(data.id)){
+    document.querySelector('dialog.treasure-book')?.addEventListener('close',()=>{
+     frame.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);
+    },{once:true});
+   }
+   return;
+  }
   if(data.type==='open'&&data.id){
    location.hash='cabinet/'+data.id;
    return;
