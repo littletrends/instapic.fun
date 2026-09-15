@@ -3,8 +3,8 @@
 <div id="discoveryDoor"><div class="door-crew"></div></div>
 <pre id="testResult">RUNNING</pre>
 <script type="module">
-import {composeDollCanvas,blankDraft} from './world/paper-dolls.js?v=doll-fit-pause-4';
-import './world/crew-selector.js?v=doll-fit-pause-4';
+import {composeDollCanvas,blankDraft,keepMine,getMine} from './world/paper-dolls.js?v=doll-clothing-slots-5';
+import './world/crew-selector.js?v=doll-clothing-slots-5';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 let waitStep=0;
 const waitFor=async fn=>{waitStep++;for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('Timed out waiting for preview step '+waitStep);};
@@ -56,8 +56,23 @@ try {
   book.querySelector('[data-doll-key="hair"][data-doll-val="bun"]').click();
   await waitFor(()=>document.getElementById('dollRenderStatus').textContent==='');
   assert(visible(),'Retry left a blank preview');
+  const choose=(key,val)=>book.querySelector(`[data-doll-key="${key}"][data-doll-val="${val}"]`).click();
+  choose('top','seaside');choose('bottom','picnic');choose('addon','library');choose('footwear','seaside');
+  await waitFor(()=>document.getElementById('dollRenderStatus').textContent==='');
+  assert(__pfDoll.draft.top==='seaside' && __pfDoll.draft.bottom==='picnic' && __pfDoll.draft.addon==='library','Separate clothing choices replaced one another');
+  choose('outfit','garden');
+  assert(__pfDoll.draft.top==='none' && __pfDoll.draft.bottom==='none' && __pfDoll.draft.addon==='library','Dress did not replace separates or discarded cardigan');
+  await waitFor(()=>document.getElementById('dollRenderStatus').textContent==='');
+  const dressed=await composeDollCanvas({...blankDraft(),outfit:'garden'});
+  const layered=await composeDollCanvas({...blankDraft(),outfit:'garden',addon:'library'});
+  const lower=c=>c.getContext('2d').getImageData(0,320,1536,192).data;
+  const beforeLower=lower(dressed),afterLower=lower(layered);
+  assert(beforeLower.every((v,i)=>v===afterLower[i]),'Cardigan replaced the lower outfit');
+  keepMine(__pfDoll.draft);
+  assert(getMine().addon==='library' && getMine().footwear==='seaside','Clothing choices did not survive saving');
+  assert(visible(),'Clothing edits blanked the preview');
   book.close();
-  document.getElementById('testResult').textContent='PASS: preview stays visible through edits, four rotations, delayed failure and retry; thumbnails deferred; latest colour wins';
+  document.getElementById('testResult').textContent='PASS: preview stays visible through edits, four rotations, delayed failure and retry; thumbnails deferred; latest colour wins; separate clothing and cardigan save correctly';
   document.documentElement.dataset.result='pass';
 } catch(e){document.getElementById('testResult').textContent='FAIL: '+e.message;document.documentElement.dataset.result='fail';}
 </script>

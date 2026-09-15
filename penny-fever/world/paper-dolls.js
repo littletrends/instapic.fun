@@ -101,6 +101,15 @@ export const OUTFITS = [
   { id: 'bee', label: 'Honeybee' },
   { id: 'pirate', label: 'Pirate pinafore' },
 ];
+// Separate clothing slots reuse the registered masters; no generated artwork.
+export const TOPS = [{id:'none',label:'Undershirt'}, {id:'seaside',label:'Sailor top'}];
+export const BOTTOMS = [{id:'none',label:'Base shorts'}, {id:'seaside',label:'Navy shorts'}, {id:'picnic',label:'Gingham skirt'}];
+export const ADDONS = [{id:'none',label:'No add-on'}, {id:'library',label:'Library cardigan'}];
+export const FOOTWEAR = [{id:'none',label:'Bare feet'}, ...OUTFITS.filter(x=>x.id!=='none').map(x=>({...x,label:x.label+' shoes'}))];
+const FULL_SET_IDS = new Set(['winter','rain','bedtime','circus','detective','mechanic','kimono','chef','soccer','conductor','postie','scientist','artist']);
+export const DRESSES = [{id:'none',label:'Use top + bottom'}, ...OUTFITS.filter(x=>!['none','seaside','library'].includes(x.id) && !FULL_SET_IDS.has(x.id))];
+export const FULL_OUTFITS = OUTFITS.filter(x=>FULL_SET_IDS.has(x.id));
+
 export const DOLL_PAGES = {
   garden: 'assets/restyle/paper-dolls/pages/garden.jpg',
   seaside: 'assets/restyle/paper-dolls/pages/seaside.jpg',
@@ -182,6 +191,7 @@ export function blankDraft() {
     eyes: 'blue',
     eyesHex: '',
     outfit: 'none',
+    top: 'none', bottom: 'none', addon: 'none', footwear: 'none',
     hat: 'none',
     collection: null,
     name: 'Paper doll',
@@ -456,7 +466,7 @@ function drawFace(ctx, bodyImg, spec) {
 }
 
 function visualKey(spec) {
-  return JSON.stringify([spec.skin, spec.skinHex, spec.eyes, spec.eyesHex, spec.outfit, spec.hair, spec.hat]);
+  return JSON.stringify([spec.skin, spec.skinHex, spec.eyes, spec.eyesHex, spec.outfit, spec.hair, spec.hat, spec.top, spec.bottom, spec.addon, spec.footwear]);
 }
 
 // The editor uses the sheet directly: no PNG encoding, data URL parsing or
@@ -486,12 +496,47 @@ export async function composeDoll(spec) {
   return url;
 }
 
+function drawClothingBand(ctx, img, start, end) {
+  ctx.drawImage(img, 0, start, W, end-start, 0, start, W, end-start);
+}
+let cardiganLayer;
+function drawCardigan(ctx, img) {
+  if (!cardiganLayer) {
+    cardiganLayer = document.createElement('canvas');
+    cardiganLayer.width = W; cardiganLayer.height = H;
+    const c = cardiganLayer.getContext('2d');
+    c.drawImage(img,0,0,W,H);
+    const pixels = c.getImageData(0,0,W,H), data = pixels.data;
+    const mask = new Uint8Array(W*H);
+    // Isolate the rust knit, preserving small enclosed buttons/stitching.
+    // The source's cream dress and skin must not cover the chosen base layer.
+    for(let y=174;y<310;y++) for(let x=0;x<W;x++) {
+      const i=(y*W+x)*4;
+      if(data[i+3] && data[i]>data[i+1]*1.65 && data[i+1]<115 && data[i]-data[i+2]>40) mask[y*W+x]=1;
+    }
+    for(let y=174;y<310;y++) {
+      let previous=-100;
+      for(let x=0;x<W;x++) if(mask[y*W+x]) {
+        if(x-previous<14) for(let fill=previous+1;fill<x;fill++) mask[y*W+fill]=1;
+        previous=x;
+      }
+    }
+    for(let i=0;i<mask.length;i++) if(!mask[i]) data[i*4+3]=0;
+    c.putImageData(pixels,0,0);
+    // The newer right-facing master sits 18px below the original body's shoulder.
+    const right=c.getImageData(CELL*3,0,CELL,H);
+    c.clearRect(CELL*3,0,CELL,H); c.putImageData(right,CELL*3,-18);
+  }
+  ctx.drawImage(cardiganLayer,0,0);
+}
+
 async function renderDollSheet(spec) {
-  const [bodyImg, wearImg, hairImg, hatImg] = await Promise.all([
+  const [bodyImg, wearImg, hairImg, hatImg, topImg, bottomImg, addonImg, shoeImg] = await Promise.all([
     load(src('bodies', 'girl.png')),
     spec.outfit && spec.outfit !== 'none' ? load(src('outfits', `${spec.outfit}.png`)) : null,
     spec.hair && spec.hair !== 'none' ? load(src('hair-clean', `${spec.hair}.png`)) : null,
     spec.hat && spec.hat !== 'none' ? load(src('hats-clean', `${spec.hat}.png`)) : null,
+    ...['top','bottom','addon','footwear'].map(slot => spec[slot] && spec[slot] !== 'none' ? load(src('outfits', `${spec[slot]}.png`)) : null),
   ]);
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -506,8 +551,17 @@ async function renderDollSheet(spec) {
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
   const eyeRgb = hexRgb(spec.eyesHex) || (spec.eyes === 'blue' ? null : EYE_COLORS.find(e => e.id === spec.eyes)?.rgb);
   if (wearImg) {
-    ctx.drawImage(wearImg, 0, 0, W, H);
+    if (spec.footwear === undefined) ctx.drawImage(wearImg, 0, 0, W, H);
+    else drawClothingBand(ctx, wearImg, 174, 385);
   }
+  // Draw bottoms first; tops overlap their waist seams. Full outfits retain
+  // their original footwear unless a separate footwear choice is supplied.
+  if (!wearImg) {
+    if (bottomImg) drawClothingBand(ctx, bottomImg, spec.bottom === 'picnic' ? 282 : 290, 373);
+    if (topImg) drawClothingBand(ctx, topImg, 174, 301);
+  }
+  if (addonImg) drawCardigan(ctx, addonImg);
+  if (shoeImg) drawClothingBand(ctx, shoeImg, 385, 512);
   colourDoll(ctx, skinRgb, eyeRgb);
   if (hairImg) {
     const style = HAIR_STYLES.find(h => h.id === spec.hair);
@@ -544,7 +598,12 @@ function writeStore(data) {
 
 export function getMine() {
   const saved = readStore().mine;
-  return saved ? availableSpec(saved) : null;
+  if (!saved) return null;
+  const migrated = {...blankDraft(), ...saved};
+  if (saved.footwear === undefined && saved.outfit && saved.outfit !== 'none') migrated.footwear = saved.outfit;
+  if (saved.outfit === 'seaside') Object.assign(migrated, {outfit:'none', top:'seaside', bottom:'seaside'});
+  if (saved.outfit === 'library') Object.assign(migrated, {outfit:'none', addon:'library', bottom:'picnic'});
+  return availableSpec(migrated);
 }
 
 export function keepMine(spec) {

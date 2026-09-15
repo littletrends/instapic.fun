@@ -1,8 +1,8 @@
 import {phoneArt} from './phone-art.js';
 import {
-  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS,
+  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-fit-pause-4';
+} from './paper-dolls.js?v=doll-clothing-slots-5';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -204,6 +204,8 @@ function turnDoll(dir) {
 
 function setPart(key, val) {
   const next = { ...boot.draft, [key]: val };
+  if (key === 'top' || key === 'bottom') next.outfit = 'none';
+  if (key === 'outfit' && val !== 'none') { next.top = 'none'; next.bottom = 'none'; }
   if (key === 'skin') next.skinHex = '';
   if (key === 'eyes') next.eyesHex = '';
   boot.draft = next;
@@ -348,7 +350,7 @@ function mount() {
 <p id="crewStatus" role="status"></p>
 <details class="crew-collections">
 <summary>Make a doll</summary>
-<p>The girl stays. Mix layers underneath: hair, hats, clothes.</p>
+<p>Mix a top and bottom, or choose a dress or full outfit. Add a cardigan and pick your shoes. Some costumes stay together as full outfits.</p>
 <div class="doll-torso-row">
   <div class="doll-torso-preview">
     <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><canvas id="dollPreviewCanvas" width="384" height="512" role="img" aria-label="Your paper doll"></canvas></div><p id="dollRenderStatus" role="status"></p>
@@ -367,7 +369,12 @@ function mount() {
 <div class="doll-tray">
   ${layerRow('Hair', 'hair', HAIR_STYLES, 'hair-clean')}
   ${layerRow('Hats', 'hat', HATS, 'hats-clean')}
-  ${layerRow('Clothes', 'outfit', OUTFITS, 'outfits')}
+  ${layerRow('Tops', 'top', TOPS, 'outfits')}
+  ${layerRow('Bottoms', 'bottom', BOTTOMS, 'outfits')}
+  ${layerRow('Dresses & dungarees', 'outfit', DRESSES, 'outfits')}
+  ${layerRow('Full outfits', 'outfit', FULL_OUTFITS, 'outfits')}
+  ${layerRow('Add-ons', 'addon', ADDONS, 'outfits')}
+  ${layerRow('Shoes & socks', 'footwear', FOOTWEAR, 'outfits')}
 </div>
 <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
 </details>`;
