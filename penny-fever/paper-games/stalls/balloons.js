@@ -9,26 +9,19 @@
  * AUTHORITATIVE economy / boarding: Lorie FINAL brief still applies via
  *   ride-seek (practice / paid / eligibility). Do not reinvent keep rules.
  *
- * Lorie BUILD — Chapter 1 First Float ONLY (playable / tuned).
- *   Auto-forward / slow orbit weave through the oval court.
- *   Path blocked by latex balloon clusters; ONE glowing/lit balloon at a
- *   time is the POP target. Wrong balloons soft-miss / bounce.
- *   Primary verb screams POP (big button + tap near lit). First ~5s teach
- *   POP only (PRACTICE badge + “POP the glowing balloon”).
- *   HOLD bellows demoted to height support only (reach high/low clusters);
- *   quiet chrome vs POP. Pointer cancel releases HOLD — never leave rising.
- *   Soft contact never confiscates finds or aborts a paid flight.
- *   Unique court balloons.png is the hero — do NOT overpaint with a big
- *   green ellipse / trunk. Paper 1-layer 2D overlays only.
- *
- * UNFINISHED CHAPTERS (names kept — do not implement Ch2–6 systems yet):
- *   2 Ribbon Breeze
- *   3 Lantern Boughs
- *   4 Crosswind Crown
- *   5 Runaway Bouquet
- *   6 The Midnight Canopy
+ * Chapters:
+ *   1 First Float — shipped + PASS (path-clear). GOAL 4 of 6, forgiving
+ *     POP window, no wind hazard. Do not regress level===0.
+ *   2 Ribbon Breeze — wind-ribbon teach on the FIRST lit blocker only
+ *     (long warn, soft dump, later blockers clean POP). GOAL 3 of 5.
+ *   3–6 unfinished (names kept — do not implement systems yet):
+ *     3 Lantern Boughs
+ *     4 Crosswind Crown
+ *     5 Runaway Bouquet
+ *     6 The Midnight Canopy
  *
  * Treasure ids preserved. Canvas 900×1200.
+ * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -82,20 +75,48 @@ const HOLD_ACCEL = 1.75; // faster reach to high path
 const RELEASE_ACCEL = -1.2;
 const VEL_DAMP = 0.86;
 
-const BLOCKER_COUNT = 6;
-const GOAL = 4; // POP 4 of 6 — Ch1 tuned so 4 is reachable
-const RIDE_SECS = 65; // time to land the 4th POP
+// Ch1 locked: POP 4 of 6, ~65s. Ch2: POP 3 of 5, ~52s (helter Ch2 haste bar).
+const BLOCKER_COUNT_CH1 = 6;
+const BLOCKER_COUNT_CH2 = 5;
+const GOAL_CH1 = 4;
+const GOAL_CH2 = 3;
+const RIDE_SECS_CH1 = 65;
+const RIDE_SECS_CH2 = 52;
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
 const POP_NEAR_ANG = 1.25; // Ch1 very wide orbit window
 const POP_COOLDOWN = 0.18;
 
+/** Long lead warning before the first wind-ribbon teach blocker (Ribbon Breeze). */
+const WIND_WARN_SECS = 7.5;
+const WIND_AMP = 0.13;
+const WIND_RATE = 1.05;
+
 const SPAWN_IDS = ['low-path', 'high-path'];
 
 const LATEX = ['#e8a0b8', '#7eb8b0', '#f0d09a', '#c9a0d8', '#8ec8e8', '#f4b890'];
 
+function isCh2(level) {
+  return (level | 0) === 1;
+}
+
+function chapterGoal(level) {
+  return isCh2(level) ? GOAL_CH2 : GOAL_CH1;
+}
+
+function chapterBlockerCount(level) {
+  return isCh2(level) ? BLOCKER_COUNT_CH2 : BLOCKER_COUNT_CH1;
+}
+
+function chapterRideSecs(level) {
+  return isCh2(level) ? RIDE_SECS_CH2 : RIDE_SECS_CH1;
+}
+
 function orbitSpeed(level, reduced) {
-  const base = 0.11 + Math.min(0.02, level * 0.006); // Ch1 very slow weave
+  // Ch1 very slow weave. Ch2 slightly slower still (helter Ch2 haste ~0.92).
+  let base;
+  if (isCh2(level)) base = 0.102;
+  else base = 0.11 + Math.min(0.02, level * 0.006);
   return reduced ? base * 0.62 : base;
 }
 
@@ -140,22 +161,30 @@ function angDist(a, b) {
   return Math.abs(d);
 }
 
+function forwardAng(from, to) {
+  let d = to - from;
+  while (d < 0) d += Math.PI * 2;
+  while (d >= Math.PI * 2) d -= Math.PI * 2;
+  return d;
+}
+
 function buildBlockers(level) {
-  // Six lit blockers along a slow orbit, alternating high/low clusters.
+  const count = chapterBlockerCount(level);
+  // Lit blockers along a slow orbit, alternating high/low clusters.
   // Each cluster has decoy latex + one lit POP target.
   const span = Math.PI * 1.85;
   const start = -0.25;
-  return Array.from({length: BLOCKER_COUNT}, (_, i) => {
-    // Ch1: first target is mid-height (easy first POP), then alternate.
+  return Array.from({length: count}, (_, i) => {
+    // First target is mid-height (easy first POP), then alternate.
     const high = i === 0 ? false : (i % 2 === 1);
     const h = i === 0 ? (LOW_PATH + HIGH_PATH) * 0.5 : (high ? HIGH_PATH : LOW_PATH);
-    const ang = start + ((i + 1) / (BLOCKER_COUNT + 1)) * span;
+    const ang = start + ((i + 1) / (count + 1)) * span;
     const decoys = [
       {ox: -38, oy: 10, r: 18, col: LATEX[(i * 2) % LATEX.length]},
       {ox: 36, oy: 14, r: 16, col: LATEX[(i * 2 + 1) % LATEX.length]},
       {ox: 4, oy: -28, r: 14, col: LATEX[(i + 3) % LATEX.length]},
     ];
-    return {
+    const b = {
       id: 'block-' + (i + 1),
       angle: ang,
       height: h,
@@ -169,13 +198,24 @@ function buildBlockers(level) {
       missFlash: 0,
       r: 26,
     };
+    // Ch2: ONE teach hazard alone — wind ribbon on the FIRST lit blocker.
+    if (isCh2(level) && i === 0) {
+      b.teach = true;
+      b.windAmp = WIND_AMP;
+      b.windPhase = 0;
+      b.baseHeight = h;
+      b.windDumped = false;
+    }
+    return b;
   });
 }
 
 function nextLit(s) {
   // Soft-brush "missed" still allows POP until well past — Ch1 must not eat the target.
+  // Wind-dumped teach blocker is skipped so later clean targets stay reachable.
   return (s.blockers || []).find((b) => {
     if (b.cleared) return false;
+    if (b.windDumped) return false;
     const ad = angDist(s.angle, b.angle);
     if (b.missed && ad > POP_NEAR_ANG + 0.35) return false;
     return true;
@@ -255,7 +295,7 @@ function softContactCluster(s) {
   // Soft brush against an uncleared cluster you are weaving past —
   // disturb lift only; never confiscate finds or abort paid flight.
   for (const b of s.blockers) {
-    if (b.cleared || b.softBump) continue;
+    if (b.cleared || b.softBump || b.windDumped) continue;
     const prev = s.prevAngle;
     const crossed = prev < b.angle && s.angle >= b.angle;
     if (!crossed) continue;
@@ -276,6 +316,62 @@ function softContactCluster(s) {
   }
 }
 
+/** Ch2: drift teach balloon height while approaching; long warn coaching. */
+function updateWindRibbon(s, dt) {
+  if (!isCh2(s.level)) return;
+  const speed = orbitSpeed(s.level, s.reduced);
+  for (const b of s.blockers || []) {
+    if (!b.teach || b.cleared || b.windDumped) continue;
+
+    const lead = forwardAng(s.angle, b.angle) / Math.max(0.04, speed);
+    // Drift height while approaching / in window (up then down bias).
+    if (lead < WIND_WARN_SECS + 2.5 || angDist(s.angle, b.angle) < POP_NEAR_ANG + 0.4) {
+      b.windPhase = (b.windPhase || 0) + dt * WIND_RATE;
+      // Sinusoid: rises then falls so POP early / HOLD adjust is the teach.
+      const drift = Math.sin(b.windPhase) * (b.windAmp || WIND_AMP);
+      b.height = clamp((b.baseHeight || LOW_PATH) + drift, HEIGHT_MIN + 0.08, HEIGHT_MAX - 0.08);
+      // Keep path label honest for coaching copy.
+      b.path = b.height >= (LOW_PATH + HIGH_PATH) * 0.5 ? 'high-path' : 'low-path';
+    }
+
+    if (lead <= WIND_WARN_SECS && lead > 0.05) {
+      if (!s.windWarned) {
+        s.windWarned = true;
+        logAction(s, 'wind-warn', {id: b.id, lead: WIND_WARN_SECS});
+      }
+      if (!earlyClarity(s) && !s.hasPoppedOnce) {
+        const rising = Math.cos(b.windPhase || 0) > 0;
+        s.note = rising
+          ? 'Wind ribbon — balloon rising. POP early or HOLD to match.'
+          : 'Wind ribbon — balloon drifting down. POP early or release to match.';
+      }
+    }
+  }
+}
+
+/** Soft dump when wind teach target passes without POP — ride continues. */
+function softWindDump(s) {
+  if (!isCh2(s.level)) return;
+  for (const b of s.blockers || []) {
+    if (!b.teach || b.cleared || b.windDumped) continue;
+    // Keep the full forgiving POP window after the angle; dump only once well past.
+    const past = forwardAng(b.angle, s.angle);
+    if (past < POP_NEAR_ANG + 0.2) continue;
+    // Still approaching from behind (wrapped) — not past yet.
+    if (s.angle < b.angle && past > Math.PI) continue;
+    b.windDumped = true;
+    b.missed = true;
+    b.missFlash = FLASH_SEC;
+    s.vel *= 0.62;
+    const pos = basketPos(b.angle, b.height);
+    pushBurst(s, pos.x, pos.y, true);
+    logAction(s, 'wind-dump', {id: b.id});
+    // Soft fail — never abort paid / never confiscate. Later clean targets still count.
+    s.note = 'Wind carried it past — soft dump; ride continues. Cleared '
+      + (s.cleared || 0) + ' / ' + s.goal + '.';
+  }
+}
+
 function earlyClarity(s) {
   return !s.hasPoppedOnce && (s.t || 0) <= 5;
 }
@@ -288,7 +384,7 @@ function setHolding(s, on) {
   if (s.result || earlyClarity(s)) return;
   if (next) s.note = 'Rising — reach the glowing balloon.';
   else s.note = 'Drifting — POP when near the glow. Cleared '
-    + (s.cleared || 0) + ' / ' + (s.goal || GOAL) + '.';
+    + (s.cleared || 0) + ' / ' + (s.goal || chapterGoal(s.level)) + '.';
 }
 
 function attemptPop(s) {
@@ -306,18 +402,21 @@ function attemptPop(s) {
 
   const ad = angDist(s.angle, lit.angle);
   let dh = Math.abs(s.height - lit.height);
-  // After 3 clears, Ch1 opens the door for the 4th POP.
-  const clutch = (s.cleared || 0) >= 3;
+  // Ch1: after 3 clears, open the door for the 4th POP. Ch2: clutch after 2 for the 3rd.
+  const clutchNeed = isCh2(s.level) ? 2 : 3;
+  const clutch = (s.cleared || 0) >= clutchNeed;
   const nearLim = clutch ? POP_NEAR_ANG + 0.35 : POP_NEAR_ANG;
   const halfLim = clutch ? lit.half + 0.12 : lit.half;
   const near = ad <= nearLim;
-  // Ch1 forgiveness: if near and almost in band, nudge into the POP band.
-  const snapBand = clutch ? halfLim + 0.12 : lit.half + 0.16;
+  // Forgiveness: if near and almost in band, nudge into the POP band.
+  // Ch2 wind teach: slightly wider snap so drifting height is still fair.
+  const windSnap = (lit.teach && !lit.windDumped) ? 0.06 : 0;
+  const snapBand = (clutch ? halfLim + 0.12 : lit.half + 0.16) + windSnap;
   if (near && dh <= snapBand) {
     s.height = s.height + (lit.height - s.height) * (clutch ? 0.9 : 0.72);
     dh = Math.abs(s.height - lit.height);
   }
-  const heightOk = dh <= halfLim;
+  const heightOk = dh <= halfLim + (lit.teach ? 0.04 : 0);
 
   if (near && heightOk) {
     lit.cleared = true;
@@ -326,12 +425,14 @@ function attemptPop(s) {
     s.hasPoppedOnce = true;
     const art = ORDINARY[(s.cleared - 1) % ORDINARY.length];
     recordFind(s, art, RIDE);
-    logAction(s, 'pop', {id: lit.id, ok: true, path: lit.path});
+    logAction(s, 'pop', {id: lit.id, ok: true, path: lit.path, teach: !!lit.teach});
     const pos = basketPos(lit.angle, lit.height);
     pushBurst(s, pos.x, pos.y, false);
     s.note = s.cleared >= s.goal
       ? 'Path clear! Landing branch ahead.'
-      : ('POP! Cleared ' + s.cleared + ' / ' + s.goal + '.');
+      : (lit.teach
+        ? ('POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.')
+        : ('POP! Cleared ' + s.cleared + ' / ' + s.goal + '.'));
     return;
   }
 
@@ -345,9 +446,13 @@ function attemptPop(s) {
   if (!near) {
     s.note = 'Too far — wait for the glow. Cleared ' + s.cleared + ' / ' + s.goal + '.';
   } else if (!heightOk) {
-    s.note = lit.path === 'high-path'
-      ? 'Too low — HOLD bellows to rise, then POP.'
-      : 'Too high — release bellows to drift, then POP.';
+    if (lit.teach) {
+      s.note = 'Wind drifted it — HOLD or release to match, then POP.';
+    } else {
+      s.note = lit.path === 'high-path'
+        ? 'Too low — HOLD bellows to rise, then POP.'
+        : 'Too high — release bellows to drift, then POP.';
+    }
   } else {
     s.note = 'Soft miss — POP the glowing balloon.';
   }
@@ -392,6 +497,31 @@ function wrapLine(d, text, x, y, size, color, maxW) {
   return ly;
 }
 
+function drawWindRibbon(d, b, angleNow, t) {
+  if (!b.teach || b.cleared || b.windDumped) return;
+  let da = b.angle - angleNow;
+  while (da < -Math.PI) da += Math.PI * 2;
+  while (da > Math.PI) da -= Math.PI * 2;
+  if (da < -0.5 || da > 1.7) return;
+
+  const pos = basketPos(b.angle, b.height);
+  // Faint wind ribbon lines — code overlays only, no court overpaint.
+  for (let i = 0; i < 3; i++) {
+    const yOff = (i - 1) * 12;
+    const phase = t * 2.4 + i * 0.9;
+    const x0 = pos.x - 52;
+    const x1 = pos.x + 52;
+    const y0 = pos.y + yOff + Math.sin(phase) * 5;
+    const y1 = pos.y + yOff + Math.sin(phase + 1.1) * 5;
+    const midX = pos.x + Math.cos(phase * 0.7) * 8;
+    const midY = pos.y + yOff + Math.sin(phase + 0.55) * 7;
+    d.line({x: x0, y: y0}, {x: midX, y: midY}, '#8ec8e866', 1.4);
+    d.line({x: midX, y: midY}, {x: x1, y: y1}, '#8ec8e855', 1.2);
+  }
+  // Soft cyan glow on teach target — 6-digit #rrggbb only.
+  d.glow(pos.x, pos.y - 6, 36, '#8ec8e8');
+}
+
 function drawCluster(d, b, angleNow, isLit) {
   let da = b.angle - angleNow;
   while (da < -Math.PI) da += Math.PI * 2;
@@ -408,6 +538,12 @@ function drawCluster(d, b, angleNow, isLit) {
       d.glow(pos.x, pos.y, 56 * bloom, '#ffe6a4');
       d.circle(pos.x, pos.y, 10 + 18 * bloom, null, '#fff6d8', 3);
     }
+    return;
+  }
+
+  if (b.windDumped) {
+    if (b.missFlash > 0) d.glow(pos.x, pos.y, 36, '#8ec8e8');
+    d.circle(pos.x, pos.y, b.r * 0.7, '#8ec8e855', '#8ec8e888', 1.2);
     return;
   }
 
@@ -431,7 +567,7 @@ function drawCluster(d, b, angleNow, isLit) {
     d.circle(pos.x, pos.y, b.r, '#f0d09acc', '#d2a65b', 2);
     d.circle(pos.x - 6, pos.y - 8, 5, '#ffffffaa', null, 0);
     if (da < 0.9 && da > -0.25) {
-      d.text('POP', pos.x, pos.y - b.r - 18, 18, '#ffe6a4');
+      d.text(b.teach ? 'POP · wind' : 'POP', pos.x, pos.y - b.r - 18, 18, '#ffe6a4');
     }
   } else {
     d.circle(pos.x, pos.y, b.r * 0.85, '#e8a0b888', '#d2a65b88', 1.5);
@@ -510,7 +646,8 @@ function drawPopButton(d, s) {
 }
 
 function drawLanding(d, s) {
-  if (s.t < RIDE_SECS - LANDING_LEAD - 1.5) return;
+  const rideSecs = s.rideSecs || chapterRideSecs(s.level);
+  if (s.t < rideSecs - LANDING_LEAD - 1.5) return;
   const pos = basketPos(s.landingAngle, LOW_PATH * 0.7);
   d.glow(pos.x, pos.y + 20, 50, '#c9e0a4');
   d.poly([
@@ -596,15 +733,15 @@ function drawObjective(d, s) {
     return;
   }
 
-  const line = 'Cleared ' + (s.cleared || 0) + ' / ' + (s.goal || GOAL);
+  const line = 'Cleared ' + (s.cleared || 0) + ' / ' + (s.goal || chapterGoal(s.level));
   d.text(line, 450, s.practice ? 168 : 148, 22, '#ffe6a4');
   if (s.note) wrapLine(d, s.note, 450, s.practice ? 198 : 178, 16, '#f0d18f', 720);
 }
 
 export default {
   title: 'Balloon Garden',
-  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree.',
-  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters.',
+  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. From Ribbon Breeze, a wind ribbon drifts the first lit balloon — POP early or match height with HOLD.',
+  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Chapter 2 (Ribbon Breeze): one wind ribbon on the first glowing balloon — long warn, soft dump if it drifts past; later balloons are clean POP.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -615,6 +752,8 @@ export default {
   ],
   create(level, rng) {
     const reduced = prefersReducedMotion();
+    const goal = chapterGoal(level);
+    const rideSecs = chapterRideSecs(level);
     return makeRideState(level, rng, {
       angle: -0.9,
       prevAngle: -0.9,
@@ -624,7 +763,8 @@ export default {
       holdAccum: 0,
       hasPoppedOnce: false,
       cleared: 0,
-      goal: GOAL,
+      goal,
+      rideSecs,
       blockers: buildBlockers(level),
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
       reduced,
@@ -633,6 +773,7 @@ export default {
       sparks: [],
       popFlash: 0,
       popCooldown: 0,
+      windWarned: false,
       _pointerMode: null,
     });
   },
@@ -668,6 +809,8 @@ export default {
     s.vel = phys.vel;
     s.holdAccum = phys.holdAccum;
 
+    updateWindRibbon(s, dt);
+    softWindDump(s);
     softContactCluster(s);
     // Live "NOW" coaching when in the POP window.
     if (!s.result && !earlyClarity(s)) {
@@ -675,12 +818,19 @@ export default {
       if (lit) {
         const ad = angDist(s.angle, lit.angle);
         const dh = Math.abs(s.height - lit.height);
-        if (ad <= POP_NEAR_ANG && dh <= lit.half + 0.06) {
-          s.note = 'NOW — POP! Cleared ' + s.cleared + ' / ' + s.goal + '.';
+        const halfPad = lit.teach ? 0.1 : 0.06;
+        if (ad <= POP_NEAR_ANG && dh <= lit.half + halfPad) {
+          s.note = lit.teach
+            ? 'NOW — POP through the breeze! Cleared ' + s.cleared + ' / ' + s.goal + '.'
+            : 'NOW — POP! Cleared ' + s.cleared + ' / ' + s.goal + '.';
         } else if (ad <= POP_NEAR_ANG && dh > lit.half) {
-          s.note = lit.path === 'high-path'
-            ? 'Glow near — HOLD to rise, then POP.'
-            : 'Glow near — release to drift, then POP.';
+          if (lit.teach) {
+            s.note = 'Wind near — match height, then POP.';
+          } else {
+            s.note = lit.path === 'high-path'
+              ? 'Glow near — HOLD to rise, then POP.'
+              : 'Glow near — release to drift, then POP.';
+          }
         }
       }
     }
@@ -688,12 +838,13 @@ export default {
     tryCollectTreasure(s);
     tickFx(s, dt);
 
-    s.progress = Math.min(1, s.t / RIDE_SECS);
+    const rideSecs = s.rideSecs || chapterRideSecs(s.level);
+    s.progress = Math.min(1, s.t / rideSecs);
 
-    if (!s.landed && s.t >= RIDE_SECS - LANDING_LEAD) {
+    if (!s.landed && s.t >= rideSecs - LANDING_LEAD) {
       s.note = 'Landing branch ahead. Cleared ' + s.cleared + ' / ' + s.goal + '.';
     }
-    if (!s.landed && s.t >= RIDE_SECS) {
+    if (!s.landed && s.t >= rideSecs) {
       s.landed = true;
       setHolding(s, false);
       s.height = clamp(s.height * 0.7 + 0.12, HEIGHT_MIN, 0.4);
@@ -745,7 +896,10 @@ export default {
     drawObjective(d, s);
 
     const lit = nextLit(s);
-    (s.blockers || []).forEach((b) => drawCluster(d, b, s.angle, lit && b.id === lit.id));
+    (s.blockers || []).forEach((b) => {
+      if (b.teach) drawWindRibbon(d, b, s.angle, s.t || 0);
+      drawCluster(d, b, s.angle, lit && b.id === lit.id);
+    });
 
     if (s.treasure && !s.treasure.taken) {
       const tr = s.treasure;
