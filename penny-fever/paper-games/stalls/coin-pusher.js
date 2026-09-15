@@ -67,8 +67,8 @@ function pegsFor(ch) {
   for (let i = 0; i < n; i++) {
     const col = i % 3, row = (i / 3) | 0;
     pegs.push({
-      x: LEFT + 90 + col * 150 + (row % 2) * 40,
-      y: BACK + 90 + row * 70,
+      x: LEFT + 55 + col * (RIGHT-LEFT-110)/2,
+      y: BACK + 65 + row * 65,
       r: 10,
     });
   }
@@ -173,11 +173,15 @@ function resolveCoins(coins, ch, pegs, pusherY, dt) {
     }
     if (c.x - c.r < wallsL) { c.x = wallsL + c.r; c.vx = Math.abs(c.vx) * 0.25; }
     if (c.x + c.r > wallsR) { c.x = wallsR - c.r; c.vx = -Math.abs(c.vx) * 0.25; }
-    if (ch.divider && c.y < FRONT - 160) {
+    if (ch.divider && c.y < FRONT - 42) {
       if (c.x + c.r > 444 && c.x < 450) { c.x = 444 - c.r; c.vx = -Math.abs(c.vx) * 0.4; }
       if (c.x - c.r < 456 && c.x > 450) { c.x = 456 + c.r; c.vx = Math.abs(c.vx) * 0.4; }
     }
-    if (ch.dead && c.x > 620 && c.y < BACK + 180) c.vx -= 30 * dt;
+    if (ch.dead && c.x > RIGHT-65 && c.y > BACK+80) { c.vx *= Math.exp(-4*dt); c.vy *= Math.exp(-4*dt); }
+    if(ch.upper && c.y>BACK+45 && c.y<BACK+80 && c.x>LEFT+95 && c.x<RIGHT-95){
+      c.x += (c.x<450?-1:1)*18*dt;
+      c.vy *= Math.exp(-6*dt);
+    }
     for (const p of pegs) {
       const dx = c.x - p.x, dy = c.y - p.y, d = Math.hypot(dx, dy) || 1, min = c.r + p.r;
       if (d < min) {
@@ -213,14 +217,13 @@ function uiButtons(s) {
   const n = s.practice ? 1 : pursePennies();
   const q = Math.max(1, Math.floor(n / 4));
   const h = Math.max(1, Math.floor(n / 2));
-  const last = s.level >= CHAPTERS.length - 1;
-  const can = s.phase === "idle" && !s.busy;
+  const can = s.phase === 'idle' && !s.busy;
+  const capped=count=>Math.min(60,count);
   return [
-    { id: "drop1", label: "Drop 1", x: 20, y: 942, w: 210, h: 80, count: 1, on: can && n >= 1 },
-    { id: "drop14", label: "¼ purse · " + q, x: 238, y: 942, w: 210, h: 80, count: q, on: can && !s.practice && n >= 1 },
-    { id: "drop12", label: "½ purse · " + h, x: 456, y: 942, w: 210, h: 80, count: h, on: can && !s.practice && n >= 1 },
-    { id: "dropall", label: "Drop purse · " + n, x: 674, y: 942, w: 206, h: 80, count: n, on: can && !s.practice && n >= 1 },
-    { id: "next-chapter", label: last ? "Last chapter" : "Next chapter", x: 170, y: 1036, w: 560, h: 78, on: !last },
+    {id:'drop1',label:s.practice?'Practice drop':'Drop 1 penny',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
+    {id:'drop14',label:'¼ purse · '+capped(q),x:460,y:942,w:410,h:84,count:capped(q),on:can&&!s.practice&&n>=1},
+    {id:'drop12',label:'½ purse · '+capped(h),x:30,y:1036,w:410,h:84,count:capped(h),on:can&&!s.practice&&n>=1},
+    {id:'dropall',label:(n>60?'Drop 60 pennies':'Drop purse · '+n),x:460,y:1036,w:410,h:84,count:capped(n),on:can&&!s.practice&&n>=1},
   ];
 }
 function hitButton(s, p) {
@@ -289,7 +292,7 @@ export default {
   levels: CHAPTERS.map(c => c.title),
   images: {
     cabinet: "./assets/coin-pusher/pusher/cabinet.webp",
-    host: "./assets/coin-pusher/ui/copper.webp",
+    host: "../assets/restyle/scene-turnarounds-2026-09-09/vendors/copper/front.webp",
     penny: "./assets/coin-pusher/pusher/penny.webp",
     star: "./assets/coin-pusher/pusher/star-token.webp",
     "coin-sleeve": "./assets/coin-pusher/prizes/coin-sleeve.webp",
@@ -297,7 +300,7 @@ export default {
     "penny-tree": "./assets/coin-pusher/prizes/penny-tree.webp",
     "coin-album": "./assets/coin-pusher/prizes/coin-album.webp",
     "treasure-tin": "./assets/coin-pusher/prizes/treasure-tin.webp",
-    "mint-press": "./assets/coin-pusher/prizes/rose-press.webp",
+    "mint-press": "./assets/coin-pusher/prizes/mint-press.webp",
   },
   actions: [],
   persist(s) {
@@ -399,7 +402,7 @@ export default {
     if (type !== "down") return;
     const btn = hitButton(s, p);
     if (btn) {
-      this.action(s, btn.id, btn.count);
+      if(btn.on)this.action(s, btn.id, btn.count);
       return;
     }
   },
@@ -462,11 +465,13 @@ export default {
 
     if (ch.divider) {
       c.fillStyle = "#8a6a38";
-      c.fillRect(446, BACK, 8, FRONT - BACK - 150);
+      c.fillRect(446, BACK, 8, FRONT - BACK - 42);
     }
     for (const p of (s.pegs || pegsFor(ch))) {
       d.circle(p.x, p.y, p.r, "#c4a060", "#7a5828", 2);
     }
+    if(ch.upper){c.fillStyle='#9e713f';c.fillRect(LEFT+95,BACK+70,RIGHT-LEFT-190,8);}
+    if(ch.dead){c.fillStyle='rgba(65,35,20,.28)';c.fillRect(RIGHT-65,BACK+80,45,FRONT-BACK-100);}
     // drop guide
     c.strokeStyle = "rgba(255, 220, 140, 0.35)";
     c.setLineDash([6, 8]);

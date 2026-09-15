@@ -11,12 +11,12 @@ const key='pennyFever.copperFalls.v6';
 let s=copper.create(0);assert(s.practice);copper.drop(s,1);assert.equal(debits.length,0);
 for(let i=0;i<2000&&s.practice;i++)copper.update(s,1/60);
 assert(!s.practice,'practice completes');assert.equal(credits.length,0);assert.equal(awards.length,0);
-cash=24;copper.pointer(s,'down',{x:300,y:970});assert.equal(debits.at(-1),6);assert.equal(s.tray.paidCount,6);assert(s.tray.treasureOn);
+cash=24;copper.pointer(s,'down',{x:650,y:970});assert.equal(debits.at(-1),6);assert.equal(s.tray.paidCount,6);assert(s.tray.treasureOn);
 copper.update(s,.02);copper.persist(s);const snap=JSON.stringify(s.tray.coins);let resumed=copper.create(0);assert.deepEqual(resumed.tray.coins,JSON.parse(snap));assert.equal(resumed.phase,s.phase);assert.equal(resumed.cycle,s.cycle);assert.equal(resumed.busy,true);assert(resumed.tray.coins.every(c=>Number.isFinite(c.vx)&&Number.isFinite(c.vy)));
 const count=debits.length;copper.drop(resumed,1);assert.equal(debits.length,count,'resume cannot recharge active drop');
 resumed.phase='push';resumed.cycle=.3;resumed.tray.coins=[{id:'paid',kind:'penny',x:450,y:800,vx:0,vy:90,r:13,falling:true},{id:'treasure',kind:'treasure',x:450,y:800,vx:0,vy:90,r:24,falling:true}];
 copper.update(resumed,.01);assert.equal(credits.at(-1),1);assert(awards.includes('coin-sleeve'));copper.persist(resumed);let again=copper.create(0);const a=awards.length,c=credits.length;copper.update(again,.02);assert.equal(awards.length,a);assert.equal(credits.length,c);
-for(let level=1;level<6;level++){s=copper.create(level);cash=40;const d=debits.length;copper.pointer(s,'down',{x:500,y:970});assert.equal(debits[d],20);copper.persist(s);assert.equal(copper.selectedChapter(),level);assert.equal(copper.create(level).tray.paidCount,20);}
+for(let level=1;level<6;level++){s=copper.create(level);cash=40;const d=debits.length;copper.pointer(s,'down',{x:250,y:1070});assert.equal(debits[d],20);copper.persist(s);assert.equal(copper.selectedChapter(),level);assert.equal(copper.create(level).tray.paidCount,20);}
 cash=0;s=copper.create(5);assert.equal(cash,0,'live empty purse not refilled');s.phase='idle';s.busy=false;const n=s.tray.coins.length;copper.drop(s,1);assert.equal(s.tray.coins.length,n);
 cash=10;reject=true;copper.drop(s,1);assert.equal(s.tray.coins.length,n,'failed debit does not mint coins');reject=false;
 let f=iris.create(0);const d=debits.length;iris.action(f,'gaze');assert(f.practice);assert.equal(debits.length,d);iris.persist(f);let rf=iris.create(0);assert.equal(rf.phase,f.phase);assert.equal(rf.charged,true);assert.equal(JSON.stringify(rf.globe),JSON.stringify(f.globe));
@@ -49,3 +49,10 @@ lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954}
 lower.phase='result';lower.fortune='A test reading.';lower.caught=true;lower.requestNext=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert(lower.requestNext);assert.equal(debits.length,charged,'Next chapter does not buy a gaze');
 lower.level=5;lower.requestNext=false;iris.pointer(lower,'down',{x:450,y:954});assert(!lower.requestNext,'last chapter cannot advance');
 console.log('PASS: both gaze controls, single charge, result retry/advance and final chapter boundary.');
+
+for(let level=0;level<6;level++){
+ const tray=copper.create(level);
+ assert(tray.pegs.every(p=>p.x-p.r>283.6&&p.x+p.r<616.4&&p.y>418.4&&p.y<610.4),'pegs stay within the playable tray');
+ copper.persist(tray);const restore=copper.create(level);assert.deepEqual(restore.tray.coins,tray.tray.coins);assert.equal(restore.phase,tray.phase);
+}
+console.log('PASS: all six Copper trays keep their saved state and their pegs inside the bed.');

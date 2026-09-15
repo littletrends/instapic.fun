@@ -1,3 +1,4 @@
+import {mountGameNavigation} from './game-navigation.js?v=copper-pass-1';
 import { games, byId } from "./catalogue.js?v=live-cabinets-1";
 import { Draw, clamp } from "./cabinet-draw.js";
 
@@ -12,7 +13,7 @@ const back = document.createElement('a'); back.className = 'back'; back.href = '
 document.querySelector('.game-menu-bar').prepend(back);
 const input = { keys: new Set(), actions: new Set(), pointer: null, down: false };
 
-let menuResume = false;
+let menuResume = false, navigation=null;
 let engine, state, draw, level = 0, playing = false, ended = false, disposed = false;
 let raf = 0, last = 0, paintAt = 0, time = 0, observer;
 
@@ -125,13 +126,8 @@ function paintHud() {
       clock.textContent = "";
     }
   }
-  if (next) {
-    const lastCh = !engine?.levels || level >= engine.levels.length - 1;
-    next.disabled = !state || lastCh;
-    next.textContent = id === 'fortune' ? '›' : (lastCh ? 'Last chapter' : 'Next chapter');
-    const prev=$('#previous-chapter');if(prev)prev.disabled=!state || level===0;
-    const label=$('#chapter-position');if(label)label.textContent='Ch '+(level+1);
-  }
+  navigation?.update(level,engine?.levels?.length||1,!state);
+
 }
 function paint() {
   if (!draw || !state) return;
@@ -291,29 +287,14 @@ listen($("#menu-close"), "click", closeMenu);
 
 try {
   if (!entry?.ready) throw Error("Choose an available game from the catalogue.");
-  engine = (await import(entry.module+"?v=fortune-actions-2")).default;
+  engine = (await import(entry.module+"?v=copper-pass-1")).default;
   level = engine.selectedChapter?.() || 0;
   document.title = engine.title + " · Penny Fever";
   $("#title").textContent = engine.title;
   $("#host").textContent = entry.host + "’s paper world";
   $("#compact-title").textContent = engine.title;
-  if (id === 'fortune') {
-    document.body.classList.add('fortune-game');
-    if (embedded) { back.remove(); $('#compact-title').remove(); }
-    const treasures=document.createElement('button');treasures.textContent='Treasures';treasures.id='treasures';
-    listen(treasures,'click',()=>{persist();pause();tellRoom('treasures');});
-    const bar=document.querySelector('.game-menu-bar');
-    if (embedded) bar.insertBefore(treasures,$('#menu-toggle'));
-    const chapterNav=document.createElement('div');chapterNav.className='chapter-nav';
-    chapterNav.setAttribute('role','group');chapterNav.setAttribute('aria-label','Choose chapter');
-    const prev=document.createElement('button');prev.id='previous-chapter';prev.textContent='‹';prev.setAttribute('aria-label','Previous chapter');
-    listen(prev,'click',()=>goChapter(-1));
-    const position=document.createElement('span');position.id='chapter-position';position.setAttribute('aria-live','polite');
-    $('#next-chapter').setAttribute('aria-label','Next chapter');
-    chapterNav.append(prev,position,$('#next-chapter'));bar.insertBefore(chapterNav,$('#menu-toggle'));
-    $('#menu-toggle').textContent='Help';
-    $('#menu-close').textContent='× Close help';
-  }
+  if(id==='fortune')document.body.classList.add('fortune-game');
+  navigation=mountGameNavigation({embedded,listen,onPrevious:()=>goChapter(-1),onTreasures:()=>{persist();pause();tellRoom('treasures');}});
   $("#intro").textContent = engine.intro;
   $("#mode-note").textContent = engine.modeNote || "First play is practice and keeps nothing. Paid play uses your alley purse. Standalone practice has a separate purse.";
   $("#instructions").textContent = engine.instructions;

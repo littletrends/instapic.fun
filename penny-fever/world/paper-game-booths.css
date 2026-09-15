@@ -88,7 +88,7 @@ body .cabinet-interior.paper-game-cabinet {
 .paper-game-till[open]{position:absolute;right:6px;top:3px;max-height:calc(100dvh - 12px);overflow:auto;min-width:240px}
 .paper-game-status:not([hidden]){position:absolute;bottom:8px;left:8px;right:8px;z-index:4;pointer-events:none}
 
-.fortune-room .paper-game-bar h1{font-size:clamp(12px,3.3vw,20px);text-align:center;white-space:normal}
-.fortune-room .paper-game-bar>button{white-space:nowrap;font-size:14px;padding:8px;min-height:44px}
-.fortune-room .paper-game-till>summary{white-space:nowrap;font-size:14px;padding:8px}
+.standard-game-room .paper-game-bar h1{font-size:clamp(12px,3.3vw,20px);text-align:center;white-space:normal}
+.standard-game-room .paper-game-bar>button{white-space:nowrap;font-size:14px;padding:8px;min-height:44px}
+.standard-game-room .paper-game-till>summary{white-space:nowrap;font-size:14px;padding:8px}
 .paper-game-menu-close{align-self:flex-end;min-width:44px;min-height:44px}

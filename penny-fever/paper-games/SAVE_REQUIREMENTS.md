@@ -162,3 +162,11 @@ a normal paid retry. The existing snapshot format and save/restore paths are unc
 Node checks cover both controls, no double charging, one charge for a retry, no charge
 for chapter navigation and the final chapter boundary. Phone browser checks use
 constructed caught/missed result fixtures to verify both result actions and layout.
+
+## Copper Falls and shared navigation — 15 September 2026
+
+Copper v6 saves and existing fixed paid-count prize thresholds are unchanged. Shared chapter navigation persists before switching; Treasures pauses the game and returns to the existing iframe. Larger drop buttons honour disabled state and show the existing maximum 60-penny debit. Chapter obstacle fixes change subsequent motion, without replacing saved coin positions.
+
+Evidence: Node cabinet checks pass practice exclusion, wallet drop sizes, all six tray snapshots, exact paid-motion restore, deduplicated rewards, empty/failed debit handling, Iris controls and Copper peg bounds. Chromium checks pass Copper practice, paid drop, chapter selection, game-specific Treasures return, and exact frozen tray/wallet equality after reload. Phone (390×844) and desktop (1280×900) screenshots captured. Shared navigation mounts without reported script/network errors in all 33 available games. These opening checks do not certify their gameplay or exact saves. Cross-device sync, unavailable storage and every browser-close/payment-interruption case remain outside this pass.
+
+Deployment: prepared for the current authorized live update; publication verification follows in the release report.

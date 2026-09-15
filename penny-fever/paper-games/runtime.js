@@ -1,3 +1,4 @@
+import {mountGameNavigation} from './game-navigation.js?v=copper-pass-1';
 import {games,byId} from './catalogue.js?v=briefs-2';
 import {Draw,seeded,clamp} from './draw.js?v=phone-layout-1';
 import {loadSprites,frontUrl} from './sprites.js';
@@ -6,7 +7,7 @@ import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-k
 import {isClosed} from './stall-entry.js?v=entry-2';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
-let menuResume=false;
+let menuResume=false,navigation=null;
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
@@ -109,21 +110,19 @@ function paintHud(){
    clock.textContent=Math.max(0,Math.ceil(state.houseLeft))+'s';
   }else{clock.hidden=true;clock.textContent='';}
  }
- if(next){
-  const last=!engine?.levels||level>=engine.levels.length-1;
-  next.disabled=last;
-  next.textContent=last?'Last chapter':'Next chapter';
- }
+ navigation?.update(level,engine?.levels?.length||1,!state||!!engine?.live);
+
 }
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();}
-function goNextChapter(){menuResume=false;closeMenu();
- if(!engine?.levels||level>=engine.levels.length-1)return;
+function goChapter(delta){menuResume=false;closeMenu();
+ if(!engine?.levels||engine.live||level+delta<0||level+delta>=engine.levels.length)return;
  persist();
- level+=1;
+ level+=delta;
  if($('#chapter'))$('#chapter').value=level;
  reset();
  start();
 }
+function goNextChapter(){goChapter(1);}
 function markChapters(){if(!engine?.levels)return;[...$('#chapter').options].forEach((o,i)=>{const prize=engine.prizes?.[i];let tick='';try{if(prize&&window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.[prize])tick=' ✓';}catch{}o.textContent=(i+1)+'. '+engine.levels[i]+tick;});}
 function reset(){stop();ended=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();const name=engine.levels[level];if(engine.tables)veil(entry.host+' presents',name,engine.tableDetail||'A new set on this table. Walk away whenever you like — this chapter keeps. Dump the purse and the bank is patient.','Step inside');else if(embedded&&engine.live)veil(entry.host+' presents',engine.liveTitle||engine.title,engine.liveDetail||engine.instructions,engine.liveButton||'Step inside');else veil(entry.host+' presents',name,engine.instructions,'Begin chapter');$('#veil-detail').textContent=engine.instructions.split(/(?<=[.!?])\s+/).slice(0,2).join(' ').replace(/First (chapter )?ride.*$/,'').trim();$('#begin').textContent='Start';$('#begin').disabled=false;$('#pause').textContent='Pause';}
 function start(){if(disposed||!engine||!state||playing)return;if(ended&&!engine.live)reset();ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
@@ -165,6 +164,7 @@ try{
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
  if(embedded){const ret=document.querySelector('.play-header a[target="_parent"]');if(ret)listen(ret,'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
+ navigation=mountGameNavigation({embedded,listen,onPrevious:()=>goChapter(-1),onTreasures:()=>{persist();pause();tellRoom('treasures',{id:entry.id});}});
  engine.levels.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+name;$('#chapter').append(o);});
  draw=new Draw(canvas);draw.art={};
  const kit=kits[entry.id]||{sprites:[],prizes:[]};
@@ -178,7 +178,7 @@ try{
  listen(window,'keydown',e=>{
   if(!playing||e.repeat)return;
   const tag=e.target?.tagName;
-  if(tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA')return;
+  if(tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA'||tag==='BUTTON'||tag==='A')return;
   const k=e.key;
   const gameKey=k.length===1||['Backspace','Tab','Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k);
   if(!gameKey)return;
@@ -194,12 +194,12 @@ try{
  listen(document,'visibilitychange',()=>{if(document.hidden)pause();});
  if(!embedded)listen(window,'blur',pause);
  listen(window,'message',e=>{
-  if(e.origin!==location.origin)return;
+  if(e.origin!==location.origin||e.source!==window.parent)return;
   const d=e.data;
   if(!d||d.channel!=='pf-paper-world')return;
   if(d.type==='menu')$('#menu-toggle').click();
   if(d.type==='pause')pause();
-  if(d.type==='resume'&&!playing&&!ended)start();
+  if(d.type==='resume'&&!playing&&!ended&&!document.body.classList.contains('menu-open'))start();
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
  const img=$('#backdrop');img.src=entry.asset;try{await img.decode();}catch{throw new Error('The illustrated background could not load. Please reload.');}
