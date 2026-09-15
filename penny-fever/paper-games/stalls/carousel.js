@@ -14,6 +14,7 @@
  *
  *   Ch1 First Turn — no false items; any crest glint is the collect target.
  *   Ch2 Painted Ponies — same crest TAP. Only the heart-marked pony is valid.
+ *   Fairness retune after Aura FAIL 1/3: slower spin, wider crest, denser heart windows.
  *     Teach alone: long warn before the first marked window (no decoys yet).
  *     Later crest passes may show decoy marks (crescent/star); TAP decoy =
  *     soft fail (note + logAction miss), ride continues, never abort.
@@ -56,7 +57,7 @@ const TEACH_MARKED = 'TAP the heart-marked pony';
 const VERB_SEC = 5;
 /** Ch2 long warn before first searchable marked window (helter cushion teach). */
 const CH2_MARK_WARN = 8.0;
-const CH2_TEACH_CHROME = 7.0;
+const CH2_TEACH_CHROME = 5.5;
 /** Tiny cosmetic sway only — NOT a named LOOK skill. */
 const SWAY_X = 10;
 const SWAY_Y = 6;
@@ -82,8 +83,8 @@ function ch1Speed(reduced) {
 }
 
 function ch2Speed(reduced) {
-  // Slightly slower than Ch1 → ~52 s ride (helter Ch2 time budget).
-  const base = 0.36;
+  // Fairness retune (Aura FAIL 1/3): slower waltz → ~58 s / 3 laps, more crest chances.
+  const base = 0.32;
   return reduced ? base * 0.72 : base;
 }
 
@@ -243,11 +244,13 @@ function scheduleCh1(s) {
 function scheduleCh2(s) {
   const speed = ch2Speed(s.reduced);
   const lap = lapSeconds(speed);
-  const crestHalf = crestHalfFromSec(speed, 3.2);
+  // Wider crest (~4.0 s) so competent first play can hit 3/3 (Aura FAIL was 1/3).
+  const crestHalf = crestHalfFromSec(speed, 4.0);
   s.crestHalf = crestHalf;
   s.crestSec = (2 * crestHalf) / speed;
   s.ch2Taught = false;
   s.markedMark = 'heart';
+  s.hitPad = HIT_R * 1.2; // slightly more forgiving crest taps on Ch2
 
   // Persistent saddle marks: heart = valid; crescent/star = decoy ponies.
   s.horseMarks = {
@@ -258,68 +261,78 @@ function scheduleCh2(s) {
     5: 'star',
   };
 
-  // Practice glint — crest TAP only, same as Ch1 (no keepsakes / no mark hazard).
-  const practiceHorse = 5;
+  // Practice glint — crest TAP only (no keepsakes / no mark hazard).
+  const practiceHorse = 2; // heart-marked so early eye training matches Ch2 rule
   const practiceCrestT = (TAU - (practiceHorse * TAU) / HORSE_N) / speed;
   const practiceFrom = Math.max(0.2, practiceCrestT - crestHalf / speed);
   const practiceUntil = practiceCrestT + crestHalf / speed;
   s.practiceGlint = {
     kind: 'practice',
     id: 'practice-crest',
-    spot: 'pole',
+    spot: 'saddle',
     horse: practiceHorse,
     from: practiceFrom,
     until: practiceUntil,
     taken: false,
   };
 
-  function crestPass(horse, lapFrac) {
-    const targetT = lap * lapFrac;
+  // BUGFIX: next crest after minT (not nearest). Pick soonest heart-horse each time.
+  function nextCrestAfter(horse, minT) {
     const phase = (horse * TAU) / HORSE_N;
-    let k = Math.round((targetT * speed + phase) / TAU);
-    if (k < 1) k = 1;
-    let crestT = (k * TAU - phase) / speed;
-    if (crestT < lap * 1.02) {
-      k += 1;
-      crestT = (k * TAU - phase) / speed;
-    }
-    if (crestT > lap * 2.92) {
-      crestT = Math.min(crestT, lap * 2.85);
-    }
     const halfT = crestHalf / speed;
-    return {crestT, from: crestT - halfT, until: crestT + halfT, horse};
+    // Require the full window to start at/after minT (no overlap with prior finds).
+    let k = Math.ceil(((minT + halfT) * speed + phase) / TAU - 1e-9);
+    if (k < 1) k = 1;
+    const crestT = (k * TAU - phase) / speed;
+    if (crestT + halfT > lap * 2.98) return null;
+    return {crestT, from: crestT - halfT, until: crestT + halfT, horse, halfT};
   }
 
-  // Three ordinary + recovery on HEART-marked horses only.
-  // First window teaches alone (no overlapping decoys).
-  const p0 = crestPass(1, 1.18);
-  const p1 = crestPass(2, 1.68);
-  const p2 = crestPass(4, 2.22);
-  const p3 = crestPass(1, 2.62); // recovery
+  function soonestHeart(minT) {
+    let best = null;
+    for (const h of [1, 2, 4]) {
+      const p = nextCrestAfter(h, minT);
+      if (p && (!best || p.crestT < best.crestT)) best = p;
+    }
+    return best;
+  }
 
-  const finds = [
-    {kind: 'ordinary', id: ORDINARY[0], spot: 'saddle', horse: p0.horse, mark: 'heart', from: p0.from, until: p0.until, taken: false, teach: true},
-    {kind: 'ordinary', id: ORDINARY[1], spot: 'mane', horse: p1.horse, mark: 'heart', from: p1.from, until: p1.until, taken: false},
-    {kind: 'ordinary', id: ORDINARY[2], spot: 'bridle', horse: p2.horse, mark: 'heart', from: p2.from, until: p2.until, taken: false},
-    {kind: 'ordinary', id: ORDINARY[0], spot: 'panel', horse: p3.horse, mark: 'heart', from: p3.from, until: p3.until, taken: false},
-  ];
+  // Dense unique heart windows from late practice through end — enough for 3/3.
+  const spots = ['saddle', 'mane', 'bridle', 'panel', 'saddle', 'mane', 'bridle', 'panel'];
+  const slots = [];
+  let minT = lap * 0.55; // allow finds during late practice lap
+  for (let i = 0; i < 8; i++) {
+    const p = soonestHeart(minT);
+    if (!p) break;
+    slots.push(p);
+    minT = p.until + 0.55; // small clear gap; still many passes
+  }
+  const finds = slots.map((p, i) => ({
+    kind: 'ordinary',
+    id: ORDINARY[i % ORDINARY.length],
+    spot: spots[i % spots.length],
+    horse: p.horse,
+    mark: 'heart',
+    from: p.from,
+    until: p.until,
+    taken: false,
+    teach: i === 0,
+  }));
   s.finds = finds;
   s.goal = GOAL;
   s.found = 0;
   s.lapsTotal = 3;
   s.lapSec = lap;
-  s.rideEnd = lap * 3; // ~52 s at ch2Speed
+  s.rideEnd = lap * 3; // ~58 s at ch2Speed 0.32
   s.ripples = [];
   s.sparks = [];
   s.flash = 0;
   s.firstMarked = finds[0];
 
-  // Decoy crest glints AFTER the teach window — live only once ch2Taught.
+  // Decoys only AFTER teach — attach to later windows (index >= 2), soft fail only.
   const halfT = crestHalf / speed;
   function decoyNear(horse, nearFind, mark, spotId) {
-    // Offset so decoy crest overlaps the find's crest pass (same NOW feel).
     const crestT = (nearFind.from + nearFind.until) / 2;
-    // Nudge decoy horse crest toward that time.
     const phase = (horse * TAU) / HORSE_N;
     let k = Math.round((crestT * speed + phase) / TAU);
     if (k < 1) k = 1;
@@ -342,19 +355,23 @@ function scheduleCh2(s) {
     };
   }
 
-  s.decoys = [
-    decoyNear(3, finds[1], 'crescent', 'panel'),
-    decoyNear(5, finds[1], 'star', 'pole'),
-    decoyNear(3, finds[2], 'crescent', 'bridle'),
-    decoyNear(5, finds[2], 'star', 'canopy'),
-    decoyNear(3, finds[3], 'crescent', 'saddle'),
+  // Decoys only against later finds that exist (never index past finds.length).
+  s.decoys = [];
+  const decoyPlan = [
+    [3, 2, 'crescent', 'panel'],
+    [5, 2, 'star', 'pole'],
+    [3, 3, 'crescent', 'bridle'],
+    [5, 3, 'star', 'canopy'],
+    [3, 4, 'crescent', 'saddle'],
   ];
+  for (const [horse, fi, mark, spotId] of decoyPlan) {
+    if (fi < finds.length) s.decoys.push(decoyNear(horse, finds[fi], mark, spotId));
+  }
 
   s.treasure = null;
   if (s.eligible && s.spawnId) {
     const spot = SPOTS.find((row) => row.id === s.spawnId) || SPOTS[0];
     const horse = spot.horse;
-    // Prefer a heart-marked horse for treasure if spawn horse is a decoy type.
     const treasureHorse = (s.horseMarks[horse] === 'heart') ? horse : 2;
     const tp = crestPass(treasureHorse, 1.95);
     const tHalf = Math.max(2.5 / 2, crestHalf / speed);
@@ -362,10 +379,10 @@ function scheduleCh2(s) {
     for (const f of finds) {
       if (f.horse !== treasureHorse) continue;
       const mid = (f.from + f.until) / 2;
-      if (Math.abs(mid - crestT) < 0.5) crestT += lap * 0.35;
+      if (Math.abs(mid - crestT) < 0.55) crestT += lap * 0.28;
     }
     if (crestT + tHalf > lap * 2.95) crestT = lap * 2.95 - tHalf;
-    if (crestT - tHalf < lap * 1.05) crestT = lap * 1.05 + tHalf;
+    if (crestT - tHalf < lap * 0.9) crestT = lap * 0.9 + tHalf;
     s.treasure = {
       id: s.treasureId,
       spot: spot.id,
@@ -928,12 +945,25 @@ function drawSparksAndFlash(d, s) {
 }
 
 function tryCrestTap(s, p) {
-  const crestPad = (scr) => scr && Math.hypot(p.x - CX, p.y - (CY + 48)) < 110;
+  const pad = (s.hitPad || HIT_R) * 1.35;
+  // Generous front-lane magnet — if a crest window is live, tapping the lower court counts.
+  const crestLive = (s.finds || []).some((row) => itemInCrestWindow(row, s))
+    || (s.treasure && itemInCrestWindow(s.treasure, s))
+    || (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s))
+    || (decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s)));
+  const crestPad = (scr) => {
+    if (!scr) return false;
+    if (Math.hypot(p.x - CX, p.y - (CY + 48)) < (pad + 70)) return true;
+    // Whole lower-middle band while a crest window is live (phone-thumb fair).
+    if (crestLive && p.y > CY - 40 && p.y < CY + 220 && p.x > CX - 160 && p.x < CX + 160) return true;
+    return false;
+  };
+  const hit = (scr) => hitItem(scr, p, pad) || crestPad(scr);
 
   // Treasure first while in crest (always heart-valid).
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
     const scr = spotScreen(s.treasure.spot, s, s.treasure.horse);
-    if (hitItem(scr, p) || crestPad(scr)) {
+    if (hit(scr)) {
       collectTreasure(s, scr);
       return 'collect';
     }
@@ -942,7 +972,7 @@ function tryCrestTap(s, p) {
   // Practice glint (lap 0 teach) — no keepsake; crest TAP only.
   if (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) {
     const scr = spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse);
-    if (hitItem(scr, p) || crestPad(scr)) {
+    if (hit(scr)) {
       collectPractice(s, scr);
       return 'collect';
     }
@@ -952,7 +982,7 @@ function tryCrestTap(s, p) {
   const find = (s.finds || []).find((row) => {
     if (!itemInCrestWindow(row, s)) return false;
     const scr = spotScreen(row.spot, s, row.horse);
-    return hitItem(scr, p) || crestPad(scr);
+    return hit(scr);
   });
   if (find) {
     collectOrdinary(s, find, spotScreen(find.spot, s, find.horse));
@@ -965,7 +995,7 @@ function tryCrestTap(s, p) {
       if (row.taken) return false;
       if (!itemInCrestWindow(row, s)) return false;
       const scr = spotScreen(row.spot, s, row.horse);
-      return hitItem(scr, p) || crestPad(scr);
+      return hit(scr);
     });
     if (decoy) {
       return softFailDecoy(s, decoy, spotScreen(decoy.spot, s, decoy.horse));
@@ -993,9 +1023,10 @@ export default {
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 78,
+  houseSeconds: 90,
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
+  actions: [{id: 'tap', label: 'TAP'}],
 
   create(level, rng) {
     const reduced = prefersReducedMotion();
@@ -1118,6 +1149,22 @@ export default {
         challengeOk: s.found >= s.goal,
         completionFind: 'star-token',
       });
+    }
+  },
+
+  action(s, id, down) {
+    if (!down || s.result || s.broke) return;
+    if (id === 'tap') {
+      logAction(s, 'tap', {via: 'button'});
+      tryCrestTap(s, {x: CX, y: CY + 48});
+    }
+  },
+
+  key(s, k, down) {
+    if (!down || s.result || s.broke) return;
+    if (k === ' ' || k === 'Enter') {
+      logAction(s, 'tap', {via: 'key', key: k});
+      tryCrestTap(s, {x: CX, y: CY + 48});
     }
   },
 
