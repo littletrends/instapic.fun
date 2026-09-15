@@ -6,7 +6,7 @@ if (id === 'fortune' || id === 'coin-pusher') {
     sheet.onerror = () => reject(new Error('The game cabinet style could not load.'));
     sheet.href = 'cabinet.css?v=collection-nav-1';
   });
-  await import('./cabinet-runtime.js?v=fortune-actions-2');
+  await import('./cabinet-runtime.js?v=nav-labels-1');
 } else {
-  await import('./runtime.js?v=phone-layout-1');
+  await import('./runtime.js?v=nav-labels-1');
 }

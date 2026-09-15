@@ -36,7 +36,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   cabinet.removeAttribute('aria-labelledby');
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
-  const back=doc.createElement('button');back.type='button';back.textContent='← Back to the alley';
+  const back=doc.createElement('button');back.type='button';back.textContent='← Back to alley';
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
   const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
@@ -102,7 +102,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   till.addEventListener('toggle',()=>{if(!till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);});
   till.append(tillSum,closeTill,help,wallet,chest,buy,cash,retry,list);
   if(game.id==='fortune') {
-    cabinet.classList.add('fortune-room');back.textContent='← Alley';
+    cabinet.classList.add('fortune-room');back.textContent='← Back to alley';
     bar.append(back,title,till);
   } else {till.append(back);bar.append(title,till);}
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');

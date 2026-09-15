@@ -299,3 +299,9 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .treasure-tree details[data-tree-group]>summary{font-weight:bold;min-height:44px}
 .treasure-tree details[data-tree-group]>details{margin-left:5px}
 .pocket-inspect .pocket-inspect-bar{position:sticky;top:0;bottom:auto;z-index:2;background:#f4e6c8;margin-bottom:10px}
+
+.treasure-book [data-look-collection]{min-height:44px;font-size:13px}
+@media(max-width:680px){
+ .pocket-header:has([data-return-game]:not([hidden]))>div{grid-row:1/4}
+ .pocket-header [data-look-collection],.pocket-header [data-return-game]{max-width:175px;font-size:12px;padding:8px}
+}

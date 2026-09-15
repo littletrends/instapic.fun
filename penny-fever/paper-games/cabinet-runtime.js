@@ -8,7 +8,7 @@ const canvas = $("#world");
 const hostPortrait = document.createElement('img');
 hostPortrait.id = 'veil-host'; hostPortrait.className = 'veil-iris'; hostPortrait.alt = '';
 $('#veil > div').prepend(hostPortrait);
-const back = document.createElement('a'); back.className = 'back'; back.href = '../index.html?style=paper&rail=paper#alley'; back.textContent = 'Back to the alley';
+const back = document.createElement('a'); back.className = 'back'; back.href = '../index.html?style=paper&rail=paper#alley'; back.textContent = 'Back to alley';
 document.querySelector('.game-menu-bar').prepend(back);
 const input = { keys: new Set(), actions: new Set(), pointer: null, down: false };
 
@@ -324,8 +324,8 @@ try {
     $("#next").textContent = "Next: " + next.host + " — " + next.title + " →";
     $("#next").href = "play.html?stall=" + next.id;
   } else {
-    $("#next").textContent = "Back to the alley →";
-    $("#next").href = "./";
+    $("#next").textContent = "Back to alley →";
+    $("#next").href = "../index.html?style=paper&rail=paper#alley";
   }
 
   engine.levels.forEach((name, i) => {

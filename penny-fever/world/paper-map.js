@@ -9,9 +9,9 @@ root.innerHTML = `<header><p>AURA’S PENNY FEVER</p><h1>The paper midway</h1>
   <p>A little folded map. Choose a host, then step inside.</p></header>
   <div id="paperMapTools">
   <p id="paperPocket" role="status"></p>
-  <nav aria-label="Paper midway"><button data-action="aura">Ticket Desk</button>
+  <nav aria-label="Paper midway"><button data-action="aura">Back to ticket booth</button>
   <button data-action="chat">Aura’s Tips</button><button data-action="treasures">Treasures</button>
-  <a href="#door">Doorway</a><a href="../index.html" data-action="home">Home</a></nav>
+  <a href="#door">Back to entrance</a><a href="../index.html" data-action="home">Home</a></nav>
   <p id="paperAdvice" role="status"></p></div>
   <section id="paperStalls" aria-label="Sideshow hosts"></section>
   <dialog id="paperBooth"><h2 id="paperBoothTitle"></h2><p id="paperBoothText"></p>

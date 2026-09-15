@@ -122,6 +122,7 @@ function mount() {
           <h1 id="treasureTitle">Treasures</h1>
           <p id="treasureCount"></p>
         </div>
+        <button type="button" data-look-collection hidden>Look at Penny Collection</button>
         <button type="button" data-return-game hidden>← Back to game</button>
         <button type="button" class="pocket-close" id="closeTreasures" aria-label="Close treasures">Close ×</button>
       </header>
@@ -189,7 +190,8 @@ function mount() {
             <button type="button" id="inspectRotate" aria-label="Rotate">Rotate</button>
           </div>
           <div class="pocket-inspect-bar">
-            <button type="button" data-return-game hidden>← Back to game</button>
+            <button type="button" data-look-collection hidden>Look at Penny Collection</button>
+        <button type="button" data-return-game hidden>← Back to game</button>
             <button type="button" id="pocketBack">← Back to the page</button>
             <button type="button" id="treasureOpen" aria-expanded="false" hidden>Open</button>
             <button type="button" id="treasurePunch" hidden>Show punched ticket</button>
@@ -209,6 +211,11 @@ function mount() {
   pages.append($('treasureShelf'),$('foundView'),$('treasureSpread'));
   $('treasureSpread').querySelector('.is-right').prepend($('bookPane'));
   dialog.querySelectorAll('[data-return-game]').forEach(b=>b.addEventListener('click',()=>dialog.close()));
+  dialog.querySelectorAll('[data-look-collection]').forEach(b=>b.addEventListener('click',()=>{
+    filter='all';$('treasureSearch').value='';
+    dialog.querySelectorAll('[data-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.filter==='all')));
+    openBook(model.books.find(book=>book.master)?.id || 'penny-collector-book');
+  }));
   tree.addEventListener('click',e=>{
     const summary=e.target.closest('summary[data-collection-book]');
     if(summary){
@@ -451,6 +458,7 @@ function render() {
     : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies'));
 
   dialog.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
+  dialog.querySelectorAll('[data-look-collection]').forEach(b=>{b.hidden=tab!=='games';});
   const onFound = filter === 'found';
   const onShelf = !onFound && tab === 'collection' && !bookId;
   const onBook = !onFound && tab === 'collection' && !!bookId;
@@ -1033,7 +1041,12 @@ function open(id) {
   if (!dialog || (!studio && /\/play$/.test(location.hash))) return false;
   if (!dialog.open) {
     opener = document.activeElement; openedHash = location.hash;
-    dialog.querySelectorAll('[data-return-game]').forEach(b=>{b.hidden=!/^#cabinet\//.test(openedHash);});
+    const gameId=openedHash.match(/^#cabinet\/([^/]+)/)?.[1];
+    const room=gameId && document.getElementById('cabinet-'+gameId);
+    const host=room?.querySelector('iframe')?.title.split(' — ')[0] || stallById(gameId)?.host;
+    dialog.querySelectorAll('[data-return-game]').forEach(b=>{
+      b.hidden=!gameId;b.textContent=host?'← Back to '+host+'’s game':'← Back to game';
+    });
     const world = globalThis.PennyFeverWorld;
     resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
     if (resumeWorld) world.pause();

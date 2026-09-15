@@ -927,7 +927,7 @@ function attachHud() {
         </nav>
         <div class="pf-world-tools">
           <button type="button" id="pfAlleyMapOpen">Map</button>
-          <button type="button" id="pfWorldLeave">Ticket desk</button>
+          <button type="button" id="pfWorldLeave">Back to ticket booth</button>
           <a id="pfWorldHome" href="../index.html">Home</a>
         </div>
       </div>
