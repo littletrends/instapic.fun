@@ -3,7 +3,7 @@
  *
  * SHIPPED: Chapter 1 First Swing — Lit Reach.
  *   Rainbow Islands pop energy on a Tempest circle. Chair carousel auto-orbits
- *   Hugo’s tower. ONE verb: HOLD to stretch radius outward; RELEASE springs in.
+ *   Hugo’s tower. ONE verb: HOLD to stretch radius outward; RELEASE tucks in.
  *   Vertical drag has no gameplay meaning; chair height is visual only.
  *   Targets are star-bubbles / lanterns on radius bands. Green “lined up” lit
  *   state fires BEFORE the catch window (Hold-the-Line SAFE). Catch = POP burst
@@ -232,6 +232,7 @@ function tryPopBubble(s, bubble, i) {
   pushBurst(s, p.x, p.y, false);
   s.popFlash = FLASH_SEC;
   s.note = 'POP! ' + s.passed + ' / ' + s.goal;
+  s.notePinUntil = s.t + 1.6;
 }
 
 function trySweepTreasure(s) {
@@ -317,7 +318,7 @@ function drawBubble(d, x, y, depth, lit, flash, miss) {
   }
   // Idle approaching lantern — gold, readable, not scream-loud
   const pulse = 0.7 + 0.3 * Math.sin(depth * 6);
-  d.glow(x, y, 22 + pulse * 10, '#f4d59066');
+  d.glow(x, y, 22 + pulse * 10, GOLD);  // draw.glow appends alpha — 6-digit only
   d.circle(x, y, r, '#f4d59022', GOLD_DIM, 2.8);
   d.circle(x, y, r * 0.72, '#f8e4b344', GOLD, 1.6);
   drawStar(d, x, y, 8 + depth * 2.5, '#f8e4b3', GOLD_DIM);
@@ -466,8 +467,8 @@ function drawFx(d, s) {
 
 export default {
   title: 'Skyward Swings',
-  intro: 'Swing wide. Catch the night. HOLD to stretch out — RELEASE to spring in. Burst the star-bubbles.',
-  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to spring in. Line up green, then POP each star-bubble. First ride is free practice.',
+  intro: 'Swing wide. Catch the night. HOLD to stretch out — RELEASE to tuck in. Burst the star-bubbles.',
+  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. First ride is free practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -498,13 +499,14 @@ export default {
       screenFlash: 0,
       popFlash: 0,
       coachUntil: 5,
+      notePinUntil: 0,
     });
   },
   update(s, dt, input) {
     if (s.result || s.broke) return;
 
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWNS)) {
-      s.note = 'HOLD to stretch out · RELEASE to spring in';
+      s.note = 'HOLD to stretch out · RELEASE to tuck in';
       s.coachUntil = s.t + 5;
     }
     if (s.result) return;
@@ -547,8 +549,9 @@ export default {
         s.screenFlash = 0.14;
         logAction(s, 'bubble-miss', {band: bubble.band, i});
         s.note = bubble.band
-          ? 'HOLD — outer'
-          : 'RELEASE — inner';
+          ? 'Missed the outer bubble — HOLD to stretch out'
+          : 'Missed the inner bubble — RELEASE to tuck in';
+        s.notePinUntil = s.t + 2.8;
         const p = orbitPoint(bubble.theta, bandRadius(bubble.band));
         pushBurst(s, p.x, p.y, true);
       }
@@ -722,11 +725,23 @@ export default {
     // Clarity-first control chrome (Lorie): one verb must read in the first 5s.
     const early = (s.t || 0) < (s.coachUntil != null ? s.coachUntil : 5);
     const verb = s.holding ? 'RELEASE' : 'HOLD';
-    const verbSub = s.holding ? 'spring in' : 'stretch out';
-    const coach = s.note || 'HOLD to stretch out · RELEASE to spring in';
+    const verbSub = s.holding ? 'tuck in' : 'stretch out';
+    const coach = s.note || 'HOLD to stretch out · RELEASE to tuck in';
+
+    // Sticky miss coaching plate (playtest: settle was burying the miss verb)
+    const missPinned = (s.notePinUntil != null) && (s.t < s.notePinUntil) && /Missed/.test(s.note || '');
+    if (missPinned) {
+      d.poly(
+        [[160, 760], [740, 760], [728, 848], [172, 848]],
+        '#1a3044ee',
+        COOL,
+        3,
+      );
+      d.text(s.note, 450, 810, 18, CREAM);
+    }
 
     // Big in-court verb plate — loudest thing early / until first POP.
-    if (early || s.holding || (s.passed || 0) < 1) {
+    if (!missPinned && (early || s.holding || (s.passed || 0) < 1)) {
       d.poly(
         [[200, 820], [700, 820], [688, 920], [212, 920]],
         s.holding ? '#6b2030ee' : '#2a1838ee',
@@ -744,7 +759,7 @@ export default {
       s.holding ? GOLD : '#f0d09a',
       s.holding ? 3.2 : 2.4,
     );
-    d.text(s.holding ? 'RELEASE · spring in' : 'HOLD · stretch out', 450, 1110, 26, CREAM);
+    d.text(s.holding ? 'RELEASE · tuck in' : 'HOLD · stretch out', 450, 1110, 26, CREAM);
     d.text(coach, 450, 1152, 16, '#f0d18f');
     if (s.practice) {
       d.poly(

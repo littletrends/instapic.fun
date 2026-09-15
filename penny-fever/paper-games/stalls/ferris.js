@@ -215,7 +215,7 @@ function drawSoftOutsideLens(d, lx, ly) {
 function drawGondolaHub(d, s) {
   // Light paper cabin at the hub — court PNG stays full-bleed behind.
   const sway = Math.sin((s.angle || 0) * 2) * (s.reduced ? 2 : 5);
-  d.glow(HUB_X + sway, HUB_Y + 20, 110, '#4a182455');
+  d.glow(HUB_X + sway, HUB_Y + 20, 110, '#4a1824');
   d.poly([
     [HUB_X - 112 + sway, HUB_Y - 40],
     [HUB_X + 112 + sway, HUB_Y - 40],
@@ -248,7 +248,7 @@ function drawTarget(d, s, t) {
   if (t.snapped) return;
   const inSweet = s.glowId === t.id;
   const r = t.size * (1 - 0.25 * t.climb);
-  d.glow(t.x, t.y, r + (inSweet ? 36 : 18), inSweet ? '#ffe6a4' : '#e8d0a0aa');
+  d.glow(t.x, t.y, r + (inSweet ? 36 : 18), inSweet ? '#ffe6a4' : '#e8d0a0');
   // Paper silhouette (roof / cabin / lamp) — readable gallery target, not an orb.
   if (t.id === 'roof') {
     d.poly([

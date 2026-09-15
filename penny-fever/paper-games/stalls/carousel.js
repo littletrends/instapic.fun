@@ -380,7 +380,7 @@ function drawHorseSafe(d, h, bob, you, t, reduced) {
   d.heart(x + 6 * sc, y + 2 * sc, (you ? 7 : 5.5) * sc, '#d2a65b');
 
   if (h.front || you) {
-    d.glow(x + 10 * sc, y - 4 * sc, 28 * sc, '#ffe6a422');
+    d.glow(x + 10 * sc, y - 4 * sc, 28 * sc, '#ffe6a4');
   }
 
   if (!reduced && !you) {
@@ -442,7 +442,7 @@ function drawPlayerHorse(d, cx, cy, bob, t, reduced) {
     [x - 24, y + 30],
   ], '#6b2030', '#d2a65b', 2.5);
   d.heart(x + 10, y + 6, 10, '#d2a65b');
-  d.glow(x + 10, y + 4, 36, '#ffe6a433');
+  d.glow(x + 10, y + 4, 36, '#ffe6a4');
   d.text('you', x + 6, y + 62, 15, '#f0d09a');
 }
 
@@ -470,9 +470,9 @@ function drawCanopy(d, cx, cy, swayX, swayY, t, reduced) {
 
   const flick = reduced ? 1 : (0.82 + 0.18 * Math.sin((t || 0) * 5.2));
   const flick2 = reduced ? 1 : (0.78 + 0.22 * Math.sin((t || 0) * 6.1 + 1.4));
-  d.glow(px - 120, py - 250, 40 * flick, '#f4c87888');
-  d.glow(px + 120, py - 250, 40 * flick2, '#f4c87888');
-  d.glow(px, py - 285, 50 * (0.9 + 0.1 * flick), '#ffe6a466');
+  d.glow(px - 120, py - 250, 40 * flick, '#f4c878');
+  d.glow(px + 120, py - 250, 40 * flick2, '#f4c878');
+  d.glow(px, py - 285, 50 * (0.9 + 0.1 * flick), '#ffe6a4');
   d.circle(px - 120, py - 248, 7, '#f8e4b3', '#d2a65b', 1.5);
   d.circle(px + 120, py - 248, 7, '#f8e4b3', '#d2a65b', 1.5);
 
@@ -494,7 +494,7 @@ function drawPlatform(d, cx, cy, swayX, swayY) {
 function drawCrestLane(d, s) {
   const y = CY + 48;
   const pulse = 1 + 0.06 * Math.sin((s.t || 0) * 5);
-  d.glow(CX, y, 70 * pulse, '#ffe6a422');
+  d.glow(CX, y, 70 * pulse, '#ffe6a4');
   d.ellipse(CX, y, 88, 28, '#d2a65b22', '#f0d09a55', 2);
   // Soft “almost… NOW” rim ticks
   d.line({x: CX - 70, y: y - 36}, {x: CX - 70, y: y + 36}, '#d2a65b66', 2);
@@ -540,7 +540,7 @@ function drawApproachGlint(d, scr, t, treasure) {
   // Visible while approaching / leaving crest window time — softer than NOW.
   const pulse = 1 + 0.06 * Math.sin((t || 0) * 5);
   const base = treasure ? 40 : 32;
-  d.glow(scr.x, scr.y, base * pulse, treasure ? '#f4d59066' : '#ffe6a466');
+  d.glow(scr.x, scr.y, base * pulse, treasure ? '#f4d590' : '#ffe6a4');
   d.circle(scr.x, scr.y, 6, '#ffe6a4aa', '#d2a65b', 1.5);
 }
 
@@ -550,7 +550,7 @@ function drawPracticeBadge(d, s) {
   const w = 210 * pulse;
   const x0 = 450 - w / 2;
   const y = 132;
-  d.glow(450, y + 28, 70, '#d2a65b66');
+  d.glow(450, y + 28, 70, '#d2a65b');
   d.poly([[x0, y], [x0 + w, y], [x0 + w, y + 56], [x0, y + 56]], '#6b2030f0', '#f0d09a', 3);
   d.text('PRACTICE', 450, y + 38, 28, '#ffe6a4');
 }
@@ -920,7 +920,7 @@ export default {
     drawSparksAndFlash(d, s);
 
     const lapFrac = Math.min(1, (s.t || 0) / (s.rideEnd || 1));
-    d.glow(70, 70, 40, '#d2a65b44');
+    d.glow(70, 70, 40, '#d2a65b');
     d.arc(70, 70, 28, -Math.PI / 2, -Math.PI / 2 + lapFrac * TAU, '#f0d09a', 7);
     d.circle(70, 70, 16, '#122335cc', '#d2a65b', 2);
     const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));

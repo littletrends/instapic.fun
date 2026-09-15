@@ -44,6 +44,7 @@ const GOAL = 2;
 const DISCOVERY = 3.2;
 const CURTAIN = 1.15;
 const RETRY = 1;
+const DWELL = 5.6;
 const HOUSE = 80;
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
 const GOLD = '#d2a65b';
@@ -67,13 +68,11 @@ function screenX(panel, scroll) {
 }
 
 function inWindow(panel, scroll) {
-  return Math.abs(screenX(panel, scroll) - FRAME.x) < FRAME.w * 0.55;
+  return Math.abs(screenX(panel, scroll) - FRAME.x) < FRAME.w * 0.62;
 }
 
-function hitPatch(p, panel, scroll) {
-  const x = screenX(panel, scroll);
-  const y = FRAME.y;
-  return Math.hypot(p.x - x, p.y - y) < 92;
+function inFrame(p) {
+  return Math.abs(p.x - FRAME.x) < FRAME.w / 2 + 36 && Math.abs(p.y - FRAME.y) < FRAME.h / 2 + 48;
 }
 
 function closeRide(s) {
@@ -87,10 +86,41 @@ function closeRide(s) {
 
 function maybeArrive(s) {
   if (s.arriving || s.result) return;
-  const leftover = s.panels.some((row) => !row.restored && !row.done && row.retries <= RETRY);
-  if (s.restored >= s.goal || !leftover) {
+  if (s.restored >= s.goal || s.index >= s.panels.length) {
     s.arriving = true;
-    s.arriveAt = s.t + 0.9;
+    s.arriveAt = s.t + 0.7;
+  }
+}
+
+function spawnNext(s) {
+  s.paused = false;
+  const row = s.panels[s.index];
+  if (!row || s.restored >= s.goal) {
+    maybeArrive(s);
+    return;
+  }
+  row.world = s.scroll + 760;
+  row.dwell = 0;
+  row.held = false;
+}
+
+function advance(s) {
+  s.index += 1;
+  spawnNext(s);
+}
+
+function missPanel(s, row) {
+  if (row.restored || row.done) return;
+  row.dwell = 0;
+  row.held = false;
+  row.retries += 1;
+  if (row.retries <= RETRY) {
+    row.world = s.scroll + 760;
+    s.paused = false;
+    s.note = 'One more pass — SPLASH inside the frame.';
+  } else {
+    row.done = true;
+    advance(s);
   }
 }
 
@@ -217,10 +247,12 @@ export default {
     const gap = reduced ? 720 : 640;
     const panels = MOTIFS.map((m, i) => ({
       ...m,
-      world: 980 + i * gap,
+      world: i === 0 ? 980 : 4000,
       restored: false,
       done: false,
       retries: 0,
+      dwell: 0,
+      held: false,
       flood: 0,
       flooding: false,
       bloom: 0,
@@ -228,8 +260,9 @@ export default {
     return makeRideState(level, rng, {
       reduced,
       panels,
+      index: 0,
       scroll: 0,
-      speed: reduced ? 108 : 168,
+      speed: reduced ? 70 : 96,
       restored: 0,
       goal: GOAL,
       paused: false,
@@ -249,7 +282,7 @@ export default {
     }
     if (s.result) return;
     s.t += dt;
-    s.progress = Math.min(1, s.scroll / (s.panels[2].world + 200));
+    s.progress = Math.min(1, (s.index + (s.panels[s.index]?.dwell || 0) / DWELL) / 3);
 
     s.panels.forEach((row) => {
       if (row.bloom > 0) row.bloom = Math.max(0, row.bloom - dt * 0.7);
@@ -273,27 +306,27 @@ export default {
         const live = s.panels.find((row) => row.id === s.liveId);
         if (live) live.done = true;
         s.liveId = null;
-        maybeArrive(s);
+        if (s.restored >= s.goal) maybeArrive(s);
+        else advance(s);
       }
       return;
     }
 
-    if (!s.paused) s.scroll += dt * s.speed;
-
-    s.panels.forEach((row) => {
-      if (row.restored || row.done) return;
-      const x = screenX(row, s.scroll);
-      if (x < FRAME.x - FRAME.w * 0.7) {
-        row.retries += 1;
-        if (row.retries <= RETRY) {
-          row.world = s.scroll + 780;
-          s.note = 'One more pass — SPLASH the patch.';
-        } else {
-          row.done = true;
-          maybeArrive(s);
-        }
-      }
-    });
+    const live = s.panels[s.index];
+    if (!live || live.done || live.restored) {
+      if (!s.arriving) advance(s);
+      return;
+    }
+    if (inWindow(live, s.scroll) || live.held) {
+      live.held = true;
+      live.world = s.scroll + FRAME.x;
+      live.dwell += dt;
+      s.paused = true;
+      if (live.dwell >= DWELL) missPanel(s, live);
+    } else {
+      s.paused = false;
+      s.scroll += dt * s.speed;
+    }
   },
   pointer(s, type, p) {
     if (s.result || s.broke || !s.boarded) return;
@@ -308,8 +341,10 @@ export default {
       }
     }
     if (s.discovery > 0 || s.arriving) return;
-    const live = s.panels.find((row) => !row.restored && !row.done && inWindow(row, s.scroll));
-    if (live && hitPatch(p, live, s.scroll)) splash(s, live);
+    const live = s.panels[s.index];
+    if (live && !live.restored && !live.done && (live.held || inWindow(live, s.scroll)) && inFrame(p)) {
+      splash(s, live);
+    }
   },
   draw(s, d) {
     // mural.png owns the court.
@@ -322,7 +357,9 @@ export default {
     d.text('painter’s platform', 450, 724 + bob, 13, GOLD);
 
     const fx = FRAME.x, fy = FRAME.y, fw = FRAME.w, fh = FRAME.h;
-    const live = s.panels.find((row) => !row.restored && !row.done && inWindow(row, s.scroll));
+    const live = s.panels[s.index] && !s.panels[s.index].restored && !s.panels[s.index].done
+      ? s.panels[s.index]
+      : null;
     d.poly(
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#f4d590' : GOLD, live ? 6 : 3,
@@ -335,8 +372,8 @@ export default {
       const faded = !row.restored;
       drawMotif(d, row.id, x, FRAME.y, faded, row.flood || 0, s.t);
       if (live && live.id === row.id && !s.discovery) {
-        d.circle(x, FRAME.y, 86, null, CREAM, 3);
-        d.text('SPLASH', x, FRAME.y + 8, 28, CREAM);
+        d.circle(FRAME.x, FRAME.y, 96, null, CREAM, 4);
+        d.text('SPLASH', FRAME.x, FRAME.y + 10, 34, CREAM);
       }
     });
 
@@ -379,6 +416,13 @@ export default {
     drawPracticeBadge(d, s);
     drawCoach(d, s);
     drawHud(d, s, {goal: s.goal, count: s.restored, label: 'patches'});
+  },
+  key(s, k, down) {
+    if (!down || s.result || !s.boarded) return;
+    if (k === ' ' || k === 'Enter' || k === 'p' || k === 'P') {
+      const live = s.panels[s.index];
+      if (live && !live.restored && !live.done) splash(s, live);
+    }
   },
   readout: (s) => s.note || '',
 };

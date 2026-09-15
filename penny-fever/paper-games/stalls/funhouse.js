@@ -24,7 +24,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=shut-ch1-1';
+} from './funhouse-rooms.js?v=shut-ch1-2';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -402,8 +402,8 @@ function drawCurtain(d, side, puff, t) {
 function punchlineTag(door) {
   if (door.lastLaugh) return 'LAUGH';
   const pl = door.punchline || door.label || door.id;
-  // Keep door tag short for oval readability.
-  return String(pl).length > 18 ? String(pl).slice(0, 16) + '…' : String(pl);
+  // Prefer full punchline; wrap handled by larger plate + slightly smaller long lines.
+  return String(pl);
 }
 
 function drawDoor(d, door, s) {
@@ -440,17 +440,28 @@ function drawDoor(d, door, s) {
     d.ellipse(x, y - 18 + slide, 38, 26, BURGUNDY, INK, 2);
     d.ellipse(x, y - 10 + slide, 24, 14, '#1a1010');
   }
-  // Punchline words (primary) + side as secondary
+  // Punchline words (primary, large) + side as secondary
   const side = door.id === 'left' ? 'LEFT' : door.id === 'right' ? 'RIGHT' : '';
   const tag = punchlineTag(door);
+  const long = tag.length > 16;
+  const plateH = long ? 78 : 62;
   d.poly(
-    [[x - 70, y + hh - 62], [x + 70, y + hh - 62], [x + 70, y + hh - 8], [x - 70, y + hh - 8]],
-    s.phase === 'choose' ? '#2a1818ee' : '#2a181866', GOLD, 2,
+    [[x - 78, y + hh - plateH], [x + 78, y + hh - plateH], [x + 78, y + hh - 6], [x - 78, y + hh - 6]],
+    s.phase === 'choose' ? '#2a1818f2' : '#2a181888', GOLD, 2.4,
   );
-  d.text(tag, x, y + hh - 38, s.phase === 'choose' ? 15 : 13, INK);
-  if (side) d.text(side, x, y + hh - 18, 12, GOLD);
+  const size = s.phase === 'choose' ? (long ? 16 : 18) : (long ? 13 : 15);
+  if (long) {
+    const mid = Math.ceil(tag.length / 2);
+    let split = tag.lastIndexOf(' ', mid);
+    if (split < 6) split = mid;
+    d.text(tag.slice(0, split).trim(), x, y + hh - (plateH - 22), size, INK);
+    d.text(tag.slice(split).trim(), x, y + hh - (plateH - 42), size, INK);
+  } else {
+    d.text(tag, x, y + hh - (plateH - 28), size, INK);
+  }
+  if (side) d.text(side, x, y + hh - 16, 13, GOLD);
   if (press > 0.05) {
-    d.text('SHUT', x, y - hh - 8, 18, INK);
+    d.text('SHUT', x, y - hh - 8, 20, INK);
   }
 }
 

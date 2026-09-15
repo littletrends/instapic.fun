@@ -79,12 +79,12 @@ export const CHAPTER1 = {
       doors: [
         door('left', 'gallery', {
           correct: true,
-          punchline: 'To raise the roof!',
+          punchline: 'Raise the roof!',
           label: 'Raise the roof',
         }),
         door('right', 'custard', {
           correct: false,
-          punchline: 'To fetch more custard',
+          punchline: 'More custard!',
           label: 'More custard',
         }),
       ],
@@ -120,7 +120,7 @@ export const CHAPTER1 = {
       doors: [
         door('left', 'whoopee', {
           correct: false,
-          punchline: 'A soft landing',
+          punchline: 'Soft landing',
           label: 'Soft landing',
         }),
         door('right', 'last-court', {
@@ -163,12 +163,12 @@ export const CHAPTER1 = {
         door('left', 'exit', {
           correct: true,
           lastLaugh: true,
-          punchline: 'Boo-who? Don\'t cry — exit!',
+          punchline: 'Don\'t cry — exit!',
           label: 'Don\'t cry — exit',
         }),
         door('right', 'false-giggle', {
           correct: false,
-          punchline: 'Boo-who? Keep giggling',
+          punchline: 'Keep giggling',
           label: 'Keep giggling',
         }),
       ],

@@ -429,7 +429,7 @@ function drawBasket(d, s) {
   const rising = !!s.holding && (s.holdAccum || 0) >= HOLD_SUSTAIN * 0.4;
   const scale = rising ? 1.06 : 1;
   d.line({x: bx, y: by - 38 * scale}, {x: bx, y: by - 8}, '#d2a65b', 2);
-  if (rising) d.glow(bx, by - 56, 28, '#f4d59088');
+  if (rising) d.glow(bx, by - 56, 28, '#f4d590');
   d.circle(bx - 16 * scale, by - 52 * scale, 16 * scale, '#e8a0b8cc', '#f4d590', 1.5);
   d.circle(bx + 14 * scale, by - 56 * scale, 14 * scale, '#7eb8b0cc', '#f4d590', 1.5);
   d.circle(bx, by - 64 * scale, 18 * scale, '#f0d09acc', '#d2a65b', 1.5);
@@ -454,7 +454,7 @@ function drawHoldChrome(d, s) {
     [HOLD_X0, HOLD_Y1],
   ], active ? '#3a2430cc' : '#2a1c18aa', active ? '#d2a65b' : '#a8907088', active ? 3 : 2);
 
-  if (active) d.glow(170, 1060, 36, '#f4d59055');
+  if (active) d.glow(170, 1060, 36, '#f4d590');
 
   const barX = HOLD_X0 + 18;
   const barY = HOLD_Y0 + 16;
@@ -488,7 +488,7 @@ function drawPopButton(d, s) {
     [POP_X0, POP_Y1],
   ], flash ? '#6a3048f2' : '#4a2038ee', '#ffe6a4', strokeW);
 
-  d.glow(590, 1065, 80 + pulse * 30, '#ffe6a4' + Math.floor(50 + pulse * 60).toString(16).padStart(2, '0'));
+  d.glow(590, 1065, 80 + pulse * 30, '#ffe6a4');
   d.text('POP', 590, 1060, 64, '#fff6d8');
   d.text('the glowing balloon', 590, 1120, 18, '#f0d09a');
 }
