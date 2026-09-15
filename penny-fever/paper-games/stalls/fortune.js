@@ -3,7 +3,7 @@ import {takeAttempt} from '../stall-entry.js?v=iris-token-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
-  fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
+  fortuneFor, resultNumber, isIrisWin, symbolName, slotAt,
 } from "../fortune-globe.js?v=iris-token-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
@@ -151,9 +151,6 @@ function finishGaze(s) {
     } else if (hit) {
       s.ordinary = "star-token";
       keep("star-token", "fortune");
-    } else {
-      s.ordinary = "everyday-penny";
-      credit(1);
     }
   } else if (treasureOk) {
     markOwned(s.level);

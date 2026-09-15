@@ -146,10 +146,10 @@ for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
 assert.equal(gaze.note,'Star token collected. Bonus still locked.');assert(!gaze.won);assert(awards.includes('star-token'));assert(!awards.includes('moon-lantern'));
-inventory.items={};awards=[];mem.clear();cash=20;
+inventory.items={};awards=[];mem.clear();cash=20;credits=[];
 gaze=iris.create(2);iris.action(gaze,'gaze');iris.update(gaze,3);
-iris.pointer(gaze,'down',{x:450,y:428});
-assert(!gaze.caught);assert(!awards.includes('star-token'),'a slipped catch must not pay a star token');
+for(let i=0;i<gaze.globe.rings.length;i++)iris.pointer(gaze,'down',{x:450,y:428});
+assert.equal(gaze.phase,'result');assert(!gaze.caught);assert.equal(awards.length,0,'a slipped gaze holds no reward');assert.equal(cash,20);assert.equal(credits.length,0);
 console.log('PASS: Iris chapter 6 is paper-crown; first catch collects the bonus; later greens pay a star token; misses do not.');
 
 mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];

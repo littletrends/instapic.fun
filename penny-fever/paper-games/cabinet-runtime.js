@@ -287,7 +287,7 @@ listen($("#menu-close"), "click", closeMenu);
 
 try {
   if (!entry?.ready) throw Error("Choose an available game from the catalogue.");
-  engine = (await import(entry.module+"?v=iris-green-1")).default;
+  engine = (await import(entry.module+"?v=iris-miss-1")).default;
   level = engine.selectedChapter?.() || 0;
   document.title = engine.title + " · Penny Fever";
   $("#title").textContent = engine.title;
