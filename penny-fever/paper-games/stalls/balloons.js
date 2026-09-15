@@ -59,9 +59,9 @@ const CY = 500; // pink oval court centre — backdrop owns the art
 const ORBIT_RX = 210;
 const ORBIT_RY = 155;
 
-const LOW_PATH = 0.36;
-const HIGH_PATH = 0.64;
-const POP_HALF = 0.34; // Ch1 forgiving height band
+const LOW_PATH = 0.40;
+const HIGH_PATH = 0.58;
+const POP_HALF = 0.40; // Ch1 very forgiving height band
 const TREASURE_HALF = 0.24;
 const HEIGHT_MIN = 0.06;
 const HEIGHT_MAX = 0.94;
@@ -78,16 +78,16 @@ const POP_Y0 = 960;
 const POP_Y1 = 1176;
 
 const HOLD_SUSTAIN = 0.12;
-const HOLD_ACCEL = 1.45;
-const RELEASE_ACCEL = -1.0;
+const HOLD_ACCEL = 1.75; // faster reach to high path
+const RELEASE_ACCEL = -1.2;
 const VEL_DAMP = 0.86;
 
 const BLOCKER_COUNT = 6;
-const GOAL = 4; // POP 4 of 6 lit blockers to open the corridor
-const RIDE_SECS = 48;
+const GOAL = 4; // POP 4 of 6 — Ch1 tuned so 4 is reachable
+const RIDE_SECS = 65; // time to land the 4th POP
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
-const POP_NEAR_ANG = 1.05; // Ch1 wide orbit window to POP
+const POP_NEAR_ANG = 1.25; // Ch1 very wide orbit window
 const POP_COOLDOWN = 0.18;
 
 const SPAWN_IDS = ['low-path', 'high-path'];
@@ -95,7 +95,7 @@ const SPAWN_IDS = ['low-path', 'high-path'];
 const LATEX = ['#e8a0b8', '#7eb8b0', '#f0d09a', '#c9a0d8', '#8ec8e8', '#f4b890'];
 
 function orbitSpeed(level, reduced) {
-  const base = 0.14 + Math.min(0.03, level * 0.008); // Ch1 slow weave
+  const base = 0.11 + Math.min(0.02, level * 0.006); // Ch1 very slow weave
   return reduced ? base * 0.62 : base;
 }
 
@@ -146,8 +146,9 @@ function buildBlockers(level) {
   const span = Math.PI * 1.85;
   const start = -0.25;
   return Array.from({length: BLOCKER_COUNT}, (_, i) => {
-    const high = i % 2 === 1;
-    const h = high ? HIGH_PATH : LOW_PATH;
+    // Ch1: first target is mid-height (easy first POP), then alternate.
+    const high = i === 0 ? false : (i % 2 === 1);
+    const h = i === 0 ? (LOW_PATH + HIGH_PATH) * 0.5 : (high ? HIGH_PATH : LOW_PATH);
     const ang = start + ((i + 1) / (BLOCKER_COUNT + 1)) * span;
     const decoys = [
       {ox: -38, oy: 10, r: 18, col: LATEX[(i * 2) % LATEX.length]},
@@ -268,7 +269,7 @@ function softContactCluster(s) {
     pushBurst(s, pos.x, pos.y, true);
     // Wobble only — keep the lit target POP-able. Never confiscate / abort.
     logAction(s, 'brush', {id: b.id});
-    if (!earlyClarity(s)) {
+    if (!earlyClarity(s) && (s.cleared || 0) < 3) {
       s.note = 'Leaves brushed — still POP the glowing balloon. Cleared '
         + s.cleared + ' / ' + s.goal + '.';
     }
@@ -305,13 +306,18 @@ function attemptPop(s) {
 
   const ad = angDist(s.angle, lit.angle);
   let dh = Math.abs(s.height - lit.height);
-  const near = ad <= POP_NEAR_ANG;
+  // After 3 clears, Ch1 opens the door for the 4th POP.
+  const clutch = (s.cleared || 0) >= 3;
+  const nearLim = clutch ? POP_NEAR_ANG + 0.35 : POP_NEAR_ANG;
+  const halfLim = clutch ? lit.half + 0.12 : lit.half;
+  const near = ad <= nearLim;
   // Ch1 forgiveness: if near and almost in band, nudge into the POP band.
-  if (near && dh <= lit.half + 0.10) {
-    s.height = s.height + (lit.height - s.height) * 0.55;
+  const snapBand = clutch ? halfLim + 0.12 : lit.half + 0.16;
+  if (near && dh <= snapBand) {
+    s.height = s.height + (lit.height - s.height) * (clutch ? 0.9 : 0.72);
     dh = Math.abs(s.height - lit.height);
   }
-  const heightOk = dh <= lit.half;
+  const heightOk = dh <= halfLim;
 
   if (near && heightOk) {
     lit.cleared = true;
