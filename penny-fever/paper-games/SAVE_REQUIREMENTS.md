@@ -153,3 +153,12 @@ and phone/desktop browser checks passed previous/next boundaries, collection-tre
 expansion, shelf-to-tree selection, image pages and saved-globe equality across a
 Treasure Book visit. Publication is included with this navigation update. The broader
 browser-close/payment-interruption limitations above are unchanged.
+
+## Fortune result controls — 15 September 2026
+
+The lower purple-area control repeats the centre globe's gaze/stop action. CAUGHT
+results offer chapter advance (disabled at the final chapter); missed catches offer
+a normal paid retry. The existing snapshot format and save/restore paths are unchanged.
+Node checks cover both controls, no double charging, one charge for a retry, no charge
+for chapter navigation and the final chapter boundary. Phone browser checks use
+constructed caught/missed result fixtures to verify both result actions and layout.

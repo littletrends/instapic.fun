@@ -38,5 +38,14 @@ for(let level=0;level<6;level++){
 for(let level=0;level<6;level++)assert.equal(JSON.stringify(iris.create(level).globe),irisSnapshots[level]);
 const finished=iris.create(5);while(finished.phase==='spin')iris.pointer(finished,'down',{x:450,y:428});
 iris.persist(finished);const savedResult=iris.create(5);assert.equal(savedResult.fortune,finished.fortune);assert.equal(savedResult.note,finished.note);assert.equal(savedResult.practice,finished.practice);
-const idle=iris.create(4);idle.phase='idle';idle.charged=false;const beforeDebit=debits.length;iris.pointer(idle,'down',{x:450,y:1020});assert.equal(idle.phase,'idle');assert.equal(debits.length,beforeDebit,'removed lower controls cannot charge');
+const idle=iris.create(4);idle.phase='idle';idle.charged=false;const beforeDebit=debits.length;iris.pointer(idle,'down',{x:40,y:1084});assert.equal(idle.phase,'idle');assert.equal(debits.length,beforeDebit,'removed lower controls cannot charge');
 console.log('PASS: six Iris chapter snapshots, centre-only input, varied signs, eight-slot rules and reading persistence.');
+
+let lower=iris.create(0);lower.phase='idle';lower.charged=false;cash=20;
+let charged=debits.length;iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1);
+iris.pointer(lower,'down',{x:450,y:428});assert.equal(debits.length,charged+1,'second control cannot double-charge');
+iris.update(lower,3);iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result');
+lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1,'Try again costs one normal gaze');
+lower.phase='result';lower.fortune='A test reading.';lower.caught=true;lower.requestNext=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert(lower.requestNext);assert.equal(debits.length,charged,'Next chapter does not buy a gaze');
+lower.level=5;lower.requestNext=false;iris.pointer(lower,'down',{x:450,y:954});assert(!lower.requestNext,'last chapter cannot advance');
+console.log('PASS: both gaze controls, single charge, result retry/advance and final chapter boundary.');
