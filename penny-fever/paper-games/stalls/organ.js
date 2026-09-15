@@ -35,7 +35,7 @@ const GOLD = '#e8c878';
 const CREAM = '#efe6d0';
 const INK = '#f0d18f';
 const MOUTH_R = 56;
-const CLIMB_SECS = 2.4;
+const CLIMB_SECS = 3.6;
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
@@ -185,7 +185,7 @@ function drawCockpit(d, s) {
       [pipe.x + 16, pipe.topY],
       [pipe.x + 22, pipe.mouthY],
       [pipe.x - 22, pipe.mouthY],
-    ], live ? pipe.fill + '66' : '#b78b4833', GOLD, live ? 3 : 1.5);
+    ], live ? pipe.fill + 'cc' : '#b78b4833', GOLD, live ? 5 : 1.5);
     d.ellipse(pipe.x, pipe.topY, 14, 7, '#d2a65bcc', GOLD, 1);
   });
 }
@@ -405,10 +405,7 @@ export default {
       missClimb(s);
       return;
     }
-    if (s.climb < HIT_MIN || s.climb > HIT_MAX) {
-      missClimb(s);
-      return;
-    }
+    // If the mouth is live, TAP scores — window is juice, not a trap.
     hitClimb(s);
   },
   action(s, id) {
@@ -430,7 +427,6 @@ export default {
     if (c) { c.save(); c.translate(shakeX, 0); }
 
     d.ellipse(450, 520, 360, 420, '#4a182412');
-    drawPractice(d, s);
     drawCockpit(d, s);
     drawClimbingNote(d, s);
     if (s.phase === 'chamber') drawChamber(d, s);
