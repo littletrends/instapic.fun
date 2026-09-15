@@ -80,3 +80,11 @@ dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;ins
 .crew-background-menu{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 12px;font-size:14px}
 .crew-background-menu select{max-width:70%;min-height:40px;padding:6px 10px;border:1px solid #987345;border-radius:6px;background:#fffaf0;color:#382816;font:inherit}
 .crew-book.is-open-album .crew-background-menu,.crew-book.is-open-album #crewDisplayStatus{display:none}
+
+/* iPhone: avoid form-focus zoom and selection/callouts while using cutouts. */
+.crew-book{touch-action:manipulation;overscroll-behavior:contain}
+.crew-book button,.crew-book summary,.crew-book label,.crew-book canvas,.crew-book .crew-portrait,.crew-book .doll-piece-thumb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media (pointer:coarse){
+  .crew-book select,.crew-book input,.crew-book button,.crew-book summary{font-size:16px}
+  .crew-book select,.crew-book button,.crew-book summary{touch-action:manipulation}
+}

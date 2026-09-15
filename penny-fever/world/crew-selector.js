@@ -2,7 +2,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine,
-} from './paper-dolls.js?v=doll-travel-phone-10';
+} from './paper-dolls.js?v=doll-iphone-touch-11';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';
@@ -273,6 +273,9 @@ function positionCrewBook() {
   const book=document.querySelector('dialog.crew-book[open]');
   const viewport=window.visualViewport;
   if (!book || !viewport) return;
+  // Do not chase Safari focus/pinch zoom: moving and shrinking the dialog
+  // during that gesture makes it appear stuck and interferes with panning.
+  if (viewport.scale > 1.05) return;
   // Mobile layout viewports may be wider than the visible screen (overflow,
   // zoom or the keyboard). Centre on the visible viewport, not that page width.
   book.style.left=`${viewport.offsetLeft+viewport.width/2}px`;
@@ -461,7 +464,7 @@ function mount() {
     });
     book.querySelector('#skinWheel')?.addEventListener('input', e => setWheel('skin', e.target.value));
     book.querySelector('#eyesWheel')?.addEventListener('input', e => setWheel('eyes', e.target.value));
-    book.addEventListener('close', () => document.getElementById('editCrew')?.focus());
+    book.addEventListener('close', () => document.getElementById('editCrew')?.focus({preventScroll:true}));
     const doll = book.querySelector('#crewRunwayDoll');
     if (doll) {
       let drag = null;
