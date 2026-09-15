@@ -179,6 +179,6 @@ Validation: Node tests pass all six chapters × four drop sizes from a 300-penny
 
 ## Copper four-penny release fix — 15 September 2026
 
-Prepared for publication. Existing v6 trays keep their penny positions, motion and accounting. All chapters use a four-paid-penny threshold; overdue unowned prizes are inserted and persisted during restore without a debit. Existing prize positions are retained and owned prizes are not reissued.
+Published as `f00e2df`, included in successful Pages run `34926887898`. Existing v6 trays keep their penny positions, motion and accounting. All chapters use a four-paid-penny threshold; overdue unowned prizes are inserted and persisted during restore without a debit. Existing prize positions are retained and owned prizes are not reissued.
 
 Node evidence: all six chapters release on their fourth single paid penny; old 48-penny saves with nine already paid receive exactly one prize on return with unchanged pennies and wallet. Reload does not duplicate the prize; stale presence flags are repaired. Existing full-haul accounting, practice exclusion, wallet, payout and Iris checks pass. Phone/desktop browser verification covers a four-penny drop, physical prize presence, Treasures return and exact saved tray/wallet restoration after reload. Remaining storage-failure and interrupted-payment limitations from the wider checklist are unchanged.
