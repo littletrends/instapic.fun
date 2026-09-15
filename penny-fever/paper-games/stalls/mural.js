@@ -6,12 +6,13 @@
  *
  * Implemented:
  *   1 First Wash — SPLASH any 2 of 3 patches (lantern, balloons, horse)
- *   2 Lantern Row — medallion match; ONE decoy soft-wash taught alone;
+ *   2 Lantern Row — medallion colour match; ONE decoy soft-wash taught alone;
  *     then 3 matching SPLASHes (~50s first-play). Soft fails never abort.
  *     On goal, guardWinClock so dry-out cannot beat Practice complete.
+ *   3 Carousel Frieze — horse motif only in the window; ONE non-horse soft teach;
+ *     then 3 horse SPLASHes (~50s). Motif read, not colour.
  *
  * Unfinished:
- *   3 Carousel Frieze — horse patch only in the window
  *   4 Evening Panorama — splash floods into neighbours
  *   5 Midway Memories — remembered fragments in order
  *   6 The Living Bay — long Sunday route; panorama wakes
@@ -45,6 +46,24 @@ const COLOURS = {
   gold: {id: 'gold', glyph: '★', name: 'Gold', color: '#d2a65b'},
   green: {id: 'green', glyph: '●', name: 'Green', color: '#3a6a4a'},
 };
+const HORSE_TARGET = {id: 'horse', glyph: '♞', name: 'Horse', color: '#6b2030', kind: 'motif'};
+
+function boardNote(level) {
+  if (level === 2) return 'SPLASH only the ♞ horse.';
+  if (level === 1) return 'SPLASH only the ♥ match.';
+  return 'SPLASH the faded patch.';
+}
+
+function teachLine(s) {
+  if (s.level === 2) return 'Not a horse — wait for ♞ in the window.';
+  return 'Wrong colour washes away — wait for ' + (s.target?.glyph || '♥') + '.';
+}
+
+function matchLine(s) {
+  if (s.level === 2) return 'SPLASH the ♞ horse in the window.';
+  if (s.target) return 'SPLASH the ' + s.target.glyph + ' match.';
+  return 'SPLASH inside the frame.';
+}
 
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
 const GOLD = '#d2a65b';
@@ -54,6 +73,26 @@ const MIX = '#8a4060';
 const CURTAIN = 0.9;
 
 function chapterPlan(level, reduced) {
+  if (level === 2) {
+    // Carousel Frieze — horse patch only in the window (Lorie: horse-emblem stencil).
+    const panels = [
+      {id: 'decoy-lantern', motif: 'lantern', colour: 'burgundy', match: false, teach: true},
+      {id: 'horse-a', motif: 'horse', colour: 'burgundy', match: true},
+      {id: 'horse-b', motif: 'horse', colour: 'gold', match: true},
+      {id: 'horse-c', motif: 'horse', colour: 'burgundy', match: true},
+    ];
+    return {
+      goal: 3,
+      house: 60,
+      dwell: reduced ? 7.2 : 5.8,
+      speed: reduced ? 72 : 94,
+      warn: 6.5,
+      target: HORSE_TARGET,
+      panels,
+      foldMedallion: true,
+      mode: 'motif',
+    };
+  }
   if (level === 1) {
     // Lantern Row — deepen SPLASH with one teach decoy, then 3 matches.
     const target = COLOURS.burgundy;
@@ -72,6 +111,7 @@ function chapterPlan(level, reduced) {
       target,
       panels,
       foldMedallion: true,
+      mode: 'colour',
     };
   }
   // First Wash
@@ -83,6 +123,7 @@ function chapterPlan(level, reduced) {
     warn: 0,
     target: null,
     foldMedallion: false,
+    mode: 'any',
     panels: MOTIFS.map((m) => ({
       id: m.id, motif: m.id, colour: 'burgundy', match: true, teach: false,
     })),
@@ -163,11 +204,10 @@ function spawnAt(s, idx) {
   s.medalOpen = 1;
   if (row.teach) {
     s.warnLeft = s.warn;
-    s.note = 'Wrong colour washes away — wait for ' + (s.target?.glyph || '♥') + '.';
+    s.note = teachLine(s);
   } else {
     s.warnLeft = 0;
-    if (s.target) s.note = 'SPLASH the ' + s.target.glyph + ' match.';
-    else s.note = 'SPLASH inside the frame.';
+    s.note = matchLine(s);
   }
 }
 
@@ -211,7 +251,7 @@ function softWash(s, panel) {
   s.paused = true;
   s.softUntil = s.t + 0.75;
   logAction(s, 'wash', {id: panel.id, colour: panel.colour});
-  s.note = 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♥') + '.';
+  s.note = 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♞') + '.';
   s.juice = true;
 }
 
@@ -326,11 +366,15 @@ function drawCoach(d, s) {
   if (!s.boarded || s.result) return;
   let line = null;
   if (s.warnLeft > 0) {
-    line = 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
+    line = s.level === 2
+      ? 'Horse only — wait for ♞ in the window'
+      : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
   } else if (!s.juice && s.t < 5.2 && s.level === 0) {
     line = 'SPLASH the faded patch';
   } else if (!s.juice && s.t < 6.5 && s.level === 1) {
     line = 'SPLASH only the ' + (s.target?.glyph || '♥') + ' match';
+  } else if (!s.juice && s.t < 7.2 && s.level === 2) {
+    line = 'SPLASH only the ♞ horse in the window';
   }
   if (!line) return;
   const c = d.c;
@@ -357,14 +401,14 @@ function drawMedallion(d, s) {
   d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
   d.circle(x, y, 36, s.target.color, GOLD, 2);
   d.text(s.target.glyph, x, y + 10, 28, CREAM);
-  d.text('match', x, y + 62, 14, GOLD);
+  d.text(s.level === 2 ? 'horse' : 'match', x, y + 62, 14, GOLD);
   c.restore();
 }
 
 export default {
   title: 'Painted Bay',
-  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. From Lantern Row, match the medallion colour; a wrong splash only washes soft.',
-  instructions: 'SPLASH the faded patch when it sits in the frame. Chapter 1: restore any two of three. Chapter 2 (Lantern Row): splash only the medallion match — a wrong colour soft-washes and the ride continues. First ride of each chapter is free practice and keeps nothing.',
+  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. Lantern Row matches medallion colour; Carousel Frieze waits for the horse emblem in the window. Wrong splash only washes soft.',
+  instructions: 'SPLASH the faded patch when it sits in the frame. Ch1: any two of three. Ch2 Lantern Row: medallion colour match. Ch3 Carousel Frieze: horse only in the window — a non-horse soft-washes and the ride continues. First ride of each chapter is free practice and keeps nothing.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -397,7 +441,7 @@ export default {
       scroll: 0,
       speed: plan.speed,
       dwellMax: plan.dwell,
-      discoverySecs: level === 1 ? 1.55 : 2.6,
+      discoverySecs: level >= 1 ? 1.55 : 2.6,
       warn: plan.warn,
       warnLeft: plan.panels[0]?.teach ? plan.warn : 0,
       softUntil: 0,
@@ -405,6 +449,7 @@ export default {
       goal: plan.goal,
       target: plan.target,
       foldMedallion: plan.foldMedallion,
+      mode: plan.mode || 'any',
       medalOpen: 1,
       paused: false,
       discovery: 0,
@@ -414,14 +459,14 @@ export default {
       juice: false,
       houseStamp: plan.house,
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
-      note: level === 1 ? 'SPLASH only the ♥ match.' : 'SPLASH the faded patch.',
+      note: boardNote(level),
     });
   },
   update(s, dt) {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, s.spawnIds || s.panels.map((p) => p.id))) {
       if (s.houseStamp && s.houseLeft != null) s.houseLeft = s.houseStamp;
-      s.note = s.level === 1 ? 'SPLASH only the ♥ match.' : 'SPLASH the faded patch.';
+      s.note = boardNote(s.level);
     }
     if (s.result) return;
     s.t += dt;
@@ -540,7 +585,11 @@ export default {
       if (x < -80 || x > 980) return;
       const faded = !row.restored;
       drawMotif(d, row.motif || row.id, x, FRAME.y, faded, row.flood || 0, s.t);
-      if (s.level >= 1) drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
+      if (s.level === 1) drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
+      if (s.level === 2) {
+        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+        d.text(row.match ? '♞' : '·', x + 70, FRAME.y - 62, 20, CREAM);
+      }
       if (row.wash > 0) {
         d.glow(x, FRAME.y, 70, '#8ab4c8');
         d.text('wash', x, FRAME.y, 22, '#c8e0f0');
@@ -584,7 +633,10 @@ export default {
       c.lineWidth = 3;
       c.stroke();
       d.text('SPLASH', 450, top + 210, 44, CREAM);
-      d.text(s.level === 1 ? 'match the medallion' : 'the faded patch', 450, top + 262, 22, GOLD);
+      d.text(
+        s.level === 2 ? 'horse only in the window' : s.level === 1 ? 'match the medallion' : 'the faded patch',
+        450, top + 262, 22, GOLD,
+      );
       c.restore();
     }
 
