@@ -56,7 +56,7 @@ for(let level=0;level<6;level++){
  for(let i=0;i<s.globe.rings.length;i++){
   const r=s.globe.rings[i];r.angle=r.glyphs.indexOf(s.globe.flash[i])*Math.PI*2/r.n;iris.pointer(s,'down',{x:450,y:428});
  }
- assert(s.won,'first matched gaze awards treasure');assert.equal(s.note,'Bonus unlocked.');
+ assert(s.won,'first matched gaze awards treasure');assert.equal(s.note,'Bonus collected.');
  assert(awards.includes(IRIS_CHAPTERS[level].prize));
  iris.persist(s);const qty=awards.length;iris.create(level);assert.equal(awards.length,qty);
 }

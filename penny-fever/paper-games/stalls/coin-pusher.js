@@ -606,7 +606,7 @@ export default {
       c.globalAlpha = 1;
       d.text("Locked", 450, 312, 14, "#ead6a4");
     } else if (s.tray.treasureOwned) {
-      d.text("Treasure kept", 450, 268, 16, "#c8e878");
+      d.text("Collected", 450, 268, 16, "#c8e878");
     }
     if (s.flash > 0) {
       c.fillStyle = `rgba(255, 220, 120, ${s.flash * 0.25})`;

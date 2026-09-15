@@ -67,7 +67,7 @@ function showPrize(id){
  const key=spriteKey(id),art=draw?.art?.[key];
  img.hidden=false;
  img.src=art?art.toDataURL():frontUrl(key);
- if(cap){cap.hidden=false;cap.textContent='Kept for later: '+itemName(id);}
+ if(cap){cap.hidden=false;cap.textContent='Collected: '+itemName(id);}
 }
 function veil(tag,title,detail,button,prize){$('#veil-tag').textContent=tag;$('#veil-title').textContent=title;$('#veil-detail').textContent=detail;$('#begin').textContent=button;showPrize(prize||null);$('#veil').hidden=false;}
 function clearInput(){input.keys.clear();input.actions.clear();input.down=false;if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;if(state)engine?.releaseInput?.(state);}
@@ -106,7 +106,7 @@ function paintHud(){
  const playButton=$('#actions [data-action=play]');if(playButton&&engine?.playLabel&&state)playButton.textContent=engine.playLabel(state);
  const cash=$('#hud-cash'),keep=$('#hud-keep'),next=$('#next-chapter');
  if(cash)cash.textContent=custom?.cash??((!embedded||state?.practice)?'Practice':'Paid play');
- if(keep){const live=draw?.liveStatus;keep.textContent=custom?.keep??(state?.treasureCollected||state?.prizePosted?'Treasure ✓':state?.treasureRevealed?'Treasure!':live?live.count+'/'+live.goal+' '+live.label:'Ch '+(level+1));}
+ if(keep){const live=draw?.liveStatus;keep.textContent=custom?.keep??(state?.treasureCollected||state?.prizePosted?'Bonus collected':state?.treasureRevealed?'Bonus locked':live?live.count+'/'+live.goal+' '+live.label:'Ch '+(level+1));}
  const mode=$('#hud-mode');if(mode)mode.hidden=true;
  const clock=$('#hud-house');
  if(clock){
@@ -165,7 +165,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+(entry.id==='pinball'?'?v=pip-items-1':entry.id==='milk-bottles'?'?v=milk-delivery-1':'?v=first-prize-1'))).default;
+ engine=(await import(entry.module+(entry.id==='pinball'?'?v=pip-spring-1':entry.id==='milk-bottles'?'?v=pip-spring-1':'?v=first-prize-1'))).default;
  if(entry.id==='pinball')document.body.classList.add('pinball-game');
  if(engine.selectedChapter)level=engine.selectedChapter();
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#compact-title').textContent=engine.title;$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.fullInstructions?engine.instructions:engine.instructions.split(/(?<=[.!?])\s+/).slice(0,2).join(' ');canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);

@@ -71,3 +71,15 @@ for(let level=0;level<6;level++)for(let second=1;second<=100;second++){
  assert.equal(awards.includes(e.prizes[level]),e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
 }
 console.log('PASS: all 600 winning/non-winning second windows, including second 100.');
+
+// Pre-pull a returning ball without moving it onto the spring or buying a ball.
+s=fresh();launch(s);s.houseLeft=40;s.ball={x:726,y:600,vx:0,vy:150};const returningDebit=debits,returningCredit=s.credit,returningBalls=s.balls;
+assert(e.actionEnabled(s).plunge);e.action(s,'plunge',true);tick(s,12,['plunge']);assert(s.charging&&s.charge>.2);assert(s.ball.y<900&&s.mode==='live','charging cannot teleport the falling ball');
+e.persist(s);r=e.create(0);assert.deepEqual(r.ball,s.ball);assert(!r.charging);assert.equal(r.houseLeft,s.houseLeft);
+for(let i=0;i<150&&s.mode==='live';i++)tick(s,1,['plunge']);assert.equal(s.mode,'lane');assert(s.charging&&s.charge>.5,'landing preserves held spring');const timeAtLanding=s.houseLeft;
+e.action(s,'plunge',false);assert.equal(s.mode,'live');assert(s.ball.vy<0);assert.equal(s.houseLeft,timeAtLanding);assert.equal(s.credit,returningCredit);assert.equal(s.balls,returningBalls);assert.equal(debits,returningDebit);
+// Early release and cancellation simply let the empty spring go.
+s.ball={x:726,y:600,vx:0,vy:150};e.action(s,'plunge',true);tick(s,10,['plunge']);const falling={...s.ball};e.action(s,'plunge',false);assert.deepEqual(s.ball,falling);assert.equal(s.charge,0);assert(!s.charging);assert.equal(debits,returningDebit);
+e.pointer(s,'down',{x:776,y:1000,pointerId:23});e.pointer(s,'move',{x:776,y:1070,pointerId:23});assert(s.charge>.5);e.pointer(s,'cancel',{x:776,y:1070,pointerId:23});assert(!s.charging);assert.deepEqual(s.ball,falling);
+s.ball={x:440,y:600,vx:0,vy:150};assert(!e.actionEnabled(s).plunge);s.ball={x:726,y:600,vx:0,vy:-150};assert(!e.actionEnabled(s).plunge);
+console.log('PASS: returning-ball precharge, held landing, same-ball relaunch, timer/credit preservation, early release, canvas cancel and mid-return reload.');

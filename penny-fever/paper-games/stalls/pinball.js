@@ -91,7 +91,7 @@ function releaseInput(s){
  if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
 }
 function prizeStatus(s){
- if(!pickUnique(s))return 'Treasure collected';
+ if(!pickUnique(s))return 'Bonus collected';
  return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
@@ -277,8 +277,10 @@ function canAfford(s) {
   if (!alleyPlay) return s.ammo > 0;
   return !!s.activeBall || (s.credit||0)>0 || (pocket() || 0) >= 1;
 }
+function returningBall(s){return s.mode==='live'&&s.activeBall&&inShooter(s.ball)&&s.ball.y>410&&s.ball.vy>=0;}
+function canPull(s){return s.mode==='lane'||returningBall(s);}
 function beginCharge(s) {
-  if (s.mode !== 'lane' || s.charging) return;
+  if (!canPull(s) || s.charging) return;
   if (!canAfford(s)) {
     s.note = alleyPlay
       ? 'Need a penny to pull the spring. Cash a booth ticket for a five-penny stack.'
@@ -289,7 +291,7 @@ function beginCharge(s) {
   s.charge = 0.02;
 }
 function releasePlunger(s) {
-  if (s.mode !== 'lane' || !s.charging) { s.charging = false; return; }
+  if (s.mode !== 'lane' || !s.charging) { s.charging = false;s.charge=0; return; }
   const power = s.charge;
   s.charging = false;
   s.charge = 0;
@@ -362,14 +364,14 @@ export default {
   cancelAction(s,id){if(id==='plunge'){s.pointerPlunge=false;s.dragPlunge=false;s.charging=false;s.charge=0;if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};}else if(id==='left'||id==='right')s[id]=false;},
   hud(s){return {cash:alleyPlay?(pocket()||0)+' pennies':'Practice',keep:(s.mode==='live'?'Ball in play · ':'')+(alleyPlay?Math.max(0,s.credit||0)+' ready':s.ammo+' ready')};},
   actionStates(s,input){return {left:s.left||input.actions.has('left')||input.keys.has('z')||input.keys.has('ArrowLeft'),right:s.right||input.actions.has('right')||input.keys.has('x')||input.keys.has('ArrowRight'),plunge:s.charging};},
-  actionEnabled(s){return {plunge:s.mode==='lane'&&canAfford(s)};},
-  actionLabels(s){return {plunge:s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
+  actionEnabled(s){return {plunge:canPull(s)&&canAfford(s)};},
+  actionLabels(s){return {plunge:returningBall(s)?'Pull back · ball returning':s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
   intro: alleyPlay
     ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter bonus. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
@@ -423,12 +425,11 @@ export default {
     const wantL = s.left || actions.has('left') || keys.has('z') || keys.has('Z') || keys.has('ArrowLeft');
     const wantR = s.right || actions.has('right') || keys.has('x') || keys.has('X') || keys.has('ArrowRight');
     const holdPlunge = s.pointerPlunge || actions.has('plunge') || keys.has(' ');
-    if (s.mode === 'lane') {
+    if (canPull(s)) {
       if (holdPlunge) beginCharge(s);
       if (s.charging) {
         if (holdPlunge && !s.dragPlunge) s.charge = clamp(s.charge + dt * 1.28, 0, 1);
-        s.ball.x = LANE.x;
-        s.ball.y = LANE.y + s.charge * LANE.pull;
+        if(s.mode==='lane'){s.ball.x=LANE.x;s.ball.y=LANE.y+s.charge*LANE.pull;}
       }
       if (s.charging && !holdPlunge) releasePlunger(s);
     } else if (s.mode === 'dead') {
@@ -525,13 +526,11 @@ export default {
       if (speed > MAX) { p.vx *= MAX / speed; p.vy *= MAX / speed; }
       if (shouldDrain(s, p)) drain(s);
     }
-    if (s.mode === 'live' && inShooter(s.ball) && s.ball.y > 1010 && s.ball.vy > -10) {
+    if (s.mode === 'live' && inShooter(s.ball) && s.ball.y >= LANE.y+s.charge*LANE.pull && s.ball.vy >= 0) {
       s.mode = 'lane';
-      s.charge = 0;
-      s.charging = false;
-      s.ball = {x: LANE.x, y: LANE.y, vx: 0, vy: 0};
+      s.ball = {x: LANE.x, y: LANE.y+s.charge*LANE.pull, vx: 0, vy: 0};
       s.trail = [];
-      s.note = 'Back down the lane. Same ball — pull the spring again.';
+      s.note = s.charging?'Ball ready — release the spring.':'Back down the lane. Same ball — pull the spring again.';
     }
     if (s.mode === 'live') {
       s.trail.push({x: s.ball.x, y: s.ball.y});
@@ -551,12 +550,12 @@ export default {
   pointer(s, type, p) {
     const id=String(p.pointerId??'primary');p={...p,x:(p.x+204)/1.35};s.touches ||= {};
     if(type==='down'){
-      const role=s.mode==='lane'&&p.x>690&&p.x<780&&p.y>850&&p.y<1120?'plunge':p.x<450?'left':'right';
+      const role=canPull(s)&&p.x>690&&p.x<780&&p.y>850&&p.y<1120?'plunge':p.x<450?'left':'right';
       s.touches[id]=role;
       if(role==='plunge'){s.pointerPlunge=true;s.dragPlunge=false;s.plungeY=p.y;beginCharge(s);}
     }
     const role=s.touches[id];
-    if(type==='move'&&role==='plunge'&&s.mode==='lane'&&Math.abs(p.y-s.plungeY)>5){
+    if(type==='move'&&role==='plunge'&&canPull(s)&&Math.abs(p.y-s.plungeY)>5){
       s.dragPlunge=true;s.charge=clamp((p.y-s.plungeY)/100,0.05,1);
     }
     if(type==='up'||type==='cancel'){
@@ -624,7 +623,7 @@ export default {
       d.poly(pts, set.bat, '#f8e6b8', 2);
       d.circle(f.x, f.y, 13, '#d4b07a', '#f8e6b8', 2);
     }
-    const springY = LANE.y + (s.mode === 'lane' ? s.charge * LANE.pull : 0);
+    const springY = LANE.y + s.charge * LANE.pull;
     d.poly([[696, 1090], [758, 1090], [758, 1148], [696, 1148]], '#3a2a22cc', '#d2b07a', 2);
     d.line({x: LANE.x, y: springY + 16}, {x: LANE.x, y: 1086}, '#c5d0d6', 5);
     const coils = 7;
@@ -651,7 +650,7 @@ export default {
     d.text(String(n), 86, 108, 18, '#fff6d8');
     d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 44, alpha:pickUnique(s)?1:.45, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
-    d.text(pickUnique(s)?'PRIZE':'KEPT',792,132,16,'#f4e2a8');
+    d.text(pickUnique(s)?'LOCKED':'COLLECTED',792,132,12,'#f4e2a8');
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
       const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64,startX=f.x*1.35-204;

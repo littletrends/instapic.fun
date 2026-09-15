@@ -157,9 +157,9 @@ function finishGaze(s) {
   } else if (s.practice) {
     s.note = "Practice — bonus stays locked.";
   } else if (treasureOk) {
-    s.note = "Bonus unlocked.";
+    s.note = "Bonus collected.";
   } else if (chapterOwned(s.level)) {
-    s.note = "Already unlocked.";
+    s.note = "Already collected.";
   } else {
     s.note = "Bonus locked — better luck next time.";
   }
@@ -201,8 +201,8 @@ export default {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
-  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Catching the signs always reads a fortune. The chapter bonus only unlocks on some catches — LOCKED means the bonus stayed shut, UNLOCKED means it is yours. Ticket entry includes the first gaze in each chapter, and that first gaze can unlock the bonus.",
-  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. A clean catch reads a fortune. UNLOCKED means the chapter bonus opened; LOCKED means this catch did not release it — try another gaze. Later gazes cost one penny.",
+  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Catching the signs always reads a fortune. The chapter bonus only unlocks on some catches — LOCKED means the bonus stayed shut, COLLECTED means it is yours. Ticket entry includes the first gaze in each chapter, and that first gaze can unlock the bonus.",
+  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. A clean catch reads a fortune. COLLECTED means the chapter bonus is in your Treasures; LOCKED means this catch did not release it — try another gaze. Later gazes cost one penny.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   images: {
     globe: "./assets/fortune/globe.webp",
@@ -258,7 +258,7 @@ export default {
       won: !!saved.won || chapterOwned(level),
       hold: 0, click: 0, requestNext: false,
       reduced: !!saved.reduced || reducedMotion(),
-      note: saved.note || (resume ? "Stop the rings." : "Gaze when you are ready."),
+      note: ({"Bonus unlocked.":"Bonus collected.","Already unlocked.":"Already collected."}[saved.note] || saved.note) || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
     if ((s.phase === "flash" || s.phase === "spin") && !s.globe) s.globe = makeGlobe(level, s.seed);
     s.preview = makeGlobe(level, s.seed);
@@ -435,7 +435,7 @@ export default {
       d.glow(px, py, 70, s.won ? "#c8e878" : "#e8c878");
       d.sprite(prizeImg, px, py, { w: 118, h: 118 });
       c.restore();
-      const plabel = chapterOwned(s.level) || s.won ? "Unlocked" : "Locked";
+      const plabel = chapterOwned(s.level) || s.won ? "Collected" : "Locked";
       d.text(plabel, px, py + 78, 16, "#fff0c8");
     }
     if (s.practice && s.phase !== "idle") {
@@ -447,7 +447,7 @@ export default {
     if (s.phase === "result" && s.fortune) {
       const hit = !!s.caught;
       const unlocked = hit && (s.won || chapterOwned(s.level)) && !s.practice;
-      const banner = !hit ? "NOT THIS CATCH" : (unlocked ? "UNLOCKED" : "LOCKED");
+      const banner = !hit ? "NOT THIS CATCH" : (unlocked ? "COLLECTED" : "LOCKED");
       const ink = !hit ? "#f0b0b0" : (unlocked ? "#d8f08a" : "#ead6a4");
       roundPath(c, 70, 720, 760, 284, 18);
       c.fillStyle = "rgba(28, 18, 24, 0.94)";

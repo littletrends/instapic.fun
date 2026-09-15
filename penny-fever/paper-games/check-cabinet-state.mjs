@@ -129,12 +129,12 @@ let gaze=iris.create(0);iris.action(gaze,'gaze');iris.update(gaze,3);
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Bonus unlocked.');assert(gaze.won);assert(awards.includes('fortune-slip'));
+assert.equal(gaze.note,'Bonus collected.');assert(gaze.won);assert(awards.includes('fortune-slip'));
 gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');gaze.clock=80;iris.update(gaze,3);
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Already unlocked.');
+assert.equal(gaze.note,'Already collected.');
 inventory.items={};awards=[];mem.clear();cash=20;
 gaze=iris.create(1);iris.action(gaze,'gaze');
 gaze.charged=false;gaze.phase='idle';iris.action(gaze,'gaze');
@@ -145,7 +145,7 @@ for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
 assert.equal(gaze.note,'Bonus locked — better luck next time.');assert(!gaze.won);assert(!awards.includes('moon-lantern'));
-console.log('PASS: Iris chapter 6 is paper-crown; UNLOCKED / LOCKED / already-unlocked copy.');
+console.log('PASS: Iris chapter 6 is paper-crown; COLLECTED / LOCKED / already-collected copy.');
 
 mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];
 let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;

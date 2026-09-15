@@ -222,7 +222,7 @@ export default {
     if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
     if(s.board?.delivered&&chapterPaid(level)&&s.phase==='play'){s.phase='result';s.won=true;s.charged=false;s.hold=0;}
     if(s.phase==='result'&&!s.result&&s.hold<=0){
-      done(s,s.won?'Treasure collected':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
+      done(s,s.won?'Bonus collected':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
     }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     if (s.won && s.chapterPrize) s.chapterPrize.field = false;
@@ -297,7 +297,7 @@ export default {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
     const moves = s.board ? s.board.movesLeft + ' moves' : 'idle';
-    const u = chapterPaid(s.level) ? 'chapter treasure collected' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'delivered' : 'gold treasure on board') : 'treasure ready when you play';
+    const u = chapterPaid(s.level) ? 'bonus collected' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'delivered' : 'gold treasure on board') : 'treasure ready when you play';
     return purse + ' · ' + moves + ' · ' + u + ' · ' + s.note;
   },
 };

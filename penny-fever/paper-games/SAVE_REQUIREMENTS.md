@@ -279,3 +279,11 @@ At the user's request, the added felt/backing and painted bumper discs are remov
 Evidence: Pip state checks pass duplicate collectible counts beyond old caps, currency bounds, all 600 bonus windows, timer and saved-ball regressions; practice and first-prize suites pass. Chromium phone tests pass touch, Treasures return/exact reload, bonus impact, lights-out and prepaid relaunch; phone art inspected. Published as `dac8483`; Pages run `34949698017` succeeded. The live Chromium phone regression passed, including successful loading of all five penny/token images.
 
 Copper warns before dumping 10 or more loose pennies from Drop purse, or 25 or more from ¼ / ½. The tray is not paused or recharged. Pack them first parks every complete 5-pack; Dump anyway spends the warned amount once; Keep them cancels. Single pennies and practice never warn. Warning state is not saved.
+
+## Pip returning plunger and shared bonus terminology — 15 September 2026
+
+The spring can be pulled while the same active ball descends the shooter lane. Pulling never teleports the falling ball; landing preserves the held charge. Release after landing relaunches the same ball with its remaining timer and paid credit count. Releasing before contact lets the empty spring go; cancel/return/reload clear held input without moving an active ball. The spring drawing and button enabled/held labels follow this state.
+
+User's final terminology is **Locked / Collected**, superseding Unlocked and Kept for chapter bonus ownership. Updated Pip, Iris, Copper, Mabel and shared result/HUD wording; Iris's old saved status strings normalize to Collected. Existing internal receipt fields and award rules retain their names and behavior. The standard is recorded in stalls/AGENTS.md for future games.
+
+Evidence: Pip tests pass precharge during descent, no teleport, held landing, early release/cancel, exact returning-ball restore and unchanged debit/credit/timer; all prior 600 bonus-window, pocket, stacking and timer checks pass. First-prize, Mabel-state and Copper/Iris cabinet suites pass. Chromium phone touch check passes pre-pull before landing, hold across landing and same-ball relaunch; existing touch, Treasures/reload and lights-out checks also pass. Publication pending.
