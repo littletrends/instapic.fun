@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Sugar Cyclone: bowl, recipe, trail, 1–100. */
 
 export const SUGAR = {
@@ -36,6 +37,7 @@ export const FLOSSIE_WINS = [
 ];
 
 export function isFlossieWin(level, n) {
+  if(firstPrizeEligible('fairy-floss',level))return true;
   return (FLOSSIE_WINS[level] || FLOSSIE_WINS[0]).includes(n);
 }
 

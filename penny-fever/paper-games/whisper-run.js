@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Whisper Run: phrases, mutations, chapter relays, 1–100. */
 
 export const WILLA_CHAPTERS = [
@@ -25,6 +26,7 @@ export const WILLA_WINS = [
 ];
 
 export function isWillaWin(level, n) {
+  if(firstPrizeEligible('whisper',level))return true;
   return (WILLA_WINS[level] || WILLA_WINS[0]).includes(n);
 }
 

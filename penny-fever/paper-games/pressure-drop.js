@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Pressure Drop: pipes, valves, chair, 1–100. */
 
 export const DUNCAN_CHAPTERS = [
@@ -26,6 +27,7 @@ export const DUNCAN_WINS = [
 ];
 
 export function isDuncanWin(level, n) {
+  if(firstPrizeEligible('dunk-tank',level))return true;
   return (DUNCAN_WINS[level] || DUNCAN_WINS[0]).includes(n);
 }
 

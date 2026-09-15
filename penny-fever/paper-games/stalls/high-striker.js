@@ -1,13 +1,13 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MAGNUS_CHAPTERS, STRIKES, BASE_Y, PLATE_X, PLATE_HALF,
   calledForStrike, sweetAt, resistAt, resolveStrike,
   resultNumber, magnusUnique, ordinaryFor,
-} from '../perfect-strike.js?v=strike-1';
+} from '../perfect-strike.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.perfectStrike';
 const PIVOT = {x: 450, y: 1008};

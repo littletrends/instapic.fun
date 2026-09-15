@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Duckling Parade: auto ducks, route pieces, 1–100. */
 
 export const DOTTIE_CHAPTERS = [
@@ -26,6 +27,7 @@ export const DOTTIE_WINS = [
 ];
 
 export function isDottieWin(level, n) {
+  if(firstPrizeEligible('duck-pond',level))return true;
   return (DOTTIE_WINS[level] || DOTTIE_WINS[0]).includes(n);
 }
 

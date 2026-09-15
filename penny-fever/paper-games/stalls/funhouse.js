@@ -1,7 +1,7 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
-} from '../ride-seek.js?v=phone-layout-1';
+} from '../ride-seek.js?v=first-prize-1';
 
 const RIDE = 'funhouse';
 const TREASURES = ['laughing-doorway', 'balloon-bouquet', 'music-carousel', 'pocket-wheel', 'organ-music-box', 'ride-stamp-book'];

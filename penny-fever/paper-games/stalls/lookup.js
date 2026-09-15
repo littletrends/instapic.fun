@@ -1,7 +1,8 @@
+import {firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
@@ -32,6 +33,7 @@ export function contactFromLaunch(counterT, pathLength, speed) {
   return skyNumber(counterT + travel, speed);
 }
 export function isWinningNumber(level, n) {
+  if(firstPrizeEligible('lookup',level))return true;
   const sky = SKY[level] || SKY[0];
   return sky.wins.includes(n);
 }

@@ -1,11 +1,11 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   makePuzzle, proveUnique, resultNumber, isCabinetWin, ordinaryFor, CABINET_PRIZES,
-} from '../cabinet-puzzles.js?v=ritual-2';
+} from '../cabinet-puzzles.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.cabinetThatLies';
 const LEVELS = [

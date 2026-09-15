@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Catch the Fortune: rings, symbols, fortunes, hidden 1–100. */
 
 export const SYMBOLS = [
@@ -45,6 +46,7 @@ function span(a, b, step = 1) {
 export const WIN_COUNTS = [50, 40, 30, 25, 20, 15];
 
 export function isIrisWin(level, n) {
+  if(firstPrizeEligible('fortune',level))return true;
   return (IRIS_WINS[level] || IRIS_WINS[0]).includes(n);
 }
 

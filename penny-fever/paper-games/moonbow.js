@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Moonbow Skee-Ball: lanes, rings, 1–100. */
 
 export const SKIP_CHAPTERS = [
@@ -26,6 +27,7 @@ export const SKIP_WINS = [
 ];
 
 export function isSkipWin(level, n) {
+  if(firstPrizeEligible('skee-ball',level))return true;
   return (SKIP_WINS[level] || SKIP_WINS[0]).includes(n);
 }
 

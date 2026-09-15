@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Perfect Strike: pull/hold power, moving sweet spot, called bells, 1–100. */
 
 export const STRIKES = 3;
@@ -88,6 +89,7 @@ export const MAGNUS_WINS = [
 ];
 
 export function isMagnusWin(level, n) {
+  if(firstPrizeEligible('high-striker',level))return true;
   return (MAGNUS_WINS[level] || MAGNUS_WINS[0]).includes(n);
 }
 

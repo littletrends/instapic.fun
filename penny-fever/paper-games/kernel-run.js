@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Kernel Run: field-to-fair cart, cargo, 1–100. */
 
 export const POPPY_CHAPTERS = [
@@ -26,6 +27,7 @@ export const POPPY_WINS = [
 ];
 
 export function isPoppyWin(level, n) {
+  if(firstPrizeEligible('popcorn',level))return true;
   return (POPPY_WINS[level] || POPPY_WINS[0]).includes(n);
 }
 

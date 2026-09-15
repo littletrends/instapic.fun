@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Shattered Fate: seeded shard grid, rotate/swap, 1–100. */
 
 export const OPAL_CHAPTERS = [
@@ -37,6 +38,7 @@ export const OPAL_WINS = [
 ];
 
 export function isOpalWin(level, n) {
+  if(firstPrizeEligible('catoptromancy',level))return true;
   return (OPAL_WINS[level] || OPAL_WINS[0]).includes(n);
 }
 

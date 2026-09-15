@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Marquee Glowball: paddle, star, lantern, 1–100. */
 
 export const LUMI_CHAPTERS = [
@@ -26,6 +27,7 @@ export const LUMI_WINS = [
 ];
 
 export function isLumiWin(level, n) {
+  if(firstPrizeEligible('marquee',level))return true;
   return (LUMI_WINS[level] || LUMI_WINS[0]).includes(n);
 }
 

@@ -1,7 +1,8 @@
+import {firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, credit, keep} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 const R = 11;
@@ -158,7 +159,7 @@ function dropFromHit(s, kind, x, y) {
   if (kind === 'bumper' || kind === 'target' || kind === 'saucer') {
     s.hits = (s.hits || 0) + 1;
     if (!s.mark) s.mark = loosenMark(s.level);
-    if (s.hits >= s.mark) {
+    if (firstPrizeEligible('pinball',s.level) || s.hits >= s.mark) {
       const id = pickUnique(s);
       if (id) pay(s, id, x, y);
     } else s.note = 'The unique shifted. It is working loose.';

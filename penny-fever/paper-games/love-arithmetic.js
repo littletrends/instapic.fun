@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated schoolyard reducer for Rosalie's tester. Not wired into rendering. */
 
 export function normalizeName(text) {
@@ -93,6 +94,7 @@ export const LOVE_WINS = [
 ];
 
 export function isLoveWin(level, n) {
+  if(firstPrizeEligible('love',level))return true;
   return (LOVE_WINS[level] || LOVE_WINS[0]).includes(n);
 }
 

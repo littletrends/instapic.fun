@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Opening Night: golden-key frogger, 1–100. */
 
 export const BEA_CHAPTERS = [
@@ -26,6 +27,7 @@ export const BEA_WINS = [
 ];
 
 export function isBeaWin(level, n) {
+  if(firstPrizeEligible('pass',level))return true;
   return (BEA_WINS[level] || BEA_WINS[0]).includes(n);
 }
 

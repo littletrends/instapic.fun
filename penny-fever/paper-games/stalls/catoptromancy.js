@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   OPAL_CHAPTERS, makeGlass, isSolved, tapGlass, rotateSlot, hitSlot, slotPos,
   resultNumber, isOpalWin, ordinaryFor, SHARD_INK, SHARD_MARK,
-} from '../shattered-fate.js?v=glass-1';
+} from '../shattered-fate.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.shatteredFate';
 const CX = 450, CY = 640;

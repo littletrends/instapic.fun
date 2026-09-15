@@ -11,8 +11,8 @@ const BACK = CAB.y + CAB.h * 0.36;
 const FRONT = CAB.y + CAB.h * 0.66;
 const COIN_R = 13;
 const TREASURE_R = 24;
-/** Every chapter releases its unique by the fourth paid penny. */
-const RELEASE_PENNIES = 4;
+/** Every chapter releases its unique by the first paid penny. */
+const RELEASE_PENNIES = 1;
 const CHAPTERS = [
   { id: "shallow", title: "The Shallow Tray", prize: "coin-sleeve", divider: false, pegs: 0, upper: false, dead: false, speed: 0.55, push: 36, rows: 3, cols: 8, lipGap: 18 },
   { id: "split", title: "Split Falls", prize: "copper-cascade", divider: true, pegs: 0, upper: false, dead: false, speed: 0.62, push: 32, rows: 3, cols: 7, lipGap: 22 },
@@ -299,8 +299,8 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. The chapter prize is not a timer: by the fourth paid penny it unlatches onto the bed, then you still have to push it over the edge.",
-  instructions: "Aim the hopper, then dump 1, ¼, ½ or the whole purse. One dump, one shove. Build a wide pile behind what you want. The unique only joins the tray by the fourth paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
+  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. The chapter prize is not a timer: by the first paid penny it unlatches onto the bed, then you still have to push it over the edge.",
+  instructions: "Aim the hopper, then dump 1, ¼, ½ or the whole purse. One dump, one shove. Build a wide pile behind what you want. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
   levels: CHAPTERS.map(c => c.title),
   images: {
     cabinet: "./assets/coin-pusher/pusher/cabinet.webp",

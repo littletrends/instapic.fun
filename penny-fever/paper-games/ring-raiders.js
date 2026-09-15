@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Ring Raiders: advancing pegs, loop-not-hit tosses, 1–100. */
 
 export const RINGO_CHAPTERS = [
@@ -30,6 +31,7 @@ export const RINGO_WINS = [
 ];
 
 export function isRingoWin(level, n) {
+  if(firstPrizeEligible('bent-rings',level))return true;
   return (RINGO_WINS[level] || RINGO_WINS[0]).includes(n);
 }
 

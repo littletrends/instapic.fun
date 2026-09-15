@@ -1,8 +1,9 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Shared Ride & Seek contract for all eight amusements. */
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=entry-1';
-import {hasUsedFirst, takeAttempt} from './stall-entry.js?v=entry-3';
+import {hasUsedFirst, takeAttempt} from './stall-entry.js?v=first-prize-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 export const BOOK_KEY = 'pennyFever.rideSeek';
@@ -81,7 +82,7 @@ export function sealAttempt({rng, chapter, practice, treasureId, rideId, spawnId
   }
   const roll = Math.min(100, Math.max(1, Math.floor((rng?.() ?? Math.random()) * 100) + 1));
   const alreadyOwned = slotOwned(slot);
-  const eligible = !practice && !alreadyOwned && roll <= eligibilityPercent(chapter);
+  const eligible = !practice && !alreadyOwned && (firstPrizeEligible(rideId,chapter) || roll <= eligibilityPercent(chapter));
   const spawnId = eligible && spawnIds?.length
     ? spawnIds[Math.floor((rng?.() ?? Math.random()) * spawnIds.length)]
     : null;

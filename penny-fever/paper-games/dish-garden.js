@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Dish Garden: bowls, cloth tug, 1–100. */
 
 export const PENELOPE_CHAPTERS = [
@@ -26,6 +27,7 @@ export const PENELOPE_WINS = [
 ];
 
 export function isPenelopeWin(level, n) {
+  if(firstPrizeEligible('penny-pitch',level))return true;
   return (PENELOPE_WINS[level] || PENELOPE_WINS[0]).includes(n);
 }
 

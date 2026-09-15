@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   KIT_CHAPTERS, makeCase, stepCase, shiftLive, rotateLive, softDrop, hardDrop, pocketSwap,
   resultNumber, isKitWin, ordinaryFor,
-} from '../impossible-case.js?v=pack-1';
+} from '../impossible-case.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.impossibleCase';
 const CELL = 36;

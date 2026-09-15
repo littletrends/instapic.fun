@@ -1,12 +1,12 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   PENELOPE_CHAPTERS, makeTable, startPitch, tugCloth, stepCoin, markedBowl,
   resultNumber, isPenelopeWin, ordinaryFor, layoutBowls,
-} from '../dish-garden.js?v=penelope-1';
+} from '../dish-garden.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.dishGarden';
 

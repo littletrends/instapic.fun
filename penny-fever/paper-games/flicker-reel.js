@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Flicker Reel: 100 hidden frames, brake window, 1–100. */
 
 export const MILO_CHAPTERS = [
@@ -28,6 +29,7 @@ export const MILO_WINS = [
 ];
 
 export function isMiloWin(level, n) {
+  if(firstPrizeEligible('mutoscope',level))return true;
   return (MILO_WINS[level] || MILO_WINS[0]).includes(n);
 }
 

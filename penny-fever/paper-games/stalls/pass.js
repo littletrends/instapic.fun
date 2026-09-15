@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   BEA_CHAPTERS, makeStage, stepStage, swipeKey, curtainOpen, propsLeft,
   resultNumber, isBeaWin, ordinaryFor,
-} from '../opening-night.js?v=curtain-1';
+} from '../opening-night.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.openingNight';
 const CELL = 70;

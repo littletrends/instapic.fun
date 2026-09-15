@@ -19,7 +19,7 @@ copper.update(resumed,.01);assert.equal(credits.at(-1),1);assert(awards.includes
 for(let level=1;level<6;level++){s=copper.create(level);cash=40;const d=debits.length;copper.pointer(s,'down',{x:250,y:1070});assert.equal(debits[d],20);copper.persist(s);assert.equal(copper.selectedChapter(),level);assert.equal(copper.create(level).tray.paidCount,20);}
 cash=0;s=copper.create(5);assert.equal(cash,0,'live empty purse not refilled');s.phase='idle';s.busy=false;const n=s.tray.coins.length;copper.drop(s,1);assert.equal(s.tray.coins.length,n);
 cash=10;reject=true;copper.drop(s,1);assert.equal(s.tray.coins.length,n,'failed debit does not mint coins');reject=false;
-let f=iris.create(0);const d=debits.length;iris.action(f,'gaze');assert(f.practice);assert.equal(debits.length,d);iris.persist(f);let rf=iris.create(0);assert.equal(rf.phase,f.phase);assert.equal(rf.charged,true);assert.equal(JSON.stringify(rf.globe),JSON.stringify(f.globe));
+let f=iris.create(0);const d=debits.length;iris.action(f,'gaze');assert(!f.practice);assert.equal(debits.length,d);iris.persist(f);let rf=iris.create(0);assert.equal(rf.phase,f.phase);assert.equal(rf.charged,true);assert.equal(JSON.stringify(rf.globe),JSON.stringify(f.globe));
 console.log('PASS: Copper free practice, quarter/half purse drops, six trays, exact paid-motion resume, one credit/prize payout, no automatic live refill, failed debit; Iris save retained.');
 
 const {makeGlobe}=await import('./fortune-globe.js?v=fortune-polish-1');
@@ -95,10 +95,10 @@ for(const id of Object.keys(inventory.items))delete inventory.items[id];
 for(let level=0;level<6;level++){
  mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;
  let game=copper.create(level);
- for(let paid=1;paid<=4;paid++){
+ for(let paid=1;paid<=1;paid++){
   copper.drop(game,1);
   assert.equal(game.tray.paidCount,paid);
-  assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,paid===4?1:0);
+  assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,paid>=1?1:0);
   for(let i=0;i<600&&game.busy;i++)copper.update(game,1/60);
   copper.persist(game);game=copper.create(level);
  }
@@ -108,7 +108,7 @@ for(let level=0;level<6;level++){
  snapshot.treasureOn=false;snapshot.mark=48;snapshot.paidCount=9;
  mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{[level]:snapshot}}));
  const before=cash;game=copper.create(level);
- assert.equal(cash,before,'overdue release costs nothing');assert.equal(game.tray.mark,4);
+ assert.equal(cash,before,'overdue release costs nothing');assert.equal(game.tray.mark,1);
  assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1);
  assert.deepEqual(game.tray.coins.filter(c=>c.kind!=='treasure'),snapshot.coins,'migration preserves pennies and their positions');
  assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,1,'reload does not duplicate overdue treasure');
@@ -117,4 +117,4 @@ for(let level=0;level<6;level++){
  game.tray.treasureOwned=true;game.tray.treasureOn=false;game.tray.coins=game.tray.coins.filter(c=>c.kind!=='treasure');copper.persist(game);
  assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,0,'owned prize does not repeat');
 }
-console.log('PASS: fourth paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');
+console.log('PASS: first paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');

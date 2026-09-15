@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Impossible Suitcase: packing tetris, list, 1–100. */
 
 export const KIT_CHAPTERS = [
@@ -26,6 +27,7 @@ export const KIT_WINS = [
 ];
 
 export function isKitWin(level, n) {
+  if(firstPrizeEligible('pack',level))return true;
   return (KIT_WINS[level] || KIT_WINS[0]).includes(n);
 }
 

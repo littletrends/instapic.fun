@@ -1,12 +1,12 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   SKIP_CHAPTERS, makeLane, makeBall, stepBall, markedHole, advanceMark,
   resultNumber, isSkipWin, ordinaryFor, shutterOpen,
-} from '../moonbow.js?v=skip-1';
+} from '../moonbow.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.moonbowLane';
 const FOOT = {x: 450, y: 1040};

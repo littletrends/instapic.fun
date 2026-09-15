@@ -1,13 +1,14 @@
+import {prizeAttempts, recordPrizeAttempt, firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
 import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-fixes-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard,
-} from '../milky-splash.js?v=milk-fixes-1';
+  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique,
+} from '../milky-splash.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -180,7 +181,7 @@ export default {
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. If a sealed unique appears, match it down into the crate. The board waits if moves run out.'
+    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. The first board of each chapter holds its uncollected treasure. Match it down into the crate. The board waits if moves run out.'
     : 'Swap neighbouring bottles. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
     ? 'Tap two neighbours to swap. Only a real match spends a move. Cascades are free. The unique is a sealed bottle — splash the dairy beneath it until it drops into Mabel’s crate.'
@@ -204,7 +205,12 @@ export default {
       note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Press Play when you are ready.',
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeBoard(level, s.seed);
-    if(s.board&&!s.board.delivered)repairBoard(s.board);
+    // Honour an in-progress paid/included legacy board without buying another allowance.
+    if(alleyPlay&&s.charged&&s.phase==='play'&&!prizeAttempts('milk-bottles',level))recordPrizeAttempt('milk-bottles',level);
+    if(s.board&&!s.board.delivered){
+      if(alleyPlay&&s.phase==='play'&&firstPrizeEligible('milk-bottles',level)&&!chapterPaid(level))spawnUnique(s.board);
+      repairBoard(s.board);
+    }
     if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
     if(s.board?.delivered&&chapterPaid(level)&&s.phase==='play'){s.phase='result';s.won=true;s.charged=false;s.hold=0;}
     if(s.phase==='result'&&!s.result&&s.hold<=0){

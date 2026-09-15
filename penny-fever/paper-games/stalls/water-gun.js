@@ -1,13 +1,13 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MARINA_CHAPTERS, GUNS, LANES, BURSTS, MIN_PRESSURE, BURST_LIFE,
   makeFleet, stepFleet, boatPose, fireBurst, advanceBurst, waterPoint,
   occluded, resultNumber, marinaUnique, ordinaryFor,
-} from '../fleet.js?v=fleet-1';
+} from '../fleet.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.waterFleet';
 

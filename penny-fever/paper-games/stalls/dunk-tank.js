@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   DUNCAN_CHAPTERS, makeBoard, rotatePipe, toggleValve, startPump, stepFlow,
   dropChair, canDrop, tileAt, evaluateFlow, resultNumber, isDuncanWin, ordinaryFor, ports,
-} from '../pressure-drop.js?v=duncan-1';
+} from '../pressure-drop.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.pressureDrop';
 

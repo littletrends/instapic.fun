@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Deterministic mysteries for The Cabinet That Lies. Each puzzle has one solution. */
 
 function rng(seed) {
@@ -46,6 +47,7 @@ export const CABINET_PRIZES = [
 ];
 
 export function isCabinetWin(level, n) {
+  if(firstPrizeEligible('curios',level))return true;
   return (CABINET_WINS[level] || CABINET_WINS[0]).includes(n);
 }
 

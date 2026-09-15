@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Marble Mill: peg field, side flippers, hanging unique, 1–100. No numbered bowls. */
 
 export const PEGGY_CHAPTERS = [
@@ -30,6 +31,7 @@ export const PEGGY_WINS = [
 ];
 
 export function isPeggyWin(level, n) {
+  if(firstPrizeEligible('plinko',level))return true;
   return (PEGGY_WINS[level] || PEGGY_WINS[0]).includes(n);
 }
 

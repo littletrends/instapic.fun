@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Water-Gun Fleet: five guns, pressure bursts, moving boats, 1–100. */
 
 export const BURSTS = 10;
@@ -41,6 +42,7 @@ export const MARINA_WINS = [
 ];
 
 export function isMarinaWin(level, n) {
+  if(firstPrizeEligible('water-gun',level))return true;
   return (MARINA_WINS[level] || MARINA_WINS[0]).includes(n);
 }
 

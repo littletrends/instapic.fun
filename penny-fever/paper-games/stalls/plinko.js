@@ -1,12 +1,12 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit} from '../wallet.js?v=entry-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   PEGGY_CHAPTERS, makeMill, dropMarble, stepMill, fireFlipper, flipperTips,
   isPeggyWin, resultNumber, ordinaryFor, RAIL_Y,
-} from '../marble-mill.js?v=mill-1';
+} from '../marble-mill.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.marbleMill';
 

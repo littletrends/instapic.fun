@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Vanishing Spot: covers, fair shuffles, 1–100. */
 
 export const DOT_CHAPTERS = [
@@ -26,6 +27,7 @@ export const DOT_WINS = [
 ];
 
 export function isDotWin(level, n) {
+  if(firstPrizeEligible('cover-the-spot',level))return true;
   return (DOT_WINS[level] || DOT_WINS[0]).includes(n);
 }
 

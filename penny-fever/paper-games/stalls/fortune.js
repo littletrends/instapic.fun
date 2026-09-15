@@ -1,8 +1,10 @@
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
+import {takeAttempt} from '../stall-entry.js?v=first-prize-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   caughtOf, fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
-} from "../fortune-globe.js?v=fortune-polish-1";
+} from "../fortune-globe.js?v=first-prize-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -81,7 +83,10 @@ function beginGaze(s) {
   try {
     const book = readBook();
     if (!s.charged) {
-      if (!book.practiceUsed) {
+      if (alleyPlay) {
+        if(!takeAttempt('fortune',s.level)){s.note="No pennies left in the purse.";return;}
+        s.practice=false;
+      } else if (!book.practiceUsed) {
         s.practice = true;
         book.practiceUsed = true;
         writeBook(book);
@@ -199,8 +204,8 @@ export default {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
-  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. First gaze is a Practice Penny. Later gazes cost one penny. Iris reads a fortune from the hidden 1–100 — you never see the number, and it is not the clock.",
-  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. Your first gaze is practice; later gazes cost one penny.",
+  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Ticket entry includes the first gaze in each chapter and its prize opportunity. Later gazes cost one penny. Iris reads a fortune from the hidden 1–100 — you never see the number, and it is not the clock.",
+  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. Ticket entry includes the first gaze in each chapter, with its treasure available to catch. Later gazes cost one penny.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   images: {
     globe: "./assets/fortune/globe.webp",
@@ -239,6 +244,7 @@ export default {
   create(level) {
     const saved = readBook().sittings[String(level)] || {};
     const resume = saved.phase === "flash" || saved.phase === "spin";
+    if(alleyPlay&&saved.charged&&!prizeAttempts('fortune',level))recordPrizeAttempt('fortune',level);
     const s = {
       level, t: 0,
       phase: ["flash", "spin", "result"].includes(saved.phase) ? saved.phase : "idle",
@@ -247,7 +253,7 @@ export default {
       flashLeft: resume ? (saved.flashLeft || 0) : 0,
       clock: resume ? (saved.clock || 0) : 0,
       charged: resume ? !!saved.charged : false,
-      practice: !!saved.practice,
+      practice: alleyPlay ? false : !!saved.practice,
       fortune: saved.fortune || "",
       resultN: saved.resultN || 0,
       ordinary: saved.ordinary || null,

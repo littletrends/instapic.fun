@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
 export const FLAVOURS = [
@@ -35,6 +36,7 @@ export const MABEL_WINS = [
 ];
 
 export function isMabelWin(level, n) {
+  if(firstPrizeEligible('milk-bottles',level))return true;
   return (MABEL_WINS[level] || MABEL_WINS[0]).includes(n);
 }
 

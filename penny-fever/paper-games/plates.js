@@ -1,3 +1,4 @@
+import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
 /** Isolated Impossible Plates: pull-back throws, rim vs clean pass, 1–100. */
 
 export const BALL_R = 15;
@@ -37,6 +38,7 @@ export const BESS_WINS = [
 ];
 
 export function isBessWin(level, n) {
+  if(firstPrizeEligible('ball-toss',level))return true;
   return (BESS_WINS[level] || BESS_WINS[0]).includes(n);
 }
 

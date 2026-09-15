@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=ritual-2';
+} from '../love-arithmetic.js?v=first-prize-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
