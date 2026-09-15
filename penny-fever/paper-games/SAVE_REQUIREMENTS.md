@@ -289,3 +289,7 @@ User's final terminology is **Locked / Collected**, superseding Unlocked and Kep
 Evidence: Pip tests pass precharge during descent, no teleport, held landing, early release/cancel, exact returning-ball restore and unchanged debit/credit/timer; all prior 600 bonus-window, pocket, stacking and timer checks pass. First-prize, Mabel-state and Copper/Iris cabinet suites pass. Chromium phone touch check passes pre-pull before landing, hold across landing and same-ball relaunch; existing touch, Treasures/reload and lights-out checks also pass.
 
 Deployment: published as `6896672`; Pages run `34951229256` succeeded. Live pinball is serving returning-ball precharge and LOCKED/COLLECTED labels.
+
+## Iris catch tokens and Mabel cow flavour — 15 September 2026
+
+A clean Iris catch that does not pay the chapter bonus now always awards a star token, with copy “Star token collected. Bonus still locked.” The first successful catch of a chapter still collects the bonus (`fortuneCatch`). Misses no longer spend that guarantee. Mabel’s prize cow keeps the flavour of the bottle it sits on (gold/yellow cows count as banana) and can be swapped into a matching flavour line. Ordinary delivery routes are unchanged because unique flavour only adds those cow-colour swaps.

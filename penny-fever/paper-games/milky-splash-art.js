@@ -1,4 +1,4 @@
-import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-delivery-1';
+import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=milk-cow-1';
 import {spriteKey} from './prizes.js';
 
 const effects=new WeakMap();
@@ -19,7 +19,7 @@ const bottles=new Map();
 function bottleArt(flavour,special='',kind='milk'){
  const key=flavour.id+':'+special+':'+kind;if(bottles.has(key))return bottles.get(key);
  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=144;const c=canvas.getContext('2d');
- const colour=kind==='sour'?'#94aa45':kind==='weighted'?'#8693a5':kind==='unique'?'#f4c65a':flavour.id==='banana'?'#f2b91c':flavour.id==='vanilla'?'#eee9e3':flavour.fill;
+ const colour=kind==='sour'?'#94aa45':kind==='weighted'?'#8693a5':kind==='unique'?(flavour.id==='banana'?'#f2b91c':flavour.id==='vanilla'?'#eee9e3':flavour.fill):flavour.id==='banana'?'#f2b91c':flavour.id==='vanilla'?'#eee9e3':flavour.fill;
  const ink=kind==='unique'?'#795116':flavour.id==='vanilla'?'#74503e':flavour.id==='banana'?'#87501c':colour;
  const cap=flavour.id==='vanilla'?'#87618d':colour;
  c.fillStyle='#573d4920';c.beginPath();c.ellipse(64,132,39,8,0,0,Math.PI*2);c.fill();
@@ -80,7 +80,7 @@ export function drawMilkySplash(s,d,chapter){
   const selected=s.selected?.c===col&&s.selected?.r===r;
   if(selected){box(c,x+2,y+2,size-4,size-4,12,'#fff0af','#c96aa3');}
   if(cell.kind==='crate'){crate(c,x+size*.13,y+size*.15,size*.74,size*.7);continue;}
-  const image=bottleArt(flavourOf(cell.flavour),cell.special==='shaken'?cell.axis:cell.special,cell.kind);
+  const image=bottleArt(flavourOf(cell.flavour || (cell.kind==='unique' ? 'banana' : null)),cell.special==='shaken'?cell.axis:cell.special,cell.kind);
   const bob=selected&&!s.reduced?Math.sin(s.t*7)*2:0;
   c.drawImage(image,x+size*.09,y-size*.03+bob,size*.82,size*.94);
   if(cell.kind==='unique'){

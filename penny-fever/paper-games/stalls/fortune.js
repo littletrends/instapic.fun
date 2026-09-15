@@ -1,10 +1,10 @@
 import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
-import {takeAttempt} from '../stall-entry.js?v=first-prize-1';
+import {takeAttempt} from '../stall-entry.js?v=iris-token-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=entry-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, ordinaryFor, symbolName, slotAt,
-} from "../fortune-globe.js?v=iris-pack-1";
+} from "../fortune-globe.js?v=iris-token-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -136,21 +136,32 @@ function finishGaze(s) {
   s.charged = false;
   s.hold = 0;
   const hit = allMatch(s.globe);
-  const treasureOk = hit && isIrisWin(s.level, n) && !chapterOwned(s.level) && !s.practice;
   s.caught = hit;
-  s.ordinary = s.practice ? null : ordinaryFor(n);
-  if (alleyPlay && s.ordinary) {
-    if (s.ordinary === "everyday-penny") credit(1);
-    else keep(s.ordinary, "fortune");
+  let treasureOk = false;
+  if (hit && !s.practice && !chapterOwned(s.level)) {
+    recordPrizeAttempt("fortuneCatch", s.level);
+    treasureOk = isIrisWin(s.level, n);
   }
-  if (treasureOk) {
-    if (alleyPlay) keep(IRIS_CHAPTERS[s.level].prize, "fortune");
+  s.ordinary = null;
+  if (!s.practice && alleyPlay) {
+    if (treasureOk) {
+      keep(IRIS_CHAPTERS[s.level].prize, "fortune");
+      markOwned(s.level);
+      s.won = true;
+    } else if (hit) {
+      s.ordinary = "star-token";
+      keep("star-token", "fortune");
+    } else {
+      s.ordinary = ordinaryFor(n);
+      if (s.ordinary === "everyday-penny") credit(1);
+      else keep(s.ordinary, "fortune");
+    }
+  } else if (treasureOk) {
     markOwned(s.level);
     s.won = true;
-    beep(660, 0.22, "sine", 0.08);
-  } else {
-    beep(hit ? 420 : 160, 0.16, hit ? "sine" : "square", 0.06);
   }
+  if (treasureOk) beep(660, 0.22, "sine", 0.08);
+  else beep(hit ? 420 : 160, 0.16, hit ? "sine" : "square", 0.06);
   if (!hit) {
     const slipped = s.globe.rings.map((ring, i) => ring.slipped ? "ring " + (i + 1) : null).filter(Boolean).join(" and ");
     s.note = "Near miss — " + slipped + " slipped.";
@@ -159,9 +170,9 @@ function finishGaze(s) {
   } else if (treasureOk) {
     s.note = "Bonus collected.";
   } else if (chapterOwned(s.level)) {
-    s.note = "Already collected.";
+    s.note = s.ordinary === "star-token" ? "Star token collected. Bonus already collected." : "Already collected.";
   } else {
-    s.note = "Bonus locked — better luck next time.";
+    s.note = "Star token collected. Bonus still locked.";
   }
   persist(s);
 }
@@ -234,14 +245,13 @@ export default {
     if (alleyPlay) book.pennies = pocket();
     const cash = s?.practice && s.phase !== "idle" ? "Practice" : (book.pennies + (book.pennies === 1 ? " penny" : " pennies"));
     const ch = IRIS_CHAPTERS[s?.level || 0];
-    const keep = chapterOwned(s?.level || 0) ? "Treasure ✓" : ("Ch " + ((s?.level || 0) + 1));
+    const keep = chapterOwned(s?.level || 0) ? "Bonus collected" : ("Ch " + ((s?.level || 0) + 1));
     return { cash, keep: keep + " · " + ch.title };
   },
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   create(level) {
     const saved = readBook().sittings[String(level)] || {};
     const resume = saved.phase === "flash" || saved.phase === "spin";
-    if(alleyPlay&&saved.charged&&!prizeAttempts('fortune',level))recordPrizeAttempt('fortune',level);
     const s = {
       level, t: 0,
       phase: ["flash", "spin", "result"].includes(saved.phase) ? saved.phase : "idle",

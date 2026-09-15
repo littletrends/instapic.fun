@@ -1,5 +1,5 @@
 import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
-import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-delivery-1';
+import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-cow-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=entry-1';
@@ -8,7 +8,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
   ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique,
-} from '../milky-splash.js?v=milk-delivery-1';
+} from '../milky-splash.js?v=milk-cow-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -151,7 +151,7 @@ function trySwap(s, a, b) {
   const res = applySwap(s.board, a.c, a.r, b.c, b.r);
   if(res.ok||res.reason==='no-match')splashSwap(s,a,b,before,res.ok);
   if (!res.ok) {
-    s.note = res.reason === 'no-match' ? 'No splash — the bottles bounce home.' : (s.board.cells[a.r]?.[a.c]?.kind==='unique'||s.board.cells[b.r]?.[b.c]?.kind==='unique'?'Move the prize bottle with a matching swap, or match below it.':'Those two will not trade.');
+    s.note = res.reason === 'no-match' ? 'No splash — the bottles bounce home.' : (s.board.cells[a.r]?.[a.c]?.kind==='unique'||s.board.cells[b.r]?.[b.c]?.kind==='unique'?'The cow matches the flavour it sits on. Swap it into that flavour, or match beneath it.':'Those two will not trade.');
     s.selected = null;
     return;
   }

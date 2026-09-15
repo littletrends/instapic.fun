@@ -46,7 +46,7 @@ function span(a, b, step = 1) {
 export const WIN_COUNTS = [50, 40, 30, 25, 20, 15];
 
 export function isIrisWin(level, n) {
-  if(firstPrizeEligible('fortune',level))return true;
+  if(firstPrizeEligible('fortune',level) || firstPrizeEligible('fortuneCatch',level))return true;
   return (IRIS_WINS[level] || IRIS_WINS[0]).includes(n);
 }
 

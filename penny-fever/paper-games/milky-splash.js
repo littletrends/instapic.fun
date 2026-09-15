@@ -90,9 +90,10 @@ function setCell(board, c, r, cell) {
   board.cells[r][c] = cell;
 }
 
-function flavourId(cell) {
+function flavourId(cell, countUnique=false) {
   if (!cell) return null;
   if (cell.kind === 'milk' || cell.kind === 'special') return cell.flavour;
+  if (countUnique && cell.kind === 'unique') return cell.flavour || 'banana';
   return null;
 }
 
@@ -126,7 +127,7 @@ export function cellFromPoint(board, p) {
   return {c, r};
 }
 
-export function findMatches(board) {
+export function findMatches(board, countUnique=false) {
   const hits = [];
   const seen = new Set();
   const mark = (c, r) => {
@@ -135,10 +136,11 @@ export function findMatches(board) {
     seen.add(key);
     hits.push({c, r});
   };
+  const flav = (c, r) => flavourId(cellAt(board, c, r), countUnique);
   for (let r = 0; r < board.rows; r++) {
     let run = 1;
     for (let c = 1; c <= board.cols; c++) {
-      const same = c < board.cols && flavourId(cellAt(board, c, r)) && flavourId(cellAt(board, c, r)) === flavourId(cellAt(board, c - 1, r));
+      const same = c < board.cols && flav(c, r) && flav(c, r) === flav(c - 1, r);
       if (same) run++;
       else {
         if (run >= 3) for (let k = 0; k < run; k++) mark(c - 1 - k, r);
@@ -149,7 +151,7 @@ export function findMatches(board) {
   for (let c = 0; c < board.cols; c++) {
     let run = 1;
     for (let r = 1; r <= board.rows; r++) {
-      const same = r < board.rows && flavourId(cellAt(board, c, r)) && flavourId(cellAt(board, c, r)) === flavourId(cellAt(board, c, r - 1));
+      const same = r < board.rows && flav(c, r) && flav(c, r) === flav(c, r - 1);
       if (same) run++;
       else {
         if (run >= 3) for (let k = 0; k < run; k++) mark(c, r - 1 - k);
@@ -172,7 +174,14 @@ function specialSwap(a,b){
  return !!(a&&b&&((a.kind==='special'&&a.special==='cream'&&flavourId(b))||(b.kind==='special'&&b.special==='cream'&&flavourId(a))||(a.kind==='special'&&b.kind==='special')));
 }
 function swapMatches(board,c1,r1,c2,r2){
- return findMatches(board).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2));
+ if(findMatches(board).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2))) return true;
+ const a=cellAt(board,c1,r1), b=cellAt(board,c2,r2);
+ const unique=a?.kind==='unique'?a:b?.kind==='unique'?b:null;
+ const other=unique===a?b:a;
+ if(!unique||!other) return false;
+ const flav=unique.flavour||'banana';
+ if(flavourId(other)!==flav) return false;
+ return findMatches(board,true).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2));
 }
 export function legalMoves(board) {
  const moves=[];
@@ -191,6 +200,7 @@ export function locateUnique(board) {
   for (let r = 0; r < board.rows; r++) {
     for (let c = 0; c < board.cols; c++) {
       if (board.cells[r][c]?.kind === 'unique') {
+        if (!board.cells[r][c].flavour) board.cells[r][c].flavour = 'banana';
         board.unique = {c, r};
         return board.unique;
       }
@@ -226,12 +236,12 @@ export function spawnUnique(board, col) {
   for (let r = 0; r < board.rows - 1; r++) {
     const cell = cellAt(board, c, r);
     if (cell && (cell.kind === 'milk' || cell.kind === 'special')) {
-      setCell(board, c, r, {kind: 'unique'});
+      setCell(board, c, r, {kind: 'unique', flavour: cell.flavour || 'banana'});
       board.unique = {c, r};
       return board;
     }
   }
-  setCell(board, c, 0, {kind: 'unique'});
+  setCell(board, c, 0, {kind: 'unique', flavour: 'banana'});
   board.unique = {c, r: 0};
   return board;
 }

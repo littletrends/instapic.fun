@@ -47,8 +47,8 @@ console.log('PASS: all six Mabel first boards, exact return state, and uncharged
 const lookup=await import('./stalls/lookup.js?v=first-prize-1');
 for(let level=0;level<6;level++){memory.clear();cash=20;entry.takeAttempt('lookup',level);for(let n=1;n<=100;n++)assert(lookup.isWinningNumber(level,n));}
 console.log('PASS: telescope first-attempt eligibility across six chapters.');
-const iris=(await import('./stalls/fortune.js?v=iris-pack-1')).default;
-const {IRIS_CHAPTERS}=await import('./fortune-globe.js?v=iris-pack-1');
+const iris=(await import('./stalls/fortune.js?v=iris-token-1')).default;
+const {IRIS_CHAPTERS}=await import('./fortune-globe.js?v=iris-token-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];

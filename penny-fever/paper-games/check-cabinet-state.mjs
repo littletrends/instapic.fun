@@ -120,7 +120,7 @@ for(let level=0;level<6;level++){
 }
 console.log('PASS: first paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');
 
-const {IRIS_CHAPTERS,isIrisWin}=await import('./fortune-globe.js?v=iris-pack-1');
+const {IRIS_CHAPTERS,isIrisWin}=await import('./fortune-globe.js?v=iris-token-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,paper-crown');
 assert(!IRIS_CHAPTERS.some(c=>c.prize==='looking-glass-locket'));
@@ -134,18 +134,19 @@ gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');gaz
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Already collected.');
+assert.equal(gaze.note,'Star token collected. Bonus already collected.');
+assert(awards.includes('star-token'));
 inventory.items={};awards=[];mem.clear();cash=20;
+mem.set('pennyFever.firstPrizeAttempts.v1',JSON.stringify({'fortune:1':9,'fortuneCatch:1':9}));
 gaze=iris.create(1);iris.action(gaze,'gaze');
-gaze.charged=false;gaze.phase='idle';iris.action(gaze,'gaze');
 iris.update(gaze,3);
 gaze.clock=81;
-assert(!isIrisWin(1,81),'second paid gaze uses the ordinary 1–100 gate');
+assert(!isIrisWin(1,81),'later catches use the ordinary 1–100 gate');
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Bonus locked — better luck next time.');assert(!gaze.won);assert(!awards.includes('moon-lantern'));
-console.log('PASS: Iris chapter 6 is paper-crown; COLLECTED / LOCKED / already-collected copy.');
+assert.equal(gaze.note,'Star token collected. Bonus still locked.');assert(!gaze.won);assert(awards.includes('star-token'));assert(!awards.includes('moon-lantern'));
+console.log('PASS: Iris chapter 6 is paper-crown; first catch collects the bonus; later greens pay a star token.');
 
 mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];
 let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;
