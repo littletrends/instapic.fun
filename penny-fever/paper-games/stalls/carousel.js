@@ -83,8 +83,8 @@ function ch1Speed(reduced) {
 }
 
 function ch2Speed(reduced) {
-  // Fairness retune 4 (browser 1/3): crest-arm TAP — early taps still collect on NOW.
-  const base = 0.26;
+  // Fairness retune 5 (Aura FAIL 2/3): longer arm + re-arm on collect; earlier opens.
+  const base = 0.24;
   return reduced ? base * 0.72 : base;
 }
 
@@ -245,7 +245,7 @@ function scheduleCh2(s) {
   const speed = ch2Speed(s.reduced);
   const lap = lapSeconds(speed);
   // Wider crest (~5.5 s); open-until finds so missing one pass is not fatal.
-  const crestHalf = crestHalfFromSec(speed, 5.5); // ~5.5s NOW windows
+  const crestHalf = crestHalfFromSec(speed, 6.0); // ~6s NOW windows
   s.crestHalf = crestHalf;
   s.crestSec = (2 * crestHalf) / speed;
   s.ch2Taught = false;
@@ -301,7 +301,7 @@ function scheduleCh2(s) {
   // Every crest pass after from is a collect chance (still crest-TAP / NOW).
   const spots = ['saddle', 'mane', 'bridle'];
   const heartHorses = [1, 2, 4];
-  const openFrom = lap * 0.35; // after practice feel
+  const openFrom = lap * 0.22; // earlier searchable window (Aura 2/3 needed one more chance)
   const rideLaps = 4;
   const finds = heartHorses.map((horse, i) => ({
     kind: 'ordinary',
@@ -467,6 +467,8 @@ function collectOrdinary(s, find, scr) {
       s.ch2Taught = true;
       logAction(s, 'teach', {kind: 'marked-pony'});
     }
+    // Chain fairness: each heart collect re-arms so a 2/3 run still reaches 3/3.
+    if (s.found < (s.goal || GOAL)) armCrestTap(s, 14);
   }
   if (scr) {
     addRipple(s, scr.x, scr.y);
@@ -942,8 +944,8 @@ function drawSparksAndFlash(d, s) {
 
 
 
-function armCrestTap(s, sec = 8) {
-  // Fairness: a TAP arms the next ~8s of crest passes (sparse taps still reach 3/3).
+function armCrestTap(s, sec = 14) {
+  // Fairness retune 5: longer arm (~14s) so sparse taps cover the third crest.
   const until = (s.t || 0) + sec;
   s.crestTapArmedUntil = Math.max(s.crestTapArmedUntil || 0, until);
 }
@@ -977,8 +979,8 @@ function consumeArmedCrest(s) {
 }
 
 function tryCrestTap(s, p) {
-  // Fairness retune 4: every TAP arms ~8s of crest collects; live NOW still collects immediately.
-  armCrestTap(s, 8);
+  // Fairness retune 5: every TAP arms ~14s; collect also re-arms so 2/3 chains to 3/3.
+  armCrestTap(s, 14);
 
   if (collectBestLiveHeart(s)) return 'collect';
 
