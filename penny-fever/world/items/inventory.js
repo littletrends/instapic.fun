@@ -57,6 +57,7 @@ const iconCache = new Map();
 let dialog, viewer, current = null, focus = null, bookId = null, tab = 'collection', filter = 'all', paintingTree = false;
 const expanded = new Set();
 const collectionExpanded = new Set();
+const closedTreeGroups = new Set();
 let selectionToken = 0, listToken = 0, opener, resumeWorld = false, openedHash = '', observer;
 const $ = id => document.getElementById(id);
 function bindDragTurn(root, onStep, cardSel) {
@@ -212,7 +213,7 @@ function mount() {
     const summary=e.target.closest('summary[data-collection-book]');
     if(summary){
       e.preventDefault();const id=summary.dataset.collectionBook;
-      if(collectionExpanded.has(id)){collectionExpanded.delete(id);render();}
+      if(collectionExpanded.has(id)){collectionExpanded.delete(id);if(bookId===id || model.books.find(b=>b.id===id)?.master)bookId=null;hideInspect();render();}
       else openBook(id);
       $('collectionBookTree').querySelector(`[data-collection-book="${id}"]`)?.focus();
       return;
@@ -224,6 +225,7 @@ function mount() {
     }
   });
 
+  $('pocketInspect').querySelector('.pocket-card').prepend($('pocketInspect').querySelector('.pocket-inspect-bar'));
   $('closeTreasures').addEventListener('click', () => dialog.close());
   $('pocketBack').addEventListener('click', hideInspect);
   $('shelfBack').addEventListener('click', goBack);
@@ -271,22 +273,26 @@ function mount() {
     if (card) select(card.dataset.item);
   });
   $('treasureTree').addEventListener('click', e => {
-    const prize = e.target.closest('[data-item]');
-    if (prize) { select(prize.dataset.item); return; }
+    const summary=e.target.closest('summary');
+    if(summary){
+      const node=summary.parentElement;
+      if(node.dataset.stall){
+        e.preventDefault();const id=node.dataset.stall;
+        if(node.open){expanded.delete(id);if(focus?.id===id)focus=null;}
+        else {expanded.add(id);focus={kind:'stall',id};}
+        hideInspect();render();
+        [...$('treasureTree').querySelectorAll('[data-stall]')].find(n=>n.dataset.stall===id)?.querySelector('summary')?.focus({preventScroll:true});
+      }else if(node.dataset.treeGroup){
+        e.preventDefault();const group=node.dataset.treeGroup;
+        if(node.open){closedTreeGroups.add(group);if(node.querySelector('[data-stall].is-current'))focus=null;}
+        else closedTreeGroups.delete(group);
+        hideInspect();render();
+        $('treasureTree').querySelector(`[data-tree-group="${group}"]>summary`)?.focus({preventScroll:true});
+      }
+      return;
+    }
+    const prize=e.target.closest('[data-item]');if(prize)select(prize.dataset.item);
   });
-  $('treasureTree').addEventListener('toggle', e => {
-    if (paintingTree) return;
-    const node = e.target.closest('details[data-stall]');
-    if (!node || e.target !== node) return;
-    const id = node.dataset.stall;
-    if (node.open) {
-      expanded.add(id);
-      focus = {kind: 'stall', id};
-      dialog.querySelector('.pocket-body')?.classList.add('has-stall');
-      $('shelfBack').hidden = false;
-      paintStall(entries(), id);
-    } else expanded.delete(id);
-  }, true);
   $('treasureOpen').addEventListener('click', () => {
     const on = viewer?.toggleOpen?.();
     $('treasureOpen').textContent = on ? 'Close' : 'Open';
@@ -393,7 +399,7 @@ function openBook(id) {
 function goBack() {
   hideInspect();
   if (tab === 'collection' && bookId) bookId = null;
-  else if (tab === 'games') focus = null;
+  else if (tab === 'games') {if(focus?.id)expanded.delete(focus.id);focus=null;}
   render();
 }
 
@@ -459,7 +465,8 @@ function render() {
   $('bookPane').hidden = !onBook;
   $('stallHead').hidden = !onGames;
   $('shelfBack').hidden = !(onBook || (onGames && focus));
-  $('shelfBack').textContent = onBook ? '← The shelf' : '← All stalls';
+  $('shelfBack').textContent = onBook ? '← The shelf' : '← Back to tree';
+  $('pocketBack').textContent = tab==='games' ? '← Back to tree' : '← Back to the book';
   $('treasureSearch').placeholder = onFound ? 'Find a found keepsake' : onGames ? 'Find a stall or prize' : (onBook ? 'Find a keepsake' : 'Find a book or keepsake');
   dialog.querySelector('.pocket-shell')?.classList.toggle('is-open-book', !onShelf);
   dialog.querySelector('.pocket-shell')?.classList.toggle('is-book-open', onBook);
@@ -677,14 +684,14 @@ function paintTree(all) {
       shown.push({stall, have, total, items, vis, hit: !!(q && (hay.includes(q) || vis.length))});
     }
     if (!shown.length) continue;
-    const h = document.createElement('p');
-    h.className = 'tree-group';
-    h.textContent = group.label;
-    root.append(h);
+    const groupNode=document.createElement('details');groupNode.dataset.treeGroup=group.label;
+    groupNode.open=!closedTreeGroups.has(group.label);
+    const h=document.createElement('summary');h.className='tree-group';h.textContent=group.label;
+    groupNode.append(h);root.append(groupNode);
     for (const row of shown) {
       const details = document.createElement('details');
       details.dataset.stall = row.stall.id;
-      details.open = expanded.has(row.stall.id) || row.hit;
+      details.open = expanded.has(row.stall.id);
       if (focus?.id === row.stall.id) details.classList.add('is-current');
       if (row.have === row.total && row.total) details.classList.add('is-complete');
       const sum = document.createElement('summary');
@@ -727,7 +734,7 @@ function paintTree(all) {
         b.append(label, state);
         details.append(b);
       }
-      root.append(details);
+      groupNode.append(details);
     }
   }
   root.scrollTop = y;
@@ -1007,7 +1014,7 @@ function celebrate(id) {
 
 function openGame(id) {
   tab = 'games'; bookId = null; filter = 'all';
-  focus = {kind:'stall', id}; expanded.clear(); expanded.add(id);
+  focus = {kind:'stall', id}; expanded.clear(); expanded.add(id); closedTreeGroups.clear();
   $('treasureSearch').value = '';
   dialog.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='all')));
   const opened = open();
