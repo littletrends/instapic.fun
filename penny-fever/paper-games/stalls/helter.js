@@ -190,7 +190,7 @@ function applyPointerTurn(s, p) {
     delta = cross / r2;
   } else {
     // Near centre: horizontal drag turns the ring.
-    delta = dx * 0.012;
+    delta = dx * 0.02;
   }
   if (Math.abs(delta) < 0.004) return;
   turnRing(s, delta);
