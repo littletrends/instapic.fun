@@ -9,7 +9,8 @@
  *
  * SHIPPED: Chapter 1 First Look — slow spokes, fat glow, one climb at a
  *   time; scream SNAP in the first 5s. Playtest: climb crawls while lit
- *   so the SNAP window is hittable (not a dwell-FOCUS meter). Unique ferris.png court stays hero
+ *   so the SNAP window is hittable (not a dwell-FOCUS meter).
+ *   Attest PASS note: further widened glow/crawl for first-timers. Unique ferris.png court stays hero
  *   (no full-screen overpaint). Soft outside-lens dim only.
  *
  * UNFINISHED CHAPTERS (keep names; do not rename treasures):
@@ -46,7 +47,7 @@ const HUB_X = CX;
 const HUB_Y = 820; // gondola hub — targets climb toward you
 
 const LENS_R = 96;
-const RETICLE_R = 48; // fat Ch1 sweet glow (Perfect Hit / gallery)
+const RETICLE_R = 56; // fat Ch1 sweet glow — attest: widen for first-timers
 const LENS_FINGER_Y = 96;
 const HUD_TOP = 110;
 const HUD_BOT = 1040;
@@ -61,7 +62,7 @@ const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
 const CLARITY_SECS = 5;
 const TEACH = 'SNAP when it’s in the glow.';
-const GLOW_PAD = 28; // Ch1 forgiving sweet zone — playtest: 14 was too tight
+const GLOW_PAD = 36; // Ch1 forgiving — attest PASS note: widen more overnight
 
 function wheelSpin(level, reduced) {
   // Slow afternoon spin of the spoke field. Eligibility never changes this.
@@ -72,7 +73,7 @@ function wheelSpin(level, reduced) {
 function climbSpeed(level, reduced) {
   // How fast targets climb spokes toward the gondola.
   // Ch1 is deliberately slow so SNAP can land in the glow (playtest gate).
-  const base = level <= 0 ? 0.028 : (0.055 + Math.min(0.04, level * 0.01));
+  const base = level <= 0 ? 0.020 : (0.055 + Math.min(0.04, level * 0.01));
   return reduced ? base * 0.65 : base;
 }
 
@@ -398,7 +399,7 @@ export default {
       t.y = pos.y;
       const lit = inGlow(s.lensX, s.lensY, t.x, t.y);
       // Ch1 teach: while lit, crawl — gives time to SNAP without a dwell meter.
-      const rate = lit ? climb * 0.15 : climb;
+      const rate = lit ? climb * 0.08 : climb; // stronger crawl-while-lit for first SNAP
       t.climb = Math.min(1, t.climb + rate * dt);
       pos = spokePos(spoke, t.climb);
       t.x = pos.x;
