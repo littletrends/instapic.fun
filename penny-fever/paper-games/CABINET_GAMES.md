@@ -25,3 +25,9 @@ New chapter layouts keep fixed starting quantities: Shallow Tray 24, Split Falls
 Accounting: current penny count + returned pennies = starting balance + dropped pennies. Existing saves establish their accounting baseline from their current coins; historical paid counts and prize state remain intact. Prize objects are excluded from penny totals. No hidden drain or forced refund percentage exists. The aimed shove scales with the square root of handful size, so more pennies increase force with diminishing returns.
 
 Deterministic fresh-tray centre-drop checks with 300 pennies returned 8 / 7 / 5 / 4 / 4 / 3 pennies, retaining the balance. These examples are not return-to-player rates or a completed economy balance study: an already loaded tray and different aim can pay differently. A hanging-prize fixture is won with an aimed full haul but not a single penny. Prize release thresholds remain unchanged.
+
+## Four-penny prize release — 15 September 2026
+
+Supersedes the earlier 4/8/14/22/32/48 thresholds: every unowned chapter prize releases by the fourth paid penny. Existing saved thresholds are updated without resetting coins or paid counts. A previously started chapter with four or more paid pennies releases its overdue prize on return, with no additional debit. An existing physical prize is retained; an owned prize is not repeated. A stale on-tray flag with no physical prize is reconciled against the actual pieces.
+
+The one complimentary practice drop is still once per Copper save, not per chapter; practice remains uncharged and excludes prizes. Persistent status distinguishes free practice, remaining paid pennies, prize on tray, and treasure already collected. The prize draws above the penny pile with an outline. Winning still requires pushing it over the edge.

@@ -11,8 +11,8 @@ const BACK = CAB.y + CAB.h * 0.36;
 const FRONT = CAB.y + CAB.h * 0.66;
 const COIN_R = 13;
 const TREASURE_R = 24;
-/** Hidden paid-drop count that unlatches the unique onto the tray — not a clock. */
-const MARKS = [4, 8, 14, 22, 32, 48];
+/** Every chapter releases its unique by the fourth paid penny. */
+const RELEASE_PENNIES = 4;
 const CHAPTERS = [
   { id: "shallow", title: "The Shallow Tray", prize: "coin-sleeve", divider: false, pegs: 0, upper: false, dead: false, speed: 0.55, push: 36, rows: 3, cols: 8, lipGap: 18 },
   { id: "split", title: "Split Falls", prize: "copper-cascade", divider: true, pegs: 0, upper: false, dead: false, speed: 0.62, push: 32, rows: 3, cols: 7, lipGap: 22 },
@@ -113,7 +113,7 @@ function freshTray(level) {
   return {
     coins: seedPile(level),
     paidCount: 0,
-    mark: MARKS[level] || 20,
+    mark: RELEASE_PENNIES,
     treasureOn: false,
     treasureOwned: false,
     pusher: 0,
@@ -234,7 +234,7 @@ function hitButton(s, p) {
 
 function maybeReleaseTreasure(s) {
   if (s.practice || s.tray.treasureOn || s.tray.treasureOwned) return;
-  if (s.tray.paidCount < s.tray.mark) return;
+  if (s.tray.paidCount < RELEASE_PENNIES) return;
   s.tray.treasureOn = true;
   s.tray.coins.push({
     id: "treasure",
@@ -245,6 +245,15 @@ function maybeReleaseTreasure(s) {
   s.note = "The latch opens. Push it over the edge.";
   s.flash = 1.2;
   clink(880, 0.35, 0.1);
+  return true;
+}
+
+function prizeStatus(s) {
+  if(s.practice)return "Free practice · no charge or prizes";
+  if(s.tray.treasureOwned)return "Treasure already in your collection";
+  if(s.tray.treasureOn)return "Prize on tray — push it over the edge";
+  const left=Math.max(0,RELEASE_PENNIES-s.tray.paidCount);
+  return "Prize releases in "+left+" paid "+(left===1?"penny":"pennies");
 }
 
 function collectOff(s) {
@@ -290,8 +299,8 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. The chapter prize is not a timer: after enough paid drops it unlatches onto the bed, then you still have to push it over the edge.",
-  instructions: "Aim the hopper, then dump 1, ¼, ½ or the whole purse. One dump, one shove. Build a wide pile behind what you want. The unique only joins the tray after a hidden number of paid pennies — never on the practice drop — and it never falls in by itself.",
+  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. The chapter prize is not a timer: by the fourth paid penny it unlatches onto the bed, then you still have to push it over the edge.",
+  instructions: "Aim the hopper, then dump 1, ¼, ½ or the whole purse. One dump, one shove. Build a wide pile behind what you want. The unique only joins the tray by the fourth paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
   levels: CHAPTERS.map(c => c.title),
   images: {
     cabinet: "./assets/coin-pusher/pusher/cabinet.webp",
@@ -321,6 +330,8 @@ export default {
     const book = readBook();
     const practice = !book.practiceUsed;
     const tray = practice ? (book.practice?.level === level ? book.practice.tray : {...freshTray(level), mark:999}) : loadTray(level);
+    const oldMark=tray.mark, oldTreasureOn=tray.treasureOn;
+    if(!practice)tray.mark=RELEASE_PENNIES;
     ledger(tray);
     tray.coins = tray.coins.map(c=>({vx:0,vy:0,falling:false,...c}));
     if (alleyPlay && owned(CHAPTERS[level].prize)) {
@@ -328,7 +339,8 @@ export default {
       tray.treasureOn = false;
       tray.coins = tray.coins.filter(c=>c.kind !== 'treasure');
     }
-    return {
+    if(!tray.treasureOwned)tray.treasureOn=tray.coins.some(c=>c.kind==='treasure');
+    const state = {
       level, t: 0, practice,
       phase: "idle",
       pegs: pegsFor(CHAPTERS[level]),
@@ -347,6 +359,10 @@ export default {
         : "The tray is as you left it. One handful, one push.",
       ...(tray.session || {}),
     };
+    // Honour already-paid pennies immediately, without buying another drop.
+    const released=maybeReleaseTreasure(state);
+    if(!practice&&(released||oldMark!==tray.mark||oldTreasureOn!==tray.treasureOn))persistState(state);
+    return state;
   },
   update(s, dt) {
     s.t += dt;
@@ -498,12 +514,14 @@ export default {
     c.setLineDash([]);
     d.circle(s.dropX, BACK - 22, 8, "#e8c878", "#7a5828", 2);
 
-    for (const coin of s.tray.coins) {
+    const pieces=[...s.tray.coins.filter(c=>c.kind!=="treasure"),...s.tray.coins.filter(c=>c.kind==="treasure")];
+    for (const coin of pieces) {
       const img = coin.kind === "treasure" ? d.art[ch.prize] : (coin.kind === "star" ? d.art.star : d.art.penny);
       if((coin.count||1)>1){
         for(let layer=1;layer<=Math.min(4,coin.count-1);layer++)
           d.circle(coin.x,coin.y-layer*3,coin.r,"#b87333","#7a4a18",1);
       }
+      if(coin.kind==='treasure')d.circle(coin.x,coin.y,coin.r+5,null,"#fff0a8",3);
       if (img) d.sprite(img, coin.x, coin.y, { w: coin.r * 2.15, h: coin.r * 2.15 });
       else d.circle(coin.x, coin.y, coin.r, coin.kind === "treasure" ? "#e8c878" : "#b87333", "#7a4a18", 2);
     }
@@ -530,7 +548,7 @@ export default {
     d.text("Collection lip", 450, FRONT + 32, 14, "#e8c878");
 
     d.wrap(s.note, 450, 848, 20, "#fff0c8", 700, 8);
-    if (s.lastWin && s.phase === "idle") d.text("+" + s.lastWin + " to purse", 450, 888, 20, "#c8e878");
+    d.text(prizeStatus(s),450,918,18,"#c8e878");
 
     uiButtons(s).forEach(b => {
       c.beginPath();
@@ -545,6 +563,6 @@ export default {
   },
   readout(s) {
     const n = pursePennies();
-    return (s.practice ? "practice" : n + " pennies") + (s.note ? " · " + s.note : "");
+    return (s.practice ? "practice" : n + " pennies") + " · " + prizeStatus(s) + (s.note ? " · " + s.note : "");
   },
 };

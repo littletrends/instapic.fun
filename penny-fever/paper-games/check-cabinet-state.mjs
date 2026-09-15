@@ -90,3 +90,31 @@ for(const amount of [1,300,3000]){
  else assert(game.tray.treasureOwned,'aimed haul can push the hanging prize over');
 }
 console.log('PASS: aimed full haul moves a hanging prize where one penny does not; 3,000-penny accounting.');
+
+for(const id of Object.keys(inventory.items))delete inventory.items[id];
+for(let level=0;level<6;level++){
+ mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;
+ let game=copper.create(level);
+ for(let paid=1;paid<=4;paid++){
+  copper.drop(game,1);
+  assert.equal(game.tray.paidCount,paid);
+  assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,paid===4?1:0);
+  for(let i=0;i<600&&game.busy;i++)copper.update(game,1/60);
+  copper.persist(game);game=copper.create(level);
+ }
+ assert(game.tray.treasureOn||game.tray.treasureOwned);
+ const snapshot=JSON.parse(JSON.stringify(game.tray));
+ snapshot.coins=snapshot.coins.filter(c=>c.kind!=='treasure');snapshot.treasureOwned=false;
+ snapshot.treasureOn=false;snapshot.mark=48;snapshot.paidCount=9;
+ mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{[level]:snapshot}}));
+ const before=cash;game=copper.create(level);
+ assert.equal(cash,before,'overdue release costs nothing');assert.equal(game.tray.mark,4);
+ assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1);
+ assert.deepEqual(game.tray.coins.filter(c=>c.kind!=='treasure'),snapshot.coins,'migration preserves pennies and their positions');
+ assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,1,'reload does not duplicate overdue treasure');
+ game.tray.treasureOn=true;game.tray.coins=game.tray.coins.filter(c=>c.kind!=='treasure');copper.persist(game);
+ game=copper.create(level);assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1,'repair stale on-tray flag without another payment');
+ game.tray.treasureOwned=true;game.tray.treasureOn=false;game.tray.coins=game.tray.coins.filter(c=>c.kind!=='treasure');copper.persist(game);
+ assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,0,'owned prize does not repeat');
+}
+console.log('PASS: fourth paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');
