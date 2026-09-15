@@ -1,21 +1,23 @@
 /*
  * Skyward Swings (Hugo) — Ride & Seek stall
  *
- * SHIPPED: Chapter 1 First Swing — Lit Reach.
+ * SHIPPED: Ch1 Lit Reach + Ch2 Ribbon Round. UNFINISHED 3–6.
  *   Rainbow Islands pop energy on a Tempest circle. Chair carousel auto-orbits
  *   Hugo’s tower. ONE verb: HOLD to stretch radius outward; RELEASE tucks in.
  *   Vertical drag has no gameplay meaning; chair height is visual only.
  *   Targets are star-bubbles / lanterns on radius bands. Green “lined up” lit
  *   state fires BEFORE the catch window (Hold-the-Line SAFE). Catch = POP burst
- *   (flash + sparks + fly-home), not a silent ring pass. Two bands only
- *   (inner / outer), long approaches (~1.8 s), no forced pushes. Platform
- *   shadow + glints show current vs target band. Ease ~620 ms between adjacent
- *   bands, no snap. Unique court (swings.png) is hero — never full-canvas
- *   overpaint. Tagline: Swing wide. Catch the night.
+ *   (flash + sparks + fly-home), not a silent ring pass. Ease ~620 ms between
+ *   adjacent bands, no snap. Unique court (swings.png) is hero — never
+ *   full-canvas overpaint. Tagline: Swing wide. Catch the night.
+ *
+ *   Ch1 First Swing — Lit Reach: two bands (inner / outer), 4 bubbles, long
+ *     approaches (~1.8 s), no forced pushes. HOLD→POP PASS locked.
+ *   Ch2 Ribbon Round: three bands (inner / middle / outer); GOAL 3; ~52 s;
+ *     ONE teach ribbon gate alone (long warn ~7.5 s) then two normal bubbles;
+ *     soft ribbon miss pushes one band inward — never aborts paid ride.
  *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
- *   2 Ribbon Round — add middle band; teach inner and outer ribbon gates
- *     separately; height is not player-controlled
  *   3 Star Circles — sequences that reward holding a smooth line, not frantic
  *     switching
  *   4 Cloud Waltz — clouds hide objects but shadows show the band first
@@ -43,26 +45,33 @@ const CY = 392;           // Hugo’s painted tower on swings.png
 const SQUASH = 0.62;      // platform foreshortening
 const INNER_R = 148;
 const OUTER_R = 292;
+const MIDDLE_R = (INNER_R + OUTER_R) * 0.5; // radiusU 0.5
 const EASE_SEC = 0.62;    // 620 ms between adjacent bands (500–700, no snap)
 const OMEGA = 0.84;       // rad/s — lit windows stay identical in reduced motion
 const TAU = Math.PI * 2;
-const GOAL = 4;
+const GOAL_CH1 = 4;
+const GOAL_CH2 = 3;
 const CATCH_HALF = 0.34;  // rad sweep window (~0.40 s at OMEGA)
-const APPROACH = 1.55;    // rad of visible approach (~1.8 s)
-const FINISH_THETA = 3.12 * TAU; // land after the fourth bubble
+const APPROACH = 1.55;    // rad of visible approach (~1.8 s) — Ch1 / normal bubbles
+const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
+const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
+const FINISH_THETA_CH2 = 6.85 * TAU; // ~51.5 s first-play window for 3/3
 const FLASH_SEC = 0.28;   // POP bloom
 const MISS_FLASH = 0.22;
 const FLY_DUR = 0.62;
+const SOFT_PUSH_SEC = 0.55; // ignore lean while soft-push eases inward
 const PURSE = {x: 86, y: 72};
 const PRIZE_CORNER = {x: 792, y: 78};
 
-// Lit Reach palette — green lined-up, gold idle, cool miss, warm POP
+// Lit Reach / Ribbon Round palette — green lined-up, gold idle, cool miss, warm POP, ribbon
 const GREEN = '#5ee08a';
 const GREEN_SOFT = '#7ef0a8';
 const GOLD = '#f4d590';
 const GOLD_DIM = '#d2a65b';
 const COOL = '#8ec8e8';
 const CREAM = '#fff6d8';
+const RIBBON = '#c45a7a';
+const RIBBON_SOFT = '#e88aaa';
 
 const SPAWNS = ['inner', 'outer'];
 
@@ -73,6 +82,19 @@ function ch1Bubbles() {
     {theta: 1.58 * TAU, band: 1, taken: false}, // outer
     {theta: 2.24 * TAU, band: 0, taken: false}, // inner
     {theta: 2.90 * TAU, band: 1, taken: false}, // outer
+  ];
+}
+
+/**
+ * Chapter 2 Ribbon Round: ONE teach ribbon on middle alone (long warn),
+ * then two normal star-bubbles (inner, outer). GOAL 3. Soft miss recoverable
+ * for ride continuity (never aborts).
+ */
+function ch2Bubbles() {
+  return [
+    {theta: 1.55 * TAU, band: 1, taken: false, ribbon: true, teach: true}, // middle ribbon gate
+    {theta: 3.45 * TAU, band: 0, taken: false}, // inner star-bubble
+    {theta: 5.25 * TAU, band: 2, taken: false}, // outer star-bubble
   ];
 }
 
@@ -92,8 +114,19 @@ function pageHidden() {
   }
 }
 
-function bandRadius(band) {
-  return band ? OUTER_R : INNER_R;
+function isThree(s) {
+  return !!(s && s.threeBand);
+}
+
+function finishThetaOf(s) {
+  return s.finishTheta != null ? s.finishTheta : FINISH_THETA_CH1;
+}
+
+function bandRadius(band, three) {
+  if (!three) return band ? OUTER_R : INNER_R;
+  if (band <= 0) return INNER_R;
+  if (band === 1) return MIDDLE_R;
+  return OUTER_R;
 }
 
 function radiusAt(u) {
@@ -112,12 +145,33 @@ function depthOf(angle) {
   return 0.5 + 0.5 * Math.sin(angle);
 }
 
-function currentBand(u) {
-  return u >= 0.5 ? 1 : 0;
+/** Discrete band from radiusU. Ch1: 2 bands. Ch2: 3 bands at 0 / 0.5 / 1. */
+function currentBand(u, three) {
+  if (!three) return u >= 0.5 ? 1 : 0;
+  if (u < 0.25) return 0;
+  if (u < 0.75) return 1;
+  return 2;
 }
 
-function bandLabel(band) {
-  return band ? 'outer' : 'inner';
+function bandToU(band, three) {
+  if (!three) return band ? 1 : 0;
+  if (band <= 0) return 0;
+  if (band === 1) return 0.5;
+  return 1;
+}
+
+function bandLabel(band, three) {
+  if (!three) return band ? 'outer' : 'inner';
+  if (band <= 0) return 'inner';
+  if (band === 1) return 'middle';
+  return 'outer';
+}
+
+function approachOf(bubble) {
+  if (bubble && bubble.ribbon && bubble.teach) {
+    return RIBBON_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s long warn
+  }
+  return APPROACH;
 }
 
 /** Ahead angle of a fixed world target relative to the chair. */
@@ -128,19 +182,21 @@ function aheadOf(s, theta) {
 /**
  * Green “lined up” lit — chair already on the target’s band while the
  * bubble/lantern is in approach (before + through the catch window).
- * Same windows in reduced motion.
+ * Middle lights when radiusU near 0.5. Same windows in reduced motion.
  */
-function isLinedUp(s, band, theta) {
+function isLinedUp(s, band, theta, approach) {
   const ahead = aheadOf(s, theta);
-  if (ahead > APPROACH || ahead < -CATCH_HALF) return false;
-  return currentBand(s.radiusU) === band;
+  const ap = approach != null ? approach : APPROACH;
+  if (ahead > ap || ahead < -CATCH_HALF) return false;
+  return currentBand(s.radiusU, isThree(s)) === band;
 }
 
 function setLean(s, on) {
+  if (s.pushUntil != null && s.t < s.pushUntil) return; // soft-push owns the ease
   const next = !!on;
   if (s.holding === next) return;
   s.holding = next;
-  const dest = next ? 1 : 0;
+  const dest = next ? 1 : 0; // HOLD → outer (1); RELEASE → inner (0); middle via ease
   if (s.easeTo !== dest) {
     s.easeFrom = s.radiusU;
     s.easeTo = dest;
@@ -157,8 +213,26 @@ function refreshLean(s, input) {
     setLean(s, false);
     return;
   }
+  if (s.pushUntil != null && s.t < s.pushUntil) {
+    s.holding = false;
+    return;
+  }
   const fromInput = !!(input?.actions?.has?.('lean') || input?.down);
   setLean(s, !!(s.holdPointer || s.holdAction || fromInput));
+}
+
+/** Soft fail: ease one discrete band inward; ride continues. */
+function softPushInward(s) {
+  const three = isThree(s);
+  const cur = currentBand(s.radiusU, three);
+  const next = Math.max(0, cur - 1);
+  const dest = bandToU(next, three);
+  s.easeFrom = s.radiusU;
+  s.easeTo = dest;
+  s.easeT = 0;
+  s.holding = false;
+  s.pushUntil = s.t + SOFT_PUSH_SEC;
+  logAction(s, 'soft-push', {from: cur, to: next});
 }
 
 function pushFly(s, id, x, y, prize) {
@@ -204,13 +278,24 @@ function pushBurst(s, x, y, cool) {
 
 function spawnTreasure(s) {
   if (!s.eligible || s.treasure) return;
-  const band = s.spawnId === 'inner' ? 0 : 1;
+  const three = isThree(s);
+  // Ch2: middle band (practiced on ribbon). Ch1: spawn lane inner/outer.
+  let band;
+  if (three) {
+    band = 1;
+  } else {
+    band = s.spawnId === 'inner' ? 0 : 1;
+  }
+  const finish = finishThetaOf(s);
   // Visible for a full circuit (green warning), then POP-swept on same angle.
+  const warnTheta = three ? 5.55 * TAU : 1.02 * TAU;
+  const sweepTheta = three ? 6.55 * TAU : 2.02 * TAU;
+  if (sweepTheta > finish - 0.15) return; // keep land window clear
   s.treasure = {
     id: s.treasureId,
     band,
-    warnTheta: 1.02 * TAU,
-    sweepTheta: 2.02 * TAU,
+    warnTheta,
+    sweepTheta,
     taken: false,
   };
 }
@@ -219,19 +304,29 @@ function tryPopBubble(s, bubble, i) {
   if (bubble.taken) return;
   const d = s.theta - bubble.theta;
   if (d < -CATCH_HALF || d > CATCH_HALF) return;
-  if (currentBand(s.radiusU) !== bubble.band) return;
+  if (currentBand(s.radiusU, isThree(s)) !== bubble.band) return;
   bubble.taken = true;
   bubble.flash = FLASH_SEC;
   bubble.lit = false;
   s.passed += 1;
   const findId = ORDINARY[s.passed % ORDINARY.length];
   recordFind(s, findId, RIDE);
-  logAction(s, 'bubble', {band: bubble.band, i, passed: s.passed, pop: true});
-  const p = orbitPoint(bubble.theta, bandRadius(bubble.band));
+  logAction(s, 'bubble', {
+    band: bubble.band,
+    i,
+    passed: s.passed,
+    pop: true,
+    ribbon: !!bubble.ribbon,
+  });
+  const p = orbitPoint(bubble.theta, bandRadius(bubble.band, isThree(s)));
   pushFly(s, findId, p.x, p.y, false);
   pushBurst(s, p.x, p.y, false);
   s.popFlash = FLASH_SEC;
-  s.note = 'POP! ' + s.passed + ' / ' + s.goal;
+  if (bubble.ribbon) {
+    s.note = 'Ribbon POP! ' + s.passed + ' / ' + s.goal;
+  } else {
+    s.note = 'POP! ' + s.passed + ' / ' + s.goal;
+  }
   s.notePinUntil = s.t + 1.6;
 }
 
@@ -242,12 +337,12 @@ function trySweepTreasure(s) {
   s.treasureRevealed = true;
   const d = s.theta - tr.sweepTheta;
   if (d < -CATCH_HALF || d > CATCH_HALF * 1.4) return;
-  if (currentBand(s.radiusU) !== tr.band) return;
+  if (currentBand(s.radiusU, isThree(s)) !== tr.band) return;
   tr.taken = true;
   tr.flash = FLASH_SEC;
   recordTreasure(s, tr.id);
   logAction(s, 'treasure', {band: tr.band, id: tr.id, pop: true});
-  const p = orbitPoint(tr.sweepTheta, bandRadius(tr.band));
+  const p = orbitPoint(tr.sweepTheta, bandRadius(tr.band, isThree(s)));
   pushFly(s, tr.id, p.x, p.y, true);
   pushBurst(s, p.x, p.y, false);
   s.popFlash = FLASH_SEC;
@@ -322,6 +417,68 @@ function drawBubble(d, x, y, depth, lit, flash, miss) {
   d.circle(x, y, r, '#f4d59022', GOLD_DIM, 2.8);
   d.circle(x, y, r * 0.72, '#f8e4b344', GOLD, 1.6);
   drawStar(d, x, y, 8 + depth * 2.5, '#f8e4b3', GOLD_DIM);
+}
+
+/** Teach ribbon gate — burgundy arch on the target band; long warn glow. */
+function drawRibbonGate(d, s, bubble, bank, lit, flash, miss) {
+  const three = isThree(s);
+  const rr = bandRadius(bubble.band, three);
+  const p = orbitPoint(bubble.theta, rr);
+  const x = p.x + bank * 0.4;
+  const y = p.y;
+  const depth = depthOf(bubble.theta);
+  const ahead = aheadOf(s, bubble.theta);
+  const warn = approachOf(bubble);
+  const ramp = clamp(1 - ahead / Math.max(0.01, warn), 0, 1);
+
+  if (flash > 0) {
+    drawBubble(d, x, y, depth, false, flash, 0);
+    return;
+  }
+  if (miss > 0) {
+    d.glow(x, y, 48, COOL);
+    drawBubble(d, x, y, depth, false, 0, miss);
+    return;
+  }
+
+  // Ribbon streamers flanking the gate (paper-cut, not full-canvas)
+  const half = 0.22 + ramp * 0.08;
+  for (let side = -1; side <= 1; side += 2) {
+    const a0 = bubble.theta + side * half;
+    const a1 = bubble.theta + side * (half * 0.55);
+    const outer = orbitPoint(a0, rr + 10);
+    const inner = orbitPoint(a1, rr - 14);
+    const mid = orbitPoint(bubble.theta + side * half * 0.75, rr + 2);
+    d.poly(
+      [
+        [outer.x + bank * 0.2, outer.y],
+        [mid.x + bank * 0.3, mid.y - 18],
+        [inner.x + bank * 0.2, inner.y],
+        [mid.x + bank * 0.3, mid.y + 10],
+      ],
+      lit ? '#5ee08a55' : '#c45a7a66',
+      lit ? GREEN : RIBBON,
+      lit ? 3.2 : 2.4,
+    );
+  }
+
+  // Gate oval on the band
+  d.ellipse(
+    x, y,
+    28 + ramp * 8, 16 + ramp * 4,
+    lit ? '#5ee08a33' : '#c45a7a33',
+    lit ? GREEN : RIBBON_SOFT,
+    lit ? 4 : 2.6,
+  );
+  if (lit) {
+    d.glow(x, y, 50 + depth * 6, GREEN);
+    d.text('lined up', x, y - 36, 15, GREEN_SOFT);
+  } else {
+    d.glow(x, y, 28 + ramp * 22, RIBBON); // 6-digit only
+  }
+  drawStar(d, x, y, 9 + depth * 2, lit ? CREAM : '#f8d0e0', lit ? GREEN : RIBBON);
+  d.text('ribbon', x, y + 30 + depth * 3, 14, lit ? GREEN_SOFT : RIBBON_SOFT);
+  d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 13, lit ? GREEN_SOFT : '#ead6a4');
 }
 
 function drawChain(d, ax, ay, bx, by, player) {
@@ -400,18 +557,24 @@ function drawCanopyHub(d, s) {
 }
 
 function drawBandShadows(d, s) {
-  const target = s.holding ? 1 : 0;
-  const cur = currentBand(s.radiusU);
-  [0, 1].forEach((band) => {
-    const rr = bandRadius(band);
-    const isTarget = band === target;
+  const three = isThree(s);
+  const bands = three ? [0, 1, 2] : [0, 1];
+  const targetU = s.holding ? 1 : 0;
+  const targetBand = currentBand(targetU, three);
+  // While easing toward middle zone, highlight nearest dest band
+  const easeBand = currentBand(s.easeTo, three);
+  const cur = currentBand(s.radiusU, three);
+  bands.forEach((band) => {
+    const rr = bandRadius(band, three);
+    const isTarget = band === easeBand || (s.easeT >= 1 && band === targetBand);
     const isCur = band === cur;
+    const isMid = three && band === 1;
     d.ellipse(
       CX, CY,
       rr, rr * SQUASH,
       isCur ? '#3a241866' : '#3a241814',
-      isTarget ? '#f4d590ee' : (isCur ? '#d2a65bcc' : '#b78b4844'),
-      isTarget ? 3.6 : (isCur ? 2.4 : 1.1),
+      isTarget ? '#f4d590ee' : (isCur ? '#d2a65bcc' : (isMid ? '#c45a7a55' : '#b78b4844')),
+      isTarget ? 3.6 : (isCur ? 2.4 : (isMid ? 1.6 : 1.1)),
     );
     if (isCur && !isTarget) {
       d.ellipse(CX, CY, rr * 0.97, rr * SQUASH * 0.97, '#2a181422', null, 0);
@@ -465,10 +628,36 @@ function drawFx(d, s) {
   }
 }
 
+function missNote(bubble, three) {
+  if (bubble.ribbon) {
+    return 'Ribbon miss — soft push inward; HOLD/RELEASE to the middle band';
+  }
+  const label = bandLabel(bubble.band, three);
+  if (label === 'outer') return 'Missed the outer bubble — HOLD to stretch out';
+  if (label === 'middle') return 'Missed the middle bubble — HOLD briefly, then RELEASE';
+  return 'Missed the inner bubble — RELEASE to tuck in';
+}
+
+function updateRibbonCoach(s) {
+  if (!isThree(s)) return;
+  const teach = s.bubbles.find((b) => b.ribbon && b.teach && !b.taken && !b.missed);
+  if (!teach) return;
+  const ahead = aheadOf(s, teach.theta);
+  const warn = approachOf(teach);
+  if (ahead > warn || ahead < -CATCH_HALF) return;
+  // Don't stomp a sticky miss plate or a fresh POP note
+  if (s.notePinUntil != null && s.t < s.notePinUntil) return;
+  if (isLinedUp(s, teach.band, teach.theta, warn)) {
+    s.note = 'Lined up — hold the middle band through the ribbon';
+  } else {
+    s.note = 'Ribbon — HOLD/RELEASE to the middle band';
+  }
+}
+
 export default {
   title: 'Skyward Swings',
   intro: 'Swing wide. Catch the night. HOLD to stretch out — RELEASE to tuck in. Burst the star-bubbles.',
-  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. First ride is free practice.',
+  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. Ribbon Round adds a middle band — ease through it for the ribbon gate. First ride is free practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -476,6 +665,7 @@ export default {
   actions: [{id: 'lean', label: 'HOLD · stretch out', hold: true}],
   create(level, rng) {
     const reduced = typeof prefersReducedMotion === 'function' ? prefersReducedMotion() : false;
+    const ch2 = level === 1;
     return makeRideState(level, rng, {
       theta: -0.35,
       radiusU: 0,
@@ -487,8 +677,10 @@ export default {
       holdAction: false,
       backgrounded: false,
       passed: 0,
-      goal: GOAL,
-      bubbles: ch1Bubbles(),
+      goal: ch2 ? GOAL_CH2 : GOAL_CH1,
+      threeBand: ch2,
+      finishTheta: ch2 ? FINISH_THETA_CH2 : FINISH_THETA_CH1,
+      bubbles: ch2 ? ch2Bubbles() : ch1Bubbles(),
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
       camBank: 0,
       pointer: null,
@@ -498,16 +690,19 @@ export default {
       leanCue: 0,
       screenFlash: 0,
       popFlash: 0,
-      coachUntil: 5,
+      coachUntil: ch2 ? 6 : 5,
       notePinUntil: 0,
+      pushUntil: 0,
     });
   },
   update(s, dt, input) {
     if (s.result || s.broke) return;
 
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWNS)) {
-      s.note = 'HOLD to stretch out · RELEASE to tuck in';
-      s.coachUntil = s.t + 5;
+      s.note = isThree(s)
+        ? 'Ribbon Round — HOLD out · RELEASE in · middle is the ease'
+        : 'HOLD to stretch out · RELEASE to tuck in';
+      s.coachUntil = s.t + (isThree(s) ? 6 : 5);
     }
     if (s.result) return;
 
@@ -529,7 +724,10 @@ export default {
     const wantBank = (s.radiusU - 0.5) * (reduced ? 5 : 16);
     s.camBank += (wantBank - s.camBank) * Math.min(1, dt * 5);
 
-    s.progress = Math.min(1, s.theta / FINISH_THETA);
+    const finish = finishThetaOf(s);
+    s.progress = Math.min(1, s.theta / finish);
+
+    const three = isThree(s);
 
     // Update green lit flags (readable before catch; same timing when reduced)
     s.bubbles.forEach((bubble) => {
@@ -537,7 +735,7 @@ export default {
         bubble.lit = false;
         return;
       }
-      bubble.lit = isLinedUp(s, bubble.band, bubble.theta);
+      bubble.lit = isLinedUp(s, bubble.band, bubble.theta, approachOf(bubble));
     });
 
     s.bubbles.forEach((bubble, i) => {
@@ -547,24 +745,27 @@ export default {
         bubble.missFlash = MISS_FLASH;
         bubble.lit = false;
         s.screenFlash = 0.14;
-        logAction(s, 'bubble-miss', {band: bubble.band, i});
-        s.note = bubble.band
-          ? 'Missed the outer bubble — HOLD to stretch out'
-          : 'Missed the inner bubble — RELEASE to tuck in';
-        s.notePinUntil = s.t + 2.8;
-        const p = orbitPoint(bubble.theta, bandRadius(bubble.band));
+        logAction(s, bubble.ribbon ? 'ribbon-miss' : 'bubble-miss', {band: bubble.band, i});
+        if (bubble.ribbon) {
+          softPushInward(s);
+        }
+        s.note = missNote(bubble, three);
+        s.notePinUntil = s.t + (bubble.ribbon ? 3.2 : 2.8);
+        const p = orbitPoint(bubble.theta, bandRadius(bubble.band, three));
         pushBurst(s, p.x, p.y, true);
       }
     });
+
+    updateRibbonCoach(s);
     spawnTreasure(s);
     if (s.treasure && !s.treasure.taken && s.theta >= s.treasure.warnTheta) {
       s.treasure.lit = isLinedUp(s, s.treasure.band, s.treasure.sweepTheta)
-        || (currentBand(s.radiusU) === s.treasure.band && s.theta < s.treasure.sweepTheta);
+        || (currentBand(s.radiusU, three) === s.treasure.band && s.theta < s.treasure.sweepTheta);
     }
     trySweepTreasure(s);
     tickFx(s, dt);
 
-    if (s.theta >= FINISH_THETA) {
+    if (s.theta >= finish) {
       finishRide(s, {
         rideId: RIDE,
         treasureId: s.treasureId,
@@ -610,6 +811,7 @@ export default {
     const bank = s.camBank || 0;
     const fly = s.radiusU;
     const hang = fly * (reduced ? 6 : 20);
+    const three = isThree(s);
 
     // Soft court vignette only — never a full-canvas fill over swings.png.
     d.ellipse(CX + bank * 0.12, CY + 70, 360, 250, '#1a101014');
@@ -648,27 +850,32 @@ export default {
       drawChair(d, x, y, scale, seat.player ? fly : 0.7, depth, seat.player, seat.player ? bank : 0);
     });
 
-    // Star-bubbles / lanterns at fixed world angles — fly the chair to them.
+    // Star-bubbles / ribbon gates at fixed world angles — fly the chair to them.
     s.bubbles.forEach((bubble) => {
       if (bubble.taken && !(bubble.flash > 0)) return;
       const ahead = aheadOf(s, bubble.theta);
-      if (!bubble.taken && ahead > APPROACH && !(bubble.missFlash > 0)) return;
+      const ap = approachOf(bubble);
+      if (!bubble.taken && ahead > ap && !(bubble.missFlash > 0)) return;
       if (!bubble.taken && ahead < -CATCH_HALF && !(bubble.missFlash > 0)) return;
-      const p = orbitPoint(bubble.theta, bandRadius(bubble.band));
+      const lit = !!bubble.lit && !bubble.taken;
+      if (bubble.ribbon) {
+        drawRibbonGate(d, s, bubble, bank, lit, bubble.flash || 0, bubble.missFlash || 0);
+        return;
+      }
+      const p = orbitPoint(bubble.theta, bandRadius(bubble.band, three));
       const depth = depthOf(bubble.theta);
       const px = p.x + bank * 0.4;
       const py = p.y;
-      const lit = !!bubble.lit && !bubble.taken;
       drawBubble(d, px, py, depth, lit, bubble.flash || 0, bubble.missFlash || 0);
       if (!bubble.taken && !(bubble.missFlash > 0) && !(bubble.flash > 0)) {
-        d.text(bandLabel(bubble.band), px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : '#ead6a4');
+        d.text(bandLabel(bubble.band, three), px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : '#ead6a4');
       }
     });
 
     if (s.treasure && !s.treasure.taken && s.theta >= s.treasure.warnTheta) {
       const tr = s.treasure;
       const ang = tr.sweepTheta;
-      const p = orbitPoint(ang, bandRadius(tr.band));
+      const p = orbitPoint(ang, bandRadius(tr.band, three));
       const x = p.x + bank * 0.4;
       const y = p.y;
       const warnSpan = tr.sweepTheta - tr.warnTheta;
@@ -678,7 +885,7 @@ export default {
       // Full green warning circuit when on-band; gold glints otherwise
       for (let i = 0; i < 6; i++) {
         const a = s.theta * 0.9 + i * (TAU / 6);
-        const g = orbitPoint(a, bandRadius(tr.band) * (0.92 + 0.08 * Math.sin(s.t * 4 + i)));
+        const g = orbitPoint(a, bandRadius(tr.band, three) * (0.92 + 0.08 * Math.sin(s.t * 4 + i)));
         d.circle(
           g.x + bank * 0.2, g.y,
           2.6 + ramp * 1.4,
@@ -698,12 +905,12 @@ export default {
         fallback: () => drawStar(d, x, y, 16, '#ffe6a4', GOLD_DIM),
       });
       if (s.theta < tr.sweepTheta - 0.2) {
-        d.text(bandLabel(tr.band) + ' band', x, y + 42, 15, lit ? GREEN_SOFT : GOLD);
+        d.text(bandLabel(tr.band, three) + ' band', x, y + 42, 15, lit ? GREEN_SOFT : GOLD);
       }
     }
     if (s.treasure?.taken && s.treasure.flash > 0) {
       const tr = s.treasure;
-      const p = orbitPoint(tr.sweepTheta, bandRadius(tr.band));
+      const p = orbitPoint(tr.sweepTheta, bandRadius(tr.band, three));
       const bloom = s.treasure.flash / FLASH_SEC;
       d.glow(p.x + bank * 0.4, p.y, 80 * bloom, CREAM);
       d.circle(p.x + bank * 0.4, p.y, 30, null, CREAM, 6);
@@ -725,11 +932,16 @@ export default {
     // Clarity-first control chrome (Lorie): one verb must read in the first 5s.
     const early = (s.t || 0) < (s.coachUntil != null ? s.coachUntil : 5);
     const verb = s.holding ? 'RELEASE' : 'HOLD';
-    const verbSub = s.holding ? 'tuck in' : 'stretch out';
-    const coach = s.note || 'HOLD to stretch out · RELEASE to tuck in';
+    const verbSub = s.holding
+      ? (three ? 'tuck in · ease past middle' : 'tuck in')
+      : (three ? 'stretch out · ease through middle' : 'stretch out');
+    const coach = s.note || (three
+      ? 'HOLD out · RELEASE in · middle for the ribbon'
+      : 'HOLD to stretch out · RELEASE to tuck in');
 
     // Sticky miss coaching plate (playtest: settle was burying the miss verb)
-    const missPinned = (s.notePinUntil != null) && (s.t < s.notePinUntil) && /Missed/.test(s.note || '');
+    const missPinned = (s.notePinUntil != null) && (s.t < s.notePinUntil)
+      && /Missed|Ribbon miss/.test(s.note || '');
     if (missPinned) {
       d.poly(
         [[160, 760], [740, 760], [728, 848], [172, 848]],
@@ -740,15 +952,17 @@ export default {
       d.text(s.note, 450, 810, 18, CREAM);
     }
 
-    // Big in-court verb plate — loudest thing early / until first POP.
-    if (!missPinned && (early || s.holding || (s.passed || 0) < 1)) {
+    // Big in-court verb plate — loudest thing early / until first POP / during ribbon teach.
+    const teachRibbon = three && s.bubbles.some((b) => b.ribbon && b.teach && !b.taken && !b.missed
+      && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -CATCH_HALF);
+    if (!missPinned && (early || s.holding || (s.passed || 0) < 1 || teachRibbon)) {
       d.poly(
         [[200, 820], [700, 820], [688, 920], [212, 920]],
         s.holding ? '#6b2030ee' : '#2a1838ee',
         s.holding ? GOLD : '#e8c878',
-        early ? 4 : 2.5,
+        early || teachRibbon ? 4 : 2.5,
       );
-      d.text(verb, 450, 858, early ? 42 : 34, CREAM);
+      d.text(verb, 450, 858, early || teachRibbon ? 42 : 34, CREAM);
       d.text(verbSub, 450, 898, 18, '#f0d18f');
     }
 
@@ -762,13 +976,16 @@ export default {
     d.text(s.holding ? 'RELEASE · tuck in' : 'HOLD · stretch out', 450, 1110, 26, CREAM);
     d.text(coach, 450, 1152, 16, '#f0d18f');
     if (s.practice) {
+      // Practice badge — pulse louder during ribbon teach
+      const pulse = teachRibbon ? (0.7 + 0.3 * Math.sin((s.t || 0) * 5)) : 1;
+      const a = Math.floor(pulse * 238).toString(16).padStart(2, '0');
       d.poly(
-        [[340, 78], [560, 78], [552, 128], [348, 128]],
-        '#2a1838ee',
-        '#ead6a4',
-        2,
+        [[320, 70], [580, 70], [568, 132], [332, 132]],
+        '#2a1838' + a,
+        teachRibbon ? RIBBON_SOFT : '#ead6a4',
+        teachRibbon ? 3 : 2,
       );
-      d.text('practice', 450, 108, 22, CREAM);
+      d.text('PRACTICE', 450, 108, teachRibbon ? 26 : 22, CREAM);
     }
 
     drawHud(d, s, {goal: s.goal, count: s.passed, label: 'bubbles'});
