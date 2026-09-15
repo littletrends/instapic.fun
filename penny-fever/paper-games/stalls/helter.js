@@ -38,11 +38,11 @@ const CX = 450;
 const TOWER_TOP = 210;
 const TOWER_BOT = 980;
 const MAT_Y = 920;
-const RIDE_SECONDS = 36;
+const RIDE_SECONDS = 41;
 const PREVIEW_SECS = 2.2;
 const TEACH_SECS = 5;
 const GOAL = 3;
-const RING_COUNT = 3;
+const RING_COUNT = 5;
 const FX_CAP = 48;
 /** Angular half-width that counts as "facing you" at the bottom notch. */
 const FACE_SNAP = Math.PI / 3;
@@ -83,12 +83,19 @@ function facingTight(theta) {
 function chapterPlan(level, rng) {
   const haste = 1 + Math.min(0.2, level * 0.035);
   const duration = RIDE_SECONDS / haste;
-  // Three rings spaced through the slow descent; treasure prefers the middle ladder.
-  const times = [0.22, 0.48, 0.74].map((f) => f * duration);
-  const treasureRing = 1;
+  // Five rings spaced through the descent; GOAL stays 3 ladders — recoverable after a snake.
+  const times = [0.14, 0.30, 0.46, 0.62, 0.78].map((f) => f * duration);
+  const treasureRing = 2;
   const rings = times.map((t, i) => {
-    // Start slightly off so the player must TURN at least once to land ladder.
-    const start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.2;
+    let start;
+    if (i === 0) {
+      // First ring: clearly off-ladder but within ~90° so one short drag teaches TURN.
+      const mag = Math.PI * (0.38 + rng() * 0.10); // ~68°–86°
+      start = (rng() < 0.5 ? mag : -mag);
+    } else {
+      // Later rings: off enough to need a TURN; still recoverable.
+      start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
+    }
     return {
       i,
       t,
@@ -192,7 +199,7 @@ function applyPointerTurn(s, p) {
 
 function spawnTreasure(s) {
   if (!s.eligible || s.treasure) return;
-  const idx = clamp(s.planTreasureRing ?? 1, 0, s.rings.length - 1);
+  const idx = clamp(s.planTreasureRing ?? 2, 0, s.rings.length - 1);
   const ring = s.rings[idx];
   ring.hasTreasure = true;
   s.treasure = {
@@ -313,9 +320,8 @@ function drawPracticeBadge(d, s, teach) {
 }
 
 function drawTurnChrome(d, s, clock, teach) {
-  const taught = !!s.turnedOnce && !teach;
-  // Big TURN chrome like TAP GAZE — fades after taught.
-  if (taught) {
+  // Loud TURN chrome until first successful turn; extra-large in the teach window.
+  if (s.turnedOnce && !teach) {
     const a = '55';
     d.text('↺  TURN  ↻', 450, 1048, 18, '#f0d09a' + a);
     return;
@@ -324,12 +330,17 @@ function drawTurnChrome(d, s, clock, teach) {
   const fillHex = Math.floor((0.42 + pulse * 0.28) * 255).toString(16).padStart(2, '0');
   const strokeHex = Math.floor((0.55 + pulse * 0.35) * 255).toString(16).padStart(2, '0');
   const textHex = Math.floor((0.9 + pulse * 0.1) * 255).toString(16).padStart(2, '0');
+  const big = teach || !s.turnedOnce;
+  const top = big ? 978 : 990;
+  const bot = big ? 1082 : 1075;
+  const left = big ? 220 : 250;
+  const right = big ? 680 : 650;
   d.poly(
-    [[250, 990], [650, 990], [640, 1075], [260, 1075]],
-    '#2a1814' + fillHex, '#d2a65b' + strokeHex, 2.5,
+    [[left, top], [right, top], [right - 10, bot], [left + 10, bot]],
+    '#2a1814' + fillHex, '#d2a65b' + strokeHex, big ? 3.2 : 2.5,
   );
-  d.text('↺  TURN  ↻', 450, 1025, 36, '#fff6d8' + textHex);
-  d.text('drag around the tower', 450, 1055, 16, '#f0d09a' + textHex);
+  d.text('↺  TURN  ↻', 450, big ? 1020 : 1025, big ? 44 : 36, '#fff6d8' + textHex);
+  d.text('drag around the tower', 450, big ? 1058 : 1055, big ? 18 : 16, '#f0d09a' + textHex);
 }
 
 function drawLadderNotch(d, x, y, rx, ry, ang, highlight) {
@@ -411,7 +422,7 @@ function drawRingToy(d, s, ring, clock, teach) {
 
   // Facing marker at bottom of ring ("you").
   if (active) {
-    d.glow(CX, y + ry, 28 + pulse * 12, face === 'ladder' ? '#ffe6a4' : '#c6748388');
+    d.glow(CX, y + ry, 28 + pulse * 12, face === 'ladder' ? '#ffe6a4' : '#c67483');
     d.text(face === 'ladder' ? 'ladder' : 'snake', CX, y + ry + 22, 14, face === 'ladder' ? '#f4d590' : '#e8b0b0');
   }
 
@@ -566,7 +577,7 @@ export default {
     tickFx(s, dt);
     if (s.result || s.broke) return;
 
-    if (ensureBoarded(s, RIDE, s.treasureId, ['ring-0', 'ring-1', 'ring-2'])) {
+    if (ensureBoarded(s, RIDE, s.treasureId, ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'])) {
       s.previewing = true;
       s.previewT = 0;
       s.launched = false;
@@ -584,8 +595,8 @@ export default {
       s.note = 'TURN the ring so the ladder faces you.';
       // Fair treasure spawn: always on a ladder segment of an authored ring.
       if (s.eligible) {
-        const preferred = ['ring-1', 'ring-0', 'ring-2'];
-        if (!preferred.includes(s.spawnId)) s.spawnId = 'ring-1';
+        const preferred = ['ring-2', 'ring-1', 'ring-3', 'ring-0', 'ring-4'];
+        if (!preferred.includes(s.spawnId)) s.spawnId = 'ring-2';
         const idx = Number(String(s.spawnId).replace('ring-', '')) || 1;
         s.planTreasureRing = clamp(idx, 0, s.rings.length - 1);
       }
@@ -704,7 +715,7 @@ export default {
     if (nearEnd || celebrating) {
       const fp = celebrating ? s.finishPulse / 1.4 : 0;
       d.ellipse(CX + bank, 1120, 160 + fp * 40, 36 + fp * 10, '#f3e2bd55', celebrating ? '#ffe6a4cc' : '#d2a65b88', celebrating ? 3 : 2);
-      if (celebrating) d.glow(CX + bank, 1120, 80 + fp * 50, s.challengeOkFlash ? '#ffe6a4' : '#8ec8e888');
+      if (celebrating) d.glow(CX + bank, 1120, 80 + fp * 50, s.challengeOkFlash ? '#ffe6a4' : '#8ec8e8');
       d.text(celebrating ? (s.challengeOkFlash ? 'bottom mat · clear' : 'bottom mat') : 'bottom mat', CX + bank, 1120, 18, '#f0d09a');
     }
 
