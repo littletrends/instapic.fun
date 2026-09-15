@@ -10,7 +10,8 @@
  * SHIPPED: Chapter 1 First Look — slow spokes, fat glow, one climb at a
  *   time; scream SNAP in the first 5s. Playtest: climb crawls while lit
  *   so the SNAP window is hittable (not a dwell-FOCUS meter).
- *   Attest PASS note: further widened glow/crawl for first-timers. Unique ferris.png court stays hero
+ *   Attest PASS note: further widened glow/crawl for first-timers.
+ *   Hit fix: SNAP on release-while-lit + actions SNAP button; drop isTap gate. Unique ferris.png court stays hero
  *   (no full-screen overpaint). Soft outside-lens dim only.
  *
  * UNFINISHED CHAPTERS (keep names; do not rename treasures):
@@ -61,7 +62,7 @@ const GOAL = 3;
 const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
 const CLARITY_SECS = 5;
-const TEACH = 'SNAP when it’s in the glow.';
+const TEACH = 'Aim the lens, then SNAP (button or release).';
 const GLOW_PAD = 36; // Ch1 forgiving — attest PASS note: widen more overnight
 
 function wheelSpin(level, reduced) {
@@ -327,13 +328,24 @@ function drawSnapChrome(d, s) {
   }
   // Big bottom SNAP control (Fortune-style chrome) when a target is in the glow.
   if (s.glowId) {
-    d.poly([[260, 1080], [640, 1080], [640, 1165], [260, 1165]], '#5a1c28f2', '#f4d590', 4);
-    d.text('SNAP', 450, 1135, 40, '#ffe6a4');
+    d.poly([[220, 990], [680, 990], [680, 1120], [220, 1120]], '#5a1c28f2', '#f4d590', 4);
+    d.text('SNAP', 450, 1070, 44, '#ffe6a4');
   }
 }
 
 function hitSnapControl(p) {
-  return p.y >= 1080 && p.y <= 1165 && p.x >= 260 && p.x <= 640;
+  // Keep inside the 900×1200 field; avoid the extreme bottom edge.
+  return p.y >= 990 && p.y <= 1120 && p.x >= 220 && p.x <= 680;
+}
+
+
+function trySnap(s, via) {
+  if (!s || !s.glowId) return false;
+  const target = (s.targets || []).find(o => o.id === s.glowId && o.alive);
+  if (!target) return false;
+  const ok = snapTarget(s, target);
+  if (ok) logAction(s, 'snap-input', {via, id: target.id});
+  return ok;
 }
 
 export default {
@@ -439,6 +451,13 @@ export default {
       });
     }
   },
+  // Fortune-style external SNAP control (runtime wires #actions buttons).
+  actions: [{id: 'snap', label: 'SNAP'}],
+  action(s, id, pressed) {
+    if (s.result || s.broke) return;
+    if (!pressed || id !== 'snap') return;
+    trySnap(s, 'action');
+  },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
 
@@ -446,10 +465,16 @@ export default {
       s.pointerDown = {x: p.x, y: p.y, t: s.t};
       s.moved = false;
       s.drag = p;
-      // Big SNAP chrome can fire immediately if something is in the glow.
+      // Big on-canvas SNAP chrome — fire on press, not only on tap-up.
       if (s.glowId && hitSnapControl(p)) {
-        const target = s.targets.find(o => o.id === s.glowId && o.alive);
-        if (target) snapTarget(s, target);
+        trySnap(s, 'chrome-down');
+        s.drag = null;
+        s.pointerDown = null;
+        return;
+      }
+      // Tap on lens glass while already glowing also snaps on down.
+      if (s.glowId && inLens(s.lensX, s.lensY, p.x, p.y, 24)) {
+        trySnap(s, 'lens-down');
         s.drag = null;
         s.pointerDown = null;
         return;
@@ -463,6 +488,14 @@ export default {
     if (type === 'move' && s.drag) {
       if (s.pointerDown && Math.hypot(p.x - s.pointerDown.x, p.y - s.pointerDown.y) > 12) {
         s.moved = true;
+      }
+      // If finger slides onto the SNAP chrome while glowing, fire.
+      if (s.glowId && hitSnapControl(p)) {
+        trySnap(s, 'chrome-move');
+        s.drag = null;
+        s.pointerDown = null;
+        s.moved = false;
+        return;
       }
       s.drag = p;
       const lens = fingerToLens(p);
@@ -478,31 +511,27 @@ export default {
 
     if (type === 'up') {
       const wasDrag = s.drag;
-      s.drag = null;
-      if (!wasDrag) return;
-      const down = s.pointerDown;
       const moved = s.moved;
-      const dtTouch = down ? Math.max(0, (s.t || 0) - (down.t || 0)) : 1;
+      s.drag = null;
       s.pointerDown = null;
       s.moved = false;
+      if (!wasDrag) return;
 
-      const isTap = !moved || dtTouch < 0.22;
-      if (!isTap) return;
-
-      // SNAP: target must be in the sweet glow; tap glass or SNAP chrome.
+      // HIT REGISTRATION FIX: do not require a short "tap".
+      // While a target is in the glow, release / SNAP chrome / lens = SNAP.
+      // (Old isTap gate ate every drag-to-aim then release.)
       if (!s.glowId) {
         if ((s.t || 0) < CLARITY_SECS) s.note = TEACH;
         return;
       }
-      const ok = hitSnapControl(p)
-        || inLens(s.lensX, s.lensY, p.x, p.y, 20)
-        || inLens(s.lensX, s.lensY, p.x, p.y - LENS_FINGER_Y * 0.35, 28);
-      if (!ok) {
-        s.note = 'Tap SNAP or tap inside the glass.';
-        return;
+      const onChrome = hitSnapControl(p);
+      const onLens = inLens(s.lensX, s.lensY, p.x, p.y, 28)
+        || inLens(s.lensX, s.lensY, p.x, p.y - LENS_FINGER_Y * 0.4, 32);
+      // Release-to-commit while still glowing (gallery trigger).
+      const releaseCommit = !onChrome; // any release while lit commits
+      if (onChrome || onLens || releaseCommit) {
+        trySnap(s, onChrome ? 'chrome-up' : (onLens ? 'lens-up' : 'release'));
       }
-      const target = s.targets.find(o => o.id === s.glowId && o.alive);
-      if (target) snapTarget(s, target);
       return;
     }
 
