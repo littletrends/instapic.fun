@@ -13,7 +13,8 @@
  *   1 First Float — shipped + PASS (path-clear). GOAL 4 of 6, forgiving
  *     POP window, no wind hazard. Do not regress level===0.
  *   2 Ribbon Breeze — wind-ribbon teach on the FIRST lit blocker only
- *     (long warn, soft dump, later blockers clean POP). GOAL 3 of 5.
+ *     (long warn, freeze drift in POP window, soft dump, later clean POP).
+ *     GOAL 3 of 5. Aura FAIL retune: wider HOLD→POP fairness.
  *   3–6 unfinished (names kept — do not implement systems yet):
  *     3 Lantern Boughs
  *     4 Crosswind Crown
@@ -81,16 +82,16 @@ const BLOCKER_COUNT_CH2 = 5;
 const GOAL_CH1 = 4;
 const GOAL_CH2 = 3;
 const RIDE_SECS_CH1 = 65;
-const RIDE_SECS_CH2 = 52;
+const RIDE_SECS_CH2 = 56; // Aura FAIL retune
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
 const POP_NEAR_ANG = 1.25; // Ch1 very wide orbit window
 const POP_COOLDOWN = 0.18;
 
 /** Long lead warning before the first wind-ribbon teach blocker (Ribbon Breeze). */
-const WIND_WARN_SECS = 7.5;
-const WIND_AMP = 0.13;
-const WIND_RATE = 1.05;
+const WIND_WARN_SECS = 8.5;
+const WIND_AMP = 0.06; // gentler — HOLD→POP can land
+const WIND_RATE = 0.65;
 
 const SPAWN_IDS = ['low-path', 'high-path'];
 
@@ -115,7 +116,7 @@ function chapterRideSecs(level) {
 function orbitSpeed(level, reduced) {
   // Ch1 very slow weave. Ch2 slightly slower still (helter Ch2 haste ~0.92).
   let base;
-  if (isCh2(level)) base = 0.102;
+  if (isCh2(level)) base = 0.085; // wider time-in-window
   else base = 0.11 + Math.min(0.02, level * 0.006);
   return reduced ? base * 0.62 : base;
 }
@@ -189,7 +190,7 @@ function buildBlockers(level) {
       angle: ang,
       height: h,
       path: high ? 'high-path' : 'low-path',
-      half: POP_HALF + Math.max(0, 0.02 - level * 0.004),
+      half: (isCh2(level) ? POP_HALF + 0.10 : POP_HALF) + Math.max(0, 0.02 - level * 0.004),
       decoys,
       cleared: false,
       missed: false,
@@ -324,13 +325,13 @@ function updateWindRibbon(s, dt) {
     if (!b.teach || b.cleared || b.windDumped) continue;
 
     const lead = forwardAng(s.angle, b.angle) / Math.max(0.04, speed);
-    // Drift height while approaching / in window (up then down bias).
-    if (lead < WIND_WARN_SECS + 2.5 || angDist(s.angle, b.angle) < POP_NEAR_ANG + 0.4) {
+    // Drift while approaching — FREEZE once inside POP window so HOLD→POP can land
+    // (Aura Ch2 FAIL: window felt too tight while height kept moving).
+    const nearPop = angDist(s.angle, b.angle) <= POP_NEAR_ANG + 0.15;
+    if (!nearPop && (lead < WIND_WARN_SECS + 2.5 || angDist(s.angle, b.angle) < POP_NEAR_ANG + 0.55)) {
       b.windPhase = (b.windPhase || 0) + dt * WIND_RATE;
-      // Sinusoid: rises then falls so POP early / HOLD adjust is the teach.
       const drift = Math.sin(b.windPhase) * (b.windAmp || WIND_AMP);
       b.height = clamp((b.baseHeight || LOW_PATH) + drift, HEIGHT_MIN + 0.08, HEIGHT_MAX - 0.08);
-      // Keep path label honest for coaching copy.
       b.path = b.height >= (LOW_PATH + HIGH_PATH) * 0.5 ? 'high-path' : 'low-path';
     }
 
@@ -403,20 +404,20 @@ function attemptPop(s) {
   const ad = angDist(s.angle, lit.angle);
   let dh = Math.abs(s.height - lit.height);
   // Ch1: after 3 clears, open the door for the 4th POP. Ch2: clutch after 2 for the 3rd.
-  const clutchNeed = isCh2(s.level) ? 2 : 3;
+  const clutchNeed = isCh2(s.level) ? 1 : 3; // Ch2 clutch earlier
   const clutch = (s.cleared || 0) >= clutchNeed;
-  const nearLim = clutch ? POP_NEAR_ANG + 0.35 : POP_NEAR_ANG;
-  const halfLim = clutch ? lit.half + 0.12 : lit.half;
+  const ch2 = isCh2(s.level);
+  const nearLim = POP_NEAR_ANG + (clutch ? 0.45 : (ch2 ? 0.25 : 0));
+  const halfLim = lit.half + (clutch ? 0.14 : (ch2 ? 0.06 : 0));
   const near = ad <= nearLim;
-  // Forgiveness: if near and almost in band, nudge into the POP band.
-  // Ch2 wind teach: slightly wider snap so drifting height is still fair.
-  const windSnap = (lit.teach && !lit.windDumped) ? 0.06 : 0;
-  const snapBand = (clutch ? halfLim + 0.12 : lit.half + 0.16) + windSnap;
+  // Forgiveness snap — Ch2 teach gets a bigger magnet once near.
+  const windSnap = (lit.teach && !lit.windDumped) ? 0.12 : (ch2 ? 0.04 : 0);
+  const snapBand = halfLim + 0.18 + windSnap;
   if (near && dh <= snapBand) {
-    s.height = s.height + (lit.height - s.height) * (clutch ? 0.9 : 0.72);
+    s.height = s.height + (lit.height - s.height) * (clutch || lit.teach ? 0.92 : (ch2 ? 0.8 : 0.72));
     dh = Math.abs(s.height - lit.height);
   }
-  const heightOk = dh <= halfLim + (lit.teach ? 0.04 : 0);
+  const heightOk = dh <= halfLim + (lit.teach ? 0.08 : 0);
 
   if (near && heightOk) {
     lit.cleared = true;
@@ -733,7 +734,8 @@ function drawObjective(d, s) {
     return;
   }
 
-  const line = 'Cleared ' + (s.cleared || 0) + ' / ' + (s.goal || chapterGoal(s.level));
+  const g = s.goal || chapterGoal(s.level);
+  const line = (isCh2(s.level) ? 'Ribbon Breeze · ' : '') + 'Cleared ' + (s.cleared || 0) + ' / ' + g;
   d.text(line, 450, s.practice ? 168 : 148, 22, '#ffe6a4');
   if (s.note) wrapLine(d, s.note, 450, s.practice ? 198 : 178, 16, '#f0d18f', 720);
 }
