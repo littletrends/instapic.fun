@@ -41,11 +41,10 @@ const MOTIFS = [
 ];
 
 const GOAL = 2;
-const DISCOVERY = 3.2;
-const CURTAIN = 1.15;
-const RETRY = 1;
-const DWELL = 5.6;
-const HOUSE = 80;
+const DISCOVERY = 2.6;
+const CURTAIN = 0.9;
+const DWELL = 8.5;
+const HOUSE = 120;
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
 const GOLD = '#d2a65b';
 const BURG = '#6b2030';
@@ -86,42 +85,54 @@ function closeRide(s) {
 
 function maybeArrive(s) {
   if (s.arriving || s.result) return;
-  if (s.restored >= s.goal || s.index >= s.panels.length) {
+  if (s.restored >= s.goal) {
     s.arriving = true;
-    s.arriveAt = s.t + 0.7;
+    s.arriveAt = s.t + 0.55;
   }
 }
 
-function spawnNext(s) {
+function nextPending(s) {
+  // Ch1 keeps offering unrestored patches until goal or house clock.
+  const n = s.panels.length;
+  for (let i = 0; i < n; i++) {
+    const idx = (s.index + 1 + i) % n;
+    const row = s.panels[idx];
+    if (!row.restored) return idx;
+  }
+  return -1;
+}
+
+function spawnAt(s, idx) {
   s.paused = false;
-  const row = s.panels[s.index];
-  if (!row || s.restored >= s.goal) {
+  if (idx < 0 || s.restored >= s.goal) {
     maybeArrive(s);
     return;
   }
-  row.world = s.scroll + 760;
-  row.dwell = 0;
+  s.index = idx;
+  const row = s.panels[idx];
+  row.done = false;
   row.held = false;
+  row.dwell = 0;
+  row.world = s.scroll + 720;
+  s.note = 'SPLASH inside the frame.';
 }
 
 function advance(s) {
-  s.index += 1;
-  spawnNext(s);
+  if (s.restored >= s.goal) {
+    maybeArrive(s);
+    return;
+  }
+  spawnAt(s, nextPending(s));
 }
 
 function missPanel(s, row) {
-  if (row.restored || row.done) return;
-  row.dwell = 0;
+  if (row.restored) return;
   row.held = false;
-  row.retries += 1;
-  if (row.retries <= RETRY) {
-    row.world = s.scroll + 760;
-    s.paused = false;
-    s.note = 'One more pass — SPLASH inside the frame.';
-  } else {
-    row.done = true;
-    advance(s);
-  }
+  row.dwell = 0;
+  row.retries = (row.retries || 0) + 1;
+  s.note = 'Missed — another patch is rolling in. SPLASH the frame.';
+  // Recycle: send this one to the back and bring the next unrestored.
+  spawnAt(s, nextPending(s));
 }
 
 function splash(s, panel) {
@@ -244,10 +255,9 @@ export default {
   actions: [],
   create(level, rng) {
     const reduced = prefersReducedMotion();
-    const gap = reduced ? 720 : 640;
     const panels = MOTIFS.map((m, i) => ({
       ...m,
-      world: i === 0 ? 980 : 4000,
+      world: i === 0 ? 900 : 5000,
       restored: false,
       done: false,
       retries: 0,
@@ -262,7 +272,7 @@ export default {
       panels,
       index: 0,
       scroll: 0,
-      speed: reduced ? 70 : 96,
+      speed: reduced ? 64 : 88,
       restored: 0,
       goal: GOAL,
       paused: false,
@@ -304,7 +314,6 @@ export default {
       if (s.discovery <= 0) {
         s.paused = false;
         const live = s.panels.find((row) => row.id === s.liveId);
-        if (live) live.done = true;
         s.liveId = null;
         if (s.restored >= s.goal) maybeArrive(s);
         else advance(s);
@@ -312,9 +321,13 @@ export default {
       return;
     }
 
-    const live = s.panels[s.index];
-    if (!live || live.done || live.restored) {
-      if (!s.arriving) advance(s);
+    if (s.restored >= s.goal) {
+      maybeArrive(s);
+      return;
+    }
+    let live = s.panels[s.index];
+    if (!live || live.restored) {
+      advance(s);
       return;
     }
     if (inWindow(live, s.scroll) || live.held) {
@@ -342,7 +355,7 @@ export default {
     }
     if (s.discovery > 0 || s.arriving) return;
     const live = s.panels[s.index];
-    if (live && !live.restored && !live.done && (live.held || inWindow(live, s.scroll)) && inFrame(p)) {
+    if (live && !live.restored && (live.held || inWindow(live, s.scroll)) && inFrame(p)) {
       splash(s, live);
     }
   },
@@ -357,9 +370,7 @@ export default {
     d.text('painter’s platform', 450, 724 + bob, 13, GOLD);
 
     const fx = FRAME.x, fy = FRAME.y, fw = FRAME.w, fh = FRAME.h;
-    const live = s.panels[s.index] && !s.panels[s.index].restored && !s.panels[s.index].done
-      ? s.panels[s.index]
-      : null;
+    const live = s.panels[s.index] && !s.panels[s.index].restored ? s.panels[s.index] : null;
     d.poly(
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#f4d590' : GOLD, live ? 6 : 3,
@@ -372,8 +383,9 @@ export default {
       const faded = !row.restored;
       drawMotif(d, row.id, x, FRAME.y, faded, row.flood || 0, s.t);
       if (live && live.id === row.id && !s.discovery) {
-        d.circle(FRAME.x, FRAME.y, 96, null, CREAM, 4);
-        d.text('SPLASH', FRAME.x, FRAME.y + 10, 34, CREAM);
+        d.circle(FRAME.x, FRAME.y, 110, '#6b203066', CREAM, 5);
+        d.text('SPLASH', FRAME.x, FRAME.y + 12, 40, CREAM);
+        d.text('tap here', FRAME.x, FRAME.y + 48, 18, GOLD);
       }
     });
 
@@ -421,7 +433,7 @@ export default {
     if (!down || s.result || !s.boarded) return;
     if (k === ' ' || k === 'Enter' || k === 'p' || k === 'P') {
       const live = s.panels[s.index];
-      if (live && !live.restored && !live.done) splash(s, live);
+      if (live && !live.restored) splash(s, live);
     }
   },
   readout: (s) => s.note || '',

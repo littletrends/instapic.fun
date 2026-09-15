@@ -45,7 +45,7 @@ const GOAL = 3;
 const RING_COUNT = 5;
 const FX_CAP = 48;
 /** Angular half-width that counts as "facing you" at the bottom notch. */
-const FACE_SNAP = Math.PI / 3;
+const FACE_SNAP = Math.PI / 2.4;
 const NUDGE = Math.PI / 10;
 
 function angNorm(a) {
@@ -211,7 +211,12 @@ function spawnTreasure(s) {
 
 function commitRing(s, ring) {
   // Ease toward target so the last TURN counts.
-  ring.theta = ring.targetTheta;
+  // Forgiving snap: if within FACE_SNAP of ladder, lock to ladder (carnival fair).
+  let theta = ring.targetTheta;
+  if (angDist(theta, 0) <= FACE_SNAP) theta = 0;
+  else if (angDist(theta, Math.PI) <= FACE_SNAP) theta = Math.PI;
+  ring.targetTheta = theta;
+  ring.theta = theta;
   const face = facingKind(ring.theta);
   ring.done = true;
   ring.result = face;

@@ -59,9 +59,9 @@ const CY = 500; // pink oval court centre — backdrop owns the art
 const ORBIT_RX = 210;
 const ORBIT_RY = 155;
 
-const LOW_PATH = 0.30;
-const HIGH_PATH = 0.70;
-const POP_HALF = 0.22; // height band to reach a lit balloon
+const LOW_PATH = 0.36;
+const HIGH_PATH = 0.64;
+const POP_HALF = 0.34; // Ch1 forgiving height band
 const TREASURE_HALF = 0.24;
 const HEIGHT_MIN = 0.06;
 const HEIGHT_MAX = 0.94;
@@ -87,7 +87,7 @@ const GOAL = 4; // POP 4 of 6 lit blockers to open the corridor
 const RIDE_SECS = 48;
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
-const POP_NEAR_ANG = 0.55; // radians — near enough on orbit to POP
+const POP_NEAR_ANG = 1.05; // Ch1 wide orbit window to POP
 const POP_COOLDOWN = 0.18;
 
 const SPAWN_IDS = ['low-path', 'high-path'];
@@ -95,7 +95,7 @@ const SPAWN_IDS = ['low-path', 'high-path'];
 const LATEX = ['#e8a0b8', '#7eb8b0', '#f0d09a', '#c9a0d8', '#8ec8e8', '#f4b890'];
 
 function orbitSpeed(level, reduced) {
-  const base = 0.20 + Math.min(0.04, level * 0.01);
+  const base = 0.14 + Math.min(0.03, level * 0.008); // Ch1 slow weave
   return reduced ? base * 0.62 : base;
 }
 
@@ -172,7 +172,13 @@ function buildBlockers(level) {
 }
 
 function nextLit(s) {
-  return (s.blockers || []).find((b) => !b.cleared && !b.missed) || null;
+  // Soft-brush "missed" still allows POP until well past — Ch1 must not eat the target.
+  return (s.blockers || []).find((b) => {
+    if (b.cleared) return false;
+    const ad = angDist(s.angle, b.angle);
+    if (b.missed && ad > POP_NEAR_ANG + 0.35) return false;
+    return true;
+  }) || null;
 }
 
 function scheduleTreasure(s) {
@@ -260,11 +266,10 @@ function softContactCluster(s) {
     s.vel += (s.height > b.height ? -0.2 : 0.15);
     const pos = basketPos(b.angle, b.height);
     pushBurst(s, pos.x, pos.y, true);
-    if (!b.cleared && !b.missed) {
-      // Passing without a POP counts as a soft miss for this lit gate.
-      b.missed = true;
-      logAction(s, 'pop', {id: b.id, ok: false, soft: true});
-      s.note = 'Soft brush — path still blocked. POP the glowing balloon. Cleared '
+    // Wobble only — keep the lit target POP-able. Never confiscate / abort.
+    logAction(s, 'brush', {id: b.id});
+    if (!earlyClarity(s)) {
+      s.note = 'Leaves brushed — still POP the glowing balloon. Cleared '
         + s.cleared + ' / ' + s.goal + '.';
     }
   }
@@ -299,8 +304,13 @@ function attemptPop(s) {
   }
 
   const ad = angDist(s.angle, lit.angle);
-  const dh = Math.abs(s.height - lit.height);
+  let dh = Math.abs(s.height - lit.height);
   const near = ad <= POP_NEAR_ANG;
+  // Ch1 forgiveness: if near and almost in band, nudge into the POP band.
+  if (near && dh <= lit.half + 0.10) {
+    s.height = s.height + (lit.height - s.height) * 0.55;
+    dh = Math.abs(s.height - lit.height);
+  }
   const heightOk = dh <= lit.half;
 
   if (near && heightOk) {
@@ -351,7 +361,7 @@ function nearLitOnCanvas(s, p) {
   const pos = basketPos(lit.angle, lit.height);
   const dx = p.x - pos.x;
   const dy = p.y - pos.y;
-  return Math.hypot(dx, dy) <= 70;
+  return Math.hypot(dx, dy) <= 120;
 }
 
 function wrapLine(d, text, x, y, size, color, maxW) {
@@ -602,7 +612,7 @@ export default {
     return makeRideState(level, rng, {
       angle: -0.9,
       prevAngle: -0.9,
-      height: LOW_PATH,
+      height: (LOW_PATH + HIGH_PATH) * 0.5,
       vel: 0,
       holding: false,
       holdAccum: 0,
@@ -653,6 +663,21 @@ export default {
     s.holdAccum = phys.holdAccum;
 
     softContactCluster(s);
+    // Live "NOW" coaching when in the POP window.
+    if (!s.result && !earlyClarity(s)) {
+      const lit = nextLit(s);
+      if (lit) {
+        const ad = angDist(s.angle, lit.angle);
+        const dh = Math.abs(s.height - lit.height);
+        if (ad <= POP_NEAR_ANG && dh <= lit.half + 0.06) {
+          s.note = 'NOW — POP! Cleared ' + s.cleared + ' / ' + s.goal + '.';
+        } else if (ad <= POP_NEAR_ANG && dh > lit.half) {
+          s.note = lit.path === 'high-path'
+            ? 'Glow near — HOLD to rise, then POP.'
+            : 'Glow near — release to drift, then POP.';
+        }
+      }
+    }
     scheduleTreasure(s);
     tryCollectTreasure(s);
     tickFx(s, dt);
