@@ -1,4 +1,5 @@
 /* Laughing Doorway — Juno
+ * cache: chrome-layout-2
  *
  * Chapter 1 Two Doors: ENTER → REVEAL → INSPECT → CHOOSE → TRANSITION
  * Chapter 2 Mirror Joke: implemented — same verb SHUT THE PUNCHLINE with ONE
@@ -32,13 +33,13 @@
  */
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=last-ch6-1';
+} from './funhouse-rooms.js?v=chrome-layout-2';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -280,6 +281,13 @@ function beginDoorPress(s, door) {
   if (s.player) {
     s.player.x = clamp(s.player.x + Math.sign(door.x - s.player.x) * 12, STAGE.xMin + 40, STAGE.xMax - 40);
   }
+}
+
+/** Cancel an incomplete hold-shut (pointer/action/key release before PRESS_MS). */
+function releaseDoorPress(s) {
+  if (!s.doorPress) return;
+  s.doorPress = null;
+  if (s.phase === 'choose') s.note = 'SHUT a door · hold or ← →';
 }
 
 function commitDoor(s, door) {
@@ -875,98 +883,29 @@ function drawChip(d, label, y, size = 16) {
   d.text(label, 450, y + 5, size, INK);
 }
 
-/** One verb + practice badge — readable in the first seconds. */
+/** Lean chrome — shell .play-hud owns practice/eligible; teach coach only. */
 function drawClarityChrome(s, d) {
-  if (s.practice) {
-    drawChip(d, 'Free practice · nothing kept', 118, 15);
-  } else if (s.eligible) {
-    drawChip(d, 'Keepsake ride', 118, 15);
-  } else {
-    drawChip(d, 'Ordinary find ride', 118, 15);
-  }
-
+  // Shell `.play-hud` + `#readout` own status. Court gets ONE teach coach only —
+  // no practice chips, no permanent SHUT verb chip (doors already say SHUT).
   const room = roomOf(s.graph, s.roomId);
-  let verb = 'SHUT THE PUNCHLINE';
-  if (room.kind === 'detour') verb = 'JOKE DETOUR';
-  else if (s.phase === 'choose') verb = room.last ? 'SHUT THE LAST LAUGH' : 'SHUT THE PUNCHLINE';
-  else if (s.phase === 'transition') verb = s.pendingExit ? 'LAST LAUGH' : 'NEXT ROOM';
-  drawChip(d, verb, 168, s.phase === 'choose' ? 26 : 22);
-
-  // Ch6 finale coach — LAST LAUGH; TRUST THE SETUP (hazard line on teach room).
-  if (room.teachFinale && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
-    let coach = 'TRUST THE SETUP → SHUT THE PUNCHLINE';
-    let size = 14;
-    if (s.phase === 'reveal' || s.phase === 'inspect') {
-      coach = 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE';
-      size = 15;
-    } else if (s.phase === 'choose') {
-      coach = 'TRUST THE SETUP → SHUT THE PUNCHLINE';
-      size = 15;
-    }
-    drawChip(d, coach, 214, size);
-    // One hazard-specific line on the teach room only (mirror alone first).
-    if (room.mirror && (s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'choose')) {
-      drawChip(d, 'MIRROR LIES — read real doors', 256, 13);
-    }
+  if (room.kind !== 'main' || s.phase === 'transition' || s.phase === 'enter') return;
+  const teaching = !!(room.teach || room.teachRotate || room.teachShrink || room.teachEcho || room.teachFinale);
+  if (!teaching) return;
+  let coach = '';
+  if (room.teachFinale) {
+    coach = s.phase === 'choose' ? 'TRUST THE SETUP → SHUT' : 'LAST LAUGH — TRUST THE SETUP';
+  } else if (room.teach) {
+    coach = 'MIRROR LIES — finish the SETUP';
+  } else if (room.teachRotate) {
+    if (s.phase === 'spin') coach = 'ROOM TURNS';
+    else if (s.phase === 'choose') coach = 'REMEMBER — then SHUT';
+    else coach = 'MARK THE DOORS — then it turns';
+  } else if (room.teachShrink) {
+    coach = s.phase === 'choose' ? 'SHUT THE NEAR PUNCHLINE' : 'MARK SETUP → WHICH IS NEAR?';
+  } else if (room.teachEcho) {
+    coach = s.phase === 'choose' ? 'MATCH THE RIDE → SHUT' : 'HEAR THE ECHO → MATCH THE RIDE';
   }
-
-  // Ch2 coach — mirror hazard alone; loud on teach room, quiet reminder later.
-  // Skip when teachFinale already coached the mirror line (Ch6 foyer).
-  if (room.mirror && !room.teachFinale && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
-    const coach = room.teach
-      ? 'MIRROR LIES — SHUT the door that finishes the SETUP'
-      : 'MIRROR LIES';
-    drawChip(d, coach, 214, room.teach ? 15 : 14);
-  }
-
-  // Ch3 coach — rotate hazard alone; no mirror restack.
-  if (room.rotate && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
-    let coach = 'MARK — then the room turns';
-    let size = 14;
-    if (s.phase === 'spin') {
-      coach = 'ROOM TURNS';
-      size = 16;
-    } else if (room.teachRotate && (s.phase === 'reveal' || s.phase === 'inspect')) {
-      coach = 'MARK THE DOORS — then the room turns';
-      size = 15;
-    } else if (s.phase === 'choose') {
-      coach = room.teachRotate ? 'REMEMBER — then SHUT' : 'REMEMBER — SHUT THE PUNCHLINE';
-      size = room.teachRotate ? 15 : 14;
-    }
-    drawChip(d, coach, 214, size);
-  }
-
-  // Ch4 coach — shrink/near-far hazard alone; no mirror or rotate restack.
-  if (room.shrink && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
-    let coach = 'NEAR vs FAR — SHUT the near punchline';
-    let size = 14;
-    if (room.teachShrink && (s.phase === 'reveal' || s.phase === 'inspect')) {
-      coach = 'MARK THE SETUP → WHICH IS NEAR?';
-      size = 15;
-    } else if (s.phase === 'choose') {
-      coach = room.teachShrink ? 'SHUT THE NEAR PUNCHLINE' : 'SHUT THE NEAR PUNCHLINE';
-      size = room.teachShrink ? 15 : 14;
-    }
-    drawChip(d, coach, 214, size);
-  }
-
-  // Ch5 coach — ride-echo hazard alone; no mirror/rotate/shrink restack.
-  if (room.echo && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
-    let coach = 'MATCH THE RIDE — SHUT THE PUNCHLINE';
-    let size = 14;
-    if (room.teachEcho && (s.phase === 'reveal' || s.phase === 'inspect')) {
-      coach = 'HEAR THE ECHO → MATCH THE RIDE';
-      size = 15;
-    } else if (s.phase === 'choose') {
-      coach = room.teachEcho ? 'MATCH THE RIDE → SHUT THE PUNCHLINE' : 'MATCH THE RIDE — SHUT THE PUNCHLINE';
-      size = room.teachEcho ? 15 : 14;
-    }
-    drawChip(d, coach, 214, size);
-  }
-
-  if (s.phase === 'choose') {
-    drawChip(d, 'hold a door to SHUT · ← →', 1118, 16);
-  }
+  if (coach) drawChip(d, coach, 168, 14);
 }
 
 function drawTransitionPanel(d, s) {
@@ -1047,7 +986,6 @@ function drawPerspectiveFloor(d, room, s, t) {
     }
   }
   if (room.teachShrink && (s.phase === 'reveal' || s.phase === 'inspect')) {
-    drawChip(d, 'NEAR = correct scale', 860, 13);
   }
 }
 
@@ -1062,7 +1000,6 @@ function drawEchoHints(d, room, s, t) {
     d.glow(450, 548, 64 + teachPulse * 16, '#f4d590');
   }
   if (room.teachEcho && (s.phase === 'reveal' || s.phase === 'inspect')) {
-    drawChip(d, 'TRUE ECHO = SETUP name', 860, 13);
   }
 }
 
@@ -1097,7 +1034,6 @@ function drawRoom(s, d) {
     if (room.rotate && s.phase === 'spin') {
       const pulse = 0.55 + 0.45 * Math.sin((t || 0) * 5);
       d.glow(450, 780, 70 + pulse * 16, '#f4d590');
-      drawChip(d, 'TURN', 780, 18);
     }
     drawPlayer(d, s);
     (s.faces || []).forEach(f => drawLaughFace(d, f, t));
@@ -1122,12 +1058,6 @@ function drawRoom(s, d) {
   }
 }
 
-function tryActionDoor(s, id) {
-  if (s.result || s.broke || s.phase !== 'choose') return;
-  const room = roomOf(s.graph, s.roomId);
-  const door = doorByAction(s, room, id);
-  if (door) pickDoor(s, door);
-}
 
 function tryActionInspect(s) {
   if (s.result || s.broke) return;
@@ -1148,8 +1078,8 @@ export default {
   prizes: TREASURES,
   houseSeconds: 90,
   actions: [
-    {id: 'left', label: 'SHUT LEFT · ←'},
-    {id: 'right', label: 'SHUT RIGHT · →'},
+    {id: 'left', label: 'SHUT LEFT · ←', hold: true},
+    {id: 'right', label: 'SHUT RIGHT · →', hold: true},
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
@@ -1345,15 +1275,25 @@ export default {
     }
     s.progress = Math.min(1, (s.cleared + (s.phase === 'transition' ? 0.4 : 0)) / Math.max(1, s.goal));
   },
-  action(s, id) {
+  action(s, id, down) {
     if (s.result || s.broke) return;
-    if (id === 'left' || id === 'right') tryActionDoor(s, id);
-    else if (id === 'inspect') tryActionInspect(s);
+    if (id === 'left' || id === 'right') {
+      if (down) {
+        const room = roomOf(s.graph, s.roomId);
+        const door = doorByAction(s, room, id);
+        if (door) beginDoorPress(s, door);
+      } else {
+        releaseDoorPress(s);
+      }
+      return;
+    }
+    if (down && id === 'inspect') tryActionInspect(s);
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
     if (type === 'up' || type === 'cancel') {
       s.tapping = false;
+      releaseDoorPress(s);
       return;
     }
     if (type !== 'down' || s.tapping) return;
@@ -1376,14 +1316,23 @@ export default {
     if (door) pickDoor(s, door);
   },
   key(s, k, down) {
-    if (!down || s.result || s.broke) return;
-    if (k === 'ArrowLeft') tryActionDoor(s, 'left');
-    if (k === 'ArrowRight') tryActionDoor(s, 'right');
+    if (s.result || s.broke) return;
+    if (k === 'ArrowLeft' || k === 'ArrowRight') {
+      const id = k === 'ArrowLeft' ? 'left' : 'right';
+      if (down) {
+        const room = roomOf(s.graph, s.roomId);
+        const door = doorByAction(s, room, id);
+        if (door) beginDoorPress(s, door);
+      } else {
+        releaseDoorPress(s);
+      }
+      return;
+    }
+    if (!down) return;
     if (k === ' ' || k === 'Enter' || k === 'i' || k === 'I') tryActionInspect(s);
   },
   draw(s, d) {
     drawRoom(s, d);
-    drawHud(d, s, {goal: s.goal, count: s.cleared, label: 'rooms'});
   },
   readout: s => s.note || '',
 };
