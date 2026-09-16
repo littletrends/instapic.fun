@@ -21,12 +21,15 @@
  *   4 Crosswind Crown — PASS locked. Visual sideways gust on FIRST lit
  *     blocker only (long warn; drawOx sway; hit-test uses true angle + stable
  *     mid height; soft dump; later clean POP). GOAL 3 of 5.
- *   5 Runaway Bouquet — implemented. Visible bouquet drifts between two
+ *   5 Runaway Bouquet — PASS locked. Visible bouquet drifts between two
  *     height paths after clear wind + ribbon cues (long warn at mid first;
  *     then real height drift; FREEZE in POP window; soft dump; later clean
  *     POP near-mid). GOAL 3 of 5.
- *   6 unfinished (name kept — do not implement systems yet):
- *     6 The Midnight Canopy
+ *   6 The Midnight Canopy — implemented (finale). Remix of lantern /
+ *     crosswind / runaway across separate lit blockers + clean POP at full
+ *     LOW/mid/HIGH canopy heights; alternating HOLD/release coach bands;
+ *     treasure slowly orbits the crown. GOAL 4 of 6, ~76s, orbit 0.062.
+ *     All six chapters shipped.
  *
  * Treasure ids preserved. Canvas 900×1200.
  * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
@@ -84,21 +87,25 @@ const RELEASE_ACCEL = -1.2;
 const VEL_DAMP = 0.86;
 
 // Ch1 locked: POP 4 of 6, ~65s. Ch2–Ch5: POP 3 of 5, ~56–72s (helter haste bar).
+// Ch6 finale: POP 4 of 6, ~76s — do not raise orbit speed with more layers.
 const BLOCKER_COUNT_CH1 = 6;
 const BLOCKER_COUNT_CH2 = 5;
 const BLOCKER_COUNT_CH3 = 5;
 const BLOCKER_COUNT_CH4 = 5;
 const BLOCKER_COUNT_CH5 = 5;
+const BLOCKER_COUNT_CH6 = 6;
 const GOAL_CH1 = 4;
 const GOAL_CH2 = 3;
 const GOAL_CH3 = 3;
 const GOAL_CH4 = 3;
 const GOAL_CH5 = 3;
+const GOAL_CH6 = 4;
 const RIDE_SECS_CH1 = 65;
 const RIDE_SECS_CH2 = 56; // Aura FAIL retune
 const RIDE_SECS_CH3 = 72; // fairness retune2: teach + 2 clean with margin
 const RIDE_SECS_CH4 = 68; // Crosswind Crown: teach + 2 clean with margin
 const RIDE_SECS_CH5 = 70; // Runaway Bouquet: teach + 2 clean with margin
+const RIDE_SECS_CH6 = 76; // Midnight Canopy finale: 3 remix teaches + cleans
 const LANDING_LEAD = 2.8;
 const FLASH_SEC = 0.32;
 const POP_NEAR_ANG = 1.25; // Ch1 very wide orbit window
@@ -143,7 +150,12 @@ function isCh5(level) {
   return (level | 0) === 4;
 }
 
+function isCh6(level) {
+  return (level | 0) === 5;
+}
+
 function chapterGoal(level) {
+  if (isCh6(level)) return GOAL_CH6;
   if (isCh5(level)) return GOAL_CH5;
   if (isCh4(level)) return GOAL_CH4;
   if (isCh3(level)) return GOAL_CH3;
@@ -152,6 +164,7 @@ function chapterGoal(level) {
 }
 
 function chapterBlockerCount(level) {
+  if (isCh6(level)) return BLOCKER_COUNT_CH6;
   if (isCh5(level)) return BLOCKER_COUNT_CH5;
   if (isCh4(level)) return BLOCKER_COUNT_CH4;
   if (isCh3(level)) return BLOCKER_COUNT_CH3;
@@ -160,6 +173,7 @@ function chapterBlockerCount(level) {
 }
 
 function chapterRideSecs(level) {
+  if (isCh6(level)) return RIDE_SECS_CH6;
   if (isCh5(level)) return RIDE_SECS_CH5;
   if (isCh4(level)) return RIDE_SECS_CH4;
   if (isCh3(level)) return RIDE_SECS_CH3;
@@ -169,8 +183,10 @@ function chapterRideSecs(level) {
 
 function orbitSpeed(level, reduced) {
   // Ch1 very slow weave. Ch2–Ch5 slightly slower still (helter haste ~0.92).
+  // Ch6 finale: slower still — do NOT raise speed with more canopy layers.
   let base;
-  if (isCh5(level)) base = 0.068; // fair first-play Runaway Bouquet
+  if (isCh6(level)) base = 0.062; // Midnight Canopy — layers via height, not haste
+  else if (isCh5(level)) base = 0.068; // fair first-play Runaway Bouquet
   else if (isCh4(level)) base = 0.070; // fair first-play Crosswind Crown
   else if (isCh3(level)) base = 0.065; // retune2: more time-in-window for 3/3
   else if (isCh2(level)) base = 0.085; // wider time-in-window
@@ -236,10 +252,16 @@ function buildBlockers(level) {
     // First target is mid-height (easy first POP), then alternate.
     const mid = (LOW_PATH + HIGH_PATH) * 0.5;
     // Ch3/Ch4/Ch5 later balloons stay near mid — small climb/drop, not full HIGH/LOW swing.
+    // Ch6 Midnight Canopy: full LOW / mid / HIGH tree levels (alternating canopy paths).
     const high = i === 0 ? false : (i % 2 === 1);
     let h;
     if (i === 0) h = mid;
-    else if (isCh3(level) || isCh4(level) || isCh5(level)) h = mid + (high ? 0.05 : -0.05);
+    else if (isCh6(level)) {
+      // Alternating full canopy heights — not the Ch3–5 ±0.05 near-mid pad.
+      if (i % 3 === 1) h = HIGH_PATH;
+      else if (i % 3 === 2) h = LOW_PATH;
+      else h = mid;
+    } else if (isCh3(level) || isCh4(level) || isCh5(level)) h = mid + (high ? 0.05 : -0.05);
     else h = high ? HIGH_PATH : LOW_PATH;
     const ang = start + ((i + 1) / (count + 1)) * span;
     const decoys = [
@@ -247,13 +269,13 @@ function buildBlockers(level) {
       {ox: 36, oy: 14, r: 16, col: LATEX[(i * 2 + 1) % LATEX.length]},
       {ox: 4, oy: -28, r: 14, col: LATEX[(i + 3) % LATEX.length]},
     ];
-    const fairHalf = (isCh2(level) || isCh3(level) || isCh4(level) || isCh5(level));
+    const fairHalf = (isCh2(level) || isCh3(level) || isCh4(level) || isCh5(level) || isCh6(level));
     const b = {
       id: 'block-' + (i + 1),
       angle: ang,
       height: h,
-      path: high ? 'high-path' : 'low-path',
-      half: ((isCh3(level) || isCh4(level) || isCh5(level)) ? POP_HALF + 0.16 : (fairHalf ? POP_HALF + 0.10 : POP_HALF)) + Math.max(0, 0.02 - level * 0.004),
+      path: isCh6(level) ? ((h >= mid) ? 'high-path' : 'low-path') : (high ? 'high-path' : 'low-path'),
+      half: ((isCh3(level) || isCh4(level) || isCh5(level) || isCh6(level)) ? POP_HALF + 0.16 : (fairHalf ? POP_HALF + 0.10 : POP_HALF)) + Math.max(0, 0.02 - Math.min(level, 4) * 0.004),
       decoys,
       cleared: false,
       missed: false,
@@ -306,6 +328,38 @@ function buildBlockers(level) {
       b.runawayDumped = false;
       b.drifting = false;
     }
+    // Ch6 finale remix — ONE hazard type per teach balloon (never stack teaches):
+    //   i===0 lantern arch, i===1 crosswind visual, i===2 runaway bouquet;
+    //   remaining lit are clean POP at alternating canopy heights.
+    if (isCh6(level)) {
+      const midH = (LOW_PATH + HIGH_PATH) * 0.5;
+      if (i === 0) {
+        b.teach = true;
+        b.lantern = true;
+        b.bandHalf = LANTERN_BAND_HALF + 0.02; // slight widen vs Ch3 for finale readability
+        b.lanternDumped = false;
+        b.height = midH;
+        b.path = 'low-path';
+      } else if (i === 1) {
+        b.teach = true;
+        b.crosswind = true;
+        b.gustPhase = 0;
+        b.drawOx = 0;
+        b.crosswindDumped = false;
+        b.height = midH;
+        b.path = 'low-path';
+      } else if (i === 2) {
+        b.teach = true;
+        b.runaway = true;
+        b.runawayPhase = 0;
+        b.baseHeight = midH;
+        b.height = midH;
+        b.path = 'low-path';
+        b.runawayDumped = false;
+        b.drifting = false;
+      }
+      // i>=3: clean POP — heights already set to full LOW/mid/HIGH above.
+    }
     return b;
   });
 }
@@ -326,11 +380,13 @@ function scheduleTreasure(s) {
   if (!s.eligible || s.treasure) return;
   const path = SPAWN_IDS.includes(s.spawnId) ? s.spawnId : 'low-path';
   // After a couple clears, on a reachable cleared-path height.
+  // Ch6 finale: crown/high path — angle slowly orbits via updateTreasureOrbit.
+  const ch6 = isCh6(s.level);
   s.treasure = {
     id: s.treasureId,
-    path,
-    height: pathHeight(path),
-    angle: 1.05,
+    path: ch6 ? 'high-path' : path,
+    height: ch6 ? HIGH_PATH : pathHeight(path),
+    angle: ch6 ? 1.35 : 1.05,
     taken: false,
     flash: 0,
   };
@@ -474,7 +530,7 @@ function softWindDump(s) {
 
 /** Ch3: long warn + coaching for the lantern height-band teach (first lit only). */
 function updateLanternBand(s, dt) {
-  if (!isCh3(s.level)) return;
+  if (!isCh3(s.level) && !isCh6(s.level)) return;
   const speed = orbitSpeed(s.level, s.reduced);
   for (const b of s.blockers || []) {
     if (!b.teach || !b.lantern || b.cleared || b.lanternDumped) continue;
@@ -494,7 +550,7 @@ function updateLanternBand(s, dt) {
 
 /** Soft dump when lantern teach target passes without POP — ride continues. */
 function softLanternDump(s) {
-  if (!isCh3(s.level)) return;
+  if (!isCh3(s.level) && !isCh6(s.level)) return;
   for (const b of s.blockers || []) {
     if (!b.teach || !b.lantern || b.cleared || b.lanternDumped) continue;
     const past = forwardAng(b.angle, s.angle);
@@ -515,7 +571,7 @@ function softLanternDump(s) {
 
 /** Ch4: visual sideways gust on teach balloon; long warn coaching. Height stays stable. */
 function updateCrosswind(s, dt) {
-  if (!isCh4(s.level)) return;
+  if (!isCh4(s.level) && !isCh6(s.level)) return;
   const speed = orbitSpeed(s.level, s.reduced);
   for (const b of s.blockers || []) {
     if (!b.teach || !b.crosswind || b.cleared || b.crosswindDumped) continue;
@@ -539,7 +595,7 @@ function updateCrosswind(s, dt) {
 
 /** Soft dump when crosswind teach target passes without POP — ride continues. */
 function softCrosswindDump(s) {
-  if (!isCh4(s.level)) return;
+  if (!isCh4(s.level) && !isCh6(s.level)) return;
   for (const b of s.blockers || []) {
     if (!b.teach || !b.crosswind || b.cleared || b.crosswindDumped) continue;
     const past = forwardAng(b.angle, s.angle);
@@ -561,7 +617,7 @@ function softCrosswindDump(s) {
 
 /** Ch5: long warn with wind+ribbon cues at mid, then real height drift; freeze in POP. */
 function updateRunawayBouquet(s, dt) {
-  if (!isCh5(s.level)) return;
+  if (!isCh5(s.level) && !isCh6(s.level)) return;
   const speed = orbitSpeed(s.level, s.reduced);
   const mid = (LOW_PATH + HIGH_PATH) * 0.5;
   const halfSpan = (HIGH_PATH - LOW_PATH) * 0.5;
@@ -611,7 +667,7 @@ function updateRunawayBouquet(s, dt) {
 
 /** Soft dump when runaway teach target passes without POP — ride continues. */
 function softRunawayDump(s) {
-  if (!isCh5(s.level)) return;
+  if (!isCh5(s.level) && !isCh6(s.level)) return;
   for (const b of s.blockers || []) {
     if (!b.teach || !b.runaway || b.cleared || b.runawayDumped) continue;
     const past = forwardAng(b.angle, s.angle);
@@ -627,6 +683,41 @@ function softRunawayDump(s) {
     logAction(s, 'runaway-dump', {id: b.id});
     // Soft fail — never abort paid / never confiscate. Later clean targets still count.
     s.note = 'Bouquet ran past — soft dump; ride continues. Cleared '
+      + (s.cleared || 0) + ' / ' + s.goal + '.';
+  }
+}
+
+/** Ch6 finale: slowly orbit treasure around the upper crown (eligible players intercept). */
+function updateTreasureOrbit(s, dt) {
+  if (!isCh6(s.level)) return;
+  const tr = s.treasure;
+  if (!tr || tr.taken) return;
+  // Slow crown orbit — well under player weave so intercept stays readable.
+  tr.angle += 0.028 * dt;
+  tr.height = HIGH_PATH;
+  tr.path = 'high-path';
+}
+
+/** Ch6: soft HOLD / release coach between clusters — visual + notes only (no physics change). */
+function updateLiftZoneCoach(s) {
+  if (!isCh6(s.level)) return;
+  if (s.result || earlyClarity(s)) return;
+  const lit = nextLit(s);
+  if (!lit) return;
+  // Don't override active remix-teach coaching.
+  if (lit.teach && (lit.lantern || lit.crosswind || lit.runaway)) return;
+  const speed = orbitSpeed(s.level, s.reduced);
+  const lead = forwardAng(s.angle, lit.angle) / Math.max(0.04, speed);
+  if (lead > 7.5 || lead < 0.35) return;
+  const mid = (LOW_PATH + HIGH_PATH) * 0.5;
+  if (lit.height >= mid + 0.04) {
+    s.note = 'HOLD zone — rise into the upper canopy, then POP. Cleared '
+      + (s.cleared || 0) + ' / ' + s.goal + '.';
+  } else if (lit.height <= mid - 0.04) {
+    s.note = 'Release zone — drift to the lower bough, then POP. Cleared '
+      + (s.cleared || 0) + ' / ' + s.goal + '.';
+  } else {
+    s.note = 'Mid canopy — ease height, then POP. Cleared '
       + (s.cleared || 0) + ' / ' + s.goal + '.';
   }
 }
@@ -661,12 +752,13 @@ function attemptPop(s) {
 
   const ad = angDist(s.angle, lit.angle);
   let dh = Math.abs(s.height - lit.height);
-  // Ch1: after 3 clears, open the door for the 4th POP. Ch2–Ch5: clutch earlier for 3/3.
-  const fair = isCh2(s.level) || isCh3(s.level) || isCh4(s.level) || isCh5(s.level);
+  // Ch1: after 3 clears, open the door for the 4th POP. Ch2–Ch6: clutch earlier (finale keeps Ch3–5 half/snap).
+  const fair = isCh2(s.level) || isCh3(s.level) || isCh4(s.level) || isCh5(s.level) || isCh6(s.level);
   const ch3 = isCh3(s.level);
   const ch4 = isCh4(s.level);
   const ch5 = isCh5(s.level);
-  const chFairPad = ch3 || ch4 || ch5; // Ch3-style fairness pads for Ch4/Ch5
+  const ch6 = isCh6(s.level);
+  const chFairPad = ch3 || ch4 || ch5 || ch6; // Ch3-style fairness pads for Ch4–Ch6
   const clutchNeed = fair ? 1 : 3;
   const clutch = (s.cleared || 0) >= clutchNeed;
   const nearLim = POP_NEAR_ANG + (clutch ? 0.50 : (chFairPad ? 0.38 : (fair ? 0.25 : 0)));
@@ -787,6 +879,33 @@ function wrapLine(d, text, x, y, size, color, maxW) {
   }
   if (line) d.text(line, x, ly, size, color);
   return ly;
+}
+
+/** Ch6: faint HOLD / release coach bands ahead of the next clean canopy target. */
+function drawLiftZoneBands(d, s) {
+  if (!isCh6(s.level) || !s.boarded) return;
+  const lit = nextLit(s);
+  if (!lit || lit.cleared) return;
+  if (lit.teach && (lit.lantern || lit.crosswind || lit.runaway)) return;
+  let da = lit.angle - s.angle;
+  while (da < -Math.PI) da += Math.PI * 2;
+  while (da > Math.PI) da -= Math.PI * 2;
+  if (da < -0.15 || da > 1.55) return;
+
+  const pos = basketPos(lit.angle, lit.height);
+  const mid = (LOW_PATH + HIGH_PATH) * 0.5;
+  const pulse = 0.5 + 0.5 * Math.sin((s.t || 0) * 2.4);
+  const y = pos.y;
+  const x0 = pos.x - 58;
+  const x1 = pos.x + 58;
+  const col = lit.height >= mid + 0.04 ? '#f4d59066' : (lit.height <= mid - 0.04 ? '#8ec8e866' : '#c9a0d866');
+  d.line({x: x0, y: y}, {x: x1, y: y}, col, 1.5 + pulse * 0.6);
+  d.line({x: x0, y: y - 10}, {x: x0 + 10, y: y - 10}, col, 1.2);
+  d.line({x: x1 - 10, y: y + 10}, {x: x1, y: y + 10}, col, 1.2);
+  if (da < 1.0 && da > -0.1) {
+    const label = lit.height >= mid + 0.04 ? 'HOLD' : (lit.height <= mid - 0.04 ? 'release' : 'mid');
+    d.text(label, pos.x, y - lit.r - 40, 13, lit.height >= mid + 0.04 ? '#f4d590' : '#8ec8e8');
+  }
 }
 
 function drawLanternBand(d, b, angleNow, t) {
@@ -1157,13 +1276,15 @@ function drawObjective(d, s) {
   }
 
   const g = s.goal || chapterGoal(s.level);
-  const prefix = isCh5(s.level)
-    ? 'Runaway Bouquet · '
-    : (isCh4(s.level)
-      ? 'Crosswind Crown · '
-      : (isCh3(s.level)
-        ? 'Lantern Boughs · '
-        : (isCh2(s.level) ? 'Ribbon Breeze · ' : '')));
+  const prefix = isCh6(s.level)
+    ? 'Midnight Canopy · '
+    : (isCh5(s.level)
+      ? 'Runaway Bouquet · '
+      : (isCh4(s.level)
+        ? 'Crosswind Crown · '
+        : (isCh3(s.level)
+          ? 'Lantern Boughs · '
+          : (isCh2(s.level) ? 'Ribbon Breeze · ' : ''))));
   const line = prefix + 'Cleared ' + (s.cleared || 0) + ' / ' + g;
   d.text(line, 450, s.practice ? 168 : 148, 22, '#ffe6a4');
   if (s.note) wrapLine(d, s.note, 450, s.practice ? 198 : 178, 16, '#f0d18f', 720);
@@ -1171,8 +1292,8 @@ function drawObjective(d, s) {
 
 export default {
   title: 'Balloon Garden',
-  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. Ribbon Breeze drifts the first lit balloon on a wind ribbon; Lantern Boughs asks you to match a visible height band; Crosswind Crown sways the approach sideways — trust height, then POP; Runaway Bouquet shows wind ribbons then drifts between two heights — match, then POP.',
-  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Ch2 Ribbon Breeze: one wind ribbon on the first glow — long warn, soft dump if it drifts past. Ch3 Lantern Boughs: one lantern height band on the first glow — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch4 Crosswind Crown: one visual sideways gust on the first glow — trust height, ignore sway, then POP; soft miss / soft dump; later balloons are clean POP. Ch5 Runaway Bouquet: wind + ribbon cues first, then the bouquet drifts between low and high — match height, then POP; soft miss / soft dump; later balloons are clean POP.',
+  intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. Ribbon Breeze drifts the first lit balloon on a wind ribbon; Lantern Boughs asks you to match a visible height band; Crosswind Crown sways the approach sideways — trust height, then POP; Runaway Bouquet shows wind ribbons then drifts between two heights — match, then POP; The Midnight Canopy finale remixes lantern, crosswind, and runaway across the canopy, then orbits a crown keepsake.',
+  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Ch2 Ribbon Breeze: one wind ribbon on the first glow — long warn, soft dump if it drifts past. Ch3 Lantern Boughs: one lantern height band on the first glow — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch4 Crosswind Crown: one visual sideways gust on the first glow — trust height, ignore sway, then POP; soft miss / soft dump; later balloons are clean POP. Ch5 Runaway Bouquet: wind + ribbon cues first, then the bouquet drifts between low and high — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch6 The Midnight Canopy (finale): lantern arch, then crosswind, then runaway on separate glows — plus clean POP at full low/mid/high canopy heights; HOLD/release coach bands between clusters; eligible keepsake slowly orbits the crown.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -1251,6 +1372,8 @@ export default {
     softCrosswindDump(s);
     updateRunawayBouquet(s, dt);
     softRunawayDump(s);
+    updateTreasureOrbit(s, dt);
+    updateLiftZoneCoach(s);
     softContactCluster(s);
     // Live "NOW" coaching when in the POP window.
     if (!s.result && !earlyClarity(s)) {
@@ -1356,6 +1479,7 @@ export default {
     drawObjective(d, s);
 
     const lit = nextLit(s);
+    drawLiftZoneBands(d, s);
     (s.blockers || []).forEach((b) => {
       // Overlay priority: lantern > crosswind > runaway > wind (teach hazards don't fight).
       if (b.teach && b.lantern) drawLanternBand(d, b, s.angle, s.t || 0);
