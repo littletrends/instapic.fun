@@ -7,8 +7,9 @@
  *   JUMP leaps over the next cell (onto cell+2). Miss/jump over a SLIDE = safe.
  *   SLIDE (deep-red chute): land or jump onto → soft dump DOWN (never abort).
  *   CUSHION (cream+gold plump): jump onto (or land) → bounce UP several cells.
- *   JUMP BALL: gold play ball rolls crest→bottom; when off, WAIT then hopper reloads.
- *   Keepsake + tokens sit ON coil cells — collect by landing / jumping onto them.
+ *   JUMP BALL: gold play ball rolls crest→bottom; near YOU → soft dump to cell 0 (JUMP over clears).
+ *   Keepsake + tokens: claim when PASSING cells (from→to inclusive), not only exact land.
+ *   Aura Tent_21_Skip + bea-player dress via helter-dress/ (no re-split).
  *
  * Practice clear: keepsake taken AND (crest reached OR ≥3 cushions bounced).
  * Soft dump never aborts paid rides; practice keeps nothing. ~45–55s ride.
@@ -85,6 +86,49 @@ const CUSHION_DEEP = '#c99448';
 const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
+/** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
+const DRESS_CACHE = 'dress-1';
+const SKIP_FILES = {
+  ball: 'Tent_21_Skip_star-ball.png',
+  slide: 'Tent_21_Skip_moon-slide.png',
+  cushion: 'Tent_21_Skip_tufted-cushion.png',
+  hopper: 'Tent_21_Skip_star-drum.png',
+  cradle: 'Tent_21_Skip_moon-cradle.png',
+  gauge: 'Tent_21_Skip_celestial-gauge.png',
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+let skipPropImgs = null;
+let beaPlayerImg = null;
+
+function ensureSkipProps() {
+  if (skipPropImgs) return skipPropImgs;
+  skipPropImgs = {};
+  for (const [key, file] of Object.entries(SKIP_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = `../assets/helter-dress/skip/${file}?v=${DRESS_CACHE}`;
+    skipPropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = `../assets/helter-dress/player/${BEA_PLAYER_FILE}?v=${DRESS_CACHE}`;
+  }
+  return skipPropImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+
 /**
  * Ch1 authored board (also used for frozen Ch2–6 stubs).
  * Slides soft-dump DOWN; cushions bounce UP.
@@ -109,8 +153,8 @@ function ch1Board() {
     {cell: 9, id: 'moon-penny'},
     {cell: 16, id: 'everyday-penny'},
   ];
-  // Fairness: teach cushion 4→8 lands on keepsake (cushion 11→16 would skip 13).
-  const treasureCell = 8; // spiral-tower on track after first bounce
+  // Hard spot between cushion-11 zone and slide-15 — careful tap / jump past.
+  const treasureCell = 14; // spiral-tower between cush path and slide 15
   // Hopper sits near crest, slightly off-track (loads balls at top).
   const hopper = {u: 0.92, ox: 48, oy: -28};
   return {
@@ -332,6 +376,7 @@ function beginCellMove(s, dest, reason) {
   s.moving = true;
   s.moveFrom = from;
   s.moveTo = to;
+  s.lastCell = from;
   s.moveT = 0;
   const jumpish = reason === 'jump' || reason === 'cushion';
   s.moveDur = reducedMotion(s) ? 0.08 : (jumpish ? JUMP_EASE : STEP_EASE);
@@ -391,15 +436,55 @@ function tryCollectTreasure(s, idx) {
   s.matPulse = 0.7;
 }
 
+/** Claim keepsake + tokens on every cell traversed from→to inclusive. */
+function collectAlong(s, from, to) {
+  const a = from | 0;
+  const b = to | 0;
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  for (let i = lo; i <= hi; i++) {
+    tryCollectTreasure(s, i);
+    tryCollectToken(s, i);
+  }
+  s.lastCell = b;
+}
+
 /**
- * Resolve landing on a cell: treasure, tokens, cushion bounce, slide dump.
+ * Ball near YOU → soft dump to BOTTOM cell 0 (never abort).
+ * Skip if this landing cleared the ball via JUMP over it.
+ */
+function maybeBallKnock(s, opts) {
+  if (!s.ballActive || s.moving || s.result || s.broke) return false;
+  if (opts && opts.jumpedOver) return false;
+  if ((s.moveReason || '') === 'ball') return false;
+  const idx = s.youCell | 0;
+  if (idx <= 0) return false; // already at bottom terminus
+  if (!ballCellNear(s, idx)) return false;
+  logAction(s, 'ball-knock', {cell: idx, ballU: s.ballU});
+  s.note = 'Ball knock — soft dump to the bottom. Ride continues.';
+  s.statusCopy = 'Ball dump';
+  s.slideFlash = 0.55;
+  const c = cellAt(s, idx);
+  pushSparks(s, c.x, c.y, true);
+  pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: 'ball!', life: 0.7, soft: true});
+  s._ballCleared = false;
+  beginCellMove(s, 0, 'ball');
+  return true;
+}
+
+/**
+ * Resolve landing on a cell: pass-claim, cushion bounce, slide dump, ball knock.
  * Soft dump never aborts. One transit at a time (no stacked auto-chains).
  */
 function resolveLanding(s) {
   const idx = s.youCell | 0;
+  const from = s.moveFrom != null ? (s.moveFrom | 0) : idx;
+  collectAlong(s, from, idx);
 
-  tryCollectTreasure(s, idx);
-  tryCollectToken(s, idx);
+  // JUMP that cleared the skipped cell does not get ball-knocked for that hop.
+  const jumpedOver = !!(s._ballCleared && (s.moveReason === 'jump'));
+  s._ballCleared = false;
+  if (maybeBallKnock(s, {jumpedOver})) return;
 
   // Cushion bounce UP first (prefer boost over slide if somehow co-located — they aren't).
   const C = cushionAt(s, idx);
@@ -531,7 +616,9 @@ function doJumpNow(s) {
     return false;
   }
   s.jumpedOnce = true;
-  if (s.ballActive && ballCellNear(s, over)) {
+  const clearedBall = !!(s.ballActive && ballCellNear(s, over));
+  s._ballCleared = clearedBall;
+  if (clearedBall) {
     logAction(s, 'ball-jump', {cell: over});
     s.note = 'Jumped the ball!';
     s.statusCopy = 'Ball clear';
@@ -649,12 +736,26 @@ function coachNote(s) {
   return s.note || 'TAP-TAP-TAP — JUMP cushions / over slides';
 }
 
-/** Bold deep-red chute wedge on a slide cell. */
+
+/** Cradle + celestial gauge as bold cream track-side scenery (y < cream pads). */
+function drawSkipScenery(d) {
+  const imgs = ensureSkipProps();
+  // Left mid court — moon cradle
+  placeDress(d, imgs.cradle, 118, 720, 88, -0.12);
+  // Right upper court — celestial gauge
+  placeDress(d, imgs.gauge, 782, 430, 72, 0.08);
+}
+
+/** Bold deep-red chute — Aura moon-slide sprite, vector fallback. */
 function drawSlideProp(d, cell, flash) {
   if (!cell) return;
   const x = cell.x, y = cell.y;
   const ang = cell.ang || 0;
-  // Chute reads downhill along the spiral (toward lower cells).
+  const imgs = ensureSkipProps();
+  if (flash) d.glow(x, y, 28, BURGUNDY);
+  else d.glow(x, y, 18, SLIDE_FILL);
+  if (placeDress(d, imgs.slide, x, y - 2, 52, ang * 0.15)) return;
+  // Fallback: chute wedge downhill along the spiral.
   const dx = Math.cos(ang + Math.PI * 0.15);
   const dy = Math.sin(ang + Math.PI * 0.15) * 0.55 + 0.55;
   const tipX = x + dx * 22;
@@ -669,68 +770,64 @@ function drawSlideProp(d, cell, flash) {
   ];
   d.poly(poly.map((p) => ({x: p.x + 2, y: p.y + 3})), TRACK_SHADOW + '88', TRACK_SHADOW, 1);
   d.poly(poly, SLIDE_FILL + 'f2', SLIDE_DEEP, 2.2);
-  // Inner gloss stripe.
   d.path(
     [{x: x, y: y - 2}, {x: tipX, y: tipY + 2}],
     CREAM + '66', 3, false, null
   );
-  if (flash) d.glow(x, y, 28, BURGUNDY);
-  else d.glow(x, y, 18, SLIDE_FILL);
   d.text('SLIDE', x, y - 22, 11, CREAM);
 }
 
-/** Bold cream+gold plump cushion oval. */
+/** Bold cream+gold cushion — Aura tufted-cushion sprite, vector fallback. */
 function drawCushionProp(d, cell, flash) {
   if (!cell) return;
   const x = cell.x, y = cell.y;
+  if (flash) d.glow(x, y, 30, GOLD);
+  else d.glow(x, y, 20, CREAM);
+  const imgs = ensureSkipProps();
+  if (placeDress(d, imgs.cushion, x, y - 2, 48)) return;
   d.ellipse(x + 2, y + 5, 20, 12, TRACK_SHADOW + '66');
   d.ellipse(x, y, 19, 11, CUSHION_FILL + 'f4', CUSHION_DEEP, 2.4);
   d.ellipse(x - 3, y - 3, 10, 5, GOLD + 'aa', CREAM_DEEP + '88', 1);
   d.ellipse(x + 4, y + 2, 7, 4, CREAM + '77');
-  // Tuft stitches
   d.circle(x, y, 3, CUSHION_DEEP + 'cc', CREAM_DEEP, 1);
-  if (flash) d.glow(x, y, 30, GOLD);
-  else d.glow(x, y, 20, CREAM);
   d.text('CUSHION', x, y - 20, 10, BURGUNDY_DEEP);
 }
 
-/** Small bold paper hopper / dispenser near crest — reloads gold balls. */
+/** Hopper / dispenser near crest — Aura star-drum; pulse while reloading. */
 function drawHopper(d, s) {
   const h = s.hopper || {u: 0.92, ox: 48, oy: -28};
   const p = spiralPoint(h.u);
   const x = p.x + (h.ox || 0);
   const y = p.y + (h.oy || 0);
-  // Body
-  d.poly([
-    {x: x - 18, y: y - 8},
-    {x: x + 18, y: y - 8},
-    {x: x + 14, y: y + 16},
-    {x: x - 14, y: y + 16},
-  ].map((q) => ({x: q.x + 2, y: q.y + 3})), TRACK_SHADOW + '77', TRACK_SHADOW, 1);
-  d.poly([
-    {x: x - 18, y: y - 8},
-    {x: x + 18, y: y - 8},
-    {x: x + 14, y: y + 16},
-    {x: x - 14, y: y + 16},
-  ], HOPPER_FILL + 'f4', HOPPER_DEEP, 2);
-  // Rim / mouth
-  d.ellipse(x, y - 10, 16, 7, TRACK_EDGE + 'ee', CREAM_DEEP, 1.5);
-  d.ellipse(x, y - 10, 10, 4, HOPPER_DEEP + 'cc');
-  // Chute lip toward track
-  d.poly([
-    {x: x - 8, y: y + 12},
-    {x: x + 8, y: y + 12},
-    {x: p.x + 6, y: p.y + 4},
-    {x: p.x - 6, y: p.y + 4},
-  ], SLIDE_DEEP + 'dd', TRACK_EDGE, 1.5);
-  if ((s.ballWait || 0) > 0) {
-    d.glow(x, y - 6, 22, GOLD);
-    d.text('…', x, y - 22, 14, GOLD);
-  } else {
-    d.text('HOPPER', x, y + 28, 9, CREAM);
+  const waiting = (s.ballWait || 0) > 0;
+  if (waiting) d.glow(x, y - 4, 28 + Math.sin((s.t || 0) * 10) * 6, GOLD);
+  const imgs = ensureSkipProps();
+  const placed = placeDress(d, imgs.hopper, x, y, waiting ? 58 : 52);
+  if (!placed) {
+    d.poly([
+      {x: x - 18, y: y - 8},
+      {x: x + 18, y: y - 8},
+      {x: x + 14, y: y + 16},
+      {x: x - 14, y: y + 16},
+    ].map((q) => ({x: q.x + 2, y: q.y + 3})), TRACK_SHADOW + '77', TRACK_SHADOW, 1);
+    d.poly([
+      {x: x - 18, y: y - 8},
+      {x: x + 18, y: y - 8},
+      {x: x + 14, y: y + 16},
+      {x: x - 14, y: y + 16},
+    ], HOPPER_FILL + 'f4', HOPPER_DEEP, 2);
+    d.ellipse(x, y - 10, 16, 7, TRACK_EDGE + 'ee', CREAM_DEEP, 1.5);
+    d.ellipse(x, y - 10, 10, 4, HOPPER_DEEP + 'cc');
+    d.poly([
+      {x: x - 8, y: y + 12},
+      {x: x + 8, y: y + 12},
+      {x: p.x + 6, y: p.y + 4},
+      {x: p.x - 6, y: p.y + 4},
+    ], SLIDE_DEEP + 'dd', TRACK_EDGE, 1.5);
+    if (!waiting) d.text('HOPPER', x, y + 28, 9, CREAM);
   }
-  // Tiny ball peek when reloading
-  if ((s.ballWait || 0) > 0 && (s.ballWait || 0) < 0.55) {
+  if (waiting) d.text('…', x, y - 30, 14, GOLD);
+  if (waiting && (s.ballWait || 0) < 0.55) {
     drawBall(d, x, y - 6, 8);
   }
 }
@@ -746,14 +843,17 @@ function drawFx(d, s) {
   }
 }
 
-/** Paper-cut gold/celestial ball — disc + highlight (prop rolls crest→door). */
+/** Gold celestial ball — Aura star-ball sprite, vector fallback. */
 function drawBall(d, x, y, r) {
+  d.glow(x, y, r * 2.1, GOLD);
+  const imgs = ensureSkipProps();
+  const w = Math.max(28, r * 2.2);
+  if (placeDress(d, imgs.ball, x, y, w)) return;
   d.ellipse(x + 2, y + 4, r * 0.95, r * 0.55, TRACK_SHADOW + '55');
   d.circle(x, y, r + 1.5, BALL_GOLD_DEEP + 'ee', TRACK_EDGE, 1.2);
   d.circle(x, y, r, BALL_GOLD + 'f8', BALL_GOLD_DEEP, 1.8);
   d.circle(x - r * 0.28, y - r * 0.32, r * 0.38, BALL_GOLD_HI + 'dd');
   d.circle(x - r * 0.18, y - r * 0.22, r * 0.14, '#fffaf0cc');
-  d.glow(x, y, r * 2.1, GOLD);
 }
 
 function loadBallFromHopper(s) {
@@ -804,6 +904,8 @@ export default {
       duration: plan.duration,
       frozenChapter: level > 0,
       youCell: 0,
+      lastCell: 0,
+      _ballCleared: false,
       youX: start.x,
       youY: start.y,
       moving: false,
@@ -838,7 +940,7 @@ export default {
     if (s.result || s.broke) return;
 
     const spawnIds = (s.cells || []).map((_, i) => 'cell-' + i);
-    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-8', 'cell-12'])) {
+    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-14', 'cell-12'])) {
       s.previewing = true;
       s.previewT = 0;
       s.launched = false;
@@ -854,6 +956,8 @@ export default {
       s.jumpedOnce = false;
       s.moving = false;
       s.youCell = 0;
+      s.lastCell = 0;
+      s._ballCleared = false;
       const c0 = cellAt(s, 0);
       s.youX = c0.x;
       s.youY = c0.y;
@@ -965,7 +1069,8 @@ export default {
         }
       }
     } else {
-      s.note = coachNote(s);
+      // Ball rolls onto standing YOU → soft dump to cell 0 (JUMP-over handled on hop).
+      if (!maybeBallKnock(s)) s.note = coachNote(s);
     }
 
     if (s.t >= (s.duration || RIDE_SECONDS)) {
@@ -1007,8 +1112,12 @@ export default {
   },
   draw(s, d) {
     const cells = s.cells || [];
+    ensureSkipProps();
     // Soft vignette only — do not hide helter.png court.
     d.ellipse(CX, 640, 400, 540, '#4a182410');
+
+    // Bold cream scenery (cradle + gauge) — away from cream pads (y≥1088).
+    drawSkipScenery(d);
 
     // RED TRACK is the star — thick coiled ribbon with back→front layering.
     drawSpiralTrack(d);
@@ -1073,14 +1182,19 @@ export default {
       drawBall(d, bx, by, BALL_R);
     }
 
-    // YOU marker.
+    // YOU = bea-player (~52–60w) with soft glow; fallback marker if unloaded.
     const yx = s.youX ?? (cells[0] && cells[0].x) ?? CX;
     const yy = s.youY ?? (cells[0] && cells[0].y) ?? Y_BOT;
     if ((s.cushionFlash || 0) > 0) d.glow(yx, yy, 36 + s.cushionFlash * 20, CREAM);
     if ((s.slideFlash || 0) > 0) d.glow(yx, yy, 34 + s.slideFlash * 18, BURGUNDY);
-    d.glow(yx, yy, 26, GOLD);
-    d.circle(yx, yy, 14, YOU_FILL + 'ee', CREAM_DEEP, 2);
-    d.text('YOU', yx, yy + 1, 11, BURGUNDY_DEEP);
+    d.glow(yx, yy + 10, 28, GOLD);
+    d.ellipse(yx + 2, yy + 18, 22, 8, TRACK_SHADOW + '44');
+    ensureSkipProps();
+    const beaOk = placeDress(d, beaPlayerImg, yx, yy - 8, 56);
+    if (!beaOk) {
+      d.circle(yx, yy, 14, YOU_FILL + 'ee', CREAM_DEEP, 2);
+      d.text('YOU', yx, yy + 1, 11, BURGUNDY_DEEP);
+    }
 
     // Finish flourish near crest / YOU.
     if ((s.finishPulse || 0) > 0) {
