@@ -30,7 +30,7 @@ const rows = [
   ['carousel','Florence','Carousel Waltz','Tap the crest when it lines up — Mario circle, horse locked.'],
   ['balloons','Nell','Balloon Garden','Pop the glowing balloons to clear the path.'],
   ['ferris','Jasper','Pocket Wheel','Snap in the glow as you climb the wheel.'],
-  ['helter','Tilly','Spiral Slide','Turn the ring — ladder vs snake spiral.'],
+  ['helter','Tilly','Spiral Slide','→ climb · JUMP cushions · clear slides.'],
   ['swings','Hugo','Skyward Swings','Hold until green lined-up, then pop.'],
   ['funhouse','Juno','Laughing Doorway','Shut the punchline — Pac-Man chase through doors.'],
   ['organ','Otto','Calliope Keys','Tap the glowing pipe mouth — no Simon.'],

@@ -1,7 +1,7 @@
 /*
  * Spiral Slide (helter) — Ch1 First Spiral live; Ch2–6 titles frozen (same board until Aura reopens).
  *
- * TAP-TAP-TAP + JUMP model (replaces cream-ladder / burgundy-snake board):
+ * TAP-TAP-TAP + JUMP model (cushions bounce up; slides soft-dump down):
  *   ONE Archimedean spiral path, BOTTOM → TOP, sampled into cells.
  *   YOU starts at cell 0 (bottom). ←/→ or tap near YOU advances along coil cells.
  *   JUMP leaps over the next cell (onto cell+2). Miss/jump over a SLIDE = safe.
@@ -57,8 +57,8 @@ const BALL_WAIT_SECS = 1.4; // pause after ball exits before hopper reload
 const CUSHION_GOAL = 3;
 const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
-const STEP_EASE = 0.28; // seconds to ease between cells
-const JUMP_EASE = 0.36;
+const STEP_EASE = 0.22; // seconds to ease between cells (snappy climb) // seconds to ease between cells
+const JUMP_EASE = 0.38; // hop loft
 const FX_CAP = 40;
 
 /** Cream / gold / deep-red props — all 6-digit for d.glow(). */
@@ -345,7 +345,7 @@ function beginCellMove(s, dest, reason) {
   s._moveBx = b.x;
   s._moveBy = b.y;
   // Arc loft for jump / cushion bounce.
-  s._moveArc = jumpish ? (reason === 'cushion' ? 42 : 28) : 0;
+  s._moveArc = jumpish ? (reason === 'cushion' ? 56 : 48) : (reason === 'tap' || reason === 'tap-back' ? 6 : 0);
 }
 
 function easeInOut(t) {
@@ -455,8 +455,34 @@ function clearOk(s) {
   return keepsake && (atTop || cushions);
 }
 
-/** Advance one cell up the spiral (TAP / →). */
-function doTap(s) {
+/** Queue one pending move if mid-ease (keeps climb responsive). */
+function queueMove(s, kind) {
+  if (s.result || s.broke || !s.launched) return false;
+  if (s.moving) {
+    s._queued = kind; // 'tap' | 'back' | 'jump'
+    return true;
+  }
+  if (kind === 'tap') return doTapNow(s);
+  if (kind === 'back') return doTapBackNow(s);
+  if (kind === 'jump') return doJumpNow(s);
+  return false;
+}
+
+function flushQueue(s) {
+  const q = s._queued;
+  s._queued = null;
+  if (!q || s.result || s.broke) return;
+  if (q === 'tap') doTapNow(s);
+  else if (q === 'back') doTapBackNow(s);
+  else if (q === 'jump') doJumpNow(s);
+}
+
+/** Advance one cell UP the spiral (→ forward). */
+function doTap(s) { return queueMove(s, 'tap'); }
+function doTapBack(s) { return queueMove(s, 'back'); }
+function doJump(s) { return queueMove(s, 'jump'); }
+
+function doTapNow(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const n = (s.cells || []).length;
@@ -468,43 +494,51 @@ function doTap(s) {
   s.tappedOnce = true;
   logAction(s, 'tap', {from: s.youCell, to: next});
   beginCellMove(s, next, 'tap');
+  s.note = 'Up the spiral';
   return true;
 }
 
-/** One cell DOWN the spiral (←). */
-function doTapBack(s) {
+/** One cell DOWN / back (←). */
+function doTapBackNow(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const prev = Math.max(0, (s.youCell | 0) - 1);
   if (prev === (s.youCell | 0)) return false;
   logAction(s, 'tap-back', {from: s.youCell, to: prev});
   beginCellMove(s, prev, 'tap-back');
+  s.note = 'Back a step';
   return true;
 }
 
 /**
- * JUMP: leap over the next cell onto cell+2.
- * Intermediate cell is skipped (safe miss over a slide).
- * Landing cell resolves cushion / slide / collectibles.
+ * JUMP: leap over the next cell onto cell+2 (clear hop up the coil).
+ * Intermediate skipped (safe over a slide). Near crest, hop +1 still arcs.
  */
-function doJump(s) {
+function doJumpNow(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const n = (s.cells || []).length;
   const from = s.youCell | 0;
   const over = Math.min(from + 1, n - 1);
-  const land = Math.min(from + 2, n - 1);
+  let land = Math.min(from + 2, n - 1);
   if (land === from) {
     maybeFinish(s, 'crest');
     return false;
   }
+  // Near crest: still hop forward one with full jump arc.
+  if (land === over && over === from) {
+    maybeFinish(s, 'crest');
+    return false;
+  }
   s.jumpedOnce = true;
-  // Ball interact: jumping near the ball counts as clearing it.
   if (s.ballActive && ballCellNear(s, over)) {
     logAction(s, 'ball-jump', {cell: over});
     s.note = 'Jumped the ball!';
     s.statusCopy = 'Ball clear';
     pushSparks(s, s.ballX || CX, s.ballY || Y_BOT, false);
+  } else {
+    s.note = 'Jump!';
+    s.statusCopy = 'Jump';
   }
   logAction(s, 'jump', {from, over, to: land});
   beginCellMove(s, land, 'jump');
@@ -520,19 +554,18 @@ function ballCellNear(s, cellIdx) {
   return Math.abs(bi - (cellIdx | 0)) <= 1;
 }
 
-/** Cream-bottom pad layout (canvas 900×1200). */
+/** Cream-bottom pad layout (canvas 900×1200) — big phone targets. */
 function creamPads() {
-  const y = 1128;
-  const h = 78;
-  const jumpW = 210;
-  const sideW = 92;
-  const gap = 28;
+  const y = 1088;
+  const h = 96;
+  const jumpW = 240;
+  const sideW = 110;
+  const gap = 22;
   const mid = CX;
   const jump = {id: 'jump', x: mid - jumpW / 2, y, w: jumpW, h, label: 'JUMP'};
   const left = {id: 'left', x: jump.x - gap - sideW, y, w: sideW, h, label: '←'};
   const right = {id: 'right', x: jump.x + jumpW + gap, y, w: sideW, h, label: '→'};
-  const stick = {id: 'stick', x: mid - 18, y: y - 36, w: 36, h: 28, label: '🕹️'};
-  return [left, jump, right, stick];
+  return [left, jump, right];
 }
 
 function hitPad(p) {
@@ -545,10 +578,6 @@ function hitPad(p) {
 
 function drawCreamPads(d) {
   for (const pad of creamPads()) {
-    if (pad.id === 'stick') {
-      d.text(pad.label, pad.x + pad.w / 2, pad.y + pad.h / 2, 22, GOLD);
-      continue;
-    }
     const isJump = pad.id === 'jump';
     d.ellipse(pad.x + pad.w / 2 + 2, pad.y + pad.h / 2 + 4, pad.w * 0.48, pad.h * 0.42, TRACK_SHADOW + '66');
     d.ellipse(
@@ -600,7 +629,7 @@ function spawnTreasure(s) {
 }
 
 function coachNote(s) {
-  if (!s.launched) return 'TAP along the spiral — JUMP onto cushions, over slides';
+  if (!s.launched) return '→ climb up · ← back · JUMP to hop';
   if (clearOk(s)) return s.note || 'Clear!';
   const idx = s.youCell | 0;
   const teachC = (s.cushions || []).find((C) => C.teach && !C.used);
@@ -929,7 +958,10 @@ export default {
         if (!s.moving) {
           if (clearOk(s)) maybeFinish(s, 'goal');
           else if ((s.youCell | 0) >= ((s.cells || []).length - 1)) maybeFinish(s, 'crest');
-          else s.note = coachNote(s);
+          else {
+            s.note = coachNote(s);
+            flushQueue(s);
+          }
         }
       }
     } else {
@@ -947,17 +979,24 @@ export default {
     else if (id === 'right' || id === 'step') doTap(s);
   },
   pointer(s, type, p) {
-    if (s.result || s.broke) return;
-    if (type !== 'up' || !p) return;
-    const hit = hitPad(p);
-    if (hit === 'left') { doTapBack(s); return; }
-    if (hit === 'jump') { doJump(s); return; }
-    if (hit === 'right' || hit === 'stick') { doTap(s); return; }
-    // Tap near YOU / ahead on the spiral = TAP advance (ignore cream pad band).
-    if (typeof p.y === 'number' && p.y < 1080) {
-      const ahead = p.y < (s.youY || Y_BOT) - 8;
-      const near = Math.hypot((p.x || 0) - (s.youX || CX), (p.y || 0) - (s.youY || Y_BOT)) < 120;
-      if (ahead || near) doTap(s);
+    if (s.result || s.broke || !p) return;
+    // Pads fire on down (phone-snappy); ignore move/cancel.
+    if (type === 'down') {
+      const hit = hitPad(p);
+      if (hit === 'left') { s._padArmed = 'left'; doTapBack(s); return; }
+      if (hit === 'jump') { s._padArmed = 'jump'; doJump(s); return; }
+      if (hit === 'right') { s._padArmed = 'right'; doTap(s); return; }
+      s._padArmed = null;
+      return;
+    }
+    if (type === 'up') {
+      // Court tap ahead/near YOU = forward (not after a pad press).
+      if (s._padArmed) { s._padArmed = null; return; }
+      if (typeof p.y === 'number' && p.y < 1060) {
+        const ahead = p.y < (s.youY || Y_BOT) - 8;
+        const near = Math.hypot((p.x || 0) - (s.youX || CX), (p.y || 0) - (s.youY || Y_BOT)) < 140;
+        if (ahead || near) doTap(s);
+      }
     }
   },
   key(s, k, down) {
