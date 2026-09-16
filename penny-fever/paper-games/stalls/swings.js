@@ -21,10 +21,11 @@
  *     short outer-band sequence (long warn ~7.5 s) + coaching “Hold the line”;
  *     later a single POP on another band. Soft leave mid-sequence coaches +
  *     soft-push — never aborts. Light streak juice under verb chrome.
- *   Ch4 Cloud Waltz: three bands; GOAL 3; ~52 s; ONE cloud-teach on OUTER
- *     alone (long warn ~7.5 s, HOLD scream-clear) — clouds hide the teach;
- *     later clear POPs (inner RELEASE + outer HOLD @ APPROACH). Soft
- *     miss soft-pushes inward — never aborts. Treasure = outer (taught).
+ *   Ch4 Cloud Waltz: three bands; GOAL 3; ~60 s; ONE cloud-teach on OUTER
+ *     alone (long warn ~10 s, HOLD scream-clear) — clouds hide the teach;
+ *     then 3 clearLong POPs (inner RELEASE + outer HOLD + makeup) so one
+ *     soft miss still allows 3/3. Soft miss soft-pushes — never aborts.
+ *     Treasure = outer (taught). HUD stays N/3.
  *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
  *   5 Bell Flight — bell pitch / symbol maps to the three bands
@@ -63,13 +64,13 @@ const CATCH_HALF = 0.34;  // rad sweep window (~0.40 s at OMEGA)
 const APPROACH = 1.55;    // rad of visible approach (~1.8 s) — Ch1 / normal bubbles
 const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
 const LINE_WARN_SEC = 7.5;   // Ch3 smooth-line teach long warn (helter Tunnel Turn bar)
-const CLOUD_WARN_SEC = 7.5;  // Ch4 cloud teach long warn (helter Cloud Waltz bar)
+const CLOUD_WARN_SEC = 10;   // Ch4 cloud teach long warn (Aura soft-miss cushion)
 const CLOUD_APPROACH_SEC = 5.0; // Ch4 non-teach cloud approach (fogged under ~5.0 s)
-const CLOUD_CLEAR_APPROACH_SEC = 3.8; // Ch4 clear #2/#3 longer approach (fair 3/3)
+const CLOUD_CLEAR_APPROACH_SEC = 3.8; // Ch4 clear #2/#3/#4 approach ≥3.8 s
 const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
 const FINISH_THETA_CH2 = 6.85 * TAU; // ~51.5 s first-play window for 3/3
 const FINISH_THETA_CH3 = 6.85 * TAU; // ~51.5 s — helter Ch3 ~52 s bar
-const FINISH_THETA_CH4 = 7.2 * TAU; // ~53.9 s — soft-miss recovery runway for 3/3
+const FINISH_THETA_CH4 = 8.0 * TAU; // ~59.8 s — makeup + soft-miss runway for 3/3
 const FLASH_SEC = 0.28;   // POP bloom
 const MISS_FLASH = 0.22;
 const FLY_DUR = 0.62;
@@ -129,17 +130,19 @@ function ch3Bubbles() {
 }
 
 /**
- * Chapter 4 Cloud Waltz: ONE cloud-teach on OUTER alone (long warn) — HOLD
+ * Chapter 4 Cloud Waltz: ONE cloud-teach on OUTER alone (long warn ~10 s) — HOLD
  * scream-clear with verb chrome; bubble fogged by soft cloud; band shadow /
- * platform glint reveals the band first. Then inner clear (RELEASE) + outer
- * clear (HOLD) normal star-bubbles (@ APPROACH). GOAL 3. Soft miss recoverable.
- * Treasure = outer. Still ONE cloud teach alone; later clear POPs.
+ * platform glint reveals the band first. Then THREE clearLong star-bubbles
+ * (inner RELEASE, outer HOLD, outer makeup HOLD) so soft-missing the teach
+ * still leaves 3 catchable clears for GOAL 3 / Practice complete. Soft miss
+ * recoverable (never aborts). Treasure = outer. HUD N/3.
  */
 function ch4Bubbles() {
   return [
     {theta: 1.55 * TAU, band: 2, taken: false, cloud: true, teach: true}, // outer cloud teach alone — ONLY clouded
-    {theta: 3.55 * TAU, band: 0, taken: false, clearLong: true}, // inner clear — longer approach RELEASE
-    {theta: 5.70 * TAU, band: 2, taken: false, clearLong: true}, // outer clear — later + longer HOLD
+    {theta: 3.50 * TAU, band: 0, taken: false, clearLong: true}, // inner clearLong — RELEASE
+    {theta: 5.45 * TAU, band: 2, taken: false, clearLong: true}, // outer clearLong — HOLD
+    {theta: 7.05 * TAU, band: 2, taken: false, clearLong: true}, // outer makeup clearLong — soft-miss recovery
   ];
 }
 
@@ -221,11 +224,11 @@ function bandLabel(band, three) {
 }
 
 
-/** Ch4 catch half: cloud-teach widest, other cloud wider, clearLong slightly wide. Ch1–3 untouched. */
+/** Ch4 catch half: cloud-teach widest (*2), other cloud wider, clearLong *1.45. Ch1–3 untouched. */
 function catchHalfOf(bubble) {
-  if (bubble && bubble.cloud && bubble.teach) return CATCH_HALF * 1.55;
+  if (bubble && bubble.cloud && bubble.teach) return CATCH_HALF * 2.0;
   if (bubble && bubble.cloud) return CATCH_HALF * 1.15;
-  if (bubble && bubble.clearLong) return CATCH_HALF * 1.25;
+  if (bubble && bubble.clearLong) return CATCH_HALF * 1.45;
   return CATCH_HALF;
 }
 
@@ -237,7 +240,7 @@ function approachOf(bubble) {
     return LINE_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s smooth-line teach
   }
   if (bubble && bubble.cloud && bubble.teach) {
-    return CLOUD_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s cloud teach
+    return CLOUD_WARN_SEC * OMEGA; // ~8.4 rad ≈ 10 s cloud teach
   }
   if (bubble && bubble.cloud) {
     return CLOUD_APPROACH_SEC * OMEGA; // ~4.2 rad ≈ 5.0 s non-teach cloud
@@ -364,9 +367,9 @@ function spawnTreasure(s) {
   }
   const finish = finishThetaOf(s);
   // Visible for a full circuit (green warning), then POP-swept on same angle.
-  // Ch4: later warn/sweep so clear #3 (5.70τ) + soft-miss runway fit before land.
-  const warnTheta = isCloudWaltz(s) ? 6.10 * TAU : (three ? 5.55 * TAU : 1.02 * TAU);
-  const sweepTheta = isCloudWaltz(s) ? 6.95 * TAU : (three ? 6.55 * TAU : 2.02 * TAU);
+  // Ch4: warn/sweep after makeup #4 (7.05τ) so soft-miss runway + treasure fit before land.
+  const warnTheta = isCloudWaltz(s) ? 7.40 * TAU : (three ? 5.55 * TAU : 1.02 * TAU);
+  const sweepTheta = isCloudWaltz(s) ? 7.90 * TAU : (three ? 6.55 * TAU : 2.02 * TAU);
   if (sweepTheta > finish - 0.15) return; // keep land window clear
   s.treasure = {
     id: s.treasureId,
