@@ -98,9 +98,12 @@ function wonPurse(){
 }
 function paintHud(){
  const cash=$('#hud-cash'),keep=$('#hud-keep'),next=$('#next-chapter');
+ const practice=!!state?.practice;
  if(cash){
   const n=penniesNow();
   if(embedded) cash.textContent=wonPurse()?(n+' '+(n===1?'penny':'pennies')+' in the purse'):(n+' '+(n===1?'penny':'pennies'));
+  // Lorie 5f: workshop funhouse is non-practice — never leave a Practice cash pill after Begin.
+  else if(entry?.id==='funhouse' && state && !practice) cash.textContent=(n? (n+' '+(n===1?'penny':'pennies')) : 'Eligible');
   else cash.textContent='Practice';
  }
  if(keep){
@@ -109,7 +112,6 @@ function paintHud(){
  }
  const mode=$('#hud-mode');
  if(mode){
-  const practice=!!state?.practice;
   mode.hidden=!practice;
   mode.textContent=practice?'Practice — no items awarded':'';
  }
@@ -174,9 +176,21 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=dress-ready-5e')).default;
+ engine=(await import(entry.module+'?v=dress-ready-5f')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
- if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':entry.id==='funhouse'?'Alley ride. Straight into the maze — eligible play, no practice chapter. Later goes cost one penny from the purse.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
+ // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
+ {
+  const note=$('#mode-note')||document.querySelector('.note');
+  if(note){
+   if(entry.id==='funhouse'){
+    note.textContent=embedded
+     ?'Alley ride. Straight into eligible maze — no practice chapter. Later goes cost one penny from the purse.'
+     :'Straight into eligible maze — no practice chapter. Mouse, touch and keyboard are listed above. Leaving or hiding this page pauses the room.';
+   }else if(embedded){
+    note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
+   }
+  }
+ }
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
  if(embedded){const ret=document.querySelector('.play-header a[target="_parent"]');if(ret)listen(ret,'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
  engine.levels.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+name;$('#chapter').append(o);});

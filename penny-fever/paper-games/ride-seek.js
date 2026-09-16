@@ -1,4 +1,6 @@
-/** Shared Ride & Seek contract for all eight amusements. */
+/** Shared Ride & Seek contract for all eight amusements.
+ * dress-ready-5f: funhouse-only workshop boardRide → practice:false (helter untouched).
+ */
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=entry-1';
@@ -89,7 +91,12 @@ export function sealAttempt({rng, chapter, practice, treasureId, rideId, spawnId
 }
 
 export function boardRide(rideId, chapter) {
-  if (!alleyPlay) return {ok: true, practice: true, paid: false};
+  // Lorie dress-ready-5f: funhouse workshop boards non-practice (no practice chapter).
+  // Helter / other rides keep workshop practice:true. Alley path unchanged.
+  if (!alleyPlay) {
+    if (rideId === 'funhouse') return {ok: true, practice: false, paid: false};
+    return {ok: true, practice: true, paid: false};
+  }
   const practice = !hasUsedFirst(rideId, chapter);
   const ok = takeAttempt(rideId, chapter);
   return {ok, practice, paid: ok && !practice};

@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-5e
+ * cache: dress-ready-5f
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -15,6 +15,7 @@
  *   Right curtain art flipped. starKey mid-court UNLOCKS cream-border bonus; collect on screen clear. Widened AA/BB portal mouths.
  *   dress-ready-5d: open centre through 3 mid blocks so K is easy; curtains never gated behind key.
  *   dress-ready-5e: no practice beat — board straight into eligible maze (skip free-practice mode).
+ *   dress-ready-5f: force practice=false at create + after ensureBoarded; boardRide workshop override.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre MOVE stick on canvas bottom + maze swipe + keyboard (no UD/LR arrow pads; no curtain-corner pads).
  *   actions: [] — no shell arrow dock. Sticky-seize fixed (release snaps home).
@@ -30,11 +31,11 @@ import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=ride-seek-4';
+} from '../ride-seek.js?v=dress-ready-5f';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-5e';
+} from './funhouse-rooms.js?v=dress-ready-5f';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -64,7 +65,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-5e';
+const BEA_CACHE_VER = 'dress-ready-5f';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -664,6 +665,8 @@ function isOpen(maze, c, r) {
 }
 
 function initMazePlay(s) {
+  // Lorie 5f: maze create is always non-practice (eligible path).
+  s.practice = false;
   const maze = parseMaze(s.graph.maze);
   s.maze = maze;
   s.phase = 'play';
@@ -2189,6 +2192,8 @@ export default {
       ? (graph.houseSeconds || MAZE_HOUSE)
       : ((level === 1 || level === 2 || level === 3 || level === 4 || level === 5) ? 52 : 90);
     return makeRideState(level, rng, {
+      // Lorie 5f: no practice chapter — start non-practice so HUD never paints Practice pill pre-board.
+      practice: false,
       graph,
       roomId: graph.start,
       phase: 'enter',
@@ -2236,10 +2241,10 @@ export default {
   update(s, dt) {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
-      // Lorie 5e: no practice chapter/mode — straight into eligible maze play.
-      // Free-first may already be consumed by boardRide; re-seal as paid/eligible.
-      if (s.practice) {
-        s.practice = false;
+      // Lorie 5f: ALWAYS force non-practice right after board (before initMazePlay / any paint).
+      // Workshop boardRide used to set practice:true (!alleyPlay); do not rely on one-shot race.
+      s.practice = false;
+      {
         const sealed = sealAttempt({
           rng: s.rng,
           chapter: s.level,
@@ -2259,6 +2264,7 @@ export default {
       if (isMaze(s) || s.graph?.mode === 'maze') {
         s.houseLeft = s.houseSeconds || s.graph?.houseSeconds || MAZE_HOUSE;
         ensureBeaProps();
+        s.practice = false; // belt: again immediately before maze paint path
         initMazePlay(s);
         return;
       }
