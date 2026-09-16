@@ -6,6 +6,7 @@
  * SHIPPED: Chapter 1 Three Bright Notes · Chapter 2 Bell and Pipe.
  * SHIPPED: Chapter 3 Paper Roll · Chapter 4 Echo Chamber.
  * SHIPPED: Chapter 5 Broken Bar · Chapter 6 The Grand Calliope.
+ * CHROME: no canvas drawHud/drawCoach; slim pipe mouths; verbs in #actions.
  *
  * organ.png is the court behind the canvas. Do not paint a full-screen background.
  * draw.glow() — 6-digit hex only (#rrggbb).
@@ -13,7 +14,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
@@ -41,7 +42,8 @@ const ROLL_GLOW = '#d8c090'; // 6-digit only for d.glow
 const ECHO_GLOW = '#b8d0e8'; // 6-digit only for d.glow
 const BROKEN_GLOW = '#c08080'; // 6-digit only for d.glow
 const GEAR_GLOW = '#d0b878'; // 6-digit only for d.glow
-const MOUTH_R = 56;
+const MOUTH_R = 52; // hit radius
+const MOUTH_DRAW = 30; // slim in-world mouth (not a plaque)
 const CLIMB_SECS = 3.6;
 const READY_SECS = 1.6;
 const HOLD_SECS = 3.8;
@@ -361,7 +363,7 @@ function drawRollMark(d, x, y, r) {
   for (const hx of holes) {
     d.circle(x + w * hx, y - 4, 3.2, '#3a2418', GOLD, 1);
   }
-  d.text('ROLL', x, y + r * 0.55, 14, CREAM);
+  d.text('ROLL', x, y + r * 0.7, 10, CREAM);
 }
 
 
@@ -472,46 +474,23 @@ function drawMouths(d, s) {
     const echo = s.echoPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const broken = s.brokenPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const gear = s.gearPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
+    const decoy = bell || roll || echo || broken || gear;
     const inWindow = live && s.climb >= HIT_MIN && s.climb <= HIT_MAX;
-    const r = MOUTH_R * (inWindow ? 1.08 : (bell || roll || echo || broken || gear ? 1.04 : 1));
-    const fill = live ? pipe.fill : (bell ? '#5a3a18ee' : (roll ? '#4a3820ee' : (echo ? '#2a3848ee' : (broken ? '#482828ee' : (gear ? '#483828ee' : '#3a2418ee')))));
-    const strokeW = live ? 5 : (bell || roll || echo || broken || gear ? 4 : 3);
-    if (d.c) {
-      roundRect(d.c, pipe.x - r, pipe.mouthY - r, r * 2, r * 2, 18);
-      d.c.fillStyle = fill;
-      d.c.fill();
-      d.c.strokeStyle = GOLD;
-      d.c.lineWidth = strokeW;
-      d.c.stroke();
-    } else {
-      d.circle(pipe.x, pipe.mouthY, r, fill, GOLD, 3);
-    }
-    if (live) d.glow(pipe.x, pipe.mouthY, r + 24, pipe.glow);
-    if (bell) d.glow(pipe.x, pipe.mouthY, r + 20, BELL_GLOW);
-    if (roll) d.glow(pipe.x, pipe.mouthY, r + 20, ROLL_GLOW);
-    if (echo) d.glow(pipe.x, pipe.mouthY, r + 20, ECHO_GLOW);
-    if (broken) d.glow(pipe.x, pipe.mouthY, r + 20, BROKEN_GLOW);
-    if (gear) d.glow(pipe.x, pipe.mouthY, r + 20, GEAR_GLOW);
-    if (bell) {
-      drawBellMark(d, pipe.x, pipe.mouthY - 4, 20);
-      d.text('BELL', pipe.x, pipe.mouthY + r - 14, 15, CREAM);
-    } else if (roll) {
-      drawRollMark(d, pipe.x, pipe.mouthY - 2, 22);
-    } else if (echo) {
-      // Faded duplicate note/mouth + ECHO label.
-      drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, '#b8d0e866', '#b8d0e8');
-      drawEchoMark(d, pipe.x, pipe.mouthY - 2, 22);
-    } else if (broken) {
-      // Cracked / crossed-out mouth + BROKEN label.
-      drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, '#c0808066', '#c08080');
-      drawBrokenMark(d, pipe.x, pipe.mouthY - 2, 22);
-    } else if (gear) {
-      // Calliope gear / music-box tooth + GEAR label.
-      drawGearMark(d, pipe.x, pipe.mouthY - 2, 22);
-    } else {
-      drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, pipe.fill, '#f8e4b3');
-      d.text(live ? 'TAP' : pipe.label, pipe.x, pipe.mouthY + r - 14, 16, CREAM);
-    }
+    const r = MOUTH_DRAW * (inWindow ? 1.12 : (decoy ? 1.06 : 1));
+    const fill = live ? pipe.fill : (bell ? '#5a3a18ee' : (roll ? '#4a3820ee' : (echo ? '#2a3848ee' : (broken ? '#482828ee' : (gear ? '#483828ee' : '#3a2418cc')))));
+    d.ellipse(pipe.x, pipe.mouthY, r * 1.05, r * 0.72, fill, GOLD, live ? 3.5 : (decoy ? 2.5 : 1.5));
+    if (live) d.glow(pipe.x, pipe.mouthY, r + 16, pipe.glow);
+    if (bell) d.glow(pipe.x, pipe.mouthY, r + 12, BELL_GLOW);
+    if (roll) d.glow(pipe.x, pipe.mouthY, r + 12, ROLL_GLOW);
+    if (echo) d.glow(pipe.x, pipe.mouthY, r + 12, ECHO_GLOW);
+    if (broken) d.glow(pipe.x, pipe.mouthY, r + 12, BROKEN_GLOW);
+    if (gear) d.glow(pipe.x, pipe.mouthY, r + 12, GEAR_GLOW);
+    if (bell) drawBellMark(d, pipe.x, pipe.mouthY - 2, 12);
+    else if (roll) drawRollMark(d, pipe.x, pipe.mouthY - 2, 12);
+    else if (echo) drawEchoMark(d, pipe.x, pipe.mouthY - 2, 12);
+    else if (broken) drawBrokenMark(d, pipe.x, pipe.mouthY - 2, 12);
+    else if (gear) drawGearMark(d, pipe.x, pipe.mouthY - 2, 12);
+    else drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 4, 11, pipe.fill, '#f8e4b3');
   });
 }
 
@@ -523,34 +502,6 @@ function drawClimbingNote(d, s) {
   d.glow(p.x, p.y, 18 * p.scale, pipe.glow);
 }
 
-function drawCoach(d, s) {
-  if (d.c) {
-    roundRect(d.c, 50, 900, 800, 64, 12);
-    d.c.fillStyle = '#122335d8';
-    d.c.fill();
-    d.c.strokeStyle = GOLD;
-    d.c.lineWidth = 2;
-    d.c.stroke();
-  }
-  let line = 'TAP the glowing pipe.';
-  if (s.phase === 'chamber') {
-    line = s.level === 5 ? 'TAP what you see in the grand calliope chamber.' : 'TAP what you see inside.';
-  } else if (s.phase === 'bypass') line = 'The ordinary corridor.';
-  else if (s.gearPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
-    line = 'Gears spin beside — TAP the climbing pipe.';
-  } else if (s.brokenPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
-    line = 'That bar is broken — TAP the climbing pipe.';
-  } else if (s.echoPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
-    line = 'Echo ghosts a wrong mouth — TAP the climbing pipe.';
-  } else if (s.rollPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
-    line = 'Paper roll marks a wrong mouth — TAP the climbing pipe.';
-  } else if (s.bellPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
-    line = 'Bell rings beside — TAP the climbing pipe.';
-  } else if (s.note && (s.note.indexOf('bell') >= 0 || s.note.indexOf('roll') >= 0 || s.note.indexOf('Roll') >= 0 || s.note.indexOf('Echo') >= 0 || s.note.indexOf('echo') >= 0 || s.note.indexOf('broken') >= 0 || s.note.indexOf('Broken') >= 0 || s.note.indexOf('gear') >= 0 || s.note.indexOf('Gear') >= 0)) {
-    line = s.note;
-  }
-  d.text(line, 450, 938, 20, CREAM);
-}
 
 function drawChamber(d, s) {
   const cx = 450, cy = 430;
@@ -810,8 +761,6 @@ export default {
     else if (s.phase === 'bypass') d.text('ordinary corridor', 450, 430, 22, INK);
     else if (s.phase === 'cough') d.text('cough', 450, 400, 24, INK);
     drawMouths(d, s);
-    drawCoach(d, s);
-    drawHud(d, s, {goal: s.goal, count: s.hits, label: 'notes'});
     if (c) c.restore();
   },
   readout: (s) => s.note || 'TAP the glowing pipe.',
