@@ -57,7 +57,7 @@ const LENS_Y_MAX = HUD_BOT - LENS_R - 8;
 
 const RIDE_SECS = 48;
 const RIDE_SECS_CH2 = 56; // helter-bar: recoverable 3/3 on first play
-const RIDE_SECS_CH3 = 64;
+const RIDE_SECS_CH3 = 72;
 const GOAL = 3;
 const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
@@ -67,12 +67,12 @@ const TEACH_CH2 = 'Emblems only — luggage is a soft dump.';
 const TEACH_CH3 = 'Roofs in order — chimney is a soft dump.';
 const GLOW_PAD_CH1 = 36; // Ch1 attested
 const GLOW_PAD_CH2 = 28; // slightly tighter, still first-play fair
-const GLOW_PAD_CH3 = 28;
+const GLOW_PAD_CH3 = 36; // match Ch1 fat — Aura fairness
 const RETICLE_CH1 = 56;
 const RETICLE_CH2 = 48;
-const RETICLE_CH3 = 48;
+const RETICLE_CH3 = 56; // match Ch1 fat
 const LUGGAGE_WARN = 7.5; // teach hazard alone with long warn (helter Ch2 bar)
-const CHIMNEY_WARN = 6.5; // Ch3 teach hazard alone — leave more trail time
+const CHIMNEY_WARN = 6.0; // Ch3 teach hazard alone — leave more trail time
 
 function rideSecs(level) {
   if (level === 1) return RIDE_SECS_CH2;
@@ -102,7 +102,7 @@ function climbSpeed(level, reduced) {
   // Ch1 attested slow. Ch2/Ch3 still 3/3-reachable on first play.
   let base = 0.020;
   if (level === 1) base = 0.022;
-  else if (level === 2) base = 0.017;
+  else if (level === 2) base = 0.014;
   else if (level >= 3) base = 0.036;
   return reduced ? base * 0.65 : base;
 }
@@ -135,9 +135,9 @@ function chapterTargets(level) {
 function ch3Targets() {
   return [
     {id: 'chimney', label: 'chimney', spoke: -0.7, size: 30, kind: 'hazard', art: null},
-    {id: 'roof-1', label: 'roof clue 1', spoke: 0.5, size: 34, kind: 'ordinary', trail: 0, art: ORDINARY[0]},
-    {id: 'roof-2', label: 'roof clue 2', spoke: 2.1, size: 34, kind: 'ordinary', trail: 1, art: ORDINARY[1]},
-    {id: 'roof-3', label: 'roof clue 3', spoke: -2.3, size: 34, kind: 'ordinary', trail: 2, art: ORDINARY[2]},
+    {id: 'roof-1', label: 'roof clue 1', spoke: 0.5, size: 40, kind: 'ordinary', trail: 0, art: ORDINARY[0]},
+    {id: 'roof-2', label: 'roof clue 2', spoke: 2.1, size: 40, kind: 'ordinary', trail: 1, art: ORDINARY[1]},
+    {id: 'roof-3', label: 'roof clue 3', spoke: -2.3, size: 40, kind: 'ordinary', trail: 2, art: ORDINARY[2]},
   ];
 }
 /** Ch1 gallery targets — large silhouettes on distinct spokes. */
@@ -333,7 +333,9 @@ function snapTarget(s, target) {
     s.didSnapOnce = true;
     spawnSparks(s, target.x, target.y, 6);
     logAction(s, 'soft-fail', {id: target.id, kind: 'hazard'});
-    s.note = 'Luggage soft-dump — emblems only. Ride continues.';
+    s.note = s.level === 2
+      ? 'Chimney soft-dump — roofs only. Ride continues.'
+      : 'Luggage soft-dump — emblems only. Ride continues.';
     if (s.glowId === target.id) s.glowId = null;
     return true;
   }
@@ -376,6 +378,18 @@ function snapTarget(s, target) {
 
 function missTarget(s, target) {
   if (!target || !target.alive) return;
+  // Ch3 armed roof: respawn so a miss cannot lock the trail at 0/3.
+  if (s.level === 2 && target.trail != null && target.armed && !target.snapped) {
+    target.climb = 0;
+    target.alive = true;
+    target.missed = false;
+    target.active = true;
+    target.open = s.t;
+    logAction(s, 'miss-retry', {id: target.id, kind: 'trail'});
+    if (s.glowId === target.id) s.glowId = null;
+    s.note = 'Roof clue ' + (target.trail + 1) + ' came back — SNAP it.';
+    return;
+  }
   target.alive = false;
   target.missed = true;
   logAction(s, 'miss', {id: target.id, kind: target.kind || 'ordinary'});
@@ -437,6 +451,7 @@ function drawSpokeGuides(d, s) {
 function drawTarget(d, s, t) {
   if (!t.alive && !t.snapped) return;
   if (t.snapped) return;
+  if (s.level === 2 && t.trail != null && !t.armed) return;
   const inSweet = s.glowId === t.id;
   const r = t.size * (1 - 0.25 * t.climb);
   const isHaz = t.kind === 'hazard';
@@ -583,11 +598,20 @@ function hitSnapControl(p) {
 
 
 function trySnap(s, via) {
-  if (!s || !s.glowId) return false;
-  const target = (s.targets || []).find(o => o.id === s.glowId && o.alive);
+  // Glow grace: release a beat after leaving the sweet spot still counts.
+  let gid = s && s.glowId;
+  if (!gid && s && s.glowGraceId && (s.t || 0) <= (s.glowGraceUntil || 0)) {
+    gid = s.glowGraceId;
+  }
+  if (!s || !gid) return false;
+  const target = (s.targets || []).find(o => o.id === gid && o.alive);
   if (!target) return false;
   const ok = snapTarget(s, target);
-  if (ok) logAction(s, 'snap-input', {via, id: target.id});
+  if (ok) {
+    logAction(s, 'snap-input', {via, id: target.id});
+    s.glowGraceId = null;
+    s.glowGraceUntil = 0;
+  }
   return ok;
 }
 
@@ -673,7 +697,7 @@ export default {
       t.y = pos.y;
       const lit = inGlow(s.lensX, s.lensY, t.x, t.y, s.level);
       // Crawl-while-lit (attested Ch1 feel; keeps SNAP hittable — not a dwell meter).
-      const rate = lit ? climb * (s.level === 2 ? 0.05 : 0.08) : climb;
+      const rate = lit ? climb * (s.level === 2 ? 0.04 : 0.08) : climb;
       t.climb = Math.min(1, t.climb + rate * dt);
       pos = spokePos(spoke, t.climb);
       t.x = pos.x;
@@ -697,6 +721,10 @@ export default {
     }
     const prev = s.glowId;
     s.glowId = glow ? glow.id : null;
+    if (glow) {
+      s.glowGraceId = glow.id;
+      s.glowGraceUntil = s.t + 0.55;
+    }
     if (s.glowId && s.glowId !== prev) {
       logAction(s, 'glow-ready', {id: s.glowId, kind: glow.kind || 'ordinary'});
       if (glow.kind === 'hazard') {
@@ -793,15 +821,16 @@ export default {
       // HIT REGISTRATION FIX: do not require a short "tap".
       // While a target is in the glow, release / SNAP chrome / lens = SNAP.
       // (Old isTap gate ate every drag-to-aim then release.)
-      if (!s.glowId) {
+      const litNow = !!(s.glowId || (s.glowGraceId && (s.t || 0) <= (s.glowGraceUntil || 0)));
+      if (!litNow) {
         if ((s.t || 0) < CLARITY_SECS) s.note = TEACH;
         return;
       }
       const onChrome = hitSnapControl(p);
       const onLens = inLens(s.lensX, s.lensY, p.x, p.y, 28)
         || inLens(s.lensX, s.lensY, p.x, p.y - LENS_FINGER_Y * 0.4, 32);
-      // Release-to-commit while still glowing (gallery trigger).
-      const releaseCommit = !onChrome; // any release while lit commits
+      // Release-to-commit while lit or in glow-grace (gallery trigger).
+      const releaseCommit = !onChrome;
       if (onChrome || onLens || releaseCommit) {
         trySnap(s, onChrome ? 'chrome-up' : (onLens ? 'lens-up' : 'release'));
       }
