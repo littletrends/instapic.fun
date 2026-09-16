@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-3c
+ * cache: dress-ready-3d
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary

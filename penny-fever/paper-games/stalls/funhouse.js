@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-3c
+ * cache: dress-ready-3d
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -10,7 +10,7 @@
  *   No moon (piece-03) / spotlight (piece-04) / standee (piece-02). BONUS = TREASURES Ch1–6 cream-border off-path.
  *   Path chips = geometric dots only. Laugh-faces = PNG cutouts (soft bomb on touch).
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
- *   Two open-curtain props on middle left/right edge walls = paired walk-through portals (same art both sides).
+ *   Two open-curtain props on middle L/R edge walls = portals (piece-01; right flipped — 2 styles / one each side).
  *   starKey mid-court → awards chapter bonus (locked→collected). Exactly ONE curtain L + ONE curtain R.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
@@ -31,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-3c';
+} from './funhouse-rooms.js?v=dress-ready-3d';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -61,7 +61,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-3c';
+const BEA_CACHE_VER = 'dress-ready-3d';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -140,11 +140,12 @@ function faceImgFor(f) {
 }
 
 /** Helter-style dress place — soft paper shadow, 6-digit glow only elsewhere. */
-function placeDress(d, img, x, y, w, angle, h) {
+function placeDress(d, img, x, y, w, angle, h, flip) {
   if (!dressReady(img) || typeof d.sprite !== 'function') return false;
   const opts = {w, shadow: true};
   if (h) opts.h = h;
   if (angle) opts.angle = angle;
+  if (flip) opts.flip = true;
   return d.sprite(img, x, y, opts);
 }
 
@@ -154,10 +155,10 @@ function placeDress(d, img, x, y, w, angle, h) {
  */
 function drawBeaScenery(d, s) {
   const imgs = ensureBeaProps();
-  const place = (key, x, y, w, angle = 0) => placeDress(d, imgs[key], x, y, w, angle);
-  // Paired cream-side curtains only (no double-up / no densify extras).
-  place('curtain', 168, 650, 100);           // left mid cream
-  place('curtain', 732, 650, 100, 0.06);     // right mid cream (was density-gated)
+  // Piece-01 has two styles in one art (open + straight). One each side:
+  // left as-authored; right flipped so open style faces the maze.
+  placeDress(d, imgs.curtain, 168, 650, 100, 0, null, false);   // left cream
+  placeDress(d, imgs.curtain, 732, 650, 100, 0.06, null, true); // right cream flipped
 }
 
 function clamp(v, a, b) {
@@ -1097,16 +1098,16 @@ function drawMazeCourt(s, d) {
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
 
-  // Paired mid-edge portals — SAME open-curtain art on A and B (no IN/OUT labels, no doorway OUT mirror).
+  // Paired mid-edge portals — piece-01 curtain both sides (no IN/OUT).
+  // Curtain art has 2 styles in-frame; flip B so each side gets a matching open look.
   {
     const imgs = ensureBeaProps();
     for (const pt of maze.portals || []) {
       const ctr = cellCenter(maze, pt.c, pt.r);
-      // Nudge slightly outward so prop sits on the edge wall, not lane centre.
       const ox = pt.id === 'A' ? -18 : (pt.id === 'B' ? 18 : 0);
+      const flip = pt.id === 'B';
       d.glow(ctr.x + ox, ctr.y, 26, '#f4d590');
-      // Both portals = Tent_26_Bea piece-01 curtain (the open red look Lorie liked).
-      placeDress(d, imgs.curtain, ctr.x + ox, ctr.y, 96, pt.id === 'B' ? 0.04 : -0.04);
+      placeDress(d, imgs.curtain, ctr.x + ox, ctr.y, 96, flip ? 0.04 : -0.04, null, flip);
     }
   }
 
