@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=mural-dress-1')).default;
+ engine=(await import(entry.module+'?v=balloons-dress-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {

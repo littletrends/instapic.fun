@@ -33,10 +33,12 @@
  *
  * Treasure ids preserved. Canvas 900×1200.
  * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
-* Cream court: bold latex / basket / lantern colours (Lorie art note).
+ * Cream court: bold latex / basket / lantern colours (Lorie art note).
+ * Dress: Bess Tent_07 pieces + Bea player via dressUrl; court HEIGHT stick
+ *   (actions: []) — pull UP to HOLD, touch near lit latex to POP.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=balloons-bold-1';
+import {spriteKey} from '../prizes.js?v=exclusive-1b';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -71,16 +73,8 @@ const TREASURE_HALF = 0.24;
 const HEIGHT_MIN = 0.06;
 const HEIGHT_MAX = 0.94;
 
-// Quiet HOLD zone (left) — height support only.
-const HOLD_X0 = 40;
-const HOLD_X1 = 300;
-const HOLD_Y0 = 960;
-const HOLD_Y1 = 1176;
-// Big POP button (right / primary scream).
-const POP_X0 = 320;
-const POP_X1 = 860;
-const POP_Y0 = 960;
-const POP_Y1 = 1176;
+// Court controls: centre HEIGHT stick (no shell HOLD/POP dock pads).
+// Stick layout lives in heightStickLayout() — cx 450 / cy 1136 under cream court.
 
 const HOLD_SUSTAIN = 0.12;
 const HOLD_ACCEL = 1.75; // faster reach to high path
@@ -134,6 +128,144 @@ const RUNAWAY_RATE = 0.72; // fair first-play amp/rate — retune if Aura tight
 const SPAWN_IDS = ['low-path', 'high-path'];
 
 const LATEX = ['#ff4f8a', '#1ec8b0', '#ffc233', '#b44dff', '#2eb8ff', '#ff7a2e'];
+
+/** Cream-court chrome — dark ink for coach/labels on cream (not pale cream text). */
+const STICK_CREAM = '#f3e2bd';
+const STICK_GOLD = '#e8b84a';
+const STICK_BURGUNDY = '#c42848';
+const DARK_INK = '#3a2a18';
+const LABEL_BURG = '#7a2038';
+
+const DRESS_CACHE = 'dress-bess-1';
+const BESS_FILES = {
+  starLantern: 'Tent_07_Bess_piece-01.png',
+  moonLantern: 'Tent_07_Bess_piece-02.png',
+  heartLantern: 'Tent_07_Bess_piece-03.png',
+  circusBall: 'Tent_07_Bess_piece-04.png',
+  gondola: 'Tent_07_Bess_piece-05.png',
+  pennant: 'Tent_07_Bess_piece-06.png',
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+
+let bessDressImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE;
+  }
+}
+
+function ensureBessDress() {
+  if (bessDressImgs) return bessDressImgs;
+  bessDressImgs = {};
+  for (const [key, file] of Object.entries(BESS_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/balloons-bess/' + file);
+    bessDressImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = dressUrl('../assets/shared-player/' + BEA_PLAYER_FILE);
+  }
+  bessDressImgs.bea = beaPlayerImg;
+  return bessDressImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+/** Quiet Bess scenery — sparse branch accents; never paints over the cream/pink oval. */
+function drawBessScenery(d, s) {
+  const imgs = ensureBessDress();
+  // Edge lanterns — fixed screen accents outside the heavy pink oval core.
+  placeDress(d, imgs.starLantern, 118, 210, 54, -0.12);
+  placeDress(d, imgs.moonLantern, 782, 228, 52, 0.1);
+  placeDress(d, imgs.heartLantern, 98, 520, 48, -0.06);
+  // Pennant near landing / lower edge.
+  const land = basketPos(s.landingAngle || Math.PI * 1.55, LOW_PATH * 0.7);
+  placeDress(d, imgs.pennant, land.x + 78, land.y + 8, 44, 0.08);
+}
+
+/**
+ * Bottom-of-canvas centre HEIGHT stick (funhouse MOVE stick, vertical height).
+ * Pull UP → HOLD/rise; neutral/down → release/drift.
+ */
+function heightStickLayout() {
+  return {
+    cx: 450,
+    cy: 1136,
+    baseRx: 62,
+    baseRy: 70,
+    knobR: 28,
+    dead: 10,
+    maxPull: 48,
+    hitScale: 1.28, // keep stick from eating mid-court POP taps
+  };
+}
+
+function hitHeightStick(p) {
+  if (!p || typeof p.x !== 'number') return false;
+  const L = heightStickLayout();
+  const dx = (p.x - L.cx) / L.baseRx;
+  const dy = (p.y - L.cy) / L.baseRy;
+  return (dx * dx + dy * dy) <= (L.hitScale * L.hitScale);
+}
+
+function applyHeightStick(s, p) {
+  const L = heightStickLayout();
+  const dx = (p?.x ?? L.cx) - L.cx;
+  const dy = (p?.y ?? L.cy) - L.cy;
+  // Prefer vertical travel; soft-clamp horizontal so the knob still feels free.
+  const softX = clamp(dx, -L.maxPull * 0.45, L.maxPull * 0.45);
+  const len = Math.hypot(softX, dy) || 1;
+  const pull = Math.min(Math.hypot(softX, dy), L.maxPull);
+  const kx = (softX / len) * pull;
+  const ky = (dy / len) * pull;
+  // UP (negative y) beyond deadzone → HOLD; neutral / down → release.
+  const holding = ky <= -L.dead;
+  s.stick = {active: true, kx, ky, holding};
+}
+
+function releaseHeightStick(s) {
+  s.stick = null;
+}
+
+function drawHeightStick(d, s) {
+  const L = heightStickLayout();
+  const armed = !!(s.stick && s.stick.active);
+  const rising = !!(armed && s.stick.holding) || !!s.holding;
+  const kx = armed ? (s.stick.kx || 0) : 0;
+  const ky = armed ? (s.stick.ky || 0) : 0;
+  const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 3.2);
+  d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
+  d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, STICK_CREAM + 'ee', STICK_GOLD, 2.4);
+  d.ellipse(L.cx, L.cy, L.baseRx * 0.72, L.baseRy * 0.62, '#f8e4b3cc', STICK_BURGUNDY, 1.6);
+  // Vertical guide ticks (up = rise).
+  d.line({x: L.cx, y: L.cy - L.baseRy + 10}, {x: L.cx, y: L.cy + L.baseRy - 10}, '#7a203866', 1.4);
+  d.text('↑', L.cx, L.cy - L.baseRy + 18, 12, LABEL_BURG);
+  if (rising) d.glow(L.cx, L.cy, 44 + pulse * 10, '#f4d590');
+  const nx = L.cx + kx;
+  const ny = L.cy + ky;
+  d.ellipse(nx + 2, ny + 4, L.knobR * 0.95, L.knobR * 0.72, '#3a1a1244');
+  d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, rising ? STICK_GOLD : STICK_BURGUNDY, STICK_GOLD, 2.2);
+  d.ellipse(nx - 4, ny - 6, L.knobR * 0.42, L.knobR * 0.28, STICK_CREAM + 'aa');
+  d.text('HEIGHT', L.cx, L.cy + L.baseRy + 16, 13, rising ? LABEL_BURG : DARK_INK);
+}
+
 
 function isCh2(level) {
   return (level | 0) === 1;
@@ -843,21 +975,13 @@ function attemptPop(s) {
   }
 }
 
-function inHoldZone(p) {
-  return p.x >= HOLD_X0 && p.x <= HOLD_X1 && p.y >= HOLD_Y0 && p.y <= HOLD_Y1;
-}
-
-function inPopZone(p) {
-  return p.x >= POP_X0 && p.x <= POP_X1 && p.y >= POP_Y0 && p.y <= POP_Y1;
-}
-
 function nearLitOnCanvas(s, p) {
   const lit = nextLit(s);
   if (!lit) return false;
   const pos = basketPos(lit.angle, lit.height);
   const dx = p.x - pos.x;
   const dy = p.y - pos.y;
-  return Math.hypot(dx, dy) <= 120;
+  return Math.hypot(dx, dy) <= 200;
 }
 
 function wrapLine(d, text, x, y, size, color, maxW) {
@@ -905,7 +1029,7 @@ function drawLiftZoneBands(d, s) {
   d.line({x: x1 - 10, y: y + 10}, {x: x1, y: y + 10}, col, 1.2);
   if (da < 1.0 && da > -0.1) {
     const label = lit.height >= mid + 0.04 ? 'HOLD' : (lit.height <= mid - 0.04 ? 'release' : 'mid');
-    d.text(label, pos.x, y - lit.r - 40, 13, lit.height >= mid + 0.04 ? '#f4d590' : '#8ec8e8');
+    d.text(label, pos.x, y - lit.r - 40, 13, lit.height >= mid + 0.04 ? LABEL_BURG : DARK_INK);
   }
 }
 
@@ -937,7 +1061,7 @@ function drawLanternBand(d, b, angleNow, t) {
   // Warm lantern glow on teach target — 6-digit #rrggbb only.
   d.glow(pos.x, pos.y - 6, 34 + pulse * 8, '#ff9a20');
   if (da < 0.95 && da > -0.2) {
-    d.text('band', pos.x, yHi - 14, 14, '#ff9a20');
+    d.text('band', pos.x, yHi - 14, 14, LABEL_BURG);
   }
 }
 
@@ -991,7 +1115,7 @@ function drawCrosswindGust(d, b, angleNow, t) {
   // Soft lavender-cyan glow — 6-digit #rrggbb only.
   d.glow(gx, pos.y - 6, 34, '#b8d4e8');
   if (da < 0.95 && da > -0.2) {
-    d.text('gust', gx, pos.y - b.r - 34, 14, '#b8d4e8');
+    d.text('gust', gx, pos.y - b.r - 34, 14, DARK_INK);
   }
 }
 
@@ -1038,7 +1162,7 @@ function drawRunawayBouquet(d, b, angleNow, t) {
   // Soft rose glow — 6-digit #rrggbb only.
   d.glow(pos.x, pos.y - 6, 34 + pulse * 8, '#e8a0b8');
   if (da < 0.95 && da > -0.2) {
-    d.text(cueing ? 'ribbons' : 'drift', pos.x, pos.y - b.r - 34, 14, '#e8a0b8');
+    d.text(cueing ? 'ribbons' : 'drift', pos.x, pos.y - b.r - 34, 14, LABEL_BURG);
   }
 }
 
@@ -1108,6 +1232,8 @@ function drawCluster(d, b, angleNow, isLit) {
     d.circle(sx, sy, b.r + 5, '#fff06eee', '#ffc233', 3.5);
     d.circle(sx, sy, b.r, '#ff4f8acc', '#ffe14a', 2.4);
     d.circle(sx - 6, sy - 8, 5, '#ffffffcc', null, 0);
+    // Occasional Bess circus-ball accent beside the lit cluster (quiet decoy prop).
+    placeDress(d, ensureBessDress().circusBall, sx + 40, sy - 18, 34, 0.08);
     if (da < 0.9 && da > -0.25) {
       const label = b.lantern ? 'POP · band' : (b.crosswind ? 'POP · gust' : (b.runaway ? 'POP · bouquet' : (b.teach ? 'POP · wind' : 'POP')));
       d.text(label, sx, sy - b.r - 18, 18, '#ff4f8a');
@@ -1123,69 +1249,28 @@ function drawBasket(d, s) {
   const by = p.y;
   const rising = !!s.holding && (s.holdAccum || 0) >= HOLD_SUSTAIN * 0.4;
   const scale = rising ? 1.06 : 1;
-  d.line({x: bx, y: by - 38 * scale}, {x: bx, y: by - 8}, '#ffc233', 2.4);
-  if (rising) d.glow(bx, by - 56, 30, '#ff4f8a');
-  d.circle(bx - 16 * scale, by - 52 * scale, 16 * scale, '#ff4f8acc', '#ffe14a', 2);
-  d.circle(bx + 14 * scale, by - 56 * scale, 14 * scale, '#1ec8b0cc', '#ffe14a', 2);
-  d.circle(bx, by - 64 * scale, 18 * scale, '#ffc233cc', '#ff7a2e', 2);
-  d.poly([
-    [bx - 28, by - 6],
-    [bx + 28, by - 6],
-    [bx + 24, by + 28],
-    [bx - 24, by + 28],
-  ], '#8a3a18ee', '#ffc233', 2.4);
-  d.text('you', bx, by + 14, 13, '#ffc233');
-  return p;
-}
+  const imgs = ensureBessDress();
+  if (rising) d.glow(bx, by - 24, 34, '#ff4f8a');
+  else d.glow(bx, by - 8, 26, '#f4d590');
 
-function drawHoldChrome(d, s) {
-  // Quiet secondary chrome — height support only.
-  const active = !!s.holding;
-  const charge = clamp((s.holdAccum || 0) / 0.6, 0, 1);
-  d.poly([
-    [HOLD_X0, HOLD_Y0],
-    [HOLD_X1, HOLD_Y0],
-    [HOLD_X1, HOLD_Y1],
-    [HOLD_X0, HOLD_Y1],
-  ], active ? '#3a2430cc' : '#2a1c18aa', active ? '#d2a65b' : '#a8907088', active ? 3 : 2);
-
-  if (active) d.glow(170, 1060, 36, '#f4d590');
-
-  const barX = HOLD_X0 + 18;
-  const barY = HOLD_Y0 + 16;
-  const barW = HOLD_X1 - HOLD_X0 - 36;
-  const barH = 10;
-  const c = d.c;
-  if (c) {
-    c.save();
-    c.fillStyle = 'rgba(20, 12, 10, 0.45)';
-    c.fillRect(barX, barY, barW, barH);
-    c.fillStyle = active ? 'rgba(240, 208, 154, 0.75)' : 'rgba(240, 208, 154, 0.2)';
-    c.fillRect(barX, barY, barW * charge, barH);
-    c.strokeStyle = '#d2a65b88';
-    c.lineWidth = 1;
-    c.strokeRect(barX, barY, barW, barH);
-    c.restore();
+  // Vehicle = Bess gondola basket; YOU = Bea player. Fallback to geometric basket.
+  const gondolaOk = placeDress(d, imgs.gondola, bx, by + 8, rising ? 88 : 80);
+  const beaOk = placeDress(d, imgs.bea, bx, by - (gondolaOk ? 20 : 10), rising ? 58 : 54);
+  if (!gondolaOk || !beaOk) {
+    d.line({x: bx, y: by - 38 * scale}, {x: bx, y: by - 8}, '#ffc233', 2.4);
+    if (rising) d.glow(bx, by - 56, 30, '#ff4f8a');
+    d.circle(bx - 16 * scale, by - 52 * scale, 16 * scale, '#ff4f8acc', '#ffe14a', 2);
+    d.circle(bx + 14 * scale, by - 56 * scale, 14 * scale, '#1ec8b0cc', '#ffe14a', 2);
+    d.circle(bx, by - 64 * scale, 18 * scale, '#ffc233cc', '#ff7a2e', 2);
+    d.poly([
+      [bx - 28, by - 6],
+      [bx + 28, by - 6],
+      [bx + 24, by + 28],
+      [bx - 24, by + 28],
+    ], '#8a3a18ee', '#ffc233', 2.4);
+    if (!beaOk) d.text('you', bx, by + 14, 13, DARK_INK);
   }
-
-  d.text(active ? 'RISING' : 'HOLD', 170, 1068, 26, active ? '#fff6d8' : '#f0d09aaa');
-  d.text('height', 170, 1110, 14, '#f0d09a88');
-}
-
-function drawPopButton(d, s) {
-  const flash = (s.popFlash || 0) > 0;
-  const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 4.5);
-  const strokeW = flash ? 7 : (5 + pulse * 2);
-  d.poly([
-    [POP_X0, POP_Y0],
-    [POP_X1, POP_Y0],
-    [POP_X1, POP_Y1],
-    [POP_X0, POP_Y1],
-  ], flash ? '#6a3048f2' : '#4a2038ee', '#ffe6a4', strokeW);
-
-  d.glow(590, 1065, 80 + pulse * 30, '#ffe6a4');
-  d.text('POP', 590, 1060, 64, '#fff6d8');
-  d.text('the glowing balloon', 590, 1120, 18, '#f0d09a');
+  return p;
 }
 
 function drawLanding(d, s) {
@@ -1199,7 +1284,7 @@ function drawLanding(d, s) {
     [pos.x + 60, pos.y + 58],
     [pos.x - 55, pos.y + 62],
   ], '#5a8f7a66', '#d2a65b', 2);
-  d.text('landing', pos.x, pos.y + 18, 16, '#f4d590');
+  d.text('landing', pos.x, pos.y + 18, 16, DARK_INK);
 }
 
 function drawFx(d, s) {
@@ -1266,22 +1351,19 @@ function drawObjective(d, s) {
   // Shell .play-hud owns cash/keep/cleared; #readout owns s.note.
   // Light early coach only — no practice badge / Cleared banner chrome.
   if (earlyClarity(s)) {
-    d.text('POP the glowing balloon', 450, 132, 18, '#ffe6a4');
+    d.text('POP the glowing balloon', 450, 132, 18, DARK_INK);
   }
 }
 
 export default {
   title: 'Balloon Garden',
   intro: 'POP the glowing balloon to open a path through Nell’s Balloon Tree. Ribbon Breeze drifts the first lit balloon on a wind ribbon; Lantern Boughs asks you to match a visible height band; Crosswind Crown sways the approach sideways — trust height, then POP; Runaway Bouquet shows wind ribbons then drifts between two heights — match, then POP; The Midnight Canopy finale remixes lantern, crosswind, and runaway across the canopy, then orbits a crown keepsake.',
-  instructions: 'POP lit latex to clear the corridor. HOLD bellows only to reach high or low clusters. Ch2 Ribbon Breeze: one wind ribbon on the first glow — long warn, soft dump if it drifts past. Ch3 Lantern Boughs: one lantern height band on the first glow — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch4 Crosswind Crown: one visual sideways gust on the first glow — trust height, ignore sway, then POP; soft miss / soft dump; later balloons are clean POP. Ch5 Runaway Bouquet: wind + ribbon cues first, then the bouquet drifts between low and high — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch6 The Midnight Canopy (finale): lantern arch, then crosswind, then runaway on separate glows — plus clean POP at full low/mid/high canopy heights; HOLD/release coach bands between clusters; eligible keepsake slowly orbits the crown.',
+  instructions: 'POP lit latex to clear the corridor. Pull the HEIGHT stick UP to rise (or hold ArrowUp/W); release to drift. Tap near a glowing balloon to POP. Ch2 Ribbon Breeze: one wind ribbon on the first glow — long warn, soft dump if it drifts past. Ch3 Lantern Boughs: one lantern height band on the first glow — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch4 Crosswind Crown: one visual sideways gust on the first glow — trust height, ignore sway, then POP; soft miss / soft dump; later balloons are clean POP. Ch5 Runaway Bouquet: wind + ribbon cues first, then the bouquet drifts between low and high — match height, then POP; soft miss / soft dump; later balloons are clean POP. Ch6 The Midnight Canopy (finale): lantern arch, then crosswind, then runaway on separate glows — plus clean POP at full low/mid/high canopy heights; HOLD/release coach bands between clusters; eligible keepsake slowly orbits the crown.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
   houseSeconds: 80,
-  actions: [
-    {id: 'pop', label: 'POP'},
-    {id: 'bellows', label: 'HOLD · height', hold: true},
-  ],
+  actions: [],
   create(level, rng) {
     const reduced = prefersReducedMotion();
     const goal = chapterGoal(level);
@@ -1310,6 +1392,9 @@ export default {
       crosswindWarned: false,
       runawayWarned: false,
       _pointerMode: null,
+      stick: null,
+      _keyHold: false,
+      _shellPopLatched: false,
     });
   },
   update(s, dt, input) {
@@ -1321,16 +1406,18 @@ export default {
     }
     if (s.result) return;
 
-    // Shell HOLD (bellows) via input.actions — canvas no longer paints HOLD pad.
-    const shellHold = !!input?.actions?.has?.('bellows');
-    if (shellHold !== !!s.holding) {
-      setHolding(s, shellHold);
-    }
-    // Shell POP tap edge via actions set (one-shot).
-    if (input?.actions?.has?.('pop') && !s._shellPopLatched) {
+    // Court HEIGHT stick + keyboard drive bellows — no shell HOLD/POP dock.
+    const stickHold = !!(s.stick && s.stick.active && s.stick.holding);
+    const keys = input?.keys;
+    const keyHold = !!(keys && (keys.has('ArrowUp') || keys.has('w') || keys.has('W') || keys.has('Shift')));
+    const wantHold = stickHold || !!s._keyHold || keyHold;
+    if (wantHold !== !!s.holding) setHolding(s, wantHold);
+    // Space/Enter edge via keys set (backup if key() missed a frame).
+    const wantPop = !!(keys && (keys.has(' ') || keys.has('Enter')));
+    if (wantPop && !s._shellPopLatched) {
       s._shellPopLatched = true;
       attemptPop(s);
-    } else if (!input?.actions?.has?.('pop')) {
+    } else if (!wantPop) {
       s._shellPopLatched = false;
     }
 
@@ -1420,19 +1507,48 @@ export default {
     }
   },
   action(s, id, on) {
-    if (id === 'bellows') setHolding(s, on);
+    // actions: [] — shell dock unused. Keep handlers harmless if shell relays.
+    if (id === 'bellows') {
+      s._keyHold = !!on;
+      setHolding(s, !!on || !!(s.stick && s.stick.holding));
+    }
     if (id === 'pop' && on) attemptPop(s);
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
-    // No HOLD/POP pad zones — shell actions own verbs. Optional: POP near lit latex.
-    if (type === 'down' && nearLitOnCanvas(s, p)) {
+    if (type === 'down') {
+      // Stick hit takes priority over POP.
+      if (hitHeightStick(p)) {
+        applyHeightStick(s, p);
+        return;
+      }
+      // Court scream: any non-stick tap attempts POP (soft-miss if far).
       attemptPop(s);
+      return;
+    }
+    if (type === 'move') {
+      if (s.stick?.active) applyHeightStick(s, p);
+      return;
+    }
+    if (type === 'up' || type === 'cancel' || type === 'blur' || type === 'hide' || type === 'leave' || type === 'out') {
+      releaseHeightStick(s);
+    }
+  },
+  key(s, k, down) {
+    if (s.result || s.broke) return;
+    if (k === ' ' || k === 'Space' || k === 'Spacebar' || k === 'Enter') {
+      if (down) attemptPop(s);
+      return;
+    }
+    if (k === 'ArrowUp' || k === 'w' || k === 'W' || k === 'Shift') {
+      s._keyHold = !!down;
     }
   },
   draw(s, d) {
     // Backdrop balloons.png is the unique court — do NOT paint a big green
     // ellipse or solid trunk over the pink oval. Light overlays only.
+    ensureBessDress();
+    drawBessScenery(d, s);
 
     drawObjective(d, s);
 
@@ -1461,14 +1577,15 @@ export default {
           shadow: false,
           fallback: () => d.star(tp.x, tp.y, 14),
         });
-        d.text('keepsake path', tp.x, tp.y - 36, 14, '#f4d590');
+        d.text('keepsake path', tp.x, tp.y - 36, 14, DARK_INK);
       }
     }
 
     drawLanding(d, s);
     drawBasket(d, s);
     drawFx(d, s);
-    // Chrome layout: shell owns HOLD/POP pads + .play-hud; no on-canvas pads/HUD.
+    // Court chrome: centre HEIGHT stick only (no giant HOLD/POP pads).
+    drawHeightStick(d, s);
   },
   readout: (s) => s.note || '',
 };
