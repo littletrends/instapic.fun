@@ -20,7 +20,7 @@
  * Hard rule: d.glow() takes 6-digit #rrggbb only.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {spriteKey} from '../prizes.js?v=mural-bold-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -42,14 +42,14 @@ const MOTIFS = [
   {id: 'horse', label: 'Horse'},
 ];
 const COLOURS = {
-  burgundy: {id: 'burgundy', glyph: '♥', name: 'Burgundy', color: '#6b2030'},
-  gold: {id: 'gold', glyph: '★', name: 'Gold', color: '#d2a65b'},
-  green: {id: 'green', glyph: '●', name: 'Green', color: '#3a6a4a'},
+  burgundy: {id: 'burgundy', glyph: '♥', name: 'Burgundy', color: '#a81e40'},
+  gold: {id: 'gold', glyph: '★', name: 'Gold', color: '#f0c050'},
+  green: {id: 'green', glyph: '●', name: 'Green', color: '#2f9a58'},
 };
-const HORSE_TARGET = {id: 'horse', glyph: '♞', name: 'Horse', color: '#6b2030', kind: 'motif'};
-const PANORAMA_TARGET = {id: 'panorama', glyph: '◐', name: 'Shutter', color: '#6b2030', kind: 'shutter'};
-const MEMORY_TARGET = {id: 'memory', glyph: '♫', name: 'Memory', color: '#6b2030', kind: 'order'};
-const FINALE_TARGET = {id: 'finale', glyph: '✦', name: 'Finale', color: '#d2a65b', kind: 'finale'};
+const HORSE_TARGET = {id: 'horse', glyph: '♞', name: 'Horse', color: '#a81e40', kind: 'motif'};
+const PANORAMA_TARGET = {id: 'panorama', glyph: '◐', name: 'Shutter', color: '#a81e40', kind: 'shutter'};
+const MEMORY_TARGET = {id: 'memory', glyph: '♫', name: 'Memory', color: '#a81e40', kind: 'order'};
+const FINALE_TARGET = {id: 'finale', glyph: '✦', name: 'Finale', color: '#f0c050', kind: 'finale'};
 const MEMORY_ORDER = ['lantern', 'balloons', 'horse'];
 const MOTIF_MARK = {lantern: '1', balloons: '2', horse: '3'};
 
@@ -86,10 +86,10 @@ function matchLine(s) {
 }
 
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
-const GOLD = '#d2a65b';
-const BURG = '#6b2030';
-const CREAM = '#fff6d8';
-const MIX = '#8a4060';
+const GOLD = '#f0c050';
+const BURG = '#a81e40';
+const CREAM = '#fffaf0';
+const MIX = '#c44a78';
 const CURTAIN = 0.9;
 
 function liveTargetFor(row) {
@@ -459,89 +459,89 @@ function splash(s, panel) {
 }
 
 function drawLantern(d, x, y, faded, flood, t) {
-  const a = faded ? 0.28 : 0.92;
+  const a = faded ? 0.38 : 0.92;
   const c = d.c;
   c.save();
   c.globalAlpha = a + flood * 0.7;
   d.line({x, y: y - 78}, {x, y: y - 50}, GOLD, 3);
-  d.poly([[x - 26, y - 48], [x + 26, y - 48], [x + 34, y + 36], [x - 34, y + 36]], faded ? '#6b203044' : MIX, GOLD, 2);
+  d.poly([[x - 26, y - 48], [x + 26, y - 48], [x + 34, y + 36], [x - 34, y + 36]], faded ? '#a81e4055' : MIX, GOLD, 2);
   d.poly([[x - 18, y - 64], [x + 18, y - 64], [x + 12, y - 48], [x - 12, y - 48]], BURG, GOLD, 2);
-  if (!faded || flood > 0.4) d.glow(x, y - 4, 48 + flood * 30, '#f4d590');
-  d.ellipse(x, y - 6, 12, 16, flood > 0.3 ? '#fff6d8' : '#d2a65b55', GOLD, 1);
+  if (!faded || flood > 0.4) d.glow(x, y - 4, 48 + flood * 30, '#ffd060');
+  d.ellipse(x, y - 6, 12, 16, flood > 0.3 ? '#fffaf0' : '#f0c05066', GOLD, 1);
   c.restore();
 }
 
 function drawBalloons(d, x, y, faded, flood, t) {
   const c = d.c;
   c.save();
-  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  c.globalAlpha = (faded ? 0.38 : 0.95) + flood * 0.6;
   const bob = faded ? 0 : Math.sin(t * 2.2) * 5;
-  [[-32, -8, '#e8a0b8'], [0, -24, '#7eb8b0'], [30, -4, '#f0d09a']].forEach(([dx, dy, col], i) => {
+  [[-32, -8, '#ff6a9a'], [0, -24, '#2ec4b6'], [30, -4, '#ffd060']].forEach(([dx, dy, col], i) => {
     const b = bob * (i === 1 ? 1 : 0.6);
     d.ellipse(x + dx, y + dy + b, 20, 26, faded ? col + '55' : col, GOLD, 2);
   });
   d.line({x: x - 32, y: y + 16}, {x, y: y + 62}, GOLD, 1.5);
   d.line({x, y: y + 4}, {x, y: y + 62}, GOLD, 1.5);
   d.line({x: x + 30, y: y + 20}, {x, y: y + 62}, GOLD, 1.5);
-  if (flood > 0.4) d.glow(x, y - 10, 40, '#f4d590');
+  if (flood > 0.4) d.glow(x, y - 10, 40, '#ffe08a');
   c.restore();
 }
 
 function drawHorse(d, x, y, faded, flood, t) {
   const c = d.c;
   c.save();
-  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  c.globalAlpha = (faded ? 0.38 : 0.95) + flood * 0.6;
   const g = faded ? 0 : Math.sin(t * 4.2) * 4;
   d.poly([
     [x - 64, y + 10 + g], [x + 52, y - 8], [x + 72, y + 22 + g], [x - 48, y + 34],
-  ], faded ? '#f7efe044' : '#f7efe0cc', GOLD, 2);
-  d.circle(x + 64, y - 2 + g * 0.4, 16, faded ? '#f7efe044' : '#f7efe0cc', GOLD, 2);
+  ], faded ? '#ffe8b044' : '#ffe8b0ee', GOLD, 2);
+  d.circle(x + 64, y - 2 + g * 0.4, 16, faded ? '#ffe8b044' : '#ffe8b0ee', GOLD, 2);
   d.poly([[x - 10, y - 8], [x + 24, y - 8], [x + 28, y + 16], [x - 14, y + 18]], BURG, GOLD, 1.5);
-  if (flood > 0.4) d.glow(x, y, 36, '#f4d590');
+  if (flood > 0.4) d.glow(x, y, 36, '#ffd060');
   c.restore();
 }
 
 function drawLanternMem(d, x, y, faded, flood, t) {
   // Altered cooler/greener memory fragment — not live Ch1 art.
-  const a = faded ? 0.28 : 0.92;
+  const a = faded ? 0.38 : 0.92;
   const c = d.c;
   c.save();
   c.globalAlpha = a + flood * 0.7;
-  d.line({x, y: y - 78}, {x, y: y - 50}, '#5a8a78', 3);
-  d.poly([[x - 26, y - 48], [x + 26, y - 48], [x + 34, y + 36], [x - 34, y + 36]], faded ? '#2a4a4044' : '#3a6a4acc', '#5a8a78', 2);
-  d.poly([[x - 18, y - 64], [x + 18, y - 64], [x + 12, y - 48], [x - 12, y - 48]], '#2a4850', '#5a8a78', 2);
-  if (!faded || flood > 0.4) d.glow(x, y - 4, 48 + flood * 30, '#a8d4c0');
-  d.ellipse(x, y - 6, 12, 16, flood > 0.3 ? '#e8fff0' : '#5a8a7855', '#5a8a78', 1);
+  d.line({x, y: y - 78}, {x, y: y - 50}, '#4aab90', 3);
+  d.poly([[x - 26, y - 48], [x + 26, y - 48], [x + 34, y + 36], [x - 34, y + 36]], faded ? '#1e5a5055' : '#2f9a58cc', '#4aab90', 2);
+  d.poly([[x - 18, y - 64], [x + 18, y - 64], [x + 12, y - 48], [x - 12, y - 48]], '#1e5a68', '#4aab90', 2);
+  if (!faded || flood > 0.4) d.glow(x, y - 4, 48 + flood * 30, '#7ee0c0');
+  d.ellipse(x, y - 6, 12, 16, flood > 0.3 ? '#e8fff0' : '#4aab9066', '#4aab90', 1);
   c.restore();
 }
 
 function drawBalloonsMem(d, x, y, faded, flood, t) {
   const c = d.c;
   c.save();
-  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  c.globalAlpha = (faded ? 0.38 : 0.95) + flood * 0.6;
   const bob = faded ? 0 : Math.sin(t * 2.2) * 5;
-  [[-32, -8, '#6a9a88'], [0, -24, '#4a7080'], [30, -4, '#c0a060']].forEach(([dx, dy, col], i) => {
+  [[-32, -8, '#4aba98'], [0, -24, '#3a90a8'], [30, -4, '#d4b050']].forEach(([dx, dy, col], i) => {
     const b = bob * (i === 1 ? 1 : 0.6);
-    d.ellipse(x + dx, y + dy + b, 20, 26, faded ? col + '55' : col, '#5a8a78', 2);
+    d.ellipse(x + dx, y + dy + b, 20, 26, faded ? col + '55' : col, '#4aab90', 2);
   });
-  d.line({x: x - 32, y: y + 16}, {x, y: y + 62}, '#5a8a78', 1.5);
-  d.line({x, y: y + 4}, {x, y: y + 62}, '#5a8a78', 1.5);
-  d.line({x: x + 30, y: y + 20}, {x, y: y + 62}, '#5a8a78', 1.5);
-  if (flood > 0.4) d.glow(x, y - 10, 40, '#a8d4c0');
+  d.line({x: x - 32, y: y + 16}, {x, y: y + 62}, '#4aab90', 1.5);
+  d.line({x, y: y + 4}, {x, y: y + 62}, '#4aab90', 1.5);
+  d.line({x: x + 30, y: y + 20}, {x, y: y + 62}, '#4aab90', 1.5);
+  if (flood > 0.4) d.glow(x, y - 10, 40, '#7ee0c0');
   c.restore();
 }
 
 function drawHorseMem(d, x, y, faded, flood, t) {
   const c = d.c;
   c.save();
-  c.globalAlpha = (faded ? 0.3 : 0.95) + flood * 0.6;
+  c.globalAlpha = (faded ? 0.38 : 0.95) + flood * 0.6;
   const g = faded ? 0 : Math.sin(t * 4.2) * 4;
   d.poly([
     [x - 64, y + 10 + g], [x + 52, y - 8], [x + 72, y + 22 + g], [x - 48, y + 34],
-  ], faded ? '#d0e8e044' : '#d0e8e0cc', '#5a8a78', 2);
-  d.circle(x + 64, y - 2 + g * 0.4, 16, faded ? '#d0e8e044' : '#d0e8e0cc', '#5a8a78', 2);
-  d.poly([[x - 10, y - 8], [x + 24, y - 8], [x + 28, y + 16], [x - 14, y + 18]], '#2a4850', '#5a8a78', 1.5);
-  if (flood > 0.4) d.glow(x, y, 36, '#a8d4c0');
+  ], faded ? '#c8f0e844' : '#c8f0e8ee', '#4aab90', 2);
+  d.circle(x + 64, y - 2 + g * 0.4, 16, faded ? '#c8f0e844' : '#c8f0e8ee', '#4aab90', 2);
+  d.poly([[x - 10, y - 8], [x + 24, y - 8], [x + 28, y + 16], [x - 14, y + 18]], '#1e5a68', '#4aab90', 1.5);
+  if (flood > 0.4) d.glow(x, y, 36, '#7ee0c0');
   c.restore();
 }
 
@@ -603,7 +603,7 @@ function drawChainRibbon(d, s) {
     const strength = Math.max(a.p.chainFlood || 0, b.p.chainFlood || 0, 0.55);
     c.save();
     c.globalAlpha = 0.35 + strength * 0.4;
-    c.strokeStyle = '#f4d590';
+    c.strokeStyle = '#ffe08a';
     c.lineWidth = 10 + strength * 8;
     c.lineCap = 'round';
     c.beginPath();
@@ -611,7 +611,7 @@ function drawChainRibbon(d, s) {
     c.lineTo(b.x - 40, midY);
     c.stroke();
     c.restore();
-    d.glow((a.x + b.x) / 2, midY, 28 + strength * 18, '#f4d590');
+    d.glow((a.x + b.x) / 2, midY, 28 + strength * 18, '#ffd060');
   }
 }
 
@@ -633,13 +633,13 @@ function drawPanoramaWake(d, s) {
   c.save();
   c.globalAlpha = 0.55;
   const grad = c.createLinearGradient(left, FRAME.y, edge, FRAME.y);
-  grad.addColorStop(0, '#f4d59000');
-  grad.addColorStop(0.55, '#f4d590aa');
-  grad.addColorStop(1, '#ffe6a4');
+  grad.addColorStop(0, '#ffe08a00');
+  grad.addColorStop(0.55, '#ffe08acc');
+  grad.addColorStop(1, '#ffd060');
   c.fillStyle = grad;
   c.fillRect(left, FRAME.y - 90, Math.max(8, edge - left), 180);
   c.restore();
-  d.glow(edge, FRAME.y, 42, '#f4d590');
+  d.glow(edge, FRAME.y, 42, '#ffd060');
   if (sweep > 0.15) {
     d.text('the bay wakes', left + (edge - left) * 0.5, FRAME.y - 100, 18, GOLD);
   }
@@ -647,7 +647,7 @@ function drawPanoramaWake(d, s) {
   if (sweep >= 1 || s.arriving || s.result) {
     c.save();
     c.globalAlpha = 0.7;
-    c.strokeStyle = '#f4d590';
+    c.strokeStyle = '#ffe08a';
     c.lineWidth = 14;
     c.lineCap = 'round';
     c.beginPath();
@@ -655,7 +655,7 @@ function drawPanoramaWake(d, s) {
     c.lineTo(right, FRAME.y);
     c.stroke();
     c.restore();
-    d.glow((left + right) / 2, FRAME.y, 36, '#ffe6a4');
+    d.glow((left + right) / 2, FRAME.y, 36, '#ffe08a');
   }
 }
 
@@ -867,11 +867,11 @@ export default {
     }
   },
   draw(s, d) {
-    d.poly([[120, 168], [780, 168], [772, 186], [128, 186]], '#6b203088', GOLD, 2);
-    d.poly([[110, 742], [790, 742], [808, 776], [92, 776]], '#6b203066', GOLD, 2);
+    d.poly([[120, 168], [780, 168], [772, 186], [128, 186]], '#a81e40bb', GOLD, 2);
+    d.poly([[110, 742], [790, 742], [808, 776], [92, 776]], '#a81e40aa', GOLD, 2);
 
     const bob = s.reduced ? 0 : Math.sin(s.t * 1.3) * 3;
-    d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#6b2030aa', GOLD, 2.5);
+    d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#a81e40dd', GOLD, 2.5);
 
     drawMedallion(d, s);
 
@@ -879,7 +879,7 @@ export default {
     const live = s.panels[s.index] && !s.panels[s.index].restored ? s.panels[s.index] : null;
     d.poly(
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
-      null, live ? '#f4d590' : GOLD, live ? 6 : 3,
+      null, live ? '#ffe08a' : GOLD, live ? 6 : 3,
     );
 
     s.panels.forEach((row) => {
@@ -889,15 +889,15 @@ export default {
       drawMotif(d, row.motif || row.id, x, FRAME.y, faded, row.flood || 0, s.t, s.level === 4);
       if (s.level === 1) drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
       if (s.level === 2) {
-        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#a81e40ee' : '#3a3a40cc', GOLD, 2);
         d.text(row.match ? '♞' : '·', x + 70, FRAME.y - 62, 20, CREAM);
       }
       if (s.level === 3) {
-        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#a81e40ee' : '#3a3a40cc', GOLD, 2);
         d.text(row.match ? '◐' : '·', x + 70, FRAME.y - 62, 20, CREAM);
       }
       if (s.level === 4) {
-        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#a81e40ee' : '#3a3a40cc', GOLD, 2);
         const mark = row.match ? (MOTIF_MARK[row.motif] || '♫') : '·';
         d.text(mark, x + 70, FRAME.y - 62, 20, CREAM);
       }
@@ -905,7 +905,7 @@ export default {
         if (row.rule === 'colour') drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
         else {
           const glyph = row.rule === 'motif' ? '♞' : row.rule === 'shutter' ? '◐' : row.rule === 'finale' ? '✦' : '·';
-          d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+          d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#a81e40ee' : '#3a3a40cc', GOLD, 2);
           d.text(glyph, x + 70, FRAME.y - 62, 20, CREAM);
         }
       }
@@ -921,8 +921,8 @@ export default {
         drawShutters(d, x, FRAME.y, row.shutterOpen || 0, alwaysClosed);
       }
       if (row.wash > 0) {
-        d.glow(x, FRAME.y, 70, '#8ab4c8');
-        d.text('wash', x, FRAME.y, 22, '#c8e0f0');
+        d.glow(x, FRAME.y, 70, '#7ec8e8');
+        d.text('wash', x, FRAME.y, 22, '#b8e4f5');
       }
     });
 
@@ -931,10 +931,10 @@ export default {
 
     if (s.treasure && !s.treasure.taken && s.discovery > 0) {
       const pulse = 1 + Math.sin(s.t * 4) * 0.1;
-      d.glow(s.treasure.x, s.treasure.y, 40 * pulse, '#ffe6a4');
+      d.glow(s.treasure.x, s.treasure.y, 40 * pulse, '#ffe08a');
       d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
         w: 64 * pulse, shadow: false,
-        fallback: (dd, x, y) => dd.star(x, y, 16, '#ffe6a4'),
+        fallback: (dd, x, y) => dd.star(x, y, 16, '#ffe08a'),
       });
     }
   },
