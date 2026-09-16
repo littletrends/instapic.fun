@@ -2,6 +2,11 @@
  * Amusement 1 — Florence — Carousel Waltz (Ride & Seek)
  * Tagline: Round and round, the secrets change.
  *
+ * DRESS (Tent_24_Lumi + bea-player): Lumi lanterns/notes as bold cream scenery;
+ *   YOU = shared bea-player on front mount. actions: [] — cream bottom TAP stick +
+ *   court tap/swipe (+ Space/Enter). Do NOT set canvasControls. d.glow 6-digit hex.
+ *   Horse sheet: front.png (not webp). Ch1–6 gameplay schedules LOCKED.
+ *
  * SHIPPED: Chapters 1–6 (First Turn, Painted Ponies, Mirror Round, Carriage Windows,
  *   Midnight Canopy, The Grand Waltz).
  *   Board one mount fixed center-front (Tempest rim lane). Orbiting horses
@@ -123,7 +128,7 @@ const DRAG_PX = 18;
 const PAPERCUT_SHEET = 512;
 const PAPERCUT_RIDE_RECT = [58, 34, 396, 446]; // front ride frame from catalogue
 const RIDE_CUTOUT_SRC = new URL(
-  '../../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.webp',
+  '../../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.png',
   import.meta.url,
 ).href;
 /** @type {HTMLCanvasElement|ImageBitmap|null} */
@@ -168,7 +173,7 @@ function preloadRideCutout() {
       }
     } catch (_) { /* keep stick geometry fallback */ }
   };
-  img.onerror = () => { /* missing webp — stick geometry remains */ };
+  img.onerror = () => { /* missing png — stick geometry remains */ };
   img.src = RIDE_CUTOUT_SRC;
 }
 preloadRideCutout();
@@ -191,6 +196,128 @@ function drawRideCutout(d, swayX, swayY) {
   c.restore();
   return true;
 }
+
+/** Cream / gold / burgundy — 6-digit hex only for d.glow(). */
+const CREAM = '#f4d590';
+const CREAM_DEEP = '#d2a65b';
+const GOLD = '#ffe6a4';
+const BURGUNDY = '#c67483';
+const BURGUNDY_DEEP = '#6b2030';
+const INK = '#3a1818';
+
+/** Aura Tent_24_Lumi + shared bea-player — resolve vs THIS module (stalls/). */
+const DRESS_CACHE = 'dress-1a';
+const LUMI_FILES = {
+  starLantern: 'Tent_24_Lumi_piece-01.png', // star-lantern
+  moonLantern: 'Tent_24_Lumi_piece-02.png', // moon-lantern
+  heartLantern: 'Tent_24_Lumi_piece-03.png', // heart-lantern
+  starNote: 'Tent_24_Lumi_piece-04.png', // star-note icon
+  moonNote: 'Tent_24_Lumi_piece-05.png', // moon-note icon
+  heartNote: 'Tent_24_Lumi_piece-06.png', // heart-note icon
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+let lumiPropImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  // Resolve against THIS module (stalls/carousel.js), not play.html.
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel;
+  }
+}
+
+function ensureLumiProps() {
+  if (lumiPropImgs) return lumiPropImgs;
+  lumiPropImgs = {};
+  for (const [key, file] of Object.entries(LUMI_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/carousel-lumi/' + file);
+    lumiPropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = dressUrl('../assets/shared-player/' + BEA_PLAYER_FILE);
+  }
+  return lumiPropImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+/**
+ * Tent_24_Lumi scenery on cream court — canopy poles, crest sides, mid-court.
+ * Do NOT paint a full-screen background over cream / #backdrop.
+ */
+function drawLumiScenery(d, swayX, swayY) {
+  const imgs = ensureLumiProps();
+  const sx = (swayX || 0) * 0.22;
+  const sy = (swayY || 0) * 0.22;
+  // Soft gold/burgundy accents only (no full bg wash).
+  d.glow(118 + sx, 268 + sy, 34, GOLD);
+  d.glow(782 + sx, 268 + sy, 34, GOLD);
+  d.glow(CX + sx, 198 + sy, 40, BURGUNDY);
+  // 01 star-lantern — left canopy pole
+  placeDress(d, imgs.starLantern, 118 + sx, 310 + sy, 96, -0.1);
+  // 02 moon-lantern — right canopy pole
+  placeDress(d, imgs.moonLantern, 782 + sx, 310 + sy, 96, 0.1);
+  // 03 heart-lantern — crest / canopy crown
+  placeDress(d, imgs.heartLantern, CX + sx, 210 + sy, 108, 0);
+  // 04 star-note — left mid-court / crest side
+  placeDress(d, imgs.starNote, 96 + sx, 520 + sy, 72, -0.12);
+  // 05 moon-note — right mid-court / crest side
+  placeDress(d, imgs.moonNote, 804 + sx, 520 + sy, 72, 0.12);
+  // 06 heart-note — mid-court accent (left-of-center, clear of crest lane)
+  placeDress(d, imgs.heartNote, 168 + sx, 430 + sy, 68, -0.05);
+}
+
+/**
+ * Centre-bottom cream TAP stick (one pad — not UD/LR cluster).
+ * Press fires crest TAP (Mario TAP remix). Shell Pause/Restart stay off-court.
+ */
+function tapStickLayout() {
+  return {cx: CX, cy: 1136, baseRx: 102, baseRy: 62, knobR: 34, maxPull: 28};
+}
+
+function hitTapStick(p) {
+  if (!p || typeof p.x !== 'number') return false;
+  const L = tapStickLayout();
+  const dx = (p.x - L.cx) / L.baseRx;
+  const dy = (p.y - L.cy) / L.baseRy;
+  return (dx * dx + dy * dy) <= 1.28;
+}
+
+function drawTapStick(s, d) {
+  const L = tapStickLayout();
+  const armed = !!(s.stick && s.stick.active);
+  const kx = armed ? (s.stick.kx || 0) : 0;
+  const ky = armed ? (s.stick.ky || 0) : 0;
+  const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 3.2);
+  d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
+  d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.4);
+  d.ellipse(L.cx, L.cy, L.baseRx * 0.72, L.baseRy * 0.62, '#f8e4b3cc', BURGUNDY, 1.6);
+  if (armed) d.glow(L.cx, L.cy, 54 + pulse * 10, GOLD);
+  const nx = L.cx + kx;
+  const ny = L.cy + ky;
+  d.ellipse(nx + 2, ny + 4, L.knobR * 0.95, L.knobR * 0.72, '#3a1a1244');
+  d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : BURGUNDY, GOLD, 2.2);
+  d.ellipse(nx - 4, ny - 6, L.knobR * 0.42, L.knobR * 0.28, CREAM + 'aa');
+  // Dark readable label on cream (not pale cream-on-cream).
+  d.text('TAP', L.cx, L.cy + L.baseRy + 18, 15, armed ? BURGUNDY_DEEP : INK);
+}
+
 
 
 /**
@@ -2385,15 +2512,15 @@ function tryCrestTap(s, p) {
 
 export default {
   title: 'Carousel Waltz',
-  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts. Carriage Windows: TAP only while the window is open. Midnight Canopy: watch treasures hang high, then TAP when they drop into NOW. Grand Waltz: painted marks, mirrors, open windows, and canopy dips combine — use every rule you’ve learned.',
-  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Carriage Windows: each window opens twice — watch the teach pass, then TAP the collect pass; shut windows never collect. Midnight Canopy: canopy treasures hang high, then dip into NOW — TAP the dip; too-high soft-fails and the ride continues. Grand Waltz: combines painted marks, mirrors, open windows, and canopy dips across rotations — miss a pass and the eligible window repeats. Find three ordinary keepsakes before the final rotation ends.',
+  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW (Mario TAP remix: cream bottom stick, court tap/swipe, or Space/Enter). Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts. Carriage Windows: TAP only while the window is open. Midnight Canopy: watch treasures hang high, then TAP when they drop into NOW. Grand Waltz: painted marks, mirrors, open windows, and canopy dips combine — use every rule you’ve learned.',
+  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW — press the cream bottom stick, tap/swipe the court, or Space/Enter (no under-stage button). Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Carriage Windows: each window opens twice — watch the teach pass, then TAP the collect pass; shut windows never collect. Midnight Canopy: canopy treasures hang high, then dip into NOW — TAP the dip; too-high soft-fails and the ride continues. Grand Waltz: combines painted marks, mirrors, open windows, and canopy dips across rotations — miss a pass and the eligible window repeats. Find three ordinary keepsakes before the final rotation ends.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
   houseSeconds: 120,
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
-  actions: [{id: 'tap', label: 'TAP'}],
+  actions: [],
 
   create(level, rng) {
     const reduced = prefersReducedMotion();
@@ -2655,39 +2782,68 @@ export default {
   },
 
   pointer(s, type, p) {
-    if (s.result || s.broke) return;
+    if (s.result || s.broke || !p) return;
 
     if (type === 'down') {
+      // Cream TAP stick — press fires crest TAP (Mario remix).
+      if (hitTapStick(p)) {
+        const L = tapStickLayout();
+        s._stickArmed = true;
+        s.stick = {active: true, kx: 0, ky: 0};
+        s.drag = null;
+        logAction(s, 'tap', {via: 'stick'});
+        tryCrestTap(s, {x: CX, y: CY + 48});
+        return;
+      }
+      s._stickArmed = false;
+      s.stick = null;
       s.drag = {x: p.x, y: p.y, swayX: s.swayX || 0, swayY: s.swayY || 0, moved: false};
       return;
     }
 
-    if (type === 'move' && s.drag) {
-      const dx = p.x - s.drag.x;
-      const dy = p.y - s.drag.y;
-      if (Math.hypot(dx, dy) > DRAG_PX) s.drag.moved = true;
-      // Tiny cosmetic sway only — ignored for crest / collect.
-      if (s.drag.moved) {
-        s.swayX = clamp(s.drag.swayX + dx * 0.08, -SWAY_X, SWAY_X);
-        s.swayY = clamp(s.drag.swayY + dy * 0.08, -SWAY_Y, SWAY_Y);
-      }
-      return;
-    }
-
-    if (type === 'up' && s.drag) {
-      const drag = s.drag;
-      s.drag = null;
-      // Drag never counts as a skill — always treat release as TAP attempt
-      // unless the finger clearly slid (then ignore; no LOOK log).
-      if (drag.moved && Math.hypot(p.x - drag.x, p.y - drag.y) > 48) {
+    if (type === 'move') {
+      if (s._stickArmed) {
+        const L = tapStickLayout();
+        const dx = (p.x || L.cx) - L.cx;
+        const dy = (p.y || L.cy) - L.cy;
+        const len = Math.hypot(dx, dy) || 1;
+        const pull = Math.min(len, L.maxPull);
+        s.stick = {active: true, kx: (dx / len) * pull, ky: (dy / len) * pull};
         return;
       }
-      logAction(s, 'tap', {x: Math.round(p.x), y: Math.round(p.y)});
-      tryCrestTap(s, p);
+      if (s.drag) {
+        const dx = p.x - s.drag.x;
+        const dy = p.y - s.drag.y;
+        if (Math.hypot(dx, dy) > DRAG_PX) s.drag.moved = true;
+        // Tiny cosmetic sway only — ignored for crest / collect.
+        if (s.drag.moved) {
+          s.swayX = clamp(s.drag.swayX + dx * 0.08, -SWAY_X, SWAY_X);
+          s.swayY = clamp(s.drag.swayY + dy * 0.08, -SWAY_Y, SWAY_Y);
+        }
+      }
       return;
     }
 
-    if (type === 'cancel') s.drag = null;
+    if (type === 'up') {
+      if (s._stickArmed) {
+        s._stickArmed = false;
+        s.stick = null;
+        return; // already fired TAP on press
+      }
+      if (s.drag) {
+        s.drag = null;
+        // Court tap OR swipe fires crest TAP (Mario TAP remix).
+        logAction(s, 'tap', {x: Math.round(p.x), y: Math.round(p.y), via: 'pointer'});
+        tryCrestTap(s, p);
+      }
+      return;
+    }
+
+    if (type === 'cancel') {
+      s.drag = null;
+      s._stickArmed = false;
+      s.stick = null;
+    }
   },
 
   draw(s, d) {
@@ -2699,6 +2855,7 @@ export default {
     const cy = CY + swayY;
     const t = s.t || 0;
     const reduced = !!s.reduced;
+    ensureLumiProps();
     const dressed = drawRideCutout(d, swayX, swayY);
 
     // Stick canopy/platform only when papercut cutout is not ready.
@@ -2706,6 +2863,8 @@ export default {
       drawPlatform(d, CX, CY, swayX, swayY);
       drawCanopy(d, CX, CY, swayX, swayY, t, reduced, s.level === 4 || s.level === 5);
     }
+    // Lumi Tent props as bold scenery (canopy poles / crest / mid-court) — no full bg.
+    drawLumiScenery(d, swayX, swayY);
     drawCrestLane(d, s);
 
     // Orbiting horses (skip index 0 — player mount fixed foreground).
@@ -2730,17 +2889,22 @@ export default {
       }
     }
 
-    // Player mount cue — light “you” marker when dressed; full stick horse otherwise.
+    // YOU = bea-player on fixed front horse lane (~52–60w) + soft glow; geometry fallback.
     const playerBobAmp = (s.level === 4 || s.level === 5) ? (reduced ? 5 : 12) : (reduced ? 3 : 8);
     const bob = Math.sin(t * 2.2) * playerBobAmp;
-    if (dressed) {
-      const px = CX + swayX * 0.15;
-      const py = CY + swayY * 0.15 + 110 + bob;
-      d.glow(px, py - 10, 36, '#ffe6a4');
-      d.ellipse(px, py + 28, 54, 14, '#12233555');
-      d.text('you', px, py + 36, 15, '#f0d09a');
-    } else {
-      drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
+    const px = CX + swayX * 0.15;
+    const py = CY + swayY * 0.15 + 110 + bob;
+    d.glow(px, py + 8, 30, GOLD);
+    d.ellipse(px + 2, py + 26, 28, 10, '#12233555');
+    ensureLumiProps();
+    const beaOk = placeDress(d, beaPlayerImg, px, py - 6, 56);
+    if (!beaOk) {
+      if (!dressed) {
+        drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
+      } else {
+        d.circle(px, py, 14, '#fff6d8ee', CREAM_DEEP, 2);
+        d.text('YOU', px, py + 1, 11, BURGUNDY_DEEP);
+      }
     }
 
     const poleX = CX + swayX * 0.25;
@@ -2916,6 +3080,9 @@ export default {
     drawCh5CanopyChrome(d, s);
     drawCh6WaltzChrome(d, s);
     drawStatusStrip(d, s);
+
+    // One cream bottom TAP stick (replaces under-stage TAP button). Pause/Restart off-court.
+    if (!s.result && !s.broke) drawTapStick(s, d);
   },
 
   readout: (s) => s.note || '',
