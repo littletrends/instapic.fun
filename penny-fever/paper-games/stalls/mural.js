@@ -15,8 +15,6 @@
  *     scenes into one continuous mural (neighbour flood ribbon).
  *   5 Midway Memories — remembered fragments in order (lantern→balloons→horse);
  *     ONE wrong-order soft teach; wrong-order soft recycles match panels.
- *
- * Unfinished:
  *   6 The Living Bay — long Sunday route; panorama wakes
  *
  * Hard rule: d.glow() takes 6-digit #rrggbb only.
@@ -51,10 +49,12 @@ const COLOURS = {
 const HORSE_TARGET = {id: 'horse', glyph: '♞', name: 'Horse', color: '#6b2030', kind: 'motif'};
 const PANORAMA_TARGET = {id: 'panorama', glyph: '◐', name: 'Shutter', color: '#6b2030', kind: 'shutter'};
 const MEMORY_TARGET = {id: 'memory', glyph: '♫', name: 'Memory', color: '#6b2030', kind: 'order'};
+const FINALE_TARGET = {id: 'finale', glyph: '✦', name: 'Finale', color: '#d2a65b', kind: 'finale'};
 const MEMORY_ORDER = ['lantern', 'balloons', 'horse'];
 const MOTIF_MARK = {lantern: '1', balloons: '2', horse: '3'};
 
 function boardNote(level) {
+  if (level === 5) return 'The Living Bay — follow each clue.';
   if (level === 4) return 'Remember ♫ — lantern, balloons, horse.';
   if (level === 3) return 'SPLASH when shutters open — link the bay.';
   if (level === 2) return 'SPLASH only the ♞ horse.';
@@ -63,6 +63,7 @@ function boardNote(level) {
 }
 
 function teachLine(s) {
+  if (s.level === 5) return 'Soft mash — follow the next clue on the medallion.';
   if (s.level === 4) return 'Wrong memory — wait for the next ♫.';
   if (s.level === 3) return 'Shutters closed — wait for ◐ to open.';
   if (s.level === 2) return 'Not a horse — wait for ♞ in the window.';
@@ -70,6 +71,13 @@ function teachLine(s) {
 }
 
 function matchLine(s) {
+  if (s.level === 5) {
+    const g = s.target?.glyph || '♥';
+    if (g === '♞') return 'SPLASH the ♞ horse in the window.';
+    if (g === '◐') return 'SPLASH when shutters open — ◐.';
+    if (g === '✦') return 'SPLASH the finale — wake the bay.';
+    return 'SPLASH the ' + g + ' colour match.';
+  }
   if (s.level === 4) return 'SPLASH the next memory in order.';
   if (s.level === 3) return 'SPLASH the open shutter in the window.';
   if (s.level === 2) return 'SPLASH the ♞ horse in the window.';
@@ -84,7 +92,37 @@ const CREAM = '#fff6d8';
 const MIX = '#8a4060';
 const CURTAIN = 0.9;
 
+function liveTargetFor(row) {
+  if (!row || row.teach || !row.match) return COLOURS.burgundy;
+  if (row.rule === 'colour') return COLOURS.burgundy;
+  if (row.rule === 'motif') return HORSE_TARGET;
+  if (row.rule === 'shutter') return PANORAMA_TARGET;
+  if (row.rule === 'finale' || row.finale) return FINALE_TARGET;
+  return COLOURS.burgundy;
+}
+
 function chapterPlan(level, reduced) {
+  if (level === 5) {
+    // The Living Bay — remix taught rules; moving speeds; panorama wake.
+    const panels = [
+      {id: 'decoy-live', motif: 'balloons', colour: 'green', match: false, teach: true, rule: 'decoy'},
+      {id: 'live-colour', motif: 'lantern', colour: 'burgundy', match: true, rule: 'colour', speedMul: 0.85},
+      {id: 'live-horse', motif: 'horse', colour: 'gold', match: true, rule: 'motif', speedMul: 1.0},
+      {id: 'live-shutter', motif: 'balloons', colour: 'burgundy', match: true, rule: 'shutter', shutter: true, link: true, speedMul: 1.05},
+      {id: 'live-finale', motif: 'lantern', colour: 'gold', match: true, rule: 'finale', finale: true, link: true, speedMul: 1.05},
+    ];
+    return {
+      goal: 4,
+      house: 88,
+      dwell: reduced ? 7.5 : 6.5,
+      speed: reduced ? 70 : 88,
+      warn: 4.0,
+      target: COLOURS.burgundy,
+      panels,
+      foldMedallion: true,
+      mode: 'live',
+    };
+  }
   if (level === 4) {
     // Midway Memories — fragments in remembered order; altered colours; soft wrong-order recycles.
     const panels = [
@@ -234,6 +272,14 @@ function maybeArrive(s) {
 
 function nextPending(s) {
   const n = s.panels.length;
+  // Ch6: prefer natural panel-list order after the teach decoy.
+  if (s.level === 5) {
+    for (let i = 0; i < n; i++) {
+      const row = s.panels[i];
+      if (!row.restored && !row.spent) return i;
+    }
+    return -1;
+  }
   // Ch5: prefer the next memory motif so teach→lantern→balloons→horse seats correctly.
   if (s.level === 4 && s.memoryOrder) {
     const need = s.memoryOrder[s.memoryNext];
@@ -265,7 +311,15 @@ function spawnAt(s, idx) {
   row.dwell = 0;
   row.wash = 0;
   row.shutterOpen = 0;
-  row.world = s.scroll + (s.level === 4 && !row.teach ? 520 : 680);
+  let seat = 680;
+  if ((s.level === 4 || s.level === 5) && !row.teach) {
+    seat = (s.level === 5 && (row.finale || row.rule === 'finale')) ? 480 : 520;
+  }
+  row.world = s.scroll + seat;
+  if (s.level === 5 && (row.finale || row.rule === 'finale') && s.restored === 3) {
+    s.houseLeft = Math.max(s.houseLeft || 0, 14);
+  }
+  if (s.level === 5) s.target = liveTargetFor(row);
   s.medalOpen = 1;
   if (row.teach) {
     s.warnLeft = s.warn;
@@ -311,21 +365,23 @@ function softWash(s, panel) {
   panel.wash = 1;
   panel.held = false;
   panel.dwell = 0;
-  // Ch5: wrong-order soft on a needed match panel — wash + recycle, do not permanently spend.
-  if (s.level === 4 && panel.match && !panel.teach) {
+  // Ch5/Ch6: soft on a needed match panel — wash + recycle, do not permanently spend.
+  if ((s.level === 4 || s.level === 5) && panel.match && !panel.teach) {
     panel.spent = false;
   } else {
     panel.spent = true;
   }
   s.warnLeft = 0;
   s.paused = true;
-  s.softUntil = s.t + (s.level === 4 ? 0.45 : 0.75);
-  logAction(s, 'wash', {id: panel.id, colour: panel.colour, order: s.level === 4});
-  s.note = s.level === 4
-    ? 'Soft wash — wrong memory order. Wait for ♫.'
-    : s.level === 3
-      ? 'Soft wash — wait for open shutters / ◐.'
-      : 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♞') + '.';
+  s.softUntil = s.t + ((s.level === 4 || s.level === 5) ? 0.45 : 0.75);
+  logAction(s, 'wash', {id: panel.id, colour: panel.colour, order: s.level === 4, live: s.level === 5});
+  s.note = s.level === 5
+    ? 'Soft wash — follow the next clue ' + (s.target?.glyph || '♥') + '.'
+    : s.level === 4
+      ? 'Soft wash — wrong memory order. Wait for ♫.'
+      : s.level === 3
+        ? 'Soft wash — wait for open shutters / ◐.'
+        : 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♞') + '.';
   s.juice = true;
 }
 
@@ -335,6 +391,11 @@ function splash(s, panel) {
     // Still in teach warn — treat as soft if they tap early on decoy.
   }
   if (!panel.match) {
+    softWash(s, panel);
+    return;
+  }
+  // Ch6: shutter rule must wait until flaps open (soft recycle on early splash).
+  if (s.level === 5 && panel.rule === 'shutter' && (panel.shutterOpen || 0) < 0.85) {
     softWash(s, panel);
     return;
   }
@@ -362,19 +423,27 @@ function splash(s, panel) {
     });
   }
   if (s.level === 4) s.memoryNext = (s.memoryNext || 0) + 1;
+  if (s.level === 5 && (panel.finale || panel.rule === 'finale')) {
+    s.panoramaWake = 1;
+    s.wakeAt = s.t;
+  }
   s.restored += 1;
   s.juice = true;
   s.paused = true;
   s.discovery = s.discoverySecs;
   s.liveId = panel.id;
   recordFind(s, ORDINARY[s.restored % ORDINARY.length], RIDE);
-  logAction(s, 'splash', {id: panel.id, n: s.restored, colour: panel.colour, motif: panel.motif});
+  logAction(s, 'splash', {id: panel.id, n: s.restored, colour: panel.colour, motif: panel.motif, rule: panel.rule});
   logAction(s, 'restore', {id: panel.id});
-  s.note = s.level === 4
-    ? 'Memory restored — ' + s.restored + ' / ' + s.goal + '.'
-    : s.level === 3
-      ? 'Linked into the panorama — ' + s.restored + ' / ' + s.goal + '.'
-      : 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
+  s.note = s.level === 5
+    ? ((panel.finale || panel.rule === 'finale')
+      ? 'Panorama wakes — ' + s.restored + ' / ' + s.goal + '.'
+      : 'Clue restored — ' + s.restored + ' / ' + s.goal + '.')
+    : s.level === 4
+      ? 'Memory restored — ' + s.restored + ' / ' + s.goal + '.'
+      : s.level === 3
+        ? 'Linked into the panorama — ' + s.restored + ' / ' + s.goal + '.'
+        : 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
   if (s.restored >= s.goal) guardWinClock(s);
   if (s.eligible && s.spawnId === panel.id && !s.treasure) {
     s.treasure = {
@@ -565,6 +634,49 @@ function drawMemoryStrip(d, s) {
   d.text('next: ' + next, 450, 252, 14, GOLD);
 }
 
+function drawPanoramaWake(d, s) {
+  if (s.level !== 5 || !s.panoramaWake) return;
+  const wakeT = s.wakeAt != null ? (s.t - s.wakeAt) : 0;
+  const sweep = clamp(wakeT / 1.35, 0, 1);
+  const restored = s.panels
+    .filter((p) => p.restored)
+    .map((p) => ({p, x: screenX(p, s.scroll)}))
+    .filter((row) => row.x > -60 && row.x < 980)
+    .sort((a, b) => a.x - b.x);
+  if (!restored.length) return;
+  const left = restored[0].x - 50;
+  const right = restored[restored.length - 1].x + 50;
+  const edge = left + (right - left) * sweep;
+  const c = d.c;
+  c.save();
+  c.globalAlpha = 0.55;
+  const grad = c.createLinearGradient(left, FRAME.y, edge, FRAME.y);
+  grad.addColorStop(0, '#f4d59000');
+  grad.addColorStop(0.55, '#f4d590aa');
+  grad.addColorStop(1, '#ffe6a4');
+  c.fillStyle = grad;
+  c.fillRect(left, FRAME.y - 90, Math.max(8, edge - left), 180);
+  c.restore();
+  d.glow(edge, FRAME.y, 42, '#f4d590');
+  if (sweep > 0.15) {
+    d.text('the bay wakes', left + (edge - left) * 0.5, FRAME.y - 100, 18, GOLD);
+  }
+  // End-to-end ribbon once sweep finishes / during arrive.
+  if (sweep >= 1 || s.arriving || s.result) {
+    c.save();
+    c.globalAlpha = 0.7;
+    c.strokeStyle = '#f4d590';
+    c.lineWidth = 14;
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(left, FRAME.y);
+    c.lineTo(right, FRAME.y);
+    c.stroke();
+    c.restore();
+    d.glow((left + right) / 2, FRAME.y, 36, '#ffe6a4');
+  }
+}
+
 function drawColourMark(d, colourId, x, y) {
   const col = COLOURS[colourId] || COLOURS.burgundy;
   d.circle(x, y, 22, col.color, GOLD, 2);
@@ -591,13 +703,15 @@ function drawCoach(d, s) {
   if (!s.boarded || s.result) return;
   let line = null;
   if (s.warnLeft > 0) {
-    line = s.level === 4
-      ? 'Wrong memory — wait for the next ♫'
-      : s.level === 3
-        ? 'Shutters closed — wait for ◐ to open'
-        : s.level === 2
-          ? 'Horse only — wait for ♞ in the window'
-          : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
+    line = s.level === 5
+      ? 'Soft mash — wait, then follow ' + (s.target?.glyph || '♥')
+      : s.level === 4
+        ? 'Wrong memory — wait for the next ♫'
+        : s.level === 3
+          ? 'Shutters closed — wait for ◐ to open'
+          : s.level === 2
+            ? 'Horse only — wait for ♞ in the window'
+            : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
   } else if (!s.juice && s.t < 5.2 && s.level === 0) {
     line = 'SPLASH the faded patch';
   } else if (!s.juice && s.t < 6.5 && s.level === 1) {
@@ -608,6 +722,10 @@ function drawCoach(d, s) {
     line = 'SPLASH when shutters open — link the bay';
   } else if (!s.juice && s.t < 8.0 && s.level === 4) {
     line = 'Remember ♫ — lantern, balloons, horse';
+  } else if (!s.juice && s.t < 8.5 && s.level === 5) {
+    line = 'The Living Bay — follow each clue ' + (s.target?.glyph || '♥');
+  } else if (s.level === 5 && !s.warnLeft) {
+    line = 'Clue ' + (s.target?.glyph || '♥') + ' — ' + (s.target?.name || 'match');
   } else if (s.level === 4 && !s.warnLeft) {
     const next = (s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'lantern';
     line = 'Next ♫: ' + next;
@@ -637,21 +755,26 @@ function drawMedallion(d, s) {
   d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
   d.circle(x, y, 36, s.target.color, GOLD, 2);
   d.text(s.target.glyph, x, y + 10, 28, CREAM);
-  const medalLabel = s.level === 4
-    ? ((s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'memory')
-    : s.level === 3 ? 'shutter' : s.level === 2 ? 'horse' : 'match';
+  const medalLabel = s.level === 5
+    ? (s.target?.name || 'clue')
+    : s.level === 4
+      ? ((s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'memory')
+      : s.level === 3 ? 'shutter' : s.level === 2 ? 'horse' : 'match';
   d.text(medalLabel, x, y + 62, 14, GOLD);
   if (s.level === 4 && s.memoryOrder) {
     const mark = MOTIF_MARK[s.memoryOrder[s.memoryNext]] || '♫';
     d.text(mark, x, y + 78, 12, CREAM);
+  }
+  if (s.level === 5 && s.target) {
+    d.text(s.target.glyph, x, y + 78, 12, CREAM);
   }
   c.restore();
 }
 
 export default {
   title: 'Painted Bay',
-  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. Lantern Row matches medallion colour; Carousel Frieze waits for the horse emblem; Evening Panorama opens shutters then links restored scenes; Midway Memories restores remembered fragments in order (lantern → balloons → horse). Wrong splash only washes soft.',
-  instructions: 'SPLASH the faded patch when it sits in the frame. Ch1: any two of three. Ch2 Lantern Row: medallion colour match. Ch3 Carousel Frieze: horse only in the window. Ch4 Evening Panorama: wait for shutters (◐) to open, then SPLASH to link the bay. Ch5 Midway Memories: remember ♫ order — lantern, balloons, horse — wrong order soft-washes and recycles; soft wash never aborts. First ride of each chapter is free practice and keeps nothing.',
+  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. Lantern Row matches medallion colour; Carousel Frieze waits for the horse emblem; Evening Panorama opens shutters then links restored scenes; Midway Memories restores remembered fragments in order (lantern → balloons → horse); The Living Bay chains colour, horse, shutter and a finale panorama wake. Wrong splash only washes soft.',
+  instructions: 'SPLASH the faded patch when it sits in the frame. Ch1: any two of three. Ch2 Lantern Row: medallion colour match. Ch3 Carousel Frieze: horse only in the window. Ch4 Evening Panorama: wait for shutters (◐) to open, then SPLASH to link the bay. Ch5 Midway Memories: remember ♫ order — lantern, balloons, horse — wrong order soft-washes and recycles. Ch6 The Living Bay: follow each clue (♥ / ♞ / ◐ / ✦); failed required panels repeat; finale wakes the panorama end to end. Soft wash never aborts. First ride of each chapter is free practice and keeps nothing.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -686,7 +809,7 @@ export default {
       scroll: 0,
       speed: plan.speed,
       dwellMax: plan.dwell,
-      discoverySecs: level === 4 ? 1.05 : (level >= 1 ? 1.55 : 2.6),
+      discoverySecs: level === 5 ? 0.95 : (level === 4 ? 1.05 : (level >= 1 ? 1.55 : 2.6)),
       warn: plan.warn,
       warnLeft: plan.panels[0]?.teach ? plan.warn : 0,
       softUntil: 0,
@@ -697,6 +820,8 @@ export default {
       mode: plan.mode || 'any',
       memoryOrder: plan.memoryOrder || (level === 4 ? MEMORY_ORDER.slice() : null),
       memoryNext: 0,
+      panoramaWake: 0,
+      wakeAt: 0,
       medalOpen: 1,
       paused: false,
       discovery: 0,
@@ -795,7 +920,8 @@ export default {
       if (live.dwell >= s.dwellMax) missPanel(s, live);
     } else {
       s.paused = false;
-      s.scroll += dt * s.speed;
+      const mul = (s.level === 5 && live) ? (live.speedMul || 1) : 1;
+      s.scroll += dt * s.speed * mul;
     }
   },
   pointer(s, type, p) {
@@ -832,9 +958,11 @@ export default {
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#f4d590' : GOLD, live ? 6 : 3,
     );
-    const frameHint = live && s.level === 4 && live.match
-      ? ((s.memoryOrder && live.motif === s.memoryOrder[s.memoryNext]) ? 'next memory' : 'wrong order soft')
-      : live && !live.match ? 'soft wash if you splash' : 'splash here';
+    const frameHint = live && s.level === 5 && live.match
+      ? ('clue ' + (s.target?.glyph || '♥'))
+      : live && s.level === 4 && live.match
+        ? ((s.memoryOrder && live.motif === s.memoryOrder[s.memoryNext]) ? 'next memory' : 'wrong order soft')
+        : live && !live.match ? 'soft wash if you splash' : 'splash here';
     d.text(frameHint, fx, fy + fh / 2 + 20, 14, live ? CREAM : GOLD);
 
     s.panels.forEach((row) => {
@@ -856,8 +984,21 @@ export default {
         const mark = row.match ? (MOTIF_MARK[row.motif] || '♫') : '·';
         d.text(mark, x + 70, FRAME.y - 62, 20, CREAM);
       }
+      if (s.level === 5) {
+        if (row.rule === 'colour') drawColourMark(d, row.colour, x + 70, FRAME.y - 70);
+        else {
+          const glyph = row.rule === 'motif' ? '♞' : row.rule === 'shutter' ? '◐' : row.rule === 'finale' ? '✦' : '·';
+          d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+          d.text(glyph, x + 70, FRAME.y - 62, 20, CREAM);
+        }
+      }
       // Shutters: decoy always closed; match panels closed until seated/open.
       if (s.level === 3 && !row.restored && (row.shutter || row.teach || !row.match)) {
+        const seated = row.held || inWindow(row, s.scroll);
+        const alwaysClosed = !row.match || row.teach || !seated;
+        drawShutters(d, x, FRAME.y, row.shutterOpen || 0, alwaysClosed);
+      }
+      if (s.level === 5 && !row.restored && (row.rule === 'shutter' || row.teach)) {
         const seated = row.held || inWindow(row, s.scroll);
         const alwaysClosed = !row.match || row.teach || !seated;
         drawShutters(d, x, FRAME.y, row.shutterOpen || 0, alwaysClosed);
@@ -869,14 +1010,16 @@ export default {
       if (live && live.id === row.id && !s.discovery && !(s.softUntil && s.t < s.softUntil)) {
         d.circle(FRAME.x, FRAME.y, 110, '#6b203066', CREAM, 5);
         const orderOk = !(s.level === 4 && live.match && s.memoryOrder && live.motif !== s.memoryOrder[s.memoryNext]);
-        const canSplash = live.match && orderOk;
-        d.text(canSplash ? 'SPLASH' : 'DECOY', FRAME.x, FRAME.y + 12, 36, CREAM);
+        const shutterOk = !(s.level === 5 && live.rule === 'shutter' && (live.shutterOpen || 0) < 0.85);
+        const canSplash = live.match && orderOk && shutterOk;
+        d.text(canSplash ? 'SPLASH' : (live.match ? 'WAIT' : 'DECOY'), FRAME.x, FRAME.y + 12, 36, CREAM);
         d.text(canSplash ? 'tap here' : 'soft fail', FRAME.x, FRAME.y + 48, 18, GOLD);
       }
     });
 
-    if (s.level === 3) drawChainRibbon(d, s);
+    if (s.level === 3 || s.level === 5) drawChainRibbon(d, s);
     if (s.level === 4) drawMemoryStrip(d, s);
+    if (s.level === 5) drawPanoramaWake(d, s);
 
     if (s.treasure && !s.treasure.taken && s.discovery > 0) {
       const pulse = 1 + Math.sin(s.t * 4) * 0.1;
@@ -894,7 +1037,16 @@ export default {
       c.lineWidth = 5;
       roundRect(c, 120, 220, 660, 500, 16);
       c.stroke();
-      d.text('Gallery', 450, 250, 22, GOLD);
+      d.text(s.level === 5 && s.panoramaWake ? 'Living Gallery' : 'Gallery', 450, 250, 22, GOLD);
+      if (s.level === 5 && s.panoramaWake) {
+        c.strokeStyle = '#f4d590';
+        c.lineWidth = 8;
+        c.beginPath();
+        c.moveTo(140, 470);
+        c.lineTo(760, 470);
+        c.stroke();
+        d.glow(450, 470, 40, '#f4d590');
+      }
       c.restore();
     }
 
@@ -911,11 +1063,12 @@ export default {
       c.stroke();
       d.text('SPLASH', 450, top + 210, 44, CREAM);
       d.text(
-        s.level === 4 ? 'remember ♫ — lantern, balloons, horse'
-          : s.level === 3 ? 'shutters open — link the bay'
-            : s.level === 2 ? 'horse only in the window'
-              : s.level === 1 ? 'match the medallion'
-                : 'the faded patch',
+        s.level === 5 ? 'follow each clue — wake the bay'
+          : s.level === 4 ? 'remember ♫ — lantern, balloons, horse'
+            : s.level === 3 ? 'shutters open — link the bay'
+              : s.level === 2 ? 'horse only in the window'
+                : s.level === 1 ? 'match the medallion'
+                  : 'the faded patch',
         450, top + 262, 22, GOLD,
       );
       c.restore();
