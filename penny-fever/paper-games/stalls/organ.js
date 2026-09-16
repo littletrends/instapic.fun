@@ -12,7 +12,7 @@
  * draw.glow() — 6-digit hex only (#rrggbb).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1';
+import {spriteKey} from '../prizes.js?v=exclusive-1b';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,

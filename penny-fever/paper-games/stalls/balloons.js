@@ -35,14 +35,14 @@
  * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1';
+import {spriteKey} from '../prizes.js?v=exclusive-1b';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'balloons';
-const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
+const ORDINARY = ['everyday-penny', 'rose-penny', 'crown-token'];
 const TREASURES = [
   'balloon-bouquet', 'prize-bag', 'singing-bird',
   'star-token', 'moon-penny', 'ride-ticket',

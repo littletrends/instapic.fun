@@ -67,7 +67,7 @@
  *     GOAL=3 reachable ~59–70 s. houseSeconds 120.
  */
 import {TAU, clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1';
+import {spriteKey} from '../prizes.js?v=exclusive-1b';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure,
   logAction, prefersReducedMotion,
