@@ -17,7 +17,8 @@
  * Practice complete does NOT require treasure.
  *
  * Tagline: Choose your spiral. Catch what tumbles.
- * Paper 1-layer 2D; helter.png court stays hero — translucent diegetic overlays only.
+ * Paper-cut deep-red spiral (layered faces + jitter). helter.png court stays hero.
+* Bottom terminus aligned to Palace of Joy stairs base; gold ball rolls crest→door.
  * No on-court drawHud / practice badges / TURN chrome. Shell .play-hud + #actions only.
  * d.glow() — 6-digit hex only. Do NOT set canvasControls.
  */
@@ -41,16 +42,20 @@ const LEVEL_NAMES = [
 
 const TAU = Math.PI * 2;
 const CX = 450;
-const Y_BOT = 1020;  // climb axis — more vertical room for 6 layers
-const Y_TOP = 190;
-const R_BOT = 295;
+/** Climb-axis bottom: front terminus (u=0) at Palace of Joy stairs base (~y 540). */
+const Y_BOT = 472;  // front exit ~555 — foot of Palace of Joy stairs
+const Y_TOP = 190;   // crest near tower tip / roof
+const R_BOT = 295;   // keep big readable scale (do not shrink)
 const R_TOP = 58;
-const TURNS = 6.0; // hard bar: ~6 visible coil layers
+const TURNS = 5.0;   // drop 1 coil vs 6 — 5 readable layers; end at stairs base (no extra loop)
 const Y_SQUASH = 0.28; // flatter ovals so stacked layers stay readable
+const ANG0 = -Math.PI / 2; // bottom-front exit toward viewer / stairs
 const CELL_COUNT = 26;
 const TRACK_W0 = 34; // outer — leave gaps between layers
 const TRACK_W1 = 22; // crest
 const TRACK_SAMPLES = 560;
+const BALL_R = 16;
+const BALL_ROLL_SECS = 14; // gravity-ish crest→door prop roll
 const GOAL = 3;
 const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
@@ -65,11 +70,15 @@ const BURGUNDY = '#c67483';
 const BURGUNDY_DEEP = '#6b2030';
 const PATH = '#e8d0a0';
 const YOU_FILL = '#fff6d8';
-/** Deep-red helter ribbon — track is the star (not thin path geometry). */
+/** Deep-red papercut ribbon — light top face / dark edge face. */
 const TRACK = '#a02838';
+const TRACK_FACE = '#b83242';   // lit paper top
 const TRACK_DEEP = '#8b1e2d';
 const TRACK_EDGE = '#5c121c';
 const TRACK_SHADOW = '#3a0a12';
+const BALL_GOLD = '#e8c46a';
+const BALL_GOLD_HI = '#fff0b8';
+const BALL_GOLD_DEEP = '#b8892e';
 
 
 /**
@@ -101,7 +110,7 @@ function ch1Board() {
  * ang starts at -PI/2 (bottom-front). depth = sin(ang): +1 back, -1 front.
  */
 function spiralPoint(u) {
-  const ang = -Math.PI / 2 + u * TURNS * TAU;
+  const ang = ANG0 + u * TURNS * TAU;
   const r = R_BOT + (R_TOP - R_BOT) * u;
   const climb = Y_BOT + (Y_TOP - Y_BOT) * u;
   // Front (sin=-1) sits lower on screen; back (sin=+1) sits higher — oval loops.
@@ -130,16 +139,38 @@ function trackWidth(u) {
  * Thick deep-red ribbon with depth layering: continuous half-turn coils,
  * back coils painted first so front turns visibly pass over them.
  */
+function paperJitter(i, seed) {
+  const n = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
+  return (n - Math.floor(n)) * 2 - 1;
+}
+
+/** Unit normals along a polyline (for paper edge offsets). */
+function pathNormals(pts) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[Math.min(pts.length - 1, i + 1)];
+    let dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    out.push({nx: -dy, ny: dx});
+  }
+  return out;
+}
+
+/**
+ * Papercut deep-red spiral: offset paper edges, clay/paper jitter,
+ * light top face + dark edge face (not a flat stroked ribbon only).
+ * Half-turn coils sorted back → front for overlap.
+ */
 function drawSpiralTrack(d) {
   const pts = [];
   for (let i = 0; i < TRACK_SAMPLES; i++) {
     pts.push(spiralPoint(i / (TRACK_SAMPLES - 1)));
   }
-  // Light spine only — heavy under-path smeared layers into one blob; coils carry the read.
-  const all = pts.map((p) => ({x: p.x, y: p.y}));
-  d.path(all.map((p) => ({x: p.x + 3, y: p.y + 5})), TRACK_SHADOW + '33', TRACK_W0 + 4, false, null);
+  // Soft under-shadow spine (paper cast).
+  d.path(pts.map((p) => ({x: p.x + 4, y: p.y + 7})), TRACK_SHADOW + '44', TRACK_W0 + 8, false, null);
 
-  // Half-turn coils (continuous arcs) sorted back → front for overlap.
   const halfTurns = Math.max(2, Math.ceil(TURNS * 2));
   const coils = [];
   for (let h = 0; h < halfTurns; h++) {
@@ -148,13 +179,12 @@ function drawSpiralTrack(d) {
     const i0 = Math.max(0, Math.floor(u0 * (TRACK_SAMPLES - 1)) - 2);
     const i1 = Math.min(TRACK_SAMPLES - 1, Math.ceil(u1 * (TRACK_SAMPLES - 1)) + 2);
     const slice = pts.slice(i0, i1 + 1);
-    if (slice.length < 2) continue;
-    // Mean depth over the half-turn (sin(ang): +back / -front).
+    if (slice.length < 3) continue;
     let depthSum = 0;
     for (const p of slice) depthSum += p.depth;
     const mid = slice[Math.floor(slice.length / 2)];
     coils.push({
-      pts: slice.map((p) => ({x: p.x, y: p.y})),
+      pts: slice,
       depth: depthSum / slice.length,
       w: trackWidth(mid.u),
       u: mid.u,
@@ -165,12 +195,52 @@ function drawSpiralTrack(d) {
 
   for (const coil of coils) {
     const w = coil.w;
-    d.path(coil.pts, TRACK_EDGE + 'f0', w + 6, false, null);
-    d.path(coil.pts, TRACK_DEEP + 'f8', w + 2.5, false, null);
-    d.path(coil.pts, TRACK + 'fc', w, false, null);
-    // Cream highlight lip on the upper edge of the ribbon.
-    const lip = coil.pts.map((p) => ({x: p.x, y: p.y - w * 0.3}));
-    d.path(lip, CREAM + '70', Math.max(2.5, w * 0.18), false, null);
+    const nrm = pathNormals(coil.pts);
+    const half = w * 0.5;
+    const thick = 7; // visible paper cardstock edge
+    const left = [];
+    const right = [];
+    for (let i = 0; i < coil.pts.length; i++) {
+      const p = coil.pts[i];
+      const n = nrm[i];
+      const jx = paperJitter(i + coil.h * 17, 1) * 1.35;
+      const jy = paperJitter(i + coil.h * 17, 2) * 1.05;
+      left.push({x: p.x + n.nx * half + jx, y: p.y + n.ny * half + jy});
+      right.push({x: p.x - n.nx * half + jx * 0.55, y: p.y - n.ny * half + jy * 0.55});
+    }
+    // Dark edge face (paper thickness) — offset down-right, drawn first.
+    const edgePoly = left.map((p) => ({x: p.x + 3.2, y: p.y + thick}))
+      .concat(right.map((p) => ({x: p.x + 3.2, y: p.y + thick})).reverse());
+    d.poly(edgePoly, TRACK_SHADOW + 'f4', TRACK_SHADOW, 1.4);
+    // Deep under-face for layered depth.
+    const deepPoly = left.map((p) => ({x: p.x + 1.6, y: p.y + thick * 0.62}))
+      .concat(right.map((p) => ({x: p.x + 1.6, y: p.y + thick * 0.62})).reverse());
+    d.poly(deepPoly, TRACK_EDGE + 'f8', TRACK_SHADOW, 1.2);
+    d.poly(
+      left.map((p) => ({x: p.x + 0.8, y: p.y + thick * 0.28}))
+        .concat(right.map((p) => ({x: p.x + 0.8, y: p.y + thick * 0.28})).reverse()),
+      TRACK_DEEP + 'f4', TRACK_EDGE, 1,
+    );
+    // Lit top paper face.
+    const topPoly = left.concat(right.slice().reverse());
+    d.poly(topPoly, TRACK_FACE + 'fa', TRACK_EDGE, 1.6);
+    // Inner body wash (slightly inset).
+    const inset = half * 0.55;
+    const innerL = [];
+    const innerR = [];
+    for (let i = 0; i < coil.pts.length; i++) {
+      const p = coil.pts[i];
+      const n = nrm[i];
+      const jx = paperJitter(i + coil.h * 9, 3) * 0.7;
+      const jy = paperJitter(i + coil.h * 9, 4) * 0.5;
+      innerL.push({x: p.x + n.nx * inset + jx, y: p.y + n.ny * inset + jy - 0.8});
+      innerR.push({x: p.x - n.nx * inset + jx * 0.4, y: p.y - n.ny * inset + jy * 0.4});
+    }
+    d.poly(innerL.concat(innerR.reverse()), TRACK + 'f4', TRACK_DEEP + '88', 1);
+    // Cream highlight lip on the upper paper edge.
+    d.path(left.map((p) => ({x: p.x, y: p.y - 1.2})), CREAM + '78', Math.max(2.2, w * 0.14), false, null);
+    // Dark lower lip (shadowed paper edge).
+    d.path(right.map((p) => ({x: p.x, y: p.y + 0.8})), TRACK_SHADOW + '99', Math.max(1.8, w * 0.1), false, null);
   }
 }
 
@@ -464,6 +534,16 @@ function drawFx(d, s) {
   }
 }
 
+/** Paper-cut gold/celestial ball — disc + highlight (prop rolls crest→door). */
+function drawBall(d, x, y, r) {
+  d.ellipse(x + 2, y + 4, r * 0.95, r * 0.55, TRACK_SHADOW + '55');
+  d.circle(x, y, r + 1.5, BALL_GOLD_DEEP + 'ee', TRACK_EDGE, 1.2);
+  d.circle(x, y, r, BALL_GOLD + 'f8', BALL_GOLD_DEEP, 1.8);
+  d.circle(x - r * 0.28, y - r * 0.32, r * 0.38, BALL_GOLD_HI + 'dd');
+  d.circle(x - r * 0.18, y - r * 0.22, r * 0.14, '#fffaf0cc');
+  d.glow(x, y, r * 2.1, GOLD);
+}
+
 export default {
   title: 'Spiral Slide',
   intro: 'Choose your spiral. Catch what tumbles. STEP up Tilly’s helter — cream ladders boost you up the spiral; burgundy snakes soft-dump you down (ride never aborts). Land 3 ladders to clear. A keepsake hides on a snake-detour off the easy climb.',
@@ -482,6 +562,7 @@ export default {
     const ladders = plan.ladders.map((L) => ({...L, used: false}));
     const snakes = plan.snakes.map((S) => ({...S, used: false}));
     const start = cells[0];
+    const crest = spiralPoint(1);
     return makeRideState(level, rand, {
       hits: 0,
       goal: GOAL,
@@ -512,6 +593,11 @@ export default {
       statusCopy: '',
       challengeOkFlash: false,
       pendingLand: false,
+      // Gold ball prop: u=1 crest → u=0 stairs-base exit (rolls down).
+      ballU: 1,
+      ballX: crest.x,
+      ballY: crest.y,
+      ballRolling: true,
     });
   },
   update(s, dt, input) {
@@ -540,6 +626,12 @@ export default {
       s.hits = 0;
       for (const L of s.ladders || []) L.used = false;
       for (const S of s.snakes || []) S.used = false;
+      s.ballU = 1;
+      s.ballRolling = true;
+      {
+        const bp = spiralPoint(1);
+        s.ballX = bp.x; s.ballY = bp.y;
+      }
       s.note = s.frozenChapter
         ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). STEP up.'
         : 'STEP up the spiral — cream ladder boosts you';
@@ -577,6 +669,21 @@ export default {
 
     s.t += dt;
     s.progress = Math.min(1, s.t / Math.max(0.01, s.duration || RIDE_SECONDS));
+
+    // Gold ball rolls DOWN the spiral (u: 1→0) with gravity-ish ease.
+    if (s.ballRolling !== false) {
+      const bu = s.ballU == null ? 1 : s.ballU;
+      // Accel as it descends — full crest→door in ~BALL_ROLL_SECS.
+      const rate = (1 / Math.max(0.01, BALL_ROLL_SECS)) * (0.55 + (1 - bu) * 1.35);
+      s.ballU = Math.max(0, bu - dt * rate);
+      if (s.ballU <= 0) {
+        s.ballU = 0;
+        s.ballRolling = false;
+      }
+      const bp = spiralPoint(s.ballU);
+      s.ballX = bp.x;
+      s.ballY = bp.y;
+    }
 
     // Ease YOU along current move; resolve landing when ease completes.
     if (s.moving) {
@@ -682,6 +789,13 @@ export default {
       try {
         d.item?.('spiral-tower', top.x, top.y - 10, {w: 28, alpha: 0.85});
       } catch { /* sprite optional */ }
+    }
+
+    // Gold celestial ball (prop) on the ribbon — rolls crest→stairs.
+    {
+      const bx = s.ballX ?? spiralPoint(s.ballU == null ? 1 : s.ballU).x;
+      const by = s.ballY ?? spiralPoint(s.ballU == null ? 1 : s.ballU).y;
+      drawBall(d, bx, by, BALL_R);
     }
 
     // YOU marker.
