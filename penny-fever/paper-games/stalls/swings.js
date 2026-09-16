@@ -46,7 +46,7 @@
  *   Coach/miss notes go to s.note → #readout only (no scream plates).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {spriteKey} from '../prizes.js?v=swings-bold-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -107,21 +107,21 @@ const SOFT_PUSH_SEC = 0.55; // ignore lean while soft-push eases inward
 const PURSE = {x: 86, y: 72};
 const PRIZE_CORNER = {x: 792, y: 78};
 
-// Lit Reach / Ribbon Round palette — green lined-up, gold idle, cool miss, warm POP, ribbon
-const GREEN = '#5ee08a';
-const GREEN_SOFT = '#7ef0a8';
-const GOLD = '#f4d590';
-const GOLD_DIM = '#d2a65b';
-const COOL = '#8ec8e8';
+// Lit Reach / Ribbon Round palette — bold on cream: green lined-up, gold idle, cool miss, warm POP, ribbon
+const GREEN = '#22e878';
+const GREEN_SOFT = '#5aff9a';
+const GOLD = '#ffd24a';
+const GOLD_DIM = '#e8a020';
+const COOL = '#4eb8f5';
 const CREAM = '#fff6d8';
-const RIBBON = '#c45a7a';
-const RIBBON_SOFT = '#e88aaa';
-const LINE_CREAM = '#ffe6a4'; // streak juice — Cream Tap feel, under chrome
-const CLOUD_TEAL = '#7ec8c0'; // soft cloud fog
-const CLOUD_SOFT = '#a8e0d8';
-const BELL_GOLD = '#e8c878'; // bell silhouette / pitch bars
-const BELL_SOFT = '#ffe6a4';
-const MIDNIGHT_SOFT = '#c8b8e8'; // Ch6 scream-clear plate
+const RIBBON = '#e82868';
+const RIBBON_SOFT = '#ff6a9a';
+const LINE_CREAM = '#ffdc55'; // streak juice — Cream Tap feel, under chrome
+const CLOUD_TEAL = '#20c4b0'; // bold teal fog — pops on cream
+const CLOUD_SOFT = '#5ee8d8';
+const BELL_GOLD = '#ffc940'; // bell silhouette / pitch bars
+const BELL_SOFT = '#ffe070';
+const MIDNIGHT_SOFT = '#b890f5'; // Ch6 scream-clear plate
 
 const SPAWNS = ['inner', 'outer'];
 
@@ -647,23 +647,23 @@ function drawBubble(d, x, y, depth, lit, flash, miss) {
   if (flash > 0) {
     const bloom = 1 + (flash / FLASH_SEC) * 1.1;
     d.glow(x, y, 56 * bloom, CREAM);
-    d.circle(x, y, r * bloom, '#ffe6a4cc', CREAM, 5);
+    d.circle(x, y, r * bloom, '#ffdc55cc', CREAM, 5);
     drawStar(d, x, y, 12 + depth * 3, CREAM, GOLD);
     // POP ring expanding
-    d.circle(x, y, r * (1.4 + (1 - flash / FLASH_SEC) * 1.6), null, '#ffe6a488', 3);
+    d.circle(x, y, r * (1.4 + (1 - flash / FLASH_SEC) * 1.6), null, '#ffdc5588', 3);
     return;
   }
   if (miss > 0) {
     d.glow(x, y, 40, COOL);
-    d.circle(x, y, r, '#8ec8e844', COOL, 4);
-    drawStar(d, x, y, 9 + depth * 3, '#c8e4f0', '#6a90b8');
+    d.circle(x, y, r, '#4eb8f544', COOL, 4);
+    drawStar(d, x, y, 9 + depth * 3, '#a8e8ff', '#3a7ab0');
     return;
   }
   if (lit) {
     // Hold-the-Line SAFE: green lined-up BEFORE the catch
     d.glow(x, y, 44 + depth * 8, GREEN);
-    d.circle(x, y, r + 4, '#5ee08a33', GREEN, 5);
-    d.circle(x, y, r, '#7ef0a866', GREEN_SOFT, 3.2);
+    d.circle(x, y, r + 4, '#22e87833', GREEN, 5);
+    d.circle(x, y, r, '#5aff9a66', GREEN_SOFT, 3.2);
     drawStar(d, x, y, 10 + depth * 3, CREAM, GREEN);
     d.text('lined up', x, y - r - 14, 14, GREEN_SOFT);
     return;
@@ -671,9 +671,9 @@ function drawBubble(d, x, y, depth, lit, flash, miss) {
   // Idle approaching lantern — gold, readable, not scream-loud
   const pulse = 0.7 + 0.3 * Math.sin(depth * 6);
   d.glow(x, y, 22 + pulse * 10, GOLD);  // draw.glow appends alpha — 6-digit only
-  d.circle(x, y, r, '#f4d59022', GOLD_DIM, 2.8);
-  d.circle(x, y, r * 0.72, '#f8e4b344', GOLD, 1.6);
-  drawStar(d, x, y, 8 + depth * 2.5, '#f8e4b3', GOLD_DIM);
+  d.circle(x, y, r, '#ffd24a22', GOLD_DIM, 2.8);
+  d.circle(x, y, r * 0.72, '#ffefb044', GOLD, 1.6);
+  drawStar(d, x, y, 8 + depth * 2.5, '#ffefb0', GOLD_DIM);
 }
 
 /** Teach ribbon gate — burgundy arch on the target band; long warn glow. */
@@ -713,7 +713,7 @@ function drawRibbonGate(d, s, bubble, bank, lit, flash, miss) {
         [inner.x + bank * 0.2, inner.y],
         [mid.x + bank * 0.3, mid.y + 10],
       ],
-      lit ? '#5ee08a55' : '#c45a7a66',
+      lit ? '#22e87855' : '#e8286866',
       lit ? GREEN : RIBBON,
       lit ? 3.2 : 2.4,
     );
@@ -723,7 +723,7 @@ function drawRibbonGate(d, s, bubble, bank, lit, flash, miss) {
   d.ellipse(
     x, y,
     28 + ramp * 8, 16 + ramp * 4,
-    lit ? '#5ee08a33' : '#c45a7a33',
+    lit ? '#22e87833' : '#e8286833',
     lit ? GREEN : RIBBON_SOFT,
     lit ? 4 : 2.6,
   );
@@ -733,9 +733,9 @@ function drawRibbonGate(d, s, bubble, bank, lit, flash, miss) {
   } else {
     d.glow(x, y, 28 + ramp * 22, RIBBON); // 6-digit only
   }
-  drawStar(d, x, y, 9 + depth * 2, lit ? CREAM : '#f8d0e0', lit ? GREEN : RIBBON);
+  drawStar(d, x, y, 9 + depth * 2, lit ? CREAM : '#ffc0d8', lit ? GREEN : RIBBON);
   d.text('ribbon', x, y + 30 + depth * 3, 14, lit ? GREEN_SOFT : RIBBON_SOFT);
-  d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 13, lit ? GREEN_SOFT : '#ead6a4');
+  d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 13, lit ? GREEN_SOFT : '#f0c860');
 }
 
 
@@ -765,7 +765,7 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
     d.circle(
       g.x + bank * 0.15, g.y,
       3.2 + ramp * 2.2 * pulse,
-      lit ? '#5ee08acc' : '#7ec8c0cc',
+      lit ? '#22e878cc' : '#20c4b0cc',
       lit ? GREEN : CLOUD_TEAL,
       lit ? 2.2 : 1.6,
     );
@@ -773,7 +773,7 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
   d.ellipse(
     x, y + 10,
     34 + ramp * 10, 12 + ramp * 4,
-    lit ? '#5ee08a33' : '#7ec8c044',
+    lit ? '#22e87833' : '#20c4b044',
     lit ? GREEN_SOFT : CLOUD_SOFT,
     lit ? 3 : 2.2,
   );
@@ -785,7 +785,7 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
     drawBubble(d, x, y, depth, lit, flash || 0, miss || 0);
     if (!bubble.taken && !(miss > 0) && !(flash > 0)) {
       d.text(fogged ? 'watch the shadow' : (bubble.teach ? 'cloud teach' : 'cloud'), x, y + 30 + depth * 3, 13, lit ? GREEN_SOFT : CLOUD_SOFT);
-      d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 12, lit ? GREEN_SOFT : '#ead6a4');
+      d.text(bandLabel(bubble.band, three), x, y + 46 + depth * 3, 12, lit ? GREEN_SOFT : '#f0c860');
     }
     return;
   }
@@ -796,16 +796,16 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
   d.glow(x, y, (teachFog ? 42 : 30) + ramp * (teachFog ? 22 : 16), CLOUD_TEAL); // 6-digit only
   if (teachFog) {
     // faint ghost star under fog (barely readable)
-    drawStar(d, x, y, 6 + depth * 1.5, '#f8e4b355', '#d2a65b55');
+    drawStar(d, x, y, 6 + depth * 1.5, '#ffefb055', '#e8a02055');
   } else {
     // clearer ghost star — readable under light fog
-    drawStar(d, x, y, 8 + depth * 2, '#f8e4b3aa', '#d2a65baa');
+    drawStar(d, x, y, 8 + depth * 2, '#ffefb0aa', '#e8a020aa');
   }
   const puffs = teachFog
     ? [[-20, -6, 22], [14, -10, 20], [-4, 8, 24], [22, 5, 17], [-24, 10, 16], [6, -18, 18], [0, 0, 20]]
     : [[-14, -4, 16], [10, -8, 14], [-2, 6, 18], [16, 4, 12], [-18, 8, 11], [4, -14, 13]];
   const puffFill = teachFog ? '#fff6d8cc' : '#fff6d855';
-  const puffInner = teachFog ? '#7ec8c088' : '#7ec8c033';
+  const puffInner = teachFog ? '#20c4b088' : '#20c4b033';
   for (const [ox, oy, pr] of puffs) {
     const wob = Math.sin(s.t * 2.4 + ox * 0.1) * 2;
     d.ellipse(
@@ -825,7 +825,7 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
   }
   d.text('Watch the shadow', x, y + (teachFog ? 42 : 36) + depth * 3, teachFog ? 16 : 13, teachFog ? CREAM : CLOUD_SOFT);
   // Always show bandLabel while fogged (non-teach clarity; teach keeps it too)
-  d.text(bandLabel(bubble.band, three) + ' band', x, y + (teachFog ? 62 : 52) + depth * 3, teachFog ? 15 : 12, teachFog ? '#ffe6a4' : '#ead6a4');
+  d.text(bandLabel(bubble.band, three) + ' band', x, y + (teachFog ? 62 : 52) + depth * 3, teachFog ? 15 : 12, teachFog ? '#ffdc55' : '#f0c860');
 }
 
 /** Bell bubble — silhouette + pitch bars (1/2/3) map low/mid/high → bands. */
@@ -856,8 +856,8 @@ function drawBellBubble(d, s, bubble, bank, lit, flash, miss) {
     const bh = 8 + i * 5;
     d.poly(
       [[bx - 4, barBaseY], [bx + 4, barBaseY], [bx + 4, barBaseY - bh], [bx - 4, barBaseY - bh]],
-      on ? (lit ? '#5ee08acc' : '#e8c878cc') : '#3a241866',
-      on ? (lit ? GREEN : BELL_GOLD) : '#b78b4844',
+      on ? (lit ? '#22e878cc' : '#ffc940cc') : '#3a241866',
+      on ? (lit ? GREEN : BELL_GOLD) : '#d4902044',
       on ? 2.2 : 1.2,
     );
   }
@@ -866,7 +866,7 @@ function drawBellBubble(d, s, bubble, bank, lit, flash, miss) {
   const br = 16 + depth * 5;
   d.glow(x, y, lit ? (44 + depth * 8) : (24 + ramp * 16), lit ? GREEN : BELL_GOLD); // 6-digit only
   // Bell body
-  d.ellipse(x, y + 2, br * 0.85, br * 0.7, lit ? '#5ee08a55' : '#e8c87855', lit ? GREEN : BELL_GOLD, lit ? 3.2 : 2.2);
+  d.ellipse(x, y + 2, br * 0.85, br * 0.7, lit ? '#22e87855' : '#ffc94055', lit ? GREEN : BELL_GOLD, lit ? 3.2 : 2.2);
   d.poly(
     [
       [x - br * 0.55, y + 4],
@@ -874,28 +874,28 @@ function drawBellBubble(d, s, bubble, bank, lit, flash, miss) {
       [x + br * 0.7, y + br * 0.85],
       [x - br * 0.7, y + br * 0.85],
     ],
-    lit ? '#7ef0a866' : '#f4d59066',
+    lit ? '#5aff9a66' : '#ffd24a66',
     lit ? GREEN_SOFT : BELL_GOLD,
     2,
   );
   // Clapper
   d.circle(x, y + br * 0.95, 3.2, lit ? GREEN_SOFT : CREAM, lit ? GREEN : GOLD_DIM, 1.4);
   // Crown
-  d.circle(x, y - br * 0.55, 3.6, lit ? '#5ee08a88' : '#e8c87888', lit ? GREEN : BELL_GOLD, 1.5);
-  drawStar(d, x, y - 2, 7 + depth * 2, lit ? CREAM : '#f8e4b3', lit ? GREEN : GOLD_DIM);
+  d.circle(x, y - br * 0.55, 3.6, lit ? '#22e87888' : '#ffc94088', lit ? GREEN : BELL_GOLD, 1.5);
+  drawStar(d, x, y - 2, 7 + depth * 2, lit ? CREAM : '#ffefb0', lit ? GREEN : GOLD_DIM);
 
   if (lit) {
-    d.circle(x, y, br + 8, '#5ee08a22', GREEN, 4);
+    d.circle(x, y, br + 8, '#22e87822', GREEN, 4);
     d.text('lined up', x, y - br - 28, 14, GREEN_SOFT);
   }
 
   if (teach) {
     d.text('HIGH → OUTER · HOLD', x, y + br + 22, 15, lit ? GREEN_SOFT : BELL_SOFT);
-    d.text(bandLabel(bubble.band, three), x, y + br + 40, 13, lit ? GREEN_SOFT : '#ead6a4');
+    d.text(bandLabel(bubble.band, three), x, y + br + 40, 13, lit ? GREEN_SOFT : '#f0c860');
   } else {
     const pitchLabel = (pitch + '').toUpperCase();
     d.text(pitchLabel + ' · ' + bellVerbHint(pitch), x, y + br + 22, 13, lit ? GREEN_SOFT : BELL_SOFT);
-    d.text(bandLabel(bubble.band, three), x, y + br + 40, 12, lit ? GREEN_SOFT : '#ead6a4');
+    d.text(bandLabel(bubble.band, three), x, y + br + 40, 12, lit ? GREEN_SOFT : '#f0c860');
   }
 }
 
@@ -923,7 +923,7 @@ function drawLineGuide(d, s, bank) {
     d.circle(
       p.x + bank * 0.25, p.y,
       2.2 + ramp * 1.4 + juice * 1.2 * pulse,
-      juice > 0 ? LINE_CREAM : '#f4d590aa',
+      juice > 0 ? LINE_CREAM : '#ffd24aaa',
       juice > 0 ? CREAM : GOLD_DIM,
       1,
     );
@@ -943,7 +943,7 @@ function drawChain(d, ax, ay, bx, by, player) {
     const u = i / links;
     const x = ax + (bx - ax) * u;
     const y = ay + (by - ay) * u;
-    d.circle(x, y, 2.4, '#c8964aaa', '#f0d09a', 1);
+    d.circle(x, y, 2.4, '#e8a830aa', '#ffe08a', 1);
   }
 }
 
@@ -969,23 +969,23 @@ function drawChair(d, x, y, scale, fly, depth, player, bank) {
     [right + kick * 0.2, seatY + 18 * scale],
     [left + kick * 0.2, seatY + 18 * scale],
   ];
-  const fillBack = player ? '#6b2030ee' : '#6b203055';
-  const fillSeat = player ? '#8a2840ee' : '#6b203044';
+  const fillBack = player ? '#b81040ee' : '#b8104055';
+  const fillSeat = player ? '#e01858ee' : '#b8104044';
   d.poly(back, fillBack, GOLD_DIM, player ? 2 : 1);
-  d.poly(seat, fillSeat, '#f0d09a', player ? 2 : 1);
+  d.poly(seat, fillSeat, '#ffe08a', player ? 2 : 1);
   if (player) {
     d.poly([
       [left - 2, seatY - 8 * scale],
       [right + 2, seatY - 8 * scale],
       [right + 1, seatY - 2 * scale],
       [left - 1, seatY - 2 * scale],
-    ], '#f0d09a88', GOLD, 1.4);
+    ], '#ffe08a88', GOLD, 1.4);
     d.poly([
       [x - 8 * scale + kick * 0.4, seatY - 22 * scale],
       [x + 8 * scale + kick * 0.4, seatY - 22 * scale],
       [x + 6 * scale + kick * 0.5, seatY + 2 * scale],
       [x - 6 * scale + kick * 0.5, seatY + 2 * scale],
-    ], '#f3e2bd', '#b78b48', 1.5);
+    ], '#fff2c0', '#d49020', 1.5);
     d.ellipse(x + kick * 0.15, seatY + 22 * scale, 22 * scale, 7 * scale, '#1a101066', null, 0);
   }
 }
@@ -994,8 +994,8 @@ function drawCanopyHub(d, s) {
   // Light hub so chains have an origin — do not hide the painted tower.
   const hold = !!s.holding;
   d.circle(CX, CY - 8, 34, hold ? '#3a182088' : '#1a304488', hold ? GOLD : GOLD_DIM, hold ? 3.6 : 3);
-  d.circle(CX, CY - 8, 18, hold ? '#8a2840cc' : '#6b2030aa', GOLD, 2);
-  d.ellipse(CX, CY + 52, 48, 16, '#2a181433', '#d2a65b55', 1);
+  d.circle(CX, CY - 8, 18, hold ? '#e01858cc' : '#b81040aa', GOLD, 2);
+  d.ellipse(CX, CY + 52, 48, 16, '#2a181433', '#e8a02055', 1);
   if (hold) d.glow(CX, CY - 8, 54, GOLD);
   if (s.leanCue > 0) {
     const u = s.leanCue / 0.35;
@@ -1026,7 +1026,7 @@ function drawBandShadows(d, s) {
       CX, CY,
       rr, rr * SQUASH,
       isCur ? '#3a241866' : '#3a241814',
-      isTarget ? '#f4d590ee' : (isCur ? '#d2a65bcc' : (isMid ? '#c45a7a55' : '#b78b4844')),
+      isTarget ? '#ffd24aee' : (isCur ? '#e8a020cc' : (isMid ? '#e8286855' : '#d4902044')),
       isTarget ? 3.6 : (isCur ? 2.4 : (isMid ? 1.6 : 1.1)),
     );
     if (isCur && !isTarget) {
@@ -1036,7 +1036,7 @@ function drawBandShadows(d, s) {
       for (let i = 0; i < 8; i++) {
         const a = s.theta * 0.35 + i * (TAU / 8);
         const p = orbitPoint(a, rr);
-        d.circle(p.x, p.y, 3.4, '#f4d590dd', GOLD_DIM, 1);
+        d.circle(p.x, p.y, 3.4, '#ffd24add', GOLD_DIM, 1);
       }
       if (s.holding || s.easeT < 1) {
         const a = s.theta + Math.PI * 0.5;
@@ -1045,8 +1045,8 @@ function drawBandShadows(d, s) {
         const right = orbitPoint(a + 0.18, rr - 6);
         d.poly(
           [[tip.x, tip.y], [left.x, left.y], [right.x, right.y]],
-          '#f4d59055',
-          '#f4d590cc',
+          '#ffd24a55',
+          '#ffd24acc',
           1.5,
         );
       }
@@ -1068,7 +1068,7 @@ function drawCloudOvalHint(d, s, bank) {
   d.ellipse(
     CX, CY,
     rr, rr * SQUASH,
-    lit ? '#5ee08a22' : '#7ec8c022',
+    lit ? '#22e87822' : '#20c4b022',
     lit ? GREEN : CLOUD_TEAL,
     2.4 + ramp * 2.2,
   );
@@ -1076,7 +1076,7 @@ function drawCloudOvalHint(d, s, bank) {
   for (let i = 0; i < 7; i++) {
     const a = live.theta - warn * (1 - ramp) * 0.35 + i * 0.09;
     const p = orbitPoint(a, rr);
-    d.circle(p.x + bank * 0.1, p.y, 2.8 + ramp, lit ? '#5ee08add' : '#a8e0d8dd', lit ? GREEN : CLOUD_SOFT, 1);
+    d.circle(p.x + bank * 0.1, p.y, 2.8 + ramp, lit ? '#22e878dd' : '#5ee8d8dd', lit ? GREEN : CLOUD_SOFT, 1);
   }
 }
 
@@ -1102,7 +1102,7 @@ function drawFx(d, s) {
     d.item(spriteKey(f.id), fx, fy, {
       w: 28 * (1 - u * 0.35),
       shadow: false,
-      fallback: () => drawStar(d, fx, fy, 10 * (1 - u * 0.3), '#ffe6a4', GOLD_DIM),
+      fallback: () => drawStar(d, fx, fy, 10 * (1 - u * 0.3), '#ffdc55', GOLD_DIM),
     });
   }
 }
@@ -1657,14 +1657,14 @@ export default {
     // Soft court vignette only — never a full-canvas fill over swings.png.
     d.ellipse(CX + bank * 0.12, CY + 70, 360, 250, '#1a101014');
     if (s.holding) {
-      d.ellipse(CX, CY + 40, 300, 210, '#6b203012');
+      d.ellipse(CX, CY + 40, 300, 210, '#b8104012');
     }
     if (s.screenFlash > 0) {
-      d.ellipse(CX, CY, 280, 200, '#6a90b822');
+      d.ellipse(CX, CY, 280, 200, '#3a7ab022');
     }
     if (s.popFlash > 0) {
       const u = s.popFlash / FLASH_SEC;
-      d.ellipse(CX, CY, 200 + (1 - u) * 80, 140 + (1 - u) * 40, '#ffe6a4' + Math.floor(u * 28).toString(16).padStart(2, '0'));
+      d.ellipse(CX, CY, 200 + (1 - u) * 80, 140 + (1 - u) * 40, '#ffdc55' + Math.floor(u * 28).toString(16).padStart(2, '0'));
     }
 
     drawBandShadows(d, s);
@@ -1722,9 +1722,9 @@ export default {
         const label = bubble.line
           ? (bubble.teach ? 'hold the line' : 'keep the line')
           : bandLabel(bubble.band, three);
-        d.text(label, px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : (bubble.line ? LINE_CREAM : '#ead6a4'));
+        d.text(label, px, py + 28 + depth * 4, 13, lit ? GREEN_SOFT : (bubble.line ? LINE_CREAM : '#f0c860'));
         if (bubble.line) {
-          d.text(bandLabel(bubble.band, three), px, py + 44 + depth * 4, 12, lit ? GREEN_SOFT : '#ead6a4');
+          d.text(bandLabel(bubble.band, three), px, py + 44 + depth * 4, 12, lit ? GREEN_SOFT : '#f0c860');
         }
       }
     });
@@ -1746,20 +1746,20 @@ export default {
         d.circle(
           g.x + bank * 0.2, g.y,
           2.6 + ramp * 1.4,
-          lit ? '#5ee08acc' : '#f4d590cc',
+          lit ? '#22e878cc' : '#ffd24acc',
           lit ? GREEN : GOLD_DIM,
           1,
         );
       }
       d.glow(x, y, (near ? 58 : 36) + ramp * 24, lit ? GREEN : GOLD);
       if (lit) {
-        d.circle(x, y, 34, '#5ee08a22', GREEN, 4);
+        d.circle(x, y, 34, '#22e87822', GREEN, 4);
         d.text('lined up', x, y - 48, 15, GREEN_SOFT);
       }
       d.item(spriteKey(tr.id), x, y, {
         w: near ? 64 : 48 + ramp * 10,
         shadow: false,
-        fallback: () => drawStar(d, x, y, 16, '#ffe6a4', GOLD_DIM),
+        fallback: () => drawStar(d, x, y, 16, '#ffdc55', GOLD_DIM),
       });
       if (s.theta < tr.sweepTheta - 0.2) {
         d.text(bandLabel(tr.band, three) + ' band', x, y + 42, 15, lit ? GREEN_SOFT : GOLD);
@@ -1771,16 +1771,16 @@ export default {
       const bloom = s.treasure.flash / FLASH_SEC;
       d.glow(p.x + bank * 0.4, p.y, 80 * bloom, CREAM);
       d.circle(p.x + bank * 0.4, p.y, 30, null, CREAM, 6);
-      d.circle(p.x + bank * 0.4, p.y, 30 * (1.3 + (1 - bloom) * 1.4), null, '#ffe6a466', 3);
+      d.circle(p.x + bank * 0.4, p.y, 30 * (1.3 + (1 - bloom) * 1.4), null, '#ffdc5566', 3);
     }
 
     // Prize waiting corner when eligible and not yet taken
     if (s.eligible && s.treasureId && !(s.treasure && s.treasure.taken) && !s.treasureCollected) {
       d.item(spriteKey(s.treasureId), PRIZE_CORNER.x, PRIZE_CORNER.y, {
         w: 48,
-        fallback: () => drawStar(d, PRIZE_CORNER.x, PRIZE_CORNER.y, 14, '#ffe6a4', GOLD_DIM),
+        fallback: () => drawStar(d, PRIZE_CORNER.x, PRIZE_CORNER.y, 14, '#ffdc55', GOLD_DIM),
       });
-      d.text('waiting', PRIZE_CORNER.x, PRIZE_CORNER.y + 42, 13, '#ead6a4');
+      d.text('waiting', PRIZE_CORNER.x, PRIZE_CORNER.y + 42, 13, '#f0c860');
     }
 
     // Court FX only — shell owns HUD / actions / readout (chrome layout pass).
