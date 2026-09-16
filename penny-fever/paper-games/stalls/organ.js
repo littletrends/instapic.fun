@@ -9,6 +9,9 @@
  * CHROME: no canvas drawHud/drawCoach; slim pipe mouths; verbs in #actions.
  * COLOUR: bolder brass/pipe/prop hex so props pop on cream court template.
  *
+ * DRESS: Tent_19_Poppy 6-pack (organ-poppy piece-01..06) + shared-player bea-player;
+ *   scenery + YOU on cream court; shell #actions TAP Do/Mi/Sol only (no on-art buttons).
+ *
  * organ.png is the court behind the canvas. Do not paint a full-screen background.
  * draw.glow() — 6-digit hex only (#rrggbb).
  */
@@ -38,6 +41,7 @@ const TAU = Math.PI * 2;
 const GOLD = '#f0c040';
 const CREAM = '#fff6e0';
 const INK = '#ffe08a';
+const INK_DARK = '#3a2418'; // dark font on cream court labels
 const BELL_GLOW = '#ffd060'; // 6-digit only for d.glow
 const ROLL_GLOW = '#f0d070'; // 6-digit only for d.glow
 const ECHO_GLOW = '#80d0ff'; // 6-digit only for d.glow
@@ -70,6 +74,85 @@ const PIPES = [
   {i: 1, x: 450, mouthY: 780, topY: 230, label: 'Mi', shape: 'diamond', fill: '#2eb84a', glow: '#7dff90'},
   {i: 2, x: 650, mouthY: 760, topY: 250, label: 'Sol', shape: 'triangle', fill: '#d02040', glow: '#ff90a8'},
 ];
+
+/** Tent_19_Poppy kit + shared YOU — court scenery only (TAP remix / Ch1–6 LOCKED). */
+const DRESS_CACHE = 'organ-dress-1';
+const POPPY_FILES = {
+  popcorn: 'Tent_19_Poppy_piece-01.png',
+  burntPopcorn: 'Tent_19_Poppy_piece-02.png',
+  bucket: 'Tent_19_Poppy_piece-03.png',
+  copperPot: 'Tent_19_Poppy_piece-04.png',
+  bellows: 'Tent_19_Poppy_piece-05.png',
+  fire: 'Tent_19_Poppy_piece-06.png',
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+let poppyPropImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  // Resolve against THIS module (stalls/organ.js), not play.html — otherwise
+  // ../assets hits penny-fever/assets/ (404) instead of paper-games/assets/.
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel;
+  }
+}
+
+function ensurePoppyProps() {
+  if (poppyPropImgs) return poppyPropImgs;
+  poppyPropImgs = {};
+  for (const [key, file] of Object.entries(POPPY_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/organ-poppy/' + file);
+    poppyPropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = dressUrl('../assets/shared-player/' + BEA_PLAYER_FILE);
+  }
+  return poppyPropImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+function drawPoppyScenery(d, s) {
+  const imgs = ensurePoppyProps();
+  // Quiet dress around cockpit — off pipe mouths (250/450/650 @ ~760) + chamber (450,430).
+  placeDress(d, imgs.popcorn, 110, 520, 70, -0.06);
+  placeDress(d, imgs.burntPopcorn, 790, 500, 70, 0.08);
+  placeDress(d, imgs.bucket, 95, 700, 90, -0.04);
+  placeDress(d, imgs.bellows, 805, 690, 95, 0.05);
+  placeDress(d, imgs.copperPot, 130, 200, 80, -0.1);
+  placeDress(d, imgs.fire, 770, 210, 75, 0.06);
+}
+
+function drawYou(d, s) {
+  ensurePoppyProps();
+  // Center-bottomish ABOVE mouths (~760) so Do/Mi/Sol stay clear.
+  const yx = 450;
+  const yy = 620;
+  d.glow(yx, yy + 8, 26, '#f0c040');
+  const ok = placeDress(d, beaPlayerImg, yx, yy, 60);
+  if (!ok) {
+    d.ellipse(yx, yy + 10, 18, 8, '#f0c04066');
+    d.circle(yx, yy, 12, '#fff6e0', '#3a2418', 2);
+    d.text('YOU', yx, yy + 4, 11, '#3a2418');
+  }
+}
+
 
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -519,7 +602,7 @@ function drawChamber(d, s) {
     d.c.fillRect(cx + 200 - wing, cy - 150, wing, 300);
     d.c.restore();
   }
-  d.text(s.level === 5 ? 'grand calliope chamber' : 'pipe chamber', cx, cy - 110, 18, INK);
+  d.text(s.level === 5 ? 'grand calliope chamber' : 'pipe chamber', cx, cy - 110, 18, INK_DARK);
   if (!s.chamberFindTaken) {
     d.glow(cx, cy + 36, 40, '#ffe6a4');
     d.item(spriteKey(ORDINARY[s.hits % ORDINARY.length]), cx, cy + 36, {
@@ -755,13 +838,17 @@ export default {
     const shakeX = (s.shake || 0) && !reduced(s) ? Math.sin(s.t * 40) * s.shake * 8 : 0;
     if (c) { c.save(); c.translate(shakeX, 0); }
 
+    // Soft quiet ground only — do not paint opaque cream over organ.png.
     d.ellipse(450, 520, 360, 420, '#4a182412');
+    ensurePoppyProps();
+    drawPoppyScenery(d, s);
     drawCockpit(d, s);
     drawClimbingNote(d, s);
     if (s.phase === 'chamber') drawChamber(d, s);
-    else if (s.phase === 'bypass') d.text('ordinary corridor', 450, 430, 22, INK);
-    else if (s.phase === 'cough') d.text('cough', 450, 400, 24, INK);
+    else if (s.phase === 'bypass') d.text('ordinary corridor', 450, 430, 22, INK_DARK);
+    else if (s.phase === 'cough') d.text('cough', 450, 400, 24, INK_DARK);
     drawMouths(d, s);
+    drawYou(d, s);
     if (c) c.restore();
   },
   readout: (s) => s.note || 'TAP the glowing pipe.',
