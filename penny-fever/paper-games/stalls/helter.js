@@ -41,16 +41,16 @@ const LEVEL_NAMES = [
 
 const TAU = Math.PI * 2;
 const CX = 450;
-const Y_BOT = 980;   // climb axis (ellipse midpoints)
-const Y_TOP = 250;
-const R_BOT = 300;
-const R_TOP = 72;
-const TURNS = 5.75; // ~5–6 visible coil layers (Lorie bar)
-const Y_SQUASH = 0.38; // elliptical loop depth (front lower, back higher)
+const Y_BOT = 1020;  // climb axis — more vertical room for 6 layers
+const Y_TOP = 190;
+const R_BOT = 295;
+const R_TOP = 58;
+const TURNS = 6.0; // hard bar: ~6 visible coil layers
+const Y_SQUASH = 0.28; // flatter ovals so stacked layers stay readable
 const CELL_COUNT = 26;
-const TRACK_W0 = 40; // outer / bottom stroke
-const TRACK_W1 = 28; // crest stroke (slight taper)
-const TRACK_SAMPLES = 420;
+const TRACK_W0 = 34; // outer — leave gaps between layers
+const TRACK_W1 = 22; // crest
+const TRACK_SAMPLES = 560;
 const GOAL = 3;
 const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
@@ -135,10 +135,9 @@ function drawSpiralTrack(d) {
   for (let i = 0; i < TRACK_SAMPLES; i++) {
     pts.push(spiralPoint(i / (TRACK_SAMPLES - 1)));
   }
-  // Continuous under-silhouette so the track reads as one ribbon (not pills).
+  // Light spine only — heavy under-path smeared layers into one blob; coils carry the read.
   const all = pts.map((p) => ({x: p.x, y: p.y}));
-  d.path(all.map((p) => ({x: p.x + 4, y: p.y + 6})), TRACK_SHADOW + '44', TRACK_W0 + 10, false, null);
-  d.path(all, TRACK_EDGE + '99', TRACK_W0 + 4, false, null);
+  d.path(all.map((p) => ({x: p.x + 3, y: p.y + 5})), TRACK_SHADOW + '33', TRACK_W0 + 4, false, null);
 
   // Half-turn coils (continuous arcs) sorted back → front for overlap.
   const halfTurns = Math.max(2, Math.ceil(TURNS * 2));
