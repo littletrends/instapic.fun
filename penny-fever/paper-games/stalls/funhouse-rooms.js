@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-3d
+ * cache: dress-ready-4
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -10,11 +10,14 @@
  * Path chips = simple geometric dots only (not catalogue coins).
  * TREASURES exclusive Ch1–6 — chapter bonus sits cream-border / off-path;
  *   starKey at mid-court unlocks → awards bonus (locked → collected).
- * Portals A/B on middle left/right edge walls — walk-through paired exits.
+ * Portals A/B on middle left/right edge walls — two-way through (enter L→exit R & vice versa).
+ * Power / invisible tokens flash chase-face masks for a beat; soft-bomb on touch stays.
  *
- * SCENERY: funhouse.png backdrop + cream oval; Tent_26_Bea curtains L+R only (no moon/light/standee);
- *   bea-player = YOU. BONUS Ch1–6 token-sized KEEP/TREASURE. No alley wall-turnaround / wall webp.
+ * SCENERY: funhouse.png backdrop + cream oval; Tent_26_Bea curtain portals one each side (right flipped);
+ *   no cream duplicate drapes / moon / light / standee. bea-player = YOU.
+ *   BONUS Ch1–6 token-sized KEEP/TREASURE. No alley wall-turnaround / wall webp.
  *   Laugh-faces = PNG cutouts in assets/funhouse-faces/ (soft bomb on touch).
+ * CONTROLS: corner arrow pads inside cream oval (⬆️⬅️ left · ➡️⬇️ right); MOVE stick retired.
  * FAIRNESS baseline Ch1: clearGoal 16; house 110s; faceSpeed 56;
  *   playerSpeed 168; powerSec 7.5. Later chapters tighten goal / faces / power.
  *
@@ -64,7 +67,7 @@ export const STAGE = {xMin: 200, xMax: 700, yMin: 450, yMax: 900};
 /**
  * ONE shared 11×13 corridor maze inside cream oval (cell 40px).
  * All chapters use this exact layout — fairness varies elsewhere.
- * A/B = paired portal openings on middle left/right edge walls (swapped sides vs dress-ready-1).
+ * A/B = paired two-way portal openings on middle left/right edge walls (swapped sides vs dress-ready-1).
  * K = starKey mid-court (was treasure seat). D = punchline door. F = face house. S = start.
  */
 const SHARED_MAZE_LAYOUT = [

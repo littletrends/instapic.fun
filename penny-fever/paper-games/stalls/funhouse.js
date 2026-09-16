@@ -1,20 +1,21 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-3d
+ * cache: dress-ready-4
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * PROPS = Tent_26_Bea (curtain L+R cream + curtain×2 mid-edge portals, starKey) + bea-player YOU.
+ * PROPS = Tent_26_Bea (curtain×2 mid-edge portals as the doors, starKey) + bea-player YOU.
  *   No moon (piece-03) / spotlight (piece-04) / standee (piece-02). BONUS = TREASURES Ch1–6 cream-border off-path.
  *   Path chips = geometric dots only. Laugh-faces = PNG cutouts (soft bomb on touch).
+ *   Power / “invisible” tokens → chase-face masks flash (glow/pulse) for a beat; soft-bomb stays.
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
- *   Two open-curtain props on middle L/R edge walls = portals (piece-01; right flipped — 2 styles / one each side).
- *   starKey mid-court → awards chapter bonus (locked→collected). Exactly ONE curtain L + ONE curtain R.
+ *   Mid-edge A/B curtain portals = two-way through (enter L→exit R, enter R→exit L; no IN/OUT labels).
+ *   Right curtain art flipped. starKey mid-court → outside bonus. Exactly one curtain each side (portal cells).
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
- * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
- *   stay. actions: [] — no shell arrow dock.
+ * CONTROLS: corner arrow pads INSIDE cream oval (L: ⬆️⬅️ · R: ➡️⬇️). Centre-bottom MOVE stick retired.
+ *   Keyboard + swipe stay. actions: [] — no shell arrow dock.
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
  *   powerSec 7.5. Soft fails never abort paid ride (face bomb = relocate to start).
  *
@@ -31,7 +32,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-3d';
+} from './funhouse-rooms.js?v=dress-ready-4';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -61,7 +62,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-3d';
+const BEA_CACHE_VER = 'dress-ready-4';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -79,6 +80,7 @@ const FACE_DRAW_W = 56;
 /** Soft face-bomb stun — relocate to start; never aborts paid ride. */
 const BOMB_STUN = 0.95;
 const PORTAL_COOL = 0.55;
+const MASK_FLASH_DUR = 0.78;
 let beaPropImgs = null;
 let beaPlayerImg = null;
 let faceArtImgs = null;
@@ -149,16 +151,15 @@ function placeDress(d, img, x, y, w, angle, h, flip) {
   return d.sprite(img, x, y, opts);
 }
 
-/** Cream-border set dressing — exactly ONE curtain left + ONE curtain right.
- *  No standee. No densify extras. Portal doorways drawn on maze edge walls.
- *  No moon / spotlight.
+/** Set dressing — curtains are the mid-edge portal doors (one L + one R, right flipped).
+ *  No standee. No densify extras. No moon / spotlight. No duplicate cream-side curtains.
  */
 function drawBeaScenery(d, s) {
+  // Maze chapters draw portal curtains on A/B cells in drawMazeCourt — skip double drapes.
+  if (s?.maze?.portals?.length) return;
   const imgs = ensureBeaProps();
-  // Piece-01 has two styles in one art (open + straight). One each side:
-  // left as-authored; right flipped so open style faces the maze.
-  placeDress(d, imgs.curtain, 168, 650, 100, 0, null, false);   // left cream
-  placeDress(d, imgs.curtain, 732, 650, 100, 0.06, null, true); // right cream flipped
+  placeDress(d, imgs.curtain, 168, 650, 100, 0, null, false);
+  placeDress(d, imgs.curtain, 732, 650, 100, 0.06, null, true);
 }
 
 function clamp(v, a, b) {
@@ -183,82 +184,61 @@ function isMaze(s) {
 }
 
 /**
- * Centre-bottom MOVE stick — helter cream-pad band under the court
- * (canvas 900×1200; pads sit ~y=1088+, below cream oval / maze lanes).
+ * Corner arrow pads INSIDE the cream oval / maze court (not under it).
+ * Left corner: ⬆️ + ⬅️ · Right corner: ➡️ + ⬇️. Stick-only chrome → corner pads.
  */
-function mazeStickLayout() {
-  return {
-    cx: 450,
-    cy: 1136,
-    baseRx: 90,
-    baseRy: 58,
-    knobR: 32,
-    dead: 8,
-    maxPull: 54,
-  };
+function mazeCornerPads() {
+  // Cream oval ~ (450,720) rx 310 ry 268. Pads sit in lower L/R corners inside the lip.
+  const r = 34;
+  return [
+    {id: 'up', x: 225, y: 820, r, label: '⬆️'},
+    {id: 'left', x: 225, y: 890, r, label: '⬅️'},
+    {id: 'right', x: 675, y: 820, r, label: '➡️'},
+    {id: 'down', x: 675, y: 890, r, label: '⬇️'},
+  ];
 }
 
-function hitMazeStick(p) {
-  if (!p || typeof p.x !== 'number') return false;
-  const L = mazeStickLayout();
-  const dx = (p.x - L.cx) / L.baseRx;
-  const dy = (p.y - L.cy) / L.baseRy;
-  return (dx * dx + dy * dy) <= 1.28;
+function hitMazePad(p) {
+  if (!p || typeof p.x !== 'number') return null;
+  for (const pad of mazeCornerPads()) {
+    if (Math.hypot(p.x - pad.x, p.y - pad.y) <= pad.r + 6) return pad.id;
+  }
+  return null;
 }
 
-function stickDirFromPull(dx, dy, dead) {
-  const len = Math.hypot(dx, dy);
-  if (len < dead) return null;
-  // Maze is cardinal-only corridors — 4-way stick.
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'right' : 'left';
-  return dy > 0 ? 'down' : 'up';
+function applyMazePad(s, dirId, down) {
+  if (!DIRS[dirId]) return;
+  setWantDir(s, dirId, !!down);
+  if (down) {
+    s.pad = {id: dirId, active: true};
+  } else if (s.pad?.id === dirId) {
+    s.pad = null;
+  }
 }
 
-function applyMazeStick(s, p) {
-  const L = mazeStickLayout();
-  const dx = (p?.x ?? L.cx) - L.cx;
-  const dy = (p?.y ?? L.cy) - L.cy;
-  const len = Math.hypot(dx, dy) || 1;
-  const pull = Math.min(len, L.maxPull);
-  const kx = (dx / len) * pull;
-  const ky = (dy / len) * pull;
-  const dir = stickDirFromPull(dx, dy, L.dead);
-  const prev = s.stick?.dir || null;
-  if (prev && prev !== dir) setWantDir(s, prev, false);
-  if (dir) setWantDir(s, dir, true);
-  s.stick = {active: true, kx, ky, dir};
-}
-
-function releaseMazeStick(s) {
-  if (!s.stick?.active) {
-    s.stick = null;
+function releaseMazePad(s) {
+  if (!s.pad?.active) {
+    s.pad = null;
     return;
   }
-  const dir = s.stick.dir;
-  s.stick = null;
+  const dir = s.pad.id;
+  s.pad = null;
   // Keep last dir for continuous run (match swipe); clear held locks only.
   s.heldDirs = {up: false, down: false, left: false, right: false};
   if (dir) s.wantDir = dir;
 }
 
-function drawMazeStick(s, d) {
-  const L = mazeStickLayout();
-  const armed = !!(s.stick && s.stick.active);
-  const kx = armed ? (s.stick.kx || 0) : 0;
-  const ky = armed ? (s.stick.ky || 0) : 0;
+function drawMazePads(s, d) {
+  const armedId = s.pad?.active ? s.pad.id : null;
   const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 3.2);
-  // Shadow + paper base (cream / gold / burgundy — oval only)
-  d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
-  d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.4);
-  d.ellipse(L.cx, L.cy, L.baseRx * 0.72, L.baseRy * 0.62, '#f8e4b3cc', BURGUNDY, 1.6);
-  if (armed) d.glow(L.cx, L.cy, 54 + pulse * 10, '#f4d590');
-  // Knobby top
-  const nx = L.cx + kx;
-  const ny = L.cy + ky;
-  d.ellipse(nx + 2, ny + 4, L.knobR * 0.95, L.knobR * 0.72, '#3a1a1244');
-  d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : BURGUNDY, GOLD, 2.2);
-  d.ellipse(nx - 4, ny - 6, L.knobR * 0.42, L.knobR * 0.28, CREAM + 'aa');
-  d.text('MOVE', L.cx, L.cy + L.baseRy + 18, 14, armed ? GOLD : INK);
+  for (const pad of mazeCornerPads()) {
+    const on = armedId === pad.id || !!(s.heldDirs && s.heldDirs[pad.id]);
+    d.ellipse(pad.x + 2, pad.y + 4, pad.r * 0.95, pad.r * 0.78, '#3a1a1266');
+    d.ellipse(pad.x, pad.y, pad.r, pad.r * 0.88, on ? GOLD : CREAM + 'ee', GOLD, 2.2);
+    d.ellipse(pad.x, pad.y, pad.r * 0.72, pad.r * 0.62, on ? '#f8e4b3' : '#f8e4b3cc', BURGUNDY, 1.5);
+    if (on) d.glow(pad.x, pad.y, pad.r + 10 + pulse * 6, '#f4d590');
+    d.text(pad.label, pad.x, pad.y + 8, 22, on ? BURGUNDY : INK);
+  }
 }
 
 /** Live door views — rotate swap, or shrink near/far scale + hitboxes. */
@@ -667,6 +647,7 @@ function initMazePlay(s) {
   s.wantDir = null;
   s.heldDirs = {up: false, down: false, left: false, right: false};
   s.swipe = null;
+  s.pad = null;
   s.stick = null;
   s.doorShut = false;
   s.cleared = 0;
@@ -705,6 +686,7 @@ function initMazePlay(s) {
   s.portalCool = 0;
   s.portalFx = null;
   s.bombFx = 0;
+  s.maskFlash = 0;
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
   logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
   s.note = s.practice
@@ -754,6 +736,7 @@ function arriveCell(s) {
     s.cleared = s.pelletsTaken;
     if (pel.kind === 'power') {
       s.powerLeft = maze.powerSec;
+      s.maskFlash = MASK_FLASH_DUR;
       s.note = 'PUNCHLINE POWER! Chase the laugh-faces!';
       logAction(s, 'power', {via: 'pellet'});
     } else {
@@ -799,6 +782,7 @@ function shutPunchlineDoor(s) {
   if (!near) return false;
   s.doorShut = true;
   s.powerLeft = maze.powerSec;
+  s.maskFlash = MASK_FLASH_DUR;
   s.note = 'Punchline SHUT — faces flee! Chase them!';
   logAction(s, 'power', {via: 'door'});
   return true;
@@ -822,7 +806,29 @@ function softBombToStart(s) {
   logAction(s, 'face-bomb', {soft: true});
 }
 
-/** Paired portal: enter A → pop out B (and vice versa). Brief cool so no bounce-loop. */
+/** Inward open neighbour of a portal — exit here so both sides feel like a through doorway. */
+function portalExitCell(maze, portal) {
+  if (!maze || !portal) return null;
+  const prefer = portal.id === 'A' ? 'right' : (portal.id === 'B' ? 'left' : null);
+  const order = prefer
+    ? [prefer, 'up', 'down', 'left', 'right']
+    : ['up', 'down', 'left', 'right'];
+  const seen = {};
+  for (const id of order) {
+    if (seen[id]) continue;
+    seen[id] = true;
+    const d = DIRS[id];
+    if (!d) continue;
+    const nc = portal.c + d.dc;
+    const nr = portal.r + d.dr;
+    if (isOpen(maze, nc, nr)) return {c: nc, r: nr, via: id};
+  }
+  return {c: portal.c, r: portal.r, via: null};
+}
+
+/** Paired portal: enter left (A) → exit right (B) inward, and enter right → exit left.
+ *  Two-way through-tunnel; no IN/OUT labels. Brief cool so no bounce-loop.
+ */
 function tryPortalTeleport(s) {
   const maze = s.maze;
   const p = s.player;
@@ -831,16 +837,21 @@ function tryPortalTeleport(s) {
   if (!hit) return false;
   const other = maze.portals.find(pt => pt.id !== hit.id);
   if (!other) return false;
+  const exit = portalExitCell(maze, other);
   const from = cellCenter(maze, hit.c, hit.r);
-  const to = cellCenter(maze, other.c, other.r);
-  p.c = other.c; p.r = other.r;
+  const to = cellCenter(maze, exit.c, exit.r);
+  p.c = exit.c; p.r = exit.r;
   p.x = to.x; p.y = to.y;
   p.tx = to.x; p.ty = to.y;
   p.moving = false;
+  // Keep travel direction so you continue out the far side (L→R or R→L).
+  if (hit.id === 'A') s.dir = 'right';
+  else if (hit.id === 'B') s.dir = 'left';
+  if (s.dir) s.wantDir = s.dir;
   s.portalCool = PORTAL_COOL;
   s.portalFx = {t: 0.42, x: to.x, y: to.y, fromX: from.x, fromY: from.y};
   s.note = 'WHOOSH — through the laughing doorway!';
-  logAction(s, 'portal', {from: hit.id, to: other.id});
+  logAction(s, 'portal', {from: hit.id, to: other.id, exitC: exit.c, exitR: exit.r});
   return true;
 }
 
@@ -994,6 +1005,7 @@ function updateMaze(s, dt) {
   }
   if (s.portalCool > 0) s.portalCool = Math.max(0, s.portalCool - dt);
   if (s.bombFx > 0) s.bombFx = Math.max(0, s.bombFx - dt);
+  if (s.maskFlash > 0) s.maskFlash = Math.max(0, s.maskFlash - dt);
   if (s.portalFx) {
     s.portalFx.t -= dt;
     if (s.portalFx.t <= 0) s.portalFx = null;
@@ -1098,8 +1110,8 @@ function drawMazeCourt(s, d) {
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
 
-  // Paired mid-edge portals — piece-01 curtain both sides (no IN/OUT).
-  // Curtain art has 2 styles in-frame; flip B so each side gets a matching open look.
+  // Paired mid-edge portals — ONE curtain each side (piece-01; right flipped). No IN/OUT.
+  // These ARE the doorway curtains (cream duplicates retired). Two-way through-tunnel.
   {
     const imgs = ensureBeaProps();
     for (const pt of maze.portals || []) {
@@ -1151,10 +1163,15 @@ function drawMazeCourt(s, d) {
     }
   }
 
-  // Faces
+  // Faces — mask flash beat when invisible/power token taken; flee glow while powered
   for (const f of s.faces || []) {
     if (!f.alive && f.gulp <= 0) continue;
-    if (s.powerLeft > 0 && f.alive) {
+    if (f.alive && (s.maskFlash || 0) > 0) {
+      const u = Math.min(1, s.maskFlash / MASK_FLASH_DUR);
+      const pulse = 0.55 + 0.45 * Math.sin(t * 14 + f.x * 0.03);
+      d.glow(f.x, f.y, 48 + pulse * 22 * u, '#ffe6a4');
+      d.glow(f.x, f.y, 28 + pulse * 14 * u, '#f4d590');
+    } else if (s.powerLeft > 0 && f.alive) {
       // Flee tint — cream with burgundy rings
       d.glow(f.x, f.y, 34, '#f4d590');
     }
@@ -1187,8 +1204,8 @@ function drawMazeCourt(s, d) {
   drawFlies(d, s);
 
   // Shell #readout / .play-hud own status — no fake court pills/coach.
-  // MOVE stick = only extra control in the game box (under cream court).
-  if (!s.result && !s.broke) drawMazeStick(s, d);
+  // Corner arrow pads inside cream oval (stick under court retired).
+  if (!s.result && !s.broke) drawMazePads(s, d);
 }
 
 
@@ -2054,14 +2071,14 @@ function updateDoorChapter(s, dt) {
 export default {
   title: 'Laughing Doorway',
   intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, walk the paired laughing doorways, grab the star key for the chapter bonus, and dodge laugh-faces (touch bombs you soft back to the entrance).',
-  instructions: 'Laughing Maze (all 6 chapters): drag the centre-bottom MOVE stick (or swipe / keyboard arrows) through the cream corridors. Chomp the midway chips. Walk through the middle-edge doorway portals to pop out the other side. Grab the mid-court star key to unlock and collect the cream-border chapter bonus. Laugh-faces chase you — power pellets / punchline door let you chase back; without power, a touch BOMBS you soft to the entrance (never aborts a paid ride). Clear the chapter chip goal to finish. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
+  instructions: 'Laughing Maze (all 6 chapters): tap the corner arrow pads inside the cream court (⬆️⬅️ left · ➡️⬇️ right), or swipe / keyboard arrows. Chomp midway chips. Walk through either mid-edge curtain doorway to pop out the other side (two-way). Grab the mid-court star key to unlock and collect the cream-border chapter bonus. Laugh-faces chase you — power / invisible tokens flash the masks and let you chase back; without power, a touch BOMBS you soft to the entrance (never aborts a paid ride). Clear the chapter chip goal to finish. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
   houseSeconds: 110,
   houseTitle: 'House lights',
   houseDetail: 'Ordinary exit — the maze stays open for another go.',
-  // MOVE via centre-bottom joystick + keyboard/swipe — no shell arrow dock.
+  // Corner pads inside court + keyboard/swipe — no shell arrow dock; MOVE stick retired.
   actions: [],
   create(level, rng) {
     const graph = chapterGraph(level);
@@ -2107,11 +2124,13 @@ export default {
       wantDir: null,
       heldDirs: {up: false, down: false, left: false, right: false},
       stick: null,
+      pad: null,
       mazeCleared: false,
       starKeyTaken: false,
       portalCool: 0,
       portalFx: null,
       bombFx: 0,
+      maskFlash: 0,
     });
   },
   update(s, dt) {
@@ -2204,10 +2223,11 @@ export default {
           takeTreasure(s);
           return;
         }
-        // Centre-bottom MOVE stick (under court) — prefer over maze swipe.
-        if (hitMazeStick(p)) {
+        // Corner arrow pads inside cream oval — prefer over maze swipe.
+        const padHit = hitMazePad(p);
+        if (padHit) {
           s.swipe = null;
-          applyMazeStick(s, p);
+          applyMazePad(s, padHit, true);
           return;
         }
         s.swipe = {x: p.x, y: p.y};
@@ -2228,8 +2248,15 @@ export default {
         return;
       }
       if (type === 'move') {
-        if (s.stick?.active) {
-          applyMazeStick(s, p);
+        if (s.pad?.active) {
+          const over = hitMazePad(p);
+          if (over && over !== s.pad.id) {
+            applyMazePad(s, s.pad.id, false);
+            applyMazePad(s, over, true);
+          } else if (!over) {
+            // Finger slid off pad — keep wantDir, drop hold highlight
+            releaseMazePad(s);
+          }
           return;
         }
         if (s.swipe) {
@@ -2245,8 +2272,8 @@ export default {
       }
       if (type === 'up' || type === 'cancel') {
         s.tapping = false;
-        if (s.stick?.active) {
-          releaseMazeStick(s);
+        if (s.pad?.active) {
+          releaseMazePad(s);
           s.swipe = null;
           return;
         }
