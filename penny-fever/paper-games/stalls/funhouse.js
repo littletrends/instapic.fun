@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-5
+ * cache: dress-ready-5b
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -12,7 +12,7 @@
  *   Power / “invisible” tokens → chase-face masks flash (glow/pulse) for a beat; soft-bomb stays.
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
  *   Mid-edge A/B curtain portals = two-way through (enter L→exit R, enter R→exit L; no IN/OUT labels).
- *   Right curtain art flipped. starKey mid-court → outside bonus. Exactly one curtain each side (portal cells).
+ *   Right curtain art flipped. starKey mid-court UNLOCKS cream-border bonus; collect on screen clear. Widened AA/BB portal mouths.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: bottom-of-stage row — UD cluster | centre MOVE stick | LR cluster (no curtain-corner pads).
  *   Keyboard + swipe stay. actions: [] — no shell arrow dock. Sticky-seize fixed (release snaps home).
@@ -32,7 +32,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-5';
+} from './funhouse-rooms.js?v=dress-ready-5b';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -62,7 +62,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-5';
+const BEA_CACHE_VER = 'dress-ready-5b';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -80,7 +80,7 @@ const FACE_DRAW_W = 56;
 /** Soft face-bomb stun — relocate to start; never aborts paid ride. */
 const BOMB_STUN = 0.95;
 const PORTAL_COOL = 0.55;
-const MASK_FLASH_DUR = 0.78;
+const MASK_FLASH_DUR = 1.35; // obvious flash beat (was 0.78 — too weak)
 let beaPropImgs = null;
 let beaPlayerImg = null;
 let faceArtImgs = null;
@@ -142,12 +142,13 @@ function faceImgFor(f) {
 }
 
 /** Helter-style dress place — soft paper shadow, 6-digit glow only elsewhere. */
-function placeDress(d, img, x, y, w, angle, h, flip) {
+function placeDress(d, img, x, y, w, angle, h, flip, alpha) {
   if (!dressReady(img) || typeof d.sprite !== 'function') return false;
   const opts = {w, shadow: true};
   if (h) opts.h = h;
   if (angle) opts.angle = angle;
   if (flip) opts.flip = true;
+  if (alpha != null) opts.alpha = alpha;
   return d.sprite(img, x, y, opts);
 }
 
@@ -490,7 +491,7 @@ function startChoose(s, room) {
 function maybeRevealTreasure(s, room) {
   if (!room?.treasure || s.treasureCollected) return;
   if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
-  // Chapter bonus on cream border / off-path — locked until starKey; key awards collected.
+  // Chapter bonus on cream border / off-path — starKey UNLOCKS only; collect on screen clear.
   if (!s.treasure) {
     let tx = room.treasure.x;
     let ty = room.treasure.y;
@@ -512,8 +513,8 @@ function maybeRevealTreasure(s, room) {
   }
   if (!s.treasure.taken) {
     s.treasureRevealed = true;
-    // Walk-pickup disabled for locked-until-key bonuses — starKey grants collect.
-    s.treasureWindow = !!s.eligible && !s.treasure.locked && !room.treasure.lockedUntilKey;
+    // Pickup window only after clear + unlock (walk past unlocked bonus until clear).
+    s.treasureWindow = !!s.eligible && !s.treasure.locked && !!s.mazeCleared;
   }
 }
 
@@ -839,7 +840,7 @@ function arriveCell(s) {
   }
   // Paired edge-wall portals
   tryPortalTeleport(s);
-  // Mid-court star key → awards outside chapter bonus
+  // Mid-court star key → unlock only (bonus awards on clear)
   collectStarKey(s);
   // Treasure pickup by proximity (unlocked walk-pickups only; key path uses collectStarKey)
   if (s.treasureWindow && s.treasure && !s.treasure.taken && !s.treasure.locked) {
@@ -849,8 +850,13 @@ function arriveCell(s) {
   if (s.phase === 'play' && !s.mazeCleared && s.pelletsTaken >= (maze.clearGoal || maze.pelletTotal)) {
     s.mazeCleared = true;
     s.cleared = s.goal;
-    s.note = 'Cleared! Keep chomping — or ride out the clock.';
     logAction(s, 'maze-clear', {gulped: s.facesGulped, taken: s.pelletsTaken, clearGoal: maze.clearGoal});
+    // Chapter bonus collects HERE (after clear) — only if starKey already unlocked it.
+    if (!awardBonusOnClear(s)) {
+      s.note = s.starKeyTaken
+        ? 'Cleared! Keep chomping — or ride out the clock.'
+        : 'Cleared! Grab the star key to unlock the cream-border bonus.';
+    }
   }
   // Full board clear → gentle exit
   if (s.phase === 'play' && s.pelletsLeft === 0 && maze.pelletTotal > 0) {
@@ -895,9 +901,35 @@ function softBombToStart(s) {
   logAction(s, 'face-bomb', {soft: true});
 }
 
-/** Inward open neighbour of a portal — exit here so both sides feel like a through doorway. */
+/** True if cell is a portal mouth tile (A/B cluster). */
+function isPortalCell(maze, c, r) {
+  return !!(maze?.portals || []).find(pt => pt.c === c && pt.r === r);
+}
+
+/** Innermost mouth of a portal id — A uses max-c, B uses min-c — so exit steps into open lane. */
+function portalAnchor(maze, id) {
+  const cluster = (maze?.portals || []).filter(pt => pt.id === id);
+  if (!cluster.length) return null;
+  if (id === 'A') return cluster.reduce((a, b) => (a.c >= b.c ? a : b));
+  if (id === 'B') return cluster.reduce((a, b) => (a.c <= b.c ? a : b));
+  return cluster[0];
+}
+
+/** Outermost mouth for curtain art — A min-c (left edge), B max-c (right edge). */
+function portalCurtainAnchor(maze, id) {
+  const cluster = (maze?.portals || []).filter(pt => pt.id === id);
+  if (!cluster.length) return null;
+  if (id === 'A') return cluster.reduce((a, b) => (a.c <= b.c ? a : b));
+  if (id === 'B') return cluster.reduce((a, b) => (a.c >= b.c ? a : b));
+  return cluster[0];
+}
+
+/** Inward open neighbour of a portal — exit here so both sides feel like a through doorway.
+ *  Skips other portal mouth tiles so a widened AA/BB mouth does not drop you onto another WHOOSH cell.
+ */
 function portalExitCell(maze, portal) {
   if (!maze || !portal) return null;
+  const anchor = portalAnchor(maze, portal.id) || portal;
   const prefer = portal.id === 'A' ? 'right' : (portal.id === 'B' ? 'left' : null);
   const order = prefer
     ? [prefer, 'up', 'down', 'left', 'right']
@@ -908,11 +940,19 @@ function portalExitCell(maze, portal) {
     seen[id] = true;
     const d = DIRS[id];
     if (!d) continue;
-    const nc = portal.c + d.dc;
-    const nr = portal.r + d.dr;
+    const nc = anchor.c + d.dc;
+    const nr = anchor.r + d.dr;
+    if (isOpen(maze, nc, nr) && !isPortalCell(maze, nc, nr)) return {c: nc, r: nr, via: id};
+  }
+  // Fallback: any open neighbour of anchor (incl. portal) rather than stuck on mouth.
+  for (const id of order) {
+    const d = DIRS[id];
+    if (!d) continue;
+    const nc = anchor.c + d.dc;
+    const nr = anchor.r + d.dr;
     if (isOpen(maze, nc, nr)) return {c: nc, r: nr, via: id};
   }
-  return {c: portal.c, r: portal.r, via: null};
+  return {c: anchor.c, r: anchor.r, via: null};
 }
 
 /** Paired portal: enter left (A) → exit right (B) inward, and enter right → exit left.
@@ -924,7 +964,8 @@ function tryPortalTeleport(s) {
   if (!maze?.portals?.length || !p || (s.portalCool || 0) > 0) return false;
   const hit = maze.portals.find(pt => pt.c === p.c && pt.r === p.r);
   if (!hit) return false;
-  const other = maze.portals.find(pt => pt.id !== hit.id);
+  const otherId = hit.id === 'A' ? 'B' : 'A';
+  const other = portalAnchor(maze, otherId) || maze.portals.find(pt => pt.id === otherId);
   if (!other) return false;
   const exit = portalExitCell(maze, other);
   const from = cellCenter(maze, hit.c, hit.r);
@@ -944,7 +985,7 @@ function tryPortalTeleport(s) {
   return true;
 }
 
-/** Mid-court starKey → release chapter bonus locked → collected (awarded if eligible). */
+/** Mid-court starKey → UNLOCK chapter bonus only (locked=false). Collect happens on screen clear. */
 function collectStarKey(s) {
   const maze = s.maze;
   if (!maze?.keyCell || s.starKeyTaken) return false;
@@ -955,15 +996,25 @@ function collectStarKey(s) {
   const room = roomOf(s.graph, 'maze');
   maybeRevealTreasure(s, room);
   if (s.treasure) s.treasure.locked = false;
-  if (s.eligible && s.treasure && !s.treasure.taken) {
-    s.treasureWindow = true;
-    takeTreasure(s);
-    s.note = 'Star key! Chapter bonus released — collected!';
+  // If screen already cleared, award now; otherwise KEEP/unlocked until clearGoal.
+  if (s.mazeCleared) {
+    awardBonusOnClear(s);
   } else {
+    s.treasureWindow = false;
     s.note = s.practice
       ? 'Star key! Practice — bonus unlocked but not kept.'
-      : 'Star key! Chapter bonus unlocked.';
+      : 'Star key! Bonus unlocked — clear the chips to keep it.';
   }
+  return true;
+}
+
+/** Award cream-border chapter bonus once screen is clear AND key has unlocked it. */
+function awardBonusOnClear(s) {
+  if (!s.eligible || !s.mazeCleared || !s.starKeyTaken) return false;
+  if (!s.treasure || s.treasure.taken || s.treasure.locked) return false;
+  s.treasureWindow = true;
+  if (!takeTreasure(s)) return false;
+  s.note = 'Screen clear! Chapter bonus collected!';
   return true;
 }
 
@@ -1201,12 +1252,15 @@ function drawMazeCourt(s, d) {
 
   // Paired mid-edge portals — ONE curtain each side (piece-01; right flipped). No IN/OUT.
   // These ARE the doorway curtains (cream duplicates retired). Two-way through-tunnel.
+  // Widened AA/BB mouths share one curtain art per side (outer edge anchor).
   {
     const imgs = ensureBeaProps();
-    for (const pt of maze.portals || []) {
+    for (const id of ['A', 'B']) {
+      const pt = portalCurtainAnchor(maze, id);
+      if (!pt) continue;
       const ctr = cellCenter(maze, pt.c, pt.r);
-      const ox = pt.id === 'A' ? -18 : (pt.id === 'B' ? 18 : 0);
-      const flip = pt.id === 'B';
+      const ox = id === 'A' ? -18 : 18;
+      const flip = id === 'B';
       d.glow(ctr.x + ox, ctr.y, 26, '#f4d590');
       placeDress(d, imgs.curtain, ctr.x + ox, ctr.y, 96, flip ? 0.04 : -0.04, null, flip);
     }
@@ -1252,19 +1306,24 @@ function drawMazeCourt(s, d) {
     }
   }
 
-  // Faces — mask flash beat when invisible/power token taken; flee glow while powered
+  // Faces — OBVIOUS mask flash when invisible/power token taken; flee glow while powered
   for (const f of s.faces || []) {
     if (!f.alive && f.gulp <= 0) continue;
-    if (f.alive && (s.maskFlash || 0) > 0) {
-      const u = Math.min(1, s.maskFlash / MASK_FLASH_DUR);
-      const pulse = 0.55 + 0.45 * Math.sin(t * 14 + f.x * 0.03);
-      d.glow(f.x, f.y, 48 + pulse * 22 * u, '#ffe6a4');
-      d.glow(f.x, f.y, 28 + pulse * 14 * u, '#f4d590');
+    const flashOn = f.alive && (s.maskFlash || 0) > 0;
+    let flashU = 0;
+    if (flashOn) {
+      flashU = Math.min(1, s.maskFlash / MASK_FLASH_DUR);
+      // Peak hard in first third, then ease — readable beat ~1.35s
+      const peak = flashU > 0.66 ? 1 : (flashU / 0.66);
+      const pulse = 0.7 + 0.3 * Math.sin(t * 16 + f.x * 0.03);
+      d.glow(f.x, f.y, 90 + pulse * 36 * peak, '#fff6d0');
+      d.glow(f.x, f.y, 64 + pulse * 28 * peak, '#ffe6a4');
+      d.glow(f.x, f.y, 40 + pulse * 18 * peak, '#f4d590');
     } else if (s.powerLeft > 0 && f.alive) {
       // Flee tint — cream with burgundy rings
       d.glow(f.x, f.y, 34, '#f4d590');
     }
-    drawLaughFace(d, f, t);
+    drawLaughFace(d, f, t, flashU);
   }
 
   // Player
@@ -1273,22 +1332,23 @@ function drawMazeCourt(s, d) {
 
   if (s.treasure && !s.treasure.taken) {
     const locked = !!s.treasure.locked;
-    const dim = !s.eligible || locked;
+    const unlockedWait = !locked && !s.mazeCleared; // key unlocked; awaiting screen clear
+    const dim = !s.eligible || locked || unlockedWait;
     const tx = s.treasure.x;
     const ty = s.treasure.y;
-    // Token-sized chapter bonus on cream border (KEEP/TREASURE); LOCKED until starKey.
+    // Token-sized chapter bonus: LOCKED → key unlocks KEEP → clear collects TREASURE.
     if (!dim) d.glow(tx, ty, 18, GOLD);
-    else d.glow(tx, ty, 14, '#f4d590');
+    else d.glow(tx, ty, unlockedWait ? 16 : 14, unlockedWait ? GOLD : '#f4d590');
     try {
       d.item(spriteKey(s.treasure.id), tx, ty, {
-        w: 28, alpha: locked ? 0.55 : (dim ? 0.72 : 0.92), shadow: true,
+        w: 28, alpha: locked ? 0.55 : (unlockedWait ? 0.82 : (dim ? 0.72 : 0.92)), shadow: true,
         fallback: () => d.heart(tx, ty, 10),
       });
     } catch {
       d.heart(tx, ty, 10);
     }
-    const tag = locked ? 'LOCKED' : (dim ? 'KEEP' : 'TREASURE');
-    d.text(tag, tx, ty - 22, 10, locked ? BURGUNDY : (dim ? INK : GOLD));
+    const tag = locked ? 'LOCKED' : (unlockedWait || dim ? 'KEEP' : 'TREASURE');
+    d.text(tag, tx, ty - 22, 10, locked ? BURGUNDY : (unlockedWait ? GOLD : (dim ? INK : GOLD)));
   }
   drawFlies(d, s);
 
@@ -1436,11 +1496,13 @@ function wrapShort(text, max) {
   return lines.slice(0, 3);
 }
 
-function drawLaughFace(d, f, t) {
+function drawLaughFace(d, f, t, flashU = 0) {
   if (!f) return;
   const gulping = f.gulp > 0;
   const u = gulping ? 1 - f.gulp / GULP_DUR : 0;
-  const scale = gulping ? Math.max(0.08, 1 - u) : 1;
+  // Brief scale-pop while masks flash (power / invisible token).
+  const flashPop = flashU > 0 ? (1 + 0.28 * Math.min(1, flashU / 0.55) * (0.85 + 0.15 * Math.sin(t * 18))) : 1;
+  const scale = (gulping ? Math.max(0.08, 1 - u) : 1) * flashPop;
   const x = f.x;
   const y = f.y - (gulping ? u * 30 : 0);
   const bounce = gulping ? 0 : Math.sin(t * 7 + f.x * 0.02) * 3;
@@ -1449,19 +1511,31 @@ function drawLaughFace(d, f, t) {
   // PNG cutouts (face-1..4 / comedy-mask-2x) — soft-bomb mechanics unchanged.
   const png = faceImgFor(f);
   const w = FACE_DRAW_W * scale;
-  if (png && placeDress(d, png, x, y + bounce, w)) return;
+  if (png && placeDress(d, png, x, y + bounce, w, 0, null, false, flashU > 0 ? Math.min(1, 0.92 + flashU * 0.08) : undefined)) {
+    if (flashU > 0) {
+      // Brighten beat — cream flash ring over PNG
+      d.glow(x, y + bounce, 22 + flashU * 18, '#fff8e0');
+    }
+    return;
+  }
   if (png && dressReady(png)) {
     try {
       const ctx = d.c || d.ctx;
       if (ctx) {
         const h = w * (png.naturalHeight / png.naturalWidth);
+        ctx.save();
+        if (flashU > 0) {
+          ctx.globalAlpha = Math.min(1, 0.88 + flashU * 0.12);
+          ctx.filter = `brightness(${1.15 + flashU * 0.45}) saturate(${1.1 + flashU * 0.35})`;
+        }
         ctx.drawImage(png, x - w / 2, y + bounce - h * 0.55, w, h);
+        ctx.restore();
         return;
       }
     } catch (_) { /* fall through to drawn mask */ }
   }
   // Fallback drawn comedy mask only if PNGs not ready
-  d.ellipse(x, y + bounce, 32 * scale, 28 * scale, CREAM, BURGUNDY, 2.4);
+  d.ellipse(x, y + bounce, 32 * scale, 28 * scale, flashU > 0 ? '#fff6d0' : CREAM, BURGUNDY, 2.4);
   diamond(d, x - 14 * scale, y - 2 * scale + bounce, 8 * scale, BURGUNDY, GOLD);
   diamond(d, x + 14 * scale, y - 2 * scale + bounce, 8 * scale, GOLD, BURGUNDY);
   d.circle(x - 10 * scale, y - 6 * scale + bounce, 4.2 * scale, BURGUNDY);

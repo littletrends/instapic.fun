@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-5
+ * cache: dress-ready-5b
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -9,7 +9,7 @@
  *
  * Path chips = simple geometric dots only (not catalogue coins).
  * TREASURES exclusive Ch1–6 — chapter bonus sits cream-border / off-path;
- *   starKey at mid-court unlocks → awards bonus (locked → collected).
+ *   starKey at mid-court UNLOCKS only; bonus collects on screen clear (clearGoal).
  * Portals A/B on middle left/right edge walls — two-way through (enter L→exit R & vice versa).
  * Power / invisible tokens flash chase-face masks for a beat; soft-bomb on touch stays.
  *
@@ -67,21 +67,21 @@ export const STAGE = {xMin: 200, xMax: 700, yMin: 450, yMax: 900};
 /**
  * ONE shared 11×13 corridor maze inside cream oval (cell 40px).
  * All chapters use this exact layout — fairness varies elsewhere.
- * A/B = paired two-way portal openings on middle left/right edge walls (swapped sides vs dress-ready-1).
+ * A/B = paired two-way portal mouths (widened AA….BB corridor) on middle left/right edge walls.
  * K = starKey mid-court (was treasure seat). D = punchline door. F = face house. S = start.
  */
 const SHARED_MAZE_LAYOUT = [
   '###########',
   '#o...#...o#',
-  '#.##.#.##.#',
+  '#.#...#.#.#',
   '#.........#',
-  '##.#.F.#.##',
-  '#..#.K.#..#',
-  'A.#######.B',
+  '#..#.F.#..#',
+  '#....K....#',
+  'AA.......BB',
   '#.........#',
-  '###.#D#.###',
+  '#...#D#...#',
   '#o..#.#..o#',
-  '#.##...##.#',
+  '#.#.....#.#',
   '#....S....#',
   '###########',
 ];
@@ -106,8 +106,8 @@ function mazeChapter(spec) {
         caption: caption || 'Chomp the midway chips — shut a punchline when you glow.',
         revealNote: 'MOVE · CHOMP · LAUGH-FACES CHASE',
         chooseNote: 'Clear the pellets — power lets you chase back.',
-        // Chapter bonus cream-border / off-path (right mid outside lanes) — locked until starKey.
-        // Key at mid-court awards bonus collected (no walk-to-edge required).
+        // Chapter bonus cream-border / off-path — locked until starKey UNLOCK;
+        // collect only after screen clear (clearGoal / mazeCleared).
         treasure: {spawnId: 'last-laugh', x: 755, y: 700, r: 22, lockedUntilKey: true},
         faces: faceCount,
       },
