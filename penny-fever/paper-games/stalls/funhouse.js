@@ -11,6 +11,10 @@
  * Chapter 4 Shrinking Hall: implemented — same verb SHUT THE PUNCHLINE with ONE
  *   new hazard taught alone: perspective / near vs far; floor tiles prove depth;
  *   SHUT the NEAR punchline that finishes the SETUP (not the tiny far decoy).
+ * Chapter 5 Midway Echoes: implemented — same verb SHUT THE PUNCHLINE with ONE
+ *   new hazard taught alone: distorted miniatures of other Penny Fever rides as
+ *   clues; oval SETUP names the true ride echo; doors show ride glyphs — some
+ *   warped decoys. Match the ride, then SHUT. No mirror/rotate/shrink restack.
  *
  * Locked lane: Pac-Man chase energy × Door Door SHUT × Finish the Joke comedy.
  * Primary verb: SHUT — slam the punchline door that finishes the setup so
@@ -20,8 +24,7 @@
  * NOT wink / look-direction Simon.
  *
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
- * Unfinished chapters (reuse Ch4 graph until authored):
- *   5 Midway Echoes   — distorted versions of the other five rides as clues
+ * Unfinished chapters (reuse Ch5 graph until authored):
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
  */
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -32,7 +35,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=shrink-ch4-1';
+} from './funhouse-rooms.js?v=echo-ch5-1';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -462,6 +465,14 @@ function drawSetupProp(d, room, t, pulse) {
     d.circle(x + 16, y - 6, 7, BURGUNDY);
     d.arc(x, y + 12, 16, 0.15, Math.PI - 0.15, BURGUNDY, 2.6);
     d.text('NEAR', x, y - 52, 18, INK);
+  } else if (prop === 'carousel' || prop === 'swings' || prop === 'balloons'
+    || prop === 'wheel' || prop === 'calliope' || prop === 'slide' || prop === 'bay') {
+    // Truthful SETUP plate — names the true ride echo (not a warped decoy).
+    d.ellipse(x + 3, y + 22, 54, 14, '#12233533');
+    d.ellipse(x, y, 52, 52, WOOD, GOLD, 3);
+    d.ellipse(x, y, 38, 38, CREAM, GOLD, 2);
+    drawRideEcho(d, prop, x, y, 1, false);
+    d.text(String(prop).toUpperCase(), x, y - 66, 16, INK);
   } else {
     d.ellipse(x, y, 44, 36, CREAM, GOLD, 2);
   }
@@ -552,6 +563,68 @@ function punchlineTag(door) {
   return String(pl);
 }
 
+
+/** Tiny oval ride glyphs for Midway Echoes — warped = decoy distortion. */
+function drawRideEcho(d, ride, x, y, scale = 1, warp = false) {
+  const s = Math.max(0.45, scale);
+  const wob = warp ? 1.22 : 1;
+  const skew = warp ? 8 : 0;
+  const fill = warp ? '#8a3040' : BURGUNDY;
+  const rim = warp ? '#c87840' : GOLD;
+  if (ride === 'carousel') {
+    d.ellipse(x + skew * 0.3, y + 2, 22 * s * wob, 10 * s, '#12233533');
+    d.ellipse(x + skew, y - 4 * s, 20 * s * wob, 16 * s, fill, rim, 2);
+    d.ellipse(x + skew * 0.5, y - 18 * s, 10 * s, 10 * s, CREAM, rim, 1.6);
+    d.ellipse(x + skew, y + 6 * s, 16 * s * wob, 6 * s, WOOD, rim, 1.4);
+  } else if (ride === 'swings') {
+    d.ellipse(x, y + 10 * s, 18 * s, 8 * s, '#12233533');
+    d.path([{x: x - 12 * s + skew, y: y - 18 * s}, {x: x - 6 * s, y: y + 8 * s}], rim, 2, false);
+    d.path([{x: x + 12 * s - skew, y: y - 18 * s}, {x: x + 6 * s, y: y + 8 * s}], rim, 2, false);
+    d.ellipse(x - 6 * s + skew * 0.4, y + 10 * s, 8 * s * wob, 6 * s, fill, rim, 1.6);
+    d.ellipse(x + 6 * s - skew * 0.4, y + 10 * s, 8 * s * wob, 6 * s, fill, rim, 1.6);
+    d.ellipse(x, y - 20 * s, 16 * s * wob, 5 * s, WOOD, rim, 1.4);
+  } else if (ride === 'balloons') {
+    d.ellipse(x + skew * 0.2, y + 12 * s, 14 * s, 6 * s, '#12233533');
+    d.ellipse(x - 8 * s + skew, y - 6 * s, 10 * s * wob, 12 * s, fill, rim, 1.8);
+    d.ellipse(x + 8 * s - skew, y - 10 * s, 9 * s * wob, 11 * s, CREAM, rim, 1.8);
+    d.path([{x: x - 8 * s, y: y + 4 * s}, {x: x, y: y + 16 * s}], rim, 1.4, false);
+    d.path([{x: x + 8 * s, y: y}, {x: x, y: y + 16 * s}], rim, 1.4, false);
+  } else if (ride === 'wheel') {
+    d.ellipse(x + skew * 0.2, y + 10 * s, 18 * s, 7 * s, '#12233533');
+    d.ellipse(x + skew * 0.5, y, 18 * s * wob, 18 * s, WOOD, rim, 2.2);
+    d.ellipse(x + skew * 0.3, y, 10 * s, 10 * s, CREAM, rim, 1.6);
+    d.ellipse(x, y, 4 * s, 4 * s, fill, rim, 1.2);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + (warp ? 0.35 : 0);
+      d.path([
+        {x: x, y: y},
+        {x: x + Math.cos(a) * 15 * s + skew * 0.2, y: y + Math.sin(a) * 15 * s},
+      ], rim, 1.4, false);
+    }
+  } else if (ride === 'calliope') {
+    d.ellipse(x, y + 12 * s, 16 * s, 6 * s, '#12233533');
+    d.ellipse(x + skew * 0.4, y + 2 * s, 18 * s * wob, 14 * s, WOOD, rim, 2);
+    d.ellipse(x - 6 * s + skew, y - 14 * s, 5 * s, 12 * s * wob, fill, rim, 1.4);
+    d.ellipse(x + skew * 0.2, y - 16 * s, 5 * s, 14 * s * wob, CREAM, rim, 1.4);
+    d.ellipse(x + 6 * s - skew, y - 12 * s, 5 * s, 10 * s * wob, fill, rim, 1.4);
+  } else if (ride === 'slide') {
+    d.ellipse(x, y + 12 * s, 18 * s, 7 * s, '#12233533');
+    d.ellipse(x - 10 * s + skew, y - 14 * s, 10 * s, 10 * s, fill, rim, 1.8);
+    d.path([
+      {x: x - 6 * s + skew, y: y - 10 * s},
+      {x: x + 14 * s - skew, y: y + 10 * s},
+    ], rim, 3.2, false);
+    d.ellipse(x + 12 * s - skew * 0.5, y + 10 * s, 8 * s * wob, 5 * s, CREAM, rim, 1.4);
+  } else if (ride === 'bay') {
+    d.ellipse(x, y + 10 * s, 20 * s, 8 * s, '#12233533');
+    d.ellipse(x + skew * 0.3, y, 22 * s * wob, 14 * s, '#4a6a88', rim, 2);
+    d.ellipse(x, y + 4 * s, 16 * s, 6 * s, CREAM, rim, 1.4);
+    d.ellipse(x - 6 * s + skew, y - 8 * s, 6 * s, 6 * s, fill, rim, 1.2);
+  } else {
+    d.ellipse(x, y, 14 * s, 12 * s, CREAM, rim, 1.6);
+  }
+}
+
 function drawDoor(d, door, s) {
   const x = door.x, y = door.y;
   let hw = door.w / 2, hh = door.h / 2;
@@ -585,6 +658,11 @@ function drawDoor(d, door, s) {
   if (door.lastLaugh) {
     d.ellipse(x, y - 18 + slide, 38, 26, BURGUNDY, INK, 2);
     d.ellipse(x, y - 10 + slide, 24, 14, '#1a1010');
+  }
+  // Midway Echoes — miniature ride glyph on the door (warped = decoy).
+  if (door.echo) {
+    const sc = (door.scale || 1) * 0.95;
+    drawRideEcho(d, door.echo, x, y - 28 * sc + slide, sc, !!door.warp);
   }
   // Punchline words (primary, large) + side as secondary — plate scales with door (near/far).
   const side = door.id === 'left' ? 'LEFT' : door.id === 'right' ? 'RIGHT' : '';
@@ -713,6 +791,27 @@ function drawJoke(d, room, t) {
     d.ellipse(450, 660 + bounce * 0.3, 40, 50, '#6b203055', GOLD, 2);
     d.ellipse(450, 660, 22, 28, '#2a181866', GOLD, 1.6);
     d.text('vanish', 450, 780, 22, INK);
+  } else if (room.joke === 'warble') {
+    d.ellipse(450, 700, 70, 18, '#12233533');
+    d.ellipse(450, 660 + bounce * 0.2, 36, 44, WOOD, GOLD, 2.4);
+    d.arc(450, 650, 22, -0.8, 0.8, BURGUNDY, 2.2);
+    d.arc(450, 670, 16, -0.6, 0.6, GOLD, 2);
+    d.text('warble', 450, 780, 22, INK);
+  } else if (room.joke === 'static') {
+    d.ellipse(450, 700, 80, 18, '#12233533');
+    for (let i = 0; i < 5; i++) {
+      const yy = 620 + i * 18 + bounce * (i % 2 ? 0.3 : -0.2);
+      d.path([{x: 410 + (i % 2) * 8, y: yy}, {x: 490 - (i % 2) * 8, y: yy + 4}],
+        i % 2 ? GOLD : BURGUNDY, 2, false);
+    }
+    d.text('static', 450, 780, 22, INK);
+  } else if (room.joke === 'sour') {
+    d.ellipse(450, 700, 70, 18, '#12233533');
+    d.ellipse(450, 660 + bounce * 0.2, 40, 48, '#8a3040', GOLD, 2.4);
+    d.arc(450, 668, 14, Math.PI + 0.2, -0.2, INK, 2.4);
+    d.circle(450 - 12, 648, 5, INK);
+    d.circle(450 + 12, 648, 5, INK);
+    d.text('sour', 450, 780, 22, INK);
   } else {
     d.poly([[410, 620], [490, 620], [490, 760], [410, 760]], WOOD, GOLD, 2);
     d.ellipse(450, 620, 40, 16, WOOD, GOLD, 2);
@@ -829,6 +928,20 @@ function drawClarityChrome(s, d) {
     drawChip(d, coach, 214, size);
   }
 
+  // Ch5 coach — ride-echo hazard alone; no mirror/rotate/shrink restack.
+  if (room.echo && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
+    let coach = 'MATCH THE RIDE — SHUT THE PUNCHLINE';
+    let size = 14;
+    if (room.teachEcho && (s.phase === 'reveal' || s.phase === 'inspect')) {
+      coach = 'HEAR THE ECHO → MATCH THE RIDE';
+      size = 15;
+    } else if (s.phase === 'choose') {
+      coach = room.teachEcho ? 'MATCH THE RIDE → SHUT THE PUNCHLINE' : 'MATCH THE RIDE — SHUT THE PUNCHLINE';
+      size = room.teachEcho ? 15 : 14;
+    }
+    drawChip(d, coach, 214, size);
+  }
+
   if (s.phase === 'choose') {
     drawChip(d, 'hold a door to SHUT · ← →', 1118, 16);
   }
@@ -916,6 +1029,21 @@ function drawPerspectiveFloor(d, room, s, t) {
   }
 }
 
+
+/** Midway Echoes teach cue — SETUP names the true ride; doors carry miniatures. */
+function drawEchoHints(d, room, s, t) {
+  if (!room?.echo || room.kind !== 'main') return;
+  const teachPulse = room.teachEcho && (s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'choose')
+    ? 0.45 + 0.35 * Math.sin((t || 0) * 3.6)
+    : 0;
+  if (teachPulse > 0.05) {
+    d.glow(450, 548, 64 + teachPulse * 16, '#f4d590');
+  }
+  if (room.teachEcho && (s.phase === 'reveal' || s.phase === 'inspect')) {
+    drawChip(d, 'TRUE ECHO = SETUP name', 860, 13);
+  }
+}
+
 function drawRoom(s, d) {
   const room = roomOf(s.graph, s.roomId);
   const t = s.t;
@@ -941,6 +1069,7 @@ function drawRoom(s, d) {
     });
     drawMirror(d, room, s, t);
     drawPerspectiveFloor(d, room, s, t);
+    drawEchoHints(d, room, s, t);
     const views = doorViews(s, room);
     views.forEach(door => drawDoor(d, door, s));
     if (room.rotate && s.phase === 'spin') {
@@ -1002,8 +1131,8 @@ export default {
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
-    // Ch2/Ch3/Ch4 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
-    const houseSecs = (level === 1 || level === 2 || level === 3) ? 52 : 90;
+    // Ch2–Ch5 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
+    const houseSecs = (level === 1 || level === 2 || level === 3 || level === 4) ? 52 : 90;
     return makeRideState(level, rng, {
       graph,
       roomId: graph.start,
@@ -1039,12 +1168,14 @@ export default {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       s.reduced = s.reduced || !!prefersReducedMotion?.();
-      // Runtime seeds houseLeft from export (90); override Ch2/Ch3/Ch4 to ~52s fair clock.
-      if (s.level === 1 || s.level === 2 || s.level === 3) s.houseLeft = s.houseSeconds || 58;
+      // Runtime seeds houseLeft from export (90); override Ch2–Ch5 to ~52s fair clock.
+      if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4) s.houseLeft = s.houseSeconds || 58;
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
       if (s.practice) {
-        if (startRoom?.teachShrink) {
+        if (startRoom?.teachEcho) {
+          s.note = 'Free practice · nothing kept. HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
+        } else if (startRoom?.teachShrink) {
           s.note = 'Free practice · nothing kept. MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
         } else if (startRoom?.teachRotate) {
           s.note = 'Free practice · nothing kept. MARK THE DOORS — then SHUT THE PUNCHLINE.';
@@ -1053,6 +1184,8 @@ export default {
         } else {
           s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
         }
+      } else if (startRoom?.teachEcho) {
+        s.note = 'HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
       } else if (startRoom?.teachShrink) {
         s.note = 'MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
       } else if (startRoom?.teachRotate) {
@@ -1118,7 +1251,9 @@ export default {
                 ? 'Mark the punchline doors — then the room turns.'
                 : (room.shrink
                   ? 'Floor tiles prove depth — SHUT the NEAR punchline.'
-                  : 'Read the punchline doors — then SHUT.')));
+                  : (room.echo
+                    ? 'SETUP names the true ride — match that miniature, then SHUT.'
+                    : 'Read the punchline doors — then SHUT.'))));
           maybeRevealTreasure(s, room);
         }
       }

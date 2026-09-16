@@ -10,8 +10,12 @@
  *   near vs far); floor tiles prove depth; SHUT the NEAR punchline that finishes
  *   the SETUP (not the tiny far decoy). No mirror or rotate restack.
  *
- * Unfinished chapters (reuse Ch4 graph until authored):
- *   5 Midway Echoes   — distorted versions of the other five rides as clues
+ * Chapter 5 Midway Echoes — implemented: one hazard taught alone (distorted
+ *   miniatures of other Penny Fever rides as clues); oval SETUP names the true
+ *   ride echo; doors show ride glyphs — some warped decoys. Match the ride,
+ *   then SHUT THE PUNCHLINE. No mirror/rotate/shrink restack.
+ *
+ * Unfinished chapters (reuse Ch5 graph until authored):
  *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
  *
  * Locked lane: Pac-Man chase × Door Door SHUT × Finish the Joke.
@@ -667,8 +671,175 @@ export const CHAPTER4 = {
   },
 };
 
+
+/**
+ * Chapter 5 — Midway Echoes.
+ * ONE new hazard taught alone on the first main room: distorted miniatures of
+ * other Penny Fever rides as clues. Oval SETUP names/shows the true ride echo
+ * (CAROUSEL / SWINGS / BALLOONS / WHEEL / CALLIOPE / SLIDE / BAY). Doors show
+ * miniature ride glyphs — some warped/wrong. Correct = door whose ride miniature
+ * matches the SETUP echo (not the warped decoy). Soft fails only — detour → rejoin.
+ * No mirror, rotate, or shrink restack. NOT wink / look-direction Simon.
+ */
+export const CHAPTER5 = {
+  id: 'midway-echoes',
+  start: 'foyer',
+  mainCount: 3,
+  rooms: {
+    foyer: {
+      id: 'foyer',
+      kind: 'main',
+      title: 'Echo Foyer',
+      teachEcho: true,
+      echo: true,
+      /* Long clear coaching window — teach ride-echo alone. */
+      revealSec: 2.35,
+      inspectSec: 2.15,
+      setup: 'The midway whispers a ride — which echo is CAROUSEL?',
+      setupProp: 'carousel',
+      setupEcho: 'carousel',
+      caption: 'HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.',
+      revealNote: 'HEAR THE ECHO — MATCH THE RIDE',
+      inspectNote: 'SETUP names the true ride. Doors show miniatures — some warped. Match, then SHUT.',
+      chooseNote: 'MATCH THE RIDE — SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'gallery', {
+          correct: true,
+          echo: 'carousel',
+          punchline: 'The waltz horse!',
+          label: 'Waltz horse',
+        }),
+        door('right', 'warble', {
+          correct: false,
+          echo: 'swings',
+          warp: true,
+          punchline: 'A warped swing!',
+          label: 'Warped swing',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'carousel', x: 450, y: 548, r: 70,
+          flavor: 'SETUP names the true ride echo. Match that miniature on a door — not the warped decoy.'},
+        {id: 'echo-find', kind: 'find', prop: 'cushion', x: 300, y: 630, r: 40, find: 'star-token',
+          flavor: 'A star token under a paper cushion — not the punchline.'},
+        {id: 'ribbon', kind: 'flavor', prop: 'panel', x: 600, y: 620, r: 34,
+          flavor: 'Pretty paper. Hear the echo — which door matches the ride?'},
+      ],
+      faces: 1,
+    },
+    warble: {
+      id: 'warble',
+      kind: 'detour',
+      title: 'Warble Joke',
+      joke: 'warble',
+      caption: 'A polite warble peeps off-key, then points you onward.',
+      revealNote: 'Wrong echo — a warble gag. Midway gallery waits ahead.',
+      rejoin: 'gallery',
+    },
+    gallery: {
+      id: 'gallery',
+      kind: 'main',
+      title: 'Midway Gallery',
+      echo: true,
+      /* Same hazard, shorter — no new stack (no mirror/rotate/shrink). */
+      revealSec: 1.05,
+      inspectSec: 0.85,
+      setup: 'Another whisper — which echo is SWINGS?',
+      setupProp: 'swings',
+      setupEcho: 'swings',
+      caption: 'Same echo rule. MATCH the ride miniature, then SHUT.',
+      revealNote: 'Hear the echo again — match SWINGS.',
+      inspectNote: 'Warped decoys may look loud. Match the SETUP ride, then SHUT.',
+      chooseNote: 'MATCH THE RIDE — SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'static', {
+          correct: false,
+          echo: 'balloons',
+          warp: true,
+          punchline: 'A sour balloon!',
+          label: 'Sour balloon',
+        }),
+        door('right', 'last-court', {
+          correct: true,
+          echo: 'swings',
+          punchline: 'The chain chair!',
+          label: 'Chain chair',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'swings', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. Match the SWINGS miniature — not a warped decoy.'},
+        {id: 'panel', kind: 'find', prop: 'panel', x: 590, y: 636, r: 42, find: 'moon-penny',
+          flavor: 'A moon penny behind a sliding paper panel.'},
+        {id: 'tassel', kind: 'flavor', prop: 'cushion', x: 310, y: 630, r: 36,
+          flavor: 'A velvet tassel. Soft — not the punchline.'},
+      ],
+      faces: 1,
+    },
+    static: {
+      id: 'static',
+      kind: 'detour',
+      title: 'Static Alcove',
+      joke: 'static',
+      caption: 'Static crackles a soft gag — then ushers you on.',
+      revealNote: 'Static gag. Last echo court is just ahead.',
+      rejoin: 'last-court',
+    },
+    'last-court': {
+      id: 'last-court',
+      kind: 'main',
+      title: 'Last Echo Court',
+      echo: true,
+      last: true,
+      setup: 'Final whisper — which echo is WHEEL?',
+      setupProp: 'wheel',
+      setupEcho: 'wheel',
+      caption: 'Final echo once — MATCH the wheel, SHUT the laughing door.',
+      revealNote: 'One more echo — MATCH WHEEL, then SHUT the last laugh.',
+      inspectNote: 'If a keepsake is here, it sits in the open — tap it.',
+      chooseNote: 'SHUT THE LAST LAUGH',
+      doors: [
+        door('left', 'exit', {
+          correct: true,
+          echo: 'wheel',
+          lastLaugh: true,
+          punchline: 'Wheel who? — exit!',
+          label: 'Wheel who? — exit',
+        }),
+        door('right', 'sour', {
+          correct: false,
+          echo: 'calliope',
+          warp: true,
+          punchline: 'Stay warped',
+          label: 'Stay warped',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'wheel', x: 450, y: 540, r: 70,
+          flavor: 'Wheel who? Match the WHEEL miniature on the laughing door — not the warped decoy.'},
+        {id: 'mouth', kind: 'flavor', prop: 'mouth', x: 268, y: 700, r: 40,
+          flavor: 'A comedy mouth. It only laughs for the true punchline.'},
+        {id: 'court-cushion', kind: 'flavor', prop: 'cushion', x: 600, y: 640, r: 38,
+          flavor: 'A court cushion. Soft landing, no secret.'},
+      ],
+      treasure: {spawnId: 'last-laugh', x: 450, y: 470, r: 58},
+      faces: 1,
+    },
+    sour: {
+      id: 'sour',
+      kind: 'detour',
+      title: 'Sour Echo',
+      joke: 'sour',
+      caption: 'A sour note bends the echo, then clears the way back.',
+      revealNote: 'Not the last laugh. Back to the court — finish the joke.',
+      rejoin: 'last-court',
+    },
+  },
+};
+
 export function chapterGraph(level) {
-  // level 0 = Ch1; level 1 = Ch2; level 2 = Ch3; level ≥3 = Ch4 until Ch5+ are authored.
+  // level 0 = Ch1; level 1 = Ch2; level 2 = Ch3; level 3 = Ch4; level ≥4 = Ch5 until Ch6 is authored.
+  if (level >= 4) return CHAPTER5;
   if (level >= 3) return CHAPTER4;
   if (level >= 2) return CHAPTER3;
   if (level >= 1) return CHAPTER2;
