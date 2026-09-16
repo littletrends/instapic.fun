@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: chrome-layout-2
+ * cache: bold-colour-1
  *
  * Chapter 1 Two Doors: ENTER → REVEAL → INSPECT → CHOOSE → TRANSITION
  * Chapter 2 Mirror Joke: implemented — same verb SHUT THE PUNCHLINE with ONE
@@ -31,7 +31,7 @@
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
  * All six chapters implemented — polish-only remaining (timing/copy).
  */
-import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {spriteKey} from '../prizes.js?v=funhouse-bold-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -39,13 +39,13 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=chrome-layout-2';
+} from './funhouse-rooms.js?v=funhouse-bold-1';
 
-const GOLD = '#d2a65b';
+const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
 const INK = '#f0d09a';
-const BURGUNDY = '#6b2030';
-const WOOD = '#4a2418';
+const BURGUNDY = '#c42848';
+const WOOD = '#7a3420';
 /** Door Door weight — hold ~160ms then SHUT commits. */
 const PRESS_MS = 0.16;
 const TREASURE_HOLD = 0.7;
@@ -564,7 +564,7 @@ function drawCurtain(d, side, puff, t) {
     pts.push([xx, yy]);
   }
   pts.push([x0 + dir * 4, 690], [x0 - dir * 8, 690], [x0 - dir * 8, 430]);
-  d.poly(pts, left ? '#6b2030cc' : '#4a1824cc', GOLD, 1.6);
+  d.poly(pts, left ? '#c42848cc' : '#8e1c34cc', GOLD, 1.6);
 }
 
 function punchlineTag(door) {
@@ -746,7 +746,7 @@ function drawJoke(d, room, t) {
     d.ellipse(450, 622 + bounce, 40, 12, CREAM);
     d.text('splut', 450, 700, 22, INK);
   } else if (room.joke === 'whoopee') {
-    d.ellipse(450, 760, 120, 28, '#6b203088', GOLD, 2);
+    d.ellipse(450, 760, 120, 28, '#c4284888', GOLD, 2);
     d.ellipse(450, 748 + bounce * 0.4, 90, 18, BURGUNDY, INK, 2);
     d.text('whoopee', 450, 700, 24, INK);
   } else if (room.joke === 'shard') {
@@ -799,7 +799,7 @@ function drawJoke(d, room, t) {
     d.text('echo', 450, 780, 22, INK);
   } else if (room.joke === 'vanish') {
     d.ellipse(450, 700, 70, 18, '#12233533');
-    d.ellipse(450, 660 + bounce * 0.3, 40, 50, '#6b203055', GOLD, 2);
+    d.ellipse(450, 660 + bounce * 0.3, 40, 50, '#c4284855', GOLD, 2);
     d.ellipse(450, 660, 22, 28, '#2a181866', GOLD, 1.6);
     d.text('vanish', 450, 780, 22, INK);
   } else if (room.joke === 'warble') {
@@ -959,14 +959,14 @@ function drawPerspectiveFloor(d, room, s, t) {
   for (let i = -3; i <= 3; i++) {
     if (i === 0) continue;
     const x0 = 450 + i * 78;
-    d.path([{x: x0, y: 900}, {x: vpX + i * 8, y: vpY}], '#d2a65b66', 1.6, false);
+    d.path([{x: x0, y: 900}, {x: vpX + i * 8, y: vpY}], '#e8b84a66', 1.6, false);
   }
   // Horizontal tile bands — wider near, narrower far.
   for (let row = 0; row < 5; row++) {
     const u = row / 4;
     const yy = 880 - u * 280;
     const half = 250 - u * 170;
-    d.path([{x: 450 - half, y: yy}, {x: 450 + half, y: yy}], row % 2 ? '#6b203055' : '#d2a65b55', 2, false);
+    d.path([{x: 450 - half, y: yy}, {x: 450 + half, y: yy}], row % 2 ? '#c4284855' : '#e8b84a55', 2, false);
     // Soft tile diamonds that shrink with depth.
     const tiles = 5 - row;
     for (let c = 0; c < tiles; c++) {
@@ -1008,7 +1008,7 @@ function drawRoom(s, d) {
   const t = s.t;
   const puff = room.kind === 'detour' ? 0.2 : (s.phase === 'choose' ? 0.85 : 0.35);
   // Paper stage on the cream oval only — façade / tents stay visible.
-  d.ellipse(450, 720, 310, 268, '#f4e6c888', '#d2a65b55', 2);
+  d.ellipse(450, 720, 310, 268, '#f4e6c888', '#e8b84a55', 2);
   d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 3, false);
   for (let i = 0; i < 7; i++) diamond(d, 210 + i * 80, 428, 11, i % 2 ? BURGUNDY : GOLD, '#f8e4b3');
   drawCurtain(d, 'left', puff, t);
