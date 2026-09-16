@@ -12,7 +12,7 @@
  * draw.glow() — 6-digit hex only (#rrggbb).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -21,8 +21,8 @@ import {
 const RIDE = 'organ';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const TREASURES = [
-  'organ-music-box', 'star-token', 'moon-penny',
-  'swing-spinner', 'ride-ticket', 'aura-keepsake',
+  'organ-music-box', 'coin-slot', 'star-token',
+  'moon-penny', 'ride-ticket', 'aura-keepsake',
 ];
 const LEVEL_NAMES = [
   'Three Bright Notes',

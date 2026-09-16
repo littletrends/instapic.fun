@@ -23,14 +23,14 @@
  * d.glow() — 6-digit hex only. Do NOT set canvasControls.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'helter';
-const TREASURES = ['spiral-tower', 'star-token', 'moon-penny', 'prize-bag', 'ride-ticket', 'lucky-match'];
+const TREASURES = ['spiral-tower', 'lucky-match', 'mercury-bead', 'star-token', 'moon-penny', 'ride-ticket'];
 const LEVEL_NAMES = [
   'First Spiral',
   'Bunting Bend',

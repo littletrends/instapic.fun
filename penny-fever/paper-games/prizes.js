@@ -153,6 +153,7 @@ export const items = {
   'laughing-doorway': {collection:'ride-keepsakes', name:'Laughing doorway'},
   'spiral-tower': {collection:'ride-keepsakes', name:'Spiral tower'},
   'painted-bay': {collection:'ride-keepsakes', name:'Painted bay'},
+  'alley-panel-kit': {collection:'ride-keepsakes', name:'Alley panel kit'},
   'showman-ribbon': {collection:'alley-curios', name:'Showman ribbon'},
   'coin-album': {collection:'pennies', name:'Coin album'},
   'safari-frame': {collection:'parlour-prizes', name:'Safari frame'},
@@ -213,8 +214,8 @@ export const kits = {
     prizes: ['whisper-charm', 'charm-pouch', 'secret-keeper', 'surprise-parcel', 'stamp-passport', 'lost-and-found-tag'],
   },
   pack: {
-    sprites: ['night-suitcase','ticket-satchel','penny-purse','coin-sleeve','lucky-match','whisper-charm','pocket-observatory','pressed-heart','penny-collector-book','sealed-secret','midnight-invitation'],
-    prizes: ['pressed-heart', 'penny-purse', 'penny-collector-book', 'sealed-secret', 'midnight-invitation', 'ticket-satchel'],
+    sprites: ['night-suitcase', 'ticket-satchel', 'penny-purse', 'coin-sleeve', 'lucky-match', 'whisper-charm', 'pocket-observatory', 'pressed-heart', 'penny-collector-book', 'sealed-secret', 'midnight-invitation'],
+    prizes: ['pressed-heart', 'penny-purse', 'penny-collector-book', 'sealed-secret', 'midnight-invitation', 'night-suitcase'],
   },
   love: {
     sprites: ['pressed-heart','heart-biscuit','rose-penny','rose-lockbox','rose-hair-bow','rose-press','kindness-heart','friendship-pins','ribbon-gift-box'],
@@ -297,8 +298,8 @@ export const kits = {
     prizes: ['marquee-bulb', 'pocket-marquee', 'lantern-lighter', 'midway-map', 'new-year-star-cracker', 'marquee-stub'],
   },
   pass: {
-    sprites: ['secret-door-key','velvet-mask','cue-script','showman-ribbon','cue-card','stage-door-pass'],
-    prizes: ['cue-script', 'velvet-mask', 'secret-door-key', 'showman-ribbon', 'cue-card', 'stage-door-pass'],
+    sprites: ['secret-door-key', 'velvet-mask', 'cue-script', 'showman-ribbon', 'cue-card', 'stage-door-pass', 'showman-pass'],
+    prizes: ['cue-script', 'velvet-mask', 'secret-door-key', 'showman-ribbon', 'cue-card', 'showman-pass'],
   },
   lookup: {
     sprites: ['star-fragment','star-spectacles','pocket-observatory','moon-rabbit','dapper-fox','moon-lantern','sleepy-compass','gyro-ghost'],
@@ -309,35 +310,35 @@ export const kits = {
     prizes: ['little-sailboat', 'message-bottle', 'harbour-washer', 'seaside-day-book', 'picnic-parcel', 'return-postcard'],
   },
   carousel: {
-    sprites: ['music-carousel','organ-music-box','pocket-wheel','swing-spinner','gyro-ghost','star-token','laughing-doorway','ride-explorer-pennant','ride-ticket'],
-    prizes: ['music-carousel','organ-music-box','pocket-wheel','laughing-doorway','ride-explorer-pennant','ride-ticket'],
+    sprites: ['music-carousel', 'ticket-satchel', 'ride-explorer-pennant', 'star-token', 'moon-penny', 'ride-ticket', 'everyday-penny'],
+    prizes: ['music-carousel', 'ticket-satchel', 'ride-explorer-pennant', 'star-token', 'moon-penny', 'ride-ticket'],
   },
   balloons: {
-    sprites: ['balloon-bouquet','autumn-leaf-lantern','moon-lantern','prize-bag','swing-spinner','aura-keepsake','laughing-doorway','organ-music-box'],
-    prizes: ['balloon-bouquet','prize-bag','swing-spinner','aura-keepsake','laughing-doorway','organ-music-box'],
+    sprites: ['balloon-bouquet', 'prize-bag', 'singing-bird', 'star-token', 'moon-penny', 'ride-ticket', 'autumn-leaf-lantern', 'moon-lantern', 'everyday-penny'],
+    prizes: ['balloon-bouquet', 'prize-bag', 'singing-bird', 'star-token', 'moon-penny', 'ride-ticket'],
   },
   ferris: {
-    sprites: ['pocket-wheel','star-token','moon-penny','ride-ticket','gyro-ghost','pressed-heart','ride-stamp-book','ride-explorer-pennant'],
-    prizes: ['pocket-wheel','star-token','moon-penny','ride-ticket','ride-stamp-book','ride-explorer-pennant'],
+    sprites: ['pocket-wheel', 'cabinet-key', 'star-token', 'moon-penny', 'ride-stamp-book', 'ride-ticket', 'everyday-penny', 'gyro-ghost', 'pressed-heart'],
+    prizes: ['pocket-wheel', 'cabinet-key', 'star-token', 'moon-penny', 'ride-stamp-book', 'ride-ticket'],
   },
   helter: {
-    sprites: ['spiral-tower','ride-explorer-pennant','star-token','moon-penny','prize-bag','ride-ticket','lucky-match'],
-    prizes: ['spiral-tower','star-token','moon-penny','prize-bag','ride-ticket','lucky-match'],
+    sprites: ['spiral-tower', 'lucky-match', 'mercury-bead', 'star-token', 'moon-penny', 'ride-ticket', 'everyday-penny', 'prize-bag'],
+    prizes: ['spiral-tower', 'lucky-match', 'mercury-bead', 'star-token', 'moon-penny', 'ride-ticket'],
   },
   swings: {
-    sprites: ['swing-spinner','pressed-heart','star-token','moon-penny','prize-bag','friendship-pins','heart-gear','music-carousel','ride-ticket'],
-    prizes: ['swing-spinner','heart-gear','star-token','prize-bag','music-carousel','ride-ticket'],
+    sprites: ['swing-spinner', 'heart-gear', 'ticket-stub', 'star-token', 'moon-penny', 'ride-ticket', 'everyday-penny', 'pressed-heart'],
+    prizes: ['swing-spinner', 'heart-gear', 'ticket-stub', 'star-token', 'moon-penny', 'ride-ticket'],
   },
   funhouse: {
-    sprites: ['laughing-doorway','looking-glass-locket','velvet-mask','balloon-bouquet','music-carousel','pocket-wheel','organ-music-box','ride-stamp-book'],
-    prizes: ['laughing-doorway','balloon-bouquet','music-carousel','pocket-wheel','organ-music-box','ride-stamp-book'],
+    sprites: ['laughing-doorway', 'heart-biscuit', 'star-token', 'moon-penny', 'ride-ticket', 'stage-door-pass', 'velvet-mask', 'everyday-penny'],
+    prizes: ['laughing-doorway', 'heart-biscuit', 'star-token', 'moon-penny', 'ride-ticket', 'stage-door-pass'],
   },
   organ: {
-    sprites: ['organ-music-box','star-token','moon-penny','pressed-heart','swing-spinner','ride-ticket','aura-keepsake'],
-    prizes: ['organ-music-box','star-token','moon-penny','swing-spinner','ride-ticket','aura-keepsake'],
+    sprites: ['organ-music-box', 'coin-slot', 'star-token', 'moon-penny', 'ride-ticket', 'aura-keepsake', 'everyday-penny', 'pressed-heart'],
+    prizes: ['organ-music-box', 'coin-slot', 'star-token', 'moon-penny', 'ride-ticket', 'aura-keepsake'],
   },
   mural: {
-    sprites: ['painted-bay','midway-map','stamp-and-inkpad','lantern-lighter','star-token','ride-stamp-book','pocket-wheel','music-carousel','laughing-doorway','balloon-bouquet','ride-explorer-pennant'],
-    prizes: ['painted-bay','pocket-wheel','music-carousel','laughing-doorway','balloon-bouquet','ride-explorer-pennant'],
+    sprites: ['painted-bay', 'alley-panel-kit', 'trade-envelope', 'star-token', 'moon-penny', 'ride-ticket', 'midway-map', 'lantern-lighter', 'everyday-penny'],
+    prizes: ['painted-bay', 'alley-panel-kit', 'trade-envelope', 'star-token', 'moon-penny', 'ride-ticket'],
   },
 };

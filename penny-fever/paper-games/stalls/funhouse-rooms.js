@@ -30,11 +30,11 @@ export const RIDE = 'funhouse';
 /* Treasure ids provisional per Lorie brief — keep in sync with prizes.js until renamed. */
 export const TREASURES = [
   'laughing-doorway',
-  'balloon-bouquet',
-  'music-carousel',
-  'pocket-wheel',
-  'organ-music-box',
-  'ride-stamp-book',
+  'heart-biscuit',
+  'star-token',
+  'moon-penny',
+  'ride-ticket',
+  'stage-door-pass',
 ];
 export const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 export const LEVEL_NAMES = [

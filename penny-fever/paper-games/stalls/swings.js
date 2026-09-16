@@ -46,14 +46,14 @@
  *   Coach/miss notes go to s.note → #readout only (no scream plates).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'swings';
-const TREASURES = ['swing-spinner', 'heart-gear', 'star-token', 'prize-bag', 'music-carousel', 'ride-ticket'];
+const TREASURES = ['swing-spinner', 'heart-gear', 'ticket-stub', 'star-token', 'moon-penny', 'ride-ticket'];
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const LEVELS = [
   'First Swing', 'Ribbon Round', 'Star Circles',

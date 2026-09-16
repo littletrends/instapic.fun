@@ -35,7 +35,7 @@
  * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -44,8 +44,8 @@ import {
 const RIDE = 'balloons';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const TREASURES = [
-  'balloon-bouquet', 'prize-bag', 'swing-spinner',
-  'aura-keepsake', 'laughing-doorway', 'organ-music-box',
+  'balloon-bouquet', 'prize-bag', 'singing-bird',
+  'star-token', 'moon-penny', 'ride-ticket',
 ];
 const LEVELS = [
   'First Float',

@@ -20,7 +20,7 @@
  * Layout: shell #actions SNAP + .play-hud + readout; no on-court chrome/HUD.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -29,8 +29,8 @@ import {
 const RIDE = 'ferris';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const TREASURES = [
-  'pocket-wheel', 'star-token', 'moon-penny',
-  'ride-ticket', 'ride-stamp-book', 'ride-explorer-pennant',
+  'pocket-wheel', 'cabinet-key', 'star-token',
+  'moon-penny', 'ride-stamp-book', 'ride-ticket',
 ];
 const LEVELS = [
   'First Look', 'Gondola Secrets', 'Rooftop Trail',

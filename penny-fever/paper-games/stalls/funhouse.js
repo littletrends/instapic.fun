@@ -31,7 +31,7 @@
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
  * All six chapters implemented — polish-only remaining (timing/copy).
  */
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,

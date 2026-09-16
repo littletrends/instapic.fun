@@ -20,7 +20,7 @@
  * Hard rule: d.glow() takes 6-digit #rrggbb only.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -29,8 +29,8 @@ import {
 const RIDE = 'mural';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const TREASURES = [
-  'painted-bay', 'pocket-wheel', 'music-carousel',
-  'laughing-doorway', 'balloon-bouquet', 'ride-explorer-pennant',
+  'painted-bay', 'alley-panel-kit', 'trade-envelope',
+  'star-token', 'moon-penny', 'ride-ticket',
 ];
 const LEVELS = [
   'First Wash', 'Lantern Row', 'Carousel Frieze',

@@ -67,7 +67,7 @@
  *     GOAL=3 reachable ~59–70 s. houseSeconds 120.
  */
 import {TAU, clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=ritual-3';
+import {spriteKey} from '../prizes.js?v=exclusive-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure,
   logAction, prefersReducedMotion,
@@ -76,8 +76,8 @@ import {
 const RIDE = 'carousel';
 const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 const TREASURES = [
-  'music-carousel', 'organ-music-box', 'pocket-wheel',
-  'laughing-doorway', 'ride-explorer-pennant', 'ride-ticket',
+  'music-carousel', 'ticket-satchel', 'ride-explorer-pennant',
+  'star-token', 'moon-penny', 'ride-ticket',
 ];
 const LEVELS = [
   'First Turn', 'Painted Ponies', 'Mirror Round',
