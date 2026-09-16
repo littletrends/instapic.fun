@@ -11,7 +11,7 @@
  *   Keepsake + tokens: claim when PASSING cells (from→to inclusive), not only exact land.
  *   Aura Tent_21_Skip + bea-player dress via helter-dress/ (no re-split).
  *
- * Practice clear: keepsake taken AND (crest reached OR ≥3 cushions bounced).
+ * Practice clear: keepsake taken AND crest reached (cushions help climb only).
  * Soft dump never aborts paid rides; practice keeps nothing. ~45–55s ride.
  *
  * Tagline: Choose your spiral. Catch what tumbles.
@@ -56,7 +56,7 @@ const BALL_R = 16;
 const BALL_ROLL_SECS = 14; // gravity-ish crest→door prop roll
 const BALL_WAIT_SECS = 1.4; // pause after ball exits before hopper reload
 const CUSHION_GOAL = 3;
-const RIDE_SECONDS = 78;
+const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
 const STEP_EASE = 0.22; // seconds to ease between cells (snappy climb) // seconds to ease between cells
 const JUMP_EASE = 0.38; // hop loft
@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3h';
+const DRESS_CACHE = 'dress-3i';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -556,8 +556,8 @@ function resolveLanding(s) {
 function clearOk(s) {
   const keepsake = !!(s.keepsakeTaken || (s.treasure && s.treasure.taken));
   const atTop = (s.youCell | 0) >= ((s.cells || []).length - 1);
-  const cushions = (s.cushionsBounced || 0) >= CUSHION_GOAL;
-  return keepsake && (atTop || cushions);
+  // Crest required — cushion boosts help climb but must not finish the ride early.
+  return keepsake && atTop;
 }
 
 /** Queue one pending move if mid-ease (keeps climb responsive). */
@@ -738,7 +738,7 @@ function maybeFinish(s, why) {
     s.matPulse = 0.55;
     s.statusCopy = ok ? 'Clear!' : 'Short';
     s.note = ok
-      ? (atTop ? 'Crest + keepsake — Practice clear!' : 'Keepsake + cushions — spiral clear!')
+      ? (atTop ? 'Crest + keepsake — Practice clear!' : 'Crest + keepsake — spiral clear!')
       : 'Need keepsake and crest (or 3 cushions). Ride returns.';
     const c = cellAt(s, s.youCell | 0);
     pushSparks(s, c.x, c.y, !ok);
@@ -778,7 +778,7 @@ function coachNote(s) {
     return 'Keepsake on the coil — TAP or JUMP onto it';
   }
   if ((s.cushionsBounced || 0) < CUSHION_GOAL && s.treasure && s.treasure.taken) {
-    return 'Keepsake secured — crest or ' + CUSHION_GOAL + ' cushions to clear';
+    return 'Keepsake secured — keep climbing to the crest';
   }
   return s.note || 'TAP-TAP-TAP — JUMP cushions / over slides';
 }
@@ -918,8 +918,8 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. TAP along Tilly’s helter — JUMP onto cream cushions to bounce up; JUMP over deep-red slides (or ride the soft dump — never aborts). Collect the spiral-tower keepsake, then crest or bounce 3 cushions to clear.',
-  instructions: 'Climb with ← JUMP → in the cream (or arrows / space). ←/→ TAP along the coil; JUMP leaps over the next cell. Land on a slide = soft dump down (ride continues). JUMP onto a cushion = bounce up. Collect keepsake + tokens on the track. Clear Practice: keepsake AND (crest OR 3 cushions). First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. TAP along Tilly’s helter — JUMP onto cream cushions to bounce up; JUMP over deep-red slides (or ride the soft dump — never aborts). Collect the spiral-tower keepsake, then climb all the way to the crest to clear.',
+  instructions: 'Climb with ← JUMP → in the cream (or arrows / space). ←/→ TAP along the coil; JUMP leaps over the next cell. Land on a slide = soft dump down (ride continues). JUMP onto a cushion = bounce up. Collect keepsake + tokens on the track. Clear Practice: keepsake AND crest (cushions help climb; they do not finish early). First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
