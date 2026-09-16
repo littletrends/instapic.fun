@@ -64,7 +64,7 @@ function showPrize(id){
  if(cap){cap.hidden=false;cap.textContent='Kept for later: '+itemName(id);}
 }
 function veil(tag,title,detail,button,prize){const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);$('#veil').hidden=false;}
-/** Start veil is Begin-only — full How to play lives in the notebook beside the room. */
+/** Start veil: Begin / Step inside button only — How to play is in the notebook on the right. */
 function startVeilDetail(){
   return '';
 }
