@@ -1,17 +1,17 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-2
+ * cache: dress-ready-3c
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * PROPS = Tent_26_Bea (curtain, standee, doorway×2 portals, starKey) + bea-player YOU.
- *   No moon (piece-03) / spotlight (piece-04). BONUS = TREASURES Ch1–6 cream-border off-path.
- *   Path chips = geometric dots only. Laugh-faces = drawn comedy masks (soft bomb on touch).
+ * PROPS = Tent_26_Bea (curtain L+R cream + curtain×2 mid-edge portals, starKey) + bea-player YOU.
+ *   No moon (piece-03) / spotlight (piece-04) / standee (piece-02). BONUS = TREASURES Ch1–6 cream-border off-path.
+ *   Path chips = geometric dots only. Laugh-faces = PNG cutouts (soft bomb on touch).
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
- *   Two doorway props on middle left/right edge walls = paired walk-through portals.
- *   starKey mid-court → awards chapter bonus (locked→collected). piece-02 standee dressing.
+ *   Two open-curtain props on middle left/right edge walls = paired walk-through portals (same art both sides).
+ *   starKey mid-court → awards chapter bonus (locked→collected). Exactly ONE curtain L + ONE curtain R.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
  *   stay. actions: [] — no shell arrow dock.
@@ -31,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-2';
+} from './funhouse-rooms.js?v=dress-ready-3c';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -54,20 +54,35 @@ const GULP_DUR = 0.42;
 const MAZE_HOUSE = 110;
 const FACE_RESPAWN = 3.8;
 
-/** Tent_26_Bea kit — no moon/spotlight. Doorway×2 portals + starKey mid-court. bea-player = YOU. */
+/** Tent_26_Bea kit — no moon/spotlight/standee. Curtain×2 portals + starKey mid-court. bea-player = YOU. */
 const BEA_PROP_FILES = {
   curtain: 'Tent_26_Bea_piece-01.png',
-  standee: 'Tent_26_Bea_piece-02.png', // decorative Bea cutout (set dressing; YOU uses bea-player)
   starKey: 'Tent_26_Bea_piece-05.png',
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-2';
+const BEA_CACHE_VER = 'dress-ready-3c';
+/** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
+const FACE_ART_FILES = [
+  'face-1-cream.png',
+  'face-2-rose.png',
+  'face-3-gold.png',
+  'face-4-plum.png',
+];
+/** Prefer comedy-mask-2x; face-only / handless native if clearer or 2x missing. */
+const FACE_FALLBACK_FILES = [
+  'comedy-mask-2x.png',
+  'comedy-mask-face-only-native.png',
+  'comedy-mask-handless-native.png',
+];
+const FACE_DRAW_W = 56;
 /** Soft face-bomb stun — relocate to start; never aborts paid ride. */
 const BOMB_STUN = 0.95;
 const PORTAL_COOL = 0.55;
 let beaPropImgs = null;
 let beaPlayerImg = null;
+let faceArtImgs = null;
+let faceFallbackImgs = null;
 
 function dressUrl(rel) {
   try {
@@ -98,6 +113,32 @@ function dressReady(img) {
   return !!(img && img.complete && img.naturalWidth > 0);
 }
 
+function loadFacePack(files) {
+  return files.map((file) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/funhouse-faces/' + file);
+    return img;
+  });
+}
+
+function ensureFaceArt() {
+  if (!faceArtImgs) faceArtImgs = loadFacePack(FACE_ART_FILES);
+  if (!faceFallbackImgs) faceFallbackImgs = loadFacePack(FACE_FALLBACK_FILES);
+  return faceArtImgs;
+}
+
+function faceImgFor(f) {
+  ensureFaceArt();
+  const idx = ((f && f.faceArt != null) ? f.faceArt : 0) % faceArtImgs.length;
+  const primary = faceArtImgs[idx];
+  if (dressReady(primary)) return primary;
+  for (const fb of faceFallbackImgs) {
+    if (dressReady(fb)) return fb;
+  }
+  return null;
+}
+
 /** Helter-style dress place — soft paper shadow, 6-digit glow only elsewhere. */
 function placeDress(d, img, x, y, w, angle, h) {
   if (!dressReady(img) || typeof d.sprite !== 'function') return false;
@@ -107,23 +148,16 @@ function placeDress(d, img, x, y, w, angle, h) {
   return d.sprite(img, x, y, opts);
 }
 
-/** Cream-border set dressing — curtain + standee. Portal doorways drawn on maze edge walls.
- *  No moon / spotlight. scenery flag densifies curtain/standee only.
+/** Cream-border set dressing — exactly ONE curtain left + ONE curtain right.
+ *  No standee. No densify extras. Portal doorways drawn on maze edge walls.
+ *  No moon / spotlight.
  */
 function drawBeaScenery(d, s) {
   const imgs = ensureBeaProps();
-  const density = s?.graph?.scenery || 'full';
   const place = (key, x, y, w, angle = 0) => placeDress(d, imgs[key], x, y, w, angle);
-  // Sides swapped vs dress-ready-1 cream doors: curtain now left mid; portals own the edge walls.
-  place('curtain', 168, 650, 100);           // left mid cream (was doorway — swapped)
-  place('standee', 182, 858, 72, -0.06);     // lower-left Bea standee (piece-02)
-  if (density === 'dense' || density === 'finale') {
-    place('curtain', 732, 860, 88, 0.06);    // lower-right drape accent (no moon/light)
-    place('standee', 718, 520, 64, 0.08);
-  }
-  if (density === 'finale') {
-    place('curtain', 148, 528, 88, -0.08);
-  }
+  // Paired cream-side curtains only (no double-up / no densify extras).
+  place('curtain', 168, 650, 100);           // left mid cream
+  place('curtain', 732, 650, 100, 0.06);     // right mid cream (was density-gated)
 }
 
 function clamp(v, a, b) {
@@ -289,6 +323,7 @@ function spawnFaces(s, room) {
       alive: true,
       gulp: 0,
       giggle: 0,
+      faceArt: i % FACE_ART_FILES.length,
     });
   }
 }
@@ -661,6 +696,7 @@ function initMazePlay(s) {
       rHit: FACE_R * 0.72,
       wanderT: i * 0.4,
       mode: 'chase',
+      faceArt: i % FACE_ART_FILES.length,
     });
   }
   s.roomId = 'maze';
@@ -996,7 +1032,7 @@ function drawMazeCourt(s, d) {
   d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 2.4, false);
   d.text(room?.title || 'Laughing Maze', 450, 456, 22, INK);
   d.glow(450, 410, 36, '#f4d590');
-  // Full Tent_26_Bea 6-pack around cream oval (outside lanes).
+  // Tent_26_Bea cream curtains L+R (no standee) around cream oval.
   drawBeaScenery(d, s);
 
   if (!maze) return;
@@ -1061,7 +1097,7 @@ function drawMazeCourt(s, d) {
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
 
-  // Two doorway props on middle left/right edge walls — paired portals (prefer doorway×2).
+  // Paired mid-edge portals — SAME open-curtain art on A and B (no IN/OUT labels, no doorway OUT mirror).
   {
     const imgs = ensureBeaProps();
     for (const pt of maze.portals || []) {
@@ -1069,8 +1105,8 @@ function drawMazeCourt(s, d) {
       // Nudge slightly outward so prop sits on the edge wall, not lane centre.
       const ox = pt.id === 'A' ? -18 : (pt.id === 'B' ? 18 : 0);
       d.glow(ctr.x + ox, ctr.y, 26, '#f4d590');
-      placeDress(d, imgs.doorway, ctr.x + ox, ctr.y, pt.id === 'B' ? 96 : 96, pt.id === 'B' ? 0.04 : -0.04);
-      d.text(pt.id === 'A' ? 'IN' : 'OUT', ctr.x + ox, ctr.y + 28, 10, GOLD);
+      // Both portals = Tent_26_Bea piece-01 curtain (the open red look Lorie liked).
+      placeDress(d, imgs.curtain, ctr.x + ox, ctr.y, 96, pt.id === 'B' ? 0.04 : -0.04);
     }
   }
 
@@ -1303,8 +1339,22 @@ function drawLaughFace(d, f, t) {
   const bounce = gulping ? 0 : Math.sin(t * 7 + f.x * 0.02) * 3;
   if (f.giggle > 0) d.glow(x, y + bounce, 40, '#ffe6a4');
   d.ellipse(x + 3, y + 18 * scale + bounce, 34 * scale, 12 * scale, '#12233533');
+  // PNG cutouts (face-1..4 / comedy-mask-2x) — soft-bomb mechanics unchanged.
+  const png = faceImgFor(f);
+  const w = FACE_DRAW_W * scale;
+  if (png && placeDress(d, png, x, y + bounce, w)) return;
+  if (png && dressReady(png)) {
+    try {
+      const ctx = d.c || d.ctx;
+      if (ctx) {
+        const h = w * (png.naturalHeight / png.naturalWidth);
+        ctx.drawImage(png, x - w / 2, y + bounce - h * 0.55, w, h);
+        return;
+      }
+    } catch (_) { /* fall through to drawn mask */ }
+  }
+  // Fallback drawn comedy mask only if PNGs not ready
   d.ellipse(x, y + bounce, 32 * scale, 28 * scale, CREAM, BURGUNDY, 2.4);
-  // Cream/burgundy comedy mask
   diamond(d, x - 14 * scale, y - 2 * scale + bounce, 8 * scale, BURGUNDY, GOLD);
   diamond(d, x + 14 * scale, y - 2 * scale + bounce, 8 * scale, GOLD, BURGUNDY);
   d.circle(x - 10 * scale, y - 6 * scale + bounce, 4.2 * scale, BURGUNDY);

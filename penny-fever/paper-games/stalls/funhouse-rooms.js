@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-2
+ * cache: dress-ready-3c
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -12,8 +12,9 @@
  *   starKey at mid-court unlocks → awards bonus (locked → collected).
  * Portals A/B on middle left/right edge walls — walk-through paired exits.
  *
- * SCENERY: funhouse.png backdrop + cream oval; Tent_26_Bea props (no moon/light);
+ * SCENERY: funhouse.png backdrop + cream oval; Tent_26_Bea curtains L+R only (no moon/light/standee);
  *   bea-player = YOU. BONUS Ch1–6 token-sized KEEP/TREASURE. No alley wall-turnaround / wall webp.
+ *   Laugh-faces = PNG cutouts in assets/funhouse-faces/ (soft bomb on touch).
  * FAIRNESS baseline Ch1: clearGoal 16; house 110s; faceSpeed 56;
  *   playerSpeed 168; powerSec 7.5. Later chapters tighten goal / faces / power.
  *
