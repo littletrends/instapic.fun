@@ -7,12 +7,13 @@
  * SHIPPED: Chapter 3 Paper Roll · Chapter 4 Echo Chamber.
  * SHIPPED: Chapter 5 Broken Bar · Chapter 6 The Grand Calliope.
  * CHROME: no canvas drawHud/drawCoach; slim pipe mouths; verbs in #actions.
+ * COLOUR: bolder brass/pipe/prop hex so props pop on cream court template.
  *
  * organ.png is the court behind the canvas. Do not paint a full-screen background.
  * draw.glow() — 6-digit hex only (#rrggbb).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {spriteKey} from '../prizes.js?v=organ-bold-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -34,14 +35,14 @@ const LEVEL_NAMES = [
 ];
 
 const TAU = Math.PI * 2;
-const GOLD = '#e8c878';
-const CREAM = '#efe6d0';
-const INK = '#f0d18f';
-const BELL_GLOW = '#e8c070'; // 6-digit only for d.glow
-const ROLL_GLOW = '#d8c090'; // 6-digit only for d.glow
-const ECHO_GLOW = '#b8d0e8'; // 6-digit only for d.glow
-const BROKEN_GLOW = '#c08080'; // 6-digit only for d.glow
-const GEAR_GLOW = '#d0b878'; // 6-digit only for d.glow
+const GOLD = '#f0c040';
+const CREAM = '#fff6e0';
+const INK = '#ffe08a';
+const BELL_GLOW = '#ffd060'; // 6-digit only for d.glow
+const ROLL_GLOW = '#f0d070'; // 6-digit only for d.glow
+const ECHO_GLOW = '#80d0ff'; // 6-digit only for d.glow
+const BROKEN_GLOW = '#ff7070'; // 6-digit only for d.glow
+const GEAR_GLOW = '#ffc050'; // 6-digit only for d.glow
 const MOUTH_R = 52; // hit radius
 const MOUTH_DRAW = 30; // slim in-world mouth (not a plaque)
 const CLIMB_SECS = 3.6;
@@ -65,9 +66,9 @@ const CH5_SECS = 58;
 const CH6_SECS = 60;
 
 const PIPES = [
-  {i: 0, x: 250, mouthY: 760, topY: 250, label: 'Do', shape: 'circle', fill: '#c9a227', glow: '#ffe6a4'},
-  {i: 1, x: 450, mouthY: 780, topY: 230, label: 'Mi', shape: 'diamond', fill: '#5a8f4a', glow: '#b8e0a8'},
-  {i: 2, x: 650, mouthY: 760, topY: 250, label: 'Sol', shape: 'triangle', fill: '#6b2030', glow: '#e8a0b0'},
+  {i: 0, x: 250, mouthY: 760, topY: 250, label: 'Do', shape: 'circle', fill: '#e8b010', glow: '#ffe566'},
+  {i: 1, x: 450, mouthY: 780, topY: 230, label: 'Mi', shape: 'diamond', fill: '#2eb84a', glow: '#7dff90'},
+  {i: 2, x: 650, mouthY: 760, topY: 250, label: 'Sol', shape: 'triangle', fill: '#d02040', glow: '#ff90a8'},
 ];
 
 function roundRect(c, x, y, w, h, r) {
@@ -329,13 +330,13 @@ function drawNoteShape(d, shape, x, y, r, fill, stroke) {
 
 function drawBellMark(d, x, y, r) {
   // Simple calliope bell — shape only, no 8-digit glow.
-  d.ellipse(x, y - 6, r * 0.55, r * 0.4, '#d2a65b', GOLD, 2);
+  d.ellipse(x, y - 6, r * 0.55, r * 0.4, '#f0c050', GOLD, 2);
   d.poly([
     [x - r * 0.7, y - 2],
     [x + r * 0.7, y - 2],
     [x + r * 0.55, y + r * 0.55],
     [x - r * 0.55, y + r * 0.55],
-  ], '#c9a227', GOLD, 2);
+  ], '#e8b010', GOLD, 2);
   d.circle(x, y + r * 0.7, 4, '#efe6d0', GOLD, 1);
 }
 
@@ -462,7 +463,7 @@ function drawCockpit(d, s) {
       [pipe.x + 22, pipe.mouthY],
       [pipe.x - 22, pipe.mouthY],
     ], tint, GOLD, lw);
-    d.ellipse(pipe.x, pipe.topY, 14, 7, '#d2a65bcc', GOLD, 1);
+    d.ellipse(pipe.x, pipe.topY, 14, 7, '#f0c050cc', GOLD, 1);
   });
 }
 
