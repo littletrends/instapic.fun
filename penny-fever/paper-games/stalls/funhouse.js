@@ -1,13 +1,14 @@
 /* Laughing Doorway — Juno
- * cache: maze-dots-1
+ * cache: maze-dots-2
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * CHAPTER BONUSES: simple path dots for now (not catalogue coins).
- *   Props / bonus-item art TBD — Lorie will explain; do not use coin sprites as pellets.
+ * PROPS = Tent_26_Bea scenery + bea-player. BONUS = TREASURES Ch1–6 keepsakes.
+ *   Path chips = simple geometric dots only (never catalogue coins). Laugh-faces = drawn comedy masks
+ *   until a dedicated face prop ships.
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval
  *   only. Tent_26_Bea dress BUILD still HELD — maze props only: split cutouts from
  *   assets/funhouse-bea/ scenery 01/03-06; bea-player.png = SHARED player sprite
@@ -30,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-dots-1';
+} from './funhouse-rooms.js?v=maze-dots-2';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -62,7 +63,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-dots-1';
+const BEA_CACHE_VER = 'maze-dots-2';
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -690,11 +691,7 @@ function arriveCell(s) {
     } else {
       s.note = `Chomp! ${s.pelletsLeft} chips left.`;
     }
-    // Tiny find flavor on some chips (practice-safe recordFind only if not practice? recordFind handles?)
-    if (!s.practice && (pel.kind === 'star' || pel.kind === 'moon' || pel.kind === 'penny') && Math.random() < 0.08) {
-      const id = pel.kind === 'star' ? 'star-token' : (pel.kind === 'moon' ? 'moon-penny' : 'everyday-penny');
-      recordFind(s, id, RIDE);
-    }
+    // Path chips award no catalogue finds — chapter bonus = TREASURES keepsake only.
   }
   // Punchline door set-piece — stepping on D slams the gag (power moment).
   if (maze.doorCell && p.c === maze.doorCell.c && p.r === maze.doorCell.r && !s.doorShut) {

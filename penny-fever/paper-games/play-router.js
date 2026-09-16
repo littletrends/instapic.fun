@@ -4,9 +4,9 @@ if (id === 'fortune' || id === 'coin-pusher') {
   await new Promise((resolve, reject) => {
     sheet.onload = resolve;
     sheet.onerror = () => reject(new Error('The game cabinet style could not load.'));
-    sheet.href = 'cabinet.css?v=maze-dots-1';
+    sheet.href = 'cabinet.css?v=dress-3e';
   });
-  await import('./cabinet-runtime.js?v=maze-dots-1');
+  await import('./cabinet-runtime.js?v=dress-3e');
 } else {
-  await import('./runtime.js?v=maze-dots-1');
+  await import('./runtime.js?v=dress-3e');
 }
