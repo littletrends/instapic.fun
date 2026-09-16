@@ -33,9 +33,10 @@
  *
  * Treasure ids preserved. Canvas 900×1200.
  * draw.glow() colors are 6-digit #rrggbb ONLY (API appends alpha).
+* Cream court: bold latex / basket / lantern colours (Lorie art note).
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {spriteKey} from '../prizes.js?v=balloons-bold-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -132,7 +133,7 @@ const RUNAWAY_RATE = 0.72; // fair first-play amp/rate — retune if Aura tight
 
 const SPAWN_IDS = ['low-path', 'high-path'];
 
-const LATEX = ['#e8a0b8', '#7eb8b0', '#f0d09a', '#c9a0d8', '#8ec8e8', '#f4b890'];
+const LATEX = ['#ff4f8a', '#1ec8b0', '#ffc233', '#b44dff', '#2eb8ff', '#ff7a2e'];
 
 function isCh2(level) {
   return (level | 0) === 1;
@@ -925,18 +926,18 @@ function drawLanternBand(d, b, angleNow, t) {
   // Readable horizontal lantern band brackets (code overlays only).
   const x0 = pos.x - 46;
   const x1 = pos.x + 46;
-  d.line({x: x0, y: yHi}, {x: x1, y: yHi}, '#f0c070aa', 2.2);
-  d.line({x: x0, y: yLo}, {x: x1, y: yLo}, '#f0c070aa', 2.2);
-  d.line({x: x0, y: yHi}, {x: x0, y: yLo}, '#f0c07066', 1.4);
-  d.line({x: x1, y: yHi}, {x: x1, y: yLo}, '#f0c07066', 1.4);
+  d.line({x: x0, y: yHi}, {x: x1, y: yHi}, '#ff9a20ee', 2.6);
+  d.line({x: x0, y: yLo}, {x: x1, y: yLo}, '#ff9a20ee', 2.6);
+  d.line({x: x0, y: yHi}, {x: x0, y: yLo}, '#ff9a2099', 1.8);
+  d.line({x: x1, y: yHi}, {x: x1, y: yLo}, '#ff9a2099', 1.8);
   // Soft lantern corner ticks
   for (const [tx, ty] of [[x0, yHi], [x1, yHi], [x0, yLo], [x1, yLo]]) {
-    d.circle(tx, ty, 3.2 + pulse * 1.2, '#f0c070cc', '#ffe6a4', 1);
+    d.circle(tx, ty, 3.2 + pulse * 1.2, '#ff9a20', '#ffe14a', 1.4);
   }
   // Warm lantern glow on teach target — 6-digit #rrggbb only.
-  d.glow(pos.x, pos.y - 6, 34 + pulse * 8, '#f0c070');
+  d.glow(pos.x, pos.y - 6, 34 + pulse * 8, '#ff9a20');
   if (da < 0.95 && da > -0.2) {
-    d.text('band', pos.x, yHi - 14, 14, '#f0c070');
+    d.text('band', pos.x, yHi - 14, 14, '#ff9a20');
   }
 }
 
@@ -958,11 +959,11 @@ function drawWindRibbon(d, b, angleNow, t) {
     const y1 = pos.y + yOff + Math.sin(phase + 1.1) * 5;
     const midX = pos.x + Math.cos(phase * 0.7) * 8;
     const midY = pos.y + yOff + Math.sin(phase + 0.55) * 7;
-    d.line({x: x0, y: y0}, {x: midX, y: midY}, '#8ec8e866', 1.4);
-    d.line({x: midX, y: midY}, {x: x1, y: y1}, '#8ec8e855', 1.2);
+    d.line({x: x0, y: y0}, {x: midX, y: midY}, '#2eb8ffaa', 1.8);
+    d.line({x: midX, y: midY}, {x: x1, y: y1}, '#2eb8ff88', 1.5);
   }
   // Soft cyan glow on teach target — 6-digit #rrggbb only.
-  d.glow(pos.x, pos.y - 6, 36, '#8ec8e8');
+  d.glow(pos.x, pos.y - 6, 36, '#2eb8ff');
 }
 
 function drawCrosswindGust(d, b, angleNow, t) {
@@ -1058,7 +1059,7 @@ function drawCluster(d, b, angleNow, isLit) {
   if (b.cleared) {
     if (b.flash > 0) {
       const bloom = b.flash / FLASH_SEC;
-      d.glow(sx, sy, 56 * bloom, '#ffe6a4');
+      d.glow(sx, sy, 56 * bloom, '#ff4f8a');
       d.circle(sx, sy, 10 + 18 * bloom, null, '#fff6d8', 3);
     }
     return;
@@ -1071,8 +1072,8 @@ function drawCluster(d, b, angleNow, isLit) {
   }
 
   if (b.lanternDumped) {
-    if (b.missFlash > 0) d.glow(sx, sy, 36, '#f0c070');
-    d.circle(sx, sy, b.r * 0.7, '#f0c07055', '#f0c07088', 1.2);
+    if (b.missFlash > 0) d.glow(sx, sy, 36, '#ff9a20');
+    d.circle(sx, sy, b.r * 0.7, '#ff9a2055', '#ff9a20aa', 1.2);
     return;
   }
 
@@ -1092,8 +1093,8 @@ function drawCluster(d, b, angleNow, isLit) {
   for (const dec of b.decoys) {
     const dx = sx + dec.ox;
     const dy = sy + dec.oy;
-    d.circle(dx, dy, dec.r, dec.col + 'bb', '#f4d590', 1.2);
-    d.line({x: dx, y: dy + dec.r - 2}, {x: dx, y: dy + dec.r + 14}, '#d2a65b88', 1);
+    d.circle(dx, dy, dec.r, dec.col + 'dd', '#ffc233', 1.6);
+    d.line({x: dx, y: dy + dec.r - 2}, {x: dx, y: dy + dec.r + 14}, '#ff7a2eaa', 1.3);
   }
 
   if (b.missFlash > 0) {
@@ -1103,16 +1104,16 @@ function drawCluster(d, b, angleNow, isLit) {
   // Lit / glowing POP target (only the active gate screams).
   if (isLit) {
     const pulse = 0.55 + 0.45 * Math.sin((angleNow + b.angle) * 6);
-    d.glow(sx, sy, 48 + pulse * 16, '#ffe6a4');
-    d.circle(sx, sy, b.r + 4, '#fff6d8ee', '#ffe6a4', 3);
-    d.circle(sx, sy, b.r, '#f0d09acc', '#d2a65b', 2);
-    d.circle(sx - 6, sy - 8, 5, '#ffffffaa', null, 0);
+    d.glow(sx, sy, 52 + pulse * 18, '#ff4f8a');
+    d.circle(sx, sy, b.r + 5, '#fff06eee', '#ffc233', 3.5);
+    d.circle(sx, sy, b.r, '#ff4f8acc', '#ffe14a', 2.4);
+    d.circle(sx - 6, sy - 8, 5, '#ffffffcc', null, 0);
     if (da < 0.9 && da > -0.25) {
       const label = b.lantern ? 'POP · band' : (b.crosswind ? 'POP · gust' : (b.runaway ? 'POP · bouquet' : (b.teach ? 'POP · wind' : 'POP')));
-      d.text(label, sx, sy - b.r - 18, 18, '#ffe6a4');
+      d.text(label, sx, sy - b.r - 18, 18, '#ff4f8a');
     }
   } else {
-    d.circle(sx, sy, b.r * 0.85, '#e8a0b888', '#d2a65b88', 1.5);
+    d.circle(sx, sy, b.r * 0.85, '#ff4f8a99', '#ffc233aa', 1.8);
   }
 }
 
@@ -1122,18 +1123,18 @@ function drawBasket(d, s) {
   const by = p.y;
   const rising = !!s.holding && (s.holdAccum || 0) >= HOLD_SUSTAIN * 0.4;
   const scale = rising ? 1.06 : 1;
-  d.line({x: bx, y: by - 38 * scale}, {x: bx, y: by - 8}, '#d2a65b', 2);
-  if (rising) d.glow(bx, by - 56, 28, '#f4d590');
-  d.circle(bx - 16 * scale, by - 52 * scale, 16 * scale, '#e8a0b8cc', '#f4d590', 1.5);
-  d.circle(bx + 14 * scale, by - 56 * scale, 14 * scale, '#7eb8b0cc', '#f4d590', 1.5);
-  d.circle(bx, by - 64 * scale, 18 * scale, '#f0d09acc', '#d2a65b', 1.5);
+  d.line({x: bx, y: by - 38 * scale}, {x: bx, y: by - 8}, '#ffc233', 2.4);
+  if (rising) d.glow(bx, by - 56, 30, '#ff4f8a');
+  d.circle(bx - 16 * scale, by - 52 * scale, 16 * scale, '#ff4f8acc', '#ffe14a', 2);
+  d.circle(bx + 14 * scale, by - 56 * scale, 14 * scale, '#1ec8b0cc', '#ffe14a', 2);
+  d.circle(bx, by - 64 * scale, 18 * scale, '#ffc233cc', '#ff7a2e', 2);
   d.poly([
     [bx - 28, by - 6],
     [bx + 28, by - 6],
     [bx + 24, by + 28],
     [bx - 24, by + 28],
-  ], '#6b4030cc', '#d2a65b', 2);
-  d.text('you', bx, by + 14, 13, '#f0d09a');
+  ], '#8a3a18ee', '#ffc233', 2.4);
+  d.text('you', bx, by + 14, 13, '#ffc233');
   return p;
 }
 
