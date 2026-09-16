@@ -18,6 +18,12 @@
  *
  * All six chapter names locked. Keep treasures. glow() 6-digit hex only.
  * Layout: shell #actions SNAP + .play-hud + readout; no on-court chrome/HUD.
+ *
+ * DRESS BUILD: Felix 6-pack (Tent_05_Felix piece-01..06) + shared bea-player.
+ *   Props: ../assets/ferris-felix/ · YOU: ../assets/shared-player/bea-player.png
+ *   Ch1 First Look dress READY (visual) — climb ids + SNAP hit-reg LOCKED.
+ *   Map: roof→01 reel, gondola→04 fox, horizon→03 rabbit, framework→02 frame;
+ *   hub: 06 theater behind YOU + optional 05 splicer; vectors fallback if PNG not loaded.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=exclusive-1b';
@@ -88,6 +94,70 @@ const RETICLE_CH6 = 56;
 const LUGGAGE_WARN = 7.5; // teach hazard alone with long warn (helter Ch2 bar)
 const CHIMNEY_WARN = 6.0; // Ch3 teach hazard alone — leave more trail time
 const CLOUD_TEACH = 7.5; // first cloud alone across the lens
+
+/** Tent_05_Felix kit + shared YOU — Ch1 dress (gameplay ids unchanged). */
+const FELIX_CACHE_VER = 'dress-ch1-1';
+const FELIX_PROP_FILES = {
+  reel: 'Tent_05_Felix_piece-01.png',
+  frame: 'Tent_05_Felix_piece-02.png',
+  rabbit: 'Tent_05_Felix_piece-03.png',
+  fox: 'Tent_05_Felix_piece-04.png',
+  splicer: 'Tent_05_Felix_piece-05.png',
+  theater: 'Tent_05_Felix_piece-06.png',
+};
+/** Ch1 climb-target → Felix piece (ids/spokes/sizes LOCKED). */
+const FELIX_TARGET_DRESS = {
+  roof: 'reel',
+  gondola: 'fox',
+  horizon: 'rabbit',
+  framework: 'frame',
+};
+const INK_DARK = '#3a1018';
+const INK_BURG = '#6b2030';
+const INK_NOTE = '#5c2a2a';
+let felixPropImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + FELIX_CACHE_VER, import.meta.url).href;
+  } catch {
+    return rel + (rel.includes('?') ? '&' : '?') + 'v=' + FELIX_CACHE_VER;
+  }
+}
+
+function ensureFelixProps() {
+  if (felixPropImgs) return felixPropImgs;
+  felixPropImgs = {};
+  for (const [key, file] of Object.entries(FELIX_PROP_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/ferris-felix/' + file);
+    felixPropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = dressUrl('../assets/shared-player/bea-player.png');
+  }
+  return felixPropImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+/** Helter/funhouse-style dress place — soft paper shadow; glow stays 6-digit elsewhere. */
+function placeDress(d, img, x, y, w, angle, h, flip, alpha) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  if (flip) opts.flip = true;
+  if (alpha != null) opts.alpha = alpha;
+  return d.sprite(img, x, y, opts);
+}
+
 
 function rideSecs(level) {
   if (level === 1) return RIDE_SECS_CH2;
@@ -663,6 +733,7 @@ function missTarget(s, target) {
 }
 
 function drawSoftOutsideLens(d, lx, ly) {
+  // Soften heavily — cream papercut template must stay quiet (no dark full-bleed wash).
   const c = d.c;
   if (!c) return;
   c.save();
@@ -670,39 +741,45 @@ function drawSoftOutsideLens(d, lx, ly) {
   c.rect(0, 0, W, H);
   c.arc(lx, ly, LENS_R + 2, 0, Math.PI * 2, true);
   c.clip('evenodd');
-  c.fillStyle = 'rgba(18, 14, 22, 0.26)';
+  c.fillStyle = 'rgba(58, 16, 24, 0.035)';
   c.fillRect(0, 0, W, H);
   c.restore();
 }
 
 function drawGondolaHub(d, s) {
-  // Light paper cabin at the hub — court PNG stays full-bleed behind.
+  // Miniature theater + YOU at the hub — soften heavy cabin vectors so PNGs read.
+  const props = ensureFelixProps();
   const sway = Math.sin((s.angle || 0) * 2) * (s.reduced ? 2 : 5);
-  d.glow(HUB_X + sway, HUB_Y + 20, 110, '#4a1824');
-  d.poly([
-    [HUB_X - 112 + sway, HUB_Y - 40],
-    [HUB_X + 112 + sway, HUB_Y - 40],
-    [HUB_X + 102 + sway, HUB_Y + 108],
-    [HUB_X - 102 + sway, HUB_Y + 108],
-  ], '#3a1018c8', '#d2a65b', 4);
-  d.circle(HUB_X - 22 + sway, HUB_Y + 14, 28, '#6b2030bb', '#f4d590', 2);
-  d.circle(HUB_X + 22 + sway, HUB_Y + 14, 28, '#6b2030bb', '#f4d590', 2);
-  d.poly([
-    [HUB_X - 48 + sway, HUB_Y + 24],
-    [HUB_X + sway, HUB_Y + 78],
-    [HUB_X + 48 + sway, HUB_Y + 24],
-  ], '#6b2030bb', '#f4d590', 2);
-  d.text('you', HUB_X + sway, HUB_Y + 100, 15, '#f0d09a');
+  const hx = HUB_X + sway;
+  const hy = HUB_Y;
+  // Light brass accent only (6-digit hex) — no heavy burgundy wash under the dress.
+  d.glow(hx, hy + 16, 96, '#c9a04a');
+  // Hub backdrop: miniature theater behind YOU.
+  const theaterOk = placeDress(d, props.theater, hx, hy + 6, 184, sway * 0.01, null, false, 0.96);
+  // Quiet static prop — mechanical splicer near hub side (not a hazard / no gameplay).
+  placeDress(d, props.splicer, hx + 122, hy + 42, 46, -0.1, null, false, 0.88);
+  // YOU (shared bea-player) with gentle sway.
+  const youOk = placeDress(d, beaPlayerImg, hx, hy + 10, 64, sway * 0.015, null, false);
+  if (!theaterOk && !youOk) {
+    // Vector fallback only when dress not loaded — keep it light.
+    d.circle(hx, hy + 14, 40, '#6b203066', '#d2a65b', 2);
+    d.poly([
+      [hx - 36, hy + 28],
+      [hx, hy + 72],
+      [hx + 36, hy + 28],
+    ], '#6b203066', '#d2a65b', 2);
+  }
+  d.text('YOU', hx, hy + (youOk ? 78 : 100), 16, INK_BURG);
 }
 
 function drawSpokeGuides(d, s) {
-  // Faint Tempest-ish spoke lines — light ink, never covers the court.
+  // Faint Tempest-ish spoke lines — slightly brighter brass, still never covers cream.
   const spin = s.angle || 0;
   for (let i = 0; i < 8; i++) {
     const a = spin + (i / 8) * Math.PI * 2;
     const rimX = CX + Math.cos(a) * WHEEL_R;
     const rimY = CY + Math.sin(a) * WHEEL_R * 0.72;
-    d.line({x: HUB_X, y: HUB_Y}, {x: rimX, y: rimY}, '#d2a65b33', 2);
+    d.line({x: HUB_X, y: HUB_Y}, {x: rimX, y: rimY}, '#e0b06044', 2);
   }
 }
 
@@ -728,8 +805,18 @@ function drawTarget(d, s, t) {
     return;
   }
   d.glow(t.x, t.y, r + (inSweet ? 36 : 18), isHaz ? '#c07070' : (inSweet || preview ? '#c8d8ff' : '#e8d0a0'));
+  // Felix dress for known climb ids — fallback to vector polys if PNG not ready.
+  const dressKey = FELIX_TARGET_DRESS[t.id];
+  let dressed = false;
+  if (dressKey && !isHaz) {
+    const props = ensureFelixProps();
+    const dw = Math.max(56, r * 2.55);
+    dressed = placeDress(d, props[dressKey], t.x, t.y, dw, 0, null, false, inSweet ? 1 : 0.96);
+  }
   // Paper silhouettes — readable gallery targets (6-digit glow only).
-  if (t.id === 'balloon') {
+  if (dressed) {
+    /* PNG placed — skip vector body so Felix art reads on cream. */
+  } else if (t.id === 'balloon') {
     d.circle(t.x, t.y - r * 0.15, r * 0.7, inSweet ? '#f0a0a0ee' : '#a05060cc', '#d2a65b', 2);
     d.line({x: t.x, y: t.y + r * 0.45}, {x: t.x, y: t.y + r * 0.95}, '#d2a65b', 2);
     if (inSweet) d.text('×', t.x, t.y + 6, 18, '#ffe6a4');
@@ -820,7 +907,7 @@ function drawTarget(d, s, t) {
     const tag = isHaz
       ? (t.id === 'chimney' ? 'chimney — skip' : (t.id === 'balloon' ? 'balloon — skip' : 'luggage — skip'))
       : t.label;
-    d.text(tag, t.x, t.y - r - 16, 14, isHaz ? '#f0a0a0' : (inSweet ? '#ffe6a4' : '#f0d09a'));
+    d.text(tag, t.x, t.y - r - 16, 14, isHaz ? '#a05050' : (inSweet ? INK_BURG : INK_DARK));
   }
   if (s.treasure && s.treasure.spot === t.id && !s.treasure.taken && t.alive) {
     d.item(spriteKey(s.treasure.id), t.x, t.y - r - 36, {
@@ -838,18 +925,19 @@ function drawLens(d, s) {
   const hot = !!s.glowId;
   const pulse = hot ? 1 + 0.04 * Math.sin((s.t || 0) * 12) : 1;
   const rim = LENS_R * pulse;
-  d.glow(lx, ly, rim + 30, hot ? '#ffe6a4' : '#d2a65b');
-  d.circle(lx, ly, rim, 'rgba(244, 232, 180, 0.08)', '#d2a65b', 8);
-  d.circle(lx, ly, rim - 10, null, '#f4d590', 2.4);
+  // Bolder brass so lens pops on cream (glow 6-digit only).
+  d.glow(lx, ly, rim + 34, hot ? '#ffe6a4' : '#e0a84a');
+  d.circle(lx, ly, rim, 'rgba(255, 220, 140, 0.12)', hot ? '#f0c060' : '#c88828', 9);
+  d.circle(lx, ly, rim - 10, null, '#f8d878', 3);
   // Sweet glow reticle (size by chapter — Ch1 attested fat, Ch2 slightly tighter)
   const rr = reticleR(s.level || 0);
-  d.circle(lx, ly, rr, hot ? 'rgba(255,230,164,0.22)' : 'rgba(244,217,144,0.08)', '#f8e4b3', 2.2);
-  d.line({x: lx - 18, y: ly}, {x: lx + 18, y: ly}, '#f4d590', 1.4);
-  d.line({x: lx, y: ly - 18}, {x: lx, y: ly + 18}, '#f4d590', 1.4);
+  d.circle(lx, ly, rr, hot ? 'rgba(255,230,164,0.26)' : 'rgba(232,168,64,0.10)', '#fce8a8', 2.4);
+  d.line({x: lx - 18, y: ly}, {x: lx + 18, y: ly}, '#f0c060', 1.6);
+  d.line({x: lx, y: ly - 18}, {x: lx, y: ly + 18}, '#f0c060', 1.6);
   if (hot) {
     d.text('SNAP', lx, ly + rim + 28, 28, '#ffe6a4');
   } else if ((s.t || 0) < CLARITY_SECS || !s.didSnapOnce) {
-    d.text('LENS', lx, ly + rim + 26, 20, '#f4d590');
+    d.text('LENS', lx, ly + rim + 26, 20, INK_NOTE);
   }
 }
 
@@ -882,6 +970,7 @@ export default {
   prizes: TREASURES,
   houseSeconds: 100,
   create(level, rng) {
+    ensureFelixProps();
     const reduced = prefersReducedMotion();
     return makeRideState(level, rng, {
       lensX: CX,
@@ -1150,6 +1239,7 @@ export default {
   },
   draw(s, d) {
     // ferris.png is the unique court — never clear or full-bleed overpaint.
+    ensureFelixProps();
     drawSpokeGuides(d, s);
     if (s.level === 5) drawDepthRings(d, s);
     drawGondolaHub(d, s);
