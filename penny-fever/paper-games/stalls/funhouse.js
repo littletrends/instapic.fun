@@ -15,6 +15,10 @@
  *   new hazard taught alone: distorted miniatures of other Penny Fever rides as
  *   clues; oval SETUP names the true ride echo; doors show ride glyphs — some
  *   warped decoys. Match the ride, then SHUT. No mirror/rotate/shrink restack.
+ * Chapter 6 The Last Laugh: implemented — finale remix of known hazards (not
+ *   stacked in one room). Foyer teachFinale: LAST LAUGH + mirror alone; gallery
+ *   echo alone; Last Laugh Court mild near/far remix. TRUST THE SETUP → SHUT
+ *   THE PUNCHLINE. Treasure ride-stamp-book. ≤6 rooms.
  *
  * Locked lane: Pac-Man chase energy × Door Door SHUT × Finish the Joke comedy.
  * Primary verb: SHUT — slam the punchline door that finishes the setup so
@@ -24,8 +28,7 @@
  * NOT wink / look-direction Simon.
  *
  * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
- * Unfinished chapters (reuse Ch5 graph until authored):
- *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
+ * All six chapters implemented — polish-only remaining (timing/copy).
  */
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
@@ -35,7 +38,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=echo-ch5-1';
+} from './funhouse-rooms.js?v=last-ch6-1';
 
 const GOLD = '#d2a65b';
 const CREAM = '#f3e2bd';
@@ -889,8 +892,27 @@ function drawClarityChrome(s, d) {
   else if (s.phase === 'transition') verb = s.pendingExit ? 'LAST LAUGH' : 'NEXT ROOM';
   drawChip(d, verb, 168, s.phase === 'choose' ? 26 : 22);
 
+  // Ch6 finale coach — LAST LAUGH; TRUST THE SETUP (hazard line on teach room).
+  if (room.teachFinale && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
+    let coach = 'TRUST THE SETUP → SHUT THE PUNCHLINE';
+    let size = 14;
+    if (s.phase === 'reveal' || s.phase === 'inspect') {
+      coach = 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE';
+      size = 15;
+    } else if (s.phase === 'choose') {
+      coach = 'TRUST THE SETUP → SHUT THE PUNCHLINE';
+      size = 15;
+    }
+    drawChip(d, coach, 214, size);
+    // One hazard-specific line on the teach room only (mirror alone first).
+    if (room.mirror && (s.phase === 'reveal' || s.phase === 'inspect' || s.phase === 'choose')) {
+      drawChip(d, 'MIRROR LIES — read real doors', 256, 13);
+    }
+  }
+
   // Ch2 coach — mirror hazard alone; loud on teach room, quiet reminder later.
-  if (room.mirror && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
+  // Skip when teachFinale already coached the mirror line (Ch6 foyer).
+  if (room.mirror && !room.teachFinale && room.kind === 'main' && s.phase !== 'transition' && s.phase !== 'enter') {
     const coach = room.teach
       ? 'MIRROR LIES — SHUT the door that finishes the SETUP'
       : 'MIRROR LIES';
@@ -1131,8 +1153,8 @@ export default {
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
-    // Ch2–Ch5 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
-    const houseSecs = (level === 1 || level === 2 || level === 3 || level === 4) ? 52 : 90;
+    // Ch2–Ch6 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
+    const houseSecs = (level === 1 || level === 2 || level === 3 || level === 4 || level === 5) ? 52 : 90;
     return makeRideState(level, rng, {
       graph,
       roomId: graph.start,
@@ -1168,12 +1190,14 @@ export default {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       s.reduced = s.reduced || !!prefersReducedMotion?.();
-      // Runtime seeds houseLeft from export (90); override Ch2–Ch5 to ~52s fair clock.
-      if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4) s.houseLeft = s.houseSeconds || 58;
+      // Runtime seeds houseLeft from export (90); override Ch2–Ch6 to ~52s fair clock.
+      if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4 || s.level === 5) s.houseLeft = s.houseSeconds || 58;
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
       if (s.practice) {
-        if (startRoom?.teachEcho) {
+        if (startRoom?.teachFinale) {
+          s.note = 'Free practice · nothing kept. LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
+        } else if (startRoom?.teachEcho) {
           s.note = 'Free practice · nothing kept. HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
         } else if (startRoom?.teachShrink) {
           s.note = 'Free practice · nothing kept. MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
@@ -1184,6 +1208,8 @@ export default {
         } else {
           s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
         }
+      } else if (startRoom?.teachFinale) {
+        s.note = 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
       } else if (startRoom?.teachEcho) {
         s.note = 'HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
       } else if (startRoom?.teachShrink) {

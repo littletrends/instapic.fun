@@ -15,8 +15,11 @@
  *   ride echo; doors show ride glyphs — some warped decoys. Match the ride,
  *   then SHUT THE PUNCHLINE. No mirror/rotate/shrink restack.
  *
- * Unfinished chapters (reuse Ch5 graph until authored):
- *   6 The Last Laugh  — recombine mirrors, rotation, false treasures; ≤6 rooms
+ * Chapter 6 The Last Laugh — implemented: finale remix of known hazards
+ *   (not stacked in one room). Foyer teaches LAST LAUGH with mirror alone;
+ *   gallery deepens with echo alone; Last Laugh Court mild near/far remix.
+ *   SETUP stays truthful; primary verb SHUT THE PUNCHLINE. ≤6 rooms.
+ *   Polish-only remaining (timing/copy), not unfinished chapters.
  *
  * Locked lane: Pac-Man chase × Door Door SHUT × Finish the Joke.
  * Primary verb SHUT — duck through / slam the punchline door that finishes
@@ -837,8 +840,171 @@ export const CHAPTER5 = {
   },
 };
 
+
+/**
+ * Chapter 6 — The Last Laugh.
+ * Finale remix of known hazards — one clear teach on foyer, then deepen.
+ * Do NOT stack every hazard in one room.
+ *   Foyer (teachFinale): LAST LAUGH coach; mirror hazard alone first.
+ *   Gallery: echo hazard alone (different prior rule).
+ *   Last Laugh Court: mild near/far remix — SETUP truthful; correct punchline
+ *     on the NEAR door. Soft fails only — detour → rejoin.
+ * Primary verb remains SHUT THE PUNCHLINE. Treasure: ride-stamp-book.
+ */
+export const CHAPTER6 = {
+  id: 'the-last-laugh',
+  start: 'foyer',
+  mainCount: 3,
+  rooms: {
+    foyer: {
+      id: 'foyer',
+      kind: 'main',
+      title: 'Encore Foyer',
+      teachFinale: true,
+      mirror: true,
+      /* Long clear coaching — LAST LAUGH + one familiar hazard alone (mirror). */
+      revealSec: 2.35,
+      inspectSec: 2.15,
+      setup: 'Why did the funhouse save the last laugh?',
+      setupProp: 'mirror',
+      caption: 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.',
+      revealNote: 'LAST LAUGH — TRUST THE SETUP. Mirror still lies once.',
+      inspectNote: 'SETUP is true. Glass swaps punchlines — read real doors, then SHUT.',
+      chooseNote: 'TRUST THE SETUP → SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'gallery', {
+          correct: true,
+          punchline: 'For the encore gag!',
+          label: 'Encore gag',
+        }),
+        door('right', 'guffaw', {
+          correct: false,
+          punchline: 'Twice the bow!',
+          label: 'Twice the bow',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'mirror', x: 450, y: 548, r: 70,
+          flavor: 'SETUP on the oval is true. Mirror lies — shut the real punchline.'},
+        {id: 'encore-find', kind: 'find', prop: 'cushion', x: 300, y: 630, r: 40, find: 'star-token',
+          flavor: 'A star token under a paper cushion — not the punchline.'},
+        {id: 'ribbon', kind: 'flavor', prop: 'panel', x: 600, y: 620, r: 34,
+          flavor: 'Pretty paper. Trust the SETUP — not the glass.'},
+      ],
+      faces: 1,
+    },
+    guffaw: {
+      id: 'guffaw',
+      kind: 'detour',
+      title: 'False Guffaw',
+      joke: 'shard',
+      caption: 'A polite false guffaw bows — then points you onward.',
+      revealNote: 'Wrong punchline — a false guffaw. Encore gallery waits ahead.',
+      rejoin: 'gallery',
+    },
+    gallery: {
+      id: 'gallery',
+      kind: 'main',
+      title: 'Echo Encore Gallery',
+      echo: true,
+      /* Different prior hazard alone — ride echo match. No mirror restack. */
+      revealSec: 1.05,
+      inspectSec: 0.85,
+      setup: 'The midway whispers once more — which echo is CAROUSEL?',
+      setupProp: 'carousel',
+      setupEcho: 'carousel',
+      caption: 'MATCH THE RIDE — then SHUT THE PUNCHLINE.',
+      revealNote: 'Hear the echo — MATCH CAROUSEL, then SHUT.',
+      inspectNote: 'SETUP names the true ride. Match that miniature — not a warped decoy.',
+      chooseNote: 'MATCH THE RIDE — SHUT THE PUNCHLINE',
+      doors: [
+        door('left', 'warble', {
+          correct: false,
+          echo: 'balloons',
+          warp: true,
+          punchline: 'A sour balloon!',
+          label: 'Sour balloon',
+        }),
+        door('right', 'last-court', {
+          correct: true,
+          echo: 'carousel',
+          punchline: 'The waltz horse!',
+          label: 'Waltz horse',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'carousel', x: 450, y: 548, r: 70,
+          flavor: 'SETUP stays true. Match the CAROUSEL miniature — not a warped decoy.'},
+        {id: 'panel', kind: 'find', prop: 'panel', x: 590, y: 636, r: 42, find: 'moon-penny',
+          flavor: 'A moon penny behind a sliding paper panel.'},
+        {id: 'tassel', kind: 'flavor', prop: 'cushion', x: 310, y: 630, r: 36,
+          flavor: 'A velvet tassel. Soft — not the punchline.'},
+      ],
+      faces: 1,
+    },
+    warble: {
+      id: 'warble',
+      kind: 'detour',
+      title: 'Off-Key Alcove',
+      joke: 'warble',
+      caption: 'An off-key peep warbles, then ushers you on.',
+      revealNote: 'Wrong echo — off-key gag. Last Laugh Court is just ahead.',
+      rejoin: 'last-court',
+    },
+    'last-court': {
+      id: 'last-court',
+      kind: 'main',
+      title: 'Last Laugh Court',
+      shrink: true,
+      last: true,
+      /* Mild remix — near door + correct punchline; SETUP truthful. No mirror/echo stack. */
+      setup: 'Knock knock. Who\'s there? Last laugh.',
+      setupProp: 'near',
+      caption: 'Final remix — SHUT the NEAR punchline that finishes the SETUP.',
+      revealNote: 'Near vs far once — TRUST THE SETUP, SHUT the near last laugh.',
+      inspectNote: 'If a keepsake is here, it sits in the open — tap it. Near finishes the gag.',
+      chooseNote: 'SHUT THE LAST LAUGH',
+      doors: [
+        door('left', 'exit', {
+          correct: true,
+          near: true,
+          lastLaugh: true,
+          punchline: 'Last laugh who? — exit!',
+          label: 'Last laugh who? — exit',
+        }),
+        door('right', 'curtain', {
+          correct: false,
+          near: false,
+          punchline: 'Stay for one more',
+          label: 'Stay for one more',
+        }),
+      ],
+      inspect: [
+        {id: 'setup-prop', kind: 'clue', prop: 'near', x: 450, y: 540, r: 70,
+          flavor: 'Last laugh who? The NEAR laughing door finishes the gag — not the tiny far decoy.'},
+        {id: 'mouth', kind: 'flavor', prop: 'mouth', x: 268, y: 700, r: 40,
+          flavor: 'A comedy mouth. It only laughs for the true punchline.'},
+        {id: 'court-cushion', kind: 'flavor', prop: 'cushion', x: 600, y: 640, r: 38,
+          flavor: 'A court cushion. Soft landing, no secret.'},
+      ],
+      treasure: {spawnId: 'last-laugh', x: 450, y: 470, r: 58},
+      faces: 1,
+    },
+    curtain: {
+      id: 'curtain',
+      kind: 'detour',
+      title: 'Curtain Call',
+      joke: 'sour',
+      caption: 'A curtain call bows too soon — then clears the way back.',
+      revealNote: 'Not the last laugh. Back to the court — finish the joke.',
+      rejoin: 'last-court',
+    },
+  },
+};
+
 export function chapterGraph(level) {
-  // level 0 = Ch1; level 1 = Ch2; level 2 = Ch3; level 3 = Ch4; level ≥4 = Ch5 until Ch6 is authored.
+  // level 0 = Ch1; 1 = Ch2; 2 = Ch3; 3 = Ch4; 4 = Ch5; ≥5 = Ch6 The Last Laugh.
+  if (level >= 5) return CHAPTER6;
   if (level >= 4) return CHAPTER5;
   if (level >= 3) return CHAPTER4;
   if (level >= 2) return CHAPTER3;
