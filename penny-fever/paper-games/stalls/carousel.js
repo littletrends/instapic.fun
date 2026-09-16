@@ -2,7 +2,7 @@
  * Amusement 1 — Florence — Carousel Waltz (Ride & Seek)
  * Tagline: Round and round, the secrets change.
  *
- * SHIPPED: Chapter 1 First Turn + Chapter 2 Painted Ponies — TAP-on-crest remix.
+ * SHIPPED: Chapter 1 First Turn + Chapter 2 Painted Ponies + Chapter 3 Mirror Round.
  *   Board one mount fixed center-front (Tempest rim lane). Orbiting horses
  *   carry crest platforms; glints rotate past like Mario platforms on a circle.
  *   ONE verb: TAP on the crest window (“almost… NOW”) — never free-look hunting.
@@ -20,8 +20,15 @@
  *     soft fail (note + logAction miss), ride continues, never abort.
  *     ~52 s searchable-friendly timing; GOAL=3 reachable on competent first play.
  *
+ *   Ch3 Mirror Round — same crest TAP. One learnable reflection rule: real crest
+ *     glints collect; false reflections (cool silver, dashed ring, horizontal flip)
+ *     cannot be collected. Teach alone: first real window has no reflections.
+ *     After first real collect (ch3Taught), later crest passes may show mirror
+ *     ghosts; TAP reflection = soft fail (note + logAction miss reason:'reflection'),
+ *     ride continues, never abort. Sticky crest-arm auto-collects REAL finds only.
+ *     Open-until finds + sticky arm (Ch2 retune 6 fairness); GOAL=3 reachable ~59 s.
+ *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures/levels):
- *   3 Mirror Round — one learnable reflection rule; false reflections cannot be collected
  *   4 Carriage Windows — door/window opens twice (teach pass, then collect pass)
  *   5 Midnight Canopy — vertical look for canopy treasures; then speed may rise
  *   6 The Grand Waltz — combine only taught rules; guarantee one repeat of the eligible window
@@ -54,10 +61,14 @@ const HORSE_N = 6;
 const COLLECT_FLASH = 0.55;
 const TEACH = 'TAP on the crest';
 const TEACH_MARKED = 'TAP the heart-marked pony';
+const TEACH_MIRROR = 'TAP the real crest — skip mirrors';
 const VERB_SEC = 5;
 /** Ch2 long warn before first searchable marked window (helter cushion teach). */
 const CH2_MARK_WARN = 8.0;
 const CH2_TEACH_CHROME = 5.5;
+/** Ch3 long warn before first searchable real window (teach alone). */
+const CH3_REAL_WARN = 8.0;
+const CH3_TEACH_CHROME = 5.5;
 /** Tiny cosmetic sway only — NOT a named LOOK skill. */
 const SWAY_X = 10;
 const SWAY_Y = 6;
@@ -88,8 +99,15 @@ function ch2Speed(reduced) {
   return reduced ? base * 0.72 : base;
 }
 
+function ch3Speed(reduced) {
+  // Mirror Round: same fairness bar as Ch2 retune 6 — slow spin, wide crest.
+  return ch2Speed(reduced);
+}
+
 function rideSpeed(s) {
-  return (s.level === 1) ? ch2Speed(s.reduced) : ch1Speed(s.reduced);
+  if (s.level === 1) return ch2Speed(s.reduced);
+  if (s.level === 2) return ch3Speed(s.reduced);
+  return ch1Speed(s.reduced);
 }
 
 function lapSeconds(speed) {
@@ -204,9 +222,12 @@ function scheduleCh1(s) {
   s.sparks = [];
   s.flash = 0;
   s.decoys = []; // none in ch1
+  s.reflections = []; // none in ch1
   s.horseMarks = null;
   s.ch2Taught = false;
+  s.ch3Taught = false;
   s.firstMarked = null;
+  s.firstReal = null;
   s.treasure = null;
 
   if (s.eligible && s.spawnId) {
@@ -352,6 +373,9 @@ function scheduleCh2(s) {
   }
 
   // Decoys only against later finds that exist (never index past finds.length).
+  s.reflections = []; // Ch2 uses decoy marks, not mirror reflections
+  s.ch3Taught = false;
+  s.firstReal = null;
   s.decoys = [];
   const decoyPlan = [
     [3, 2, 'crescent', 'panel'],
@@ -391,9 +415,137 @@ function scheduleCh2(s) {
   }
 }
 
+/**
+ * Ch3 Mirror Round — same crest TAP as Ch1/Ch2.
+ * Hazard: false reflections (cool silver / dashed / horizontal flip) soft-fail on TAP.
+ * First real window teaches alone; reflections unlock after first real collect (ch3Taught).
+ * Sticky crest-arm auto-collects REAL finds only — never reflections.
+ * Open-until finds + Ch2 retune 6 fairness; GOAL=3 reachable in one fair ~59 s run.
+ */
+function scheduleCh3(s) {
+  const speed = ch3Speed(s.reduced);
+  const lap = lapSeconds(speed);
+  const crestHalf = crestHalfFromSec(speed, 6.0); // ~6s NOW windows
+  s.crestHalf = crestHalf;
+  s.crestSec = (2 * crestHalf) / speed;
+  s.ch3Taught = false;
+  s.ch2Taught = false;
+  s.hitPad = HIT_R * 1.2;
+  s.horseMarks = null;
+  s.decoys = [];
+  s.firstMarked = null;
+
+  // Practice glint — real crest TAP only (no reflection hazard on practice lap).
+  const practiceHorse = 1;
+  const practiceCrestT = (TAU - (practiceHorse * TAU) / HORSE_N) / speed;
+  const practiceFrom = Math.max(0.2, practiceCrestT - crestHalf / speed);
+  const practiceUntil = practiceCrestT + crestHalf / speed;
+  s.practiceGlint = {
+    kind: 'practice',
+    id: 'practice-crest',
+    spot: 'saddle',
+    horse: practiceHorse,
+    from: practiceFrom,
+    until: practiceUntil,
+    taken: false,
+  };
+
+  function nextCrestAfter(horse, minT) {
+    const phase = (horse * TAU) / HORSE_N;
+    const halfT = crestHalf / speed;
+    let k = Math.ceil(((minT + halfT) * speed + phase) / TAU - 1e-9);
+    if (k < 1) k = 1;
+    const crestT = (k * TAU - phase) / speed;
+    if (crestT + halfT > lap * 2.98) return null;
+    return {crestT, from: crestT - halfT, until: crestT + halfT, horse, halfT};
+  }
+
+  // Open-until real finds (same fairness as Ch2 retune 6). Sticky arm covers 3/3.
+  const spots = ['saddle', 'mane', 'bridle', 'panel'];
+  const realHorses = [1, 2, 4, 1]; // 4th spare — goal stays 3
+  const openFrom = lap * 0.12;
+  const rideLaps = 3;
+  const finds = realHorses.map((horse, i) => ({
+    kind: 'ordinary',
+    id: ORDINARY[i % ORDINARY.length],
+    spot: spots[i % spots.length],
+    horse,
+    from: openFrom,
+    until: lap * rideLaps,
+    taken: false,
+    teach: i === 0,
+    real: true,
+  }));
+  s.finds = finds;
+  s.goal = GOAL;
+  s.found = 0;
+  s.lapsTotal = rideLaps;
+  s.lapSec = lap;
+  s.rideEnd = lap * rideLaps;
+  s.ripples = [];
+  s.sparks = [];
+  s.flash = 0;
+  s.firstReal = finds[0];
+
+  // False reflections — scheduled early but gated by reflectionsLive (after teach).
+  // Cool silver ghost crest glints on non-primary horses; soft-fail only, never collect.
+  const halfT = crestHalf / speed;
+  s.reflections = [];
+  let refMin = openFrom + halfT * 1.5;
+  const refPlan = [
+    [3, 'panel'],
+    [5, 'pole'],
+    [3, 'bridle'],
+    [5, 'canopy'],
+    [3, 'saddle'],
+    [5, 'mane'],
+    [3, 'panel'],
+    [5, 'pole'],
+  ];
+  for (let i = 0; i < refPlan.length; i++) {
+    const [horse, spotId] = refPlan[i];
+    const p = nextCrestAfter(horse, refMin);
+    if (!p) break;
+    s.reflections.push({
+      kind: 'reflection',
+      id: 'reflection-' + i,
+      spot: spotId,
+      horse,
+      from: p.from,
+      until: p.until,
+      taken: false,
+      afterTeach: true,
+    });
+    refMin = p.crestT + halfT * 0.35;
+  }
+
+  s.treasure = null;
+  if (s.eligible && s.spawnId) {
+    const spot = SPOTS.find((row) => row.id === s.spawnId) || SPOTS[0];
+    // Eligible treasure is REAL (not a reflection) — prefer a real-find horse.
+    let treasureHorse = spot.horse;
+    if (![1, 2, 4].includes(treasureHorse)) treasureHorse = 2;
+    const tp = nextCrestAfter(treasureHorse, lap * 0.9);
+    const tHalf = Math.max(2.5 / 2, crestHalf / speed);
+    let crestT = tp ? tp.crestT : lap * 1.6;
+    if (crestT + tHalf > lap * 2.95) crestT = lap * 2.95 - tHalf;
+    if (crestT - tHalf < lap * 0.9) crestT = lap * 0.9 + tHalf;
+    s.treasure = {
+      id: s.treasureId,
+      spot: spot.id,
+      horse: treasureHorse,
+      real: true,
+      from: crestT - tHalf,
+      until: crestT + tHalf,
+      taken: false,
+    };
+  }
+}
+
 function scheduleForLevel(s) {
-  // 0 → Ch1; 1 → Ch2; unfinished 2–5 stub as Ch1 until authored.
+  // 0 → Ch1; 1 → Ch2; 2 → Ch3; unfinished 3–5 stub as Ch1 until authored.
   if (s.level === 1) scheduleCh2(s);
+  else if (s.level === 2) scheduleCh3(s);
   else scheduleCh1(s);
 }
 
@@ -470,6 +622,14 @@ function collectOrdinary(s, find, scr) {
     // Chain fairness: each heart collect re-arms so a 2/3 run still reaches 3/3.
     if (s.found < (s.goal || GOAL)) armCrestTap(s, 20);
   }
+  if (s.level === 2) {
+    if (!s.ch3Taught) {
+      s.ch3Taught = true;
+      logAction(s, 'teach', {kind: 'real-crest'});
+    }
+    // Chain fairness: sticky re-arm until goal (reflections never auto-collect).
+    if (s.found < (s.goal || GOAL)) armCrestTap(s, 20);
+  }
   if (scr) {
     addRipple(s, scr.x, scr.y);
     spawnSparks(s, scr.x, scr.y, 12);
@@ -481,7 +641,9 @@ function collectOrdinary(s, find, scr) {
     ? 'Three finds — ride the horse home.'
     : (s.level === 1
       ? (s.found + ' of ' + s.goal + ' — heart-marked ponies.')
-      : (s.found + ' of ' + s.goal + ' ordinary finds.'));
+      : (s.level === 2
+        ? (s.found + ' of ' + s.goal + ' — real crests only.')
+        : (s.found + ' of ' + s.goal + ' ordinary finds.')));
   s.statusKind = 'found';
   return true;
 }
@@ -504,6 +666,28 @@ function softFailDecoy(s, decoy, scr) {
   s.decoyFlash = 0.55;
   s.decoyFlashX = scr ? scr.x : CX;
   s.decoyFlashY = scr ? scr.y : CY;
+  return 'miss';
+}
+
+function reflectionsLive(s) {
+  // Mirror ghosts only AFTER first real collect teaches the rule.
+  // Practice-lap practiceGlint itself never spawns reflections (separate item).
+  return s.level === 2 && !!s.ch3Taught;
+}
+
+function softFailReflection(s, reflection, scr) {
+  logAction(s, 'miss', {
+    reason: 'reflection',
+    horse: reflection.horse,
+    spot: reflection.spot,
+    x: scr ? Math.round(scr.x) : 0,
+    y: scr ? Math.round(scr.y) : 0,
+  });
+  s.note = 'Mirror ghost — ' + TEACH_MIRROR + '. Ride continues.';
+  s.statusKind = 'miss';
+  s.reflectionFlash = 0.55;
+  s.reflectionFlashX = scr ? scr.x : CX;
+  s.reflectionFlashY = scr ? scr.y : CY;
   return 'miss';
 }
 
@@ -886,6 +1070,98 @@ function drawCh2MarkChrome(d, s) {
   d.text('Gold heart saddle — decoys come later', 520, y + 92, 16, `rgba(240,208,154,${fade})`);
 }
 
+/** Dashed silver ring — learnable false-reflection cue (6-digit glow only). */
+function drawDashedRing(d, x, y, r, color, segs = 14) {
+  for (let i = 0; i < segs; i++) {
+    if (i % 2) continue;
+    const a0 = (i / segs) * Math.PI * 2;
+    const a1 = ((i + 0.72) / segs) * Math.PI * 2;
+    d.arc(x, y, r, a0, a1, color, 2.4);
+  }
+}
+
+/** False reflection crest glint — cool silver, dashed ring, horizontal flip cue. */
+function drawReflectionGlint(d, scr, t) {
+  if (!scr) return;
+  const pulse = 1 + 0.08 * Math.sin((t || 0) * 6.5);
+  const n = scr.crest || 0;
+  // Ghost position hint: slight horizontal flip offset of inner art about glint center.
+  d.glow(scr.x, scr.y, (n > 0.02 ? 48 : 30) * pulse, '#b8c4d4');
+  drawDashedRing(d, scr.x, scr.y, 26 * pulse, '#c8d0e0');
+  d.circle(scr.x, scr.y, 12, 'rgba(168,184,200,0.28)', '#c8d0e0', 2);
+  // Horizontal-flip chevrons (mirror cue) — drawn flipped left/right.
+  const fx = 10;
+  d.poly(
+    [[scr.x + fx, scr.y - 11], [scr.x - 2, scr.y], [scr.x + fx, scr.y + 11]],
+    null,
+    '#c8d0e0',
+    2.2,
+  );
+  d.poly(
+    [[scr.x - fx, scr.y - 11], [scr.x + 2, scr.y], [scr.x - fx, scr.y + 11]],
+    null,
+    '#a8b8c8',
+    1.6,
+  );
+  if (n > 0.35) {
+    const fade = Math.min(1, (n - 0.35) / 0.4);
+    d.poly(
+      [[scr.x - 52, scr.y - 66], [scr.x + 52, scr.y - 66], [scr.x + 52, scr.y - 34], [scr.x - 52, scr.y - 34]],
+      `rgba(26,32,48,${0.88 * fade})`,
+      '#c8d0e0',
+      2,
+    );
+    d.text('MIRROR', scr.x, scr.y - 42, 18, `rgba(200,208,224,${fade})`);
+  }
+}
+
+/** Ch3 teach-alone chrome — real crest before mirror ghosts. No LOOK verb. */
+function drawCh3MirrorChrome(d, s) {
+  if (s.level !== 2) return;
+  if (s.ch3Taught) return;
+  const t = s.t || 0;
+  const lap0 = s.practice && Math.floor(t / (s.lapSec || 1)) === 0;
+
+  let show = false;
+  let fade = 1;
+  if (lap0 && t >= VERB_SEC && t < VERB_SEC + CH3_TEACH_CHROME) {
+    show = true;
+    const end = VERB_SEC + CH3_TEACH_CHROME;
+    fade = t < end - 0.6 ? 1 : Math.max(0, (end - t) / 0.6);
+  }
+
+  const first = s.firstReal;
+  if (!s.practice && first && !first.taken) {
+    const lead = first.from - t;
+    if (lead <= CH3_REAL_WARN && t <= first.until + 0.2) {
+      show = true;
+      fade = lead > 0 ? 1 : Math.max(0.35, 1 - (t - first.from) / Math.max(0.4, first.until - first.from));
+    }
+  }
+
+  if (!s.practice && !s.ch3Taught && t < CH3_TEACH_CHROME) {
+    show = true;
+    fade = t < CH3_TEACH_CHROME - 0.6 ? 1 : Math.max(0, (CH3_TEACH_CHROME - t) / 0.6);
+  }
+
+  if (!show || fade < 0.05) return;
+
+  const y = 820;
+  d.poly(
+    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
+    `rgba(12,10,18,${0.86 * fade})`,
+    '#d2a65b',
+    3,
+  );
+  const hx = 200;
+  const hy = y + 58;
+  d.glow(hx, hy, 36, '#ffe6a4');
+  d.circle(hx, hy, 16, 'rgba(255,230,164,0.35)', '#ffe6a4', 2.5);
+  d.heart(hx, hy, 10, '#d2a65b');
+  d.text(TEACH_MIRROR, 520, y + 48, 22, `rgba(255,230,164,${fade})`);
+  d.text('Real crest — skip mirror ghosts', 520, y + 88, 16, `rgba(240,208,154,${fade})`);
+}
+
 function drawStatusStrip(d, s) {
   if (s.practice && (s.t || 0) < VERB_SEC) return;
   const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
@@ -898,12 +1174,19 @@ function drawStatusStrip(d, s) {
     (s.treasure && itemInCrestWindow(s.treasure, s)) ||
     (s.finds || []).some((row) => itemInCrestWindow(row, s));
   const anyDecoy = decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s));
-  const anyCrest = anyMarked || anyDecoy;
+  const anyReflection = reflectionsLive(s) && (s.reflections || []).some((row) => itemInCrestWindow(row, s));
+  const anyCrest = anyMarked || anyDecoy || anyReflection;
 
   if (anyMarked) {
-    label = s.level === 1 ? 'almost… NOW — heart TAP' : 'almost… NOW — TAP';
+    label = s.level === 1
+      ? 'almost… NOW — heart TAP'
+      : (s.level === 2 ? 'almost… NOW — real TAP' : 'almost… NOW — TAP');
     color = '#ffe6a4';
     fill = '#3a2018ee';
+  } else if (anyReflection) {
+    label = 'mirror ghost — skip reflections';
+    color = '#c8d0e0';
+    fill = '#1a2030ee';
   } else if (anyDecoy) {
     label = 'decoy crest — skip wrong marks';
     color = '#c8d0e0';
@@ -1004,6 +1287,14 @@ function tryCrestTap(s, p) {
     }
   }
 
+  // Reflections after teach — soft-fail only (never collected; sticky arm ignores them).
+  if (reflectionsLive(s)) {
+    const reflection = (s.reflections || []).find((row) => !row.taken && itemInCrestWindow(row, s));
+    if (reflection) {
+      return softFailReflection(s, reflection, spotScreen(reflection.spot, s, reflection.horse));
+    }
+  }
+
   const early = (s.finds || []).find((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
   const earlyTr = s.treasure && itemActive(s.treasure, s.t) && !itemInCrestWindow(s.treasure, s);
   const earlyPr = s.practiceGlint && itemActive(s.practiceGlint, s.t) && !itemInCrestWindow(s.practiceGlint, s);
@@ -1020,8 +1311,8 @@ function tryCrestTap(s, p) {
 
 export default {
   title: 'Carousel Waltz',
-  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies adds one rule: only the gold heart-marked pony counts.',
-  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Find three ordinary keepsakes before the final rotation ends.',
+  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts.',
+  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Find three ordinary keepsakes before the final rotation ends.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -1055,9 +1346,13 @@ export default {
       practiceGlint: null,
       horseMarks: null,
       decoys: [],
+      reflections: [],
       ch2Taught: false,
+      ch3Taught: false,
       firstMarked: null,
+      firstReal: null,
       decoyFlash: 0,
+      reflectionFlash: 0,
     });
   },
 
@@ -1076,6 +1371,10 @@ export default {
         s.note = s.eligible
           ? 'Painted Ponies — TAP the heart-marked pony. A keepsake hides this waltz.'
           : 'Painted Ponies — TAP the heart-marked pony. Three finds finish the ride.';
+      } else if (s.level === 2) {
+        s.note = s.eligible
+          ? 'Mirror Round — TAP real crests; skip mirror ghosts. A keepsake hides this waltz.'
+          : 'Mirror Round — TAP real crests; skip mirror ghosts. Three finds finish the ride.';
       } else {
         s.note = s.eligible
           ? 'A keepsake hides this waltz. TAP on the crest.'
@@ -1117,6 +1416,16 @@ export default {
       }
     }
 
+    // Ch3 long warn before first real window (teach alone — no reflections yet).
+    if (s.level === 2 && !s.practice && !s.ch3Taught && s.firstReal && !s.firstReal.taken) {
+      const lead = s.firstReal.from - (s.t || 0);
+      if (lead <= CH3_REAL_WARN && lead > -0.05 && !s.ch3WarnLogged) {
+        s.ch3WarnLogged = true;
+        logAction(s, 'real-warn', {lead: CH3_REAL_WARN});
+        s.note = TEACH_MIRROR + ' — warm gold NOW is real.';
+      }
+    }
+
     // Reveal eligible treasure when its crest window opens (ride never pauses).
     if (s.treasure && itemInCrestWindow(s.treasure, s) && !s.treasureRevealed) {
       s.treasureRevealed = true;
@@ -1143,6 +1452,7 @@ export default {
     }
     if (s.flash > 0) s.flash = Math.max(0, s.flash - dt);
     if ((s.decoyFlash || 0) > 0) s.decoyFlash = Math.max(0, s.decoyFlash - dt);
+    if ((s.reflectionFlash || 0) > 0) s.reflectionFlash = Math.max(0, s.reflectionFlash - dt);
 
     // Fairness: seal a win as soon as 3/3 lands (don't bleed into a late miss veil).
     if (!s.result && (s.found || 0) >= (s.goal || GOAL) && (s.t || 0) > 0.4) {
@@ -1276,10 +1586,13 @@ export default {
       if (!scr) return;
       if (scr.crest > 0.02) drawNowTelegraph(d, scr, t, false);
       else drawApproachGlint(d, scr, t, false);
-      // Heart cue on the collectable glint (Ch2).
+      // Heart cue on the collectable glint (Ch2). Ch3: warm REAL cue (vs silver mirrors).
       if (row.mark === 'heart') {
         d.glow(scr.x, scr.y - 22, 18, '#ffe6a4');
         d.heart(scr.x, scr.y - 22, 9, '#d2a65b');
+      } else if (s.level === 2 && row.real) {
+        d.glow(scr.x, scr.y - 20, 16, '#ffe6a4');
+        d.circle(scr.x, scr.y - 20, 5, '#ffe6a4', '#d2a65b', 1.5);
       }
       d.item(spriteKey(row.id), scr.x, scr.y, {
         w: 56,
@@ -1313,10 +1626,26 @@ export default {
       });
     }
 
+    // Ch3 false reflections — cool silver / dashed / flip cue; soft-fail on TAP (after teach).
+    if (reflectionsLive(s)) {
+      (s.reflections || []).forEach((row) => {
+        if (!itemActive(row, s.t)) return;
+        const scr = spotScreen(row.spot, s, row.horse);
+        if (!scr) return;
+        drawReflectionGlint(d, scr, t);
+      });
+    }
+
     if ((s.decoyFlash || 0) > 0) {
       const k = s.decoyFlash / 0.55;
       d.glow(s.decoyFlashX || CX, s.decoyFlashY || CY, 24 + 40 * k, '#c8d0e0');
       d.text('soft miss', s.decoyFlashX || CX, (s.decoyFlashY || CY) - 36, 16, `rgba(200,208,224,${k})`);
+    }
+
+    if ((s.reflectionFlash || 0) > 0) {
+      const k = s.reflectionFlash / 0.55;
+      d.glow(s.reflectionFlashX || CX, s.reflectionFlashY || CY, 24 + 40 * k, '#b8c4d4');
+      d.text('mirror miss', s.reflectionFlashX || CX, (s.reflectionFlashY || CY) - 36, 16, `rgba(200,208,224,${k})`);
     }
 
     if (s.treasure && itemActive(s.treasure, s.t)) {
@@ -1356,6 +1685,7 @@ export default {
     drawVerbChrome(d, s);
     drawPracticeLegend(d, s);
     drawCh2MarkChrome(d, s);
+    drawCh3MirrorChrome(d, s);
     drawStatusStrip(d, s);
 
     drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
