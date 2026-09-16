@@ -10,6 +10,7 @@
  *
  * Ch1 teach: first ladder alone with coaching; one milder snake later (no stacked hazards).
  * Fair bar: competent STEP reaches 3/3 ladders in one free practice ride (~45–55s).
+ * Aura fairness retune: post-snake L3 on dump corridor (no long crest re-climb).
  *
  * Keepsake (Lorie): NOT on the trivial upward ladder-skip route. It sits in the corridor
  * you only visit after a soft snake dump — slide down, step the keepsake cell, climb again.
@@ -40,12 +41,16 @@ const LEVEL_NAMES = [
 
 const TAU = Math.PI * 2;
 const CX = 450;
-const Y_BOT = 1040;
-const Y_TOP = 200;
-const R_BOT = 310;
-const R_TOP = 95;
-const TURNS = 2.35;
+const Y_BOT = 980;   // climb axis (ellipse midpoints)
+const Y_TOP = 250;
+const R_BOT = 300;
+const R_TOP = 72;
+const TURNS = 5.75; // ~5–6 visible coil layers (Lorie bar)
+const Y_SQUASH = 0.38; // elliptical loop depth (front lower, back higher)
 const CELL_COUNT = 26;
+const TRACK_W0 = 40; // outer / bottom stroke
+const TRACK_W1 = 28; // crest stroke (slight taper)
+const TRACK_SAMPLES = 420;
 const GOAL = 3;
 const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
@@ -60,6 +65,12 @@ const BURGUNDY = '#c67483';
 const BURGUNDY_DEEP = '#6b2030';
 const PATH = '#e8d0a0';
 const YOU_FILL = '#fff6d8';
+/** Deep-red helter ribbon — track is the star (not thin path geometry). */
+const TRACK = '#a02838';
+const TRACK_DEEP = '#8b1e2d';
+const TRACK_EDGE = '#5c121c';
+const TRACK_SHADOW = '#3a0a12';
+
 
 /**
  * Ch1 authored board (also used for frozen Ch2–6 stubs).
@@ -68,31 +79,100 @@ const YOU_FILL = '#fff6d8';
  */
 function ch1Board() {
   // Ladder feet + boost (destination = foot + boost, clamped).
+  // Fairness retune (Aura FAIL 2/3): L3 foot sits on the post-snake corridor
+  // (cell 8 — skipped by L1 boost 4→9) so one STEP after dump clears the 3rd ladder.
   const ladders = [
-    {foot: 4, boost: 5, teach: true},   // 4 → 9; skips 5–8 (treasure lives in dump corridor)
+    {foot: 4, boost: 5, teach: true},   // 4 → 9; skips 5–8
     {foot: 11, boost: 4, teach: false}, // 11 → 15
-    {foot: 20, boost: 4, teach: false}, // 20 → 24 (3rd hit after snake recover)
+    {foot: 8, boost: 7, teach: false},  // 8 → 15 — only after snake dump to 7
   ];
-  // Mild snake after L1 teach + L2; dump into treasure corridor.
+  // Mild snake after L1+L2; dump onto keepsake cell, L3 one STEP ahead.
   const snakes = [
-    {head: 16, dump: 9, teach: false}, // 16 → 7; treasure at 8 is one STEP ahead
+    {head: 16, dump: 9, teach: false}, // 16 → 7
   ];
-  const treasureCell = 8; // only reached after snake dump to 7 (not on upward L1/L2 skip route)
+  const treasureCell = 7; // land here on soft dump (off easy L1 skip route)
   return {ladders, snakes, treasureCell, cellCount: CELL_COUNT, duration: RIDE_SECONDS};
 }
 
-/** Sample Archimedean-style spiral BOTTOM → TOP into cell positions. */
+/**
+ * Archimedean helter coil: BOTTOM → TOP, large radius → tight crest.
+ * Each turn is an ELLIPSE (x full r, y climb ± r*Y_SQUASH) so loops read as
+ * coils wrapping a tower — not a flat front-view zigzag.
+ * ang starts at -PI/2 (bottom-front). depth = sin(ang): +1 back, -1 front.
+ */
+function spiralPoint(u) {
+  const ang = -Math.PI / 2 + u * TURNS * TAU;
+  const r = R_BOT + (R_TOP - R_BOT) * u;
+  const climb = Y_BOT + (Y_TOP - Y_BOT) * u;
+  // Front (sin=-1) sits lower on screen; back (sin=+1) sits higher — oval loops.
+  const x = CX + Math.cos(ang) * r;
+  const y = climb - Math.sin(ang) * r * Y_SQUASH;
+  const depth = Math.sin(ang); // back first when sorted descending
+  return {x, y, ang, r, u, depth, climb};
+}
+
+/** Sample spiral BOTTOM → TOP into cell centers ON the ribbon. */
 function buildSpiral(n) {
   const cells = [];
   for (let i = 0; i < n; i++) {
     const u = n <= 1 ? 0 : i / (n - 1);
-    const ang = -Math.PI / 2 + u * TURNS * TAU; // start near bottom-front
-    const r = R_BOT + (R_TOP - R_BOT) * u;
-    const x = CX + Math.cos(ang) * r;
-    const y = Y_BOT + (Y_TOP - Y_BOT) * u;
-    cells.push({i, x, y, ang, r, u});
+    const p = spiralPoint(u);
+    cells.push({i, x: p.x, y: p.y, ang: p.ang, r: p.r, u: p.u, depth: p.depth});
   }
   return cells;
+}
+
+function trackWidth(u) {
+  return TRACK_W0 + (TRACK_W1 - TRACK_W0) * clamp(u, 0, 1);
+}
+
+/**
+ * Thick deep-red ribbon with depth layering: continuous half-turn coils,
+ * back coils painted first so front turns visibly pass over them.
+ */
+function drawSpiralTrack(d) {
+  const pts = [];
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    pts.push(spiralPoint(i / (TRACK_SAMPLES - 1)));
+  }
+  // Continuous under-silhouette so the track reads as one ribbon (not pills).
+  const all = pts.map((p) => ({x: p.x, y: p.y}));
+  d.path(all.map((p) => ({x: p.x + 4, y: p.y + 6})), TRACK_SHADOW + '44', TRACK_W0 + 10, false, null);
+  d.path(all, TRACK_EDGE + '99', TRACK_W0 + 4, false, null);
+
+  // Half-turn coils (continuous arcs) sorted back → front for overlap.
+  const halfTurns = Math.max(2, Math.ceil(TURNS * 2));
+  const coils = [];
+  for (let h = 0; h < halfTurns; h++) {
+    const u0 = h / (TURNS * 2);
+    const u1 = Math.min(1, (h + 1) / (TURNS * 2));
+    const i0 = Math.max(0, Math.floor(u0 * (TRACK_SAMPLES - 1)) - 2);
+    const i1 = Math.min(TRACK_SAMPLES - 1, Math.ceil(u1 * (TRACK_SAMPLES - 1)) + 2);
+    const slice = pts.slice(i0, i1 + 1);
+    if (slice.length < 2) continue;
+    // Mean depth over the half-turn (sin(ang): +back / -front).
+    let depthSum = 0;
+    for (const p of slice) depthSum += p.depth;
+    const mid = slice[Math.floor(slice.length / 2)];
+    coils.push({
+      pts: slice.map((p) => ({x: p.x, y: p.y})),
+      depth: depthSum / slice.length,
+      w: trackWidth(mid.u),
+      u: mid.u,
+      h,
+    });
+  }
+  coils.sort((a, b) => b.depth - a.depth || a.u - b.u);
+
+  for (const coil of coils) {
+    const w = coil.w;
+    d.path(coil.pts, TRACK_EDGE + 'f0', w + 6, false, null);
+    d.path(coil.pts, TRACK_DEEP + 'f8', w + 2.5, false, null);
+    d.path(coil.pts, TRACK + 'fc', w, false, null);
+    // Cream highlight lip on the upper edge of the ribbon.
+    const lip = coil.pts.map((p) => ({x: p.x, y: p.y - w * 0.3}));
+    d.path(lip, CREAM + '70', Math.max(2.5, w * 0.18), false, null);
+  }
 }
 
 function reducedMotion(s) {
@@ -560,23 +640,20 @@ export default {
     // Soft vignette only — do not hide helter.png court.
     d.ellipse(CX, 640, 400, 540, '#4a182410');
 
-    // Spiral path stroke (translucent).
-    if (cells.length) {
-      d.path(cells.map((c) => ({x: c.x, y: c.y})), PATH + '66', 4, false, null);
-      d.path(cells.map((c) => ({x: c.x, y: c.y})), CREAM_DEEP + '44', 1.5, false, null);
-    }
+    // RED TRACK is the star — thick coiled ribbon with back→front layering.
+    drawSpiralTrack(d);
 
-    // Cell ticks.
+    // Faint cell centers on the ribbon (readable footholds, not geometry lines).
     for (const c of cells) {
-      d.circle(c.x, c.y, 3.5, '#f0d09a33', PATH + '88', 1);
+      d.circle(c.x, c.y, 4, '#f4d59028', TRACK_EDGE + '55', 1);
     }
 
-    // Ladder segments (cream/gold).
+    // Ladder segments (cream/gold) sit ON the track.
     for (const L of s.ladders || []) {
       drawLadderSeg(d, cells, L.foot, L.foot + L.boost);
     }
 
-    // Snake curves (burgundy).
+    // Snake curves (burgundy) sit ON the track.
     for (const S of s.snakes || []) {
       drawSnakeCurve(d, cells, S.head, S.head - S.dump);
     }
@@ -597,11 +674,15 @@ export default {
       }
     }
 
-    // Crest hint at top cell.
+    // Crest bullseye — cream disc (+ optional tiny spiral-tower sprite).
     const top = cells[cells.length - 1];
     if (top) {
-      d.ellipse(top.x, top.y, 22, 12, '#f3e2bd33', CREAM_DEEP + '66', 1);
-      d.text('crest', top.x, top.y - 18, 12, '#f0d09a66');
+      d.ellipse(top.x, top.y + 2, 26, 14, TRACK_SHADOW + '44');
+      d.ellipse(top.x, top.y, 20, 11, CREAM + '55', CREAM_DEEP + '99', 1.5);
+      d.ellipse(top.x, top.y, 8, 5, GOLD + '66', CREAM_DEEP + '88', 1);
+      try {
+        d.item?.('spiral-tower', top.x, top.y - 10, {w: 28, alpha: 0.85});
+      } catch { /* sprite optional */ }
     }
 
     // YOU marker.
