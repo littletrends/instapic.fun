@@ -28,12 +28,12 @@
  *     catch ×2.2 / makeup ×2.5). Soft-miss teach arms auto-line assist
  *     (snap outer while HOLD) + short soft-push (~0.25 s) — never aborts.
  *     Treasure = outer (taught). HUD stays N/3.
- *   Ch5 Bell Flight: three bands; GOAL 3; ~67 s; ONE high→outer teach alone
- *     (long warn ~10 s, HOLD scream-clear) — bell pitch/symbol maps to bands;
- *     then 3 outer HOLD clearLong POPs (#2/#3 + makeup, approach ≥8 s,
- *     catch ×2.2 / makeup ×2.0; teach catch ≥×2.0). Soft-miss teach arms
- *     ch5Assist auto-line snap while HOLD + short soft-push (~0.25 s) —
- *     never aborts. Treasure = outer (taught). HUD stays N/3.
+ *   Ch5 Bell Flight: three bands; GOAL 3 (goalCap 3, HUD forced N/3); ~67 s;
+ *     ONE high→outer teach alone (long warn ~10 s, HOLD scream-clear) — bell
+ *     pitch/symbol maps to bands; then 3 outer HOLD clearLong POPs (#2/#3 +
+ *     makeup, clearLong approach ≥10 s, catch teach/clears ×2.5 / makeup ×2.8).
+ *     Soft-miss teach arms ch5Assist auto-line snap while HOLD + short
+ *     soft-push (~0.25 s) — never aborts. Treasure = outer (taught).
  *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
  *   6 The Midnight Waltz — combine taught patterns; treasure gets one full
@@ -78,7 +78,7 @@ const CLOUD_CLEAR_APPROACH_SEC = 8.0; // Ch4 clear #2/#3 approach ≥8 s
 const CLOUD_MAKEUP_APPROACH_SEC = 8.0; // Ch4 makeup #4 approach ≥8 s
 const SOFT_PUSH_SEC_CH4 = 0.25; // Ch4 soft-push lock — HOLD resumes immediately
 const BELL_WARN_SEC = 10; // Ch5 teach bell long warn
-const BELL_CLEAR_APPROACH_SEC = 8.0; // Ch5 #2/#3 clearLong approach ≥8 s
+const BELL_CLEAR_APPROACH_SEC = 10.0; // Ch5 #2/#3 clearLong approach ≥10 s
 const BELL_MAKEUP_APPROACH_SEC = 8.0; // Ch5 makeup #4 approach ≥8 s
 const SOFT_PUSH_SEC_CH5 = 0.25; // Ch5 soft-push lock — HOLD resumes immediately
 const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
@@ -167,18 +167,18 @@ function ch4Bubbles() {
 /**
  * Chapter 5 Bell Flight: ONE high→outer teach alone (long warn ~10 s) — bell
  * pitch/symbol maps to bands (low/mid/high → inner/middle/outer). Then THREE
- * outer HOLD clearLong bell-bubbles (#2/#3 + makeup, approach ≥8 s) —
- * recovery is HOLD-only (no inner RELEASE). Soft teach miss arms ch5Assist
+ * outer HOLD clearLong bell-bubbles (#2/#3 + makeup, clearLong approach ≥10 s)
+ * — recovery is HOLD-only (no inner RELEASE). Soft teach miss arms ch5Assist
  * auto-line snap while HOLD so POPs land; soft miss recoverable (never
- * aborts). Treasure = outer (taught). HUD N/3. GOAL 3 with 4 bubbles so one
- * soft miss still allows Practice complete.
+ * aborts). Treasure = outer (taught). HUD forced N/3 (goalCap 3). GOAL 3 with
+ * 4 bubbles so one soft miss still allows Practice complete.
  */
 function ch5Bubbles() {
   return [
-    {theta: 1.55 * TAU, band: 2, taken: false, bell: 'high', teach: true}, // #1 outer high teach — 10s warn, catch ≥×2.0
-    {theta: 3.60 * TAU, band: 2, taken: false, bell: 'high', clearLong: true}, // #2 outer high — HOLD, catch ×2.2, approach ≥8s
+    {theta: 1.55 * TAU, band: 2, taken: false, bell: 'high', teach: true}, // #1 outer high teach — 10s warn, catch ×2.5
+    {theta: 3.60 * TAU, band: 2, taken: false, bell: 'high', clearLong: true}, // #2 outer high — HOLD, catch ×2.5, approach ≥10s
     {theta: 5.50 * TAU, band: 2, taken: false, bell: 'high', clearLong: true}, // #3 outer high — HOLD, same
-    {theta: 7.20 * TAU, band: 2, taken: false, bell: 'high', clearLong: true, makeup: true}, // #4 outer high makeup — catch ×2.0
+    {theta: 7.20 * TAU, band: 2, taken: false, bell: 'high', clearLong: true, makeup: true}, // #4 outer high makeup — catch ×2.8
   ];
 }
 
@@ -283,13 +283,13 @@ function bandLabel(band, three) {
 }
 
 
-/** Catch half: Ch5 teach ≥×2.0, clearLong ×2.2, makeup ×2.0; Ch4 teach/clearLong ×2.2, makeup ×2.5. Ch1–3 untouched. */
+/** Catch half: Ch5 teach/clears ×2.5, makeup ×2.8; Ch4 teach/clearLong ×2.2, makeup ×2.5. Ch1–3 untouched. */
 function catchHalfOf(bubble) {
   if (bubble && bubble.bell) {
-    if (bubble.makeup) return CATCH_HALF * 2.0;
-    if (bubble.teach) return CATCH_HALF * 2.0;
-    if (bubble.clearLong) return CATCH_HALF * 2.2;
-    return CATCH_HALF * 2.0;
+    if (bubble.makeup) return CATCH_HALF * 2.8;
+    if (bubble.teach) return CATCH_HALF * 2.5;
+    if (bubble.clearLong) return CATCH_HALF * 2.5;
+    return CATCH_HALF * 2.5;
   }
   if (bubble && bubble.cloud && bubble.teach) return CATCH_HALF * 2.2;
   if (bubble && bubble.makeup) return CATCH_HALF * 2.5;
@@ -306,7 +306,7 @@ function approachOf(bubble) {
     return BELL_MAKEUP_APPROACH_SEC * OMEGA; // ~6.72 rad ≈ 8.0 s makeup
   }
   if (bubble && bubble.bell) {
-    return BELL_CLEAR_APPROACH_SEC * OMEGA; // ~6.72 rad ≈ 8.0 s clearLong
+    return BELL_CLEAR_APPROACH_SEC * OMEGA; // ~8.4 rad ≈ 10.0 s clearLong
   }
   if (bubble && bubble.ribbon && bubble.teach) {
     return RIBBON_WARN_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s long warn
@@ -501,9 +501,11 @@ function tryPopBubble(s, bubble, i) {
       : 'Cloud POP! ' + s.passed + ' / ' + s.goal;
   } else if (bubble.bell) {
     s.lineStreak = 0;
+    const g = GOAL_CH5;
+    const n = Math.min(s.passed, g);
     s.note = bubble.teach
-      ? 'Bell POP! Match the pitch — ' + s.passed + ' / ' + s.goal
-      : 'Bell POP! ' + s.passed + ' / ' + s.goal;
+      ? 'Bell POP! Match the pitch — ' + n + ' / ' + g
+      : 'Bell POP! ' + n + ' / ' + g;
   } else {
     s.lineStreak = 0;
     s.note = 'POP! ' + s.passed + ' / ' + s.goal;
@@ -1295,6 +1297,7 @@ export default {
       backgrounded: false,
       passed: 0,
       goal: ch5 ? GOAL_CH5 : (ch4 ? GOAL_CH4 : (ch3 ? GOAL_CH3 : (ch2 ? GOAL_CH2 : GOAL_CH1))),
+      goalCap: ch5 ? GOAL_CH5 : undefined,
       threeBand: three,
       starCircles: ch3,
       cloudWaltz: ch4,
@@ -1323,6 +1326,11 @@ export default {
   },
   update(s, dt, input) {
     if (s.result || s.broke) return;
+    // Belt-and-suspenders: Bell Flight HUD/goal never drifts to bubble count (4).
+    if (isBellFlight(s)) {
+      s.goal = GOAL_CH5;
+      s.goalCap = GOAL_CH5;
+    }
 
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWNS)) {
       s.note = isBellFlight(s)
@@ -1428,7 +1436,7 @@ export default {
       finishRide(s, {
         rideId: RIDE,
         treasureId: s.treasureId,
-        challengeOk: s.passed >= s.goal,
+        challengeOk: s.passed >= (isBellFlight(s) ? GOAL_CH5 : s.goal),
         completionFind: 'star-token',
       });
     }
@@ -1681,7 +1689,11 @@ export default {
       d.text(verbSub, 450, 898, 18, '#f0d18f');
       // Scream-clear N/3 under verb during Cloud Waltz / Bell Flight
       if (tall) {
-        d.text((s.passed || 0) + ' / ' + s.goal + ' bubbles', 450, 924, 17, isBellFlight(s) ? BELL_SOFT : CLOUD_SOFT);
+        if (isBellFlight(s)) {
+          d.text(Math.min(s.passed || 0, GOAL_CH5) + ' / ' + GOAL_CH5 + ' Bell POP', 450, 924, 17, BELL_SOFT);
+        } else {
+          d.text((s.passed || 0) + ' / ' + s.goal + ' bubbles', 450, 924, 17, CLOUD_SOFT);
+        }
       }
     }
 
@@ -1708,7 +1720,11 @@ export default {
       d.text('PRACTICE', 450, 208, teachLoud ? 24 : 20, CREAM);
     }
 
-    drawHud(d, s, {goal: s.goal, count: s.passed, label: 'bubbles'});
+    if (isBellFlight(s)) {
+      drawHud(d, s, {goal: GOAL_CH5, count: Math.min(s.passed || 0, GOAL_CH5), label: 'Bell POP'});
+    } else {
+      drawHud(d, s, {goal: s.goal, count: s.passed, label: 'bubbles'});
+    }
   },
   readout: (s) => s.note || '',
 };
