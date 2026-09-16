@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-5d
+ * cache: dress-ready-5e
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -14,6 +14,7 @@
  *   Mid-edge A/B curtain portals = two-way through (enter L→exit R, enter R→exit L; no IN/OUT labels).
  *   Right curtain art flipped. starKey mid-court UNLOCKS cream-border bonus; collect on screen clear. Widened AA/BB portal mouths.
  *   dress-ready-5d: open centre through 3 mid blocks so K is easy; curtains never gated behind key.
+ *   dress-ready-5e: no practice beat — board straight into eligible maze (skip free-practice mode).
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre MOVE stick on canvas bottom + maze swipe + keyboard (no UD/LR arrow pads; no curtain-corner pads).
  *   actions: [] — no shell arrow dock. Sticky-seize fixed (release snaps home).
@@ -28,12 +29,12 @@
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
-  prefersReducedMotion,
+  sealAttempt, prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-5d';
+} from './funhouse-rooms.js?v=dress-ready-5e';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -63,7 +64,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-5d';
+const BEA_CACHE_VER = 'dress-ready-5e';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -2235,6 +2236,25 @@ export default {
   update(s, dt) {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
+      // Lorie 5e: no practice chapter/mode — straight into eligible maze play.
+      // Free-first may already be consumed by boardRide; re-seal as paid/eligible.
+      if (s.practice) {
+        s.practice = false;
+        const sealed = sealAttempt({
+          rng: s.rng,
+          chapter: s.level,
+          practice: false,
+          treasureId: s.treasureId,
+          rideId: RIDE,
+          spawnIds: SPAWN_IDS,
+        });
+        s.hiddenResult = sealed.hiddenResult;
+        s.eligible = sealed.eligible;
+        s.spawnId = sealed.spawnId;
+        s.preserved = sealed.preserved;
+        s.slot = sealed.slot;
+        logAction(s, 'skip-practice', {eligible: s.eligible, spawnId: s.spawnId});
+      }
       s.reduced = s.reduced || !!prefersReducedMotion?.();
       if (isMaze(s) || s.graph?.mode === 'maze') {
         s.houseLeft = s.houseSeconds || s.graph?.houseSeconds || MAZE_HOUSE;

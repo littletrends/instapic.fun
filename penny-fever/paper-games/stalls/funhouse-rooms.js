@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-5d
+ * cache: dress-ready-5e
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -23,6 +23,7 @@
  *
  * Locked lane: carnival chase energy × punchline power × Finish the Joke comedy.
  * Soft fails never abort paid ride (face bomb = soft relocate to start).
+ * dress-ready-5e: practice mode skipped in funhouse.js — maze starts eligible.
  */
 
 export const RIDE = 'funhouse';
