@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3c';
+const DRESS_CACHE = 'dress-3d';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -147,10 +147,11 @@ function placeDress(d, img, x, y, w, angle, h) {
  */
 function ch1Board() {
   // Slide cells: land/jump onto → dump DOWN by `dump` cells.
+  // Placement nudge (Lorie): top slide up; 2nd & 3rd down a bit.
   const slides = [
-    {cell: 7, dump: 5, teach: true},   // 7 → 2
-    {cell: 15, dump: 6, teach: false}, // 15 → 9
-    {cell: 21, dump: 5, teach: false}, // 21 → 16
+    {cell: 5, dump: 5, teach: true},   // was 7 — lower on spiral
+    {cell: 13, dump: 6, teach: false}, // was 15 — lower
+    {cell: 23, dump: 5, teach: false}, // was 21 — higher toward crest
   ];
   // Cushion cells: land/jump onto → bounce UP by `boost` cells.
   const cushions = [
@@ -165,7 +166,7 @@ function ch1Board() {
     {cell: 16, id: 'everyday-penny'},
   ];
   // Hard spot between cushion-11 zone and slide-15 — careful tap / jump past.
-  const treasureCell = 14; // spiral-tower between cush path and slide 15
+  const treasureCell = 14; // spiral-tower between slide 13 and cush-11→16 path
   // Hopper sits near crest, slightly off-track (loads balls at top).
   const hopper = {u: 0.92, ox: 48, oy: -28};
   return {
