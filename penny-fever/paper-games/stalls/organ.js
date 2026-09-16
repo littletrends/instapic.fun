@@ -5,7 +5,8 @@
  *
  * SHIPPED: Chapter 1 Three Bright Notes · Chapter 2 Bell and Pipe.
  * SHIPPED: Chapter 3 Paper Roll · Chapter 4 Echo Chamber.
- * UNFINISHED: Broken Bar · The Grand Calliope
+ * SHIPPED: Chapter 5 Broken Bar.
+ * UNFINISHED: The Grand Calliope
  *
  * organ.png is the court behind the canvas. Do not paint a full-screen background.
  * draw.glow() — 6-digit hex only (#rrggbb).
@@ -39,6 +40,7 @@ const INK = '#f0d18f';
 const BELL_GLOW = '#e8c070'; // 6-digit only for d.glow
 const ROLL_GLOW = '#d8c090'; // 6-digit only for d.glow
 const ECHO_GLOW = '#b8d0e8'; // 6-digit only for d.glow
+const BROKEN_GLOW = '#c08080'; // 6-digit only for d.glow
 const MOUTH_R = 56;
 const CLIMB_SECS = 3.6;
 const READY_SECS = 1.6;
@@ -46,6 +48,7 @@ const HOLD_SECS = 3.8;
 const BELL_WARN_SECS = 3.4; // Ch2 teach: long warn with bell alone before climb
 const ROLL_WARN_SECS = 3.6; // Ch3 teach: long warn with roll alone before climb
 const ECHO_WARN_SECS = 3.4; // Ch4 teach: long warn with echo alone before climb
+const BROKEN_WARN_SECS = 3.4; // Ch5 teach: long warn with broken bar alone before climb
 const HIT_MIN = 0.55;
 const HIT_MAX = 1.08;
 const COUGH_SECS = 0.7;
@@ -55,6 +58,7 @@ const RIDE_SECS = 48;
 const CH2_SECS = 52;
 const CH3_SECS = 54;
 const CH4_SECS = 56;
+const CH5_SECS = 58;
 
 const PIPES = [
   {i: 0, x: 250, mouthY: 760, topY: 250, label: 'Do', shape: 'circle', fill: '#c9a227', glow: '#ffe6a4'},
@@ -78,8 +82,8 @@ function reduced(s) {
 }
 
 function tempo(s) {
-  // Ch2/Ch3/Ch4 slightly slower so a competent first play can land 3/3 (~50–56s).
-  const slow = (s.level === 1 || s.level === 2 || s.level === 3) ? 1.12 : 1;
+  // Ch2/Ch3/Ch4/Ch5 slightly slower so a competent first play can land 3/3 (~50–58s).
+  const slow = (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4) ? 1.12 : 1;
   return (reduced(s) ? 1.35 : 1) * slow;
 }
 
@@ -123,12 +127,23 @@ function ch4Notes() {
   ];
 }
 
+function ch5Notes() {
+  // Deepen TAP. ONE teach hazard alone: a BROKEN bar/mouth decoy on a wrong (unavailable) pipe.
+  // Later climbs stay clean — no broken, no bell, no roll, no echo (helter Ch5 bar).
+  return [
+    {pipe: 1, broken: 0, teach: true, at: 0.15}, // live Mi; broken decoy on Do
+    {pipe: 2, at: 0.15},
+    {pipe: 0, at: 0.15},
+  ];
+}
+
 function chapterNotes(level) {
   if (level <= 0) return ch1Notes();
   if (level === 1) return ch2Notes();
   if (level === 2) return ch3Notes();
   if (level === 3) return ch4Notes();
-  // Ch5–6 stubs until asked.
+  if (level === 4) return ch5Notes();
+  // Ch6 stub until asked.
   return [{pipe: level % 3, at: 0.2}];
 }
 
@@ -156,6 +171,7 @@ function notePos(pipe, climb) {
 function readySecs(s) {
   const note = s.notes[s.noteIndex];
   // Hazard-specific warn — do not let other taught flags steal this chapter's warn.
+  if (note && note.teach && note.broken != null && !s.brokenTaught) return BROKEN_WARN_SECS;
   if (note && note.teach && note.echo != null && !s.echoTaught) return ECHO_WARN_SECS;
   if (note && note.teach && note.roll != null && !s.rollTaught) return ROLL_WARN_SECS;
   if (note && note.teach && note.bell != null && !s.bellTaught) return BELL_WARN_SECS;
@@ -172,6 +188,7 @@ function startClimb(s, idx) {
     s.bellPipe = -1;
     s.rollPipe = -1;
     s.echoPipe = -1;
+    s.brokenPipe = -1;
     if (s.phase === 'chamber') openChamber(s);
     else {
       s.note = 'The ordinary corridor carries you on.';
@@ -188,9 +205,12 @@ function startClimb(s, idx) {
   s.bellPipe = (note.teach && note.bell != null) ? note.bell : -1;
   s.rollPipe = (note.teach && note.roll != null) ? note.roll : -1;
   s.echoPipe = (note.teach && note.echo != null) ? note.echo : -1;
+  s.brokenPipe = (note.teach && note.broken != null) ? note.broken : -1;
   s.tapped = false;
   s.holdT = 0;
-  if (s.echoPipe >= 0 && !s.echoTaught) {
+  if (s.brokenPipe >= 0 && !s.brokenTaught) {
+    s.note = 'That bar is broken — TAP the climbing pipe.';
+  } else if (s.echoPipe >= 0 && !s.echoTaught) {
     s.note = 'Echo ghosts a wrong mouth — TAP the climbing pipe.';
   } else if (s.rollPipe >= 0 && !s.rollTaught) {
     s.note = 'Paper roll marks a wrong mouth — TAP the climbing pipe.';
@@ -199,7 +219,7 @@ function startClimb(s, idx) {
   } else {
     s.note = 'TAP the glowing pipe.';
   }
-  logAction(s, 'climb', {i: idx, pipe: s.livePipe, bell: s.bellPipe, roll: s.rollPipe, echo: s.echoPipe});
+  logAction(s, 'climb', {i: idx, pipe: s.livePipe, bell: s.bellPipe, roll: s.rollPipe, echo: s.echoPipe, broken: s.brokenPipe});
 }
 
 function openChamber(s) {
@@ -209,6 +229,7 @@ function openChamber(s) {
   s.bellPipe = -1;
   s.rollPipe = -1;
   s.echoPipe = -1;
+  s.brokenPipe = -1;
   s.chamberFindTaken = false;
   s.note = 'TAP what you see inside.';
   logAction(s, 'open', {gate: 'chamber-0'});
@@ -224,7 +245,11 @@ function missClimb(s, reason) {
   s.phase = 'cough';
   s.phaseT = 0;
   s.shake = reduced(s) ? 0.2 : 0.55;
-  if (reason === 'echo') {
+  if (reason === 'broken') {
+    s.retrySame = true;
+    s.skipAhead = false;
+    s.note = 'That bar is broken — TAP the climbing pipe.';
+  } else if (reason === 'echo') {
     s.retrySame = true;
     s.skipAhead = false;
     s.note = 'Echo ghosts a wrong mouth — TAP the climbing pipe.';
@@ -258,9 +283,11 @@ function hitClimb(s) {
   if (s.bellPipe >= 0) s.bellTaught = true;
   if (s.rollPipe >= 0) s.rollTaught = true;
   if (s.echoPipe >= 0) s.echoTaught = true;
+  if (s.brokenPipe >= 0) s.brokenTaught = true;
   s.bellPipe = -1;
   s.rollPipe = -1;
   s.echoPipe = -1;
+  s.brokenPipe = -1;
   s.note = 'Open.';
   logAction(s, 'tap', {pipe: s.livePipe, hits: s.hits});
   s.phase = 'hit';
@@ -320,6 +347,37 @@ function drawEchoMark(d, x, y, r) {
   d.text('ECHO', x, y + r * 0.55, 14, CREAM);
 }
 
+function drawBrokenMark(d, x, y, r) {
+  // Cracked / crossed-out mouth — X over bar + BROKEN label; glow uses 6-digit hex elsewhere.
+  const s = r * 0.75;
+  if (d.c) {
+    d.c.save();
+    d.c.strokeStyle = '#c08080';
+    d.c.lineWidth = 4;
+    d.c.lineCap = 'round';
+    d.c.beginPath();
+    d.c.moveTo(x - s, y - s * 0.7);
+    d.c.lineTo(x + s, y + s * 0.7);
+    d.c.moveTo(x + s, y - s * 0.7);
+    d.c.lineTo(x - s, y + s * 0.7);
+    d.c.stroke();
+    // Crack notch across the mouth bar.
+    d.c.strokeStyle = '#a06060';
+    d.c.lineWidth = 2;
+    d.c.beginPath();
+    d.c.moveTo(x - s * 0.9, y - 2);
+    d.c.lineTo(x - s * 0.2, y + 4);
+    d.c.lineTo(x + s * 0.15, y - 3);
+    d.c.lineTo(x + s * 0.9, y + 2);
+    d.c.stroke();
+    d.c.restore();
+  } else {
+    d.poly([[x - s, y - s * 0.7], [x + s, y + s * 0.7]], null, '#c08080', 4);
+    d.poly([[x + s, y - s * 0.7], [x - s, y + s * 0.7]], null, '#c08080', 4);
+  }
+  d.text('BROKEN', x, y + r * 0.55, 14, CREAM);
+}
+
 function drawCockpit(d, s) {
   // Light pipe bank on the court — no full cover.
   PIPES.forEach((pipe) => {
@@ -327,8 +385,9 @@ function drawCockpit(d, s) {
     const bell = s.bellPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough');
     const roll = s.rollPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough');
     const echo = s.echoPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough');
-    const tint = live ? pipe.fill + 'cc' : (bell ? '#c9a22766' : (roll ? '#d8c09066' : (echo ? '#b8d0e866' : '#b78b4833')));
-    const lw = live ? 5 : (bell || roll || echo ? 3 : 1.5);
+    const broken = s.brokenPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough');
+    const tint = live ? pipe.fill + 'cc' : (bell ? '#c9a22766' : (roll ? '#d8c09066' : (echo ? '#b8d0e866' : (broken ? '#c0808066' : '#b78b4833'))));
+    const lw = live ? 5 : (bell || roll || echo || broken ? 3 : 1.5);
     d.poly([
       [pipe.x - 16, pipe.topY],
       [pipe.x + 16, pipe.topY],
@@ -345,10 +404,11 @@ function drawMouths(d, s) {
     const bell = s.bellPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const roll = s.rollPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const echo = s.echoPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
+    const broken = s.brokenPipe === pipe.i && (s.phase === 'ready' || s.phase === 'climb' || s.phase === 'cough') && !s.tapped;
     const inWindow = live && s.climb >= HIT_MIN && s.climb <= HIT_MAX;
-    const r = MOUTH_R * (inWindow ? 1.08 : (bell || roll || echo ? 1.04 : 1));
-    const fill = live ? pipe.fill : (bell ? '#5a3a18ee' : (roll ? '#4a3820ee' : (echo ? '#2a3848ee' : '#3a2418ee')));
-    const strokeW = live ? 5 : (bell || roll || echo ? 4 : 3);
+    const r = MOUTH_R * (inWindow ? 1.08 : (bell || roll || echo || broken ? 1.04 : 1));
+    const fill = live ? pipe.fill : (bell ? '#5a3a18ee' : (roll ? '#4a3820ee' : (echo ? '#2a3848ee' : (broken ? '#482828ee' : '#3a2418ee'))));
+    const strokeW = live ? 5 : (bell || roll || echo || broken ? 4 : 3);
     if (d.c) {
       roundRect(d.c, pipe.x - r, pipe.mouthY - r, r * 2, r * 2, 18);
       d.c.fillStyle = fill;
@@ -363,6 +423,7 @@ function drawMouths(d, s) {
     if (bell) d.glow(pipe.x, pipe.mouthY, r + 20, BELL_GLOW);
     if (roll) d.glow(pipe.x, pipe.mouthY, r + 20, ROLL_GLOW);
     if (echo) d.glow(pipe.x, pipe.mouthY, r + 20, ECHO_GLOW);
+    if (broken) d.glow(pipe.x, pipe.mouthY, r + 20, BROKEN_GLOW);
     if (bell) {
       drawBellMark(d, pipe.x, pipe.mouthY - 4, 20);
       d.text('BELL', pipe.x, pipe.mouthY + r - 14, 15, CREAM);
@@ -372,6 +433,10 @@ function drawMouths(d, s) {
       // Faded duplicate note/mouth + ECHO label.
       drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, '#b8d0e866', '#b8d0e8');
       drawEchoMark(d, pipe.x, pipe.mouthY - 2, 22);
+    } else if (broken) {
+      // Cracked / crossed-out mouth + BROKEN label.
+      drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, '#c0808066', '#c08080');
+      drawBrokenMark(d, pipe.x, pipe.mouthY - 2, 22);
     } else {
       drawNoteShape(d, pipe.shape, pipe.x, pipe.mouthY - 8, 18, pipe.fill, '#f8e4b3');
       d.text(live ? 'TAP' : pipe.label, pipe.x, pipe.mouthY + r - 14, 16, CREAM);
@@ -399,13 +464,15 @@ function drawCoach(d, s) {
   let line = 'TAP the glowing pipe.';
   if (s.phase === 'chamber') line = 'TAP what you see inside.';
   else if (s.phase === 'bypass') line = 'The ordinary corridor.';
-  else if (s.echoPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
+  else if (s.brokenPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
+    line = 'That bar is broken — TAP the climbing pipe.';
+  } else if (s.echoPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
     line = 'Echo ghosts a wrong mouth — TAP the climbing pipe.';
   } else if (s.rollPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
     line = 'Paper roll marks a wrong mouth — TAP the climbing pipe.';
   } else if (s.bellPipe >= 0 && (s.phase === 'ready' || s.phase === 'climb')) {
     line = 'Bell rings beside — TAP the climbing pipe.';
-  } else if (s.note && (s.note.indexOf('bell') >= 0 || s.note.indexOf('roll') >= 0 || s.note.indexOf('Roll') >= 0 || s.note.indexOf('Echo') >= 0 || s.note.indexOf('echo') >= 0)) {
+  } else if (s.note && (s.note.indexOf('bell') >= 0 || s.note.indexOf('roll') >= 0 || s.note.indexOf('Roll') >= 0 || s.note.indexOf('Echo') >= 0 || s.note.indexOf('echo') >= 0 || s.note.indexOf('broken') >= 0 || s.note.indexOf('Broken') >= 0)) {
     line = s.note;
   }
   d.text(line, 450, 938, 20, CREAM);
@@ -451,7 +518,12 @@ function tryTap(s, mouth) {
     return;
   }
   if ((s.phase !== 'ready' && s.phase !== 'climb') || s.tapped) return;
-  logAction(s, 'key', {pipe: mouth, live: s.livePipe, bell: s.bellPipe, roll: s.rollPipe, echo: s.echoPipe});
+  logAction(s, 'key', {pipe: mouth, live: s.livePipe, bell: s.bellPipe, roll: s.rollPipe, echo: s.echoPipe, broken: s.brokenPipe});
+  // Soft fail: tapping the teach broken bar coughs and retries — never aborts alone.
+  if (s.brokenPipe >= 0 && mouth === s.brokenPipe) {
+    missClimb(s, 'broken');
+    return;
+  }
   // Soft fail: tapping the teach echo coughs and retries — never aborts alone.
   if (s.echoPipe >= 0 && mouth === s.echoPipe) {
     missClimb(s, 'echo');
@@ -476,6 +548,7 @@ function tryTap(s, mouth) {
 }
 
 function rideDuration(level) {
+  if (level === 4) return CH5_SECS + level * 2;
   if (level === 3) return CH4_SECS + level * 2;
   if (level === 2) return CH3_SECS + level * 2;
   if (level === 1) return CH2_SECS + level * 2;
@@ -483,6 +556,7 @@ function rideDuration(level) {
 }
 
 function boardingNote(level) {
+  if (level === 4) return 'That bar is broken — TAP the climbing pipe.';
   if (level === 3) return 'Echo ghosts a wrong mouth — TAP the climbing pipe.';
   if (level === 2) return 'Paper roll marks a wrong mouth — TAP the climbing pipe.';
   if (level === 1) return 'Bell rings beside — TAP the climbing pipe, not the bell.';
@@ -491,8 +565,8 @@ function boardingNote(level) {
 
 export default {
   title: 'Calliope Keys',
-  intro: 'Otto’s organ is the cockpit. Notes climb the brass. TAP the glowing pipe mouth. From chapter 2, a calliope bell may ring on a wrong mouth — TAP the climbing pipe, not the bell. From chapter 3, a punched-paper ROLL may mark a wrong mouth — TAP the climbing pipe, not the roll. From chapter 4, a ghost ECHO may decoy a wrong mouth — TAP the climbing pipe, not the echo.',
-  instructions: 'Tap the glowing pipe. The mouth lights before the note climbs; TAP it then, or as the note arrives. Sound is optional — shape and colour mark each pipe. From chapter 2 (Bell and Pipe), one teach bell rings beside the live climb — soft cough if you TAP the bell; keep TAP on the climbing pipe. From chapter 3 (Paper Roll), one punched-paper ROLL decoy sits on a wrong mouth on the first climb only — soft cough if you TAP the roll; climbs 2–3 stay clean TAP. From chapter 4 (Echo Chamber), one ghost ECHO decoy sits on a wrong mouth on the first climb only — soft cough if you TAP the echo; climbs 2–3 stay clean TAP. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss on a paid ride takes the ordinary corridor.',
+  intro: 'Otto’s organ is the cockpit. Notes climb the brass. TAP the glowing pipe mouth. From chapter 2, a calliope bell may ring on a wrong mouth — TAP the climbing pipe, not the bell. From chapter 3, a punched-paper ROLL may mark a wrong mouth — TAP the climbing pipe, not the roll. From chapter 4, a ghost ECHO may decoy a wrong mouth — TAP the climbing pipe, not the echo. From chapter 5, a BROKEN bar may mark an unavailable mouth — TAP the climbing pipe, not the broken bar.',
+  instructions: 'Tap the glowing pipe. The mouth lights before the note climbs; TAP it then, or as the note arrives. Sound is optional — shape and colour mark each pipe. From chapter 2 (Bell and Pipe), one teach bell rings beside the live climb — soft cough if you TAP the bell; keep TAP on the climbing pipe. From chapter 3 (Paper Roll), one punched-paper ROLL decoy sits on a wrong mouth on the first climb only — soft cough if you TAP the roll; climbs 2–3 stay clean TAP. From chapter 4 (Echo Chamber), one ghost ECHO decoy sits on a wrong mouth on the first climb only — soft cough if you TAP the echo; climbs 2–3 stay clean TAP. From chapter 5 (Broken Bar), one BROKEN bar/mouth decoy sits on a wrong (unavailable) pipe on the first climb only — soft cough if you TAP the broken mouth; climbs 2–3 stay clean TAP. First chapter ride is free practice and keeps nothing. A miss coughs; a second miss on a paid ride takes the ordinary corridor.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -510,6 +584,8 @@ export default {
       rollTaught: false,
       echoPipe: -1,
       echoTaught: false,
+      brokenPipe: -1,
+      brokenTaught: false,
       climb: 0,
       tapped: false,
       hits: 0,
@@ -524,7 +600,7 @@ export default {
       skipAhead: false,
       chamberFindTaken: false,
       duration: rideDuration(level),
-      stubChapter: level > 3,
+      stubChapter: level > 4,
     });
   },
   update(s, dt) {

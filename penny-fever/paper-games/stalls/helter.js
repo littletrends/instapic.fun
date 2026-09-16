@@ -1,6 +1,6 @@
 /*
- * Spiral Slide (helter) — Chapters 1–5 (First Spiral, Bunting Bend, Tunnel Turn,
- * Three-Way Tower, Runaway Keepsake).
+ * Spiral Slide (helter) — Chapters 1–6 (First Spiral, Bunting Bend, Tunnel Turn,
+ * Three-Way Tower, Runaway Keepsake, The Impossible Descent).
  * Locked remix: Snakes & Ladders on a helter + Helix/Tempest DNA.
  * ONE verb: TURN the ring (drag/swipe around the tower) so a ladder faces you
  * (boost/safe) or a snake faces you (soft dump/redirect — never abort paid ride).
@@ -22,9 +22,11 @@
  *     only after visible bounce FX + arrow cue; catch still needs a ladder on the
  *     ring that holds it; teach hop alone (long warn); mild remix ≤1 cushion after;
  *     hop logic only when level===4; cap hops so catch stays fair
- *
- * Unfinished chapter 6:
- *   6 The Impossible Descent — do not stack max speed + darkness + tiny intercept; widen final collision
+ *   6 The Impossible Descent — fair finale via sequence variety (not stacked unfairness);
+ *     teach cream alone first; mild remix ≤1 of {tunnel, cushion, threeway} per ring;
+ *     never tunnel-dark + tiny snap + high haste; haste ≤0.96; widen final intercept
+ *     (FACE_SNAP × 1.35+) + longer commit grace; treasure on final ring; soft-miss
+ *     recover like Ch4/Ch5; Ch5 hop stays level===4 only
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -83,6 +85,14 @@ const MAX_TREASURE_HOPS = 2;
 /** Hop cue colours (6-digit; glow() must stay #rrggbb). */
 const HOP_ARROW = '#f4d590';
 const HOP_BOUNCE = '#ffe6a4';
+/** Ch6 mild haste — drama without max speed (≤0.96). */
+const CH6_HASTE = 0.94;
+/** Ch6 base ride seconds before haste (~56–60). */
+const CH6_BASE_SECS = 58;
+/** Ch6 final intercept cream snap multiplier (widen collision). */
+const CH6_FINAL_SNAP_MULT = 1.38;
+/** Longer commit grace on Ch6 final ring (seconds). */
+const CH6_FINAL_GRACE = 0.95;
 
 
 /** Ch4-only: wider cream-ladder snap on early rings, recover, and late light pressure. */
@@ -174,21 +184,71 @@ function ch5AfterSoftMiss(s, kind) {
   return true;
 }
 
-/** Active ladder / snake snap half-width (Ch4 / Ch5 widen; else FACE_SNAP). */
+/** Ch6-only: cream-friendly early / recover; WIDEN final intercept (×1.35+). */
+function ch6LadderSnap(s, ring) {
+  if (!s || s.level !== 5) return FACE_SNAP;
+  if (ring && ring.i === (s.rings ? s.rings.length - 1 : 5)) {
+    return FACE_SNAP * CH6_FINAL_SNAP_MULT; // final intercept — forgiving catch
+  }
+  if ((s.ch6Recover || 0) > 0) return FACE_SNAP * 1.28;
+  if (ring && ring.i <= 2) return FACE_SNAP * 1.22; // early: cream-friendly
+  return FACE_SNAP * 1.10;
+}
+
+/** Ch6-only: narrower snake snap so cream wins close calls (esp. final). */
+function ch6SnakeSnap(s, ring) {
+  if (!s || s.level !== 5) return FACE_SNAP;
+  if (ring && ring.i === (s.rings ? s.rings.length - 1 : 5)) {
+    return FACE_SNAP * 0.78; // final: cream preferred
+  }
+  if ((s.ch6Recover || 0) > 0) return FACE_SNAP * 0.82;
+  if (ring && ring.i <= 2) return FACE_SNAP * 0.85;
+  return FACE_SNAP * 0.90;
+}
+
+/**
+ * Ch6 soft-miss assist: under GOAL, next ring faces cream + duration bump
+ * so Practice 3/3 stays reachable after snake / cushion / landmark.
+ */
+function ch6AfterSoftMiss(s, kind) {
+  if (!s || s.level !== 5) return false;
+  if (s.hits >= GOAL) {
+    s.t = Math.max(0, s.t - 0.30);
+    return true;
+  }
+  s.duration = (s.duration || 0) + 3.5;
+  s.ch6Recover = Math.max(s.ch6Recover || 0, 3);
+  s.note = 'Cream ladder next — TURN clear';
+  s.statusCopy = 'Cream ladder next';
+  s.phaseFlash = 0.95;
+  s.phaseFlashLabel = kind === 'landmark' ? 'Join' : (kind === 'cushion' ? 'Cushion' : 'Snake');
+  const next = (s.rings || []).find((r) => !r.done);
+  if (next) {
+    const jitter = ((next.i * 0.037) % 0.12) - 0.06;
+    next.targetTheta = angNorm(jitter);
+    next.theta = next.targetTheta;
+  }
+  return true;
+}
+
+/** Active ladder / snake snap half-width (Ch4 / Ch5 / Ch6 widen; else FACE_SNAP). */
 function ladderSnap(s, ring) {
+  if (s && s.level === 5) return ch6LadderSnap(s, ring);
   if (s && s.level === 4) return ch5LadderSnap(s, ring);
   return ch4LadderSnap(s, ring);
 }
 
 function snakeSnap(s, ring) {
+  if (s && s.level === 5) return ch6SnakeSnap(s, ring);
   if (s && s.level === 4) return ch5SnakeSnap(s, ring);
   return ch4SnakeSnap(s, ring);
 }
 
-/** Soft-miss recovery for Ch4/Ch5; returns true if chapter handled it. */
+/** Soft-miss recovery for Ch4/Ch5/Ch6; returns true if chapter handled it. */
 function afterSoftMiss(s, kind) {
   if (ch4AfterSoftMiss(s, kind)) return true;
   if (ch5AfterSoftMiss(s, kind)) return true;
+  if (ch6AfterSoftMiss(s, kind)) return true;
   return false;
 }
 
@@ -309,55 +369,70 @@ function tunnelExitKind(ring) {
 }
 
 function chapterPlan(level, rng) {
-  // Ch2/Ch3/Ch4/Ch5 fair bar: MORE time so a competent first play can land 3 ladders.
-  // Ch3 soft — never stack max speed + darkness. Ch4/Ch5 same bar; tunnels only when level===2.
-  const fair = (level === 1 || level === 2 || level === 3 || level === 4);
-  const haste = fair
-    ? 0.92 // Ch2–Ch5 slower than Ch1
-    : 1 + Math.min(0.2, level * 0.035);
-  // Ch4/Ch5: a few extra seconds so one soft dump still leaves runway to 3/3.
-  const baseSecs = (level === 3 || level === 4) ? 56 : (fair ? 52 : RIDE_SECONDS);
+  // Ch2–Ch6 fair bar: MORE time so a competent first play can land 3 ladders.
+  // Never stack max speed + darkness + tiny intercept (Ch6 hard rule).
+  const fair = (level === 1 || level === 2 || level === 3 || level === 4 || level === 5);
+  const haste = level === 5
+    ? CH6_HASTE // mild uptick ≤0.96 — not max speed
+    : (fair
+      ? 0.92 // Ch2–Ch5 slower than Ch1
+      : 1 + Math.min(0.2, level * 0.035));
+  // Ch4/Ch5: extra seconds after soft dump. Ch6: generous ~56–60s base / 6 rings.
+  const baseSecs = level === 5 ? CH6_BASE_SECS
+    : ((level === 3 || level === 4) ? 56 : (fair ? 52 : RIDE_SECONDS));
   const duration = baseSecs / haste;
-  // Ch2–Ch5: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
+  // Ch2–Ch6: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
   const fracs = fair
     ? [0.12, 0.26, 0.40, 0.54, 0.68, 0.82]
     : [0.14, 0.30, 0.46, 0.62, 0.78];
   const times = fracs.map((f) => f * duration);
-  // Ch5: treasure starts on an early reachable ring (teach hop alone). Else mid fair ring.
-  const treasureRing = level === 4 ? 1 : (fair ? 3 : 2);
+  // Ch5: treasure early (teach hop). Ch6: treasure on FINAL intercept ring. Else mid fair.
+  const treasureRing = level === 5 ? 5 : (level === 4 ? 1 : (fair ? 3 : 2));
   const bunting = level >= 1; // Ch2+ denser bunting art flag for draw
-  // Ch2: ONE teach cushion only (clearer window); later rings are clean ladder/snake.
-  // Ch4: mild remix — ONE cushion after the three-way teach (not on teach ring).
-  // Ch5: mild remix — ONE cushion after the teach-hop treasure ring (never on hop teach).
+  // Ch2: ONE teach cushion only. Ch4/Ch5: mild remix one cushion after teach.
+  // Ch6: at most one of {tunnel, cushion, threeway} per ring — cushion alone on ring 2.
   // Hard rule: Ch2 cushion teach only when level===1.
   const cushionIdx = level === 1 ? new Set([0])
     : (level === 3 ? new Set([3])
-      : (level === 4 ? new Set([4]) : null));
-  // Ch3: ONE teach tunnel only (symbol before dark); later rings clean — keep 3 ladders fair.
-  // Hard rule: tunnel logic only when level===2 (never on Ch4/Ch5).
-  const tunnelIdx = level === 2 ? new Set([0]) : null;
-  // Ch4: ONE teach three-way ring alone first (no cushion/tunnel on teach).
-  // Hard rule: threeway only when level===3 (never on Ch5).
-  const threewayIdx = level === 3 ? new Set([0]) : null;
+      : (level === 4 ? new Set([4])
+        : (level === 5 ? new Set([2]) : null)));
+  // Ch3: ONE teach tunnel (level===2). Ch6: own fair tunnel teach (symbol before dark)
+  // on ring 1 alone + optional false-exit flavour tunnel later (still cream cue).
+  const tunnelIdx = level === 2 ? new Set([0])
+    : (level === 5 ? new Set([1, 4]) : null);
+  // Ch4: threeway teach only when level===3. Ch6: one threeway landmark alone (ring 3).
+  const threewayIdx = level === 3 ? new Set([0])
+    : (level === 5 ? new Set([3]) : null);
   const rings = times.map((t, i) => {
     let start;
     let cushion = null;
     let tunnel = null;
     let threeway = null;
+    const last = i === times.length - 1;
     if (threewayIdx && threewayIdx.has(i)) {
       // Three notches: cream ladder (win), burgundy snake (soft dump), gold/teal landmark (soft reconnect).
-      const teach = i === 0;
+      const teach = (level === 3 && i === 0) || (level === 5 && i === 3);
       threeway = {teach, landmark: LANDMARK_LOCAL, half: LANDMARK_HALF};
       // Cream-friendly teach: ~40–55° off cream (NOT at landmark) — short TURN lands ladder.
       const mag = Math.PI * (0.222 + rng() * 0.083); // ~40°–55°
       start = (rng() < 0.5 ? mag : -mag);
     } else if (tunnelIdx && tunnelIdx.has(i)) {
       // Safe exit is always the ladder notch; symbol teaches which notch before darkness.
-      const teach = i === 0;
-      tunnel = {exit: 'ladder', teach};
-      // Start clearly off-ladder so the player must TURN using the exit symbol.
-      const mag = Math.PI * (0.42 + rng() * 0.12); // ~76°–97°
-      start = (rng() < 0.5 ? mag : -mag);
+      // Ch6 false-exit (ring 4): looks dark/busy but cue still points cream.
+      const teach = (level === 2 && i === 0) || (level === 5 && i === 1);
+      const falseExit = level === 5 && i === 4;
+      tunnel = {exit: 'ladder', teach, falseExit};
+      if (level === 5) {
+        // Cream-friendly tunnel starts ~40–65°; false-exit a bit busier but still readable.
+        const mag = falseExit
+          ? Math.PI * (0.30 + rng() * 0.12) // ~54°–76°
+          : Math.PI * (0.222 + rng() * 0.139); // ~40°–65°
+        start = (rng() < 0.5 ? mag : -mag);
+      } else {
+        // Start clearly off-ladder so the player must TURN using the exit symbol.
+        const mag = Math.PI * (0.42 + rng() * 0.12); // ~76°–97°
+        start = (rng() < 0.5 ? mag : -mag);
+      }
     } else if (cushionIdx && cushionIdx.has(i)) {
       // Offset from ladder so TURN can clear cushion toward ladder (they rotate together).
       const mag = Math.PI * (0.40 + rng() * 0.12); // ~72°–94° from ladder
@@ -365,23 +440,23 @@ function chapterPlan(level, rng) {
       let loc = side * mag;
       while (loc > Math.PI) loc -= TAU;
       while (loc < -Math.PI) loc += TAU;
-      // Ch2 teach cushion alone on ring 0; Ch4/Ch5 post-teach cushions are not "teach".
+      // Ch2 teach cushion alone on ring 0; Ch4/Ch5/Ch6 post-open cushions are not "teach".
       const teach = level === 1 && i === 0;
       cushion = {local: loc, half: CUSHION_HALF, teach};
       if (teach) {
         // Start with cushion nearly facing you — TURN clear of it toward the ladder.
         start = -loc + (rng() - 0.5) * 0.08;
-      } else if (level === 4) {
-        // Ch5 mild cushion: cream-friendly start so one TURN still clears.
+      } else if (level === 4 || level === 5) {
+        // Mild cushion: cream-friendly start so one TURN still clears.
         const cmag = Math.PI * (0.25 + rng() * 0.111); // ~45°–65°
         start = (rng() < 0.5 ? cmag : -cmag);
       } else {
         start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
       }
     } else if (i === 0) {
-      // First ring (Ch1, or Ch2 non-cushion): clearly off-ladder but within ~90° so one short drag teaches TURN.
-      // Ch5: cream-friendly early start ~40–65° (learn from Ch4 Aura FAILs).
-      if (level === 4) {
+      // First ring: Ch6 opens cream-friendly alone (teach before mixing).
+      // Ch5: cream-friendly early start ~40–65°. Else classic short-drag teach.
+      if (level === 4 || level === 5) {
         const mag = Math.PI * (0.222 + rng() * 0.139); // ~40°–65°
         start = (rng() < 0.5 ? mag : -mag);
       } else {
@@ -390,12 +465,14 @@ function chapterPlan(level, rng) {
       }
     } else {
       // Later rings: off enough to need a TURN; still recoverable.
-      // Ch4/Ch5: milder offset so late snakes stay light after teach (Aura Practice 3/3 bar).
-      if (level === 3 || level === 4) {
-        // Rings 1–2: milder ~40–65° off cream; later clean rings keep a fuller TURN ask.
-        const mag = (i <= 2)
-          ? Math.PI * (0.222 + rng() * 0.139) // ~40°–65°
-          : Math.PI * (0.44 + rng() * 0.10); // ~79°–97°
+      // Ch4/Ch5/Ch6: milder offset so late snakes stay light (Aura Practice 3/3 bar).
+      // Ch6 final intercept: cream-friendly so wide snap + grace can land.
+      if (level === 3 || level === 4 || level === 5) {
+        const mag = (level === 5 && last)
+          ? Math.PI * (0.222 + rng() * 0.139) // final ~40–65° — fair intercept
+          : ((i <= 2)
+            ? Math.PI * (0.222 + rng() * 0.139) // ~40°–65°
+            : Math.PI * (0.44 + rng() * 0.10)); // ~79°–97°
         start = (rng() < 0.5 ? mag : -mag);
       } else {
         start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
@@ -414,6 +491,7 @@ function chapterPlan(level, rng) {
       cushion,
       tunnel,
       threeway,
+      finalIntercept: level === 5 && last,
     };
   });
   return {
@@ -421,8 +499,9 @@ function chapterPlan(level, rng) {
     rings,
     treasureRing,
     denserBunting: bunting,
-    threeWay: level === 3,
+    threeWay: level === 3 || level === 5,
     runaway: level === 4,
+    impossible: level === 5,
   };
 }
 
@@ -679,6 +758,7 @@ function commitRing(s, ring) {
   const y = ringScreenY(s, ring);
   if (s.level === 3 && (s.ch4Recover || 0) > 0) s.ch4Recover -= 1;
   if (s.level === 4 && (s.ch5Recover || 0) > 0) s.ch5Recover -= 1;
+  if (s.level === 5 && (s.ch6Recover || 0) > 0) s.ch6Recover -= 1;
 
   // Ladder snap beats cushion — carnival fair; cushions teach redirect, not soft-lock.
   if (!snappedLadder && cushionBlocking(ring, ring.theta)) {
@@ -816,6 +896,22 @@ function coachingLine(s, preview, ring) {
     return 'Keepsake hopped — TURN cream on the marked ring.';
   }
   if (s.level === 4 && (s.ch5Recover || 0) > 0) return 'Cream ladder next — TURN clear';
+  if (s.level === 5 && (s.ch6Recover || 0) > 0) return 'Cream ladder next — TURN clear';
+  // Ch6 final intercept cue
+  if (s.level === 5 && ring && !ring.done && ring.finalIntercept) {
+    return ring.hasTreasure && s.treasure && !s.treasure.taken
+      ? 'Final intercept — wide catch; TURN cream for the keepsake.'
+      : 'Final intercept — TURN cream; wide catch window.';
+  }
+  // Ch6 false-exit flavour: dark/busy look but symbol still points cream.
+  if (s.level === 5 && ring && !ring.done && ring.tunnel && ring.tunnel.falseExit) {
+    const phase = tunnelPhase(s, ring);
+    if (preview || phase === 'warn' || phase === 'dark') {
+      return phase === 'dark'
+        ? 'False exit — follow the cream symbol through the dark.'
+        : 'Looks busy — symbol still points cream. TURN ladder.';
+    }
+  }
   // Ch4 teach: three-way fork alone first — TURN cream ladder; map shows the join.
   if (ring && !ring.done && ring.threeway && ring.threeway.teach) {
     const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
@@ -856,6 +952,7 @@ function coachingLine(s, preview, ring) {
     }
   }
   if (s.level === 3 && (s.ch4Recover || 0) > 0) return 'Cream ladder next — TURN clear';
+  if (s.level === 5 && (s.ch6Recover || 0) > 0) return 'Cream ladder next — TURN clear';
   if (!s.turnedOnce) return 'TURN the ring so the ladder faces you.';
   if (ring && !ring.done) {
     const phase = tunnelPhase(s, ring);
@@ -1397,12 +1494,12 @@ function drawMat(d, s, clock) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness. From chapter 4, three notches reconnect — cream ladder wins, snake soft-dumps, gold/teal side chute soft-reconnects (no ladder credit); a tiny map shows the join. From chapter 5, the keepsake hops to a later ring only after a visible bounce and arrow — catch it with a cream ladder on its new ring.',
-  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. From chapter 4 (Three-Way Tower), three notches reconnect — TURN the cream ladder; the gold/teal side chute is a soft reconnect with no ladder credit; the map shows paths rejoining. From chapter 5 (Runaway Keepsake), if you miss the keepsake it hops — watch the bounce + arrow, then TURN cream on its new ring; soft dump / snake / cushion never abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness. From chapter 4, three notches reconnect — cream ladder wins, snake soft-dumps, gold/teal side chute soft-reconnects (no ladder credit); a tiny map shows the join. From chapter 5, the keepsake hops to a later ring only after a visible bounce and arrow — catch it with a cream ladder on its new ring. From chapter 6, the Impossible Descent stacks tower beats in fair sequence — cream teach first, then tunnel / cushion / three-way one at a time, a false-exit that still cues cream, and a widened final intercept (never max speed + dark + tiny snap together).',
+  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. From chapter 4 (Three-Way Tower), three notches reconnect — TURN the cream ladder; the gold/teal side chute is a soft reconnect with no ladder credit; the map shows paths rejoining. From chapter 5 (Runaway Keepsake), if you miss the keepsake it hops — watch the bounce + arrow, then TURN cream on its new ring; soft dump / snake / cushion never abort. From chapter 6 (The Impossible Descent), hazards arrive one-at-a-time after a cream teach; the final ring widens the cream catch and lengthens commit grace — soft fails never abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 70,
+  houseSeconds: 78,
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
     const plan = chapterPlan(level, rand);
@@ -1416,6 +1513,7 @@ export default {
       denserBunting: !!plan.denserBunting,
       threeWay: !!plan.threeWay,
       runaway: !!plan.runaway,
+      impossible: !!plan.impossible,
       camBank: 0,
       towerY: 520,
       drag: null,
@@ -1440,6 +1538,7 @@ export default {
       hopArrowTo: -1,
       ch4Recover: 0,
       ch5Recover: 0,
+      ch6Recover: 0,
     });
   },
   update(s, dt) {
@@ -1469,22 +1568,28 @@ export default {
       s.hopArrowTo = -1;
       s.ch4Recover = 0;
       s.ch5Recover = 0;
+      s.ch6Recover = 0;
       const teachTun = (s.rings || []).find((r) => r.tunnel && r.tunnel.teach);
       const teachCush = (s.rings || []).find((r) => r.cushion && r.cushion.teach);
       const teachThree = (s.rings || []).find((r) => r.threeway && r.threeway.teach);
-      s.note = s.level === 4
-        ? 'Keepsake may hop — watch the bounce + arrow, then TURN cream on its ring.'
-        : teachThree
-          ? 'Three ways — TURN the cream ladder. Map shows the join.'
-          : teachTun
-            ? 'Tunnel ahead — watch the exit symbol before darkness.'
-            : teachCush
-              ? 'Cushion ahead — TURN clear of it toward the ladder.'
-              : 'TURN the ring so the ladder faces you.';
+      s.note = s.level === 5
+        ? 'Impossible Descent — cream first, then variety; final intercept is wide.'
+        : s.level === 4
+          ? 'Keepsake may hop — watch the bounce + arrow, then TURN cream on its ring.'
+          : teachThree
+            ? 'Three ways — TURN the cream ladder. Map shows the join.'
+            : teachTun
+              ? 'Tunnel ahead — watch the exit symbol before darkness.'
+              : teachCush
+                ? 'Cushion ahead — TURN clear of it toward the ladder.'
+                : 'TURN the ring so the ladder faces you.';
       // Fair treasure spawn: always on a ladder segment of an authored ring.
       // Ch5: keep authored early planTreasureRing (teach hop) — do not reassign to mid.
+      // Ch6: keep authored FINAL intercept ring — do not reassign away from last.
       if (s.eligible) {
-        if (s.level === 4) {
+        if (s.level === 5) {
+          s.planTreasureRing = clamp(s.planTreasureRing ?? (s.rings.length - 1), 0, s.rings.length - 1);
+        } else if (s.level === 4) {
           s.planTreasureRing = clamp(s.planTreasureRing ?? 1, 0, s.rings.length - 1);
         } else {
           const preferred = ['ring-2', 'ring-1', 'ring-3', 'ring-0', 'ring-4'];
@@ -1621,15 +1726,20 @@ export default {
     // One discrete commit per ring when the mat reaches it (Helix-style drop through).
     s.rings.forEach((ring) => {
       if (!ring.done && s.t >= ring.t) {
-        // Ch4/Ch5: if nearly facing cream on early rings / recover / late, grant a short grace turn window.
-        if ((s.level === 3 || s.level === 4) && !ring._ch4Grace) {
+        // Ch4/Ch5/Ch6: if nearly facing cream, grant a short grace turn window.
+        // Ch6 final ring: longer grace + wider near-miss band (forgiving intercept).
+        if ((s.level === 3 || s.level === 4 || s.level === 5) && !ring._ch4Grace) {
           const toL = angDist(ring.targetTheta, 0);
           const half = ladderSnap(s, ring);
-          const recover = s.level === 4 ? (s.ch5Recover || 0) : (s.ch4Recover || 0);
-          const earlyOrRecover = recover > 0 || ring.i <= 2 || ring.i >= 3;
-          if (toL > half && toL < half + 0.28 && earlyOrRecover) {
+          const recover = s.level === 5 ? (s.ch6Recover || 0)
+            : (s.level === 4 ? (s.ch5Recover || 0) : (s.ch4Recover || 0));
+          const isFinal = s.level === 5 && !!ring.finalIntercept;
+          const earlyOrRecover = recover > 0 || ring.i <= 2 || ring.i >= 3 || isFinal;
+          const nearBand = isFinal ? 0.42 : 0.28;
+          const graceSecs = isFinal ? CH6_FINAL_GRACE : 0.62;
+          if (toL > half && toL < half + nearBand && earlyOrRecover) {
             ring._ch4Grace = true;
-            ring.t += 0.62;
+            ring.t += graceSecs;
           } else {
             commitRing(s, ring);
           }

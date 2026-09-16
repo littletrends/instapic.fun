@@ -13,11 +13,10 @@
  *   Ch2 Gondola Secrets — Aura PASS (9464867). Emblems + luggage soft-hazard.
  *   Ch3 Rooftop Trail — Aura PASS (958f413). Ordered roofs + chimney; miss-retry.
  *   Ch4 Cloud Crossing — Aura PASS (942d27f). Clouds occlude glow; armed/climb hold.
- *   Ch5 Ferris at Midnight — one moonlight marking preview; dim finds brighten
- *     in the lens; ONE unmarked soft-dump; reachable first-play 3/3.
+ *   Ch5 Ferris at Midnight — Aura PASS (ebfbf02). Moon preview; dim glyphs; unmarked soft-dump.
+ *   Ch6 The Highest View — ≤2 Tempest depth rings; SNAP true finds; balloon decoys soft-dump.
  *
- * UNFINISHED CHAPTERS (keep names; do not rename treasures):
- *   6 The Highest View — Tempest depth rings + decoys/balloons; ≤2 depths
+ * All six chapter names locked. Keep treasures. glow() 6-digit hex only.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -60,6 +59,7 @@ const RIDE_SECS_CH2 = 56; // helter-bar: recoverable 3/3 on first play
 const RIDE_SECS_CH3 = 72;
 const RIDE_SECS_CH4 = 68; // cloud gaps + 3/3 first-play bar
 const RIDE_SECS_CH5 = 78; // preview + dim climb + 3/3 first-play
+const RIDE_SECS_CH6 = 74; // two depths + decoys; first-play 3/3
 const GOAL = 3;
 const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
@@ -69,17 +69,21 @@ const TEACH_CH2 = 'Emblems only — luggage is a soft dump.';
 const TEACH_CH3 = 'Roofs in order — chimney is a soft dump.';
 const TEACH_CH4 = 'Wait out the cloud, then SNAP in the clear glow.';
 const TEACH_CH5 = 'Marked finds only — unmarked is a soft dump.';
+const TEACH_CH6 = 'True finds on the rings — balloons soft-dump.';
+const BALLOON_WARN = 6.5; // Ch6 teach decoy alone
 const PREVIEW_SECS = 7.0; // Ch5 moonlight marking preview once
 const GLOW_PAD_CH1 = 36; // Ch1 attested
 const GLOW_PAD_CH2 = 28; // slightly tighter, still first-play fair
 const GLOW_PAD_CH3 = 36; // match Ch1 fat — Aura fairness
 const GLOW_PAD_CH4 = 34; // generous under cloud timing
 const GLOW_PAD_CH5 = 36;
+const GLOW_PAD_CH6 = 36;
 const RETICLE_CH1 = 56;
 const RETICLE_CH2 = 48;
 const RETICLE_CH3 = 56; // match Ch1 fat
 const RETICLE_CH4 = 54;
 const RETICLE_CH5 = 56;
+const RETICLE_CH6 = 56;
 const LUGGAGE_WARN = 7.5; // teach hazard alone with long warn (helter Ch2 bar)
 const CHIMNEY_WARN = 6.0; // Ch3 teach hazard alone — leave more trail time
 const CLOUD_TEACH = 7.5; // first cloud alone across the lens
@@ -89,6 +93,7 @@ function rideSecs(level) {
   if (level === 2) return RIDE_SECS_CH3;
   if (level === 3) return RIDE_SECS_CH4;
   if (level === 4) return RIDE_SECS_CH5;
+  if (level === 5) return RIDE_SECS_CH6;
   return RIDE_SECS;
 }
 
@@ -97,6 +102,7 @@ function glowPad(level) {
   if (level === 2) return GLOW_PAD_CH3;
   if (level === 3) return GLOW_PAD_CH4;
   if (level === 4) return GLOW_PAD_CH5;
+  if (level === 5) return GLOW_PAD_CH6;
   return GLOW_PAD_CH1;
 }
 
@@ -105,6 +111,7 @@ function reticleR(level) {
   if (level === 2) return RETICLE_CH3;
   if (level === 3) return RETICLE_CH4;
   if (level === 4) return RETICLE_CH5;
+  if (level === 5) return RETICLE_CH6;
   return RETICLE_CH1;
 }
 
@@ -121,7 +128,8 @@ function climbSpeed(level, reduced) {
   else if (level === 2) base = 0.014;
   else if (level === 3) base = 0.018;
   else if (level === 4) base = 0.014;
-  else if (level >= 5) base = 0.036;
+  else if (level === 5) base = 0.015;
+  else if (level >= 6) base = 0.036;
   return reduced ? base * 0.65 : base;
 }
 
@@ -148,6 +156,7 @@ function chapterTargets(level) {
   if (level === 2) return ch3Targets();
   if (level === 3) return ch4Targets();
   if (level === 4) return ch5Targets();
+  if (level === 5) return ch6Targets();
   return ch1Targets();
 }
 
@@ -162,6 +171,17 @@ function ch3Targets() {
 }
 
 
+
+/** Ch6 — ≤2 Tempest depth rings; true finds + balloon decoys (soft dump). */
+function ch6Targets() {
+  return [
+    {id: 'balloon', label: 'decoy balloon', spoke: -1.05, size: 30, kind: 'hazard', depth: 0, art: null},
+    {id: 'peak-a', label: 'outer peak', spoke: 0.35, size: 36, kind: 'ordinary', depth: 0, art: ORDINARY[0]},
+    {id: 'peak-b', label: 'inner crest', spoke: 2.0, size: 34, kind: 'ordinary', depth: 1, art: ORDINARY[1]},
+    {id: 'peak-c', label: 'outer lamp', spoke: -2.25, size: 34, kind: 'ordinary', depth: 0, art: ORDINARY[2]},
+    {id: 'peak-d', label: 'inner pennant', spoke: 1.15, size: 32, kind: 'ordinary', depth: 1, art: ORDINARY[0]},
+  ];
+}
 /** Ch5 — moon-marked finds + ONE unmarked soft-dump; preview markings once. */
 function ch5Targets() {
   return [
@@ -191,10 +211,12 @@ function ch1Targets() {
   ];
 }
 
-function spokePos(spokeAngle, climb) {
+function spokePos(spokeAngle, climb, depth = 0) {
   // climb 0 = rim (safe), 1 = hub (reaches you — miss if unsnapped).
-  const rimX = CX + Math.cos(spokeAngle) * WHEEL_R;
-  const rimY = CY + Math.sin(spokeAngle) * WHEEL_R * 0.72;
+  // depth 0 = outer Tempest ring, depth 1 = inner (≤2 depths for Ch6).
+  const ring = depth >= 1 ? 0.72 : 1.0;
+  const rimX = CX + Math.cos(spokeAngle) * WHEEL_R * ring;
+  const rimY = CY + Math.sin(spokeAngle) * WHEEL_R * 0.72 * ring;
   return {
     x: rimX + (HUB_X - rimX) * climb,
     y: rimY + (HUB_Y - rimY) * climb,
@@ -440,11 +462,58 @@ function endMidnightPreview(s) {
   s.note = TEACH_CH5;
   logAction(s, 'preview-done', {chapter: 5});
 }
+
+function scheduleCh6(s) {
+  // Highest View: balloon teach alone, then finds on ≤2 depth rings.
+  const rows = ch6Targets();
+  s.targets = rows.map((row, i) => {
+    const isHaz = row.kind === 'hazard';
+    const fi = isHaz ? -1 : rows.slice(0, i + 1).filter(o => o.kind !== 'hazard').length - 1;
+    return {
+      ...row,
+      depth: row.depth === 1 ? 1 : 0, // hard-cap ≤2 depths
+      climb: 0,
+      alive: true,
+      snapped: false,
+      missed: false,
+      open: isHaz ? 0.4 : (BALLOON_WARN + 0.7 + Math.max(0, fi) * 11),
+      active: false,
+      teach: isHaz,
+      forceExit: isHaz ? (BALLOON_WARN + 0.8) : null,
+    };
+  });
+  s.goal = GOAL;
+  s.found = 0;
+  s.glowId = null;
+  s.hazardWarned = false;
+  s.rideSecs = rideSecs(5);
+  s.treasure = null;
+  attachTreasureHost(s);
+}
+
+function drawDepthRings(d, s) {
+  // Two Tempest-ish depth rings only (never more).
+  const spin = s.angle || 0;
+  for (const ring of [1.0, 0.72]) {
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const a = spin * 0.2 + (i / 24) * Math.PI * 2;
+      pts.push([
+        CX + Math.cos(a) * WHEEL_R * ring,
+        CY + Math.sin(a) * WHEEL_R * 0.72 * ring,
+      ]);
+    }
+    for (let i = 0; i < pts.length - 1; i++) {
+      d.line({x: pts[i][0], y: pts[i][1]}, {x: pts[i + 1][0], y: pts[i + 1][1]}, '#d2a65b44', 2);
+    }
+  }
+}
 function scheduleRide(s) {
   if (s.level === 1) scheduleCh2(s);
   else if (s.level === 2) scheduleCh3(s);
   else if (s.level === 3) scheduleCh4(s);
   else if (s.level === 4) scheduleCh5(s);
+  else if (s.level === 5) scheduleCh6(s);
   else scheduleCh1(s);
 }
 
@@ -493,7 +562,9 @@ function snapTarget(s, target) {
       ? 'Chimney soft-dump — roofs only. Ride continues.'
       : (s.level === 4
         ? 'Unmarked soft-dump — moon marks only. Ride continues.'
-        : 'Luggage soft-dump — emblems only. Ride continues.');
+        : (s.level === 5
+          ? 'Balloon soft-dump — true finds only. Ride continues.'
+          : 'Luggage soft-dump — emblems only. Ride continues.'));
     if (s.glowId === target.id) s.glowId = null;
     return true;
   }
@@ -525,7 +596,7 @@ function snapTarget(s, target) {
     logAction(s, 'collect', {id: target.id, kind: 'treasure', verb: 'snap'});
     s.note = 'Keepsake snapped — Jasper will stamp the card.';
   } else {
-    const teach = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : (s.level === 4 ? TEACH_CH5 : TEACH)));
+    const teach = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : (s.level === 4 ? TEACH_CH5 : (s.level === 5 ? TEACH_CH6 : TEACH))));
     s.note = s.found >= s.goal
       ? 'Three snaps — the gondola carries you home.'
       : (s.found + ' / ' + s.goal + ' · ' + teach);
@@ -560,6 +631,18 @@ function missTarget(s, target) {
     s.note = 'Mark came back — SNAP the moon marking.';
     return;
   }
+  // Ch6 true find: respawn so depth misses cannot lock under 3/3.
+  if (s.level === 5 && target.kind !== 'hazard' && !target.snapped) {
+    target.climb = 0;
+    target.alive = true;
+    target.missed = false;
+    target.active = true;
+    target.open = s.t;
+    logAction(s, 'miss-retry', {id: target.id, kind: 'highest'});
+    if (s.glowId === target.id) s.glowId = null;
+    s.note = 'Find came back on the ring — SNAP it.';
+    return;
+  }
   target.alive = false;
   target.missed = true;
   logAction(s, 'miss', {id: target.id, kind: target.kind || 'ordinary'});
@@ -569,7 +652,9 @@ function missTarget(s, target) {
       ? 'Chimney passed — SNAP roof clue 1 next.'
       : (s.level === 4
         ? 'Unmarked passed — SNAP the moon markings.'
-        : 'Luggage passed — now SNAP the cabin emblems.');
+        : (s.level === 5
+          ? 'Balloon passed — SNAP the depth-ring finds.'
+          : 'Luggage passed — now SNAP the cabin emblems.'));
     s.hazardWarned = true;
   } else {
     s.note = 'It reached the gondola — watch the next spoke.';
@@ -626,7 +711,7 @@ function drawTarget(d, s, t) {
   if (s.level === 2 && t.trail != null && !t.armed) return;
   const inSweet = s.glowId === t.id;
   const preview = s.level === 4 && !s.previewDone;
-  const r = t.size * (1 - 0.25 * t.climb);
+  const r = t.size * (1 - 0.25 * t.climb) * ((t.depth || 0) >= 1 ? 0.88 : 1);
   const isHaz = t.kind === 'hazard';
   // Ch5: dim moonlight until lens (or during the one preview).
   const moonLit = preview || inSweet || s.level !== 4;
@@ -643,7 +728,11 @@ function drawTarget(d, s, t) {
   }
   d.glow(t.x, t.y, r + (inSweet ? 36 : 18), isHaz ? '#c07070' : (inSweet || preview ? '#c8d8ff' : '#e8d0a0'));
   // Paper silhouettes — readable gallery targets (6-digit glow only).
-  if (t.id === 'roof') {
+  if (t.id === 'balloon') {
+    d.circle(t.x, t.y - r * 0.15, r * 0.7, inSweet ? '#f0a0a0ee' : '#a05060cc', '#d2a65b', 2);
+    d.line({x: t.x, y: t.y + r * 0.45}, {x: t.x, y: t.y + r * 0.95}, '#d2a65b', 2);
+    if (inSweet) d.text('×', t.x, t.y + 6, 18, '#ffe6a4');
+  } else if (t.id === 'roof') {
     d.poly([
       [t.x - r, t.y],
       [t.x, t.y - r * 0.9],
@@ -708,6 +797,17 @@ function drawTarget(d, s, t) {
       [t.x - r * 0.75, t.y + r * 0.55],
     ], inSweet ? '#f4d590ee' : '#c9a04acc', '#d2a65b', 2);
     if (t.armed) d.text(String((t.trail || 0) + 1), t.x, t.y + 6, 18, '#ffe6a4');
+  } else {
+    // Default peak / mark / sky silhouettes (Ch4–Ch6).
+    d.poly([
+      [t.x, t.y - r],
+      [t.x + r * 0.55, t.y + r * 0.2],
+      [t.x, t.y + r * 0.55],
+      [t.x - r * 0.55, t.y + r * 0.2],
+    ], inSweet ? '#f4d590ee' : '#e8d0a0bb', '#d2a65b', 2);
+    if (s.level === 5 && (t.depth || 0) >= 1) d.text('1', t.x, t.y + 6, 14, '#ffe6a4');
+    if (s.level === 5 && (t.depth || 0) === 0 && !isHaz) d.text('0', t.x, t.y + 6, 14, '#e8d0a0');
+  }
   if (s.level === 4 && t.marked && (preview || inSweet)) {
     const g = t.id === 'mark-crescent' ? '☾' : (t.id === 'mark-star' ? '✦' : (t.id === 'mark-ring' ? '◦' : '•'));
     d.text(g, t.x, t.y + 8, 22, '#e8f0ff');
@@ -715,17 +815,9 @@ function drawTarget(d, s, t) {
   if (s.level === 4 && isHaz && (preview || inSweet)) {
     d.text('?', t.x, t.y + 8, 22, '#f0c0c0');
   }
-  } else {
-    d.poly([
-      [t.x, t.y - r],
-      [t.x + r * 0.55, t.y + r * 0.2],
-      [t.x, t.y + r * 0.55],
-      [t.x - r * 0.55, t.y + r * 0.2],
-    ], inSweet ? '#f4d590ee' : '#e8d0a0bb', '#d2a65b', 2);
-  }
   if (inSweet || t.climb < 0.25 || (isHaz && t.teach) || (t.armed && t.trail != null)) {
     const tag = isHaz
-      ? (t.id === 'chimney' ? 'chimney — skip' : 'luggage — skip')
+      ? (t.id === 'chimney' ? 'chimney — skip' : (t.id === 'balloon' ? 'balloon — skip' : 'luggage — skip'))
       : t.label;
     d.text(tag, t.x, t.y - r - 16, 14, isHaz ? '#f0a0a0' : (inSweet ? '#ffe6a4' : '#f0d09a'));
   }
@@ -811,11 +903,11 @@ function trySnap(s, via) {
 export default {
   title: 'Pocket Wheel',
   intro: 'Rise above the midway. Look closer. Targets climb the spokes — SNAP them in Jasper’s brass glow before they reach your gondola.',
-  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: emblems only — luggage soft-dumps. Ch3: roofs in order 1→2→3 — chimney soft-dumps. Ch4: wait out clouds, then SNAP. Ch5: moon marks only — unmarked soft-dumps; one preview. First ride is practice.',
+  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: emblems only — luggage soft-dumps. Ch3: roofs in order 1→2→3 — chimney soft-dumps. Ch4: wait out clouds, then SNAP. Ch5: moon marks only — unmarked soft-dumps; one preview. Ch6: depth rings — balloons soft-dump. First ride is practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 90,
+  houseSeconds: 100,
   create(level, rng) {
     const reduced = prefersReducedMotion();
     return makeRideState(level, rng, {
@@ -847,7 +939,7 @@ export default {
     if (ensureBoarded(s, RIDE, s.treasureId, chapterTargets(s.level).filter(o => o.kind !== 'hazard').map(o => o.id))) {
       scheduleRide(s);
       s.scheduled = true;
-      s.note = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : (s.level === 4 ? TEACH_CH5 : TEACH)));
+      s.note = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : (s.level === 4 ? TEACH_CH5 : (s.level === 5 ? TEACH_CH6 : TEACH))));
     }
     if (s.result) return;
     if (!s.scheduled) return;
@@ -879,7 +971,7 @@ export default {
           if (!t5.alive) continue;
           t5.active = true;
           const spoke = t5.spoke + s.angle * 0.15;
-          const pos = spokePos(spoke, t5.climb);
+          const pos = spokePos(spoke, t5.climb, t5.depth || 0);
           t5.x = pos.x;
           t5.y = pos.y;
         }
@@ -907,14 +999,16 @@ export default {
       endMidnightPreview(s);
     }
 
-    // Ch2/Ch3 teach: long warn while the single hazard approaches alone.
-    if ((s.level === 1 || s.level === 2) && !s.hazardWarned) {
+    // Ch2/Ch3/Ch6 teach: long warn while the single hazard approaches alone.
+    if ((s.level === 1 || s.level === 2 || s.level === 5) && !s.hazardWarned) {
       const haz = (s.targets || []).find(o => o.kind === 'hazard' && o.alive);
-      const warnUntil = s.level === 2 ? CHIMNEY_WARN : LUGGAGE_WARN;
+      const warnUntil = s.level === 2 ? CHIMNEY_WARN : (s.level === 5 ? BALLOON_WARN : LUGGAGE_WARN);
       if (haz && s.t >= haz.open && s.t < warnUntil) {
         s.note = s.level === 2
           ? 'Chimney climbing — do not SNAP it.'
-          : 'Luggage climbing — do not SNAP it.';
+          : (s.level === 5
+            ? 'Balloon climbing — do not SNAP it.'
+            : 'Luggage climbing — do not SNAP it.');
       }
       if (haz && !haz.alive) s.hazardWarned = true;
       if (!haz || s.t >= warnUntil) s.hazardWarned = true;
@@ -931,7 +1025,7 @@ export default {
       if (s.t >= t.open) t.active = true;
       if (!t.active) continue;
       const spoke = t.spoke + s.angle * 0.15; // slight field drift
-      let pos = spokePos(spoke, t.climb);
+      let pos = spokePos(spoke, t.climb, t.depth || 0);
       t.x = pos.x;
       t.y = pos.y;
       // Ch4: once active, armed stays true forever — clouds never reset it or climb.
@@ -947,9 +1041,9 @@ export default {
       }
       // Crawl-while-lit (attested Ch1 feel; keeps SNAP hittable — not a dwell meter).
       // Ch4: crawl only when clear-lit; occluded climb continues at full rate (no reset).
-      const rate = lit ? climb * (s.level === 2 ? 0.04 : (s.level === 4 ? 0.05 : 0.08)) : climb;
+      const rate = lit ? climb * (s.level === 2 ? 0.04 : (s.level === 4 || s.level === 5 ? 0.05 : 0.08)) : climb;
       t.climb = Math.min(1, t.climb + rate * dt);
-      pos = spokePos(spoke, t.climb);
+      pos = spokePos(spoke, t.climb, t.depth || 0);
       t.x = pos.x;
       t.y = pos.y;
       // Ch2: clear luggage after teach window so emblems own the glow.
@@ -980,7 +1074,9 @@ export default {
       if (glow.kind === 'hazard') {
         s.note = s.level === 2
           ? 'Chimney in the glow — skip it!'
-          : (s.level === 4 ? 'Unmarked in the glow — skip it!' : 'Luggage in the glow — skip it!');
+          : (s.level === 4
+            ? 'Unmarked in the glow — skip it!'
+            : (s.level === 5 ? 'Balloon in the glow — skip it!' : 'Luggage in the glow — skip it!'));
       } else s.note = 'In the glow — SNAP!';
     }
 
@@ -1098,6 +1194,7 @@ export default {
   draw(s, d) {
     // ferris.png is the unique court — never clear or full-bleed overpaint.
     drawSpokeGuides(d, s);
+    if (s.level === 5) drawDepthRings(d, s);
     drawGondolaHub(d, s);
 
     if (s.level === 3) drawClouds(d, s);
