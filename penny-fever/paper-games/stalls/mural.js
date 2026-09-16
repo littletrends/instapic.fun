@@ -4,6 +4,9 @@
  * Verb: SPLASH. The mural rolls past; splash faded patches on the wall;
  * they FILL/flood. No mix-then-HOLD PAINT chrome.
  *
+ * DRESS mural-dress-1 — Tent_12_Dot 6-pack + bea YOU; cream SPLASH pad;
+ * prizes locked (painted-bay … ride-ticket). Shell .play-hud only.
+ *
  * Implemented:
  *   1 First Wash — SPLASH any 2 of 3 patches (lantern, balloons, horse)
  *   2 Lantern Row — medallion colour match; ONE decoy soft-wash taught alone;
@@ -18,9 +21,10 @@
  *   6 The Living Bay — long Sunday route; panorama wakes
  *
  * Hard rule: d.glow() takes 6-digit #rrggbb only.
+ * Controls: cream-bottom SPLASH pad + frame/court touch. actions:[]. No court keyboard splash.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=mural-bold-1';
+import {spriteKey} from '../prizes.js?v=mural-dress-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -88,9 +92,125 @@ function matchLine(s) {
 const FRAME = {x: 450, y: 488, w: 260, h: 220};
 const GOLD = '#f0c050';
 const BURG = '#a81e40';
+const BURG_DEEP = '#6b2030';
 const CREAM = '#fffaf0';
+const CREAM_DEEP = '#d2a65b';
 const MIX = '#c44a78';
 const CURTAIN = 0.9;
+
+/** Aura Tent_12_Dot 6-pack + shared bea YOU — mural-dot / shared-player (do not re-split). */
+const DRESS_CACHE = 'mural-dress-1';
+const DOT_FILES = {
+  heart: 'Tent_12_Dot_piece-01.png',   // burgundy medallion
+  star: 'Tent_12_Dot_piece-02.png',    // gold medallion
+  leaf: 'Tent_12_Dot_piece-03.png',    // green medallion
+  moon: 'Tent_12_Dot_piece-04.png',    // shutter flaps
+  flower: 'Tent_12_Dot_piece-05.png',  // quiet court scenery
+  hoop: 'Tent_12_Dot_piece-06.png',    // FRAME overlay (empty centre)
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+let dotPropImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  // Resolve against THIS module (stalls/mural.js), not play.html.
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel;
+  }
+}
+
+function ensureDotProps() {
+  if (dotPropImgs) return dotPropImgs;
+  dotPropImgs = {};
+  for (const [key, file] of Object.entries(DOT_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/mural-dot/' + file);
+    dotPropImgs[key] = img;
+  }
+  return dotPropImgs;
+}
+
+function ensureBeaPlayer() {
+  if (beaPlayerImg) return beaPlayerImg;
+  beaPlayerImg = new Image();
+  beaPlayerImg.decoding = 'async';
+  beaPlayerImg.src = dressUrl('../assets/shared-player/' + BEA_PLAYER_FILE);
+  return beaPlayerImg;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+function medallionDressKey(target) {
+  if (!target) return null;
+  const id = (target.id || '').toLowerCase();
+  const name = (target.name || '').toLowerCase();
+  if (id === 'burgundy' || id === 'burg' || name === 'burgundy') return 'heart';
+  if (id === 'gold' || name === 'gold') return 'star';
+  if (id === 'green' || name === 'green') return 'leaf';
+  return null;
+}
+
+/** Cream-bottom SPLASH pad (canvas 900×1200) — big phone target. */
+function creamPads() {
+  const y = 1088;
+  const h = 100;
+  const w = 280;
+  const mid = 450;
+  return [{id: 'splash', x: mid - w / 2, y, w, h, label: 'SPLASH'}];
+}
+
+function hitPad(p) {
+  if (!p || typeof p.x !== 'number') return null;
+  for (const pad of creamPads()) {
+    if (p.x >= pad.x && p.x <= pad.x + pad.w && p.y >= pad.y && p.y <= pad.y + pad.h) return pad.id;
+  }
+  return null;
+}
+
+function drawCreamPads(d) {
+  for (const pad of creamPads()) {
+    d.ellipse(pad.x + pad.w / 2 + 2, pad.y + pad.h / 2 + 4, pad.w * 0.48, pad.h * 0.42, '#3a0a1266');
+    d.ellipse(
+      pad.x + pad.w / 2,
+      pad.y + pad.h / 2,
+      pad.w * 0.48,
+      pad.h * 0.42,
+      CREAM + 'ee',
+      CREAM_DEEP,
+      2
+    );
+    d.text(pad.label, pad.x + pad.w / 2, pad.y + pad.h / 2 + 1, 24, BURG_DEEP);
+  }
+}
+
+function drawFlowerScenery(d) {
+  const imgs = ensureDotProps();
+  // Quiet L/R mid-court — keep below hoop / above cream pads (y < ~1000).
+  placeDress(d, imgs.flower, 118, 620, 72, -0.08);
+  placeDress(d, imgs.flower, 782, 640, 68, 0.1);
+}
+
+function trySplashFromPad(s) {
+  if (s.result || s.broke || !s.boarded) return;
+  if (s.discovery > 0 || s.arriving || (s.softUntil && s.t < s.softUntil)) return;
+  const live = s.panels[s.index];
+  if (live && !live.restored && (live.held || inWindow(live, s.scroll))) {
+    splash(s, live);
+  }
+}
 
 function liveTargetFor(row) {
   if (!row || row.teach || !row.match) return COLOURS.burgundy;
@@ -580,9 +700,12 @@ function drawShutters(d, x, y, open, alwaysClosed) {
   roundRect(c, left, y + halfH - flap, w, flap, 6);
   c.fill();
   c.stroke();
-  // Shutter bar cue
+  // Shutter bar cue — Dot moon piece when closed-ish; ◐ glyph fallback.
   if (o < 0.85) {
-    d.text('◐', x, y - halfH + flap * 0.55 + 6, 16, GOLD);
+    const imgs = ensureDotProps();
+    const my = y - halfH + flap * 0.55;
+    const moonOk = placeDress(d, imgs.moon, x, my, 28);
+    if (!moonOk) d.text('◐', x, my + 6, 16, GOLD);
   }
   c.restore();
 }
@@ -676,21 +799,29 @@ function drawMedallion(d, s) {
   const c = d.c;
   c.save();
   c.globalAlpha = open;
-  d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
-  d.circle(x, y, 36, s.target.color, GOLD, 2);
-  d.text(s.target.glyph, x, y + 10, 28, CREAM);
+  const imgs = ensureDotProps();
+  const dressKey = medallionDressKey(s.target);
+  const dressImg = dressKey ? imgs[dressKey] : null;
+  const placed = dressImg ? placeDress(d, dressImg, x, y, 96) : false;
+  if (!placed) {
+    // Vector fallback when PNG not ready / non-colour target.
+    d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
+    d.circle(x, y, 36, s.target.color, GOLD, 2);
+    d.text(s.target.glyph, x, y + 10, 28, CREAM);
+  }
+  // Dark/gold readable labels on cream court (never washed-out cream-on-cream).
   const medalLabel = s.level === 5
     ? (s.target?.name || 'clue')
     : s.level === 4
       ? ((s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'memory')
       : s.level === 3 ? 'shutter' : s.level === 2 ? 'horse' : 'match';
-  d.text(medalLabel, x, y + 62, 14, GOLD);
+  d.text(medalLabel, x, y + 62, 14, BURG_DEEP);
   if (s.level === 4 && s.memoryOrder) {
     const mark = MOTIF_MARK[s.memoryOrder[s.memoryNext]] || '♫';
-    d.text(mark, x, y + 78, 12, CREAM);
+    d.text(mark, x, y + 78, 12, GOLD);
   }
   if (s.level === 5 && s.target) {
-    d.text(s.target.glyph, x, y + 78, 12, CREAM);
+    d.text(s.target.glyph, x, y + 78, 12, GOLD);
   }
   c.restore();
 }
@@ -705,7 +836,7 @@ export default {
   houseSeconds: 70,
   houseTitle: 'The paint dried',
   houseDetail: 'The bay went still before the wall woke. Try this chapter again.',
-  actions: [{id: 'splash', label: 'SPLASH'}],
+  actions: [],
   create(level, rng) {
     const reduced = prefersReducedMotion();
     const plan = chapterPlan(level, reduced);
@@ -861,26 +992,54 @@ export default {
       }
     }
     if (s.discovery > 0 || s.arriving || (s.softUntil && s.t < s.softUntil)) return;
+    // Cream SPLASH pad (same splash logic as former action / frame tap).
+    if (hitPad(p) === 'splash') {
+      trySplashFromPad(s);
+      return;
+    }
     const live = s.panels[s.index];
     if (live && !live.restored && (live.held || inWindow(live, s.scroll)) && inFrame(p)) {
       splash(s, live);
     }
   },
   draw(s, d) {
+    ensureDotProps();
+    ensureBeaPlayer();
+
     d.poly([[120, 168], [780, 168], [772, 186], [128, 186]], '#a81e40bb', GOLD, 2);
     d.poly([[110, 742], [790, 742], [808, 776], [92, 776]], '#a81e40aa', GOLD, 2);
 
     const bob = s.reduced ? 0 : Math.sin(s.t * 1.3) * 3;
     d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#a81e40dd', GOLD, 2.5);
 
+    // YOU = bea-player on bobbing platform (~56w); soft glow + ellipse fallback.
+    {
+      const yx = 450;
+      const yy = 700 + bob - 8;
+      d.glow(yx, yy + 10, 28, '#ffd060');
+      d.ellipse(yx + 2, yy + 18, 22, 8, '#3a0a1244');
+      const beaOk = placeDress(d, beaPlayerImg, yx, yy, 56);
+      if (!beaOk) {
+        d.circle(yx, yy, 14, '#fff6d8ee', CREAM_DEEP, 2);
+        d.text('YOU', yx, yy + 1, 11, BURG_DEEP);
+      }
+    }
+
+    drawFlowerScenery(d);
     drawMedallion(d, s);
 
     const fx = FRAME.x, fy = FRAME.y, fw = FRAME.w, fh = FRAME.h;
     const live = s.panels[s.index] && !s.panels[s.index].restored ? s.panels[s.index] : null;
+    // Subtle gold stroke under hoop so FRAME edge stays readable.
     d.poly(
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#ffe08a' : GOLD, live ? 6 : 3,
     );
+    // Embroidery hoop frames ~260×220 window; empty centre keeps inFrame hitbox.
+    {
+      const imgs = ensureDotProps();
+      placeDress(d, imgs.hoop, fx, fy, 340);
+    }
 
     s.panels.forEach((row) => {
       const x = screenX(row, s.scroll);
@@ -937,6 +1096,9 @@ export default {
         fallback: (dd, x, y) => dd.star(x, y, 16, '#ffe08a'),
       });
     }
+
+    // On-court cream-bottom SPLASH pad (replaces shell SPLASH dock).
+    if (!s.result && !s.broke) drawCreamPads(d);
   },
   action(s, id, on) {
     if (on === false) return;
@@ -949,11 +1111,8 @@ export default {
     }
   },
   key(s, k, down) {
-    if (!down || s.result || !s.boarded) return;
-    if (k === ' ' || k === 'Enter' || k === 'p' || k === 'P') {
-      const live = s.panels[s.index];
-      if (live && !live.restored) splash(s, live);
-    }
+    // Court keyboard splash removed — cream pad + frame touch only.
+    return;
   },
   readout: (s) => {
     const base = s.note || '';
