@@ -22,7 +22,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
@@ -615,24 +615,6 @@ function drawChainRibbon(d, s) {
   }
 }
 
-function drawMemoryStrip(d, s) {
-  // Brief remembered-order ribbon: lantern → balloons → horse.
-  if (s.level !== 4 || !s.boarded || s.result) return;
-  if (s.t > 4.8 && s.restored > 0) return;
-  if (s.t > 5.5) return;
-  const c = d.c;
-  c.save();
-  roundRect(c, 160, 210, 580, 52, 12);
-  c.fillStyle = '#1a1210ee';
-  c.fill();
-  c.strokeStyle = GOLD;
-  c.lineWidth = 2.5;
-  c.stroke();
-  c.restore();
-  const next = (s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'lantern';
-  d.text('♫  lantern → balloons → horse', 450, 234, 22, CREAM);
-  d.text('next: ' + next, 450, 252, 14, GOLD);
-}
 
 function drawPanoramaWake(d, s) {
   if (s.level !== 5 || !s.panoramaWake) return;
@@ -683,65 +665,7 @@ function drawColourMark(d, colourId, x, y) {
   d.text(col.glyph, x, y + 8, 22, CREAM);
 }
 
-function drawPracticeBadge(d, s) {
-  if (!s.boarded) return;
-  const c = d.c;
-  const label = s.practice ? 'PRACTICE' : 'PAID';
-  const w = s.practice ? 168 : 110;
-  c.save();
-  roundRect(c, 28, 178, w, 42, 12);
-  c.fillStyle = s.practice ? '#6b2030ee' : '#2a1c18ee';
-  c.fill();
-  c.strokeStyle = GOLD;
-  c.lineWidth = 2.5;
-  c.stroke();
-  c.restore();
-  d.text(label, 28 + w / 2, 207, 20, CREAM);
-}
 
-function drawCoach(d, s) {
-  if (!s.boarded || s.result) return;
-  let line = null;
-  if (s.warnLeft > 0) {
-    line = s.level === 5
-      ? 'Soft mash — wait, then follow ' + (s.target?.glyph || '♥')
-      : s.level === 4
-        ? 'Wrong memory — wait for the next ♫'
-        : s.level === 3
-          ? 'Shutters closed — wait for ◐ to open'
-          : s.level === 2
-            ? 'Horse only — wait for ♞ in the window'
-            : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
-  } else if (!s.juice && s.t < 5.2 && s.level === 0) {
-    line = 'SPLASH the faded patch';
-  } else if (!s.juice && s.t < 6.5 && s.level === 1) {
-    line = 'SPLASH only the ' + (s.target?.glyph || '♥') + ' match';
-  } else if (!s.juice && s.t < 7.2 && s.level === 2) {
-    line = 'SPLASH only the ♞ horse in the window';
-  } else if (!s.juice && s.t < 7.5 && s.level === 3) {
-    line = 'SPLASH when shutters open — link the bay';
-  } else if (!s.juice && s.t < 8.0 && s.level === 4) {
-    line = 'Remember ♫ — lantern, balloons, horse';
-  } else if (!s.juice && s.t < 8.5 && s.level === 5) {
-    line = 'The Living Bay — follow each clue ' + (s.target?.glyph || '♥');
-  } else if (s.level === 5 && !s.warnLeft) {
-    line = 'Clue ' + (s.target?.glyph || '♥') + ' — ' + (s.target?.name || 'match');
-  } else if (s.level === 4 && !s.warnLeft) {
-    const next = (s.memoryOrder && s.memoryOrder[s.memoryNext]) || 'lantern';
-    line = 'Next ♫: ' + next;
-  }
-  if (!line) return;
-  const c = d.c;
-  c.save();
-  roundRect(c, 90, 248, 720, 58, 14);
-  c.fillStyle = '#1a1210ee';
-  c.fill();
-  c.strokeStyle = GOLD;
-  c.lineWidth = 3;
-  c.stroke();
-  c.restore();
-  d.text(line, 450, 286, 26, CREAM);
-}
 
 function drawMedallion(d, s) {
   if (!s.target) return;
@@ -781,7 +705,7 @@ export default {
   houseSeconds: 70,
   houseTitle: 'The paint dried',
   houseDetail: 'The bay went still before the wall woke. Try this chapter again.',
-  actions: [],
+  actions: [{id: 'splash', label: 'SPLASH'}],
   create(level, rng) {
     const reduced = prefersReducedMotion();
     const plan = chapterPlan(level, reduced);
@@ -948,7 +872,6 @@ export default {
 
     const bob = s.reduced ? 0 : Math.sin(s.t * 1.3) * 3;
     d.poly([[250, 700 + bob], [650, 700 + bob], [630, 738 + bob], [270, 738 + bob]], '#6b2030aa', GOLD, 2.5);
-    d.text('painter’s platform', 450, 724 + bob, 13, GOLD);
 
     drawMedallion(d, s);
 
@@ -958,12 +881,6 @@ export default {
       [[fx - fw / 2, fy - fh / 2], [fx + fw / 2, fy - fh / 2], [fx + fw / 2, fy + fh / 2], [fx - fw / 2, fy + fh / 2]],
       null, live ? '#f4d590' : GOLD, live ? 6 : 3,
     );
-    const frameHint = live && s.level === 5 && live.match
-      ? ('clue ' + (s.target?.glyph || '♥'))
-      : live && s.level === 4 && live.match
-        ? ((s.memoryOrder && live.motif === s.memoryOrder[s.memoryNext]) ? 'next memory' : 'wrong order soft')
-        : live && !live.match ? 'soft wash if you splash' : 'splash here';
-    d.text(frameHint, fx, fy + fh / 2 + 20, 14, live ? CREAM : GOLD);
 
     s.panels.forEach((row) => {
       const x = screenX(row, s.scroll);
@@ -1007,18 +924,9 @@ export default {
         d.glow(x, FRAME.y, 70, '#8ab4c8');
         d.text('wash', x, FRAME.y, 22, '#c8e0f0');
       }
-      if (live && live.id === row.id && !s.discovery && !(s.softUntil && s.t < s.softUntil)) {
-        d.circle(FRAME.x, FRAME.y, 110, '#6b203066', CREAM, 5);
-        const orderOk = !(s.level === 4 && live.match && s.memoryOrder && live.motif !== s.memoryOrder[s.memoryNext]);
-        const shutterOk = !(s.level === 5 && live.rule === 'shutter' && (live.shutterOpen || 0) < 0.85);
-        const canSplash = live.match && orderOk && shutterOk;
-        d.text(canSplash ? 'SPLASH' : (live.match ? 'WAIT' : 'DECOY'), FRAME.x, FRAME.y + 12, 36, CREAM);
-        d.text(canSplash ? 'tap here' : 'soft fail', FRAME.x, FRAME.y + 48, 18, GOLD);
-      }
     });
 
     if (s.level === 3 || s.level === 5) drawChainRibbon(d, s);
-    if (s.level === 4) drawMemoryStrip(d, s);
     if (s.level === 5) drawPanoramaWake(d, s);
 
     if (s.treasure && !s.treasure.taken && s.discovery > 0) {
@@ -1029,54 +937,16 @@ export default {
         fallback: (dd, x, y) => dd.star(x, y, 16, '#ffe6a4'),
       });
     }
-
-    if (s.arriving || s.result) {
-      const c = d.c;
-      c.save();
-      c.strokeStyle = GOLD;
-      c.lineWidth = 5;
-      roundRect(c, 120, 220, 660, 500, 16);
-      c.stroke();
-      d.text(s.level === 5 && s.panoramaWake ? 'Living Gallery' : 'Gallery', 450, 250, 22, GOLD);
-      if (s.level === 5 && s.panoramaWake) {
-        c.strokeStyle = '#f4d590';
-        c.lineWidth = 8;
-        c.beginPath();
-        c.moveTo(140, 470);
-        c.lineTo(760, 470);
-        c.stroke();
-        d.glow(450, 470, 40, '#f4d590');
-      }
-      c.restore();
+  },
+  action(s, id, on) {
+    if (on === false) return;
+    if (s.result || s.broke || !s.boarded) return;
+    if (id !== 'splash') return;
+    if (s.discovery > 0 || s.arriving || (s.softUntil && s.t < s.softUntil)) return;
+    const live = s.panels[s.index];
+    if (live && !live.restored && (live.held || inWindow(live, s.scroll))) {
+      splash(s, live);
     }
-
-    const u = clamp(s.t / CURTAIN, 0, 1);
-    if (u < 1) {
-      const top = 150 - u * u * 420;
-      const c = d.c;
-      c.save();
-      roundRect(c, 130, top, 640, 520, 18);
-      c.fillStyle = '#4a1830ee';
-      c.fill();
-      c.strokeStyle = GOLD;
-      c.lineWidth = 3;
-      c.stroke();
-      d.text('SPLASH', 450, top + 210, 44, CREAM);
-      d.text(
-        s.level === 5 ? 'follow each clue — wake the bay'
-          : s.level === 4 ? 'remember ♫ — lantern, balloons, horse'
-            : s.level === 3 ? 'shutters open — link the bay'
-              : s.level === 2 ? 'horse only in the window'
-                : s.level === 1 ? 'match the medallion'
-                  : 'the faded patch',
-        450, top + 262, 22, GOLD,
-      );
-      c.restore();
-    }
-
-    drawPracticeBadge(d, s);
-    drawCoach(d, s);
-    drawHud(d, s, {goal: s.goal, count: s.restored, label: 'patches'});
   },
   key(s, k, down) {
     if (!down || s.result || !s.boarded) return;
@@ -1085,5 +955,10 @@ export default {
       if (live && !live.restored) splash(s, live);
     }
   },
-  readout: (s) => s.note || '',
+  readout: (s) => {
+    const base = s.note || '';
+    if (s.goal == null) return base;
+    const prog = (s.restored || 0) + '/' + s.goal;
+    return base ? (base + ' · ' + prog) : prog;
+  },
 };
