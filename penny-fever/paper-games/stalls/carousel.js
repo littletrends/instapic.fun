@@ -119,6 +119,80 @@ const SWAY_X = 10;
 const SWAY_Y = 6;
 const DRAG_PX = 18;
 
+/** Papercut horse-carousel front sheet — crop ride rect into rideCutout. */
+const PAPERCUT_SHEET = 512;
+const PAPERCUT_RIDE_RECT = [58, 34, 396, 446]; // front ride frame from catalogue
+const RIDE_CUTOUT_SRC = new URL(
+  '../../assets/restyle/scene-turnarounds-2026-09-09/amusements/horse-carousel/front.webp',
+  import.meta.url,
+).href;
+/** @type {HTMLCanvasElement|ImageBitmap|null} */
+let rideCutout = null;
+let rideCutoutReady = false;
+
+function cropRideCutout(img, rect) {
+  const [sx, sy, sw, sh] = rect;
+  const out = (typeof OffscreenCanvas !== 'undefined')
+    ? new OffscreenCanvas(sw, sh)
+    : Object.assign(document.createElement('canvas'), {width: sw, height: sh});
+  if (!(out instanceof OffscreenCanvas)) {
+    out.width = sw;
+    out.height = sh;
+  }
+  const ctx = out.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  return out;
+}
+
+function preloadRideCutout() {
+  if (rideCutoutReady || typeof Image === 'undefined') return;
+  const img = new Image();
+  img.decoding = 'async';
+  img.onload = () => {
+    try {
+      const cut = cropRideCutout(img, PAPERCUT_RIDE_RECT);
+      if (!cut) return;
+      // Prefer ImageBitmap when available (faster draw); else keep canvas.
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(cut).then((bmp) => {
+          rideCutout = bmp;
+          rideCutoutReady = true;
+        }).catch(() => {
+          rideCutout = cut;
+          rideCutoutReady = true;
+        });
+      } else {
+        rideCutout = cut;
+        rideCutoutReady = true;
+      }
+    } catch (_) { /* keep stick geometry fallback */ }
+  };
+  img.onerror = () => { /* missing webp — stick geometry remains */ };
+  img.src = RIDE_CUTOUT_SRC;
+}
+preloadRideCutout();
+
+function drawRideCutout(d, swayX, swayY) {
+  if (!rideCutoutReady || !rideCutout) return false;
+  const w = 560;
+  const iw = rideCutout.width || PAPERCUT_RIDE_RECT[2];
+  const ih = rideCutout.height || PAPERCUT_RIDE_RECT[3];
+  const h = w * (ih / (iw || 1));
+  const x = CX + swayX * 0.35;
+  const y = CY - 40 + swayY * 0.35;
+  if (typeof d.sprite === 'function') {
+    return d.sprite(rideCutout, x, y, {w, h, shadow: false, alpha: 1});
+  }
+  const c = d.c;
+  c.save();
+  c.translate(x, y);
+  c.drawImage(rideCutout, -w / 2, -h / 2, w, h);
+  c.restore();
+  return true;
+}
+
+
 /**
  * Addressable crest carriers — sealed spawnIds for treasure eligibility.
  * horse index orbits; crest = when that horse enters the front sweet-spot.
@@ -2749,12 +2823,17 @@ export default {
     const cy = CY + swayY;
     const t = s.t || 0;
     const reduced = !!s.reduced;
+    const dressed = drawRideCutout(d, swayX, swayY);
 
-    drawPlatform(d, CX, CY, swayX, swayY);
-    drawCanopy(d, CX, CY, swayX, swayY, t, reduced, s.level === 4 || s.level === 5);
+    // Stick canopy/platform only when papercut cutout is not ready.
+    if (!dressed) {
+      drawPlatform(d, CX, CY, swayX, swayY);
+      drawCanopy(d, CX, CY, swayX, swayY, t, reduced, s.level === 4 || s.level === 5);
+    }
     drawCrestLane(d, s);
 
     // Orbiting horses (skip index 0 — player mount fixed foreground).
+    // When dressed, skip stick horses — papercut sheet already shows the ring.
     const order = [];
     for (let i = 1; i < HORSE_N; i++) {
       const h = horsePoint(i, HORSE_N, s.angle || 0, cx, cy + 40, 250, 220);
@@ -2765,7 +2844,7 @@ export default {
     for (const {i, h} of order) {
       const bobAmp = (s.level === 4 || s.level === 5) ? (reduced ? 5 : 14) : (reduced ? 3 : 10);
       const bob = Math.sin((s.angle || 0) * 2 + i) * bobAmp;
-      drawHorseSafe(d, h, bob, false, t, reduced);
+      if (!dressed) drawHorseSafe(d, h, bob, false, t, reduced);
       // Ch4 / Ch6: paper-cut carriage window on crest carriers (open vs shut).
       if ((s.level === 3 || s.level === 5) && (s.carriageHorses || []).includes(i) && h.front) {
         const op = liveOpeningForHorse(s, i);
@@ -2775,10 +2854,18 @@ export default {
       }
     }
 
-    // Player horse — locked center-front (Tempest rim lane).
+    // Player mount cue — light “you” marker when dressed; full stick horse otherwise.
     const playerBobAmp = (s.level === 4 || s.level === 5) ? (reduced ? 5 : 12) : (reduced ? 3 : 8);
     const bob = Math.sin(t * 2.2) * playerBobAmp;
-    drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
+    if (dressed) {
+      const px = CX + swayX * 0.15;
+      const py = CY + swayY * 0.15 + 110 + bob;
+      d.glow(px, py - 10, 36, '#ffe6a4');
+      d.ellipse(px, py + 28, 54, 14, '#12233555');
+      d.text('you', px, py + 36, 15, '#f0d09a');
+    } else {
+      drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
+    }
 
     const poleX = CX + swayX * 0.25;
     const poleY = CY + swayY * 0.25;
