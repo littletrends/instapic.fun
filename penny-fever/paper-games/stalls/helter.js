@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-2';
+const DRESS_CACHE = 'dress-3';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -400,7 +400,7 @@ function beginCellMove(s, dest, reason) {
   s._moveBx = b.x;
   s._moveBy = b.y;
   // Arc loft for jump / cushion bounce.
-  s._moveArc = jumpish ? (reason === 'cushion' ? 56 : 48) : (reason === 'tap' || reason === 'tap-back' ? 6 : 0);
+  s._moveArc = jumpish ? (reason === 'cushion' ? 56 : (reason === 'jump' ? 64 : 48)) : (reason === 'tap' || reason === 'tap-back' ? 6 : 0);
 }
 
 function easeInOut(t) {
@@ -432,11 +432,11 @@ function tryCollectTreasure(s, idx) {
   if (s.eligible) {
     recordTreasure(s, s.treasure.id);
     logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
-    s.note = 'Keepsake! Spiral tower secured.';
-    s.statusCopy = 'Keepsake';
+    s.note = 'KEEPSAKE! Spiral tower secured.';
+    s.statusCopy = 'KEEPSAKE!';
   } else {
-    s.note = 'Practice keepsake glimpse — paid rides can keep it.';
-    s.statusCopy = 'Glimpse';
+    s.note = 'KEEPSAKE! Practice glimpse — paid rides can keep it.';
+    s.statusCopy = 'KEEPSAKE!';
     logAction(s, 'treasure-practice', {cell: idx});
   }
   s.treasure.taken = true;
@@ -444,7 +444,9 @@ function tryCollectTreasure(s, idx) {
   s.keepsakeTaken = true;
   const c = cellAt(s, idx);
   pushSparks(s, c.x, c.y, false);
-  s.matPulse = 0.7;
+  s.matPulse = 1.0;
+  s.ladderFlash = 0.9; // reuse cream flash as claim pop
+  pushFx(s, {kind: 'label', x: c.x, y: c.y - 50, text: 'KEEPSAKE!', life: 1.2, soft: false});
 }
 
 /** Claim keepsake + tokens on every cell traversed from→to inclusive. */
@@ -470,14 +472,18 @@ function maybeBallKnock(s, opts) {
   if ((s.moveReason || '') === 'ball') return false;
   const idx = s.youCell | 0;
   if (idx <= 0) return false; // already at bottom terminus
-  if (!(ballMeetsYou(s) || ballCellNear(s, idx))) return false;
-  logAction(s, 'ball-knock', {cell: idx, ballU: s.ballU});
-  s.note = 'Ball knock — soft dump to the bottom. Ride continues.';
-  s.statusCopy = 'Ball dump';
-  s.slideFlash = 0.55;
+  // PIXEL meet only — cell-index false-fires across stacked spiral layers.
+  if (!ballMeetsYou(s)) return false;
+  logAction(s, 'ball-knock', {cell: idx, ballU: s.ballU, dist: s._ballDist});
+  s.note = 'BALL DUMP! Soft dump to the bottom — ride continues.';
+  s.statusCopy = 'BALL DUMP';
+  s.slideFlash = 1.1;
+  s.matPulse = 0.85;
+  s.finishPulse = Math.max(s.finishPulse || 0, 0.45);
   const c = cellAt(s, idx);
   pushSparks(s, c.x, c.y, true);
-  pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: 'ball!', life: 0.7, soft: true});
+  pushSparks(s, s.ballX || c.x, s.ballY || c.y, true);
+  pushFx(s, {kind: 'label', x: c.x, y: c.y - 48, text: 'BALL DUMP!', life: 1.15, soft: true});
   s._ballCleared = false;
   beginCellMove(s, 0, 'ball');
   return true;
@@ -508,9 +514,9 @@ function resolveLanding(s) {
       logAction(s, 'cushion', {cell: idx, dest, n: s.cushionsBounced, teach: !!C.teach});
       recordFind(s, 'cell-' + idx, RIDE);
       s.note = C.teach
-        ? 'Cushion bounce! Up the coil — JUMP onto more.'
-        : 'Bounce! Cushion ' + s.cushionsBounced + '/' + CUSHION_GOAL;
-      s.statusCopy = 'Bounce ' + s.cushionsBounced + '/' + CUSHION_GOAL;
+        ? 'CUSHION UP! Bounce up the coil.'
+        : 'CUSHION UP! ' + s.cushionsBounced + '/' + CUSHION_GOAL;
+      s.statusCopy = 'UP! ' + s.cushionsBounced + '/' + CUSHION_GOAL;
     } else {
       logAction(s, 'cushion-rehit', {cell: idx, dest});
       s.note = 'Cushion again — bounce on.';
@@ -519,7 +525,7 @@ function resolveLanding(s) {
     s.cushionFlash = 0.7;
     const c = cellAt(s, idx);
     pushSparks(s, c.x, c.y, false);
-    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: first ? 'bounce!' : 'up!', life: 0.7, soft: false});
+    pushFx(s, {kind: 'label', x: c.x, y: c.y - 44, text: first ? 'UP!' : 'UP!', life: 0.95, soft: false});
     beginCellMove(s, dest, 'cushion');
     return;
   }
@@ -533,11 +539,11 @@ function resolveLanding(s) {
     s.slideFlash = 0.85;
     const c = cellAt(s, idx);
     pushSparks(s, c.x, c.y, true);
-    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: 'slide…', life: 0.75, soft: true});
+    pushFx(s, {kind: 'label', x: c.x, y: c.y - 44, text: 'SLIDE DOWN!', life: 1.0, soft: true});
     s.note = S.teach
-      ? 'Slide soft dump — climb again. Ride continues.'
-      : 'Soft dump — jump over slides next time. Ride continues.';
-    s.statusCopy = 'Soft dump';
+      ? 'SLIDE DOWN! Soft dump — climb again. Ride continues.'
+      : 'SLIDE DOWN! Jump over next time. Ride continues.';
+    s.statusCopy = 'SLIDE DOWN';
     // Soft dump DOWN — never abort / never broke.
     beginCellMove(s, dest, 'slide');
     return;
@@ -607,38 +613,55 @@ function doTapBackNow(s) {
 }
 
 /**
- * JUMP: leap over the next cell onto cell+2 (clear hop up the coil).
- * Intermediate skipped (safe over a slide). Near crest, hop +1 still arcs.
+ * JUMP:
+ *   next cell is CUSHION → land ON it (bounce UP)
+ *   next cell is SLIDE → leap OVER it (+2, safe)
+ *   else hop +2 up the coil
  */
 function doJumpNow(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const n = (s.cells || []).length;
   const from = s.youCell | 0;
-  const over = Math.min(from + 1, n - 1);
-  let land = Math.min(from + 2, n - 1);
+  const next = Math.min(from + 1, n - 1);
+  const over2 = Math.min(from + 2, n - 1);
+  let land = over2;
+  let tag = 'JUMP!';
+  if (next === from) {
+    maybeFinish(s, 'crest');
+    return false;
+  }
+  if (cushionAt(s, next)) {
+    land = next; // JUMP onto cushion → resolveLanding boosts UP
+    tag = 'JUMP UP!';
+  } else if (slideAt(s, next)) {
+    land = over2; // JUMP over slide
+    tag = 'JUMP OVER!';
+  } else {
+    land = over2;
+  }
   if (land === from) {
     maybeFinish(s, 'crest');
     return false;
   }
-  // Near crest: still hop forward one with full jump arc.
-  if (land === over && over === from) {
-    maybeFinish(s, 'crest');
-    return false;
-  }
   s.jumpedOnce = true;
-  const clearedBall = !!(s.ballActive && ballCellNear(s, over));
-  s._ballCleared = clearedBall;
-  if (clearedBall) {
-    logAction(s, 'ball-jump', {cell: over});
+  const clearedBall = !!(s.ballActive && (ballMeetsYou(s) || ballCellNear(s, next)));
+  s._ballCleared = clearedBall && land !== next;
+  if (clearedBall && land !== next) {
+    logAction(s, 'ball-jump', {cell: next});
     s.note = 'Jumped the ball!';
     s.statusCopy = 'Ball clear';
     pushSparks(s, s.ballX || CX, s.ballY || Y_BOT, false);
   } else {
-    s.note = 'Jump!';
-    s.statusCopy = 'Jump';
+    s.note = tag;
+    s.statusCopy = tag;
   }
-  logAction(s, 'jump', {from, over, to: land});
+  logAction(s, 'jump', {from, next, to: land, tag});
+  {
+    const c = cellAt(s, from);
+    pushFx(s, {kind: 'label', x: c.x, y: c.y - 42, text: tag, life: 0.6, soft: false});
+    s.matPulse = Math.max(s.matPulse || 0, 0.45);
+  }
   beginCellMove(s, land, 'jump');
   return true;
 }
@@ -652,12 +675,14 @@ function ballCellNear(s, cellIdx) {
   return Math.abs(bi - (cellIdx | 0)) <= 2;
 }
 
-/** Pixel meet — ball must actually reach YOU on the track. */
+/** Pixel meet — ball must actually touch Bea (not just same spiral cell index). */
 function ballMeetsYou(s) {
   if (!s.ballActive || s.ballX == null || s.youX == null) return false;
   if ((s.youCell | 0) <= 0) return false;
   const dist = Math.hypot((s.ballX || 0) - (s.youX || 0), (s.ballY || 0) - (s.youY || 0));
-  return dist < 54; // Bea + ball radii overlap on the ribbon
+  s._ballDist = dist;
+  // Tight: Bea ~28r + ball ~16r; require real overlap, not adjacent coil.
+  return dist < 36;
 }
 
 /** Cream-bottom pad layout (canvas 900×1200) — big phone targets. */
@@ -765,35 +790,35 @@ function drawSkipScenery(d) {
   placeDress(d, imgs.gauge, 782, 430, 72, 0.08);
 }
 
-/** Bold deep-red chute — Aura moon-slide sprite, vector fallback. */
+/** Bold deep-red chute — bigger, aimed DOWN the spiral toward the lower layer. */
 function drawSlideProp(d, cell, flash) {
   if (!cell) return;
   const x = cell.x, y = cell.y;
-  const ang = cell.ang || 0;
+  const u = cell.u != null ? cell.u : 0;
+  // Downhill = toward lower u (bottom of spiral).
+  const down = spiralPoint(Math.max(0, u - 0.035));
+  const downhillAng = Math.atan2(down.y - y, down.x - x);
   const imgs = ensureSkipProps();
-  if (flash) d.glow(x, y, 28, BURGUNDY);
-  else d.glow(x, y, 18, SLIDE_FILL);
-  if (placeDress(d, imgs.slide, x, y - 2, 52, ang * 0.15)) return;
-  // Fallback: chute wedge downhill along the spiral.
-  const dx = Math.cos(ang + Math.PI * 0.15);
-  const dy = Math.sin(ang + Math.PI * 0.15) * 0.55 + 0.55;
-  const tipX = x + dx * 22;
-  const tipY = y + dy * 26;
-  const w = 16;
-  const nx = -dy, ny = dx;
+  if (flash) d.glow(x, y, 32, BURGUNDY);
+  else d.glow(x, y, 22, SLIDE_FILL);
+  // Moon-slide art faces down-ramp; rotate to spiral downhill + slight screen-down bias.
+  const artAng = downhillAng + 0.35;
+  if (placeDress(d, imgs.slide, x + Math.cos(downhillAng) * 8, y + Math.sin(downhillAng) * 8, 78, artAng)) return;
+  // Fallback wedge pointing downhill.
+  const tipX = x + Math.cos(downhillAng) * 34;
+  const tipY = y + Math.sin(downhillAng) * 34;
+  const w = 20;
+  const nx = -Math.sin(downhillAng), ny = Math.cos(downhillAng);
   const poly = [
-    {x: x + nx * w, y: y + ny * w - 4},
-    {x: x - nx * w, y: y - ny * w - 4},
-    {x: tipX - nx * 4, y: tipY - ny * 4 + 6},
-    {x: tipX + nx * 4, y: tipY + ny * 4 + 6},
+    {x: x + nx * w, y: y + ny * w - 2},
+    {x: x - nx * w, y: y - ny * w - 2},
+    {x: tipX - nx * 5, y: tipY - ny * 5 + 4},
+    {x: tipX + nx * 5, y: tipY + ny * 5 + 4},
   ];
   d.poly(poly.map((p) => ({x: p.x + 2, y: p.y + 3})), TRACK_SHADOW + '88', TRACK_SHADOW, 1);
   d.poly(poly, SLIDE_FILL + 'f2', SLIDE_DEEP, 2.2);
-  d.path(
-    [{x: x, y: y - 2}, {x: tipX, y: tipY + 2}],
-    CREAM + '66', 3, false, null
-  );
-  d.text('SLIDE', x, y - 22, 11, CREAM);
+  d.path([{x, y: y - 2}, {x: tipX, y: tipY + 2}], CREAM + '66', 3, false, null);
+  d.text('SLIDE', x, y - 26, 12, CREAM);
 }
 
 /** Bold cream+gold cushion — Aura tufted-cushion sprite, vector fallback. */
