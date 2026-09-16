@@ -44,6 +44,11 @@
  *   Chrome layout pass — shell owns HUD/actions/readout; canvas is court only.
  *   No on-court HOLD/RELEASE verb plate, thumb chrome, PRACTICE badge, or drawHud.
  *   Coach/miss notes go to s.note → #readout only (no scream plates).
+ *
+ *   Celeste dress (Tent_04 6-pack + shared bea-player): lanterns on bubbles,
+ *   cloud prop for Cloud Waltz fog, mirror/crystal/moon as court scenery.
+ *   Bea sits in/on the YOU swing chair. KEEP Hugo HOLD gameplay; no new
+ *   on-court verb plates / PRACTICE badge / drawHud. d.glow() 6-digit only.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=swings-bold-1';
@@ -122,6 +127,63 @@ const CLOUD_SOFT = '#5ee8d8';
 const BELL_GOLD = '#ffc940'; // bell silhouette / pitch bars
 const BELL_SOFT = '#ffe070';
 const MIDNIGHT_SOFT = '#b890f5'; // Ch6 scream-clear plate
+
+/** Aura Tent_04_Celeste 6-pack + shared bea-player — dress-only (HOLD gameplay locked). */
+const DRESS_CACHE = 'swings-dress-1';
+// Piece map (sheet reading order top→bottom L→R; cyan removed):
+// 01 mirror/portal · 02 star crystal · 03 unlit star lantern · 04 lit star lantern
+// 05 cloud display · 06 moon projector/telescope
+const CELESTE_FILES = {
+  mirror: 'Tent_04_Celeste_piece-01.png',   // ambient portal
+  crystal: 'Tent_04_Celeste_piece-02.png',  // ambient crystal
+  lanternUnlit: 'Tent_04_Celeste_piece-03.png', // idle bubble
+  lanternLit: 'Tent_04_Celeste_piece-04.png',   // lined-up / green bubble
+  cloud: 'Tent_04_Celeste_piece-05.png',    // Cloud Waltz fog
+  moon: 'Tent_04_Celeste_piece-06.png',     // ambient projector
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+let celestePropImgs = null;
+let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  // Resolve against THIS module (stalls/swings.js), not play.html — otherwise
+  // ../assets hits penny-fever/assets/ (404) instead of paper-games/assets/.
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel;
+  }
+}
+
+function ensureCelesteProps() {
+  if (celestePropImgs) return celestePropImgs;
+  celestePropImgs = {};
+  for (const [key, file] of Object.entries(CELESTE_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = dressUrl('../assets/swings-celeste/' + file);
+    celestePropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    // Prefer shared-player; ride-local copy only if shared missing at runtime (404 still falls back vector YOU).
+    beaPlayerImg.src = dressUrl('../assets/shared-player/' + BEA_PLAYER_FILE);
+  }
+  return celestePropImgs;
+}
+
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
 
 const SPAWNS = ['inner', 'outer'];
 
@@ -641,12 +703,18 @@ function drawStar(d, x, y, r, fill, stroke) {
   d.poly(pts, fill || GOLD, stroke || GOLD_DIM, 1.5);
 }
 
-/** Star-bubble / lantern — soft globe with star core; green when lined up. */
+/** Star-bubble / lantern — Celeste lit/unlit lantern dress; vector fallback. */
 function drawBubble(d, x, y, depth, lit, flash, miss) {
   const r = 18 + depth * 7;
+  const imgs = ensureCelesteProps();
+  const dressW = 40 + depth * 10;
   if (flash > 0) {
     const bloom = 1 + (flash / FLASH_SEC) * 1.1;
     d.glow(x, y, 56 * bloom, CREAM);
+    if (placeDress(d, imgs.lanternLit, x, y, dressW * bloom)) {
+      d.circle(x, y, r * (1.4 + (1 - flash / FLASH_SEC) * 1.6), null, '#ffdc5588', 3);
+      return;
+    }
     d.circle(x, y, r * bloom, '#ffdc55cc', CREAM, 5);
     drawStar(d, x, y, 12 + depth * 3, CREAM, GOLD);
     // POP ring expanding
@@ -655,22 +723,31 @@ function drawBubble(d, x, y, depth, lit, flash, miss) {
   }
   if (miss > 0) {
     d.glow(x, y, 40, COOL);
+    if (placeDress(d, imgs.lanternUnlit, x, y, dressW)) {
+      d.circle(x, y, r + 6, null, COOL, 3);
+      return;
+    }
     d.circle(x, y, r, '#4eb8f544', COOL, 4);
     drawStar(d, x, y, 9 + depth * 3, '#a8e8ff', '#3a7ab0');
     return;
   }
   if (lit) {
-    // Hold-the-Line SAFE: green lined-up BEFORE the catch
+    // Hold-the-Line SAFE: green lined-up BEFORE the catch — lit lantern (04)
     d.glow(x, y, 44 + depth * 8, GREEN);
+    if (placeDress(d, imgs.lanternLit, x, y, dressW + 4)) {
+      d.text('lined up', x, y - r - 18, 14, GREEN_SOFT);
+      return;
+    }
     d.circle(x, y, r + 4, '#22e87833', GREEN, 5);
     d.circle(x, y, r, '#5aff9a66', GREEN_SOFT, 3.2);
     drawStar(d, x, y, 10 + depth * 3, CREAM, GREEN);
     d.text('lined up', x, y - r - 14, 14, GREEN_SOFT);
     return;
   }
-  // Idle approaching lantern — gold, readable, not scream-loud
+  // Idle approaching lantern — unlit (03); gold glow, readable, not scream-loud
   const pulse = 0.7 + 0.3 * Math.sin(depth * 6);
   d.glow(x, y, 22 + pulse * 10, GOLD);  // draw.glow appends alpha — 6-digit only
+  if (placeDress(d, imgs.lanternUnlit, x, y, dressW)) return;
   d.circle(x, y, r, '#ffd24a22', GOLD_DIM, 2.8);
   d.circle(x, y, r * 0.72, '#ffefb044', GOLD, 1.6);
   drawStar(d, x, y, 8 + depth * 2.5, '#ffefb0', GOLD_DIM);
@@ -790,10 +867,16 @@ function drawCloudBubble(d, s, bubble, bank, lit, flash, miss) {
     return;
   }
 
-  // Fogged: soft teal/cream cloud puffs hide the star art
+  // Fogged: Celeste cloud display (05) hides the star art; puff fallback if unload.
   // Teach = full fog; non-teach = lighter fog (clearer ghost + always bandLabel).
   const r = 18 + depth * 7;
   d.glow(x, y, (teachFog ? 42 : 30) + ramp * (teachFog ? 22 : 16), CLOUD_TEAL); // 6-digit only
+  const imgs = ensureCelesteProps();
+  if (placeDress(d, imgs.cloud, x, y - 4, teachFog ? 58 : 48)) {
+    d.text('Watch the shadow', x, y + (teachFog ? 42 : 36) + depth * 3, teachFog ? 16 : 13, teachFog ? '#3a2418' : '#1a3044');
+    d.text(bandLabel(bubble.band, three) + ' band', x, y + (teachFog ? 62 : 52) + depth * 3, teachFog ? 15 : 12, teachFog ? '#3a2418' : '#2a4060');
+    return;
+  }
   if (teachFog) {
     // faint ghost star under fog (barely readable)
     drawStar(d, x, y, 6 + depth * 1.5, '#ffefb055', '#e8a02055');
@@ -980,12 +1063,24 @@ function drawChair(d, x, y, scale, fly, depth, player, bank) {
       [right + 1, seatY - 2 * scale],
       [left - 1, seatY - 2 * scale],
     ], '#ffe08a88', GOLD, 1.4);
-    d.poly([
-      [x - 8 * scale + kick * 0.4, seatY - 22 * scale],
-      [x + 8 * scale + kick * 0.4, seatY - 22 * scale],
-      [x + 6 * scale + kick * 0.5, seatY + 2 * scale],
-      [x - 6 * scale + kick * 0.5, seatY + 2 * scale],
-    ], '#fff2c0', '#d49020', 1.5);
+    // YOU = bea-player (~52–60w) seated in the swing chair; soft glow; fallback plate if unload.
+    ensureCelesteProps();
+    const beaW = Math.round(52 + depth * 8); // ~52–60 like helter
+    d.glow(x + kick * 0.15, seatY - 6 * scale, 28 + depth * 6, GOLD);
+    const beaOk = placeDress(
+      d, beaPlayerImg,
+      x + kick * 0.15, seatY - 14 * scale,
+      beaW,
+    );
+    if (!beaOk) {
+      d.poly([
+        [x - 8 * scale + kick * 0.4, seatY - 22 * scale],
+        [x + 8 * scale + kick * 0.4, seatY - 22 * scale],
+        [x + 6 * scale + kick * 0.5, seatY + 2 * scale],
+        [x - 6 * scale + kick * 0.5, seatY + 2 * scale],
+      ], '#fff2c0', '#d49020', 1.5);
+      d.text('YOU', x + kick * 0.15, seatY - 8 * scale, 12, '#3a2418');
+    }
     d.ellipse(x + kick * 0.15, seatY + 22 * scale, 22 * scale, 7 * scale, '#1a101066', null, 0);
   }
 }
@@ -1007,6 +1102,19 @@ function drawCanopyHub(d, s) {
       d.line(p0, p1, GOLD + (u > 0.5 ? 'aa' : '55'), 2);
     }
   }
+}
+
+/** Celeste ambient court props — prop density like Iris/Copper dress rides; no full night overpaint. */
+function drawCelesteScenery(d) {
+  const imgs = ensureCelesteProps();
+  // Left mid/lower — mirror/portal (01)
+  placeDress(d, imgs.mirror, 102, 655, 82, -0.1);
+  // Right mid — star crystal (02)
+  placeDress(d, imgs.crystal, 818, 470, 58, 0.08);
+  // Upper-right near canopy — moon projector/telescope (06)
+  placeDress(d, imgs.moon, 792, 188, 66, 0.12);
+  // Soft secondary crystal peek left-upper (lighter density, smaller)
+  placeDress(d, imgs.crystal, 118, 240, 44, -0.06);
 }
 
 function drawBandShadows(d, s) {
@@ -1654,7 +1762,9 @@ export default {
     const hang = fly * (reduced ? 6 : 20);
     const three = isThree(s);
 
-    // Soft court vignette only — never a full-canvas fill over swings.png.
+    ensureCelesteProps();
+
+    // Soft court vignette only — never a full-canvas fill over swings.png / cream.
     d.ellipse(CX + bank * 0.12, CY + 70, 360, 250, '#1a101014');
     if (s.holding) {
       d.ellipse(CX, CY + 40, 300, 210, '#b8104012');
@@ -1667,6 +1777,7 @@ export default {
       d.ellipse(CX, CY, 200 + (1 - u) * 80, 140 + (1 - u) * 40, '#ffdc55' + Math.floor(u * 28).toString(16).padStart(2, '0'));
     }
 
+    drawCelesteScenery(d);
     drawBandShadows(d, s);
     drawCloudOvalHint(d, s, bank);
     drawLineGuide(d, s, bank);
