@@ -1,5 +1,5 @@
 /*
- * Spiral Slide (helter) — Chapters 1–3 (First Spiral, Bunting Bend, Tunnel Turn).
+ * Spiral Slide (helter) — Chapters 1–4 (First Spiral, Bunting Bend, Tunnel Turn, Three-Way Tower).
  * Locked remix: Snakes & Ladders on a helter + Helix/Tempest DNA.
  * ONE verb: TURN the ring (drag/swipe around the tower) so a ladder faces you
  * (boost/safe) or a snake faces you (soft dump/redirect — never abort paid ride).
@@ -13,9 +13,11 @@
  *     taught alone (long warn) before later chapters mix more hazards
  *   3 Tunnel Turn — short tunnels; warning symbol shows exit notch before darkness;
  *     taught alone (no new cushion teach on Ch3); dim ring art in dark, symbol stays
+ *   4 Three-Way Tower — three notches that reconnect; landmark colours + tiny map;
+ *     teach alone (long warn); third notch = soft reconnect (no ladder credit);
+ *     mild remix: one cushion max after teach; Ch3 tunnels only when level===2
  *
- * Unfinished chapters 4–6:
- *   4 Three-Way Tower — three notches that reconnect; landmark colours + tiny map
+ * Unfinished chapters 5–6:
  *   5 Runaway Keepsake — treasure hops rings only after visible bounce + arrow
  *   6 The Impossible Descent — do not stack max speed + darkness + tiny intercept; widen final collision
  */
@@ -60,6 +62,15 @@ const CUSHION_WARN_SECS = 8.0; // clearer teach window (Aura Ch2 FAIL)
 const TUNNEL_WARN_SECS = 7.5; // clearer symbol window before dark
 /** Seconds before commit when the tunnel ring goes dark (symbol stays readable). */
 const TUNNEL_DARK_SECS = 2.4;
+/** Local angle of the third (landmark / side-chute) notch on Three-Way rings. */
+const LANDMARK_LOCAL = (2 * Math.PI) / 3; // 120° — clear of ladder FACE_SNAP
+/** Angular half-width for landmark soft-reconnect snap (narrower than FACE_SNAP). */
+const LANDMARK_HALF = Math.PI / 5; // ~36°
+/** Long lead warning before the first three-way teach ring (Three-Way Tower). */
+const THREEWAY_WARN_SECS = 8.0;
+/** Landmark / side-chute colours (gold + teal) — repeat at reconnection joins. */
+const LANDMARK_GOLD = '#d4a84a';
+const LANDMARK_TEAL = '#7ec8b8';
 
 function angNorm(a) {
   let x = a % TAU;
@@ -91,6 +102,41 @@ function facingKind(theta) {
 
 function facingTight(theta) {
   return Math.min(angDist(theta, 0), angDist(theta, Math.PI)) <= FACE_SNAP;
+}
+
+/**
+ * Ring-aware facing for Ch4 three-way rings.
+ * Ladder FACE_SNAP always wins; landmark is soft reconnect; snake soft dump.
+ * Non-threeway rings keep classic ladder vs snake.
+ */
+function ringFacing(ring, theta) {
+  if (ring && ring.threeway) {
+    const toL = angDist(theta, 0);
+    if (toL <= FACE_SNAP) return 'ladder';
+    const half = (ring.threeway.half != null) ? ring.threeway.half : LANDMARK_HALF;
+    const loc = (ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL;
+    const toM = angDist(theta, loc);
+    const toS = angDist(theta, Math.PI);
+    if (toM <= half && toM <= toS) return 'landmark';
+    if (toS <= FACE_SNAP) return 'snake';
+    // Nearest of the three outside snap windows.
+    if (toL <= toM && toL <= toS) return 'ladder';
+    if (toM <= toS) return 'landmark';
+    return 'snake';
+  }
+  return facingKind(theta);
+}
+
+function landmarkFaceDist(ring, theta) {
+  if (!ring || !ring.threeway) return Infinity;
+  const loc = (ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL;
+  return angDist(theta, loc);
+}
+
+function landmarkFacing(ring, theta) {
+  if (!ring || !ring.threeway) return false;
+  const half = (ring.threeway.half != null) ? ring.threeway.half : LANDMARK_HALF;
+  return landmarkFaceDist(ring, theta) <= half;
 }
 
 /** Local cushion angle whose world face is "you" (bottom) when theta ≈ -local. */
@@ -137,28 +183,42 @@ function tunnelExitKind(ring) {
 }
 
 function chapterPlan(level, rng) {
-  // Ch2 gets MORE time (Aura FAIL: practice ended at 2/3). Ch3 soft — never stack max speed + darkness.
-  const haste = (level === 1 || level === 2)
-    ? 0.92 // Ch2/Ch3 slower than Ch1 so a competent first play can land 3 ladders
+  // Ch2/Ch3/Ch4 fair bar: MORE time so a competent first play can land 3 ladders.
+  // Ch3 soft — never stack max speed + darkness. Ch4 same bar; tunnels only when level===2.
+  const fair = (level === 1 || level === 2 || level === 3);
+  const haste = fair
+    ? 0.92 // Ch2/Ch3/Ch4 slower than Ch1
     : 1 + Math.min(0.2, level * 0.035);
-  const baseSecs = (level === 1 || level === 2) ? 52 : RIDE_SECONDS;
+  const baseSecs = fair ? 52 : RIDE_SECONDS;
   const duration = baseSecs / haste;
-  // Ch2/Ch3: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
-  const fracs = (level === 1 || level === 2)
+  // Ch2/Ch3/Ch4: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
+  const fracs = fair
     ? [0.12, 0.26, 0.40, 0.54, 0.68, 0.82]
     : [0.14, 0.30, 0.46, 0.62, 0.78];
   const times = fracs.map((f) => f * duration);
-  const treasureRing = (level === 1 || level === 2) ? 3 : 2;
+  const treasureRing = fair ? 3 : 2;
   const bunting = level >= 1; // Ch2+ denser bunting art flag for draw
   // Ch2: ONE teach cushion only (clearer window); later rings are clean ladder/snake.
-  const cushionIdx = level === 1 ? new Set([0]) : null;
+  // Ch4: mild remix — ONE cushion after the three-way teach (not on teach ring).
+  const cushionIdx = level === 1 ? new Set([0])
+    : (level === 3 ? new Set([3]) : null);
   // Ch3: ONE teach tunnel only (symbol before dark); later rings clean — keep 3 ladders fair.
+  // Hard rule: tunnel logic only when level===2 (never on Ch4).
   const tunnelIdx = level === 2 ? new Set([0]) : null;
+  // Ch4: ONE teach three-way ring alone first (no cushion/tunnel on teach).
+  const threewayIdx = level === 3 ? new Set([0]) : null;
   const rings = times.map((t, i) => {
     let start;
     let cushion = null;
     let tunnel = null;
-    if (tunnelIdx && tunnelIdx.has(i)) {
+    let threeway = null;
+    if (threewayIdx && threewayIdx.has(i)) {
+      // Three notches: cream ladder (win), burgundy snake (soft dump), gold/teal landmark (soft reconnect).
+      const teach = i === 0;
+      threeway = {teach, landmark: LANDMARK_LOCAL, half: LANDMARK_HALF};
+      // Start near the landmark so the player must TURN to the cream ladder.
+      start = LANDMARK_LOCAL + (rng() - 0.5) * 0.14;
+    } else if (tunnelIdx && tunnelIdx.has(i)) {
       // Safe exit is always the ladder notch; symbol teaches which notch before darkness.
       const teach = i === 0;
       tunnel = {exit: 'ladder', teach};
@@ -200,9 +260,10 @@ function chapterPlan(level, rng) {
       hasTreasure: false,
       cushion,
       tunnel,
+      threeway,
     };
   });
-  return {duration, rings, treasureRing, denserBunting: bunting};
+  return {duration, rings, treasureRing, denserBunting: bunting, threeWay: level === 3};
 }
 
 function pushFx(s, item) {
@@ -266,7 +327,7 @@ function turnRing(s, delta) {
     logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face: 'cushion'});
     return;
   }
-  const face = facingKind(ring.targetTheta);
+  const face = ringFacing(ring, ring.targetTheta);
   const phase = tunnelPhase(s, ring);
   if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
     const exit = tunnelExitKind(ring);
@@ -280,6 +341,20 @@ function turnRing(s, delta) {
       s.statusCopy = phase === 'dark' ? 'Dark — follow symbol' : 'Tunnel symbol';
     }
     logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face, tunnel: phase});
+    return;
+  }
+  if (ring.threeway) {
+    if (face === 'ladder' && facingTight(ring.targetTheta)) {
+      s.note = 'Ladder facing you — hold for the drop.';
+      s.statusCopy = 'Ladder ahead';
+    } else if (face === 'landmark') {
+      s.note = 'Side chute — soft reconnect; TURN cream ladder for credit.';
+      s.statusCopy = 'Side chute';
+    } else {
+      s.note = 'Three ways — TURN the cream ladder. Map shows the join.';
+      s.statusCopy = face === 'snake' ? 'Snake ahead' : 'Three ways';
+    }
+    logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face, threeway: true});
     return;
   }
   s.note = face === 'ladder'
@@ -327,10 +402,16 @@ function spawnTreasure(s) {
 function commitRing(s, ring) {
   // Ease toward target so the last TURN counts.
   // Forgiving snap: if within FACE_SNAP of ladder, lock to ladder (carnival fair).
+  // Ladder FACE_SNAP beats blockers (cushion) and landmark soft-reconnect.
   // Cushion soft-redirect wins if cushion still covers the face after snap.
   let theta = ring.targetTheta;
   let snappedLadder = false;
+  let snappedLandmark = false;
   if (angDist(theta, 0) <= FACE_SNAP) { theta = 0; snappedLadder = true; }
+  else if (ring.threeway && landmarkFacing(ring, theta)) {
+    theta = (ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL;
+    snappedLandmark = true;
+  }
   else if (angDist(theta, Math.PI) <= FACE_SNAP) theta = Math.PI;
   ring.targetTheta = theta;
   ring.theta = theta;
@@ -349,7 +430,8 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Cushion';
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
-    s.t = Math.max(0, s.t - 0.45);
+    // Softer time penalty on Ch4 fair bar; Ch1–Ch3 keep prior values.
+    s.t = Math.max(0, s.t - ((s.level === 3) ? 0.35 : 0.45));
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'cushion!', true);
@@ -360,7 +442,30 @@ function commitRing(s, ring) {
     return;
   }
 
-  const face = facingKind(ring.theta);
+  // Ch4 landmark / side chute: soft reconnect — no abort, no ladder credit.
+  if (snappedLandmark || (ring.threeway && !snappedLadder && ringFacing(ring, ring.theta) === 'landmark')) {
+    ring.done = true;
+    ring.result = 'landmark';
+    logAction(s, 'commit', {ring: ring.i, face: 'landmark', theta: Math.round(ring.theta * 1000) / 1000});
+    logAction(s, 'landmark', {ring: ring.i});
+    s.note = 'Side chute! Soft reconnect — no ladder credit; TURN cream next time.';
+    s.statusCopy = 'Side chute';
+    s.phaseFlash = 0.85;
+    s.phaseFlashLabel = 'Join';
+    s.snakeSlide = 0.7;
+    s.matPulse = 0.3;
+    s.t = Math.max(0, s.t - 0.35); // softer than snake
+    pushSparks(s, CX, y, true);
+    pushRingFx(s, CX, y, true);
+    pushLabel(s, CX, y - 36, 'reconnect', true);
+    if (ring.hasTreasure && s.treasure && !s.treasure.taken) {
+      s.treasureRevealed = true;
+      s.note = 'Side chute soft-redirected the keepsake past you — ride continues.';
+    }
+    return;
+  }
+
+  const face = ringFacing(ring, ring.theta);
   ring.done = true;
   ring.result = face;
   logAction(s, 'commit', {ring: ring.i, face, theta: Math.round(ring.theta * 1000) / 1000});
@@ -402,8 +507,8 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Snake';
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
-    // Tiny soft slide-back on the descent clock (still finishes).
-    s.t = Math.max(0, s.t - 0.6);
+    // Tiny soft slide-back on the descent clock (still finishes). Ch4 softer.
+    s.t = Math.max(0, s.t - ((s.level === 3) ? 0.45 : 0.6));
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'slide-back', true);
@@ -435,6 +540,20 @@ function teachWindow(s, preview) {
 
 function coachingLine(s, preview, ring) {
   if (s.statusCopy && (s.matPulse > 0 || s.phaseFlash > 0.2)) return s.statusCopy;
+  // Ch4 teach: three-way fork alone first — TURN cream ladder; map shows the join.
+  if (ring && !ring.done && ring.threeway && ring.threeway.teach) {
+    const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
+    if (preview || lead <= THREEWAY_WARN_SECS) {
+      const face = ringFacing(ring, ring.targetTheta);
+      if (face === 'ladder' && facingTight(ring.targetTheta)) {
+        return 'Ladder faces you — drop through when it arrives.';
+      }
+      if (face === 'landmark') {
+        return 'Side chute reconnects — TURN cream ladder for credit.';
+      }
+      return 'Three ways — TURN the cream ladder. Map shows the join.';
+    }
+  }
   // Ch3 teach: exit symbol before darkness on the first tunnel ring (taught alone).
   if (ring && !ring.done && ring.tunnel && ring.tunnel.teach) {
     const phase = tunnelPhase(s, ring);
@@ -465,7 +584,7 @@ function coachingLine(s, preview, ring) {
     const phase = tunnelPhase(s, ring);
     if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
       const exit = tunnelExitKind(ring);
-      const face = facingKind(ring.targetTheta);
+      const face = ringFacing(ring, ring.targetTheta);
       if (face === exit && facingTight(ring.targetTheta)) {
         return 'Exit notch faces you — hold through the tunnel.';
       }
@@ -476,11 +595,15 @@ function coachingLine(s, preview, ring) {
     if (cushionBlocking(ring, ring.targetTheta)) {
       return 'Cushion ahead — TURN clear of it toward the ladder.';
     }
-    const face = facingKind(ring.targetTheta);
+    const face = ringFacing(ring, ring.targetTheta);
     if (face === 'ladder' && facingTight(ring.targetTheta)) {
       return 'Ladder faces you — drop through when it arrives.';
     }
+    if (face === 'landmark') {
+      return 'Side chute reconnects — TURN cream ladder for credit.';
+    }
     if (face === 'snake') return 'Snake faces you — TURN toward the cream ladder.';
+    if (ring.threeway) return 'Three ways — TURN the cream ladder. Map shows the join.';
     return 'TURN so the ladder notch sits at the bottom.';
   }
   if (!preview && s.progress > 0.82) {
@@ -577,6 +700,88 @@ function drawSnakeNotch(d, x, y, rx, ry, ang, highlight) {
   d.circle(pts[8][0], pts[8][1], highlight ? 5 : 3.5, col, stroke, 1);
 }
 
+function drawLandmarkNotch(d, x, y, rx, ry, ang, highlight) {
+  // Gold/teal side-chute wedge — third notch on Three-Way rings.
+  const px = x + Math.cos(ang) * rx;
+  const py = y + Math.sin(ang) * ry;
+  const tx = -Math.sin(ang);
+  const ty = Math.cos(ang);
+  const depth = highlight ? 26 : 20;
+  const half = highlight ? 16 : 13;
+  const ox = Math.cos(ang) * depth;
+  const oy = Math.sin(ang) * depth;
+  d.poly([
+    [px - tx * half, py - ty * half],
+    [px + tx * half, py + ty * half],
+    [px + tx * half * 0.5 + ox, py + ty * half * 0.5 + oy],
+    [px - tx * half * 0.5 + ox, py - ty * half * 0.5 + oy],
+  ], highlight ? '#7ec8b8ee' : '#7ec8b8bb', highlight ? LANDMARK_GOLD : '#d4a84a99', highlight ? 2.4 : 1.6);
+  // Teal inner channel + gold lip
+  d.line(
+    {x: px - tx * half * 0.35, y: py - ty * half * 0.35},
+    {x: px - tx * half * 0.35 + ox * 0.85, y: py - ty * half * 0.35 + oy * 0.85},
+    LANDMARK_GOLD + 'cc', 1.4,
+  );
+  d.line(
+    {x: px + tx * half * 0.35, y: py + ty * half * 0.35},
+    {x: px + tx * half * 0.35 + ox * 0.85, y: py + ty * half * 0.35 + oy * 0.85},
+    LANDMARK_TEAL + 'cc', 1.4,
+  );
+}
+
+/** Tiny map: three paths rejoining — teach preview for Three-Way Tower. */
+function drawTinyMap(d, s, clock, active) {
+  const pulse = active ? (0.55 + 0.45 * Math.sin(clock * 4.2)) : 0.7;
+  const fillA = Math.floor((0.45 + pulse * 0.25) * 255).toString(16).padStart(2, '0');
+  const strokeA = Math.floor((0.55 + pulse * 0.35) * 255).toString(16).padStart(2, '0');
+  const ox = 78;
+  const oy = s.practice ? 118 : 96;
+  d.ellipse(ox, oy, 64, 52, '#1a1010' + fillA, '#d2a65b' + strokeA, active ? 2.2 : 1.5);
+  d.text('map', ox, oy - 38, 11, '#ead6a4cc');
+  // Three paths from top → join at bottom (cream / teal / burgundy).
+  const topY = oy - 18;
+  const joinY = oy + 16;
+  const midY = oy + 2;
+  // Left cream ladder path
+  d.path([
+    {x: ox - 22, y: topY},
+    {x: ox - 14, y: midY},
+    {x: ox, y: joinY},
+  ], '#f3e2bd', active ? 3.2 : 2.4, false, null);
+  // Centre teal landmark path
+  d.path([
+    {x: ox, y: topY},
+    {x: ox, y: midY},
+    {x: ox, y: joinY},
+  ], LANDMARK_TEAL, active ? 3.2 : 2.4, false, null);
+  // Right burgundy snake path
+  d.path([
+    {x: ox + 22, y: topY},
+    {x: ox + 14, y: midY},
+    {x: ox, y: joinY},
+  ], '#6b2030', active ? 3.2 : 2.4, false, null);
+  // Landmark colours at the join
+  d.circle(ox, joinY, 5.5, LANDMARK_GOLD, LANDMARK_TEAL, 1.6);
+  d.circle(ox - 22, topY, 3.5, '#f3e2bd', '#d2a65bcc', 1);
+  d.circle(ox, topY, 3.5, LANDMARK_TEAL, LANDMARK_GOLD, 1);
+  d.circle(ox + 22, topY, 3.5, '#6b2030', '#d2a65bcc', 1);
+  if (active) d.text('join', ox, oy + 32, 11, '#f0d09acc');
+}
+
+/** Landmark colour markers at reconnection joins along the tower spine (Ch4). */
+function drawJoinLandmarks(d, s) {
+  if (!s.threeWay) return;
+  const bank = s.camBank || 0;
+  const joins = [0.28, 0.52, 0.76];
+  for (let i = 0; i < joins.length; i++) {
+    const y = TOWER_TOP + (TOWER_BOT - TOWER_TOP) * joins[i];
+    const col = (i % 2 === 0) ? LANDMARK_GOLD : LANDMARK_TEAL;
+    d.circle(CX + bank * 0.1, y, 5, col + 'aa', '#d2a65b66', 1.2);
+    d.circle(CX + bank * 0.1 - 22, y + 4, 3.2, LANDMARK_TEAL + '88', null, 0);
+    d.circle(CX + bank * 0.1 + 22, y + 4, 3.2, LANDMARK_GOLD + '88', null, 0);
+  }
+}
+
 function drawCushion(d, x, y, rx, ry, ang, highlight, rolled) {
   // Burgundy cushion / rolled mat on a ring arc — paper-cut oval + soft strap.
   const px = x + Math.cos(ang) * rx;
@@ -642,7 +847,7 @@ function drawRingToy(d, s, ring, clock, teach) {
   const rx = ringRadius(s, ring);
   const ry = rx * 0.38;
   const theta = ring.theta;
-  const face = facingKind(ring.targetTheta);
+  const face = ringFacing(ring, ring.targetTheta);
   const tight = facingTight(ring.targetTheta);
   const active = !ring.done && ring === activeRing(s);
   const phase = tunnelPhase(s, ring);
@@ -670,9 +875,18 @@ function drawRingToy(d, s, ring, clock, teach) {
   const snakeAng = theta + Math.PI + flourish + Math.PI / 2;
 
   // Warn phase: notches still clear. Darkness: hide notch art — symbol carries the teach.
+  const landmarkAng = ring.threeway
+    ? (theta + ((ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL) + flourish + Math.PI / 2)
+    : null;
   if (!dark) {
     drawLadderNotch(d, CX, y, rx, ry, ladderAng, active && face === 'ladder' && tight && !cushionBlocking(ring, ring.targetTheta));
     drawSnakeNotch(d, CX, y, rx, ry, snakeAng, active && face === 'snake' && !cushionBlocking(ring, ring.targetTheta));
+    if (ring.threeway && landmarkAng != null) {
+      drawLandmarkNotch(
+        d, CX, y, rx, ry, landmarkAng,
+        active && face === 'landmark' && !cushionBlocking(ring, ring.targetTheta),
+      );
+    }
   }
 
   // Cushion / rolled mat on some Ch2 ring arcs.
@@ -707,20 +921,27 @@ function drawRingToy(d, s, ring, clock, teach) {
     const glowCol = blocked ? '#c67483'
       : (inTunnel && matchedExit) ? '#ffe6a4'
       : (inTunnel && !matchedExit) ? '#c67483'
-      : (face === 'ladder' ? '#ffe6a4' : '#c67483');
+      : (face === 'ladder' ? '#ffe6a4'
+        : (face === 'landmark' ? LANDMARK_TEAL : '#c67483'));
     d.glow(CX, y + ry, 28 + pulse * 12, glowCol);
-    let label = blocked ? 'cushion' : (face === 'ladder' ? 'ladder' : 'snake');
+    let label = blocked ? 'cushion'
+      : (face === 'ladder' ? 'ladder'
+        : (face === 'landmark' ? 'side chute' : 'snake'));
     if (inTunnel && !blocked) label = dark ? ('dark · ' + label) : label;
-    const labelCol = blocked ? '#e8b0b0' : (face === 'ladder' ? '#f4d590' : '#e8b0b0');
+    const labelCol = blocked ? '#e8b0b0'
+      : (face === 'ladder' ? '#f4d590'
+        : (face === 'landmark' ? LANDMARK_TEAL : '#e8b0b0'));
     d.text(label, CX, y + ry + 22, 14, labelCol);
   }
 
   // Result stamp after commit.
   if (ring.done) {
     const stamp = ring.result === 'ladder' ? '▲ ladder'
-      : ring.result === 'cushion' ? '▣ cushion' : '∿ snake';
+      : ring.result === 'cushion' ? '▣ cushion'
+      : ring.result === 'landmark' ? '◇ join' : '∿ snake';
     const stampCol = ring.result === 'ladder' ? '#f4d590aa'
-      : ring.result === 'cushion' ? '#c67483aa' : '#c67483aa';
+      : ring.result === 'cushion' ? '#c67483aa'
+      : ring.result === 'landmark' ? (LANDMARK_TEAL + 'aa') : '#c67483aa';
     d.text(stamp, CX, y - ry - 14, 14, stampCol);
   }
 
@@ -821,8 +1042,11 @@ function drawBottomStrip(d, s, preview, ring) {
     } else if (cushionBlocking(ring, ring.targetTheta)) {
       d.text('facing: cushion', 450, 1156, 13, '#e8b0b0cc');
     } else {
-      const face = facingKind(ring.targetTheta);
-      d.text(face === 'ladder' ? 'facing: ladder' : 'facing: snake', 450, 1156, 13, '#f0d09acc');
+      const face = ringFacing(ring, ring.targetTheta);
+      const faceTxt = face === 'ladder' ? 'facing: ladder'
+        : (face === 'landmark' ? 'facing: side chute' : 'facing: snake');
+      const faceCol = face === 'landmark' ? (LANDMARK_TEAL + 'cc') : '#f0d09acc';
+      d.text(faceTxt, 450, 1156, 13, faceCol);
     }
   }
 }
@@ -854,8 +1078,8 @@ function drawMat(d, s, clock) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness.',
-  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness. From chapter 4, three notches reconnect — cream ladder wins, snake soft-dumps, gold/teal side chute soft-reconnects (no ladder credit); a tiny map shows the join.',
+  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. From chapter 4 (Three-Way Tower), three notches reconnect — TURN the cream ladder; the gold/teal side chute is a soft reconnect with no ladder credit; the map shows paths rejoining. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -871,6 +1095,7 @@ export default {
       planTreasureRing: plan.treasureRing,
       duration: plan.duration,
       denserBunting: !!plan.denserBunting,
+      threeWay: !!plan.threeWay,
       camBank: 0,
       towerY: 520,
       drag: null,
@@ -889,6 +1114,7 @@ export default {
       ringFlourish: 0,
       cushionWarned: false,
       tunnelWarned: false,
+      threewayWarned: false,
     });
   },
   update(s, dt) {
@@ -912,13 +1138,17 @@ export default {
       s.ringFlourish = 0;
       s.cushionWarned = false;
       s.tunnelWarned = false;
+      s.threewayWarned = false;
       const teachTun = (s.rings || []).find((r) => r.tunnel && r.tunnel.teach);
       const teachCush = (s.rings || []).find((r) => r.cushion && r.cushion.teach);
-      s.note = teachTun
-        ? 'Tunnel ahead — watch the exit symbol before darkness.'
-        : teachCush
-          ? 'Cushion ahead — TURN clear of it toward the ladder.'
-          : 'TURN the ring so the ladder faces you.';
+      const teachThree = (s.rings || []).find((r) => r.threeway && r.threeway.teach);
+      s.note = teachThree
+        ? 'Three ways — TURN the cream ladder. Map shows the join.'
+        : teachTun
+          ? 'Tunnel ahead — watch the exit symbol before darkness.'
+          : teachCush
+            ? 'Cushion ahead — TURN clear of it toward the ladder.'
+            : 'TURN the ring so the ladder faces you.';
       // Fair treasure spawn: always on a ladder segment of an authored ring.
       if (s.eligible) {
         const preferred = ['ring-2', 'ring-1', 'ring-3', 'ring-0', 'ring-4'];
@@ -943,7 +1173,8 @@ export default {
 
     // Soft camera bank from ring facing — reduced motion keeps windows, less bank.
     const live = activeRing(s);
-    const faceSign = live ? (facingKind(live.targetTheta) === 'ladder' ? -1 : 1) : 0;
+    const liveFace = live ? ringFacing(live, live.targetTheta) : null;
+    const faceSign = liveFace === 'ladder' ? -1 : (liveFace === 'landmark' ? 0 : (liveFace ? 1 : 0));
     const targetBank = faceSign * (reduced ? 4 : 14);
     s.camBank += (targetBank - s.camBank) * Math.min(1, dt * 3.5);
     s.towerY = 480 + (s.progress || 0) * 80;
@@ -972,8 +1203,29 @@ export default {
       if (tr && s.t >= tr.t - 4) s.treasureRevealed = true;
     }
 
-    // Ch2 teach loop: long warn before the first cushion ring commits.
+    // Ch4 teach loop: long warn before the first three-way ring commits.
     const liveRing = activeRing(s);
+    if (liveRing && liveRing.threeway && liveRing.threeway.teach && !liveRing.done) {
+      if (s.t >= liveRing.t - THREEWAY_WARN_SECS) {
+        if (!s.threewayWarned) {
+          s.threewayWarned = true;
+          s.statusCopy = 'Three ways';
+          s.phaseFlash = 0.7;
+          s.phaseFlashLabel = 'Three ways';
+          logAction(s, 'threeway-warn', {ring: liveRing.i, lead: THREEWAY_WARN_SECS});
+        }
+        const face = ringFacing(liveRing, liveRing.targetTheta);
+        if (face === 'ladder' && facingTight(liveRing.targetTheta)) {
+          s.note = 'Ladder faces you — drop through when it arrives.';
+        } else if (face === 'landmark') {
+          s.note = 'Side chute reconnects — TURN cream ladder for credit.';
+        } else {
+          s.note = 'Three ways — TURN the cream ladder. Map shows the join.';
+        }
+      }
+    }
+
+    // Ch2 teach loop: long warn before the first cushion ring commits.
     if (liveRing && liveRing.cushion && liveRing.cushion.teach && !liveRing.done) {
       if (s.t >= liveRing.t - CUSHION_WARN_SECS) {
         if (!s.cushionWarned) {
@@ -1063,10 +1315,20 @@ export default {
 
     drawBunting(d, 150, !!s.denserBunting);
     drawTowerHint(d, s);
+    drawJoinLandmarks(d, s);
 
     if (preview) {
       d.ellipse(CX + bank * 0.1, 175, 120, 28, '#f3e2bd33', '#d2a65b55', 1.5);
       d.text('launch', CX + bank * 0.1, 175, 14, '#f0d09a88');
+    }
+
+    // Ch4 tiny map during teach / approach of the three-way teach ring.
+    if (s.threeWay) {
+      const tw = (s.rings || []).find((r) => r.threeway && r.threeway.teach && !r.done);
+      const lead = tw ? (tw.t - (s.launched ? s.t : -PREVIEW_SECS)) : Infinity;
+      const showMap = !!tw && (preview || lead <= THREEWAY_WARN_SECS || !s.launched);
+      if (showMap) drawTinyMap(d, s, clock, true);
+      else if (s.threeWay && preview) drawTinyMap(d, s, clock, false);
     }
 
     // Draw rings back-to-front (top first).
