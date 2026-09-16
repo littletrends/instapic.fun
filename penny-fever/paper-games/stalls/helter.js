@@ -56,7 +56,7 @@ const BALL_R = 16;
 const BALL_ROLL_SECS = 14; // gravity-ish crest→door prop roll
 const BALL_WAIT_SECS = 1.4; // pause after ball exits before hopper reload
 const CUSHION_GOAL = 3;
-const RIDE_SECONDS = 52;
+const RIDE_SECONDS = 78;
 const PREVIEW_SECS = 1.6;
 const STEP_EASE = 0.22; // seconds to ease between cells (snappy climb) // seconds to ease between cells
 const JUMP_EASE = 0.38; // hop loft
@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3f';
+const DRESS_CACHE = 'dress-3h';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -793,21 +793,20 @@ function drawSkipScenery(d) {
   placeDress(d, imgs.gauge, 782, 430, 72, 0.08);
 }
 
-/** Bold deep-red chute — bigger, aimed DOWN the spiral toward the lower layer. */
+/** Bold slide seat — upright on the coil (Lorie: straighten up a bit). */
 function drawSlideProp(d, cell, flash) {
   if (!cell) return;
   const x = cell.x, y = cell.y;
   const u = cell.u != null ? cell.u : 0;
-  // Downhill = toward lower u (bottom of spiral).
+  // Downhill kept for vector fallback tip only.
   const down = spiralPoint(Math.max(0, u - 0.035));
   const downhillAng = Math.atan2(down.y - y, down.x - x);
   const imgs = ensureSkipProps();
   if (flash) d.glow(x, y, 32, BURGUNDY);
   else d.glow(x, y, 22, SLIDE_FILL);
-  // LONGER not fatter: stretch along downhill toward lower coil (snake length).
-  const artAng = downhillAng + 0.35;
-  // Tall natural aspect: large height, modest width — reads long on the track.
-  if (placeDress(d, imgs.slide, x + Math.cos(downhillAng) * 18, y + Math.sin(downhillAng) * 18, 64, artAng, 120)) return;
+  // Sit upright on the cell (match cushion posture); tiny lean only.
+  const artAng = 0.06;
+  if (placeDress(d, imgs.slide, x, y - 2, 56, artAng, 88)) return;
   // Fallback wedge — long tip downhill.
   const tipX = x + Math.cos(downhillAng) * 52;
   const tipY = y + Math.sin(downhillAng) * 52;
