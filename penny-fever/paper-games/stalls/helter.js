@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3';
+const DRESS_CACHE = 'dress-3c';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -131,9 +131,10 @@ function dressReady(img) {
   return !!(img && img.complete && img.naturalWidth > 0);
 }
 
-function placeDress(d, img, x, y, w, angle) {
+function placeDress(d, img, x, y, w, angle, h) {
   if (!dressReady(img) || typeof d.sprite !== 'function') return false;
   const opts = {w, shadow: true};
+  if (h) opts.h = h;
   if (angle) opts.angle = angle;
   return d.sprite(img, x, y, opts);
 }
@@ -801,13 +802,14 @@ function drawSlideProp(d, cell, flash) {
   const imgs = ensureSkipProps();
   if (flash) d.glow(x, y, 32, BURGUNDY);
   else d.glow(x, y, 22, SLIDE_FILL);
-  // Moon-slide art faces down-ramp; rotate to spiral downhill + slight screen-down bias.
+  // LONGER not fatter: stretch along downhill toward lower coil (snake length).
   const artAng = downhillAng + 0.35;
-  if (placeDress(d, imgs.slide, x + Math.cos(downhillAng) * 8, y + Math.sin(downhillAng) * 8, 78, artAng)) return;
-  // Fallback wedge pointing downhill.
-  const tipX = x + Math.cos(downhillAng) * 34;
-  const tipY = y + Math.sin(downhillAng) * 34;
-  const w = 20;
+  // Tall natural aspect: large height, modest width — reads long on the track.
+  if (placeDress(d, imgs.slide, x + Math.cos(downhillAng) * 18, y + Math.sin(downhillAng) * 18, 64, artAng, 120)) return;
+  // Fallback wedge — long tip downhill.
+  const tipX = x + Math.cos(downhillAng) * 52;
+  const tipY = y + Math.sin(downhillAng) * 52;
+  const w = 16;
   const nx = -Math.sin(downhillAng), ny = Math.cos(downhillAng);
   const poly = [
     {x: x + nx * w, y: y + ny * w - 2},
