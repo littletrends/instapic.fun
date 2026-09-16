@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-4
+ * cache: dress-ready-5
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -14,8 +14,8 @@
  *   Mid-edge A/B curtain portals = two-way through (enter L→exit R, enter R→exit L; no IN/OUT labels).
  *   Right curtain art flipped. starKey mid-court → outside bonus. Exactly one curtain each side (portal cells).
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
- * CONTROLS: corner arrow pads INSIDE cream oval (L: ⬆️⬅️ · R: ➡️⬇️). Centre-bottom MOVE stick retired.
- *   Keyboard + swipe stay. actions: [] — no shell arrow dock.
+ * CONTROLS: bottom-of-stage row — UD cluster | centre MOVE stick | LR cluster (no curtain-corner pads).
+ *   Keyboard + swipe stay. actions: [] — no shell arrow dock. Sticky-seize fixed (release snaps home).
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
  *   powerSec 7.5. Soft fails never abort paid ride (face bomb = relocate to start).
  *
@@ -32,7 +32,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-4';
+} from './funhouse-rooms.js?v=dress-ready-5';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -62,7 +62,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-4';
+const BEA_CACHE_VER = 'dress-ready-5';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
@@ -184,26 +184,76 @@ function isMaze(s) {
 }
 
 /**
- * Corner arrow pads INSIDE the cream oval / maze court (not under it).
- * Left corner: ⬆️ + ⬅️ · Right corner: ➡️ + ⬇️. Stick-only chrome → corner pads.
+ * Bottom-of-GAME-SCREEN control bar (under cream court, canvas 900×1200):
+ *   L→R: Up+Down cluster | centre MOVE 4-way stick | Left+Right cluster.
+ * No curtain-corner pads. Swipe + keyboard stay as backup.
+ * Sticky-seize fix: releaseMazeControls always clears heldDirs + snaps knob home;
+ * wantDir may keep last dir for Pac continuous run.
  */
-function mazeCornerPads() {
-  // Cream oval ~ (450,720) rx 310 ry 268. Pads sit in lower L/R corners inside the lip.
-  const r = 34;
+function mazeStickLayout() {
+  return {
+    cx: 450,
+    cy: 1136,
+    baseRx: 78,
+    baseRy: 52,
+    knobR: 30,
+    dead: 10,       // snappy deadzone
+    maxPull: 48,
+    hitScale: 1.55, // generous thumb hit
+  };
+}
+
+/** Arrow pads along bottom stage — UD left of stick, LR right of stick. */
+function mazeArrowPads() {
+  const r = 30;
   return [
-    {id: 'up', x: 225, y: 820, r, label: '⬆️'},
-    {id: 'left', x: 225, y: 890, r, label: '⬅️'},
-    {id: 'right', x: 675, y: 820, r, label: '➡️'},
-    {id: 'down', x: 675, y: 890, r, label: '⬇️'},
+    // Up + Down cluster (left)
+    {id: 'up', x: 168, y: 1108, r, label: '⬆️', cluster: 'ud'},
+    {id: 'down', x: 168, y: 1166, r, label: '⬇️', cluster: 'ud'},
+    // Left + Right cluster (right)
+    {id: 'left', x: 700, y: 1136, r, label: '⬅️', cluster: 'lr'},
+    {id: 'right', x: 772, y: 1136, r, label: '➡️', cluster: 'lr'},
   ];
+}
+
+function hitMazeStick(p) {
+  if (!p || typeof p.x !== 'number') return false;
+  const L = mazeStickLayout();
+  const dx = (p.x - L.cx) / L.baseRx;
+  const dy = (p.y - L.cy) / L.baseRy;
+  return (dx * dx + dy * dy) <= (L.hitScale * L.hitScale);
 }
 
 function hitMazePad(p) {
   if (!p || typeof p.x !== 'number') return null;
-  for (const pad of mazeCornerPads()) {
-    if (Math.hypot(p.x - pad.x, p.y - pad.y) <= pad.r + 6) return pad.id;
+  for (const pad of mazeArrowPads()) {
+    if (Math.hypot(p.x - pad.x, p.y - pad.y) <= pad.r + 10) return pad.id;
   }
   return null;
+}
+
+function stickDirFromPull(dx, dy, dead) {
+  const len = Math.hypot(dx, dy);
+  if (len < dead) return null;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'down' : 'up';
+}
+
+function applyMazeStick(s, p) {
+  const L = mazeStickLayout();
+  const dx = (p?.x ?? L.cx) - L.cx;
+  const dy = (p?.y ?? L.cy) - L.cy;
+  const len = Math.hypot(dx, dy) || 1;
+  const pull = Math.min(len, L.maxPull);
+  const kx = (dx / len) * pull;
+  const ky = (dy / len) * pull;
+  const dir = stickDirFromPull(dx, dy, L.dead);
+  const prev = s.stick?.dir || null;
+  if (prev && prev !== dir) setWantDir(s, prev, false);
+  if (dir) setWantDir(s, dir, true);
+  s.stick = {active: true, kx, ky, dir};
+  // Stick owns heldDirs while active — drop any pad hold highlight.
+  if (s.pad) s.pad = null;
 }
 
 function applyMazePad(s, dirId, down) {
@@ -211,34 +261,73 @@ function applyMazePad(s, dirId, down) {
   setWantDir(s, dirId, !!down);
   if (down) {
     s.pad = {id: dirId, active: true};
+    // Pad press displaces stick hold so knob never stays seized beside a pad.
+    if (s.stick?.active) {
+      s.stick = {active: false, kx: 0, ky: 0, dir: null};
+    }
   } else if (s.pad?.id === dirId) {
     s.pad = null;
   }
 }
 
-function releaseMazePad(s) {
-  if (!s.pad?.active) {
-    s.pad = null;
-    return;
-  }
-  const dir = s.pad.id;
+/** Always snap knob home + clear held locks. Keep wantDir for Pac continuous run. */
+function releaseMazeControls(s, keepWant) {
+  const stickDir = s.stick?.dir || null;
+  const padDir = s.pad?.active ? s.pad.id : null;
+  const last = keepWant !== false ? (stickDir || padDir || s.wantDir || null) : null;
+  s.stick = null; // knob snaps home visually (draw uses active? kx/ky : 0)
   s.pad = null;
-  // Keep last dir for continuous run (match swipe); clear held locks only.
   s.heldDirs = {up: false, down: false, left: false, right: false};
-  if (dir) s.wantDir = dir;
+  if (last && DIRS[last]) s.wantDir = last;
+}
+
+function releaseMazeStick(s) {
+  releaseMazeControls(s, true);
+}
+
+function releaseMazePad(s) {
+  releaseMazeControls(s, true);
+}
+
+function drawMazeStick(s, d) {
+  const L = mazeStickLayout();
+  const armed = !!(s.stick && s.stick.active);
+  const kx = armed ? (s.stick.kx || 0) : 0;
+  const ky = armed ? (s.stick.ky || 0) : 0;
+  const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 3.2);
+  d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
+  d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.4);
+  d.ellipse(L.cx, L.cy, L.baseRx * 0.72, L.baseRy * 0.62, '#f8e4b3cc', BURGUNDY, 1.6);
+  if (armed) d.glow(L.cx, L.cy, 48 + pulse * 10, '#f4d590');
+  const nx = L.cx + kx;
+  const ny = L.cy + ky;
+  d.ellipse(nx + 2, ny + 4, L.knobR * 0.95, L.knobR * 0.72, '#3a1a1244');
+  d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : BURGUNDY, GOLD, 2.2);
+  d.ellipse(nx - 4, ny - 6, L.knobR * 0.42, L.knobR * 0.28, CREAM + 'aa');
+  d.text('MOVE', L.cx, L.cy + L.baseRy + 16, 13, armed ? GOLD : INK);
 }
 
 function drawMazePads(s, d) {
   const armedId = s.pad?.active ? s.pad.id : null;
   const pulse = 0.55 + 0.45 * Math.sin((s.t || 0) * 3.2);
-  for (const pad of mazeCornerPads()) {
+  // Soft cluster bases under UD / LR groups
+  d.ellipse(168, 1137, 42, 64, '#3a1a1244');
+  d.ellipse(168, 1137, 38, 58, CREAM + '66', GOLD, 1.2);
+  d.ellipse(736, 1136, 64, 42, '#3a1a1244');
+  d.ellipse(736, 1136, 58, 38, CREAM + '66', GOLD, 1.2);
+  for (const pad of mazeArrowPads()) {
     const on = armedId === pad.id || !!(s.heldDirs && s.heldDirs[pad.id]);
     d.ellipse(pad.x + 2, pad.y + 4, pad.r * 0.95, pad.r * 0.78, '#3a1a1266');
     d.ellipse(pad.x, pad.y, pad.r, pad.r * 0.88, on ? GOLD : CREAM + 'ee', GOLD, 2.2);
     d.ellipse(pad.x, pad.y, pad.r * 0.72, pad.r * 0.62, on ? '#f8e4b3' : '#f8e4b3cc', BURGUNDY, 1.5);
     if (on) d.glow(pad.x, pad.y, pad.r + 10 + pulse * 6, '#f4d590');
-    d.text(pad.label, pad.x, pad.y + 8, 22, on ? BURGUNDY : INK);
+    d.text(pad.label, pad.x, pad.y + 8, 20, on ? BURGUNDY : INK);
   }
+}
+
+function drawMazeControls(s, d) {
+  drawMazePads(s, d);
+  drawMazeStick(s, d);
 }
 
 /** Live door views — rotate swap, or shrink near/far scale + hitboxes. */
@@ -1204,8 +1293,8 @@ function drawMazeCourt(s, d) {
   drawFlies(d, s);
 
   // Shell #readout / .play-hud own status — no fake court pills/coach.
-  // Corner arrow pads inside cream oval (stick under court retired).
-  if (!s.result && !s.broke) drawMazePads(s, d);
+  // Bottom stage: UD | MOVE stick | LR (no curtain-corner pads).
+  if (!s.result && !s.broke) drawMazeControls(s, d);
 }
 
 
@@ -2071,14 +2160,14 @@ function updateDoorChapter(s, dt) {
 export default {
   title: 'Laughing Doorway',
   intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, walk the paired laughing doorways, grab the star key for the chapter bonus, and dodge laugh-faces (touch bombs you soft back to the entrance).',
-  instructions: 'Laughing Maze (all 6 chapters): tap the corner arrow pads inside the cream court (⬆️⬅️ left · ➡️⬇️ right), or swipe / keyboard arrows. Chomp midway chips. Walk through either mid-edge curtain doorway to pop out the other side (two-way). Grab the mid-court star key to unlock and collect the cream-border chapter bonus. Laugh-faces chase you — power / invisible tokens flash the masks and let you chase back; without power, a touch BOMBS you soft to the entrance (never aborts a paid ride). Clear the chapter chip goal to finish. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
+  instructions: 'Laughing Maze (all 6 chapters): use the bottom row — Up/Down pads, centre MOVE stick, Left/Right pads — or swipe / keyboard arrows. Chomp midway chips. Walk through either mid-edge curtain doorway to pop out the other side (two-way). Grab the mid-court star key to unlock and collect the cream-border chapter bonus. Laugh-faces chase you — power / invisible tokens flash the masks and let you chase back; without power, a touch BOMBS you soft to the entrance (never aborts a paid ride). Clear the chapter chip goal to finish. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
   houseSeconds: 110,
   houseTitle: 'House lights',
   houseDetail: 'Ordinary exit — the maze stays open for another go.',
-  // Corner pads inside court + keyboard/swipe — no shell arrow dock; MOVE stick retired.
+  // Bottom row UD | MOVE stick | LR + keyboard/swipe — no shell arrow dock; no curtain pads.
   actions: [],
   create(level, rng) {
     const graph = chapterGraph(level);
@@ -2223,11 +2312,16 @@ export default {
           takeTreasure(s);
           return;
         }
-        // Corner arrow pads inside cream oval — prefer over maze swipe.
+        // Bottom row: pads or centre MOVE stick — prefer over maze swipe.
         const padHit = hitMazePad(p);
         if (padHit) {
           s.swipe = null;
           applyMazePad(s, padHit, true);
+          return;
+        }
+        if (hitMazeStick(p)) {
+          s.swipe = null;
+          applyMazeStick(s, p);
           return;
         }
         s.swipe = {x: p.x, y: p.y};
@@ -2248,13 +2342,17 @@ export default {
         return;
       }
       if (type === 'move') {
+        if (s.stick?.active) {
+          applyMazeStick(s, p);
+          return;
+        }
         if (s.pad?.active) {
           const over = hitMazePad(p);
           if (over && over !== s.pad.id) {
             applyMazePad(s, s.pad.id, false);
             applyMazePad(s, over, true);
           } else if (!over) {
-            // Finger slid off pad — keep wantDir, drop hold highlight
+            // Finger slid off pad — keep wantDir, drop hold highlight / clear heldDirs
             releaseMazePad(s);
           }
           return;
@@ -2270,16 +2368,12 @@ export default {
         }
         return;
       }
-      if (type === 'up' || type === 'cancel') {
+      // up / cancel / blur / visibility-hide (runtime clearInput → cancel):
+      // always release — knob snaps home; heldDirs clear; wantDir may keep last dir.
+      if (type === 'up' || type === 'cancel' || type === 'blur' || type === 'hide') {
         s.tapping = false;
-        if (s.pad?.active) {
-          releaseMazePad(s);
-          s.swipe = null;
-          return;
-        }
         s.swipe = null;
-        // Release held swipe dirs — keep wantDir as last swipe (continuous run)
-        s.heldDirs = {up: false, down: false, left: false, right: false};
+        releaseMazeControls(s, true);
         return;
       }
       return;

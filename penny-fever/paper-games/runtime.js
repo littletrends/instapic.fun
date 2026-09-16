@@ -121,11 +121,13 @@ function paintHud(){
    clock.textContent=Math.max(0,Math.ceil(state.houseLeft))+'s';
   }else{clock.hidden=true;clock.textContent='';}
  }
- if(next){
-  const last=!engine?.levels||level>=engine.levels.length-1;
-  next.disabled=last;
-  next.textContent=last?'Last chapter':'Next chapter';
- }
+ // Lorie LOCK: no under-stage buttons — hide shell .play-advance / #next-chapter.
+ // Maze controls (UD|stick|LR) are canvas-only. Chapter ←→ deferred (on-canvas later / 5b).
+ const adv=$('.play-advance');
+ if(adv) adv.hidden=true;
+ if(next){ next.hidden=true; next.disabled=true; }
+ const prev=$('#prev-chapter'); if(prev){ prev.hidden=true; prev.disabled=true; }
+ const lab=$('#chapter-label'); if(lab) lab.hidden=true;
 }
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();}
 function goNextChapter(){
@@ -172,7 +174,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=dress-ready-4')).default;
+ engine=(await import(entry.module+'?v=dress-ready-5')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  if(embedded){const note=document.querySelector('.note');if(note)note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';}
  const next=games.slice(games.indexOf(entry)+1).find(g=>g.ready);if(next){$('#next').textContent='Next: '+next.host+' — '+next.title+' →';$('#next').href=next.direct||'play.html?stall='+next.id;if(embedded)listen($('#next'),'click',e=>{e.preventDefault();tellRoom('open',{id:next.id});});}else if(embedded){$('#next').textContent='Back to the alley →';listen($('#next'),'click',e=>{e.preventDefault();tellRoom('leave',{id:entry.id});});}
@@ -185,8 +187,13 @@ try{
  observer=new ResizeObserver(()=>{const b=stage.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(stage);
  listen($('#chapter'),'change',()=>{persist();level=Number($('#chapter').value);reset();});listen($('#restart'),'click',()=>{if(engine.tables){persist();start();return;}reset();});listen($('#pause'),'click',()=>playing?pause():start());
  listen($('#next-chapter'),'click',goNextChapter);
+ // Hide under-canvas advance strip immediately (Lorie: controllers on canvas only).
+ {const adv=$('.play-advance'); if(adv) adv.hidden=true; const n=$('#next-chapter'); if(n){n.hidden=true;n.disabled=true;}}
  listen($('#begin'),'click',()=>{if(!ended){start();return;}const won=state?.result?.won!==false;const stay=state?.result?.advance===false;persist();if(won&&!stay&&level<engine.levels.length-1){level++;$('#chapter').value=level;reset();return;}reset();if(!won)start();});
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type));
+ // Sticky-seize fix: lost capture / window blur always release maze stick+pads (knob snaps home).
+ listen(canvas,'lostpointercapture',e=>{if(!playing)return;input.down=false;engine?.pointer?.(state,'cancel',input.pointer||point(e)||{x:450,y:1136},input);input.pointer=null;paint();});
+ listen(window,'blur',()=>{if(!playing)return;clearInput();paint();});
  listen(window,'keydown',e=>{
   if(!playing||e.repeat)return;
   const tag=e.target?.tagName;
