@@ -138,7 +138,7 @@ const STICK_BURGUNDY = '#c42848';
 const DARK_INK = '#3a2a18';
 const LABEL_BURG = '#7a2038';
 
-const DRESS_CACHE = 'dress-bess-2';
+const DRESS_CACHE = 'dress-bess-2b';
 const BESS_FILES = {
   starLantern: 'Tent_07_Bess_piece-01.png',
   moonLantern: 'Tent_07_Bess_piece-02.png',
@@ -210,9 +210,11 @@ function drawBessScenery(d, s) {
 /** Quiet cream papercut play oval — covers busy balloons.png art in the playfield.
  *  Backdrop may still frame outside; Bess props + Bea sit ON cream (Aura FAIL cream). */
 function drawCreamCourt(d) {
-  // Soft layered oval — opaque enough to quiet the illustrated court.
-  d.ellipse(CX, CY + 36, 372, 438, COURT_CREAM + 'f5', '#d2a65b66', 2.2);
-  d.ellipse(CX, CY + 36, 348, 412, COURT_CREAM_DEEP + 'f8', null, 0);
+  // Solid cream papercut oval — fully covers busy balloons.png playfield (Aura FAIL cream).
+  // Soft cast under, then opaque cream + gold lip (funhouse-style court presence).
+  d.ellipse(CX, CY + 42, 382, 448, '#3a1a1233');
+  d.ellipse(CX, CY + 36, 372, 438, COURT_CREAM, '#d2a65b88', 2.4);
+  d.ellipse(CX, CY + 36, 348, 412, COURT_CREAM_DEEP, '#d2a65b44', 1.2);
   // Faint inner paper ring so the orbit reads without reopening the busy art.
   d.ellipse(CX, CY + 20, ORBIT_RX + 48, ORBIT_RY + 88, null, '#d2a65b44', 1.4);
 }
