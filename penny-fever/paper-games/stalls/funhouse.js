@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: maze-stick-1
+ * cache: maze-flow-2
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -31,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-stick-1';
+} from './funhouse-rooms.js?v=maze-flow-2';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -63,7 +63,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-stick-1';
+const BEA_CACHE_VER = 'maze-flow-2';
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -484,11 +484,12 @@ function inspectSpot(s, spot) {
 }
 
 function leaveRide(s) {
+  const cleared = !!(s.mazeCleared || (s.pelletsTaken >= (s.goal || 0)));
   finishRide(s, {
     rideId: RIDE,
     treasureId: s.treasureId,
-    challengeOk: true,
-    completionFind: 'everyday-penny',
+    challengeOk: cleared,
+    completionFind: cleared ? 'everyday-penny' : undefined,
   });
 }
 
@@ -702,14 +703,19 @@ function arriveCell(s) {
     if (hitCircle(p, s.treasure.x, s.treasure.y, s.treasure.r)) takeTreasure(s);
   }
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
-  if (s.phase === 'play' && s.pelletsTaken >= (maze.clearGoal || maze.pelletTotal)) {
+  if (s.phase === 'play' && !s.mazeCleared && s.pelletsTaken >= (maze.clearGoal || maze.pelletTotal)) {
+    s.mazeCleared = true;
     s.cleared = s.goal;
-    s.note = 'Midway cleared — the laughing doorway bows!';
-    s.holdBeat = Math.max(s.holdBeat || 0, 0.45);
+    s.note = 'Cleared! Keep chomping — or ride out the clock.';
+    logAction(s, 'maze-clear', {gulped: s.facesGulped, taken: s.pelletsTaken, clearGoal: maze.clearGoal});
+  }
+  // Full board clear → gentle exit
+  if (s.phase === 'play' && s.pelletsLeft === 0 && maze.pelletTotal > 0) {
+    s.note = 'Every chip gone — the doorway bows!';
+    s.holdBeat = Math.max(s.holdBeat || 0, 0.55);
     s.pendingExit = true;
     s.phase = 'finish';
     s.phaseT = 0;
-    logAction(s, 'maze-clear', {gulped: s.facesGulped, taken: s.pelletsTaken, clearGoal: maze.clearGoal});
   }
 }
 
@@ -862,6 +868,17 @@ function updateMaze(s, dt) {
     updatePlayerMaze(s, dt);
     updateFacesMaze(s, dt);
     maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
+    // Soft house: end the chapter ourselves (won if clearGoal met) before runtime lose-veil.
+    if (s.houseLeft != null && s.houseLeft <= 0.05 && !s.pendingExit && !s.result) {
+      s.houseLeft = 0;
+      s.note = s.mazeCleared
+        ? 'House lights — midway clear stands!'
+        : 'House lights — ordinary exit, try again anytime.';
+      s.holdBeat = Math.max(s.holdBeat || 0, 0.4);
+      s.pendingExit = true;
+      s.phase = 'finish';
+      s.phaseT = 0;
+    }
   } else if (s.phase === 'finish') {
     s.phaseT += dt;
     const need = s.reduced ? 0.15 : (s.holdBeat > 0 ? 0.55 : 0.35);
@@ -1817,7 +1834,9 @@ export default {
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
-  houseSeconds: 90,
+  houseSeconds: 110,
+  houseTitle: 'House lights',
+  houseDetail: 'Ordinary exit — the maze stays open for another go.',
   // MOVE via centre-bottom joystick + keyboard/swipe — no shell arrow dock.
   actions: [],
   create(level, rng) {
@@ -1864,6 +1883,7 @@ export default {
       wantDir: null,
       heldDirs: {up: false, down: false, left: false, right: false},
       stick: null,
+      mazeCleared: false,
     });
   },
   update(s, dt) {
