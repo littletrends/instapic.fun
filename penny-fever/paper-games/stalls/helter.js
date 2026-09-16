@@ -72,6 +72,57 @@ const THREEWAY_WARN_SECS = 8.0;
 const LANDMARK_GOLD = '#d4a84a';
 const LANDMARK_TEAL = '#7ec8b8';
 
+
+/** Ch4-only: slightly wider cream-ladder snap while recovering after a soft miss, and on late rings. */
+function ch4LadderSnap(s, ring) {
+  if (!s || s.level !== 3) return FACE_SNAP;
+  if ((s.ch4Recover || 0) > 0) return FACE_SNAP * 1.28; // ~96° — clear runway after soft dump
+  if (ring && ring.i >= 4) return FACE_SNAP * 1.14; // late rings: light snake pressure
+  return FACE_SNAP;
+}
+
+/** Ch4-only: slightly narrower snake snap while recovering / late so cream wins close calls. */
+function ch4SnakeSnap(s, ring) {
+  if (!s || s.level !== 3) return FACE_SNAP;
+  if ((s.ch4Recover || 0) > 0) return FACE_SNAP * 0.82;
+  if (ring && ring.i >= 4) return FACE_SNAP * 0.90;
+  return FACE_SNAP;
+}
+
+/**
+ * Ch4 soft-miss assist: when still under GOAL, refund clock + brief cream bias so Practice 3/3
+ * stays reachable in one free ride after a soft dump / landmark / cushion.
+ */
+function ch4AfterSoftMiss(s, kind) {
+  if (!s || s.level !== 3) return false;
+  if (s.hits >= GOAL) {
+    // Already cleared bar — keep a tiny soft slide-back only.
+    s.t = Math.max(0, s.t - 0.30);
+    return true;
+  }
+  // Refund / boost time so the next cream ladder has runway.
+  s.t = Math.max(0, s.t - 2.25);
+  s.duration = (s.duration || 0) + 1.75;
+  s.ch4Recover = Math.max(s.ch4Recover || 0, 2);
+  s.note = 'Cream ladder next — TURN clear';
+  s.statusCopy = 'Cream ladder next';
+  s.phaseFlash = 0.95;
+  s.phaseFlashLabel = kind === 'landmark' ? 'Join' : (kind === 'cushion' ? 'Cushion' : 'Snake');
+  // Nudge the next undischarged ring toward cream (partial — still needs a TURN).
+  const next = (s.rings || []).find((r) => !r.done);
+  if (next) {
+    let diff = 0 - next.targetTheta;
+    while (diff > Math.PI) diff -= TAU;
+    while (diff < -Math.PI) diff += TAU;
+    const pull = Math.sign(diff || 1) * Math.min(Math.abs(diff), Math.PI * 0.28);
+    if (Math.abs(diff) > 0.04) {
+      next.targetTheta = angNorm(next.targetTheta + pull);
+    }
+  }
+  return true;
+}
+
+
 function angNorm(a) {
   let x = a % TAU;
   if (x < 0) x += TAU;
@@ -189,7 +240,8 @@ function chapterPlan(level, rng) {
   const haste = fair
     ? 0.92 // Ch2/Ch3/Ch4 slower than Ch1
     : 1 + Math.min(0.2, level * 0.035);
-  const baseSecs = fair ? 52 : RIDE_SECONDS;
+  // Ch4 only: a few extra seconds so one soft dump still leaves runway to 3/3.
+  const baseSecs = level === 3 ? 56 : (fair ? 52 : RIDE_SECONDS);
   const duration = baseSecs / haste;
   // Ch2/Ch3/Ch4: 6 rings for recoverable 3 ladders; Ch1: 5 rings.
   const fracs = fair
@@ -246,7 +298,13 @@ function chapterPlan(level, rng) {
       start = (rng() < 0.5 ? mag : -mag);
     } else {
       // Later rings: off enough to need a TURN; still recoverable.
-      start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
+      // Ch4: milder offset so late snakes stay light after teach (Aura Practice 3/3 bar).
+      if (level === 3) {
+        const mag = Math.PI * (0.44 + rng() * 0.10); // ~79°–97° — needs TURN, not a free ladder
+        start = (rng() < 0.5 ? mag : -mag);
+      } else {
+        start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
+      }
     }
     return {
       i,
@@ -404,18 +462,22 @@ function commitRing(s, ring) {
   // Forgiving snap: if within FACE_SNAP of ladder, lock to ladder (carnival fair).
   // Ladder FACE_SNAP beats blockers (cushion) and landmark soft-reconnect.
   // Cushion soft-redirect wins if cushion still covers the face after snap.
+  // Ch4: recover/late rings use a slightly wider cream snap and narrower snake snap.
   let theta = ring.targetTheta;
   let snappedLadder = false;
   let snappedLandmark = false;
-  if (angDist(theta, 0) <= FACE_SNAP) { theta = 0; snappedLadder = true; }
+  const ladderHalf = ch4LadderSnap(s, ring);
+  const snakeHalf = ch4SnakeSnap(s, ring);
+  if (angDist(theta, 0) <= ladderHalf) { theta = 0; snappedLadder = true; }
   else if (ring.threeway && landmarkFacing(ring, theta)) {
     theta = (ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL;
     snappedLandmark = true;
   }
-  else if (angDist(theta, Math.PI) <= FACE_SNAP) theta = Math.PI;
+  else if (angDist(theta, Math.PI) <= snakeHalf) theta = Math.PI;
   ring.targetTheta = theta;
   ring.theta = theta;
   const y = ringScreenY(s, ring);
+  if (s.level === 3 && (s.ch4Recover || 0) > 0) s.ch4Recover -= 1;
 
   // Ladder snap beats cushion — carnival fair; cushions teach redirect, not soft-lock.
   if (!snappedLadder && cushionBlocking(ring, ring.theta)) {
@@ -430,8 +492,10 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Cushion';
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
-    // Softer time penalty on Ch4 fair bar; Ch1–Ch3 keep prior values.
-    s.t = Math.max(0, s.t - ((s.level === 3) ? 0.35 : 0.45));
+    // Ch4: refund/boost when under GOAL so Practice 3/3 stays reachable; else mild.
+    if (!ch4AfterSoftMiss(s, 'cushion')) {
+      s.t = Math.max(0, s.t - 0.45);
+    }
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'cushion!', true);
@@ -454,7 +518,10 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Join';
     s.snakeSlide = 0.7;
     s.matPulse = 0.3;
-    s.t = Math.max(0, s.t - 0.35); // softer than snake
+    // Ch4 landmark: same recovery runway as soft dump when under GOAL.
+    if (!ch4AfterSoftMiss(s, 'landmark')) {
+      s.t = Math.max(0, s.t - 0.35);
+    }
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'reconnect', true);
@@ -507,8 +574,11 @@ function commitRing(s, ring) {
     s.phaseFlashLabel = 'Snake';
     s.snakeSlide = 0.9;
     s.matPulse = 0.35;
-    // Tiny soft slide-back on the descent clock (still finishes). Ch4 softer.
-    s.t = Math.max(0, s.t - ((s.level === 3) ? 0.45 : 0.6));
+    // Tiny soft slide-back on the descent clock (still finishes).
+    // Ch4 under GOAL: refund/boost + cream cue so one free practice can still hit 3/3.
+    if (!ch4AfterSoftMiss(s, 'snake')) {
+      s.t = Math.max(0, s.t - 0.6);
+    }
     pushSparks(s, CX, y, true);
     pushRingFx(s, CX, y, true);
     pushLabel(s, CX, y - 36, 'slide-back', true);
@@ -579,6 +649,7 @@ function coachingLine(s, preview, ring) {
       return 'Cushion ahead — TURN clear of it toward the ladder.';
     }
   }
+  if (s.level === 3 && (s.ch4Recover || 0) > 0) return 'Cream ladder next — TURN clear';
   if (!s.turnedOnce) return 'TURN the ring so the ladder faces you.';
   if (ring && !ring.done) {
     const phase = tunnelPhase(s, ring);
@@ -1115,6 +1186,7 @@ export default {
       cushionWarned: false,
       tunnelWarned: false,
       threewayWarned: false,
+      ch4Recover: 0,
     });
   },
   update(s, dt) {
@@ -1139,6 +1211,7 @@ export default {
       s.cushionWarned = false;
       s.tunnelWarned = false;
       s.threewayWarned = false;
+      s.ch4Recover = 0;
       const teachTun = (s.rings || []).find((r) => r.tunnel && r.tunnel.teach);
       const teachCush = (s.rings || []).find((r) => r.cushion && r.cushion.teach);
       const teachThree = (s.rings || []).find((r) => r.threeway && r.threeway.teach);
@@ -1266,7 +1339,21 @@ export default {
 
     // One discrete commit per ring when the mat reaches it (Helix-style drop through).
     s.rings.forEach((ring) => {
-      if (!ring.done && s.t >= ring.t) commitRing(s, ring);
+      if (!ring.done && s.t >= ring.t) {
+        // Ch4: if nearly facing cream after a soft miss / late ring, grant a short grace turn window.
+        if (s.level === 3 && !ring._ch4Grace) {
+          const toL = angDist(ring.targetTheta, 0);
+          const half = ch4LadderSnap(s, ring);
+          if (toL > half && toL < half + 0.28 && ((s.ch4Recover || 0) > 0 || ring.i >= 3)) {
+            ring._ch4Grace = true;
+            ring.t += 0.45;
+          } else {
+            commitRing(s, ring);
+          }
+        } else {
+          commitRing(s, ring);
+        }
+      }
     });
 
     if (s.t >= s.duration) {
