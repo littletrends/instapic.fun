@@ -1,18 +1,17 @@
 /* Laughing Doorway — Juno
- * cache: maze-ready-1
+ * cache: dress-ready-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * PROPS = Tent_26_Bea scenery + bea-player. BONUS = TREASURES Ch1–6 keepsakes.
- *   Path chips = simple geometric dots only (never catalogue coins). Laugh-faces = drawn comedy masks
- *   until a dedicated face prop ships.
- * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval
- *   only. Tent_26_Bea dress BUILD still HELD — maze props only: split cutouts from
- *   assets/funhouse-bea/ scenery 01/03-06; bea-player.png = SHARED player sprite
- *   placed around cream oval OUTSIDE maze lanes. No whole-backdrop overpaint.
+ * PROPS = full Tent_26_Bea 6-pack (piece-01..06) + bea-player YOU. BONUS = TREASURES Ch1–6.
+ *   Path chips = simple geometric dots only (never catalogue coins). Laugh-faces = drawn comedy masks.
+ * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
+ *   Wire ALL 6 Doorway Tent_26_Bea props via placeDress on cream border —
+ *   outside maze lanes. piece-02 = decorative Bea standee; bea-player.png = moving YOU.
+ *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
  *   stay. actions: [] — no shell arrow dock.
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
@@ -31,7 +30,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-ready-1';
+} from './funhouse-rooms.js?v=dress-ready-1';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -54,18 +53,27 @@ const GULP_DUR = 0.42;
 const MAZE_HOUSE = 110;
 const FACE_RESPAWN = 3.8;
 
-/** Tent_26_Bea split cutouts — maze scenery only (dress BUILD still held). */
+/** Tent_26_Bea 6-pack — Doorway kit only (+ funhouse.png backdrop). bea-player = YOU. */
 const BEA_PROP_FILES = {
   curtain: 'Tent_26_Bea_piece-01.png',
+  standee: 'Tent_26_Bea_piece-02.png', // decorative Bea cutout (set dressing; YOU uses bea-player)
   moon: 'Tent_26_Bea_piece-03.png',
   spotlight: 'Tent_26_Bea_piece-04.png',
   starKey: 'Tent_26_Bea_piece-05.png',
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-ready-1';
+const BEA_CACHE_VER = 'dress-ready-1';
 let beaPropImgs = null;
 let beaPlayerImg = null;
+
+function dressUrl(rel) {
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + BEA_CACHE_VER, import.meta.url).href;
+  } catch {
+    return rel + (rel.includes('?') ? '&' : '?') + 'v=' + BEA_CACHE_VER;
+  }
+}
 
 function ensureBeaProps() {
   if (beaPropImgs) return beaPropImgs;
@@ -73,42 +81,51 @@ function ensureBeaProps() {
   for (const [key, file] of Object.entries(BEA_PROP_FILES)) {
     const img = new Image();
     img.decoding = 'async';
-    img.src = `../assets/funhouse-bea/${file}?v=${BEA_CACHE_VER}`;
+    img.src = dressUrl('../assets/funhouse-bea/' + file);
     beaPropImgs[key] = img;
   }
   if (!beaPlayerImg) {
     beaPlayerImg = new Image();
     beaPlayerImg.decoding = 'async';
-    beaPlayerImg.src = `../assets/funhouse-bea/${BEA_PLAYER_FILE}?v=${BEA_CACHE_VER}`;
+    beaPlayerImg.src = dressUrl('../assets/funhouse-bea/' + BEA_PLAYER_FILE);
   }
   return beaPropImgs;
 }
 
-/** Place Tent_26_Bea cutouts on cream papercut border — never on maze path cells.
- *  scenery flag (full/dense/finale) only changes prop density — not the maze grid.
- *  Baseline always shows all five scenery types (piece-02 = shared YOU sprite).
+function dressReady(img) {
+  return !!(img && img.complete && img.naturalWidth > 0);
+}
+
+/** Helter-style dress place — soft paper shadow, 6-digit glow only elsewhere. */
+function placeDress(d, img, x, y, w, angle, h) {
+  if (!dressReady(img) || typeof d.sprite !== 'function') return false;
+  const opts = {w, shadow: true};
+  if (h) opts.h = h;
+  if (angle) opts.angle = angle;
+  return d.sprite(img, x, y, opts);
+}
+
+/** Place ALL 6 Tent_26_Bea cutouts on cream papercut border — never on maze path cells.
+ *  scenery flag (full/dense/finale) only adds repeats — baseline always wires the full 6-pack.
  */
 function drawBeaScenery(d, s) {
   const imgs = ensureBeaProps();
   const density = s?.graph?.scenery || 'full';
-  const place = (key, x, y, w, angle = 0) => {
-    const img = imgs[key];
-    if (!img || !img.complete || !(img.naturalWidth > 0)) return false;
-    return d.sprite(img, x, y, {w, angle, shadow: true});
-  };
-  // Baseline 5-pack readable on cream: doorway / curtain / spotlight / moon / star key
-  place('doorway', 178, 640, 118);
-  place('curtain', 722, 618, 112);
-  place('spotlight', 298, 478, 76, -0.18);
-  place('moon', 618, 490, 100);
-  place('starKey', 708, 848, 68, 0.12);
+  const place = (key, x, y, w, angle = 0) => placeDress(d, imgs[key], x, y, w, angle);
+  // Full Tent_26_Bea 6-pack — readable, strategic, not cluttered. No alley wall-turnaround.
+  place('doorway', 168, 650, 108);           // left mid — signature laughing door
+  place('curtain', 732, 635, 100);           // right mid — theatre drape
+  place('spotlight', 262, 468, 70, -0.16);   // upper-left wash
+  place('moon', 638, 478, 92);               // upper-right celestial
+  place('starKey', 718, 858, 64, 0.14);      // lower-right gold accent
+  place('standee', 182, 858, 72, -0.06);     // lower-left Bea standee (piece-02)
   if (density === 'dense' || density === 'finale') {
-    place('spotlight', 590, 878, 60, 0.22);
-    place('moon', 218, 858, 82, -0.1);
+    place('spotlight', 588, 878, 58, 0.22);
+    place('moon', 250, 880, 78, -0.1);
   }
   if (density === 'finale') {
-    place('curtain', 148, 528, 92, -0.08);
-    place('doorway', 752, 528, 96, 0.06);
+    place('curtain', 148, 528, 88, -0.08);
+    place('doorway', 752, 528, 92, 0.06);
   }
 }
 
@@ -383,7 +400,7 @@ function maybeRevealTreasure(s, room) {
       id: s.treasureId || TREASURES[s.level] || TREASURES[0],
       x: tx ?? 450,
       y: ty ?? 700,
-      r: room.treasure.r || 56,
+      r: room.treasure.r || 22,
       taken: false,
     };
   }
@@ -891,31 +908,46 @@ function drawMazeCourt(s, d) {
   const maze = s.maze;
   const t = s.t || 0;
   const room = roomOf(s.graph, s.roomId || 'maze');
-  // Cream oval stage only — no canvas pills/chips/coach; shell .play-hud owns status.
-  d.ellipse(450, 720, 310, 268, '#f4e6c888', '#e8b84a55', 2);
+  // Cream oval stage only — funhouse.png backdrop shows through; no alley wall webp.
+  // Soft paper cast under oval, then cream fill + gold lip (papercut court presence).
+  d.ellipse(454, 726, 314, 272, '#3a1a1233');
+  d.ellipse(450, 720, 310, 268, '#f4e6c8bb', '#e8b84a88', 2.4);
+  d.ellipse(450, 720, 292, 252, '#f7ebcf66', GOLD, 1.2);
   d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 2.4, false);
   d.text(room?.title || 'Laughing Maze', 450, 456, 22, INK);
-  // Soft wash — Tent_26_Bea cutouts supply the funhouse set-pieces.
   d.glow(450, 410, 36, '#f4d590');
-  // Bea maze props around cream oval (outside lanes) — dress BUILD still held.
+  // Full Tent_26_Bea 6-pack around cream oval (outside lanes).
   drawBeaScenery(d, s);
 
   if (!maze) return;
   const cell = maze.cell;
-  // Corridors + walls as paper wood / cream lanes
+  // Corridors + walls — papercut depth (cast shadow → edge face → lit top → cream lip)
   for (let r = 0; r < maze.rows; r++) {
     for (let c = 0; c < maze.cols; c++) {
       const x = maze.ox + c * cell;
       const y = maze.oy + r * cell;
       if (maze.grid[r][c] === 1) {
+        // Soft paper cast
         d.poly(
-          [[x + 2, y + 2], [x + cell - 2, y + 2], [x + cell - 2, y + cell - 2], [x + 2, y + cell - 2]],
+          [[x + 5, y + 6], [x + cell + 1, y + 6], [x + cell + 1, y + cell + 2], [x + 5, y + cell + 2]],
+          '#3a1a1244',
+        );
+        // Dark edge face (cardstock thickness)
+        d.poly(
+          [[x + 3, y + 4], [x + cell - 1, y + 4], [x + cell - 1, y + cell], [x + 3, y + cell]],
+          '#4a2018ee', '#2a100c', 1,
+        );
+        // Lit top paper face
+        d.poly(
+          [[x + 2, y + 2], [x + cell - 3, y + 2], [x + cell - 3, y + cell - 3], [x + 2, y + cell - 3]],
           WOOD, GOLD, 1.2,
         );
-        // Inner burgundy trim for carnival density
+        // Cream highlight lip
+        d.path([{x: x + 5, y: y + 4}, {x: x + cell - 5, y: y + 4}], CREAM, 1.3, false);
+        // Deep-red/gold inner on alternate cells
         if ((c + r) % 2 === 0) {
           d.poly(
-            [[x + 8, y + 8], [x + cell - 8, y + 8], [x + cell - 8, y + cell - 8], [x + 8, y + cell - 8]],
+            [[x + 9, y + 9], [x + cell - 9, y + 9], [x + cell - 9, y + cell - 9], [x + 9, y + cell - 9]],
             '#5c2818', BURGUNDY, 1,
           );
         }
@@ -928,14 +960,23 @@ function drawMazeCourt(s, d) {
     }
   }
 
-  // Punchline door set-piece — simple paper door (props/bonus art TBD)
+  // Punchline door — layered paper (shadow / edge / face)
   if (maze.doorCell) {
     const dc = cellCenter(maze, maze.doorCell.c, maze.doorCell.r);
     const shut = s.doorShut;
     d.poly(
+      [[dc.x - 12, dc.y - 12], [dc.x + 18, dc.y - 12], [dc.x + 18, dc.y + 20], [dc.x - 12, dc.y + 20]],
+      '#3a1a1244',
+    );
+    d.poly(
+      [[dc.x - 13, dc.y - 14], [dc.x + 15, dc.y - 14], [dc.x + 15, dc.y + 18], [dc.x - 13, dc.y + 18]],
+      '#4a2018ee', '#2a100c', 1,
+    );
+    d.poly(
       [[dc.x - 14, dc.y - 16], [dc.x + 14, dc.y - 16], [dc.x + 14, dc.y + 16], [dc.x - 14, dc.y + 16]],
       shut ? '#5a2018' : WOOD, GOLD, 2,
     );
+    d.path([{x: dc.x - 10, y: dc.y - 14}, {x: dc.x + 10, y: dc.y - 14}], CREAM, 1.2, false);
     d.text(shut ? 'SHUT' : 'HA!', dc.x, dc.y + 4, 11, INK);
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
@@ -971,11 +1012,20 @@ function drawMazeCourt(s, d) {
 
   if (s.treasure && !s.treasure.taken) {
     const dim = !s.eligible;
-    if (!dim) d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
-    d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
-      w: dim ? 48 : 64, shadow: false,
-      fallback: () => d.heart(s.treasure.x, s.treasure.y, dim ? 12 : 16),
-    });
+    const tx = s.treasure.x;
+    const ty = s.treasure.y;
+    // Token-sized chapter bonus (helter dress-3j bar: w:28 + KEEP/TREASURE tag)
+    if (!dim) d.glow(tx, ty, 18, GOLD);
+    else d.glow(tx, ty, 14, '#f4d590');
+    try {
+      d.item(spriteKey(s.treasure.id), tx, ty, {
+        w: 28, alpha: dim ? 0.72 : 0.92, shadow: true,
+        fallback: () => d.heart(tx, ty, 10),
+      });
+    } catch {
+      d.heart(tx, ty, 10);
+    }
+    d.text(dim ? 'KEEP' : 'TREASURE', tx, ty - 22, 10, dim ? INK : GOLD);
   }
   drawFlies(d, s);
 
@@ -1156,27 +1206,30 @@ function drawPlayer(d, s) {
   d.ellipse(x + 3, y + 22, 28, 10, '#12233533');
   ensureBeaProps();
   const img = beaPlayerImg;
-  if (isMaze(s) && img && img.complete && img.naturalWidth > 0 && typeof d.sprite === 'function') {
-    d.sprite(img, x, y - 6, {w: 50, shadow: true});
-  } else if (isMaze(s) && img && img.complete && img.naturalWidth > 0) {
-    // Fallback if draw.sprite missing — canvas image via item-like ellipse stand-in still OK
-    try {
-      const ctx = d.c || d.ctx;
-      if (ctx && img) {
-        const w = 50, h = w * (img.naturalHeight / img.naturalWidth);
-        ctx.drawImage(img, x - w / 2, y - h * 0.72, w, h);
-      } else {
+  const beaOk = isMaze(s) && placeDress(d, img, x, y - 6, 52);
+  if (!beaOk) {
+    if (isMaze(s) && dressReady(img)) {
+      try {
+        const ctx = d.c || d.ctx;
+        if (ctx && img) {
+          const w = 52, h = w * (img.naturalHeight / img.naturalWidth);
+          ctx.drawImage(img, x - w / 2, y - h * 0.72, w, h);
+        } else {
+          d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
+          d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+          d.text('YOU', x, y + 1, 11, BURGUNDY);
+        }
+      } catch {
         d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
         d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+        d.text('YOU', x, y + 1, 11, BURGUNDY);
       }
-    } catch {
+    } else {
       d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
       d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+      d.arc(x, y - 24, 7, 0.2, Math.PI - 0.2, BURGUNDY, 1.8);
+      d.text('YOU', x, y + 1, 11, BURGUNDY);
     }
-  } else {
-    d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
-    d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
-    d.arc(x, y - 24, 7, 0.2, Math.PI - 0.2, BURGUNDY, 1.8);
   }
   if (stun) d.text('!', x + 22, y - 36, 18, INK);
 }
@@ -1687,11 +1740,20 @@ function drawRoom(s, d) {
   }
 
   if (s.treasure && !s.treasure.taken) {
-    d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
-    d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
-      w: 62, shadow: false,
-      fallback: () => d.heart(s.treasure.x, s.treasure.y, 16),
-    });
+    const tx = s.treasure.x;
+    const ty = s.treasure.y;
+    const dim = !s.eligible;
+    if (!dim) d.glow(tx, ty, 18, GOLD);
+    else d.glow(tx, ty, 14, '#f4d590');
+    try {
+      d.item(spriteKey(s.treasure.id), tx, ty, {
+        w: 28, alpha: dim ? 0.72 : 0.92, shadow: true,
+        fallback: () => d.heart(tx, ty, 10),
+      });
+    } catch {
+      d.heart(tx, ty, 10);
+    }
+    d.text(dim ? 'KEEP' : 'TREASURE', tx, ty - 22, 10, dim ? INK : GOLD);
   }
   drawFlies(d, s);
   drawClarityChrome(s, d);
