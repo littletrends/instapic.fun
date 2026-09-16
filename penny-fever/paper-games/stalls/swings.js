@@ -39,6 +39,7 @@
  *     #3 outer cloud (returning), #4 outer makeup clearLong. Soft-miss
  *     teach arms ch6Assist snap outer while HOLD + short soft-push
  *     (~0.25 s) — never aborts. Treasure = outer, one full warning circuit.
+ *   Ch6 build 2 — name-locked GOAL (level===5 OR LEVELS name; HUD never /4).
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -70,6 +71,7 @@ const GOAL_CH3 = 3;
 const GOAL_CH4 = 3;
 const GOAL_CH5 = 3;
 const GOAL_CH6 = 3;
+const CH6_BUILD = 2; // Ch6 build 2 — name-locked GOAL
 const CATCH_HALF = 0.34;  // rad sweep window (~0.40 s at OMEGA)
 const APPROACH = 1.55;    // rad of visible approach (~1.8 s) — Ch1 / normal bubbles
 const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
@@ -243,7 +245,11 @@ function isBellFlight(s) {
 }
 
 function isMidnightWaltz(s) {
-  return !!(s && s.midnightWaltz);
+  if (!s) return false;
+  if (s.midnightWaltz) return true;
+  if (s.level === 5) return true;
+  if (LEVELS[s.level] === 'The Midnight Waltz') return true;
+  return false;
 }
 
 /** Bell pitch → band: low=0 inner, mid=1 middle, high=2 outer. */
@@ -1424,8 +1430,9 @@ export default {
     const ch3 = level === 2;
     const ch4 = level === 3;
     const ch5 = level === 4;
-    const ch6 = level === 5;
+    const ch6 = level === 5 || LEVELS[level] === 'The Midnight Waltz';
     const three = ch2 || ch3 || ch4 || ch5 || ch6;
+    void CH6_BUILD; // name-locked GOAL build stamp
     return makeRideState(level, rng, {
       theta: -0.35,
       radiusU: 0,
@@ -1474,7 +1481,13 @@ export default {
       s.goal = GOAL_CH5;
       s.goalCap = GOAL_CH5;
     }
-    if (isMidnightWaltz(s)) {
+    // Name-lock Ch6: force midnightWaltz + GOAL_CH6 even if flag was never armed.
+    if (LEVELS[s.level] === 'The Midnight Waltz' || s.midnightWaltz || s.level === 5) {
+      s.midnightWaltz = true;
+      s.goal = GOAL_CH6;
+      s.goalCap = GOAL_CH6;
+    }
+    if (s.midnightWaltz && s.goal === 4) {
       s.goal = GOAL_CH6;
       s.goalCap = GOAL_CH6;
     }
@@ -1841,7 +1854,7 @@ export default {
 
     // Big in-court verb plate — loudest early / until first POP / during teach or makeup.
     if (!missPinned && (early || s.holding || (s.passed || 0) < 1 || teachLoud)) {
-      const tall = isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s);
+      const tall = isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s) || LEVELS[s.level] === 'The Midnight Waltz';
       d.poly(
         [[200, 820], [700, 820], [688, tall ? 940 : 920], [212, tall ? 940 : 920]],
         s.holding ? '#6b2030ee' : '#2a1838ee',
@@ -1852,7 +1865,7 @@ export default {
       d.text(verbSub, 450, 898, 18, '#f0d18f');
       // Scream-clear N/3 under verb during Cloud Waltz / Bell Flight / Midnight Waltz
       if (tall) {
-        if (isMidnightWaltz(s)) {
+        if (isMidnightWaltz(s) || LEVELS[s.level] === 'The Midnight Waltz') {
           d.text(Math.min(s.passed || 0, GOAL_CH6) + ' / ' + GOAL_CH6 + ' Midnight POP', 450, 924, 17, MIDNIGHT_SOFT);
         } else if (isBellFlight(s)) {
           d.text(Math.min(s.passed || 0, GOAL_CH5) + ' / ' + GOAL_CH5 + ' Bell POP', 450, 924, 17, BELL_SOFT);
@@ -1885,7 +1898,7 @@ export default {
       d.text('PRACTICE', 450, 208, teachLoud ? 24 : 20, CREAM);
     }
 
-    if (isMidnightWaltz(s)) {
+    if (isMidnightWaltz(s) || LEVELS[s.level] === 'The Midnight Waltz') {
       drawHud(d, s, {goal: GOAL_CH6, count: Math.min(s.passed || 0, GOAL_CH6), label: 'Midnight POP'});
     } else if (isBellFlight(s)) {
       drawHud(d, s, {goal: GOAL_CH5, count: Math.min(s.passed || 0, GOAL_CH5), label: 'Bell POP'});
