@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3i';
+const DRESS_CACHE = 'dress-3j';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -804,9 +804,11 @@ function drawSlideProp(d, cell, flash) {
   const imgs = ensureSkipProps();
   if (flash) d.glow(x, y, 32, BURGUNDY);
   else d.glow(x, y, 22, SLIDE_FILL);
-  // Sit upright on the cell (match cushion posture); tiny lean only.
-  const artAng = 0.06;
-  if (placeDress(d, imgs.slide, x, y - 2, 56, artAng, 88)) return;
+  // Iso moon-slide is baked tipped; counter-rotate so long axis reads
+  // more screen-upright / cushion-like (Aura FAIL dress-3i). No face-on cutout.
+  const artAng = -0.70;
+  // Natural-ish aspect (no tall stretch) — matches cushion footprint better.
+  if (placeDress(d, imgs.slide, x, y - 2, 52, artAng)) return;
   // Fallback wedge — long tip downhill.
   const tipX = x + Math.cos(downhillAng) * 52;
   const tipY = y + Math.sin(downhillAng) * 52;
