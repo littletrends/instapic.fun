@@ -11,9 +11,10 @@
  *     On goal, guardWinClock so dry-out cannot beat Practice complete.
  *   3 Carousel Frieze — horse motif only in the window; ONE non-horse soft teach;
  *     then 3 horse SPLASHes (~50s). Motif read, not colour.
+ *   4 Evening Panorama — shutters open in the window; SPLASH links restored
+ *     scenes into one continuous mural (neighbour flood ribbon).
  *
  * Unfinished:
- *   4 Evening Panorama — splash floods into neighbours
  *   5 Midway Memories — remembered fragments in order
  *   6 The Living Bay — long Sunday route; panorama wakes
  *
@@ -47,19 +48,23 @@ const COLOURS = {
   green: {id: 'green', glyph: '●', name: 'Green', color: '#3a6a4a'},
 };
 const HORSE_TARGET = {id: 'horse', glyph: '♞', name: 'Horse', color: '#6b2030', kind: 'motif'};
+const PANORAMA_TARGET = {id: 'panorama', glyph: '◐', name: 'Shutter', color: '#6b2030', kind: 'shutter'};
 
 function boardNote(level) {
+  if (level === 3) return 'SPLASH when shutters open — link the bay.';
   if (level === 2) return 'SPLASH only the ♞ horse.';
   if (level === 1) return 'SPLASH only the ♥ match.';
   return 'SPLASH the faded patch.';
 }
 
 function teachLine(s) {
+  if (s.level === 3) return 'Shutters closed — wait for ◐ to open.';
   if (s.level === 2) return 'Not a horse — wait for ♞ in the window.';
   return 'Wrong colour washes away — wait for ' + (s.target?.glyph || '♥') + '.';
 }
 
 function matchLine(s) {
+  if (s.level === 3) return 'SPLASH the open shutter in the window.';
   if (s.level === 2) return 'SPLASH the ♞ horse in the window.';
   if (s.target) return 'SPLASH the ' + s.target.glyph + ' match.';
   return 'SPLASH inside the frame.';
@@ -73,6 +78,26 @@ const MIX = '#8a4060';
 const CURTAIN = 0.9;
 
 function chapterPlan(level, reduced) {
+  if (level === 3) {
+    // Evening Panorama — shutters reveal part of each reference; splash links the bay.
+    const panels = [
+      {id: 'decoy-shutter', motif: 'lantern', colour: 'gold', match: false, teach: true},
+      {id: 'pano-lantern', motif: 'lantern', colour: 'burgundy', match: true, shutter: true, link: true},
+      {id: 'pano-balloons', motif: 'balloons', colour: 'gold', match: true, shutter: true, link: true},
+      {id: 'pano-horse', motif: 'horse', colour: 'burgundy', match: true, shutter: true, link: true},
+    ];
+    return {
+      goal: 3,
+      house: 58,
+      dwell: reduced ? 7.0 : 5.5,
+      speed: reduced ? 74 : 98,
+      warn: 6.8,
+      target: PANORAMA_TARGET,
+      panels,
+      foldMedallion: true,
+      mode: 'shutter',
+    };
+  }
   if (level === 2) {
     // Carousel Frieze — horse patch only in the window (Lorie: horse-emblem stencil).
     const panels = [
@@ -200,6 +225,7 @@ function spawnAt(s, idx) {
   row.held = false;
   row.dwell = 0;
   row.wash = 0;
+  row.shutterOpen = 0;
   row.world = s.scroll + 680;
   s.medalOpen = 1;
   if (row.teach) {
@@ -251,7 +277,9 @@ function softWash(s, panel) {
   s.paused = true;
   s.softUntil = s.t + 0.75;
   logAction(s, 'wash', {id: panel.id, colour: panel.colour});
-  s.note = 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♞') + '.';
+  s.note = s.level === 3
+    ? 'Soft wash — wait for open shutters / ◐.'
+    : 'Soft wash — ride continues. Wait for ' + (s.target?.glyph || '♞') + '.';
   s.juice = true;
 }
 
@@ -268,6 +296,17 @@ function splash(s, panel) {
   panel.flood = 0.001;
   panel.flooding = true;
   panel.bloom = 1;
+  panel.shutterOpen = 1;
+  if (panel.link || s.mode === 'shutter') {
+    panel.chainFlood = 1;
+    // Visual only: nudge already-restored neighbours so the bay reads continuous.
+    s.panels.forEach((other) => {
+      if (!other.restored || other.id === panel.id) return;
+      if (!(other.link || other.shutter)) return;
+      other.flood = Math.min(1, Math.max(other.flood || 0, 0.55) + 0.12);
+      other.chainFlood = Math.max(other.chainFlood || 0, 0.9);
+    });
+  }
   s.restored += 1;
   s.juice = true;
   s.paused = true;
@@ -276,7 +315,9 @@ function splash(s, panel) {
   recordFind(s, ORDINARY[s.restored % ORDINARY.length], RIDE);
   logAction(s, 'splash', {id: panel.id, n: s.restored, colour: panel.colour});
   logAction(s, 'restore', {id: panel.id});
-  s.note = 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
+  s.note = s.level === 3
+    ? 'Linked into the panorama — ' + s.restored + ' / ' + s.goal + '.'
+    : 'The wall wakes — ' + s.restored + ' / ' + s.goal + '.';
   if (s.restored >= s.goal) guardWinClock(s);
   if (s.eligible && s.spawnId === panel.id && !s.treasure) {
     s.treasure = {
@@ -340,6 +381,64 @@ function drawMotif(d, id, x, y, faded, flood, t) {
   else drawLantern(d, x, y, faded, flood, t);
 }
 
+function drawShutters(d, x, y, open, alwaysClosed) {
+  // Top/bottom flaps cover ~45% when closed; animate open 0→1 off the motif.
+  const o = alwaysClosed ? 0 : clamp(open || 0, 0, 1);
+  const cover = 0.48 * (1 - o);
+  const halfH = 78;
+  const flap = halfH * cover;
+  if (flap < 2) return;
+  const c = d.c;
+  const left = x - 78;
+  const w = 156;
+  c.save();
+  c.globalAlpha = 0.92 - o * 0.35;
+  // Top shutter
+  roundRect(c, left, y - halfH, w, flap, 6);
+  c.fillStyle = '#3a1c28ee';
+  c.fill();
+  c.strokeStyle = GOLD;
+  c.lineWidth = 2;
+  c.stroke();
+  // Bottom shutter
+  roundRect(c, left, y + halfH - flap, w, flap, 6);
+  c.fill();
+  c.stroke();
+  // Shutter bar cue
+  if (o < 0.85) {
+    d.text('◐', x, y - halfH + flap * 0.55 + 6, 16, GOLD);
+  }
+  c.restore();
+}
+
+function drawChainRibbon(d, s) {
+  // Screen-space wash ribbon between consecutive restored link panels.
+  const linked = s.panels
+    .filter((p) => p.restored && (p.link || p.shutter))
+    .map((p) => ({p, x: screenX(p, s.scroll)}))
+    .filter((row) => row.x > -40 && row.x < 940)
+    .sort((a, b) => a.x - b.x);
+  if (linked.length < 2) return;
+  const c = d.c;
+  for (let i = 0; i < linked.length - 1; i++) {
+    const a = linked[i];
+    const b = linked[i + 1];
+    const midY = FRAME.y;
+    const strength = Math.max(a.p.chainFlood || 0, b.p.chainFlood || 0, 0.55);
+    c.save();
+    c.globalAlpha = 0.35 + strength * 0.4;
+    c.strokeStyle = '#f4d590';
+    c.lineWidth = 10 + strength * 8;
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(a.x + 40, midY);
+    c.lineTo(b.x - 40, midY);
+    c.stroke();
+    c.restore();
+    d.glow((a.x + b.x) / 2, midY, 28 + strength * 18, '#f4d590');
+  }
+}
+
 function drawColourMark(d, colourId, x, y) {
   const col = COLOURS[colourId] || COLOURS.burgundy;
   d.circle(x, y, 22, col.color, GOLD, 2);
@@ -366,15 +465,19 @@ function drawCoach(d, s) {
   if (!s.boarded || s.result) return;
   let line = null;
   if (s.warnLeft > 0) {
-    line = s.level === 2
-      ? 'Horse only — wait for ♞ in the window'
-      : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
+    line = s.level === 3
+      ? 'Shutters closed — wait for ◐ to open'
+      : s.level === 2
+        ? 'Horse only — wait for ♞ in the window'
+        : 'Wrong colour washes — wait for ' + (s.target?.glyph || '♥');
   } else if (!s.juice && s.t < 5.2 && s.level === 0) {
     line = 'SPLASH the faded patch';
   } else if (!s.juice && s.t < 6.5 && s.level === 1) {
     line = 'SPLASH only the ' + (s.target?.glyph || '♥') + ' match';
   } else if (!s.juice && s.t < 7.2 && s.level === 2) {
     line = 'SPLASH only the ♞ horse in the window';
+  } else if (!s.juice && s.t < 7.5 && s.level === 3) {
+    line = 'SPLASH when shutters open — link the bay';
   }
   if (!line) return;
   const c = d.c;
@@ -401,14 +504,14 @@ function drawMedallion(d, s) {
   d.circle(x, y, 48, '#3a1c28cc', GOLD, 3);
   d.circle(x, y, 36, s.target.color, GOLD, 2);
   d.text(s.target.glyph, x, y + 10, 28, CREAM);
-  d.text(s.level === 2 ? 'horse' : 'match', x, y + 62, 14, GOLD);
+  d.text(s.level === 3 ? 'shutter' : s.level === 2 ? 'horse' : 'match', x, y + 62, 14, GOLD);
   c.restore();
 }
 
 export default {
   title: 'Painted Bay',
-  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. Lantern Row matches medallion colour; Carousel Frieze waits for the horse emblem in the window. Wrong splash only washes soft.',
-  instructions: 'SPLASH the faded patch when it sits in the frame. Ch1: any two of three. Ch2 Lantern Row: medallion colour match. Ch3 Carousel Frieze: horse only in the window — a non-horse soft-washes and the ride continues. First ride of each chapter is free practice and keeps nothing.',
+  intro: 'Arlo’s platform rolls along the living mural. Splash faded patches as they pass — the wall floods awake. Lantern Row matches medallion colour; Carousel Frieze waits for the horse emblem; Evening Panorama opens shutters then links restored scenes into one continuous mural. Wrong splash only washes soft.',
+  instructions: 'SPLASH the faded patch when it sits in the frame. Ch1: any two of three. Ch2 Lantern Row: medallion colour match. Ch3 Carousel Frieze: horse only in the window. Ch4 Evening Panorama: wait for shutters (◐) to open, then SPLASH to link the bay — soft wash never aborts. First ride of each chapter is free practice and keeps nothing.',
   levels: LEVELS,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -431,6 +534,8 @@ export default {
       bloom: 0,
       wash: 0,
       spent: false,
+      shutterOpen: 0,
+      chainFlood: 0,
     }));
     const spawnIds = panels.filter((p) => p.match).map((p) => p.id);
     return makeRideState(level, rng, {
@@ -484,6 +589,7 @@ export default {
     s.panels.forEach((row) => {
       if (row.bloom > 0) row.bloom = Math.max(0, row.bloom - dt * 0.7);
       if (row.wash > 0) row.wash = Math.max(0, row.wash - dt * 0.9);
+      if (row.chainFlood > 0) row.chainFlood = Math.max(0, row.chainFlood - dt * 0.25);
       if (row.flooding) {
         row.flood = Math.min(1, row.flood + dt / 0.55);
         if (row.flood >= 1) row.flooding = false;
@@ -537,6 +643,12 @@ export default {
       live.held = true;
       live.world = s.scroll + FRAME.x;
       live.dwell += dt;
+      // Match shutters open ~0.4s once seated; decoy stays shuttered.
+      if ((live.shutter || live.link) && live.match) {
+        live.shutterOpen = Math.min(1, (live.shutterOpen || 0) + dt / 0.4);
+      } else {
+        live.shutterOpen = 0;
+      }
       s.paused = true;
       if (live.dwell >= s.dwellMax) missPanel(s, live);
     } else {
@@ -590,6 +702,16 @@ export default {
         d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
         d.text(row.match ? '♞' : '·', x + 70, FRAME.y - 62, 20, CREAM);
       }
+      if (s.level === 3) {
+        d.circle(x + 70, FRAME.y - 70, 20, row.match ? '#6b2030cc' : '#3a3a40cc', GOLD, 2);
+        d.text(row.match ? '◐' : '·', x + 70, FRAME.y - 62, 20, CREAM);
+      }
+      // Shutters: decoy always closed; match panels closed until seated/open.
+      if (s.level === 3 && !row.restored && (row.shutter || row.teach || !row.match)) {
+        const seated = row.held || inWindow(row, s.scroll);
+        const alwaysClosed = !row.match || row.teach || !seated;
+        drawShutters(d, x, FRAME.y, row.shutterOpen || 0, alwaysClosed);
+      }
       if (row.wash > 0) {
         d.glow(x, FRAME.y, 70, '#8ab4c8');
         d.text('wash', x, FRAME.y, 22, '#c8e0f0');
@@ -600,6 +722,8 @@ export default {
         d.text(live.match ? 'tap here' : 'soft fail', FRAME.x, FRAME.y + 48, 18, GOLD);
       }
     });
+
+    if (s.level === 3) drawChainRibbon(d, s);
 
     if (s.treasure && !s.treasure.taken && s.discovery > 0) {
       const pulse = 1 + Math.sin(s.t * 4) * 0.1;
@@ -634,7 +758,10 @@ export default {
       c.stroke();
       d.text('SPLASH', 450, top + 210, 44, CREAM);
       d.text(
-        s.level === 2 ? 'horse only in the window' : s.level === 1 ? 'match the medallion' : 'the faded patch',
+        s.level === 3 ? 'shutters open — link the bay'
+          : s.level === 2 ? 'horse only in the window'
+            : s.level === 1 ? 'match the medallion'
+              : 'the faded patch',
         450, top + 262, 22, GOLD,
       );
       c.restore();
