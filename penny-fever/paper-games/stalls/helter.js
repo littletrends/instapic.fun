@@ -19,7 +19,7 @@
  * Tagline: Choose your spiral. Catch what tumbles.
  * Paper-cut deep-red spiral (layered faces + jitter). helter.png court stays hero.
 * Bottom terminus aligned to Palace of Joy stairs base; gold ball rolls crest→door.
- * No on-court drawHud / practice badges / TURN chrome. Shell .play-hud + #actions only.
+ * Cream-bottom ← JUMP → pads on court. No shell STEP. Shell .play-hud only (menu off court).
  * d.glow() — 6-digit hex only. Do NOT set canvasControls.
  */
 import {clamp} from '../draw.js';
@@ -43,11 +43,11 @@ const LEVEL_NAMES = [
 const TAU = Math.PI * 2;
 const CX = 450;
 /** Climb-axis bottom: front terminus (u=0) at Palace of Joy stairs base (~y 540). */
-const Y_BOT = 472;  // front exit ~555 — foot of Palace of Joy stairs
+const Y_BOT = 980;  // big court fill — leave lower cream for ← JUMP → pads
 const Y_TOP = 190;   // crest near tower tip / roof
 const R_BOT = 295;   // keep big readable scale (do not shrink)
 const R_TOP = 58;
-const TURNS = 5.0;   // drop 1 coil vs 6 — 5 readable layers; end at stairs base (no extra loop)
+const TURNS = 6.0;   // restore pre–stairs-shrink coil count
 const Y_SQUASH = 0.28; // flatter ovals so stacked layers stay readable
 const ANG0 = -Math.PI / 2; // bottom-front exit toward viewer / stairs
 const CELL_COUNT = 26;
@@ -427,6 +427,61 @@ function doStep(s) {
   return true;
 }
 
+/** One cell DOWN the spiral (←). */
+function doStepBack(s) {
+  if (s.result || s.broke || s.moving) return false;
+  if (!s.launched) return false;
+  const prev = Math.max(0, (s.youCell | 0) - 1);
+  if (prev === (s.youCell | 0)) return false;
+  logAction(s, 'step-back', {from: s.youCell, to: prev});
+  beginCellMove(s, prev, 'step-back');
+  return true;
+}
+
+/** Cream-bottom pad layout (canvas 900×1200). */
+function creamPads() {
+  const y = 1128;
+  const h = 78;
+  const jumpW = 210;
+  const sideW = 92;
+  const gap = 28;
+  const mid = CX;
+  const jump = {id: 'jump', x: mid - jumpW / 2, y, w: jumpW, h, label: 'JUMP'};
+  const left = {id: 'left', x: jump.x - gap - sideW, y, w: sideW, h, label: '←'};
+  const right = {id: 'right', x: jump.x + jumpW + gap, y, w: sideW, h, label: '→'};
+  const stick = {id: 'stick', x: mid - 18, y: y - 36, w: 36, h: 28, label: '🕹️'};
+  return [left, jump, right, stick];
+}
+
+function hitPad(p) {
+  if (!p || typeof p.x !== 'number') return null;
+  for (const pad of creamPads()) {
+    if (p.x >= pad.x && p.x <= pad.x + pad.w && p.y >= pad.y && p.y <= pad.y + pad.h) return pad.id;
+  }
+  return null;
+}
+
+function drawCreamPads(d) {
+  for (const pad of creamPads()) {
+    if (pad.id === 'stick') {
+      d.text(pad.label, pad.x + pad.w / 2, pad.y + pad.h / 2, 22, GOLD);
+      continue;
+    }
+    const isJump = pad.id === 'jump';
+    d.ellipse(pad.x + pad.w / 2 + 2, pad.y + pad.h / 2 + 4, pad.w * 0.48, pad.h * 0.42, TRACK_SHADOW + '66');
+    d.ellipse(
+      pad.x + pad.w / 2,
+      pad.y + pad.h / 2,
+      pad.w * 0.48,
+      pad.h * 0.42,
+      isJump ? CREAM + 'ee' : '#233941ee',
+      isJump ? CREAM_DEEP : '#a48c62',
+      2
+    );
+    d.text(pad.label, pad.x + pad.w / 2, pad.y + pad.h / 2 + 1, isJump ? 22 : 28, isJump ? BURGUNDY_DEEP : CREAM);
+  }
+}
+
 function maybeFinish(s, why) {
   if (s.result || s.broke) return;
   const ok = (s.hits || 0) >= (s.goal || GOAL);
@@ -547,14 +602,12 @@ function drawBall(d, x, y, r) {
 export default {
   title: 'Spiral Slide',
   intro: 'Choose your spiral. Catch what tumbles. STEP up Tilly’s helter — cream ladders boost you up the spiral; burgundy snakes soft-dump you down (ride never aborts). Land 3 ladders to clear. A keepsake hides on a snake-detour off the easy climb.',
-  instructions: 'STEP up the spiral (shell STEP, tap ahead, or ↑). Cream ladders boost you up; land on 3 to clear Practice. Burgundy snakes soft-dump you down — climb again; paid rides never abort. Keepsake sits off the easy ladder route on the snake-dump path. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  instructions: 'Climb with ← JUMP → in the cream (or ↑ / space). Cream ladders boost you up; land on 3 to clear Practice. Burgundy snakes soft-dump you down — climb again; paid rides never abort. Keepsake sits off the easy ladder route on the snake-dump path. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
   houseSeconds: 70,
-  actions: [
-    {id: 'step', label: 'STEP', hold: false},
-  ],
+  actions: [],
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
     const plan = ch1Board(); // Ch2–6 frozen: same First Spiral board until Aura reopens
@@ -720,26 +773,28 @@ export default {
     }
   },
   action(s, id, down) {
-    if (id === 'step') {
-      if (down) {
-        if (!s.result && !s.broke) doStep(s);
-      }
-    }
+    if (!down || s.result || s.broke) return;
+    if (id === 'step' || id === 'jump') doStep(s);
+    else if (id === 'left') doStepBack(s);
+    else if (id === 'right') doStep(s);
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
-    if (type === 'down' || type === 'up') {
-      // Tap-ahead: if pointer is above YOU (toward top / higher cell), STEP.
-      if (type === 'up' && p && typeof p.y === 'number') {
-        const ahead = p.y < (s.youY || Y_BOT) - 8;
-        const near = Math.hypot((p.x || 0) - (s.youX || CX), (p.y || 0) - (s.youY || Y_BOT)) < 120;
-        if (ahead || near) doStep(s);
-      }
+    if (type !== 'up' || !p) return;
+    const hit = hitPad(p);
+    if (hit === 'left') { doStepBack(s); return; }
+    if (hit === 'right' || hit === 'jump' || hit === 'stick') { doStep(s); return; }
+    // Tap-ahead on the spiral still STEPs (ignore cream pad band).
+    if (typeof p.y === 'number' && p.y < 1080) {
+      const ahead = p.y < (s.youY || Y_BOT) - 8;
+      const near = Math.hypot((p.x || 0) - (s.youX || CX), (p.y || 0) - (s.youY || Y_BOT)) < 120;
+      if (ahead || near) doStep(s);
     }
   },
   key(s, k, down) {
     if (!down || s.result || s.broke) return;
-    if (k === 'ArrowUp' || k === 'ArrowRight' || k === ' ' || k === 'Enter') doStep(s);
+    if (k === 'ArrowLeft') doStepBack(s);
+    else if (k === 'ArrowUp' || k === 'ArrowRight' || k === ' ' || k === 'Enter' || k === 'j' || k === 'J') doStep(s);
   },
   draw(s, d) {
     const cells = s.cells || [];
@@ -813,6 +868,9 @@ export default {
     }
 
     drawFx(d, s);
+
+    // On-court cream-bottom controls (replaces shell STEP).
+    if (!s.result && !s.broke) drawCreamPads(d);
   },
   readout: (s) => s.note || '',
 };
