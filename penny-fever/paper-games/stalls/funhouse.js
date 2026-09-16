@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: maze-dots-2
+ * cache: maze-stick-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -31,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-dots-2';
+} from './funhouse-rooms.js?v=maze-stick-1';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -63,7 +63,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-dots-2';
+const BEA_CACHE_VER = 'maze-stick-1';
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -1813,17 +1813,13 @@ function updateDoorChapter(s, dt) {
 export default {
   title: 'Laughing Doorway',
   intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, dodge laugh-faces, and grab punchline power to chase them back.',
-  instructions: 'Laughing Maze (all 6 chapters): drag the centre-bottom MOVE stick (or swipe / arrow actions / keyboard arrows) through the cream corridors. Chomp star, moon, and penny chips. Laugh-faces chase you — pick up a glowing punchline power pellet (or SHUT the punchline door) to chase them back for a few seconds. Clear the chapter chip goal to finish — extras are bonus. Soft house clock — timer end is an ordinary exit, not a crash. Same maze layout every chapter; later chapters tighten fairness only.',
+  instructions: 'Laughing Maze (all 6 chapters): drag the centre-bottom MOVE stick (or swipe / keyboard arrows) through the cream corridors. Chomp the midway chips. Laugh-faces chase you — pick up a glowing punchline power pellet (or SHUT the punchline door) to chase them back for a few seconds. Clear the chapter chip goal to finish — extras are bonus. Soft house clock — timer end is an ordinary exit, not a crash. Same maze layout every chapter; later chapters tighten fairness only.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
   houseSeconds: 90,
-  actions: [
-    {id: 'up', label: 'UP · ↑', hold: true},
-    {id: 'down', label: 'DOWN · ↓', hold: true},
-    {id: 'left', label: 'LEFT · ←', hold: true},
-    {id: 'right', label: 'RIGHT · →', hold: true},
-  ],
+  // MOVE via centre-bottom joystick + keyboard/swipe — no shell arrow dock.
+  actions: [],
   create(level, rng) {
     const graph = chapterGraph(level);
     const mazeMode = graph.mode === 'maze';

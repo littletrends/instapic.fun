@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-3e';
+const DRESS_CACHE = 'dress-3f';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -160,13 +160,14 @@ function ch1Board() {
     {cell: 18, boost: 4, teach: false}, // 18 → 22
   ];
   // Collectible tokens ON the track (not exclusive treasures).
+  // Hard seats: off cushion-boost arcs so bounce-pass doesn't auto-claim.
   const tokens = [
-    {cell: 6, id: 'star-token'},       // was 3 — cleared for slide-3
-    {cell: 9, id: 'moon-penny'},
-    {cell: 16, id: 'everyday-penny'},
+    {cell: 2, id: 'star-token'},       // early — slide-3 next
+    {cell: 9, id: 'moon-penny'},       // squeeze before slide-10
+    {cell: 23, id: 'everyday-penny'},  // late crest approach past slide-20
   ];
-  // Hard spot near mid coil — careful tap / jump past.
-  const treasureCell = 14; // spiral-tower between slide-10 and cush-11→16 path
+  // Chapter keepsake: same visual size as tokens; off bounce arcs (11→16, 18→22).
+  const treasureCell = 17; // tap/jump claim between cush-11 zone and cush-18
   // Hopper sits near crest, slightly off-track (loads balls at top).
   const hopper = {u: 0.92, ox: 48, oy: -28};
   return {
@@ -987,7 +988,7 @@ export default {
     if (s.result || s.broke) return;
 
     const spawnIds = (s.cells || []).map((_, i) => 'cell-' + i);
-    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-14', 'cell-12'])) {
+    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-17', 'cell-9'])) {
       s.previewing = true;
       s.previewT = 0;
       s.launched = false;
@@ -1028,16 +1029,18 @@ export default {
         ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). TAP up.'
         : 'TAP along the spiral — JUMP onto cushions, over slides';
       if (s.eligible) {
-        const preferred = 'cell-' + (s.planTreasureCell ?? 13);
+        const prefer = s.planTreasureCell != null ? s.planTreasureCell : 17;
+        const preferred = 'cell-' + prefer;
         if (s.spawnId && String(s.spawnId).startsWith('cell-')) {
           const idx = Number(String(s.spawnId).replace('cell-', ''));
-          // Keep seal spawn only if near authored mid-coil keepsake.
-          if (!(idx >= 11 && idx <= 15)) s.spawnId = preferred;
+          // Keep seal spawn near authored hard-seat keepsake (±2).
+          if (!(idx >= prefer - 2 && idx <= prefer + 2)) s.spawnId = preferred;
         } else {
           s.spawnId = preferred;
         }
         const idx = Number(String(s.spawnId).replace('cell-', ''));
-        s.planTreasureCell = clamp(Number.isFinite(idx) ? idx : 13, 11, 15);
+        const raw = Number.isFinite(idx) ? idx : prefer;
+        s.planTreasureCell = clamp(raw, prefer - 2, prefer + 2);
       }
       logAction(s, 'preview', {secs: PREVIEW_SECS});
     }
@@ -1212,17 +1215,18 @@ export default {
       }
     }
 
-    // Chapter keepsake on coil cell.
+    // Chapter keepsake — normal token size (same w as track tokens).
     if (s.treasure && !s.treasure.taken) {
       const tc = cellAt(s, s.treasure.cell);
       if (tc) {
-        d.glow(tc.x, tc.y, 34, GOLD);
-        d.star(tc.x, tc.y, 14, CREAM);
+        d.glow(tc.x, tc.y, 18, GOLD);
         try {
           const key = typeof spriteKey === 'function' ? spriteKey(s.treasure.id) : s.treasure.id;
-          d.item?.(key, tc.x, tc.y, {w: 40, alpha: 1});
-        } catch { /* sprite optional */ }
-        d.text('KEEP', tc.x, tc.y - 28, 11, GOLD);
+          d.item?.(key, tc.x, tc.y, {w: 28, alpha: 0.92});
+        } catch {
+          d.star(tc.x, tc.y, 10, CREAM);
+        }
+        d.text('KEEP', tc.x, tc.y - 22, 10, GOLD);
       }
     }
 
