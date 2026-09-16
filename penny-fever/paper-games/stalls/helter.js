@@ -73,25 +73,27 @@ const LANDMARK_GOLD = '#d4a84a';
 const LANDMARK_TEAL = '#7ec8b8';
 
 
-/** Ch4-only: slightly wider cream-ladder snap while recovering after a soft miss, and on late rings. */
+/** Ch4-only: wider cream-ladder snap on early rings, recover, and late light pressure. */
 function ch4LadderSnap(s, ring) {
   if (!s || s.level !== 3) return FACE_SNAP;
   if ((s.ch4Recover || 0) > 0) return FACE_SNAP * 1.28; // ~96° — clear runway after soft dump
+  if (ring && ring.i <= 2) return FACE_SNAP * 1.22; // early rings: cream wins close calls
   if (ring && ring.i >= 4) return FACE_SNAP * 1.14; // late rings: light snake pressure
   return FACE_SNAP;
 }
 
-/** Ch4-only: slightly narrower snake snap while recovering / late so cream wins close calls. */
+/** Ch4-only: narrower snake snap on early / recover / late so cream wins close calls. */
 function ch4SnakeSnap(s, ring) {
   if (!s || s.level !== 3) return FACE_SNAP;
   if ((s.ch4Recover || 0) > 0) return FACE_SNAP * 0.82;
+  if (ring && ring.i <= 2) return FACE_SNAP * 0.85; // early: cream preferred over snake
   if (ring && ring.i >= 4) return FACE_SNAP * 0.90;
   return FACE_SNAP;
 }
 
 /**
- * Ch4 soft-miss assist: when still under GOAL, refund clock + brief cream bias so Practice 3/3
- * stays reachable in one free ride after a soft dump / landmark / cushion.
+ * Ch4 soft-miss assist: when still under GOAL, put next ring facing cream + net clock gain
+ * so Practice 3/3 stays reachable after a soft dump / landmark / cushion.
  */
 function ch4AfterSoftMiss(s, kind) {
   if (!s || s.level !== 3) return false;
@@ -100,24 +102,19 @@ function ch4AfterSoftMiss(s, kind) {
     s.t = Math.max(0, s.t - 0.30);
     return true;
   }
-  // Refund / boost time so the next cream ladder has runway.
-  s.t = Math.max(0, s.t - 2.25);
-  s.duration = (s.duration || 0) + 1.75;
-  s.ch4Recover = Math.max(s.ch4Recover || 0, 2);
+  // Net +time remaining: duration bump, no rewind of t (avoid net time loss).
+  s.duration = (s.duration || 0) + 3.5;
+  s.ch4Recover = Math.max(s.ch4Recover || 0, 3);
   s.note = 'Cream ladder next — TURN clear';
   s.statusCopy = 'Cream ladder next';
   s.phaseFlash = 0.95;
   s.phaseFlashLabel = kind === 'landmark' ? 'Join' : (kind === 'cushion' ? 'Cushion' : 'Snake');
-  // Nudge the next undischarged ring toward cream (partial — still needs a TURN).
+  // Face cream on the next undischarged ring (~0 ±0.12) so Ladder 1 is fast after soft dump.
   const next = (s.rings || []).find((r) => !r.done);
   if (next) {
-    let diff = 0 - next.targetTheta;
-    while (diff > Math.PI) diff -= TAU;
-    while (diff < -Math.PI) diff += TAU;
-    const pull = Math.sign(diff || 1) * Math.min(Math.abs(diff), Math.PI * 0.28);
-    if (Math.abs(diff) > 0.04) {
-      next.targetTheta = angNorm(next.targetTheta + pull);
-    }
+    const jitter = ((next.i * 0.037) % 0.12) - 0.06; // deterministic tiny offset ≤0.06 rad
+    next.targetTheta = angNorm(jitter);
+    next.theta = next.targetTheta;
   }
   return true;
 }
@@ -151,25 +148,30 @@ function facingKind(theta) {
   return toLadder <= toSnake ? 'ladder' : 'snake';
 }
 
-function facingTight(theta) {
-  return Math.min(angDist(theta, 0), angDist(theta, Math.PI)) <= FACE_SNAP;
+function facingTight(theta, half) {
+  const h = (half != null) ? half : FACE_SNAP;
+  return Math.min(angDist(theta, 0), angDist(theta, Math.PI)) <= h;
 }
 
 /**
  * Ring-aware facing for Ch4 three-way rings.
- * Ladder FACE_SNAP always wins; landmark is soft reconnect; snake soft dump.
+ * Ladder snap (Ch4-wider when s provided) always wins; landmark soft reconnect; snake soft dump.
  * Non-threeway rings keep classic ladder vs snake.
  */
-function ringFacing(ring, theta) {
+function ringFacing(ring, theta, s) {
   if (ring && ring.threeway) {
     const toL = angDist(theta, 0);
-    if (toL <= FACE_SNAP) return 'ladder';
+    const ladderHalf = ch4LadderSnap(s, ring);
+    if (toL <= ladderHalf) return 'ladder';
     const half = (ring.threeway.half != null) ? ring.threeway.half : LANDMARK_HALF;
     const loc = (ring.threeway.landmark != null) ? ring.threeway.landmark : LANDMARK_LOCAL;
     const toM = angDist(theta, loc);
     const toS = angDist(theta, Math.PI);
-    if (toM <= half && toM <= toS) return 'landmark';
-    if (toS <= FACE_SNAP) return 'snake';
+    // Slightly shrink landmark window on early Ch4 so cream wins close calls.
+    const mHalf = (s && s.level === 3 && ring.i <= 2) ? half * 0.92 : half;
+    const snakeHalf = ch4SnakeSnap(s, ring);
+    if (toM <= mHalf && toM <= toS) return 'landmark';
+    if (toS <= snakeHalf) return 'snake';
     // Nearest of the three outside snap windows.
     if (toL <= toM && toL <= toS) return 'ladder';
     if (toM <= toS) return 'landmark';
@@ -268,8 +270,9 @@ function chapterPlan(level, rng) {
       // Three notches: cream ladder (win), burgundy snake (soft dump), gold/teal landmark (soft reconnect).
       const teach = i === 0;
       threeway = {teach, landmark: LANDMARK_LOCAL, half: LANDMARK_HALF};
-      // Start near the landmark so the player must TURN to the cream ladder.
-      start = LANDMARK_LOCAL + (rng() - 0.5) * 0.14;
+      // Cream-friendly teach: ~40–55° off cream (NOT at landmark) — short TURN lands ladder.
+      const mag = Math.PI * (0.222 + rng() * 0.083); // ~40°–55°
+      start = (rng() < 0.5 ? mag : -mag);
     } else if (tunnelIdx && tunnelIdx.has(i)) {
       // Safe exit is always the ladder notch; symbol teaches which notch before darkness.
       const teach = i === 0;
@@ -300,7 +303,10 @@ function chapterPlan(level, rng) {
       // Later rings: off enough to need a TURN; still recoverable.
       // Ch4: milder offset so late snakes stay light after teach (Aura Practice 3/3 bar).
       if (level === 3) {
-        const mag = Math.PI * (0.44 + rng() * 0.10); // ~79°–97° — needs TURN, not a free ladder
+        // Rings 1–2: milder ~45–65° off cream; later clean rings keep a fuller TURN ask.
+        const mag = (i <= 2)
+          ? Math.PI * (0.25 + rng() * 0.111) // ~45°–65°
+          : Math.PI * (0.44 + rng() * 0.10); // ~79°–97°
         start = (rng() < 0.5 ? mag : -mag);
       } else {
         start = (rng() < 0.5 ? Math.PI * 0.55 : Math.PI * 1.45) + (rng() - 0.5) * 0.25;
@@ -385,7 +391,7 @@ function turnRing(s, delta) {
     logAction(s, 'turn', {ring: ring.i, theta: Math.round(ring.targetTheta * 1000) / 1000, face: 'cushion'});
     return;
   }
-  const face = ringFacing(ring, ring.targetTheta);
+  const face = ringFacing(ring, ring.targetTheta, s);
   const phase = tunnelPhase(s, ring);
   if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
     const exit = tunnelExitKind(ring);
@@ -507,7 +513,7 @@ function commitRing(s, ring) {
   }
 
   // Ch4 landmark / side chute: soft reconnect — no abort, no ladder credit.
-  if (snappedLandmark || (ring.threeway && !snappedLadder && ringFacing(ring, ring.theta) === 'landmark')) {
+  if (snappedLandmark || (ring.threeway && !snappedLadder && ringFacing(ring, ring.theta, s) === 'landmark')) {
     ring.done = true;
     ring.result = 'landmark';
     logAction(s, 'commit', {ring: ring.i, face: 'landmark', theta: Math.round(ring.theta * 1000) / 1000});
@@ -532,7 +538,7 @@ function commitRing(s, ring) {
     return;
   }
 
-  const face = ringFacing(ring, ring.theta);
+  const face = ringFacing(ring, ring.theta, s);
   ring.done = true;
   ring.result = face;
   logAction(s, 'commit', {ring: ring.i, face, theta: Math.round(ring.theta * 1000) / 1000});
@@ -614,7 +620,7 @@ function coachingLine(s, preview, ring) {
   if (ring && !ring.done && ring.threeway && ring.threeway.teach) {
     const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
     if (preview || lead <= THREEWAY_WARN_SECS) {
-      const face = ringFacing(ring, ring.targetTheta);
+      const face = ringFacing(ring, ring.targetTheta, s);
       if (face === 'ladder' && facingTight(ring.targetTheta)) {
         return 'Ladder faces you — drop through when it arrives.';
       }
@@ -655,7 +661,7 @@ function coachingLine(s, preview, ring) {
     const phase = tunnelPhase(s, ring);
     if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
       const exit = tunnelExitKind(ring);
-      const face = ringFacing(ring, ring.targetTheta);
+      const face = ringFacing(ring, ring.targetTheta, s);
       if (face === exit && facingTight(ring.targetTheta)) {
         return 'Exit notch faces you — hold through the tunnel.';
       }
@@ -666,7 +672,7 @@ function coachingLine(s, preview, ring) {
     if (cushionBlocking(ring, ring.targetTheta)) {
       return 'Cushion ahead — TURN clear of it toward the ladder.';
     }
-    const face = ringFacing(ring, ring.targetTheta);
+    const face = ringFacing(ring, ring.targetTheta, s);
     if (face === 'ladder' && facingTight(ring.targetTheta)) {
       return 'Ladder faces you — drop through when it arrives.';
     }
@@ -918,7 +924,7 @@ function drawRingToy(d, s, ring, clock, teach) {
   const rx = ringRadius(s, ring);
   const ry = rx * 0.38;
   const theta = ring.theta;
-  const face = ringFacing(ring, ring.targetTheta);
+  const face = ringFacing(ring, ring.targetTheta, s);
   const tight = facingTight(ring.targetTheta);
   const active = !ring.done && ring === activeRing(s);
   const phase = tunnelPhase(s, ring);
@@ -1113,7 +1119,7 @@ function drawBottomStrip(d, s, preview, ring) {
     } else if (cushionBlocking(ring, ring.targetTheta)) {
       d.text('facing: cushion', 450, 1156, 13, '#e8b0b0cc');
     } else {
-      const face = ringFacing(ring, ring.targetTheta);
+      const face = ringFacing(ring, ring.targetTheta, s);
       const faceTxt = face === 'ladder' ? 'facing: ladder'
         : (face === 'landmark' ? 'facing: side chute' : 'facing: snake');
       const faceCol = face === 'landmark' ? (LANDMARK_TEAL + 'cc') : '#f0d09acc';
@@ -1246,7 +1252,7 @@ export default {
 
     // Soft camera bank from ring facing — reduced motion keeps windows, less bank.
     const live = activeRing(s);
-    const liveFace = live ? ringFacing(live, live.targetTheta) : null;
+    const liveFace = live ? ringFacing(live, live.targetTheta, s) : null;
     const faceSign = liveFace === 'ladder' ? -1 : (liveFace === 'landmark' ? 0 : (liveFace ? 1 : 0));
     const targetBank = faceSign * (reduced ? 4 : 14);
     s.camBank += (targetBank - s.camBank) * Math.min(1, dt * 3.5);
@@ -1287,7 +1293,7 @@ export default {
           s.phaseFlashLabel = 'Three ways';
           logAction(s, 'threeway-warn', {ring: liveRing.i, lead: THREEWAY_WARN_SECS});
         }
-        const face = ringFacing(liveRing, liveRing.targetTheta);
+        const face = ringFacing(liveRing, liveRing.targetTheta, s);
         if (face === 'ladder' && facingTight(liveRing.targetTheta)) {
           s.note = 'Ladder faces you — drop through when it arrives.';
         } else if (face === 'landmark') {
@@ -1340,13 +1346,14 @@ export default {
     // One discrete commit per ring when the mat reaches it (Helix-style drop through).
     s.rings.forEach((ring) => {
       if (!ring.done && s.t >= ring.t) {
-        // Ch4: if nearly facing cream after a soft miss / late ring, grant a short grace turn window.
+        // Ch4: if nearly facing cream on early rings / recover / late, grant a short grace turn window.
         if (s.level === 3 && !ring._ch4Grace) {
           const toL = angDist(ring.targetTheta, 0);
           const half = ch4LadderSnap(s, ring);
-          if (toL > half && toL < half + 0.28 && ((s.ch4Recover || 0) > 0 || ring.i >= 3)) {
+          const earlyOrRecover = (s.ch4Recover || 0) > 0 || ring.i <= 2 || ring.i >= 3;
+          if (toL > half && toL < half + 0.28 && earlyOrRecover) {
             ring._ch4Grace = true;
-            ring.t += 0.45;
+            ring.t += 0.62;
           } else {
             commitRing(s, ring);
           }
