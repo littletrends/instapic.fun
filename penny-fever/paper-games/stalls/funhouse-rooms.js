@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: maze-art-1
+ * cache: maze-dots-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -7,8 +7,8 @@
  * faceCount, house timer, scenery density flag (props, not grid).
  * Old punchline-door CHAPTER2–6 room graphs retired from play routing.
  *
- * CHAPTER BONUSES on path: star / moon / penny chips + keepsake per chapter
- *   via ride-seek boarding (sprites under ride-keepsakes/).
+ * Path chips are simple dots for now (not catalogue coins).
+ *   Props / bonus-item art TBD per Lorie. Keepsakes still via ride-seek when eligible.
  * TREASURES exclusive Ch1–6 unchanged.
  *
  * SCENERY: cream court oval; Tent_26_Bea dress BUILD still HELD — maze props

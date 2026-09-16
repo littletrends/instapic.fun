@@ -1,4 +1,4 @@
-import {games} from '../paper-games/catalogue.js?v=dress-3d';
+import {games} from '../paper-games/catalogue.js?v=maze-dots-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
 import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-3';
