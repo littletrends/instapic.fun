@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: maze-all-1
+ * cache: maze-art-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -17,7 +17,7 @@
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
  *   powerSec 7.5. Soft fails never abort paid ride.
  *
- * Shell #actions + .play-hud; no canvas drawHud menu panel.
+ * Shell #actions + .play-hud strip (sibling under #stage); no canvas menu pills.
  * d.glow() 6-digit hex only. Oval-only draw — don’t overpaint whole court.
  *
  * Source of truth: Lorie GREENLIGHT + addendum (tagline: Every door tells a different joke).
@@ -30,7 +30,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-all-1';
+} from './funhouse-rooms.js?v=maze-art-1';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -62,7 +62,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-all-1';
+const BEA_CACHE_VER = 'maze-art-1';
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -369,8 +369,7 @@ function startChoose(s, room) {
 
 function maybeRevealTreasure(s, room) {
   if (!room?.treasure || s.treasureCollected) return;
-  if (!s.eligible) return;
-  if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
+  // Always place chapter keepsake for display (Practice: visible, dim, no collect).
   if (!s.treasure) {
     let tx = room.treasure.x;
     let ty = room.treasure.y;
@@ -379,13 +378,16 @@ function maybeRevealTreasure(s, room) {
       tx = c.x; ty = c.y;
     }
     s.treasure = {
-      id: s.treasureId,
+      id: s.treasureId || TREASURES[s.level] || TREASURES[0],
       x: tx ?? 450,
       y: ty ?? 470,
       r: room.treasure.r || 58,
       taken: false,
     };
   }
+  // Collect window only on eligible boarded rides with matching spawn.
+  if (!s.eligible) return;
+  if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
   if (!s.treasure.taken) {
     s.treasureRevealed = true;
     s.treasureWindow = true;
@@ -918,37 +920,67 @@ function drawMazeCourt(s, d) {
     }
   }
 
-  // Punchline door set-piece
+  // Punchline door set-piece — Bea doorway cutout / laughing-doorway sprite
   if (maze.doorCell) {
     const dc = cellCenter(maze, maze.doorCell.c, maze.doorCell.r);
     const shut = s.doorShut;
-    d.poly(
-      [[dc.x - 14, dc.y - 16], [dc.x + 14, dc.y - 16], [dc.x + 14, dc.y + 16], [dc.x - 14, dc.y + 16]],
-      shut ? '#5a2018' : WOOD, GOLD, 2,
-    );
-    d.text(shut ? 'SHUT' : 'HA!', dc.x, dc.y + 4, 11, INK);
-    if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
+    const bea = ensureBeaProps().doorway;
+    const doorOk = bea && bea.complete && bea.naturalWidth > 0;
+    if (!shut) d.glow(dc.x, dc.y, 30, '#f4d590');
+    if (doorOk) {
+      d.sprite(bea, dc.x, dc.y, {w: shut ? 34 : 40, alpha: shut ? 0.55 : 1, shadow: !shut});
+    } else {
+      d.item(spriteKey('laughing-doorway'), dc.x, dc.y, {
+        w: shut ? 34 : 40, alpha: shut ? 0.55 : 1, shadow: !shut,
+        fallback: () => {
+          d.poly(
+            [[dc.x - 14, dc.y - 16], [dc.x + 14, dc.y - 16], [dc.x + 14, dc.y + 16], [dc.x - 14, dc.y + 16]],
+            shut ? '#5a2018' : WOOD, GOLD, 2,
+          );
+        },
+      });
+    }
+    if (shut) d.text('SHUT', dc.x, dc.y + 18, 11, INK);
   }
 
-  // Pellets
+  // Pellets — real catalogue sprites (geometric fallback if art missing)
   for (const pel of maze.pellets) {
     if (pel.taken) continue;
     const ctr = cellCenter(maze, pel.c, pel.r);
     if (pel.kind === 'power') {
       const pulse = 0.55 + 0.45 * Math.sin(t * 5 + pel.c);
-      d.glow(ctr.x, ctr.y, 18 + pulse * 8, '#f4d590');
-      d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
-      d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
+      d.glow(ctr.x, ctr.y, 20 + pulse * 10, '#f4d590');
+      d.item(spriteKey('laughing-doorway'), ctr.x, ctr.y, {
+        w: 30, shadow: false,
+        fallback: () => {
+          d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
+          d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
+        },
+      });
     } else if (pel.kind === 'star') {
-      if (typeof d.star === 'function') d.star(ctr.x, ctr.y, 7, GOLD);
-      else diamond(d, ctr.x, ctr.y, 6, GOLD, BURGUNDY);
+      d.item(spriteKey('star-token'), ctr.x, ctr.y, {
+        w: 24, shadow: false,
+        fallback: () => {
+          if (typeof d.star === 'function') d.star(ctr.x, ctr.y, 7, GOLD);
+          else diamond(d, ctr.x, ctr.y, 6, GOLD, BURGUNDY);
+        },
+      });
     } else if (pel.kind === 'moon') {
-      d.circle(ctr.x, ctr.y, 5.5, CREAM, GOLD, 1.4);
-      d.circle(ctr.x + 2, ctr.y - 1, 3.5, '#f7ebcf');
+      d.item(spriteKey('moon-penny'), ctr.x, ctr.y, {
+        w: 24, shadow: false,
+        fallback: () => {
+          d.circle(ctr.x, ctr.y, 5.5, CREAM, GOLD, 1.4);
+          d.circle(ctr.x + 2, ctr.y - 1, 3.5, '#f7ebcf');
+        },
+      });
     } else {
-      // penny chip
-      d.circle(ctr.x, ctr.y, 4.5, GOLD, WOOD, 1.2);
-      d.circle(ctr.x, ctr.y, 2.2, CREAM);
+      d.item(spriteKey('everyday-penny'), ctr.x, ctr.y, {
+        w: 22, shadow: false,
+        fallback: () => {
+          d.circle(ctr.x, ctr.y, 4.5, GOLD, WOOD, 1.2);
+          d.circle(ctr.x, ctr.y, 2.2, CREAM);
+        },
+      });
     }
   }
 
@@ -966,22 +998,18 @@ function drawMazeCourt(s, d) {
   if (s.powerLeft > 0) d.glow(s.player.x, s.player.y, 36, '#ffe6a4');
   drawPlayer(d, s);
 
-  if (s.treasure && !s.treasure.taken && s.treasureWindow && s.eligible) {
-    d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
+  // Chapter keepsake always visible once placed (Practice: dim, no collect)
+  if (s.treasure && !s.treasure.taken) {
+    const canTake = !!(s.eligible && s.treasureWindow);
+    if (canTake) d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
     d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
-      w: 62, shadow: false,
+      w: 62, shadow: false, alpha: canTake ? 1 : 0.55,
       fallback: () => d.heart(s.treasure.x, s.treasure.y, 16),
     });
   }
   drawFlies(d, s);
 
-  // Lean chip — clearGoal progress (extras remain as bonus chomp)
-  const taken = s.pelletsTaken ?? 0;
-  const need = s.goal || maze.clearGoal || 24;
-  const chip = s.powerLeft > 0
-    ? `POWER ${Math.ceil(s.powerLeft)}s · ${taken}/${need}`
-    : `${taken}/${need} chips · stick / arrows`;
-  drawChip(d, chip, 168, 14);
+  // Progress lives in shell #readout / .play-hud — no fake court pills.
   // MOVE stick under cream court (helter pad band) — never over maze lanes.
   if (!s.result && !s.broke) drawMazeStick(s, d);
 }
@@ -1688,10 +1716,11 @@ function drawRoom(s, d) {
     (s.faces || []).forEach(f => drawLaughFace(d, f, t));
   }
 
-  if (s.treasure && !s.treasure.taken && s.treasureWindow && s.eligible) {
-    d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
+  if (s.treasure && !s.treasure.taken) {
+    const canTake = !!(s.eligible && s.treasureWindow);
+    if (canTake) d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
     d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
-      w: 62, shadow: false,
+      w: 62, shadow: false, alpha: canTake ? 1 : 0.55,
       fallback: () => d.heart(s.treasure.x, s.treasure.y, 16),
     });
   }
