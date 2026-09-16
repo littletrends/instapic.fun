@@ -70,7 +70,7 @@ import {TAU, clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure,
-  logAction, drawHud, prefersReducedMotion,
+  logAction, prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
 const RIDE = 'carousel';
@@ -1906,17 +1906,7 @@ function drawApproachGlint(d, scr, t, treasure) {
   d.circle(scr.x, scr.y, 6, '#ffe6a4aa', '#d2a65b', 1.5);
 }
 
-function drawPracticeBadge(d, s) {
-  if (!s.practice) return;
-  // Below drawHud panel (practice HUD ends ~168) — never cover N/3 count (swings pattern).
-  const pulse = 1 + 0.03 * Math.sin((s.t || 0) * 4);
-  const w = 156 * pulse;
-  const x0 = 450 - w / 2;
-  const y = 178;
-  d.glow(450, y + 16, 32, '#d2a65b');
-  d.poly([[x0, y], [x0 + w, y], [x0 + w, y + 32], [x0, y + 32]], '#6b2030e8', '#f0d09a', 2);
-  d.text('PRACTICE', 450, y + 22, 16, '#ffe6a4');
-}
+
 
 /** Tiny crest-adjacent cue — not a full-width teach panel / permanent bar. */
 function drawCrestAdjacentCue(d, primary, secondary, fade, accent) {
@@ -1935,18 +1925,7 @@ function drawCrestAdjacentCue(d, primary, secondary, fade, accent) {
   if (secondary) d.text(secondary, CX, y + 32, 11, `rgba(240,208,154,${0.92 * fade})`);
 }
 
-function drawPracticeLegend(d, s) {
-  if (!s.practice) return;
-  if ((s.t || 0) < VERB_SEC) return;
-  const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
-  if (lapIdx > 0) return;
-  // Brief time-gated crest cue — durable teach lives in s.note / shell readout.
-  const t = s.t || 0;
-  const end = VERB_SEC + 3.2;
-  if (t > end) return;
-  const fade = t < end - 0.5 ? 1 : Math.max(0, (end - t) / 0.5);
-  drawCrestAdjacentCue(d, 'almost… NOW', null, fade, '#d2a65b');
-}
+
 
 /** Ch2 teach-alone chrome — brief crest-adjacent. No LOOK / TAP glyph. */
 function drawCh2MarkChrome(d, s) {
@@ -2929,11 +2908,8 @@ export default {
 
     drawSparksAndFlash(d, s);
 
-    // Single top HUD (ride-seek drawHud). Shell .play-hud owns cash/timer.
-    // No homemade lap/finds chrome fighting drawHud. Practice badge below count.
-    drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
-    drawPracticeBadge(d, s);
-    drawPracticeLegend(d, s);
+    // Shell .play-hud + #readout/s.note own status — no on-court Practice/count HUD.
+    // Crest-adjacent teach cues only.
     drawCh2MarkChrome(d, s);
     drawCh3MirrorChrome(d, s);
     drawCh4WindowChrome(d, s);
