@@ -1,21 +1,22 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-1
+ * cache: dress-ready-2
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * PROPS = full Tent_26_Bea 6-pack (piece-01..06) + bea-player YOU. BONUS = TREASURES Ch1–6.
- *   Path chips = simple geometric dots only (never catalogue coins). Laugh-faces = drawn comedy masks.
+ * PROPS = Tent_26_Bea (curtain, standee, doorway×2 portals, starKey) + bea-player YOU.
+ *   No moon (piece-03) / spotlight (piece-04). BONUS = TREASURES Ch1–6 cream-border off-path.
+ *   Path chips = geometric dots only. Laugh-faces = drawn comedy masks (soft bomb on touch).
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
- *   Wire ALL 6 Doorway Tent_26_Bea props via placeDress on cream border —
- *   outside maze lanes. piece-02 = decorative Bea standee; bea-player.png = moving YOU.
+ *   Two doorway props on middle left/right edge walls = paired walk-through portals.
+ *   starKey mid-court → awards chapter bonus (locked→collected). piece-02 standee dressing.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
  *   stay. actions: [] — no shell arrow dock.
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
- *   powerSec 7.5. Soft fails never abort paid ride.
+ *   powerSec 7.5. Soft fails never abort paid ride (face bomb = relocate to start).
  *
  * Shell .play-hud strip outside stage OK; no canvas pills/chips/coach on cream.
  * d.glow() 6-digit hex only. Oval-only draw — don’t overpaint whole court.
@@ -30,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-1';
+} from './funhouse-rooms.js?v=dress-ready-2';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -53,17 +54,18 @@ const GULP_DUR = 0.42;
 const MAZE_HOUSE = 110;
 const FACE_RESPAWN = 3.8;
 
-/** Tent_26_Bea 6-pack — Doorway kit only (+ funhouse.png backdrop). bea-player = YOU. */
+/** Tent_26_Bea kit — no moon/spotlight. Doorway×2 portals + starKey mid-court. bea-player = YOU. */
 const BEA_PROP_FILES = {
   curtain: 'Tent_26_Bea_piece-01.png',
   standee: 'Tent_26_Bea_piece-02.png', // decorative Bea cutout (set dressing; YOU uses bea-player)
-  moon: 'Tent_26_Bea_piece-03.png',
-  spotlight: 'Tent_26_Bea_piece-04.png',
   starKey: 'Tent_26_Bea_piece-05.png',
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-1';
+const BEA_CACHE_VER = 'dress-ready-2';
+/** Soft face-bomb stun — relocate to start; never aborts paid ride. */
+const BOMB_STUN = 0.95;
+const PORTAL_COOL = 0.55;
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -105,27 +107,22 @@ function placeDress(d, img, x, y, w, angle, h) {
   return d.sprite(img, x, y, opts);
 }
 
-/** Place ALL 6 Tent_26_Bea cutouts on cream papercut border — never on maze path cells.
- *  scenery flag (full/dense/finale) only adds repeats — baseline always wires the full 6-pack.
+/** Cream-border set dressing — curtain + standee. Portal doorways drawn on maze edge walls.
+ *  No moon / spotlight. scenery flag densifies curtain/standee only.
  */
 function drawBeaScenery(d, s) {
   const imgs = ensureBeaProps();
   const density = s?.graph?.scenery || 'full';
   const place = (key, x, y, w, angle = 0) => placeDress(d, imgs[key], x, y, w, angle);
-  // Full Tent_26_Bea 6-pack — readable, strategic, not cluttered. No alley wall-turnaround.
-  place('doorway', 168, 650, 108);           // left mid — signature laughing door
-  place('curtain', 732, 635, 100);           // right mid — theatre drape
-  place('spotlight', 262, 468, 70, -0.16);   // upper-left wash
-  place('moon', 638, 478, 92);               // upper-right celestial
-  place('starKey', 718, 858, 64, 0.14);      // lower-right gold accent
+  // Sides swapped vs dress-ready-1 cream doors: curtain now left mid; portals own the edge walls.
+  place('curtain', 168, 650, 100);           // left mid cream (was doorway — swapped)
   place('standee', 182, 858, 72, -0.06);     // lower-left Bea standee (piece-02)
   if (density === 'dense' || density === 'finale') {
-    place('spotlight', 588, 878, 58, 0.22);
-    place('moon', 250, 880, 78, -0.1);
+    place('curtain', 732, 860, 88, 0.06);    // lower-right drape accent (no moon/light)
+    place('standee', 718, 520, 64, 0.08);
   }
   if (density === 'finale') {
     place('curtain', 148, 528, 88, -0.08);
-    place('doorway', 752, 528, 92, 0.06);
   }
 }
 
@@ -388,7 +385,7 @@ function startChoose(s, room) {
 function maybeRevealTreasure(s, room) {
   if (!room?.treasure || s.treasureCollected) return;
   if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
-  // Always place keepsake for mid-court display; collect only when eligible.
+  // Chapter bonus on cream border / off-path — locked until starKey; key awards collected.
   if (!s.treasure) {
     let tx = room.treasure.x;
     let ty = room.treasure.y;
@@ -396,17 +393,22 @@ function maybeRevealTreasure(s, room) {
       const c = cellCenter(s.maze, room.treasure.col, room.treasure.row);
       tx = c.x; ty = c.y;
     }
+    const needsKey = !!room.treasure.lockedUntilKey;
     s.treasure = {
       id: s.treasureId || TREASURES[s.level] || TREASURES[0],
-      x: tx ?? 450,
+      x: tx ?? 755,
       y: ty ?? 700,
       r: room.treasure.r || 22,
       taken: false,
+      locked: needsKey && !s.starKeyTaken,
     };
+  } else if (s.treasure.locked && s.starKeyTaken) {
+    s.treasure.locked = false;
   }
   if (!s.treasure.taken) {
     s.treasureRevealed = true;
-    s.treasureWindow = !!s.eligible;
+    // Walk-pickup disabled for locked-until-key bonuses — starKey grants collect.
+    s.treasureWindow = !!s.eligible && !s.treasure.locked && !room.treasure.lockedUntilKey;
   }
 }
 
@@ -545,6 +547,8 @@ function parseMaze(spec) {
   let start = {c: 5, r: 11};
   const faceSpawns = [];
   let doorCell = null;
+  const portals = [];
+  let keyCell = null;
   for (let r = 0; r < rows.length; r++) {
     const line = rows[r];
     const row = [];
@@ -561,10 +565,13 @@ function parseMaze(spec) {
       if (ch === 'S') start = {c, r};
       if (ch === 'F') faceSpawns.push({c, r});
       if (ch === 'D') doorCell = {c, r};
+      if (ch === 'A' || ch === 'B') portals.push({id: ch, c, r});
+      if (ch === 'K') keyCell = {c, r};
     }
     grid.push(row);
   }
-  if (!faceSpawns.length) faceSpawns.push({c: 5, r: 5});
+  if (!faceSpawns.length) faceSpawns.push({c: 5, r: 4});
+  if (!keyCell) keyCell = {c: 5, r: 5};
   const pelletTotal = pellets.length;
   const clearGoal = Math.max(1, Math.min(spec.clearGoal || pelletTotal, pelletTotal));
   return {
@@ -584,6 +591,8 @@ function parseMaze(spec) {
     start,
     faceSpawns,
     doorCell,
+    portals,
+    keyCell,
     pelletTotal,
   };
 }
@@ -655,11 +664,15 @@ function initMazePlay(s) {
     });
   }
   s.roomId = 'maze';
+  s.starKeyTaken = false;
+  s.portalCool = 0;
+  s.portalFx = null;
+  s.bombFx = 0;
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
   logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
   s.note = s.practice
     ? `Free practice · nothing kept. Chomp ${maze.clearGoal}+ chips · POWER chase-back.`
-    : `MOVE · CHOMP ${maze.clearGoal}+ chips · POWER to chase laugh-faces.`;
+    : `MOVE · CHOMP ${maze.clearGoal}+ · grab the star key · dodge faces (BOMB soft).`;
 }
 
 function setWantDir(s, id, down) {
@@ -715,8 +728,12 @@ function arriveCell(s) {
   if (maze.doorCell && p.c === maze.doorCell.c && p.r === maze.doorCell.r && !s.doorShut) {
     shutPunchlineDoor(s);
   }
-  // Treasure pickup by proximity
-  if (s.treasureWindow && s.treasure && !s.treasure.taken) {
+  // Paired edge-wall portals
+  tryPortalTeleport(s);
+  // Mid-court star key → awards outside chapter bonus
+  collectStarKey(s);
+  // Treasure pickup by proximity (unlocked walk-pickups only; key path uses collectStarKey)
+  if (s.treasureWindow && s.treasure && !s.treasure.taken && !s.treasure.locked) {
     if (hitCircle(p, s.treasure.x, s.treasure.y, s.treasure.r)) takeTreasure(s);
   }
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
@@ -747,6 +764,69 @@ function shutPunchlineDoor(s) {
   s.powerLeft = maze.powerSec;
   s.note = 'Punchline SHUT — faces flee! Chase them!';
   logAction(s, 'power', {via: 'door'});
+  return true;
+}
+
+/** Soft dump to maze start / entrance — NEVER abort paid ride or set result/broke. */
+function softBombToStart(s) {
+  const maze = s.maze;
+  const p = s.player;
+  if (!maze || !p) return;
+  const sc = cellCenter(maze, maze.start.c, maze.start.r);
+  p.x = sc.x; p.y = sc.y;
+  p.c = maze.start.c; p.r = maze.start.r;
+  p.tx = sc.x; p.ty = sc.y;
+  p.moving = false;
+  s.dir = null;
+  s.wantDir = null;
+  s.tagStun = BOMB_STUN;
+  s.bombFx = 0.6;
+  s.note = 'BOMBED OUT! Back to the entrance!';
+  logAction(s, 'face-bomb', {soft: true});
+}
+
+/** Paired portal: enter A → pop out B (and vice versa). Brief cool so no bounce-loop. */
+function tryPortalTeleport(s) {
+  const maze = s.maze;
+  const p = s.player;
+  if (!maze?.portals?.length || !p || (s.portalCool || 0) > 0) return false;
+  const hit = maze.portals.find(pt => pt.c === p.c && pt.r === p.r);
+  if (!hit) return false;
+  const other = maze.portals.find(pt => pt.id !== hit.id);
+  if (!other) return false;
+  const from = cellCenter(maze, hit.c, hit.r);
+  const to = cellCenter(maze, other.c, other.r);
+  p.c = other.c; p.r = other.r;
+  p.x = to.x; p.y = to.y;
+  p.tx = to.x; p.ty = to.y;
+  p.moving = false;
+  s.portalCool = PORTAL_COOL;
+  s.portalFx = {t: 0.42, x: to.x, y: to.y, fromX: from.x, fromY: from.y};
+  s.note = 'WHOOSH — through the laughing doorway!';
+  logAction(s, 'portal', {from: hit.id, to: other.id});
+  return true;
+}
+
+/** Mid-court starKey → release chapter bonus locked → collected (awarded if eligible). */
+function collectStarKey(s) {
+  const maze = s.maze;
+  if (!maze?.keyCell || s.starKeyTaken) return false;
+  const p = s.player;
+  if (!p || p.c !== maze.keyCell.c || p.r !== maze.keyCell.r) return false;
+  s.starKeyTaken = true;
+  logAction(s, 'star-key', {c: maze.keyCell.c, r: maze.keyCell.r});
+  const room = roomOf(s.graph, 'maze');
+  maybeRevealTreasure(s, room);
+  if (s.treasure) s.treasure.locked = false;
+  if (s.eligible && s.treasure && !s.treasure.taken) {
+    s.treasureWindow = true;
+    takeTreasure(s);
+    s.note = 'Star key! Chapter bonus released — collected!';
+  } else {
+    s.note = s.practice
+      ? 'Star key! Practice — bonus unlocked but not kept.'
+      : 'Star key! Chapter bonus unlocked.';
+  }
   return true;
 }
 
@@ -862,15 +942,9 @@ function updateFacesMaze(s, dt) {
         s.note = 'Gulp! Laugh-face tagged.';
         logAction(s, 'gulp-face', {});
       } else if (s.tagStun <= 0) {
-        f.giggle = 0.4;
-        s.tagStun = TAG_STUN;
-        s.note = 'Giggle bump! Keep chomping.';
-        // Soft shove opposite face
-        const sx = Math.sign(s.player.x - f.x) || 1;
-        const sy = Math.sign(s.player.y - f.y) || 1;
-        // Nudge back toward open neighbor if possible
-        s.player.x = clamp(s.player.x + sx * 10, maze.ox + 8, maze.ox + maze.cols * maze.cell - 8);
-        s.player.y = clamp(s.player.y + sy * 10, maze.oy + 8, maze.oy + maze.rows * maze.cell - 8);
+        f.giggle = 0.45;
+        // Soft bomb-out — relocate YOU to maze start. Never abort paid ride.
+        softBombToStart(s);
       }
     }
   }
@@ -880,6 +954,12 @@ function updateMaze(s, dt) {
   if (s.powerLeft > 0) {
     s.powerLeft = Math.max(0, s.powerLeft - dt);
     if (s.powerLeft === 0 && s.phase === 'play') s.note = 'Power faded — chomp on!';
+  }
+  if (s.portalCool > 0) s.portalCool = Math.max(0, s.portalCool - dt);
+  if (s.bombFx > 0) s.bombFx = Math.max(0, s.bombFx - dt);
+  if (s.portalFx) {
+    s.portalFx.t -= dt;
+    if (s.portalFx.t <= 0) s.portalFx = null;
   }
   if (s.phase === 'play') {
     updatePlayerMaze(s, dt);
@@ -981,6 +1061,44 @@ function drawMazeCourt(s, d) {
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
 
+  // Two doorway props on middle left/right edge walls — paired portals (prefer doorway×2).
+  {
+    const imgs = ensureBeaProps();
+    for (const pt of maze.portals || []) {
+      const ctr = cellCenter(maze, pt.c, pt.r);
+      // Nudge slightly outward so prop sits on the edge wall, not lane centre.
+      const ox = pt.id === 'A' ? -18 : (pt.id === 'B' ? 18 : 0);
+      d.glow(ctr.x + ox, ctr.y, 26, '#f4d590');
+      placeDress(d, imgs.doorway, ctr.x + ox, ctr.y, pt.id === 'B' ? 96 : 96, pt.id === 'B' ? 0.04 : -0.04);
+      d.text(pt.id === 'A' ? 'IN' : 'OUT', ctr.x + ox, ctr.y + 28, 10, GOLD);
+    }
+  }
+
+  // Mid-court starKey (piece-05) until collected
+  if (maze.keyCell && !s.starKeyTaken) {
+    const imgs = ensureBeaProps();
+    const kc = cellCenter(maze, maze.keyCell.c, maze.keyCell.r);
+    d.glow(kc.x, kc.y, 22, GOLD);
+    if (!placeDress(d, imgs.starKey, kc.x, kc.y, 52, 0.12)) {
+      d.circle(kc.x, kc.y, 12, GOLD, BURGUNDY, 2);
+      d.text('★', kc.x, kc.y + 5, 16, BURGUNDY);
+    }
+    d.text('KEY', kc.x, kc.y - 28, 10, GOLD);
+  }
+
+  // Portal / bomb FX flashes
+  if (s.portalFx) {
+    const fx = s.portalFx;
+    const a = Math.max(0, fx.t / 0.42);
+    d.glow(fx.x, fx.y, 40 + (1 - a) * 30, '#ffe6a4');
+    d.glow(fx.fromX, fx.fromY, 28 * a, '#f4d590');
+    d.text('WHOOSH!', fx.x, fx.y - 36, 14, GOLD);
+  }
+  if (s.bombFx > 0) {
+    d.glow(s.player.x, s.player.y, 48, '#c42848');
+    d.text('BOMBED OUT!', 450, 500, 18, BURGUNDY);
+  }
+
   // Path chips — simple geometric dots only (NOT catalogue coins / faces).
   for (const pel of maze.pellets) {
     if (pel.taken) continue;
@@ -1011,21 +1129,23 @@ function drawMazeCourt(s, d) {
   drawPlayer(d, s);
 
   if (s.treasure && !s.treasure.taken) {
-    const dim = !s.eligible;
+    const locked = !!s.treasure.locked;
+    const dim = !s.eligible || locked;
     const tx = s.treasure.x;
     const ty = s.treasure.y;
-    // Token-sized chapter bonus (helter dress-3j bar: w:28 + KEEP/TREASURE tag)
+    // Token-sized chapter bonus on cream border (KEEP/TREASURE); LOCKED until starKey.
     if (!dim) d.glow(tx, ty, 18, GOLD);
     else d.glow(tx, ty, 14, '#f4d590');
     try {
       d.item(spriteKey(s.treasure.id), tx, ty, {
-        w: 28, alpha: dim ? 0.72 : 0.92, shadow: true,
+        w: 28, alpha: locked ? 0.55 : (dim ? 0.72 : 0.92), shadow: true,
         fallback: () => d.heart(tx, ty, 10),
       });
     } catch {
       d.heart(tx, ty, 10);
     }
-    d.text(dim ? 'KEEP' : 'TREASURE', tx, ty - 22, 10, dim ? INK : GOLD);
+    const tag = locked ? 'LOCKED' : (dim ? 'KEEP' : 'TREASURE');
+    d.text(tag, tx, ty - 22, 10, locked ? BURGUNDY : (dim ? INK : GOLD));
   }
   drawFlies(d, s);
 
@@ -1882,8 +2002,8 @@ function updateDoorChapter(s, dt) {
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, dodge laugh-faces, and grab punchline power to chase them back.',
-  instructions: 'Laughing Maze (all 6 chapters): drag the centre-bottom MOVE stick (or swipe / keyboard arrows) through the cream corridors. Chomp the midway chips. Laugh-faces chase you — pick up a glowing punchline power pellet (or SHUT the punchline door) to chase them back for a few seconds. Clear the chapter chip goal to finish — extras are bonus. Soft house clock — timer end is an ordinary exit, not a crash. Same maze layout every chapter; later chapters tighten fairness only.',
+  intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, walk the paired laughing doorways, grab the star key for the chapter bonus, and dodge laugh-faces (touch bombs you soft back to the entrance).',
+  instructions: 'Laughing Maze (all 6 chapters): drag the centre-bottom MOVE stick (or swipe / keyboard arrows) through the cream corridors. Chomp the midway chips. Walk through the middle-edge doorway portals to pop out the other side. Grab the mid-court star key to unlock and collect the cream-border chapter bonus. Laugh-faces chase you — power pellets / punchline door let you chase back; without power, a touch BOMBS you soft to the entrance (never aborts a paid ride). Clear the chapter chip goal to finish. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -1937,6 +2057,10 @@ export default {
       heldDirs: {up: false, down: false, left: false, right: false},
       stick: null,
       mazeCleared: false,
+      starKeyTaken: false,
+      portalCool: 0,
+      portalFx: null,
+      bombFx: 0,
     });
   },
   update(s, dt) {

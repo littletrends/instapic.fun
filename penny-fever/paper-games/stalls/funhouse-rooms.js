@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-1
+ * cache: dress-ready-2
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -8,15 +8,17 @@
  * Old punchline-door CHAPTER2–6 room graphs retired from play routing.
  *
  * Path chips = simple geometric dots only (not catalogue coins).
- * TREASURES exclusive Ch1–6 — mid-court keepsake; collect when eligible.
+ * TREASURES exclusive Ch1–6 — chapter bonus sits cream-border / off-path;
+ *   starKey at mid-court unlocks → awards bonus (locked → collected).
+ * Portals A/B on middle left/right edge walls — walk-through paired exits.
  *
- * SCENERY: funhouse.png backdrop + cream oval; full Tent_26_Bea 6-pack (01–06);
- *   bea-player = YOU. BONUS Ch1–6 centre token-sized. No alley wall-turnaround / wall webp.
+ * SCENERY: funhouse.png backdrop + cream oval; Tent_26_Bea props (no moon/light);
+ *   bea-player = YOU. BONUS Ch1–6 token-sized KEEP/TREASURE. No alley wall-turnaround / wall webp.
  * FAIRNESS baseline Ch1: clearGoal 16; house 110s; faceSpeed 56;
  *   playerSpeed 168; powerSec 7.5. Later chapters tighten goal / faces / power.
  *
  * Locked lane: carnival chase energy × punchline power × Finish the Joke comedy.
- * Soft fails never abort paid ride.
+ * Soft fails never abort paid ride (face bomb = soft relocate to start).
  */
 
 export const RIDE = 'funhouse';
@@ -61,15 +63,17 @@ export const STAGE = {xMin: 200, xMax: 700, yMin: 450, yMax: 900};
 /**
  * ONE shared 11×13 corridor maze inside cream oval (cell 40px).
  * All chapters use this exact layout — fairness varies elsewhere.
+ * A/B = paired portal openings on middle left/right edge walls (swapped sides vs dress-ready-1).
+ * K = starKey mid-court (was treasure seat). D = punchline door. F = face house. S = start.
  */
 const SHARED_MAZE_LAYOUT = [
   '###########',
   '#o...#...o#',
   '#.##.#.##.#',
   '#.........#',
-  '##.#.+.#.##',
-  '#..#.F.#..#',
-  '#.#######.#',
+  '##.#.F.#.##',
+  '#..#.K.#..#',
+  'A.#######.B',
   '#.........#',
   '###.#D#.###',
   '#o..#.#..o#',
@@ -98,7 +102,9 @@ function mazeChapter(spec) {
         caption: caption || 'Chomp the midway chips — shut a punchline when you glow.',
         revealNote: 'MOVE · CHOMP · LAUGH-FACES CHASE',
         chooseNote: 'Clear the pellets — power lets you chase back.',
-        treasure: {spawnId: 'last-laugh', col: 5, row: 5, r: 22},
+        // Chapter bonus cream-border / off-path (right mid outside lanes) — locked until starKey.
+        // Key at mid-court awards bonus collected (no walk-to-edge required).
+        treasure: {spawnId: 'last-laugh', x: 755, y: 700, r: 22, lockedUntilKey: true},
         faces: faceCount,
       },
     },
@@ -113,7 +119,8 @@ function mazeChapter(spec) {
       clearGoal,
       playerSpeed,
       faceCount,
-      /** # wall  . pellet  o power  + empty  S start  F face  D punchline-door */
+      /** # wall  . pellet  o power  + empty  S start  F face  D punchline-door
+       *  A/B portals  K starKey mid-court */
       layout: SHARED_MAZE_LAYOUT,
     },
   };
