@@ -2,8 +2,7 @@
  * Skyward Swings (Hugo) — Ride & Seek stall
  *
  * SHIPPED: Ch1 Lit Reach + Ch2 Ribbon Round + Ch3 Star Circles + Ch4 Cloud Waltz
- *   + Ch5 Bell Flight.
- *   UNFINISHED 6 only.
+ *   + Ch5 Bell Flight + Ch6 The Midnight Waltz — complete.
  *   Rainbow Islands pop energy on a Tempest circle. Chair carousel auto-orbits
  *   Hugo’s tower. ONE verb: HOLD to stretch radius outward; RELEASE tucks in.
  *   Vertical drag has no gameplay meaning; chair height is visual only.
@@ -34,10 +33,12 @@
  *     makeup, clearLong approach ≥10 s, catch teach/clears ×2.5 / makeup ×2.8).
  *     Soft-miss teach arms ch5Assist auto-line snap while HOLD + short
  *     soft-push (~0.25 s) — never aborts. Treasure = outer (taught).
- *
- * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
- *   6 The Midnight Waltz — combine taught patterns; treasure gets one full
- *     warning circuit
+ *   Ch6 The Midnight Waltz: three bands; GOAL 3 (goalCap 3, HUD forced N/3);
+ *     ~67 s; fair remix — ONE high→outer teach alone (long warn ~10 s,
+ *     scream “Midnight — HOLD outer”); then #2 outer clearLong HOLD,
+ *     #3 outer cloud (returning), #4 outer makeup clearLong. Soft-miss
+ *     teach arms ch6Assist snap outer while HOLD + short soft-push
+ *     (~0.25 s) — never aborts. Treasure = outer, one full warning circuit.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
@@ -68,6 +69,7 @@ const GOAL_CH2 = 3;
 const GOAL_CH3 = 3;
 const GOAL_CH4 = 3;
 const GOAL_CH5 = 3;
+const GOAL_CH6 = 3;
 const CATCH_HALF = 0.34;  // rad sweep window (~0.40 s at OMEGA)
 const APPROACH = 1.55;    // rad of visible approach (~1.8 s) — Ch1 / normal bubbles
 const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
@@ -81,11 +83,17 @@ const BELL_WARN_SEC = 10; // Ch5 teach bell long warn
 const BELL_CLEAR_APPROACH_SEC = 10.0; // Ch5 #2/#3 clearLong approach ≥10 s
 const BELL_MAKEUP_APPROACH_SEC = 8.0; // Ch5 makeup #4 approach ≥8 s
 const SOFT_PUSH_SEC_CH5 = 0.25; // Ch5 soft-push lock — HOLD resumes immediately
+const MIDNIGHT_WARN_SEC = 10; // Ch6 teach alone long warn
+const MIDNIGHT_CLEAR_APPROACH_SEC = 10.0; // Ch6 #2/#3 clearLong / returning cloud ≥10 s
+const MIDNIGHT_MAKEUP_APPROACH_SEC = 8.0; // Ch6 makeup #4 approach ≥8 s
+const MIDNIGHT_CLOUD_CATCH = 2.5; // Ch6 returning cloud catch multiplier
+const SOFT_PUSH_SEC_CH6 = 0.25; // Ch6 soft-push lock — HOLD resumes immediately
 const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
 const FINISH_THETA_CH2 = 6.85 * TAU; // ~51.5 s first-play window for 3/3
 const FINISH_THETA_CH3 = 6.85 * TAU; // ~51.5 s — helter Ch3 ~52 s bar
 const FINISH_THETA_CH4 = 9.0 * TAU; // ~67.3 s — makeup always finishes before land
 const FINISH_THETA_CH5 = 9.0 * TAU; // ~67.3 s — Ch5 makeup finishes before land
+const FINISH_THETA_CH6 = 9.0 * TAU; // ~67.3 s — Ch6 makeup finishes before land
 const FLASH_SEC = 0.28;   // POP bloom
 const MISS_FLASH = 0.22;
 const FLY_DUR = 0.62;
@@ -107,6 +115,7 @@ const CLOUD_TEAL = '#7ec8c0'; // soft cloud fog
 const CLOUD_SOFT = '#a8e0d8';
 const BELL_GOLD = '#e8c878'; // bell silhouette / pitch bars
 const BELL_SOFT = '#ffe6a4';
+const MIDNIGHT_SOFT = '#c8b8e8'; // Ch6 scream-clear plate
 
 const SPAWNS = ['inner', 'outer'];
 
@@ -182,6 +191,25 @@ function ch5Bubbles() {
   ];
 }
 
+/**
+ * Chapter 6 The Midnight Waltz: fair remix of taught patterns (do NOT stack
+ * max difficulty). ONE high→outer teach alone (long warn ~10 s) — scream
+ * “Midnight — HOLD outer”. Then light combination: #2 outer clearLong HOLD
+ * (reinforce); #3 outer cloud (one returning mechanic); #4 outer makeup
+ * clearLong HOLD. GOAL 3 with 4 bubbles so one soft miss still allows
+ * Practice complete. Soft teach miss arms ch6Assist auto-line snap while
+ * HOLD; soft miss recoverable (never aborts). Treasure = outer, one full
+ * warning circuit. HUD forced N/3 (goalCap 3).
+ */
+function ch6Bubbles() {
+  return [
+    {theta: 1.55 * TAU, band: 2, taken: false, bell: 'high', teach: true, midnight: true}, // #1 outer HIGH teach alone — 10s, Midnight HOLD
+    {theta: 3.60 * TAU, band: 2, taken: false, clearLong: true, midnight: true}, // #2 outer clearLong HOLD reinforce
+    {theta: 5.50 * TAU, band: 2, taken: false, cloud: true, clearLong: true, midnight: true}, // #3 outer cloud returning (not stacked with bell)
+    {theta: 7.20 * TAU, band: 2, taken: false, clearLong: true, makeup: true, midnight: true}, // #4 outer makeup clearLong
+  ];
+}
+
 function reducedOf(s) {
   if (typeof prefersReducedMotion === 'function') {
     try { if (prefersReducedMotion()) return true; } catch { /* fall through */ }
@@ -212,6 +240,10 @@ function isCloudWaltz(s) {
 
 function isBellFlight(s) {
   return !!(s && s.bellFlight);
+}
+
+function isMidnightWaltz(s) {
+  return !!(s && s.midnightWaltz);
 }
 
 /** Bell pitch → band: low=0 inner, mid=1 middle, high=2 outer. */
@@ -283,8 +315,16 @@ function bandLabel(band, three) {
 }
 
 
-/** Catch half: Ch5 teach/clears ×2.5, makeup ×2.8; Ch4 teach/clearLong ×2.2, makeup ×2.5. Ch1–3 untouched. */
+/** Catch half: Ch5 teach/clears ×2.5, makeup ×2.8; Ch4 teach/clearLong ×2.2, makeup ×2.5;
+ * Ch6 midnight clearLong/cloud ×2.5, makeup ×2.8. Ch1–3 untouched. */
 function catchHalfOf(bubble) {
+  if (bubble && bubble.midnight) {
+    if (bubble.makeup) return CATCH_HALF * 2.8;
+    if (bubble.teach) return CATCH_HALF * 2.5;
+    if (bubble.cloud && bubble.clearLong) return CATCH_HALF * MIDNIGHT_CLOUD_CATCH;
+    if (bubble.clearLong) return CATCH_HALF * 2.5;
+    return CATCH_HALF * 2.5;
+  }
   if (bubble && bubble.bell) {
     if (bubble.makeup) return CATCH_HALF * 2.8;
     if (bubble.teach) return CATCH_HALF * 2.5;
@@ -299,6 +339,18 @@ function catchHalfOf(bubble) {
 }
 
 function approachOf(bubble) {
+  if (bubble && bubble.midnight && bubble.teach) {
+    return MIDNIGHT_WARN_SEC * OMEGA; // ~8.4 rad ≈ 10 s midnight teach alone
+  }
+  if (bubble && bubble.midnight && bubble.makeup) {
+    return MIDNIGHT_MAKEUP_APPROACH_SEC * OMEGA; // ~6.72 rad ≈ 8.0 s makeup
+  }
+  if (bubble && bubble.midnight && bubble.cloud && bubble.clearLong) {
+    return MIDNIGHT_CLEAR_APPROACH_SEC * OMEGA; // ~8.4 rad ≈ 10 s returning cloud
+  }
+  if (bubble && bubble.midnight && bubble.clearLong) {
+    return MIDNIGHT_CLEAR_APPROACH_SEC * OMEGA; // ~8.4 rad ≈ 10 s clearLong
+  }
   if (bubble && bubble.bell && bubble.teach) {
     return BELL_WARN_SEC * OMEGA; // ~8.4 rad ≈ 10 s bell teach
   }
@@ -386,7 +438,9 @@ function softPushInward(s) {
   s.easeTo = dest;
   s.easeT = 0;
   s.holding = false;
-  s.pushUntil = s.t + ((isCloudWaltz(s) || isBellFlight(s)) ? (isBellFlight(s) ? SOFT_PUSH_SEC_CH5 : SOFT_PUSH_SEC_CH4) : SOFT_PUSH_SEC);
+  s.pushUntil = s.t + (isMidnightWaltz(s)
+    ? SOFT_PUSH_SEC_CH6
+    : ((isCloudWaltz(s) || isBellFlight(s)) ? (isBellFlight(s) ? SOFT_PUSH_SEC_CH5 : SOFT_PUSH_SEC_CH4) : SOFT_PUSH_SEC));
   logAction(s, 'soft-push', {from: cur, to: next});
 }
 
@@ -436,8 +490,8 @@ function spawnTreasure(s) {
   const three = isThree(s);
   // Ch3/Ch4/Ch5: outer (taught). Ch2: middle (taught). Ch1: spawn lane.
   let band;
-  if (isStarCircles(s) || isCloudWaltz(s) || isBellFlight(s)) {
-    band = 2; // Star Circles / Cloud Waltz / Bell Flight teach — outer
+  if (isStarCircles(s) || isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s)) {
+    band = 2; // Star Circles / Cloud / Bell / Midnight teach — outer
   } else if (three) {
     band = 1; // Ribbon teach — middle reachable
   } else {
@@ -445,8 +499,8 @@ function spawnTreasure(s) {
   }
   const finish = finishThetaOf(s);
   // Visible for a full circuit (green warning), then POP-swept on same angle.
-  // Ch4/Ch5: warn/sweep after makeup #4 (7.20τ); long outer warn before land at 9.0τ.
-  const longTreasure = isCloudWaltz(s) || isBellFlight(s);
+  // Ch4/Ch5/Ch6: warn/sweep after makeup #4 (7.20τ); long outer warn before land at 9.0τ.
+  const longTreasure = isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s);
   const warnTheta = longTreasure ? 7.55 * TAU : (three ? 5.55 * TAU : 1.02 * TAU);
   const sweepTheta = longTreasure ? 8.55 * TAU : (three ? 6.55 * TAU : 2.02 * TAU);
   if (sweepTheta > finish - 0.15) return; // keep land window clear
@@ -494,6 +548,15 @@ function tryPopBubble(s, bubble, i) {
   } else if (bubble.ribbon) {
     s.lineStreak = 0;
     s.note = 'Ribbon POP! ' + s.passed + ' / ' + s.goal;
+  } else if (bubble.midnight) {
+    s.lineStreak = 0;
+    const g = GOAL_CH6;
+    const n = Math.min(s.passed, g);
+    s.note = bubble.teach
+      ? 'Midnight POP! HOLD outer — ' + n + ' / ' + g
+      : (bubble.cloud
+        ? 'Cloud POP! Midnight — ' + n + ' / ' + g
+        : 'Midnight POP! ' + n + ' / ' + g);
   } else if (bubble.cloud) {
     s.lineStreak = 0;
     s.note = bubble.teach
@@ -983,7 +1046,7 @@ function drawBandShadows(d, s) {
 
 /** Ch4: brighten the target band oval while a cloud bubble approaches. */
 function drawCloudOvalHint(d, s, bank) {
-  if (!isCloudWaltz(s)) return;
+  if (!isCloudWaltz(s) && !isMidnightWaltz(s)) return;
   const live = s.bubbles.find((b) => b.cloud && !b.taken && !b.missed);
   if (!live) return;
   const ahead = aheadOf(s, live.theta);
@@ -1086,6 +1149,33 @@ function updateCh5Assist(s) {
   s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.4);
 }
 
+/** Ch6 soft-miss teach: same snap pattern as Ch4/Ch5 — while HOLD and outer clear/cloud/makeup in window. */
+function updateCh6Assist(s) {
+  if (!isMidnightWaltz(s) || !s.ch6Assist) return;
+  if ((s.passed || 0) >= s.goal || s.result) {
+    s.ch6Assist = false;
+    return;
+  }
+  if (s.pushUntil != null && s.t < s.pushUntil) return;
+  if (!s.holding) return;
+  const target = s.bubbles.find((b) => !b.taken && !b.missed && b.band === 2 && b.midnight && (b.clearLong || b.makeup || b.cloud));
+  if (!target) return;
+  const ahead = aheadOf(s, target.theta);
+  const warn = approachOf(target);
+  const half = catchHalfOf(target);
+  if (ahead > warn || ahead < -half) return;
+  s.radiusU = 1;
+  s.easeFrom = 1;
+  s.easeTo = 1;
+  s.easeT = 1;
+  s.note = target.makeup
+    ? 'HOLD outer — makeup · auto-line'
+    : (target.cloud
+      ? 'HOLD outer — cloud · auto-line'
+      : 'HOLD — auto-line outer');
+  s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.4);
+}
+
 function missNote(bubble, three) {
   if (bubble.ribbon) {
     return 'Ribbon miss — soft push inward; HOLD/RELEASE to the middle band';
@@ -1095,6 +1185,9 @@ function missNote(bubble, three) {
   }
   if (bubble.cloud) {
     return 'Cloud miss — soft push; watch the shadow for the band';
+  }
+  if (bubble.midnight) {
+    return 'Midnight miss — soft push; HOLD outer';
   }
   if (bubble.bell) {
     return 'Match the bell — soft push; HOLD outer';
@@ -1106,7 +1199,7 @@ function missNote(bubble, three) {
 }
 
 function updateRibbonCoach(s) {
-  if (!isThree(s) || isStarCircles(s) || isCloudWaltz(s) || isBellFlight(s)) return;
+  if (!isThree(s) || isStarCircles(s) || isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s)) return;
   const teach = s.bubbles.find((b) => b.ribbon && b.teach && !b.taken && !b.missed);
   if (!teach) return;
   const ahead = aheadOf(s, teach.theta);
@@ -1171,7 +1264,7 @@ function updateCloudCoach(s) {
 
 /** Ch4/Ch5 makeup: scream coach when live and still short of GOAL. */
 function updateMakeupCoach(s) {
-  if (!isCloudWaltz(s) && !isBellFlight(s)) return;
+  if (!isCloudWaltz(s) && !isBellFlight(s) && !isMidnightWaltz(s)) return;
   const makeup = s.bubbles.find((b) => b.makeup && !b.taken && !b.missed);
   if (!makeup) return;
   if ((s.passed || 0) >= s.goal) return;
@@ -1180,9 +1273,17 @@ function updateMakeupCoach(s) {
   const half = catchHalfOf(makeup);
   if (ahead > warn || ahead < -half) return;
   const missHold = (s.notePinUntil != null) && (s.t < s.notePinUntil)
-    && /Cloud miss|Bell miss|Match the bell|Missed|auto-line/.test(s.note || '');
+    && /Cloud miss|Bell miss|Match the bell|Midnight miss|Missed|auto-line/.test(s.note || '');
   if (missHold) return;
-  if (isBellFlight(s)) {
+  if (isMidnightWaltz(s)) {
+    if (s.ch6Assist) {
+      s.note = 'HOLD outer — makeup · auto-line';
+    } else {
+      s.note = isLinedUp(s, makeup.band, makeup.theta, warn)
+        ? 'HOLD outer — makeup · lined up'
+        : 'Midnight — HOLD outer · makeup';
+    }
+  } else if (isBellFlight(s)) {
     if (s.ch5Assist) {
       s.note = 'HOLD outer — makeup bell · auto-line';
     } else {
@@ -1236,6 +1337,45 @@ function updateBellCoach(s) {
     : 'Match the bell — ' + pitch + ' · ' + bellVerbHint(live.bell);
 }
 
+/** Ch6: long warn coaching — scream-clear “Midnight — HOLD outer”. */
+function updateMidnightCoach(s) {
+  if (!isMidnightWaltz(s)) return;
+  const live = s.bubbles.find((b) => b.midnight && !b.taken && !b.missed);
+  if (!live) return;
+  const ahead = aheadOf(s, live.theta);
+  const warn = approachOf(live);
+  const half = catchHalfOf(live);
+  if (ahead > warn || ahead < -half) return;
+  const missHold = (s.notePinUntil != null) && (s.t < s.notePinUntil)
+    && /Midnight miss|Missed|auto-line|Match the bell|Cloud miss/.test(s.note || '');
+  if (missHold) return;
+  if (live.teach) {
+    s.note = isLinedUp(s, live.band, live.theta, warn)
+      ? 'Midnight — HOLD outer · lined up'
+      : 'Midnight — HOLD outer';
+    s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.35);
+    return;
+  }
+  if (live.makeup) return; // makeup coach owns plate
+  if (s.ch6Assist) {
+    s.note = isLinedUp(s, live.band, live.theta, warn)
+      ? 'HOLD — auto-line outer · lined up'
+      : (live.cloud ? 'HOLD outer — cloud · auto-line' : 'HOLD — auto-line outer');
+    s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.35);
+    return;
+  }
+  if (s.notePinUntil != null && s.t < s.notePinUntil) return;
+  if (live.cloud) {
+    s.note = isLinedUp(s, live.band, live.theta, warn)
+      ? 'Watch the shadow — HOLD outer · lined up'
+      : 'Watch the shadow — HOLD outer · cloud returns';
+  } else {
+    s.note = isLinedUp(s, live.band, live.theta, warn)
+      ? 'Midnight — HOLD outer · lined up'
+      : 'Midnight — HOLD outer';
+  }
+}
+
 /**
  * Soft fail mid-sequence: leave the teach band during an active line window
  * after having been lined up → coaching (+ optional soft-push debounce).
@@ -1272,7 +1412,7 @@ function updateLineSoftLeave(s) {
 export default {
   title: 'Skyward Swings',
   intro: 'Swing wide. Catch the night. HOLD to stretch out — RELEASE to tuck in. Burst the star-bubbles.',
-  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. Ribbon Round adds a middle band — ease through it for the ribbon gate. Star Circles rewards holding a smooth flight line on one band. Cloud Waltz hides the star in soft cloud — watch the band shadow first. Bell Flight maps pitch to bands — high OUTER HOLD. First ride is free practice.',
+  instructions: 'One verb: HOLD to stretch out to the outer band. RELEASE to tuck in. Line up green, then POP each star-bubble. Ribbon Round adds a middle band — ease through it for the ribbon gate. Star Circles rewards holding a smooth flight line on one band. Cloud Waltz hides the star in soft cloud — watch the band shadow first. Bell Flight maps pitch to bands — high OUTER HOLD. Midnight Waltz remixes taught cues — HOLD outer through clear, cloud, and makeup stars. First ride is free practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -1284,7 +1424,8 @@ export default {
     const ch3 = level === 2;
     const ch4 = level === 3;
     const ch5 = level === 4;
-    const three = ch2 || ch3 || ch4 || ch5;
+    const ch6 = level === 5;
+    const three = ch2 || ch3 || ch4 || ch5 || ch6;
     return makeRideState(level, rng, {
       theta: -0.35,
       radiusU: 0,
@@ -1296,14 +1437,15 @@ export default {
       holdAction: false,
       backgrounded: false,
       passed: 0,
-      goal: ch5 ? GOAL_CH5 : (ch4 ? GOAL_CH4 : (ch3 ? GOAL_CH3 : (ch2 ? GOAL_CH2 : GOAL_CH1))),
-      goalCap: ch5 ? GOAL_CH5 : undefined,
+      goal: ch6 ? GOAL_CH6 : (ch5 ? GOAL_CH5 : (ch4 ? GOAL_CH4 : (ch3 ? GOAL_CH3 : (ch2 ? GOAL_CH2 : GOAL_CH1)))),
+      goalCap: ch6 ? GOAL_CH6 : (ch5 ? GOAL_CH5 : undefined),
       threeBand: three,
       starCircles: ch3,
       cloudWaltz: ch4,
       bellFlight: ch5,
-      finishTheta: ch5 ? FINISH_THETA_CH5 : (ch4 ? FINISH_THETA_CH4 : (ch3 ? FINISH_THETA_CH3 : (ch2 ? FINISH_THETA_CH2 : FINISH_THETA_CH1))),
-      bubbles: ch5 ? ch5Bubbles() : (ch4 ? ch4Bubbles() : (ch3 ? ch3Bubbles() : (ch2 ? ch2Bubbles() : ch1Bubbles()))),
+      midnightWaltz: ch6,
+      finishTheta: ch6 ? FINISH_THETA_CH6 : (ch5 ? FINISH_THETA_CH5 : (ch4 ? FINISH_THETA_CH4 : (ch3 ? FINISH_THETA_CH3 : (ch2 ? FINISH_THETA_CH2 : FINISH_THETA_CH1)))),
+      bubbles: ch6 ? ch6Bubbles() : (ch5 ? ch5Bubbles() : (ch4 ? ch4Bubbles() : (ch3 ? ch3Bubbles() : (ch2 ? ch2Bubbles() : ch1Bubbles())))),
       treasureId: TREASURES[Math.max(0, Math.min(level, TREASURES.length - 1))],
       camBank: 0,
       pointer: null,
@@ -1317,32 +1459,39 @@ export default {
       lineStreak: 0,
       lineWasLit: false,
       lineSoftUntil: 0,
-      coachUntil: ch5 ? 7 : (ch4 ? 7 : (ch3 ? 7 : (ch2 ? 6 : 5))),
+      coachUntil: ch6 ? 7 : (ch5 ? 7 : (ch4 ? 7 : (ch3 ? 7 : (ch2 ? 6 : 5)))),
       notePinUntil: 0,
       pushUntil: 0,
       ch4Assist: false,
       ch5Assist: false,
+      ch6Assist: false,
     });
   },
   update(s, dt, input) {
     if (s.result || s.broke) return;
-    // Belt-and-suspenders: Bell Flight HUD/goal never drifts to bubble count (4).
+    // Belt-and-suspenders: Bell Flight / Midnight Waltz HUD/goal never drifts to bubble count (4).
     if (isBellFlight(s)) {
       s.goal = GOAL_CH5;
       s.goalCap = GOAL_CH5;
     }
+    if (isMidnightWaltz(s)) {
+      s.goal = GOAL_CH6;
+      s.goalCap = GOAL_CH6;
+    }
 
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWNS)) {
-      s.note = isBellFlight(s)
-        ? 'Bell Flight — Match the pitch'
-        : (isCloudWaltz(s)
-          ? 'Cloud Waltz — watch the shadow'
-          : (isStarCircles(s)
-            ? 'Star Circles — HOLD the line · stay on one band'
-            : (isThree(s)
-              ? 'Ribbon Round — HOLD out · RELEASE in · middle is the ease'
-              : 'HOLD to stretch out · RELEASE to tuck in')));
-      s.coachUntil = s.t + (isBellFlight(s) || isCloudWaltz(s) || isStarCircles(s) ? 7 : (isThree(s) ? 6 : 5));
+      s.note = isMidnightWaltz(s)
+        ? 'Midnight Waltz — HOLD outer'
+        : (isBellFlight(s)
+          ? 'Bell Flight — Match the pitch'
+          : (isCloudWaltz(s)
+            ? 'Cloud Waltz — watch the shadow'
+            : (isStarCircles(s)
+              ? 'Star Circles — HOLD the line · stay on one band'
+              : (isThree(s)
+                ? 'Ribbon Round — HOLD out · RELEASE in · middle is the ease'
+                : 'HOLD to stretch out · RELEASE to tuck in'))));
+      s.coachUntil = s.t + (isMidnightWaltz(s) || isBellFlight(s) || isCloudWaltz(s) || isStarCircles(s) ? 7 : (isThree(s) ? 6 : 5));
     }
     if (s.result) return;
 
@@ -1378,11 +1527,12 @@ export default {
       bubble.lit = isLinedUp(s, bubble.band, bubble.theta, approachOf(bubble));
     });
 
-    // Ch4/Ch5 assist snap (after ease) so HOLD lands outer before POP check
+    // Ch4/Ch5/Ch6 assist snap (after ease) so HOLD lands outer before POP check
     updateCh4Assist(s);
     updateCh5Assist(s);
+    updateCh6Assist(s);
     // Re-lit after possible assist snap
-    if (s.ch4Assist || s.ch5Assist) {
+    if (s.ch4Assist || s.ch5Assist || s.ch6Assist) {
       s.bubbles.forEach((bubble) => {
         if (bubble.taken || bubble.missed) { bubble.lit = false; return; }
         bubble.lit = isLinedUp(s, bubble.band, bubble.theta, approachOf(bubble));
@@ -1396,21 +1546,26 @@ export default {
         bubble.missFlash = MISS_FLASH;
         bubble.lit = false;
         s.screenFlash = 0.14;
-        const missType = bubble.ribbon ? 'ribbon-miss' : (bubble.line ? 'line-miss' : (bubble.cloud ? 'cloud-miss' : (bubble.bell ? 'bell-miss' : 'bubble-miss')));
-        logAction(s, missType, {band: bubble.band, i, bell: bubble.bell || null});
-        if (bubble.ribbon || bubble.line || bubble.cloud || bubble.bell) {
+        const missType = bubble.midnight
+          ? (bubble.cloud ? 'cloud-miss' : (bubble.bell ? 'bell-miss' : 'bubble-miss'))
+          : (bubble.ribbon ? 'ribbon-miss' : (bubble.line ? 'line-miss' : (bubble.cloud ? 'cloud-miss' : (bubble.bell ? 'bell-miss' : 'bubble-miss'))));
+        logAction(s, missType, {band: bubble.band, i, bell: bubble.bell || null, midnight: !!bubble.midnight});
+        if (bubble.ribbon || bubble.line || bubble.cloud || bubble.bell || bubble.midnight) {
           softPushInward(s);
         }
-        // Soft-miss cloud/bell teach → arm auto-line assist until GOAL or ride end
-        if (bubble.cloud && bubble.teach) {
+        // Soft-miss cloud/bell/midnight teach → arm auto-line assist until GOAL or ride end
+        if (bubble.cloud && bubble.teach && !bubble.midnight) {
           s.ch4Assist = true;
         }
-        if (bubble.bell && bubble.teach) {
+        if (bubble.bell && bubble.teach && !bubble.midnight) {
           s.ch5Assist = true;
+        }
+        if (bubble.midnight && bubble.teach) {
+          s.ch6Assist = true;
         }
         if (bubble.line) s.lineStreak = 0;
         s.note = missNote(bubble, three);
-        s.notePinUntil = s.t + (bubble.ribbon || bubble.line || bubble.cloud || bubble.bell ? 3.2 : 2.8);
+        s.notePinUntil = s.t + (bubble.ribbon || bubble.line || bubble.cloud || bubble.bell || bubble.midnight ? 3.2 : 2.8);
         const p = orbitPoint(bubble.theta, bandRadius(bubble.band, three));
         pushBurst(s, p.x, p.y, true);
       }
@@ -1421,9 +1576,11 @@ export default {
     updateLineCoach(s);
     updateCloudCoach(s);
     updateBellCoach(s);
+    updateMidnightCoach(s);
     updateMakeupCoach(s);
     updateCh4Assist(s); // coach note after plates; snap already applied pre-POP
     updateCh5Assist(s);
+    updateCh6Assist(s);
     spawnTreasure(s);
     if (s.treasure && !s.treasure.taken && s.theta >= s.treasure.warnTheta) {
       s.treasure.lit = isLinedUp(s, s.treasure.band, s.treasure.sweepTheta)
@@ -1436,7 +1593,7 @@ export default {
       finishRide(s, {
         rideId: RIDE,
         treasureId: s.treasureId,
-        challengeOk: s.passed >= (isBellFlight(s) ? GOAL_CH5 : s.goal),
+        challengeOk: s.passed >= (isMidnightWaltz(s) ? GOAL_CH6 : (isBellFlight(s) ? GOAL_CH5 : s.goal)),
         completionFind: 'star-token',
       });
     }
@@ -1616,20 +1773,22 @@ export default {
     const early = (s.t || 0) < (s.coachUntil != null ? s.coachUntil : 5);
     const verb = s.holding ? 'RELEASE' : 'HOLD';
     const verbSub = s.holding
-      ? (isBellFlight(s) ? 'tuck in · Match the pitch' : (isCloudWaltz(s) ? 'tuck in · watch the shadow' : (isStarCircles(s) ? 'tuck in · leave the line' : (three ? 'tuck in · ease past middle' : 'tuck in'))))
-      : (isBellFlight(s) ? 'stretch out · Match the pitch' : (isCloudWaltz(s) ? 'stretch out · watch the shadow' : (isStarCircles(s) ? 'stretch out · hold the line' : (three ? 'stretch out · ease through middle' : 'stretch out'))));
-    const coach = s.note || (isBellFlight(s)
-      ? 'Match the bell — HOLD outer'
-      : (isCloudWaltz(s)
-        ? 'Watch the shadow — cloud hides the star'
-        : (isStarCircles(s)
-          ? 'HOLD the line · stay on the outer band'
-          : (three
-            ? 'HOLD out · RELEASE in · middle for the ribbon'
-            : 'HOLD to stretch out · RELEASE to tuck in'))));
+      ? (isMidnightWaltz(s) ? 'tuck in · Midnight HOLD' : (isBellFlight(s) ? 'tuck in · Match the pitch' : (isCloudWaltz(s) ? 'tuck in · watch the shadow' : (isStarCircles(s) ? 'tuck in · leave the line' : (three ? 'tuck in · ease past middle' : 'tuck in')))))
+      : (isMidnightWaltz(s) ? 'stretch out · Midnight HOLD' : (isBellFlight(s) ? 'stretch out · Match the pitch' : (isCloudWaltz(s) ? 'stretch out · watch the shadow' : (isStarCircles(s) ? 'stretch out · hold the line' : (three ? 'stretch out · ease through middle' : 'stretch out')))));
+    const coach = s.note || (isMidnightWaltz(s)
+      ? 'Midnight — HOLD outer'
+      : (isBellFlight(s)
+        ? 'Match the bell — HOLD outer'
+        : (isCloudWaltz(s)
+          ? 'Watch the shadow — cloud hides the star'
+          : (isStarCircles(s)
+            ? 'HOLD the line · stay on the outer band'
+            : (three
+              ? 'HOLD out · RELEASE in · middle for the ribbon'
+              : 'HOLD to stretch out · RELEASE to tuck in')))));
 
     // Teach windows first — cloud teach / makeup use catchHalfOf so HOLD chrome lasts full catch.
-    const teachRibbon = three && !isStarCircles(s) && !isCloudWaltz(s) && !isBellFlight(s) && s.bubbles.some((b) => b.ribbon && b.teach && !b.taken && !b.missed
+    const teachRibbon = three && !isStarCircles(s) && !isCloudWaltz(s) && !isBellFlight(s) && !isMidnightWaltz(s) && s.bubbles.some((b) => b.ribbon && b.teach && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -CATCH_HALF);
     const teachLine = isStarCircles(s) && s.bubbles.some((b) => b.line && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -CATCH_HALF);
@@ -1637,17 +1796,19 @@ export default {
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
     const teachBell = isBellFlight(s) && s.bubbles.some((b) => b.bell && b.teach && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
-    const makeupLoud = (isCloudWaltz(s) || isBellFlight(s)) && (s.passed || 0) < s.goal && s.bubbles.some((b) => b.makeup && !b.taken && !b.missed
+    const teachMidnight = isMidnightWaltz(s) && s.bubbles.some((b) => b.midnight && b.teach && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
-    const assistLoud = ((isCloudWaltz(s) && !!s.ch4Assist) || (isBellFlight(s) && !!s.ch5Assist))
+    const makeupLoud = (isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s)) && (s.passed || 0) < s.goal && s.bubbles.some((b) => b.makeup && !b.taken && !b.missed
+      && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
+    const assistLoud = ((isCloudWaltz(s) && !!s.ch4Assist) || (isBellFlight(s) && !!s.ch5Assist) || (isMidnightWaltz(s) && !!s.ch6Assist))
       && (s.passed || 0) < s.goal
       && /auto-line/.test(s.note || '');
-    const teachLoud = teachRibbon || teachLine || teachCloud || teachBell || makeupLoud || assistLoud;
+    const teachLoud = teachRibbon || teachLine || teachCloud || teachBell || teachMidnight || makeupLoud || assistLoud;
 
     // Sticky miss coaching plate (playtest: settle was burying the miss verb).
     // Cloud-teach / makeup / assist pin uses its own scream plate below so verb HOLD stays visible.
-    const missPinned = !teachCloud && !teachBell && !makeupLoud && !assistLoud && (s.notePinUntil != null) && (s.t < s.notePinUntil)
-      && /Missed|Ribbon miss|Left the line|Hold the line|Cloud miss|Watch the shadow|Match the bell|Bell miss|makeup|auto-line/.test(s.note || '');
+    const missPinned = !teachCloud && !teachBell && !teachMidnight && !makeupLoud && !assistLoud && (s.notePinUntil != null) && (s.t < s.notePinUntil)
+      && /Missed|Ribbon miss|Left the line|Hold the line|Cloud miss|Watch the shadow|Match the bell|Bell miss|Midnight miss|makeup|auto-line/.test(s.note || '');
     if (missPinned) {
       d.poly(
         [[160, 760], [740, 760], [728, 848], [172, 848]],
@@ -1658,27 +1819,29 @@ export default {
       d.text(s.note, 450, 810, 18, CREAM);
     }
 
-    // Live cloud/bell teach / makeup / auto-line assist: sticky scream-clear coach plate
-    if ((teachCloud || teachBell || makeupLoud || assistLoud) && !missPinned) {
+    // Live cloud/bell/midnight teach / makeup / auto-line assist: sticky scream-clear coach plate
+    if ((teachCloud || teachBell || teachMidnight || makeupLoud || assistLoud) && !missPinned) {
       d.poly(
         [[120, 730], [780, 730], [768, 808], [132, 808]],
         '#1a3044f0',
-        teachBell || (isBellFlight(s) && makeupLoud) ? BELL_SOFT : CLOUD_SOFT,
+        teachMidnight || (isMidnightWaltz(s) && (makeupLoud || assistLoud))
+          ? MIDNIGHT_SOFT
+          : (teachBell || (isBellFlight(s) && makeupLoud) ? BELL_SOFT : CLOUD_SOFT),
         3.5,
       );
       d.text(
         s.note || (assistLoud
           ? 'HOLD — auto-line outer'
           : (makeupLoud
-            ? (isBellFlight(s) ? 'HOLD outer — makeup bell' : 'HOLD outer — makeup star')
-            : (teachBell ? 'HIGH → OUTER · HOLD' : 'Watch the shadow — HOLD outer · cloud hides the star'))),
+            ? (isMidnightWaltz(s) ? 'HOLD outer — makeup' : (isBellFlight(s) ? 'HOLD outer — makeup bell' : 'HOLD outer — makeup star'))
+            : (teachMidnight ? 'Midnight — HOLD outer' : (teachBell ? 'HIGH → OUTER · HOLD' : 'Watch the shadow — HOLD outer · cloud hides the star')))),
         450, 778, 20, CREAM,
       );
     }
 
     // Big in-court verb plate — loudest early / until first POP / during teach or makeup.
     if (!missPinned && (early || s.holding || (s.passed || 0) < 1 || teachLoud)) {
-      const tall = isCloudWaltz(s) || isBellFlight(s);
+      const tall = isCloudWaltz(s) || isBellFlight(s) || isMidnightWaltz(s);
       d.poly(
         [[200, 820], [700, 820], [688, tall ? 940 : 920], [212, tall ? 940 : 920]],
         s.holding ? '#6b2030ee' : '#2a1838ee',
@@ -1687,9 +1850,11 @@ export default {
       );
       d.text(verb, 450, 858, early || teachLoud ? 42 : 34, CREAM);
       d.text(verbSub, 450, 898, 18, '#f0d18f');
-      // Scream-clear N/3 under verb during Cloud Waltz / Bell Flight
+      // Scream-clear N/3 under verb during Cloud Waltz / Bell Flight / Midnight Waltz
       if (tall) {
-        if (isBellFlight(s)) {
+        if (isMidnightWaltz(s)) {
+          d.text(Math.min(s.passed || 0, GOAL_CH6) + ' / ' + GOAL_CH6 + ' Midnight POP', 450, 924, 17, MIDNIGHT_SOFT);
+        } else if (isBellFlight(s)) {
           d.text(Math.min(s.passed || 0, GOAL_CH5) + ' / ' + GOAL_CH5 + ' Bell POP', 450, 924, 17, BELL_SOFT);
         } else {
           d.text((s.passed || 0) + ' / ' + s.goal + ' bubbles', 450, 924, 17, CLOUD_SOFT);
@@ -1704,7 +1869,7 @@ export default {
       s.holding ? GOLD : '#f0d09a',
       s.holding ? 3.2 : 2.4,
     );
-    const loudChrome = teachCloud || teachBell || makeupLoud || assistLoud;
+    const loudChrome = teachCloud || teachBell || teachMidnight || makeupLoud || assistLoud;
     d.text(s.holding ? 'RELEASE · tuck in' : 'HOLD · stretch out', 450, 1110, loudChrome ? 28 : 26, CREAM);
     d.text(coach, 450, 1152, loudChrome ? 20 : 16, loudChrome ? CREAM : '#f0d18f');
     if (s.practice) {
@@ -1714,13 +1879,15 @@ export default {
       d.poly(
         [[320, 178], [580, 178], [568, 228], [332, 228]],
         '#2a1838' + a,
-        teachLine ? LINE_CREAM : (teachBell ? BELL_SOFT : (teachCloud ? CLOUD_SOFT : (teachRibbon ? RIBBON_SOFT : '#ead6a4'))),
+        teachLine ? LINE_CREAM : (teachMidnight ? MIDNIGHT_SOFT : (teachBell ? BELL_SOFT : (teachCloud ? CLOUD_SOFT : (teachRibbon ? RIBBON_SOFT : '#ead6a4')))),
         teachLoud ? 3 : 2,
       );
       d.text('PRACTICE', 450, 208, teachLoud ? 24 : 20, CREAM);
     }
 
-    if (isBellFlight(s)) {
+    if (isMidnightWaltz(s)) {
+      drawHud(d, s, {goal: GOAL_CH6, count: Math.min(s.passed || 0, GOAL_CH6), label: 'Midnight POP'});
+    } else if (isBellFlight(s)) {
       drawHud(d, s, {goal: GOAL_CH5, count: Math.min(s.passed || 0, GOAL_CH5), label: 'Bell POP'});
     } else {
       drawHud(d, s, {goal: s.goal, count: s.passed, label: 'bubbles'});
