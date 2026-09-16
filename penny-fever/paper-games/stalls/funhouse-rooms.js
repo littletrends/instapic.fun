@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: dress-ready-5c
+ * cache: dress-ready-5d
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -69,20 +69,21 @@ export const STAGE = {xMin: 200, xMax: 700, yMin: 450, yMax: 900};
  * All chapters use this exact layout — fairness varies elsewhere.
  * A/B = paired two-way portal mouths (widened AA….BB corridor) on middle left/right edge walls.
  * K = starKey mid-court (was treasure seat). D = punchline door. F = face house. S = start.
- * dress-ready-5c: open centre through the 3 mid blocks (F flanks, D flanks, lower lane pillars) so K is easy to walk onto.
+ * dress-ready-5d: restore all inner walls; only two open bricks behind each curtain (A...###...B).
  */
 const SHARED_MAZE_LAYOUT = [
+  // Walls restored (Lorie). Only two open bricks behind each curtain (A...###...B).
   '###########',
   '#o...#...o#',
-  '#.#.....#.#',
+  '#.##.#.##.#',
   '#.........#',
-  '#....F....#',
-  '#....K....#',
-  'AA.......BB',
+  '##.#.F.#.##',
+  '#..#.K.#..#',
+  'A...###...B',
   '#.........#',
-  '#....D....#',
-  '#o.......o#',
-  '#.#.....#.#',
+  '###.#D#.###',
+  '#o..#.#..o#',
+  '#.##...##.#',
   '#....S....#',
   '###########',
 ];

@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: dress-ready-5c
+ * cache: dress-ready-5d
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -13,7 +13,7 @@
  * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval only.
  *   Mid-edge A/B curtain portals = two-way through (enter L→exit R, enter R→exit L; no IN/OUT labels).
  *   Right curtain art flipped. starKey mid-court UNLOCKS cream-border bonus; collect on screen clear. Widened AA/BB portal mouths.
- *   dress-ready-5c: open centre through 3 mid blocks so K is easy; curtains never gated behind key.
+ *   dress-ready-5d: open centre through 3 mid blocks so K is easy; curtains never gated behind key.
  *   No invent/re-split. No whole-backdrop overpaint. Papercut walls/doors; token KEEP.
  * CONTROLS: centre MOVE stick on canvas bottom + maze swipe + keyboard (no UD/LR arrow pads; no curtain-corner pads).
  *   actions: [] — no shell arrow dock. Sticky-seize fixed (release snaps home).
@@ -33,7 +33,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=dress-ready-5c';
+} from './funhouse-rooms.js?v=dress-ready-5d';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -63,7 +63,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'dress-ready-5c';
+const BEA_CACHE_VER = 'dress-ready-5d';
 /** Chase faces — PNG cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.png',
