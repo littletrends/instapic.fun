@@ -17,11 +17,12 @@
  *   Ch6 The Highest View — ≤2 Tempest depth rings; SNAP true finds; balloon decoys soft-dump.
  *
  * All six chapter names locked. Keep treasures. glow() 6-digit hex only.
+ * Layout: shell #actions SNAP + .play-hud + readout; no on-court chrome/HUD.
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
@@ -852,34 +853,6 @@ function drawLens(d, s) {
   }
 }
 
-function drawSnapChrome(d, s) {
-  const y = s.practice ? 198 : 168;
-  d.poly([[40, y], [560, y], [560, y + 58], [40, y + 58]], '#122335f2', '#d2a65b', 3);
-  if (s.glowId) {
-    d.text('SNAP', 300, y + 40, 36, '#ffe6a4');
-  } else if ((s.t || 0) < CLARITY_SECS || !s.didSnapOnce) {
-    d.text('SNAP', 300, y + 40, 36, '#ffe6a4');
-  } else {
-    d.text(TEACH, 300, y + 40, 22, '#f0d09a');
-  }
-  if (((s.t || 0) < CLARITY_SECS || !s.didSnapOnce) && !s.glowId) {
-    d.text('Drag lens · snap in the glow', 300, y + 78, 18, '#e8d0a0');
-  }
-  if (s.practice) {
-    d.poly([[640, 188], [870, 188], [870, 248], [640, 248]], '#5a1c28f0', '#f4d590', 3);
-    d.text('PRACTICE', 755, 228, 28, '#ffe6a4');
-  }
-  // Big bottom SNAP control (Fortune-style chrome) when a target is in the glow.
-  if (s.glowId) {
-    d.poly([[220, 990], [680, 990], [680, 1120], [220, 1120]], '#5a1c28f2', '#f4d590', 4);
-    d.text('SNAP', 450, 1070, 44, '#ffe6a4');
-  }
-}
-
-function hitSnapControl(p) {
-  // Keep inside the 900×1200 field; avoid the extreme bottom edge.
-  return p.y >= 990 && p.y <= 1120 && p.x >= 220 && p.x <= 680;
-}
 
 
 function trySnap(s, via) {
@@ -1114,13 +1087,6 @@ export default {
       s.pointerDown = {x: p.x, y: p.y, t: s.t};
       s.moved = false;
       s.drag = p;
-      // Big on-canvas SNAP chrome — fire on press, not only on tap-up.
-      if (s.glowId && hitSnapControl(p)) {
-        trySnap(s, 'chrome-down');
-        s.drag = null;
-        s.pointerDown = null;
-        return;
-      }
       // Tap on lens glass while already glowing also snaps on down.
       if (s.glowId && inLens(s.lensX, s.lensY, p.x, p.y, 24)) {
         trySnap(s, 'lens-down');
@@ -1137,14 +1103,6 @@ export default {
     if (type === 'move' && s.drag) {
       if (s.pointerDown && Math.hypot(p.x - s.pointerDown.x, p.y - s.pointerDown.y) > 12) {
         s.moved = true;
-      }
-      // If finger slides onto the SNAP chrome while glowing, fire.
-      if (s.glowId && hitSnapControl(p)) {
-        trySnap(s, 'chrome-move');
-        s.drag = null;
-        s.pointerDown = null;
-        s.moved = false;
-        return;
       }
       s.drag = p;
       const lens = fingerToLens(p);
@@ -1174,13 +1132,12 @@ export default {
         if ((s.t || 0) < CLARITY_SECS) s.note = TEACH;
         return;
       }
-      const onChrome = hitSnapControl(p);
       const onLens = inLens(s.lensX, s.lensY, p.x, p.y, 28)
         || inLens(s.lensX, s.lensY, p.x, p.y - LENS_FINGER_Y * 0.4, 32);
       // Release-to-commit while lit or in glow-grace (gallery trigger).
-      const releaseCommit = !onChrome;
-      if (onChrome || onLens || releaseCommit) {
-        trySnap(s, onChrome ? 'chrome-up' : (onLens ? 'lens-up' : 'release'));
+      // Shell #actions SNAP + lens tap + release-while-lit — no on-court chrome.
+      if (onLens || true) {
+        trySnap(s, onLens ? 'lens-up' : 'release');
       }
       return;
     }
@@ -1217,8 +1174,6 @@ export default {
       d.glow(s.flashX || CX, s.flashY || CY, 28 + 70 * k, '#ffe6a4');
     }
 
-    drawHud(d, s, {goal: s.goal, count: s.found, label: 'snapped'});
-    drawSnapChrome(d, s);
   },
   readout: s => s.note || TEACH,
 };

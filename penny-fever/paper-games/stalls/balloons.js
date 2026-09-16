@@ -37,7 +37,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
@@ -1262,32 +1262,11 @@ function drawPracticeBadge(d, s) {
 
 function drawObjective(d, s) {
   if (!s.boarded && s.cleared == null) return;
-
-  if (s.practice) {
-    drawPracticeBadge(d, s);
-  } else {
-    const mode = s.eligible ? 'Paid flight · keepsake live' : 'Paid flight';
-    d.text(mode, 450, 118, 16, '#fff6d8');
-  }
-
+  // Shell .play-hud owns cash/keep/cleared; #readout owns s.note.
+  // Light early coach only — no practice badge / Cleared banner chrome.
   if (earlyClarity(s)) {
-    d.text('POP the glowing balloon', 450, s.practice ? 168 : 152, 22, '#ffe6a4');
-    return;
+    d.text('POP the glowing balloon', 450, 132, 18, '#ffe6a4');
   }
-
-  const g = s.goal || chapterGoal(s.level);
-  const prefix = isCh6(s.level)
-    ? 'Midnight Canopy · '
-    : (isCh5(s.level)
-      ? 'Runaway Bouquet · '
-      : (isCh4(s.level)
-        ? 'Crosswind Crown · '
-        : (isCh3(s.level)
-          ? 'Lantern Boughs · '
-          : (isCh2(s.level) ? 'Ribbon Breeze · ' : ''))));
-  const line = prefix + 'Cleared ' + (s.cleared || 0) + ' / ' + g;
-  d.text(line, 450, s.practice ? 168 : 148, 22, '#ffe6a4');
-  if (s.note) wrapLine(d, s.note, 450, s.practice ? 198 : 178, 16, '#f0d18f', 720);
 }
 
 export default {
@@ -1341,9 +1320,9 @@ export default {
     }
     if (s.result) return;
 
-    // Shell HOLD (bellows) — only when pointer is not capturing hold.
+    // Shell HOLD (bellows) via input.actions — canvas no longer paints HOLD pad.
     const shellHold = !!input?.actions?.has?.('bellows');
-    if (s._pointerMode !== 'hold' && shellHold !== !!s.holding) {
+    if (shellHold !== !!s.holding) {
       setHolding(s, shellHold);
     }
     // Shell POP tap edge via actions set (one-shot).
@@ -1445,31 +1424,9 @@ export default {
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
-    if (type === 'down') {
-      if (inHoldZone(p)) {
-        s._pointerMode = 'hold';
-        setHolding(s, true);
-        return;
-      }
-      if (inPopZone(p) || nearLitOnCanvas(s, p)) {
-        s._pointerMode = 'pop';
-        attemptPop(s);
-        return;
-      }
-      return;
-    }
-    if (type === 'move' && s._pointerMode === 'hold') {
-      return;
-    }
-    if (type === 'up') {
-      if (s._pointerMode === 'hold') setHolding(s, false);
-      s._pointerMode = null;
-      return;
-    }
-    if (type === 'cancel') {
-      // Pointer cancel / lost capture → bellows released; never leave rising forever.
-      s._pointerMode = null;
-      setHolding(s, false);
+    // No HOLD/POP pad zones — shell actions own verbs. Optional: POP near lit latex.
+    if (type === 'down' && nearLitOnCanvas(s, p)) {
+      attemptPop(s);
     }
   },
   draw(s, d) {
@@ -1510,9 +1467,7 @@ export default {
     drawLanding(d, s);
     drawBasket(d, s);
     drawFx(d, s);
-    drawHoldChrome(d, s);
-    drawPopButton(d, s);
-    drawHud(d, s, {goal: s.goal, count: s.cleared, label: 'cleared'});
+    // Chrome layout: shell owns HOLD/POP pads + .play-hud; no on-canvas pads/HUD.
   },
   readout: (s) => s.note || '',
 };

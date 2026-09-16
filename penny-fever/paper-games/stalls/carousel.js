@@ -1908,39 +1908,31 @@ function drawApproachGlint(d, scr, t, treasure) {
 
 function drawPracticeBadge(d, s) {
   if (!s.practice) return;
-  const pulse = 1 + 0.04 * Math.sin((s.t || 0) * 4);
-  const w = 210 * pulse;
+  // Below drawHud panel (practice HUD ends ~168) — never cover N/3 count (swings pattern).
+  const pulse = 1 + 0.03 * Math.sin((s.t || 0) * 4);
+  const w = 156 * pulse;
   const x0 = 450 - w / 2;
-  const y = 132;
-  d.glow(450, y + 28, 70, '#d2a65b');
-  d.poly([[x0, y], [x0 + w, y], [x0 + w, y + 56], [x0, y + 56]], '#6b2030f0', '#f0d09a', 3);
-  d.text('PRACTICE', 450, y + 38, 28, '#ffe6a4');
+  const y = 178;
+  d.glow(450, y + 16, 32, '#d2a65b');
+  d.poly([[x0, y], [x0 + w, y], [x0 + w, y + 32], [x0, y + 32]], '#6b2030e8', '#f0d09a', 2);
+  d.text('PRACTICE', 450, y + 22, 16, '#ffe6a4');
 }
 
-function drawVerbChrome(d, s) {
-  // First 5s: ONE verb — TAP on the crest. No LOOK chrome.
-  if (!s.practice) return;
-  const t = s.t || 0;
-  if (t > VERB_SEC) return;
-  const fade = t < VERB_SEC - 0.6 ? 1 : Math.max(0, (VERB_SEC - t) / 0.6);
-  if (fade < 0.05) return;
-
-  const y = 860;
+/** Tiny crest-adjacent cue — not a full-width teach panel / permanent bar. */
+function drawCrestAdjacentCue(d, primary, secondary, fade, accent) {
+  if (!primary || fade < 0.05) return;
+  const y = CY + 112;
+  const h = secondary ? 38 : 28;
+  const w = Math.min(560, secondary ? 500 : 400);
+  const x0 = CX - w / 2;
   d.poly(
-    [[120, y], [780, y], [780, y + 150], [120, y + 150]],
-    `rgba(12,10,18,${0.88 * fade})`,
-    '#d2a65b',
-    3,
+    [[x0, y], [x0 + w, y], [x0 + w, y + h], [x0, y + h]],
+    `rgba(12,10,18,${0.7 * fade})`,
+    accent || '#d2a65b',
+    1.5,
   );
-
-  const tx = 450;
-  const ty = y + 58;
-  const pulse = 1 + 0.12 * Math.sin(t * 6);
-  d.glow(tx, ty, 58 * pulse, '#ffe6a4');
-  d.circle(tx, ty, 48, `rgba(210,166,91,${0.35 * fade})`, '#ffe6a4', 3);
-  d.circle(tx, ty, 15, `rgba(255,230,164,${0.95 * fade})`, '#d2a65b', 2);
-  d.text('TAP', tx, ty + 72, 28, `rgba(255,230,164,${fade})`);
-  d.text(TEACH, 450, y + 138, 24, `rgba(255,246,216,${fade})`);
+  d.text(primary, CX, y + (secondary ? 15 : 19), secondary ? 13 : 14, `rgba(255,230,164,${fade})`);
+  if (secondary) d.text(secondary, CX, y + 32, 11, `rgba(240,208,154,${0.92 * fade})`);
 }
 
 function drawPracticeLegend(d, s) {
@@ -1948,19 +1940,21 @@ function drawPracticeLegend(d, s) {
   if ((s.t || 0) < VERB_SEC) return;
   const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
   if (lapIdx > 0) return;
-  const y = 168;
-  d.poly([[160, y], [740, y], [740, y + 44], [160, y + 44]], '#122335e8', '#d2a65b', 2);
-  d.text(TEACH + ' · almost… NOW · nothing kept', 450, y + 30, 18, '#ffe6a4');
+  // Brief time-gated crest cue — durable teach lives in s.note / shell readout.
+  const t = s.t || 0;
+  const end = VERB_SEC + 3.2;
+  if (t > end) return;
+  const fade = t < end - 0.5 ? 1 : Math.max(0, (end - t) / 0.5);
+  drawCrestAdjacentCue(d, 'almost… NOW', null, fade, '#d2a65b');
 }
 
-/** Ch2 teach-alone chrome — long warn / coaching for the heart mark. No LOOK verb. */
+/** Ch2 teach-alone chrome — brief crest-adjacent. No LOOK / TAP glyph. */
 function drawCh2MarkChrome(d, s) {
   if (s.level !== 1) return;
   if (s.ch2Taught) return;
   const t = s.t || 0;
   const lap0 = s.practice && Math.floor(t / (s.lapSec || 1)) === 0;
 
-  // Practice: after crest-TAP verb, briefly show the heart mark (seconds ~5–8).
   let show = false;
   let fade = 1;
   if (lap0 && t >= VERB_SEC && t < VERB_SEC + CH2_TEACH_CHROME) {
@@ -1969,7 +1963,6 @@ function drawCh2MarkChrome(d, s) {
     fade = t < end - 0.6 ? 1 : Math.max(0, (end - t) / 0.6);
   }
 
-  // Searchable: long warn before first marked window (helter cushion pattern).
   const first = s.firstMarked;
   if (!s.practice && first && !first.taken) {
     const lead = first.from - t;
@@ -1979,28 +1972,13 @@ function drawCh2MarkChrome(d, s) {
     }
   }
 
-  // Also first ~7 s of searchable if teach window is later.
   if (!s.practice && !s.ch2Taught && t < CH2_TEACH_CHROME) {
     show = true;
     fade = t < CH2_TEACH_CHROME - 0.6 ? 1 : Math.max(0, (CH2_TEACH_CHROME - t) / 0.6);
   }
 
   if (!show || fade < 0.05) return;
-
-  const y = 820;
-  d.poly(
-    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
-    `rgba(12,10,18,${0.86 * fade})`,
-    '#d2a65b',
-    3,
-  );
-  const hx = 200;
-  const hy = y + 58;
-  d.glow(hx, hy, 36, '#ffe6a4');
-  d.heart(hx, hy, 18, '#d2a65b');
-  d.heart(hx, hy - 1, 11, '#ffe6a4');
-  d.text(TEACH_MARKED, 520, y + 52, 24, `rgba(255,230,164,${fade})`);
-  d.text('Gold heart saddle — decoys come later', 520, y + 92, 16, `rgba(240,208,154,${fade})`);
+  drawCrestAdjacentCue(d, TEACH_MARKED, 'gold heart saddle', fade, '#d2a65b');
 }
 
 /** Dashed silver ring — learnable false-reflection cue (6-digit glow only). */
@@ -2048,7 +2026,7 @@ function drawReflectionGlint(d, scr, t) {
   }
 }
 
-/** Ch3 teach-alone chrome — real crest before mirror ghosts. No LOOK verb. */
+/** Ch3 teach-alone chrome — brief crest-adjacent. No LOOK verb. */
 function drawCh3MirrorChrome(d, s) {
   if (s.level !== 2) return;
   if (s.ch3Taught) return;
@@ -2078,21 +2056,7 @@ function drawCh3MirrorChrome(d, s) {
   }
 
   if (!show || fade < 0.05) return;
-
-  const y = 820;
-  d.poly(
-    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
-    `rgba(12,10,18,${0.86 * fade})`,
-    '#d2a65b',
-    3,
-  );
-  const hx = 200;
-  const hy = y + 58;
-  d.glow(hx, hy, 36, '#ffe6a4');
-  d.circle(hx, hy, 16, 'rgba(255,230,164,0.35)', '#ffe6a4', 2.5);
-  d.heart(hx, hy, 10, '#d2a65b');
-  d.text(TEACH_MIRROR, 520, y + 48, 22, `rgba(255,230,164,${fade})`);
-  d.text('Real crest — skip mirror ghosts', 520, y + 88, 16, `rgba(240,208,154,${fade})`);
+  drawCrestAdjacentCue(d, TEACH_MIRROR, 'skip mirror ghosts', fade, '#d2a65b');
 }
 
 /** Paper-cut carriage window on a crest horse — gold/burgundy frame; open = bright interior. */
@@ -2163,19 +2127,7 @@ function drawCh4WindowChrome(d, s) {
   }
 
   if (!show || fade < 0.05) return;
-
-  const y = 820;
-  d.poly(
-    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
-    `rgba(12,10,18,${0.86 * fade})`,
-    '#d2a65b',
-    3,
-  );
-  const hx = 200;
-  const hy = y + 58;
-  drawCarriageWindow(d, hx, hy, 1.6, true, true);
-  d.text(TEACH_WINDOW, 520, y + 48, 20, `rgba(255,230,164,${fade})`);
-  d.text('Open window at NOW — shut never collects', 520, y + 88, 16, `rgba(240,208,154,${fade})`);
+  drawCrestAdjacentCue(d, TEACH_WINDOW, 'open at NOW · shut never', fade, '#d2a65b');
 }
 
 /** Paper-cut gold/teal canopy ornament — distinct from hearts / silver ghosts / windows. */
@@ -2226,23 +2178,11 @@ function drawCh5CanopyChrome(d, s) {
   }
 
   if (!show || fade < 0.05) return;
-
-  const y = 820;
-  d.poly(
-    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
-    `rgba(10,14,22,${0.88 * fade})`,
-    '#7ec8b0',
-    3,
-  );
-  const hx = 200;
-  const hy = y + 58;
-  drawCanopyOrnament(d, hx, hy - 18, 1.5, true);
-  d.text(TEACH_CANOPY, 520, y + 48, 18, `rgba(200,232,216,${fade})`);
-  d.text('Hang high — TAP only when it dips into NOW', 520, y + 88, 16, `rgba(210,166,91,${fade})`);
+  drawCrestAdjacentCue(d, TEACH_CANOPY, 'hang high — TAP on the dip', fade, '#7ec8b0');
 }
 
 
-/** Ch6 teach-alone chrome — Grand Waltz mix naming. No LOOK verb. */
+/** Ch6 teach-alone chrome — brief crest-adjacent. No LOOK verb. */
 function drawCh6WaltzChrome(d, s) {
   if (s.level !== 5) return;
   if (s.ch6Taught) return;
@@ -2272,33 +2212,14 @@ function drawCh6WaltzChrome(d, s) {
   }
 
   if (!show || fade < 0.05) return;
-
-  const y = 800;
-  d.poly(
-    [[80, y], [820, y], [820, y + 140], [80, y + 140]],
-    `rgba(12,10,18,${0.88 * fade})`,
-    '#d2a65b',
-    3,
-  );
-  const hx = 180;
-  const hy = y + 68;
-  d.glow(hx, hy, 36, '#ffe6a4');
-  d.heart(hx, hy - 10, 12, '#d2a65b');
-  drawCarriageWindow(d, hx + 36, hy - 4, 0.9, true, false);
-  drawCanopyOrnament(d, hx - 36, hy - 18, 1.0, true);
-  drawDashedRing(d, hx, hy + 28, 14, '#c8d0e0', 10);
-  d.text(TEACH_WALTZ, 520, y + 52, 18, `rgba(255,230,164,${fade})`);
-  d.text('Hearts · mirrors · open windows · canopy dips', 520, y + 92, 15, `rgba(240,208,154,${fade})`);
-  d.text('Eligible window repeats if you miss a pass', 520, y + 122, 14, `rgba(200,208,224,${fade})`);
+  drawCrestAdjacentCue(d, TEACH_WALTZ, 'hearts · mirrors · windows · dips', fade, '#d2a65b');
 }
 
 function drawStatusStrip(d, s) {
+  // Durable lines → s.note / shell readout. Only brief crest-adjacent NOW/hazard cues.
   if (s.practice && (s.t || 0) < VERB_SEC) return;
-  const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
-  const y = 1088;
-  let label = 'searching';
-  let color = '#f0d09a';
-  let fill = '#1a1220ee';
+  let label = '';
+  let accent = '#d2a65b';
   const anyMarked =
     (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) ||
     (s.treasure && itemInCrestWindow(s.treasure, s)) ||
@@ -2311,61 +2232,37 @@ function drawStatusStrip(d, s) {
     canopyFindLive(s, row) && !itemInCrestWindow(row, s)))
     || (s.level === 5 && (s.finds || []).some((row) =>
       row.canopy && waltzFindLive(s, row) && !itemInCrestWindow(row, s)));
-  const anyCrest = anyMarked || anyDecoy || anyReflection || anyTeach;
 
   if (anyMarked) {
     label = s.level === 1
-      ? 'almost… NOW — heart TAP'
+      ? 'almost… NOW — heart'
       : (s.level === 2
-        ? 'almost… NOW — real TAP'
+        ? 'almost… NOW — real'
         : (s.level === 3
-          ? 'almost… NOW — open TAP'
+          ? 'almost… NOW — open'
           : (s.level === 4
-            ? 'almost… NOW — canopy TAP'
-            : (s.level === 5 ? 'almost… NOW — waltz TAP' : 'almost… NOW — TAP'))));
-    color = (s.level === 4 || s.level === 5) ? '#c8e8d8' : '#ffe6a4';
-    fill = (s.level === 4 || s.level === 5) ? '#1a2830ee' : '#3a2018ee';
+            ? 'almost… NOW — canopy'
+            : (s.level === 5 ? 'almost… NOW — waltz' : 'almost… NOW'))));
+    accent = (s.level === 4 || s.level === 5) ? '#7ec8b0' : '#d2a65b';
   } else if (anyTooHigh) {
     label = 'still high — wait for the dip';
-    color = '#7ec8b0';
-    fill = '#121828ee';
+    accent = '#7ec8b0';
   } else if (anyTeach) {
-    label = 'window opens — watch; next pass TAP';
-    color = '#f0d09a';
-    fill = '#2a2018ee';
+    label = 'window opens — watch';
+    accent = '#d2a65b';
   } else if (anyShut) {
-    label = 'window shut — wait for open';
-    color = '#c8d0e0';
-    fill = '#1a2030ee';
+    label = 'window shut — wait';
+    accent = '#c8d0e0';
   } else if (anyReflection) {
-    label = 'mirror ghost — skip reflections';
-    color = '#c8d0e0';
-    fill = '#1a2030ee';
+    label = 'mirror ghost — skip';
+    accent = '#c8d0e0';
   } else if (anyDecoy) {
-    label = 'decoy crest — skip wrong marks';
-    color = '#c8d0e0';
-    fill = '#1a2030ee';
-  } else if (s.practice && lapIdx === 0) {
-    label = 'practice · wait for the crest';
-    color = '#ead6a4';
-    fill = '#2a2030ee';
-  } else if (s.statusKind === 'found' && (s.flash || 0) > 0.15) {
-    label = 'found · ' + (s.found || 0) + ' / ' + (s.goal || GOAL);
-    color = '#ffe6a4';
-    fill = '#3a2810ee';
-  } else if (s.found >= (s.goal || GOAL)) {
-    label = 'complete · ride home';
-    color = '#fff6d8';
-    fill = '#2a2210ee';
-  } else if (lapIdx === 0) {
-    label = 'practice lap';
-    color = '#ead6a4';
+    label = 'decoy crest — skip';
+    accent = '#c8d0e0';
   } else {
-    label = 'lap ' + (lapIdx + 1) + ' · ' + (s.found || 0) + '/' + (s.goal || GOAL);
-    color = '#f0d09a';
+    return; // no permanent searching/lap bar
   }
-  d.poly([[200, y], [700, y], [700, y + 40], [200, y + 40]], fill, '#d2a65b', 2);
-  d.text(label, 450, y + 28, 18, color);
+  drawCrestAdjacentCue(d, label, null, 1, accent);
 }
 
 function drawSparksAndFlash(d, s) {
@@ -3032,19 +2929,10 @@ export default {
 
     drawSparksAndFlash(d, s);
 
-    const lapFrac = Math.min(1, (s.t || 0) / (s.rideEnd || 1));
-    d.glow(70, 70, 40, '#d2a65b');
-    d.arc(70, 70, 28, -Math.PI / 2, -Math.PI / 2 + lapFrac * TAU, '#f0d09a', 7);
-    d.circle(70, 70, 16, '#122335cc', '#d2a65b', 2);
-    const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
-    d.text(String(lapIdx + 1), 70, 76, 18, '#ffe6a4');
-    d.text(lapIdx === 0 ? 'practice' : ('lap ' + (lapIdx + 1)), 70, 112, 14, '#e8d0a0');
-
-    d.poly([[760, 48], [870, 48], [870, 96], [760, 96]], '#122335dd', '#d2a65b', 2);
-    d.text((s.found || 0) + ' / ' + (s.goal || GOAL), 815, 82, 22, '#ffe6a4');
-
+    // Single top HUD (ride-seek drawHud). Shell .play-hud owns cash/timer.
+    // No homemade lap/finds chrome fighting drawHud. Practice badge below count.
+    drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
     drawPracticeBadge(d, s);
-    drawVerbChrome(d, s);
     drawPracticeLegend(d, s);
     drawCh2MarkChrome(d, s);
     drawCh3MirrorChrome(d, s);
@@ -3052,8 +2940,6 @@ export default {
     drawCh5CanopyChrome(d, s);
     drawCh6WaltzChrome(d, s);
     drawStatusStrip(d, s);
-
-    drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
   },
 
   readout: (s) => s.note || '',
