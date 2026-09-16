@@ -31,7 +31,7 @@
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
-  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction, drawHud,
+  makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
 } from '../ride-seek.js?v=ride-seek-4';
 
@@ -61,6 +61,8 @@ const FX_CAP = 48;
 /** Angular half-width that counts as "facing you" at the bottom notch. */
 const FACE_SNAP = Math.PI / 2.4;
 const NUDGE = Math.PI / 10;
+/** Held shell TURN rate (rad/sec) — pinball-style continuous while button down. */
+const HOLD_TURN = Math.PI * 1.6;
 /** Angular half-width of a cushion / rolled-mat obstacle on a ring arc. */
 const CUSHION_HALF = Math.PI / 6.5; // narrower so ladder snap stays clearable
 /** Long lead warning before the first teach-cushion ring (Bunting Bend). */
@@ -880,158 +882,6 @@ function teachWindow(s, preview) {
   return s.t < TEACH_SECS;
 }
 
-function coachingLine(s, preview, ring) {
-  if (s.statusCopy && (s.matPulse > 0 || s.phaseFlash > 0.2)) return s.statusCopy;
-  // Ch5 teach: first hop telegraphed alone — bounce + arrow, then TURN cream on new ring.
-  if (s.level === 4 && s.treasure && !s.treasure.taken && (s.treasure.hops || 0) === 0) {
-    const tr = s.rings[s.treasure.ring];
-    if (tr && !tr.done && ring && ring.i === tr.i) {
-      const lead = tr.t - (s.launched ? s.t : -PREVIEW_SECS);
-      if (preview || lead <= HOP_WARN_SECS) {
-        return 'Keepsake hops — watch the bounce + arrow, TURN cream on its new ring.';
-      }
-    }
-  }
-  if (s.level === 4 && (s.hopPulse || 0) > 0.15) {
-    return 'Keepsake hopped — TURN cream on the marked ring.';
-  }
-  if (s.level === 4 && (s.ch5Recover || 0) > 0) return 'Cream ladder next — TURN clear';
-  if (s.level === 5 && (s.ch6Recover || 0) > 0) return 'Cream ladder next — TURN clear';
-  // Ch6 final intercept cue
-  if (s.level === 5 && ring && !ring.done && ring.finalIntercept) {
-    return ring.hasTreasure && s.treasure && !s.treasure.taken
-      ? 'Final intercept — wide catch; TURN cream for the keepsake.'
-      : 'Final intercept — TURN cream; wide catch window.';
-  }
-  // Ch6 false-exit flavour: dark/busy look but symbol still points cream.
-  if (s.level === 5 && ring && !ring.done && ring.tunnel && ring.tunnel.falseExit) {
-    const phase = tunnelPhase(s, ring);
-    if (preview || phase === 'warn' || phase === 'dark') {
-      return phase === 'dark'
-        ? 'False exit — follow the cream symbol through the dark.'
-        : 'Looks busy — symbol still points cream. TURN ladder.';
-    }
-  }
-  // Ch4 teach: three-way fork alone first — TURN cream ladder; map shows the join.
-  if (ring && !ring.done && ring.threeway && ring.threeway.teach) {
-    const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
-    if (preview || lead <= THREEWAY_WARN_SECS) {
-      const face = ringFacing(ring, ring.targetTheta, s);
-      if (face === 'ladder' && facingTight(ring.targetTheta)) {
-        return 'Ladder faces you — drop through when it arrives.';
-      }
-      if (face === 'landmark') {
-        return 'Side chute reconnects — TURN cream ladder for credit.';
-      }
-      return 'Three ways — TURN the cream ladder. Map shows the join.';
-    }
-  }
-  // Ch3 teach: exit symbol before darkness on the first tunnel ring (taught alone).
-  if (ring && !ring.done && ring.tunnel && ring.tunnel.teach) {
-    const phase = tunnelPhase(s, ring);
-    if (preview || phase === 'warn' || phase === 'dark') {
-      const exit = tunnelExitKind(ring);
-      if (phase === 'dark') {
-        return exit === 'ladder'
-          ? 'Dark tunnel — follow the symbol; TURN ladder to face you.'
-          : 'Dark tunnel — follow the symbol; TURN snake to face you.';
-      }
-      return exit === 'ladder'
-        ? 'Tunnel ahead — symbol shows ladder exit. TURN before darkness.'
-        : 'Tunnel ahead — symbol shows snake exit. TURN before darkness.';
-    }
-  }
-  // Ch2 teach: long warn on the first cushion ring before mixing other hazards.
-  if (ring && !ring.done && ring.cushion && ring.cushion.teach) {
-    const lead = ring.t - (s.launched ? s.t : -PREVIEW_SECS);
-    if (preview || lead <= CUSHION_WARN_SECS) {
-      if (cushionBlocking(ring, ring.targetTheta)) {
-        return 'Cushion ahead — TURN clear of it toward the ladder.';
-      }
-      return 'Cushion ahead — TURN clear of it toward the ladder.';
-    }
-  }
-  if (s.level === 3 && (s.ch4Recover || 0) > 0) return 'Cream ladder next — TURN clear';
-  if (s.level === 5 && (s.ch6Recover || 0) > 0) return 'Cream ladder next — TURN clear';
-  if (!s.turnedOnce) return 'TURN the ring so the ladder faces you.';
-  if (ring && !ring.done) {
-    const phase = tunnelPhase(s, ring);
-    if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
-      const exit = tunnelExitKind(ring);
-      const face = ringFacing(ring, ring.targetTheta, s);
-      if (face === exit && facingTight(ring.targetTheta)) {
-        return 'Exit notch faces you — hold through the tunnel.';
-      }
-      return phase === 'dark'
-        ? 'Dark — follow the exit symbol and TURN.'
-        : 'Symbol shows the exit — TURN before darkness.';
-    }
-    if (cushionBlocking(ring, ring.targetTheta)) {
-      return 'Cushion ahead — TURN clear of it toward the ladder.';
-    }
-    const face = ringFacing(ring, ring.targetTheta, s);
-    if (face === 'ladder' && facingTight(ring.targetTheta)) {
-      if (ring.hasTreasure && s.treasure && !s.treasure.taken) {
-        return 'Keepsake on this ring — hold the cream ladder.';
-      }
-      return 'Ladder faces you — drop through when it arrives.';
-    }
-    if (face === 'landmark') {
-      return 'Side chute reconnects — TURN cream ladder for credit.';
-    }
-    if (face === 'snake') return 'Snake faces you — TURN toward the cream ladder.';
-    if (ring.threeway) return 'Three ways — TURN the cream ladder. Map shows the join.';
-    if (ring.hasTreasure && s.level === 4) {
-      return 'Keepsake on this ring — TURN cream to catch it.';
-    }
-    return 'TURN so the ladder notch sits at the bottom.';
-  }
-  if (!preview && s.progress > 0.82) {
-    return s.hits >= s.goal ? 'Bottom mat ahead — ladders clear.' : 'Bottom mat ahead — hold steady.';
-  }
-  return s.note || 'Choose your spiral. Catch what tumbles.';
-}
-
-function phaseLabel(s, preview) {
-  if (s.phaseFlash > 0 && s.phaseFlashLabel) return s.phaseFlashLabel;
-  if (s.result) return s.challengeOkFlash ? 'Clear' : 'Sliding';
-  if (preview) return s.practice ? 'Practice' : 'Ready';
-  if (s.launched) return 'Sliding';
-  return s.practice ? 'Practice' : 'Ready';
-}
-
-function drawPracticeBadge(d, s, teach) {
-  if (!s.practice) return;
-  const pulse = teach ? (0.7 + 0.3 * Math.sin((s.previewT || s.t) * 5)) : 1;
-  const a = Math.floor(pulse * 200).toString(16).padStart(2, '0');
-  d.ellipse(450, 34, teach ? 148 : 132, teach ? 30 : 26, '#6b2030' + a, '#d2a65bcc', 2);
-  d.text('PRACTICE', 450, 34, teach ? 28 : 24, '#fff6d8');
-}
-
-function drawTurnChrome(d, s, clock, teach) {
-  // Loud TURN chrome until first successful turn; extra-large in the teach window.
-  if (s.turnedOnce && !teach) {
-    const a = '55';
-    d.text('↺  TURN  ↻', 450, 1048, 18, '#f0d09a' + a);
-    return;
-  }
-  const pulse = 0.55 + 0.45 * Math.sin(clock * 4.2);
-  const fillHex = Math.floor((0.42 + pulse * 0.28) * 255).toString(16).padStart(2, '0');
-  const strokeHex = Math.floor((0.55 + pulse * 0.35) * 255).toString(16).padStart(2, '0');
-  const textHex = Math.floor((0.9 + pulse * 0.1) * 255).toString(16).padStart(2, '0');
-  const big = teach || !s.turnedOnce;
-  const top = big ? 978 : 990;
-  const bot = big ? 1082 : 1075;
-  const left = big ? 220 : 250;
-  const right = big ? 680 : 650;
-  d.poly(
-    [[left, top], [right, top], [right - 10, bot], [left + 10, bot]],
-    '#2a1814' + fillHex, '#d2a65b' + strokeHex, big ? 3.2 : 2.5,
-  );
-  d.text('↺  TURN  ↻', 450, big ? 1020 : 1025, big ? 44 : 36, '#fff6d8' + textHex);
-  d.text('drag around the tower', 450, big ? 1058 : 1055, big ? 18 : 16, '#f0d09a' + textHex);
-}
-
 function drawLadderNotch(d, x, y, rx, ry, ang, highlight) {
   // Cream/gold step wedge at the notch angle on the ellipse.
   const px = x + Math.cos(ang) * rx;
@@ -1427,46 +1277,6 @@ function drawFx(d, s) {
   }
 }
 
-function drawStateChip(d, s, preview) {
-  const label = phaseLabel(s, preview);
-  const chapter = LEVEL_NAMES[clamp(s.level || 0, 0, LEVEL_NAMES.length - 1)] || LEVEL_NAMES[0];
-  const cy = s.practice ? 78 : 56;
-  d.ellipse(450, cy, 210, 28, '#1a101066', '#d2a65b55', 1.2);
-  d.text(label, 450, cy - 8, 18, '#fff6d8');
-  d.text(chapter, 450, cy + 14, 13, '#ead6a4aa');
-}
-
-function drawBottomStrip(d, s, preview, ring) {
-  const line = coachingLine(s, preview, ring);
-  d.poly(
-    [[120, 1088], [780, 1088], [768, 1172], [132, 1172]],
-    '#2a181466', '#d2a65b66', 1.5,
-  );
-  d.text(line, 450, 1128, 18, '#fff6d8');
-  if (s.practice && s.turnedOnce) {
-    d.text('nothing is kept', 450, 1156, 13, '#ead6a488');
-  } else if (s.level === 4 && s.treasure && !s.treasure.taken && (s.hopPulse || 0) > 0) {
-    d.text('bounce + arrow → new ring', 450, 1156, 13, '#f4d590cc');
-  } else if (ring && !ring.done) {
-    const phase = tunnelPhase(s, ring);
-    if (ring.tunnel && (phase === 'warn' || phase === 'dark')) {
-      const exit = tunnelExitKind(ring);
-      d.text(
-        (phase === 'dark' ? 'dark · ' : '') + 'exit symbol: ' + exit,
-        450, 1156, 13, '#f0d09acc',
-      );
-    } else if (cushionBlocking(ring, ring.targetTheta)) {
-      d.text('facing: cushion', 450, 1156, 13, '#e8b0b0cc');
-    } else {
-      const face = ringFacing(ring, ring.targetTheta, s);
-      const faceTxt = face === 'ladder' ? 'facing: ladder'
-        : (face === 'landmark' ? 'facing: side chute' : 'facing: snake');
-      const faceCol = face === 'landmark' ? (LANDMARK_TEAL + 'cc') : '#f0d09acc';
-      d.text(faceTxt, 450, 1156, 13, faceCol);
-    }
-  }
-}
-
 function drawMat(d, s, clock) {
   const reduced = reducedMotion(s);
   const bank = s.camBank || 0;
@@ -1495,11 +1305,15 @@ function drawMat(d, s, clock) {
 export default {
   title: 'Spiral Slide',
   intro: 'Choose your spiral. Catch what tumbles. Tilly’s helter carries you down — TURN each ring so a ladder faces you, and catch what sits on the spiral. From chapter 2, burgundy cushions and rolled mats appear on some arcs — TURN clear of them toward the ladder. From chapter 3, short tunnels hide the notches — a warning symbol shows the safe exit before darkness. From chapter 4, three notches reconnect — cream ladder wins, snake soft-dumps, gold/teal side chute soft-reconnects (no ladder credit); a tiny map shows the join. From chapter 5, the keepsake hops to a later ring only after a visible bounce and arrow — catch it with a cream ladder on its new ring. From chapter 6, the Impossible Descent stacks tower beats in fair sequence — cream teach first, then tunnel / cushion / three-way one at a time, a false-exit that still cues cream, and a widened final intercept (never max speed + dark + tiny snap together).',
-  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (drag around the tower or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. From chapter 4 (Three-Way Tower), three notches reconnect — TURN the cream ladder; the gold/teal side chute is a soft reconnect with no ladder credit; the map shows paths rejoining. From chapter 5 (Runaway Keepsake), if you miss the keepsake it hops — watch the bounce + arrow, then TURN cream on its new ring; soft dump / snake / cushion never abort. From chapter 6 (The Impossible Descent), hazards arrive one-at-a-time after a cream teach; the final ring widens the cream catch and lengthens commit grace — soft fails never abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  instructions: 'Choose your spiral. Catch what tumbles. TURN the ring (shell TURN ← / TURN →, drag around the tower, or ← →) so the cream ladder faces you before you drop through. Land on 3 ladders. A snake is a soft dump — the ride never aborts. From chapter 2 (Bunting Bend), cushions and rolled mats block a notch if you commit into them — soft redirect, never an abort. From chapter 3 (Tunnel Turn), a warning symbol shows which notch is the safe exit before the ring goes dark — follow the symbol and TURN; darkness dims the ring art but the symbol stays readable. From chapter 4 (Three-Way Tower), three notches reconnect — TURN the cream ladder; the gold/teal side chute is a soft reconnect with no ladder credit; the map shows paths rejoining. From chapter 5 (Runaway Keepsake), if you miss the keepsake it hops — watch the bounce + arrow, then TURN cream on its new ring; soft dump / snake / cushion never abort. From chapter 6 (The Impossible Descent), hazards arrive one-at-a-time after a cream teach; the final ring widens the cream catch and lengthens commit grace — soft fails never abort. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
   houseSeconds: 78,
+  actions: [
+    {id: 'turn-left', label: 'TURN ←', hold: true},
+    {id: 'turn-right', label: 'TURN →', hold: true},
+  ],
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
     const plan = chapterPlan(level, rand);
@@ -1517,6 +1331,7 @@ export default {
       camBank: 0,
       towerY: 520,
       drag: null,
+      _hold: null,
       turnedOnce: false,
       previewing: false,
       previewT: 0,
@@ -1541,9 +1356,21 @@ export default {
       ch6Recover: 0,
     });
   },
-  update(s, dt) {
+  update(s, dt, input) {
     tickFx(s, dt);
     if (s.result || s.broke) return;
+
+    // Shell hold TURN buttons (runtime adds id to input.actions while held; action() mirrors to s._hold).
+    {
+      const acts = input && input.actions;
+      const hold = s._hold || null;
+      const holdL = !!(hold && hold['turn-left']) || !!(acts && acts.has && acts.has('turn-left'));
+      const holdR = !!(hold && hold['turn-right']) || !!(acts && acts.has && acts.has('turn-right'));
+      if (holdL || holdR) {
+        const dir = (holdR ? 1 : 0) - (holdL ? 1 : 0);
+        if (dir) turnRing(s, dir * HOLD_TURN * dt);
+      }
+    }
 
     if (ensureBoarded(s, RIDE, s.treasureId, ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4', 'ring-5'])) {
       s.previewing = true;
@@ -1768,6 +1595,16 @@ export default {
       });
     }
   },
+  action(s, id, down) {
+    if (!s._hold) s._hold = Object.create(null);
+    if (id === 'turn-left' || id === 'turn-right') {
+      s._hold[id] = !!down;
+      // Immediate nudge on press; update() continues while held (pinball pattern).
+      if (down && !s.result && !s.broke) {
+        turnRing(s, id === 'turn-left' ? -NUDGE : NUDGE);
+      }
+    }
+  },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
     if (type === 'down') s.drag = {x: p.x, y: p.y};
@@ -1788,7 +1625,6 @@ export default {
     const preview = !!(s.previewing && !s.launched);
     const clock = preview ? s.previewT : s.t;
     const teach = teachWindow(s, preview);
-    const ring = activeRing(s);
 
     // Soft oval vignette only — do not hide helter.png court.
     d.ellipse(CX + bank * 0.15, 640, 390, 520, '#4a182414');
@@ -1828,12 +1664,6 @@ export default {
     }
 
     drawFx(d, s);
-    drawPracticeBadge(d, s, teach && !!s.practice);
-    drawStateChip(d, s, preview);
-    drawTurnChrome(d, s, clock, teach);
-    drawBottomStrip(d, s, preview, ring);
-
-    drawHud(d, s, {goal: s.goal, count: s.hits, label: 'ladders'});
   },
   readout: (s) => s.note || '',
 };
