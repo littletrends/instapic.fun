@@ -11,11 +11,11 @@
  *   Ch1 First Look — Aura PASS. Slow spokes, fat glow, release-while-lit SNAP
  *     hit-reg LOCKED (do not regress isTap-free release / chrome / actions).
  *   Ch2 Gondola Secrets — Aura PASS (9464867). Emblems + luggage soft-hazard.
- *   Ch3 Rooftop Trail — ordered roof clues 1→2→3 (next arms after SNAP);
- *     ONE chimney teach-hazard alone (soft fail); reachable 3/3 ~55s.
+ *   Ch3 Rooftop Trail — Aura PASS (958f413). Ordered roofs + chimney; miss-retry.
+ *   Ch4 Cloud Crossing — drifting clouds occlude glow; climb/armed never reset
+ *     under cloud; 4 sky finds, goal 3; reachable first-play 3/3.
  *
  * UNFINISHED CHAPTERS (keep names; do not rename treasures):
- *   4 Cloud Crossing — clouds occlude glow; armed state does not reset
  *   5 Ferris at Midnight — moonlight markings; practice preview once
  *   6 The Highest View — Tempest depth rings + decoys/balloons; ≤2 depths
  */
@@ -58,6 +58,7 @@ const LENS_Y_MAX = HUD_BOT - LENS_R - 8;
 const RIDE_SECS = 48;
 const RIDE_SECS_CH2 = 56; // helter-bar: recoverable 3/3 on first play
 const RIDE_SECS_CH3 = 72;
+const RIDE_SECS_CH4 = 68; // cloud gaps + 3/3 first-play bar
 const GOAL = 3;
 const LENS_MOVE_LOG_MS = 280;
 const COLLECT_FLASH = 0.45;
@@ -65,30 +66,37 @@ const CLARITY_SECS = 5;
 const TEACH = 'Aim the lens, then SNAP (button or release).';
 const TEACH_CH2 = 'Emblems only — luggage is a soft dump.';
 const TEACH_CH3 = 'Roofs in order — chimney is a soft dump.';
+const TEACH_CH4 = 'Wait out the cloud, then SNAP in the clear glow.';
 const GLOW_PAD_CH1 = 36; // Ch1 attested
 const GLOW_PAD_CH2 = 28; // slightly tighter, still first-play fair
 const GLOW_PAD_CH3 = 36; // match Ch1 fat — Aura fairness
+const GLOW_PAD_CH4 = 34; // generous under cloud timing
 const RETICLE_CH1 = 56;
 const RETICLE_CH2 = 48;
 const RETICLE_CH3 = 56; // match Ch1 fat
+const RETICLE_CH4 = 54;
 const LUGGAGE_WARN = 7.5; // teach hazard alone with long warn (helter Ch2 bar)
 const CHIMNEY_WARN = 6.0; // Ch3 teach hazard alone — leave more trail time
+const CLOUD_TEACH = 7.5; // first cloud alone across the lens
 
 function rideSecs(level) {
   if (level === 1) return RIDE_SECS_CH2;
   if (level === 2) return RIDE_SECS_CH3;
+  if (level === 3) return RIDE_SECS_CH4;
   return RIDE_SECS;
 }
 
 function glowPad(level) {
   if (level === 1) return GLOW_PAD_CH2;
   if (level === 2) return GLOW_PAD_CH3;
+  if (level === 3) return GLOW_PAD_CH4;
   return GLOW_PAD_CH1;
 }
 
 function reticleR(level) {
   if (level === 1) return RETICLE_CH2;
   if (level === 2) return RETICLE_CH3;
+  if (level === 3) return RETICLE_CH4;
   return RETICLE_CH1;
 }
 
@@ -103,7 +111,8 @@ function climbSpeed(level, reduced) {
   let base = 0.020;
   if (level === 1) base = 0.022;
   else if (level === 2) base = 0.014;
-  else if (level >= 3) base = 0.036;
+  else if (level === 3) base = 0.018;
+  else if (level >= 4) base = 0.036;
   return reduced ? base * 0.65 : base;
 }
 
@@ -128,6 +137,7 @@ function ch2Targets() {
 function chapterTargets(level) {
   if (level === 1) return ch2Targets();
   if (level === 2) return ch3Targets();
+  if (level === 3) return ch4Targets();
   return ch1Targets();
 }
 
@@ -138,6 +148,16 @@ function ch3Targets() {
     {id: 'roof-1', label: 'roof clue 1', spoke: 0.5, size: 40, kind: 'ordinary', trail: 0, art: ORDINARY[0]},
     {id: 'roof-2', label: 'roof clue 2', spoke: 2.1, size: 40, kind: 'ordinary', trail: 1, art: ORDINARY[1]},
     {id: 'roof-3', label: 'roof clue 3', spoke: -2.3, size: 40, kind: 'ordinary', trail: 2, art: ORDINARY[2]},
+  ];
+}
+
+/** Ch4 — sky finds + drifting clouds that occlude glow (armed/climb never reset). */
+function ch4Targets() {
+  return [
+    {id: 'crest', label: 'cloud crest', spoke: -0.85, size: 36, kind: 'ordinary', art: ORDINARY[0]},
+    {id: 'sun-rim', label: 'sun rim', spoke: 0.55, size: 34, kind: 'ordinary', art: ORDINARY[1]},
+    {id: 'kite', label: 'paper kite', spoke: 2.2, size: 34, kind: 'ordinary', art: ORDINARY[2]},
+    {id: 'pennant', label: 'sky pennant', spoke: -2.35, size: 32, kind: 'ordinary', art: ORDINARY[0]},
   ];
 }
 /** Ch1 gallery targets — large silhouettes on distinct spokes. */
@@ -286,9 +306,79 @@ function armNextRoof(s) {
   s.note = 'Roof clue ' + (s.trailStep + 1) + ' — SNAP in order.';
 }
 
+
+function scheduleCh4(s) {
+  // Cloud Crossing: staggered sky finds; clouds teach then leave SNAP gaps.
+  // Armed once active — clouds never clear armed or reset climb.
+  const rows = ch4Targets();
+  s.targets = rows.map((row, i) => ({
+    ...row,
+    climb: 0,
+    alive: true,
+    snapped: false,
+    missed: false,
+    open: CLOUD_TEACH + 0.6 + i * 11.5,
+    active: false,
+    armed: false,
+    teach: false,
+  }));
+  s.clouds = [
+    // Teach cloud: wide, slow, alone across the court
+    {id: 'teach', x: 80, y: 480, r: 110, vx: 55, vy: 8, teach: true},
+    // Later thinner band with gaps
+    {id: 'band-a', x: -40, y: 420, r: 78, vx: 70, vy: -6, teach: false, delay: CLOUD_TEACH + 2},
+    {id: 'band-b', x: 980, y: 560, r: 72, vx: -62, vy: 5, teach: false, delay: CLOUD_TEACH + 8},
+  ];
+  s.goal = GOAL;
+  s.found = 0;
+  s.glowId = null;
+  s.cloudTeachDone = false;
+  s.rideSecs = rideSecs(3);
+  s.treasure = null;
+  attachTreasureHost(s);
+}
+
+function cloudOccludes(s, x, y, pad = 0) {
+  for (const c of s.clouds || []) {
+    if (c.delay != null && s.t < c.delay) continue;
+    if (c.teach && s.cloudTeachDone) continue;
+    if (Math.hypot(c.x - x, c.y - y) <= c.r + pad) return c;
+  }
+  return null;
+}
+
+function updateClouds(s, dt) {
+  for (const c of s.clouds || []) {
+    if (c.delay != null && s.t < c.delay) continue;
+    if (c.teach && s.t >= CLOUD_TEACH) {
+      s.cloudTeachDone = true;
+      continue;
+    }
+    c.x += c.vx * dt;
+    c.y += c.vy * dt;
+    // Wrap horizontally so bands keep crossing with clear gaps.
+    if (c.x > W + c.r + 40) c.x = -c.r - 40;
+    if (c.x < -c.r - 40) c.x = W + c.r + 40;
+    c.y = clamp(c.y, 280, 720);
+  }
+}
+
+function drawClouds(d, s) {
+  for (const c of s.clouds || []) {
+    if (c.delay != null && s.t < c.delay) continue;
+    if (c.teach && s.cloudTeachDone) continue;
+    const r = c.r;
+    // Soft paper clouds — 6-digit glow only.
+    d.glow(c.x, c.y, r + 24, '#e8e0d0');
+    d.circle(c.x - r * 0.35, c.y, r * 0.55, '#f4f0e8cc', '#d2a65b55', 1);
+    d.circle(c.x + r * 0.25, c.y - r * 0.1, r * 0.62, '#f7f4eecc', '#d2a65b55', 1);
+    d.circle(c.x, c.y + r * 0.15, r * 0.5, '#efeae0cc', '#d2a65b44', 1);
+  }
+}
 function scheduleRide(s) {
   if (s.level === 1) scheduleCh2(s);
   else if (s.level === 2) scheduleCh3(s);
+  else if (s.level === 3) scheduleCh4(s);
   else scheduleCh1(s);
 }
 
@@ -367,7 +457,7 @@ function snapTarget(s, target) {
     logAction(s, 'collect', {id: target.id, kind: 'treasure', verb: 'snap'});
     s.note = 'Keepsake snapped — Jasper will stamp the card.';
   } else {
-    const teach = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : TEACH);
+    const teach = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : TEACH));
     s.note = s.found >= s.goal
       ? 'Three snaps — the gondola carries you home.'
       : (s.found + ' / ' + s.goal + ' · ' + teach);
@@ -618,11 +708,11 @@ function trySnap(s, via) {
 export default {
   title: 'Pocket Wheel',
   intro: 'Rise above the midway. Look closer. Targets climb the spokes — SNAP them in Jasper’s brass glow before they reach your gondola.',
-  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: emblems only — luggage soft-dumps. Ch3: roofs in order 1→2→3 — chimney soft-dumps. First ride is practice.',
+  instructions: TEACH + ' Drag the lens (above your thumb); release while lit to SNAP. Ch2: emblems only — luggage soft-dumps. Ch3: roofs in order 1→2→3 — chimney soft-dumps. Ch4: wait out clouds, then SNAP. First ride is practice.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
-  houseSeconds: 80,
+  houseSeconds: 90,
   create(level, rng) {
     const reduced = prefersReducedMotion();
     return makeRideState(level, rng, {
@@ -654,7 +744,7 @@ export default {
     if (ensureBoarded(s, RIDE, s.treasureId, chapterTargets(s.level).filter(o => o.kind !== 'hazard').map(o => o.id))) {
       scheduleRide(s);
       s.scheduled = true;
-      s.note = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : TEACH);
+      s.note = s.level === 1 ? TEACH_CH2 : (s.level === 2 ? TEACH_CH3 : (s.level === 3 ? TEACH_CH4 : TEACH));
     }
     if (s.result) return;
     if (!s.scheduled) return;
@@ -667,6 +757,16 @@ export default {
     const spin = wheelSpin(s.level, s.reduced) * wheelEase(s.progress);
     s.angle += spin * dt;
     const climb = climbSpeed(s.level, s.reduced);
+
+    if (s.level === 3) {
+      updateClouds(s, dt);
+      if (!s.cloudTeachDone && s.t < CLOUD_TEACH) {
+        s.note = 'Cloud crossing the lens — wait for clear sky.';
+      } else if (!s.cloudTeachDone && s.t >= CLOUD_TEACH) {
+        s.cloudTeachDone = true;
+        s.note = TEACH_CH4;
+      }
+    }
 
     // Ch2/Ch3 teach: long warn while the single hazard approaches alone.
     if ((s.level === 1 || s.level === 2) && !s.hazardWarned) {
@@ -695,8 +795,19 @@ export default {
       let pos = spokePos(spoke, t.climb);
       t.x = pos.x;
       t.y = pos.y;
-      const lit = inGlow(s.lensX, s.lensY, t.x, t.y, s.level);
+      // Ch4: once active, armed stays true forever — clouds never reset it or climb.
+      if (s.level === 3) t.armed = true;
+      const aiming = inGlow(s.lensX, s.lensY, t.x, t.y, s.level);
+      const occluded = s.level === 3 && !!(
+        cloudOccludes(s, s.lensX, s.lensY, 36)
+        || cloudOccludes(s, t.x, t.y, (t.size || 30) + 8)
+      );
+      const lit = aiming && !occluded;
+      if (s.level === 3 && aiming && occluded && t.armed) {
+        s.note = 'Cloud over the glow — wait, then SNAP.';
+      }
       // Crawl-while-lit (attested Ch1 feel; keeps SNAP hittable — not a dwell meter).
+      // Ch4: crawl only when clear-lit; occluded climb continues at full rate (no reset).
       const rate = lit ? climb * (s.level === 2 ? 0.04 : 0.08) : climb;
       t.climb = Math.min(1, t.climb + rate * dt);
       pos = spokePos(spoke, t.climb);
@@ -847,6 +958,8 @@ export default {
     // ferris.png is the unique court — never clear or full-bleed overpaint.
     drawSpokeGuides(d, s);
     drawGondolaHub(d, s);
+
+    if (s.level === 3) drawClouds(d, s);
 
     (s.targets || []).forEach(t => {
       if (t.active && (t.alive || t.snapped)) drawTarget(d, s, t);
