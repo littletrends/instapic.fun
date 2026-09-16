@@ -1,37 +1,29 @@
 /* Laughing Doorway — Juno
- * cache: bold-colour-1
+ * cache: maze-ch1-4
  *
- * Chapter 1 Two Doors: ENTER → REVEAL → INSPECT → CHOOSE → TRANSITION
- * Chapter 2 Mirror Joke: implemented — same verb SHUT THE PUNCHLINE with ONE
- *   new hazard taught alone: the mirror lies (reflection swaps/reverses door
- *   punchlines; truth is oval SETUP + real door labels, not the glass).
- * Chapter 3 Upside Down: implemented — same verb SHUT THE PUNCHLINE with ONE
- *   new hazard taught alone: the room rotates; mark door positions before the
- *   turn; punchlines travel with door objects as they swap places; memory
- *   solves which physical door still finishes the SETUP after the spin.
- * Chapter 4 Shrinking Hall: implemented — same verb SHUT THE PUNCHLINE with ONE
- *   new hazard taught alone: perspective / near vs far; floor tiles prove depth;
- *   SHUT the NEAR punchline that finishes the SETUP (not the tiny far decoy).
- * Chapter 5 Midway Echoes: implemented — same verb SHUT THE PUNCHLINE with ONE
- *   new hazard taught alone: distorted miniatures of other Penny Fever rides as
- *   clues; oval SETUP names the true ride echo; doors show ride glyphs — some
- *   warped decoys. Match the ride, then SHUT. No mirror/rotate/shrink restack.
- * Chapter 6 The Last Laugh: implemented — finale remix of known hazards (not
- *   stacked in one room). Foyer teachFinale: LAST LAUGH + mirror alone; gallery
- *   echo alone; Last Laugh Court mild near/far remix. TRUST THE SETUP → SHUT
- *   THE PUNCHLINE. Treasure ride-stamp-book. ≤6 rooms.
+ * Chapter 1 Laughing Maze (BUILD): move through cream-oval corridors, chomp
+ *   star/moon/penny pellets, laugh-faces chase; power pellet / punchline door
+ *   → brief chase-back. maze-chase–inspired carnival comedy — NOT a licensed-maze clone
+ *   names/art. Primary loop = maze run + chomp + chase.
  *
- * Locked lane: Pac-Man chase energy × Door Door SHUT × Finish the Joke comedy.
- * Primary verb: SHUT — slam the punchline door that finishes the setup so
- * chasing laugh-faces vanish (power-pellet = correct punchline).
+ * CHAPTER BONUSES: path chips (star/moon/penny) + keepsake laughing-doorway
+ *   (d.item via spriteKey → ride-keepsakes/laughing-doorway/front.png).
+ * SCENERY: #backdrop = assets/funhouse.png (cream court). Maze drawn inside oval
+ *   only. Tent_26_Bea dress BUILD still HELD — maze props only: split cutouts from
+ *   assets/funhouse-bea/ scenery 01/03-06; bea-player.png = SHARED player sprite
+ *   placed around cream oval OUTSIDE maze lanes. No whole-backdrop overpaint.
+ * FAIRNESS: MAZE_HOUSE 110s; clearGoal 16 pellets (extras = bonus chomp); faces slower.
  *
- * Clue: punchline labels on doors finish the setup prop/text on the oval.
- * NOT wink / look-direction Simon.
+ * FREEZE Ch2–Ch6 (levels ≥1): existing door-SHUT chapters still load via
+ *   CHAPTER2–6 graphs (Mirror / Rotate / Shrink / Echo / Last Laugh). Do not
+ *   expand until Ch1 maze ships. Soft fails never abort paid ride.
  *
- * Source of truth: Lorie’s Amusement 6 brief (tagline: Every door tells a different joke).
- * All six chapters implemented — polish-only remaining (timing/copy).
+ * Shell #actions + .play-hud; no canvas drawHud menu panel.
+ * d.glow() 6-digit hex only. Oval-only draw — don’t overpaint whole court.
+ *
+ * Source of truth: Lorie GREENLIGHT + addendum (tagline: Every door tells a different joke).
  */
-import {spriteKey} from '../prizes.js?v=funhouse-bold-1';
+import {spriteKey} from '../prizes.js?v=ritual-3';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -39,14 +31,14 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=funhouse-bold-1';
+} from './funhouse-rooms.js?v=maze-ch1-4';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
 const INK = '#f0d09a';
 const BURGUNDY = '#c42848';
 const WOOD = '#7a3420';
-/** Door Door weight — hold ~160ms then SHUT commits. */
+/** Door Door weight — hold ~160ms then SHUT commits (Ch2–6). */
 const PRESS_MS = 0.16;
 const TREASURE_HOLD = 0.7;
 const NUDGE_SEC = 2;
@@ -58,6 +50,55 @@ const PLAYER_R = 26;
 const FACE_SPEED = 78;
 const TAG_STUN = 0.55;
 const GULP_DUR = 0.42;
+/** Ch1 maze house clock — fair first-play ~60–90s (was too tight at 60). */
+const MAZE_HOUSE = 110;
+const FACE_RESPAWN = 3.8;
+
+/** Tent_26_Bea split cutouts — maze scenery only (dress BUILD still held). */
+const BEA_PROP_FILES = {
+  curtain: 'Tent_26_Bea_piece-01.png',
+  moon: 'Tent_26_Bea_piece-03.png',
+  spotlight: 'Tent_26_Bea_piece-04.png',
+  starKey: 'Tent_26_Bea_piece-05.png',
+  doorway: 'Tent_26_Bea_piece-06.png',
+};
+const BEA_PLAYER_FILE = 'bea-player.png';
+const BEA_CACHE_VER = 'maze-ch1-4';
+let beaPropImgs = null;
+let beaPlayerImg = null;
+
+function ensureBeaProps() {
+  if (beaPropImgs) return beaPropImgs;
+  beaPropImgs = {};
+  for (const [key, file] of Object.entries(BEA_PROP_FILES)) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = `../assets/funhouse-bea/${file}?v=${BEA_CACHE_VER}`;
+    beaPropImgs[key] = img;
+  }
+  if (!beaPlayerImg) {
+    beaPlayerImg = new Image();
+    beaPlayerImg.decoding = 'async';
+    beaPlayerImg.src = `../assets/funhouse-bea/${BEA_PLAYER_FILE}?v=${BEA_CACHE_VER}`;
+  }
+  return beaPropImgs;
+}
+
+/** Place cutouts on cream oval edges — never on maze path cells. */
+function drawBeaScenery(d) {
+  const imgs = ensureBeaProps();
+  const place = (key, x, y, w, angle = 0) => {
+    const img = imgs[key];
+    if (!img || !img.complete || !(img.naturalWidth > 0)) return false;
+    return d.sprite(img, x, y, {w, angle, shadow: true});
+  };
+  // Scenery exclusive: doorway, curtain, spotlight, moon, star key (piece-02 = shared player).
+  place('doorway', 165, 655, 96);
+  place('curtain', 735, 635, 90);
+  place('spotlight', 285, 462, 54, -0.18);
+  place('moon', 655, 478, 82);
+  place('starKey', 780, 860, 42, 0.12);
+}
 
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
@@ -76,11 +117,15 @@ function spinDur(room) {
   return PHASE_SECONDS.spin ?? 0.85;
 }
 
+function isMaze(s) {
+  return !!(s?.graph?.mode === 'maze' || s?.maze);
+}
+
+
 /** Live door views — rotate swap, or shrink near/far scale + hitboxes. */
 function doorViews(s, room) {
   const raw = room?.doors || [];
   if (room?.shrink) {
-    // Near = full/correct scale (bigger hitbox); far = tiny decoy higher + inset.
     return raw.map(row => {
       const near = !!row.near;
       const scale = near ? 1.08 : 0.55;
@@ -105,7 +150,6 @@ function doorViews(s, room) {
   let u = 0;
   if (s.phase === 'spin') u = clamp((s.spinT || 0) / spinDur(room), 0, 1);
   else if (s.spun) u = 1;
-  // Smoothstep paper slide; slight arc reads as a turn.
   const ease = u * u * (3 - 2 * u);
   const arc = Math.sin(ease * Math.PI) * -22;
   const swapped = ease >= 0.5;
@@ -179,24 +223,20 @@ function updateFaces(s, dt, room) {
       f.x = clamp(f.x + f.vx * dt, STAGE.xMin, STAGE.xMax);
       f.y = clamp(f.y + f.vy * dt, STAGE.yMin, STAGE.yMax);
 
-      // Soft tag during CHOOSE — comedy bump, never instant loss.
       if (s.phase === 'choose' && !s.doorPress && dist < f.r + PLAYER_R) {
         f.giggle = 0.35;
         s.tagStun = TAG_STUN;
         s.note = 'Giggle bump! Still SHUT a punchline.';
-        // Comedy shove toward stage center-ish, slight wrong-door feel.
         const wrong = doorViews(s, room).find(d => !d.correct);
         if (wrong && s.player) {
           const sx = Math.sign(wrong.x - s.player.x) || 1;
           s.player.x = clamp(s.player.x + sx * 18, STAGE.xMin + 40, STAGE.xMax - 40);
         }
-        // Nudge face back so it doesn't sticky-tag every frame.
         f.x = clamp(f.x - (dx / dist) * 36, STAGE.xMin, STAGE.xMax);
         f.y = clamp(f.y - (dy / dist) * 36, STAGE.yMin, STAGE.yMax);
       }
     }
   }
-  // Drop finished gulps
   s.faces = faces.filter(f => f.alive || f.gulp > 0);
 }
 
@@ -243,11 +283,17 @@ function maybeRevealTreasure(s, room) {
   if (!s.eligible) return;
   if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
   if (!s.treasure) {
+    let tx = room.treasure.x;
+    let ty = room.treasure.y;
+    if (tx == null && room.treasure.col != null && s.maze) {
+      const c = cellCenter(s.maze, room.treasure.col, room.treasure.row);
+      tx = c.x; ty = c.y;
+    }
     s.treasure = {
       id: s.treasureId,
-      x: room.treasure.x,
-      y: room.treasure.y,
-      r: room.treasure.r,
+      x: tx ?? 450,
+      y: ty ?? 470,
+      r: room.treasure.r || 58,
       taken: false,
     };
   }
@@ -263,27 +309,24 @@ function takeTreasure(s) {
   s.treasureWindow = false;
   recordTreasure(s, s.treasure.id);
   s.holdBeat = TREASURE_HOLD;
-  s.note = 'The laughing doorway is yours — a beat to keep it.';
+  s.note = 'Laughing-doorway keepsake! A beat to keep it.';
   logAction(s, 'treasure', {id: s.treasure.id});
   return true;
 }
 
 function beginDoorPress(s, door) {
   if (!door || s.phase !== 'choose' || s.doorPress) return;
-  // Brief tag-stun still allows SHUT — Door Door weight is the commit.
   s.doorPress = {id: door.id, t: 0, door};
   s.note = door.lastLaugh
     ? 'The last laughing door lets you through.'
     : (door.correct
       ? 'Shutting the punchline…'
       : 'A joke door. The house has a detour for that.');
-  // Lean player toward the door they are shutting.
   if (s.player) {
     s.player.x = clamp(s.player.x + Math.sign(door.x - s.player.x) * 12, STAGE.xMin + 40, STAGE.xMax - 40);
   }
 }
 
-/** Cancel an incomplete hold-shut (pointer/action/key release before PRESS_MS). */
 function releaseDoorPress(s) {
   if (!s.doorPress) return;
   s.doorPress = null;
@@ -362,7 +405,6 @@ function leaveRide(s) {
 function doorByAction(s, room, id) {
   if (!room) return null;
   if (id !== 'left' && id !== 'right') return null;
-  // Match visual side after rotate settle (punchlines travel with doors).
   return doorViews(s, room).find(row => row.id === id) || null;
 }
 
@@ -376,6 +418,482 @@ function beginSpin(s, room) {
     ? 'MARKED — the room turns…'
     : 'Room turns…';
 }
+
+
+/* ─── Ch1 Laughing Maze ─────────────────────────────────────────── */
+
+const DIRS = {
+  up: {dc: 0, dr: -1},
+  down: {dc: 0, dr: 1},
+  left: {dc: -1, dr: 0},
+  right: {dc: 1, dr: 0},
+};
+
+function parseMaze(spec) {
+  const rows = spec.layout;
+  const grid = [];
+  const pellets = [];
+  const powers = [];
+  let start = {c: 5, r: 11};
+  const faceSpawns = [];
+  let doorCell = null;
+  for (let r = 0; r < rows.length; r++) {
+    const line = rows[r];
+    const row = [];
+    for (let c = 0; c < line.length; c++) {
+      const ch = line[c];
+      const wall = ch === '#';
+      row.push(wall ? 1 : 0);
+      if (ch === '.' || ch === 'o') {
+        const kind = ch === 'o' ? 'power' : (['star', 'moon', 'penny'][(c + r) % 3]);
+        const entry = {c, r, kind, taken: false};
+        pellets.push(entry);
+        if (ch === 'o') powers.push(entry);
+      }
+      if (ch === 'S') start = {c, r};
+      if (ch === 'F') faceSpawns.push({c, r});
+      if (ch === 'D') doorCell = {c, r};
+    }
+    grid.push(row);
+  }
+  if (!faceSpawns.length) faceSpawns.push({c: 5, r: 5});
+  const pelletTotal = pellets.length;
+  const clearGoal = Math.max(1, Math.min(spec.clearGoal || pelletTotal, pelletTotal));
+  return {
+    cols: spec.cols,
+    rows: spec.rows,
+    cell: spec.cell,
+    ox: spec.ox,
+    oy: spec.oy,
+    powerSec: spec.powerSec,
+    faceSpeed: spec.faceSpeed,
+    playerSpeed: spec.playerSpeed,
+    faceCount: spec.faceCount || 3,
+    clearGoal,
+    grid,
+    pellets,
+    powers,
+    start,
+    faceSpawns,
+    doorCell,
+    pelletTotal,
+  };
+}
+
+function cellCenter(maze, c, r) {
+  return {
+    x: maze.ox + (c + 0.5) * maze.cell,
+    y: maze.oy + (r + 0.5) * maze.cell,
+  };
+}
+
+function worldToCell(maze, x, y) {
+  const c = Math.floor((x - maze.ox) / maze.cell);
+  const r = Math.floor((y - maze.oy) / maze.cell);
+  return {c, r};
+}
+
+function inBounds(maze, c, r) {
+  return r >= 0 && c >= 0 && r < maze.rows && c < maze.cols;
+}
+
+function isOpen(maze, c, r) {
+  return inBounds(maze, c, r) && maze.grid[r][c] === 0;
+}
+
+function initMazePlay(s) {
+  const maze = parseMaze(s.graph.maze);
+  s.maze = maze;
+  s.phase = 'play';
+  s.phaseT = 0;
+  s.pelletsLeft = maze.pelletTotal;
+  s.pelletsTaken = 0;
+  s.powerLeft = 0;
+  s.facesGulped = 0;
+  s.dir = null;
+  s.wantDir = null;
+  s.heldDirs = {up: false, down: false, left: false, right: false};
+  s.swipe = null;
+  s.doorShut = false;
+  s.cleared = 0;
+  s.goal = maze.clearGoal;
+  const sc = cellCenter(maze, maze.start.c, maze.start.r);
+  s.player = {
+    x: sc.x, y: sc.y,
+    c: maze.start.c, r: maze.start.r,
+    tx: sc.x, ty: sc.y,
+    moving: false,
+  };
+  s.faces = [];
+  const n = maze.faceCount;
+  for (let i = 0; i < n; i++) {
+    const sp = maze.faceSpawns[i % maze.faceSpawns.length];
+    const fc = cellCenter(maze, sp.c, sp.r);
+    // Spread faces along pocket so they don’t stack.
+    const jitter = (i - (n - 1) / 2) * 6;
+    s.faces.push({
+      x: fc.x + jitter, y: fc.y,
+      c: sp.c, r: sp.r,
+      tx: fc.x + jitter, ty: fc.y,
+      spawn: {...sp},
+      alive: true,
+      gulp: 0,
+      giggle: 0,
+      respawn: 0,
+      rHit: FACE_R * 0.72,
+      wanderT: i * 0.4,
+      mode: 'chase',
+    });
+  }
+  s.roomId = 'maze';
+  maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
+  logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
+  s.note = s.practice
+    ? `Free practice · nothing kept. Chomp ${maze.clearGoal}+ chips · POWER chase-back.`
+    : `MOVE · CHOMP ${maze.clearGoal}+ chips · POWER to chase laugh-faces.`;
+}
+
+function setWantDir(s, id, down) {
+  if (!DIRS[id]) return;
+  s.heldDirs[id] = !!down;
+  if (down) s.wantDir = id;
+  else if (s.wantDir === id) {
+    s.wantDir = ['up', 'down', 'left', 'right'].find(k => s.heldDirs[k]) || null;
+  }
+}
+
+function tryStep(s, dirId) {
+  const maze = s.maze;
+  const p = s.player;
+  if (!maze || !p || !dirId || !DIRS[dirId]) return false;
+  const d = DIRS[dirId];
+  const nc = p.c + d.dc;
+  const nr = p.r + d.dr;
+  if (!isOpen(maze, nc, nr)) return false;
+  p.c = nc;
+  p.r = nr;
+  const ctr = cellCenter(maze, nc, nr);
+  p.tx = ctr.x;
+  p.ty = ctr.y;
+  p.moving = true;
+  s.dir = dirId;
+  return true;
+}
+
+function arriveCell(s) {
+  const maze = s.maze;
+  const p = s.player;
+  p.x = p.tx;
+  p.y = p.ty;
+  p.moving = false;
+  // Chomp pellet on this cell
+  for (const pel of maze.pellets) {
+    if (pel.taken || pel.c !== p.c || pel.r !== p.r) continue;
+    pel.taken = true;
+    s.pelletsTaken += 1;
+    s.pelletsLeft = Math.max(0, s.pelletsLeft - 1);
+    s.cleared = s.pelletsTaken;
+    if (pel.kind === 'power') {
+      s.powerLeft = maze.powerSec;
+      s.note = 'PUNCHLINE POWER! Chase the laugh-faces!';
+      logAction(s, 'power', {via: 'pellet'});
+    } else {
+      s.note = `Chomp! ${s.pelletsLeft} chips left.`;
+    }
+    // Tiny find flavor on some chips (practice-safe recordFind only if not practice? recordFind handles?)
+    if (!s.practice && (pel.kind === 'star' || pel.kind === 'moon' || pel.kind === 'penny') && Math.random() < 0.08) {
+      const id = pel.kind === 'star' ? 'star-token' : (pel.kind === 'moon' ? 'moon-penny' : 'everyday-penny');
+      recordFind(s, id, RIDE);
+    }
+  }
+  // Punchline door set-piece — stepping on D slams the gag (power moment).
+  if (maze.doorCell && p.c === maze.doorCell.c && p.r === maze.doorCell.r && !s.doorShut) {
+    shutPunchlineDoor(s);
+  }
+  // Treasure pickup by proximity
+  if (s.treasureWindow && s.treasure && !s.treasure.taken) {
+    if (hitCircle(p, s.treasure.x, s.treasure.y, s.treasure.r)) takeTreasure(s);
+  }
+  maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
+  if (s.phase === 'play' && s.pelletsTaken >= (maze.clearGoal || maze.pelletTotal)) {
+    s.cleared = s.goal;
+    s.note = 'Midway cleared — the laughing doorway bows!';
+    s.holdBeat = Math.max(s.holdBeat || 0, 0.45);
+    s.pendingExit = true;
+    s.phase = 'finish';
+    s.phaseT = 0;
+    logAction(s, 'maze-clear', {gulped: s.facesGulped, taken: s.pelletsTaken, clearGoal: maze.clearGoal});
+  }
+}
+
+function shutPunchlineDoor(s) {
+  const maze = s.maze;
+  const p = s.player;
+  if (!maze?.doorCell || !p || s.doorShut) return false;
+  const dc = maze.doorCell;
+  const near = Math.abs(p.c - dc.c) + Math.abs(p.r - dc.r) <= 1;
+  if (!near) return false;
+  s.doorShut = true;
+  s.powerLeft = maze.powerSec;
+  s.note = 'Punchline SHUT — faces flee! Chase them!';
+  logAction(s, 'power', {via: 'door'});
+  return true;
+}
+
+function updatePlayerMaze(s, dt) {
+  const maze = s.maze;
+  const p = s.player;
+  if (!maze || !p) return;
+  if (s.tagStun > 0) return;
+  const speed = (s.reduced ? maze.playerSpeed * 0.7 : maze.playerSpeed);
+  if (!p.moving) {
+    // Prefer queued wantDir, else current dir
+    const tryOrder = s.wantDir ? [s.wantDir, s.dir] : [s.dir];
+    for (const id of tryOrder) {
+      if (id && tryStep(s, id)) break;
+    }
+  }
+  if (!p.moving) return;
+  const dx = p.tx - p.x;
+  const dy = p.ty - p.y;
+  const dist = Math.hypot(dx, dy);
+  const step = speed * dt;
+  if (dist <= step || dist < 0.5) {
+    arriveCell(s);
+  } else {
+    p.x += (dx / dist) * step;
+    p.y += (dy / dist) * step;
+  }
+}
+
+function faceNextDir(s, f, toward) {
+  const maze = s.maze;
+  const options = ['up', 'down', 'left', 'right'];
+  // Shuffle lightly by wander
+  const scored = [];
+  for (const id of options) {
+    const d = DIRS[id];
+    const nc = f.c + d.dc;
+    const nr = f.r + d.dr;
+    if (!isOpen(maze, nc, nr)) continue;
+    const ctr = cellCenter(maze, nc, nr);
+    const px = s.player.x;
+    const py = s.player.y;
+    const dist = Math.hypot(ctr.x - px, ctr.y - py);
+    scored.push({id, dist, nc, nr, ctr});
+  }
+  if (!scored.length) return null;
+  scored.sort((a, b) => toward ? a.dist - b.dist : b.dist - a.dist);
+  // Occasional wander pick #2
+  f.wanderT = (f.wanderT || 0);
+  if (scored.length > 1 && f.wanderT % 1 > 0.72) return scored[1];
+  return scored[0];
+}
+
+function updateFacesMaze(s, dt) {
+  const maze = s.maze;
+  if (!maze) return;
+  const powered = s.powerLeft > 0;
+  const speed = (s.reduced ? maze.faceSpeed * 0.5 : maze.faceSpeed) * (powered ? 0.72 : 1);
+  for (const f of s.faces || []) {
+    if (f.gulp > 0) {
+      f.gulp = Math.max(0, f.gulp - dt);
+      if (f.gulp === 0 && !f.alive) f.respawn = FACE_RESPAWN;
+      continue;
+    }
+    if (!f.alive) {
+      f.respawn = Math.max(0, (f.respawn || 0) - dt);
+      if (f.respawn === 0) {
+        f.alive = true;
+        f.c = f.spawn.c;
+        f.r = f.spawn.r;
+        const ctr = cellCenter(maze, f.c, f.r);
+        f.x = ctr.x; f.y = ctr.y; f.tx = ctr.x; f.ty = ctr.y;
+        f.moving = false;
+      }
+      continue;
+    }
+    if (f.giggle > 0) f.giggle = Math.max(0, f.giggle - dt);
+    f.wanderT = (f.wanderT || 0) + dt;
+    f.mode = powered ? 'flee' : 'chase';
+
+    if (!f.moving) {
+      const pick = faceNextDir(s, f, !powered);
+      if (pick) {
+        f.c = pick.nc;
+        f.r = pick.nr;
+        f.tx = pick.ctr.x;
+        f.ty = pick.ctr.y;
+        f.moving = true;
+        f.dir = pick.id;
+      }
+    }
+    if (f.moving) {
+      const dx = f.tx - f.x;
+      const dy = f.ty - f.y;
+      const dist = Math.hypot(dx, dy);
+      const step = speed * dt;
+      if (dist <= step || dist < 0.5) {
+        f.x = f.tx; f.y = f.ty; f.moving = false;
+      } else {
+        f.x += (dx / dist) * step;
+        f.y += (dy / dist) * step;
+      }
+    }
+
+    // Collide with player
+    const distP = Math.hypot(f.x - s.player.x, f.y - s.player.y);
+    if (distP < (f.rHit || 20) + PLAYER_R * 0.65) {
+      if (powered) {
+        f.alive = false;
+        f.gulp = GULP_DUR;
+        f.moving = false;
+        s.facesGulped = (s.facesGulped || 0) + 1;
+        s.note = 'Gulp! Laugh-face tagged.';
+        logAction(s, 'gulp-face', {});
+      } else if (s.tagStun <= 0) {
+        f.giggle = 0.4;
+        s.tagStun = TAG_STUN;
+        s.note = 'Giggle bump! Keep chomping.';
+        // Soft shove opposite face
+        const sx = Math.sign(s.player.x - f.x) || 1;
+        const sy = Math.sign(s.player.y - f.y) || 1;
+        // Nudge back toward open neighbor if possible
+        s.player.x = clamp(s.player.x + sx * 10, maze.ox + 8, maze.ox + maze.cols * maze.cell - 8);
+        s.player.y = clamp(s.player.y + sy * 10, maze.oy + 8, maze.oy + maze.rows * maze.cell - 8);
+      }
+    }
+  }
+}
+
+function updateMaze(s, dt) {
+  if (s.powerLeft > 0) {
+    s.powerLeft = Math.max(0, s.powerLeft - dt);
+    if (s.powerLeft === 0 && s.phase === 'play') s.note = 'Power faded — chomp on!';
+  }
+  if (s.phase === 'play') {
+    updatePlayerMaze(s, dt);
+    updateFacesMaze(s, dt);
+    maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
+  } else if (s.phase === 'finish') {
+    s.phaseT += dt;
+    const need = s.reduced ? 0.15 : (s.holdBeat > 0 ? 0.55 : 0.35);
+    if (s.phaseT >= need) leaveRide(s);
+  }
+  s.progress = Math.min(1, (s.pelletsTaken || 0) / Math.max(1, s.goal || 1));
+}
+
+function drawMazeCourt(s, d) {
+  const maze = s.maze;
+  const t = s.t || 0;
+  const room = roomOf(s.graph, s.roomId || 'maze');
+  // Cream oval stage only — façade stays visible.
+  d.ellipse(450, 720, 310, 268, '#f4e6c888', '#e8b84a55', 2);
+  d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 3, false);
+  for (let i = 0; i < 7; i++) diamond(d, 210 + i * 80, 428, 11, i % 2 ? BURGUNDY : GOLD, '#f8e4b3');
+  drawCurtain(d, 'left', 0.35, t);
+  drawCurtain(d, 'right', 0.3, t);
+  d.text(room?.title || 'Laughing Maze', 450, 456, 22, INK);
+  // Soft wash only — Tent_26_Bea cutouts supply the funhouse set-pieces.
+  d.glow(450, 410, 42, '#f4d590');
+  d.ellipse(450, 404, 36, 10, '#f4d59055', GOLD, 1.2);
+  // Bea maze props around cream oval (outside lanes) — dress BUILD still held.
+  drawBeaScenery(d);
+
+  if (!maze) return;
+  const cell = maze.cell;
+  // Corridors + walls as paper wood / cream lanes
+  for (let r = 0; r < maze.rows; r++) {
+    for (let c = 0; c < maze.cols; c++) {
+      const x = maze.ox + c * cell;
+      const y = maze.oy + r * cell;
+      if (maze.grid[r][c] === 1) {
+        d.poly(
+          [[x + 2, y + 2], [x + cell - 2, y + 2], [x + cell - 2, y + cell - 2], [x + 2, y + cell - 2]],
+          WOOD, GOLD, 1.2,
+        );
+        // Inner burgundy trim for carnival density
+        if ((c + r) % 2 === 0) {
+          d.poly(
+            [[x + 8, y + 8], [x + cell - 8, y + 8], [x + cell - 8, y + cell - 8], [x + 8, y + cell - 8]],
+            '#5c2818', BURGUNDY, 1,
+          );
+        }
+      } else {
+        d.poly(
+          [[x + 1, y + 1], [x + cell - 1, y + 1], [x + cell - 1, y + cell - 1], [x + 1, y + cell - 1]],
+          '#f7ebcfaa', '#e8b84a33', 1,
+        );
+      }
+    }
+  }
+
+  // Punchline door set-piece
+  if (maze.doorCell) {
+    const dc = cellCenter(maze, maze.doorCell.c, maze.doorCell.r);
+    const shut = s.doorShut;
+    d.poly(
+      [[dc.x - 14, dc.y - 16], [dc.x + 14, dc.y - 16], [dc.x + 14, dc.y + 16], [dc.x - 14, dc.y + 16]],
+      shut ? '#5a2018' : WOOD, GOLD, 2,
+    );
+    d.text(shut ? 'SHUT' : 'HA!', dc.x, dc.y + 4, 11, INK);
+    if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
+  }
+
+  // Pellets
+  for (const pel of maze.pellets) {
+    if (pel.taken) continue;
+    const ctr = cellCenter(maze, pel.c, pel.r);
+    if (pel.kind === 'power') {
+      const pulse = 0.55 + 0.45 * Math.sin(t * 5 + pel.c);
+      d.glow(ctr.x, ctr.y, 18 + pulse * 8, '#f4d590');
+      d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
+      d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
+    } else if (pel.kind === 'star') {
+      if (typeof d.star === 'function') d.star(ctr.x, ctr.y, 7, GOLD);
+      else diamond(d, ctr.x, ctr.y, 6, GOLD, BURGUNDY);
+    } else if (pel.kind === 'moon') {
+      d.circle(ctr.x, ctr.y, 5.5, CREAM, GOLD, 1.4);
+      d.circle(ctr.x + 2, ctr.y - 1, 3.5, '#f7ebcf');
+    } else {
+      // penny chip
+      d.circle(ctr.x, ctr.y, 4.5, GOLD, WOOD, 1.2);
+      d.circle(ctr.x, ctr.y, 2.2, CREAM);
+    }
+  }
+
+  // Faces
+  for (const f of s.faces || []) {
+    if (!f.alive && f.gulp <= 0) continue;
+    if (s.powerLeft > 0 && f.alive) {
+      // Flee tint — cream with burgundy rings
+      d.glow(f.x, f.y, 34, '#f4d590');
+    }
+    drawLaughFace(d, f, t);
+  }
+
+  // Player
+  if (s.powerLeft > 0) d.glow(s.player.x, s.player.y, 36, '#ffe6a4');
+  drawPlayer(d, s);
+
+  if (s.treasure && !s.treasure.taken && s.treasureWindow && s.eligible) {
+    d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
+    d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
+      w: 62, shadow: false,
+      fallback: () => d.heart(s.treasure.x, s.treasure.y, 16),
+    });
+  }
+  drawFlies(d, s);
+
+  // Lean chip — clearGoal progress (extras remain as bonus chomp)
+  const taken = s.pelletsTaken ?? 0;
+  const need = s.goal || maze.clearGoal || 24;
+  const chip = s.powerLeft > 0
+    ? `POWER ${Math.ceil(s.powerLeft)}s · ${taken}/${need}`
+    : `${taken}/${need} chips · arrows move`;
+  drawChip(d, chip, 168, 14);
+}
+
 
 function diamond(d, x, y, size, fill, stroke) {
   d.poly([[x, y - size], [x + size * 0.72, y], [x, y + size], [x - size * 0.72, y]], fill, stroke || GOLD, 1.4);
@@ -546,9 +1064,30 @@ function drawPlayer(d, s) {
   const x = p.x + shake;
   const y = p.y;
   d.ellipse(x + 3, y + 22, 28, 10, '#12233533');
-  d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
-  d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
-  d.arc(x, y - 24, 7, 0.2, Math.PI - 0.2, BURGUNDY, 1.8);
+  ensureBeaProps();
+  const img = beaPlayerImg;
+  if (isMaze(s) && img && img.complete && img.naturalWidth > 0 && typeof d.sprite === 'function') {
+    d.sprite(img, x, y - 6, {w: 44, shadow: true});
+  } else if (isMaze(s) && img && img.complete && img.naturalWidth > 0) {
+    // Fallback if draw.sprite missing — canvas image via item-like ellipse stand-in still OK
+    try {
+      const ctx = d.c || d.ctx;
+      if (ctx && img) {
+        const w = 44, h = w * (img.naturalHeight / img.naturalWidth);
+        ctx.drawImage(img, x - w / 2, y - h * 0.72, w, h);
+      } else {
+        d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
+        d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+      }
+    } catch {
+      d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
+      d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+    }
+  } else {
+    d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
+    d.circle(x, y - 28, 14, CREAM, BURGUNDY, 2);
+    d.arc(x, y - 24, 7, 0.2, Math.PI - 0.2, BURGUNDY, 1.8);
+  }
   if (stun) d.text('!', x + 22, y - 36, 18, INK);
 }
 
@@ -1003,11 +1542,30 @@ function drawEchoHints(d, room, s, t) {
   }
 }
 
+
+
+function tryActionInspect(s) {
+  if (s.result || s.broke) return;
+  if (isMaze(s)) {
+    shutPunchlineDoor(s);
+    return;
+  }
+  if (s.phase !== 'inspect' && s.phase !== 'choose') return;
+  const room = roomOf(s.graph, s.roomId);
+  const spots = room.inspect || [];
+  const find = spots.find(row => row.kind === 'find' && !s.findsTaken[row.id]);
+  const target = find || spots.find(row => row.kind === 'clue') || spots[0];
+  if (target) inspectSpot(s, target);
+}
+
 function drawRoom(s, d) {
+  if (isMaze(s)) {
+    drawMazeCourt(s, d);
+    return;
+  }
   const room = roomOf(s.graph, s.roomId);
   const t = s.t;
   const puff = room.kind === 'detour' ? 0.2 : (s.phase === 'choose' ? 0.85 : 0.35);
-  // Paper stage on the cream oval only — façade / tents stay visible.
   d.ellipse(450, 720, 310, 268, '#f4e6c888', '#e8b84a55', 2);
   d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 3, false);
   for (let i = 0; i < 7; i++) diamond(d, 210 + i * 80, 428, 11, i % 2 ? BURGUNDY : GOLD, '#f8e4b3');
@@ -1017,7 +1575,6 @@ function drawRoom(s, d) {
 
   if (room.kind === 'detour') {
     drawJoke(d, room, t);
-    // Detour giggle face (comedy, not chase threat)
     drawLaughFace(d, {x: 450, y: 530, alive: true, gulp: 0, giggle: 0.5}, t);
   } else {
     drawSetupProp(d, room, t, s.inspectPulse || 0);
@@ -1058,37 +1615,143 @@ function drawRoom(s, d) {
   }
 }
 
-
-function tryActionInspect(s) {
-  if (s.result || s.broke) return;
-  if (s.phase !== 'inspect' && s.phase !== 'choose') return;
+function updateDoorChapter(s, dt) {
   const room = roomOf(s.graph, s.roomId);
-  const spots = room.inspect || [];
-  const find = spots.find(row => row.kind === 'find' && !s.findsTaken[row.id]);
-  const target = find || spots.find(row => row.kind === 'clue') || spots[0];
-  if (target) inspectSpot(s, target);
+  const reduced = s.reduced;
+  updateFaces(s, dt, room);
+
+  if (s.doorPress) {
+    s.doorPress.t += dt;
+    if (s.doorPress.t >= PRESS_MS) {
+      const door = s.doorPress.door;
+      commitDoor(s, door);
+    }
+    s.progress = Math.min(1, (s.cleared + 0.15) / Math.max(1, s.goal));
+    return;
+  }
+
+  if (s.phase === 'enter') {
+    const need = reduced ? 0.12 : PHASE_SECONDS.enter;
+    if (s.phaseT >= need) {
+      s.phase = 'reveal';
+      s.phaseT = 0;
+      s.note = room.revealNote || 'SHUT THE PUNCHLINE';
+      if (room.kind === 'main') spawnFaces(s, room);
+    }
+  } else if (s.phase === 'reveal') {
+    const revealNeed = room.kind === 'detour'
+      ? (reduced ? 0.5 : PHASE_SECONDS.detourReveal)
+      : (reduced ? 0.18 : (room.revealSec ?? PHASE_SECONDS.reveal));
+    if (s.phaseT >= revealNeed) {
+      s.clueDone = true;
+      if (room.kind === 'detour') {
+        s.phase = 'transition';
+        s.phaseT = 0;
+        s.panel = 0;
+        s.nextRoom = room.rejoin;
+      } else {
+        s.phase = 'inspect';
+        s.phaseT = 0;
+        s.note = room.inspectNote
+          || (room.mirror
+            ? 'Glass swaps punchlines — read the real doors, then SHUT.'
+            : (room.rotate
+              ? 'Mark the punchline doors — then the room turns.'
+              : (room.shrink
+                ? 'Floor tiles prove depth — SHUT the NEAR punchline.'
+                : (room.echo
+                  ? 'SETUP names the true ride — match that miniature, then SHUT.'
+                  : 'Read the punchline doors — then SHUT.'))));
+        maybeRevealTreasure(s, room);
+      }
+    }
+  } else if (s.phase === 'inspect') {
+    maybeRevealTreasure(s, room);
+    const inspectNeed = reduced ? 0.45 : (room.inspectSec ?? PHASE_SECONDS.inspect);
+    if (s.phaseT >= inspectNeed) {
+      if (room.rotate) {
+        if (reduced) {
+          s.spun = true;
+          s.spinT = spinDur(room);
+          startChoose(s, room);
+          if (room.teachRotate) s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
+        } else {
+          beginSpin(s, room);
+        }
+      } else {
+        startChoose(s, room);
+      }
+    }
+  } else if (s.phase === 'spin') {
+    s.spinT += dt;
+    const need = spinDur(room);
+    if (s.spinT >= need) {
+      s.spun = true;
+      s.spinT = need;
+      startChoose(s, room);
+      if (room.teachRotate) {
+        s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
+      }
+    }
+  } else if (s.phase === 'choose') {
+    s.choiceLeft = Math.max(0, s.choiceLeft - dt);
+    maybeRevealTreasure(s, room);
+    if (s.choiceLeft === 0) {
+      s.nudgeT = (s.nudgeT || 0) + dt;
+      if (!s.timerNoted) {
+        s.timerNoted = true;
+        s.note = 'SHUT THE PUNCHLINE';
+        s.nudgeT = 0;
+      } else if (s.nudgeT >= NUDGE_SEC) {
+        s.nudgeT = 0;
+        s.note = 'SHUT a door · hold or ← →';
+      }
+    }
+  } else if (s.phase === 'transition') {
+    if (reduced) {
+      s.panel = 1;
+    } else {
+      s.panel = Math.min(1, s.phaseT / PHASE_SECONDS.transition);
+    }
+    const holdBlock = s.pendingExit && s.holdBeat > 0;
+    const need = reduced ? 0.05 : PHASE_SECONDS.transition;
+    if (!holdBlock && s.phaseT >= need) {
+      if (s.pendingExit) {
+        leaveRide(s);
+        return;
+      }
+      const nxt = s.nextRoom;
+      s.nextRoom = null;
+      enterRoom(s, nxt || s.graph.start);
+    }
+  }
+  s.progress = Math.min(1, (s.cleared + (s.phase === 'transition' ? 0.4 : 0)) / Math.max(1, s.goal));
 }
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Every door tells a different joke. Read the setup, SHUT the punchline door, and laughing faces gulp away like a power-pellet clear.',
-  instructions: 'SHUT THE PUNCHLINE. A short reveal shows the joke setup and a chasing laugh-face. Read which door finishes the gag, then hold that door to SHUT. Correct punchline clears the faces; wrong doors joke-detour, then rejoin. First chapter ride is free practice and keeps nothing.',
+  intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, dodge laugh-faces, and grab punchline power to chase them back.',
+  instructions: 'Laughing Maze: swipe or tap arrow actions / keyboard arrows to move the corridors. Chomp star, moon, and penny chips. Laugh-faces chase you — pick up a glowing punchline power pellet (or SHUT the punchline door) to chase them back for a few seconds. Chomp the clear goal (about sixteen chips) to finish — extras are bonus. Soft house clock — timer end is an ordinary exit, not a crash. Chapters 2–6 stay frozen door-SHUT rooms.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
   houseSeconds: 90,
   actions: [
-    {id: 'left', label: 'SHUT LEFT · ←', hold: true},
-    {id: 'right', label: 'SHUT RIGHT · →', hold: true},
+    {id: 'up', label: 'UP · ↑', hold: true},
+    {id: 'down', label: 'DOWN · ↓', hold: true},
+    {id: 'left', label: 'LEFT · ←', hold: true},
+    {id: 'right', label: 'RIGHT · →', hold: true},
   ],
   create(level, rng) {
     const graph = chapterGraph(level);
-    // Ch2–Ch6 house clock ~52s so first-play 3/3 is fair; Ch1 keeps 90 via export.
-    const houseSecs = (level === 1 || level === 2 || level === 3 || level === 4 || level === 5) ? 52 : 90;
+    const mazeMode = graph.mode === 'maze';
+    const houseSecs = mazeMode
+      ? MAZE_HOUSE
+      : ((level === 1 || level === 2 || level === 3 || level === 4 || level === 5) ? 52 : 90);
     return makeRideState(level, rng, {
       graph,
       roomId: graph.start,
-      phase: 'enter',
+      phase: mazeMode ? 'enter' : 'enter',
       phaseT: 0,
       clueDone: false,
       choiceLeft: CHOICE_SECONDS,
@@ -1100,7 +1763,7 @@ export default {
       findsTaken: {},
       treasureId: TREASURES[level] || TREASURES[0],
       treasureWindow: false,
-      goal: graph.mainCount,
+      goal: mazeMode ? (graph.maze?.layout ? 1 : graph.mainCount) : graph.mainCount,
       panel: 0,
       doorPress: null,
       flies: [],
@@ -1114,14 +1777,28 @@ export default {
       spinT: 0,
       spun: false,
       houseSeconds: houseSecs,
+      maze: null,
+      pelletsLeft: 0,
+      pelletsTaken: 0,
+      powerLeft: 0,
+      dir: null,
+      wantDir: null,
+      heldDirs: {up: false, down: false, left: false, right: false},
     });
   },
   update(s, dt) {
     if (s.result || s.broke) return;
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       s.reduced = s.reduced || !!prefersReducedMotion?.();
-      // Runtime seeds houseLeft from export (90); override Ch2–Ch6 to ~52s fair clock.
-      if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4 || s.level === 5) s.houseLeft = s.houseSeconds || 58;
+      if (isMaze(s) || s.graph?.mode === 'maze') {
+        s.houseLeft = s.houseSeconds || MAZE_HOUSE;
+        ensureBeaProps();
+        initMazePlay(s);
+        return;
+      }
+      if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4 || s.level === 5) {
+        s.houseLeft = s.houseSeconds || 58;
+      }
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
       if (s.practice) {
@@ -1162,121 +1839,22 @@ export default {
       for (const f of s.flies) f.t += dt;
       s.flies = s.flies.filter(f => f.t < f.dur);
     }
-    const room = roomOf(s.graph, s.roomId);
-    const reduced = s.reduced;
-
-    // Chase faces run during reveal/inspect/choose (and gulp in transition).
-    updateFaces(s, dt, room);
-
-    if (s.doorPress) {
-      s.doorPress.t += dt;
-      if (s.doorPress.t >= PRESS_MS) {
-        const door = s.doorPress.door;
-        commitDoor(s, door);
-      }
-      s.progress = Math.min(1, (s.cleared + 0.15) / Math.max(1, s.goal));
+    if (isMaze(s)) {
+      updateMaze(s, dt);
       return;
     }
-
-    if (s.phase === 'enter') {
-      const need = reduced ? 0.12 : PHASE_SECONDS.enter;
-      if (s.phaseT >= need) {
-        s.phase = 'reveal';
-        s.phaseT = 0;
-        s.note = room.revealNote || 'SHUT THE PUNCHLINE';
-        if (room.kind === 'main') spawnFaces(s, room);
-      }
-    } else if (s.phase === 'reveal') {
-      const revealNeed = room.kind === 'detour'
-        ? (reduced ? 0.5 : PHASE_SECONDS.detourReveal)
-        : (reduced ? 0.18 : (room.revealSec ?? PHASE_SECONDS.reveal));
-      if (s.phaseT >= revealNeed) {
-        s.clueDone = true;
-        if (room.kind === 'detour') {
-          s.phase = 'transition';
-          s.phaseT = 0;
-          s.panel = 0;
-          s.nextRoom = room.rejoin;
-        } else {
-          s.phase = 'inspect';
-          s.phaseT = 0;
-          s.note = room.inspectNote
-            || (room.mirror
-              ? 'Glass swaps punchlines — read the real doors, then SHUT.'
-              : (room.rotate
-                ? 'Mark the punchline doors — then the room turns.'
-                : (room.shrink
-                  ? 'Floor tiles prove depth — SHUT the NEAR punchline.'
-                  : (room.echo
-                    ? 'SETUP names the true ride — match that miniature, then SHUT.'
-                    : 'Read the punchline doors — then SHUT.'))));
-          maybeRevealTreasure(s, room);
-        }
-      }
-    } else if (s.phase === 'inspect') {
-      maybeRevealTreasure(s, room);
-      const inspectNeed = reduced ? 0.45 : (room.inspectSec ?? PHASE_SECONDS.inspect);
-      if (s.phaseT >= inspectNeed) {
-        if (room.rotate) {
-          if (reduced) {
-            s.spun = true;
-            s.spinT = spinDur(room);
-            startChoose(s, room);
-            if (room.teachRotate) s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
-          } else {
-            beginSpin(s, room);
-          }
-        } else {
-          startChoose(s, room);
-        }
-      }
-    } else if (s.phase === 'spin') {
-      s.spinT += dt;
-      const need = spinDur(room);
-      if (s.spinT >= need) {
-        s.spun = true;
-        s.spinT = need;
-        startChoose(s, room);
-        if (room.teachRotate) {
-          s.note = 'REMEMBER — then SHUT the door that finishes the SETUP.';
-        }
-      }
-    } else if (s.phase === 'choose') {
-      s.choiceLeft = Math.max(0, s.choiceLeft - dt);
-      maybeRevealTreasure(s, room);
-      if (s.choiceLeft === 0) {
-        s.nudgeT = (s.nudgeT || 0) + dt;
-        if (!s.timerNoted) {
-          s.timerNoted = true;
-          s.note = 'SHUT THE PUNCHLINE';
-          s.nudgeT = 0;
-        } else if (s.nudgeT >= NUDGE_SEC) {
-          s.nudgeT = 0;
-          s.note = 'SHUT a door · hold or ← →';
-        }
-      }
-    } else if (s.phase === 'transition') {
-      if (reduced) {
-        s.panel = 1;
-      } else {
-        s.panel = Math.min(1, s.phaseT / PHASE_SECONDS.transition);
-      }
-      const holdBlock = s.pendingExit && s.holdBeat > 0;
-      const need = reduced ? 0.05 : PHASE_SECONDS.transition;
-      if (!holdBlock && s.phaseT >= need) {
-        if (s.pendingExit) {
-          leaveRide(s);
-          return;
-        }
-        const nxt = s.nextRoom;
-        s.nextRoom = null;
-        enterRoom(s, nxt || s.graph.start);
-      }
-    }
-    s.progress = Math.min(1, (s.cleared + (s.phase === 'transition' ? 0.4 : 0)) / Math.max(1, s.goal));
+    updateDoorChapter(s, dt);
   },
   action(s, id, down) {
     if (s.result || s.broke) return;
+    if (isMaze(s)) {
+      if (id === 'up' || id === 'down' || id === 'left' || id === 'right') {
+        setWantDir(s, id, down);
+        return;
+      }
+      if (down && (id === 'inspect' || id === 'shut')) shutPunchlineDoor(s);
+      return;
+    }
     if (id === 'left' || id === 'right') {
       if (down) {
         const room = roomOf(s.graph, s.roomId);
@@ -1291,6 +1869,49 @@ export default {
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
+    if (isMaze(s)) {
+      if (type === 'down') {
+        s.tapping = true;
+        s.swipe = {x: p.x, y: p.y};
+        if (s.treasureWindow && s.treasure && !s.treasure.taken && hitCircle(p, s.treasure.x, s.treasure.y, s.treasure.r)) {
+          takeTreasure(s);
+          return;
+        }
+        // Tap adjacent cell → face that way
+        if (s.maze && s.player) {
+          const cell = worldToCell(s.maze, p.x, p.y);
+          const dc = cell.c - s.player.c;
+          const dr = cell.r - s.player.r;
+          if (Math.abs(dc) + Math.abs(dr) === 1) {
+            if (dc === 1) setWantDir(s, 'right', true);
+            else if (dc === -1) setWantDir(s, 'left', true);
+            else if (dr === 1) setWantDir(s, 'down', true);
+            else if (dr === -1) setWantDir(s, 'up', true);
+          } else if (s.maze.doorCell && hitCircle(p, cellCenter(s.maze, s.maze.doorCell.c, s.maze.doorCell.r).x, cellCenter(s.maze, s.maze.doorCell.c, s.maze.doorCell.r).y, 28)) {
+            shutPunchlineDoor(s);
+          }
+        }
+        return;
+      }
+      if (type === 'move' && s.swipe) {
+        const dx = p.x - s.swipe.x;
+        const dy = p.y - s.swipe.y;
+        if (Math.hypot(dx, dy) > 28) {
+          if (Math.abs(dx) > Math.abs(dy)) setWantDir(s, dx > 0 ? 'right' : 'left', true);
+          else setWantDir(s, dy > 0 ? 'down' : 'up', true);
+          s.swipe = {x: p.x, y: p.y};
+        }
+        return;
+      }
+      if (type === 'up' || type === 'cancel') {
+        s.tapping = false;
+        s.swipe = null;
+        // Release held swipe dirs — keep wantDir as last swipe (continuous run)
+        s.heldDirs = {up: false, down: false, left: false, right: false};
+        return;
+      }
+      return;
+    }
     if (type === 'up' || type === 'cancel') {
       s.tapping = false;
       releaseDoorPress(s);
@@ -1317,6 +1938,18 @@ export default {
   },
   key(s, k, down) {
     if (s.result || s.broke) return;
+    if (isMaze(s)) {
+      const map = {
+        ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+        w: 'up', W: 'up', s: 'down', S: 'down', a: 'left', A: 'left', d: 'right', D: 'right',
+      };
+      if (map[k]) {
+        setWantDir(s, map[k], down);
+        return;
+      }
+      if (down && (k === ' ' || k === 'Enter')) shutPunchlineDoor(s);
+      return;
+    }
     if (k === 'ArrowLeft' || k === 'ArrowRight') {
       const id = k === 'ArrowLeft' ? 'left' : 'right';
       if (down) {

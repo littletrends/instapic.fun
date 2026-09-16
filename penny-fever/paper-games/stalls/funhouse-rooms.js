@@ -1,29 +1,31 @@
 /* Laughing Doorway — authored room graph.
+ * cache: maze-ch1-4
  *
- * Chapter 1 Two Doors — SHUT THE PUNCHLINE (unchanged).
- * Chapter 2 Mirror Joke — implemented: one hazard taught alone (the mirror lies;
- *   reflection swaps/reverses door punchlines; truth is oval SETUP + real doors).
- * Chapter 3 Upside Down — implemented: one hazard taught alone (room rotates;
- *   mark door positions before the turn; punchlines travel with door objects as
- *   they swap places; memory solves which physical door still finishes the SETUP).
- * Chapter 4 Shrinking Hall — implemented: one hazard taught alone (perspective /
- *   near vs far); floor tiles prove depth; SHUT the NEAR punchline that finishes
- *   the SETUP (not the tiny far decoy). No mirror or rotate restack.
+ * Chapter 1 Laughing Maze (BUILD): maze-chase–inspired carnival maze inside the
+ *   cream oval — move along corridors, chomp star/moon/penny pellets, dodge
+ *   chasing laugh-faces; power pellets / punchline door → brief chase-back.
+ *   NOT a licensed-maze clone (no clone character names or art). Primary loop = maze
+ *   run + chomp + chase (door gags are set-pieces only).
  *
- * Chapter 5 Midway Echoes — implemented: one hazard taught alone (distorted
- *   miniatures of other Penny Fever rides as clues); oval SETUP names the true
- *   ride echo; doors show ride glyphs — some warped decoys. Match the ride,
- *   then SHUT THE PUNCHLINE. No mirror/rotate/shrink restack.
+ * CHAPTER BONUSES on path: star / moon / penny chips + Ch1 keepsake
+ *   laughing-doorway via ride-seek boarding (sprites:
+ *   assets/restyle/game-sprites/ride-keepsakes/laughing-doorway/front.png).
+ * TREASURES list unchanged; only Ch1 maze ships now.
  *
- * Chapter 6 The Last Laugh — implemented: finale remix of known hazards
- *   (not stacked in one room). Foyer teaches LAST LAUGH with mirror alone;
- *   gallery deepens with echo alone; Last Laugh Court mild near/far remix.
- *   SETUP stays truthful; primary verb SHUT THE PUNCHLINE. ≤6 rooms.
- *   Polish-only remaining (timing/copy), not unfinished chapters.
+ * SCENERY (existing art — no Imagine; maze built AROUND cream court):
+ *   playfield paper-games/assets/funhouse.png (+ Concepts Amusement_06);
+ *   6-pack walls assets/restyle/scene-turnarounds-2026-09-09/amusements/funhouse/;
+ *   Tent_26_Bea dress BUILD still HELD — maze props only via assets/funhouse-bea/
+ *   split cutouts (doorway/curtain/spotlight/moon + optional attendant).
+ * Canvas draws oval court only — do not overpaint #backdrop playfield.
+ * FAIRNESS: clearGoal 16 (bonus chomp beyond); house via MAZE_HOUSE 110s; faces slower.
  *
- * Locked lane: Pac-Man chase × Door Door SHUT × Finish the Joke.
- * Primary verb SHUT — duck through / slam the punchline door that finishes
- * the joke so chasing laugh-faces vanish (power-pellet = correct punchline).
+ * FREEZE Ch2–Ch6 (levels ≥1): Mirror Joke / Upside Down / Shrinking Hall /
+ *   Midway Echoes / The Last Laugh keep existing CHAPTER2–6 graphs so routing
+ *   still loads without crash. Polish-only; do not expand until Ch1 maze ships.
+ *
+ * Locked lane: carnival chase energy × punchline power × Finish the Joke comedy.
+ * Prizes TREASURES unchanged. Soft fails never abort paid ride.
  */
 
 export const RIDE = 'funhouse';
@@ -38,7 +40,7 @@ export const TREASURES = [
 ];
 export const ORDINARY = ['everyday-penny', 'star-token', 'moon-penny'];
 export const LEVEL_NAMES = [
-  'Two Doors',
+  'Laughing Maze',
   'Mirror Joke',
   'Upside Down',
   'Shrinking Hall',
@@ -74,152 +76,54 @@ function door(id, to, extra = {}) {
   return {id, to, x: box.x, y: box.y, w: box.w, h: box.h, ...extra};
 }
 
-/**
- * Chapter 1 — Two Doors.
- * Clue = which door finishes the joke (punchline label on the door).
- * NOT wink / look-direction Simon.
- */
 export const CHAPTER1 = {
-  id: 'two-doors',
-  start: 'foyer',
-  mainCount: 3,
+  id: 'laughing-maze',
+  mode: 'maze',
+  start: 'maze',
+  mainCount: 1,
   rooms: {
-    foyer: {
-      id: 'foyer',
-      kind: 'main',
-      title: 'Velvet Foyer',
-      setup: 'Why did the clown bring a ladder?',
-      setupProp: 'ladder',
-      caption: 'Finish the joke — SHUT the punchline door.',
-      revealNote: 'SHUT THE PUNCHLINE',
-      inspectNote: 'Read the punchlines on the doors. Faces only giggle.',
-      chooseNote: 'SHUT THE PUNCHLINE',
-      doors: [
-        door('left', 'gallery', {
-          correct: true,
-          punchline: 'Raise the roof!',
-          label: 'Raise the roof',
-        }),
-        door('right', 'custard', {
-          correct: false,
-          punchline: 'More custard!',
-          label: 'More custard',
-        }),
-      ],
-      inspect: [
-        {id: 'setup-prop', kind: 'clue', prop: 'ladder', x: 450, y: 560, r: 70,
-          flavor: 'The setup is the ladder. The punchline is on a door.'},
-        {id: 'cushion', kind: 'find', prop: 'cushion', x: 318, y: 640, r: 42, find: 'star-token',
-          flavor: 'A star token tucked under a paper cushion.'},
-        {id: 'ribbon', kind: 'flavor', prop: 'panel', x: 560, y: 620, r: 36,
-          flavor: 'A paper ribbon. Pretty — the punchline is still on a door.'},
-      ],
-      faces: 1,
+    maze: {
+      id: 'maze',
+      kind: 'maze',
+      title: 'Laughing Maze',
+      caption: 'Chomp the midway chips — shut a punchline when you glow.',
+      revealNote: 'MOVE · CHOMP · LAUGH-FACES CHASE',
+      chooseNote: 'Clear the pellets — power lets you chase back.',
+      treasure: {spawnId: 'last-laugh', col: 5, row: 4, r: 52},
+      faces: 3,
     },
-    custard: {
-      id: 'custard',
-      kind: 'detour',
-      title: 'Custard Joke',
-      joke: 'pie',
-      caption: 'A cream pie makes its introductions.',
-      revealNote: 'Wrong punchline — a polite pie. The gallery waits ahead.',
-      rejoin: 'gallery',
-    },
-    gallery: {
-      id: 'gallery',
-      kind: 'main',
-      title: 'Diamond Gallery',
-      setup: 'What do you call a joke that falls flat?',
-      setupProp: 'flat',
-      caption: 'New setup. SHUT the door that finishes it.',
-      revealNote: 'SHUT THE PUNCHLINE',
-      inspectNote: 'A panel might hide a penny. The punchline is still on a door.',
-      chooseNote: 'SHUT THE PUNCHLINE',
-      doors: [
-        door('left', 'whoopee', {
-          correct: false,
-          punchline: 'Soft landing',
-          label: 'Soft landing',
-        }),
-        door('right', 'last-court', {
-          correct: true,
-          punchline: 'A floor gag!',
-          label: 'Floor gag',
-        }),
-      ],
-      inspect: [
-        {id: 'setup-prop', kind: 'clue', prop: 'flat', x: 450, y: 560, r: 70,
-          flavor: 'Flat setup on the oval. One door finishes it.'},
-        {id: 'panel', kind: 'find', prop: 'panel', x: 590, y: 636, r: 42, find: 'moon-penny',
-          flavor: 'A moon penny behind a sliding paper panel.'},
-        {id: 'tassel', kind: 'flavor', prop: 'cushion', x: 310, y: 630, r: 36,
-          flavor: 'A velvet tassel. Soft, silent — not the punchline.'},
-      ],
-      faces: 1,
-    },
-    whoopee: {
-      id: 'whoopee',
-      kind: 'detour',
-      title: 'Whoopee Hall',
-      joke: 'whoopee',
-      caption: 'The floor has opinions.',
-      revealNote: 'A whoopee cushion bows. The last court is just ahead.',
-      rejoin: 'last-court',
-    },
-    'last-court': {
-      id: 'last-court',
-      kind: 'main',
-      title: 'Last Court',
-      setup: 'Knock knock. Who\'s there? Boo.',
-      setupProp: 'boo',
-      last: true,
-      caption: 'The last laughing door keeps the way out.',
-      revealNote: 'SHUT THE PUNCHLINE',
-      inspectNote: 'If a keepsake is here, it sits in the open — tap it.',
-      chooseNote: 'SHUT THE LAST LAUGH',
-      doors: [
-        door('left', 'exit', {
-          correct: true,
-          lastLaugh: true,
-          punchline: 'Don\'t cry — exit!',
-          label: 'Don\'t cry — exit',
-        }),
-        door('right', 'false-giggle', {
-          correct: false,
-          punchline: 'Keep giggling',
-          label: 'Keep giggling',
-        }),
-      ],
-      inspect: [
-        {id: 'setup-prop', kind: 'clue', prop: 'boo', x: 450, y: 540, r: 70,
-          flavor: 'Boo who? The laughing door finishes the gag.'},
-        {id: 'mouth', kind: 'flavor', prop: 'mouth', x: 268, y: 700, r: 40,
-          flavor: 'A comedy mouth. It only laughs for the true punchline.'},
-        {id: 'court-cushion', kind: 'flavor', prop: 'cushion', x: 600, y: 640, r: 38,
-          flavor: 'A court cushion. Soft landing, no secret.'},
-      ],
-      treasure: {spawnId: 'last-laugh', x: 450, y: 470, r: 58},
-      faces: 1,
-    },
-    'false-giggle': {
-      id: 'false-giggle',
-      kind: 'detour',
-      title: 'False Giggle',
-      joke: 'honk',
-      caption: 'A tiny door honks, then admits the gag.',
-      revealNote: 'Not the last laugh. Back to the court — finish the joke.',
-      rejoin: 'last-court',
-    },
+  },
+  /** 11×13 corridor maze inside cream oval (cell 40px). */
+  maze: {
+    cols: 11,
+    rows: 13,
+    cell: 40,
+    ox: 230,
+    oy: 495,
+    powerSec: 7.5,
+    faceSpeed: 56,
+    clearGoal: 16,
+    playerSpeed: 168,
+    faceCount: 3,
+    /** # wall  . pellet  o power  + empty  S start  F face  D punchline-door */
+    layout: [
+      '###########',
+      '#o...#...o#',
+      '#.##.#.##.#',
+      '#.........#',
+      '##.#.+.#.##',
+      '#..#.F.#..#',
+      '#.#######.#',
+      '#.........#',
+      '###.#D#.###',
+      '#o..#.#..o#',
+      '#.##...##.#',
+      '#....S....#',
+      '###########',
+    ],
   },
 };
 
-/**
- * Chapter 2 — Mirror Joke.
- * ONE new hazard taught alone on the first main room: the mirror lies
- * (reflection swaps/reverses door punchlines). Truth = oval SETUP + real doors.
- * Soft fails only — wrong door → joke detour → rejoin. Never abort the paid ride.
- * NOT wink / look-direction Simon.
- */
 export const CHAPTER2 = {
   id: 'mirror-joke',
   start: 'foyer',
@@ -1003,7 +907,7 @@ export const CHAPTER6 = {
 };
 
 export function chapterGraph(level) {
-  // level 0 = Ch1; 1 = Ch2; 2 = Ch3; 3 = Ch4; 4 = Ch5; ≥5 = Ch6 The Last Laugh.
+  // level 0 = Ch1 Laughing Maze; 1–5 = frozen CHAPTER2–6 (load-safe).
   if (level >= 5) return CHAPTER6;
   if (level >= 4) return CHAPTER5;
   if (level >= 3) return CHAPTER4;
