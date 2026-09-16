@@ -1,5 +1,5 @@
 /* Laughing Doorway — authored room graph.
- * cache: maze-flow-2
+ * cache: maze-ready-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  * maze LAYOUT for every chapter — same corridors, same verb. Chapters vary
@@ -7,12 +7,11 @@
  * faceCount, house timer, scenery density flag (props, not grid).
  * Old punchline-door CHAPTER2–6 room graphs retired from play routing.
  *
- * Path chips are simple dots for now (not catalogue coins).
- *   Props / bonus-item art TBD per Lorie. Keepsakes still via ride-seek when eligible.
- * TREASURES exclusive Ch1–6 unchanged.
+ * Path chips = simple geometric dots only (not catalogue coins).
+ * TREASURES exclusive Ch1–6 — mid-court keepsake; collect when eligible.
  *
- * SCENERY: cream court oval; Tent_26_Bea dress BUILD still HELD — maze props
- *   only via assets/funhouse-bea/ cutouts. Canvas draws oval court only.
+ * SCENERY: cream court oval; Tent_26_Bea props (01/03–06) in papercut border;
+ *   bea-player = YOU. BONUS treasures Ch1–6 mid-court. Canvas oval court only.
  * FAIRNESS baseline Ch1: clearGoal 16; house 110s; faceSpeed 56;
  *   playerSpeed 168; powerSec 7.5. Later chapters tighten goal / faces / power.
  *
@@ -99,7 +98,7 @@ function mazeChapter(spec) {
         caption: caption || 'Chomp the midway chips — shut a punchline when you glow.',
         revealNote: 'MOVE · CHOMP · LAUGH-FACES CHASE',
         chooseNote: 'Clear the pellets — power lets you chase back.',
-        treasure: {spawnId: 'last-laugh', col: 5, row: 4, r: 52},
+        treasure: {spawnId: 'last-laugh', col: 5, row: 5, r: 56},
         faces: faceCount,
       },
     },

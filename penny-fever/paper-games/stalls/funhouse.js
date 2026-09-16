@@ -1,5 +1,5 @@
 /* Laughing Doorway — Juno
- * cache: maze-flow-2
+ * cache: maze-ready-1
  *
  * ALL 6 chapters = Pac-Man carnival maze (MOVE / CHOMP / chase). ONE shared
  *   maze LAYOUT — same corridors every chapter. Fairness/strategy varies per
@@ -13,12 +13,12 @@
  *   only. Tent_26_Bea dress BUILD still HELD — maze props only: split cutouts from
  *   assets/funhouse-bea/ scenery 01/03-06; bea-player.png = SHARED player sprite
  *   placed around cream oval OUTSIDE maze lanes. No whole-backdrop overpaint.
- * CONTROLS: centre-bottom virtual joystick (helter ← JUMP → pad band under court)
- *   drives MOVE; arrow keys / shell actions / swipe still work.
+ * CONTROLS: centre-bottom MOVE joystick only (snappy deadzone); keyboard + swipe
+ *   stay. actions: [] — no shell arrow dock.
  * FAIRNESS baseline Ch1: MAZE_HOUSE 110s; clearGoal 16; faceSpeed 56; playerSpeed 168;
  *   powerSec 7.5. Soft fails never abort paid ride.
  *
- * Shell #actions + .play-hud strip (sibling under #stage); no canvas menu pills.
+ * Shell .play-hud strip outside stage OK; no canvas pills/chips/coach on cream.
  * d.glow() 6-digit hex only. Oval-only draw — don’t overpaint whole court.
  *
  * Source of truth: Lorie GREENLIGHT + addendum (tagline: Every door tells a different joke).
@@ -31,7 +31,7 @@ import {
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
-} from './funhouse-rooms.js?v=maze-flow-2';
+} from './funhouse-rooms.js?v=maze-ready-1';
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -63,7 +63,7 @@ const BEA_PROP_FILES = {
   doorway: 'Tent_26_Bea_piece-06.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.png';
-const BEA_CACHE_VER = 'maze-flow-2';
+const BEA_CACHE_VER = 'maze-ready-1';
 let beaPropImgs = null;
 let beaPlayerImg = null;
 
@@ -84,9 +84,9 @@ function ensureBeaProps() {
   return beaPropImgs;
 }
 
-/** Place cutouts on cream oval edges — never on maze path cells. */
-/** Place cutouts on cream oval edges — never on maze path cells.
+/** Place Tent_26_Bea cutouts on cream papercut border — never on maze path cells.
  *  scenery flag (full/dense/finale) only changes prop density — not the maze grid.
+ *  Baseline always shows all five scenery types (piece-02 = shared YOU sprite).
  */
 function drawBeaScenery(d, s) {
   const imgs = ensureBeaProps();
@@ -96,21 +96,19 @@ function drawBeaScenery(d, s) {
     if (!img || !img.complete || !(img.naturalWidth > 0)) return false;
     return d.sprite(img, x, y, {w, angle, shadow: true});
   };
-  // Scenery exclusive: doorway, curtain, spotlight, moon, star key (piece-02 = shared player).
-  place('doorway', 165, 655, 96);
-  place('curtain', 735, 635, 90);
-  place('spotlight', 285, 462, 54, -0.18);
-  place('moon', 655, 478, 82);
-  if (density === 'full' || density === 'dense' || density === 'finale') {
-    place('starKey', 780, 860, 42, 0.12);
-  }
+  // Baseline 5-pack readable on cream: doorway / curtain / spotlight / moon / star key
+  place('doorway', 178, 640, 118);
+  place('curtain', 722, 618, 112);
+  place('spotlight', 298, 478, 76, -0.18);
+  place('moon', 618, 490, 100);
+  place('starKey', 708, 848, 68, 0.12);
   if (density === 'dense' || density === 'finale') {
-    place('spotlight', 620, 900, 44, 0.22);
-    place('moon', 200, 880, 64, -0.1);
+    place('spotlight', 590, 878, 60, 0.22);
+    place('moon', 218, 858, 82, -0.1);
   }
   if (density === 'finale') {
-    place('curtain', 120, 520, 70, -0.08);
-    place('doorway', 780, 520, 72, 0.06);
+    place('curtain', 148, 528, 92, -0.08);
+    place('doorway', 752, 528, 96, 0.06);
   }
 }
 
@@ -143,11 +141,11 @@ function mazeStickLayout() {
   return {
     cx: 450,
     cy: 1136,
-    baseRx: 86,
-    baseRy: 56,
-    knobR: 30,
-    dead: 16,
-    maxPull: 46,
+    baseRx: 90,
+    baseRy: 58,
+    knobR: 32,
+    dead: 8,
+    maxPull: 54,
   };
 }
 
@@ -156,7 +154,7 @@ function hitMazeStick(p) {
   const L = mazeStickLayout();
   const dx = (p.x - L.cx) / L.baseRx;
   const dy = (p.y - L.cy) / L.baseRy;
-  return (dx * dx + dy * dy) <= 1.15;
+  return (dx * dx + dy * dy) <= 1.28;
 }
 
 function stickDirFromPull(dx, dy, dead) {
@@ -189,7 +187,9 @@ function releaseMazeStick(s) {
   }
   const dir = s.stick.dir;
   s.stick = null;
-  if (dir) setWantDir(s, dir, false);
+  // Keep last dir for continuous run (match swipe); clear held locks only.
+  s.heldDirs = {up: false, down: false, left: false, right: false};
+  if (dir) s.wantDir = dir;
 }
 
 function drawMazeStick(s, d) {
@@ -370,8 +370,8 @@ function startChoose(s, room) {
 
 function maybeRevealTreasure(s, room) {
   if (!room?.treasure || s.treasureCollected) return;
-  if (!s.eligible) return;
   if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
+  // Always place keepsake for mid-court display; collect only when eligible.
   if (!s.treasure) {
     let tx = room.treasure.x;
     let ty = room.treasure.y;
@@ -382,14 +382,14 @@ function maybeRevealTreasure(s, room) {
     s.treasure = {
       id: s.treasureId || TREASURES[s.level] || TREASURES[0],
       x: tx ?? 450,
-      y: ty ?? 470,
-      r: room.treasure.r || 58,
+      y: ty ?? 700,
+      r: room.treasure.r || 56,
       taken: false,
     };
   }
   if (!s.treasure.taken) {
     s.treasureRevealed = true;
-    s.treasureWindow = true;
+    s.treasureWindow = !!s.eligible;
   }
 }
 
@@ -536,7 +536,7 @@ function parseMaze(spec) {
       const wall = ch === '#';
       row.push(wall ? 1 : 0);
       if (ch === '.' || ch === 'o') {
-        const kind = ch === 'o' ? 'power' : (['star', 'moon', 'penny'][(c + r) % 3]);
+        const kind = ch === 'o' ? 'power' : 'dot';
         const entry = {c, r, kind, taken: false};
         pellets.push(entry);
         if (ch === 'o') powers.push(entry);
@@ -891,16 +891,12 @@ function drawMazeCourt(s, d) {
   const maze = s.maze;
   const t = s.t || 0;
   const room = roomOf(s.graph, s.roomId || 'maze');
-  // Cream oval stage only — façade stays visible.
+  // Cream oval stage only — no canvas pills/chips/coach; shell .play-hud owns status.
   d.ellipse(450, 720, 310, 268, '#f4e6c888', '#e8b84a55', 2);
-  d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 3, false);
-  for (let i = 0; i < 7; i++) diamond(d, 210 + i * 80, 428, 11, i % 2 ? BURGUNDY : GOLD, '#f8e4b3');
-  drawCurtain(d, 'left', 0.35, t);
-  drawCurtain(d, 'right', 0.3, t);
+  d.path([{x: 200, y: 430}, {x: 450, y: 390}, {x: 700, y: 430}], GOLD, 2.4, false);
   d.text(room?.title || 'Laughing Maze', 450, 456, 22, INK);
-  // Soft wash only — Tent_26_Bea cutouts supply the funhouse set-pieces.
-  d.glow(450, 410, 42, '#f4d590');
-  d.ellipse(450, 404, 36, 10, '#f4d59055', GOLD, 1.2);
+  // Soft wash — Tent_26_Bea cutouts supply the funhouse set-pieces.
+  d.glow(450, 410, 36, '#f4d590');
   // Bea maze props around cream oval (outside lanes) — dress BUILD still held.
   drawBeaScenery(d, s);
 
@@ -944,7 +940,7 @@ function drawMazeCourt(s, d) {
     if (!shut) d.glow(dc.x, dc.y, 28, '#f4d590');
   }
 
-  // Pellets — simple dots only (NOT catalogue coins). Props/bonus art TBD.
+  // Path chips — simple geometric dots only (NOT catalogue coins / faces).
   for (const pel of maze.pellets) {
     if (pel.taken) continue;
     const ctr = cellCenter(maze, pel.c, pel.r);
@@ -953,12 +949,6 @@ function drawMazeCourt(s, d) {
       d.glow(ctr.x, ctr.y, 18 + pulse * 8, '#f4d590');
       d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
       d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
-    } else if (pel.kind === 'star') {
-      if (typeof d.star === 'function') d.star(ctr.x, ctr.y, 7, GOLD);
-      else diamond(d, ctr.x, ctr.y, 6, GOLD, BURGUNDY);
-    } else if (pel.kind === 'moon') {
-      d.circle(ctr.x, ctr.y, 5.5, CREAM, GOLD, 1.4);
-      d.circle(ctr.x + 2, ctr.y - 1, 3.5, '#f7ebcf');
     } else {
       d.circle(ctr.x, ctr.y, 4.5, GOLD, WOOD, 1.2);
       d.circle(ctr.x, ctr.y, 2.2, CREAM);
@@ -979,17 +969,18 @@ function drawMazeCourt(s, d) {
   if (s.powerLeft > 0) d.glow(s.player.x, s.player.y, 36, '#ffe6a4');
   drawPlayer(d, s);
 
-  if (s.treasure && !s.treasure.taken && s.treasureWindow && s.eligible) {
-    d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
+  if (s.treasure && !s.treasure.taken) {
+    const dim = !s.eligible;
+    if (!dim) d.glow(s.treasure.x, s.treasure.y, 48, '#f4d590');
     d.item(spriteKey(s.treasure.id), s.treasure.x, s.treasure.y, {
-      w: 62, shadow: false,
-      fallback: () => d.heart(s.treasure.x, s.treasure.y, 16),
+      w: dim ? 48 : 64, shadow: false,
+      fallback: () => d.heart(s.treasure.x, s.treasure.y, dim ? 12 : 16),
     });
   }
   drawFlies(d, s);
 
-  // Progress lives in shell #readout / .play-hud — no fake court pills.
-  // MOVE stick under cream court (helter pad band) — never over maze lanes.
+  // Shell #readout / .play-hud own status — no fake court pills/coach.
+  // MOVE stick = only extra control in the game box (under cream court).
   if (!s.result && !s.broke) drawMazeStick(s, d);
 }
 
@@ -1166,13 +1157,13 @@ function drawPlayer(d, s) {
   ensureBeaProps();
   const img = beaPlayerImg;
   if (isMaze(s) && img && img.complete && img.naturalWidth > 0 && typeof d.sprite === 'function') {
-    d.sprite(img, x, y - 6, {w: 44, shadow: true});
+    d.sprite(img, x, y - 6, {w: 50, shadow: true});
   } else if (isMaze(s) && img && img.complete && img.naturalWidth > 0) {
     // Fallback if draw.sprite missing — canvas image via item-like ellipse stand-in still OK
     try {
       const ctx = d.c || d.ctx;
       if (ctx && img) {
-        const w = 44, h = w * (img.naturalHeight / img.naturalWidth);
+        const w = 50, h = w * (img.naturalHeight / img.naturalWidth);
         ctx.drawImage(img, x - w / 2, y - h * 0.72, w, h);
       } else {
         d.ellipse(x, y, 22, 28, CREAM, GOLD, 2);
@@ -2007,7 +1998,7 @@ export default {
         if (s.swipe) {
           const dx = p.x - s.swipe.x;
           const dy = p.y - s.swipe.y;
-          if (Math.hypot(dx, dy) > 28) {
+          if (Math.hypot(dx, dy) > 22) {
             if (Math.abs(dx) > Math.abs(dy)) setWantDir(s, dx > 0 ? 'right' : 'left', true);
             else setWantDir(s, dy > 0 ? 'down' : 'up', true);
             s.swipe = {x: p.x, y: p.y};
