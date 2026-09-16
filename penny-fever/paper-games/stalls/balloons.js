@@ -62,7 +62,9 @@ const LEVELS = [
 const W = 900;
 const H = 1200;
 const CX = 450;
-const CY = 500; // pink oval court centre — backdrop owns the art
+const CY = 500; // cream quiet oval centre (backdrop frames outside only)
+const COURT_CREAM = '#f3e2bd';
+const COURT_CREAM_DEEP = '#f8edd8';
 const ORBIT_RX = 210;
 const ORBIT_RY = 155;
 
@@ -136,7 +138,7 @@ const STICK_BURGUNDY = '#c42848';
 const DARK_INK = '#3a2a18';
 const LABEL_BURG = '#7a2038';
 
-const DRESS_CACHE = 'dress-bess-1';
+const DRESS_CACHE = 'dress-bess-2';
 const BESS_FILES = {
   starLantern: 'Tent_07_Bess_piece-01.png',
   moonLantern: 'Tent_07_Bess_piece-02.png',
@@ -204,6 +206,17 @@ function drawBessScenery(d, s) {
  * Bottom-of-canvas centre HEIGHT stick (funhouse MOVE stick, vertical height).
  * Pull UP → HOLD/rise; neutral/down → release/drift.
  */
+
+/** Quiet cream papercut play oval — covers busy balloons.png art in the playfield.
+ *  Backdrop may still frame outside; Bess props + Bea sit ON cream (Aura FAIL cream). */
+function drawCreamCourt(d) {
+  // Soft layered oval — opaque enough to quiet the illustrated court.
+  d.ellipse(CX, CY + 36, 372, 438, COURT_CREAM + 'f5', '#d2a65b66', 2.2);
+  d.ellipse(CX, CY + 36, 348, 412, COURT_CREAM_DEEP + 'f8', null, 0);
+  // Faint inner paper ring so the orbit reads without reopening the busy art.
+  d.ellipse(CX, CY + 20, ORBIT_RX + 48, ORBIT_RY + 88, null, '#d2a65b44', 1.4);
+}
+
 function heightStickLayout() {
   return {
     cx: 450,
@@ -1545,8 +1558,9 @@ export default {
     }
   },
   draw(s, d) {
-    // Backdrop balloons.png is the unique court — do NOT paint a big green
-    // ellipse or solid trunk over the pink oval. Light overlays only.
+    // Cream quiet play oval ON TOP of busy balloons.png playfield (Aura FAIL cream).
+    // Do NOT paint green trunk / full-screen wipe — backdrop may frame outside.
+    drawCreamCourt(d);
     ensureBessDress();
     drawBessScenery(d, s);
 
