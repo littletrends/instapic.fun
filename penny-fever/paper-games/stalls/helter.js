@@ -1,24 +1,21 @@
 /*
  * Spiral Slide (helter) — Ch1 First Spiral live; Ch2–6 titles frozen (same board until Aura reopens).
  *
- * NEW model (replaces Helix ring-drop / TURN / cream-ladder catcher):
+ * TAP-TAP-TAP + JUMP model (replaces cream-ladder / burgundy-snake board):
  *   ONE Archimedean spiral path, BOTTOM → TOP, sampled into cells.
- *   YOU starts at cell 0 (bottom) and climbs with verb STEP.
- *   Ladders = boost UP several cells (cream/gold). Count toward GOAL.
- *   Snakes = soft dump DOWN several cells (burgundy). Ride continues; never abort paid.
- *   Practice / chapter bar: land GOAL=3 ladders. Treasure is optional + hard (snake-detour).
+ *   YOU starts at cell 0 (bottom). ←/→ or tap near YOU advances along coil cells.
+ *   JUMP leaps over the next cell (onto cell+2). Miss/jump over a SLIDE = safe.
+ *   SLIDE (deep-red chute): land or jump onto → soft dump DOWN (never abort).
+ *   CUSHION (cream+gold plump): jump onto (or land) → bounce UP several cells.
+ *   JUMP BALL: gold play ball rolls crest→bottom; when off, WAIT then hopper reloads.
+ *   Keepsake + tokens sit ON coil cells — collect by landing / jumping onto them.
  *
- * Ch1 teach: first ladder alone with coaching; one milder snake later (no stacked hazards).
- * Fair bar: competent STEP reaches 3/3 ladders in one free practice ride (~45–55s).
- * Aura fairness retune: post-snake L3 on dump corridor (no long crest re-climb).
- *
- * Keepsake (Lorie): NOT on the trivial upward ladder-skip route. It sits in the corridor
- * you only visit after a soft snake dump — slide down, step the keepsake cell, climb again.
- * Practice complete does NOT require treasure.
+ * Practice clear: keepsake taken AND (crest reached OR ≥3 cushions bounced).
+ * Soft dump never aborts paid rides; practice keeps nothing. ~45–55s ride.
  *
  * Tagline: Choose your spiral. Catch what tumbles.
  * Paper-cut deep-red spiral (layered faces + jitter). helter.png court stays hero.
-* Bottom terminus aligned to Palace of Joy stairs base; gold ball rolls crest→door.
+ * Bottom terminus aligned to Palace of Joy stairs base; gold ball rolls crest→door.
  * Cream-bottom ← JUMP → pads on court. No shell STEP. Shell .play-hud only (menu off court).
  * d.glow() — 6-digit hex only. Do NOT set canvasControls.
  */
@@ -56,13 +53,15 @@ const TRACK_W1 = 22; // crest
 const TRACK_SAMPLES = 560;
 const BALL_R = 16;
 const BALL_ROLL_SECS = 14; // gravity-ish crest→door prop roll
-const GOAL = 3;
+const BALL_WAIT_SECS = 1.4; // pause after ball exits before hopper reload
+const CUSHION_GOAL = 3;
 const RIDE_SECONDS = 52;
 const PREVIEW_SECS = 1.6;
 const STEP_EASE = 0.28; // seconds to ease between cells
+const JUMP_EASE = 0.36;
 const FX_CAP = 40;
 
-/** Cream / gold ladder art; burgundy snake; keepsake glow — all 6-digit for d.glow(). */
+/** Cream / gold / deep-red props — all 6-digit for d.glow(). */
 const CREAM = '#f4d590';
 const CREAM_DEEP = '#d2a65b';
 const GOLD = '#ffe6a4';
@@ -79,28 +78,45 @@ const TRACK_SHADOW = '#3a0a12';
 const BALL_GOLD = '#e8c46a';
 const BALL_GOLD_HI = '#fff0b8';
 const BALL_GOLD_DEEP = '#b8892e';
-
+const SLIDE_FILL = '#c03040';
+const SLIDE_DEEP = '#7a1828';
+const CUSHION_FILL = '#ffe8b0';
+const CUSHION_DEEP = '#c99448';
+const HOPPER_FILL = '#3a2a28';
+const HOPPER_DEEP = '#1e1412';
 
 /**
  * Ch1 authored board (also used for frozen Ch2–6 stubs).
- * Ladders boost UP; snake soft-dumps DOWN.
- * Treasure cell is only on the post-snake dump corridor (skipped by early ladder climbs).
+ * Slides soft-dump DOWN; cushions bounce UP.
+ * Keepsake + tokens sit on coil cells.
  */
 function ch1Board() {
-  // Ladder feet + boost (destination = foot + boost, clamped).
-  // Fairness retune (Aura FAIL 2/3): L3 foot sits on the post-snake corridor
-  // (cell 8 — skipped by L1 boost 4→9) so one STEP after dump clears the 3rd ladder.
-  const ladders = [
-    {foot: 4, boost: 5, teach: true},   // 4 → 9; skips 5–8
-    {foot: 11, boost: 4, teach: false}, // 11 → 15
-    {foot: 8, boost: 7, teach: false},  // 8 → 15 — only after snake dump to 7
+  // Slide cells: land/jump onto → dump DOWN by `dump` cells.
+  const slides = [
+    {cell: 7, dump: 5, teach: true},   // 7 → 2
+    {cell: 15, dump: 6, teach: false}, // 15 → 9
+    {cell: 21, dump: 5, teach: false}, // 21 → 16
   ];
-  // Mild snake after L1+L2; dump onto keepsake cell, L3 one STEP ahead.
-  const snakes = [
-    {head: 16, dump: 9, teach: false}, // 16 → 7
+  // Cushion cells: land/jump onto → bounce UP by `boost` cells.
+  const cushions = [
+    {cell: 4, boost: 4, teach: true},   // 4 → 8
+    {cell: 11, boost: 5, teach: false}, // 11 → 16
+    {cell: 18, boost: 4, teach: false}, // 18 → 22
   ];
-  const treasureCell = 7; // land here on soft dump (off easy L1 skip route)
-  return {ladders, snakes, treasureCell, cellCount: CELL_COUNT, duration: RIDE_SECONDS};
+  // Collectible tokens ON the track (not exclusive treasures).
+  const tokens = [
+    {cell: 3, id: 'star-token'},
+    {cell: 9, id: 'moon-penny'},
+    {cell: 16, id: 'everyday-penny'},
+  ];
+  // Fairness: teach cushion 4→8 lands on keepsake (cushion 11→16 would skip 13).
+  const treasureCell = 8; // spiral-tower on track after first bounce
+  // Hopper sits near crest, slightly off-track (loads balls at top).
+  const hopper = {u: 0.92, ox: 48, oy: -28};
+  return {
+    slides, cushions, tokens, treasureCell, hopper,
+    cellCount: CELL_COUNT, duration: RIDE_SECONDS,
+  };
 }
 
 /**
@@ -258,14 +274,12 @@ function cellAt(s, idx) {
   return cells[i];
 }
 
-function ladderAt(s, cellIdx) {
-  // Match foot even if used — recover climb can reuse ladder for movement;
-  // hits only credit on first use in resolveLanding.
-  return (s.ladders || []).find((L) => L.foot === cellIdx);
+function slideAt(s, cellIdx) {
+  return (s.slides || []).find((S) => S.cell === cellIdx);
 }
 
-function snakeAt(s, cellIdx) {
-  return (s.snakes || []).find((S) => S.head === cellIdx && !S.used);
+function cushionAt(s, cellIdx) {
+  return (s.cushions || []).find((C) => C.cell === cellIdx);
 }
 
 function pushFx(s, fx) {
@@ -291,8 +305,8 @@ function pushSparks(s, x, y, soft) {
 function tickFx(s, dt) {
   if ((s.finishPulse || 0) > 0) s.finishPulse = Math.max(0, s.finishPulse - dt);
   if ((s.matPulse || 0) > 0) s.matPulse = Math.max(0, s.matPulse - dt);
-  if ((s.snakeFlash || 0) > 0) s.snakeFlash = Math.max(0, s.snakeFlash - dt);
-  if ((s.ladderFlash || 0) > 0) s.ladderFlash = Math.max(0, s.ladderFlash - dt);
+  if ((s.slideFlash || 0) > 0) s.slideFlash = Math.max(0, s.slideFlash - dt);
+  if ((s.cushionFlash || 0) > 0) s.cushionFlash = Math.max(0, s.cushionFlash - dt);
   s.fx = (s.fx || []).filter((fx) => {
     fx.life -= dt;
     if (fx.kind === 'spark') {
@@ -319,8 +333,9 @@ function beginCellMove(s, dest, reason) {
   s.moveFrom = from;
   s.moveTo = to;
   s.moveT = 0;
-  s.moveDur = reducedMotion(s) ? 0.08 : STEP_EASE;
-  s.moveReason = reason || 'step';
+  const jumpish = reason === 'jump' || reason === 'cushion';
+  s.moveDur = reducedMotion(s) ? 0.08 : (jumpish ? JUMP_EASE : STEP_EASE);
+  s.moveReason = reason || 'tap';
   const a = cellAt(s, from);
   const b = cellAt(s, to);
   s.youX = a.x;
@@ -329,113 +344,180 @@ function beginCellMove(s, dest, reason) {
   s._moveAy = a.y;
   s._moveBx = b.x;
   s._moveBy = b.y;
+  // Arc loft for jump / cushion bounce.
+  s._moveArc = jumpish ? (reason === 'cushion' ? 42 : 28) : 0;
 }
 
 function easeInOut(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
+function tryCollectToken(s, idx) {
+  const tok = (s.tokens || []).find((T) => T.cell === idx && !T.taken);
+  if (!tok) return;
+  tok.taken = true;
+  s.tokensTaken = (s.tokensTaken || 0) + 1;
+  logAction(s, 'token', {cell: idx, id: tok.id});
+  if (s.eligible) {
+    recordFind(s, tok.id, RIDE);
+    s.note = 'Token! ' + tok.id.replace(/-/g, ' ');
+  } else {
+    s.note = 'Practice token glimpse — paid rides keep finds.';
+  }
+  s.statusCopy = 'Token';
+  const c = cellAt(s, idx);
+  pushSparks(s, c.x, c.y, false);
+  s.matPulse = 0.5;
+}
+
+function tryCollectTreasure(s, idx) {
+  if (!s.treasure || s.treasure.taken || s.treasure.cell !== idx) return;
+  if (!(s.eligible || s.practice)) return;
+  if (s.eligible) {
+    recordTreasure(s, s.treasure.id);
+    logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
+    s.note = 'Keepsake! Spiral tower secured.';
+    s.statusCopy = 'Keepsake';
+  } else {
+    s.note = 'Practice keepsake glimpse — paid rides can keep it.';
+    s.statusCopy = 'Glimpse';
+    logAction(s, 'treasure-practice', {cell: idx});
+  }
+  s.treasure.taken = true;
+  s.treasureRevealed = true;
+  s.keepsakeTaken = true;
+  const c = cellAt(s, idx);
+  pushSparks(s, c.x, c.y, false);
+  s.matPulse = 0.7;
+}
+
 /**
- * Resolve landing on a cell: treasure, ladder boost, snake dump.
- * Ladder/snake chains: resolve one transit at a time (no stacked auto-chains in Ch1).
+ * Resolve landing on a cell: treasure, tokens, cushion bounce, slide dump.
+ * Soft dump never aborts. One transit at a time (no stacked auto-chains).
  */
 function resolveLanding(s) {
   const idx = s.youCell | 0;
 
-  // Optional keepsake — only while eligible / not yet taken; hard snake-detour cell.
-  if (s.treasure && !s.treasure.taken && s.treasure.cell === idx) {
-    if (s.eligible || s.practice) {
-      // Practice may "see" it but ride-seek only keeps on paid; still record for paid.
-      if (s.eligible) {
-        recordTreasure(s, s.treasure.id);
-        logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
-        s.note = 'Keepsake! Soft snake detour paid off.';
-        s.statusCopy = 'Keepsake';
-      } else {
-        s.note = 'Practice keepsake glimpse — paid rides can keep it.';
-        s.statusCopy = 'Glimpse';
-        logAction(s, 'treasure-practice', {cell: idx});
-      }
-      s.treasure.taken = true;
-      s.treasureRevealed = true;
-      const c = cellAt(s, idx);
-      pushSparks(s, c.x, c.y, false);
-      s.matPulse = 0.7;
-    }
-  }
+  tryCollectTreasure(s, idx);
+  tryCollectToken(s, idx);
 
-  const L = ladderAt(s, idx);
-  if (L) {
-    const first = !L.used;
-    const dest = clamp(L.foot + L.boost, 0, (s.cells || []).length - 1);
+  // Cushion bounce UP first (prefer boost over slide if somehow co-located — they aren't).
+  const C = cushionAt(s, idx);
+  if (C) {
+    const dest = clamp(C.cell + C.boost, 0, (s.cells || []).length - 1);
+    const first = !C.used;
     if (first) {
-      L.used = true;
-      s.hits = (s.hits || 0) + 1;
-      logAction(s, 'ladder', {cell: idx, dest, hits: s.hits, teach: !!L.teach});
+      C.used = true;
+      s.cushionsBounced = (s.cushionsBounced || 0) + 1;
+      logAction(s, 'cushion', {cell: idx, dest, n: s.cushionsBounced, teach: !!C.teach});
       recordFind(s, 'cell-' + idx, RIDE);
-      s.note = s.hits >= GOAL
-        ? 'Crest clear — ' + s.hits + ' / ' + GOAL + ' ladders!'
-        : (L.teach
-          ? 'Cream ladder! Boost up — keep STEPping for more.'
-          : 'Ladder boost! ' + s.hits + ' / ' + GOAL);
-      s.statusCopy = 'Ladder ' + s.hits + '/' + GOAL;
+      s.note = C.teach
+        ? 'Cushion bounce! Up the coil — JUMP onto more.'
+        : 'Bounce! Cushion ' + s.cushionsBounced + '/' + CUSHION_GOAL;
+      s.statusCopy = 'Bounce ' + s.cushionsBounced + '/' + CUSHION_GOAL;
     } else {
-      logAction(s, 'ladder-reclimb', {cell: idx, dest});
-      s.note = 'Ladder again — climb on.';
-      s.statusCopy = 'Reclimb';
+      logAction(s, 'cushion-rehit', {cell: idx, dest});
+      s.note = 'Cushion again — bounce on.';
+      s.statusCopy = 'Bounce';
     }
-    s.ladderFlash = 0.7;
+    s.cushionFlash = 0.7;
     const c = cellAt(s, idx);
     pushSparks(s, c.x, c.y, false);
-    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: first ? 'ladder!' : 'up!', life: 0.7, soft: false});
-    // Boost UP (first credit or soft-dump reclimb).
-    beginCellMove(s, dest, 'ladder');
+    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: first ? 'bounce!' : 'up!', life: 0.7, soft: false});
+    beginCellMove(s, dest, 'cushion');
     return;
   }
 
-  const S = snakeAt(s, idx);
+  const S = slideAt(s, idx);
   if (S) {
+    const dest = clamp(S.cell - S.dump, 0, (s.cells || []).length - 1);
     S.used = true;
-    const dest = clamp(S.head - S.dump, 0, (s.cells || []).length - 1);
-    logAction(s, 'snake', {cell: idx, dest});
-    s.snakeFlash = 0.85;
+    s.slidesSurvived = (s.slidesSurvived || 0) + 1;
+    logAction(s, 'slide', {cell: idx, dest, n: s.slidesSurvived});
+    s.slideFlash = 0.85;
     const c = cellAt(s, idx);
     pushSparks(s, c.x, c.y, true);
-    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: 'snake…', life: 0.75, soft: true});
-    s.note = 'Snake soft dump — climb again. Ride continues.';
+    pushFx(s, {kind: 'label', x: c.x, y: c.y - 36, text: 'slide…', life: 0.75, soft: true});
+    s.note = S.teach
+      ? 'Slide soft dump — climb again. Ride continues.'
+      : 'Soft dump — jump over slides next time. Ride continues.';
     s.statusCopy = 'Soft dump';
     // Soft dump DOWN — never abort / never broke.
-    beginCellMove(s, dest, 'snake');
+    beginCellMove(s, dest, 'slide');
     return;
   }
 }
 
-/** Advance one cell up the spiral (STEP). */
-function doStep(s) {
+function clearOk(s) {
+  const keepsake = !!(s.keepsakeTaken || (s.treasure && s.treasure.taken));
+  const atTop = (s.youCell | 0) >= ((s.cells || []).length - 1);
+  const cushions = (s.cushionsBounced || 0) >= CUSHION_GOAL;
+  return keepsake && (atTop || cushions);
+}
+
+/** Advance one cell up the spiral (TAP / →). */
+function doTap(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const n = (s.cells || []).length;
   const next = Math.min((s.youCell | 0) + 1, n - 1);
   if (next === (s.youCell | 0)) {
-    // Already at crest — try finish if goal met.
     maybeFinish(s, 'crest');
     return false;
   }
-  s.steppedOnce = true;
-  logAction(s, 'step', {from: s.youCell, to: next});
-  beginCellMove(s, next, 'step');
+  s.tappedOnce = true;
+  logAction(s, 'tap', {from: s.youCell, to: next});
+  beginCellMove(s, next, 'tap');
   return true;
 }
 
 /** One cell DOWN the spiral (←). */
-function doStepBack(s) {
+function doTapBack(s) {
   if (s.result || s.broke || s.moving) return false;
   if (!s.launched) return false;
   const prev = Math.max(0, (s.youCell | 0) - 1);
   if (prev === (s.youCell | 0)) return false;
-  logAction(s, 'step-back', {from: s.youCell, to: prev});
-  beginCellMove(s, prev, 'step-back');
+  logAction(s, 'tap-back', {from: s.youCell, to: prev});
+  beginCellMove(s, prev, 'tap-back');
   return true;
+}
+
+/**
+ * JUMP: leap over the next cell onto cell+2.
+ * Intermediate cell is skipped (safe miss over a slide).
+ * Landing cell resolves cushion / slide / collectibles.
+ */
+function doJump(s) {
+  if (s.result || s.broke || s.moving) return false;
+  if (!s.launched) return false;
+  const n = (s.cells || []).length;
+  const from = s.youCell | 0;
+  const over = Math.min(from + 1, n - 1);
+  const land = Math.min(from + 2, n - 1);
+  if (land === from) {
+    maybeFinish(s, 'crest');
+    return false;
+  }
+  s.jumpedOnce = true;
+  // Ball interact: jumping near the ball counts as clearing it.
+  if (s.ballActive && ballCellNear(s, over)) {
+    logAction(s, 'ball-jump', {cell: over});
+    s.note = 'Jumped the ball!';
+    s.statusCopy = 'Ball clear';
+    pushSparks(s, s.ballX || CX, s.ballY || Y_BOT, false);
+  }
+  logAction(s, 'jump', {from, over, to: land});
+  beginCellMove(s, land, 'jump');
+  return true;
+}
+
+function ballCellNear(s, cellIdx) {
+  if (s.ballU == null || !s.ballActive) return false;
+  const n = (s.cells || []).length;
+  if (n < 2) return false;
+  const bu = clamp(s.ballU, 0, 1);
+  const bi = Math.round(bu * (n - 1));
+  return Math.abs(bi - (cellIdx | 0)) <= 1;
 }
 
 /** Cream-bottom pad layout (canvas 900×1200). */
@@ -484,17 +566,17 @@ function drawCreamPads(d) {
 
 function maybeFinish(s, why) {
   if (s.result || s.broke) return;
-  const ok = (s.hits || 0) >= (s.goal || GOAL);
+  const ok = clearOk(s);
   const atTop = (s.youCell | 0) >= ((s.cells || []).length - 1);
   if (!ok && why !== 'timeout') return;
   if (ok || why === 'timeout') {
     s.challengeOkFlash = ok;
     s.finishPulse = 1.3;
     s.matPulse = 0.55;
-    s.statusCopy = ok ? 'Clear!' : 'Short on ladders';
+    s.statusCopy = ok ? 'Clear!' : 'Short';
     s.note = ok
-      ? (atTop ? 'Top of the spiral — Practice clear!' : 'Three ladders — spiral clear!')
-      : 'Short on ladders — ride returns.';
+      ? (atTop ? 'Crest + keepsake — Practice clear!' : 'Keepsake + cushions — spiral clear!')
+      : 'Need keepsake and crest (or 3 cushions). Ride returns.';
     const c = cellAt(s, s.youCell | 0);
     pushSparks(s, c.x, c.y, !ok);
     finishRide(s, {
@@ -507,81 +589,127 @@ function maybeFinish(s, why) {
 }
 
 function spawnTreasure(s) {
-  const cell = s.planTreasureCell != null ? s.planTreasureCell : 8;
+  const cell = s.planTreasureCell != null ? s.planTreasureCell : 13;
   s.treasure = {
     id: s.treasureId || TREASURES[0],
     cell,
     taken: false,
   };
-  s.treasureRevealed = false;
+  s.treasureRevealed = true; // on-track keepsake is visible
+  s.keepsakeTaken = false;
 }
 
 function coachNote(s) {
-  if (!s.launched) return 'STEP up the spiral — cream ladder boosts you';
-  if ((s.hits || 0) >= GOAL) return s.note || 'Clear!';
+  if (!s.launched) return 'TAP along the spiral — JUMP onto cushions, over slides';
+  if (clearOk(s)) return s.note || 'Clear!';
   const idx = s.youCell | 0;
-  const teachL = (s.ladders || []).find((L) => L.teach && !L.used);
-  if (teachL && idx <= teachL.foot) {
-    return 'STEP up the spiral — cream ladder boosts you';
+  const teachC = (s.cushions || []).find((C) => C.teach && !C.used);
+  if (teachC && idx < teachC.cell) {
+    return 'TAP up — JUMP onto the cream cushion for a boost';
   }
-  const sn = (s.snakes || []).find((S) => !S.used);
-  if (sn && idx >= sn.head - 2 && idx <= sn.head) {
-    return 'Burgundy snake ahead — soft dump, then climb again';
+  const teachS = (s.slides || []).find((S) => S.teach && !S.used);
+  if (teachS && idx >= teachS.cell - 2 && idx < teachS.cell) {
+    return 'Deep-red slide ahead — JUMP over it, or ride the soft dump';
   }
-  if (s.treasure && !s.treasure.taken && idx < s.treasure.cell && (s.snakes || []).some((S) => S.used)) {
-    return 'Keepsake on the dump path — STEP onto it';
+  if (s.treasure && !s.treasure.taken && idx < s.treasure.cell) {
+    return 'Keepsake on the coil — TAP or JUMP onto it';
   }
-  return s.note || 'STEP up the spiral';
+  if ((s.cushionsBounced || 0) < CUSHION_GOAL && s.treasure && s.treasure.taken) {
+    return 'Keepsake secured — crest or ' + CUSHION_GOAL + ' cushions to clear';
+  }
+  return s.note || 'TAP-TAP-TAP — JUMP cushions / over slides';
 }
 
-function drawLadderSeg(d, cells, foot, dest) {
-  const a = cells[foot];
-  const b = cells[Math.min(dest, cells.length - 1)];
-  if (!a || !b) return;
-  // Cream/gold rail + rungs (translucent diegetic).
-  d.line({x: a.x - 10, y: a.y}, {x: b.x - 10, y: b.y}, CREAM_DEEP + '99', 3);
-  d.line({x: a.x + 10, y: a.y}, {x: b.x + 10, y: b.y}, CREAM_DEEP + '99', 3);
-  const steps = 4;
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const x1 = a.x - 10 + (b.x - a.x) * t;
-    const y1 = a.y + (b.y - a.y) * t;
-    const x2 = a.x + 10 + (b.x - a.x) * t;
-    d.line({x: x1, y: y1}, {x: x2, y: y1}, CREAM + 'aa', 2);
-  }
-  d.glow(a.x, a.y, 22, CREAM);
-  d.circle(a.x, a.y, 7, CREAM + '66', CREAM_DEEP, 1.5);
+/** Bold deep-red chute wedge on a slide cell. */
+function drawSlideProp(d, cell, flash) {
+  if (!cell) return;
+  const x = cell.x, y = cell.y;
+  const ang = cell.ang || 0;
+  // Chute reads downhill along the spiral (toward lower cells).
+  const dx = Math.cos(ang + Math.PI * 0.15);
+  const dy = Math.sin(ang + Math.PI * 0.15) * 0.55 + 0.55;
+  const tipX = x + dx * 22;
+  const tipY = y + dy * 26;
+  const w = 16;
+  const nx = -dy, ny = dx;
+  const poly = [
+    {x: x + nx * w, y: y + ny * w - 4},
+    {x: x - nx * w, y: y - ny * w - 4},
+    {x: tipX - nx * 4, y: tipY - ny * 4 + 6},
+    {x: tipX + nx * 4, y: tipY + ny * 4 + 6},
+  ];
+  d.poly(poly.map((p) => ({x: p.x + 2, y: p.y + 3})), TRACK_SHADOW + '88', TRACK_SHADOW, 1);
+  d.poly(poly, SLIDE_FILL + 'f2', SLIDE_DEEP, 2.2);
+  // Inner gloss stripe.
+  d.path(
+    [{x: x, y: y - 2}, {x: tipX, y: tipY + 2}],
+    CREAM + '66', 3, false, null
+  );
+  if (flash) d.glow(x, y, 28, BURGUNDY);
+  else d.glow(x, y, 18, SLIDE_FILL);
+  d.text('SLIDE', x, y - 22, 11, CREAM);
 }
 
-function drawSnakeCurve(d, cells, head, dest) {
-  const a = cells[head];
-  const b = cells[Math.max(0, dest)];
-  if (!a || !b) return;
-  const mid = {
-    x: (a.x + b.x) / 2 + (a.y < b.y ? 36 : -36),
-    y: (a.y + b.y) / 2,
-  };
-  // Approximate S-curve with polyline segments.
-  const pts = [];
-  for (let i = 0; i <= 8; i++) {
-    const t = i / 8;
-    const omt = 1 - t;
-    const x = omt * omt * a.x + 2 * omt * t * mid.x + t * t * b.x;
-    const y = omt * omt * a.y + 2 * omt * t * mid.y + t * t * b.y;
-    pts.push({x, y});
+/** Bold cream+gold plump cushion oval. */
+function drawCushionProp(d, cell, flash) {
+  if (!cell) return;
+  const x = cell.x, y = cell.y;
+  d.ellipse(x + 2, y + 5, 20, 12, TRACK_SHADOW + '66');
+  d.ellipse(x, y, 19, 11, CUSHION_FILL + 'f4', CUSHION_DEEP, 2.4);
+  d.ellipse(x - 3, y - 3, 10, 5, GOLD + 'aa', CREAM_DEEP + '88', 1);
+  d.ellipse(x + 4, y + 2, 7, 4, CREAM + '77');
+  // Tuft stitches
+  d.circle(x, y, 3, CUSHION_DEEP + 'cc', CREAM_DEEP, 1);
+  if (flash) d.glow(x, y, 30, GOLD);
+  else d.glow(x, y, 20, CREAM);
+  d.text('CUSHION', x, y - 20, 10, BURGUNDY_DEEP);
+}
+
+/** Small bold paper hopper / dispenser near crest — reloads gold balls. */
+function drawHopper(d, s) {
+  const h = s.hopper || {u: 0.92, ox: 48, oy: -28};
+  const p = spiralPoint(h.u);
+  const x = p.x + (h.ox || 0);
+  const y = p.y + (h.oy || 0);
+  // Body
+  d.poly([
+    {x: x - 18, y: y - 8},
+    {x: x + 18, y: y - 8},
+    {x: x + 14, y: y + 16},
+    {x: x - 14, y: y + 16},
+  ].map((q) => ({x: q.x + 2, y: q.y + 3})), TRACK_SHADOW + '77', TRACK_SHADOW, 1);
+  d.poly([
+    {x: x - 18, y: y - 8},
+    {x: x + 18, y: y - 8},
+    {x: x + 14, y: y + 16},
+    {x: x - 14, y: y + 16},
+  ], HOPPER_FILL + 'f4', HOPPER_DEEP, 2);
+  // Rim / mouth
+  d.ellipse(x, y - 10, 16, 7, TRACK_EDGE + 'ee', CREAM_DEEP, 1.5);
+  d.ellipse(x, y - 10, 10, 4, HOPPER_DEEP + 'cc');
+  // Chute lip toward track
+  d.poly([
+    {x: x - 8, y: y + 12},
+    {x: x + 8, y: y + 12},
+    {x: p.x + 6, y: p.y + 4},
+    {x: p.x - 6, y: p.y + 4},
+  ], SLIDE_DEEP + 'dd', TRACK_EDGE, 1.5);
+  if ((s.ballWait || 0) > 0) {
+    d.glow(x, y - 6, 22, GOLD);
+    d.text('…', x, y - 22, 14, GOLD);
+  } else {
+    d.text('HOPPER', x, y + 28, 9, CREAM);
   }
-  d.path(pts, BURGUNDY + 'cc', 5, false, null);
-  d.path(pts, BURGUNDY_DEEP + '88', 2, false, null);
-  d.glow(a.x, a.y, 20, BURGUNDY);
-  d.circle(a.x, a.y, 6, BURGUNDY + '55', BURGUNDY_DEEP, 1.5);
+  // Tiny ball peek when reloading
+  if ((s.ballWait || 0) > 0 && (s.ballWait || 0) < 0.55) {
+    drawBall(d, x, y - 6, 8);
+  }
 }
 
 function drawFx(d, s) {
   for (const fx of s.fx || []) {
     if (fx.kind === 'spark') {
       const alpha = clamp(fx.life / 0.5, 0, 1);
-      // Bake alpha into 8-digit only on fill via ellipse hex+alpha is ok if 6-digit base for glow;
-      // use circle fill with 8-digit; glow itself stays 6-digit.
       d.circle(fx.x, fx.y, 3 + alpha * 2, (fx.soft ? BURGUNDY : GOLD) + Math.round(alpha * 200).toString(16).padStart(2, '0'));
     } else if (fx.kind === 'label') {
       d.text(fx.text, fx.x, fx.y, 16, fx.soft ? BURGUNDY : CREAM);
@@ -599,10 +727,23 @@ function drawBall(d, x, y, r) {
   d.glow(x, y, r * 2.1, GOLD);
 }
 
+function loadBallFromHopper(s) {
+  s.ballU = 1;
+  s.ballActive = true;
+  s.ballRolling = true;
+  s.ballWait = 0;
+  const bp = spiralPoint(1);
+  s.ballX = bp.x;
+  s.ballY = bp.y;
+  logAction(s, 'ball-load', {});
+  s.note = 'Hopper loads a fresh ball!';
+  pushSparks(s, bp.x, bp.y, false);
+}
+
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. STEP up Tilly’s helter — cream ladders boost you up the spiral; burgundy snakes soft-dump you down (ride never aborts). Land 3 ladders to clear. A keepsake hides on a snake-detour off the easy climb.',
-  instructions: 'Climb with ← JUMP → in the cream (or ↑ / space). Cream ladders boost you up; land on 3 to clear Practice. Burgundy snakes soft-dump you down — climb again; paid rides never abort. Keepsake sits off the easy ladder route on the snake-dump path. First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Choose your spiral. Catch what tumbles. TAP along Tilly’s helter — JUMP onto cream cushions to bounce up; JUMP over deep-red slides (or ride the soft dump — never aborts). Collect the spiral-tower keepsake, then crest or bounce 3 cushions to clear.',
+  instructions: 'Climb with ← JUMP → in the cream (or arrows / space). ←/→ TAP along the coil; JUMP leaps over the next cell. Land on a slide = soft dump down (ride continues). JUMP onto a cushion = bounce up. Collect keepsake + tokens on the track. Clear Practice: keepsake AND (crest OR 3 cushions). First chapter ride is free practice and keeps nothing; later rides cost a penny.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -612,17 +753,24 @@ export default {
     const rand = typeof rng === 'function' ? rng : Math.random;
     const plan = ch1Board(); // Ch2–6 frozen: same First Spiral board until Aura reopens
     const cells = buildSpiral(plan.cellCount);
-    const ladders = plan.ladders.map((L) => ({...L, used: false}));
-    const snakes = plan.snakes.map((S) => ({...S, used: false}));
+    const slides = plan.slides.map((S) => ({...S, used: false}));
+    const cushions = plan.cushions.map((C) => ({...C, used: false}));
+    const tokens = plan.tokens.map((T) => ({...T, taken: false}));
     const start = cells[0];
     const crest = spiralPoint(1);
     return makeRideState(level, rand, {
       hits: 0,
-      goal: GOAL,
+      cushionsBounced: 0,
+      slidesSurvived: 0,
+      tokensTaken: 0,
+      keepsakeTaken: false,
+      goal: CUSHION_GOAL,
       treasureId: TREASURES[level] || TREASURES[0],
       cells,
-      ladders,
-      snakes,
+      slides,
+      cushions,
+      tokens,
+      hopper: plan.hopper,
       planTreasureCell: plan.treasureCell,
       duration: plan.duration,
       frozenChapter: level > 0,
@@ -637,12 +785,13 @@ export default {
       previewing: false,
       previewT: 0,
       launched: false,
-      steppedOnce: false,
+      tappedOnce: false,
+      jumpedOnce: false,
       fx: [],
       matPulse: 0,
       finishPulse: 0,
-      snakeFlash: 0,
-      ladderFlash: 0,
+      slideFlash: 0,
+      cushionFlash: 0,
       statusCopy: '',
       challengeOkFlash: false,
       pendingLand: false,
@@ -651,6 +800,8 @@ export default {
       ballX: crest.x,
       ballY: crest.y,
       ballRolling: true,
+      ballActive: true,
+      ballWait: 0,
     });
   },
   update(s, dt, input) {
@@ -667,39 +818,46 @@ export default {
       s.fx = [];
       s.matPulse = 0;
       s.finishPulse = 0;
-      s.snakeFlash = 0;
-      s.ladderFlash = 0;
+      s.slideFlash = 0;
+      s.cushionFlash = 0;
       s.statusCopy = '';
-      s.steppedOnce = false;
+      s.tappedOnce = false;
+      s.jumpedOnce = false;
       s.moving = false;
       s.youCell = 0;
       const c0 = cellAt(s, 0);
       s.youX = c0.x;
       s.youY = c0.y;
       s.hits = 0;
-      for (const L of s.ladders || []) L.used = false;
-      for (const S of s.snakes || []) S.used = false;
+      s.cushionsBounced = 0;
+      s.slidesSurvived = 0;
+      s.tokensTaken = 0;
+      s.keepsakeTaken = false;
+      for (const S of s.slides || []) S.used = false;
+      for (const C of s.cushions || []) C.used = false;
+      for (const T of s.tokens || []) T.taken = false;
       s.ballU = 1;
       s.ballRolling = true;
+      s.ballActive = true;
+      s.ballWait = 0;
       {
         const bp = spiralPoint(1);
         s.ballX = bp.x; s.ballY = bp.y;
       }
       s.note = s.frozenChapter
-        ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). STEP up.'
-        : 'STEP up the spiral — cream ladder boosts you';
-      // Fair treasure: seal may pick a spawn; prefer authored snake-detour cell when eligible.
+        ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). TAP up.'
+        : 'TAP along the spiral — JUMP onto cushions, over slides';
       if (s.eligible) {
-        const preferred = 'cell-' + (s.planTreasureCell ?? 8);
+        const preferred = 'cell-' + (s.planTreasureCell ?? 13);
         if (s.spawnId && String(s.spawnId).startsWith('cell-')) {
           const idx = Number(String(s.spawnId).replace('cell-', ''));
-          // Keep seal spawn only if it sits on the hard dump corridor near authored cell.
-          if (!(idx >= 5 && idx <= 9)) s.spawnId = preferred;
+          // Keep seal spawn only if near authored mid-coil keepsake.
+          if (!(idx >= 11 && idx <= 15)) s.spawnId = preferred;
         } else {
           s.spawnId = preferred;
         }
         const idx = Number(String(s.spawnId).replace('cell-', ''));
-        s.planTreasureCell = clamp(Number.isFinite(idx) ? idx : 8, 5, 9);
+        s.planTreasureCell = clamp(Number.isFinite(idx) ? idx : 13, 11, 15);
       }
       logAction(s, 'preview', {secs: PREVIEW_SECS});
     }
@@ -712,7 +870,7 @@ export default {
         s.launched = true;
         s.t = 0;
         s.progress = 0;
-        s.note = 'STEP up the spiral — cream ladder boosts you';
+        s.note = 'TAP along the spiral — JUMP onto cushions, over slides';
         s.statusCopy = 'Climbing';
         logAction(s, 'release', {});
         spawnTreasure(s);
@@ -723,15 +881,24 @@ export default {
     s.t += dt;
     s.progress = Math.min(1, s.t / Math.max(0.01, s.duration || RIDE_SECONDS));
 
-    // Gold ball rolls DOWN the spiral (u: 1→0) with gravity-ish ease.
-    if (s.ballRolling !== false) {
+    // Gold ball rolls DOWN; when off bottom, WAIT then hopper reloads.
+    if (s.ballWait > 0) {
+      s.ballWait -= dt;
+      if (s.ballWait <= 0) {
+        s.ballWait = 0;
+        loadBallFromHopper(s);
+      }
+    } else if (s.ballActive && s.ballRolling !== false) {
       const bu = s.ballU == null ? 1 : s.ballU;
-      // Accel as it descends — full crest→door in ~BALL_ROLL_SECS.
       const rate = (1 / Math.max(0.01, BALL_ROLL_SECS)) * (0.55 + (1 - bu) * 1.35);
       s.ballU = Math.max(0, bu - dt * rate);
       if (s.ballU <= 0) {
         s.ballU = 0;
         s.ballRolling = false;
+        s.ballActive = false;
+        s.ballWait = BALL_WAIT_SECS;
+        logAction(s, 'ball-exit', {});
+        s.note = 'Ball off the bottom — hopper reloading…';
       }
       const bp = spiralPoint(s.ballU);
       s.ballX = bp.x;
@@ -743,8 +910,15 @@ export default {
       s.moveT += dt;
       const u = clamp(s.moveT / Math.max(0.001, s.moveDur || STEP_EASE), 0, 1);
       const e = easeInOut(u);
-      s.youX = (s._moveAx ?? s.youX) + ((s._moveBx ?? s.youX) - (s._moveAx ?? s.youX)) * e;
-      s.youY = (s._moveAy ?? s.youY) + ((s._moveBy ?? s.youY) - (s._moveAy ?? s.youY)) * e;
+      const ax = s._moveAx ?? s.youX;
+      const ay = s._moveAy ?? s.youY;
+      const bx = s._moveBx ?? s.youX;
+      const by = s._moveBy ?? s.youY;
+      s.youX = ax + (bx - ax) * e;
+      s.youY = ay + (by - ay) * e;
+      // Jump / cushion loft arc.
+      const arc = s._moveArc || 0;
+      if (arc > 0) s.youY -= Math.sin(Math.PI * e) * arc;
       if (u >= 1) {
         s.moving = false;
         s.youCell = s.moveTo | 0;
@@ -752,9 +926,8 @@ export default {
         s.youX = c.x;
         s.youY = c.y;
         resolveLanding(s);
-        // If resolve started another move (ladder/snake), wait; else check win.
         if (!s.moving) {
-          if ((s.hits || 0) >= (s.goal || GOAL)) maybeFinish(s, 'goal');
+          if (clearOk(s)) maybeFinish(s, 'goal');
           else if ((s.youCell | 0) >= ((s.cells || []).length - 1)) maybeFinish(s, 'crest');
           else s.note = coachNote(s);
         }
@@ -763,38 +936,35 @@ export default {
       s.note = coachNote(s);
     }
 
-    // Reveal keepsake once snake has fired (detour corridor only).
-    if (s.treasure && !s.treasure.taken) {
-      if ((s.snakes || []).some((S) => S.used)) s.treasureRevealed = true;
-    }
-
     if (s.t >= (s.duration || RIDE_SECONDS)) {
       maybeFinish(s, 'timeout');
     }
   },
   action(s, id, down) {
     if (!down || s.result || s.broke) return;
-    if (id === 'step' || id === 'jump') doStep(s);
-    else if (id === 'left') doStepBack(s);
-    else if (id === 'right') doStep(s);
+    if (id === 'jump') doJump(s);
+    else if (id === 'left') doTapBack(s);
+    else if (id === 'right' || id === 'step') doTap(s);
   },
   pointer(s, type, p) {
     if (s.result || s.broke) return;
     if (type !== 'up' || !p) return;
     const hit = hitPad(p);
-    if (hit === 'left') { doStepBack(s); return; }
-    if (hit === 'right' || hit === 'jump' || hit === 'stick') { doStep(s); return; }
-    // Tap-ahead on the spiral still STEPs (ignore cream pad band).
+    if (hit === 'left') { doTapBack(s); return; }
+    if (hit === 'jump') { doJump(s); return; }
+    if (hit === 'right' || hit === 'stick') { doTap(s); return; }
+    // Tap near YOU / ahead on the spiral = TAP advance (ignore cream pad band).
     if (typeof p.y === 'number' && p.y < 1080) {
       const ahead = p.y < (s.youY || Y_BOT) - 8;
       const near = Math.hypot((p.x || 0) - (s.youX || CX), (p.y || 0) - (s.youY || Y_BOT)) < 120;
-      if (ahead || near) doStep(s);
+      if (ahead || near) doTap(s);
     }
   },
   key(s, k, down) {
     if (!down || s.result || s.broke) return;
-    if (k === 'ArrowLeft') doStepBack(s);
-    else if (k === 'ArrowUp' || k === 'ArrowRight' || k === ' ' || k === 'Enter' || k === 'j' || k === 'J') doStep(s);
+    if (k === 'ArrowLeft') doTapBack(s);
+    else if (k === 'ArrowRight') doTap(s);
+    else if (k === 'ArrowUp' || k === ' ' || k === 'Enter' || k === 'j' || k === 'J') doJump(s);
   },
   draw(s, d) {
     const cells = s.cells || [];
@@ -809,45 +979,56 @@ export default {
       d.circle(c.x, c.y, 4, '#f4d59028', TRACK_EDGE + '55', 1);
     }
 
-    // Ladder segments (cream/gold) sit ON the track.
-    for (const L of s.ladders || []) {
-      drawLadderSeg(d, cells, L.foot, L.foot + L.boost);
+    // SLIDE chute wedges (deep-red) sit ON the track.
+    for (const S of s.slides || []) {
+      drawSlideProp(d, cells[S.cell], (s.slideFlash || 0) > 0 && (s.youCell | 0) === S.cell);
     }
 
-    // Snake curves (burgundy) sit ON the track.
-    for (const S of s.snakes || []) {
-      drawSnakeCurve(d, cells, S.head, S.head - S.dump);
+    // CUSHION plump ovals (cream+gold) sit ON the track.
+    for (const C of s.cushions || []) {
+      drawCushionProp(d, cells[C.cell], (s.cushionFlash || 0) > 0 && (s.youCell | 0) === C.cell);
     }
 
-    // Treasure on hard detour cell.
-    if (s.treasure && !s.treasure.taken && (s.treasureRevealed || s.eligible || s.practice)) {
-      const tc = cellAt(s, s.treasure.cell);
-      if (tc) {
-        const show = s.treasureRevealed || ((s.snakes || []).some((S) => S.used));
-        if (show) {
-          d.glow(tc.x, tc.y, 28, GOLD);
-          d.star(tc.x, tc.y, 14, CREAM);
-          try {
-            const key = typeof spriteKey === 'function' ? spriteKey(s.treasure.id) : s.treasure.id;
-            d.item?.(key, tc.x, tc.y, {w: 36, alpha: 0.9});
-          } catch { /* sprite optional */ }
-        }
+    // Track tokens (star / moon / everyday).
+    for (const T of s.tokens || []) {
+      if (T.taken) continue;
+      const tc = cells[T.cell];
+      if (!tc) continue;
+      d.glow(tc.x, tc.y, 18, GOLD);
+      try {
+        const key = typeof spriteKey === 'function' ? spriteKey(T.id) : T.id;
+        d.item?.(key, tc.x, tc.y, {w: 28, alpha: 0.92});
+      } catch {
+        d.star(tc.x, tc.y, 10, CREAM);
       }
     }
 
-    // Crest bullseye — cream disc (+ optional tiny spiral-tower sprite).
+    // Chapter keepsake on coil cell.
+    if (s.treasure && !s.treasure.taken && (s.treasureRevealed || s.eligible || s.practice)) {
+      const tc = cellAt(s, s.treasure.cell);
+      if (tc) {
+        d.glow(tc.x, tc.y, 30, GOLD);
+        d.star(tc.x, tc.y, 14, CREAM);
+        try {
+          const key = typeof spriteKey === 'function' ? spriteKey(s.treasure.id) : s.treasure.id;
+          d.item?.(key, tc.x, tc.y, {w: 36, alpha: 0.9});
+        } catch { /* sprite optional */ }
+      }
+    }
+
+    // Crest bullseye.
     const top = cells[cells.length - 1];
     if (top) {
       d.ellipse(top.x, top.y + 2, 26, 14, TRACK_SHADOW + '44');
       d.ellipse(top.x, top.y, 20, 11, CREAM + '55', CREAM_DEEP + '99', 1.5);
       d.ellipse(top.x, top.y, 8, 5, GOLD + '66', CREAM_DEEP + '88', 1);
-      try {
-        d.item?.('spiral-tower', top.x, top.y - 10, {w: 28, alpha: 0.85});
-      } catch { /* sprite optional */ }
     }
 
-    // Gold celestial ball (prop) on the ribbon — rolls crest→stairs.
-    {
+    // Hopper near crest (reloads balls).
+    drawHopper(d, s);
+
+    // Gold celestial ball on the ribbon — rolls crest→stairs (hidden while waiting).
+    if (s.ballActive) {
       const bx = s.ballX ?? spiralPoint(s.ballU == null ? 1 : s.ballU).x;
       const by = s.ballY ?? spiralPoint(s.ballU == null ? 1 : s.ballU).y;
       drawBall(d, bx, by, BALL_R);
@@ -856,8 +1037,8 @@ export default {
     // YOU marker.
     const yx = s.youX ?? (cells[0] && cells[0].x) ?? CX;
     const yy = s.youY ?? (cells[0] && cells[0].y) ?? Y_BOT;
-    if ((s.ladderFlash || 0) > 0) d.glow(yx, yy, 36 + s.ladderFlash * 20, CREAM);
-    if ((s.snakeFlash || 0) > 0) d.glow(yx, yy, 34 + s.snakeFlash * 18, BURGUNDY);
+    if ((s.cushionFlash || 0) > 0) d.glow(yx, yy, 36 + s.cushionFlash * 20, CREAM);
+    if ((s.slideFlash || 0) > 0) d.glow(yx, yy, 34 + s.slideFlash * 18, BURGUNDY);
     d.glow(yx, yy, 26, GOLD);
     d.circle(yx, yy, 14, YOU_FILL + 'ee', CREAM_DEEP, 2);
     d.text('YOU', yx, yy + 1, 11, BURGUNDY_DEEP);
