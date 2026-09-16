@@ -2,7 +2,7 @@
  * Amusement 1 — Florence — Carousel Waltz (Ride & Seek)
  * Tagline: Round and round, the secrets change.
  *
- * SHIPPED: Chapter 1 First Turn + Chapter 2 Painted Ponies + Chapter 3 Mirror Round.
+ * SHIPPED: Chapters 1–4 (First Turn, Painted Ponies, Mirror Round, Carriage Windows).
  *   Board one mount fixed center-front (Tempest rim lane). Orbiting horses
  *   carry crest platforms; glints rotate past like Mario platforms on a circle.
  *   ONE verb: TAP on the crest window (“almost… NOW”) — never free-look hunting.
@@ -28,8 +28,17 @@
  *     ride continues, never abort. Sticky crest-arm auto-collects REAL finds only.
  *     Open-until finds + sticky arm (Ch2 retune 6 fairness); GOAL=3 reachable ~59 s.
  *
+ *   Ch4 Carriage Windows — same crest TAP. Finds live only while a carriage window
+ *     is OPEN at the crest NOW. Each carriage opens twice: teach pass (watch —
+ *     chrome “Window opens — watch; next pass TAP”; no collect), then collect pass
+ *     (TAP on NOW takes the find). Shut windows never collect. Soft-fail TAP while
+ *     shut/early/teach (miss note, ride continues). Teach alone: first carriage
+ *     teach has no competing opens; later carriages run teach→collect pairs.
+ *     Sticky crest-arm after first TAP collects only when window open + find live.
+ *     Open collect scheduling + early win seal; GOAL=3 reachable ~59 s.
+ *     No Ch2 decoys / Ch3 reflections on Ch4 (Grand Waltz combines later).
+ *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures/levels):
- *   4 Carriage Windows — door/window opens twice (teach pass, then collect pass)
  *   5 Midnight Canopy — vertical look for canopy treasures; then speed may rise
  *   6 The Grand Waltz — combine only taught rules; guarantee one repeat of the eligible window
  */
@@ -62,6 +71,7 @@ const COLLECT_FLASH = 0.55;
 const TEACH = 'TAP on the crest';
 const TEACH_MARKED = 'TAP the heart-marked pony';
 const TEACH_MIRROR = 'TAP the real crest — skip mirrors';
+const TEACH_WINDOW = 'Window opens — watch; next pass TAP';
 const VERB_SEC = 5;
 /** Ch2 long warn before first searchable marked window (helter cushion teach). */
 const CH2_MARK_WARN = 8.0;
@@ -69,6 +79,9 @@ const CH2_TEACH_CHROME = 5.5;
 /** Ch3 long warn before first searchable real window (teach alone). */
 const CH3_REAL_WARN = 8.0;
 const CH3_TEACH_CHROME = 5.5;
+/** Ch4 long warn before first teach window (teach alone). */
+const CH4_WINDOW_WARN = 8.0;
+const CH4_TEACH_CHROME = 5.5;
 /** Tiny cosmetic sway only — NOT a named LOOK skill. */
 const SWAY_X = 10;
 const SWAY_Y = 6;
@@ -104,9 +117,15 @@ function ch3Speed(reduced) {
   return ch2Speed(reduced);
 }
 
+function ch4Speed(reduced) {
+  // Carriage Windows: same fairness bar — slow spin ~0.24, ~6s crest.
+  return ch2Speed(reduced);
+}
+
 function rideSpeed(s) {
   if (s.level === 1) return ch2Speed(s.reduced);
   if (s.level === 2) return ch3Speed(s.reduced);
+  if (s.level === 3) return ch4Speed(s.reduced);
   return ch1Speed(s.reduced);
 }
 
@@ -542,10 +561,208 @@ function scheduleCh3(s) {
   }
 }
 
+
+/**
+ * Ch4 Carriage Windows — same crest TAP as Ch1–Ch3.
+ * Rule: finds live only while a carriage window is OPEN at the crest NOW.
+ * Each carriage opens twice: teach pass (watch / no collect), then collect pass
+ * (TAP collects). Collect phase is open-until across later crest visits for fairness.
+ * Teach alone: first teach has no competing opens. Sticky arm collects only on
+ * open collect windows. No Ch2 decoys / Ch3 reflections. GOAL=3 ~59 s.
+ */
+function scheduleCh4(s) {
+  const speed = ch4Speed(s.reduced);
+  const lap = lapSeconds(speed);
+  const crestHalf = crestHalfFromSec(speed, 6.0); // ~6s NOW windows
+  s.crestHalf = crestHalf;
+  s.crestSec = (2 * crestHalf) / speed;
+  s.ch4Taught = false;
+  s.ch3Taught = false;
+  s.ch2Taught = false;
+  s.hitPad = HIT_R * 1.2;
+  s.horseMarks = null;
+  s.decoys = [];
+  s.reflections = [];
+  s.firstMarked = null;
+  s.firstReal = null;
+
+  const halfT = crestHalf / speed;
+  // Narrower teach opens so teach-alone does not collide with the next carriage.
+  const teachHalfT = Math.min(1.35, halfT * 0.45);
+
+  function nextCrestAfter(horse, minT) {
+    const phase = (horse * TAU) / HORSE_N;
+    let k = Math.ceil(((minT + halfT) * speed + phase) / TAU - 1e-9);
+    if (k < 1) k = 1;
+    const crestT = (k * TAU - phase) / speed;
+    if (crestT + halfT > lap * 2.98) return null;
+    return {crestT, from: crestT - halfT, until: crestT + halfT, horse, halfT};
+  }
+
+  function nextTeachAfter(horse, minT) {
+    const phase = (horse * TAU) / HORSE_N;
+    let k = Math.ceil(((minT + teachHalfT) * speed + phase) / TAU - 1e-9);
+    if (k < 1) k = 1;
+    const crestT = (k * TAU - phase) / speed;
+    if (crestT + teachHalfT > lap * 2.98) return null;
+    return {
+      crestT,
+      from: crestT - teachHalfT,
+      until: crestT + teachHalfT,
+      horse,
+      halfT: teachHalfT,
+    };
+  }
+
+  // Practice lap — one real OPEN window glint (collectible as practice only).
+  // Horse 5 crests first; first searchable teach uses a different carriage so
+  // practice and teach-alone never fight for the same NOW.
+  const practiceHorse = 5;
+  const practiceCrestT = (TAU - (practiceHorse * TAU) / HORSE_N) / speed;
+  const practiceFrom = Math.max(0.2, practiceCrestT - crestHalf / speed);
+  const practiceUntil = practiceCrestT + crestHalf / speed;
+  s.practiceGlint = {
+    kind: 'practice',
+    id: 'practice-crest',
+    spot: 'pole',
+    horse: practiceHorse,
+    from: practiceFrom,
+    until: practiceUntil,
+    taken: false,
+    windowOpen: true,
+  };
+
+  const rideLaps = 3;
+  // Early-crest horses so teach→collect pairs fit the ~59 s fairness bar.
+  // First teach alone on horse 4 after practice ends (no competing carriage opens).
+  const carriagePlan = [
+    {horse: 4, spot: 'bridle'},
+    {horse: 3, spot: 'panel'},
+    {horse: 2, spot: 'mane'},
+    {horse: 1, spot: 'saddle'}, // spare
+  ];
+
+  s.openings = [{
+    kind: 'practice',
+    horse: practiceHorse,
+    spot: 'pole',
+    from: practiceFrom,
+    until: practiceUntil,
+  }];
+  s.carriageHorses = [5, 4, 3, 2, 1];
+
+  // Practice (horse 5) and first teach (horse 4) crest at different times — wall-clock
+  // may nearly touch, but NOW never shares a competing open. Keep teachMin early.
+  let teachMin = lap * 0.08;
+  const finds = [];
+  for (let i = 0; i < carriagePlan.length; i++) {
+    const {horse, spot} = carriagePlan[i];
+    const teach = nextTeachAfter(horse, teachMin);
+    if (!teach) break;
+    const collect = nextCrestAfter(horse, teach.crestT + teachHalfT + 0.05);
+    if (!collect) break;
+
+    finds.push({
+      kind: 'ordinary',
+      id: ORDINARY[i % ORDINARY.length],
+      spot,
+      horse,
+      from: collect.from,
+      until: lap * rideLaps,
+      taken: false,
+      teach: i === 0,
+      teachFrom: teach.from,
+      teachUntil: teach.until,
+      collectFrom: collect.from,
+    });
+
+    s.openings.push({
+      kind: 'teach',
+      horse,
+      spot,
+      from: teach.from,
+      until: teach.until,
+      findIndex: i,
+    });
+    // Collect open-until: every later crest of this horse opens the window.
+    s.openings.push({
+      kind: 'collect',
+      horse,
+      spot,
+      from: collect.from,
+      until: lap * rideLaps,
+      findIndex: i,
+    });
+
+    if (i === 0) {
+      // Teach alone — next carriage teach starts only after this teach ends.
+      teachMin = teach.until + 0.15;
+      s.firstTeach = {
+        from: teach.from,
+        until: teach.until,
+        horse,
+        spot,
+        crestT: teach.crestT,
+      };
+      s.firstCollect = {
+        from: collect.from,
+        until: collect.until,
+        horse,
+        spot,
+        crestT: collect.crestT,
+      };
+    } else {
+      teachMin = teach.until + 0.1;
+    }
+  }
+
+  s.finds = finds;
+  s.goal = GOAL;
+  s.found = 0;
+  s.lapsTotal = rideLaps;
+  s.lapSec = lap;
+  s.rideEnd = lap * rideLaps;
+  s.ripples = [];
+  s.sparks = [];
+  s.flash = 0;
+
+  s.treasure = null;
+  if (s.eligible && s.spawnId) {
+    const spot = SPOTS.find((row) => row.id === s.spawnId) || SPOTS[0];
+    // Treasure only on a COLLECT pass — prefer a carriage horse after its teach.
+    let treasureHorse = spot.horse;
+    if (![5, 4, 3, 2].includes(treasureHorse)) treasureHorse = 4;
+    const firstCollectFrom = (finds[0] && finds[0].collectFrom) || lap * 0.9;
+    const tp = nextCrestAfter(treasureHorse, Math.max(firstCollectFrom, lap * 0.85));
+    const tHalf = Math.max(2.5 / 2, crestHalf / speed);
+    let crestT = tp ? tp.crestT : lap * 1.6;
+    if (crestT + tHalf > lap * 2.95) crestT = lap * 2.95 - tHalf;
+    if (crestT - tHalf < firstCollectFrom) crestT = firstCollectFrom + tHalf;
+    s.treasure = {
+      id: s.treasureId,
+      spot: spot.id,
+      horse: treasureHorse,
+      from: crestT - tHalf,
+      until: crestT + tHalf,
+      taken: false,
+      collectPass: true,
+    };
+    s.openings.push({
+      kind: 'collect',
+      horse: treasureHorse,
+      spot: spot.id,
+      from: crestT - tHalf,
+      until: crestT + tHalf,
+      treasure: true,
+    });
+  }
+}
+
 function scheduleForLevel(s) {
-  // 0 → Ch1; 1 → Ch2; 2 → Ch3; unfinished 3–5 stub as Ch1 until authored.
+  // 0 → Ch1; 1 → Ch2; 2 → Ch3; 3 → Ch4; unfinished 4–5 stub as Ch1 until authored.
   if (s.level === 1) scheduleCh2(s);
   else if (s.level === 2) scheduleCh3(s);
+  else if (s.level === 3) scheduleCh4(s);
   else scheduleCh1(s);
 }
 
@@ -577,12 +794,58 @@ function itemActive(item, t) {
   return item && !item.taken && t >= item.from && t <= item.until;
 }
 
+/** Ch4: which opening is live for a horse right now (crest + time). */
+function liveOpeningForHorse(s, horse) {
+  const t = s.t || 0;
+  const half = s.crestHalf || 0.6;
+  if (horse == null || !inCrest(horse, s.angle, half)) return null;
+  const opens = (s.openings || []).filter((op) =>
+    op.horse === horse && t >= op.from && t <= op.until);
+  if (!opens.length) return null;
+  // Prefer collect over teach when both somehow overlap.
+  return opens.find((op) => op.kind === 'collect' || op.kind === 'practice')
+    || opens[0];
+}
+
+function horseWindowOpen(s, horse) {
+  return !!liveOpeningForHorse(s, horse);
+}
+
+function teachOpeningLive(s) {
+  const t = s.t || 0;
+  const half = s.crestHalf || 0.6;
+  return (s.openings || []).find((op) =>
+    op.kind === 'teach'
+    && t >= op.from && t <= op.until
+    && inCrest(op.horse, s.angle, half)) || null;
+}
+
+function shutCarriageAtCrest(s) {
+  if (s.level !== 3) return null;
+  const half = s.crestHalf || 0.6;
+  for (const horse of (s.carriageHorses || [])) {
+    if (!inCrest(horse, s.angle, half)) continue;
+    if (!horseWindowOpen(s, horse)) return horse;
+  }
+  return null;
+}
+
 /** Collectable only while carrier is inside the crest sweet-spot. */
 function itemInCrestWindow(item, s) {
   if (!itemActive(item, s.t)) return false;
   const horse = item.horse != null ? item.horse : (SPOTS.find((r) => r.id === item.spot) || {}).horse;
   if (horse == null) return false;
-  return inCrest(horse, s.angle, s.crestHalf || 0.6);
+  if (!inCrest(horse, s.angle, s.crestHalf || 0.6)) return false;
+  // Ch4: finds / treasure live only while a COLLECT (or practice) window is open.
+  if (s.level === 3) {
+    if (item.kind === 'practice' || item.windowOpen) return true;
+    const op = liveOpeningForHorse(s, horse);
+    if (!op) return false;
+    if (op.kind === 'teach') return false;
+    if (op.kind === 'collect' || op.kind === 'practice') return true;
+    return false;
+  }
+  return true;
 }
 
 function hitItem(scr, p, pad = HIT_R) {
@@ -630,6 +893,14 @@ function collectOrdinary(s, find, scr) {
     // Chain fairness: sticky re-arm until goal (reflections never auto-collect).
     if (s.found < (s.goal || GOAL)) armCrestTap(s, 20);
   }
+  if (s.level === 3) {
+    if (!s.ch4Taught) {
+      s.ch4Taught = true;
+      logAction(s, 'teach', {kind: 'carriage-window'});
+    }
+    // Chain fairness: sticky re-arm until goal (shut/teach never auto-collect).
+    if (s.found < (s.goal || GOAL)) armCrestTap(s, 20);
+  }
   if (scr) {
     addRipple(s, scr.x, scr.y);
     spawnSparks(s, scr.x, scr.y, 12);
@@ -643,7 +914,9 @@ function collectOrdinary(s, find, scr) {
       ? (s.found + ' of ' + s.goal + ' — heart-marked ponies.')
       : (s.level === 2
         ? (s.found + ' of ' + s.goal + ' — real crests only.')
-        : (s.found + ' of ' + s.goal + ' ordinary finds.')));
+        : (s.level === 3
+          ? (s.found + ' of ' + s.goal + ' — open windows only.')
+          : (s.found + ' of ' + s.goal + ' ordinary finds.'))));
   s.statusKind = 'found';
   return true;
 }
@@ -688,6 +961,27 @@ function softFailReflection(s, reflection, scr) {
   s.reflectionFlash = 0.55;
   s.reflectionFlashX = scr ? scr.x : CX;
   s.reflectionFlashY = scr ? scr.y : CY;
+  return 'miss';
+}
+
+function softFailWindow(s, reason, horse, scr) {
+  logAction(s, 'miss', {
+    reason: reason || 'shut',
+    horse: horse != null ? horse : null,
+    x: scr ? Math.round(scr.x) : 0,
+    y: scr ? Math.round(scr.y) : 0,
+  });
+  if (reason === 'teach') {
+    s.note = TEACH_WINDOW + '. Ride continues.';
+  } else if (reason === 'early') {
+    s.note = 'Too early — wait for an open window at NOW.';
+  } else {
+    s.note = 'Window shut — TAP only while open at NOW. Ride continues.';
+  }
+  s.statusKind = 'miss';
+  s.windowFlash = 0.55;
+  s.windowFlashX = scr ? scr.x : CX;
+  s.windowFlashY = scr ? scr.y : CY;
   return 'miss';
 }
 
@@ -1162,6 +1456,89 @@ function drawCh3MirrorChrome(d, s) {
   d.text('Real crest — skip mirror ghosts', 520, y + 88, 16, `rgba(240,208,154,${fade})`);
 }
 
+/** Paper-cut carriage window on a crest horse — gold/burgundy frame; open = bright interior. */
+function drawCarriageWindow(d, x, y, sc, open, teach) {
+  const fx = x - 6 * sc;
+  const fy = y - 10 * sc;
+  const w = 22 * sc;
+  const h = 28 * sc;
+  // Burgundy body + gold frame (6-digit glow only).
+  d.poly(
+    [[fx, fy], [fx + w, fy], [fx + w, fy + h], [fx, fy + h]],
+    '#4a1828',
+    '#d2a65b',
+    2.2,
+  );
+  d.poly(
+    [[fx + 2 * sc, fy + 2 * sc], [fx + w - 2 * sc, fy + 2 * sc], [fx + w - 2 * sc, fy + h - 2 * sc], [fx + 2 * sc, fy + h - 2 * sc]],
+    open ? (teach ? '#3a2a18' : '#fff6d8') : '#1a1018',
+    '#d2a65b',
+    1.4,
+  );
+  if (open) {
+    d.glow(fx + w * 0.5, fy + h * 0.45, 18 * sc, teach ? '#f0d09a' : '#ffe6a4');
+    if (!teach) {
+      d.circle(fx + w * 0.5, fy + h * 0.42, 4 * sc, '#ffe6a4', '#d2a65b', 1.2);
+    } else {
+      d.text('…', fx + w * 0.5, fy + h * 0.55, Math.max(10, 12 * sc), '#ead6a4');
+    }
+  } else {
+    // Shut sash.
+    d.line({x: fx + 2 * sc, y: fy + h * 0.5}, {x: fx + w - 2 * sc, y: fy + h * 0.5}, '#6b2030', 2);
+    d.line({x: fx + w * 0.5, y: fy + 2 * sc}, {x: fx + w * 0.5, y: fy + h - 2 * sc}, '#6b2030', 2);
+  }
+}
+
+function drawCh4WindowChrome(d, s) {
+  if (s.level !== 3) return;
+  const t = s.t || 0;
+  const lap0 = s.practice && Math.floor(t / (s.lapSec || 1)) === 0;
+  let show = false;
+  let fade = 1;
+
+  if (lap0 && t >= VERB_SEC && t < VERB_SEC + CH4_TEACH_CHROME) {
+    show = true;
+    const end = VERB_SEC + CH4_TEACH_CHROME;
+    fade = t < end - 0.6 ? 1 : Math.max(0, (end - t) / 0.6);
+  }
+
+  const first = s.firstTeach;
+  if (!s.practice && first && t <= first.until + 0.35) {
+    const lead = first.from - t;
+    if (lead <= CH4_WINDOW_WARN) {
+      show = true;
+      fade = lead > 0 ? 1 : Math.max(0.35, 1 - (t - first.from) / Math.max(0.4, first.until - first.from));
+    }
+  }
+
+  if (!s.practice && !s.ch4Taught && t < CH4_TEACH_CHROME) {
+    show = true;
+    fade = t < CH4_TEACH_CHROME - 0.6 ? 1 : Math.max(0, (CH4_TEACH_CHROME - t) / 0.6);
+  }
+
+  // During a live teach open, reinforce the watch cue.
+  const teachOp = teachOpeningLive(s);
+  if (teachOp) {
+    show = true;
+    fade = 1;
+  }
+
+  if (!show || fade < 0.05) return;
+
+  const y = 820;
+  d.poly(
+    [[100, y], [800, y], [800, y + 120], [100, y + 120]],
+    `rgba(12,10,18,${0.86 * fade})`,
+    '#d2a65b',
+    3,
+  );
+  const hx = 200;
+  const hy = y + 58;
+  drawCarriageWindow(d, hx, hy, 1.6, true, true);
+  d.text(TEACH_WINDOW, 520, y + 48, 20, `rgba(255,230,164,${fade})`);
+  d.text('Open window at NOW — shut never collects', 520, y + 88, 16, `rgba(240,208,154,${fade})`);
+}
+
 function drawStatusStrip(d, s) {
   if (s.practice && (s.t || 0) < VERB_SEC) return;
   const lapIdx = Math.min(2, Math.floor((s.t || 0) / (s.lapSec || 1)));
@@ -1175,14 +1552,26 @@ function drawStatusStrip(d, s) {
     (s.finds || []).some((row) => itemInCrestWindow(row, s));
   const anyDecoy = decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s));
   const anyReflection = reflectionsLive(s) && (s.reflections || []).some((row) => itemInCrestWindow(row, s));
-  const anyCrest = anyMarked || anyDecoy || anyReflection;
+  const anyTeach = s.level === 3 && !!teachOpeningLive(s);
+  const anyShut = s.level === 3 && shutCarriageAtCrest(s) != null;
+  const anyCrest = anyMarked || anyDecoy || anyReflection || anyTeach;
 
   if (anyMarked) {
     label = s.level === 1
       ? 'almost… NOW — heart TAP'
-      : (s.level === 2 ? 'almost… NOW — real TAP' : 'almost… NOW — TAP');
+      : (s.level === 2
+        ? 'almost… NOW — real TAP'
+        : (s.level === 3 ? 'almost… NOW — open TAP' : 'almost… NOW — TAP'));
     color = '#ffe6a4';
     fill = '#3a2018ee';
+  } else if (anyTeach) {
+    label = 'window opens — watch; next pass TAP';
+    color = '#f0d09a';
+    fill = '#2a2018ee';
+  } else if (anyShut) {
+    label = 'window shut — wait for open';
+    color = '#c8d0e0';
+    fill = '#1a2030ee';
   } else if (anyReflection) {
     label = 'mirror ghost — skip reflections';
     color = '#c8d0e0';
@@ -1267,6 +1656,16 @@ function tryCrestTap(s, p) {
   // Fairness retune 6: sticky crest-arm until 3/3 after first TAP; timed arm backup 20s.
   armCrestTap(s, 20);
 
+  // Ch4: teach-open TAP = soft miss BEFORE any collect (watch; next pass).
+  if (s.level === 3) {
+    const teachOp = teachOpeningLive(s);
+    if (teachOp) {
+      const scr = spotScreen(teachOp.spot || 'saddle', s, teachOp.horse)
+        || {x: CX, y: CY + 48, scale: 1};
+      return softFailWindow(s, 'teach', teachOp.horse, scr);
+    }
+  }
+
   if (collectBestLiveHeart(s)) return 'collect';
 
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
@@ -1295,10 +1694,21 @@ function tryCrestTap(s, p) {
     }
   }
 
+  // Ch4: shut window at crest = soft miss (after teach handled above).
+  if (s.level === 3) {
+    const shutHorse = shutCarriageAtCrest(s);
+    if (shutHorse != null) {
+      return softFailWindow(s, 'shut', shutHorse, {x: CX, y: CY + 48, scale: 1});
+    }
+  }
+
   const early = (s.finds || []).find((row) => itemActive(row, s.t) && !itemInCrestWindow(row, s));
   const earlyTr = s.treasure && itemActive(s.treasure, s.t) && !itemInCrestWindow(s.treasure, s);
   const earlyPr = s.practiceGlint && itemActive(s.practiceGlint, s.t) && !itemInCrestWindow(s.practiceGlint, s);
   if (early || earlyTr || earlyPr) {
+    if (s.level === 3) {
+      return softFailWindow(s, 'early', early ? early.horse : null, {x: CX, y: CY + 48, scale: 1});
+    }
     logAction(s, 'arm', {reason: 'early', x: Math.round(p.x), y: Math.round(p.y)});
     s.note = 'Armed — wait for NOW.';
     s.statusKind = 'searching';
@@ -1311,8 +1721,8 @@ function tryCrestTap(s, p) {
 
 export default {
   title: 'Carousel Waltz',
-  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts.',
-  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Find three ordinary keepsakes before the final rotation ends.',
+  intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW. Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts. Carriage Windows: TAP only while the window is open.',
+  instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW. Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Carriage Windows: each window opens twice — watch the teach pass, then TAP the collect pass; shut windows never collect. Find three ordinary keepsakes before the final rotation ends.',
   levels: LEVELS,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -1347,12 +1757,18 @@ export default {
       horseMarks: null,
       decoys: [],
       reflections: [],
+      openings: [],
+      carriageHorses: [],
       ch2Taught: false,
       ch3Taught: false,
+      ch4Taught: false,
       firstMarked: null,
       firstReal: null,
+      firstTeach: null,
+      firstCollect: null,
       decoyFlash: 0,
       reflectionFlash: 0,
+      windowFlash: 0,
     });
   },
 
@@ -1375,6 +1791,10 @@ export default {
         s.note = s.eligible
           ? 'Mirror Round — TAP real crests; skip mirror ghosts. A keepsake hides this waltz.'
           : 'Mirror Round — TAP real crests; skip mirror ghosts. Three finds finish the ride.';
+      } else if (s.level === 3) {
+        s.note = s.eligible
+          ? 'Carriage Windows — TAP only while open. A keepsake hides this waltz.'
+          : 'Carriage Windows — watch the teach open; TAP the next open pass.';
       } else {
         s.note = s.eligible
           ? 'A keepsake hides this waltz. TAP on the crest.'
@@ -1426,6 +1846,23 @@ export default {
       }
     }
 
+    // Ch4: mark teach complete when first teach window ends; warn before it.
+    if (s.level === 3 && s.firstTeach) {
+      const t = s.t || 0;
+      if (!s.ch4Taught && t > s.firstTeach.until) {
+        s.ch4Taught = true;
+        logAction(s, 'teach', {kind: 'carriage-window-seen'});
+      }
+      if (!s.practice && t <= s.firstTeach.until + 0.2) {
+        const lead = s.firstTeach.from - t;
+        if (lead <= CH4_WINDOW_WARN && lead > -0.05 && !s.ch4WarnLogged) {
+          s.ch4WarnLogged = true;
+          logAction(s, 'window-warn', {lead: CH4_WINDOW_WARN});
+          s.note = TEACH_WINDOW;
+        }
+      }
+    }
+
     // Reveal eligible treasure when its crest window opens (ride never pauses).
     if (s.treasure && itemInCrestWindow(s.treasure, s) && !s.treasureRevealed) {
       s.treasureRevealed = true;
@@ -1453,6 +1890,7 @@ export default {
     if (s.flash > 0) s.flash = Math.max(0, s.flash - dt);
     if ((s.decoyFlash || 0) > 0) s.decoyFlash = Math.max(0, s.decoyFlash - dt);
     if ((s.reflectionFlash || 0) > 0) s.reflectionFlash = Math.max(0, s.reflectionFlash - dt);
+    if ((s.windowFlash || 0) > 0) s.windowFlash = Math.max(0, s.windowFlash - dt);
 
     // Fairness: seal a win as soon as 3/3 lands (don't bleed into a late miss veil).
     if (!s.result && (s.found || 0) >= (s.goal || GOAL) && (s.t || 0) > 0.4) {
@@ -1552,6 +1990,13 @@ export default {
     for (const {i, h} of order) {
       const bob = Math.sin((s.angle || 0) * 2 + i) * (reduced ? 3 : 10);
       drawHorseSafe(d, h, bob, false, t, reduced);
+      // Ch4: paper-cut carriage window on crest carriers (open vs shut).
+      if (s.level === 3 && (s.carriageHorses || []).includes(i) && h.front) {
+        const op = liveOpeningForHorse(s, i);
+        const open = !!op;
+        const teach = !!(op && op.kind === 'teach');
+        drawCarriageWindow(d, h.x - 8 * h.scale, h.y - 6 * h.scale + bob, h.scale, open, teach);
+      }
     }
 
     // Player horse — locked center-front (Tempest rim lane).
@@ -1572,6 +2017,9 @@ export default {
       if (scr) {
         if (scr.crest > 0.02) drawNowTelegraph(d, scr, t, false);
         else drawApproachGlint(d, scr, t, false);
+        if (s.level === 3) {
+          drawCarriageWindow(d, scr.x, scr.y - 26, 0.9, true, false);
+        }
         d.item(spriteKey('star-token'), scr.x, scr.y, {
           w: 52,
           shadow: false,
@@ -1582,10 +2030,19 @@ export default {
 
     (s.finds || []).forEach((row) => {
       if (!itemActive(row, s.t)) return;
+      // Ch4: never draw find during a teach open; approach OK in collect phase.
+      if (s.level === 3) {
+        const teachLive = (s.openings || []).some((op) =>
+          op.kind === 'teach' && op.horse === row.horse
+          && s.t >= op.from && s.t <= op.until);
+        if (teachLive) return;
+      }
       const scr = spotScreen(row.spot, s, row.horse);
       if (!scr) return;
-      if (scr.crest > 0.02) drawNowTelegraph(d, scr, t, false);
-      else drawApproachGlint(d, scr, t, false);
+      const openNow = s.level !== 3 || !!itemInCrestWindow(row, s);
+      if (scr.crest > 0.02 && openNow) drawNowTelegraph(d, scr, t, false);
+      else if (s.level !== 3 || scr.crest > 0.001) drawApproachGlint(d, scr, t, false);
+      else return;
       // Heart cue on the collectable glint (Ch2). Ch3: warm REAL cue (vs silver mirrors).
       if (row.mark === 'heart') {
         d.glow(scr.x, scr.y - 22, 18, '#ffe6a4');
@@ -1593,12 +2050,17 @@ export default {
       } else if (s.level === 2 && row.real) {
         d.glow(scr.x, scr.y - 20, 16, '#ffe6a4');
         d.circle(scr.x, scr.y - 20, 5, '#ffe6a4', '#d2a65b', 1.5);
+      } else if (s.level === 3 && openNow) {
+        d.glow(scr.x, scr.y - 18, 16, '#ffe6a4');
+        drawCarriageWindow(d, scr.x, scr.y - 28, 0.85, true, false);
       }
-      d.item(spriteKey(row.id), scr.x, scr.y, {
-        w: 56,
-        shadow: false,
-        fallback: () => d.star(scr.x, scr.y, 14),
-      });
+      if (s.level !== 3 || openNow || scr.crest > 0.15) {
+        d.item(spriteKey(row.id), scr.x, scr.y, {
+          w: 56,
+          shadow: false,
+          fallback: () => d.star(scr.x, scr.y, 14),
+        });
+      }
     });
 
     // Ch2 decoy crest glints — wrong marks; soft-fail on TAP (after teach).
@@ -1648,6 +2110,12 @@ export default {
       d.text('mirror miss', s.reflectionFlashX || CX, (s.reflectionFlashY || CY) - 36, 16, `rgba(200,208,224,${k})`);
     }
 
+    if ((s.windowFlash || 0) > 0) {
+      const k = s.windowFlash / 0.55;
+      d.glow(s.windowFlashX || CX, s.windowFlashY || CY, 24 + 40 * k, '#f0d09a');
+      d.text('window miss', s.windowFlashX || CX, (s.windowFlashY || CY) - 36, 16, `rgba(240,208,154,${k})`);
+    }
+
     if (s.treasure && itemActive(s.treasure, s.t)) {
       const scr = spotScreen(s.treasure.spot, s, s.treasure.horse);
       if (scr) {
@@ -1686,6 +2154,7 @@ export default {
     drawPracticeLegend(d, s);
     drawCh2MarkChrome(d, s);
     drawCh3MirrorChrome(d, s);
+    drawCh4WindowChrome(d, s);
     drawStatusStrip(d, s);
 
     drawHud(d, s, {goal: s.goal || GOAL, count: s.found || 0, label: 'finds'});
