@@ -23,9 +23,10 @@
  *     soft-push — never aborts. Light streak juice under verb chrome.
  *   Ch4 Cloud Waltz: three bands; GOAL 3; ~67 s; ONE cloud-teach on OUTER
  *     alone (long warn ~10 s, HOLD scream-clear) — clouds hide the teach;
- *     then 3 outer HOLD clearLong POPs (#2/#3 + makeup) so soft-miss teach
- *     still allows 3/3 without fighting RELEASE. Soft miss soft-pushes —
- *     never aborts. Treasure = outer (taught). HUD stays N/3.
+ *     then 3 outer HOLD clearLong POPs (#2/#3 + makeup, approach ≥8 s,
+ *     catch ×2.2 / makeup ×2.5). Soft-miss teach arms auto-line assist
+ *     (snap outer while HOLD) + short soft-push (~0.25 s) — never aborts.
+ *     Treasure = outer (taught). HUD stays N/3.
  *
  * UNFINISHED CHAPTERS (file-top note — do not rename treasures / levels):
  *   5 Bell Flight — bell pitch / symbol maps to the three bands
@@ -66,8 +67,9 @@ const RIBBON_WARN_SEC = 7.5; // Ch2 teach ribbon long warn (helter cushion bar)
 const LINE_WARN_SEC = 7.5;   // Ch3 smooth-line teach long warn (helter Tunnel Turn bar)
 const CLOUD_WARN_SEC = 10;   // Ch4 cloud teach long warn (Aura soft-miss cushion)
 const CLOUD_APPROACH_SEC = 5.0; // Ch4 non-teach cloud approach (fogged under ~5.0 s)
-const CLOUD_CLEAR_APPROACH_SEC = 4.5; // Ch4 clear #2/#3 approach ≥4.5 s
-const CLOUD_MAKEUP_APPROACH_SEC = 7.5; // Ch4 makeup #4 long approach
+const CLOUD_CLEAR_APPROACH_SEC = 8.0; // Ch4 clear #2/#3 approach ≥8 s
+const CLOUD_MAKEUP_APPROACH_SEC = 8.0; // Ch4 makeup #4 approach ≥8 s
+const SOFT_PUSH_SEC_CH4 = 0.25; // Ch4 soft-push lock — HOLD resumes immediately
 const FINISH_THETA_CH1 = 3.12 * TAU; // land after the fourth bubble
 const FINISH_THETA_CH2 = 6.85 * TAU; // ~51.5 s first-play window for 3/3
 const FINISH_THETA_CH3 = 6.85 * TAU; // ~51.5 s — helter Ch3 ~52 s bar
@@ -134,16 +136,17 @@ function ch3Bubbles() {
  * Chapter 4 Cloud Waltz: ONE cloud-teach on OUTER alone (long warn ~10 s) — HOLD
  * scream-clear with verb chrome; bubble fogged by soft cloud; band shadow /
  * platform glint reveals the band first. Then THREE outer HOLD clearLong
- * star-bubbles (#2/#3 + makeup) — recovery is HOLD-only (no inner RELEASE)
- * so soft-push + HOLD habits clear GOAL 3. Soft miss recoverable (never
- * aborts). Treasure = outer. HUD N/3.
+ * star-bubbles (#2/#3 + makeup, approach ≥8 s) — recovery is HOLD-only
+ * (no inner RELEASE). Soft teach miss arms ch4Assist auto-line snap while
+ * HOLD so POPs land; soft miss recoverable (never aborts). Treasure = outer.
+ * HUD N/3.
  */
 function ch4Bubbles() {
   return [
-    {theta: 1.55 * TAU, band: 2, taken: false, cloud: true, teach: true}, // #1 outer cloud+teach — 10s warn, catch ×2.0
-    {theta: 3.60 * TAU, band: 2, taken: false, clearLong: true}, // #2 outer clearLong — HOLD, catch ×1.6, approach ≥4.5s
+    {theta: 1.55 * TAU, band: 2, taken: false, cloud: true, teach: true}, // #1 outer cloud+teach — 10s warn, catch ×2.2
+    {theta: 3.60 * TAU, band: 2, taken: false, clearLong: true}, // #2 outer clearLong — HOLD, catch ×2.2, approach ≥8s
     {theta: 5.50 * TAU, band: 2, taken: false, clearLong: true}, // #3 outer clearLong — HOLD, same
-    {theta: 7.20 * TAU, band: 2, taken: false, clearLong: true, makeup: true}, // #4 outer makeup — approach 7.5s, catch ×2.0
+    {theta: 7.20 * TAU, band: 2, taken: false, clearLong: true, makeup: true}, // #4 outer makeup — approach ≥8s, catch ×2.5
   ];
 }
 
@@ -225,12 +228,12 @@ function bandLabel(band, three) {
 }
 
 
-/** Ch4 catch half: cloud-teach/makeup *2, clearLong *1.6, other cloud wider. Ch1–3 untouched. */
+/** Ch4 catch half: teach/clearLong ×2.2, makeup ×2.5, other cloud wider. Ch1–3 untouched. */
 function catchHalfOf(bubble) {
-  if (bubble && bubble.cloud && bubble.teach) return CATCH_HALF * 2.0;
-  if (bubble && bubble.makeup) return CATCH_HALF * 2.0;
+  if (bubble && bubble.cloud && bubble.teach) return CATCH_HALF * 2.2;
+  if (bubble && bubble.makeup) return CATCH_HALF * 2.5;
   if (bubble && bubble.cloud) return CATCH_HALF * 1.15;
-  if (bubble && bubble.clearLong) return CATCH_HALF * 1.6;
+  if (bubble && bubble.clearLong) return CATCH_HALF * 2.2;
   return CATCH_HALF;
 }
 
@@ -248,10 +251,10 @@ function approachOf(bubble) {
     return CLOUD_APPROACH_SEC * OMEGA; // ~4.2 rad ≈ 5.0 s non-teach cloud
   }
   if (bubble && bubble.makeup) {
-    return CLOUD_MAKEUP_APPROACH_SEC * OMEGA; // ~6.3 rad ≈ 7.5 s makeup
+    return CLOUD_MAKEUP_APPROACH_SEC * OMEGA; // ~6.72 rad ≈ 8.0 s makeup
   }
   if (bubble && bubble.clearLong) {
-    return CLOUD_CLEAR_APPROACH_SEC * OMEGA; // ~3.78 rad ≈ 4.5 s Ch4 clears
+    return CLOUD_CLEAR_APPROACH_SEC * OMEGA; // ~6.72 rad ≈ 8.0 s Ch4 clears
   }
   return APPROACH;
 }
@@ -313,7 +316,7 @@ function softPushInward(s) {
   s.easeTo = dest;
   s.easeT = 0;
   s.holding = false;
-  s.pushUntil = s.t + SOFT_PUSH_SEC;
+  s.pushUntil = s.t + (isCloudWaltz(s) ? SOFT_PUSH_SEC_CH4 : SOFT_PUSH_SEC);
   logAction(s, 'soft-push', {from: cur, to: next});
 }
 
@@ -881,6 +884,33 @@ function drawFx(d, s) {
   }
 }
 
+
+/** Ch4 soft-miss teach: auto-line assist — while HOLD and outer clear/makeup in window, snap outer. */
+function updateCh4Assist(s) {
+  if (!isCloudWaltz(s) || !s.ch4Assist) return;
+  if ((s.passed || 0) >= s.goal || s.result) {
+    s.ch4Assist = false;
+    return;
+  }
+  if (s.pushUntil != null && s.t < s.pushUntil) return; // brief soft-push owns ease
+  if (!s.holding) return;
+  const target = s.bubbles.find((b) => !b.taken && !b.missed && b.band === 2 && (b.clearLong || b.makeup));
+  if (!target) return;
+  const ahead = aheadOf(s, target.theta);
+  const warn = approachOf(target);
+  const half = catchHalfOf(target);
+  if (ahead > warn || ahead < -half) return;
+  // Snap outer so continuous HOLD screams the band and POPs land
+  s.radiusU = 1;
+  s.easeFrom = 1;
+  s.easeTo = 1;
+  s.easeT = 1;
+  s.note = target.makeup
+    ? 'HOLD outer — makeup star · auto-line'
+    : 'HOLD — auto-line outer';
+  s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.4);
+}
+
 function missNote(bubble, three) {
   if (bubble.ribbon) {
     return 'Ribbon miss — soft push inward; HOLD/RELEASE to the middle band';
@@ -972,11 +1002,17 @@ function updateMakeupCoach(s) {
   const half = catchHalfOf(makeup);
   if (ahead > warn || ahead < -half) return;
   const missHold = (s.notePinUntil != null) && (s.t < s.notePinUntil)
-    && /Cloud miss|Missed/.test(s.note || '');
+    && /Cloud miss|Missed|auto-line/.test(s.note || '');
   if (missHold) return;
-  s.note = isLinedUp(s, makeup.band, makeup.theta, warn)
-    ? 'HOLD outer — makeup star · lined up'
-    : 'HOLD outer — makeup star';
+  if (s.ch4Assist) {
+    s.note = isLinedUp(s, makeup.band, makeup.theta, warn)
+      ? 'HOLD outer — makeup star · auto-line'
+      : 'HOLD outer — makeup star · auto-line';
+  } else {
+    s.note = isLinedUp(s, makeup.band, makeup.theta, warn)
+      ? 'HOLD outer — makeup star · lined up'
+      : 'HOLD outer — makeup star';
+  }
   s.notePinUntil = Math.max(s.notePinUntil || 0, s.t + 0.35);
 }
 
@@ -1061,6 +1097,7 @@ export default {
       coachUntil: ch4 ? 7 : (ch3 ? 7 : (ch2 ? 6 : 5)),
       notePinUntil: 0,
       pushUntil: 0,
+      ch4Assist: false,
     });
   },
   update(s, dt, input) {
@@ -1110,6 +1147,16 @@ export default {
       bubble.lit = isLinedUp(s, bubble.band, bubble.theta, approachOf(bubble));
     });
 
+    // Ch4 assist snap (after ease) so HOLD lands outer before POP check
+    updateCh4Assist(s);
+    // Re-lit after possible assist snap
+    if (s.ch4Assist) {
+      s.bubbles.forEach((bubble) => {
+        if (bubble.taken || bubble.missed) { bubble.lit = false; return; }
+        bubble.lit = isLinedUp(s, bubble.band, bubble.theta, approachOf(bubble));
+      });
+    }
+
     s.bubbles.forEach((bubble, i) => {
       tryPopBubble(s, bubble, i);
       if (!bubble.taken && !bubble.missed && s.theta > bubble.theta + catchHalfOf(bubble)) {
@@ -1121,6 +1168,10 @@ export default {
         logAction(s, missType, {band: bubble.band, i});
         if (bubble.ribbon || bubble.line || bubble.cloud) {
           softPushInward(s);
+        }
+        // Soft-miss cloud teach → arm auto-line assist until GOAL or ride end
+        if (bubble.cloud && bubble.teach) {
+          s.ch4Assist = true;
         }
         if (bubble.line) s.lineStreak = 0;
         s.note = missNote(bubble, three);
@@ -1135,6 +1186,7 @@ export default {
     updateLineCoach(s);
     updateCloudCoach(s);
     updateMakeupCoach(s);
+    updateCh4Assist(s); // coach note after plates; snap already applied pre-POP
     spawnTreasure(s);
     if (s.treasure && !s.treasure.taken && s.theta >= s.treasure.warnTheta) {
       s.treasure.lit = isLinedUp(s, s.treasure.band, s.treasure.sweepTheta)
@@ -1342,12 +1394,14 @@ export default {
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
     const makeupLoud = isCloudWaltz(s) && (s.passed || 0) < s.goal && s.bubbles.some((b) => b.makeup && !b.taken && !b.missed
       && aheadOf(s, b.theta) <= approachOf(b) && aheadOf(s, b.theta) > -catchHalfOf(b));
-    const teachLoud = teachRibbon || teachLine || teachCloud || makeupLoud;
+    const assistLoud = isCloudWaltz(s) && !!s.ch4Assist && (s.passed || 0) < s.goal
+      && /auto-line/.test(s.note || '');
+    const teachLoud = teachRibbon || teachLine || teachCloud || makeupLoud || assistLoud;
 
     // Sticky miss coaching plate (playtest: settle was burying the miss verb).
-    // Cloud-teach / makeup pin uses its own scream plate below so verb HOLD stays visible.
-    const missPinned = !teachCloud && !makeupLoud && (s.notePinUntil != null) && (s.t < s.notePinUntil)
-      && /Missed|Ribbon miss|Left the line|Hold the line|Cloud miss|Watch the shadow|makeup/.test(s.note || '');
+    // Cloud-teach / makeup / assist pin uses its own scream plate below so verb HOLD stays visible.
+    const missPinned = !teachCloud && !makeupLoud && !assistLoud && (s.notePinUntil != null) && (s.t < s.notePinUntil)
+      && /Missed|Ribbon miss|Left the line|Hold the line|Cloud miss|Watch the shadow|makeup|auto-line/.test(s.note || '');
     if (missPinned) {
       d.poly(
         [[160, 760], [740, 760], [728, 848], [172, 848]],
@@ -1358,8 +1412,8 @@ export default {
       d.text(s.note, 450, 810, 18, CREAM);
     }
 
-    // Live cloud teach / makeup: sticky scream-clear coach plate (above verb)
-    if ((teachCloud || makeupLoud) && !missPinned) {
+    // Live cloud teach / makeup / auto-line assist: sticky scream-clear coach plate
+    if ((teachCloud || makeupLoud || assistLoud) && !missPinned) {
       d.poly(
         [[120, 730], [780, 730], [768, 808], [132, 808]],
         '#1a3044f0',
@@ -1367,7 +1421,9 @@ export default {
         3.5,
       );
       d.text(
-        s.note || (makeupLoud ? 'HOLD outer — makeup star' : 'Watch the shadow — HOLD outer · cloud hides the star'),
+        s.note || (assistLoud
+          ? 'HOLD — auto-line outer'
+          : (makeupLoud ? 'HOLD outer — makeup star' : 'Watch the shadow — HOLD outer · cloud hides the star')),
         450, 778, 20, CREAM,
       );
     }
@@ -1396,7 +1452,7 @@ export default {
       s.holding ? GOLD : '#f0d09a',
       s.holding ? 3.2 : 2.4,
     );
-    const loudChrome = teachCloud || makeupLoud;
+    const loudChrome = teachCloud || makeupLoud || assistLoud;
     d.text(s.holding ? 'RELEASE · tuck in' : 'HOLD · stretch out', 450, 1110, loudChrome ? 28 : 26, CREAM);
     d.text(coach, 450, 1152, loudChrome ? 20 : 16, loudChrome ? CREAM : '#f0d18f');
     if (s.practice) {
