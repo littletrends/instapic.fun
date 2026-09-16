@@ -87,7 +87,7 @@ const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
 /** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
-const DRESS_CACHE = 'dress-1';
+const DRESS_CACHE = 'dress-2';
 const SKIP_FILES = {
   ball: 'Tent_21_Skip_star-ball.png',
   slide: 'Tent_21_Skip_moon-slide.png',
@@ -100,19 +100,29 @@ const BEA_PLAYER_FILE = 'bea-player.png';
 let skipPropImgs = null;
 let beaPlayerImg = null;
 
+function dressUrl(rel) {
+  // Resolve against THIS module (stalls/helter.js), not play.html — otherwise
+  // ../assets hits penny-fever/assets/ (404) instead of paper-games/assets/.
+  try {
+    return new URL(rel + (rel.includes('?') ? '&' : '?') + 'v=' + DRESS_CACHE, import.meta.url).href;
+  } catch {
+    return rel;
+  }
+}
+
 function ensureSkipProps() {
   if (skipPropImgs) return skipPropImgs;
   skipPropImgs = {};
   for (const [key, file] of Object.entries(SKIP_FILES)) {
     const img = new Image();
     img.decoding = 'async';
-    img.src = `../assets/helter-dress/skip/${file}?v=${DRESS_CACHE}`;
+    img.src = dressUrl('../assets/helter-dress/skip/' + file);
     skipPropImgs[key] = img;
   }
   if (!beaPlayerImg) {
     beaPlayerImg = new Image();
     beaPlayerImg.decoding = 'async';
-    beaPlayerImg.src = `../assets/helter-dress/player/${BEA_PLAYER_FILE}?v=${DRESS_CACHE}`;
+    beaPlayerImg.src = dressUrl('../assets/helter-dress/player/' + BEA_PLAYER_FILE);
   }
   return skipPropImgs;
 }
@@ -417,7 +427,8 @@ function tryCollectToken(s, idx) {
 
 function tryCollectTreasure(s, idx) {
   if (!s.treasure || s.treasure.taken || s.treasure.cell !== idx) return;
-  if (!(s.eligible || s.practice)) return;
+  // Collect whenever the ride is live (practice OR paid) — Lorie: claim on pass.
+  if (s.result || s.broke) return;
   if (s.eligible) {
     recordTreasure(s, s.treasure.id);
     logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
@@ -459,7 +470,7 @@ function maybeBallKnock(s, opts) {
   if ((s.moveReason || '') === 'ball') return false;
   const idx = s.youCell | 0;
   if (idx <= 0) return false; // already at bottom terminus
-  if (!ballCellNear(s, idx)) return false;
+  if (!(ballMeetsYou(s) || ballCellNear(s, idx))) return false;
   logAction(s, 'ball-knock', {cell: idx, ballU: s.ballU});
   s.note = 'Ball knock — soft dump to the bottom. Ride continues.';
   s.statusCopy = 'Ball dump';
@@ -638,7 +649,15 @@ function ballCellNear(s, cellIdx) {
   if (n < 2) return false;
   const bu = clamp(s.ballU, 0, 1);
   const bi = Math.round(bu * (n - 1));
-  return Math.abs(bi - (cellIdx | 0)) <= 1;
+  return Math.abs(bi - (cellIdx | 0)) <= 2;
+}
+
+/** Pixel meet — ball must actually reach YOU on the track. */
+function ballMeetsYou(s) {
+  if (!s.ballActive || s.ballX == null || s.youX == null) return false;
+  if ((s.youCell | 0) <= 0) return false;
+  const dist = Math.hypot((s.ballX || 0) - (s.youX || 0), (s.ballY || 0) - (s.youY || 0));
+  return dist < 54; // Bea + ball radii overlap on the ribbon
 }
 
 /** Cream-bottom pad layout (canvas 900×1200) — big phone targets. */
@@ -1036,6 +1055,20 @@ export default {
       const bp = spiralPoint(s.ballU);
       s.ballX = bp.x;
       s.ballY = bp.y;
+      // Live meet: ball rolling into Bea knocks to bottom (unless mid JUMP clear).
+      if (!s.moving && !(s._ballCleared && s.moveReason === 'jump')) {
+        maybeBallKnock(s, {});
+      }
+    }
+
+    // Pass-claim while easing across keepsake/token cells.
+    if (s.moving && s.treasure && !s.treasure.taken) {
+      const a = s.moveFrom | 0;
+      const b = s.moveTo | 0;
+      const u = clamp(s.moveT / Math.max(0.001, s.moveDur || STEP_EASE), 0, 1);
+      const mid = Math.round(a + (b - a) * u);
+      tryCollectTreasure(s, mid);
+      tryCollectToken(s, mid);
     }
 
     // Ease YOU along current move; resolve landing when ease completes.
@@ -1152,15 +1185,16 @@ export default {
     }
 
     // Chapter keepsake on coil cell.
-    if (s.treasure && !s.treasure.taken && (s.treasureRevealed || s.eligible || s.practice)) {
+    if (s.treasure && !s.treasure.taken) {
       const tc = cellAt(s, s.treasure.cell);
       if (tc) {
-        d.glow(tc.x, tc.y, 30, GOLD);
+        d.glow(tc.x, tc.y, 34, GOLD);
         d.star(tc.x, tc.y, 14, CREAM);
         try {
           const key = typeof spriteKey === 'function' ? spriteKey(s.treasure.id) : s.treasure.id;
-          d.item?.(key, tc.x, tc.y, {w: 36, alpha: 0.9});
+          d.item?.(key, tc.x, tc.y, {w: 40, alpha: 1});
         } catch { /* sprite optional */ }
+        d.text('KEEP', tc.x, tc.y - 28, 11, GOLD);
       }
     }
 
