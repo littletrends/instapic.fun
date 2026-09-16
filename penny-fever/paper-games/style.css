@@ -32,7 +32,7 @@
 .game-page .notebook{min-height:0;overflow:auto;padding:12px;font-size:15px}
 .game-page .notebook h1{font-size:24px}.game-page .notebook h2{font-size:19px}
 .game-page .veil{z-index:4;padding:12px;backdrop-filter:none}
-.game-page .veil>div{max-width:360px;max-height:100%;overflow:auto;padding:20px}
+.game-page .veil>div{max-width:360px;max-height:100%;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:8px}.game-page .veil #veil-detail{max-height:28vh;overflow:auto;flex:0 1 auto}.game-page .veil #begin{flex:0 0 auto;position:sticky;bottom:0}
 .game-page .veil h2{font-size:26px;line-height:1.15;margin:8px 0}
 .game-page .veil p{font-size:16px;line-height:1.35}
 .game-page .veil button{min-width:150px;min-height:48px}
