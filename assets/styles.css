@@ -544,15 +544,19 @@ body {
   margin-top: 1rem;
 }
 
+.site-footer {
+  position: relative;
+}
+
 .penny-fever-hatch {
-  position: fixed;
-  right: 8px;
-  bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
   z-index: 4;
   display: grid;
   place-items: center;
   width: 34px;
-  height: 44px;
+  height: 40px;
   margin: 0;
   padding: 0;
   text-decoration: none;
