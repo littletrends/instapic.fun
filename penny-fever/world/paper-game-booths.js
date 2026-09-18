@@ -5,7 +5,7 @@ import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/st
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=milk-props-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=milk-clean-1'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
@@ -130,6 +130,10 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
+  frame.setAttribute('scrolling','no');
+  frame.setAttribute('draggable','false');
+  frame.style.touchAction='none';
+  frame.style.overscrollBehavior='none';
   stage.append(bar,status,frame);cabinet.append(stage);
  }
  function unload(){

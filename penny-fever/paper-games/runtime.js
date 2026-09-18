@@ -52,7 +52,7 @@ function houseSpec(){
 }
 function tellRoom(type,fields={}){if(embedded)window.parent.postMessage({channel:'pf-paper-world',type,...fields},location.origin);}
 if(embedded)document.body.classList.add('is-alley-room');
-function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{...opts,signal:abort.signal});}
+function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{passive:false,...opts,signal:abort.signal});}
 function error(e){playing=false;cancelAnimationFrame(raf);$('#error').textContent='This workshop room could not open: '+e.message;$('#veil-title').textContent='The room needs attention';$('#veil-detail').textContent='Please try another paper world. Your Instapic sessions are not involved.';$('#begin').disabled=true;$('#pause').disabled=true;$('#veil').hidden=false;tellRoom('error');}
 function showPrize(id){
  const img=$('#veil-prize'),cap=$('#veil-prize-name');
@@ -158,7 +158,7 @@ function swallowWin(r){
 }
 function tick(now){if(!playing||disposed)return;try{if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;engine.update?.(state,dt,input);const house=houseSpec();if(house&&state&&!state.result){if(state.houseLeft==null)state.houseLeft=house.seconds;state.houseLeft-=dt;if(state.houseLeft<=0){state.houseLeft=0;state.result={title:house.title,detail:house.detail,won:false};}}stepPrize(state,dt);if(state.prizeDeliver){state.prizeDeliver=false;handPrize();}if(now-paintAt>1000/30){paintAt=now;paint();}if(now-reportAt>350){reportAt=now;const text=engine.readout?.(state)||'';if($('#readout').textContent!==text)$('#readout').textContent=text;}if(state.result){persist();if(swallowWin(state.result)){raf=requestAnimationFrame(tick);return;}if(engine.live&&engine.chapterEnds===false&&state.result.won!==false){delete state.result;raf=requestAnimationFrame(tick);return;}ended=true;stop();paint();const r=state.result,won=r.won!==false,prize=resultPrize(r,won),stay=r.advance===false;veil(won?'Chapter complete':(engine.loseTitle||'Not this time'),r.title,r.detail,won?(stay?'Board the paid ride':(level<engine.levels.length-1?'Next chapter':'Play chapter again')):(engine.retryButton||'Try this chapter again'),won?prize:null);$('#readout').textContent=engine.readout?.(state)||'';return;}raf=requestAnimationFrame(tick);}catch(e){error(e);}}
 function point(e){const b=canvas.getBoundingClientRect();return{x:clamp((e.clientX-b.left)/b.width*900,0,900),y:clamp((e.clientY-b.top)/b.height*1200,0,1200)};}
-function move(e,type){if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;canvas.setPointerCapture(e.pointerId);}if(type==='up'||type==='cancel')input.down=false;engine.pointer?.(state,type,p,input);paint();}
+function move(e,type){if(e.cancelable)e.preventDefault();if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;try{canvas.setPointerCapture(e.pointerId);}catch(_){}}if(type==='up'||type==='cancel')input.down=false;engine.pointer?.(state,type,p,input);paint();}
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=milk-props-1')).default;
+ engine=(await import(entry.module+'?v=milk-clean-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
@@ -204,7 +204,9 @@ try{
  // Hide under-canvas advance strip immediately (Lorie: controllers on canvas only).
  {const adv=$('.play-advance'); if(adv) adv.hidden=true; const n=$('#next-chapter'); if(n){n.hidden=true;n.disabled=true;}}
  listen($('#begin'),'click',()=>{if(!ended){start();return;}const won=state?.result?.won!==false;const stay=state?.result?.advance===false;persist();if(won&&!stay&&level<engine.levels.length-1){level++;$('#chapter').value=level;reset();return;}reset();if(!won)start();});
- for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type));
+ for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});
+ listen(canvas,'contextmenu',e=>e.preventDefault());
+ listen(stage,'touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
  // Sticky-seize fix: lost capture / window blur always release maze stick (knob snaps home).
  listen(canvas,'lostpointercapture',e=>{if(!playing)return;input.down=false;engine?.pointer?.(state,'cancel',input.pointer||point(e)||{x:450,y:1136},input);input.pointer=null;paint();});
  listen(window,'blur',()=>{if(!playing)return;clearInput();paint();});
