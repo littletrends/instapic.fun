@@ -209,13 +209,6 @@
   }
 
   function saveState(s) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) {
-      const original = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (!original || s.demoCoins !== original.demoCoins || s.playTickets !== original.playTickets) {
-        if (original) { s.demoCoins = original.demoCoins; s.playTickets = original.playTickets; }
-        throw new Error('Private testing cannot change the legacy wallet.');
-      }
-    }
     const migrationRaw = localStorage.getItem('pennyFever.ledger.migration.v1');
     if (migrationRaw) {
       const migration = JSON.parse(migrationRaw);
@@ -673,7 +666,6 @@
   }
 
   function spendDemoCoin(kind) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     if (state.showmanPass && state.passDay === darwinDay()) {
       return true;
     }
@@ -688,7 +680,6 @@
   }
 
   function spendPennies(amount, {allowPass = true} = {}) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     const need = Math.max(0, Math.floor(Number(amount) || 0));
     if (!need) return true;
     if (allowPass && state.showmanPass && state.passDay === darwinDay()) return true;
@@ -700,7 +691,6 @@
   }
 
   function addDemoCoins(amount) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return 0;
     const added = Math.max(0, Math.floor(Number(amount) || 0));
     if (!added) return 0;
     state.demoCoins = Math.max(0, Number(state.demoCoins) || 0) + added;
@@ -722,7 +712,6 @@
   }
 
   function packFivePennies() {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     if (pennies() < PENNY_STACK) return false;
     if (!spendPennies(PENNY_STACK, {allowPass: false})) return false;
     state.pennyPacks = pennyPacks() + 1;
@@ -732,7 +721,6 @@
   }
 
   function unpackFivePennies() {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     if (pennyPacks() < 1) return false;
     state.pennyPacks = pennyPacks() - 1;
     addDemoCoins(PENNY_STACK);
@@ -753,7 +741,6 @@
   }
 
   function addTickets(amount) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return 0;
     const added = Math.max(0, Math.floor(Number(amount) || 0));
     if (!added) return 0;
     state.playTickets = tickets() + added;
@@ -763,7 +750,6 @@
   }
 
   function spendTicket(kind) {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     if (state.showmanPass && state.passDay === darwinDay()) return true;
     if (tickets() < 1) return false;
     state.playTickets = tickets() - 1;
@@ -782,7 +768,6 @@
   }
 
   function cashTicketForPennies() {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return 0;
     if (tickets() < 1) return 0;
     state.playTickets = tickets() - 1;
     const added = addDemoCoins(PENNY_STACK);
@@ -790,7 +775,6 @@
   }
 
   function tradePenniesForTicket() {
-    if (localStorage.getItem('pennyFever.privateTest.session.v1') !== null) return false;
     if (pennies() < PENNY_STACK) return false;
     state.demoCoins = pennies() - PENNY_STACK;
     state.playTickets = tickets() + 1;

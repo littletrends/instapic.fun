@@ -94,8 +94,9 @@ html.pf-dev .development-ribbon {
   border-bottom: 1px solid rgba(212, 164, 90, 0.35);
 }
 .workshop-stop { display: none !important; }
-#pfTillLoan, #pfTillReset, #auraCounterLoan, #auraCounterReset, #demoPass, #devReset { display: none !important; }
-html.pf-dev #pfTillLoan, html.pf-dev #pfTillReset, html.pf-dev #auraCounterLoan, html.pf-dev #auraCounterReset { display: inline-block !important; }
+#pfTillReset, #auraCounterReset, #demoPass, #devReset { display: none !important; }
+#auraCounterLoan, #pfTillLoan { display: inline-block !important; }
+html.pf-dev #pfTillReset, html.pf-dev #auraCounterReset { display: inline-block !important; }
 html.pf-dev #demoPass, html.pf-dev #devReset { display: inline-block !important; }
 
 .arcade-shell {
