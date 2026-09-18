@@ -1,5 +1,5 @@
 import {games,byId} from './catalogue.js?v=dress-3j';
-import {Draw,seeded,clamp} from './draw.js?v=sep17-3';
+import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=sep17-3')).default;
+ engine=(await import(entry.module+'?v=sep17-4')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
@@ -222,7 +222,7 @@ try{
   paint();
  });
  listen(window,'keyup',e=>{input.keys.delete(e.key);if(playing)engine.key?.(state,e.key,false,input);});
- for(const a of engine.actions||[]){const b=document.createElement('button');b.textContent=a.label;$('#actions').append(b);if(a.hold){listen(b,'pointerdown',e=>{if(!playing)return;b.setPointerCapture(e.pointerId);input.actions.add(a.id);engine.action?.(state,a.id,true,input);});for(const ev of ['pointerup','pointercancel','lostpointercapture'])listen(b,ev,()=>{input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);});listen(b,'keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();input.actions.add(a.id);if(playing)engine.action?.(state,a.id,true,input);}});listen(b,'keyup',e=>{if(e.key===' '||e.key==='Enter'){input.actions.delete(a.id);if(playing)engine.action?.(state,a.id,false,input);}});}else listen(b,'click',()=>{if(playing){engine.action?.(state,a.id,true,input);paint();}});}
+ const actBox=$('#actions');if(actBox){actBox.hidden=true;actBox.replaceChildren();}
  let silentHide=false;listen(document,'visibilitychange',()=>{if(document.hidden){if(!playing)return;silentHide=true;persist();stop();}else if(silentHide&&!playing&&!ended&&state){silentHide=false;start();}else{silentHide=false;}});
  // no blur→pause (mid-play rest veil)
  listen(window,'message',e=>{
@@ -233,8 +233,32 @@ try{
   if(d.type==='resume'&&!playing&&!ended)start();
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
- const img=$('#backdrop');img.src=entry.asset;img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ const img=$('#backdrop');
+ if(engine.canvasControls){
+  img.removeAttribute('src');
+  img.hidden=true;
+ }else{
+  img.hidden=false;
+  img.src=entry.asset;
+  img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ }
  if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;if(engine.tables){$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.textContent='Table · each chapter is a new set';}else if(engine.live){$('#chapter').disabled=true;$('#chapter').hidden=true;$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.hidden=true;}tellRoom('ready',{title:engine.title});}
- loadSprites(spriteIds.map(spriteKey)).then(art=>{if(disposed||!draw)return;draw.art=art;paint();});
+ function loadImg(src){
+  return new Promise(resolve=>{
+   const i=new Image();
+   i.onload=()=>resolve(i);
+   i.onerror=()=>resolve(null);
+   i.src=new URL(src,import.meta.url).href;
+  });
+ }
+ Promise.all([
+  loadSprites(spriteIds.map(spriteKey)),
+  Promise.all(Object.entries(engine.images||{}).map(async([k,src])=>[k,await loadImg(src)])),
+ ]).then(([prizeArt, imagePairs])=>{
+  if(disposed||!draw)return;
+  const imageArt=Object.fromEntries(imagePairs.filter(([,img])=>img));
+  draw.art={...prizeArt,...imageArt};
+  paint();
+ });
  }
 }catch(e){error(e);}
