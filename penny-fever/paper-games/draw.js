@@ -15,6 +15,21 @@ export class Draw {
  ellipse(x,y,rx,ry,fill,stroke=null,width=1){const c=this.c;c.beginPath();c.ellipse(x,y,Math.max(0,rx),Math.max(0,ry),0,0,TAU);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
  circle(x,y,r,fill,stroke=null,width=1){this.ellipse(x,y,r,r,fill,stroke,width);}
  text(text,x,y,size=20,color='#fff0cb',align='center'){const c=this.c;size=Math.max(size,12*900/(this.cssWidth||450),12*1200/(this.cssHeight||600));c.font=`600 ${size}px Georgia,serif`;c.textAlign=align;c.fillStyle=color;const hex=/^#[0-9a-f]{6}$/i.test(color)?color.slice(1):null;const light=hex?(parseInt(hex.slice(0,2),16)*.299+parseInt(hex.slice(2,4),16)*.587+parseInt(hex.slice(4,6),16)*.114)>145:true;c.save();c.strokeStyle=light?'#241820d9':'#fff3ddd9';c.lineWidth=Math.max(2,size*.10);c.strokeText(String(text),x,y,align==='center'?Math.max(100,Math.min(x,900-x)*2-20):Math.max(100,900-x-20));c.restore();c.fillText(String(text),x,y,align==='center'?Math.max(100,Math.min(x,900-x)*2-20):Math.max(100,900-x-20));}
+ wrap(text,x,y,size=20,color='#fff0cb',maxW=680,gap=8,align='center'){
+  const words=String(text||'').split(/\s+/).filter(Boolean);
+  const lines=[]; let line='';
+  const c=this.c; const sz=Math.max(size,12*900/(this.cssWidth||450),12*1200/(this.cssHeight||600));
+  c.font=`600 ${sz}px Georgia,serif`;
+  for(const w of words){
+    const next=line?line+' '+w:w;
+    if(line && c.measureText(next).width>maxW){lines.push(line);line=w;}
+    else line=next;
+  }
+  if(line)lines.push(line);
+  const h=sz+gap;
+  const top=y-((lines.length-1)*h)/2;
+  lines.forEach((ln,i)=>this.text(ln,x,top+i*h,size,color,align));
+ }
  glow(x,y,r,color='#edcd8b'){const c=String(color||'#edcd8b');const base=/^#[0-9a-fA-F]{8}$/i.test(c)?c.slice(0,7):(/^#[0-9a-fA-F]{6}$/i.test(c)?c:'#edcd8b');const g=this.c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,base+'55');g.addColorStop(1,base+'00');this.circle(x,y,r,g);}
  ball(x,y,r,color='#ddc082'){this.ellipse(x+5,y+r*.6,r,r*.55,'#071e3440');const g=this.c.createRadialGradient(x-r*.3,y-r*.4,1,x,y,r);g.addColorStop(0,'#fff5d8');g.addColorStop(.35,color);g.addColorStop(1,'#514c55');this.circle(x,y,r,g,'#e6d5b1',1.5);}
  star(x,y,r,fill='#e7c789'){this.poly(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;return[x+Math.cos(a)*rr,y+Math.sin(a)*rr];}),fill,'#f8e4b3',1.3);}

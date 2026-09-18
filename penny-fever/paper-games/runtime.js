@@ -1,5 +1,5 @@
 import {games,byId} from './catalogue.js?v=dress-3j';
-import {Draw,seeded,clamp} from './draw.js?v=glow-safe-1';
+import {Draw,seeded,clamp} from './draw.js?v=sep17-3';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=dress-bess-2b')).default;
+ engine=(await import(entry.module+'?v=sep17-3')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
