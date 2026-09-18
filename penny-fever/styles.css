@@ -1,4 +1,11 @@
 /* Aura's Penny Fever — private preview */
+html, body, canvas, img, svg, video {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+img, canvas, svg { -webkit-user-drag: none; }
 :root {
   --ink: #241018;
   --paper: #f7ebe0;
