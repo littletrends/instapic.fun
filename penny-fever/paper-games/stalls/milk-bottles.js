@@ -1,5 +1,5 @@
 import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
-import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-cow-1';
+import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-props-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=entry-1';
@@ -12,6 +12,30 @@ import {
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
+
+const PROP_URLS = [1, 2, 3, 4, 5, 6].map((i) =>
+  new URL(`../assets/prop-kits/milk-bottles/piece-0${i}.png?v=milk-props-1`, import.meta.url).href
+);
+const propImgs = [];
+function preloadMilkProps() {
+  PROP_URLS.forEach((src, i) => {
+    if (propImgs[i]) return;
+    const im = new Image();
+    im.onload = () => { propImgs[i] = im; };
+    im.src = src;
+  });
+}
+function paintMilkProps(d) {
+  preloadMilkProps();
+  const spots = [
+    { x: 108, y: 360 }, { x: 96, y: 560 }, { x: 118, y: 760 },
+    { x: 792, y: 360 }, { x: 804, y: 560 }, { x: 782, y: 760 },
+  ];
+  spots.forEach((p, i) => {
+    const img = propImgs[i];
+    if (img) d.sprite(img, p.x, p.y, { w: 92, shadow: false });
+  });
+}
 
 function emptyBook() {
   return {v: 1, paid: {}, sittings: {}};
@@ -189,11 +213,9 @@ export default {
   levels: MABEL_CHAPTERS.map(c => c.title),
   sprites: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn', 'moon-penny', 'star-token', 'everyday-penny'],
   prizes: MABEL_CHAPTERS.map(c => c.prize),
-  actions: [
-    {id: 'play', label: 'Play'},
-    {id: 'again', label: alleyPlay ? 'Play again · 1 penny' : 'Play again'},
-  ],
+  actions: [],
   create(level) {
+    preloadMilkProps();
     const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
     const seed = saved.seed || (level + 1) * 4099;
     const s = {
@@ -202,7 +224,7 @@ export default {
       charged: !!saved.charged, resultN: saved.resultN || 0,
       won: !!saved.won && !!saved.board?.delivered, hold:saved.hold||0, result:saved.result||null, rewardCommitted:saved.rewardCommitted??(saved.phase==='result'), reduced: !!saved.reduced,
       selected: saved.selected || null, lock: false,
-      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Press Play when you are ready.',
+      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Tap the board when you are ready.',
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeDeliveryBoard(level, s.seed,{allowUnique:!chapterPaid(level)});
     // Honour an in-progress paid/included legacy board without buying another allowance.
@@ -292,7 +314,7 @@ export default {
     if (!down) return;
     if (k === ' ' || k === 'Enter') this.action(s, 'play');
   },
-  draw(s,d){drawMilkySplash(s,d,MABEL_CHAPTERS[s.level]);},
+  draw(s,d){paintMilkProps(d);drawMilkySplash(s,d,MABEL_CHAPTERS[s.level]);},
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');

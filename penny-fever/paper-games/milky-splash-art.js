@@ -49,13 +49,7 @@ export function drawMilkySplash(s,d,chapter){
  const board=real||{cols:5,rows:6,cells:Array.from({length:6},(_,r)=>Array.from({length:5},(_,i)=>({kind:'milk',flavour:FLAVOURS[(i+r*2)%6].id})))};
  const {size,originX,originY,crateY}=layoutOf(board),width=board.cols*size,height=board.rows*size;
  c.save();
- text(c,'MABEL’S LITTLE DAIRY',450,59,19,'#937482');
- text(c,'Milky Splash!',450,109,47,'#b84179',900);
- text(c,chapter.title,450,150,23,'#754563');
- if(real?.sourOn&&real.cells.some(row=>row.some(cell=>cell?.kind==='sour')))text(c,'Sour spreads in '+(3-(real.sourTurns||0)%3)+' moves',450,185,18,'#587238');
- box(c,72,122,130,46,18,'#fffaf0');text(c,real?real.movesLeft+' moves':'Match 3',137,153,22,'#a84073');
- box(c,710,122,116,46,18,'#fffaf0');text(c,'Ch '+(s.level+1),768,153,22,'#a84073');
- // The existing illustrated template remains the board background.
+ // Keep the dairy court clear at the top — no title/HUD over the shop.
  const fx=effects.get(s),age=fx?s.t-fx.at:2;
  const swapping=real&&fx&&age<.18;
  const returning=real&&fx&&!fx.accepted&&age>=.18&&age<.32;
@@ -93,7 +87,8 @@ export function drawMilkySplash(s,d,chapter){
  c.restore();
  crate(c,originX-10,crateY+8,width+20,56);
  box(c,450-136,crateY+18,272,35,9,'#fff3d6');
- text(c,board.delivered?'DELIVERY RECEIVED ✓':'DELIVER THE GOLD PRIZE HERE',450,crateY+42,18,'#83573f');
+ const crateLabel=board.delivered?'DELIVERY RECEIVED ✓':((real?real.movesLeft+' moves · ':'')+'PRIZE TO THE CRATE');
+ text(c,crateLabel,450,crateY+42,18,'#83573f');
  if(real&&fx&&fx.accepted&&age>=0&&age<.6&&!s.reduced){
   c.save();c.globalAlpha=1-age/.6;
   for(const cell of [fx.a,fx.b].filter(p=>['milk','special'].includes(fx.before[p.r][p.c]?.kind)))for(let i=0;i<8;i++){
@@ -104,12 +99,8 @@ export function drawMilkySplash(s,d,chapter){
  if(!real){
   box(c,originX+18,originY+height*.35,width-36,138,23,'#fff8eaf5','#df9ab8');
   text(c,'A little swap. A lovely splash.',450,originY+height*.35+43,23,'#965076');
-  text(c,'Tap to play',450,originY+height*.35+91,32,'#b84179');
+  text(c,'Tap the board',450,originY+height*.35+91,32,'#b84179');
  }
 
- const words=String(s.note||'Swap neighbours. Match three bottles.').split(' ');let line='',lines=[];
- for(const word of words){if((line+' '+word).length>57){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);
- lines.slice(0,2).forEach((line,i)=>text(c,line,450,1095+i*27,22,'#754563',600));
- text(c,'Wooden crates break. Gold treasure drops.',450,1170,21,'#754563');
  c.restore();
 }

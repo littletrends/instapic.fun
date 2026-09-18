@@ -45,6 +45,7 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
   restyle: restyled.has(id),
   asset: id==='fortune' ? './assets/fortune.webp?v=iris-globe-1'
     : id==='coin-pusher' ? './assets/coin-pusher.webp?v=iris-globe-1'
+    : id==='milk-bottles' ? './assets/milk-bottles.webp?v=milk-props-1'
     : `./assets/${id}.png?v=unique-courts-1`,
   module: `./stalls/${id}.js`,
 }));

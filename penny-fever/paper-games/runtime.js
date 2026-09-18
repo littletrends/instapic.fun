@@ -1,4 +1,4 @@
-import {games,byId} from './catalogue.js?v=iris-globe-1';
+import {games,byId} from './catalogue.js?v=milk-props-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=iris-globe-1')).default;
+ engine=(await import(entry.module+'?v=milk-props-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
@@ -223,6 +223,7 @@ try{
  });
  listen(window,'keyup',e=>{input.keys.delete(e.key);if(playing)engine.key?.(state,e.key,false,input);});
  const actBox=$('#actions');if(actBox){actBox.hidden=true;actBox.replaceChildren();}
+ const hud=$('#hud');if(hud)hud.hidden=true;
  let silentHide=false;listen(document,'visibilitychange',()=>{if(document.hidden){if(!playing)return;silentHide=true;persist();stop();}else if(silentHide&&!playing&&!ended&&state){silentHide=false;start();}else{silentHide=false;}});
  // no blur→pause (mid-play rest veil)
  listen(window,'message',e=>{
