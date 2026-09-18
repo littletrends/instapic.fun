@@ -1,4 +1,4 @@
-import {games,byId} from './catalogue.js?v=dress-3j';
+import {games,byId} from './catalogue.js?v=iris-globe-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
@@ -176,7 +176,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=sep17-4')).default;
+ engine=(await import(entry.module+'?v=iris-globe-1')).default;
  document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
@@ -234,14 +234,9 @@ try{
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
  const img=$('#backdrop');
- if(engine.canvasControls){
-  img.removeAttribute('src');
-  img.hidden=true;
- }else{
-  img.hidden=false;
-  img.src=entry.asset;
-  img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
- }
+ img.hidden=false;
+ img.src=entry.asset;
+ img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
  if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;if(engine.tables){$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.textContent='Table · each chapter is a new set';}else if(engine.live){$('#chapter').disabled=true;$('#chapter').hidden=true;$('#restart').hidden=true;const lab=document.querySelector('label[for="chapter"]');if(lab)lab.hidden=true;}tellRoom('ready',{title:engine.title});}
  function loadImg(src){
   return new Promise(resolve=>{
