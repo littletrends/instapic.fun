@@ -12,7 +12,6 @@ const ART = { cx: 405, cy: 341, r: 325, w: 802, h: 1000 };
 const CX = 450;
 const CY = 428;
 const LOWER_CY = 1084;
-const RESULT_ACTION = {x: 250, y: 916, w: 400, h: 76};
 const R = 248;
 const START_PENNIES = 12;
 
@@ -185,7 +184,7 @@ function ringRadius(ringCount, ringIndex) {
 }
 
 function drawPlayControl(s, d, y) {
-  if (s.phase === 'flash') return;
+  if (s.phase === 'flash' || s.phase === 'result') return;
   const c=d.c, accent=['#edce88','#a8d7db','#ddb2ef','#a9c8f0','#e9adbd','#e7df9a'][s.level];
   d.circle(CX,y,76,'#24152eee',accent,3);
   c.save();c.textAlign='center';c.fillStyle=accent;c.font='600 23px Georgia,serif';
@@ -193,15 +192,7 @@ function drawPlayControl(s, d, y) {
   c.font='600 32px Georgia,serif';
   const ring=nextLiveRing(s.globe || s.preview)+1;
   c.fillText(s.phase==='spin'?(['1st','2nd','3rd'][ring-1]+' Ring'):'GAZE',CX,y+18);
-  if(s.phase==='result'){c.font='italic 22px Georgia,serif';c.fillText('again',CX,y+45);}
   c.restore();
-}
-
-function roundPath(c, x, y, w, h, r) {
-  const rr = Math.min(r, w / 2, h / 2);
-  c.beginPath();
-  if (c.roundRect) c.roundRect(x, y, w, h, rr);
-  else c.rect(x, y, w, h);
 }
 
 export default {
@@ -262,7 +253,7 @@ export default {
       ordinary: saved.ordinary || null,
       caught: !!saved.caught,
       won: !!saved.won || chapterOwned(level),
-      hold: 0, click: 0, requestNext: false,
+      hold: 0, click: 0,
       reduced: !!saved.reduced || reducedMotion(),
       note: ({"Bonus unlocked.":"Bonus collected.","Already unlocked.":"Already collected."}[saved.note] || saved.note) || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
@@ -301,22 +292,14 @@ export default {
   },
   pointer(s, type, p) {
     if (type !== "down") return;
-    const b = RESULT_ACTION;
-    if (s.phase === 'result' && s.fortune && p.x >= b.x && p.x <= b.x+b.w && p.y >= b.y && p.y <= b.y+b.h) {
-      if (!s.caught) beginGaze(s);
-      else if (s.level < IRIS_CHAPTERS.length-1) this.action(s, 'next-chapter');
-      return;
-    }
+    // Chapter results and retries belong to the shared player.
+    if (s.phase === 'result') return;
     const inGlobe = Math.hypot(p.x - CX, p.y - CY) <= 82 || Math.hypot(p.x - CX, p.y - LOWER_CY) <= 82;
     if (!inGlobe) return;
     if (s.phase === "idle" || s.phase === "result") beginGaze(s);
     else if (s.phase === "spin") brake(s);
   },
   action(s, id) {
-    if (id === "next-chapter") {
-      s.requestNext = true;
-      return;
-    }
     if (id === "gaze") {
       if (s.phase === "result") {
         s.phase = "idle";
@@ -450,29 +433,8 @@ export default {
       d.text("Practice", 158, 646, 16, "#f0d18f");
     }
 
-    if (s.phase === "result" && s.fortune) {
-      const hit = !!s.caught;
-      const unlocked = hit && (s.won || chapterOwned(s.level)) && !s.practice;
-      const banner = !hit ? "NOT THIS CATCH" : (unlocked ? "COLLECTED" : "LOCKED");
-      const ink = !hit ? "#f0b0b0" : (unlocked ? "#d8f08a" : "#ead6a4");
-      roundPath(c, 70, 720, 760, 284, 18);
-      c.fillStyle = "rgba(28, 18, 24, 0.94)";
-      c.fill();
-      c.strokeStyle = !hit ? "#e09090" : (unlocked ? "#c8e878" : "#e8c878");
-      c.lineWidth = 3;
-      c.stroke();
-      d.text(banner, CX, 762, 30, ink);
-      c.save();c.font='italic 34px "Palatino Linotype", "Book Antiqua", Georgia, serif';
-      c.fillStyle='#fff1d1';c.textAlign='center';
-      const words=s.fortune.split(' ');let line='',y=815;
-      for(const word of words){const trial=line ? line+' '+word : word;if(line && c.measureText(trial).width>660){c.fillText(line,CX,y);line=word;y+=42;}else line=trial;}
-      if(line)c.fillText(line,CX,y);c.restore();
-      d.text(s.note, CX, 898, 18, "#d2b98c");
-      const b = RESULT_ACTION, last = s.level === IRIS_CHAPTERS.length-1;
-      roundPath(c,b.x,b.y,b.w,b.h,16);
-      c.fillStyle='#452a50';c.fill();c.strokeStyle=unlocked?'#c8e878':(hit?'#e8c878':'#edce88');c.lineWidth=2;c.stroke();
-      d.text(hit ? (last ? 'Last chapter' : 'Next chapter') : 'Try again',CX,b.y+48,28,hit&&last?'#b5a58c':'#fff1d1');
-    } else if (s.note && s.phase !== "idle") {
+    // The shared result panel displays the reading and collection status.
+    if (s.note && s.phase !== "idle" && s.phase !== "result") {
       d.wrap(s.note, CX, 780, 24, "#fff0c8", 700, 8);
     }
     drawPlayControl(s, d, LOWER_CY);

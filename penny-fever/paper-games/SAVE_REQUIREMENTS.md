@@ -328,4 +328,26 @@ its first-attempt policy assertion predates this change.
 Remaining: no new exact-state persistence is claimed for other engines lacking
 save hooks, nor for Copper's single complimentary practice-tray slot when
 switching to a different practice chapter. Paid trays are tested separately.
-Deployment: pending publication of this change.
+Deployment: published as dd41aa4; GitHub Pages run 35418592411 succeeded. The live browser regression passed.
+
+
+## Remove duplicate chapter cards — 19 September 2026
+
+Iris no longer draws her legacy result rectangle, fortune text or next/retry
+buttons on the canvas. Her fortune and Locked/Collected note are presented only
+by the shared runtime panel. Finished canvas gaze controls are inert; the shared
+retry action still starts exactly one normal gaze. Iris and Copper no longer
+expose their obsolete next-chapter engine commands. Saved readings, rings, paid
+tray state and reward receipts retain their existing format and behaviour.
+
+Evidence: `check-cabinet-state.mjs` passes six-chapter exact restoration, saved
+readings, single-charge retry and inert removed hit targets, plus existing Copper
+accounting/receipt checks. `tests/chapter-menus.mjs` now exercises the shared end
+panel across all 33 open games and records canvas text to reject legacy chapter
+buttons. Iris uses an actual ring catch; the other end states are constructed
+fixtures. The existing four-engine browser return/reload checks also pass. The
+Iris phone result screenshot was inspected: one shared card, no old card behind
+it. Other engines' in-board scores and game information are not chapter popups.
+
+Deployment target: main / GitHub Pages, following the verified dd41aa4 release.
+This is a display/control cleanup; the remaining save limitations above still apply.

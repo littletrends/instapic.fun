@@ -378,7 +378,6 @@ export default {
       flash: 0,
       lastWin: 0,
       won: !!tray.treasureOwned,
-      requestNext: false,
       busy: false,
       note: practice
         ? "Complimentary first drop. Watch the hopper, then tap Drop."
@@ -504,8 +503,7 @@ export default {
     persistState(s);
   },
   action(s, id, count) {
-    if (s.warn && id !== "warn-pack" && id !== "warn-dump" && id !== "warn-keep" && id !== "next-chapter") return;
-    if (id === "next-chapter") s.requestNext = true;
+    if (s.warn && id !== "warn-pack" && id !== "warn-dump" && id !== "warn-keep") return;
     if (id === "pack5") {
       if (s.practice || s.busy || s.phase !== "idle") return;
       if (pursePackFive()) {
@@ -643,7 +641,7 @@ export default {
       c.strokeStyle = b.on ? "#f0d18f" : "#6a5a50";
       c.lineWidth = b.on ? 3 : 1.5;
       c.stroke();
-      d.text(b.label, b.x + b.w / 2, b.y + b.h / 2 + 7, b.id === "next-chapter" ? 24 : 18, b.on ? "#fff6d8" : "#8a7a70");
+      d.text(b.label, b.x + b.w / 2, b.y + b.h / 2 + 7, 18, b.on ? "#fff6d8" : "#8a7a70");
     });
   },
   readout(s) {

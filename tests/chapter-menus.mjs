@@ -15,16 +15,18 @@ try{
  const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});
  socket.onmessage=async e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);else if(m.method==='Fetch.requestPaused'){
   const p=m.params;if(p.request.url.includes('/paper-games/runtime.js?')){
-   const src=await readFile(new URL('penny-fever/paper-games/runtime.js',root),'utf8');
+   const response=await fetch(p.request.url);assert(response.ok);const src=await response.text();
    await send('Fetch.fulfillRequest',{requestId:p.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/javascript'}],body:Buffer.from(src+'\nwindow.__test={state:()=>state,engine:()=>engine,pause:stop,start,level:()=>level,playing:()=>playing,holds:()=>[...holds]};').toString('base64')});
   }else await send('Fetch.continueRequest',{requestId:p.requestId});
  }};
  const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});assert(!r.exceptionDetails,JSON.stringify(r.exceptionDetails));return r.result.value;};
  const until=async expression=>{for(let i=0;i<120;i++){if(await ev(expression))return;await sleep(100);}throw Error('Timed out: '+expression+' '+JSON.stringify(await ev('({url:location.href,error:document.querySelector("#error")?.textContent,body:document.body.innerText.slice(-1200)})')))};
- await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*paper-games/runtime.js?*'}]});
+ await send('Page.enable');await send('Runtime.enable');
+ await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.canvasLabels=[];const originalFillText=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){window.canvasLabels.push(String(text));return originalFillText.call(this,text,...args);};`});await send('Fetch.enable',{patterns:[{urlPattern:'*paper-games/runtime.js?*'}]});
  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  const base=process.env.CHAPTER_TEST_BASE||'http://127.0.0.1:4187';
- for(const id of ['fortune','coin-pusher','pinball','milk-bottles','funhouse','helter']){
+ const {games}=await import(new URL('penny-fever/paper-games/catalogue.js',root));
+ for(const {id} of games.filter(g=>g.ready&&g.id!=='snap')){
   await send('Page.navigate',{url:base+'/penny-fever/paper-games/play.html?stall='+id});await until('!!window.__test && !document.querySelector("#chapter").disabled');
   assert.equal(await ev('document.querySelector("#error").textContent'),'');
   assert.equal(await ev('document.querySelector("#chapter").options.length'),6,id+' six chapters');
@@ -42,27 +44,25 @@ try{
   await send('Page.reload');await until('!!window.__test');assert.equal(await ev('__test.level()'),5,id+' selected survives reload');
   await ev('document.querySelector("#chapter").value=0;document.querySelector("#chapter").dispatchEvent(new Event("change"));__test.pause()');
   // Exercise the real shared runtime with each engine's terminal-state contract.
-  const fixture=id==='fortune'?`Object.assign(__test.state(),{phase:'result',caught:true,fortune:'A bright future.',note:'Bonus collected.'})`:
+  const fixture=id==='fortune'?`(()=>{const s=__test.state(),e=__test.engine();s.phase='idle';s.charged=false;e.action(s,'gaze');e.update(s,3);for(let i=0;i<s.globe.rings.length;i++){const ring=s.globe.rings[i];ring.angle=ring.glyphs.indexOf(s.globe.flash[i])*Math.PI*2/ring.n;e.pointer(s,'down',{x:450,y:428});}})()`:
    id==='coin-pusher'?`Object.assign(__test.state(),{phase:'idle',busy:false});__test.state().tray.treasureOwned=true`:
    id==='pinball'?`__test.state().prizeKept=true;__test.state().chapterPrize.phase='gone'`:
    `__test.state().result={title:'Chapter cleared',detail:'Fixture completion',won:true,prize:null,settle:true}`;
-  await ev(fixture+';__test.start()');await until('!document.querySelector("#veil").hidden && document.querySelector("#begin").textContent==="Next chapter"');
+  await ev('window.canvasLabels=[];'+fixture+';__test.start()');await until('!document.querySelector("#veil").hidden && document.querySelector("#begin").textContent==="Next chapter"');
+  assert.deepEqual(await ev('canvasLabels.filter(t=>/next chapter|last chapter|try again|not this catch/i.test(t))'),[],id+' has no legacy chapter card on the canvas');
+  assert.equal(await ev('document.querySelectorAll("#veil:not([hidden])").length'),1,id+' uses one shared result panel');
+  if(id==='fortune'){
+   assert(await ev('__test.state().caught'),'real Iris catch completes');
+   assert(await ev('document.querySelector("#veil-detail").textContent.includes(__test.state().fortune)'),'shared panel retains Iris reading');
+   assert(!await ev('canvasLabels.includes(__test.state().fortune)'),'no duplicate canvas fortune');
+   const shot=await send('Page.captureScreenshot',{format:'png'});await writeFile('/tmp/iris-shared-result.png',Buffer.from(shot.data,'base64'));
+  }
   await ev('window.postMessage({channel:"pf-paper-world",type:"pause"},location.origin);window.postMessage({channel:"pf-paper-world",type:"resume"},location.origin)');await sleep(100);
   assert.equal(await ev('document.querySelector("#begin").textContent'),'Next chapter','Menu close preserves result');
   await ev('document.querySelector("#begin").click()');assert.equal(await ev('__test.level()'),1,id+' completion advances');
   console.log('PASS '+id+': terminal popup, next/previous/select, reload, help pause, mobile fit');
  }
- // Every available game uses the same chapter selector and keeps it usable on a phone.
- const {games}=await import(new URL('penny-fever/paper-games/catalogue.js',root));
- for(const game of games.filter(g=>g.ready&&g.id!=='snap')){
-  await send('Page.navigate',{url:base+'/penny-fever/paper-games/play.html?stall='+game.id});
-  await until('!!window.__test && !!__test.state()');
-  assert.equal(await ev('document.querySelector("#error").textContent'),'',game.id+' loads');
-  await ev('document.querySelector("#chapter").value=5;document.querySelector("#chapter").dispatchEvent(new Event("change"))');
-  assert.equal(await ev('__test.level()'),5,game.id+' chapter six');
-  await ev('document.querySelector("#previous-chapter").click()');assert.equal(await ev('__test.level()'),4);
- }
- console.log('PASS all 33 open games: chapter selector, last chapter and previous chapter');
+ console.log('PASS all 33 open games: one shared result panel, no canvas chapter buttons, chapter navigation and reload');
  assert.deepEqual(errors,[],'No browser exceptions');
  // Full alley shell: use a private fixture wallet, real vendor and inventory UI stub.
  await send('Page.navigate',{url:base+'/tests/fixtures/chapter-menu.html'});await until('!!document.querySelector("iframe")?.contentWindow?.__test');

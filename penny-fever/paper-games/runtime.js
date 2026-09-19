@@ -176,7 +176,6 @@ function tick(now){
   if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
   // Allow an earned prize to reach Treasures before opening the result panel.
   if(!completion)engine.update?.(state,dt,input);
-  if(state.requestNext){state.requestNext=false;if(level<engine.levels.length-1){goNextChapter();return;}}
   const house=houseSpec();
   if(!completion&&house&&!state.result&&(engine.clockRuns?.(state)??true)){
    if(state.houseLeft==null)state.houseLeft=house.seconds;
@@ -220,7 +219,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=milk-clean-1')).default;
+ engine=(await import(entry.module+'?v=chapter-menu-2')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

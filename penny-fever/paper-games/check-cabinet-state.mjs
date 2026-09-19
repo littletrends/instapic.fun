@@ -45,10 +45,12 @@ let lower=iris.create(0);lower.phase='idle';lower.charged=false;cash=20;
 let charged=debits.length;iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1);
 iris.pointer(lower,'down',{x:450,y:428});assert.equal(debits.length,charged+1,'second control cannot double-charge');
 iris.update(lower,3);iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result');
-lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1,'Try again costs one normal gaze');
-lower.phase='result';lower.fortune='A test reading.';lower.caught=true;lower.requestNext=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert(lower.requestNext);assert.equal(debits.length,charged,'Next chapter does not buy a gaze');
-lower.level=5;lower.requestNext=false;iris.pointer(lower,'down',{x:450,y:954});assert(!lower.requestNext,'last chapter cannot advance');
-console.log('PASS: both gaze controls, single charge, result retry/advance and final chapter boundary.');
+lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert.equal(lower.phase,'result');assert.equal(debits.length,charged,'removed result button cannot buy a gaze');
+iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result','result canvas has no retry control');
+iris.action(lower,'gaze');assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1,'shared retry buys one normal gaze');
+lower.phase='result';lower.fortune='A test reading.';lower.caught=true;charged=debits.length;
+for(const level of [0,5]){lower.level=level;iris.pointer(lower,'down',{x:450,y:954});iris.action(lower,'next-chapter');assert(!lower.requestNext);assert.equal(debits.length,charged);}
+console.log('PASS: both gaze controls, single charge, shared retry, inert legacy result controls and saved readings.');
 
 for(let level=0;level<6;level++){
  const tray=copper.create(level);
