@@ -98,7 +98,7 @@ try{
   await ev(`(()=>{const t=${f}.__test,s=t.state(),e=t.engine();t.pause();${id==='fortune'?"e.action(s,'gaze');e.update(s,.4)":id==='coin-pusher'?"e.action(s,'drop1');e.update(s,.1)":id==='milk-bottles'?"e.action(s,'play');s.houseLeft=47":"s.houseLeft=47;s.credit=2"};e.persist(s);})()`);
   const saved=await ev(`(()=>{const s=${f}.__test.state();return ${snapshot};})()`);
   const pennies=await ev('window.fixtureCash');
-  await ev(`const c=${f}.document.querySelector('#chapter');c.value=1;c.dispatchEvent(new Event('change'));c.value=0;c.dispatchEvent(new Event('change'));`);
+  await ev(`const c=${f}.document.querySelector('#chapter');c.value=1;c.dispatchEvent(new Event('change'));c.value=0;c.dispatchEvent(new Event('change'));${f}.__test.pause()`);
   const returned=await ev(`(()=>{const s=${f}.__test.state();return ${snapshot};})()`);
   assert.deepEqual(returned,saved,id+' exact state on chapter return');
   assert.equal(await ev('window.fixtureCash'),pennies,id+' switching does not charge');

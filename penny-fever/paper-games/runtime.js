@@ -84,7 +84,13 @@ function publishChapter(){
 function goChapter(target){
  if(!Number.isInteger(target)||target<0||target>=engine.levels.length||target===level)return;
  if($('#game-help').open){resumeAfterHold=false;closeHelp();}
- persist();level=target;reset();persist();
+ persist();
+ level=target;
+ reset();
+ // Choosing a chapter is an explicit request to enter that chapter. Keep the
+ // board visible and ready instead of leaving the new chapter behind Begin.
+ start();
+ persist();
 }
 function retryChapter(){
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
