@@ -1,404 +1,557 @@
-import {clamp, done} from '../draw.js';
+import { paintProps, paintBea, preloadKit, getKit, needsCharacter } from '../prop-kit.js?v=props-6';
+import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep} from '../wallet.js?v=heartstrings-1';
+import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-1';
+import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
+import {
+ LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
+ isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
+} from '../love-arithmetic.js?v=love-ux-1';
+import { paintLayout as paintHoleLayout } from '../layouts/love.js?v=love-ux-1';
 
-const PIVOT = {x: 450, y: 258};
-const LEN = 300;
-const CLOCK = 48;
-const HEART_R = 20;
-const PULL = 1.14;
-const BALLS = ['pressed-heart', 'heart-biscuit', 'rose-penny'];
-const SETS = [
-  {prize: 'rose-hair-bow', felt: '#3a2430cc', wood: '#5a3a38', ribbon: '#e8b8c4', bat: '#f0c4cc', lid: false, wind: 0, drift: 36, bob: 10, catch: 58},
-  {prize: 'rose-press', felt: '#2a2438cc', wood: '#4a3228', ribbon: '#e0b070', bat: '#f0d0a0', lid: false, wind: 22, drift: 54, bob: 16, catch: 50},
-  {prize: 'rose-lockbox', felt: '#241820cc', wood: '#3a2a22', ribbon: '#d4a090', bat: '#e8c4b0', lid: false, wind: 40, drift: 72, bob: 22, catch: 44},
-  {prize: 'kindness-heart', felt: '#1c1828ee', wood: '#3a1c18', ribbon: '#c89090', bat: '#e0b0a8', lid: true, wind: 52, drift: 88, bob: 28, catch: 38},
-  {prize: 'friendship-pins', felt: '#18141cee', wood: '#2a1814', ribbon: '#b09088', bat: '#d4b0a8', lid: true, wind: 68, drift: 108, bob: 34, catch: 34},
-  {prize: 'ribbon-gift-box', felt: '#141018ee', wood: '#241414', ribbon: '#d4a0a8', bat: '#e8b8c0', lid: true, wind: 84, drift: 128, bob: 40, catch: 30},
-];
-const SPRITES = ['pressed-heart', 'heart-biscuit', 'rose-penny', 'rose-lockbox', 'rose-hair-bow',
-  'rose-press', 'kindness-heart', 'friendship-pins', 'ribbon-gift-box', 'penny-purse', 'everyday-penny'];
+const BOOK = 'pennyFever.rosalieTester';
+const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
+const DIGITS = '0123456789'.split('');
 
-function chapterPrize(s) {
-  return SETS[s.level]?.prize || null;
+function roundRect(c, x, y, w, h, r) {
+ const rr = Math.min(r, w / 2, h / 2);
+ c.beginPath();
+ c.moveTo(x + rr, y);
+ c.arcTo(x + w, y, x + w, y + h, rr);
+ c.arcTo(x + w, y + h, x, y + h, rr);
+ c.arcTo(x, y + h, x, y, rr);
+ c.arcTo(x, y, x + w, y, rr);
+ c.closePath();
 }
-function heartId(s) {
-  return BALLS[s.level % BALLS.length];
+function wrapLine(d, text, x, y, size, color, maxW) {
+ const c = d.c;
+ c.font = `500 ${size}px Georgia,serif`;
+ const words = String(text).split(' ');
+ let line = '', ly = y;
+ for (const word of words) {
+ const trial = line ? line + ' ' + word : word;
+ if (line && c.measureText(trial).width > maxW) {
+ d.text(line, x, ly, size, color);
+ line = word;
+ ly += size + 8;
+ } else line = trial;
+ }
+ if (line) d.text(line, x, ly, size, color);
+ return ly;
 }
-function nest(s) {
-  const set = s.set || SETS[s.level] || SETS[0];
-  const speed = 0.62 + s.level * 0.11;
-  const lidShut = set.lid && Math.sin(s.t * (1.35 + s.level * 0.16)) <= (s.level >= 5 ? 0.22 : -0.02);
-  return {
-    x: 450 + Math.sin(s.t * speed) * set.drift,
-    y: 798 - Math.sin(s.t * speed * 0.72) * set.bob,
-    r: set.catch,
-    open: !lidShut,
-  };
+function hit(p, b) {
+ return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
-function place(s) {
-  s.x = PIVOT.x + Math.sin(s.angle) * LEN;
-  s.y = PIVOT.y + Math.cos(s.angle) * LEN;
+function plateBox(which, two) {
+ // Leave a wide centre gap so the chapter WORD sits as the hero between plates.
+ const h = 78;
+ if (!two) return {x: 190, y: 250, w: 520, h};
+ const w = 200;
+ return which === 0 ? {x: 48, y: 220, w, h} : {x: 652, y: 220, w, h};
 }
-function seatIdle(s) {
-  s.mode = 'idle';
-  s.attached = true;
-  s.charging = false;
-  s.charge = 0;
-  s.pointerThread = false;
-  s.angle = -0.16;
-  s.omega = 0;
-  s.vx = 0;
-  s.vy = 0;
-  s.trail = [];
-  s.wait = 0;
-  s.stuck = 0;
-  place(s);
+function submitBox() {
+ return {x: 300, y: 520, w: 300, h: 56};
 }
-function canAfford() {
-  if (!alleyPlay) return true;
-  return (pocket() || 0) >= 1;
+function namesReady(s) {
+ const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
+ const you = normalizeName(s.you);
+ if (!you) return false;
+ if (ch.bLabel && !normalizeName(s.them)) return false;
+ return true;
 }
-function beginThread(s) {
-  if (s.mode !== 'idle' || s.charging || s.won) return;
-  if (!canAfford()) {
-    s.note = alleyPlay
-      ? 'Need a penny to thread the ribbon. Cash a booth ticket for a five-penny stack.'
-      : 'The practice ribbon is spent.';
-    return;
-  }
-  s.charging = true;
-  s.charge = 0.02;
+function keyBox(i) {
+ const cols = 7, w = 56, h = 48, gap = 8;
+ const row = Math.floor(i / cols), col = i % cols;
+ const total = cols * w + (cols - 1) * gap;
+ return {x: 450 - total / 2 + col * (w + gap), y: 620 + row * (h + gap), w, h};
 }
-function releaseThread(s) {
-  if (s.mode !== 'idle' || !s.charging) { s.charging = false; return; }
-  const power = s.charge;
-  s.charging = false;
-  s.charge = 0;
-  s.pointerThread = false;
-  if (power < 0.1) {
-    s.angle = -0.16;
-    place(s);
-    s.note = 'A timid thread. Draw the ribbon further back.';
-    return;
-  }
-  if (alleyPlay) {
-    if (!spend(1)) {
-      s.note = 'Need a penny to thread the ribbon. Cash a booth ticket for a five-penny stack.';
-      s.angle = -0.16;
-      place(s);
-      return;
-    }
-  }
-  s.mode = 'live';
-  s.attached = true;
-  s.clock = s.clockMax || CLOCK;
-  s.hearts++;
-  s.omega = 0.55 + power * 1.55;
-  s.note = power > 0.72 ? 'A strong thread. Lean, then let go.' : 'The heart is live. Pump the swing, then let go.';
+function digitBox(i) {
+ const w = 64, h = 64, gap = 10;
+ const total = 10 * w + 9 * gap;
+ return {x: 450 - total / 2 + i * (w + gap), y: 760, w, h};
 }
-function letGo(s) {
-  if (s.won || s.mode !== 'live' || !s.attached || s.wait) return;
-  s.attached = false;
-  s.vx = Math.cos(s.angle) * LEN * s.omega;
-  s.vy = -Math.sin(s.angle) * LEN * s.omega;
-  s.shots++;
-  s.trail = [];
-  s.note = 'A little leap — nudge it if the lockbox drifts.';
+
+function emptyBook() {
+ return {v: 1, used: {}, paid: {}, sittings: {}};
 }
-function rewind(s, why) {
-  s.attached = true;
-  s.wait = 0;
-  s.vx = 0;
-  s.vy = 0;
-  s.trail = [];
-  s.stuck = 0;
-  if (Math.abs(s.omega) < 0.35) s.omega = (s.angle < 0 ? 0.7 : -0.7);
-  place(s);
-  s.note = why || 'The ribbon caught you. Lean and let go again — the clock is still running.';
+function readBook() {
+ if (typeof localStorage === 'undefined') return emptyBook();
+ try {
+ const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+ if (blob && blob.v === 1) return {used: {}, paid: {}, sittings: {}, ...blob};
+ } catch {}
+ return emptyBook();
 }
-function drain(s) {
-  s.mode = 'dead';
-  s.deadAt = s.t;
-  s.charging = false;
-  s.charge = 0;
-  s.attached = true;
-  s.vx = 0;
-  s.vy = 0;
-  s.note = alleyPlay
-    ? 'The ribbon went still. Another penny to thread another heart.'
-    : 'Time. Thread the ribbon again.';
+function writeBook(book) {
+ if (!alleyPlay || typeof localStorage === 'undefined') return;
+ try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
 }
-function fly(s, id, x, y) {
-  s.fly.push({id, x, y, t: 0, dur: 0.7});
+function usedMap(level) {
+ return readBook().used[String(level)] || {};
 }
-function claim(s) {
-  if (s.won || s.prizeOut) return;
-  const prize = chapterPrize(s);
-  if (!prize) return;
-  s.prizeOut = true;
-  s.won = true;
-  s.mode = 'won';
-  s.settle = 0.7;
-  s.attached = false;
-  s.vx = 0;
-  s.vy = 0;
-  s.x = s.box.x;
-  s.y = s.box.y;
-  s.note = itemName(prize) + ' — you knocked it off the lockbox!';
-  if (alleyPlay) keep(prize, 'love');
-  fly(s, prize, s.x, s.y);
+function rememberUse(level, key, pct) {
+ if (!alleyPlay) return;
+ const book = readBook();
+ book.used[String(level)] = book.used[String(level)] || {};
+ book.used[String(level)][key] = pct;
+ writeBook(book);
+}
+function chapterPaid(level) {
+ return !!(readBook().paid && readBook().paid[String(level)]);
+}
+function markPaid(level) {
+ if (!alleyPlay) return;
+ const book = readBook();
+ book.paid = book.paid || {};
+ book.paid[String(level)] = true;
+ writeBook(book);
+}
+
+function persist(s) {
+ if (!alleyPlay || typeof localStorage === 'undefined' || !s) return;
+ const book = readBook();
+ book.sittings[String(s.level)] = {
+ you: s.you, them: s.them, focus: s.focus, phase: s.phase,
+ reads: s.reads, charged: !!s.charged, launchId: s.launchId || 0,
+ trueCounts: s.trueCounts, playerCounts: s.playerCounts,
+ countIndex: s.countIndex, addRow: s.addRow, addCol: s.addCol,
+ playerRows: s.playerRows, pct: s.pct, reading: s.reading,
+ mistakes: s.mistakes, hints: s.hints, won: !!s.won,
+ note: s.note, mercury: s.mercury || 0,
+ };
+ writeBook(book);
+}
+
+function combined(s) {
+ const ch = LOVE_CHAPTERS[s.level];
+ return ch.bLabel ? (s.you + ' ' + s.them) : s.you;
+}
+
+function typeInto(s, ch) {
+ if (s.phase !== 'edit') return;
+ const two = !!(LOVE_CHAPTERS[s.level].bLabel);
+ const key = !two || s.focus === 0 ? 'you' : 'them';
+ if (ch === 'del') s[key] = s[key].slice(0, -1);
+ else if (ch === 'space') {
+ if (s[key].length && s[key].length < 16 && !s[key].endsWith(' ')) s[key] += ' ';
+ } else if (s[key].length < 16) s[key] += ch;
+ persist(s);
+}
+
+function emptyNote() {
+ return alleyPlay
+ ? 'A penny for a sitting. Cash a ticket at Copper Falls.'
+ : 'Fill the paper, then begin.';
+}
+
+function beginAttempt(s) {
+ if (s.phase !== 'edit' && s.phase !== 'wait') return;
+ if (s.chargeLock) return;
+ const ch = LOVE_CHAPTERS[s.level];
+ const you = normalizeName(s.you);
+ const them = ch.bLabel ? normalizeName(s.them) : '';
+ if (!you || (ch.bLabel && !them)) {
+ s.note = 'Fill the paper, darling.';
+ s.shake = 0.35;
+ return;
+ }
+ const key = normalizeKey(ch.bLabel ? [you, them] : [you]);
+ const used = usedMap(s.level);
+ if (Object.prototype.hasOwnProperty.call(used, key)) {
+ s.note = 'Those two names still make ' + used[key] + ', darling. Arithmetic has not changed its mind. Try a nickname.';
+ s.shake = 0.4;
+ return;
+ }
+ s.chargeLock = true;
+ try {
+ if (!s.charged) {
+ if (alleyPlay) {
+ if (!takeAttempt('love', s.level)) { s.note = retryNote(); return; }
+ }
+ s.charged = true;
+ s.launchId = (s.launchId || 0) + 1;
+ }
+ s.trueCounts = countWord(combined(s), ch.word);
+ s.trueAdd = addDown(s.trueCounts);
+ s.playerCounts = [];
+ s.countIndex = 0;
+ s.addRow = 1;
+ s.addCol = 0;
+ s.playerRows = [s.trueCounts.map(() => null)];
+ s.phase = 'count';
+ s.reads += 1;
+ s.mistakes = 0;
+ s.hints = 0;
+ s.prizeKept = false;
+ s.mercury = 0.08;
+ const repeats = repeatedLetters(ch.word);
+ s.note = repeats.length
+ ? ch.word + ' repeats ' + repeats.join(' and ') + '. Count each column. How many ' + ch.word[0] + '?'
+ : 'How many ' + ch.word[0] + ' in the names?';
+ persist(s);
+ } finally {
+ s.chargeLock = false;
+ }
+}
+
+function enterDigit(s, digit) {
+ const n = Number(digit);
+ if (s.phase === 'count') {
+ const ch = LOVE_CHAPTERS[s.level];
+ const need = s.trueCounts[s.countIndex];
+ if (n !== need) {
+ s.mistakes += 1;
+ s.shake = 0.35;
+ s.note = 'The spirits are mysterious. Your addition is simply wrong. Count the ' + ch.word[s.countIndex] + ' again.';
+ persist(s);
+ return;
+ }
+ s.playerCounts[s.countIndex] = n;
+ s.countIndex += 1;
+ s.mercury = s.countIndex / ch.word.length * 0.45;
+ if (s.countIndex >= ch.word.length) {
+ s.playerRows = [s.trueCounts.slice()];
+ if (s.trueCounts.length <= 2) {
+ finishMath(s);
+ return;
+ }
+ s.phase = 'add';
+ s.addRow = 1;
+ s.addCol = 0;
+ s.note = 'Add the neighbours. ' + s.trueCounts[0] + ' + ' + s.trueCounts[1] + ' ends in…';
+ persist(s);
+ return;
+ }
+ s.note = 'How many ' + ch.word[s.countIndex] + '?';
+ persist(s);
+ return;
+ }
+ if (s.phase === 'add') {
+ const prev = s.trueAdd.rows[s.addRow - 1];
+ const need = sumPair(prev[s.addCol], prev[s.addCol + 1]);
+ if (n !== need) {
+ s.mistakes += 1;
+ s.shake = 0.35;
+ s.note = 'Not that digit. ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' ends in which number?';
+ persist(s);
+ return;
+ }
+ s.playerRows[s.addRow] = s.playerRows[s.addRow] || [];
+ s.playerRows[s.addRow][s.addCol] = n;
+ s.addCol += 1;
+ const rowLen = prev.length - 1;
+ if (s.addCol >= rowLen) {
+ const filled = [];
+ for (let i = 0; i < rowLen; i++) filled.push(s.playerRows[s.addRow][i]);
+ s.playerRows[s.addRow] = filled;
+ s.mercury = 0.45 + (s.addRow / Math.max(1, s.trueAdd.rows.length - 1)) * 0.45;
+ if (rowLen <= 2) {
+ finishMath(s);
+ return;
+ }
+ s.addRow += 1;
+ s.addCol = 0;
+ const nextPrev = s.trueAdd.rows[s.addRow - 1];
+ s.note = 'Next line. ' + nextPrev[0] + ' + ' + nextPrev[1] + ' ends in…';
+ persist(s);
+ return;
+ }
+ const nextPrev = s.trueAdd.rows[s.addRow - 1];
+ s.note = nextPrev[s.addCol] + ' + ' + nextPrev[s.addCol + 1] + ' ends in…';
+ persist(s);
+ }
+}
+
+function finishMath(s) {
+ const pct = s.trueAdd.pct;
+ const key = normalizeKey(LOVE_CHAPTERS[s.level].bLabel ? [s.you, s.them] : [s.you]);
+ rememberUse(s.level, key, pct);
+ s.pct = pct;
+ s.phase = 'result';
+ s.reading = readingFor(s.level, pct);
+ s.charged = false;
+ s.mercury = 1;
+ const drop = ordinaryFor(pct);
+ const prize = LOVE_CHAPTERS[s.level].prize;
+ const win = isLoveWin(s.level, pct) && !chapterPaid(s.level) && !s.won;
+ if (alleyPlay) {
+ if (drop === 'everyday-penny') credit(1);
+ else if (drop) keep(drop, 'love');
+ if (win) {
+ keep(prize, 'love');
+ markPaid(s.level);
+ s.won = true;
+ }
+ } else if (win) s.won = true;
+ if (win) takePrize(s, prize, {x: 720, y: 200});
+ s.hold = 1.3;
+ s.note = s.reading;
+ persist(s);
+}
+
+function hint(s) {
+ if (s.phase === 'count') {
+ s.hints += 1;
+ s.note = 'Rosalie circles a letter. There are ' + s.trueCounts[s.countIndex] + ' ' + LOVE_CHAPTERS[s.level].word[s.countIndex] + '.';
+ persist(s);
+ return;
+ }
+ if (s.phase === 'add') {
+ const prev = s.trueAdd.rows[s.addRow - 1];
+ s.hints += 1;
+ s.note = 'A red-pencil hint: ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' ends in ' + sumPair(prev[s.addCol], prev[s.addCol + 1]) + '.';
+ persist(s);
+ }
 }
 
 export default {
-  title: 'Heartstrings',
-  live: alleyPlay,
-  tables: true,
-  chapterEnds: true,
-  intro: alleyPlay
-    ? 'Rosalie’s tiny theatre. Six valentine cabinets. A penny threads the ribbon. The heart is live on a clock — lean to pump the swing, let go into the lockbox, nudge in the air. Hit this chapter’s keepsake hanging on the lockbox to keep it. Time or a still ribbon, and another penny threads another heart.'
-    : 'Workshop ribbon. Thread the heart, lean to pump, let go, nudge in the air. Hit the hanging prize.',
-  instructions: alleyPlay
-    ? 'Hold Thread and release (one penny). Z / X or the sides of the carpet lean the swing; in the air they still nudge. Let go, or tap the stage, to send the heart. A clock runs while it is live. Hit the prize on the lockbox to stamp it. Later cabinets shut their mouths — wait for a yawn. Cash a booth ticket for a five-penny stack.'
-    : 'Hold Thread. Z and X lean. Let go into the lockbox. Hit the hanging prize.',
-  liveTitle: 'Heartstrings',
-  liveDetail: alleyPlay
-    ? 'A penny threads the ribbon. Hit the prize hanging on the lockbox. The clock is running.'
-    : 'Thread the ribbon. Hit the prize. Lean, let go, nudge.',
-  liveButton: 'Step up to the ribbon',
-  tableDetail: alleyPlay
-    ? 'A penny threads the ribbon. Hit this cabinet’s prize on the lockbox to keep it. Time runs out — another penny for another heart. Lean, let go, and nudge in the air.'
-    : 'Hit the hanging prize. Lean, let go, nudge.',
-  levels: ['First flutter', 'A change of heart', 'Hearts on the breeze', 'The restless lockbox', 'A hurried valentine', 'A gale of valentines'],
-  sprites: SPRITES,
-  prizes: SETS.map(t => t.prize),
-  actions: [
-    {id: 'left', label: 'Lean left · Z', hold: true},
-    {id: 'thread', label: alleyPlay ? 'Thread · 1 penny' : 'Thread the ribbon', hold: true},
-    {id: 'release', label: 'Let go'},
-    {id: 'right', label: 'Lean right · X', hold: true},
-  ],
-  create(level) {
-    const set = SETS[level] || SETS[0];
-    const s = {
-      level, t: 0, set, mode: 'idle', charge: 0, charging: false, pointerThread: false,
-      left: false, right: false, attached: true, angle: -0.16, omega: 0,
-      x: 0, y: 0, vx: 0, vy: 0, trail: [], fly: [], wait: 0, stuck: 0,
-      hearts: 0, shots: 0, score: 0, won: false, prizeOut: false, settle: 0,
-      clockMax: Math.max(28, CLOCK - level * 3), clock: Math.max(28, CLOCK - level * 3),
-      box: {x: 450, y: 798, r: set.catch, open: true},
-      note: alleyPlay
-        ? 'A penny threads the ribbon. Hit the prize on the lockbox to keep it.'
-        : 'Thread the ribbon. Hit the prize.',
-    };
-    seatIdle(s);
-    s.box = nest(s);
-    return s;
-  },
-  update(s, dt, input) {
-    s.t += dt;
-    s.box = nest(s);
-    if (s.mode === 'won') {
-      s.x = s.box.x;
-      s.y = s.box.y;
-      for (const f of s.fly) f.t += dt;
-      s.fly = s.fly.filter(f => f.t < f.dur);
-      s.settle = Math.max(0, (s.settle || 0) - dt);
-      if (s.settle <= 0 && !s.result) {
-        const prize = chapterPrize(s);
-        done(s, 'A little leap of faith',
-          itemName(prize) + ' flies into the treasure book. Rosalie would call that a connection.',
-          {prize, won: true});
-      }
-      return;
-    }
-    if (s.mode === 'live') {
-      s.clock = Math.max(0, (s.clock ?? s.clockMax) - dt);
-      if (s.clock <= 0) drain(s);
-    }
-    const wantL = s.left || input.actions.has('left') || input.keys.has('z') || input.keys.has('Z') || input.keys.has('ArrowLeft');
-    const wantR = s.right || input.actions.has('right') || input.keys.has('x') || input.keys.has('X') || input.keys.has('ArrowRight');
-    const holdThread = s.pointerThread || input.actions.has('thread') || input.keys.has(' ');
-    if (s.mode === 'idle') {
-      if (holdThread) beginThread(s);
-      if (s.charging) {
-        if (holdThread && !s.pointerThread) s.charge = clamp(s.charge + dt * 1.28, 0, 1);
-        s.angle = -0.18 - s.charge * PULL;
-        s.omega = 0;
-        place(s);
-      }
-      if (s.charging && !holdThread) releaseThread(s);
-    } else if (s.mode === 'dead') {
-      if (s.t - s.deadAt > 0.8) seatIdle(s);
-    }
-    if (s.mode !== 'live') {
-      for (const f of s.fly) f.t += dt;
-      s.fly = s.fly.filter(f => f.t < f.dur);
-      return;
-    }
-    if (s.wait) {
-      s.wait -= dt;
-      if (s.wait <= 0) rewind(s);
-      return;
-    }
-    const pump = (wantR ? 1 : 0) - (wantL ? 1 : 0);
-    if (s.attached) {
-      s.omega += (-2.2 * Math.sin(s.angle) + pump * 0.82) * dt;
-      s.omega *= Math.exp(-0.008 * dt);
-      s.omega = clamp(s.omega, -2.45, 2.45);
-      s.angle += s.omega * dt;
-      place(s);
-      if (Math.abs(s.omega) < 0.05 && Math.abs(s.angle) < 0.1) {
-        s.stuck += dt;
-        if (s.stuck > 1.15) {
-          s.omega += s.angle <= 0 ? 0.85 : -0.85;
-          s.stuck = 0;
-        }
-      } else s.stuck = 0;
-    } else {
-      const set = s.set || SETS[s.level] || SETS[0];
-      s.vx += Math.sin(s.t * 0.9) * set.wind * dt;
-      s.vx += pump * 210 * dt;
-      s.vy += 460 * dt;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      s.trail.push({x: s.x, y: s.y});
-      if (s.trail.length > 22) s.trail.shift();
-      const box = s.box;
-      const reach = Math.hypot(s.x - box.x, s.y - box.y);
-      if (reach < box.r) {
-        if (box.open) {
-          s.score += 2500;
-          claim(s);
-          return;
-        }
-        if (s.vy > 0) {
-          s.vy = -Math.abs(s.vy) * 0.42;
-          s.vx += (s.x < box.x ? -90 : 90);
-          s.note = 'The lockbox closed its mouth. Wait for a yawn.';
-        }
-      } else if (s.y > 1108 || s.x < 118 || s.x > 782) {
-        s.score += 40;
-        s.wait = 0.35;
-        s.note = 'The ribbon caught you. Try letting go a little earlier or later.';
-      }
-    }
-    for (const f of s.fly) f.t += dt;
-    s.fly = s.fly.filter(f => f.t < f.dur);
-  },
-  pointer(s, type, p) {
-    if (type === 'down') {
-      if (s.mode === 'idle') {
-        s.pointerThread = true;
-        beginThread(s);
-        s.charge = clamp((p.y - (PIVOT.y + LEN - 20)) / 130, 0.05, 1);
-      } else if (s.mode === 'live' && s.attached) {
-        if (p.y > 1110) {
-          if (p.x < 380) s.left = true;
-          else if (p.x > 520) s.right = true;
-        } else letGo(s);
-      } else if (s.mode === 'live') {
-        if (p.x < 450) s.left = true;
-        else s.right = true;
-      }
-    }
-    if (type === 'move' && s.pointerThread && s.mode === 'idle') {
-      s.charge = clamp((p.y - (PIVOT.y + LEN - 20)) / 130, 0.05, 1);
-    }
-    if (type === 'up' || type === 'cancel') {
-      if (s.pointerThread) { s.pointerThread = false; releaseThread(s); }
-      s.left = false;
-      s.right = false;
-    }
-  },
-  action(s, id, down) {
-    if (id === 'left') s.left = !!down;
-    if (id === 'right') s.right = !!down;
-    if (id === 'thread') {
-      if (down) beginThread(s);
-      else releaseThread(s);
-    }
-    if (id === 'release' && down) letGo(s);
-  },
-  key(s, k, down) {
-    if ((k === 'z' || k === 'Z' || k === 'ArrowLeft') && !down) s.left = false;
-    if ((k === 'x' || k === 'X' || k === 'ArrowRight') && !down) s.right = false;
-    if (k === ' ') {
-      if (s.mode === 'idle') {
-        if (down) beginThread(s);
-        else releaseThread(s);
-      } else if (down) letGo(s);
-    }
-    if (down && (k === 'Enter' || k === 'r' || k === 'R')) letGo(s);
-  },
-  draw(s, d, _t, input) {
-    const set = s.set || SETS[s.level] || SETS[0];
-    const leftOn = s.left || input?.keys?.has('z') || input?.keys?.has('Z') || input?.keys?.has('ArrowLeft') || input?.actions?.has('left');
-    const rightOn = s.right || input?.keys?.has('x') || input?.keys?.has('X') || input?.keys?.has('ArrowRight') || input?.actions?.has('right');
-    const threadOn = s.charging || input?.actions?.has('thread') || (s.mode === 'idle' && input?.keys?.has(' '));
-    d.poly([[70, 36], [300, 36], [300, 118], [70, 118]], '#161022cc', '#e6c57a', 2);
-    d.text('HEARTSTRINGS', 185, 68, 16, '#fff3d0');
-    d.text(String(s.score).padStart(6, '0'), 185, 96, 16, '#f0d49a');
-    d.arc(PIVOT.x, PIVOT.y + 8, 168, Math.PI, 0, '#e7b482', 7);
-    d.ring(PIVOT.x, PIVOT.y, 12, '#e7b482', 3);
-    if (s.attached) {
-      d.line(PIVOT, {x: s.x, y: s.y}, '#6d4356', 6);
-      d.line({x: PIVOT.x - 2, y: PIVOT.y}, {x: s.x - 2, y: s.y}, set.ribbon, 3);
-      if (s.mode === 'live') {
-        let x = s.x, y = s.y, vx = Math.cos(s.angle) * LEN * s.omega, vy = -Math.sin(s.angle) * LEN * s.omega;
-        for (let i = 0; i < 16; i++) {
-          vy += 460 * 0.032;
-          x += vx * 0.032;
-          y += vy * 0.032;
-          d.circle(x, y, 2.2, '#f7e3b894');
-        }
-      }
-    }
-    d.path(s.trail, '#f7ccbf88', 4);
-    const box = s.box;
-    if (box.open) d.glow(box.x, box.y, 70, '#ffdca5');
-    d.item(spriteKey('rose-lockbox'), box.x, box.y + 8, {
-      w: 78, alpha: box.open ? 1 : 0.55,
-      fallback: () => d.poly([[box.x - 50, box.y], [box.x - 34, box.y + 40], [box.x + 34, box.y + 40], [box.x + 50, box.y]], '#b77774', '#edc993', 3),
-    });
-    d.item(spriteKey(set.prize), box.x, box.y - 18, {
-      w: s.prizeOut ? 28 : 44, alpha: s.prizeOut ? 0.3 : (box.open ? 1 : 0.4),
-      fallback: () => d.heart(box.x, box.y - 18, 16, '#c95c79'),
-    });
-    if (!s.prizeOut) d.text(box.open ? 'hit' : 'shut', box.x, box.y + 52, 12, box.open ? '#f0d6a8' : '#c4a0a8');
-    d.item(spriteKey(heartId(s)), s.x, s.y, {
-      w: 52, angle: s.attached ? s.angle : Math.atan2(s.vy, s.vx) + Math.PI / 2,
-      fallback: () => d.heart(s.x, s.y, 22, '#c95c79'),
-    });
-    d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
-    d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
-    d.circle(450, 1148, 14, threadOn ? '#f0d080' : '#3a2a2288', '#c4a46a66', 1);
-    d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
-    d.text('Z', 210, 1152, 12, '#fff6d8');
-    d.text('X', 690, 1152, 12, '#fff6d8');
-    const remain = Math.ceil(Math.max(0, s.mode === 'live' ? s.clock : (s.clockMax || CLOCK)));
-    d.text(remain + 's', 620, 128, 16, remain <= 8 && s.mode === 'live' ? '#f0a070' : '#ead6a4');
-    const n = alleyPlay ? (pocket() ?? 0) : '∞';
-    d.item(spriteKey('penny-purse'), 86, 64, {w: 72, fallback: () => d.heart(86, 64, 22, '#6a7a52')});
-    d.text(String(n), 86, 108, 18, '#fff6d8');
-    d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
-    d.item(spriteKey(set.prize), 792, 76, {w: 36, fallback: () => d.heart(792, 76, 12, '#f4e2a8')});
-    for (const f of s.fly) {
-      const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
-      d.item(spriteKey(f.id), f.x + (792 - f.x) * e, f.y + (76 - f.y) * e, {
-        w: 28 * (1 - u * 0.35),
-        fallback: () => d.heart(f.x + (792 - f.x) * e, f.y + (76 - f.y) * e, 10, '#c95c79'),
-      });
-    }
-  },
-  readout: s => {
-    const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice ribbon' : n + (n === 1 ? ' penny' : ' pennies');
-    const mode = s.mode === 'live'
-      ? (s.attached ? (s.charging ? 'ribbon drawn' : 'swinging') : 'in the air')
-      : s.mode === 'idle' ? (s.charging ? 'ribbon drawn' : 'thread the ribbon')
-        : s.mode === 'won' ? 'prize kept' : 'still';
-    const clock = s.mode === 'live' ? Math.ceil(Math.max(0, s.clock)) + 's' : 'clock ready';
-    return purse + ' · ' + clock + ' · ' + s.score + ' · ' + (s.prizeOut ? 'prize kept' : 'hit the prize') + ' · ' + mode + ' · ' + s.note;
-  },
+ title: 'Love Tester',
+ live: alleyPlay,
+ tables: true,
+ chapterEnds: true,
+ houseSeconds: 100,
+ persist,
+ intro: alleyPlay
+ ? 'Rosalie’s schoolyard fortune machine. Write the names. Count the letters. Add them down until 1–100 remains. A ticket sits you; first try of each chapter is included. Extra sittings a penny. The valentine only drops on tonight’s numbers. Same names, same answer — always.'
+ : 'Write the names, count the letters, add them down. ',
+ instructions: alleyPlay
+ ? 'Fill the paper. Count each letter of the chapter word, then add neighbours (ones digit only). Wrong counts are free to correct. Extra sittings cost a penny. Same names will not be charged again.'
+ : 'Type, count, add. ',
+ levels: LOVE_CHAPTERS.map(c => c.title),
+ sprites: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox', 'rose-penny', 'heart-biscuit', 'everyday-penny', 'pressed-heart'],
+ prizes: LOVE_CHAPTERS.map(c => c.prize),
+ actions: [
+ {id: 'read', label: 'Begin sitting · Submit'},
+ {id: 'hint', label: 'A little hint'},
+ {id: 'again', label: alleyPlay ? 'New sitting · 1 penny' : 'New sitting'},
+ ],
+ create(level) {
+    preloadKit('love');
+ const ch = LOVE_CHAPTERS[level] || LOVE_CHAPTERS[0];
+ // Open / create always starts blank name plates in edit.
+ // Keep used-names / paid / prize book via readBook helpers — do not restore
+ // typed names or mid-entry count/add phase from sittings.
+ const s = {
+ level, t: 0,
+ you: '', them: '', focus: 0,
+ phase: 'edit',
+ reads: 0, charged: false, launchId: 0,
+ shake: 0, mistakes: 0, hints: 0,
+ trueCounts: null,
+ trueAdd: null,
+ playerCounts: [], countIndex: 0,
+ playerRows: [], addRow: 1, addCol: 0,
+ pct: 0, reading: '', hold: 0,
+ won: false, mercury: 0,
+ note: ch.aLabel + (ch.bLabel ? ' and ' + ch.bLabel.toLowerCase() : '') + '. Type names, then Begin sitting.',
+ };
+ if (chapterPaid(level)) s.won = true;
+ bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+ if (s.won && s.chapterPrize) s.chapterPrize.field = false;
+ persist(s);
+ return s;
+ },
+ update(s, dt) {
+ s.t += dt;
+ s.shake = Math.max(0, (s.shake || 0) - dt);
+ if (s.won && s.hold > 0 && !s.result) {
+ s.hold -= dt;
+ if (s.hold <= 0) {
+ const ch = LOVE_CHAPTERS[s.level];
+ done(s, 'A valentine from Rosalie',
+ itemName(ch.prize) + ' — struck on ' + s.pct + '. ' + s.reading,
+ {prize: ch.prize, won: true});
+ }
+ } else if (s.phase === 'result' && !s.won && !s.result && s.hold > 0) {
+ s.hold -= dt;
+ }
+ },
+ pointer(s, type, p) {
+ if (type !== 'down' || s.result) return;
+ const ch = LOVE_CHAPTERS[s.level];
+ const two = !!ch.bLabel;
+ if (s.phase === 'edit' || s.phase === 'wait' || (s.phase === 'result' && !s.won)) {
+ if ((s.phase === 'edit' || s.phase === 'wait') && hit(p, submitBox())) {
+ if (!namesReady(s)) { s.note = 'Fill the paper, darling.'; s.shake = 0.35; return; }
+ beginAttempt(s);
+ return;
+ }
+ if (hit(p, plateBox(0, two))) { s.phase = 'edit'; s.focus = 0; return; }
+ if (two && hit(p, plateBox(1, two))) { s.phase = 'edit'; s.focus = 1; return; }
+ if (s.phase === 'edit') {
+ for (let i = 0; i < KEYS.length; i++) if (hit(p, keyBox(i))) { typeInto(s, KEYS[i]); return; }
+ }
+ }
+ if (s.phase === 'count' || s.phase === 'add') {
+ for (let i = 0; i < DIGITS.length; i++) if (hit(p, digitBox(i))) { enterDigit(s, DIGITS[i]); return; }
+ }
+ },
+ action(s, id) {
+ if (id === 'read' || id === 'again') {
+ if (s.phase === 'result' || s.phase === 'wait') {
+ s.phase = 'edit';
+ s.note = 'Change a name, then sit again.';
+ persist(s);
+ return;
+ }
+ if (id === 'read' && !namesReady(s)) {
+ s.note = 'Fill the paper, darling.';
+ s.shake = 0.35;
+ return;
+ }
+ beginAttempt(s);
+ }
+ if (id === 'hint') hint(s);
+ },
+ key(s, k, down) {
+ if (!down) return;
+ if (k === 'Enter') this.action(s, 'read');
+ if (k === 'Tab') {
+ s.focus = s.focus ? 0 : 1;
+ return;
+ }
+ if (s.phase === 'edit') {
+ if (k === 'Backspace') typeInto(s, 'del');
+ else if (k === ' ') typeInto(s, 'space');
+ else if (/^[a-zA-Z]$/.test(k)) typeInto(s, k.toUpperCase());
+ }
+ if ((s.phase === 'count' || s.phase === 'add') && /^[0-9]$/.test(k)) enterDigit(s, k);
+ },
+ draw(s, d) {
+    paintProps(d, 'love', s.level ?? 0);
+    if (needsCharacter('love')) paintBea(d, 450, 900, { w: 64, stallId: 'love' });
+  paintHoleLayout(d, s.level ?? 0);
+
+ const kit = getKit('love');
+ // Booth accents (Iris-style ring kept): pendant by mercury tube; gates on result beat.
+ if (kit?.pieces?.[0]) d.sprite(kit.pieces[0], 96, 320, { w: 52, alpha: 0.95 });
+ if (s.phase === 'result' && kit?.pieces?.[1]) d.sprite(kit.pieces[1], 450, 860, { w: 110, alpha: 0.92 });
+ else if (kit?.pieces?.[2]) d.sprite(kit.pieces[2], 780, 860, { w: 72, alpha: 0.75 });
+
+ const ch = LOVE_CHAPTERS[s.level];
+ const two = !!ch.bLabel;
+ const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
+ const c = d.c;
+ d.text('Rosalie’s tester', 450 + jx, 118, 28, '#5a2030');
+ d.text(ch.title, 450, 152, 18, '#7a3040');
+ if (!s.won) {
+ d.item(spriteKey(ch.prize), 800, 150, {w: 70, fallback: () => d.heart(800, 150, 28, '#c45a6a')});
+ d.text('waiting', 800, 204, 14, '#a05060');
+ }
+
+ const tubeX = 46, tubeY = 250, tubeH = 220;
+ roundRect(c, tubeX, tubeY, 22, tubeH, 10);
+ c.fillStyle = '#f8e4e8';
+ c.fill();
+ c.strokeStyle = '#c45a6a';
+ c.stroke();
+ const fillH = Math.max(8, tubeH * Math.min(1, s.mercury || 0));
+ roundRect(c, tubeX + 3, tubeY + tubeH - fillH - 3, 16, fillH, 8);
+ c.fillStyle = '#c45a6a';
+ c.fill();
+ d.heart(tubeX + 11, tubeY + tubeH + 22, 12, '#c45a6a');
+
+ const plates = two ? [0, 1] : [0];
+ for (const which of plates) {
+ const b = plateBox(which, two);
+ const on = s.focus === which && s.phase === 'edit';
+ roundRect(c, b.x + jx, b.y, b.w, b.h, 12);
+ c.fillStyle = on ? '#fff0f4ee' : '#f8e4e8dd';
+ c.fill();
+ c.strokeStyle = on ? '#c45a6a' : '#e8a0b0';
+ c.lineWidth = on ? 4 : 2;
+ c.stroke();
+ d.text(which === 0 ? ch.aLabel : ch.bLabel, b.x + b.w / 2, b.y + 22, 16, '#a05060');
+ d.text((which === 0 ? s.you : s.them) || '…', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
+ }
+
+ // Chapter WORD is the visual hero — centred, larger than name plates.
+ {
+ const wordY = two ? 262 : 205;
+ const wordSize = two ? 58 : 54;
+ d.glow(450 + jx, wordY - 8, 70, '#c45a6a');
+ d.text(ch.word, 450 + jx, wordY, wordSize, '#c45a6a');
+ }
+
+ const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
+ const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
+ names.forEach((word, row) => {
+ if (!word) return;
+ const y = 330 + row * 36;
+ const start = 450 - (word.length - 1) * 16;
+ [...word].forEach((chh, i) => {
+ const x = start + i * 32;
+ const on = letter && chh === letter;
+ if (on) d.circle(x, y - 6, 14, '#f8c8d088', '#c45a6a', 2);
+ d.text(chh, x, y, 22, on ? '#c45a6a' : '#5a2030');
+ });
+ });
+
+ if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
+ const word = ch.word;
+ for (let i = 0; i < word.length; i++) {
+ const x = 450 - (word.length - 1) * 36 + i * 72;
+ const on = s.phase === 'count' && i === s.countIndex;
+ d.text(word[i], x, 390, 32, on ? '#c45a6a' : '#7a3040');
+ const shown = s.playerCounts[i];
+ d.text(shown == null ? '·' : String(shown), x, 428, 28, '#5a2030');
+ }
+ }
+
+ if (s.phase === 'edit' || s.phase === 'wait') {
+ const sb = submitBox();
+ const ready = namesReady(s);
+ roundRect(c, sb.x, sb.y, sb.w, sb.h, 14);
+ c.fillStyle = ready ? '#c45a6aee' : '#a08088aa';
+ c.fill();
+ c.strokeStyle = ready ? '#5a2030' : '#806068';
+ c.lineWidth = 2;
+ c.stroke();
+ d.text(ready ? 'Begin sitting · Enter' : 'Enter names to begin', sb.x + sb.w / 2, sb.y + 36, 22, ready ? '#fff6f8' : '#f0e0e4');
+ }
+ if (s.phase === 'edit') {
+ KEYS.forEach((k, i) => {
+ const b = keyBox(i);
+ roundRect(c, b.x, b.y, b.w, b.h, 8);
+ c.fillStyle = '#5a2038ee';
+ c.fill();
+ d.text(k === 'space' ? '⎵' : k === 'del' ? '⌫' : k, b.x + b.w / 2, b.y + 34, 20, '#fff0f4');
+ });
+ }
+ if (s.phase === 'count' || s.phase === 'add') {
+ DIGITS.forEach((k, i) => {
+ const b = digitBox(i);
+ roundRect(c, b.x, b.y, b.w, b.h, 10);
+ c.fillStyle = '#5a2038ee';
+ c.fill();
+ d.text(k, b.x + b.w / 2, b.y + 44, 28, '#fff6d8');
+ });
+ }
+
+ if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
+ s.trueAdd.rows.forEach((row, r) => {
+ if (r === 0) return;
+ const y = 470 + r * 36;
+ const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
+ if (!shown && s.phase !== 'result') return;
+ row.forEach((n, i) => {
+ const known = s.phase === 'result' || r < s.addRow || (r === s.addRow && i < s.addCol);
+ const x = 450 - (row.length - 1) * 28 + i * 56;
+ const value = s.phase === 'result' ? n : (s.playerRows[r] && s.playerRows[r][i] != null ? s.playerRows[r][i] : n);
+ d.text(known ? String(value) : '·', x, y, 24, '#5a2030');
+ });
+ });
+ }
+
+ wrapLine(d, s.note, 450, 980, 22, '#7a3040', 720);
+ if (s.phase === 'result' && s.pct) {
+ d.text(String(s.pct), 450, 920, 48, '#c45a6a');
+ }
+ },
+ readout: s => {
+ const n = alleyPlay ? pocket() : null;
+ const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+ return purse + ' · ' + s.mistakes + ' slips · ' + s.hints + ' hints · ' + s.note;
+ },
 };
