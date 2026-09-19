@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../penny-fever/world/paper-game-booths.css"></head><body><section class="cabinet-interior"></section><dialog class="treasure-book"><button onclick="this.parentElement.close()">×</button>Treasures</dialog><script type="module">
+// Isolated test wallet. Never contacts the real payment service.
+const id=new URLSearchParams(location.search).get('stall')||'pinball';document.querySelector('section').id='cabinet-'+id;
+if(id==='coin-pusher'){const key='pennyFever.copperFalls.v6';const saved=JSON.parse(localStorage.getItem(key)||'{}');saved.v=6;saved.practiceUsed=true;localStorage.setItem(key,JSON.stringify(saved));}
+window.fixtureCash=100;window.fixtureAwards=[];const inventory={items:{}};
+window.PennyFever={pennies:()=>window.fixtureCash,tickets:()=>10,pennyPacks:()=>2,getState:()=>({demoCoins:window.fixtureCash,paperInventory:inventory}),saveState(){},spendTicket:()=>true,spendPennies:n=>{window.fixtureCash-=n;return true;},addDemoCoins:n=>window.fixtureCash+=n};
+window.PennyFeverInventoryModel={recordPaperPrize(s,p){fixtureAwards.push(p.item);inventory.items[p.item]={qty:1};return [p.item];}};
+window.PennyFeverInventory={openGame(){document.querySelector('.treasure-book').showModal();return true;}};
+const {paperGameRooms,createPaperGameVendor}=await import('../../penny-fever/world/paper-game-booths.js');
+createPaperGameVendor(paperGameRooms.find(g=>g.id===id)).onShow();
+</script></body></html>

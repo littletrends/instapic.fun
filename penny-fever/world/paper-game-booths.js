@@ -5,7 +5,7 @@ import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/st
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=touch-lock-1'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=chapter-menu-1'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
@@ -36,23 +36,9 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   cabinet.removeAttribute('aria-labelledby');
   stage=doc.createElement('div');stage.className='paper-game-room';
   const bar=doc.createElement('header');bar.className='paper-game-bar';
-  const back=doc.createElement('button');back.type='button';back.textContent='← Back to alley';
+  const back=doc.createElement('button');back.type='button';back.textContent='← Alley';
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.host+' · '+game.title;title.tabIndex=-1;
-  const list=doc.createElement('a');list.href=new URL('../game-links.html',import.meta.url).href;list.textContent='All games';
-  const door=doorKind(game.id);
-  const retry=doc.createElement('button');retry.type='button';
-  retry.textContent=door==='closed'?'Come back later':door==='ticket'?'The tent waits':door==='free'?'The table waits':'Play again · 1 penny';
-  if(door==='penny'){
-    retry.addEventListener('click',()=>load(true));
-  }else{
-    retry.disabled=true;
-    retry.title=door==='closed'
-      ?'Felix’s Instapic photo booth is closed for maintenance.'
-      :door==='ticket'
-      ?'Your sitting is saved. First try of each chapter is included; extra goes cost a penny inside.'
-      :'Pennies are spent on each play. Leave and come back — this table remembers.';
-  }
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
     const PF=window.PennyFever;
@@ -63,17 +49,18 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
+  const tradeStatus=doc.createElement('p');tradeStatus.className='paper-trade-status';tradeStatus.setAttribute('role','status');
   const cash=doc.createElement('button');cash.type='button';cash.textContent='Cash a ticket · 5 pennies';
   cash.addEventListener('click',()=>{
     const PF=window.PennyFever;
     const got=PF?.cashTicketForPennies?.();
     if(!got){
-      status.hidden=false;
-      status.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
+      tradeStatus.hidden=false;
+      tradeStatus.textContent='Need a booth ticket. Buy a strip from Aura’s roll.';
       return;
     }
-    status.hidden=false;
-    status.textContent='Five pennies in the purse.';
+    tradeStatus.hidden=false;
+    tradeStatus.textContent='Five pennies in the purse.';
     paintWallet();
     if(frame&&frame.getAttribute('src')==='about:blank') load();
   });
@@ -81,12 +68,12 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   buy.addEventListener('click',()=>{
     const PF=window.PennyFever;
     if(!PF?.tradePenniesForTicket?.()){
-      status.hidden=false;
-      status.textContent='Need five pennies for a ticket. Buy a pack from Aura.';
+      tradeStatus.hidden=false;
+      tradeStatus.textContent='Need five pennies for a ticket. Buy a pack from Aura.';
       return;
     }
-    status.hidden=false;
-    status.textContent='A ticket for a sitting.';
+    tradeStatus.hidden=false;
+    tradeStatus.textContent='A ticket for a sitting.';
     paintWallet();
     if(frame&&frame.getAttribute('src')==='about:blank') load();
   });
@@ -94,39 +81,66 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   pack.addEventListener('click',()=>{
     const PF=window.PennyFever;
     if(!PF?.packFivePennies?.()){
-      status.hidden=false;
-      status.textContent='Need five loose pennies to pack. Packed coins stay out of Copper’s machine.';
+      tradeStatus.hidden=false;
+      tradeStatus.textContent='Need five loose pennies to pack. Packed coins stay out of Copper’s machine.';
       return;
     }
-    status.hidden=false;
-    status.textContent='Five pennies packed. Open the pack when you want them back.';
+    tradeStatus.hidden=false;
+    tradeStatus.textContent='Five pennies packed. Open the pack when you want them back.';
     paintWallet();
   });
   const unpack=doc.createElement('button');unpack.type='button';unpack.textContent='Open a 5-pack';
   unpack.addEventListener('click',()=>{
     const PF=window.PennyFever;
     if(!PF?.unpackFivePennies?.()){
-      status.hidden=false;
-      status.textContent='No 5-packs to open.';
+      tradeStatus.hidden=false;
+      tradeStatus.textContent='No 5-packs to open.';
       return;
     }
-    status.hidden=false;
-    status.textContent='Five pennies back in the purse.';
+    tradeStatus.hidden=false;
+    tradeStatus.textContent='Five pennies back in the purse.';
     paintWallet();
   });
   const chest=doc.createElement('button');chest.type='button';chest.className='paper-game-treasure';
   chest.innerHTML='<span>🗝</span> Treasures';
-  chest.addEventListener('click',()=>window.PennyFeverInventory?.openGame(game.id));
-  const till=doc.createElement('details');till.className='paper-game-till';
-  const tillSum=doc.createElement('summary');tillSum.textContent='Alley menu';
-  const help=doc.createElement('button');help.type='button';help.textContent='Game menu / Help';help.addEventListener('click',()=>{till.open=false;frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'menu'},location.origin);});
-  till.addEventListener('toggle',()=>{if(till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'pause'},location.origin);});
-  const closeTill=doc.createElement('button');closeTill.type='button';closeTill.textContent='×';
-  closeTill.setAttribute('aria-label','Close alley menu');closeTill.className='paper-game-menu-close';
-  closeTill.addEventListener('click',()=>{till.open=false;tillSum.focus();});
-  till.addEventListener('toggle',()=>{if(!till.open)frame?.contentWindow?.postMessage({channel:'pf-paper-world',type:'resume'},location.origin);});
-  till.append(tillSum,closeTill,help,wallet,chest,buy,cash,pack,unpack,retry,list);
-  bar.append(back,title,till);
+  const message=(type,fields={})=>frame?.contentWindow?.postMessage({channel:'pf-paper-world',type,...fields},location.origin);
+  chest.addEventListener('click',()=>{
+    message('pause');
+    const opened=window.PennyFeverInventory?.openGame(game.id);
+    const book=doc.querySelector('dialog.treasure-book');
+    if(opened&&book)book.addEventListener('close',()=>message('resume'),{once:true});
+    else message('resume');
+  });
+  const chapters=doc.createElement('nav');chapters.className='paper-chapter-nav';chapters.setAttribute('aria-label','Choose chapter');
+  const previous=doc.createElement('button');previous.type='button';previous.textContent='‹';previous.setAttribute('aria-label','Previous chapter');previous.disabled=true;
+  const select=doc.createElement('select');select.setAttribute('aria-label','Choose chapter');select.disabled=true;
+  const placeholder=doc.createElement('option');placeholder.textContent='Chapter';select.append(placeholder);
+  const next=doc.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','Next chapter');next.disabled=true;
+  let chapter=0,count=0;
+  previous.addEventListener('click',()=>message('chapter',{level:chapter-1}));
+  next.addEventListener('click',()=>message('chapter',{level:chapter+1}));
+  select.addEventListener('change',()=>message('chapter',{level:Number(select.value)}));
+  window.addEventListener('message',event=>{
+    const data=event.data;
+    if(event.origin!==location.origin||event.source!==frame?.contentWindow||data?.channel!=='pf-paper-world'||data.type!=='chapters')return;
+    chapter=data.level;count=data.levels.length;select.replaceChildren();
+    data.levels.forEach((name,i)=>{const option=doc.createElement('option');option.value=i;option.textContent='Chapter '+(i+1);option.title=name;select.append(option);});
+    select.value=chapter;select.disabled=false;previous.disabled=chapter<=0;next.disabled=chapter>=count-1;
+  });
+  chapters.append(previous,select,next);
+  const trade=doc.createElement('button');trade.type='button';trade.textContent='Penny Trade';trade.setAttribute('aria-haspopup','dialog');
+  const till=doc.createElement('dialog');till.className='paper-game-trade';till.setAttribute('aria-label','Penny Trade');
+  const tillTitle=doc.createElement('h2');tillTitle.textContent='Penny Trade';
+  const closeTill=doc.createElement('button');closeTill.type='button';closeTill.textContent='×';closeTill.className='paper-game-menu-close';closeTill.setAttribute('aria-label','Close Penny Trade');
+  const description=doc.createElement('p');description.textContent='Trade tickets and pennies, or pack five pennies to keep them out of Copper’s loose purse.';
+  const trades=doc.createElement('div');trades.className='paper-trade-actions';trades.append(buy,cash,pack,unpack);
+  trade.addEventListener('click',()=>{message('pause');paintWallet();tradeStatus.textContent='';till.showModal();});
+  closeTill.addEventListener('click',()=>till.close());
+  till.addEventListener('close',()=>{message('resume');trade.focus();});
+  till.append(closeTill,tillTitle,wallet,description,trades,tradeStatus);
+  const help=doc.createElement('button');help.type='button';help.textContent='Help';help.setAttribute('aria-haspopup','dialog');help.addEventListener('click',()=>message('menu'));
+  bar.append(back,chapters,chest,trade,help,title);
+  stage.append(till);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
@@ -140,6 +154,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   clearTimeout(timer);timer=null;
   if(!frame)return;
   frame.onload=frame.onerror=null;
+  stage?.querySelector('dialog[open]')?.close();
   if(frame.getAttribute('src')!=='about:blank')frame.src='about:blank';
  }
  function load(restart=false){

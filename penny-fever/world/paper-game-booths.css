@@ -69,16 +69,29 @@ body .cabinet-interior.paper-game-cabinet {
  .paper-game-treasure.is-prize-catch,#pfPocketChest.is-prize-catch{animation:none}
  .pf-prize-fly{transition:transform .4s ease,opacity .4s ease}
 }
-.paper-game-till{margin-left:auto;position:relative;}
-.paper-game-till>summary{list-style:none;cursor:pointer;font:18px/1.3 Georgia,serif;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;padding:10px 14px;}
-.paper-game-till>summary::-webkit-details-marker{display:none}
-.paper-game-till[open]{z-index:3;}
-.paper-game-till[open]{display:flex;flex-direction:column;gap:8px;background:#172831;border:1px solid #ad9362;border-radius:10px;padding:8px;}
-@media(max-width:600px){
- /* phone-chrome-out: menu strip ABOVE the game iframe — never over cream template */
- .paper-game-bar{gap:6px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));flex-wrap:nowrap;box-shadow:0 2px 0 #0a1218;}
- .paper-game-bar h1{flex:1;min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
- .paper-game-wallet{font-size:14px;white-space:nowrap;}
- .paper-game-bar button,.paper-game-bar a,.paper-game-till>summary{font-size:14px;padding:8px 10px;}
- .paper-game-frame{min-height:0;}
+
+.paper-game-bar{flex-wrap:nowrap;gap:8px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));}
+.paper-game-bar h1{font-size:18px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.paper-game-bar button,.paper-game-bar a,.paper-chapter-nav select{font:16px/1.3 Georgia,serif;padding:8px 10px;min-height:40px;white-space:nowrap;}
+.paper-game-bar button:disabled{opacity:.4;cursor:default;}
+.paper-chapter-nav{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.paper-chapter-nav select{width:122px;min-width:0;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;cursor:pointer;}
+.paper-game-treasure{margin-left:0;}
+.paper-game-trade{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:24px;color:#f3e4c6;background:#172831;border:1px solid #ad9362;border-radius:16px;font:17px/1.5 Georgia,serif;touch-action:pan-y;}
+.paper-game-trade::backdrop{background:#06121bbd;}
+.paper-game-trade h2{margin:0 40px 18px 0;font-size:25px;}
+.paper-game-trade .paper-game-wallet{display:block;white-space:normal;}
+.paper-game-trade button{font:inherit;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;padding:10px;cursor:pointer;}
+.paper-game-menu-close{position:absolute;right:12px;top:10px;min-width:44px;min-height:44px;}
+.paper-trade-actions{display:grid;gap:10px;}
+.paper-trade-status:empty{display:none;}
+@media(max-width:700px){
+ .paper-game-bar{display:grid;grid-template-columns:auto 1fr auto;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));}
+ .paper-game-bar h1{display:none;}
+ .paper-game-bar button,.paper-game-bar a,.paper-chapter-nav select{font-size:13px;padding:7px;min-height:38px;}
+ .paper-chapter-nav{justify-content:center;}
+ .paper-chapter-nav select{width:110px;}
+ .paper-game-bar>.paper-game-treasure{justify-self:stretch;}
+ .paper-game-bar>button:nth-last-of-type(2){grid-column:1/3;}
+ .paper-game-bar>button:last-of-type{grid-column:3;}
 }

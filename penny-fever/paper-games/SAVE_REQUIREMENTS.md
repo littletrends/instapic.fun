@@ -295,3 +295,37 @@ Deployment: published as `6896672`; Pages run `34951229256` succeeded. Live pinb
 A clean Iris catch that does not pay the chapter bonus now always awards a star token, with copy “Star token collected. Bonus still locked.” The first successful catch of a chapter still collects the bonus (`fortuneCatch`). Misses no longer spend that guarantee. Mabel’s prize cow keeps the flavour of the bottle it sits on (gold/yellow cows count as banana) and can be swapped into a matching flavour line. Ordinary delivery routes are unchanged because unique flavour only adds those cow-colour swaps.
 
 Iris star tokens require a full green catch. A slipped gaze holds no reward — no pennies, no tokens. Pip Storm Glass (chapter 5) moon bumpers sit slightly left of the shooter lane so a hit no longer dumps the ball down the reload chute; layout version 3 refreshes saved bumper positions.
+
+
+## Shared chapter navigation and menus — 19 September 2026
+
+The current `play.html` route loads `runtime.js` for every open game (the older
+cabinet runtime is not on this route). The shared player now preserves engine
+selected chapters, saves before chapter changes/pause and once per second while
+playing, retains restored house timers, and respects engine-owned clocks and
+timeout callbacks. A separate per-game selection key also covers engines without
+a selectedChapter hook. Existing engine save keys and reward rules are retained.
+
+The common chapter panel keeps the result after a prize animation instead of
+consuming it. Iris reading results, Copper's collected/settled tray and Pip's
+collected bonus also enter that panel. Mabel uses its existing terminal result and
+retry hook. All games have previous/next and direct chapter selection. Opening
+Help, Penny Trade or Treasures pauses play; closing resumes only a previously
+running game, without dismissing an end-of-chapter result or starting an idle game.
+
+Evidence: `tests/chapter-menus.mjs` runs Chromium against the served live-source
+checkout. All 33 open games load and support chapter selection. Six named games
+pass injected terminal-state popup/advance checks, phone layout and selected
+chapter reload checks. Iris in-progress rings, Copper's paid moving tray, Pip's
+ball/remaining time/credits and Mabel's board/moves/time retain exact compared
+state through chapter switching and reload without an extra debit. This is a
+fixture-based browser regression, not a human playthrough of every chapter.
+The full Penny Fever page and 320/390/1440 px menu layouts were also checked.
+The existing cabinet, Pip-state and Mabel-state suites pass. The existing
+`check-first-prizes.mjs` fails at line 17 on both unchanged b286fe9 and this work;
+its first-attempt policy assertion predates this change.
+
+Remaining: no new exact-state persistence is claimed for other engines lacking
+save hooks, nor for Copper's single complimentary practice-tray slot when
+switching to a different practice chapter. Paid trays are tested separately.
+Deployment: pending publication of this change.
