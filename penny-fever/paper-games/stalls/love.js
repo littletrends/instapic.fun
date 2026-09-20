@@ -42,15 +42,15 @@ function hit(p, b) {
   return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
 function plateBox(which, two) {
-  // Under the lifted title stack — calc gap between plates and keyboard.
-  const h = 62;
-  if (!two) return {x: 275, y: 500, w: 350, h};
+  // Tight under title stack — leaves room for calc then keyboard.
+  const h = 60;
+  if (!two) return {x: 275, y: 445, w: 350, h};
   const w = 155;
-  return which === 0 ? {x: 270, y: 500, w, h} : {x: 475, y: 500, w, h};
+  return which === 0 ? {x: 270, y: 445, w, h} : {x: 475, y: 445, w, h};
 }
 function enterBox() {
-  // Edit-only: mid calc-gap; count/add reclaim this band for how-many.
-  return {x: 300, y: 640, w: 300, h: 46};
+  // Edit-only: between plates and keyboard.
+  return {x: 300, y: 580, w: 300, h: 46};
 }
 function namesReady(s) {
   const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -413,15 +413,15 @@ export default {
     const two = !!ch.bLabel;
     const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
     const c = d.c;
-    d.text('Rosalie’s tester', 450 + jx, 385, 24, '#5a2030');
-    d.text(ch.title, 450, 415, 18, '#7a3040');
-    d.text(ch.word, 450 + jx, 458, 44, '#c45a6a');
+    d.text('Rosalie’s tester', 450 + jx, 318, 24, '#5a2030');
+    d.text(ch.title, 450, 348, 18, '#7a3040');
+    d.text(ch.word, 450 + jx, 392, 44, '#c45a6a');
     if (!s.won) {
-      d.item(spriteKey(ch.prize), 640, 410, {w: 44, fallback: () => d.heart(640, 410, 18, '#c45a6a')});
-      d.text('waiting', 640, 448, 12, '#a05060');
+      d.item(spriteKey(ch.prize), 640, 340, {w: 44, fallback: () => d.heart(640, 340, 18, '#c45a6a')});
+      d.text('waiting', 640, 378, 12, '#a05060');
     }
 
-    const tubeX = 218, tubeY = 385, tubeH = 80;
+    const tubeX = 218, tubeY = 318, tubeH = 70;
     roundRect(c, tubeX, tubeY, 22, tubeH, 10);
     c.fillStyle = '#f8e4e8';
     c.fill();
@@ -450,7 +450,7 @@ export default {
     // Calc band under name plates: names (count) → word/counts → add rows flow under each other.
     const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
     const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
-    let calcY = 575;
+    let calcY = 520;
 
     if (s.phase === 'count') {
       names.forEach((word, row) => {
@@ -532,15 +532,15 @@ export default {
     }
 
 
-    {
-      // Edit: above keyboard. Count/add: under the digit strip.
-      const noteY = (s.phase === 'edit' || s.phase === 'wait') ? 825 : 970;
-      wrapLine(d, s.note, 450, noteY, 20, '#7a3040', 720);
+    // Skip canvas note during edit — it was painting over the letter keyboard.
+    // Count/add keep the prompt under the digit strip; readout still shows status.
+    if (s.phase !== 'edit' && s.phase !== 'wait') {
+      wrapLine(d, s.note, 450, 970, 20, '#7a3040', 720);
     }
     if (s.phase === 'result' && s.pct) {
       const rows = (s.trueAdd && s.trueAdd.rows) ? s.trueAdd.rows.length : 1;
       // Under word+counts+(pyramid rows after row 0)
-      const pctY = Math.min(860, 575 + 70 + Math.max(0, rows - 1) * 34 + 20);
+      const pctY = Math.min(860, 520 + 70 + Math.max(0, rows - 1) * 34 + 20);
       d.text(String(s.pct) + '%', 450, pctY, 44, '#c45a6a');
     }
   },
