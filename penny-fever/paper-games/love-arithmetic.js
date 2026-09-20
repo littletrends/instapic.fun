@@ -40,25 +40,33 @@ export function repeatedLetters(word) {
 }
 
 /** Adjacent digits summed mod 10 until two digits remain. 00 is 100. */
+/** Full neighbour sums (7+4 → 11). Final dial is last two digits of the closing total. */
+export function pctFromFinal(last) {
+  const nums = (last || []).map(n => Math.abs(Number(n) || 0));
+  if (!nums.length) return 100;
+  const total = nums.length === 1 ? nums[0] : nums[0] + nums[1];
+  const p = total % 100;
+  return p === 0 ? 100 : p;
+}
+
 export function addDown(counts) {
-  const start = (counts || []).map(n => ((Number(n) || 0) % 10 + 10) % 10);
+  const start = (counts || []).map(n => Math.abs(Number(n) || 0));
   if (!start.length) return {rows: [[]], pct: 100, digits: [0, 0]};
   const rows = [start.slice()];
   while (rows[rows.length - 1].length > 2) {
     const prev = rows[rows.length - 1];
     const next = [];
-    for (let i = 0; i < prev.length - 1; i++) next.push((prev[i] + prev[i + 1]) % 10);
+    for (let i = 0; i < prev.length - 1; i++) next.push(prev[i] + prev[i + 1]);
     rows.push(next);
   }
   const last = rows[rows.length - 1];
-  const digits = last.length === 1 ? [0, last[0]] : [last[0], last[1]];
-  const raw = digits[0] * 10 + digits[1];
-  const pct = raw === 0 ? 100 : raw;
+  const pct = pctFromFinal(last);
+  const digits = last.length === 1 ? [Math.floor(pct / 10), pct % 10] : last.slice();
   return {rows, pct, digits};
 }
 
 export function sumPair(a, b) {
-  return (((Number(a) || 0) + (Number(b) || 0)) % 10 + 10) % 10;
+  return (Number(a) || 0) + (Number(b) || 0);
 }
 
 export function readingForInput(level, you, them) {

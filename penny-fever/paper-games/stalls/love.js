@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=love-hole-enter-1';
+} from '../love-arithmetic.js?v=full-sum-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -115,7 +115,7 @@ function persist(s) {
     you: s.you, them: s.them, focus: s.focus, phase: s.phase,
     reads: s.reads, charged: !!s.charged, launchId: s.launchId || 0,
     trueCounts: s.trueCounts, playerCounts: s.playerCounts,
-    countIndex: s.countIndex, addRow: s.addRow, addCol: s.addCol,
+    countIndex: s.countIndex, addRow: s.addRow, addCol: s.addCol, addBuf: s.addBuf || "",
     playerRows: s.playerRows, pct: s.pct, reading: s.reading,
     mistakes: s.mistakes, hints: s.hints, won: !!s.won,
     note: s.note, mercury: s.mercury || 0,
@@ -195,9 +195,15 @@ function beginAttempt(s) {
   }
 }
 
+function addPrompt(prev, col, buf) {
+  const a = prev[col], b = prev[col + 1];
+  const base = a + ' + ' + b + ' = ';
+  return buf ? base + buf + '…' : base + '…';
+}
+
 function enterDigit(s, digit) {
-  const n = Number(digit);
   if (s.phase === 'count') {
+    const n = Number(digit);
     const ch = LOVE_CHAPTERS[s.level];
     const need = s.trueCounts[s.countIndex];
     if (n !== need) {
@@ -219,7 +225,8 @@ function enterDigit(s, digit) {
       s.phase = 'add';
       s.addRow = 1;
       s.addCol = 0;
-      s.note = 'Add the neighbours. ' + s.trueCounts[0] + ' + ' + s.trueCounts[1] + ' ends in…';
+      s.addBuf = '';
+      s.note = 'Add the neighbours. ' + addPrompt(s.trueCounts, 0, '');
       persist(s);
       return;
     }
@@ -230,15 +237,32 @@ function enterDigit(s, digit) {
   if (s.phase === 'add') {
     const prev = s.trueAdd.rows[s.addRow - 1];
     const need = sumPair(prev[s.addCol], prev[s.addCol + 1]);
-    if (n !== need) {
+    const needStr = String(need);
+    if (digit === 'del') {
+      s.addBuf = String(s.addBuf || '').slice(0, -1);
+      s.note = addPrompt(prev, s.addCol, s.addBuf);
+      persist(s);
+      return;
+    }
+    if (!/^[0-9]$/.test(String(digit))) return;
+    s.addBuf = String(s.addBuf || '') + String(digit);
+    const typed = Number(s.addBuf);
+    if (s.addBuf.length < needStr.length) {
+      s.note = addPrompt(prev, s.addCol, s.addBuf);
+      persist(s);
+      return;
+    }
+    if (typed !== need) {
       s.mistakes += 1;
       s.shake = 0.35;
-      s.note = 'Not that digit. ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' ends in which number?';
+      s.addBuf = '';
+      s.note = 'Not that total. ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' = ?';
       persist(s);
       return;
     }
     s.playerRows[s.addRow] = s.playerRows[s.addRow] || [];
-    s.playerRows[s.addRow][s.addCol] = n;
+    s.playerRows[s.addRow][s.addCol] = need;
+    s.addBuf = '';
     s.addCol += 1;
     const rowLen = prev.length - 1;
     if (s.addCol >= rowLen) {
@@ -253,12 +277,11 @@ function enterDigit(s, digit) {
       s.addRow += 1;
       s.addCol = 0;
       const nextPrev = s.trueAdd.rows[s.addRow - 1];
-      s.note = 'Next line. ' + nextPrev[0] + ' + ' + nextPrev[1] + ' ends in…';
+      s.note = 'Next line. ' + addPrompt(nextPrev, 0, '');
       persist(s);
       return;
     }
-    const nextPrev = s.trueAdd.rows[s.addRow - 1];
-    s.note = nextPrev[s.addCol] + ' + ' + nextPrev[s.addCol + 1] + ' ends in…';
+    s.note = addPrompt(prev, s.addCol, '');
     persist(s);
   }
 }
@@ -300,7 +323,7 @@ function hint(s) {
   if (s.phase === 'add') {
     const prev = s.trueAdd.rows[s.addRow - 1];
     s.hints += 1;
-    s.note = 'A red-pencil hint: ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' ends in ' + sumPair(prev[s.addCol], prev[s.addCol + 1]) + '.';
+    s.note = 'A red-pencil hint: ' + prev[s.addCol] + ' + ' + prev[s.addCol + 1] + ' = ' + sumPair(prev[s.addCol], prev[s.addCol + 1]) + '.';
     persist(s);
   }
 }
@@ -310,12 +333,13 @@ export default {
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
+  retryButton: 'Play again',
   persist,
   intro: alleyPlay
     ? 'Rosalie’s schoolyard fortune machine. Write the names. Count the letters. Add them down until 1–100 remains. A penny a sitting. The unique valentine only drops on tonight’s numbers. Same names, same answer — always. Not medical advice, even on the health sitting.'
     : 'Write the names, count the letters, add them down. Workshop sittings are free and write nothing.',
   instructions: alleyPlay
-    ? 'Fill the paper. Count each letter of the chapter word, then add neighbours (ones digit only). Wrong counts are free to correct. A penny starts a new sitting. Same names will not be charged again.'
+    ? 'Fill the paper. Count each letter of the chapter word, then add neighbours in full (7+4 writes 11). Wrong counts are free to correct. A penny starts a new sitting. Same names will not be charged again.'
     : 'Type, count, add. Practice writes nothing.',
   levels: LOVE_CHAPTERS.map(c => c.title),
   sprites: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox', 'rose-penny', 'heart-biscuit', 'everyday-penny', 'pressed-heart'],
@@ -337,7 +361,7 @@ export default {
       trueCounts: saved.trueCounts || null,
       trueAdd: saved.trueCounts ? addDown(saved.trueCounts) : null,
       playerCounts: saved.playerCounts || [], countIndex: saved.countIndex || 0,
-      playerRows: saved.playerRows || [], addRow: saved.addRow || 1, addCol: saved.addCol || 0,
+      playerRows: saved.playerRows || [], addRow: saved.addRow || 1, addCol: saved.addCol || 0, addBuf: saved.addBuf || "",
       pct: saved.pct || 0, reading: saved.reading || '', hold: 0,
       won: !!saved.won, mercury: saved.mercury || 0,
       note: saved.note || (ch.aLabel + (ch.bLabel ? ' and ' + ch.bLabel.toLowerCase() : '') + '.'),
@@ -350,16 +374,22 @@ export default {
   update(s, dt) {
     s.t += dt;
     s.shake = Math.max(0, (s.shake || 0) - dt);
-    if (s.won && s.hold > 0 && !s.result) {
-      s.hold -= dt;
+    // After the reading beat, always open the shared result veil (win or miss)
+    // so Play again / Next chapter is available — never leave the sitting stuck.
+    if (s.phase === 'result' && !s.result) {
+      if (s.hold > 0) s.hold -= dt;
       if (s.hold <= 0) {
         const ch = LOVE_CHAPTERS[s.level];
-        done(s, 'A valentine from Rosalie',
-          itemName(ch.prize) + ' — struck on ' + s.pct + '. ' + s.reading,
-          {prize: ch.prize, won: true});
+        if (s.won) {
+          done(s, 'A valentine from Rosalie',
+            itemName(ch.prize) + ' — struck on ' + s.pct + '%. ' + s.reading,
+            {prize: ch.prize, won: true, handled: true});
+        } else {
+          done(s, (s.pct || '—') + '% · Rosalie’s reading',
+            (s.reading || 'The paper is full.') + ' Another sitting when you are ready.',
+            {won: false, prize: null, handled: true});
+        }
       }
-    } else if (s.phase === 'result' && !s.won && !s.result && s.hold > 0) {
-      s.hold -= dt;
     }
   },
   pointer(s, type, p) {
@@ -406,6 +436,7 @@ export default {
       else if (k === ' ') typeInto(s, 'space');
       else if (/^[a-zA-Z]$/.test(k)) typeInto(s, k.toUpperCase());
     }
+    if (s.phase === 'add' && k === 'Backspace') enterDigit(s, 'del');
     if ((s.phase === 'count' || s.phase === 'add') && /^[0-9]$/.test(k)) enterDigit(s, k);
   },
   draw(s, d) {
@@ -469,7 +500,7 @@ export default {
 
     // Under plates: LOVES + counts (count) or full pyramid (add/result). No duplicate names.
     const word = ch.word;
-    const colStep = 56;
+    const colStep = 64;
     const rowStep = 42;
     const colX = (len, i) => 450 - (len - 1) * (colStep / 2) + i * colStep;
     const pyramidX = (rowLen, i) => {
@@ -509,7 +540,9 @@ export default {
           else if (s.playerRows[r] && s.playerRows[r][i] != null) value = s.playerRows[r][i];
           else value = null;
           const x = r === 0 ? colX(word.length, i) : pyramidX(vals.length, i);
-          d.text(known && value != null ? String(value) : '\u00b7', x, y, 24, '#5a2030');
+          const typing = s.phase === 'add' && r === s.addRow && i === s.addCol && s.addBuf;
+          const label = typing ? String(s.addBuf) : (known && value != null ? String(value) : '\u00b7');
+          d.text(label, x, y, typing || (value != null && String(value).length > 1) ? 20 : 24, typing ? '#c45a6a' : '#5a2030');
         }
       });
     }
