@@ -650,7 +650,7 @@ export default {
     d.text(String(n), 86, 108, 18, '#fff6d8');
     d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 44, alpha:pickUnique(s)?1:.45, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
-    d.text(pickUnique(s)?'LOCKED':'COLLECTED',792,132,12,'#f4e2a8');
+    d.text(pickUnique(s)?'Locked':'Collected',792,132,12,'#f4e2a8');
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
       const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64,startX=f.x*1.35-204;

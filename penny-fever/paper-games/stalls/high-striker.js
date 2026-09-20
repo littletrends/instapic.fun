@@ -346,9 +346,10 @@ export default {
     d.text('Perfect Strike', 450, 108, 28, '#efe6d0');
     d.text('Hard Isn\'t Enough. Ring It Right.', 450, 140, 16, '#d2b98c');
     d.text(ch.title, 450, 168, 18, '#ead6a4');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 148, {w: 66, fallback: () => d.star(800, 148, 22)});
-      d.text('waiting', 800, 202, 14, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 202, 14, owned ? '#c8e878' : '#ead6a4');
     }
 
     const crooked = s.level === 2;

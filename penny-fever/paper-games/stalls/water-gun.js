@@ -328,9 +328,10 @@ export default {
     const c = d.c;
     d.text('Water-Gun Fleet', 450, 112, 28, '#efe6d0');
     d.text(ch.title, 450, 148, 20, '#d2b98c');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 148, {w: 66, fallback: () => d.star(800, 148, 22)});
-      d.text('waiting', 800, 202, 14, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 202, 14, owned ? '#c8e878' : '#ead6a4');
     }
 
     LANES.forEach((y, i) => {

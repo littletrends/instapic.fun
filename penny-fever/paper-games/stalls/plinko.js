@@ -262,9 +262,10 @@ export default {
     const mill = s.mill;
     d.text('Marble Mill', 450, 72, 28, '#fff3d0');
     d.text(ch.title, 450, 104, 18, '#d2b98c');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 88, {w: 58, fallback: () => d.star(800, 88, 18)});
-      d.text('waiting', 800, 136, 12, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 136, 12, owned ? '#c8e878' : '#ead6a4');
     }
     d.line({x: 168, y: 220}, {x: 732, y: 220}, '#e6c57a', 6);
     d.text('rail', 450, 208, 12, '#ead6a4');

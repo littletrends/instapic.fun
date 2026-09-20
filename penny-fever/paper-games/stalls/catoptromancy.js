@@ -234,9 +234,10 @@ export default {
     const c = d.c;
     d.text('Shattered Fate', 450, 118, 28, '#efe6d0');
     d.text(ch.title, 450, 154, 20, '#d2b98c');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 148, {w: 70, fallback: () => d.star(800, 148, 24)});
-      d.text('waiting', 800, 202, 14, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 202, 14, owned ? '#c8e878' : '#ead6a4');
     }
 
     c.beginPath();

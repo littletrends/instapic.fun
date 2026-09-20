@@ -283,9 +283,10 @@ export default {
     const prize = CABINET_PRIZES[s.level];
     d.text('The Cabinet That Lies', 450, 118, 28, '#efe6d0');
     d.text(LEVELS[s.level], 450, 154, 20, '#d2b98c');
-    if (!s.paid) {
+    {
+      const owned = s.paid;
       d.item(spriteKey(prize), 780, 138, {w: 70, fallback: () => d.star(780, 138, 24)});
-      d.text('waiting', 780, 192, 14, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 780, 192, 14, owned ? '#c8e878' : '#ead6a4');
     }
     const c = d.c;
     if (!s.puzzle || s.phase === 'idle') {

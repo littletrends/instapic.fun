@@ -1227,7 +1227,7 @@ export default {
         } catch {
           d.star(tc.x, tc.y, 10, CREAM);
         }
-        d.text('KEEP', tc.x, tc.y - 22, 10, GOLD);
+        d.text('Unlocked', tc.x, tc.y - 22, 10, GOLD);
       }
     }
 

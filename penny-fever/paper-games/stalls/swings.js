@@ -1886,12 +1886,16 @@ export default {
     }
 
     // Prize waiting corner when eligible and not yet taken
-    if (s.eligible && s.treasureId && !(s.treasure && s.treasure.taken) && !s.treasureCollected) {
-      d.item(spriteKey(s.treasureId), PRIZE_CORNER.x, PRIZE_CORNER.y, {
-        w: 48,
-        fallback: () => drawStar(d, PRIZE_CORNER.x, PRIZE_CORNER.y, 14, '#ffdc55', GOLD_DIM),
-      });
-      d.text('waiting', PRIZE_CORNER.x, PRIZE_CORNER.y + 42, 13, '#f0c860');
+    if (s.treasureId) {
+      const owned = !!(s.treasure && s.treasure.taken) || !!s.treasureCollected;
+      const show = owned || (s.eligible && !(s.treasure && s.treasure.taken));
+      if (show) {
+        d.item(spriteKey(s.treasureId), PRIZE_CORNER.x, PRIZE_CORNER.y, {
+          w: 48,
+          fallback: () => drawStar(d, PRIZE_CORNER.x, PRIZE_CORNER.y, 14, '#ffdc55', GOLD_DIM),
+        });
+        d.text(owned ? 'Collected' : 'Locked', PRIZE_CORNER.x, PRIZE_CORNER.y + 42, 13, owned ? '#c8e878' : '#f0c860');
+      }
     }
 
     // Court FX only — shell owns HUD / actions / readout (chrome layout pass).

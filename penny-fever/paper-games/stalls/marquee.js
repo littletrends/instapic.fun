@@ -219,9 +219,10 @@ export default {
     const glow = s.board ? s.board.targets.filter(t => t.lit).length / Math.max(1, s.board.targets.length) : 0;
     d.text('Marquee Glowball', 450, 118, 28, '#efe6d0');
     d.text(ch.title, 450, 154, 20, '#d2b98c');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 148, {w: 70, fallback: () => d.star(800, 148, 24)});
-      d.text('in the lantern', 800, 202, 14, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 202, 14, owned ? '#c8e878' : '#ead6a4');
     }
     roundRect(c, 80, 200, 740, 860, 18);
     // The illustrated template supplies the surface; keep the gameplay outline.

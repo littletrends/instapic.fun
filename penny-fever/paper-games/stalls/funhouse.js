@@ -1277,7 +1277,7 @@ function drawMazeCourt(s, d) {
     const dim = !s.eligible || locked || unlockedWait;
     const tx = s.treasure.x;
     const ty = s.treasure.y;
-    // Token-sized chapter bonus: LOCKED → key unlocks KEEP → clear collects TREASURE.
+    // Token-sized chapter bonus: Locked → key unlocks Unlocked → clear collects Collected.
     if (!dim) d.glow(tx, ty, 18, GOLD);
     else d.glow(tx, ty, unlockedWait ? 16 : 14, unlockedWait ? GOLD : '#f4d590');
     try {
@@ -1288,7 +1288,7 @@ function drawMazeCourt(s, d) {
     } catch {
       d.heart(tx, ty, 10);
     }
-    const tag = locked ? 'LOCKED' : (unlockedWait || dim ? 'KEEP' : 'TREASURE');
+    const tag = locked ? 'Locked' : (unlockedWait || dim ? 'Unlocked' : 'Collected');
     d.text(tag, tx, ty - 22, 10, locked ? BURGUNDY : (unlockedWait ? GOLD : (dim ? INK : GOLD)));
   }
   drawFlies(d, s);
@@ -2045,7 +2045,7 @@ function drawRoom(s, d) {
     } catch {
       d.heart(tx, ty, 10);
     }
-    d.text(dim ? 'KEEP' : 'TREASURE', tx, ty - 22, 10, dim ? INK : GOLD);
+    d.text(dim ? 'Unlocked' : 'Collected', tx, ty - 22, 10, dim ? INK : GOLD);
   }
   drawFlies(d, s);
   drawClarityChrome(s, d);

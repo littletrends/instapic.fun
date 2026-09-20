@@ -274,9 +274,10 @@ export default {
     const ch = RINGO_CHAPTERS[s.level];
     d.text('Ring Raiders', 450, 88, 28, '#efe6d0');
     d.text(ch.title, 450, 122, 18, '#d2b98c');
-    if (!s.won) {
+    {
+      const owned = s.won || chapterPaid(s.level);
       d.item(spriteKey(ch.prize), 800, 108, {w: 60, fallback: () => d.star(800, 108, 20)});
-      d.text('waiting', 800, 156, 12, '#ead6a4');
+      d.text(owned ? 'Collected' : 'Locked', 800, 156, 12, owned ? '#c8e878' : '#ead6a4');
     }
     d.line({x: FIELD.left, y: 160}, {x: FIELD.left, y: 1000}, '#8a7652', 10);
     d.line({x: FIELD.right, y: 160}, {x: FIELD.right, y: 1000}, '#8a7652', 10);

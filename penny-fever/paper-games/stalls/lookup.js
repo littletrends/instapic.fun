@@ -527,11 +527,13 @@ export default {
       const clue = skyClue(s);
       if (clue) d.text(clue, rx, ry + 86, 16, '#f0d18f');
     }
-    if (!s.paid) {
+    {
+      const owned = !!s.paid;
       d.item(spriteKey(s.prize), rx, ry - 72, {
         w: 58, shadow: false,
         fallback: () => d.star(rx, ry - 72, 20, '#e7c789'),
       });
+      d.text(owned ? 'Collected' : 'Locked', rx, ry - 28, 14, owned ? '#c8e878' : '#ead6a4');
     }
     const [sx, sy] = c.source;
     d.glow(sx, sy, s.phase === 'flying' ? 56 : 36, '#f0d18f');
