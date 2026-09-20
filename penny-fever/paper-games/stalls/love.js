@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=first-prize-1';
+} from '../love-arithmetic.js?v=love-hole-enter-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -42,20 +42,33 @@ function hit(p, b) {
   return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
 function plateBox(which, two) {
-  const w = two ? 250 : 520, h = 70;
-  if (!two) return {x: 190, y: 210, w, h};
-  return which === 0 ? {x: 90, y: 210, w, h} : {x: 560, y: 210, w, h};
+  // Inward mid-cream plates — clear of rose buildings / top stage.
+  const h = 66;
+  if (!two) return {x: 275, y: 690, w: 350, h};
+  const w = 155;
+  return which === 0 ? {x: 270, y: 690, w, h} : {x: 475, y: 690, w, h};
+}
+function enterBox() {
+  // On-canvas Enter between name plates and keyboard.
+  return {x: 300, y: 780, w: 300, h: 52};
+}
+function namesReady(s) {
+  const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
+  const you = normalizeName(s.you || '');
+  if (!you) return false;
+  if (ch.bLabel && !normalizeName(s.them || '')) return false;
+  return true;
 }
 function keyBox(i) {
-  const cols = 7, w = 56, h = 48, gap = 8;
+  const cols = 7, w = 52, h = 40, gap = 6;
   const row = Math.floor(i / cols), col = i % cols;
   const total = cols * w + (cols - 1) * gap;
-  return {x: 450 - total / 2 + col * (w + gap), y: 620 + row * (h + gap), w, h};
+  return {x: 450 - total / 2 + col * (w + gap), y: 850 + row * (h + gap), w, h};
 }
 function digitBox(i) {
-  const w = 64, h = 64, gap = 10;
+  const w = 48, h = 48, gap = 6;
   const total = 10 * w + 9 * gap;
-  return {x: 450 - total / 2 + i * (w + gap), y: 760, w, h};
+  return {x: 450 - total / 2 + i * (w + gap), y: 870, w, h};
 }
 
 function emptyBook() {
@@ -355,6 +368,11 @@ export default {
     if (s.phase === 'edit' || s.phase === 'wait' || (s.phase === 'result' && !s.won)) {
       if (hit(p, plateBox(0, two))) { s.phase = 'edit'; s.focus = 0; return; }
       if (two && hit(p, plateBox(1, two))) { s.phase = 'edit'; s.focus = 1; return; }
+      if ((s.phase === 'edit' || s.phase === 'wait') && hit(p, enterBox())) {
+        if (namesReady(s)) this.action(s, 'read');
+        else { s.note = 'Write both names, then Enter.'; persist(s); }
+        return;
+      }
       if (s.phase === 'edit') {
         for (let i = 0; i < KEYS.length; i++) if (hit(p, keyBox(i))) { typeInto(s, KEYS[i]); return; }
       }
@@ -394,14 +412,15 @@ export default {
     const two = !!ch.bLabel;
     const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
     const c = d.c;
-    d.text('Rosalie’s tester', 450 + jx, 118, 28, '#5a2030');
-    d.text(ch.title + ' · ' + ch.word, 450, 152, 22, '#7a3040');
+    d.text('Rosalie’s tester', 450 + jx, 520, 26, '#5a2030');
+    d.text(ch.title, 450, 565, 20, '#7a3040');
+    d.text(ch.word, 450 + jx, 625, 52, '#c45a6a');
     if (!s.won) {
-      d.item(spriteKey(ch.prize), 800, 150, {w: 70, fallback: () => d.heart(800, 150, 28, '#c45a6a')});
-      d.text('waiting', 800, 204, 14, '#a05060');
+      d.item(spriteKey(ch.prize), 640, 560, {w: 56, fallback: () => d.heart(640, 560, 24, '#c45a6a')});
+      d.text('waiting', 640, 608, 12, '#a05060');
     }
 
-    const tubeX = 46, tubeY = 250, tubeH = 220;
+    const tubeX = 218, tubeY = 520, tubeH = 100;
     roundRect(c, tubeX, tubeY, 22, tubeH, 10);
     c.fillStyle = '#f8e4e8';
     c.fill();
@@ -424,32 +443,48 @@ export default {
       c.lineWidth = on ? 4 : 2;
       c.stroke();
       d.text(which === 0 ? ch.aLabel : ch.bLabel, b.x + b.w / 2, b.y + 22, 16, '#a05060');
-      d.text((which === 0 ? s.you : s.them) || '…', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
+      d.text((which === 0 ? s.you : s.them) || '\u2026', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
     }
 
+    // Calc / letter band between plates and Enter (count/add).
     const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
     const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
-    names.forEach((word, row) => {
-      if (!word) return;
-      const y = 300 + row * 36;
-      const start = 450 - (word.length - 1) * 16;
-      [...word].forEach((chh, i) => {
-        const x = start + i * 32;
-        const on = letter && chh === letter;
-        if (on) d.circle(x, y - 6, 14, '#f8c8d088', '#c45a6a', 2);
-        d.text(chh, x, y, 22, on ? '#c45a6a' : '#5a2030');
+    if (s.phase === 'count' || s.phase === 'add') {
+      names.forEach((word, row) => {
+        if (!word) return;
+        const y = 760 + row * 28;
+        const start = 450 - (word.length - 1) * 14;
+        [...word].forEach((chh, i) => {
+          const x = start + i * 28;
+          const on = letter && chh === letter;
+          if (on) d.circle(x, y - 6, 12, '#f8c8d088', '#c45a6a', 2);
+          d.text(chh, x, y, 18, on ? '#c45a6a' : '#5a2030');
+        });
       });
-    });
+    }
 
     if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
       const word = ch.word;
+      const baseY = (s.phase === 'count' || s.phase === 'add') ? 820 : 760;
       for (let i = 0; i < word.length; i++) {
-        const x = 450 - (word.length - 1) * 36 + i * 72;
+        const x = 450 - (word.length - 1) * 32 + i * 64;
         const on = s.phase === 'count' && i === s.countIndex;
-        d.text(word[i], x, 390, 32, on ? '#c45a6a' : '#7a3040');
+        d.text(word[i], x, baseY, 28, on ? '#c45a6a' : '#7a3040');
         const shown = s.playerCounts[i];
-        d.text(shown == null ? '·' : String(shown), x, 428, 28, '#5a2030');
+        d.text(shown == null ? '\u00b7' : String(shown), x, baseY + 32, 24, '#5a2030');
       }
+    }
+
+    if (s.phase === 'edit' || s.phase === 'wait') {
+      const eb = enterBox();
+      const ready = namesReady(s);
+      roundRect(c, eb.x, eb.y, eb.w, eb.h, 14);
+      c.fillStyle = ready ? '#c45a6aee' : '#a08088aa';
+      c.fill();
+      c.strokeStyle = ready ? '#5a2030' : '#806068';
+      c.lineWidth = 2;
+      c.stroke();
+      d.text(ready ? 'Enter' : 'Enter names first', eb.x + eb.w / 2, eb.y + 34, 22, ready ? '#fff6f8' : '#f0e0e4');
     }
 
     if (s.phase === 'edit') {
@@ -458,7 +493,7 @@ export default {
         roundRect(c, b.x, b.y, b.w, b.h, 8);
         c.fillStyle = '#5a2038ee';
         c.fill();
-        d.text(k === 'space' ? '⎵' : k === 'del' ? '⌫' : k, b.x + b.w / 2, b.y + 34, 20, '#fff0f4');
+        d.text(k === 'space' ? '\u23b5' : k === 'del' ? '\u232b' : k, b.x + b.w / 2, b.y + 28, 18, '#fff0f4');
       });
     }
     if (s.phase === 'count' || s.phase === 'add') {
@@ -467,7 +502,7 @@ export default {
         roundRect(c, b.x, b.y, b.w, b.h, 10);
         c.fillStyle = '#5a2038ee';
         c.fill();
-        d.text(k, b.x + b.w / 2, b.y + 44, 28, '#fff6d8');
+        d.text(k, b.x + b.w / 2, b.y + 34, 26, '#fff6d8');
       });
     }
 
