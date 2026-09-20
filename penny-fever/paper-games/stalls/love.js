@@ -42,15 +42,15 @@ function hit(p, b) {
   return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
 function plateBox(which, two) {
-  // Inward mid-cream plates — clear of rose buildings / top stage.
+  // Just under title stack — leaves a wide calc gap above the keyboard.
   const h = 66;
-  if (!two) return {x: 275, y: 690, w: 350, h};
+  if (!two) return {x: 275, y: 555, w: 350, h};
   const w = 155;
-  return which === 0 ? {x: 270, y: 690, w, h} : {x: 475, y: 690, w, h};
+  return which === 0 ? {x: 270, y: 555, w, h} : {x: 475, y: 555, w, h};
 }
 function enterBox() {
-  // On-canvas Enter between name plates and keyboard.
-  return {x: 300, y: 780, w: 300, h: 52};
+  // Edit-only: sits in the calc gap; count/add reclaim this band.
+  return {x: 300, y: 700, w: 300, h: 48};
 }
 function namesReady(s) {
   const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -60,15 +60,16 @@ function namesReady(s) {
   return true;
 }
 function keyBox(i) {
+  // Bottom of cream hole — room above for how-many / add.
   const cols = 7, w = 52, h = 40, gap = 6;
   const row = Math.floor(i / cols), col = i % cols;
   const total = cols * w + (cols - 1) * gap;
-  return {x: 450 - total / 2 + col * (w + gap), y: 850 + row * (h + gap), w, h};
+  return {x: 450 - total / 2 + col * (w + gap), y: 880 + row * (h + gap), w, h};
 }
 function digitBox(i) {
   const w = 48, h = 48, gap = 6;
   const total = 10 * w + 9 * gap;
-  return {x: 450 - total / 2 + i * (w + gap), y: 870, w, h};
+  return {x: 450 - total / 2 + i * (w + gap), y: 895, w, h};
 }
 
 function emptyBook() {
@@ -412,15 +413,15 @@ export default {
     const two = !!ch.bLabel;
     const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
     const c = d.c;
-    d.text('Rosalie’s tester', 450 + jx, 520, 26, '#5a2030');
-    d.text(ch.title, 450, 565, 20, '#7a3040');
-    d.text(ch.word, 450 + jx, 625, 52, '#c45a6a');
+    d.text('Rosalie’s tester', 450 + jx, 445, 26, '#5a2030');
+    d.text(ch.title, 450, 478, 20, '#7a3040');
+    d.text(ch.word, 450 + jx, 528, 48, '#c45a6a');
     if (!s.won) {
-      d.item(spriteKey(ch.prize), 640, 560, {w: 56, fallback: () => d.heart(640, 560, 24, '#c45a6a')});
-      d.text('waiting', 640, 608, 12, '#a05060');
+      d.item(spriteKey(ch.prize), 640, 470, {w: 48, fallback: () => d.heart(640, 470, 20, '#c45a6a')});
+      d.text('waiting', 640, 512, 12, '#a05060');
     }
 
-    const tubeX = 218, tubeY = 520, tubeH = 100;
+    const tubeX = 218, tubeY = 445, tubeH = 90;
     roundRect(c, tubeX, tubeY, 22, tubeH, 10);
     c.fillStyle = '#f8e4e8';
     c.fill();
@@ -446,13 +447,13 @@ export default {
       d.text((which === 0 ? s.you : s.them) || '\u2026', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
     }
 
-    // Calc / letter band between plates and Enter (count/add).
+    // How-many / letter band — directly under name plates; keyboard stays at bottom.
     const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
     const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
     if (s.phase === 'count' || s.phase === 'add') {
       names.forEach((word, row) => {
         if (!word) return;
-        const y = 760 + row * 28;
+        const y = 640 + row * 28;
         const start = 450 - (word.length - 1) * 14;
         [...word].forEach((chh, i) => {
           const x = start + i * 28;
@@ -465,13 +466,13 @@ export default {
 
     if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
       const word = ch.word;
-      const baseY = (s.phase === 'count' || s.phase === 'add') ? 820 : 760;
+      const baseY = (s.phase === 'count' || s.phase === 'add') ? 710 : 660;
       for (let i = 0; i < word.length; i++) {
         const x = 450 - (word.length - 1) * 32 + i * 64;
         const on = s.phase === 'count' && i === s.countIndex;
         d.text(word[i], x, baseY, 28, on ? '#c45a6a' : '#7a3040');
         const shown = s.playerCounts[i];
-        d.text(shown == null ? '\u00b7' : String(shown), x, baseY + 32, 24, '#5a2030');
+        d.text(shown == null ? '·' : String(shown), x, baseY + 32, 24, '#5a2030');
       }
     }
 
@@ -509,7 +510,7 @@ export default {
     if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
       s.trueAdd.rows.forEach((row, r) => {
         if (r === 0) return;
-        const y = 470 + r * 36;
+        const y = 640 + r * 32 + r * 36;
         const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
         if (!shown && s.phase !== 'result') return;
         row.forEach((n, i) => {
@@ -523,7 +524,7 @@ export default {
 
     wrapLine(d, s.note, 450, 980, 22, '#7a3040', 720);
     if (s.phase === 'result' && s.pct) {
-      d.text(String(s.pct), 450, 920, 48, '#c45a6a');
+      d.text(String(s.pct), 450, 780, 48, '#c45a6a');
     }
   },
   readout: s => {
