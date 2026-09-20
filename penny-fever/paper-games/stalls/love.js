@@ -42,15 +42,15 @@ function hit(p, b) {
   return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
 function plateBox(which, two) {
-  // Just under title stack — leaves a wide calc gap above the keyboard.
-  const h = 66;
-  if (!two) return {x: 275, y: 555, w: 350, h};
+  // Under the lifted title stack — calc gap between plates and keyboard.
+  const h = 62;
+  if (!two) return {x: 275, y: 500, w: 350, h};
   const w = 155;
-  return which === 0 ? {x: 270, y: 555, w, h} : {x: 475, y: 555, w, h};
+  return which === 0 ? {x: 270, y: 500, w, h} : {x: 475, y: 500, w, h};
 }
 function enterBox() {
-  // Edit-only: sits in the calc gap; count/add reclaim this band.
-  return {x: 300, y: 700, w: 300, h: 48};
+  // Edit-only: mid calc-gap; count/add reclaim this band for how-many.
+  return {x: 300, y: 640, w: 300, h: 46};
 }
 function namesReady(s) {
   const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -413,15 +413,15 @@ export default {
     const two = !!ch.bLabel;
     const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
     const c = d.c;
-    d.text('Rosalie’s tester', 450 + jx, 445, 26, '#5a2030');
-    d.text(ch.title, 450, 478, 20, '#7a3040');
-    d.text(ch.word, 450 + jx, 528, 48, '#c45a6a');
+    d.text('Rosalie’s tester', 450 + jx, 385, 24, '#5a2030');
+    d.text(ch.title, 450, 415, 18, '#7a3040');
+    d.text(ch.word, 450 + jx, 458, 44, '#c45a6a');
     if (!s.won) {
-      d.item(spriteKey(ch.prize), 640, 470, {w: 48, fallback: () => d.heart(640, 470, 20, '#c45a6a')});
-      d.text('waiting', 640, 512, 12, '#a05060');
+      d.item(spriteKey(ch.prize), 640, 410, {w: 44, fallback: () => d.heart(640, 410, 18, '#c45a6a')});
+      d.text('waiting', 640, 448, 12, '#a05060');
     }
 
-    const tubeX = 218, tubeY = 445, tubeH = 90;
+    const tubeX = 218, tubeY = 385, tubeH = 80;
     roundRect(c, tubeX, tubeY, 22, tubeH, 10);
     c.fillStyle = '#f8e4e8';
     c.fill();
@@ -453,7 +453,7 @@ export default {
     if (s.phase === 'count' || s.phase === 'add') {
       names.forEach((word, row) => {
         if (!word) return;
-        const y = 640 + row * 28;
+        const y = 580 + row * 28;
         const start = 450 - (word.length - 1) * 14;
         [...word].forEach((chh, i) => {
           const x = start + i * 28;
@@ -466,7 +466,7 @@ export default {
 
     if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
       const word = ch.word;
-      const baseY = (s.phase === 'count' || s.phase === 'add') ? 710 : 660;
+      const baseY = (s.phase === 'count' || s.phase === 'add') ? 650 : 600;
       for (let i = 0; i < word.length; i++) {
         const x = 450 - (word.length - 1) * 32 + i * 64;
         const on = s.phase === 'count' && i === s.countIndex;
@@ -510,7 +510,7 @@ export default {
     if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
       s.trueAdd.rows.forEach((row, r) => {
         if (r === 0) return;
-        const y = 640 + r * 32;
+        const y = 580 + r * 32;
         const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
         if (!shown && s.phase !== 'result') return;
         row.forEach((n, i) => {
@@ -522,7 +522,11 @@ export default {
       });
     }
 
-    wrapLine(d, s.note, 450, 980, 22, '#7a3040', 720);
+    {
+      // Edit: above keyboard. Count/add: under the digit strip.
+      const noteY = (s.phase === 'edit' || s.phase === 'wait') ? 825 : 970;
+      wrapLine(d, s.note, 450, noteY, 20, '#7a3040', 720);
+    }
     if (s.phase === 'result' && s.pct) {
       d.text(String(s.pct), 450, 780, 48, '#c45a6a');
     }
