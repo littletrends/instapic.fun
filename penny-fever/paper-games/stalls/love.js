@@ -510,7 +510,7 @@ export default {
     if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
       s.trueAdd.rows.forEach((row, r) => {
         if (r === 0) return;
-        const y = 640 + r * 32 + r * 36;
+        const y = 640 + r * 32;
         const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
         if (!shown && s.phase !== 'result') return;
         row.forEach((n, i) => {
