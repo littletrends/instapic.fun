@@ -41,6 +41,7 @@ try{
   await ev('document.querySelector("#next-chapter").click()');assert.equal(await ev('__test.level()'),1);
   await ev('document.querySelector("#chapter").value=5;document.querySelector("#chapter").dispatchEvent(new Event("change"))');
   assert.equal(await ev('__test.level()'),5);assert(await ev('document.querySelector("#next-chapter").disabled'));
+  assert(await ev('__test.playing()'),id+' selected chapter starts immediately');
   await send('Page.reload');await until('!!window.__test');assert.equal(await ev('__test.level()'),5,id+' selected survives reload');
   await ev('document.querySelector("#chapter").value=0;document.querySelector("#chapter").dispatchEvent(new Event("change"));__test.pause()');
   // Exercise the real shared runtime with each engine's terminal-state contract.
