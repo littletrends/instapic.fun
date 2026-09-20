@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=love-readings-2';
+} from '../love-arithmetic.js?v=love-locked-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -486,9 +486,15 @@ export default {
     if (s.phase === 'edit' || s.phase === 'wait') {
       d.text(ch.word, 450 + jx, 372, 42, '#c45a6a');
     }
-    if (!s.won) {
-      d.item(spriteKey(ch.prize), 640, 318, {w: 40, fallback: () => d.heart(640, 318, 16, '#c45a6a')});
-      d.text('waiting', 640, 354, 11, '#a05060');
+    // Chapter bonus badge — same Locked / Collected language as Iris’s globe.
+    {
+      const owned = chapterPaid(s.level) || s.won;
+      const px = 640, py = 318;
+      c.save();
+      c.globalAlpha = owned ? 1 : 0.55;
+      d.item(spriteKey(ch.prize), px, py, {w: 40, fallback: () => d.heart(px, py, 16, '#c45a6a')});
+      c.restore();
+      d.text(owned ? 'Collected' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
     }
 
     const tubeX = 218, tubeY = 300, tubeH = 64;
