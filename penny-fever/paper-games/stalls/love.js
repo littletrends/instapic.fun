@@ -7,8 +7,8 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
  LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
  isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=love-layout-1';
-import { paintLayout as paintHoleLayout } from '../layouts/love.js?v=love-layout-1';
+} from '../love-arithmetic.js?v=love-layout-2';
+import { paintLayout as paintHoleLayout } from '../layouts/love.js?v=love-layout-2';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -45,15 +45,15 @@ function hit(p, b) {
 }
 /** Play lives in the cream HOLE oval (~210–690 × 418–998). Keep chrome clear. */
 function plateBox(which, two) {
- // Inward plates in the blank playfield — clear of side roses/lamps.
+ // Mid-hole plates — below top stage/curtains, clear of side roses.
  const h = 66;
- if (!two) return {x: 275, y: 638, w: 350, h};
+ if (!two) return {x: 275, y: 735, w: 350, h};
  const w = 155;
- return which === 0 ? {x: 270, y: 638, w, h} : {x: 475, y: 638, w, h};
+ return which === 0 ? {x: 270, y: 735, w, h} : {x: 475, y: 735, w, h};
 }
 function submitBox() {
- // Sits in the reserved calc band between plates and keyboard.
- return {x: 300, y: 740, w: 300, h: 50};
+ // Calc / Begin band between plates and keyboard.
+ return {x: 300, y: 820, w: 300, h: 50};
 }
 function namesReady(s) {
  const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -63,17 +63,17 @@ function namesReady(s) {
  return true;
 }
 function keyBox(i) {
- // Compact grid so the last row stays inside the oval (not on bottom roses).
+ // Lower-hole keyboard — room above for calc; last row inside oval.
  const cols = 7, w = 48, h = 34, gap = 5;
  const row = Math.floor(i / cols), col = i % cols;
  const total = cols * w + (cols - 1) * gap;
- return {x: 450 - total / 2 + col * (w + gap), y: 825 + row * (h + gap), w, h};
+ return {x: 450 - total / 2 + col * (w + gap), y: 885 + row * (h + gap), w, h};
 }
 function digitBox(i) {
- // Narrow digit strip — fits oval width at lower hole.
+ // Digit strip under the calc band (count/add phases).
  const w = 42, h = 44, gap = 5;
  const total = 10 * w + 9 * gap;
- return {x: 450 - total / 2 + i * (w + gap), y: 870, w, h};
+ return {x: 450 - total / 2 + i * (w + gap), y: 900, w, h};
 }
 
 function emptyBook() {
@@ -429,7 +429,7 @@ export default {
 
  const kit = getKit('love');
  // Booth accents (Iris-style ring kept): pendant by mercury tube; gates on result beat.
- if (kit?.pieces?.[0]) d.sprite(kit.pieces[0], 230, 520, { w: 44, alpha: 0.9 });
+ if (kit?.pieces?.[0]) d.sprite(kit.pieces[0], 230, 600, { w: 44, alpha: 0.9 });
  if (s.phase === 'result' && kit?.pieces?.[1]) d.sprite(kit.pieces[1], 450, 900, { w: 96, alpha: 0.92 });
  else if (kit?.pieces?.[2]) d.sprite(kit.pieces[2], 670, 900, { w: 60, alpha: 0.75 });
 
@@ -438,14 +438,14 @@ export default {
  const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
  const c = d.c;
  // Title stack: host / chapter / WORD — spaced ~3 lines inside the blank hole (not top chrome).
- d.text('Rosalie’s tester', 450 + jx, 475, 24, '#5a2030');
- d.text(ch.title, 450, 525, 18, '#7a3040');
+ d.text('Rosalie’s tester', 450 + jx, 560, 26, '#5a2030');
+ d.text(ch.title, 450, 610, 20, '#7a3040');
  if (!s.won) {
- d.item(spriteKey(ch.prize), 648, 500, {w: 52, fallback: () => d.heart(648, 500, 20, '#c45a6a')});
- d.text('waiting', 648, 540, 12, '#a05060');
+ d.item(spriteKey(ch.prize), 648, 590, {w: 52, fallback: () => d.heart(648, 590, 20, '#c45a6a')});
+ d.text('waiting', 648, 630, 12, '#a05060');
  }
 
- const tubeX = 232, tubeY = 470, tubeH = 90;
+ const tubeX = 232, tubeY = 560, tubeH = 90;
  roundRect(c, tubeX, tubeY, 22, tubeH, 10);
  c.fillStyle = '#f8e4e8';
  c.fill();
@@ -473,7 +473,7 @@ export default {
 
  // Chapter WORD — third line of the title stack in the blank hole.
  {
- const wordY = 590;
+ const wordY = 680;
  const wordSize = two ? 52 : 48;
  d.glow(450 + jx, wordY - 8, 64, '#c45a6a');
  d.text(ch.word, 450 + jx, wordY, wordSize, '#c45a6a');
@@ -484,7 +484,7 @@ export default {
  const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
  names.forEach((word, row) => {
  if (!word || (s.phase !== 'count' && s.phase !== 'add')) return;
- const y = 715 + row * 28;
+ const y = 800 + row * 28;
  const start = 450 - (word.length - 1) * 14;
  [...word].forEach((chh, i) => {
  const x = start + i * 28;
@@ -496,7 +496,7 @@ export default {
 
  if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
  const word = ch.word;
- const baseY = names.some(Boolean) && (s.phase === 'count' || s.phase === 'add') ? 768 : 725;
+ const baseY = names.some(Boolean) && (s.phase === 'count' || s.phase === 'add') ? 830 : 800;
  for (let i = 0; i < word.length; i++) {
  const x = 450 - (word.length - 1) * 32 + i * 64;
  const on = s.phase === 'count' && i === s.countIndex;
@@ -539,7 +539,7 @@ export default {
  if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
  s.trueAdd.rows.forEach((row, r) => {
  if (r === 0) return;
- const y = 720 + r * 30;
+ const y = 800 + r * 30;
  const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
  if (!shown && s.phase !== 'result') return;
  row.forEach((n, i) => {
@@ -551,7 +551,7 @@ export default {
  });
  }
 
- wrapLine(d, s.note, 450, 990, 18, '#7a3040', 560);
+ wrapLine(d, s.note, 450, 1005, 18, '#7a3040', 560);
  if (s.phase === 'result' && s.pct) {
  d.text(String(s.pct), 450, 940, 44, '#c45a6a');
  }
