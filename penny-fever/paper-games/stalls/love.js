@@ -447,13 +447,15 @@ export default {
       d.text((which === 0 ? s.you : s.them) || '\u2026', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
     }
 
-    // How-many / letter band — directly under name plates; keyboard stays at bottom.
+    // Calc band under name plates: names (count) → word/counts → add rows flow under each other.
     const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
     const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
-    if (s.phase === 'count' || s.phase === 'add') {
+    let calcY = 575;
+
+    if (s.phase === 'count') {
       names.forEach((word, row) => {
         if (!word) return;
-        const y = 580 + row * 28;
+        const y = calcY + row * 26;
         const start = 450 - (word.length - 1) * 14;
         [...word].forEach((chh, i) => {
           const x = start + i * 28;
@@ -462,18 +464,24 @@ export default {
           d.text(chh, x, y, 18, on ? '#c45a6a' : '#5a2030');
         });
       });
+      const nameRows = names.filter(Boolean).length || 1;
+      calcY += nameRows * 26 + 10;
     }
 
     if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
       const word = ch.word;
-      const baseY = (s.phase === 'count' || s.phase === 'add') ? 650 : 600;
       for (let i = 0; i < word.length; i++) {
         const x = 450 - (word.length - 1) * 32 + i * 64;
         const on = s.phase === 'count' && i === s.countIndex;
-        d.text(word[i], x, baseY, 28, on ? '#c45a6a' : '#7a3040');
-        const shown = s.playerCounts[i];
-        d.text(shown == null ? '·' : String(shown), x, baseY + 32, 24, '#5a2030');
+        d.text(word[i], x, calcY, 28, on ? '#c45a6a' : '#7a3040');
       }
+      calcY += 34;
+      for (let i = 0; i < word.length; i++) {
+        const x = 450 - (word.length - 1) * 32 + i * 64;
+        const shown = s.playerCounts[i];
+        d.text(shown == null ? '\u00b7' : String(shown), x, calcY, 24, '#5a2030');
+      }
+      calcY += 36;
     }
 
     if (s.phase === 'edit' || s.phase === 'wait') {
@@ -508,19 +516,21 @@ export default {
     }
 
     if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
+      // Pyramid rows stack under the count line (skip row 0 — already drawn as counts).
       s.trueAdd.rows.forEach((row, r) => {
         if (r === 0) return;
-        const y = 580 + r * 32;
+        const y = calcY + (r - 1) * 34;
         const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
         if (!shown && s.phase !== 'result') return;
         row.forEach((n, i) => {
           const known = s.phase === 'result' || r < s.addRow || (r === s.addRow && i < s.addCol);
           const x = 450 - (row.length - 1) * 28 + i * 56;
           const value = s.phase === 'result' ? n : (s.playerRows[r] && s.playerRows[r][i] != null ? s.playerRows[r][i] : n);
-          d.text(known ? String(value) : '·', x, y, 24, '#5a2030');
+          d.text(known ? String(value) : '\u00b7', x, y, 24, '#5a2030');
         });
       });
     }
+
 
     {
       // Edit: above keyboard. Count/add: under the digit strip.
@@ -528,7 +538,10 @@ export default {
       wrapLine(d, s.note, 450, noteY, 20, '#7a3040', 720);
     }
     if (s.phase === 'result' && s.pct) {
-      d.text(String(s.pct), 450, 780, 48, '#c45a6a');
+      const rows = (s.trueAdd && s.trueAdd.rows) ? s.trueAdd.rows.length : 1;
+      // Under word+counts+(pyramid rows after row 0)
+      const pctY = Math.min(860, 575 + 70 + Math.max(0, rows - 1) * 34 + 20);
+      d.text(String(s.pct) + '%', 450, pctY, 44, '#c45a6a');
     }
   },
   readout: s => {
