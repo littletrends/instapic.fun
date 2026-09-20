@@ -108,49 +108,50 @@ export function isLoveWin(level, n) {
 
 export function readingFor(level, n) {
   const ch = LOVE_CHAPTERS[level] || LOVE_CHAPTERS[0];
-  const x = ((n - 1) % 5);
+  const x = ((Math.max(1, Number(n) || 1) - 1) % 5);
+  // Body only — the booth prints "33% = …" so score + reasoning always show together.
   const lines = {
     love: [
-      n + '% — a spark, not a fire. Keep the names anyway.',
-      n + '% — the tester blushes. Not a promise, a flutter.',
-      n + '% — warm paper. The machine likes this pairing.',
-      n + '% — sweet heat. Rosalie fans herself, purely theatrically.',
-      n + '% — boil over. Arithmetic has lost its composure.',
+      'A spark, not a fire. Keep the names anyway.',
+      'The tester blushes. Not a promise — a flutter.',
+      'Warm paper. The machine likes this pairing.',
+      'Sweet heat. Rosalie fans herself, purely theatrically.',
+      'Boil over. Arithmetic has lost its composure.',
     ],
     vital: [
-      n + '% theatrical vitality. Whimsy only — not medical advice.',
-      n + '% on the paper. The spirits recommend a biscuit, not a doctor. Not medical advice.',
-      n + '% stubborn ache in pencil. Still not a diagnosis.',
-      n + '% — Rosalie circs it in red. Whimsy only; not medical advice.',
-      n + '% — the machine is being dramatic. You are probably fine. Not medical advice.',
+      'Theatrical vitality. Whimsy only — not medical advice.',
+      'The spirits recommend a biscuit, not a doctor. Not medical advice.',
+      'Stubborn ache in pencil. Still not a diagnosis. Not medical advice.',
+      'Rosalie circles it in red. Whimsy only; not medical advice.',
+      'The machine is being dramatic. You are probably fine. Not medical advice.',
     ],
     family: [
-      n + '% — a quiet bond. The paper does not gossip.',
-      n + '% — someone at home is thinking of you, or of supper.',
-      n + '% — family arithmetic: messy, fond, unsolved.',
-      n + '% — the names still belong on the same page.',
-      n + '% — a strong knot. Do not tell them Rosalie said so.',
+      'A quiet bond. The paper does not gossip.',
+      'Someone at home is thinking of you, or of supper.',
+      'Family arithmetic: messy, fond, unsolved.',
+      'The names still belong on the same page.',
+      'A strong knot. Do not tell them Rosalie said so.',
     ],
     mates: [
-      n + '% — mates. The tester refuses to be unkind.',
-      n + '% — a good pairing for a paper alley.',
-      n + '% — friendship with extra glitter.',
-      n + '% — those two names still make ' + n + ', darling. Arithmetic has not changed its mind.',
-      n + '% — the machine would sit with you both.',
+      'Mates. The tester refuses to be unkind.',
+      'A good pairing for a paper alley.',
+      'Friendship with extra glitter.',
+      'Those two names still add up, darling. Arithmetic has not changed its mind.',
+      'The machine would sit with you both.',
     ],
     dream: [
-      n + '% — a small wish, still breathing.',
-      n + '% — the future is doodling in the margin.',
-      n + '% — keep the hope. The paper likes it.',
-      n + '% — a bright scribble of a tomorrow.',
-      n + '% — the wish is loud. Rosalie covers her ears, smiling.',
+      'A small wish, still breathing.',
+      'The future is doodling in the margin.',
+      'Keep the hope. The paper likes it.',
+      'A bright scribble of a tomorrow.',
+      'The wish is loud. Rosalie covers her ears, smiling.',
     ],
     mystery: [
-      n + '% — the spirits are mysterious. The numbers less so.',
-      n + '% — a riddle with a red-pencil answer.',
-      n + '% — unexplained, but neatly added.',
-      n + '% — the word keeps its secret. The percent does not.',
-      n + '% — mystery satisfied, for a schoolyard value of satisfied.',
+      'The spirits are mysterious. The numbers less so.',
+      'A riddle with a red-pencil answer.',
+      'Unexplained, but neatly added.',
+      'The word keeps its secret. The percent does not.',
+      'Mystery satisfied, for a schoolyard value of satisfied.',
     ],
   };
   const pack = lines[ch.id] || lines.love;

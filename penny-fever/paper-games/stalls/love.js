@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=full-sum-2';
+} from '../love-arithmetic.js?v=readings-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -308,8 +308,8 @@ function finishMath(s) {
     }
   } else if (win) s.won = true;
   if (win) takePrize(s, prize, {x: 720, y: 200});
-  s.hold = 1.3;
-  s.note = s.reading;
+  s.hold = 2.6;
+  s.note = s.pct + '% = ' + s.reading;
   persist(s);
 }
 
@@ -413,13 +413,15 @@ export default {
       if (s.hold > 0) s.hold -= dt;
       if (s.hold <= 0) {
         const ch = LOVE_CHAPTERS[s.level];
+        const score = (s.pct != null ? s.pct : '—') + '%';
+        const reason = s.reading || 'The paper is full.';
         if (s.won) {
-          done(s, 'A valentine from Rosalie',
-            itemName(ch.prize) + ' — struck on ' + s.pct + '%. ' + s.reading,
+          done(s, score + ' — valentine',
+            reason + ' Unique drop: ' + itemName(ch.prize) + '.',
             {prize: ch.prize, won: true, handled: true});
         } else {
-          done(s, (s.pct || '—') + '% · Rosalie’s reading',
-            (s.reading || 'The paper is full.') + ' Another sitting when you are ready.',
+          done(s, score,
+            reason + ' Another sitting when you are ready.',
             {won: false, prize: null, handled: true});
         }
       }
@@ -612,16 +614,16 @@ export default {
     }
 
 
-    // Skip canvas note during edit — it was painting over the letter keyboard.
-    // Count/add keep the prompt under the digit strip; readout still shows status.
-    if (s.phase !== 'edit' && s.phase !== 'wait') {
-      wrapLine(d, s.note, 450, 970, 20, '#7a3040', 720);
-    }
-    if (s.phase === 'result' && s.pct) {
+    if (s.phase === 'result' && s.pct != null) {
+      // Score + reading on the paper before the shared veil opens.
       const rows = (s.trueAdd && s.trueAdd.rows) ? s.trueAdd.rows.length : 1;
-      // Under word+counts+(pyramid rows after row 0)
-      const pctY = Math.min(860, 490 + 42 + Math.max(1, rows) * 42 + 16);
-      d.text(String(s.pct) + '%', 450, pctY, 44, '#c45a6a');
+      const pctY = Math.min(700, 490 + 36 + Math.max(1, rows) * 36 + 8);
+      d.text(String(s.pct) + '%', 450, pctY, 52, '#c45a6a');
+      d.text('=', 450, pctY + 40, 28, '#7a3040');
+      wrapLine(d, s.reading || '', 450, pctY + 72, 22, '#5a2030', 640);
+    } else if (s.phase !== 'edit' && s.phase !== 'wait') {
+      // Count/add prompts under the digit strip (never over the letter keyboard).
+      wrapLine(d, s.note, 450, 970, 20, '#7a3040', 720);
     }
   },
   readout: s => {
