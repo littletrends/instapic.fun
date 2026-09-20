@@ -7,8 +7,8 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
  LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
  isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=love-ux-1';
-import { paintLayout as paintHoleLayout } from '../layouts/love.js?v=love-ux-1';
+} from '../love-arithmetic.js?v=love-layout-1';
+import { paintLayout as paintHoleLayout } from '../layouts/love.js?v=love-layout-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -43,15 +43,17 @@ function wrapLine(d, text, x, y, size, color, maxW) {
 function hit(p, b) {
  return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
+/** Play lives in the cream HOLE oval (~210–690 × 418–998). Keep chrome clear. */
 function plateBox(which, two) {
- // Leave a wide centre gap so the chapter WORD sits as the hero between plates.
- const h = 78;
- if (!two) return {x: 190, y: 250, w: 520, h};
- const w = 200;
- return which === 0 ? {x: 48, y: 220, w, h} : {x: 652, y: 220, w, h};
+ // Inward plates in the blank playfield — clear of side roses/lamps.
+ const h = 66;
+ if (!two) return {x: 275, y: 638, w: 350, h};
+ const w = 155;
+ return which === 0 ? {x: 270, y: 638, w, h} : {x: 475, y: 638, w, h};
 }
 function submitBox() {
- return {x: 300, y: 520, w: 300, h: 56};
+ // Sits in the reserved calc band between plates and keyboard.
+ return {x: 300, y: 740, w: 300, h: 50};
 }
 function namesReady(s) {
  const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -61,15 +63,17 @@ function namesReady(s) {
  return true;
 }
 function keyBox(i) {
- const cols = 7, w = 56, h = 48, gap = 8;
+ // Compact grid so the last row stays inside the oval (not on bottom roses).
+ const cols = 7, w = 48, h = 34, gap = 5;
  const row = Math.floor(i / cols), col = i % cols;
  const total = cols * w + (cols - 1) * gap;
- return {x: 450 - total / 2 + col * (w + gap), y: 620 + row * (h + gap), w, h};
+ return {x: 450 - total / 2 + col * (w + gap), y: 825 + row * (h + gap), w, h};
 }
 function digitBox(i) {
- const w = 64, h = 64, gap = 10;
+ // Narrow digit strip — fits oval width at lower hole.
+ const w = 42, h = 44, gap = 5;
  const total = 10 * w + 9 * gap;
- return {x: 450 - total / 2 + i * (w + gap), y: 760, w, h};
+ return {x: 450 - total / 2 + i * (w + gap), y: 870, w, h};
 }
 
 function emptyBook() {
@@ -425,22 +429,23 @@ export default {
 
  const kit = getKit('love');
  // Booth accents (Iris-style ring kept): pendant by mercury tube; gates on result beat.
- if (kit?.pieces?.[0]) d.sprite(kit.pieces[0], 96, 320, { w: 52, alpha: 0.95 });
- if (s.phase === 'result' && kit?.pieces?.[1]) d.sprite(kit.pieces[1], 450, 860, { w: 110, alpha: 0.92 });
- else if (kit?.pieces?.[2]) d.sprite(kit.pieces[2], 780, 860, { w: 72, alpha: 0.75 });
+ if (kit?.pieces?.[0]) d.sprite(kit.pieces[0], 230, 520, { w: 44, alpha: 0.9 });
+ if (s.phase === 'result' && kit?.pieces?.[1]) d.sprite(kit.pieces[1], 450, 900, { w: 96, alpha: 0.92 });
+ else if (kit?.pieces?.[2]) d.sprite(kit.pieces[2], 670, 900, { w: 60, alpha: 0.75 });
 
  const ch = LOVE_CHAPTERS[s.level];
  const two = !!ch.bLabel;
  const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
  const c = d.c;
- d.text('Rosalie’s tester', 450 + jx, 118, 28, '#5a2030');
- d.text(ch.title, 450, 152, 18, '#7a3040');
+ // Title stack: host / chapter / WORD — spaced ~3 lines inside the blank hole (not top chrome).
+ d.text('Rosalie’s tester', 450 + jx, 475, 24, '#5a2030');
+ d.text(ch.title, 450, 525, 18, '#7a3040');
  if (!s.won) {
- d.item(spriteKey(ch.prize), 800, 150, {w: 70, fallback: () => d.heart(800, 150, 28, '#c45a6a')});
- d.text('waiting', 800, 204, 14, '#a05060');
+ d.item(spriteKey(ch.prize), 648, 500, {w: 52, fallback: () => d.heart(648, 500, 20, '#c45a6a')});
+ d.text('waiting', 648, 540, 12, '#a05060');
  }
 
- const tubeX = 46, tubeY = 250, tubeH = 220;
+ const tubeX = 232, tubeY = 470, tubeH = 90;
  roundRect(c, tubeX, tubeY, 22, tubeH, 10);
  c.fillStyle = '#f8e4e8';
  c.fill();
@@ -466,36 +471,38 @@ export default {
  d.text((which === 0 ? s.you : s.them) || '…', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
  }
 
- // Chapter WORD is the visual hero — centred, larger than name plates.
+ // Chapter WORD — third line of the title stack in the blank hole.
  {
- const wordY = two ? 262 : 205;
- const wordSize = two ? 58 : 54;
- d.glow(450 + jx, wordY - 8, 70, '#c45a6a');
+ const wordY = 590;
+ const wordSize = two ? 52 : 48;
+ d.glow(450 + jx, wordY - 8, 64, '#c45a6a');
  d.text(ch.word, 450 + jx, wordY, wordSize, '#c45a6a');
  }
 
+ // Letter highlight + count/add live in the band between plates and keyboard.
  const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
  const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
  names.forEach((word, row) => {
- if (!word) return;
- const y = 330 + row * 36;
- const start = 450 - (word.length - 1) * 16;
+ if (!word || (s.phase !== 'count' && s.phase !== 'add')) return;
+ const y = 715 + row * 28;
+ const start = 450 - (word.length - 1) * 14;
  [...word].forEach((chh, i) => {
- const x = start + i * 32;
+ const x = start + i * 28;
  const on = letter && chh === letter;
- if (on) d.circle(x, y - 6, 14, '#f8c8d088', '#c45a6a', 2);
- d.text(chh, x, y, 22, on ? '#c45a6a' : '#5a2030');
+ if (on) d.circle(x, y - 5, 12, '#f8c8d088', '#c45a6a', 2);
+ d.text(chh, x, y, 18, on ? '#c45a6a' : '#5a2030');
  });
  });
 
  if (s.phase === 'count' || s.phase === 'add' || s.phase === 'result') {
  const word = ch.word;
+ const baseY = names.some(Boolean) && (s.phase === 'count' || s.phase === 'add') ? 768 : 725;
  for (let i = 0; i < word.length; i++) {
- const x = 450 - (word.length - 1) * 36 + i * 72;
+ const x = 450 - (word.length - 1) * 32 + i * 64;
  const on = s.phase === 'count' && i === s.countIndex;
- d.text(word[i], x, 390, 32, on ? '#c45a6a' : '#7a3040');
+ d.text(word[i], x, baseY, 28, on ? '#c45a6a' : '#7a3040');
  const shown = s.playerCounts[i];
- d.text(shown == null ? '·' : String(shown), x, 428, 28, '#5a2030');
+ d.text(shown == null ? '·' : String(shown), x, baseY + 34, 24, '#5a2030');
  }
  }
 
@@ -532,7 +539,7 @@ export default {
  if (s.trueAdd && (s.phase === 'add' || s.phase === 'result')) {
  s.trueAdd.rows.forEach((row, r) => {
  if (r === 0) return;
- const y = 470 + r * 36;
+ const y = 720 + r * 30;
  const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add');
  if (!shown && s.phase !== 'result') return;
  row.forEach((n, i) => {
@@ -544,9 +551,9 @@ export default {
  });
  }
 
- wrapLine(d, s.note, 450, 980, 22, '#7a3040', 720);
+ wrapLine(d, s.note, 450, 990, 18, '#7a3040', 560);
  if (s.phase === 'result' && s.pct) {
- d.text(String(s.pct), 450, 920, 48, '#c45a6a');
+ d.text(String(s.pct), 450, 940, 44, '#c45a6a');
  }
  },
  readout: s => {
