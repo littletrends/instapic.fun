@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=full-sum-1';
+} from '../love-arithmetic.js?v=full-sum-2';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -328,6 +328,28 @@ function hint(s) {
   }
 }
 
+
+/** Wipe the finished (or mid) paper so Play again does not reopen the same result. */
+function clearSitting(s, note) {
+  s.phase = 'edit';
+  s.result = null;
+  s.hold = 0;
+  s.trueCounts = null;
+  s.trueAdd = null;
+  s.playerCounts = [];
+  s.countIndex = 0;
+  s.playerRows = [];
+  s.addRow = 1;
+  s.addCol = 0;
+  s.addBuf = '';
+  s.pct = 0;
+  s.reading = '';
+  s.charged = false;
+  s.mercury = 0;
+  s.shake = 0;
+  s.note = note || 'Names stay — change one, or sit again.';
+}
+
 export default {
   title: 'Love Tester',
   live: alleyPlay,
@@ -352,24 +374,35 @@ export default {
   create(level) {
     const ch = LOVE_CHAPTERS[level] || LOVE_CHAPTERS[0];
     const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
+    const finished = saved.phase === 'result';
     const s = {
       level, t: 0,
       you: saved.you || '', them: saved.them || '', focus: saved.focus || 0,
-      phase: saved.phase || 'edit',
-      reads: saved.reads || 0, charged: !!saved.charged, launchId: saved.launchId || 0,
-      shake: 0, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
-      trueCounts: saved.trueCounts || null,
-      trueAdd: saved.trueCounts ? addDown(saved.trueCounts) : null,
-      playerCounts: saved.playerCounts || [], countIndex: saved.countIndex || 0,
-      playerRows: saved.playerRows || [], addRow: saved.addRow || 1, addCol: saved.addCol || 0, addBuf: saved.addBuf || "",
-      pct: saved.pct || 0, reading: saved.reading || '', hold: 0,
-      won: !!saved.won, mercury: saved.mercury || 0,
-      note: saved.note || (ch.aLabel + (ch.bLabel ? ' and ' + ch.bLabel.toLowerCase() : '') + '.'),
+      // Finished sittings reopen on a clear paper (names kept) so Play again works.
+      phase: finished ? 'edit' : (saved.phase || 'edit'),
+      reads: saved.reads || 0, charged: finished ? false : !!saved.charged, launchId: saved.launchId || 0,
+      shake: 0, mistakes: finished ? 0 : (saved.mistakes || 0), hints: finished ? 0 : (saved.hints || 0),
+      trueCounts: finished ? null : (saved.trueCounts || null),
+      trueAdd: finished ? null : (saved.trueCounts ? addDown(saved.trueCounts) : null),
+      playerCounts: finished ? [] : (saved.playerCounts || []), countIndex: finished ? 0 : (saved.countIndex || 0),
+      playerRows: finished ? [] : (saved.playerRows || []),
+      addRow: finished ? 1 : (saved.addRow || 1), addCol: finished ? 0 : (saved.addCol || 0),
+      addBuf: finished ? '' : (saved.addBuf || ''),
+      pct: finished ? 0 : (saved.pct || 0), reading: finished ? '' : (saved.reading || ''), hold: 0,
+      won: !!saved.won, mercury: finished ? 0 : (saved.mercury || 0),
+      note: finished
+        ? 'Names stay — change one, or sit again.'
+        : (saved.note || (ch.aLabel + (ch.bLabel ? ' and ' + ch.bLabel.toLowerCase() : '') + '.')),
     };
     if (s.won || chapterPaid(level)) s.won = true;
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     if (s.won && s.chapterPrize) s.chapterPrize.field = false;
+    if (finished) persist(s);
     return s;
+  },
+  retryAttempt(s) {
+    clearSitting(s);
+    persist(s);
   },
   update(s, dt) {
     s.t += dt;
@@ -415,8 +448,7 @@ export default {
   action(s, id) {
     if (id === 'read' || id === 'again') {
       if (s.phase === 'result' || s.phase === 'wait') {
-        s.phase = 'edit';
-        s.note = 'Change a name, then sit again.';
+        clearSitting(s);
         persist(s);
         return;
       }
