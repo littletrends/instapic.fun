@@ -42,15 +42,15 @@ function hit(p, b) {
   return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
 }
 function plateBox(which, two) {
-  // Tight under title stack — leaves room for calc then keyboard.
-  const h = 60;
-  if (!two) return {x: 275, y: 445, w: 350, h};
-  const w = 155;
-  return which === 0 ? {x: 270, y: 445, w, h} : {x: 475, y: 445, w, h};
+  // Just under the title stack.
+  const h = 64;
+  if (!two) return {x: 260, y: 400, w: 380, h};
+  const w = 168;
+  return which === 0 ? {x: 250, y: 400, w, h} : {x: 482, y: 400, w, h};
 }
 function enterBox() {
-  // Edit-only: between plates and keyboard.
-  return {x: 300, y: 580, w: 300, h: 46};
+  // Edit-only: under plates, above keyboard.
+  return {x: 300, y: 520, w: 300, h: 48};
 }
 function namesReady(s) {
   const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -413,15 +413,18 @@ export default {
     const two = !!ch.bLabel;
     const jx = s.shake ? Math.sin(s.t * 40) * 8 : 0;
     const c = d.c;
-    d.text('Rosalie’s tester', 450 + jx, 318, 24, '#5a2030');
-    d.text(ch.title, 450, 348, 18, '#7a3040');
-    d.text(ch.word, 450 + jx, 392, 44, '#c45a6a');
+    d.text('Rosalie’s tester', 450 + jx, 300, 22, '#5a2030');
+    d.text(ch.title, 450, 328, 17, '#7a3040');
+    // Big chapter word only while naming — during count/add the pyramid owns LOVES.
+    if (s.phase === 'edit' || s.phase === 'wait') {
+      d.text(ch.word, 450 + jx, 372, 42, '#c45a6a');
+    }
     if (!s.won) {
-      d.item(spriteKey(ch.prize), 640, 340, {w: 44, fallback: () => d.heart(640, 340, 18, '#c45a6a')});
-      d.text('waiting', 640, 378, 12, '#a05060');
+      d.item(spriteKey(ch.prize), 640, 318, {w: 40, fallback: () => d.heart(640, 318, 16, '#c45a6a')});
+      d.text('waiting', 640, 354, 11, '#a05060');
     }
 
-    const tubeX = 218, tubeY = 318, tubeH = 70;
+    const tubeX = 218, tubeY = 300, tubeH = 64;
     roundRect(c, tubeX, tubeY, 22, tubeH, 10);
     c.fillStyle = '#f8e4e8';
     c.fill();
@@ -431,8 +434,9 @@ export default {
     roundRect(c, tubeX + 3, tubeY + tubeH - fillH - 3, 16, fillH, 8);
     c.fillStyle = '#c45a6a';
     c.fill();
-    d.heart(tubeX + 11, tubeY + tubeH + 22, 12, '#c45a6a');
+    d.heart(tubeX + 11, tubeY + tubeH + 20, 11, '#c45a6a');
 
+    const highlight = s.phase === 'count' ? (ch.word[s.countIndex] || '') : '';
     const plates = two ? [0, 1] : [0];
     for (const which of plates) {
       const b = plateBox(which, two);
@@ -443,36 +447,38 @@ export default {
       c.strokeStyle = on ? '#c45a6a' : '#e8a0b0';
       c.lineWidth = on ? 4 : 2;
       c.stroke();
-      d.text(which === 0 ? ch.aLabel : ch.bLabel, b.x + b.w / 2, b.y + 22, 16, '#a05060');
-      d.text((which === 0 ? s.you : s.them) || '\u2026', b.x + b.w / 2, b.y + 52, 24, '#5a2030');
+      d.text(which === 0 ? ch.aLabel : ch.bLabel, b.x + b.w / 2, b.y + 20, 14, '#a05060');
+      const raw = (which === 0 ? s.you : s.them) || '';
+      const shown = raw || '\u2026';
+      if (s.phase === 'count' && raw) {
+        // Light matching letters inside the name plate — no second name layer.
+        const chars = [...shown];
+        const step = Math.min(22, (b.w - 24) / Math.max(1, chars.length));
+        const start = b.x + b.w / 2 - (chars.length - 1) * step / 2;
+        chars.forEach((chh, i) => {
+          const hit = highlight && chh.toUpperCase() === highlight;
+          const x = start + i * step + jx;
+          const y = b.y + 48;
+          if (hit) d.circle(x, y - 4, 12, '#f8c8d0cc', '#c45a6a', 2);
+          d.text(chh, x, y, 22, hit ? '#c45a6a' : '#5a2030');
+        });
+      } else {
+        d.text(shown, b.x + b.w / 2 + jx, b.y + 48, 22, '#5a2030');
+      }
     }
 
-    // Calc band: count shows names + word/counts; add/result draws a clear pyramid under the plates.
-    const names = two ? [lettersOnly(s.you), lettersOnly(s.them)] : [lettersOnly(s.you)];
-    const letter = s.phase === 'count' ? ch.word[s.countIndex] : '';
+    // Under plates: LOVES + counts (count) or full pyramid (add/result). No duplicate names.
     const word = ch.word;
     const colStep = 56;
-    const rowStep = 44;
+    const rowStep = 42;
     const colX = (len, i) => 450 - (len - 1) * (colStep / 2) + i * colStep;
-    // Stagger shorter pyramid rows under pair midpoints of the word row.
     const pyramidX = (rowLen, i) => {
       const inset = (word.length - rowLen) * (colStep / 2);
       return 450 - (word.length - 1) * (colStep / 2) + inset + i * colStep;
     };
-    let calcY = 515;
+    let calcY = 490;
 
     if (s.phase === 'count') {
-      names.forEach((nm, row) => {
-        if (!nm) return;
-        const y = calcY + row * 28;
-        [...nm].forEach((chh, i) => {
-          const x = 450 - (nm.length - 1) * 14 + i * 28;
-          const on = letter && chh === letter;
-          if (on) d.circle(x, y - 6, 12, '#f8c8d088', '#c45a6a', 2);
-          d.text(chh, x, y, 18, on ? '#c45a6a' : '#5a2030');
-        });
-      });
-      calcY += (names.filter(Boolean).length || 1) * 28 + 12;
       for (let i = 0; i < word.length; i++) {
         const on = i === s.countIndex;
         d.text(word[i], colX(word.length, i), calcY, 26, on ? '#c45a6a' : '#7a3040');
@@ -485,7 +491,6 @@ export default {
     }
 
     if (s.phase === 'add' || s.phase === 'result') {
-      // Header letters once, then every digit row (including counts) stacked with room to breathe.
       for (let i = 0; i < word.length; i++) {
         d.text(word[i], colX(word.length, i), calcY, 26, '#7a3040');
       }
@@ -495,9 +500,7 @@ export default {
         const y = calcY + r * rowStep;
         const shown = s.phase === 'result' || r < s.addRow || (r === s.addRow && s.phase === 'add') || r === 0;
         if (!shown) return;
-        const vals = r === 0
-          ? (s.playerCounts || row)
-          : row;
+        const vals = r === 0 ? (s.playerCounts || row) : row;
         for (let i = 0; i < vals.length; i++) {
           const known = s.phase === 'result' || r === 0 || r < s.addRow || (r === s.addRow && i < s.addCol);
           let value;
@@ -510,6 +513,7 @@ export default {
         }
       });
     }
+
 
     if (s.phase === 'edit' || s.phase === 'wait') {
       const eb = enterBox();
@@ -551,7 +555,7 @@ export default {
     if (s.phase === 'result' && s.pct) {
       const rows = (s.trueAdd && s.trueAdd.rows) ? s.trueAdd.rows.length : 1;
       // Under word+counts+(pyramid rows after row 0)
-      const pctY = Math.min(860, 515 + 44 + Math.max(1, rows) * 44 + 16);
+      const pctY = Math.min(860, 490 + 42 + Math.max(1, rows) * 42 + 16);
       d.text(String(s.pct) + '%', 450, pctY, 44, '#c45a6a');
     }
   },
