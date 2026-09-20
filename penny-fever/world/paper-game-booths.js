@@ -113,21 +113,19 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   });
   const chapters=doc.createElement('nav');chapters.className='paper-chapter-nav';chapters.setAttribute('aria-label','Choose chapter');
   const previous=doc.createElement('button');previous.type='button';previous.textContent='‹';previous.setAttribute('aria-label','Previous chapter');previous.disabled=true;
-  const select=doc.createElement('select');select.setAttribute('aria-label','Choose chapter');select.disabled=true;
-  const placeholder=doc.createElement('option');placeholder.textContent='Chapter';select.append(placeholder);
+  const chapterName=doc.createElement('span');chapterName.className='paper-chapter-name';chapterName.setAttribute('aria-live','polite');chapterName.textContent='Chapter 1';
   const next=doc.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','Next chapter');next.disabled=true;
   let chapter=0,count=0;
   previous.addEventListener('click',()=>message('chapter',{level:chapter-1}));
   next.addEventListener('click',()=>message('chapter',{level:chapter+1}));
-  select.addEventListener('change',()=>message('chapter',{level:Number(select.value)}));
   window.addEventListener('message',event=>{
     const data=event.data;
     if(event.origin!==location.origin||event.source!==frame?.contentWindow||data?.channel!=='pf-paper-world'||data.type!=='chapters')return;
-    chapter=data.level;count=data.levels.length;select.replaceChildren();
-    data.levels.forEach((name,i)=>{const option=doc.createElement('option');option.value=i;option.textContent='Chapter '+(i+1);option.title=name;select.append(option);});
-    select.value=chapter;select.disabled=false;previous.disabled=chapter<=0;next.disabled=chapter>=count-1;
+    chapter=data.level;count=data.levels.length;
+    chapterName.textContent='Chapter '+(chapter+1);chapterName.title=data.levels[chapter]||'';
+    previous.disabled=chapter<=0;next.disabled=chapter>=count-1;
   });
-  chapters.append(previous,select,next);
+  chapters.append(previous,chapterName,next);
   const trade=doc.createElement('button');trade.type='button';trade.textContent='Penny Trade';trade.setAttribute('aria-haspopup','dialog');
   const till=doc.createElement('dialog');till.className='paper-game-trade';till.setAttribute('aria-label','Penny Trade');
   const tillTitle=doc.createElement('h2');tillTitle.textContent='Penny Trade';

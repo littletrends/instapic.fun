@@ -78,7 +78,7 @@ function publishChapter(){
  const count=engine?.levels?.length||0;
  $('#previous-chapter').disabled=!state||level<=0;
  $('#next-chapter').disabled=!state||level>=count-1;
- $('#chapter').value=level;
+ $('#chapter-name').textContent='Chapter '+(level+1);
  tellRoom('chapters',{id:entry.id,level,levels:engine.levels});
 }
 function goChapter(target){
@@ -168,7 +168,7 @@ function paintHud(){
 }
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();}
 function goNextChapter(){goChapter(level+1);}
-function markChapters(){if(!engine?.levels)return;[...$('#chapter').options].forEach((o,i)=>{const prize=engine.prizes?.[i];let tick='';try{if(prize&&window.parent?.PennyFever?.getState?.()?.paperInventory?.items?.[prize])tick=' ✓';}catch{}o.textContent='Chapter '+(i+1)+' · '+engine.levels[i]+tick;});}
+function markChapters(){}
 function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('','','','Play chapter '+(level+1));$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
 function start(){if(disposed||!engine||!state||playing||ended||holds.size)return;ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
@@ -243,13 +243,11 @@ try{
    }
   }
  }
- engine.levels.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+name;$('#chapter').append(o);});
  draw=new Draw(canvas);draw.art={};
  const kit=kits[entry.id]||{sprites:[],prizes:[]};
  engine.prizes=(kit.prizes&&kit.prizes.length)?kit.prizes:(engine.prizes||[]);
  const spriteIds=[...new Set([...(engine.sprites||kit.sprites||[]),...engine.prizes])];
  observer=new ResizeObserver(()=>{const b=stage.getBoundingClientRect();draw.resize(b.width,b.height,devicePixelRatio||1);paint();});observer.observe(stage);
- listen($('#chapter'),'change',()=>goChapter(Number($('#chapter').value)));
  listen($('#previous-chapter'),'click',()=>goChapter(level-1));
  listen($('#next-chapter'),'click',goNextChapter);
  listen($('#restart'),'click',()=>{closeHelp();retryChapter();});
@@ -298,7 +296,7 @@ try{
  img.hidden=false;
  img.src=entry.asset;
  img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
- if(!disposed){reset();for(const id of ['chapter','pause','restart'])$('#'+id).disabled=false;publishChapter();tellRoom('ready',{title:engine.title});}
+ if(!disposed){reset();for(const id of ['pause','restart'])$('#'+id).disabled=false;publishChapter();tellRoom('ready',{title:engine.title});}
  function loadImg(src){
   return new Promise(resolve=>{
    const i=new Image();

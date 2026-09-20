@@ -27,9 +27,10 @@ try{
  const base=process.env.CHAPTER_TEST_BASE||'http://127.0.0.1:4187';
  const {games}=await import(new URL('penny-fever/paper-games/catalogue.js',root));
  for(const {id} of games.filter(g=>g.ready&&g.id!=='snap')){
-  await send('Page.navigate',{url:base+'/penny-fever/paper-games/play.html?stall='+id});await until('!!window.__test && !document.querySelector("#chapter").disabled');
+  await send('Page.navigate',{url:base+'/penny-fever/paper-games/play.html?stall='+id});await until('!!window.__test && !!document.querySelector("#chapter-name")');
   assert.equal(await ev('document.querySelector("#error").textContent'),'');
-  assert.equal(await ev('document.querySelector("#chapter").options.length'),6,id+' six chapters');
+  assert.equal(await ev('document.querySelector("#chapter-name").textContent'),'Chapter 1',id+' starts on chapter one');
+  assert.equal(await ev('document.querySelector("#chapter")'),null,id+' has no chapter dropdown');
   assert(await ev('document.documentElement.scrollWidth<=innerWidth'),id+' fits');
   const before=await ev('document.querySelector("#world").getBoundingClientRect().toJSON()');
   assert(before.bottom<=844&&before.right<=390,id+' board fits viewport');
@@ -39,11 +40,11 @@ try{
   await ev('document.querySelector("#menu-toggle").click()');assert.equal(await ev('__test.playing()'),false);
   await ev('document.querySelector("#menu-close").click()');await until('__test.playing()');
   await ev('document.querySelector("#next-chapter").click()');assert.equal(await ev('__test.level()'),1);
-  await ev('document.querySelector("#chapter").value=5;document.querySelector("#chapter").dispatchEvent(new Event("change"))');
+  for(let n=0;n<4;n++)await ev('document.querySelector("#next-chapter").click()');
   assert.equal(await ev('__test.level()'),5);assert(await ev('document.querySelector("#next-chapter").disabled'));
   assert(await ev('__test.playing()'),id+' selected chapter starts immediately');
   await send('Page.reload');await until('!!window.__test');assert.equal(await ev('__test.level()'),5,id+' selected survives reload');
-  await ev('document.querySelector("#chapter").value=0;document.querySelector("#chapter").dispatchEvent(new Event("change"));__test.pause()');
+  for(let n=0;n<5;n++)await ev('document.querySelector("#previous-chapter").click()');await ev('__test.pause()');
   // Exercise the real shared runtime with each engine's terminal-state contract.
   const fixture=id==='fortune'?`(()=>{const s=__test.state(),e=__test.engine();s.phase='idle';s.charged=false;e.action(s,'gaze');e.update(s,3);for(let i=0;i<s.globe.rings.length;i++){const ring=s.globe.rings[i];ring.angle=ring.glyphs.indexOf(s.globe.flash[i])*Math.PI*2/ring.n;e.pointer(s,'down',{x:450,y:428});}})()`:
    id==='coin-pusher'?`Object.assign(__test.state(),{phase:'idle',busy:false});__test.state().tray.treasureOwned=true`:
@@ -61,14 +62,15 @@ try{
   await ev('window.postMessage({channel:"pf-paper-world",type:"pause"},location.origin);window.postMessage({channel:"pf-paper-world",type:"resume"},location.origin)');await sleep(100);
   assert.equal(await ev('document.querySelector("#begin").textContent'),'Next chapter','Menu close preserves result');
   await ev('document.querySelector("#begin").click()');assert.equal(await ev('__test.level()'),1,id+' completion advances');
-  console.log('PASS '+id+': terminal popup, next/previous/select, reload, help pause, mobile fit');
+  console.log('PASS '+id+': terminal popup, chapter arrows, reload, help pause, mobile fit');
  }
  console.log('PASS all 33 open games: one shared result panel, no canvas chapter buttons, chapter navigation and reload');
  assert.deepEqual(errors,[],'No browser exceptions');
  // Full alley shell: use a private fixture wallet, real vendor and inventory UI stub.
  await send('Page.navigate',{url:base+'/tests/fixtures/chapter-menu.html'});await until('!!document.querySelector("iframe")?.contentWindow?.__test');
  const f='document.querySelector("iframe").contentWindow';
- await until('!document.querySelector(".paper-chapter-nav select").disabled');
+ await until('document.querySelector(".paper-chapter-name")?.textContent==="Chapter 1"');
+ assert.equal(await ev('document.querySelector(".paper-chapter-nav select")'),null,'cabinet has no chapter dropdown');
  await ev(f+'.document.querySelector("#begin").click()');
  const rect=await ev('document.querySelector("iframe").getBoundingClientRect().toJSON()');
  await ev('[...document.querySelectorAll(".paper-game-bar>button")].find(x=>x.textContent==="Penny Trade").click()');await sleep(100);
@@ -77,7 +79,7 @@ try{
  await ev('document.querySelector(".paper-game-menu-close").click()');await until(f+'.__test.playing()');
  await ev('document.querySelector(".paper-game-treasure").click()');await sleep(100);assert.equal(await ev(f+'.__test.playing()'),false);
  await ev('document.querySelector(".treasure-book").close()');await until(f+'.__test.playing()');
- await ev('document.querySelector(".paper-chapter-nav select").value=3;document.querySelector(".paper-chapter-nav select").dispatchEvent(new Event("change"))');await until(f+'.__test.level()===3');
+ for(let n=0;n<3;n++)await ev('document.querySelector(".paper-chapter-nav button:last-child").click()');await until(f+'.__test.level()===3');await until(f+'.__test.playing()');
  await ev('[...document.querySelectorAll(".paper-game-bar>button")].find(x=>x.textContent==="Help").click()');await until(f+'.document.querySelector("#game-help").open');
  await ev(f+'.document.querySelector("#menu-close").click()');
  for(const size of [{width:390,height:844},{width:320,height:568},{width:1440,height:900}]){
@@ -91,7 +93,7 @@ try{
  for(const id of ['fortune','coin-pusher','pinball','milk-bottles']){
   await send('Page.navigate',{url:base+'/tests/fixtures/chapter-menu.html?stall='+id});
   await until('!!document.querySelector("iframe")?.contentWindow?.__test?.state()');
-  await ev(f+'.document.querySelector("#chapter").value=0;'+f+'.document.querySelector("#chapter").dispatchEvent(new Event("change"))');
+  for(let n=0;n<6;n++)await ev(f+'.document.querySelector("#previous-chapter").click()');
   const snapshot = id==='fortune'?`({phase:s.phase,globe:s.globe,clock:s.clock,charged:s.charged})`:
     id==='coin-pusher'?`({phase:s.phase,coins:s.tray.coins,cycle:s.cycle})`:
     id==='pinball'?`({houseLeft:s.houseLeft,ball:s.ball,credit:s.credit,rngState:s.rngState})`:
@@ -99,7 +101,7 @@ try{
   await ev(`(()=>{const t=${f}.__test,s=t.state(),e=t.engine();t.pause();${id==='fortune'?"e.action(s,'gaze');e.update(s,.4)":id==='coin-pusher'?"e.action(s,'drop1');e.update(s,.1)":id==='milk-bottles'?"e.action(s,'play');s.houseLeft=47":"s.houseLeft=47;s.credit=2"};e.persist(s);})()`);
   const saved=await ev(`(()=>{const s=${f}.__test.state();return ${snapshot};})()`);
   const pennies=await ev('window.fixtureCash');
-  await ev(`const c=${f}.document.querySelector('#chapter');c.value=1;c.dispatchEvent(new Event('change'));c.value=0;c.dispatchEvent(new Event('change'));${f}.__test.pause()`);
+  await ev(`${f}.document.querySelector('#next-chapter').click();${f}.document.querySelector('#previous-chapter').click();${f}.__test.pause()`);
   const returned=await ev(`(()=>{const s=${f}.__test.state();return ${snapshot};})()`);
   assert.deepEqual(returned,saved,id+' exact state on chapter return');
   assert.equal(await ev('window.fixtureCash'),pennies,id+' switching does not charge');
