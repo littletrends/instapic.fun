@@ -95,7 +95,12 @@ function goChapter(target){
 function retryChapter(){
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
  if(entry.id==='fortune'){engine.action(state,'gaze');start();}
- else if(engine.retryAttempt){engine.retryAttempt(state);start();}
+ else if(engine.retryAttempt){
+  // Clear persisted sitting, then remount so Play again never reopens the old result veil.
+  engine.retryAttempt(state);
+  reset();
+  start();
+ }
  else if(entry.id==='coin-pusher'||entry.id==='pinball'){start();}
  else {reset();start();}
  persist();
@@ -225,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=chapter-menu-2')).default;
+ engine=(await import(entry.module+'?v=love-readings-2')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

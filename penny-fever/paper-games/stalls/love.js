@@ -6,7 +6,7 @@ import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=readings-1';
+} from '../love-arithmetic.js?v=love-readings-2';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -401,7 +401,9 @@ export default {
     return s;
   },
   retryAttempt(s) {
-    clearSitting(s);
+    clearSitting(s, 'Names stay — change one, or sit again.');
+    s.result = null;
+    s.hold = 0;
     persist(s);
   },
   update(s, dt) {
