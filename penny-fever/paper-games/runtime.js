@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=celeste-hard-1')).default;
+ engine=(await import(entry.module+'?v=florence-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

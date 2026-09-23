@@ -672,9 +672,10 @@ function scheduleCh2(s) {
     const spot = SPOTS.find((row) => row.id === s.spawnId) || SPOTS[0];
     const horse = spot.horse;
     const treasureHorse = (s.horseMarks[horse] === 'heart') ? horse : 2;
-    const tp = crestPass(treasureHorse, 1.95);
+    // nextCrestAfter (not Ch1 crestPass) — crestPass is scoped inside scheduleCh1 only.
+    const tp = nextCrestAfter(treasureHorse, lap * 0.9);
     const tHalf = Math.max(2.5 / 2, crestHalf / speed);
-    let crestT = tp.crestT;
+    let crestT = tp ? tp.crestT : lap * 1.6;
     for (const f of finds) {
       if (f.horse !== treasureHorse) continue;
       const mid = (f.from + f.until) / 2;
@@ -1654,6 +1655,7 @@ function decoysLive(s) {
 }
 
 function softFailDecoy(s, decoy, scr) {
+  lockTap(s);
   logAction(s, 'miss', {
     reason: 'decoy',
     mark: decoy.mark || 'wrong',
@@ -1678,6 +1680,7 @@ function reflectionsLive(s) {
 }
 
 function softFailReflection(s, reflection, scr) {
+  lockTap(s);
   logAction(s, 'miss', {
     reason: 'reflection',
     horse: reflection.horse,
@@ -1694,6 +1697,7 @@ function softFailReflection(s, reflection, scr) {
 }
 
 function softFailWindow(s, reason, horse, scr) {
+  lockTap(s);
   logAction(s, 'miss', {
     reason: reason || 'shut',
     horse: horse != null ? horse : null,
@@ -1715,6 +1719,7 @@ function softFailWindow(s, reason, horse, scr) {
 }
 
 function softFailTooHigh(s, horse, scr) {
+  lockTap(s);
   logAction(s, 'miss', {
     reason: 'tooHigh',
     horse: horse != null ? horse : null,
@@ -2391,6 +2396,10 @@ function armCrestTap(s, sec = 20) {
   s.crestTapArmedUntil = Math.max(s.crestTapArmedUntil || 0, until);
 }
 
+function lockTap(s, sec = 0.18) {
+  s.tapLockUntil = Math.max(s.tapLockUntil || 0, (s.t || 0) + sec);
+}
+
 function liveHeartFinds(s) {
   return (s.finds || []).filter((row) => itemInCrestWindow(row, s));
 }
@@ -2421,6 +2430,8 @@ function consumeArmedCrest(s) {
 }
 
 function tryCrestTap(s, p) {
+  // Debounce stick bounce / double key+pointer so soft-fails cannot spam a sitting.
+  if ((s.tapLockUntil || 0) > (s.t || 0)) return 'locked';
   // Fairness retune 6: sticky crest-arm until 3/3 after first TAP; timed arm backup 20s.
   armCrestTap(s, 20);
 
@@ -2434,15 +2445,17 @@ function tryCrestTap(s, p) {
     }
   }
 
-  if (collectBestLiveHeart(s)) return 'collect';
+  if (collectBestLiveHeart(s)) { lockTap(s); return 'collect'; }
 
   if (s.treasure && itemInCrestWindow(s.treasure, s)) {
     collectTreasure(s, spotScreen(s.treasure.spot, s, s.treasure.horse) || {x: CX, y: CY + 48, scale: 1});
+    lockTap(s);
     return 'collect';
   }
 
   if (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) {
     collectPractice(s, spotScreen(s.practiceGlint.spot, s, s.practiceGlint.horse) || {x: CX, y: CY + 48, scale: 1});
+    lockTap(s);
     return 'collect';
   }
 
@@ -2503,15 +2516,18 @@ function tryCrestTap(s, p) {
     logAction(s, 'arm', {reason: 'early', x: Math.round(p.x), y: Math.round(p.y)});
     s.note = 'Armed — wait for NOW.';
     s.statusKind = 'searching';
+    lockTap(s, 0.12);
     return 'arm';
   }
   s.note = 'TAP armed — crest will catch it.';
+  lockTap(s, 0.12);
   return 'arm';
 }
 
 
 export default {
   title: 'Carousel Waltz',
+  retryButton: 'Play again',
   intro: 'Round and round, the secrets change. Board one horse fixed front-and-center; glints rise into the crest — TAP on NOW (Mario TAP remix: cream bottom stick, court tap/swipe, or Space/Enter). Painted Ponies: only the gold heart counts. Mirror Round: TAP real crests — skip cool silver mirror ghosts. Carriage Windows: TAP only while the window is open. Midnight Canopy: watch treasures hang high, then TAP when they drop into NOW. Grand Waltz: painted marks, mirrors, open windows, and canopy dips combine — use every rule you’ve learned.',
   instructions: 'Your horse stays center-front. Watch orbiting glints rise into the crest sweet-spot, then TAP on NOW — press the cream bottom stick, tap/swipe the court, or Space/Enter (no under-stage button). Practice teaches crest TAP and keeps nothing; a paid waltz costs one penny. First Turn: any crest glint. Painted Ponies: TAP the heart-marked pony — wrong marks soft-fail and the ride continues. Mirror Round: one reflection rule — real crest glints collect; dashed silver mirror ghosts cannot. Carriage Windows: each window opens twice — watch the teach pass, then TAP the collect pass; shut windows never collect. Midnight Canopy: canopy treasures hang high, then dip into NOW — TAP the dip; too-high soft-fails and the ride continues. Grand Waltz: combines painted marks, mirrors, open windows, and canopy dips across rotations — miss a pass and the eligible window repeats. Find three ordinary keepsakes before the final rotation ends.',
   levels: LEVELS,
@@ -2521,6 +2537,16 @@ export default {
   houseTitle: 'The waltz ended',
   houseDetail: 'The lantern dimmed before the last lap. Try this chapter again.',
   actions: [],
+
+  onTimeout(s) {
+    // House clock — settle like ride-end so Play again / purse never leave a raw veil.
+    finishRide(s, {
+      rideId: RIDE,
+      treasureId: s.treasureId,
+      challengeOk: (s.found || 0) >= (s.goal || GOAL),
+      completionFind: 'star-token',
+    });
+  },
 
   create(level, rng) {
     const reduced = prefersReducedMotion();
@@ -2570,6 +2596,9 @@ export default {
       reflectionFlash: 0,
       windowFlash: 0,
       canopyFlash: 0,
+      tapLockUntil: 0,
+      crestTapSticky: false,
+      crestTapArmedUntil: 0,
     });
   },
 
@@ -2578,7 +2607,13 @@ export default {
 
     const spawnIds = SPOTS.map((row) => row.id);
     if (ensureBoarded(s, RIDE, s.treasureId, spawnIds)) {
-      scheduleForLevel(s);
+      try {
+        scheduleForLevel(s);
+      } catch (err) {
+        // Never leave a boarded sitting without a schedule — room would soft-lock.
+        logAction(s, 'schedule-error', {message: String(err && err.message || err)});
+        scheduleCh1(s);
+      }
       s.scheduled = true;
       s.introShown = true;
       s.statusKind = s.practice ? 'practice' : 'searching';
@@ -3080,6 +3115,22 @@ export default {
     drawCh5CanopyChrome(d, s);
     drawCh6WaltzChrome(d, s);
     drawStatusStrip(d, s);
+
+    // Chapter bonus corner — Iris language: Locked → Collected (no mid Unlocked needed).
+    if (s.treasureId) {
+      const owned = !!(s.treasure && s.treasure.taken) || !!s.treasureCollected;
+      const show = owned || (s.eligible && !(s.treasure && s.treasure.taken));
+      if (show) {
+        const px = 792;
+        const py = 78;
+        d.item(spriteKey(s.treasureId), px, py, {
+          w: 48,
+          shadow: false,
+          fallback: () => d.heart(px, py, 14),
+        });
+        d.text(owned ? 'Collected' : 'Locked', px, py + 42, 13, owned ? '#c8e878' : '#f0c860');
+      }
+    }
 
     // One cream bottom TAP stick (replaces under-stage TAP button). Pause/Restart off-court.
     if (!s.result && !s.broke) drawTapStick(s, d);
