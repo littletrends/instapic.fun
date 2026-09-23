@@ -79,19 +79,17 @@ body .cabinet-interior.paper-game-cabinet {
 .paper-game-treasure{margin-left:0;}
 .paper-game-trade{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:24px;color:#f3e4c6;background:#172831;border:1px solid #ad9362;border-radius:16px;font:17px/1.5 Georgia,serif;touch-action:pan-y;}
 .paper-game-trade::backdrop{background:#06121bbd;}
-.paper-game-trade h2{margin:0 40px 18px 0;font-size:25px;}
-.paper-game-trade .paper-game-wallet{display:block;white-space:normal;}
+.paper-game-trade{position:relative;}
+.paper-game-trade .paper-game-wallet{display:block;white-space:normal;margin:8px 40px 12px 0;}
 .paper-game-trade button{font:inherit;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;padding:10px;cursor:pointer;}
-.paper-game-menu-close{position:absolute;right:12px;top:10px;min-width:44px;min-height:44px;}
-.paper-trade-actions{display:grid;gap:10px;}
+.paper-game-menu-close{position:absolute;right:8px;top:8px;min-width:44px;min-height:44px;}
+.paper-trade-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .paper-trade-status:empty{display:none;}
+.paper-trade-status{margin:10px 0 0;font-size:15px;}
 @media(max-width:700px){
- .paper-game-bar{display:grid;grid-template-columns:auto 1fr auto;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));}
+ .paper-game-bar{display:flex;flex-wrap:nowrap;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));}
  .paper-game-bar h1{display:none;}
  .paper-game-bar button,.paper-game-bar a,.paper-chapter-name{font-size:13px;padding:7px;min-height:38px;}
- .paper-chapter-nav{justify-content:center;}
- .paper-chapter-name{min-width:78px;}
- .paper-game-bar>.paper-game-treasure{justify-self:stretch;}
- .paper-game-bar>button:nth-last-of-type(2){grid-column:1/3;}
- .paper-game-bar>button:last-of-type{grid-column:3;}
+ .paper-chapter-nav{flex:1;justify-content:center;}
+ .paper-chapter-name{min-width:72px;}
 }

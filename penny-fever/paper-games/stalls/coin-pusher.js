@@ -402,14 +402,20 @@ export default {
     }
     if(s.phase==='push'){
       const advance=Math.max(0,Math.sin(Math.min(1,s.cycle+dt*.85)*Math.PI)-Math.sin(s.cycle*Math.PI));
-      const shove=2*Math.sqrt(s.handful||1)*advance;
+      const drop=Math.max(1,s.handful||1);
+      const depth=FRONT-BACK;
+      const totalY=Math.min(depth*0.55, 10+Math.pow(drop,0.55)*6.2);
+      const shove=totalY*advance;
+      const laneW=70+Math.min(140,Math.sqrt(drop)*10);
       for(const coin of s.tray.coins)if(!coin.falling){
-        const lane=Math.exp(-Math.pow((coin.x-s.dropX)/85,2));
+        const lane=Math.exp(-Math.pow((coin.x-s.dropX)/laneW,2));
         coin.y+=shove*lane;
         coin.vy=Math.max(coin.vy,shove*lane/Math.max(dt,.001));
       }
     }
-    const pusherY = BACK - 8 + (s.phase === "push" ? Math.sin(s.cycle * Math.PI) * (ch.push || 70) : 0);
+    const dropAmp=Math.max(1,s.handful||1);
+    const pushAmp=Math.min(96,(ch.push||36)*(0.7+Math.min(2.1,Math.sqrt(dropAmp)/7)));
+    const pusherY = BACK - 8 + (s.phase === "push" ? Math.sin(s.cycle * Math.PI) * pushAmp : 0);
     const steps = 5;
     const h = dt / steps;
     const pegs = s.pegs || pegsFor(ch);
