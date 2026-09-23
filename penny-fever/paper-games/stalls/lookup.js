@@ -1,12 +1,12 @@
 import {firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=booth-play-2';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
-} from '../../experiments/celestes-starlight/model.js';
+} from '../../experiments/celestes-starlight/model.js?v=celeste-hard-1';
 
 const BOOK = 'pennyFever.littleStarlight';
 const GLASS = ['I', 'II', 'III', 'IV', 'V'];
@@ -80,6 +80,49 @@ function readSky(level) {
     lastStrike: Number(row.lastStrike) || 0,
     clueUntil: Number(row.clueUntil) || 0,
   };
+}
+
+function chapterOwned(level) {
+  const set = SETS[level] || SETS[0];
+  return (alleyPlay && owned(set.prize)) || !!readSky(level).paid;
+}
+/** Fresh sitting: keep Collected, wipe glasses/stars/flight so Play again never sticks. */
+function clearSitting(s) {
+  const c = CHAPTERS[s.chapter];
+  s.phase = 'playing';
+  s.result = null;
+  s.won = false;
+  s.settle = 0;
+  s.drag = null;
+  s.gesture = null;
+  s.lanternDown = false;
+  s.launchLock = false;
+  s.cooldown = 0;
+  s.fly = [];
+  s.angles = c.initial.map(i => i * STEP);
+  s.selected = 0;
+  s.turns = 0;
+  s.hints = 0;
+  s.history = [];
+  s.keptLit = c.stars.map(() => false);
+  s.bellLit = false;
+  s.needAlign = false;
+  s.lastStrike = 0;
+  s.clueUntil = 0;
+  s.contactNumber = 0;
+  s.launchCounterT = 0;
+  s.frozenRay = null;
+  s.flight = 0;
+  s.counterT = 0;
+  s.skyFace = 1;
+  s.houseLeft = null;
+  refresh(s);
+  s.note = s.paid
+    ? itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.'
+    : (alleyPlay
+      ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then feed a penny of starlight.'
+      : 'Turn the glasses, then feed a practice penny along the path.');
+  s.dirty = true;
 }
 function persist(s) {
   if (!s || typeof localStorage === 'undefined' || !alleyPlay) return;
@@ -231,7 +274,11 @@ function claim(s, n) {
   s.keptLit = c.stars.map(() => true);
   s.lastStrike = n;
   s.needAlign = false;
-  if (alleyPlay) keep(prize, 'lookup');
+  // Mark paid before wallet write so a keep hiccup cannot leave Locked after a win.
+  persist(s);
+  if (alleyPlay) {
+    try { keep(prize, 'lookup'); } catch { /* purse write is best-effort */ }
+  }
   takePrize(s, prize, {x: rx, y: ry - 36});
   s.fly = s.fly || [];
   s.fly.push({id: prize, x: rx, y: ry - 36, t: 0, dur: 0.72, prize: true});
@@ -323,12 +370,21 @@ function hydrate(level, saved) {
     s.turns = saved.turns || 0;
     s.hints = saved.hints || 0;
   }
-  if (s.paid) {
-    s.keptLit = c.stars.map(() => true);
-    s.bellLit = true;
+  // Wallet can show Collected even if an older save missed paid.
+  if (!s.paid && alleyPlay && owned(s.prize)) s.paid = true;
+  const reopenFresh = !!s.paid && !saved.flying;
+  if (reopenFresh) {
+    // Finished sky: keep Collected, clear the board so re-entry / Play again is playable.
+    s.keptLit = c.stars.map(() => false);
+    s.bellLit = false;
+    s.angles = c.initial.map(i => i * STEP);
+    s.selected = 0;
+    s.needAlign = false;
+    s.lastStrike = 0;
+    s.clueUntil = 0;
   }
   refresh(s);
-  if (saved.flying && saved.frozen) {
+  if (!reopenFresh && saved.flying && saved.frozen) {
     s.frozenRay = {
       length: saved.frozen.length || 0,
       solved: !!saved.frozen.solved,
@@ -344,12 +400,17 @@ function hydrate(level, saved) {
     s.contactNumber = saved.contactNumber || contactFromLaunch(s.launchCounterT, s.frozenRay.length, (SKY[s.level] || SKY[0]).speed);
     s.launchLock = true;
   }
-  s.note = s.paid
-    ? itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.'
-    : alleyPlay
-      ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then feed a penny of starlight.'
-      : 'Turn the glasses, then feed a practice penny along the path.';
-  if (s.phase === 'flying') s.note = 'The comet is still travelling.';
+  if (s.phase === 'flying') {
+    s.note = 'The comet is still travelling.';
+  } else if (reopenFresh) {
+    s.note = itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.';
+  } else if (s.paid) {
+    s.note = itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.';
+  } else if (alleyPlay) {
+    s.note = 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then feed a penny of starlight.';
+  } else {
+    s.note = 'Turn the glasses, then feed a practice penny along the path.';
+  }
   return s;
 }
 
@@ -358,6 +419,7 @@ export default {
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
+  retryButton: 'Play again',
   intro: alleyPlay
     ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turn the glasses for free. Each penny is a comet. Wake the stars, then time the 1–100 bell — only tonight’s numbers drop the unique. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
     : 'Celeste’s workshop sky. Turn the brass glasses, then feed practice pennies along the path. Workshop scores never enter your wallet.',
@@ -385,9 +447,39 @@ export default {
   persist,
   create(level) {
     const index = clamp(Math.trunc(level) || 0, 0, SETS.length - 1);
-    const s = hydrate(index, alleyPlay ? readSky(index) : {});
-    bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    const saved = alleyPlay ? readSky(index) : {};
+    const s = hydrate(index, saved);
+    bindPrize(s, this.prizes[index] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    // Persist a cleared reopen so the next load does not revive a finished tableau.
+    if (alleyPlay && s.paid && !saved.flying) persist(s);
     return s;
+  },
+  retryAttempt(s) {
+    if (!s) return;
+    clearSitting(s);
+    persist(s);
+  },
+  clockRuns(s) {
+    // Freeze the house clock while a comet flies or the win settles — avoids
+    // a timeout veil stealing the Collected result mid-celebration.
+    return !!s && s.phase === 'playing' && !s.result;
+  },
+  onTimeout(s) {
+    if (!s) return;
+    s.launchLock = false;
+    s.flight = 0;
+    s.frozenRay = null;
+    s.contactNumber = 0;
+    s.drag = null;
+    s.gesture = null;
+    if (s.phase === 'flying') s.phase = 'playing';
+    s.result = {
+      title: 'The sky went quiet',
+      detail: 'Celeste covers the lantern. Another sitting when you are ready.',
+      won: false,
+    };
+    s.dirty = true;
+    persist(s);
   },
   update(s, dt, input) {
     if (s.phase === 'ready') start(s);
@@ -411,8 +503,11 @@ export default {
     s.counterT = (s.counterT || 0) + Math.min(dt, 0.1);
     s.skyFace = skyNumber(s.counterT, sky.speed);
     if (s.phase === 'flying') {
+      if (!Number.isFinite(s.flight)) s.flight = 0;
       s.flight += Math.min(dt, 0.1) * FLIGHT_SPEED;
-      if (s.flight >= (s.frozenRay?.length || 0) + FLIGHT_EXTRA) land(s);
+      const path = Number(s.frozenRay?.length);
+      const need = (Number.isFinite(path) ? path : 0) + FLIGHT_EXTRA;
+      if (s.flight >= need) land(s);
       return;
     }
     if (s.needAlign && s.ray?.solved) s.needAlign = false;
@@ -528,12 +623,12 @@ export default {
       if (clue) d.text(clue, rx, ry + 86, 16, '#f0d18f');
     }
     {
-      const owned = !!s.paid;
+      const got = chapterOwned(s.level) || !!s.paid || !!s.won;
       d.item(spriteKey(s.prize), rx, ry - 72, {
         w: 58, shadow: false,
         fallback: () => d.star(rx, ry - 72, 20, '#e7c789'),
       });
-      d.text(owned ? 'Collected' : 'Locked', rx, ry - 28, 14, owned ? '#c8e878' : '#ead6a4');
+      d.text(got ? 'Collected' : 'Locked', rx, ry - 28, 14, got ? '#c8e878' : '#ead6a4');
     }
     const [sx, sy] = c.source;
     d.glow(sx, sy, s.phase === 'flying' ? 56 : 36, '#f0d18f');
