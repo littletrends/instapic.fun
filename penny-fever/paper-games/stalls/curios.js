@@ -10,10 +10,13 @@ import {
 /** Digby's Capsule Cabinet — claw / gacha play. Mystery drawers erased. */
 const BOOK = 'pennyFever.capsuleCabinet.v2';
 const CX = 450;
-const CASE = {x: 140, y: 210, w: 620, h: 620};
-const RAIL_Y = CASE.y + 36;
-const FLOOR_Y = CASE.y + CASE.h - 70;
-const CLAW_OPEN = 38;
+/** Full stall shell — Copper-style backdrop rect for Digger's Vault front.webp. */
+const CAB = {x: 130, y: 188, w: 640, h: 640};
+/** Play court over the vault's interior shelf glass (middle of booth; not title / A-frame). */
+const CASE = {x: 270, y: 388, w: 370, h: 220};
+const RAIL_Y = CASE.y + 24;
+const FLOOR_Y = CASE.y + CASE.h - 40;
+const CLAW_OPEN = 32;
 const HOUSE_SECONDS = 120;
 
 const LEVELS = [
@@ -90,8 +93,8 @@ function persist(s) {
 function swayAmp(level) {
   return 10 + level * 4;
 }
-function clawMin() { return CASE.x + 56; }
-function clawMax() { return CASE.x + CASE.w - 56; }
+function clawMin() { return CASE.x + 40; }
+function clawMax() { return CASE.x + CASE.w - 40; }
 
 function makeCapsules(level, seed) {
   const roll = rng(seed + 17 + level * 131);
@@ -100,10 +103,10 @@ function makeCapsules(level, seed) {
   const bonusIndex = Math.floor(roll() * n);
   const prize = CABINET_PRIZES[level] || CABINET_PRIZES[0];
   const list = [];
-  const left = CASE.x + 52;
-  const right = CASE.x + CASE.w - 52;
-  const top = CASE.y + 190;
-  const bottom = FLOOR_Y - 8;
+  const left = CASE.x + 36;
+  const right = CASE.x + CASE.w - 36;
+  const top = CASE.y + 58;
+  const bottom = FLOOR_Y - 6;
   for (let i = 0; i < n; i++) {
     const depth = i / Math.max(1, n - 1); // 0 = back, 1 = front
     const layer = Math.floor(depth * 5);
@@ -116,7 +119,7 @@ function makeCapsules(level, seed) {
     const kind = bonus ? 'bonus' : EVERYDAY[Math.floor(roll() * EVERYDAY.length)];
     const prizeId = bonus ? prize : null;
     const itemId = prizeId || kind;
-    const size = bonus ? 54 + roll() * 4 : 44 + roll() * 14;
+    const size = bonus ? 40 + roll() * 4 : 30 + roll() * 10;
     list.push({
       id: i,
       x: clamp(x, left, right),
@@ -153,7 +156,7 @@ function nearestCapsule(s) {
     }
   }
   // Must be roughly under the claw — hard grab window
-  if (!best || bestD > 48) return null;
+  if (!best || bestD > 36) return null;
   return best;
 }
 
@@ -410,6 +413,9 @@ export default {
     ? 'Drag the court or use ←/→ / cream pads to aim. DROP (Space / cream TAP) lowers the claw. Hit a winning 1–100 to keep the aimed curio. Chapter bonus only if you aimed at the glowing prize and the number holds.'
     : 'Aim, DROP, see the number. Practice writes nothing.',
   levels: LEVELS,
+  images: {
+    cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
+  },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
     'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny',
@@ -589,21 +595,29 @@ export default {
       d.text(collected ? 'Collected' : 'Locked', 800, 182, 14, collected ? '#c8e878' : '#ead6a4');
     }
 
-    // Cabinet frame — burgundy / brass
-    roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
-    c.fillStyle = '#3a1818ee';
-    c.fill();
-    c.strokeStyle = '#e8c878';
-    c.lineWidth = 5;
-    c.stroke();
-
-    // Glass pane
-    roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
-    c.fillStyle = '#1a2838aa';
-    c.fill();
-    c.strokeStyle = '#c8b070';
-    c.lineWidth = 3;
-    c.stroke();
+    // Digger's Vault stall art as cabinet shell (Copper pattern)
+    const cab = d.art && d.art.cabinet;
+    if (cab) {
+      c.drawImage(cab, CAB.x, CAB.y, CAB.w, CAB.h);
+      // Soft glass wash on the interior court only — no burgundy double-frame over the painted booth
+      roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 8);
+      c.fillStyle = 'rgba(18, 28, 40, 0.28)';
+      c.fill();
+    } else {
+      // Fallback if vault art fails to load
+      roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
+      c.fillStyle = '#3a1818ee';
+      c.fill();
+      c.strokeStyle = '#e8c878';
+      c.lineWidth = 5;
+      c.stroke();
+      roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
+      c.fillStyle = '#1a2838aa';
+      c.fill();
+      c.strokeStyle = '#c8b070';
+      c.lineWidth = 3;
+      c.stroke();
+    }
 
     // Rail
     d.line({x: CASE.x + 20, y: RAIL_Y}, {x: CASE.x + CASE.w - 20, y: RAIL_Y}, '#e8c878', 4);
@@ -619,8 +633,8 @@ export default {
         drawCapsule(d, cap, time || s.t);
       }
     } else if (s.phase === 'idle') {
-      d.text('Play', 450, 520, 36, '#ead6a4');
-      d.wrap('Vault of curios · brass claw · dig for Digby’s prizes', 450, 580, 20, '#d2b98c', 520);
+      d.text('Play', CX, CASE.y + CASE.h * 0.42, 28, '#ead6a4');
+      d.wrap('Vault of curios · brass claw · dig for Digby’s prizes', CX, CASE.y + CASE.h * 0.62, 16, '#d2b98c', CASE.w - 24);
     }
 
     // Aim ghost
