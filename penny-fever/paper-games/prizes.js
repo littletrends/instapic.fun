@@ -222,7 +222,7 @@ export const kits = {
     prizes: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox'],
   },
   curios: {
-    sprites: ['clockwork-key','cabinet-key','heart-gear','display-dome','clockwork-butterfly','tin-style-robot','crystal-cradle','curio-cabinet-album'],
+    sprites: ['clockwork-key','cabinet-key','heart-gear','everyday-penny','display-dome','clockwork-butterfly','tin-style-robot','crystal-cradle','curio-cabinet-album'],
     prizes: ['clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot', 'crystal-cradle', 'curio-cabinet-album'],
   },
   'duck-pond': {

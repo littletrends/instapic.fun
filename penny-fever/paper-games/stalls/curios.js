@@ -8,9 +8,11 @@ import {
 } from '../cabinet-puzzles.js?v=first-prize-1';
 
 /** Digby's Capsule Cabinet — claw / gacha play. Mystery drawers erased. */
-const BOOK = 'pennyFever.capsuleCabinet';
+const BOOK = 'pennyFever.capsuleCabinet.v2';
 const CX = 450;
 const CASE = {x: 140, y: 210, w: 620, h: 620};
+/** Full vault shell — Copper-style backdrop rect (portrait art stretched to machine shell). */
+const CAB = {x: 130, y: 188, w: 640, h: 640};
 const RAIL_Y = CASE.y + 36;
 const FLOOR_Y = CASE.y + CASE.h - 70;
 const CLAW_OPEN = 38;
@@ -52,13 +54,13 @@ function roundRect(c, x, y, w, h, r) {
 }
 
 function emptyBook() {
-  return {v: 1, paid: {}, sittings: {}};
+  return {v: 2, paid: {}, sittings: {}};
 }
 function readBook() {
   if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
-    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
+    if (blob && blob.v === 2) return {paid: {}, sittings: {}, ...blob};
   } catch {}
   return emptyBook();
 }
@@ -95,34 +97,48 @@ function clawMax() { return CASE.x + CASE.w - 56; }
 
 function makeCapsules(level, seed) {
   const roll = rng(seed + 17 + level * 131);
-  const n = 12 + (level | 0);
+  // Dense vault pile — crowded, overlapping, not a neat grid
+  const n = 18 + (level | 0) * 2; // 18..28
   const bonusIndex = Math.floor(roll() * n);
   const prize = CABINET_PRIZES[level] || CABINET_PRIZES[0];
   const list = [];
-  const cols = 4;
-  const cellW = (CASE.w - 80) / cols;
+  const left = CASE.x + 52;
+  const right = CASE.x + CASE.w - 52;
+  const top = CASE.y + 190;
+  const bottom = FLOOR_Y - 8;
   for (let i = 0; i < n; i++) {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const jitterX = (roll() - 0.5) * 28;
-    const jitterY = (roll() - 0.5) * 18;
-    const x = CASE.x + 50 + col * cellW + cellW / 2 + jitterX;
-    const y = FLOOR_Y - 28 - row * 52 - (col % 2) * 10 + jitterY;
+    const depth = i / Math.max(1, n - 1); // 0 = back, 1 = front
+    const layer = Math.floor(depth * 5);
+    const stagger = (layer % 2) * 22;
+    // Bias toward the floor; sprinkle upward so the pile looks stuffed
+    const rise = Math.pow(roll(), 0.55) * (bottom - top) * (0.5 + roll() * 0.5);
+    const x = left + stagger + roll() * Math.max(40, right - left - stagger) + (roll() - 0.5) * 40;
+    const y = bottom - rise + (roll() - 0.5) * 16;
     const bonus = i === bonusIndex;
+    const kind = bonus ? 'bonus' : EVERYDAY[Math.floor(roll() * EVERYDAY.length)];
+    const prizeId = bonus ? prize : null;
+    const itemId = prizeId || kind;
+    const size = bonus ? 54 + roll() * 4 : 44 + roll() * 14;
     list.push({
       id: i,
-      x: clamp(x, CASE.x + 40, CASE.x + CASE.w - 40),
-      y: clamp(y, CASE.y + 160, FLOOR_Y - 20),
-      rx: 22 + roll() * 6,
-      ry: 28 + roll() * 6,
-      color: CAPSULE_COLORS[Math.floor(roll() * CAPSULE_COLORS.length)],
-      kind: bonus ? 'bonus' : EVERYDAY[Math.floor(roll() * EVERYDAY.length)],
-      prizeId: bonus ? prize : null,
+      x: clamp(x, left, right),
+      y: clamp(y, top, bottom),
+      rx: size * 0.42,
+      ry: size * 0.5,
+      size,
+      kind,
+      prizeId,
+      itemId,
       taken: false,
       lift: 0,
     });
   }
   return list;
+}
+
+/** Old v1 sittings were neat capsule grids without itemId — remake those piles. */
+function pileOk(capsules) {
+  return Array.isArray(capsules) && capsules.length > 0 && capsules.every(c => c && typeof c.itemId === 'string');
 }
 
 function nearestCapsule(s) {
@@ -139,7 +155,7 @@ function nearestCapsule(s) {
     }
   }
   // Must be roughly under the claw — hard grab window
-  if (!best || bestD > 42) return null;
+  if (!best || bestD > 48) return null;
   return best;
 }
 
@@ -348,19 +364,21 @@ function drawCapsule(d, cap, time) {
   if (cap.taken && !cap.lift) return;
   const y = cap.y - (cap.lift || 0);
   const bob = Math.sin((time || 0) * 2 + cap.id) * 1.5;
-  d.ellipse(cap.x + 2, y + cap.ry * 0.7, cap.rx * 0.9, cap.ry * 0.35, '#12233555');
-  d.ellipse(cap.x, y + bob, cap.rx, cap.ry, cap.color, '#fff6d8', 2);
-  // Seam
-  d.ellipse(cap.x, y + bob - 2, cap.rx * 0.92, 3, null, '#fff6d888', 1.5);
+  const size = cap.size || Math.max(44, (cap.rx || 22) * 2.2);
+  const itemId = cap.itemId || cap.prizeId || (cap.kind !== 'bonus' ? cap.kind : null);
+  d.ellipse(cap.x + 2, y + size * 0.34, size * 0.36, size * 0.13, '#12233555');
   if (cap.kind === 'bonus') {
-    d.glow(cap.x, y + bob, 36, '#e8c878');
-    d.star(cap.x, y + bob, 10, '#fff6d8');
-  } else if (cap.kind === 'heart-gear') {
-    d.heart(cap.x, y + bob + 2, 8, '#fff0c8');
-  } else if (cap.kind === 'cabinet-key') {
-    d.text('key', cap.x, y + bob + 4, 12, '#fff6d8');
-  } else {
-    d.circle(cap.x, y + bob, 6, '#e8c878', '#5a3028', 1);
+    d.glow(cap.x, y + bob, size * 0.72, '#e8c878');
+  }
+  if (itemId) {
+    d.item(spriteKey(itemId), cap.x, y + bob, {
+      w: size,
+      fallback: () => {
+        const fill = CAPSULE_COLORS[(cap.id || 0) % CAPSULE_COLORS.length];
+        d.ellipse(cap.x, y + bob, size * 0.38, size * 0.46, fill, '#fff6d8', 2);
+        if (cap.kind === 'bonus') d.star(cap.x, y + bob, 10, '#fff6d8');
+      },
+    });
   }
 }
 
@@ -388,12 +406,15 @@ export default {
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   playLabel: s => alleyPlay && ['result', 'idle'].includes(s.phase) ? 'Play again · 1 penny' : 'Play',
   intro: alleyPlay
-    ? 'Digby’s glass Capsule Cabinet. Aim the claw along the rail, then DROP. A result from 1–100 decides the grip — the right number picks up whatever you aimed at: the chapter bonus capsule, or a hard everyday collectable. Wrong numbers slip. A penny starts a sitting.'
+    ? 'Digby’s Cabinet of Curios. Aim the claw along the rail, then DROP. A result from 1–100 decides the grip — the right number picks up whatever you aimed at: the glowing chapter prize in the vault pile, or a hard everyday collectable. Wrong numbers slip. A penny starts a sitting.'
     : 'Aim the claw, DROP when ready. Workshop sittings are free and write nothing.',
   instructions: alleyPlay
-    ? 'Drag the court or use ←/→ / cream pads to aim. DROP (Space / cream TAP) lowers the claw. Hit a winning 1–100 to keep the aimed capsule. Chapter bonus only if you aimed at the glowing capsule and the number holds.'
+    ? 'Drag the court or use ←/→ / cream pads to aim. DROP (Space / cream TAP) lowers the claw. Hit a winning 1–100 to keep the aimed curio. Chapter bonus only if you aimed at the glowing prize and the number holds.'
     : 'Aim, DROP, see the number. Practice writes nothing.',
   levels: LEVELS,
+  images: {
+    cabinet: './assets/curios/cabinet.webp',
+  },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
     'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny',
@@ -411,7 +432,7 @@ export default {
       level, t: 0,
       phase: resume ? saved.phase : (saved.phase === 'result' ? 'result' : 'idle'),
       seed: saved.seed || (level + 1) * 7919,
-      capsules: saved.capsules || null,
+      capsules: pileOk(saved.capsules) ? saved.capsules : null,
       aimX: saved.aimX ?? CX,
       clawX: saved.clawX ?? CX,
       clawY: RAIL_Y + 40,
@@ -573,21 +594,29 @@ export default {
       d.text(collected ? 'Collected' : 'Locked', 800, 182, 14, collected ? '#c8e878' : '#ead6a4');
     }
 
-    // Cabinet frame — burgundy / brass
-    roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
-    c.fillStyle = '#3a1818ee';
-    c.fill();
-    c.strokeStyle = '#e8c878';
-    c.lineWidth = 5;
-    c.stroke();
-
-    // Glass pane
-    roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
-    c.fillStyle = '#1a2838aa';
-    c.fill();
-    c.strokeStyle = '#c8b070';
-    c.lineWidth = 3;
-    c.stroke();
+    // Vault cabinet backdrop (Copper pattern) — real Empty Cabinet art
+    const cab = d.art && d.art.cabinet;
+    if (cab) {
+      c.drawImage(cab, CAB.x, CAB.y, CAB.w, CAB.h);
+      // Soft glass wash so piled sprites read clearly without double-framing
+      roundRect(c, CASE.x + 6, CASE.y + 6, CASE.w - 12, CASE.h - 12, 10);
+      c.fillStyle = 'rgba(18, 28, 40, 0.32)';
+      c.fill();
+    } else {
+      // Fallback if cabinet art fails to load
+      roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
+      c.fillStyle = '#3a1818ee';
+      c.fill();
+      c.strokeStyle = '#e8c878';
+      c.lineWidth = 5;
+      c.stroke();
+      roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
+      c.fillStyle = '#1a2838aa';
+      c.fill();
+      c.strokeStyle = '#c8b070';
+      c.lineWidth = 3;
+      c.stroke();
+    }
 
     // Rail
     d.line({x: CASE.x + 20, y: RAIL_Y}, {x: CASE.x + CASE.w - 20, y: RAIL_Y}, '#e8c878', 4);
@@ -604,7 +633,7 @@ export default {
       }
     } else if (s.phase === 'idle') {
       d.text('Play', 450, 520, 36, '#ead6a4');
-      d.wrap('Glass case · brass claw · colourful capsules', 450, 580, 20, '#d2b98c', 520);
+      d.wrap('Vault of curios · brass claw · dig for Digby’s prizes', 450, 580, 20, '#d2b98c', 520);
     }
 
     // Aim ghost
@@ -614,7 +643,10 @@ export default {
       d.line({x: s.clawX, y: RAIL_Y + 50}, {x: s.clawX, y: FLOOR_Y}, '#fff6d8', 2);
       c.restore();
       const under = nearestCapsule(s);
-      if (under) d.ellipse(under.x, under.y, under.rx + 6, under.ry + 6, null, '#fff6d8aa', 2);
+      if (under) {
+        const r = (under.size || 48) * 0.52;
+        d.ellipse(under.x, under.y, r, r * 1.08, null, '#fff6d8aa', 2);
+      }
     }
 
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
