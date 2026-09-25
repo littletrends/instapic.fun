@@ -1,5 +1,5 @@
 import {chapterOutcome} from './chapter-flow.js?v=chapter-menu-1';
-import {byId} from './catalogue.js?v=milk-props-1';
+import {byId} from './catalogue.js?v=digby-claw-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
@@ -15,7 +15,7 @@ const embedded=window.parent!==window&&new URLSearchParams(location.search).get(
 const HOUSE={
  fortune:{seconds:100,title:'The globe went still',detail:'Iris covers the glass. Another gaze when you are ready.'},
  love:{seconds:240,title:'The tester slept',detail:'Rosalie blots the page. Another sitting when you are ready.'},
- curios:{seconds:180,title:'The cabinet closed',detail:'The drawers latch. Another mystery when you have a penny.'},
+ curios:{seconds:120,title:'The cabinet closed',detail:'Digby latches the glass. Another claw when you have a penny.'},
  lookup:{seconds:150,title:'The sky went quiet',detail:'Celeste covers the lantern. Another sitting when you are ready.'},
  snap:{seconds:45,title:'The shutter slept',detail:'Felix winds a fresh plate. Try this woodland again.'},
  whisper:{seconds:180,title:'The whisper slept',detail:'Willa folds the last envelope. Another run when you are ready.'},
@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v=florence-fix-1')).default;
+ engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-1':'florence-fix-1'))).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

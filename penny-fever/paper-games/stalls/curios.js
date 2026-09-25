@@ -1,21 +1,44 @@
-import {done} from '../draw.js';
+import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
-import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=booth-play-2';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
-  makePuzzle, proveUnique, resultNumber, isCabinetWin, ordinaryFor, CABINET_PRIZES,
+  resultNumber, isCabinetWin, ordinaryFor, CABINET_PRIZES,
 } from '../cabinet-puzzles.js?v=first-prize-1';
 
-const BOOK = 'pennyFever.cabinetThatLies';
+/** Digby's Capsule Cabinet — claw / gacha play. Mystery drawers erased. */
+const BOOK = 'pennyFever.capsuleCabinet';
+const CX = 450;
+const CASE = {x: 140, y: 210, w: 620, h: 620};
+const RAIL_Y = CASE.y + 36;
+const FLOOR_Y = CASE.y + CASE.h - 70;
+const CLAW_OPEN = 38;
+const HOUSE_SECONDS = 120;
+
 const LEVELS = [
-  'Three drawers, one honest card',
-  'Two cards, four drawers',
-  'One of the cards is lying',
-  'The curtain moves a moth',
-  'The looking-glass reverses',
-  'Three voices, one truth',
+  'Brass claw',
+  'Capsule tide',
+  'Glass sway',
+  'Deep pile',
+  'Rare number',
+  'Menagerie vault',
 ];
+
+const CAPSULE_COLORS = [
+  '#c67483', '#6aaa9a', '#e8c878', '#7a8ec8', '#c88a5a',
+  '#a67ab0', '#8ab070', '#d09070', '#70a8c8', '#b87898',
+];
+
+const EVERYDAY = ['heart-gear', 'cabinet-key', 'everyday-penny'];
+
+function rng(seed) {
+  let s = (Number(seed) || 1) >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
 
 function roundRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -27,315 +50,594 @@ function roundRect(c, x, y, w, h, r) {
   c.arcTo(x, y, x + w, y, rr);
   c.closePath();
 }
-function wrapLine(d, text, x, y, size, color, maxW) {
-  const c = d.c;
-  c.font = `500 ${size}px Georgia,serif`;
-  const words = String(text).split(' ');
-  let line = '', ly = y;
-  for (const word of words) {
-    const trial = line ? line + ' ' + word : word;
-    if (line && c.measureText(trial).width > maxW) {
-      d.text(line, x, ly, size, color);
-      line = word;
-      ly += size + 8;
-    } else line = trial;
-  }
-  if (line) d.text(line, x, ly, size, color);
-  return ly;
-}
-function hit(p, b) {
-  return b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
-}
-function drawerBox(i, n) {
-  const w = n > 3 ? 160 : 200, h = 150, gap = 18;
-  const total = n * w + (n - 1) * gap;
-  return {x: 450 - total / 2 + i * (w + gap), y: 560, w, h};
-}
-function clueBox(i) {
-  return {x: 80, y: 240 + i * 78, w: 740, h: 68};
-}
 
 function emptyBook() {
-  return {v: 1, tables: {}};
+  return {v: 1, paid: {}, sittings: {}};
 }
 function readBook() {
   if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
-    if (blob && blob.v === 1 && blob.tables) return blob;
+    if (blob && blob.v === 1) return {paid: {}, sittings: {}, ...blob};
   } catch {}
   return emptyBook();
 }
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function chapterPaid(level) {
+  return !!(readBook().paid && readBook().paid[String(level)]) || owned(CABINET_PRIZES[level]);
+}
+function markPaid(level) {
+  if (!alleyPlay) return;
+  const book = readBook();
+  book.paid[String(level)] = true;
+  writeBook(book);
+}
 function persist(s) {
-  if (!alleyPlay || typeof localStorage === 'undefined' || !s) return;
-  try {
-    const book = readBook();
-    book.tables[String(s.level)] = {
-      seed: s.seed, phase: s.phase, opened: (s.opened || []).slice(),
-      cluesOpen: (s.cluesOpen || []).slice(),
-      curtain: !!s.curtain, glass: !!s.glass,
-      curtainSeen: !!s.curtainSeen, glassSeen: !!s.glassSeen,
-      inspect: s.inspect, choice: s.choice, mistakes: s.mistakes, hints: s.hints,
-      paid: !!s.paid, won: !!s.won, resultN: s.resultN || 0,
-      charged: !!s.charged, launchId: s.launchId || 0,
-    };
-    localStorage.setItem(BOOK, JSON.stringify(book));
-  } catch {}
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.sittings[String(s.level)] = {
+    phase: s.phase, seed: s.seed, charged: !!s.charged,
+    aimX: s.aimX, clawX: s.clawX, capsules: s.capsules,
+    won: !!s.won, note: s.note, resultN: s.resultN || 0,
+    drops: s.drops || 0, houseLeft: s.houseLeft,
+  };
+  writeBook(book);
 }
 
-function emptyNote() {
-  return alleyPlay ? 'A penny to open the cabinet.' : 'Open a practice mystery.';
+function swayAmp(level) {
+  return 10 + level * 4;
+}
+function clawMin() { return CASE.x + 56; }
+function clawMax() { return CASE.x + CASE.w - 56; }
+
+function makeCapsules(level, seed) {
+  const roll = rng(seed + 17 + level * 131);
+  const n = 12 + (level | 0);
+  const bonusIndex = Math.floor(roll() * n);
+  const prize = CABINET_PRIZES[level] || CABINET_PRIZES[0];
+  const list = [];
+  const cols = 4;
+  const cellW = (CASE.w - 80) / cols;
+  for (let i = 0; i < n; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const jitterX = (roll() - 0.5) * 28;
+    const jitterY = (roll() - 0.5) * 18;
+    const x = CASE.x + 50 + col * cellW + cellW / 2 + jitterX;
+    const y = FLOOR_Y - 28 - row * 52 - (col % 2) * 10 + jitterY;
+    const bonus = i === bonusIndex;
+    list.push({
+      id: i,
+      x: clamp(x, CASE.x + 40, CASE.x + CASE.w - 40),
+      y: clamp(y, CASE.y + 160, FLOOR_Y - 20),
+      rx: 22 + roll() * 6,
+      ry: 28 + roll() * 6,
+      color: CAPSULE_COLORS[Math.floor(roll() * CAPSULE_COLORS.length)],
+      kind: bonus ? 'bonus' : EVERYDAY[Math.floor(roll() * EVERYDAY.length)],
+      prizeId: bonus ? prize : null,
+      taken: false,
+      lift: 0,
+    });
+  }
+  return list;
 }
 
-function beginMystery(s) {
-  if (s.phase === 'mystery') return;
+function nearestCapsule(s) {
+  if (!s.capsules) return null;
+  let best = null;
+  let bestD = 1e9;
+  const cx = s.clawX;
+  for (const cap of s.capsules) {
+    if (cap.taken) continue;
+    const d = Math.abs(cap.x - cx);
+    if (d < bestD) {
+      bestD = d;
+      best = cap;
+    }
+  }
+  // Must be roughly under the claw — hard grab window
+  if (!best || bestD > 42) return null;
+  return best;
+}
+
+function creamPads() {
+  const y = 1088;
+  const h = 96;
+  const dropW = 240;
+  const sideW = 110;
+  const gap = 22;
+  const drop = {id: 'drop', x: CX - dropW / 2, y, w: dropW, h, label: 'DROP'};
+  const left = {id: 'left', x: drop.x - gap - sideW, y, w: sideW, h, label: '←'};
+  const right = {id: 'right', x: drop.x + dropW + gap, y, w: sideW, h, label: '→'};
+  return [left, drop, right];
+}
+function hitPad(p) {
+  if (!p || typeof p.x !== 'number') return null;
+  for (const pad of creamPads()) {
+    if (p.x >= pad.x && p.x <= pad.x + pad.w && p.y >= pad.y && p.y <= pad.y + pad.h) return pad.id;
+  }
+  return null;
+}
+function drawCreamPads(d) {
+  for (const pad of creamPads()) {
+    const isDrop = pad.id === 'drop';
+    d.ellipse(pad.x + pad.w / 2 + 2, pad.y + pad.h / 2 + 4, pad.w * 0.48, pad.h * 0.42, '#12233566');
+    d.ellipse(
+      pad.x + pad.w / 2,
+      pad.y + pad.h / 2,
+      pad.w * 0.48,
+      pad.h * 0.42,
+      isDrop ? '#efe6d0ee' : '#2a1818ee',
+      isDrop ? '#8a6040' : '#e8c878',
+      2
+    );
+    d.text(pad.label, pad.x + pad.w / 2, pad.y + pad.h / 2 + 1, isDrop ? 22 : 28, isDrop ? '#4a2018' : '#efe6d0');
+  }
+}
+
+function beginSitting(s) {
+  if (s.phase === 'aim' || s.phase === 'drop') return;
   if (s.chargeLock) return;
   s.chargeLock = true;
   try {
     if (!s.charged) {
       if (alleyPlay) {
-        if (!takeAttempt('curios', s.level)) { s.note = retryNote(); return; }
+        if (!takeAttempt('curios', s.level)) {
+          s.note = retryNote();
+          return;
+        }
       }
       s.charged = true;
+      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 3 + s.level * 59;
       s.launchId = (s.launchId || 0) + 1;
-      s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 97;
     }
-    s.puzzle = makePuzzle(s.level, s.seed);
-    s.phase = 'mystery';
-    s.opened = [];
-    s.cluesOpen = s.puzzle.clues.map((_, i) => i === 0);
-    s.curtain = false;
-    s.glass = false;
-    s.curtainSeen = false;
-    s.glassSeen = false;
-    s.inspect = -1;
-    s.choice = -1;
-    s.mistakes = 0;
-    s.hints = 0;
+    s.capsules = makeCapsules(s.level, s.seed);
+    s.phase = 'aim';
+    s.aimX = CX;
+    s.clawX = CX;
+    s.clawY = RAIL_Y + 40;
+    s.held = null;
+    s.dropT = 0;
+    s.dropPhase = null;
+    s.resultN = 0;
     s.prizeKept = false;
-    s.note = s.puzzle.rule;
+    s.houseLeft = HOUSE_SECONDS;
+    s.note = 'Aim the claw — DROP when ready';
     persist(s);
   } finally {
     s.chargeLock = false;
   }
 }
 
-function inspectDrawer(s, drawer) {
-  if (s.phase !== 'mystery' || s.choice >= 0 || !s.puzzle) return;
-  const d = s.puzzle.drawers[drawer];
-  if (!d) return;
-  if (s.inspect === drawer) {
-    accuse(s, drawer);
-    return;
-  }
-  s.inspect = drawer;
-  s.note = 'The ' + d.label + ' drawer. ' + d.color + ' handle, ' + d.emblem + ' mark. Tap again to name it.';
+function nudgeAim(s, dir) {
+  if (s.phase !== 'aim') return;
+  s.aimX = clamp(s.aimX + dir * 28, clawMin(), clawMax());
   persist(s);
 }
 
-function accuse(s, drawer) {
-  if (s.phase !== 'mystery' || s.choice >= 0 || s.chargeLock) return;
-  if (!s.puzzle || drawer < 0 || drawer >= s.puzzle.drawers.length) return;
-  if (s.puzzle.kind === 'memory' && !s.curtainSeen) {
-    s.note = 'Pull the curtain before you name a drawer.';
-    return;
-  }
-  if (s.puzzle.kind === 'mirror' && !s.glassSeen) {
-    s.note = 'Slide the looking-glass first.';
-    return;
-  }
-  s.choice = drawer;
-  s.phase = 'reveal';
-  const ok = drawer === s.puzzle.solution;
+function startDrop(s) {
+  if (s.phase !== 'aim' || s.chargeLock) return;
+  s.phase = 'drop';
+  s.dropPhase = 'descend';
+  s.dropT = 0;
+  s._riseFromY = null;
+  s.held = null;
+  s.target = nearestCapsule(s);
+  s.seed = (s.seed || 1) + 1;
+  s.note = 'Claw descending…';
+  persist(s);
+}
+
+function resolveDrop(s) {
   const n = resultNumber(s.seed);
   s.resultN = n;
+  s.drops = (s.drops || 0) + 1;
+  const aimed = s.target;
+  const win = isCabinetWin(s.level, n);
   const prize = CABINET_PRIZES[s.level];
-  if (!ok) {
-    s.mistakes += 1;
-    s.note = 'The ' + s.puzzle.drawers[drawer].label + ' drawer is empty. The curiosity was ' + s.puzzle.drawers[s.puzzle.solution].label + '.';
+  const already = chapterPaid(s.level) || s.won;
+
+  if (!aimed) {
+    s.held = null;
+    s.note = n + ' — nothing under the claw';
+    finishMiss(s);
+    return;
+  }
+
+  if (win) {
+    // Grip holds — receive the aimed item
+    aimed.taken = true;
+    s.held = aimed;
+    let got = null;
+    let chapterWin = false;
+    if (aimed.kind === 'bonus') {
+      if (!already) {
+        got = prize;
+        chapterWin = true;
+      } else {
+        got = ordinaryFor(n);
+      }
+    } else {
+      got = aimed.kind;
+    }
+
+    if (alleyPlay) {
+      if (got === 'everyday-penny') credit(1);
+      else keep(got, 'curios');
+      if (chapterWin) {
+        markPaid(s.level);
+        s.won = true;
+        s.paid = true;
+      }
+    } else if (chapterWin) {
+      s.won = true;
+      s.paid = true;
+    }
+
+    if (chapterWin) takePrize(s, prize, {x: aimed.x, y: aimed.y});
+
+    const label = itemName(got) || got;
+    s.note = n + ' — caught the ' + label + '!';
+    s.phase = 'result';
     s.charged = false;
+    s.hold = chapterWin ? 1.4 : 0.9;
     persist(s);
     return;
   }
-  const drop = ordinaryFor(n);
-  const win = isCabinetWin(s.level, n) && !s.paid;
-  if (alleyPlay) {
-    if (drop === 'everyday-penny') credit(1);
-    else keep(drop, 'curios');
-    if (win) {
-      keep(prize, 'curios');
-      s.paid = true;
-      s.won = true;
-    }
-  } else if (win) s.won = true;
-  if (win) takePrize(s, prize, {x: 450, y: 200});
-  s.note = 'THE DRAWER WAS TRUE. Result ' + n + (win ? '. ' + itemName(prize) + ' FOUND.' : '. A beautiful find — the unique still waits.');
-  s.hold = 1.2;
+
+  // Wrong number — claw slips. Optional tiny consolation on near-miss.
+  s.held = null;
+  const near = nearMiss(s.level, n);
+  if (near && (s.seed % 7 === 0)) {
+    const drop = 'everyday-penny';
+    if (alleyPlay) credit(1);
+    s.note = n + ' — slipped (a penny rattled free)';
+  } else {
+    s.note = n + ' — slipped';
+  }
+  finishMiss(s);
+}
+
+function nearMiss(level, n) {
+  for (let d = -2; d <= 2; d++) {
+    if (d === 0) continue;
+    const m = n + d;
+    if (m >= 1 && m <= 100 && isCabinetWin(level, m)) return true;
+  }
+  return false;
+}
+
+function finishMiss(s) {
+  s.phase = 'result';
   s.charged = false;
+  s.hold = 0.7;
   persist(s);
 }
 
+function drawClaw(d, x, y, open, holding) {
+  const c = d.c;
+  const spread = holding ? 14 : open;
+  // Rail trolley
+  d.ellipse(x, RAIL_Y, 22, 10, '#8a7048', '#e8c878', 2);
+  // Cable
+  d.line({x, y: RAIL_Y}, {x, y}, '#c8b898', 3);
+  // Body
+  d.ellipse(x, y, 16, 12, '#5a3028', '#e8c878', 2);
+  // Three prongs
+  c.save();
+  c.strokeStyle = '#e8c878';
+  c.fillStyle = '#6a3830';
+  c.lineWidth = 3;
+  for (const [dx, ang] of [[-spread, -0.35], [0, 0.15], [spread, 0.35]]) {
+    c.beginPath();
+    c.moveTo(x, y + 8);
+    c.quadraticCurveTo(x + dx * 0.6, y + 28, x + dx, y + 44);
+    c.stroke();
+    c.beginPath();
+    c.arc(x + dx, y + 44, 5, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+  }
+  c.restore();
+}
+
+function drawCapsule(d, cap, time) {
+  if (cap.taken && !cap.lift) return;
+  const y = cap.y - (cap.lift || 0);
+  const bob = Math.sin((time || 0) * 2 + cap.id) * 1.5;
+  d.ellipse(cap.x + 2, y + cap.ry * 0.7, cap.rx * 0.9, cap.ry * 0.35, '#12233555');
+  d.ellipse(cap.x, y + bob, cap.rx, cap.ry, cap.color, '#fff6d8', 2);
+  // Seam
+  d.ellipse(cap.x, y + bob - 2, cap.rx * 0.92, 3, null, '#fff6d888', 1.5);
+  if (cap.kind === 'bonus') {
+    d.glow(cap.x, y + bob, 36, '#e8c878');
+    d.star(cap.x, y + bob, 10, '#fff6d8');
+  } else if (cap.kind === 'heart-gear') {
+    d.heart(cap.x, y + bob + 2, 8, '#fff0c8');
+  } else if (cap.kind === 'cabinet-key') {
+    d.text('key', cap.x, y + bob + 4, 12, '#fff6d8');
+  } else {
+    d.circle(cap.x, y + bob, 6, '#e8c878', '#5a3028', 1);
+  }
+}
+
 export default {
-  title: 'The Cabinet That Lies',
+  title: 'Capsule Cabinet',
   live: alleyPlay,
   tables: true,
   chapterEnds: true,
+  canvasControls: true,
+  persist,
+  houseSeconds: HOUSE_SECONDS,
+  houseTitle: 'The cabinet closed',
+  houseDetail: 'Digby latches the glass. Another claw when you have a penny.',
+  clockRuns: s => s.phase === 'aim' || s.phase === 'drop',
+  onTimeout(s) {
+    if (s.phase === 'aim' || s.phase === 'drop') {
+      s.phase = 'result';
+      s.charged = false;
+      s.note = 'Time is up. The claw rests.';
+      s.hold = 0.5;
+      persist(s);
+    }
+  },
+  retryAttempt(s) { this.action(s, 'again'); },
+  retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
+  playLabel: s => alleyPlay && ['result', 'idle'].includes(s.phase) ? 'Play again · 1 penny' : 'Play',
   intro: alleyPlay
-    ? 'A living sideshow cabinet. Several drawers. Several clues. Something is lying. A penny opens one mystery. Solve it for a 1–100 result; tonight’s numbers release this chapter’s curiosity. Wrong drawers never secretly move the answer.'
-    : 'Inspect the clues, then name the drawer. Workshop mysteries are free and write nothing.',
+    ? 'Digby’s glass Capsule Cabinet. Aim the claw along the rail, then DROP. A result from 1–100 decides the grip — the right number picks up whatever you aimed at: the chapter bonus capsule, or a hard everyday collectable. Wrong numbers slip. A penny starts a sitting.'
+    : 'Aim the claw, DROP when ready. Workshop sittings are free and write nothing.',
   instructions: alleyPlay
-    ? 'Open a clue card. Tap a drawer to inspect, tap again to accuse. A penny starts a new mystery. The unique only drops on a correct drawer and a winning number.'
-    : 'Read the cards, inspect a drawer, tap again to name it. Practice writes nothing.',
+    ? 'Drag the court or use ←/→ / cream pads to aim. DROP (Space / cream TAP) lowers the claw. Hit a winning 1–100 to keep the aimed capsule. Chapter bonus only if you aimed at the glowing capsule and the number holds.'
+    : 'Aim, DROP, see the number. Practice writes nothing.',
   levels: LEVELS,
-  sprites: ['clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot', 'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny'],
+  sprites: [
+    'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
+    'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny',
+  ],
   prizes: CABINET_PRIZES.slice(),
   actions: [
-    {id: 'open', label: alleyPlay ? 'Open a mystery · 1 penny' : 'Open a practice mystery'},
-    {id: 'hint', label: 'A small hint'},
-    {id: 'curtain', label: 'Pull the curtain'},
-    {id: 'glass', label: 'Slide the looking-glass'},
+    {id: 'play', label: alleyPlay ? 'Play · 1 penny' : 'Play'},
+    {id: 'again', label: alleyPlay ? 'Play again · 1 penny' : 'Play again'},
+    {id: 'drop', label: 'DROP · Space'},
   ],
-  persist,
   create(level) {
-    const saved = alleyPlay ? (readBook().tables[String(level)] || {}) : {};
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
+    const resume = saved.phase === 'aim' || saved.phase === 'drop';
     const s = {
-      level, t: 0, phase: saved.phase || 'idle', seed: saved.seed || (level + 1) * 7919,
-      puzzle: saved.seed ? makePuzzle(level, saved.seed) : null,
-      opened: saved.opened || [], cluesOpen: saved.cluesOpen || [],
-      curtain: !!saved.curtain, glass: !!saved.glass,
-      curtainSeen: !!saved.curtainSeen, glassSeen: !!saved.glassSeen,
-      inspect: saved.inspect ?? -1,
-      choice: saved.choice ?? -1, mistakes: saved.mistakes || 0, hints: saved.hints || 0,
-      paid: !!saved.paid, won: !!saved.won, resultN: saved.resultN || 0,
-      charged: !!saved.charged, launchId: saved.launchId || 0, hold: 0,
-      note: saved.phase === 'mystery' ? 'The cabinet is still waiting.' : 'A penny opens a mystery.',
+      level, t: 0,
+      phase: resume ? saved.phase : (saved.phase === 'result' ? 'result' : 'idle'),
+      seed: saved.seed || (level + 1) * 7919,
+      capsules: saved.capsules || null,
+      aimX: saved.aimX ?? CX,
+      clawX: saved.clawX ?? CX,
+      clawY: RAIL_Y + 40,
+      charged: resume ? !!saved.charged : false,
+      won: !!saved.won || chapterPaid(level),
+      paid: chapterPaid(level),
+      hold: 0,
+      resultN: saved.resultN || 0,
+      drops: saved.drops || 0,
+      houseLeft: saved.houseLeft,
+      held: null,
+      target: null,
+      dropT: 0,
+      dropPhase: null,
+      dragAim: false,
+      note: saved.note || 'Aim the claw — DROP when ready',
     };
-    if (s.phase === 'mystery' && !s.puzzle) s.puzzle = makePuzzle(level, s.seed);
-    if (s.puzzle && !proveUnique(s.puzzle)) s.puzzle = makePuzzle(level, s.seed);
+    if (resume && !s.capsules) s.capsules = makeCapsules(level, s.seed);
+    if (s.phase === 'drop') {
+      // Interrupted mid-drop — settle back to aim
+      s.phase = 'aim';
+      s.dropPhase = null;
+    }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
-    if (s.paid && s.chapterPrize) s.chapterPrize.field = false;
+    if ((s.won || s.paid) && s.chapterPrize) s.chapterPrize.field = false;
     return s;
   },
-  update(s, dt) {
+  update(s, dt, input) {
     s.t += dt;
+    if (typeof document !== 'undefined' && document.hidden) return;
+
+    // Keyboard hold aim
+    if (s.phase === 'aim' && input?.keys) {
+      if (input.keys.has('ArrowLeft') || input.keys.has('a')) {
+        s.aimX = clamp(s.aimX - 120 * dt, clawMin(), clawMax());
+      }
+      if (input.keys.has('ArrowRight') || input.keys.has('d')) {
+        s.aimX = clamp(s.aimX + 120 * dt, clawMin(), clawMax());
+      }
+    }
+
+    if (s.phase === 'aim') {
+      const sway = Math.sin(s.t * (1.8 + s.level * 0.15)) * swayAmp(s.level);
+      s.clawX = clamp(s.aimX + sway, clawMin(), clawMax());
+      s.clawY = RAIL_Y + 40;
+      s.note = s.note && s.note.includes('—') && s.resultN ? s.note : 'Aim the claw — DROP when ready';
+    }
+
+    if (s.phase === 'drop') {
+      s.dropT += dt;
+      if (s.dropPhase === 'descend') {
+        const targetY = (s.target ? s.target.y - 50 : FLOOR_Y - 80);
+        s.clawY = lerp(RAIL_Y + 40, targetY, Math.min(1, s.dropT / 0.55));
+        if (s.dropT >= 0.55) {
+          s.dropPhase = 'grip';
+          s.dropT = 0;
+        }
+      } else if (s.dropPhase === 'grip') {
+        if (s.dropT >= 0.28) {
+          s.dropPhase = 'rise';
+          s.dropT = 0;
+          // Peek: will we hold? Decide now so rise can show item or empty
+          const n = resultNumber(s.seed);
+          const win = isCabinetWin(s.level, n) && s.target;
+          if (win && s.target) {
+            s.held = s.target;
+            s.target.lift = 0;
+          } else {
+            s.held = null;
+          }
+        }
+      } else if (s.dropPhase === 'rise') {
+        if (s._riseFromY == null) s._riseFromY = s.clawY;
+        s.clawY = lerp(s._riseFromY, RAIL_Y + 40, Math.min(1, s.dropT / 0.5));
+        if (s.held) {
+          s.held.x = s.clawX;
+          s.held.lift = Math.max(0, s.held.y - (s.clawY + 55));
+        }
+        if (s.dropT >= 0.5) {
+          s._riseFromY = null;
+          resolveDrop(s);
+        }
+      }
+    }
+
     if (s.won && s.hold > 0 && !s.result) {
       s.hold -= dt;
       if (s.hold <= 0) {
-        done(s, 'The cabinet told the truth, once',
+        done(s, 'The claw held true',
           itemName(CABINET_PRIZES[s.level]) + ' — result ' + s.resultN + '.',
           {prize: CABINET_PRIZES[s.level], won: true});
       }
+    } else if (s.phase === 'result' && !s.won && s.hold > 0) {
+      s.hold -= dt;
     }
   },
   pointer(s, type, p) {
-    if (type !== 'down' || s.result) return;
-    if (s.phase === 'idle') return;
-    if (s.puzzle) {
-      s.puzzle.clues.forEach((_, i) => {
-        if (hit(p, clueBox(i))) {
-          s.cluesOpen[i] = true;
-          persist(s);
-        }
-      });
-      if (s.phase === 'mystery') {
-        s.puzzle.drawers.forEach((_, i) => {
-          if (hit(p, drawerBox(i, s.puzzle.drawers.length))) inspectDrawer(s, i);
-        });
+    if (s.result) return;
+    const pad = hitPad(p);
+    if (type === 'down') {
+      if (pad === 'left') { nudgeAim(s, -1); return; }
+      if (pad === 'right') { nudgeAim(s, 1); return; }
+      if (pad === 'drop') {
+        if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
+        else if (s.phase === 'aim') startDrop(s);
+        return;
       }
+      if (s.phase === 'idle' || s.phase === 'result') {
+        beginSitting(s);
+        return;
+      }
+      if (s.phase === 'aim' && p.y >= CASE.y && p.y <= CASE.y + CASE.h) {
+        s.dragAim = true;
+        s.aimX = clamp(p.x, clawMin(), clawMax());
+      }
+      return;
+    }
+    if (type === 'move' || type === 'drag') {
+      if (s.phase === 'aim' && (s.dragAim || (p.y >= CASE.y && p.y <= CASE.y + CASE.h + 40))) {
+        s.aimX = clamp(p.x, clawMin(), clawMax());
+      }
+      return;
+    }
+    if (type === 'up' || type === 'cancel') {
+      s.dragAim = false;
     }
   },
   action(s, id) {
-    if (id === 'open') beginMystery(s);
-    if (id === 'hint' && s.puzzle) {
-      s.hints += 1;
-      if (s.puzzle.kind === 'memory' && s.puzzle.memory) {
-        s.note = 'A whisper: it started in the ' + s.puzzle.drawers[s.puzzle.memory.from].label + ' drawer.';
-      } else if (s.puzzle.kind === 'mirror') {
-        s.note = 'A whisper: the mark is a mirror. Name the opposite drawer.';
-      } else {
-        s.note = 'A whisper: the rule is still “' + s.puzzle.rule + '”';
+    if (id === 'play' || id === 'again') {
+      if (s.phase === 'result') {
+        s.phase = 'idle';
+        s.note = 'Another claw when you are ready.';
+        persist(s);
       }
-      persist(s);
+      beginSitting(s);
     }
-    if (id === 'curtain' && s.puzzle?.kind === 'memory') {
-      s.curtain = !s.curtain;
-      s.curtainSeen = true;
-      s.note = s.curtain ? 'The curtain is closed. The moth has moved.' : 'The curtain is open. Remember the first drawer.';
-      persist(s);
-    } else if (id === 'curtain') {
-      s.note = 'This chapter has no curtain.';
-    }
-    if (id === 'glass' && s.puzzle?.kind === 'mirror') {
-      s.glass = !s.glass;
-      s.glassSeen = true;
-      s.note = s.glass ? 'The glass is over the cabinet. Left is right.' : 'The glass is set aside.';
-      persist(s);
-    } else if (id === 'glass' && s.puzzle && s.puzzle.kind !== 'mirror') {
-      s.note = 'This chapter has no looking-glass.';
+    if (id === 'drop') {
+      if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
+      else startDrop(s);
     }
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === ' ') this.action(s, 'open');
-    if (s.phase === 'mystery' && s.puzzle && k >= '1' && k <= '4') inspectDrawer(s, Number(k) - 1);
+    if (k === 'ArrowLeft' || k === 'a') nudgeAim(s, -1);
+    if (k === 'ArrowRight' || k === 'd') nudgeAim(s, 1);
+    if (k === ' ' || k === 'Enter') {
+      if (s.phase === 'aim') startDrop(s);
+      else if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
+    }
   },
-  draw(s, d) {
+  draw(s, d, time) {
     const prize = CABINET_PRIZES[s.level];
-    d.text('The Cabinet That Lies', 450, 118, 28, '#efe6d0');
-    d.text(LEVELS[s.level], 450, 154, 20, '#d2b98c');
-    {
-      const owned = s.paid;
-      d.item(spriteKey(prize), 780, 138, {w: 70, fallback: () => d.star(780, 138, 24)});
-      d.text(owned ? 'Collected' : 'Locked', 780, 192, 14, owned ? '#c8e878' : '#ead6a4');
-    }
     const c = d.c;
-    if (!s.puzzle || s.phase === 'idle') {
-      wrapLine(d, s.note, 450, 520, 24, '#f0d18f', 700);
-      return;
+    d.text('Capsule Cabinet', 450, 108, 28, '#efe6d0');
+    d.text(LEVELS[s.level], 450, 142, 18, '#d2b98c');
+    {
+      const collected = s.won || chapterPaid(s.level);
+      d.item(spriteKey(prize), 800, 130, {w: 64, fallback: () => d.star(800, 130, 22)});
+      d.text(collected ? 'Collected' : 'Locked', 800, 182, 14, collected ? '#c8e878' : '#ead6a4');
     }
-    wrapLine(d, s.puzzle.rule, 450, 196, 20, '#f0d18f', 760);
-    s.puzzle.clues.forEach((clue, i) => {
-      const b = clueBox(i);
-      const open = s.cluesOpen[i];
-      roundRect(c, b.x, b.y, b.w, b.h, 10);
-      c.fillStyle = open ? '#3a2a18ee' : '#241810ee';
-      c.fill();
-      c.strokeStyle = '#e8c878';
-      c.lineWidth = 2;
-      c.stroke();
-      d.text(open ? clue.text : 'Clue card ' + (i + 1) + ' — tap to slide up', b.x + b.w / 2, b.y + 42, 18, open ? '#fff6d8' : '#ead6a4');
-    });
-    const n = s.puzzle.drawers.length;
-    s.puzzle.drawers.forEach((drawer, i) => {
-      let show = i;
-      if (s.puzzle.kind === 'mirror' && s.glass) show = n - 1 - i;
-      const b = drawerBox(i, n);
-      const chosen = s.choice === i;
-      const inspecting = s.inspect === i && s.phase === 'mystery';
-      const truth = s.phase === 'reveal' && s.puzzle.solution === i;
-      roundRect(c, b.x, b.y, b.w, b.h, 12);
-      c.fillStyle = truth ? '#3a4830ee' : chosen ? '#483018ee' : inspecting ? '#3a3020ee' : '#2a2018ee';
-      c.fill();
-      c.strokeStyle = truth ? '#c8e878' : inspecting ? '#f0d18f' : '#e8c878';
-      c.lineWidth = inspecting || truth ? 4 : 3;
-      c.stroke();
-      const label = s.puzzle.drawers[show] ? s.puzzle.drawers[show].label : drawer.label;
-      d.text(label, b.x + b.w / 2, b.y + 48, 22, '#fff6d8');
-      d.text(drawer.emblem, b.x + b.w / 2, b.y + 86, 16, '#ead6a4');
-      if (s.puzzle.kind === 'mirror' && s.glass && i === s.puzzle.glassMark) {
-        d.star(b.x + b.w / 2, b.y + 118, 12, '#f0d18f');
+
+    // Cabinet frame — burgundy / brass
+    roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
+    c.fillStyle = '#3a1818ee';
+    c.fill();
+    c.strokeStyle = '#e8c878';
+    c.lineWidth = 5;
+    c.stroke();
+
+    // Glass pane
+    roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
+    c.fillStyle = '#1a2838aa';
+    c.fill();
+    c.strokeStyle = '#c8b070';
+    c.lineWidth = 3;
+    c.stroke();
+
+    // Rail
+    d.line({x: CASE.x + 20, y: RAIL_Y}, {x: CASE.x + CASE.w - 20, y: RAIL_Y}, '#e8c878', 4);
+
+    // Floor pile shadow
+    d.ellipse(CX, FLOOR_Y + 18, CASE.w * 0.38, 18, '#12233566');
+
+    if (s.capsules) {
+      // Draw back-to-front by y
+      const ordered = s.capsules.slice().sort((a, b) => a.y - b.y);
+      for (const cap of ordered) {
+        if (s.held && cap.id === s.held.id) continue;
+        drawCapsule(d, cap, time || s.t);
       }
-      if (s.puzzle.kind === 'memory' && s.puzzle.memory) {
-        const mothHere = s.curtain ? i === s.puzzle.memory.to : i === s.puzzle.memory.from;
-        if (mothHere) d.text('moth', b.x + b.w / 2, b.y + 118, 16, '#f0d18f');
-      }
-    });
-    wrapLine(d, s.note, 450, 760, 22, '#fff6d8', 760);
-    if (s.resultN) d.text('Result ' + s.resultN, 450, 1080, 28, '#f0d18f');
+    } else if (s.phase === 'idle') {
+      d.text('Play', 450, 520, 36, '#ead6a4');
+      d.wrap('Glass case · brass claw · colourful capsules', 450, 580, 20, '#d2b98c', 520);
+    }
+
+    // Aim ghost
+    if (s.phase === 'aim') {
+      c.save();
+      c.globalAlpha = 0.35;
+      d.line({x: s.clawX, y: RAIL_Y + 50}, {x: s.clawX, y: FLOOR_Y}, '#fff6d8', 2);
+      c.restore();
+      const under = nearestCapsule(s);
+      if (under) d.ellipse(under.x, under.y, under.rx + 6, under.ry + 6, null, '#fff6d8aa', 2);
+    }
+
+    if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
+      drawClaw(d, s.clawX, s.clawY, s.held ? 14 : CLAW_OPEN, !!s.held);
+      if (s.held) drawCapsule(d, Object.assign({}, s.held, {x: s.clawX, lift: 0, y: s.clawY + 55}), time);
+    }
+
+    // Big 1–100 readout
+    if (s.resultN) {
+      d.glow(CX, 860, 70, '#e8c878');
+      d.text(String(s.resultN), CX, 870, 64, '#fff6d8');
+    }
+
+    d.wrap(s.note || '', CX, 960, 22, '#fff6d8', 720);
+    drawCreamPads(d);
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
-    return purse + ' · ' + s.mistakes + ' wrong drawers · ' + s.hints + ' hints · ' + s.note;
+    return purse + ' · ' + s.note;
   },
 };
+
+function lerp(a, b, t) {
+  return a + (b - a) * clamp(t, 0, 1);
+}

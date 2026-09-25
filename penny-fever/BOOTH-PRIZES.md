@@ -40,7 +40,9 @@ Also from a fortune colour (older cabinet / colour extra): ticket stub, and some
 5. Friendship pins
 6. Ribbon gift box
 
-## Digby · Clockwork Menagerie
+## Digby · Capsule Cabinet
+
+Claw / capsule cabinet (was Clockwork Menagerie mystery). Same six prize names.
 
 1. Clockwork key
 2. Display dome

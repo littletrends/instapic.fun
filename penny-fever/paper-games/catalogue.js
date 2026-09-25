@@ -3,7 +3,7 @@
 const rows = [
   ['fortune','Iris','Catch the Fortune','The globe flashes a sign. Brake the rings before it fades.'],
   ['love','Rosalie','Love Tester','Write the names. Count the letters. Add them down.'],
-  ['curios','Digby','The Cabinet That Lies','Several drawers. Several clues. Something is lying.'],
+  ['curios','Digby','Capsule Cabinet','Aim the claw. Drop on the right number. Catch a capsule.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
   ['snap','Felix','Instapic Photo Booth','Closed for maintenance. The paper booth will open later.'],
   ['whisper','Willa','Whisper Run','Read the secret. Cross the board. Pick the phrase you remember.'],
