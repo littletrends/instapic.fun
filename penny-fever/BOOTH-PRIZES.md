@@ -178,12 +178,12 @@ A penny a ball. Cash a booth ticket here for five pennies.
 
 ## Peggy · Peggy’s Marble Mill
 
-1. Five-penny stack
-2. Lucky dish
-3. Mercury bead
+1. Mill marble
+2. Gate token
+3. Heart gear
 4. Ticket punch
 5. Stamp and inkpad
-6. Coin album
+6. Marble tin
 
 ## Flossie · Cloud Atelier
 

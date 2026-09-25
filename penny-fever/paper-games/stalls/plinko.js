@@ -8,6 +8,9 @@ import {
   isPeggyWin, resultNumber, ordinaryFor, RAIL_Y,
 } from '../marble-mill.js?v=first-prize-1';
 
+/** Full stall shell — Copper/Digby-style backdrop for Plinko front.webp. */
+const CAB = {x: 130, y: 188, w: 640, h: 640};
+
 const BOOK = 'pennyFever.marbleMill';
 
 function wrapLine(d, text, x, y, size, color, maxW) {
@@ -158,6 +161,9 @@ export default {
     ? 'Drag the top slider, release to drop. Tap left or right to fire a flipper. Hit the hanging unique. A drain without a hit spends the penny.'
     : 'Aim, drop, flip. Practice writes nothing.',
   levels: PEGGY_CHAPTERS.map(c => c.title),
+  images: {
+    cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/plinko/front.webp',
+  },
   sprites: ['mill-marble', 'gate-token', 'heart-gear', 'ticket-punch', 'stamp-and-inkpad', 'marble-tin', 'moon-penny', 'star-token', 'everyday-penny'],
   prizes: PEGGY_CHAPTERS.map(c => c.prize),
   actions: [
@@ -267,6 +273,13 @@ export default {
       d.item(spriteKey(ch.prize), 800, 88, {w: 58, fallback: () => d.star(800, 88, 18)});
       d.text(owned ? 'Collected' : 'Locked', 800, 136, 12, owned ? '#c8e878' : '#ead6a4');
     }
+
+    // Plinko stall art as cabinet shell (Copper / Digby pattern)
+    const cab = d.art && d.art.cabinet;
+    if (cab) {
+      d.c.drawImage(cab, CAB.x, CAB.y, CAB.w, CAB.h);
+    }
+
     d.line({x: 168, y: 220}, {x: 732, y: 220}, '#e6c57a', 6);
     d.text('rail', 450, 208, 12, '#ead6a4');
     if (mill) {
