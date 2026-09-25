@@ -3,8 +3,10 @@
  * Tagline: Round and round, the secrets change.
  *
  * DRESS (Tent_24_Lumi + bea-player): Lumi lanterns/notes as bold cream scenery;
- *   YOU = shared bea-player on front mount. actions: [] — cream bottom TAP stick +
- *   court tap/swipe (+ Space/Enter). Do NOT set canvasControls. d.glow 6-digit hex.
+ *   YOU = shared bea-player on front mount. Papercut ride sheet = soft backdrop only;
+ *   orbiting stick horses ALWAYS draw during play so the waltz spin is visible.
+ *   actions: [] — cream bottom TAP stick + court tap/swipe (+ Space/Enter).
+ *   Do NOT set canvasControls. d.glow 6-digit hex.
  *   Horse sheet: front.png (not webp). Ch1–6 gameplay schedules LOCKED.
  *
  * SHIPPED: Chapters 1–6 (First Turn, Painted Ponies, Mirror Round, Carriage Windows,
@@ -180,6 +182,8 @@ preloadRideCutout();
 
 function drawRideCutout(d, swayX, swayY) {
   if (!rideCutoutReady || !rideCutout) return false;
+  // Soft backdrop only — orbiting stick horses always draw on top so spin is visible.
+  const backdropAlpha = 0.38;
   const w = 560;
   const iw = rideCutout.width || PAPERCUT_RIDE_RECT[2];
   const ih = rideCutout.height || PAPERCUT_RIDE_RECT[3];
@@ -187,10 +191,11 @@ function drawRideCutout(d, swayX, swayY) {
   const x = CX + swayX * 0.35;
   const y = CY - 40 + swayY * 0.35;
   if (typeof d.sprite === 'function') {
-    return d.sprite(rideCutout, x, y, {w, h, shadow: false, alpha: 1});
+    return d.sprite(rideCutout, x, y, {w, h, shadow: false, alpha: backdropAlpha});
   }
   const c = d.c;
   c.save();
+  c.globalAlpha = backdropAlpha;
   c.translate(x, y);
   c.drawImage(rideCutout, -w / 2, -h / 2, w, h);
   c.restore();
@@ -314,8 +319,8 @@ function drawTapStick(s, d) {
   d.ellipse(nx + 2, ny + 4, L.knobR * 0.95, L.knobR * 0.72, '#3a1a1244');
   d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : BURGUNDY, GOLD, 2.2);
   d.ellipse(nx - 4, ny - 6, L.knobR * 0.42, L.knobR * 0.28, CREAM + 'aa');
-  // Dark readable label on cream (not pale cream-on-cream).
-  d.text('TAP', L.cx, L.cy + L.baseRy + 18, 15, armed ? BURGUNDY_DEEP : INK);
+  // Large dark TAP on lower cream pad (below knob; old label sat past H=1200 and clipped).
+  d.text('TAP', L.cx, L.cy + 44, 26, armed ? BURGUNDY_DEEP : INK);
 }
 
 
@@ -2002,17 +2007,21 @@ function drawNowTelegraph(d, scr, t, treasure) {
   const base = treasure ? 64 : 52;
   d.glow(scr.x, scr.y, base * pulse * (0.55 + 0.45 * n), treasure ? '#f4d590' : '#ffe6a4');
   d.glow(scr.x, scr.y, (base * 0.5) * pulse, '#fff6d8');
-  // NOW badge when deep in crest
-  if (n > 0.35) {
-    const fade = Math.min(1, (n - 0.35) / 0.4);
-    const by = scr.y - 48;
+  // Approach cue, then big NOW badge when deep in crest window.
+  if (n > 0.12 && n <= 0.32) {
+    const fade = Math.min(1, (n - 0.12) / 0.2);
+    d.text('almost…', scr.x, scr.y - 44, 16, `rgba(255,230,164,${0.85 * fade})`);
+  }
+  if (n > 0.28) {
+    const fade = Math.min(1, (n - 0.28) / 0.35);
+    const by = scr.y - 52;
     d.poly(
-      [[scr.x - 42, by - 16], [scr.x + 42, by - 16], [scr.x + 42, by + 16], [scr.x - 42, by + 16]],
-      `rgba(107,32,48,${0.92 * fade})`,
+      [[scr.x - 52, by - 20], [scr.x + 52, by - 20], [scr.x + 52, by + 20], [scr.x - 52, by + 20]],
+      `rgba(107,32,48,${0.94 * fade})`,
       '#ffe6a4',
-      2.5,
+      3,
     );
-    d.text('NOW', scr.x, by + 6, 22, `rgba(255,230,164,${fade})`);
+    d.text('NOW', scr.x, by + 8, 28, `rgba(255,230,164,${fade})`);
   }
   // Sparkle ticks
   const spin = (t || 0) * 2.4;
@@ -2327,14 +2336,18 @@ function drawCh6WaltzChrome(d, s) {
 }
 
 function drawStatusStrip(d, s) {
-  // Durable lines → s.note / shell readout. Only brief crest-adjacent NOW/hazard cues.
-  if (s.practice && (s.t || 0) < VERB_SEC) return;
+  // Durable lines → s.note / shell readout. Crest-adjacent NOW/hazard cues.
   let label = '';
   let accent = '#d2a65b';
   const anyMarked =
     (s.practiceGlint && itemInCrestWindow(s.practiceGlint, s)) ||
     (s.treasure && itemInCrestWindow(s.treasure, s)) ||
     (s.finds || []).some((row) => itemInCrestWindow(row, s));
+  // Practice opener cue — yield immediately when a crest glint is live (Ch1 practice ~2.8s).
+  if (s.practice && (s.t || 0) < VERB_SEC && !anyMarked) {
+    drawCrestAdjacentCue(d, 'Watch the front crest — TAP when it says NOW.', null, 1, '#d2a65b');
+    return;
+  }
   const anyDecoy = decoysLive(s) && (s.decoys || []).some((row) => itemInCrestWindow(row, s));
   const anyReflection = reflectionsLive(s) && (s.reflections || []).some((row) => itemInCrestWindow(row, s));
   const anyTeach = s.level === 3 && !!teachOpeningLive(s);
@@ -2618,7 +2631,7 @@ export default {
       s.introShown = true;
       s.statusKind = s.practice ? 'practice' : 'searching';
       if (s.practice) {
-        s.note = 'PRACTICE — TAP on the crest when it pulses NOW. Nothing is kept.';
+        s.note = 'Watch the front crest — TAP when it says NOW. Practice keeps nothing.';
       } else if (s.level === 1) {
         s.note = s.eligible
           ? 'Painted Ponies — TAP the heart-marked pony. A keepsake hides this waltz.'
@@ -2902,8 +2915,7 @@ export default {
     drawLumiScenery(d, swayX, swayY);
     drawCrestLane(d, s);
 
-    // Orbiting horses (skip index 0 — player mount fixed foreground).
-    // When dressed, skip stick horses — papercut sheet already shows the ring.
+    // Orbiting horses always during play (papercut is soft backdrop only — never skip spin).
     const order = [];
     for (let i = 1; i < HORSE_N; i++) {
       const h = horsePoint(i, HORSE_N, s.angle || 0, cx, cy + 40, 250, 220);
@@ -2914,7 +2926,7 @@ export default {
     for (const {i, h} of order) {
       const bobAmp = (s.level === 4 || s.level === 5) ? (reduced ? 5 : 14) : (reduced ? 3 : 10);
       const bob = Math.sin((s.angle || 0) * 2 + i) * bobAmp;
-      if (!dressed) drawHorseSafe(d, h, bob, false, t, reduced);
+      drawHorseSafe(d, h, bob, false, t, reduced);
       // Ch4 / Ch6: paper-cut carriage window on crest carriers (open vs shut).
       if ((s.level === 3 || s.level === 5) && (s.carriageHorses || []).includes(i) && h.front) {
         const op = liveOpeningForHorse(s, i);
@@ -2924,22 +2936,19 @@ export default {
       }
     }
 
-    // YOU = bea-player on fixed front horse lane (~52–60w) + soft glow; geometry fallback.
+    // YOU = player horse (always) + bea-player on fixed front lane; geometry if dress missing.
     const playerBobAmp = (s.level === 4 || s.level === 5) ? (reduced ? 5 : 12) : (reduced ? 3 : 8);
     const bob = Math.sin(t * 2.2) * playerBobAmp;
     const px = CX + swayX * 0.15;
     const py = CY + swayY * 0.15 + 110 + bob;
+    drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
     d.glow(px, py + 8, 30, GOLD);
     d.ellipse(px + 2, py + 26, 28, 10, '#12233555');
     ensureLumiProps();
     const beaOk = placeDress(d, beaPlayerImg, px, py - 6, 56);
     if (!beaOk) {
-      if (!dressed) {
-        drawPlayerHorse(d, CX + swayX * 0.15, CY + swayY * 0.15, bob, t, reduced);
-      } else {
-        d.circle(px, py, 14, '#fff6d8ee', CREAM_DEEP, 2);
-        d.text('YOU', px, py + 1, 11, BURGUNDY_DEEP);
-      }
+      d.circle(px, py - 18, 14, '#fff6d8ee', CREAM_DEEP, 2);
+      d.text('YOU', px, py - 17, 11, BURGUNDY_DEEP);
     }
 
     const poleX = CX + swayX * 0.25;
