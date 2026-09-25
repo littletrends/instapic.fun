@@ -11,8 +11,6 @@ import {
 const BOOK = 'pennyFever.capsuleCabinet.v2';
 const CX = 450;
 const CASE = {x: 140, y: 210, w: 620, h: 620};
-/** Full vault shell — Copper-style backdrop rect (portrait art stretched to machine shell). */
-const CAB = {x: 130, y: 188, w: 640, h: 640};
 const RAIL_Y = CASE.y + 36;
 const FLOOR_Y = CASE.y + CASE.h - 70;
 const CLAW_OPEN = 38;
@@ -412,9 +410,6 @@ export default {
     ? 'Drag the court or use ←/→ / cream pads to aim. DROP (Space / cream TAP) lowers the claw. Hit a winning 1–100 to keep the aimed curio. Chapter bonus only if you aimed at the glowing prize and the number holds.'
     : 'Aim, DROP, see the number. Practice writes nothing.',
   levels: LEVELS,
-  images: {
-    cabinet: './assets/curios/cabinet.webp',
-  },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
     'crystal-cradle', 'curio-cabinet-album', 'cabinet-key', 'heart-gear', 'everyday-penny',
@@ -594,29 +589,21 @@ export default {
       d.text(collected ? 'Collected' : 'Locked', 800, 182, 14, collected ? '#c8e878' : '#ead6a4');
     }
 
-    // Vault cabinet backdrop (Copper pattern) — real Empty Cabinet art
-    const cab = d.art && d.art.cabinet;
-    if (cab) {
-      c.drawImage(cab, CAB.x, CAB.y, CAB.w, CAB.h);
-      // Soft glass wash so piled sprites read clearly without double-framing
-      roundRect(c, CASE.x + 6, CASE.y + 6, CASE.w - 12, CASE.h - 12, 10);
-      c.fillStyle = 'rgba(18, 28, 40, 0.32)';
-      c.fill();
-    } else {
-      // Fallback if cabinet art fails to load
-      roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
-      c.fillStyle = '#3a1818ee';
-      c.fill();
-      c.strokeStyle = '#e8c878';
-      c.lineWidth = 5;
-      c.stroke();
-      roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
-      c.fillStyle = '#1a2838aa';
-      c.fill();
-      c.strokeStyle = '#c8b070';
-      c.lineWidth = 3;
-      c.stroke();
-    }
+    // Cabinet frame — burgundy / brass
+    roundRect(c, CASE.x - 18, CASE.y - 24, CASE.w + 36, CASE.h + 48, 18);
+    c.fillStyle = '#3a1818ee';
+    c.fill();
+    c.strokeStyle = '#e8c878';
+    c.lineWidth = 5;
+    c.stroke();
+
+    // Glass pane
+    roundRect(c, CASE.x, CASE.y, CASE.w, CASE.h, 10);
+    c.fillStyle = '#1a2838aa';
+    c.fill();
+    c.strokeStyle = '#c8b070';
+    c.lineWidth = 3;
+    c.stroke();
 
     // Rail
     d.line({x: CASE.x + 20, y: RAIL_Y}, {x: CASE.x + CASE.w - 20, y: RAIL_Y}, '#e8c878', 4);

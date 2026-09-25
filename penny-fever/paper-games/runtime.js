@@ -1,5 +1,5 @@
 import {chapterOutcome} from './chapter-flow.js?v=chapter-menu-1';
-import {byId} from './catalogue.js?v=digby-claw-2';
+import {byId} from './catalogue.js?v=digby-claw-3';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprites,frontUrl} from './sprites.js';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-2':'florence-fix-1'))).default;
+ engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-3':'florence-fix-1'))).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

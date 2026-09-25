@@ -1,4 +1,4 @@
-import {games} from './catalogue.js?v=digby-claw-2';
+import {games} from './catalogue.js?v=digby-claw-3';
 document.querySelector('#progress').textContent=games.filter(g=>g.ready).length+' of '+games.length+' interiors available to try';
 const root=document.querySelector('#catalogue');
 for(const [i,g] of games.entries()){
