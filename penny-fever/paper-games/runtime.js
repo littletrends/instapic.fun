@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-5':entry.id==='lookup'?'celeste-feed-1':entry.id==='carousel'?'florence-waltz-1':entry.id==='plinko'?'peggy-mill-1':'florence-fix-1'))).default;
+ engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-6':entry.id==='lookup'?'celeste-feed-1':entry.id==='carousel'?'florence-waltz-1':entry.id==='plinko'?'peggy-mill-1':'florence-fix-1'))).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

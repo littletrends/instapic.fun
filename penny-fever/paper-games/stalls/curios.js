@@ -8,15 +8,15 @@ import {
 } from '../cabinet-puzzles.js?v=first-prize-1';
 
 /** Digby — Digger's Vault claw. Packed glass capsules, joystick + DROP. */
-const BOOK = 'pennyFever.capsuleCabinet.v3';
+const BOOK = 'pennyFever.capsuleCabinet.v4';
 const CX = 450;
 const CAB = {x: 130, y: 188, w: 640, h: 640};
 /** Glass cubby of the vault booth — claw window. */
 const CASE = {x: 268, y: 378, w: 364, h: 268};
 const RAIL_Y = CASE.y + 18;
-const FLOOR_Y = CASE.y + CASE.h - 28;
+const FLOOR_Y = CASE.y + CASE.h - 22;
 const HOUSE_SECONDS = 100;
-const PIECE_CACHE = 'digby-claw-5';
+const PIECE_CACHE = 'digby-claw-6';
 
 const LEVELS = [
   'Brass claw',
@@ -60,13 +60,13 @@ function roundRect(c, x, y, w, h, r) {
 }
 
 function emptyBook() {
-  return {v: 3, paid: {}, sittings: {}};
+  return {v: 4, paid: {}, sittings: {}};
 }
 function readBook() {
   if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
-    if (blob && blob.v === 3) return {paid: {}, sittings: {}, ...blob};
+    if (blob && blob.v === 4) return {paid: {}, sittings: {}, ...blob};
   } catch {}
   return emptyBook();
 }
@@ -98,7 +98,10 @@ function swayAmp(level) {
   return 6 + level * 5;
 }
 function slipChance(level) {
-  return 0.08 + level * 0.08;
+  return 0.32 + level * 0.08;
+}
+function keepChance(level) {
+  return 0.52 - level * 0.05;
 }
 function clawMin() { return CASE.x + 36; }
 function clawMax() { return CASE.x + CASE.w - 36; }
@@ -109,57 +112,65 @@ function pileOk(capsules) {
 
 function makeCapsules(level, seed) {
   const roll = rng(seed + 19 + level * 131);
-  const n = 18 + (level | 0) * 4;
-  const bonusIndex = Math.floor(roll() * n);
   const prize = CABINET_PRIZES[level] || CABINET_PRIZES[0];
+  const size = 50;
+  const r = size * 0.5;
+  const left = CASE.x + r + 10;
+  const right = CASE.x + CASE.w - r - 10;
+  const floor = FLOOR_Y - r * 0.2;
+  const rowH = r * 1.08;
+  const rows = 4 + Math.min(2, level | 0);
   const list = [];
-  const left = CASE.x + 28;
-  const right = CASE.x + CASE.w - 28;
-  const top = CASE.y + 52;
-  const bottom = FLOOR_Y - 4;
-  for (let i = 0; i < n; i++) {
-    const layer = Math.floor((i / n) * 4);
-    const stagger = (layer % 2) * 18;
-    const rise = Math.pow(roll(), 0.62) * (bottom - top) * (0.55 + roll() * 0.45);
-    const x = left + stagger + roll() * Math.max(40, right - left - stagger);
-    const y = bottom - rise + (roll() - 0.5) * 10;
-    const bonus = i === bonusIndex;
-    const piece = Math.floor(roll() * PIECE_KEYS.length);
-    const size = bonus ? 62 : 48 + roll() * 14;
-    list.push({
-      id: i,
-      x: clamp(x, left, right),
-      y: clamp(y, top, bottom),
-      size,
-      piece,
-      bonus,
-      prizeId: bonus ? prize : null,
-      drip: bonus ? null : EVERYDAY_DROP[Math.floor(roll() * EVERYDAY_DROP.length)],
-      tint: CAPSULE_TINTS[(piece + i) % CAPSULE_TINTS.length],
-      taken: false,
-      lift: 0,
-    });
+  let id = 0;
+  for (let row = 0; row < rows; row++) {
+    const y = floor - row * rowH;
+    const stagger = (row % 2) * r * 0.95;
+    const span = Math.max(r, right - left - stagger);
+    const cols = Math.max(5, Math.round(span / (r * 1.72)));
+    for (let col = 0; col < cols; col++) {
+      const t = cols === 1 ? 0.5 : col / (cols - 1);
+      const x = left + stagger + t * span;
+      const piece = Math.floor(roll() * PIECE_KEYS.length);
+      list.push({
+        id: id++,
+        x: clamp(x + (roll() - 0.5) * 6, left, right),
+        y: y + (roll() - 0.5) * 4,
+        homeX: 0,
+        homeY: 0,
+        size,
+        piece,
+        bonus: false,
+        prizeId: null,
+        drip: EVERYDAY_DROP[Math.floor(roll() * EVERYDAY_DROP.length)],
+        tint: CAPSULE_TINTS[(piece + id) % CAPSULE_TINTS.length],
+        taken: false,
+        lift: 0,
+      });
+    }
+  }
+  if (list.length) {
+    const bonus = list[Math.floor(roll() * list.length)];
+    bonus.bonus = true;
+    bonus.prizeId = prize;
+    bonus.drip = null;
+    bonus.size = 56;
+  }
+  for (const cap of list) {
+    cap.homeX = cap.x;
+    cap.homeY = cap.y;
   }
   return list;
 }
 
 function nearestCapsule(s) {
-  if (!s.capsules) return null;
-  let best = null;
-  let bestD = 1e9;
-  for (const cap of s.capsules) {
-    if (cap.taken) continue;
-    const dx = cap.x - s.clawX;
-    const dy = cap.y - (s.clawY + 48);
-    const d = Math.hypot(dx, dy * 0.85);
-    if (d < bestD) {
-      bestD = d;
-      best = cap;
-    }
-  }
-  const reach = best ? best.size * 0.72 : 28;
-  if (!best || bestD > reach) return null;
-  return best;
+  const live = (s.capsules || []).filter(c => !c.taken);
+  if (!live.length) return null;
+  live.sort((a, b) => {
+    const dx = Math.abs(a.x - s.clawX) - Math.abs(b.x - s.clawX);
+    if (Math.abs(dx) > 8) return dx;
+    return b.y - a.y;
+  });
+  return live[0];
 }
 
 function stickLayout() {
@@ -213,9 +224,10 @@ function beginSitting(s) {
     s.held = null;
     s.dropT = 0;
     s.dropPhase = null;
+    s.slipChecked = false;
     s.prizeKept = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Aim the claw — DROP on a capsule';
+    s.note = 'Aim the claw — DROP. Every go picks one up.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -229,6 +241,7 @@ function startDrop(s) {
   s.dropT = 0;
   s._riseFromY = null;
   s.held = null;
+  s.slipChecked = false;
   s.target = nearestCapsule(s);
   s.note = 'Claw descending…';
   persist(s);
@@ -270,11 +283,27 @@ function awardCatch(s, cap) {
   return chapterWin;
 }
 
+function dropCapsuleHome(cap) {
+  if (!cap) return;
+  cap.taken = false;
+  cap.lift = 0;
+  cap.x = cap.homeX || cap.x;
+  cap.y = cap.homeY || cap.y;
+}
+
 function resolveDrop(s) {
   s.drops = (s.drops || 0) + 1;
   const aimed = s.held;
   if (!aimed) {
-    s.note = 'Nothing in the claws';
+    s.note = 'It slipped back into the pile.';
+    finishMiss(s);
+    return;
+  }
+  const roll = rng(s.seed + s.drops * 47 + (s.level + 3) * 11)();
+  if (roll > keepChance(s.level)) {
+    dropCapsuleHome(aimed);
+    s.held = null;
+    s.note = 'The claws opened — nothing kept this go.';
     finishMiss(s);
     return;
   }
@@ -383,11 +412,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw in Digger’s Vault. Aim with the stick, DROP on a glass capsule. A clean grab keeps whatever is inside — Digby’s clockwork pieces, or the glowing chapter bonus when tonight’s mark is in. Soft slips stay in the pile. A ticket sits the first go; later claws cost a penny.'
-    : 'Aim the claw, DROP on a capsule. Workshop sittings are free and write nothing.',
+    ? 'Digby’s claw in Digger’s Vault. Capsules sit in a pile on the vault floor. Every DROP picks one up. It can slip on the way, and even a held globe only keeps at random. The glowing capsule is this chapter’s bonus when tonight’s mark is in. A ticket sits the first go; later claws cost a penny.'
+    : 'Every DROP picks up a capsule. It may slip, and keeps are random. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the AIM stick (or ←/→) to slide the claw. DROP (cream pad or Space) lowers it. Grab a capsule by sitting the claws over it. The glowing globe is this chapter’s bonus — skill must catch it, and tonight’s hidden mark must agree. Other globes hold Digby’s 6-piece curios as everyday finds.'
-    : 'Aim, DROP, grab a capsule. Practice writes nothing.',
+    ? 'Hold AIM (or ←/→) over the floor pile, then DROP. The claw always lifts a globe. Watch for a slip on the way up — keeps are luck. The glow is the chapter bonus.'
+    : 'Aim, DROP. Every go lifts one. Slips and keeps are random. Practice writes nothing.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -461,31 +490,40 @@ export default {
     if (s.phase === 'drop') {
       s.dropT += dt;
       if (s.dropPhase === 'descend') {
-        const targetY = s.target ? s.target.y - s.target.size * 0.55 : FLOOR_Y - 50;
+        const targetY = s.target ? s.target.y - s.target.size * 0.55 : FLOOR_Y - 40;
         s.clawY = lerp(RAIL_Y + 36, targetY, Math.min(1, s.dropT / 0.5));
         if (s.dropT >= 0.5) {
           s.dropPhase = 'grip';
           s.dropT = 0;
         }
       } else if (s.dropPhase === 'grip') {
-        if (s.dropT >= 0.22) {
+        if (s.dropT >= 0.18) {
           const cap = nearestCapsule(s);
-          const roll = rng(s.seed + s.drops * 91 + (s.level + 1) * 13)();
-          const hold = cap && roll > slipChance(s.level);
-          s.held = hold ? cap : null;
+          s.held = cap;
           s.target = cap;
           s.dropPhase = 'rise';
           s.dropT = 0;
-          s.note = s.held ? 'Got it…' : 'Slipped!';
+          s.slipChecked = false;
+          s.note = cap ? 'Got it…' : 'The pile is empty.';
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
-        s.clawY = lerp(s._riseFromY, RAIL_Y + 36, Math.min(1, s.dropT / 0.48));
+        const u = Math.min(1, s.dropT / 0.7);
+        s.clawY = lerp(s._riseFromY, RAIL_Y + 36, u);
         if (s.held) {
           s.held.x = s.clawX;
           s.held.lift = Math.max(0, s.held.y - (s.clawY + 50));
         }
-        if (s.dropT >= 0.48) {
+        if (!s.slipChecked && u >= 0.42 && s.held) {
+          s.slipChecked = true;
+          const roll = rng(s.seed + (s.drops || 0) * 91 + (s.level + 1) * 13)();
+          if (roll < slipChance(s.level)) {
+            dropCapsuleHome(s.held);
+            s.held = null;
+            s.note = 'Slipped!';
+          }
+        }
+        if (s.dropT >= 0.7) {
           s._riseFromY = null;
           resolveDrop(s);
         }
@@ -507,8 +545,10 @@ export default {
     if (s.result) return;
     if (type === 'down') {
       if (hitDrop(p)) {
-        if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
-        else if (s.phase === 'aim') startDrop(s);
+        if (s.phase === 'idle' || s.phase === 'result') {
+          beginSitting(s);
+          startDrop(s);
+        } else if (s.phase === 'aim') startDrop(s);
         return;
       }
       if (hitStick(p)) {
@@ -556,7 +596,10 @@ export default {
     if (!down) return;
     if (k === ' ' || k === 'Enter') {
       if (s.phase === 'aim') startDrop(s);
-      else if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
+      else if (s.phase === 'idle' || s.phase === 'result') {
+        beginSitting(s);
+        startDrop(s);
+      }
     }
   },
   draw(s, d, time) {
