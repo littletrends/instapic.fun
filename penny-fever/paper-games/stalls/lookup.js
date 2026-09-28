@@ -196,6 +196,22 @@ function emptyNote() {
     ? 'Need a penny for the lantern. Cash a booth ticket for a five-penny stack.'
     : 'Practice starlight is spent. The glasses still wait.';
 }
+function feedPad() {
+  return {x: 300, y: 1130, w: 300, h: 78};
+}
+function hitFeedPad(p) {
+  if (!p) return false;
+  const b = feedPad();
+  return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
+}
+function drawFeedPad(s, d) {
+  const b = feedPad();
+  const cx = b.x + b.w / 2;
+  const cy = b.y + b.h / 2;
+  d.ellipse(cx + 2, cy + 4, b.w * 0.48, b.h * 0.42, '#12233566');
+  d.ellipse(cx, cy, b.w * 0.48, b.h * 0.42, '#f4d590ee', '#e8c878', 2.2);
+  d.text(s.phase === 'flying' ? '…' : 'FEED', cx, cy + 2, 24, '#3a1818');
+}
 function feed(s) {
   if (!s || s.phase === 'flying' || s.phase === 'won' || s.gesture || s.drag) return;
   if (s.cooldown > 0 || s.launchLock) return;
@@ -437,13 +453,7 @@ export default {
   levels: CHAPTERS.map(c => c.title),
   sprites: SPRITES,
   prizes: SETS.map(row => row.prize),
-  actions: [
-    {id: 'left', label: '↶ Turn'},
-    {id: 'right', label: '↷ Turn'},
-    {id: 'feed', label: alleyPlay ? 'Feed the lantern · 1 penny' : 'Feed a practice penny'},
-    {id: 'undo', label: 'Undo'},
-    {id: 'hint', label: 'A small hint'},
-  ],
+  actions: [],
   persist,
   create(level) {
     const index = clamp(Math.trunc(level) || 0, 0, SETS.length - 1);
@@ -534,8 +544,9 @@ export default {
         s.drag = {index, from: s.angles[index], cx: mirrors[index][0], cy: mirrors[index][1], last: Math.atan2(p.y - mirrors[index][1], p.x - mirrors[index][0]), total: 0, ox: p.x, oy: p.y, moved: false, center: best < 20};
         return;
       }
+      if (hitFeedPad(p)) { s.lanternDown = true; return; }
       const src = CHAPTERS[s.chapter].source;
-      if (Math.hypot(p.x - src[0], p.y - src[1]) < 64) s.lanternDown = true;
+      if (Math.hypot(p.x - src[0], p.y - src[1]) < 96) s.lanternDown = true;
     }
     if (type === 'move' && s.drag) {
       const a = Math.atan2(p.y - s.drag.cy, p.x - s.drag.cx);
@@ -558,7 +569,7 @@ export default {
     if (type === 'up' && s.lanternDown) {
       s.lanternDown = false;
       const src = CHAPTERS[s.chapter].source;
-      if (Math.hypot(p.x - src[0], p.y - src[1]) < 72) feed(s);
+      if (hitFeedPad(p) || Math.hypot(p.x - src[0], p.y - src[1]) < 110) feed(s);
     }
   },
   action(s, id) {
@@ -616,11 +627,11 @@ export default {
       w: 70, shadow: false,
       fallback: () => { d.circle(rx, ry, 28, '#121f3e', '#caac6f', 3); d.star(rx, ry, 16, bellOn ? '#ffe8a6' : '#635e68'); },
     });
-    if (ready) {
+    if (bellOn || ready) {
       const face = s.phase === 'flying' && s.contactNumber ? s.skyFace : (s.skyFace || 1);
-      d.text(String(face).padStart(2, '0'), rx, ry + 8, 36, '#fff6d8');
+      d.text(String(face).padStart(2, '0'), rx, ry + 8, 32, '#fff6d8');
       const clue = skyClue(s);
-      if (clue) d.text(clue, rx, ry + 86, 16, '#f0d18f');
+      if (ready && clue) d.text(clue, rx, ry + 86, 16, '#f0d18f');
     }
     {
       const got = chapterOwned(s.level) || !!s.paid || !!s.won;
@@ -636,7 +647,6 @@ export default {
       w: 64, shadow: false,
       fallback: () => d.circle(sx, sy, 22, '#3a2a18', '#e0b773', 3),
     });
-    d.text('lantern', sx, sy + 42, 13, '#ead6a4');
     c.mirrors.forEach((p, i) => {
       const [x, y] = p;
       if (s.selected === i) d.glow(x, y, 70, '#a5e4ee');
@@ -661,12 +671,11 @@ export default {
     d.item(spriteKey('penny-purse'), px, py, {w: 120, fallback: () => d.heart(px, py, 36, '#6a7a52')});
     d.text(String(n), px, py + 70, 22, '#fff6d8');
     d.text(n === 1 ? 'penny for the lantern' : 'pennies for the lantern', px, py + 92, 13, '#ead6a4');
-    d.poly([[742, 48], [838, 52], [834, 128], [738, 122]], '#6b3a3a', '#e8d4a0', 2);
-    d.text('treasures', 788, 144, 13, '#ead6a4');
+    drawFeedPad(s, d);
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? 780 : px, destY = f.prize ? 90 : py;
+      const destX = f.prize ? rx : px, destY = f.prize ? ry - 72 : py;
       const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
       d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, 44 * (1 - u * 0.4)), fallback: () => d.star(fx, fy, 12, '#e7c789')});
     }

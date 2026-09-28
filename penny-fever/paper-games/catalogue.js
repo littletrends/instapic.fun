@@ -3,7 +3,7 @@
 const rows = [
   ['fortune','Iris','Catch the Fortune','The globe flashes a sign. Brake the rings before it fades.'],
   ['love','Rosalie','Love Tester','Write the names. Count the letters. Add them down.'],
-  ['curios','Digby','Capsule Cabinet','Aim the claw. Drop on the right number. Catch a capsule.'],
+  ['curios','Digby','Digger’s Vault','Aim the claw. Drop on a glass capsule. Catch Digby’s curios.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
   ['snap','Felix','Instapic Photo Booth','Closed for maintenance. The paper booth will open later.'],
   ['whisper','Willa','Whisper Run','Read the secret. Cross the board. Pick the phrase you remember.'],
@@ -27,7 +27,7 @@ const rows = [
   ['marquee','Lumi','Marquee Glowball','Paddle a star-ball. Light the board. Hit the prize lantern.'],
   ['pack','Kit','The Impossible Suitcase','Pack the list. Strap the layers. Unique in the tag.'],
   ['pass','Bea','Opening Night','Guide the key through the wings to the portrait door.'],
-  ['carousel','Florence','Carousel Waltz','Tap the crest when it lines up — Mario circle, horse locked.'],
+  ['carousel','Florence','Carousel Waltz','Sit the horse. TAP when the brass ring swings to you.'],
   ['balloons','Nell','Balloon Garden','Pop the glowing balloons to clear the path.'],
   ['ferris','Jasper','Pocket Wheel','Snap in the glow as you climb the wheel.'],
   ['helter','Tilly','Spiral Slide','→ climb · JUMP cushions · clear slides.'],
