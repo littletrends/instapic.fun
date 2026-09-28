@@ -7,16 +7,17 @@ import {
   resultNumber, isCabinetWin, CABINET_PRIZES,
 } from '../cabinet-puzzles.js?v=first-prize-1';
 
-/** Digby — Digger's Vault claw. Packed glass capsules, joystick + DROP. */
-const BOOK = 'pennyFever.capsuleCabinet.v4';
+/** Digby — Digger's Vault claw. Rail at the top, pile on the floor, one-way stick. */
+const BOOK = 'pennyFever.capsuleCabinet.v5';
 const CX = 450;
 const CAB = {x: 130, y: 188, w: 640, h: 640};
 /** Glass cubby of the vault booth — claw window. */
-const CASE = {x: 268, y: 378, w: 364, h: 268};
-const RAIL_Y = CASE.y + 18;
-const FLOOR_Y = CASE.y + CASE.h - 22;
+const CASE = {x: 268, y: 348, w: 364, h: 318};
+const RAIL_Y = CASE.y + 10;
+const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
-const PIECE_CACHE = 'digby-claw-6';
+const SWEEP_SECONDS = 5;
+const PIECE_CACHE = 'digby-claw-7';
 
 const LEVELS = [
   'Brass claw',
@@ -60,13 +61,13 @@ function roundRect(c, x, y, w, h, r) {
 }
 
 function emptyBook() {
-  return {v: 4, paid: {}, sittings: {}};
+  return {v: 5, paid: {}, sittings: {}};
 }
 function readBook() {
   if (typeof localStorage === 'undefined') return emptyBook();
   try {
     const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
-    if (blob && blob.v === 4) return {paid: {}, sittings: {}, ...blob};
+    if (blob && blob.v === 5) return {paid: {}, sittings: {}, ...blob};
   } catch {}
   return emptyBook();
 }
@@ -94,9 +95,6 @@ function persist(s) {
   writeBook(book);
 }
 
-function swayAmp(level) {
-  return 6 + level * 5;
-}
 function slipChance(level) {
   return 0.32 + level * 0.08;
 }
@@ -119,7 +117,7 @@ function makeCapsules(level, seed) {
   const right = CASE.x + CASE.w - r - 10;
   const floor = FLOOR_Y - r * 0.2;
   const rowH = r * 1.08;
-  const rows = 4 + Math.min(2, level | 0);
+  const rows = 2;
   const list = [];
   let id = 0;
   for (let row = 0; row < rows; row++) {
@@ -174,22 +172,14 @@ function nearestCapsule(s) {
 }
 
 function stickLayout() {
-  return {cx: 640, cy: 1134, baseRx: 96, baseRy: 58, knobR: 30, maxPull: 42};
-}
-function dropPad() {
-  return {x: 170, y: 1088, w: 250, h: 92};
+  return {cx: 450, cy: 1134, baseRx: 118, baseRy: 66, knobR: 32, maxPull: 48, dead: 14};
 }
 function hitStick(p) {
   if (!p) return false;
   const L = stickLayout();
   const dx = (p.x - L.cx) / L.baseRx;
   const dy = (p.y - L.cy) / L.baseRy;
-  return (dx * dx + dy * dy) <= 1.35;
-}
-function hitDrop(p) {
-  if (!p) return false;
-  const b = dropPad();
-  return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
+  return (dx * dx + dy * dy) <= 1.4;
 }
 function applyStick(s, p) {
   const L = stickLayout();
@@ -197,7 +187,8 @@ function applyStick(s, p) {
   const dy = (p?.y ?? L.cy) - L.cy;
   const len = Math.hypot(dx, dy) || 1;
   const pull = Math.min(len, L.maxPull);
-  s.stick = {active: true, kx: (dx / len) * pull, ky: (dy / len) * pull};
+  // One way: right only. Left pull is ignored.
+  s.stick = {active: true, kx: Math.max(0, (dx / len) * pull), ky: (dy / len) * pull, pull};
 }
 
 function beginSitting(s) {
@@ -218,16 +209,17 @@ function beginSitting(s) {
     }
     s.capsules = makeCapsules(s.level, s.seed);
     s.phase = 'aim';
-    s.aimX = CX;
-    s.clawX = CX;
-    s.clawY = RAIL_Y + 36;
+    s.aimX = clawMin();
+    s.clawX = clawMin();
+    s.clawY = RAIL_Y + 28;
+    s.sweepT = 0;
     s.held = null;
     s.dropT = 0;
     s.dropPhase = null;
     s.slipChecked = false;
     s.prizeKept = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Aim the claw — DROP. Every go picks one up.';
+    s.note = 'Hold right to sweep. TAP to drop — or it drops in 5s.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -370,23 +362,14 @@ function drawStick(s, d) {
   const L = stickLayout();
   const armed = !!(s.stick && s.stick.active);
   const kx = armed ? (s.stick.kx || 0) : 0;
-  const ky = armed ? (s.stick.ky || 0) : 0;
   d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
   d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.2);
   const nx = L.cx + kx;
-  const ny = L.cy + ky;
+  const ny = L.cy;
   d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : '#c42848', GOLD, 2);
   d.ellipse(nx - 4, ny - 6, L.knobR * 0.4, L.knobR * 0.26, CREAM + 'aa');
-  d.text('AIM', L.cx, L.cy - L.baseRy + 18, 14, INK);
-}
-
-function drawDrop(s, d) {
-  const b = dropPad();
-  const cx = b.x + b.w / 2;
-  const cy = b.y + b.h / 2;
-  d.ellipse(cx + 2, cy + 4, b.w * 0.48, b.h * 0.42, '#12233566');
-  d.ellipse(cx, cy, b.w * 0.48, b.h * 0.42, CREAM + 'ee', GOLD, 2.2);
-  d.text('DROP', cx, cy + 2, 24, INK);
+  const left = s.phase === 'aim' ? Math.max(0, SWEEP_SECONDS - (s.sweepT || 0)) : 0;
+  d.text(s.phase === 'aim' ? (left <= 2.2 && left > 0 ? 'TAP' : 'HOLD →') : 'TAP', L.cx, L.cy - L.baseRy + 18, 16, INK);
 }
 
 export default {
@@ -412,11 +395,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw in Digger’s Vault. Capsules sit in a pile on the vault floor. Every DROP picks one up. It can slip on the way, and even a held globe only keeps at random. The glowing capsule is this chapter’s bonus when tonight’s mark is in. A ticket sits the first go; later claws cost a penny.'
-    : 'Every DROP picks up a capsule. It may slip, and keeps are random. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP the stick to drop, or the claw falls on its own after five seconds. Every go lifts a globe; it can slip, and keeps are luck. A ticket sits the first go; later claws cost a penny.'
+    : 'Stick sweeps one way. TAP to drop, or it drops in 5s. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold AIM (or ←/→) over the floor pile, then DROP. The claw always lifts a globe. Watch for a slip on the way up — keeps are luck. The glow is the chapter bonus.'
-    : 'Aim, DROP. Every go lifts one. Slips and keeps are random. Practice writes nothing.',
+    ? 'Hold the stick right to send the claw across. It never comes back. TAP to release. If you wait five seconds it drops where it is. The glow is the chapter bonus.'
+    : 'Hold right to sweep. TAP to drop. Five seconds and it drops anyway.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -441,9 +424,10 @@ export default {
       phase: resume ? saved.phase : (saved.phase === 'result' ? 'result' : 'idle'),
       seed: saved.seed || (level + 1) * 7919,
       capsules: pileOk(saved.capsules) ? saved.capsules : null,
-      aimX: saved.aimX ?? CX,
-      clawX: saved.clawX ?? CX,
-      clawY: RAIL_Y + 36,
+      aimX: saved.aimX ?? clawMin(),
+      clawX: saved.clawX ?? clawMin(),
+      clawY: RAIL_Y + 28,
+      sweepT: 0,
       charged: resume ? !!saved.charged : false,
       won: !!saved.won || chapterPaid(level),
       paid: chapterPaid(level),
@@ -471,27 +455,25 @@ export default {
     if (typeof document !== 'undefined' && document.hidden) return;
 
     if (s.phase === 'aim') {
-      if (s.stick && s.stick.active) {
-        s.aimX = clamp(s.aimX + (s.stick.kx || 0) * 3.2 * dt, clawMin(), clawMax());
+      s.sweepT = (s.sweepT || 0) + dt;
+      if (s.stick && s.stick.active && (s.stick.kx || 0) > 10) {
+        s.aimX = clamp(s.aimX + 170 * dt, clawMin(), clawMax());
       }
-      if (input?.keys) {
-        if (input.keys.has('ArrowLeft') || input.keys.has('a')) {
-          s.aimX = clamp(s.aimX - 140 * dt, clawMin(), clawMax());
-        }
-        if (input.keys.has('ArrowRight') || input.keys.has('d')) {
-          s.aimX = clamp(s.aimX + 140 * dt, clawMin(), clawMax());
-        }
+      if (input?.keys && (input.keys.has('ArrowRight') || input.keys.has('d'))) {
+        s.aimX = clamp(s.aimX + 170 * dt, clawMin(), clawMax());
       }
-      const sway = Math.sin(s.t * (1.4 + s.level * 0.18)) * swayAmp(s.level);
-      s.clawX = clamp(s.aimX + sway, clawMin(), clawMax());
-      s.clawY = RAIL_Y + 36;
+      s.clawX = s.aimX;
+      s.clawY = RAIL_Y + 28;
+      const left = Math.max(0, SWEEP_SECONDS - s.sweepT);
+      if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
+      if (s.sweepT >= SWEEP_SECONDS) startDrop(s);
     }
 
     if (s.phase === 'drop') {
       s.dropT += dt;
       if (s.dropPhase === 'descend') {
         const targetY = s.target ? s.target.y - s.target.size * 0.55 : FLOOR_Y - 40;
-        s.clawY = lerp(RAIL_Y + 36, targetY, Math.min(1, s.dropT / 0.5));
+        s.clawY = lerp(RAIL_Y + 28, targetY, Math.min(1, s.dropT / 0.55));
         if (s.dropT >= 0.5) {
           s.dropPhase = 'grip';
           s.dropT = 0;
@@ -509,7 +491,7 @@ export default {
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
         const u = Math.min(1, s.dropT / 0.7);
-        s.clawY = lerp(s._riseFromY, RAIL_Y + 36, u);
+        s.clawY = lerp(s._riseFromY, RAIL_Y + 28, u);
         if (s.held) {
           s.held.x = s.clawX;
           s.held.lift = Math.max(0, s.held.y - (s.clawY + 50));
@@ -544,38 +526,30 @@ export default {
   pointer(s, type, p) {
     if (s.result) return;
     if (type === 'down') {
-      if (hitDrop(p)) {
-        if (s.phase === 'idle' || s.phase === 'result') {
-          beginSitting(s);
-          startDrop(s);
-        } else if (s.phase === 'aim') startDrop(s);
-        return;
-      }
-      if (hitStick(p)) {
-        if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
-        applyStick(s, p);
-        return;
-      }
       if (s.phase === 'idle' || s.phase === 'result') {
         beginSitting(s);
+        s._pressT = s.t;
+        s._startedGo = true;
+        if (hitStick(p)) applyStick(s, p);
         return;
       }
-      if (s.phase === 'aim' && p.y >= CASE.y && p.y <= CASE.y + CASE.h) {
-        s.dragAim = true;
-        s.aimX = clamp(p.x, clawMin(), clawMax());
+      if (s.phase === 'aim') {
+        s._pressT = s.t;
+        s._startedGo = false;
+        if (hitStick(p)) applyStick(s, p);
+        else startDrop(s);
       }
       return;
     }
     if (type === 'move' || type === 'drag') {
-      if (s.stick && s.stick.active) applyStick(s, p);
-      else if (s.phase === 'aim' && (s.dragAim || (p.y >= CASE.y && p.y <= CASE.y + CASE.h + 40))) {
-        s.aimX = clamp(p.x, clawMin(), clawMax());
-      }
+      if (s.phase === 'aim' && s.stick && s.stick.active) applyStick(s, p);
       return;
     }
     if (type === 'up' || type === 'cancel') {
+      const held = s.stick && s.stick.active;
+      const tap = !s._startedGo && (s.t - (s._pressT || s.t)) < 0.28 && (!held || (s.stick.pull || 0) < 16);
       s.stick = null;
-      s.dragAim = false;
+      if (s.phase === 'aim' && tap) startDrop(s);
     }
   },
   action(s, id) {
@@ -596,10 +570,7 @@ export default {
     if (!down) return;
     if (k === ' ' || k === 'Enter') {
       if (s.phase === 'aim') startDrop(s);
-      else if (s.phase === 'idle' || s.phase === 'result') {
-        beginSitting(s);
-        startDrop(s);
-      }
+      else if (s.phase === 'idle' || s.phase === 'result') beginSitting(s);
     }
   },
   draw(s, d, time) {
@@ -648,7 +619,6 @@ export default {
     }
 
     d.wrap(s.note || '', CX, 980, 20, '#fff6d8', 720);
-    drawDrop(s, d);
     drawStick(s, d);
   },
   readout: s => {
