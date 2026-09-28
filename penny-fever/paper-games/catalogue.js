@@ -27,7 +27,7 @@ const rows = [
   ['marquee','Lumi','Marquee Glowball','Paddle a star-ball. Light the board. Hit the prize lantern.'],
   ['pack','Kit','The Impossible Suitcase','Pack the list. Strap the layers. Unique in the tag.'],
   ['pass','Bea','Opening Night','Guide the key through the wings to the portrait door.'],
-  ['carousel','Florence','Carousel Waltz','Sit the horse. TAP when the brass ring swings to you.'],
+  ['carousel','Florence','Carousel Waltz','Race the painted horses. Steer lanes. Grab items. Win the lap.'],
   ['balloons','Nell','Balloon Garden','Pop the glowing balloons to clear the path.'],
   ['ferris','Jasper','Pocket Wheel','Snap in the glow as you climb the wheel.'],
   ['helter','Tilly','Spiral Slide','→ climb · JUMP cushions · clear slides.'],

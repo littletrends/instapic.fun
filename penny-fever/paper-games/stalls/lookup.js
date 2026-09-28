@@ -459,7 +459,7 @@ export default {
     const index = clamp(Math.trunc(level) || 0, 0, SETS.length - 1);
     const saved = alleyPlay ? readSky(index) : {};
     const s = hydrate(index, saved);
-    bindPrize(s, this.prizes[index] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
+    bindPrize(s, this.prizes[index] || this.prizes[0], (this.live || this.tables) ? {x: 800, y: 130, w: 64, field: true} : null);
     // Persist a cleared reopen so the next load does not revive a finished tableau.
     if (alleyPlay && s.paid && !saved.flying) persist(s);
     return s;
@@ -635,11 +635,11 @@ export default {
     }
     {
       const got = chapterOwned(s.level) || !!s.paid || !!s.won;
-      d.item(spriteKey(s.prize), rx, ry - 72, {
-        w: 58, shadow: false,
-        fallback: () => d.star(rx, ry - 72, 20, '#e7c789'),
+      d.item(spriteKey(s.prize), 800, 130, {
+        w: 64, shadow: false,
+        fallback: () => d.star(800, 130, 22, '#e7c789'),
       });
-      d.text(got ? 'Collected' : 'Locked', rx, ry - 28, 14, got ? '#c8e878' : '#ead6a4');
+      d.text(got ? 'Collected' : 'Locked', 800, 182, 14, got ? '#c8e878' : '#ead6a4');
     }
     const [sx, sy] = c.source;
     d.glow(sx, sy, s.phase === 'flying' ? 56 : 36, '#f0d18f');
@@ -675,7 +675,7 @@ export default {
     for (const f of (s.fly || [])) {
       const u = Math.min(1, f.t / f.dur);
       const e = 1 - (1 - u) * (1 - u);
-      const destX = f.prize ? rx : px, destY = f.prize ? ry - 72 : py;
+      const destX = f.prize ? 800 : px, destY = f.prize ? 130 : py;
       const fx = f.x + (destX - f.x) * e, fy = f.y + (destY - f.y) * e;
       d.item(spriteKey(f.id), fx, fy, {w: Math.max(18, 44 * (1 - u * 0.4)), fallback: () => d.star(fx, fy, 12, '#e7c789')});
     }
