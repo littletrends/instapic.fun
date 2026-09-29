@@ -5,6 +5,7 @@
  */
 import {TAU, clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=exclusive-1b';
+import {matteImage} from '../sprites.js?v=load-fix-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure,
   logAction, prefersReducedMotion,
@@ -17,7 +18,7 @@ const TREASURES = [
   'star-token', 'moon-penny', 'ride-ticket',
 ];
 const CHAPTERS = [
-  {title: 'First Turn', laps: 2, ai: 2, speed: 1.05, items: false, pies: false},
+  {title: 'First Turn', laps: 2, ai: 2, speed: 1.05, items: true, pies: false},
   {title: 'Painted Ponies', laps: 2, ai: 3, speed: 1.15, items: true, pies: false},
   {title: 'Mirror Round', laps: 3, ai: 3, speed: 1.22, items: true, pies: true},
   {title: 'Carriage Windows', laps: 3, ai: 3, speed: 1.32, items: true, pies: true},
@@ -31,7 +32,7 @@ const CREAM = '#f4d590';
 const GOLD = '#ffe6a4';
 const BURGUNDY = '#c67483';
 const INK = '#3a1818';
-const DRESS = 'race-1';
+const DRESS = 'race-2';
 const AI_TINT = ['#c67483', '#6aaa9a', '#7a8ec8', '#c88a5a'];
 const AI_NAME = ['Brass', 'Ribbon', 'Moon', 'Ticket'];
 const ITEMS = ['boost', 'pie', 'star'];
@@ -94,17 +95,21 @@ function dressUrl(file) {
   return new URL('../assets/prop-kits/carousel/' + file + '?v=' + DRESS, import.meta.url).href;
 }
 const dressImgs = {};
+function keepDress(k, img) {
+  const apply = () => { dressImgs[k] = matteImage(img) || img; };
+  if (img.complete && img.naturalWidth) apply();
+  else img.onload = apply;
+}
 function ensureDress() {
-  if (dressImgs.horse) return dressImgs;
-  const files = {
-    horse: 'piece-01.png', star: 'piece-02.png', moon: 'piece-03.png',
-    arch: 'piece-04.png', canopy: 'piece-05.png', pennant: 'piece-06.png',
-  };
+  if (dressImgs._once) return dressImgs;
+  dressImgs._once = true;
+  const files = {horse: 'piece-01.png'};
   for (const [k, f] of Object.entries(files)) {
     const img = new Image();
     img.decoding = 'async';
     img.src = dressUrl(f);
     dressImgs[k] = img;
+    keepDress(k, img);
   }
   const bea = new Image();
   bea.decoding = 'async';
@@ -113,14 +118,15 @@ function ensureDress() {
   return dressImgs;
 }
 function place(d, img, x, y, w, opts = {}) {
-  if (!(img && img.complete && img.naturalWidth > 0) || typeof d.sprite !== 'function') return false;
+  const ready = img && ((img.naturalWidth || img.width || 0) > 0);
+  if (!ready || typeof d.sprite !== 'function') return false;
   return d.sprite(img, x, y, {w, shadow: true, ...opts});
 }
 
 function makeRacer(id, angle, lane, ai, tint, name) {
   return {
-    id, angle, lane, laneF: lane, speed: 0, boost: 0, slow: 0, star: 0,
-    item: null, ai, tint, name, finished: 0, laps: 0, lastAng: angle,
+    id, angle, progress: angle, lane, laneF: lane, speed: 0, boost: 0, slow: 0, star: 0,
+    item: null, ai, tint, name, finished: 0, laps: 0, lastAng: angle, laneCool: 0,
   };
 }
 function spawnBoxes(ch) {
@@ -139,7 +145,7 @@ function boardIfNeeded(s) {
 }
 
 function placeOf(s, racer) {
-  const score = (r) => r.laps * TAU + wrapAng(r.angle);
+  const score = (r) => r.progress ?? 0;
   const you = score(racer);
   let place = 1;
   for (const r of s.racers) {
@@ -185,7 +191,7 @@ function stepRacer(s, r, dt, ch) {
   const reduced = s.reduced ? 0.75 : 1;
   let spd = ch.speed * 0.95 * reduced;
   if (r.ai) {
-    spd *= 0.92 + (r.id.length % 5) * 0.02 + Math.sin(s.t * 0.7 + r.angle) * 0.04;
+    spd *= 0.84 + (r.id.length % 5) * 0.02 + Math.sin(s.t * 0.7 + r.angle) * 0.04;
     if (s.t > 1.2 && (Math.floor(s.t * 3 + r.angle * 4) % 17 === 0) && r.laneCool <= 0) {
       r.lane = clamp(r.lane + (Math.sin(s.t + r.angle) > 0 ? 1 : -1), 0, LANES - 1);
       r.laneCool = 0.9;
@@ -204,9 +210,9 @@ function stepRacer(s, r, dt, ch) {
   if (r.slow > 0) { spd *= 0.55; r.slow -= dt; }
   r.laneCool = Math.max(0, (r.laneCool || 0) - dt);
   r.laneF += (r.lane - r.laneF) * Math.min(1, dt * 6);
-  const prev = r.angle;
-  r.angle = wrapAng(r.angle + spd * dt);
-  if (r.angle < prev) r.laps += 1;
+  r.progress = (r.progress ?? r.angle) + spd * dt;
+  r.angle = wrapAng(r.progress);
+  r.laps = Math.floor(Math.max(0, r.progress) / TAU);
   r.speed = spd;
 }
 
@@ -286,7 +292,7 @@ export default {
   title: 'Carousel Waltz',
   retryButton: 'Play again',
   intro: 'Florence’s painted derby. Race the other horses around the canopy — steer lanes, snatch globes, boost, drop pies. First over the finish keeps the chapter bonus when tonight’s mark is in.',
-  instructions: 'STEER left/right to change lane. Hold the stick up to gallop faster. USE fires a globe (boost, pie, star). Beat the field on the laps. Practice keeps nothing.',
+  instructions: 'STEER left/right to change lane. Hold the stick up to gallop faster. BOOST fires a globe (boost, pie, star) or a short burst. Beat the field on the laps. Practice keeps nothing.',
   levels: CHAPTERS.map(c => c.title),
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -306,10 +312,10 @@ export default {
   create(level, rng) {
     const ch = chOf(level);
     const reduced = prefersReducedMotion();
-    const you = makeRacer('you', 0, 1, false, GOLD, 'You');
+    const you = makeRacer('you', 0.12, 1, false, GOLD, 'You');
     const racers = [you];
     for (let i = 0; i < ch.ai; i++) {
-      racers.push(makeRacer('ai' + i, -0.45 * (i + 1), i % LANES, true, AI_TINT[i % AI_TINT.length], AI_NAME[i % AI_NAME.length]));
+      racers.push(makeRacer('ai' + i, -0.28 * (i + 1), i % LANES, true, AI_TINT[i % AI_TINT.length], AI_NAME[i % AI_NAME.length]));
     }
     return makeRideState(level, rng, {
       phase: 'count',
@@ -383,11 +389,6 @@ export default {
   },
   draw(s, d) {
     const imgs = ensureDress();
-    const ch = chOf(s.level);
-    place(d, imgs.canopy, CX, CY - 8, 168, {});
-    place(d, imgs.arch, CX, CY + 6, 210, {});
-    place(d, imgs.star, 118, 268, 78, {});
-    place(d, imgs.moon, 782, 268, 78, {});
     for (let lane = LANES - 1; lane >= 0; lane--) {
       const {rx, ry} = laneRadii(lane);
       d.ellipse(CX, CY, rx, ry, null, lane === 1 ? GOLD : '#d2a65b88', lane === 1 ? 3 : 1.6);

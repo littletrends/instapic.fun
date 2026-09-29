@@ -1,7 +1,7 @@
 import {chapterOutcome} from './chapter-flow.js?v=chapter-menu-1';
-import {byId} from './catalogue.js?v=florence-race-1';
+import {byId} from './catalogue.js?v=load-fix-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
-import {loadSprites,frontUrl} from './sprites.js';
+import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
 import {isClosed} from './stall-entry.js?v=entry-2';
@@ -39,7 +39,7 @@ const HOUSE={
  marquee:{seconds:45,title:'The boardwalk dimmed',detail:'Lumi kills the wave. Conduct the lights on the next penny.'},
  pack:{seconds:80,title:'The suitcase snapped shut',detail:'Kit latches the lid. Pack again when you have another penny.'},
  pass:{seconds:60,title:'The curtain fell',detail:'Bea closes the fly loft. Slip through again next call.'},
- carousel:{seconds:40,title:'The waltz ended',detail:'The lantern dimmed before you caught enough treasures.'},
+ carousel:{seconds:100,title:'The waltz ended',detail:'The lanterns dimmed before the last lap. Race this chapter again.'},
  balloons:{seconds:40,title:'The bunch drifted off',detail:'Nell is tying the next handful. Try this garden again.'},
  ferris:{seconds:40,title:'The wheel slowed',detail:'The crescent waited, and the cabins went home.'},
  helter:{seconds:30,title:'The mat is empty',detail:'The slide ran out before every gold ring was caught.'},
@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-7':entry.id==='lookup'?'celeste-feed-2':entry.id==='carousel'?'florence-race-1':entry.id==='plinko'?'peggy-mill-1':'florence-fix-1'))).default;
+ engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-8':entry.id==='lookup'?'celeste-feed-2':entry.id==='carousel'?'florence-race-2':entry.id==='plinko'?'peggy-mill-1':'load-fix-1'))).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;
@@ -305,19 +305,20 @@ try{
  function loadImg(src){
   return new Promise(resolve=>{
    const i=new Image();
+   i.decoding='async';
    i.onload=()=>resolve(i);
    i.onerror=()=>resolve(null);
    i.src=new URL(src,import.meta.url).href;
   });
  }
- Promise.all([
-  loadSprites(spriteIds.map(spriteKey)),
-  Promise.all(Object.entries(engine.images||{}).map(async([k,src])=>[k,await loadImg(src)])),
- ]).then(([prizeArt, imagePairs])=>{
-  if(disposed||!draw)return;
-  const imageArt=Object.fromEntries(imagePairs.filter(([,img])=>img));
-  draw.art={...prizeArt,...imageArt};
+ function putArt(key,img){
+  if(disposed||!draw||!key||!img)return;
+  draw.art[key]=img;
   paint();
- });
+ }
+ const prizeFirst=spriteKey(engine.prizes?.[level]||engine.prizes?.[0]||'');
+ const prizeKeys=[prizeFirst,...spriteIds.map(spriteKey).filter(k=>k&&k!==prizeFirst)];
+ for(const key of prizeKeys) loadSprite(key).then(img=>putArt(key,img));
+ for(const [k,src] of Object.entries(engine.images||{})) loadImg(src).then(img=>putArt(k,img));
  }
 }catch(e){error(e);}

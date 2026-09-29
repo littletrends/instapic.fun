@@ -1,5 +1,6 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
+import {matteImage} from '../sprites.js?v=load-fix-1';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=booth-play-2';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
@@ -17,7 +18,8 @@ const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
 const SWEEP_SECONDS = 5;
-const PIECE_CACHE = 'digby-claw-7';
+const PIECE_CACHE = 'digby-claw-8';
+const keyedPieces = {};
 
 const LEVELS = [
   'Brass claw',
@@ -91,18 +93,25 @@ function persist(s) {
     phase: s.phase, seed: s.seed, charged: !!s.charged,
     aimX: s.aimX, clawX: s.clawX, capsules: s.capsules,
     won: !!s.won, note: s.note, drops: s.drops || 0, houseLeft: s.houseLeft,
+    grabBeat: s.grabBeat,
   };
   writeBook(book);
 }
 
-function slipChance(level) {
-  return 0.32 + level * 0.08;
-}
-function keepChance(level) {
-  return 0.52 - level * 0.05;
-}
 function clawMin() { return CASE.x + 36; }
 function clawMax() { return CASE.x + CASE.w - 36; }
+function grabBeatOf(seed) {
+  return 1 + Math.floor(rng(seed + 91)() * SWEEP_SECONDS);
+}
+function sweepBeat(s) {
+  return Math.min(SWEEP_SECONDS, Math.max(1, Math.ceil(s.sweepT || 0.01)));
+}
+function pieceArt(d, key) {
+  const img = d.art && d.art[key];
+  if (!img) return null;
+  if (!keyedPieces[key]) keyedPieces[key] = matteImage(img) || img;
+  return keyedPieces[key];
+}
 
 function pileOk(capsules) {
   return Array.isArray(capsules) && capsules.length > 0 && capsules.every(c => c && typeof c.piece === 'number');
@@ -218,8 +227,11 @@ function beginSitting(s) {
     s.dropPhase = null;
     s.slipChecked = false;
     s.prizeKept = false;
+    s.grabBeat = grabBeatOf(s.seed);
+    s.dropBeat = 0;
+    s.timed = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Hold right to sweep. TAP to drop — or it drops in 5s.';
+    s.note = 'Hold right. TAP on the glowing second or the claws drop it.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -234,8 +246,10 @@ function startDrop(s) {
   s._riseFromY = null;
   s.held = null;
   s.slipChecked = false;
+  s.dropBeat = sweepBeat(s);
+  s.timed = s.dropBeat === s.grabBeat;
   s.target = nearestCapsule(s);
-  s.note = 'Claw descending…';
+  s.note = s.timed ? 'The second is true — lifting…' : 'Wrong second — it will drop.';
   persist(s);
 }
 
@@ -291,11 +305,10 @@ function resolveDrop(s) {
     finishMiss(s);
     return;
   }
-  const roll = rng(s.seed + s.drops * 47 + (s.level + 3) * 11)();
-  if (roll > keepChance(s.level)) {
+  if (!s.timed) {
     dropCapsuleHome(aimed);
     s.held = null;
-    s.note = 'The claws opened — nothing kept this go.';
+    s.note = 'Wrong second — the claws opened.';
     finishMiss(s);
     return;
   }
@@ -350,7 +363,7 @@ function drawCapsule(d, cap, time) {
       fallback: () => d.star(cap.x, cy, r * 0.35, '#fff6d8'),
     });
   } else {
-    const img = d.art && d.art[artKey];
+    const img = pieceArt(d, artKey);
     if (img && typeof d.sprite === 'function') d.sprite(img, cap.x, cy, {w: r * 1.35, shadow: false});
     else d.star(cap.x, cy, r * 0.28, GOLD);
   }
@@ -368,8 +381,8 @@ function drawStick(s, d) {
   const ny = L.cy;
   d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : '#c42848', GOLD, 2);
   d.ellipse(nx - 4, ny - 6, L.knobR * 0.4, L.knobR * 0.26, CREAM + 'aa');
-  const left = s.phase === 'aim' ? Math.max(0, SWEEP_SECONDS - (s.sweepT || 0)) : 0;
-  d.text(s.phase === 'aim' ? (left <= 2.2 && left > 0 ? 'TAP' : 'HOLD →') : 'TAP', L.cx, L.cy - L.baseRy + 18, 16, INK);
+  const now = s.phase === 'aim' && sweepBeat(s) === s.grabBeat;
+  d.text(s.phase === 'aim' ? (now ? 'NOW' : 'HOLD →') : 'TAP', L.cx, L.cy - L.baseRy + 18, 16, now ? '#c42848' : INK);
 }
 
 export default {
@@ -395,11 +408,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP the stick to drop, or the claw falls on its own after five seconds. Every go lifts a globe; it can slip, and keeps are luck. A ticket sits the first go; later claws cost a penny.'
-    : 'Stick sweeps one way. TAP to drop, or it drops in 5s. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. One of the five seconds is the catch — TAP then or the claws drop it. A ticket sits the first go; later claws cost a penny.'
+    : 'Stick sweeps one way. TAP on the glowing second or the item drops. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. TAP to release. If you wait five seconds it drops where it is. The glow is the chapter bonus.'
-    : 'Hold right to sweep. TAP to drop. Five seconds and it drops anyway.',
+    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights. Miss that second and the item falls back. The glow is the chapter bonus.'
+    : 'Hold right to sweep. TAP when NOW lights. Miss the second and it drops.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -439,7 +452,10 @@ export default {
       dropT: 0,
       dropPhase: null,
       stick: null,
-      note: saved.note || 'Aim the claw — DROP on a capsule',
+      grabBeat: saved.grabBeat || grabBeatOf(saved.seed || (level + 1) * 7919),
+      dropBeat: 0,
+      timed: false,
+      note: saved.note || 'Aim the claw — TAP the glowing second',
     };
     if (resume && !s.capsules) s.capsules = makeCapsules(level, s.seed);
     if (s.phase === 'drop') {
@@ -465,7 +481,10 @@ export default {
       s.clawX = s.aimX;
       s.clawY = RAIL_Y + 28;
       const left = Math.max(0, SWEEP_SECONDS - s.sweepT);
-      if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
+      const beat = sweepBeat(s);
+      if (beat === s.grabBeat) s.note = 'NOW — TAP!';
+      else if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
+      else s.note = 'Sweep right. TAP on the glowing second.';
       if (s.sweepT >= SWEEP_SECONDS) startDrop(s);
     }
 
@@ -496,14 +515,11 @@ export default {
           s.held.x = s.clawX;
           s.held.lift = Math.max(0, s.held.y - (s.clawY + 50));
         }
-        if (!s.slipChecked && u >= 0.42 && s.held) {
+        if (!s.slipChecked && u >= 0.42 && s.held && !s.timed) {
           s.slipChecked = true;
-          const roll = rng(s.seed + (s.drops || 0) * 91 + (s.level + 1) * 13)();
-          if (roll < slipChance(s.level)) {
-            dropCapsuleHome(s.held);
-            s.held = null;
-            s.note = 'Slipped!';
-          }
+          dropCapsuleHome(s.held);
+          s.held = null;
+          s.note = 'Wrong second — dropped.';
         }
         if (s.dropT >= 0.7) {
           s._riseFromY = null;
@@ -613,7 +629,17 @@ export default {
     }
     c.restore();
 
+    if (s.phase === 'aim') {
+      const beat = sweepBeat(s);
+      for (let i = 1; i <= SWEEP_SECONDS; i++) {
+        const x = CASE.x + 48 + (i - 1) * 38;
+        const y = CASE.y + 18;
+        const now = beat === i && i === s.grabBeat;
+        d.circle(x, y, now ? 8 : 5, now ? GOLD : (i === beat ? CREAM : '#3a181888'), GOLD, 1.5);
+      }
+    }
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
+      if (s.phase === 'aim' && sweepBeat(s) === s.grabBeat) d.glow(s.clawX, s.clawY, 46, GOLD);
       drawClaw(d, s.clawX, s.clawY, s.held ? 12 : 28);
       if (s.held) drawCapsule(d, Object.assign({}, s.held, {x: s.clawX, lift: 0, y: s.clawY + 52}), time);
     }

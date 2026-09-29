@@ -1,4 +1,4 @@
-import {games} from './catalogue.js?v=florence-race-1';
+import {games} from './catalogue.js?v=load-fix-1';
 document.querySelector('#progress').textContent=games.filter(g=>g.ready).length+' of '+games.length+' interiors available to try';
 const root=document.querySelector('#catalogue');
 for(const [i,g] of games.entries()){

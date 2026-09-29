@@ -1,45 +1,63 @@
-// Decode turnaround fronts once, trim empty alpha, rasterize to a small canvas.
+// Load prize fronts as small canvases. No pixel-scan — that froze phones
+// and left the locked prize on a fallback star until raster finished.
 const root = new URL('../assets/restyle/game-sprites/', import.meta.url);
 const cache = new Map();
+const matteCache = new WeakMap();
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    image.decoding = 'async';
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error(src));
     image.src = src;
   });
 }
 
-function bounds(data, width, height) {
-  let left = width, top = height, right = -1, bottom = -1;
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    if (data[(y * width + x) * 4 + 3] > 24) {
-      if (x < left) left = x;
-      if (y < top) top = y;
-      if (x > right) right = x;
-      if (y > bottom) bottom = y;
-    }
-  }
-  return right < left ? null : {x: left, y: top, width: right - left + 1, height: bottom - top + 1};
+function scaleTo(image, size) {
+  const w = image.naturalWidth || image.width || 1;
+  const h = image.naturalHeight || image.height || 1;
+  const fit = size / Math.max(w, h);
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(w * fit));
+  out.height = Math.max(1, Math.round(h * fit));
+  out.getContext('2d').drawImage(image, 0, 0, out.width, out.height);
+  return out;
 }
 
-function raster(image, size) {
+/** Knock out cyan-screen and matching corner mattes on prop-kit PNGs. */
+export function matteImage(image, opts = {}) {
+  if (!image || !(image.naturalWidth || image.width)) return image;
+  if (matteCache.has(image)) return matteCache.get(image);
+  const w = image.naturalWidth || image.width;
+  const h = image.naturalHeight || image.height;
   const work = document.createElement('canvas');
-  const max = 512;
-  const scale = Math.min(1, max / Math.max(image.naturalWidth, image.naturalHeight));
-  work.width = Math.max(1, Math.round(image.naturalWidth * scale));
-  work.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  work.width = w;
+  work.height = h;
   const ctx = work.getContext('2d', {willReadFrequently: true});
-  ctx.drawImage(image, 0, 0, work.width, work.height);
-  const box = bounds(ctx.getImageData(0, 0, work.width, work.height).data, work.width, work.height);
-  const out = document.createElement('canvas');
-  if (!box) { out.width = out.height = size; return out; }
-  const fit = (size - 4) / Math.max(box.width, box.height);
-  out.width = Math.max(1, Math.round(box.width * fit) + 4);
-  out.height = Math.max(1, Math.round(box.height * fit) + 4);
-  out.getContext('2d').drawImage(work, box.x, box.y, box.width, box.height, 2, 2, out.width - 4, out.height - 4);
-  return out;
+  ctx.drawImage(image, 0, 0);
+  let pix;
+  try { pix = ctx.getImageData(0, 0, w, h); }
+  catch {
+    matteCache.set(image, image);
+    return image;
+  }
+  const d = pix.data;
+  const corners = [0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + (w - 1)) * 4];
+  let cr = 0, cg = 0, cb = 0;
+  for (const i of corners) { cr += d[i]; cg += d[i + 1]; cb += d[i + 2]; }
+  cr /= 4; cg /= 4; cb /= 4;
+  const cornerTol = opts.cornerTol ?? 34;
+  const cyanTol = opts.cyanTol ?? 48;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const cyan = Math.hypot(r - 0, g - 251, b - 253);
+    const corner = Math.hypot(r - cr, g - cg, b - cb);
+    if (cyan < cyanTol || corner < cornerTol) d[i + 3] = 0;
+  }
+  ctx.putImageData(pix, 0, 0);
+  matteCache.set(image, work);
+  return work;
 }
 
 export function frontUrl(key) {
@@ -49,7 +67,7 @@ export function frontUrl(key) {
 export async function loadSprite(key, size = 160) {
   const id = key + ':' + size;
   if (cache.has(id)) return cache.get(id);
-  const pending = loadImage(frontUrl(key)).then(image => raster(image, size)).catch(() => null);
+  const pending = loadImage(frontUrl(key)).then(image => scaleTo(image, size)).catch(() => null);
   cache.set(id, pending);
   return pending;
 }
