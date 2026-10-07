@@ -18,7 +18,7 @@ const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
 const SWEEP_SECONDS = 5;
-const PIECE_CACHE = 'digby-claw-8';
+const PIECE_CACHE = 'digby-claw-9';
 const keyedPieces = {};
 
 const LEVELS = [
@@ -179,6 +179,9 @@ function nearestCapsule(s) {
   });
   return live[0];
 }
+function bonusCapsule(s) {
+  return (s.capsules || []).find(c => c && c.bonus && !c.taken) || null;
+}
 
 function stickLayout() {
   return {cx: 450, cy: 1134, baseRx: 118, baseRy: 66, knobR: 32, maxPull: 48, dead: 14};
@@ -248,8 +251,10 @@ function startDrop(s) {
   s.slipChecked = false;
   s.dropBeat = sweepBeat(s);
   s.timed = s.dropBeat === s.grabBeat;
-  s.target = nearestCapsule(s);
-  s.note = s.timed ? 'The second is true — lifting…' : 'Wrong second — it will drop.';
+  s.target = s.timed ? bonusCapsule(s) : nearestCapsule(s);
+  s.note = s.timed
+    ? (s.target ? 'The second is true — lifting the glow…' : 'The second is true, but the glow is gone.')
+    : 'Wrong second — it will drop.';
   persist(s);
 }
 
@@ -264,7 +269,10 @@ function awardCatch(s, cap) {
       got = prize;
       chapterWin = true;
     } else {
-      got = cap.drip || EVERYDAY_DROP[0];
+      s.note = already
+        ? 'The bonus rose. This chapter is already kept.'
+        : 'The bonus rose. Tonight’s mark did not keep it.';
+      return false;
     }
   } else {
     got = cap.drip || EVERYDAY_DROP[0];
@@ -281,7 +289,7 @@ function awardCatch(s, cap) {
     s.won = true;
     s.paid = true;
   }
-  if (chapterWin) takePrize(s, prize, {x: cap.x, y: cap.y});
+  if (chapterWin) takePrize(s, prize, {x: 800, y: 130});
   const label = itemName(got) || got;
   s.note = chapterWin
     ? 'The claw held the ' + label + '!'
@@ -313,10 +321,14 @@ function resolveDrop(s) {
     return;
   }
   aimed.taken = true;
+  aimed.lift = 0;
+  aimed.x = s.clawX;
+  aimed.y = s.clawY + 52;
+  s.held = aimed;
   awardCatch(s, aimed);
   s.phase = 'result';
   s.charged = false;
-  s.hold = s.won ? 1.3 : 0.85;
+  s.hold = s.won ? 2.2 : 1.6;
   persist(s);
 }
 
@@ -408,11 +420,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. One of the five seconds is the catch — TAP then or the claws drop it. A ticket sits the first go; later claws cost a penny.'
-    : 'Stick sweeps one way. TAP on the glowing second or the item drops. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on the glowing second and the claw lifts the chapter bonus. Miss that second and whatever it grabs falls back. A ticket sits the first go; later claws cost a penny.'
+    : 'Stick sweeps one way. TAP on the glowing second to lift the bonus. Miss and it drops. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights. Miss that second and the item falls back. The glow is the chapter bonus.'
-    : 'Hold right to sweep. TAP when NOW lights. Miss the second and it drops.',
+    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights to lift the glow. Miss that second and the claws drop the ball on the way up.'
+    : 'Hold right to sweep. TAP when NOW lights to lift the bonus. Miss the second and it drops.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -491,41 +503,57 @@ export default {
     if (s.phase === 'drop') {
       s.dropT += dt;
       if (s.dropPhase === 'descend') {
-        const targetY = s.target ? s.target.y - s.target.size * 0.55 : FLOOR_Y - 40;
-        s.clawY = lerp(RAIL_Y + 28, targetY, Math.min(1, s.dropT / 0.55));
+        const cap = s.target;
+        const targetY = cap ? cap.y - cap.size * 0.55 : FLOOR_Y - 40;
+        const u = Math.min(1, s.dropT / 0.55);
+        if (cap) s.clawX = lerp(s.clawX, cap.x, Math.min(1, u * 1.4));
+        s.clawY = lerp(RAIL_Y + 28, targetY, u);
         if (s.dropT >= 0.5) {
           s.dropPhase = 'grip';
           s.dropT = 0;
         }
       } else if (s.dropPhase === 'grip') {
         if (s.dropT >= 0.18) {
-          const cap = nearestCapsule(s);
+          const cap = s.target || (s.timed ? bonusCapsule(s) : nearestCapsule(s));
           s.held = cap;
           s.target = cap;
+          if (cap) {
+            s.clawX = cap.x;
+            cap.taken = false;
+            cap.lift = 0;
+          }
           s.dropPhase = 'rise';
           s.dropT = 0;
           s.slipChecked = false;
-          s.note = cap ? 'Got it…' : 'The pile is empty.';
+          s.note = !cap
+            ? 'The pile is empty.'
+            : (s.timed ? 'The glow is in the claws…' : 'Got it…');
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
-        const u = Math.min(1, s.dropT / 0.7);
+        const u = Math.min(1, s.dropT / 0.85);
         s.clawY = lerp(s._riseFromY, RAIL_Y + 28, u);
         if (s.held) {
           s.held.x = s.clawX;
           s.held.lift = Math.max(0, s.held.y - (s.clawY + 50));
         }
-        if (!s.slipChecked && u >= 0.42 && s.held && !s.timed) {
+        if (!s.slipChecked && u >= 0.38 && s.held && !s.timed) {
           s.slipChecked = true;
           dropCapsuleHome(s.held);
           s.held = null;
           s.note = 'Wrong second — dropped.';
         }
-        if (s.dropT >= 0.7) {
+        if (s.dropT >= 0.85) {
           s._riseFromY = null;
           resolveDrop(s);
         }
       }
+    }
+
+    if (s.phase === 'result' && s.held && s.timed) {
+      s.held.x = s.clawX;
+      s.held.y = s.clawY + 52;
+      s.held.lift = 0;
     }
 
     if (s.won && s.hold > 0 && !s.result) {
@@ -641,7 +669,11 @@ export default {
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
       if (s.phase === 'aim' && sweepBeat(s) === s.grabBeat) d.glow(s.clawX, s.clawY, 46, GOLD);
       drawClaw(d, s.clawX, s.clawY, s.held ? 12 : 28);
-      if (s.held) drawCapsule(d, Object.assign({}, s.held, {x: s.clawX, lift: 0, y: s.clawY + 52}), time);
+      if (s.held) {
+        drawCapsule(d, Object.assign({}, s.held, {
+          x: s.clawX, y: s.clawY + 52, lift: 0, taken: false,
+        }), time);
+      }
     }
 
     d.wrap(s.note || '', CX, 980, 20, '#fff6d8', 720);
