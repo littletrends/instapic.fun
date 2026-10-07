@@ -1,12 +1,10 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {matteImage} from '../sprites.js?v=load-fix-1';
-import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=booth-play-2';
+import {alleyPlay, pocket, keep, owned} from '../wallet.js?v=booth-play-2';
 import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
-import {
-  resultNumber, isCabinetWin, CABINET_PRIZES,
-} from '../cabinet-puzzles.js?v=first-prize-1';
+import {CABINET_PRIZES} from '../cabinet-puzzles.js?v=first-prize-1';
 
 /** Digby — Digger's Vault claw. Rail at the top, pile on the floor, one-way stick. */
 const BOOK = 'pennyFever.capsuleCabinet.v5';
@@ -18,7 +16,7 @@ const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
 const SWEEP_SECONDS = 5;
-const PIECE_CACHE = 'digby-claw-9';
+const PIECE_CACHE = 'digby-claw-10';
 const keyedPieces = {};
 
 const LEVELS = [
@@ -169,16 +167,6 @@ function makeCapsules(level, seed) {
   return list;
 }
 
-function nearestCapsule(s) {
-  const live = (s.capsules || []).filter(c => !c.taken);
-  if (!live.length) return null;
-  live.sort((a, b) => {
-    const dx = Math.abs(a.x - s.clawX) - Math.abs(b.x - s.clawX);
-    if (Math.abs(dx) > 8) return dx;
-    return b.y - a.y;
-  });
-  return live[0];
-}
 function bonusCapsule(s) {
   return (s.capsules || []).find(c => c && c.bonus && !c.taken) || null;
 }
@@ -228,13 +216,12 @@ function beginSitting(s) {
     s.held = null;
     s.dropT = 0;
     s.dropPhase = null;
-    s.slipChecked = false;
     s.prizeKept = false;
     s.grabBeat = grabBeatOf(s.seed);
     s.dropBeat = 0;
     s.timed = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Hold right. TAP on the glowing second or the claws drop it.';
+    s.note = 'Hold right. TAP on the glowing second to lift and keep the bonus.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -248,53 +235,32 @@ function startDrop(s) {
   s.dropT = 0;
   s._riseFromY = null;
   s.held = null;
-  s.slipChecked = false;
   s.dropBeat = sweepBeat(s);
   s.timed = s.dropBeat === s.grabBeat;
-  s.target = s.timed ? bonusCapsule(s) : nearestCapsule(s);
+  s.target = s.timed ? bonusCapsule(s) : null;
   s.note = s.timed
     ? (s.target ? 'The second is true — lifting the glow…' : 'The second is true, but the glow is gone.')
-    : 'Wrong second — it will drop.';
+    : 'Wrong second — empty claws.';
   persist(s);
 }
 
 function awardCatch(s, cap) {
+  if (!cap || !cap.bonus) return false;
   const prize = CABINET_PRIZES[s.level];
   const already = chapterPaid(s.level) || s.won;
-  const mark = resultNumber(s.seed + (s.drops || 0) * 17);
-  let got = null;
-  let chapterWin = false;
-  if (cap.bonus) {
-    if (!already && isCabinetWin(s.level, mark)) {
-      got = prize;
-      chapterWin = true;
-    } else {
-      s.note = already
-        ? 'The bonus rose. This chapter is already kept.'
-        : 'The bonus rose. Tonight’s mark did not keep it.';
-      return false;
-    }
-  } else {
-    got = cap.drip || EVERYDAY_DROP[0];
+  s.won = true;
+  s.paid = true;
+  if (already) {
+    s.note = 'The claw held the bonus. This chapter is already kept.';
+    return true;
   }
   if (alleyPlay) {
-    if (got === 'everyday-penny') credit(1);
-    else keep(got, 'curios');
-    if (chapterWin) {
-      markPaid(s.level);
-      s.won = true;
-      s.paid = true;
-    }
-  } else if (chapterWin) {
-    s.won = true;
-    s.paid = true;
+    keep(prize, 'curios');
+    markPaid(s.level);
   }
-  if (chapterWin) takePrize(s, prize, {x: 800, y: 130});
-  const label = itemName(got) || got;
-  s.note = chapterWin
-    ? 'The claw held the ' + label + '!'
-    : 'Caught a capsule — ' + label + '.';
-  return chapterWin;
+  takePrize(s, prize, {x: 800, y: 130});
+  s.note = 'The claw held the ' + (itemName(prize) || prize) + '!';
+  return true;
 }
 
 function dropCapsuleHome(cap) {
@@ -308,15 +274,10 @@ function dropCapsuleHome(cap) {
 function resolveDrop(s) {
   s.drops = (s.drops || 0) + 1;
   const aimed = s.held;
-  if (!aimed) {
-    s.note = 'It slipped back into the pile.';
-    finishMiss(s);
-    return;
-  }
-  if (!s.timed) {
-    dropCapsuleHome(aimed);
+  if (!s.timed || !aimed) {
+    if (aimed) dropCapsuleHome(aimed);
     s.held = null;
-    s.note = 'Wrong second — the claws opened.';
+    s.note = s.timed ? 'The glow slipped the claws.' : 'Wrong second — empty claws.';
     finishMiss(s);
     return;
   }
@@ -420,11 +381,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on the glowing second and the claw lifts the chapter bonus. Miss that second and whatever it grabs falls back. A ticket sits the first go; later claws cost a penny.'
-    : 'Stick sweeps one way. TAP on the glowing second to lift the bonus. Miss and it drops. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on the glowing second to lift and keep the chapter bonus. Miss that second and the claws come up empty. A ticket sits the first go; later claws cost a penny.'
+    : 'Stick sweeps one way. TAP on the glowing second to lift and keep the bonus. Miss and the claws come up empty. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights to lift the glow. Miss that second and the claws drop the ball on the way up.'
-    : 'Hold right to sweep. TAP when NOW lights to lift the bonus. Miss the second and it drops.',
+    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights to lift and keep the glow. Miss that second and the claws come up empty.'
+    : 'Hold right to sweep. TAP when NOW lights to lift and keep the bonus. Miss the second and the claws come up empty.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -503,7 +464,7 @@ export default {
     if (s.phase === 'drop') {
       s.dropT += dt;
       if (s.dropPhase === 'descend') {
-        const cap = s.target;
+        const cap = s.timed ? s.target : null;
         const targetY = cap ? cap.y - cap.size * 0.55 : FLOOR_Y - 40;
         const u = Math.min(1, s.dropT / 0.55);
         if (cap) s.clawX = lerp(s.clawX, cap.x, Math.min(1, u * 1.4));
@@ -514,7 +475,7 @@ export default {
         }
       } else if (s.dropPhase === 'grip') {
         if (s.dropT >= 0.18) {
-          const cap = s.target || (s.timed ? bonusCapsule(s) : nearestCapsule(s));
+          const cap = s.timed ? (s.target || bonusCapsule(s)) : null;
           s.held = cap;
           s.target = cap;
           if (cap) {
@@ -524,10 +485,7 @@ export default {
           }
           s.dropPhase = 'rise';
           s.dropT = 0;
-          s.slipChecked = false;
-          s.note = !cap
-            ? 'The pile is empty.'
-            : (s.timed ? 'The glow is in the claws…' : 'Got it…');
+          s.note = cap ? 'The glow is in the claws…' : 'Wrong second — empty claws.';
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
@@ -536,12 +494,6 @@ export default {
         if (s.held) {
           s.held.x = s.clawX;
           s.held.lift = Math.max(0, s.held.y - (s.clawY + 50));
-        }
-        if (!s.slipChecked && u >= 0.38 && s.held && !s.timed) {
-          s.slipChecked = true;
-          dropCapsuleHome(s.held);
-          s.held = null;
-          s.note = 'Wrong second — dropped.';
         }
         if (s.dropT >= 0.85) {
           s._riseFromY = null;
