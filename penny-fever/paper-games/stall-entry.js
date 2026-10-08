@@ -47,6 +47,7 @@ export function isClosed(id) {
 
 export function entryFor(id) {
   if (CLOSED_SET.has(id)) return {door: 'closed', inside: 'none', firstChapterFree: false};
+  if (id === 'curios') return {door: 'ticket', inside: 'penny', firstChapterFree: false};
   if (RIDE_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
   if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: false};
   if (TICKET_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-penny', firstChapterFree: true};

@@ -1,11 +1,11 @@
 import {games} from '../paper-games/catalogue.js?v=load-fix-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
-import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-3';
+import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-4';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
- ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=load-fix-4'),gameBase).href,
+ ...game,src:new URL(game.direct||('play.html?stall='+encodeURIComponent(game.id)+'&room=alley&v=load-fix-5'),gameBase).href,
 }));
 
 // Door vs inside charges live in stall-entry.js (ticket sit-down, penny rail, Felix free).
@@ -40,12 +40,15 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   back.addEventListener('click',()=>leavePaperGame(game.id,nav));
   const title=doc.createElement('h1');title.textContent=game.title;title.tabIndex=-1;title.hidden=true;
   const wallet=doc.createElement('span');wallet.className='paper-game-wallet';wallet.setAttribute('aria-live','polite');
+  const barWallet=doc.createElement('span');barWallet.className='paper-game-wallet is-on-bar';barWallet.setAttribute('aria-live','polite');
   const paintWallet=()=>{
     const PF=window.PennyFever;
     const n=Number(PF?.pennies?.()??PF?.getState?.()?.demoCoins)||0;
     const t=Number(PF?.tickets?.()??PF?.getState?.()?.playTickets)||0;
     const packed=Number(PF?.pennyPacks?.()??PF?.getState?.()?.pennyPacks)||0;
-    wallet.textContent=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies')+(packed?(' · '+packed+' '+(packed===1?'pack':'packs')):'');
+    const line=t+' '+(t===1?'ticket':'tickets')+' · '+n+' '+(n===1?'penny':'pennies')+(packed?(' · '+packed+' '+(packed===1?'pack':'packs')):'');
+    wallet.textContent=line;
+    barWallet.textContent=n+' '+(n===1?'penny':'pennies');
   };
   paintWallet();
   window.addEventListener('pennyfever:statechange',paintWallet);
@@ -135,7 +138,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   closeTill.addEventListener('click',()=>till.close());
   till.addEventListener('close',()=>{message('resume');trade.focus();});
   till.append(closeTill,wallet,trades,tradeStatus);
-  bar.append(back,chapters,chest,trade,title);
+  bar.append(back,chapters,chest,barWallet,trade,title);
   stage.append(till);
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;

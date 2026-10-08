@@ -1,8 +1,8 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js';
 import {matteImage} from '../sprites.js?v=load-fix-1';
-import {alleyPlay, pocket, keep, owned} from '../wallet.js?v=booth-play-2';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=first-prize-1';
+import {alleyPlay, pocket, tickets, keep, owned} from '../wallet.js?v=booth-play-2';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=entry-4';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {CABINET_PRIZES} from '../cabinet-puzzles.js?v=first-prize-1';
 
@@ -16,7 +16,8 @@ const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
 const SWEEP_SECONDS = 5;
-const PIECE_CACHE = 'digby-claw-10';
+const PIECE_CACHE = 'digby-claw-11';
+const GRAB_REACH = 34;
 const keyedPieces = {};
 
 const LEVELS = [
@@ -170,6 +171,11 @@ function makeCapsules(level, seed) {
 function bonusCapsule(s) {
   return (s.capsules || []).find(c => c && c.bonus && !c.taken) || null;
 }
+function clawOver(s, cap) {
+  if (!s || !cap) return false;
+  const reach = Math.max(GRAB_REACH, (cap.size || 50) * 0.52);
+  return Math.abs((s.clawX || 0) - cap.x) <= reach;
+}
 
 function stickLayout() {
   return {cx: 450, cy: 1134, baseRx: 118, baseRy: 66, knobR: 32, maxPull: 48, dead: 14};
@@ -220,8 +226,9 @@ function beginSitting(s) {
     s.grabBeat = grabBeatOf(s.seed);
     s.dropBeat = 0;
     s.timed = false;
+    s.lined = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Hold right. TAP on the glowing second to lift and keep the bonus.';
+    s.note = 'Hold right. TAP on NOW when the claw is over the glow.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -237,9 +244,11 @@ function startDrop(s) {
   s.held = null;
   s.dropBeat = sweepBeat(s);
   s.timed = s.dropBeat === s.grabBeat;
-  s.target = s.timed ? bonusCapsule(s) : null;
+  const bonus = bonusCapsule(s);
+  s.lined = !!(s.timed && clawOver(s, bonus));
+  s.target = s.lined ? bonus : null;
   s.note = s.timed
-    ? (s.target ? 'The second is true — lifting the glow…' : 'The second is true, but the glow is gone.')
+    ? (s.lined ? 'The second is true — lifting the glow…' : 'NOW, but the claws were not over the glow.')
     : 'Wrong second — empty claws.';
   persist(s);
 }
@@ -274,10 +283,12 @@ function dropCapsuleHome(cap) {
 function resolveDrop(s) {
   s.drops = (s.drops || 0) + 1;
   const aimed = s.held;
-  if (!s.timed || !aimed) {
+  if (!s.timed || !s.lined || !aimed) {
     if (aimed) dropCapsuleHome(aimed);
     s.held = null;
-    s.note = s.timed ? 'The glow slipped the claws.' : 'Wrong second — empty claws.';
+    s.note = s.timed
+      ? 'NOW, but the claws were not over the glow.'
+      : 'Wrong second — empty claws.';
     finishMiss(s);
     return;
   }
@@ -381,11 +392,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on the glowing second to lift and keep the chapter bonus. Miss that second and the claws come up empty. A ticket sits the first go; later claws cost a penny.'
-    : 'Stick sweeps one way. TAP on the glowing second to lift and keep the bonus. Miss and the claws come up empty. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on NOW when the claw is over the glow to lift and keep the chapter bonus. Miss the second or the line-up and the claws come up empty. A ticket sits you at the door; each claw costs a penny.'
+    : 'Stick sweeps one way. TAP on NOW when the claw is over the glow to lift and keep the bonus. Miss the second or the line-up and the claws come up empty. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights to lift and keep the glow. Miss that second and the claws come up empty.'
-    : 'Hold right to sweep. TAP when NOW lights to lift and keep the bonus. Miss the second and the claws come up empty.',
+    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights AND the claw is over the glow. Each go costs a penny.'
+    : 'Hold right to sweep. TAP when NOW lights and the claw is over the glow. Miss the second or the line-up and the claws come up empty.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -398,7 +409,7 @@ export default {
   },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
-    'crystal-cradle', 'curio-cabinet-album', 'star-token', 'moon-penny', 'crown-token', 'everyday-penny',
+    'crystal-cradle', 'curio-cabinet-album', 'penny-purse', 'star-token', 'moon-penny', 'crown-token', 'everyday-penny',
   ],
   prizes: CABINET_PRIZES.slice(),
   actions: [],
@@ -428,6 +439,7 @@ export default {
       grabBeat: saved.grabBeat || grabBeatOf(saved.seed || (level + 1) * 7919),
       dropBeat: 0,
       timed: false,
+      lined: false,
       note: saved.note || 'Aim the claw — TAP the glowing second',
     };
     if (resume && !s.capsules) s.capsules = makeCapsules(level, s.seed);
@@ -464,10 +476,9 @@ export default {
     if (s.phase === 'drop') {
       s.dropT += dt;
       if (s.dropPhase === 'descend') {
-        const cap = s.timed ? s.target : null;
+        const cap = s.lined ? s.target : null;
         const targetY = cap ? cap.y - cap.size * 0.55 : FLOOR_Y - 40;
         const u = Math.min(1, s.dropT / 0.55);
-        if (cap) s.clawX = lerp(s.clawX, cap.x, Math.min(1, u * 1.4));
         s.clawY = lerp(RAIL_Y + 28, targetY, u);
         if (s.dropT >= 0.5) {
           s.dropPhase = 'grip';
@@ -475,17 +486,17 @@ export default {
         }
       } else if (s.dropPhase === 'grip') {
         if (s.dropT >= 0.18) {
-          const cap = s.timed ? (s.target || bonusCapsule(s)) : null;
+          const cap = s.lined && clawOver(s, s.target) ? s.target : null;
           s.held = cap;
-          s.target = cap;
           if (cap) {
-            s.clawX = cap.x;
             cap.taken = false;
             cap.lift = 0;
           }
           s.dropPhase = 'rise';
           s.dropT = 0;
-          s.note = cap ? 'The glow is in the claws…' : 'Wrong second — empty claws.';
+          s.note = cap
+            ? 'The glow is in the claws…'
+            : (s.timed ? 'NOW, but the claws were not over the glow.' : 'Wrong second — empty claws.');
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
@@ -629,11 +640,26 @@ export default {
     }
 
     d.wrap(s.note || '', CX, 980, 20, '#fff6d8', 720);
+    const n = alleyPlay ? (pocket() ?? 0) : null;
+    const t = alleyPlay ? (tickets() ?? 0) : 0;
+    if (n != null) {
+      d.item(spriteKey('penny-purse'), 86, 72, {
+        w: 64,
+        fallback: () => d.heart(86, 72, 20, '#6a7a52'),
+      });
+      d.text(n + (n === 1 ? ' penny' : ' pennies'), 86, 118, 14, '#fff6d8');
+      d.text(t + (t === 1 ? ' ticket' : ' tickets'), 86, 136, 12, '#ead6a4');
+    } else {
+      d.text('practice', 86, 72, 14, '#ead6a4');
+    }
     drawStick(s, d);
   },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
-    const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
+    const t = alleyPlay ? tickets() : null;
+    const purse = n == null
+      ? 'practice'
+      : n + (n === 1 ? ' penny' : ' pennies') + ' · ' + t + (t === 1 ? ' ticket' : ' tickets');
     return purse + ' · ' + s.note;
   },
 };
