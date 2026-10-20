@@ -16,8 +16,9 @@ const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
 const SWEEP_SECONDS = 5;
-const PIECE_CACHE = 'digby-claw-11';
+const PIECE_CACHE = 'digby-claw-12';
 const GRAB_REACH = 34;
+const PRIZE_SPOT = {x: 738, y: 758, w: 68};
 const keyedPieces = {};
 
 const LEVELS = [
@@ -178,7 +179,7 @@ function clawOver(s, cap) {
 }
 
 function stickLayout() {
-  return {cx: 450, cy: 1134, baseRx: 118, baseRy: 66, knobR: 32, maxPull: 48, dead: 14};
+  return {cx: 450, cy: 1058, baseRx: 118, baseRy: 70, knobR: 32, maxPull: 48, dead: 14};
 }
 function hitStick(p) {
   if (!p) return false;
@@ -219,6 +220,7 @@ function beginSitting(s) {
     s.clawX = clawMin();
     s.clawY = RAIL_Y + 28;
     s.sweepT = 0;
+    s.swept = false;
     s.held = null;
     s.dropT = 0;
     s.dropPhase = null;
@@ -267,7 +269,7 @@ function awardCatch(s, cap) {
     keep(prize, 'curios');
     markPaid(s.level);
   }
-  takePrize(s, prize, {x: 800, y: 130});
+  takePrize(s, prize, {x: PRIZE_SPOT.x, y: PRIZE_SPOT.y});
   s.note = 'The claw held the ' + (itemName(prize) || prize) + '!';
   return true;
 }
@@ -311,17 +313,22 @@ function finishMiss(s) {
   persist(s);
 }
 
-function drawClaw(d, x, y, open) {
-  const c = d.c;
+function drawClaw(d, x, y, shut) {
   d.ellipse(x, RAIL_Y, 20, 8, '#8a7048', GOLD, 2);
-  d.line({x, y: RAIL_Y}, {x, y}, '#c8b898', 3);
+  d.line({x, y: RAIL_Y}, {x, y: y - 10}, '#c8b898', 3);
+  const img = d.art && d.art[shut ? 'clawShut' : 'clawOpen'];
+  if (img && typeof d.sprite === 'function') {
+    d.sprite(img, x, y + 18, {w: shut ? 64 : 74, shadow: false});
+    return;
+  }
+  const c = d.c;
+  const open = shut ? 12 : 28;
   d.ellipse(x, y, 14, 10, '#5a3028', GOLD, 2);
   c.save();
   c.strokeStyle = GOLD;
-  c.fillStyle = '#8aa0b0';
   c.lineWidth = 4;
   c.lineCap = 'round';
-  for (const [dx, ang] of [[-open, -0.45], [open, 0.45]]) {
+  for (const dx of [-open, open]) {
     c.beginPath();
     c.moveTo(x, y + 6);
     c.quadraticCurveTo(x + dx * 0.45, y + 26, x + dx, y + 44);
@@ -359,14 +366,26 @@ function drawStick(s, d) {
   const L = stickLayout();
   const armed = !!(s.stick && s.stick.active);
   const kx = armed ? (s.stick.kx || 0) : 0;
-  d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
-  d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.2);
+  const base = d.art && d.art.stickBase;
+  const knob = d.art && d.art.stickKnob;
+  if (base && typeof d.sprite === 'function') {
+    d.sprite(base, L.cx, L.cy + 10, {w: 210, shadow: false});
+  } else {
+    d.ellipse(L.cx + 3, L.cy + 5, L.baseRx, L.baseRy, '#3a1a1266');
+    d.ellipse(L.cx, L.cy, L.baseRx, L.baseRy, CREAM + 'ee', GOLD, 2.2);
+  }
   const nx = L.cx + kx;
-  const ny = L.cy;
-  d.ellipse(nx, ny, L.knobR, L.knobR * 0.82, armed ? GOLD : '#c42848', GOLD, 2);
-  d.ellipse(nx - 4, ny - 6, L.knobR * 0.4, L.knobR * 0.26, CREAM + 'aa');
-  const now = s.phase === 'aim' && sweepBeat(s) === s.grabBeat;
-  d.text(s.phase === 'aim' ? (now ? 'NOW' : 'HOLD →') : 'TAP', L.cx, L.cy - L.baseRy + 18, 16, now ? '#c42848' : INK);
+  const ny = L.cy - 18;
+  if (knob && typeof d.sprite === 'function') {
+    d.sprite(knob, nx, ny, {w: 92, shadow: false});
+  } else {
+    d.ellipse(nx, L.cy, L.knobR, L.knobR * 0.82, armed ? GOLD : '#c42848', GOLD, 2);
+    d.ellipse(nx - 4, L.cy - 6, L.knobR * 0.4, L.knobR * 0.26, CREAM + 'aa');
+  }
+  const waiting = s.phase === 'aim' && !s.swept;
+  const now = s.phase === 'aim' && s.swept && sweepBeat(s) === s.grabBeat;
+  const label = s.phase === 'aim' ? (waiting ? 'HOLD →' : (now ? 'NOW' : 'HOLD →')) : 'TAP';
+  d.text(label, L.cx, L.cy - L.baseRy - 6, 16, now ? '#c42848' : '#fff6d8');
 }
 
 export default {
@@ -392,11 +411,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. TAP on NOW when the claw is over the glow to lift and keep the chapter bonus. Miss the second or the line-up and the claws come up empty. A ticket sits you at the door; each claw costs a penny.'
-    : 'Stick sweeps one way. TAP on NOW when the claw is over the glow to lift and keep the bonus. Miss the second or the line-up and the claws come up empty. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. Hold right to start the claw; it will not auto-drop until it has moved. TAP on NOW when the claw is over the glow to lift and keep the chapter bonus. A ticket sits you at the door; each claw costs a penny.'
+    : 'Hold right to start the claw. It will not auto-drop until it has moved. TAP on NOW when the claw is over the glow. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. TAP when NOW lights AND the claw is over the glow. Each go costs a penny.'
-    : 'Hold right to sweep. TAP when NOW lights and the claw is over the glow. Miss the second or the line-up and the claws come up empty.',
+    ? 'Hold the stick right to send the claw across. It never comes back. The five-second drop starts after it moves. TAP when NOW lights AND the claw is over the glow. Each go costs a penny.'
+    : 'Hold right to sweep. The auto-drop starts after the claw moves. TAP when NOW lights and the claw is over the glow.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -406,6 +425,10 @@ export default {
     piece4: './assets/prop-kits/curios/piece-04.png?v=' + PIECE_CACHE,
     piece5: './assets/prop-kits/curios/piece-05.png?v=' + PIECE_CACHE,
     piece6: './assets/prop-kits/curios/piece-06.png?v=' + PIECE_CACHE,
+    clawOpen: './assets/prop-kits/curios/claw-open.png?v=' + PIECE_CACHE,
+    clawShut: './assets/prop-kits/curios/claw-shut.png?v=' + PIECE_CACHE,
+    stickBase: './assets/prop-kits/curios/stick-base.png?v=' + PIECE_CACHE,
+    stickKnob: './assets/prop-kits/curios/stick-knob.png?v=' + PIECE_CACHE,
   },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
@@ -440,6 +463,7 @@ export default {
       dropBeat: 0,
       timed: false,
       lined: false,
+      swept: false,
       note: saved.note || 'Aim the claw — TAP the glowing second',
     };
     if (resume && !s.capsules) s.capsules = makeCapsules(level, s.seed);
@@ -456,21 +480,25 @@ export default {
     if (typeof document !== 'undefined' && document.hidden) return;
 
     if (s.phase === 'aim') {
-      s.sweepT = (s.sweepT || 0) + dt;
-      if (s.stick && s.stick.active && (s.stick.kx || 0) > 10) {
+      const pulling = !!(s.stick && s.stick.active && (s.stick.kx || 0) > 10);
+      const keyed = !!(input?.keys && (input.keys.has('ArrowRight') || input.keys.has('d')));
+      if (pulling || keyed) {
         s.aimX = clamp(s.aimX + 170 * dt, clawMin(), clawMax());
-      }
-      if (input?.keys && (input.keys.has('ArrowRight') || input.keys.has('d'))) {
-        s.aimX = clamp(s.aimX + 170 * dt, clawMin(), clawMax());
+        if ((s.aimX - clawMin()) > 16) s.swept = true;
       }
       s.clawX = s.aimX;
       s.clawY = RAIL_Y + 28;
-      const left = Math.max(0, SWEEP_SECONDS - s.sweepT);
-      const beat = sweepBeat(s);
-      if (beat === s.grabBeat) s.note = 'NOW — TAP!';
-      else if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
-      else s.note = 'Sweep right. TAP on the glowing second.';
-      if (s.sweepT >= SWEEP_SECONDS) startDrop(s);
+      if (s.swept) {
+        s.sweepT = (s.sweepT || 0) + dt;
+        const left = Math.max(0, SWEEP_SECONDS - s.sweepT);
+        const beat = sweepBeat(s);
+        if (beat === s.grabBeat) s.note = 'NOW — TAP!';
+        else if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
+        else s.note = 'Sweep right. TAP on the glowing second.';
+        if (s.sweepT >= SWEEP_SECONDS) startDrop(s);
+      } else {
+        s.note = 'Hold right to send the claw across.';
+      }
     }
 
     if (s.phase === 'drop') {
@@ -583,12 +611,14 @@ export default {
   draw(s, d, time) {
     const prize = CABINET_PRIZES[s.level];
     const c = d.c;
-    d.text('Digger’s Vault', 450, 108, 28, '#efe6d0');
-    d.text(LEVELS[s.level], 450, 142, 18, '#d2b98c');
     {
       const collected = s.won || chapterPaid(s.level);
-      d.item(spriteKey(prize), 800, 130, {w: 64, fallback: () => d.star(800, 130, 22)});
-      d.text(collected ? 'Collected' : 'Locked', 800, 182, 14, collected ? '#c8e878' : '#ead6a4');
+      d.item(spriteKey(prize), PRIZE_SPOT.x, PRIZE_SPOT.y, {
+        w: PRIZE_SPOT.w,
+        fallback: () => d.star(PRIZE_SPOT.x, PRIZE_SPOT.y, 22),
+      });
+      d.text(collected ? 'Collected' : 'Locked', PRIZE_SPOT.x, PRIZE_SPOT.y + 50, 14, collected ? '#c8e878' : '#ead6a4');
+      d.text(LEVELS[s.level], PRIZE_SPOT.x, PRIZE_SPOT.y + 70, 13, '#d2b98c');
     }
 
     const cab = d.art && d.art.cabinet;
@@ -620,7 +650,7 @@ export default {
     }
     c.restore();
 
-    if (s.phase === 'aim') {
+    if (s.phase === 'aim' && s.swept) {
       const beat = sweepBeat(s);
       for (let i = 1; i <= SWEEP_SECONDS; i++) {
         const x = CASE.x + 48 + (i - 1) * 38;
@@ -630,8 +660,8 @@ export default {
       }
     }
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
-      if (s.phase === 'aim' && sweepBeat(s) === s.grabBeat) d.glow(s.clawX, s.clawY, 46, GOLD);
-      drawClaw(d, s.clawX, s.clawY, s.held ? 12 : 28);
+      if (s.phase === 'aim' && s.swept && sweepBeat(s) === s.grabBeat) d.glow(s.clawX, s.clawY, 46, GOLD);
+      drawClaw(d, s.clawX, s.clawY, !!s.held);
       if (s.held) {
         drawCapsule(d, Object.assign({}, s.held, {
           x: s.clawX, y: s.clawY + 52, lift: 0, taken: false,
@@ -639,7 +669,7 @@ export default {
       }
     }
 
-    d.wrap(s.note || '', CX, 980, 20, '#fff6d8', 720);
+    d.wrap(s.note || '', CX, 940, 20, '#fff6d8', 560);
     const n = alleyPlay ? (pocket() ?? 0) : null;
     const t = alleyPlay ? (tickets() ?? 0) : 0;
     if (n != null) {
