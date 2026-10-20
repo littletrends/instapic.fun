@@ -47,6 +47,15 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
    hideFallback(figure);
    figure.userData.needSides=true;
+   for(const view of PAPERCUT_VIEWS){
+    if(view==='front')continue;
+    if(dead||!active||controller.signal.aborted||!figure.parent)return;
+    const face=await load(ROOT+id+'/'+view+'.webp',STALL_FRAMES[id][view],{signal:controller.signal});
+    if(!figure.parent||figure.userData.papercutStand!==cut||controller.signal.aborted){face.texture?.dispose();return;}
+    setPapercutFace(cut,view,face,opts);
+    figure.userData.papercutViews=cut.userData.papercutViews;
+   }
+   if(figure.userData.papercutStand===cut)figure.userData.needSides=false;
   }catch(error){
    if(!controller.signal.aborted)console.warn('[Penny Fever stalls]',id,error.message);
   }finally{

@@ -7,14 +7,14 @@ import { installPaperProprietor, updatePaperProprietor } from "./paper-proprieto
 import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=phone-images-3";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
-import { installIndividualVendors } from "./paper-vendors.js?v=phone-images-3";
+import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=phone-images-3";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
 import {installWallBackdrops} from "./walls/install.js?v=phone-images-3";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=keep-light-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=tent-depth-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
 import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=entry-3";
 

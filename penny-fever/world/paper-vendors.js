@@ -386,12 +386,12 @@ export function installIndividualVendors(stalls,scene) {
   for(const stall of stalls){
     const spec=stall.userData.stall,d=VENDOR_DESIGNS[spec.id];if(!d)continue;
     stall.children.forEach(child=>{child.visible=false;globalThis.PennyFeverRestyle?.noteLiveBody(child);});
-    // Papercut shopfronts own the bay. A cheap tint card stands in until the cutout streams in.
+    // Volumetric stub until the papercut stand streams in (same idea as Aura’s booth).
     const card=new THREE.Mesh(
-      new THREE.PlaneGeometry(2.2,3.2),
+      new THREE.BoxGeometry(1.8,2.8,.72),
       new THREE.MeshBasicMaterial({color:d.body,transparent:true,opacity:.28,depthWrite:false})
     );
-    card.position.set(0,1.65,.18);
+    card.position.set(0,1.42,.18);
     card.name=`${d.host}'s placeholder`;
     stall.add(card);
     stall.userData.paperPlaceholder=card;
