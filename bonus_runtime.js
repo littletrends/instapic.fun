@@ -50,7 +50,16 @@
   }
 
   async function fetchMediaFile(fileUrl) {
-    const res = await fetch(fileUrl, { mode: "cors", credentials: "omit" });
+    let res;
+    try {
+      res = await fetch(fileUrl, { mode: "cors", credentials: "omit" });
+    } catch (err) {
+      try {
+        res = await fetch(fileUrl, { mode: "cors", credentials: "omit", targetAddressSpace: "local" });
+      } catch {
+        throw err;
+      }
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
     const name = (fileUrl.split("/").pop() || "instapic_media").split("?")[0];

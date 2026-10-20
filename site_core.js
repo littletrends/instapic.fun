@@ -38,8 +38,23 @@
     }
   }
 
+  // On MotherPC itself, Funnel DNS is 100.x. Brave 142+ then blocks
+  // public https://instapic.fun from fetching it unless the request is
+  // tagged local (and the guest Allows local network access).
+  async function fetchApi(url, opts) {
+    try {
+      return await fetch(url, opts);
+    } catch (err) {
+      try {
+        return await fetch(url, Object.assign({}, opts, { targetAddressSpace: "local" }));
+      } catch {
+        throw err;
+      }
+    }
+  }
+
   async function createTicket(packageId, amountCents, source = "website_test_bypass") {
-    const res = await fetch(`${API_BASE}/api/create-ticket`, {
+    const res = await fetchApi(`${API_BASE}/api/create-ticket`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -67,7 +82,7 @@
   }
 
   async function payAndCreateTicket(payload) {
-    const res = await fetch(`${API_BASE}/api/pay-and-create-ticket`, {
+    const res = await fetchApi(`${API_BASE}/api/pay-and-create-ticket`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload || {})
@@ -116,7 +131,7 @@
 
     const visitorId = anonymousVisitorId();
     const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
-    const res = await fetch(
+    const res = await fetchApi(
       `${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}${visitorQuery}`
     );
     const data = await readJson(res);
@@ -133,7 +148,7 @@
     if (!/^\d{6}$/.test(code)) return Promise.resolve(false);
     const visitorId = anonymousVisitorId();
     const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
-    return fetch(
+    return fetchApi(
       `${API_BASE}/api/bonus-analytics/${encodeURIComponent(code)}${visitorQuery}`,
       {
         method: "POST",
