@@ -313,129 +313,217 @@ section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc{
   background: #2a1a22;
 }
 
-/* ---- speed-2: fill portrait phone, spread UI, bigger taps/strip ---- */
+
+/* ---- speed-3: beat branding flex-start, spread + cream package cards ---- */
 #booth-stage {
-  /* height set by fitStage(); keep cream-friendly dark booth fill */
   min-height: 1920px;
 }
 section.screen.active {
-  /* screens stretch with grown stage */
   display: flex !important;
 }
-section.screen .screen-content {
-  box-sizing: border-box;
+/* branding.css forces flex-start !important — override with equal/higher specificity */
+section.screen.active .screen-content,
+section.screen.active[data-screen="PAYMENT"] .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content,
+section.screen.active[data-screen="AWAKE"] .screen-content,
+section.screen.active[data-screen="BACKGROUNDS"] .screen-content,
+section.screen.active[data-screen="TRY_INFO"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="PREPAID"] .screen-content {
+  box-sizing: border-box !important;
+  height: 100% !important;
+  min-height: 100% !important;
   justify-content: space-between !important;
-  padding: 4.5vh 5.5vw 3.5vh !important;
-  gap: 1.2rem;
+  padding: 5vh 5.5vw 4.5vh !important;
+  gap: 1.1rem !important;
 }
-/* Attract / Awake — use the extra height, bigger logo + portal */
-section.screen[data-screen="ATTRACT"] .screen-content.attract-screen,
-section.screen[data-screen="AWAKE"] .screen-content.awake-screen {
-  justify-content: space-between !important;
-  gap: 2rem !important;
+section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen {
+  justify-content: space-evenly !important;
+  padding: 6vh 5vw 7vh !important;
+  gap: 2.5rem !important;
 }
-section.screen[data-screen="ATTRACT"] .brand-logo img {
-  width: min(720px, 78vw) !important;
+section.screen.active[data-screen="ATTRACT"] .brand-logo img {
+  width: min(780px, 82vw) !important;
   max-width: none !important;
 }
-section.screen[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"] {
-  width: min(520px, 70vw) !important;
-  height: min(520px, 70vw) !important;
-  min-width: 420px !important;
-  min-height: 420px !important;
-  font-size: 2.6rem !important;
-}
-section.screen[data-screen="AWAKE"] .awake-logo {
-  width: min(640px, 70vw) !important;
-}
-section.screen[data-screen="AWAKE"] .awake-portal .btn-big {
-  min-width: min(620px, 80vw) !important;
-  min-height: 140px !important;
-  font-size: 2.6rem !important;
-  padding: 1.6rem 2.4rem !important;
-}
-/* Payment — roomy pills + package cards fill width */
-section.screen[data-screen="PAYMENT"] .title-main {
-  margin-top: 1vh !important;
-  margin-bottom: 0.6rem !important;
-  font-size: 3.6rem !important;
-}
-section.screen[data-screen="PAYMENT"] .subtitle {
-  margin-bottom: 1rem !important;
-  font-size: 1.7rem !important;
-  max-width: 92% !important;
-}
-section.screen[data-screen="PAYMENT"] .payment-pills-row {
-  gap: 18px !important;
-  width: min(920px, 94%) !important;
-}
-section.screen[data-screen="PAYMENT"] .payment-pills-row .btn {
-  min-height: 110px !important;
-  font-size: 1.55rem !important;
-  padding: 1.1rem 1.6rem !important;
-  flex: 1 1 260px;
-}
-section.screen[data-screen="PAYMENT"] button.felix-pkg-card {
-  min-height: 148px !important;
-  padding: 22px 26px !important;
-}
-section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-price {
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"] {
+  width: min(640px, 78vw) !important;
+  height: min(640px, 78vw) !important;
+  min-width: 520px !important;
+  min-height: 520px !important;
   font-size: 3rem !important;
 }
-section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-label {
-  font-size: 1.35rem !important;
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen {
+  justify-content: space-evenly !important;
+  padding: 4vh 4vw 3vh !important;
 }
-section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc {
-  font-size: 1.2rem !important;
+section.screen.active[data-screen="AWAKE"] .awake-logo {
+  width: min(700px, 76vw) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-portal .btn-big {
+  min-width: min(700px, 84vw) !important;
+  min-height: 160px !important;
+  font-size: 2.8rem !important;
+  padding: 1.8rem 2.6rem !important;
+}
+
+/* Payment — cream papercut package cards, roomy taps */
+section.screen.active[data-screen="PAYMENT"] .title-main {
+  margin: 0 !important;
+  font-size: 3.8rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .subtitle {
+  margin: 0 auto !important;
+  font-size: 1.75rem !important;
+  max-width: 92% !important;
+  opacity: 0.92;
+}
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row {
+  gap: 20px !important;
+  width: min(960px, 94%) !important;
+  flex-wrap: wrap !important;
+}
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row .btn {
+  min-height: 128px !important;
+  font-size: 1.7rem !important;
+  padding: 1.25rem 1.7rem !important;
+  flex: 1 1 280px;
+}
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 18px !important;
+  width: min(920px, 94%) !important;
+  margin: 0 auto !important;
+  flex-wrap: nowrap !important;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-lead {
+  margin: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  color: #f3e6d2;
+  font-weight: 700;
+}
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card {
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 200px !important;
+  border-radius: 32px !important;
+  padding: 26px 30px !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "price label" "price desc";
+  column-gap: 22px;
+  row-gap: 6px;
+  align-items: center !important;
+  text-align: left !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  animation: none !important;
+  transform: none !important;
+  /* cream papercut card */
+  background: linear-gradient(180deg, #fffaf0 0%, #f3e6d2 100%) !important;
+  color: #3b2a1a !important;
+  border: 4px solid #e0c9a0 !important;
+  box-shadow:
+    0 10px 0 #c9a873,
+    0 18px 36px rgba(40, 20, 10, 0.35) !important;
+  backdrop-filter: none !important;
+}
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card::before,
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card::after {
+  display: none !important;
+  content: none !important;
+}
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card .pkg-price {
+  grid-area: price;
+  font-size: 3.4rem !important;
+  font-weight: 900 !important;
+  color: #9a4a16 !important;
+  text-shadow: none !important;
+  letter-spacing: 0.02em !important;
+}
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card .pkg-label {
+  grid-area: label;
+  font-size: 1.55rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  color: #3b2a1a !important;
+  text-transform: uppercase;
+}
+section.screen.active[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc {
+  grid-area: desc;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: #6b4e24 !important;
+  text-transform: none !important;
+  max-width: none !important;
 }
 .felix-wallet {
-  margin: 0.4rem auto 0.8rem !important;
-  font-size: 1.35rem;
-  padding: 0.85rem 1.3rem !important;
+  margin: 0.2rem auto !important;
+  font-size: 1.45rem;
+  padding: 0.95rem 1.4rem !important;
+  background: rgba(255, 248, 235, 0.95) !important;
+  border: 2px solid #e0c9a0;
+  box-shadow: 0 6px 0 #c9a873;
 }
+
 /* Backgrounds — bigger thumb cards */
-section.screen[data-screen="BACKGROUNDS"] .background-card {
-  width: 280px !important;
-  min-width: 280px !important;
+section.screen.active[data-screen="BACKGROUNDS"] .background-card {
+  width: 300px !important;
+  min-width: 300px !important;
 }
-section.screen[data-screen="BACKGROUNDS"] .background-card img {
-  width: 280px !important;
-  height: 414px !important;
+section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
+  width: 300px !important;
+  height: 444px !important;
   object-fit: cover;
-  border-radius: 18px;
+  border-radius: 20px;
+  border: 3px solid #e0c9a0;
+  box-shadow: 0 8px 0 #c9a873;
 }
-section.screen[data-screen="BACKGROUNDS"] .btn[data-action="backgrounds-next"] {
-  min-width: min(640px, 86vw) !important;
-  min-height: 120px !important;
-  font-size: 2.2rem !important;
-}
-/* LIVE / REVIEW / PRINT — bigger strip + actions */
-#finalStripPreview,
-#digitalStripPreview,
-.final-strip-preview,
-.digital-strip-preview,
-img#finalStripPreview,
-img#digitalStripPreview {
-  max-height: min(62vh, 1200px) !important;
-  width: auto !important;
-  max-width: 92% !important;
-}
-section.screen[data-screen="REVIEW"] .btn,
-section.screen[data-screen="PRINT"] .btn,
-section.screen[data-screen="DIGITAL"] .btn {
-  min-height: 110px !important;
-  font-size: 1.7rem !important;
-  padding: 1.1rem 1.8rem !important;
-}
-section.screen[data-screen="LIVE"] #enableCameraBtn,
-section.screen[data-screen="LIVE"] .no-camera-file-label {
+section.screen.active[data-screen="BACKGROUNDS"] .btn[data-action="backgrounds-next"] {
   min-width: min(700px, 88vw) !important;
   min-height: 130px !important;
-  font-size: 2.1rem !important;
+  font-size: 2.3rem !important;
+}
+
+/* Strip + review actions */
+#finalStripPreview,
+#digitalStripPreview,
+img#finalStripPreview,
+img#digitalStripPreview {
+  max-height: min(64vh, 1280px) !important;
+  width: auto !important;
+  max-width: 94% !important;
+}
+section.screen.active[data-screen="REVIEW"] .btn,
+section.screen.active[data-screen="PRINT"] .btn,
+section.screen.active[data-screen="DIGITAL"] .btn {
+  min-height: 120px !important;
+  font-size: 1.8rem !important;
+  padding: 1.2rem 1.9rem !important;
+}
+section.screen.active[data-screen="LIVE"] #enableCameraBtn,
+section.screen.active[data-screen="LIVE"] .no-camera-file-label {
+  min-width: min(720px, 90vw) !important;
+  min-height: 140px !important;
+  font-size: 2.2rem !important;
 }
 .template-frame,
 #templateFrame {
-  transform: scale(1.08);
+  transform: scale(1.1);
   transform-origin: center top;
 }
 
+/* Prepaid / try portals — keep glow but taller tap */
+section.screen.active[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen.active[data-screen="PAYMENT"] button[data-action="enter-try-info"] {
+  min-height: 200px !important;
+}
