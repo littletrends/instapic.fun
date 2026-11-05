@@ -299,7 +299,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=pass-2").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=pass-2b").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -311,7 +311,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=pass-2").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=pass-2b").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -778,17 +778,17 @@
 
   async function buildStrip() {
     const bg = await loadImage(currentBackground?.src || "backgrounds/" + TRY_SAMPLE_ID + ".jpg");
+    // Always fill all 4 strip windows so unused poses are cream placeholders,
+    // not empty see-through holes in the template.
     const photoSrcs = [];
     for (let i = 0; i < 4; i++) {
       if (i < totalPoses) {
         photoSrcs.push(capturedPhotos[i] || makeSilhouetteDataUrl(720, 1280));
       } else {
-        photoSrcs.push(null);
+        photoSrcs.push(makeSilhouetteDataUrl(720, 1280));
       }
     }
-    const photos = await Promise.all(
-      photoSrcs.map((src) => (src ? loadImage(src) : Promise.resolve(null)))
-    );
+    const photos = await Promise.all(photoSrcs.map((src) => loadImage(src)));
     const out = document.createElement("canvas");
     out.width = bg.width;
     out.height = bg.height;

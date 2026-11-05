@@ -171,3 +171,13 @@ html, body {
   color: #ffe9b8;
   font-weight: 700;
 }
+
+.no-camera-card .btn-secondary {
+  background: #3b2a1a;
+  color: #fff6e4;
+  border: 2px solid #3b2a1a;
+}
+.no-camera-card .btn-secondary:active,
+.no-camera-card .btn-secondary:hover {
+  filter: brightness(1.08);
+}
