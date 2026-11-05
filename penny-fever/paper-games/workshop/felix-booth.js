@@ -37,7 +37,25 @@
     unlockPennies: 2,
     unlockTickets: 1,
   };
-  const CASHIN_CREDITS = { p2: 1, p4: 2, p6: 3 };
+  const CASHIN_CREDITS = { p2: 2, p4: 4, p6: 6 };
+  // Lorie (05/11/2026): $7 = 2 Felix sessions, $13 = 4, $18 = 6. Keyed by the
+  // Instapic package_id MotherPC stores on the code (WEBSITE_PACKAGES).
+  const SESSIONS_BY_PKG = { P1_STRIP: 2, P2_STRIP_GIF: 4, P3_STRIP_GIF: 6 };
+  // Booth-style session video (same contract as the Magic Mirror
+  // video_capture_patch.js: one continuous upright clip, field "video",
+  // file session_video.mp4|webm, max 40 s). Phone-friendly size.
+  const REC_MAX_MS = 40000;
+  const REC_LONG_SIDE = 960;
+  const REC_FPS = 24;
+  const REC_BPS = 1200000;
+  const REC_MIME_CHAIN = [
+    "video/mp4;codecs=avc1.42E01E",
+    "video/mp4;codecs=avc1",
+    "video/mp4",
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
   const LS = {
     pennies: "felixBooth.pennies",
     tickets: "felixBooth.tickets",
@@ -125,6 +143,10 @@
   let bonusState = "idle"; // idle | working | ready | failed
   let bonusSessionKey = "";
   let pendingCashinPkg = "p2";
+  // { no, total, left } for multi-session codes ($7/$13/$18 packages).
+  let sessionInfo = null;
+  let rec = null; // active MediaRecorder state
+  let recPromise = null; // resolves to { blob, mime, ext } | null for this session
   let unlockedBgs = loadUnlocks();
 
   function fitStage() {
@@ -195,8 +217,19 @@
     try { localStorage.setItem(PHOTO_CODES_KEY, JSON.stringify(list)); } catch (_) {}
   }
   // Booth credits = Square-approved Instapic codes bought at Aura's booth.
+  function sessionsForPkg(pkg) {
+    return SESSIONS_BY_PKG[String(pkg || "").toUpperCase()] || 1;
+  }
+  function codeTotal(r) {
+    const n = Number(r && r.total);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : sessionsForPkg(r && r.pkg);
+  }
+  function codeLeft(r) {
+    const n = Number(r && r.left);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : codeTotal(r);
+  }
   function getCredits() {
-    return photoCodes().length;
+    return photoCodes().reduce((sum, r) => sum + codeLeft(r), 0);
   }
   function spendPennies(amount) {
     const PF = fever();
@@ -226,29 +259,55 @@
   // Server check: only an ISSUED Instapic code becomes a session.
   async function redeemCode(code) {
     const { res, data } = await api("/api/redeem-ticket", { ticket_code: code });
-    if (res.ok && data.ok) return { ok: true };
+    if (res.ok && data.ok) return { ok: true, ticket: data.ticket || {} };
     if (res.status === 409) return { ok: false, used: true, status: data.status || "" };
     if (res.status === 404) return { ok: false, missing: true };
     return { ok: false, error: data.error || "HTTP " + res.status };
   }
-  async function useCreditCode() {
+  // One Instapic code = N Felix sessions (2/4/6 by package). MotherPC's
+  // redeem-ticket is single-shot (ISSUED -> REDEEMED), so the first session
+  // redeems on the server and later sessions on the same code run from this
+  // wallet record; commit-used / receive-assets accept a USED code again.
+  async function useCreditCode(onlyCode) {
     const list = photoCodes();
-    const rec = list[0];
-    if (!rec) return { ok: false, error: "none" };
+    const idx = onlyCode ? list.findIndex((r) => String(r.code) === String(onlyCode)) : list.findIndex((r) => codeLeft(r) > 0);
+    const rec = list[idx];
+    if (!rec || codeLeft(rec) < 1) return { ok: false, error: "none" };
     let check;
     try {
       check = await redeemCode(rec.code);
     } catch (_) {
       return { ok: false, error: "offline" };
     }
-    // A code from our own approved purchase that was redeemed but never
-    // finished (status REDEEMED) may still run its session.
-    if (check.ok || (check.used && check.status === "REDEEMED")) {
-      savePhotoCodes(list.slice(1));
-      return { ok: true, code: rec.code };
+    const status = check.status || "";
+    const okFirst = check.ok;
+    // Already redeemed by this wallet (earlier session) or an interrupted first run.
+    const okAgain = check.used && (status === "REDEEMED" || (rec.redeemed && status === "USED"));
+    if (okFirst || okAgain) {
+      if (okFirst && check.ticket && check.ticket.package_id) rec.pkg = String(check.ticket.package_id);
+      const total = codeTotal(rec);
+      const left = codeLeft(rec);
+      rec.total = total;
+      rec.left = left - 1;
+      rec.redeemed = true;
+      const rest = list.filter((_, i) => i !== idx);
+      savePhotoCodes(rec.left > 0 ? [rec, ...rest] : rest);
+      return { ok: true, code: rec.code, info: { no: total - left + 1, total, left: rec.left } };
     }
-    if (check.used || check.missing) savePhotoCodes(list.slice(1));
+    if (check.used || check.missing) savePhotoCodes(list.filter((_, i) => i !== idx));
     return { ok: false, error: check.used ? "used" : check.missing ? "missing" : check.error };
+  }
+  // A code typed in by hand: first redeem decides how many sessions it holds.
+  function rememberTypedCode(code, ticket) {
+    const pkg = String((ticket && ticket.package_id) || "");
+    const total = sessionsForPkg(pkg);
+    const info = { no: 1, total, left: total - 1 };
+    if (info.left > 0) {
+      const list = photoCodes().filter((r) => String(r.code) !== String(code));
+      list.unshift({ code, pkg, total, left: info.left, redeemed: true, source: "typed", ts: Date.now() });
+      savePhotoCodes(list);
+    }
+    return info;
   }
   function creditPennies(n) {
     const PF = fever();
@@ -449,7 +508,9 @@
     };
   }
 
-  function startPaidSession(code) {
+  function startPaidSession(code, info) {
+    resetRecording();
+    sessionInfo = info || null;
     isTrySession = false;
     hasCommitted = true;
     totalPoses = 4;
@@ -468,6 +529,8 @@
   }
 
   function startTrySession() {
+    resetRecording();
+    sessionInfo = null;
     isTrySession = true;
     hasCommitted = false;
     totalPoses = 2;
@@ -552,11 +615,18 @@
         if (blob) form.append("freeze_" + (i + 1), blob, "freeze_" + (i + 1) + ".jpg");
       }
       if (lastCompositeUrl) form.append("strip", await dataUrlToBlob(lastCompositeUrl), "felix_strip.jpg");
+      // Booth contract: MotherPC builds collage / GIF / boomerang from
+      // assets/video/session_video.(mp4|webm).
+      stopRecording("pre-upload");
+      const vid = await waitForSessionVideo(7000);
+      if (vid && vid.blob && vid.blob.size > 1000) {
+        form.append("video", vid.blob, "session_video." + vid.ext);
+      }
       const up = await fetch(API_BASE + "/api/receive-assets", { method: "POST", body: form });
       const upData = await up.json().catch(() => ({}));
       if (!up.ok || !upData.ok) throw new Error("upload " + (upData.error || up.status));
       if (sessionCodeDisplay) sessionCodeDisplay.textContent = serverCode;
-      setBonusUi("ready", "Bonus pack ready. Your code is " + serverCode + ".");
+      setBonusUi("ready", "Bonus pack ready. Your code is " + serverCode + "." + sessionNoteSuffix());
     } catch (err) {
       console.warn("Felix bonus", err);
       setBonusUi("failed", "Couldn't make the bonus pack just now. Your strip is safe \u2014 tap Try again.");
@@ -570,6 +640,148 @@
       : "https://instapic.fun/bonus.html";
     if (bonusLink) bonusLink.href = url;
     if (bonusLinkDigital) bonusLinkDigital.href = url;
+  }
+
+  function sessionNoteSuffix() {
+    if (!sessionInfo || sessionInfo.total < 2) return "";
+    return " Your bonus page shows your latest session \u2014 save each strip.";
+  }
+  function renderSessionCount() {
+    const el = document.getElementById("sessionCountNote");
+    if (!el) return;
+    if (!sessionInfo || sessionInfo.total < 2) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent =
+      "Session " + sessionInfo.no + " of " + sessionInfo.total + " \u00b7 " +
+      (sessionInfo.left > 0
+        ? sessionInfo.left + (sessionInfo.left === 1 ? " session" : " sessions") + " left on this code"
+        : "last session on this code");
+  }
+
+  // ---- Session video (booth-style MediaRecorder) ----
+  function pickRecMime() {
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
+    for (const t of REC_MIME_CHAIN) {
+      try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (_) {}
+    }
+    return "";
+  }
+  function recExt(mime) {
+    return /mp4/i.test(mime || "") ? "mp4" : "webm";
+  }
+  function drawRecFrame() {
+    if (!rec || !rec.ctx) return;
+    const w = liveVideo.videoWidth;
+    const h = liveVideo.videoHeight;
+    if (!w || !h || liveVideo.readyState < 2) return;
+    const c = rec.canvas;
+    const ctx = rec.ctx;
+    ctx.save();
+    if (rec.portrait) {
+      // Mirrored like the freezes (capturePhoto).
+      ctx.translate(c.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(liveVideo, 0, 0, c.width, c.height);
+    } else {
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.scale(1, -1);
+      ctx.drawImage(liveVideo, -c.height / 2, -c.width / 2, c.height, c.width);
+    }
+    ctx.restore();
+  }
+  function startRecording(attempt) {
+    try {
+      if (isTrySession || !serverCode || rec || recPromise) return;
+      if (!window.MediaRecorder || !videoStream) return;
+      const w = liveVideo.videoWidth;
+      const h = liveVideo.videoHeight;
+      if (!w || !h) {
+        if ((attempt || 0) < 15) setTimeout(() => startRecording((attempt || 0) + 1), 200);
+        return;
+      }
+      const portrait = h >= w;
+      const scale = Math.min(1, REC_LONG_SIDE / Math.max(w, h));
+      const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+      const canvas = document.createElement("canvas");
+      // Upright portrait pixels, as the booth bakes them.
+      canvas.width = even((portrait ? w : h) * scale);
+      canvas.height = even((portrait ? h : w) * scale);
+      const ctx = canvas.getContext("2d", { alpha: false });
+      let stream = null;
+      if (canvas.captureStream) stream = canvas.captureStream(REC_FPS);
+      if (!stream) stream = videoStream; // fallback: raw camera, unmirrored
+      const mime = pickRecMime();
+      let recorder;
+      try {
+        recorder = new MediaRecorder(stream, Object.assign(mime ? { mimeType: mime } : {}, { videoBitsPerSecond: REC_BPS }));
+      } catch (_) {
+        recorder = new MediaRecorder(stream);
+      }
+      rec = { recorder, chunks: [], canvas, ctx, portrait, stream, drawTimer: null, stopTimer: null, mime };
+      const mine = rec;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawRecFrame();
+      rec.drawTimer = setInterval(drawRecFrame, Math.round(1000 / REC_FPS));
+      recPromise = new Promise((resolve) => {
+        recorder.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) mine.chunks.push(ev.data);
+        };
+        recorder.onstop = () => {
+          if (mine.drawTimer) clearInterval(mine.drawTimer);
+          const type = recorder.mimeType || mine.mime || (mine.chunks[0] && mine.chunks[0].type) || "video/webm";
+          const blob = new Blob(mine.chunks, { type });
+          try { if (mine.stream !== videoStream) mine.stream.getTracks().forEach((t) => t.stop()); } catch (_) {}
+          const out = blob.size > 0 ? { blob, mime: type, ext: recExt(type) } : null;
+          window.__felixSessionVideo = out ? { size: blob.size, mime: type, ext: out.ext } : { size: 0 };
+          if (rec === mine) rec = null;
+          resolve(out);
+        };
+        recorder.onerror = () => {
+          try { recorder.stop(); } catch (_) {}
+        };
+      });
+      recorder.start(1000);
+      rec.stopTimer = setTimeout(() => stopRecording("timeout"), REC_MAX_MS);
+      window.__felixSessionVideo = { recording: true, mime: recorder.mimeType || mime };
+    } catch (err) {
+      console.warn("Felix rec start failed", err);
+      rec = null;
+      recPromise = null;
+    }
+  }
+  function stopRecording(reason) {
+    if (!rec) return;
+    try {
+      if (rec.stopTimer) clearTimeout(rec.stopTimer);
+      rec.stopTimer = null;
+      if (rec.recorder.state !== "inactive") {
+        try { rec.recorder.requestData(); } catch (_) {}
+        rec.recorder.stop();
+      }
+    } catch (err) {
+      console.warn("Felix rec stop", reason, err);
+    }
+  }
+  function resetRecording() {
+    if (rec) {
+      const r = rec;
+      rec = null;
+      try { if (r.drawTimer) clearInterval(r.drawTimer); } catch (_) {}
+      try { if (r.stopTimer) clearTimeout(r.stopTimer); } catch (_) {}
+      try { if (r.recorder.state !== "inactive") r.recorder.stop(); } catch (_) {}
+    }
+    recPromise = null;
+    window.__felixSessionVideo = null;
+  }
+  function waitForSessionVideo(maxMs) {
+    if (!recPromise) return Promise.resolve(null);
+    return Promise.race([recPromise, new Promise((r) => setTimeout(() => r(null), maxMs || 7000))]);
   }
 
   function makeSilhouetteDataUrl(w, h) {
@@ -729,6 +941,7 @@
   }
 
   function stopCamera() {
+    stopRecording("camera-off");
     if (videoStream) {
       videoStream.getTracks().forEach((t) => t.stop());
       videoStream = null;
@@ -802,6 +1015,8 @@
   function startLiveAutoSnapTimer() {
     stopLiveAutoSnapTimer();
     if (cameraAvailable === false) return;
+    // Start the session video with the first pose (booth: LIVE up -> record).
+    if (cameraAvailable && capturedPhotos.filter(Boolean).length === 0) startRecording();
     liveAutoSnapTimer = setTimeout(() => {
       liveAutoSnapTimer = null;
       if (currentScreen === Screen.LIVE && !isCaptureInProgress && cameraAvailable) {
@@ -1219,6 +1434,7 @@
     }
     if (name === Screen.DIGITAL) {
       if (sessionCodeDisplay) sessionCodeDisplay.textContent = localSessionCode || "\u2026";
+      renderSessionCount();
       if (lastCompositeUrl && digitalStripPreview) digitalStripPreview.src = lastCompositeUrl;
       makeBonusPack();
       startDigitalIdleTimer();
@@ -1346,8 +1562,11 @@
       useCreditCode().then((r) => {
         refreshWalletUi();
         if (r.ok) {
-          setPayBanner("Approved code " + r.code + ".");
-          startPaidSession(r.code);
+          setPayBanner(
+            "Approved code " + r.code + "." +
+              (r.info && r.info.total > 1 ? " Session " + r.info.no + " of " + r.info.total + "." : "")
+          );
+          startPaidSession(r.code, r.info);
         } else if (r.error === "none") {
           setPayBanner("No photo sessions yet. Buy one at Aura's booth.");
         } else if (r.error === "offline") {
@@ -1380,9 +1599,9 @@
         cashinSubtitle.textContent =
           "Enter a 6-digit Instapic code from a $" +
           ({ p2: "7", p4: "13", p6: "18" }[pendingCashinPkg] || "?") +
-          " package. Grants " +
+          " package. Gives " +
           credits +
-          " booth credit(s). Prefer Square pay above for a new purchase.";
+          " Felix photo sessions.";
       }
       return showScreen(Screen.CASHIN);
     }
@@ -1396,12 +1615,28 @@
         return;
       }
       if (errEl) errEl.textContent = "Checking your code\u2026";
+      // Code already in this wallet with sessions left -> next session on it.
+      if (photoCodes().some((r) => String(r.code) === code && codeLeft(r) > 0)) {
+        useCreditCode(code).then((r) => {
+          refreshWalletUi();
+          if (r.ok) {
+            if (errEl) errEl.textContent = "";
+            setPayBanner("Code " + code + " approved. Session " + r.info.no + " of " + r.info.total + ".");
+            startPaidSession(code, r.info);
+          } else if (errEl) {
+            errEl.textContent = r.error === "offline" ? "Couldn't reach Instapic. Try again." : "That code has no sessions left.";
+          }
+        });
+        return;
+      }
       redeemCode(code)
         .then((r) => {
           if (r.ok) {
             if (errEl) errEl.textContent = "";
-            setPayBanner("Code " + code + " approved.");
-            startPaidSession(code);
+            const info = rememberTypedCode(code, r.ticket);
+            refreshWalletUi();
+            setPayBanner("Code " + code + " approved." + (info.total > 1 ? " " + info.total + " sessions on this code." : ""));
+            startPaidSession(code, info);
           } else if (errEl) {
             errEl.textContent = r.used
               ? "That code has already been used."

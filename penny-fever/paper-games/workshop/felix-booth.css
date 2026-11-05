@@ -203,3 +203,32 @@ html, body {
 #goBonusBtn.is-disabled{opacity:.55;pointer-events:none}
 .felix-bonus-status{min-height:1.2em;text-align:center}
 #retryBonusBtn[hidden],#goBonusBtn[hidden]{display:none!important}
+
+/* ---- rec-1: roomy "$7 · $13 · $18" package circle ---- */
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"]{
+  gap: 6px !important;
+  padding: 0 26px !important;
+  letter-spacing: 0.04em !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-price{
+  font-size: 1.9rem !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.02em !important;
+  position: relative; z-index: 2;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-label{
+  position: relative; z-index: 2;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #fff;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-desc{
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+  max-width: 180px;
+}
+.felix-session-count{font-weight:800;color:#7a2a5a;margin:.35em 0 0}
+.felix-session-count[hidden]{display:none!important}

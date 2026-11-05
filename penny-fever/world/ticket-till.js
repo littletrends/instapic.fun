@@ -9,9 +9,9 @@ const FALLBACK_PACKS = [
 // check), which returns a real 6-digit Instapic code. That code is the only
 // thing Felix's booth accepts as a paid session.
 const PHOTO_PACKS = [
-  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Classic: 2 photo strips.', amount_cents:700},
-  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Perfect for sharing: 4 photo strips.', amount_cents:1300},
-  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Full crew: 6 photo strips.', amount_cents:1800},
+  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'2 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:700},
+  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'4 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:1300},
+  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'6 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:1800},
 ];
 export const PHOTO_CODES_KEY = 'pf-photo-codes';
 export function photoCodes() {
@@ -369,7 +369,7 @@ async function chargePhotoPack(tokenResult) {
   addPhotoCode({code, pkg: pack.id, payment_id: data.payment_id || '', ts: Date.now()});
   apiRef?.stampKeepsake?.('ticket-roll', 'aura-till');
   try { localStorage.setItem('pf-last-till-payment', data.payment_id || ''); } catch {}
-  setStatus(`Approved. Photo session ready in Felix’s booth — your code is ${code}.`);
+  setStatus(`Approved. Photo sessions ready in Felix’s booth — your code is ${code}.`);
   window.dispatchEvent(new CustomEvent('pf-photo-code', {detail: {code}}));
 }
 

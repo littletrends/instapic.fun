@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=pass-2">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pass-2">
   <link rel="stylesheet" href="event_portal_patch.css?v=pass-2">
-  <link rel="stylesheet" href="felix-booth.css?v=photo-till-2">
+  <link rel="stylesheet" href="felix-booth.css?v=rec-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -94,8 +94,9 @@
 
             <div class="button-row payment-options payment-packages-row">
               <button class="btn btn-secondary package-btn" data-action="top-up-aura" type="button">
-                <span class="pkg-price">$7 · $13 · $18 photo packages</span>
-                <span class="pkg-desc">Buy at Aura's booth with Square · shows here once approved</span>
+                <span class="pkg-price">$7 · $13 · $18</span>
+                <span class="pkg-label">Photo packages</span>
+                <span class="pkg-desc">2 · 4 · 6 sessions<br>Buy at Aura's booth</span>
               </button>
             </div>
 
@@ -386,6 +387,7 @@
                 <div class="output-group digital-code-group">
                   <h2>Session code</h2>
                   <div id="sessionCodeDisplay" class="session-code-display"></div>
+                  <p id="sessionCountNote" class="subtitle small felix-session-count" hidden></p>
                   <p class="subtitle small digital-code-hint">
                     Also printed on the bottom of your strip next to the QR.
                   </p>
@@ -446,6 +448,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=photo-till-2"></script>
+  <script src="felix-booth.js?v=rec-1"></script>
 </body>
 </html>
