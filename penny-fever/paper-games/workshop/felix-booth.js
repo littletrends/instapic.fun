@@ -153,7 +153,15 @@
 
   function fitStage() {
     if (!boothStage) return;
-    const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+    // Portrait phones are taller than the 1080×1920 kiosk aspect, so min-fit
+    // left big black bars and bunched UI. Fill width, grow design height so
+    // after scale the stage covers the whole viewport (no empty margins).
+    const vw = Math.max(1, window.innerWidth || 390);
+    const vh = Math.max(1, window.innerHeight || 844);
+    const scale = vw / 1080;
+    const designH = Math.max(1920, Math.ceil(vh / scale));
+    boothStage.style.width = "1080px";
+    boothStage.style.height = designH + "px";
     boothStage.style.transform = "scale(" + scale + ")";
   }
   fitStage();
@@ -428,7 +436,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=speed-1").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=speed-2").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -440,7 +448,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=speed-1").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=speed-2").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }

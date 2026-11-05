@@ -5,7 +5,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: #f3e6d2;
 }
 #booth-frame {
   width: 100%;
@@ -14,7 +14,11 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #000;
+  /* Cream papercut around the booth (any sub-pixel gap stays on-theme). */
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(230,200,160,0.35), transparent 45%),
+    #f3e6d2;
 }
 #booth-stage {
   width: 1080px;
@@ -308,3 +312,130 @@ section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc{
 .background-card img{
   background: #2a1a22;
 }
+
+/* ---- speed-2: fill portrait phone, spread UI, bigger taps/strip ---- */
+#booth-stage {
+  /* height set by fitStage(); keep cream-friendly dark booth fill */
+  min-height: 1920px;
+}
+section.screen.active {
+  /* screens stretch with grown stage */
+  display: flex !important;
+}
+section.screen .screen-content {
+  box-sizing: border-box;
+  justify-content: space-between !important;
+  padding: 4.5vh 5.5vw 3.5vh !important;
+  gap: 1.2rem;
+}
+/* Attract / Awake — use the extra height, bigger logo + portal */
+section.screen[data-screen="ATTRACT"] .screen-content.attract-screen,
+section.screen[data-screen="AWAKE"] .screen-content.awake-screen {
+  justify-content: space-between !important;
+  gap: 2rem !important;
+}
+section.screen[data-screen="ATTRACT"] .brand-logo img {
+  width: min(720px, 78vw) !important;
+  max-width: none !important;
+}
+section.screen[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"] {
+  width: min(520px, 70vw) !important;
+  height: min(520px, 70vw) !important;
+  min-width: 420px !important;
+  min-height: 420px !important;
+  font-size: 2.6rem !important;
+}
+section.screen[data-screen="AWAKE"] .awake-logo {
+  width: min(640px, 70vw) !important;
+}
+section.screen[data-screen="AWAKE"] .awake-portal .btn-big {
+  min-width: min(620px, 80vw) !important;
+  min-height: 140px !important;
+  font-size: 2.6rem !important;
+  padding: 1.6rem 2.4rem !important;
+}
+/* Payment — roomy pills + package cards fill width */
+section.screen[data-screen="PAYMENT"] .title-main {
+  margin-top: 1vh !important;
+  margin-bottom: 0.6rem !important;
+  font-size: 3.6rem !important;
+}
+section.screen[data-screen="PAYMENT"] .subtitle {
+  margin-bottom: 1rem !important;
+  font-size: 1.7rem !important;
+  max-width: 92% !important;
+}
+section.screen[data-screen="PAYMENT"] .payment-pills-row {
+  gap: 18px !important;
+  width: min(920px, 94%) !important;
+}
+section.screen[data-screen="PAYMENT"] .payment-pills-row .btn {
+  min-height: 110px !important;
+  font-size: 1.55rem !important;
+  padding: 1.1rem 1.6rem !important;
+  flex: 1 1 260px;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card {
+  min-height: 148px !important;
+  padding: 22px 26px !important;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-price {
+  font-size: 3rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-label {
+  font-size: 1.35rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc {
+  font-size: 1.2rem !important;
+}
+.felix-wallet {
+  margin: 0.4rem auto 0.8rem !important;
+  font-size: 1.35rem;
+  padding: 0.85rem 1.3rem !important;
+}
+/* Backgrounds — bigger thumb cards */
+section.screen[data-screen="BACKGROUNDS"] .background-card {
+  width: 280px !important;
+  min-width: 280px !important;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-card img {
+  width: 280px !important;
+  height: 414px !important;
+  object-fit: cover;
+  border-radius: 18px;
+}
+section.screen[data-screen="BACKGROUNDS"] .btn[data-action="backgrounds-next"] {
+  min-width: min(640px, 86vw) !important;
+  min-height: 120px !important;
+  font-size: 2.2rem !important;
+}
+/* LIVE / REVIEW / PRINT — bigger strip + actions */
+#finalStripPreview,
+#digitalStripPreview,
+.final-strip-preview,
+.digital-strip-preview,
+img#finalStripPreview,
+img#digitalStripPreview {
+  max-height: min(62vh, 1200px) !important;
+  width: auto !important;
+  max-width: 92% !important;
+}
+section.screen[data-screen="REVIEW"] .btn,
+section.screen[data-screen="PRINT"] .btn,
+section.screen[data-screen="DIGITAL"] .btn {
+  min-height: 110px !important;
+  font-size: 1.7rem !important;
+  padding: 1.1rem 1.8rem !important;
+}
+section.screen[data-screen="LIVE"] #enableCameraBtn,
+section.screen[data-screen="LIVE"] .no-camera-file-label {
+  min-width: min(700px, 88vw) !important;
+  min-height: 130px !important;
+  font-size: 2.1rem !important;
+}
+.template-frame,
+#templateFrame {
+  transform: scale(1.08);
+  transform-origin: center top;
+}
+
