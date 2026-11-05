@@ -67,6 +67,9 @@
     backgrounds.push(bg);
     const pick = () => {
       currentBackground = bg;
+      try {
+        sessionStorage.setItem("felix_bg_id", bg.id);
+      } catch (_) {}
       document.querySelectorAll(".background-card").forEach((el) => {
         el.classList.toggle("selected", el === card);
       });
@@ -79,21 +82,22 @@
     const grid = document.getElementById("backgroundGrid");
     let ids = [];
     try {
-      const res = await fetch("backgrounds.json?v=bg-sets-1");
+      const res = await fetch("backgrounds.json?v=bg-sets-2");
       ids = await res.json();
     } catch (_) {
       ids = ["bg_11", "bg_22"];
     }
+    ids = (Array.isArray(ids) ? ids : []).filter((id) => /^bg_\d+$/.test(String(id)));
+    if (!ids.length) ids = ["bg_11", "bg_22"];
     grid.replaceChildren();
     ids.forEach((id, index) => {
-      const num = String(id).replace(/^bg_/, "");
       const card = document.createElement("div");
       card.className = "background-card" + (index === 0 ? " selected" : "");
       card.dataset.backgroundId = id;
       card.dataset.poses = "4";
       card.innerHTML =
-        `<img src="backgrounds/${id}.jpg" alt="${id}">` +
-        `<div class="bg-label">${id.replace("_", " ").toUpperCase()} · Set ${num}</div>`;
+        `<img src="backgrounds/${id}.jpg" alt="${id.toUpperCase()}">` +
+        `<div class="bg-label">${id.toUpperCase()} – 4 poses</div>`;
       grid.append(card);
       bindBackgroundCard(card);
     });
