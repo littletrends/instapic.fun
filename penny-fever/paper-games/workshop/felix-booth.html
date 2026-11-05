@@ -2,90 +2,145 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
-  <title>Felix · Instapic Cyber Booth · Penny Fever workshop</title>
-  <link rel="stylesheet" href="felix-booth.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Felix · Instapic Photo Booth</title>
+  <link rel="stylesheet" href="flow-booth.css?v=booth-flow-1">
+  <link rel="stylesheet" href="felix-booth.css?v=booth-flow-1">
 </head>
-<body>
-  <p class="dev-ribbon">Enclosed development · Felix cyber booth · not the Darwin machines</p>
-  <header class="top">
-    <a href="../index.html">← Paper worlds workshop</a>
-    <span class="eyebrow">Felix · Instapic</span>
-    <a href="../../index.html?style=paper&amp;rail=paper#alley">Alley</a>
-  </header>
+<body class="felix-cyber">
+  <p class="dev-ribbon">Felix · Penny Fever · Instapic booth copy · game only</p>
+  <div id="turn-phone" hidden>
+    <p>Hold your phone upright — this booth is portrait, like the real machine.</p>
+  </div>
 
-  <main class="kiosk" id="kiosk">
-    <section class="screen active" data-screen="attract">
-      <img class="logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
-      <p class="sparkle">✨ Are you ready to sparkle?</p>
-      <button type="button" class="portal" data-go="payment">TAP TO START</button>
-    </section>
+  <div id="video-layer" class="hidden">
+    <video id="liveVideo" autoplay muted playsinline></video>
+    <canvas id="captureCanvas"></canvas>
+  </div>
 
-    <section class="screen" data-screen="payment">
-      <img class="logo small" src="../../../assets/img/instapic_logo.png" alt="">
-      <h1>Choose how to play</h1>
-      <p class="sub">Game-only. Codes will not print on a real booth.</p>
-      <button type="button" class="btn primary" data-go="try-info">TRY IT FIRST</button>
-      <button type="button" class="btn" data-go="pay-note">PAY $3 · DIGITAL STRIP</button>
-      <button type="button" class="btn ghost" data-go="attract">EXIT TO START</button>
-      <p class="note" id="pay-note" hidden>Enclosed development. $3 Square (or 3 tickets / 6 pennies) is next. Full 4 photos + 2 retakes + real bonus will land here. Try is ready now.</p>
-    </section>
-
-    <section class="screen" data-screen="try-info">
-      <h1>Try It Mode</h1>
-      <p class="sub">Two sample selfies. No printer. Then the website bonus preview, watermarked, in this same cabinet.</p>
-      <button type="button" class="btn primary" data-go="live">START TRY MODE</button>
-      <button type="button" class="btn ghost" data-go="payment">BACK</button>
-    </section>
-
-    <section class="screen live-screen" data-screen="live">
-      <video id="live-video" autoplay muted playsinline></video>
-      <canvas id="capture-canvas" hidden></canvas>
-      <div class="live-hud">
-        <p id="live-status">Look at the camera</p>
-        <p id="live-count" hidden></p>
-        <button type="button" class="btn primary" id="snap-btn">SNAP</button>
-        <button type="button" class="btn ghost" data-go="payment">CANCEL</button>
+  <div id="ui-layer">
+    <section class="screen active" data-screen="ATTRACT">
+      <div class="screen-content attract-screen">
+        <div class="brand-logo">
+          <img src="../../../assets/img/instapic_logo.png" alt="Instapic">
+        </div>
+        <p class="pf-kicker">Felix’s tent · Penny Fever</p>
+        <button class="portal-button" type="button" data-action="wake-mirror">TAP TO START</button>
       </div>
     </section>
 
-    <section class="screen" data-screen="print">
-      <h1>Your sample strip</h1>
-      <p class="sub">Same moment as the booth preview. Next screen is the website bonus, not a download tray.</p>
-      <img id="strip-preview" alt="Sample photo strip">
-      <button type="button" class="btn primary" data-go="bonus">See your bonus sample →</button>
+    <section class="screen" data-screen="AWAKE">
+      <div class="screen-content awake-screen">
+        <div class="awake-kicker">Welcome to</div>
+        <img class="awake-logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+        <div class="awake-sparkle">✨ Are you ready to sparkle?</div>
+        <button class="btn btn-primary btn-big" type="button" data-action="enter-mirror">Touch to Start</button>
+      </div>
     </section>
 
-    <section class="screen bonus-screen" data-screen="bonus">
-      <div class="bonus-brand">
-        <img class="logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+    <section class="screen" data-screen="PAYMENT">
+      <div class="screen-content">
+        <h1 class="title-main">Choose an option</h1>
+        <p class="subtitle">Try it first, or pay $3 for a digital strip and full bonus. Game-only — will not print on a Darwin booth.</p>
+        <div class="button-row payment-options">
+          <button class="btn btn-secondary" type="button" data-action="enter-try-info">TRY IT FIRST</button>
+          <button class="btn btn-primary" type="button" data-action="pay-note">PAY $3 · DIGITAL STRIP</button>
+        </div>
+        <p class="note" id="pay-note" hidden>Enclosed development. Square $3 (or 3 tickets / 6 pennies) is next. 4 photos, 2 retakes, real bonus. Try is ready now.</p>
+        <div class="button-row">
+          <button class="btn btn-ghost" type="button" data-action="payment-exit">EXIT TO START</button>
+        </div>
       </div>
-      <div class="bonus-head">
-        <h1>Bonus sample</h1>
-        <p>Website bonus preview. Watermarked Try. Penny Fever stays on this screen.</p>
+    </section>
+
+    <section class="screen" data-screen="TRY_INFO">
+      <div class="screen-content">
+        <h1 class="title-main">Try It Mode</h1>
+        <p class="subtitle">Same booth flow. 2 sample photos, no printer. Then the website bonus preview, watermarked, in this tent.</p>
+        <div class="button-row">
+          <button class="btn btn-primary" type="button" data-action="enter-try-mode">START TRY MODE</button>
+          <button class="btn btn-secondary" type="button" data-action="try-info-back">BACK</button>
+        </div>
       </div>
-      <div class="bonus-grid">
-        <article class="card">
-          <div class="card-head">Photo strip</div>
-          <div class="media-frame" id="bonus-strip-frame"></div>
-        </article>
-        <article class="card">
-          <div class="card-head">Collage · 5 seconds each</div>
-          <div class="media-frame">
-            <canvas id="collage-canvas" width="540" height="720" aria-label="Watermarked bonus collage"></canvas>
+    </section>
+
+    <section class="screen" data-screen="BACKGROUNDS">
+      <div class="screen-content">
+        <h1 class="title-main">Choose a Background Template</h1>
+        <p class="subtitle">Select your photo strip design.</p>
+        <div class="background-grid" id="backgroundGrid">
+          <div class="background-card selected" data-background-id="bg_11" data-poses="2">
+            <img src="backgrounds/bg_11.jpg" alt="Instapic strip">
+            <div class="bg-label">Instapic booth · 2 sample poses</div>
           </div>
-        </article>
+          <div class="background-card" data-background-id="bg_1" data-poses="2">
+            <img src="backgrounds/bg_1.jpg" alt="Classic strip">
+            <div class="bg-label">Classic booth · 2 sample poses</div>
+          </div>
+          <div class="background-card" data-background-id="felix-alley" data-poses="2">
+            <img src="backgrounds/felix-alley.webp" alt="Felix alley">
+            <div class="bg-label">Felix’s tent · Penny Fever</div>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary" type="button" data-action="backgrounds-next">CONTINUE</button>
+        </div>
       </div>
-      <p class="status">SAMPLE · 10 seconds · instapic.fun watermark. Full bonus after $3.</p>
-      <div class="actions">
-        <button type="button" class="btn primary" data-go="pay-note">Pay $3 to play</button>
-        <button type="button" class="btn ghost" data-go="payment">Back to pay</button>
-        <a class="btn ghost" href="../index.html">Leave booth</a>
-      </div>
-      <p class="note" id="bonus-pay-note" hidden>Enclosed development. $3 digital pack, 4 photos, 2 retakes, real bonus, game-only code. Not wired to Square yet.</p>
     </section>
-  </main>
+
+    <section class="screen" data-screen="LIVE">
+      <div class="screen-content live-screen">
+        <div id="liveOverlayTop" class="overlay-top hidden">
+          <h1 class="title-main">Your session has started</h1>
+          <p class="subtitle"></p>
+        </div>
+        <div id="liveCueOverlay" class="live-cue-overlay hidden" aria-live="assertive">
+          <div id="liveCueText" class="live-cue-text"></div>
+        </div>
+        <div id="lookUpOverlay" class="lookup-overlay hidden" aria-live="assertive">
+          <div class="lookup-arrow" aria-hidden="true">▲</div>
+          <div class="lookup-label">Look at the camera</div>
+          <div class="lookup-sub">Hold the phone upright · Felix is watching</div>
+        </div>
+        <div id="countdownOverlay" class="countdown-overlay hidden">
+          <span id="countdownNumber">3</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="PRINT">
+      <div class="screen-content">
+        <h1 class="title-main">Your sample strip</h1>
+        <p class="subtitle">Same preview as the booth. Next is the website bonus, not a download tray.</p>
+        <div class="background-preview-frame">
+          <img id="finalStripPreview" alt="Photo strip preview">
+        </div>
+        <div class="button-row">
+          <button class="btn btn-primary btn-big" type="button" data-action="see-bonus">See your bonus sample →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="BONUS">
+      <div class="screen-content bonus-copy">
+        <img class="awake-logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+        <h1 class="title-main">Bonus sample</h1>
+        <p class="subtitle">Website bonus preview. Watermarked Try. Penny Fever stays on this screen.</p>
+        <div class="bonus-pair">
+          <img id="bonusStrip" alt="Sample strip">
+          <canvas id="collageCanvas" width="540" height="720" aria-label="10 second collage"></canvas>
+        </div>
+        <p class="subtitle">SAMPLE · 5 seconds each · 10 second collage</p>
+        <div class="button-row">
+          <button class="btn btn-primary" type="button" data-action="pay-note">Pay $3 to play</button>
+          <button class="btn btn-secondary" type="button" data-action="try-info-back">Back to pay</button>
+        </div>
+        <p class="note" id="bonus-pay-note" hidden>Enclosed development. $3 digital pack, 4 photos, 2 retakes, real bonus, game-only code. Not wired to Square yet.</p>
+      </div>
+    </section>
+  </div>
   <script src="felix-booth.js"></script>
 </body>
 </html>

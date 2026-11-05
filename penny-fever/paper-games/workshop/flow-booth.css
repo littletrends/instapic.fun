@@ -1,0 +1,817 @@
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Arial", sans-serif;
+  background: #000;
+  color: #fff;
+  touch-action: manipulation;
+}
+
+/* =========================================================
+   SCREEN STRUCTURE
+========================================================= */
+
+.screen {
+  display: none;
+  position: absolute;
+  inset: 0;
+}
+
+.screen.active {
+  display: flex;
+}
+
+.screen-content {
+  width: 100%;
+  height: 100%;
+  padding: 10vh 6vw 4vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
+}
+
+/* =========================================================
+   TYPOGRAPHY
+========================================================= */
+
+.title-main {
+  font-size: 5.2rem;
+  font-weight: 700;
+  margin-top: 4vh;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.subtitle {
+  font-size: 2.2rem;
+  opacity: 0.9;
+  margin-bottom: 3rem;
+  max-width: 70rem;
+}
+
+/* =========================================================
+   PREMIUM GLOW BUTTONS
+========================================================= */
+
+.btn {
+  font-size: 2.4rem;
+  padding: 1.8rem 4.2rem;
+  border-radius: 40px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(6px);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.btn-big {
+  font-size: 2.8rem;
+  padding: 2.1rem 5rem;
+}
+/* Round portal button (for main actions) */
+.btn-portal {
+  width: 22rem;
+  height: 22rem;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  background: radial-gradient(circle at top, #ff5fa2, #ffbf5f 55%, #5c2cff);
+  box-shadow:
+    0 0 30px rgba(255, 95, 162, 0.8),
+    0 0 60px rgba(92, 44, 255, 0.6);
+  color: #120f1a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  font-size: 2.2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 3rem;
+  transition: all 0.25s ease;
+}
+
+.btn-portal span {
+  display: block;
+  line-height: 1.25;
+}
+
+.btn-portal:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow:
+    0 0 40px rgba(255, 95, 162, 1),
+    0 0 80px rgba(92, 44, 255, 0.8);
+}
+
+.btn-primary {
+  border-color: rgba(0, 140, 255, 0.8);
+  box-shadow: 0 0 18px rgba(0, 140, 255, 0.6);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 32px rgba(0, 140, 255, 1);
+}
+
+.btn-secondary {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-ghost:hover {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.4rem;
+  margin-top: 3rem;
+  justify-content: center;
+}
+
+/* payment row helper */
+.payment-options {
+  margin-top: 2rem;
+}
+
+/* error text under inputs */
+.error-msg {
+  color: #ff8080;
+  font-size: 1.6rem;
+  min-height: 2rem;
+  margin-top: 0.5rem;
+}
+
+/* =========================================================
+   LIVE CAMERA SCREEN
+========================================================= */
+
+.screen-live {
+  position: relative;
+}
+
+.screen-live .screen-inner {
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* The main camera/mirror window */
+.live-main {
+  position: relative;
+  width: 100%;
+  height: 70vh;         /* ORIGINAL v5 value */
+  max-height: 900px;    /* ORIGINAL v5 value */
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+  background: #111;
+}
+
+/* Video layer for live + freeze frame */
+#video-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Live webcam feed inside portrait frame (original v5, NO MIRROR) */
+#liveVideo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vh;              /* rotated landscape feed filling portrait window */
+  height: auto;
+  object-fit: cover;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  transform-origin: center center;
+}
+
+/* Canvas never visible */
+#captureCanvas {
+  display: none;
+}
+
+/* LIVE overlays layout */
+.screen[data-screen="LIVE"] .screen-content.live-screen {
+  padding: 0;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+}
+
+/* top text */
+.overlay-top {
+  position: fixed;
+  top: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+  z-index: 10;
+}
+
+/* TAKE PHOTO button – fixed at ~65% of viewport height */
+.overlay-bottom {
+  position: fixed;
+  top: 65vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.overlay-bottom .btn {
+  pointer-events: auto;
+}
+
+/* ARE YOU READY + 3-2-1: TOP centre (same zone as look-up arrow)
+   so eyes stay up at the camera, not pulled back to mid-screen */
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2.5vh;
+  font-size: clamp(7rem, 18vw, 12rem);
+  font-weight: 900;
+  text-shadow: 0 0 25px rgba(0, 0, 0, 0.9);
+  z-index: 22;
+  pointer-events: none;
+  text-align: center;
+  line-height: 1;
+  color: #fff;
+  animation: liveCueIn 0.28s ease-out;
+}
+
+.countdown-overlay.is-ready {
+  font-size: clamp(2.4rem, 6.5vw, 4.5rem);
+  letter-spacing: 0.06em;
+  max-width: 92vw;
+  white-space: normal;
+  padding-top: 4vh;
+}
+
+/* Staged text cues (session started, etc.) */
+.live-cue-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 22;
+  pointer-events: none;
+  padding: 2rem;
+}
+
+.live-cue-overlay.hidden,
+.lookup-overlay.hidden {
+  display: none !important;
+}
+
+.live-cue-text {
+  font-size: clamp(2.4rem, 6.5vw, 4.8rem);
+  font-weight: 800;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 28px rgba(0, 0, 0, 0.95), 0 4px 18px rgba(0, 0, 0, 0.8);
+  max-width: 88vw;
+  line-height: 1.15;
+  animation: liveCueIn 0.35s ease-out;
+}
+
+/* Arrow at top-centre — camera sits above the monitor */
+.lookup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 22;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.2vh;
+  animation: liveCueIn 0.35s ease-out;
+}
+
+.lookup-arrow {
+  font-size: clamp(4rem, 12vw, 8rem);
+  line-height: 1;
+  color: #ffe566;
+  text-shadow:
+    0 0 24px rgba(255, 220, 80, 0.95),
+    0 0 40px rgba(0, 0, 0, 0.9);
+  animation: lookupBounce 0.85s ease-in-out infinite;
+}
+
+.lookup-label {
+  margin-top: 0.4rem;
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 22px rgba(0, 0, 0, 0.95);
+}
+
+.lookup-sub {
+  margin-top: 0.25rem;
+  font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 0 14px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes liveCueIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes lookupBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+/* Brief camera flash when snap fires on "1" */
+.live-snap-flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  z-index: 30;
+  pointer-events: none;
+  animation: liveSnapFlash 0.28s ease-out;
+}
+
+@keyframes liveSnapFlash {
+  0%   { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+/* =========================================================
+   BACKGROUND SELECTION
+========================================================= */
+
+.background-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 2rem;
+  padding: 1rem;
+  width: 50%;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.background-card {
+  background: rgba(17, 17, 17, 0.9);
+  border-radius: 18px;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: 0.25s ease;
+  border: 3px solid transparent;
+}
+
+.background-card img {
+  width: 100%;
+  border-radius: 14px;
+}
+
+.background-card.selected {
+  border: 3px solid #ffcc00;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+}
+
+.bg-label {
+  margin-top: 0.4rem;
+  font-size: 1.6rem;
+}
+
+/* =========================================================
+   REVIEW SCREEN
+========================================================= */
+
+.review-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 5rem;
+  width: 100%;
+  justify-content: center;
+  margin-top: 6vh;
+}
+
+.template-preview {
+  position: relative;
+  width: 38%;
+  max-width: 600px;
+}
+
+.template-bg {
+  width: 100%;
+  border-radius: 16px;
+  border: 4px solid white;
+}
+
+.template-slot {
+  position: absolute;
+  overflow: hidden;
+}
+
+.template-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* original small horizontal-ish slots (we'll refine later) */
+.slot-1 {
+  top: 10%;
+  left: 50%;
+  width: 35%;
+  height: 18%;
+  transform: translateX(-50%);
+}
+.slot-2 {
+  top: 32%;
+  left: 50%;
+  width: 35%;
+  height: 18%;
+  transform: translateX(-50%);
+}
+.slot-3 {
+  top: 54%;
+  left: 50%;
+  width: 35%;
+  height: 18%;
+  transform: translateX(-50%);
+}
+.slot-4 {
+  top: 76%;
+  left: 50%;
+  width: 35%;
+  height: 18%;
+  transform: translateX(-50%);
+}
+.thumbs-title {
+  margin-bottom: 1.2rem;
+  font-size: 1.1rem;
+  color: #ffffffcc;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.selected-photo-panel {
+  width: 38%;
+  max-width: 600px;
+}
+
+.photo-preview-wrapper {
+  width: 100%;
+  border-radius: 16px;
+  border: 4px solid white;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.photo-preview {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* =========================================================
+   PRINT & DIGITAL
+========================================================= */
+
+.background-preview-frame img,
+#digitalStripPreview {
+  width: 60%;
+  max-width: 580px;
+  border-radius: 16px;
+  border: 4px solid white;
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.6);
+}
+
+.output-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 5rem;
+  width: 100%;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 5vh;
+}
+
+.output-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.output-group h2 {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.output-group input {
+  font-size: 2rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  width: 24rem;
+}
+
+.qr-placeholder {
+  margin-top: 1rem;
+  min-width: 10rem;
+  min-height: 10rem;
+  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  opacity: 0.8;
+}
+/* ----------------------------------------------------------
+   PREPAID TOUCH KEYPAD
+   ---------------------------------------------------------- */
+
+.keypad-wrapper {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.keypad-label {
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 100px));
+  grid-auto-rows: 60px;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.keypad-key {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: radial-gradient(circle at 0% 0%, #2e2f40, #151524);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 35px rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out,
+              background 0.12s ease-out;
+}
+
+.keypad-key:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 6px 15px rgba(0, 0, 0, 0.7);
+}
+
+.keypad-key-wide {
+  grid-column: span 2;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.keypad-key-ok {
+  background: linear-gradient(135deg, #ffb347, #ff5f6d);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* =========================================================
+   FORM INPUT WRAPPERS
+========================================================= */
+
+.code-input-wrapper {
+  margin: 2rem 0 1rem;
+}
+
+.code-input-wrapper input {
+  font-size: 3rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: 12px;
+  border: 2px solid #ccc;
+  width: 20rem;
+  text-align: center;
+}
+
+/* =========================================================
+   ADMIN / HEALTH
+========================================================= */
+
+.health-panel {
+  background: #111;
+  width: 70%;
+  height: 50vh;
+  border-radius: 20px;
+  padding: 2rem;
+  overflow-y: auto;
+  border: 3px solid #555;
+  font-size: 1.4rem;
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* invisible hotspot for admin */
+.admin-hotspot {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  width: 160px;
+  height: 160px;
+  transform: translateX(-50%);
+  background: transparent;
+  border: none;
+  z-index: 9999;
+}
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.error-banner {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #d9534f;
+  padding: 1.2rem;
+  text-align: center;
+  font-size: 1.8rem;
+  color: #fff;
+  z-index: 2000;
+}
+.session-code-display {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 0.5em 0.75em;
+  border-radius: 0.75em;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: rgba(0, 0, 0, 0.28);
+  text-align: center;
+  margin: 0 0 0.5em;
+}
+
+.digital-code-hint {
+  max-width: 28rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.qr-placeholder.has-qr {
+  flex-direction: column;
+  gap: 0.5rem;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.75rem;
+  min-width: 12rem;
+  min-height: 12rem;
+}
+
+.qr-image-instapic,
+.instapic-digital-qr {
+  width: min(220px, 42vw);
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.qr-hint-instapic {
+  font-size: 0.9rem;
+  color: #333;
+  text-align: center;
+  max-width: 14rem;
+  line-height: 1.25;
+}
+.brand-logo {
+  margin-bottom: 3rem;
+}
+
+.brand-logo img {
+  max-width: 40rem;
+  width: 40vw;
+  height: auto;
+}
+/* --------------------------------------------------
+ * REVIEW SCREEN – remove template art + add glow
+ * -------------------------------------------------- */
+
+/* Hide the background JPG inside the strip preview */
+.review-screen .template-bg {
+  display: none;
+}
+
+/* Give each small photo a soft card edge */
+.review-screen .template-slot img {
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Glow behind the big selected photo as well */
+.review-screen .photo-preview-wrapper {
+  padding: 1.5rem;
+  border-radius: 24px;
+  background: radial-gradient(circle at top left,
+    #ff8a80 0%,
+    #ff5f6d 25%,
+    #ffb347 55%,
+    #2b2d42 100%
+  );
+  box-shadow: 0 0 40px rgba(255, 120, 180, 0.55);
+}
+
+.review-screen .photo-preview {
+  border-radius: 18px;
+}
+/* -----------------------------------------------
+ * MINI PHOTO THUMBNAILS – soft glow behind slots
+ * ----------------------------------------------- */
+
+.review-screen .template-slot {
+  /* keep whatever positioning the core gave it */
+  border-radius: 16px;
+  overflow: visible; /* let the glow leak out a bit */
+}
+
+/* Glow layer sitting BEHIND the slot, not changing layout */
+.review-screen .template-slot::before {
+  content: "";
+  position: absolute;
+  top: -0.4rem;
+  left: -0.4rem;
+  right: -0.4rem;
+  bottom: -0.4rem;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left,
+    #ff8a80 0%,
+    #ff5f6d 25%,
+    #ffb347 55%,
+    #2b2d42 100%
+  );
+  opacity: 0.85;
+  filter: blur(6px);
+  z-index: -1;
+  pointer-events: none; /* important: never block taps */
+}
+
+/* Slight rounding + shadow on the actual image */
+.review-screen .template-slot img {
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
