@@ -1,0 +1,1566 @@
+/* =========================================================
+   INSTAPIC UI FONT (SAFE TEST)
+   ========================================================= */
+
+/* ----------------------------------------------------------
+   Instapic Magic Mirror – Branding Layer  FINAL CLEAN)
+   - Base site-like buttons remain (pill)
+   - Portals are applied ONLY to specific screens + actions
+   - No global overrides that can leak across screens
+   ---------------------------------------------------------- */
+
+:root{
+  --instapic-ui-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --instapic-title-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --instapic-subtitle-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --instapic-pink: #ff5fa2;
+  --instapic-pink-deep: #ff2f6c;
+  --instapic-gold: #ffbf5f;
+  --instapic-charcoal: #171320;
+  --instapic-cream: #fff9f5;
+
+  /* Portal palette (LittleTrends-ish) */
+  --portal-hi: rgba(255,255,255,0.95);
+  --portal-pink: rgba(255,180,230,0.90);
+  --portal-magenta: rgba(255,110,170,0.85);
+  --portal-orange: rgba(255,120,60,0.85);
+  --portal-violet: rgba(140,0,90,0.90);
+  --portal-deep: rgba(10,0,14,0.98);
+
+  /* Shared portal text */
+  --portal-letter: 0.12em;
+}
+
+/* Background – soft night gradient */
+body{
+  background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
+  color: #f4f4f8;
+}
+
+/* Titles */
+.title-main{
+  font-family: var(--instapic-title-font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 1.6rem;
+  color: var(--instapic-cream);
+}
+
+.subtitle{
+  font-family: var(--instapic-subtitle-font);
+  opacity: 0.85;
+}
+
+.title-main,
+.subtitle{
+  font-family: inherit;
+}
+.title-main{
+  font-family: var(--instapic-title-font) !important;
+}
+.subtitle{
+  font-family: var(--instapic-subtitle-font) !important;
+}
+body,
+button,
+h1, h2, h3,
+.title-sub,
+.btn,
+button[data-action]{
+  font-family: var(--instapic-ui-font) !important;
+}
+/* =========================================
+   PORTAL BUTTON TEXT LEGIBILITY BOOST
+   (safe: coloured portals only)
+   ========================================= */
+
+button.portal,
+button.portal * {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+/* ----------------------------------------------------------
+   Base Buttons (site-like pills) – keep these for anything NOT portal’d
+   ---------------------------------------------------------- */
+
+.btn{
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 10px 20px;
+  font-size: 1.0rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.btn.btn-primary{
+  background: linear-gradient(135deg, var(--instapic-pink), var(--instapic-pink-deep), var(--instapic-gold));
+  color: #100f14;
+  font-weight: 600;
+  box-shadow:
+    0 0 16px rgba(255, 95, 162, 0.4),
+    0 10px 24px rgba(0, 0, 0, 0.8);
+}
+
+.btn.btn-primary:hover{
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 22px rgba(255, 95, 162, 0.7),
+    0 14px 32px rgba(0, 0, 0, 0.9);
+}
+
+.btn.btn-secondary{
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #f4f4f8;
+  font-weight: 500;
+}
+
+.btn.btn-secondary:hover{
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+/* Optional big pill variant (kept for non-portal big CTAs) */
+.btn.btn-big{
+  padding: 18px 48px;
+  font-size: 1.6rem;
+}
+
+/* ----------------------------------------------------------
+   Logo block
+   ---------------------------------------------------------- */
+
+.brand-logo{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.brand-logo img{
+  max-width: 420px;
+  width: 70%;
+  height: auto;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6));
+}
+
+.screen[data-screen="THANKYOU"] .brand-logo img{
+  max-width: 360px;
+}
+
+/* ----------------------------------------------------------
+   PORTAL SYSTEM (shared)
+   ---------------------------------------------------------- */
+
+@keyframes instapicPortalSpin{
+  from{ transform: translate(-50%, -50%) rotate(0deg); }
+  to  { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+/* Pulse for LIVE is scale only (positioning handled by margin-top) */
+@keyframes instapicPortalPulseScale{
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* Core portal look (applied via very specific selectors below) */
+section.screen button[data-action]{
+  /* nothing global here on purpose */
+}
+
+/* Common portal base (selector groups below share this via duplication on purpose for safety) */
+section.screen[data-screen="ATTRACT"] button[data-action="wake-mirror"],
+section.screen[data-screen="AWAKE"]  button[data-action="enter-mirror"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-paynow"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"],
+section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"],
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"],
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-exit"],
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-paid"],
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-paid"],
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-back"],
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-back"],
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-exit"],
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-exit"],
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-continue"],
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-back"],
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-exit"],
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-back"],
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"],
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"],
+section.screen[data-screen="PRINT"]  button[data-action="print-now"],
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"]{
+
+  width: var(--portal-size, 220px) !important;
+  height: var(--portal-size, 220px) !important;
+  min-width: var(--portal-size, 220px) !important;
+  min-height: var(--portal-size, 220px) !important;
+  border-radius: 50% !important;
+
+  padding: 0 !important;
+  border: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+
+  /* text safety (reduces overflow) */
+  white-space: normal !important;
+  word-break: break-word !important;
+  line-height: 1.12 !important;
+  padding: 1.0rem !important;
+
+  color: #fff !important;
+  font-size: var(--portal-font, 1.05rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: var(--portal-letter) !important;
+  text-transform: uppercase !important;
+
+  background:
+    radial-gradient(circle at 30% 28%,
+      var(--portal-hi) 0%,
+      var(--portal-pink) 14%,
+      var(--portal-magenta) 28%,
+      var(--portal-orange) 48%,
+      var(--portal-violet) 72%,
+      var(--portal-deep) 100%
+    ) !important;
+
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.80),
+    0 0 70px rgba(255,110,170,0.45),
+    0 0 120px rgba(255,140,70,0.28),
+    inset 0 0 28px rgba(255,255,255,0.50) !important;
+
+  position: relative !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+
+  animation: instapicPortalPulse 3.9s ease-in-out infinite;
+}
+
+/* Swirl ring */
+section.screen[data-screen="ATTRACT"] button[data-action="wake-mirror"]::before,
+section.screen[data-screen="AWAKE"]  button[data-action="enter-mirror"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-paynow"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"]::before,
+section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"]::before,
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"]::before,
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-exit"]::before,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-paid"]::before,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-paid"]::before,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-back"]::before,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-back"]::before,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-exit"]::before,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-exit"]::before,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-continue"]::before,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-back"]::before,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-exit"]::before,
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-back"]::before,
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"]::before,
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"]::before,
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"]::before,
+section.screen[data-screen="PRINT"]  button[data-action="print-now"]::before,
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"]::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--portal-ring, 260px);
+  height: var(--portal-ring, 260px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+
+  background:
+    conic-gradient(from 0deg,
+      rgba(255,140,70,0.98),
+      rgba(255,60,170,0.98),
+      rgba(255,215,120,0.98),
+      rgba(170,70,255,0.98),
+      rgba(255,140,70,0.98)
+    );
+
+  filter: blur(10px) saturate(1.25);
+  opacity: 0.95;
+
+  animation: instapicPortalSpin 4.6s linear infinite;
+}
+
+/* Inner glass rim */
+section.screen[data-screen="ATTRACT"] button[data-action="wake-mirror"]::after,
+section.screen[data-screen="AWAKE"]  button[data-action="enter-mirror"]::after,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-paynow"]::after,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"]::after,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"]::after,
+section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"]::after,
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"]::after,
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-exit"]::after,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-paid"]::after,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-paid"]::after,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-back"]::after,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-back"]::after,
+section.screen[data-screen="PRIVATE_EVENT"]  button[data-action="event-exit"]::after,
+section.screen[data-screen="PRIVATE_EVENT"] button[data-action="event-exit"]::after,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-continue"]::after,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-back"]::after,
+section.screen[data-screen="PREPAID"]  button[data-action="prepaid-exit"]::after,
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-back"]::after,
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"]::after,
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"]::after,
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"]::after,
+section.screen[data-screen="PRINT"]  button[data-action="print-now"]::after,
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"]::after{
+  content:"";
+  position:absolute;
+  inset: var(--portal-inset, 15px);
+  border-radius: 50%;
+  pointer-events:none;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow:
+    inset 0 0 16px rgba(255,255,255,0.32),
+    0 0 24px rgba(255,120,200,0.28);
+  opacity: .92;
+}
+
+/* ----------------------------------------------------------
+   Per-screen sizing (ONLY sizes; styling stays shared)
+   ---------------------------------------------------------- */
+
+/* Screen 1: ATTRACT */
+section.screen[data-screen="ATTRACT"]{
+  --portal-size: 560px;
+  --portal-ring: 670px;
+  --portal-inset: 16px;
+  --portal-font: 1.35rem;
+}
+
+/* Screen 1: bigger wake text – portal remains the hero */
+section.screen.active[data-screen="ATTRACT"] button[data-action="wake-mirror"]{
+  font-size: 2.1rem !important;   /* keeps portal text dominant */
+  letter-spacing: 0.14em !important;
+  line-height: 1.15 !important;
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]{
+  font-size: 4.5rem !important;   /* try 4–6rem range for huge portal */
+  line-height: 1.1 !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* Screen 2: AWAKE */
+
+section.screen[data-screen="AWAKE"]{
+  --portal-size: 600px;
+  --portal-ring: 650px;
+  --portal-inset: 15px;
+  --portal-font: 3.25rem;
+}
+
+/* Awake screen supporting text – increased for better readability (still neat, portal is hero) */
+section.screen.active[data-screen="AWAKE"] .title-main,
+section.screen.active[data-screen="AWAKE"] .subtitle,
+section.screen.active[data-screen="AWAKE"] .attract-label,   /* reused class or similar */
+section.screen.active[data-screen="AWAKE"] .brand-logo::after,
+section.screen.active[data-screen="AWAKE"] p,
+section.screen.active[data-screen="AWAKE"] div:not(.portal-button):not(.awake-logo-wrap):not(.awake-logo),
+section.screen.active[data-screen="AWAKE"] .event-info,
+section.screen.active[data-screen="AWAKE"] small {
+  font-size: 1.85rem !important;          /* bumped up from 1.45rem – more readable on large screen */
+  line-height: 1.35 !important;
+  letter-spacing: 0.10em !important;
+  font-weight: 600 !important;
+  opacity: 0.90 !important;
+}
+
+/* Subtle hierarchy for main titles & sparkle line */
+section.screen.active[data-screen="AWAKE"] .title-main {
+  font-size: 2.3rem !important;           /* was 1.65rem → clearer headline */
+  font-weight: 700 !important;
+}
+
+section.screen.active[data-screen="AWAKE"] .attract-label {   /* sparkle / prompt line */
+  font-size: 2.5rem !important;           /* was 1.75rem → stands out gently */
+  opacity: 0.94 !important;
+}
+
+/* Bottom event info / QR text 
+section.screen.active[data-screen="AWAKE"] .event-info,
+section.screen.active[data-screen="AWAKE"] p:last-of-type,
+section.screen.active[data-screen="AWAKE"] small {
+  font-size: 0.75rem !important;        
+  opacity: 0.42 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Awake portal text – keeps it the clear hero */
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  font-size: var(--portal-font) !important;   /* huge 3.25rem – dominant focal point */
+}
+
+/* SCREEN 2 (AWAKE) — logo */
+section.screen[data-screen="AWAKE"] .awake-logo-wrap {
+  margin-top: 8px !important;  /* pushes the logo (and everything below it) much higher – reduces top gap dramatically */
+}
+section.screen[data-screen="AWAKE"] .awake-logo-wrap{
+  display:flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content:center;
+  margin: 30px auto 18px auto;
+}
+
+section.screen[data-screen="AWAKE"] .awake-screen {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 1.5vh 4vw 2vh !important;
+  justify-content: space-evenly !important;
+  gap: 1vh;
+}
+
+section.screen[data-screen="AWAKE"] .awake-top,
+section.screen[data-screen="AWAKE"] .awake-bottom {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+section.screen[data-screen="AWAKE"] .awake-bottom {
+  margin-top: clamp(28px, 3.5vh, 56px);
+}
+
+section.screen[data-screen="AWAKE"] .awake-kicker {
+  font-size: clamp(1.4rem, 2.5vh, 2.5rem) !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.06em !important;
+}
+
+section.screen[data-screen="AWAKE"] .awake-sparkle {
+  font-size: clamp(1.2rem, 2.1vh, 2rem) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.04em !important;
+  margin-top: 1vh;
+}
+
+section.screen.active[data-screen="AWAKE"] .awake-subtitle {
+  margin: 1.2vh auto 0 !important;
+  font-size: clamp(1rem, 1.8vh, 1.6rem) !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.05em !important;
+  text-align: center;
+}
+
+section.screen[data-screen="AWAKE"] .awake-portal {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+section.screen[data-screen="AWAKE"] .awake-qr-label {
+  max-width: 90vw;
+  font-size: clamp(1rem, 1.7vh, 1.5rem) !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.03em !important;
+  margin: 0 auto clamp(8px, 1vh, 16px) !important;
+}
+
+section.screen[data-screen="AWAKE"] .awake-logo{
+  width: min(500px, 40vw);
+  height: auto;
+  border-radius: 18px;
+  box-shadow: 0 0 40px rgba(255,120,200,0.12);
+}
+/* Screen 3: PAYMENT entry portals (NOT package pills) */
+section.screen[data-screen="PAYMENT"]{
+  --portal-size: 220px;
+  --portal-ring: 260px;
+  --portal-inset: 14px;
+  --portal-font: 1.05rem;
+}
+
+/* Screen 4: TRY_INFO */
+section.screen[data-screen="TRY_INFO"]{
+  --portal-size: 220px;
+  --portal-ring: 260px;
+  --portal-inset: 14px;
+  --portal-font: 1.05rem;
+}
+
+/* Screen 5: PRIVATE_EVENT */
+section.screen[data-screen="PRIVATE_EVENT"],
+section.screen[data-screen="PRIVATE_EVENT"]{
+  --portal-size: 220px;
+  --portal-ring: 260px;
+  --portal-inset: 14px;
+  --portal-font: 1.05rem;
+}
+
+/* Screen 6: PREPAID (portals only; keypad untouched because selectors are scoped) */
+section.screen[data-screen="PREPAID"]{
+  --portal-size: 220px;
+  --portal-ring: 260px;
+  --portal-inset: 14px;
+  --portal-font: 1.00rem;
+}
+/* =========================================================
+   KEYPAD — VISIBILITY BOOST (SAFE)
+   ========================================================= */
+
+.keypad-key {
+  background: rgba(255,255,255,0.10) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,0.12),
+    0 0 18px rgba(255,160,220,0.18) !important;
+}
+
+.keypad-key:active {
+  background: rgba(255,255,255,0.18) !important;
+  transform: scale(0.96);
+}
+
+/* Screen 7: BACKGROUNDS */
+section.screen[data-screen="BACKGROUNDS"]{
+  --portal-size: 200px;
+  --portal-ring: 240px;
+  --portal-inset: 14px;
+  --portal-font: 0.95rem;
+}
+
+/* Screen 9: REVIEW */
+section.screen[data-screen="REVIEW"]{
+  --portal-size: 240px;
+  --portal-ring: 290px;
+  --portal-inset: 15px;
+  --portal-font: 1.00rem;
+}
+
+/* Screen 10: PRINT */
+section.screen[data-screen="PRINT"]{
+  --portal-size: 300px;
+  --portal-ring: 360px;
+  --portal-inset: 16px;
+  --portal-font: 1.15rem;
+}
+
+/* Screen 11: DIGITAL */
+section.screen[data-screen="DIGITAL"]{
+  --portal-size: 240px;
+  --portal-ring: 290px;
+  --portal-inset: 15px;
+  --portal-font: 1.00rem;
+}
+
+/* =========================================================
+   SCREEN 8 (LIVE) — TAKE PHOTO PORTAL (SAFE + SCOPED)
+   Only affects LIVE when it is active.
+   Does NOT touch ATTRACT/Screen 1.
+   ========================================================= */
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]{
+  white-space: normal !important;
+  word-break: break-word !important;
+  text-wrap: balance;
+}
+
+/* Center within the LIVE screen-content only */
+section.screen.active[data-screen="LIVE"] .screen-content.live-screen{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* LIVE: move the TAKE PHOTO portal upward (do NOT affect other screens) */
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]{
+  position: relative !important;
+  transform: translateY( -500px) !important; /* move up */
+}
+
+/* keep the pulse, but include the translate so it doesn’t snap back */
+@keyframes instapicPortalPulseLive{
+  0%   { transform: translateY(-220px) scale(1); }
+  50%  { transform: translateY(-220px) scale(1.07); }
+  100% { transform: translateY(-220px) scale(1); }
+}
+
+/* Big translucent glass portal */
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]{
+  width: 420px !important;
+  height: 420px !important;
+  min-width: 420px !important;
+  min-height: 420px !important;
+  border-radius: 50% !important;
+
+  padding: 0 !important;
+  border: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+
+  color: #ffffff !important;
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
+
+  /* more see-through */
+  background:
+    radial-gradient(circle at 30% 28%,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,190,230,0.18) 20%,
+      rgba(255,150,200,0.12) 42%,
+      rgba(255,180,120,0.09) 60%,
+      rgba(80,0,60,0.14) 78%,
+      rgba(10,0,14,0.26) 100%
+    ) !important;
+
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+
+  box-shadow:
+    0 0 40px rgba(255,160,220,0.28),
+    0 0 120px rgba(255,130,200,0.18),
+    inset 0 0 60px rgba(255,255,255,0.18),
+    inset 0 0 18px rgba(255,255,255,0.22) !important;
+
+  position: relative !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+
+  animation: instapicPortalPulseLive 6s ease-in-out infinite;
+}
+
+/* soft aura ring */
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 520px;
+  height: 520px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+
+  background:
+    conic-gradient(from 0deg,
+      rgba(255,200,150,0.22),
+      rgba(255,120,200,0.22),
+      rgba(255,220,180,0.22),
+      rgba(180,120,255,0.22),
+      rgba(255,200,150,0.22)
+    );
+
+  filter: blur(28px) saturate(1.05);
+  opacity: 0.55;
+
+  animation: instapicPortalSpinLive 12s linear infinite;
+}
+
+/* inner rim */
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]::after{
+  content:"";
+  position:absolute;
+  inset: 24px;
+  border-radius: 50%;
+  pointer-events:none;
+
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 36px rgba(255,255,255,0.16);
+
+  opacity: 0.8;
+}
+
+@keyframes instapicPortalSpinLive{
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes instapicPortalPulseLive{
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"]{
+  margin: 0 auto !important;
+}
+
+/* ----------------------------------------------------------
+   Screen 13: ERROR – keep functional, not portal
+   ---------------------------------------------------------- */
+
+section.screen[data-screen="ERROR"] button[data-action="error-retry"],
+section.screen[data-screen="ERROR"] button[data-action="error-to-attract"]{
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  box-shadow: 0 0 16px rgba(255,110,170,0.18);
+}
+
+/* =========================================================
+   SCREEN 3 (PAYMENT) — PACKAGE PORTALS ($7/$13/$18/CANCEL)
+   Safe: ONLY affects PAYMENT screen package buttons.
+   ========================================================= */
+
+/* Layout: allow circles, center row, no clipping */
+section.screen[data-screen="PAYMENT"] .payment-pills-row{
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 28px !important;
+  flex-wrap: wrap !important;
+  padding: 10px 0 0 0 !important;
+}
+
+section.screen[data-screen="PAYMENT"] .payment-pills-row button{
+  overflow: visible !important; /* allow aura */
+}
+
+/* Base: make package buttons circular portals */
+section.screen[data-screen="PAYMENT"] button.package-btn,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]{
+  overflow: visible !important;
+  isolation: isolate;
+}
+
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price,
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc{
+  position: relative;
+  z-index: 2;
+}
+
+/* Subtle pulse */
+section.screen[data-screen="PAYMENT"] button.package-btn,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]{
+  width: 240px !important;
+  height: 240px !important;
+  min-width: 240px !important;
+  min-height: 240px !important;
+
+  border-radius: 50% !important;
+  padding: 0 !important;
+  border: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+
+  /* text fit */
+  white-space: normal !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  font-size: 1.15rem !important;
+
+  color: #ffffff !important;
+
+  background:
+    radial-gradient(circle at 30% 28%,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,190,230,0.18) 20%,
+      rgba(255,150,200,0.12) 42%,
+      rgba(255,180,120,0.09) 60%,
+      rgba(80,0,60,0.14) 78%,
+      rgba(10,0,14,0.26) 100%
+    ) !important;
+
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+
+  box-shadow:
+    0 0 30px rgba(255,160,220,0.30),
+    0 0 90px rgba(255,130,200,0.20),
+    inset 0 0 50px rgba(255,255,255,0.16),
+    inset 0 0 16px rgba(255,255,255,0.20) !important;
+
+  position: relative !important;
+  cursor: pointer !important;
+}
+
+/* Aura ring */
+section.screen[data-screen="PAYMENT"] button.package-btn::before,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 310px;
+  height: 310px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+
+  background:
+    conic-gradient(from 0deg,
+      rgba(255,200,150,0.24),
+      rgba(255,120,200,0.24),
+      rgba(255,220,180,0.24),
+      rgba(180,120,255,0.24),
+      rgba(255,200,150,0.24)
+    );
+
+  filter: blur(26px) saturate(1.05);
+  opacity: 0.60;
+  animation: instapicPackageSpin 12s linear infinite;
+}
+
+/* Inner rim */
+section.screen[data-screen="PAYMENT"] button.package-btn::after,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]::after{
+  content:"";
+  position:absolute;
+  inset: 16px;
+  border-radius: 50%;
+  pointer-events:none;
+
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 28px rgba(255,255,255,0.16);
+  opacity: 0.85;
+}
+
+/* Subtle pulse */
+section.screen[data-screen="PAYMENT"] button.package-btn,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]{
+  animation: instapicPackagePulse 6s ease-in-out infinite;
+}
+
+@keyframes instapicPackageSpin{
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes instapicPackagePulse{
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* =========================================================
+   PAYMENT SCREEN — CANCEL BUTTON (PLAIN PILL)
+   Explicitly opt-out of portal styling
+   ========================================================= */
+
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]{
+  width: auto !important;
+  height: auto !important;
+  min-width: 220px !important;
+  min-height: unset !important;
+
+  border-radius: 999px !important;
+  padding: 14px 28px !important;
+
+  background: rgba(255,255,255,0.08) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.18),
+    0 6px 18px rgba(0,0,0,0.35) !important;
+
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+
+  animation: none !important;
+}
+
+/* Remove any portal rings if inherited */
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="pay-cancel"]::after{
+  display: none !important;
+}
+/* =========================================================
+   SCREEN 1 (ATTRACT) — “SLEEPING” WAKE PORTAL (INVITING)
+   Scoped: only when ATTRACT is active
+   ========================================================= */
+
+section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen{
+  gap: 1.6rem;
+}
+
+/* Bigger logo + soft glow */
+section.screen.active[data-screen="ATTRACT"] .brand-logo img{
+  width: min(560px, 72vw);
+  height: auto;
+  filter:
+    drop-shadow(0 10px 24px rgba(0,0,0,0.55))
+    drop-shadow(0 0 28px rgba(255,120,200,0.16))
+    drop-shadow(0 0 58px rgba(255,170,120,0.10));
+  opacity: 0.98;
+}
+
+/* Optional: a tiny magical tagline under the logo (no HTML changes) */
+section.screen.active[data-screen="ATTRACT"] .brand-logo::after{
+  content: "✨ Moments made magical ✨";
+  display: block;
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.70);
+  text-shadow: 0 0 18px rgba(255,140,210,0.18);
+}
+
+/* Keep your “tap to…” label but make it feel alive */
+section.screen.active[data-screen="ATTRACT"] .attract-label{
+  font-size: 2.30rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.66);
+  text-shadow: 0 0 18px rgba(255,140,210,0.18);
+  animation: instapicSleepBlink 4.8s ease-in-out infinite;
+}
+
+@keyframes instapicSleepBlink{
+  0%,100% { opacity: 0.65; }
+  50%     { opacity: 0.95; }
+}
+
+/* --- The portal button itself --- */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]{
+  width: 420px;
+  height: 420px;
+  min-width: 420px;
+  min-height: 420px;
+  border-radius: 50%;
+
+  padding: 0;
+  border: 0;
+
+  display: grid;
+  place-items: center;
+  text-align: center;
+
+  color: rgba(255,255,255,0.94);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.15;
+
+  /* Glassy portal core */
+  background:
+    radial-gradient(circle at 30% 26%,
+      rgba(255,255,255,0.30) 0%,
+      rgba(255,170,220,0.18) 20%,
+      rgba(255,120,200,0.12) 44%,
+      rgba(255,180,120,0.10) 62%,
+      rgba(70,0,60,0.16) 80%,
+      rgba(10,0,14,0.30) 100%
+    );
+
+  backdrop-filter: blur(10px) saturate(1.25);
+  -webkit-backdrop-filter: blur(10px) saturate(1.25);
+
+  box-shadow:
+    0 0 42px rgba(255,120,200,0.28),
+    0 0 120px rgba(255,150,120,0.14),
+    inset 0 0 64px rgba(255,255,255,0.16),
+    inset 0 0 18px rgba(255,255,255,0.22);
+
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+
+  /* The “sleep breathing” */
+  animation: instapicWakeBreath 5.8s ease-in-out infinite;
+}
+
+/* Breathing animation (subtle scale + glow swell) */
+@keyframes instapicWakeBreath{
+  0%,100%{
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255,140,210,0));
+  }
+  50%{
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 26px rgba(255,140,210,0.22));
+  }
+}
+
+/* Ripple ring (the “tap me” invitation) */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 460px;
+  height: 460px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+
+  background:
+    radial-gradient(circle,
+      rgba(255,170,120,0.18) 0%,
+      rgba(255,120,210,0.18) 40%,
+      rgba(255,170,120,0.00) 72%
+    );
+
+  filter: blur(10px);
+  opacity: 0.60;
+  animation: instapicWakeRipple 3.2s ease-out infinite;
+}
+
+@keyframes instapicWakeRipple{
+  0%   { transform: translate(-50%, -50%) scale(0.92); opacity: 0.55; }
+  70%  { transform: translate(-50%, -50%) scale(1.14); opacity: 0.12; }
+  100% { transform: translate(-50%, -50%) scale(1.14); opacity: 0; }
+}
+
+/* Inner rim for “porthole” feel */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]::after{
+  content:"";
+  position:absolute;
+  inset: 22px;
+  border-radius: 50%;
+  pointer-events:none;
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 0 34px rgba(255,255,255,0.14);
+  opacity: 0.85;
+}
+
+/* Hover/press feel (nice on Dell, still fine on touch) */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]:active{
+  transform: scale(0.98);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  section.screen.active[data-screen="ATTRACT"] .attract-label,
+  section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"],
+  section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]::before{
+    animation: none !important;
+  }
+}
+/* =========================================================
+   OVERRIDE: SCREEN 1 (ATTRACT) — FORCE HUGE PORTAL
+   Put this at the VERY BOTTOM of branding.css
+   ========================================================= */
+
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]{
+  width: 880px !important;
+  height: 880px !important;
+  min-width: 88px !important;
+  min-height: 88px !important;
+  border-radius: 50% !important;
+}
+
+/* Make the ripple ring scale with it */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]::before{
+  width: 1440px !important;
+  height: 1440px !important;
+}
+/* SCREEN 1 tagline — place UNDER logo, centered */
+section.screen.active[data-screen="ATTRACT"] .brand-logo{
+  position: relative !important;
+}
+
+section.screen.active[data-screen="ATTRACT"] .brand-logo::after{
+  content: "✨ Moments made magical ✨" !important;
+  display: block !important;
+  margin: 0.8rem auto 0 !important;
+  text-align: center !important;
+
+  font-size: 2.200rem !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+
+  color: rgba(255,255,255,0.78) !important;
+  text-shadow:
+    0 0 14px rgba(255,140,210,0.18),
+    0 0 36px rgba(255,180,120,0.10) !important;
+
+  animation: instapicTaglineFloat 5.8s ease-in-out infinite !important;
+}
+/* Force logo + tagline to stack vertically */
+section.screen.active[data-screen="ATTRACT"] .brand-logo{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+/* Tagline under logo */
+section.screen.active[data-screen="ATTRACT"] .brand-logo::after{
+  margin-top: 1rem !important;
+}
+
+@keyframes instapicTaglineFloat{
+  0%,100% { transform: translateY(0px); opacity: 0.70; }
+  50%     { transform: translateY(-6px); opacity: 0.98; }
+}
+/* SCREEN 1 tagline — place UNDER logo, centered */
+section.screen.active[data-screen="ATTRACT"] .brand-logo{
+  position: relative !important;
+}
+
+section.screen.active[data-screen="ATTRACT"] .brand-logo::after{
+  content: "✨ Moments made magical ✨" !important;
+  display: block !important;
+  margin: 0.8rem auto 0 !important;
+  text-align: center !important;
+
+  font-size: 2.20rem !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+
+  color: rgba(255,255,255,0.78) !important;
+  text-shadow:
+    0 0 14px rgba(255,140,210,0.18),
+    0 0 36px rgba(255,180,120,0.10) !important;
+
+  animation: instapicTaglineFloat 5.8s ease-in-out infinite !important;
+}
+
+@keyframes instapicTaglineFloat{
+  0%,100% { transform: translateY(0px); opacity: 0.70; }
+  50%     { transform: translateY(-6px); opacity: 0.98; }
+}
+/* =========================================================
+   PAYMENT PACKAGES — PRICE HERO (requires span markup)
+   ========================================================= */
+
+section.screen[data-screen="PAYMENT"] button.package-btn{
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 10px !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.10em !important;
+}
+
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price{
+  font-size: 3.1rem !important;      /* BIG price */
+  font-weight: 900 !important;
+  color: #ffcc88 !important;
+  text-shadow:
+    0 0 10px rgba(255,190,120,0.65),
+    0 0 26px rgba(255,150,90,0.45) !important;
+}
+
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc{
+  font-size: 1.05rem !important;     /* smaller descriptor */
+  font-weight: 800 !important;
+  color: rgba(255,255,255,0.88) !important;
+  text-shadow: 0 0 14px rgba(255,120,200,0.18);
+}
+
+/* =========================================
+   MOST POPULAR — EXTRA BREATH + GLOW
+   ========================================= */
+
+section.screen[data-screen="PAYMENT"] button[data-action="pay-p4"]{
+  animation: portalPulsePopular 5.2s ease-in-out infinite !important;
+}
+
+@keyframes portalPulsePopular {
+  0%,100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 30px rgba(255,160,220,0.30),
+      0 0 90px rgba(255,130,200,0.20),
+      inset 0 0 50px rgba(255,255,255,0.16);
+  }
+  50% {
+    transform: scale(1.10);
+    box-shadow:
+      0 0 48px rgba(255,190,140,0.55),
+      0 0 140px rgba(255,150,90,0.45),
+      inset 0 0 70px rgba(255,255,255,0.22);
+  }
+}
+
+
+/* ===== TIGHTER TOP SPACING, KEEP TITLES ===== */
+.screen .screen-content {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+section.screen.active .screen-content {
+  padding-top: 1.2rem !important;
+  margin-top: 0 !important;
+  justify-content: flex-start !important;
+}
+
+.screen .title-main {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.screen .subtitle {
+  margin-top: 0.35rem !important;
+}
+
+section.screen[data-screen="EVENT_PORTAL"] .screen-content,
+section.screen[data-screen="PAYMENT"] .screen-content,
+section.screen[data-screen="PREPAID"] .screen-content,
+section.screen[data-screen="LIVE"] .screen-content,
+section.screen[data-screen="REVIEW"] .screen-content,
+section.screen[data-screen="PRINT"] .screen-content,
+section.screen[data-screen="DIGITAL"] .screen-content {
+  padding-top: 1.2rem !important;
+  margin-top: 0 !important;
+}
+
+/* ===== PREPAID screen tighten-up ===== */
+section.screen[data-screen="PREPAID"] .subtitle {
+  margin-bottom: 0.35rem !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-grid,
+section.screen[data-screen="PREPAID"] .keypad,
+section.screen[data-screen="PREPAID"] .code-entry,
+section.screen[data-screen="PREPAID"] .keypad-wrap {
+  margin-top: 0.35rem !important;
+  padding-top: 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button,
+section.screen[data-screen="PREPAID"] .keypad button {
+  min-height: 58px !important;
+  height: 58px !important;
+  font-size: 1.25rem !important;
+}
+
+section.screen[data-screen="PREPAID"] .screen-content {
+  padding-top: 0.8rem !important;
+}
+
+/* ===== PREPAID move higher ===== */
+section.screen[data-screen="PREPAID"] .screen-content {
+  padding-top: 0.2rem !important;
+  justify-content: flex-start !important;
+}
+
+section.screen[data-screen="PREPAID"] .title-main {
+  margin-bottom: 0.15rem !important;
+}
+
+section.screen[data-screen="PREPAID"] .subtitle {
+  margin-top: 0 !important;
+  margin-bottom: 0.1rem !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-grid,
+section.screen[data-screen="PREPAID"] .keypad,
+section.screen[data-screen="PREPAID"] .code-entry,
+section.screen[data-screen="PREPAID"] .keypad-wrap {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  transform: translateY(-18px) !important;
+}
+
+section.screen[data-screen="PREPAID"] .portal-button,
+section.screen[data-screen="PREPAID"] button.portal-button {
+  margin-top: 0.35rem !important;
+  transform: translateY(-18px) !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button,
+section.screen[data-screen="PREPAID"] .keypad button {
+  min-height: 54px !important;
+  height: 54px !important;
+  font-size: 1.15rem !important;
+}
+
+/* ===== PREPAID: kill gap between subtitle and keypad ===== */
+section.screen[data-screen="PREPAID"] .screen-content > * {
+  margin-top: 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .title-main {
+  margin-bottom: 0.1rem !important;
+}
+
+section.screen[data-screen="PREPAID"] .subtitle {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-grid,
+section.screen[data-screen="PREPAID"] .keypad,
+section.screen[data-screen="PREPAID"] .keypad-wrap,
+section.screen[data-screen="PREPAID"] .code-entry,
+section.screen[data-screen="PREPAID"] .code-display,
+section.screen[data-screen="PREPAID"] .keypad-container {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  transform: translateY(-32px) !important;
+}
+
+section.screen[data-screen="PREPAID"] .portal-button,
+section.screen[data-screen="PREPAID"] button.portal-button {
+  margin-top: 0 !important;
+  transform: translateY(-28px) !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button,
+section.screen[data-screen="PREPAID"] .keypad button {
+  min-height: 52px !important;
+  height: 52px !important;
+  font-size: 1.1rem !important;
+}
+
+/* ===== PREPAID side layout ===== */
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  display: grid;
+  grid-template-columns: 140px 1fr 140px;
+  align-items: center;
+  gap: 12px;
+}
+
+/* keypad center */
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  grid-column: 2;
+}
+
+/* buttons container becomes invisible wrapper */
+section.screen[data-screen="PREPAID"] .prepaid-actions-row {
+  display: contents;
+}
+
+/* back left */
+section.screen[data-screen="PREPAID"] .prepaid-back {
+  grid-column: 1;
+  height: 90px;
+}
+
+/* continue right */
+section.screen[data-screen="PREPAID"] .prepaid-continue {
+  grid-column: 3;
+  height: 90px;
+}
+
+/* tighten label gap */
+section.screen[data-screen="PREPAID"] .keypad-label {
+  margin-bottom: 6px !important;
+}
+
+
+/* ===== PREPAID spread side buttons further apart ===== */
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  grid-template-columns: 220px 1fr 220px !important;
+  gap: 42px !important;
+}
+
+section.screen[data-screen="PREPAID"] .prepaid-back,
+section.screen[data-screen="PREPAID"] .prepaid-continue {
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+/* ===== PREPAID fix: keep keypad centered, side buttons truly at sides ===== */
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  display: grid !important;
+  grid-template-columns: 220px 1fr 220px !important;
+  grid-template-rows: auto auto !important;
+  gap: 8px 42px !important;
+  align-items: start !important;
+}
+
+/* label sits above keypad, centered in middle column */
+section.screen[data-screen="PREPAID"] .keypad-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  text-align: center !important;
+  margin: 0 0 6px 0 !important;
+}
+
+/* keypad stays centered in middle column */
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* buttons become side items on same row as keypad */
+section.screen[data-screen="PREPAID"] .prepaid-actions-row {
+  display: contents !important;
+}
+
+section.screen[data-screen="PREPAID"] .prepaid-back {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  align-self: center !important;
+  justify-self: center !important;
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+section.screen[data-screen="PREPAID"] .prepaid-continue {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  align-self: center !important;
+  justify-self: center !important;
+  width: 220px !important;
+  min-width: 220px !important;
+}
+
+/* ===== PREPAID: shrink keypad so portals have room ===== */
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  width: 300px !important;
+  max-width: 300px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  gap: 8px !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button {
+  width: 92px !important;
+  min-width: 92px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  font-size: 1rem !important;
+  padding: 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key-wide {
+  width: 92px !important;
+  min-width: 92px !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  max-width: 340px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+section.screen[data-screen="PREPAID"] .portal-button,
+section.screen[data-screen="PREPAID"] button.portal-button,
+section.screen[data-screen="PREPAID"] .btn {
+  transform: none !important;
+}
+
+/* ===== PREPAID: keypad sized to match portal button scale ===== */
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  max-width: 760px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  width: 540px !important;
+  max-width: 540px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  gap: 14px !important;
+  justify-content: center !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button {
+  width: 170px !important;
+  min-width: 170px !important;
+  height: 88px !important;
+  min-height: 88px !important;
+  font-size: 1.6rem !important;
+  padding: 0 !important;
+  border-radius: 18px !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key-wide {
+  width: 170px !important;
+  min-width: 170px !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-label {
+  margin-bottom: 10px !important;
+}
+
+/* ===== PREPAID reset: portals above, keypad centered ===== */
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  display: block !important;
+  max-width: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+section.screen[data-screen="PREPAID"] .prepaid-actions-row,
+section.screen[data-screen="PREPAID"] .button-row {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 28px !important;
+  margin: 0 0 16px 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .prepaid-back,
+section.screen[data-screen="PREPAID"] .prepaid-continue,
+section.screen[data-screen="PREPAID"] .button-row .btn {
+  transform: none !important;
+  margin: 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-label {
+  text-align: center !important;
+  margin: 0 0 8px 0 !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  width: fit-content !important;
+  max-width: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  justify-content: center !important;
+  transform: none !important;
+}
+
+section.screen[data-screen="PREPAID"] .keypad-key,
+section.screen[data-screen="PREPAID"] .keypad-grid button {
+  transform: none !important;
+}
+
+/* INSTAPIC FIX: hide LIVE screen TAKE PHOTO button.
+   Auto-capture/timer logic remains unchanged. */
+section.screen[data-screen="LIVE"] button[data-action="take-photo"],
+section.screen.active[data-screen="LIVE"] button[data-action="take-photo"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

@@ -143,10 +143,15 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
-  if(game.id==='snap') frame.setAttribute('allow','camera;fullscreen');
-  frame.setAttribute('scrolling','no');
+  if(game.id==='snap') {
+    frame.setAttribute('allow','camera;fullscreen');
+    frame.setAttribute('scrolling','yes');
+    frame.style.touchAction='auto';
+  } else {
+    frame.setAttribute('scrolling','no');
+    frame.style.touchAction='none';
+  }
   frame.setAttribute('draggable','false');
-  frame.style.touchAction='none';
   frame.style.overscrollBehavior='none';
   stage.append(bar,status,frame);cabinet.append(stage);
  }
