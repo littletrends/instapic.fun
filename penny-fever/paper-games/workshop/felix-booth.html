@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=speed-3b">
-  <link rel="stylesheet" href="branding.css?v=speed-3b">
-  <link rel="stylesheet" href="patches.css?v=speed-3b">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=speed-3b">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=speed-3b">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=speed-3b">
-  <link rel="stylesheet" href="event_portal_patch.css?v=speed-3b">
-  <link rel="stylesheet" href="felix-booth.css?v=speed-3b">
+  <link rel="stylesheet" href="flow-booth.css?v=patch-pay-1">
+  <link rel="stylesheet" href="branding.css?v=patch-pay-1">
+  <link rel="stylesheet" href="patches.css?v=patch-pay-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=patch-pay-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=patch-pay-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=patch-pay-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=patch-pay-1">
+  <link rel="stylesheet" href="felix-booth.css?v=patch-pay-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -69,7 +69,8 @@
           <div class="screen-content">
             <h1 class="title-main">Choose an option</h1>
             <p class="subtitle">
-              Pay with tickets or pennies, use a photo session bought at Aura's booth, enter an Instapic code, or try it first.
+              Pay now, use a prepaid code, or try it first.
+              <br>In Penny Fever you can also pay with tickets or pennies.
             </p>
 
             <div id="felix-wallet" class="felix-wallet" aria-live="polite">
@@ -80,7 +81,28 @@
               <span id="felix-wallet-credits">0 photo sessions</span>
             </div>
 
-            <div class="button-row payment-options payment-pills-row">
+            <!-- Screen 3 package portals — same markup as Magic Mirror flow.html + pay_screen_buttons_patch -->
+            <div class="button-row payment-options payment-packages-row">
+              <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="P1_STRIP" type="button">
+                <span class="pkg-price">$7.00 Quick &amp; Simple</span>
+                <span class="pkg-desc">2 PHOTO STRIPS</span>
+              </button>
+              <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="P2_STRIP_GIF" type="button">
+                <span class="pkg-price">$13.00 Most Popular ✨</span>
+                <span class="pkg-desc">4 PHOTO STRIPS</span>
+              </button>
+              <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="P3_STRIP_GIF" type="button">
+                <span class="pkg-price">$18.00 Best for Groups</span>
+                <span class="pkg-desc">6 PHOTO STRIPS</span>
+              </button>
+            </div>
+
+            <p class="felix-pkg-note">Photo packages · buy at Aura&rsquo;s booth (Square). Credits only after approval.</p>
+
+            <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
+
+            <!-- Felix midway wallet (tickets / pennies / unused photo sessions) -->
+            <div class="button-row payment-options payment-pills-row felix-scrip-row">
               <button class="btn btn-primary" data-action="pay-tickets">
                 PAY WITH TICKETS · 1
               </button>
@@ -92,30 +114,9 @@
               </button>
             </div>
 
-            <div class="button-row payment-options payment-packages-row felix-pkg-stack">
-              <p class="felix-pkg-lead">Photo packages · buy at Aura&rsquo;s booth</p>
-              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P1_STRIP" type="button">
-                <span class="pkg-price">$7</span>
-                <span class="pkg-label">Quick &amp; Simple</span>
-                <span class="pkg-desc">2 sessions</span>
-              </button>
-              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P2_STRIP_GIF" type="button">
-                <span class="pkg-price">$13</span>
-                <span class="pkg-label">Most Popular</span>
-                <span class="pkg-desc">4 sessions</span>
-              </button>
-              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P3_STRIP_GIF" type="button">
-                <span class="pkg-price">$18</span>
-                <span class="pkg-label">Best for Groups</span>
-                <span class="pkg-desc">6 sessions</span>
-              </button>
-            </div>
-
-            <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
-
             <div class="button-row payment-options payment-pills-row">
               <button class="btn btn-secondary" data-action="enter-prepaid">
-                I HAVE A PREPAID / INSTAPIC CODE
+                I HAVE A PREPAID CODE
               </button>
               <button class="btn btn-secondary" data-action="enter-try-info">
                 TRY IT FIRST
@@ -459,6 +460,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=speed-3b"></script>
+  <script src="felix-booth.js?v=patch-pay-1"></script>
 </body>
 </html>

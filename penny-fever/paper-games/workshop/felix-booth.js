@@ -436,7 +436,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=speed-3b").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=patch-pay-1").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -448,7 +448,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=speed-3b").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=patch-pay-1").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -1600,16 +1600,27 @@
       });
       return;
     }
-    if (action === "square-p2" || action === "square-p4" || action === "square-p6" || action === "top-up-aura") {
-      const pkg = (btn && btn.dataset && btn.dataset.pkg) || "";
+    if (
+      action === "square-p2" ||
+      action === "square-p4" ||
+      action === "square-p6" ||
+      action === "top-up-aura" ||
+      action === "pay-p2" ||
+      action === "pay-p4" ||
+      action === "pay-p6"
+    ) {
+      // Magic Mirror Screen 3 portals (pay_screen_buttons_patch). On Felix, real
+      // money is taken at Aura's till — never grant credits from a tap alone.
+      const fromAction = { "pay-p2": "P1_STRIP", "pay-p4": "P2_STRIP_GIF", "pay-p6": "P3_STRIP_GIF", "square-p2": "P1_STRIP", "square-p4": "P2_STRIP_GIF", "square-p6": "P3_STRIP_GIF" }[action] || "";
+      const pkg = (btn && btn.dataset && btn.dataset.pkg) || fromAction;
       const tip = {
-        P1_STRIP: "$7 · 2 sessions",
-        P2_STRIP_GIF: "$13 · 4 sessions",
-        P3_STRIP_GIF: "$18 · 6 sessions",
+        P1_STRIP: "$7.00 Quick & Simple · 2 photo strips / sessions",
+        P2_STRIP_GIF: "$13.00 Most Popular · 4 photo strips / sessions",
+        P3_STRIP_GIF: "$18.00 Best for Groups · 6 photo strips / sessions",
       }[pkg];
       setPayBanner(
         (tip ? tip + " — " : "") +
-          "sold at Aura's booth. Pay there with Square \u2014 credits appear here only after Square approves."
+          "buy at Aura's booth with Square. Credits appear here only after Square approves."
       );
       return;
     }
