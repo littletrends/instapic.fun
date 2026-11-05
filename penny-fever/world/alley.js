@@ -16,7 +16,7 @@ import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=tent-depth-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
-import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=lock-1";
+import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=felix-open-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -24,7 +24,7 @@ const STALLS = [
   { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
   { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
   { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
-  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Instapic photo booth — come back later." },
+  { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Instapic photo booth. Try a couple of selfies." },
   { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
   { id: "ball-toss", kind: "booth", art: CUTOUT("ball-toss"), accent: 0xc45a3a, line: "Knock every lantern in one toss." },
   { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },

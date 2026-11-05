@@ -1,7 +1,7 @@
-import {games} from '../paper-games/catalogue.js?v=load-fix-1';
+import {games} from '../paper-games/catalogue.js?v=felix-open-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
-import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=lock-1';
+import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=felix-open-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
@@ -143,6 +143,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   status=doc.createElement('p');status.className='paper-game-status';status.setAttribute('role','status');
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
+  if(game.id==='snap') frame.setAttribute('allow','camera;fullscreen');
   frame.setAttribute('scrolling','no');
   frame.setAttribute('draggable','false');
   frame.style.touchAction='none';

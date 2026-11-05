@@ -4,7 +4,7 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isClosed,isUnderConstruction} from './stall-entry.js?v=lock-1';
+import {isClosed,isUnderConstruction} from './stall-entry.js?v=felix-open-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;

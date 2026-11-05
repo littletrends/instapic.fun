@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Felix · Instapic Cyber Booth · Penny Fever workshop</title>
+  <link rel="stylesheet" href="felix-booth.css">
+</head>
+<body>
+  <p class="dev-ribbon">Enclosed development · Felix cyber booth · not the Darwin machines</p>
+  <header class="top">
+    <a href="../index.html">← Paper worlds workshop</a>
+    <span class="eyebrow">Felix · Instapic</span>
+    <a href="../../index.html?style=paper&amp;rail=paper#alley">Alley</a>
+  </header>
+
+  <main class="kiosk" id="kiosk">
+    <section class="screen active" data-screen="attract">
+      <img class="logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+      <p class="sparkle">✨ Are you ready to sparkle?</p>
+      <button type="button" class="portal" data-go="payment">TAP TO START</button>
+    </section>
+
+    <section class="screen" data-screen="payment">
+      <img class="logo small" src="../../../assets/img/instapic_logo.png" alt="">
+      <h1>Choose how to play</h1>
+      <p class="sub">Game-only. Codes will not print on a real booth.</p>
+      <button type="button" class="btn primary" data-go="try-info">TRY IT FIRST</button>
+      <button type="button" class="btn" data-go="pay-note">PAY $3 · DIGITAL STRIP</button>
+      <button type="button" class="btn ghost" data-go="attract">EXIT TO START</button>
+      <p class="note" id="pay-note" hidden>Enclosed development. $3 Square (or 3 tickets / 6 pennies) is next. Full 4 photos + 2 retakes + real bonus will land here. Try is ready now.</p>
+    </section>
+
+    <section class="screen" data-screen="try-info">
+      <h1>Try It Mode</h1>
+      <p class="sub">Two sample selfies. No printer. Then the website bonus preview, watermarked, in this same cabinet.</p>
+      <button type="button" class="btn primary" data-go="live">START TRY MODE</button>
+      <button type="button" class="btn ghost" data-go="payment">BACK</button>
+    </section>
+
+    <section class="screen live-screen" data-screen="live">
+      <video id="live-video" autoplay muted playsinline></video>
+      <canvas id="capture-canvas" hidden></canvas>
+      <div class="live-hud">
+        <p id="live-status">Look at the camera</p>
+        <p id="live-count" hidden></p>
+        <button type="button" class="btn primary" id="snap-btn">SNAP</button>
+        <button type="button" class="btn ghost" data-go="payment">CANCEL</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="print">
+      <h1>Your sample strip</h1>
+      <p class="sub">Same moment as the booth preview. Next screen is the website bonus, not a download tray.</p>
+      <img id="strip-preview" alt="Sample photo strip">
+      <button type="button" class="btn primary" data-go="bonus">See your bonus sample →</button>
+    </section>
+
+    <section class="screen bonus-screen" data-screen="bonus">
+      <div class="bonus-brand">
+        <img class="logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+      </div>
+      <div class="bonus-head">
+        <h1>Bonus sample</h1>
+        <p>Website bonus preview. Watermarked Try. Penny Fever stays on this screen.</p>
+      </div>
+      <div class="bonus-grid">
+        <article class="card">
+          <div class="card-head">Photo strip</div>
+          <div class="media-frame" id="bonus-strip-frame"></div>
+        </article>
+        <article class="card">
+          <div class="card-head">Collage · 5 seconds each</div>
+          <div class="media-frame">
+            <canvas id="collage-canvas" width="540" height="720" aria-label="Watermarked bonus collage"></canvas>
+          </div>
+        </article>
+      </div>
+      <p class="status">SAMPLE · 10 seconds · instapic.fun watermark. Full bonus after $3.</p>
+      <div class="actions">
+        <button type="button" class="btn primary" data-go="pay-note">Pay $3 to play</button>
+        <button type="button" class="btn ghost" data-go="payment">Back to pay</button>
+        <a class="btn ghost" href="../index.html">Leave booth</a>
+      </div>
+      <p class="note" id="bonus-pay-note" hidden>Enclosed development. $3 digital pack, 4 photos, 2 retakes, real bonus, game-only code. Not wired to Square yet.</p>
+    </section>
+  </main>
+  <script src="felix-booth.js"></script>
+</body>
+</html>
