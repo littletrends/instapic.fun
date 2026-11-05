@@ -436,7 +436,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=link-pay-1").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=link-pay-2").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -448,7 +448,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=link-pay-1").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=link-pay-2").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -1533,7 +1533,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=booth-till-4";
+    link.href = "/penny-fever/world/ticket-till.css?v=link-pay-2";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1549,7 +1549,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=booth-till-4");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=link-pay-2");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1571,7 +1571,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=link-pay-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=link-pay-2"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
@@ -1627,6 +1627,8 @@
   window.addEventListener("pf-felix-start-paid", onFelixStartPaid);
   window.addEventListener("pf-till-closed", () => {
     refreshWalletUi();
+    // Cancel / close Aura till: stay on Felix payment screen (Magic Mirror Screen 3).
+    if (document.querySelector('[data-screen="PAYMENT"]')) showScreen(Screen.PAYMENT);
   });
 
   document.body.addEventListener("click", (ev) => {
