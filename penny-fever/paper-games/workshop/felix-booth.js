@@ -503,6 +503,7 @@
       btn.textContent = ready ? "GO TO MY BONUS" : "MAKING YOUR BONUS\u2026";
     }
     if (retry) retry.hidden = state !== "failed";
+    if (btn) btn.hidden = state === "none";
   }
 
   function dataUrlToBlob(dataUrl) {
@@ -521,6 +522,7 @@
 
   async function makeBonusPack() {
     if (isTrySession) return;
+    if (bonusState === "none") return;
     if (bonusState === "working" || bonusState === "ready") {
       setBonusUi(bonusState, bonusState === "ready" ? "Bonus pack ready." : "Making your bonus pack\u2026");
       return;
@@ -529,19 +531,14 @@
     try {
       const bgId = currentBackground?.id || TRY_SAMPLE_ID;
       if (!serverCode) {
-        // Ticket/penny session: ask MotherPC for an Instapic code (no charge).
-        const { res, data } = await api("/api/create-ticket", {
-          package_id: "PF_FELIX_SCRIP",
-          amount_cents: 0,
-          source: "penny-fever-felix",
-          reference_id: "felix-" + bonusSessionKey,
-        });
-        const code = String(data.ticket_code || "");
-        if (!res.ok || !/^\d{6}$/.test(code)) throw new Error("no code");
-        serverCode = code;
-        localSessionCode = code;
-        if (sessionCodeDisplay) sessionCodeDisplay.textContent = code;
-        updateBonusLinks();
+        // Ticket/penny sessions have no Instapic code. MotherPC only mints
+        // codes for booths holding its secret (or after a Square payment at
+        // Aura's booth), so there is no bonus page for these sessions.
+        setBonusUi(
+          "none",
+          "Bonus pages come with Instapic photo sessions from Aura's booth. Save or share your strip here."
+        );
+        return;
       }
       const commit = await api("/api/commit-used", { ticket_code: serverCode, bg_id: bgId });
       if (!commit.res.ok || !commit.data.ok) throw new Error("commit " + (commit.data.error || commit.res.status));
@@ -1356,7 +1353,13 @@
         } else if (r.error === "offline") {
           setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
         } else {
-          setPayBanner("That code was already used, so it was removed.");
+          setPayBanner(
+            r.error === "used"
+              ? "That code was already used, so it was removed."
+              : r.error === "missing"
+                ? "That code isn't valid, so it was removed."
+                : "Couldn't check your code. Try again."
+          );
         }
       });
       return;
