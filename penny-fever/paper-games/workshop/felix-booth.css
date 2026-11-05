@@ -232,3 +232,79 @@ section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aur
 }
 .felix-session-count{font-weight:800;color:#7a2a5a;margin:.35em 0 0}
 .felix-session-count[hidden]{display:none!important}
+
+/* ---- speed-1: snappy load + tappable package cards (defeat 240px circles) ---- */
+section.screen[data-screen="PAYMENT"] .felix-pkg-stack{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 14px !important;
+  width: min(560px, 92%) !important;
+  margin: 0.4rem auto 0.2rem !important;
+  flex-wrap: nowrap !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pkg-lead{
+  margin: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.78);
+  text-transform: none;
+  font-weight: 700;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card{
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 118px !important;
+  border-radius: 28px !important;
+  padding: 18px 22px !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "price label" "price desc";
+  column-gap: 18px;
+  row-gap: 4px;
+  align-items: center !important;
+  justify-content: stretch !important;
+  text-align: left !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card::before,
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card::after{
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-price{
+  grid-area: price;
+  font-size: 2.4rem !important;
+  font-weight: 900 !important;
+  color: #ffcc88 !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-label{
+  grid-area: label;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  color: #fff !important;
+  text-transform: uppercase;
+}
+section.screen[data-screen="PAYMENT"] button.felix-pkg-card .pkg-desc{
+  grid-area: desc;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  color: rgba(255,255,255,0.9) !important;
+  max-width: none !important;
+}
+
+/* Background cards: keep thumbs crisp while scrolling */
+.background-card img{
+  background: #2a1a22;
+}

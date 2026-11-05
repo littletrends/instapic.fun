@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=pass-2">
-  <link rel="stylesheet" href="branding.css?v=pass-2">
-  <link rel="stylesheet" href="patches.css?v=pass-2">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pass-2">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=pass-2">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pass-2">
-  <link rel="stylesheet" href="event_portal_patch.css?v=pass-2">
-  <link rel="stylesheet" href="felix-booth.css?v=rec-1">
+  <link rel="stylesheet" href="flow-booth.css?v=speed-1">
+  <link rel="stylesheet" href="branding.css?v=speed-1">
+  <link rel="stylesheet" href="patches.css?v=speed-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=speed-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=speed-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=speed-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=speed-1">
+  <link rel="stylesheet" href="felix-booth.css?v=speed-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -32,7 +32,7 @@
         <section class="screen active" data-screen="ATTRACT">
           <div class="screen-content attract-screen">
             <div class="brand-logo">
-              <img src="../../../assets/img/instapic_logo.png" alt="Instapic">
+              <img src="img/instapic_logo.jpg" alt="Instapic">
             </div>
             <p class="attract-label"> </p>
             <button class="portal-button" id="attractWakeButton" data-action="wake-mirror">
@@ -46,7 +46,7 @@
             <div class="awake-top">
               <div class="awake-kicker">Welcome to</div>
               <div class="awake-logo-wrap">
-                <img class="awake-logo" src="../../../assets/img/instapic_logo.png" alt="Instapic">
+                <img class="awake-logo" src="img/instapic_logo.jpg" alt="Instapic">
                 <div class="awake-sparkle">✨ Are you ready to sparkle?</div>
               </div>
             </div>
@@ -92,11 +92,22 @@
               </button>
             </div>
 
-            <div class="button-row payment-options payment-packages-row">
-              <button class="btn btn-secondary package-btn" data-action="top-up-aura" type="button">
-                <span class="pkg-price">$7 · $13 · $18</span>
-                <span class="pkg-label">Photo packages</span>
-                <span class="pkg-desc">2 · 4 · 6 sessions<br>Buy at Aura's booth</span>
+            <div class="button-row payment-options payment-packages-row felix-pkg-stack">
+              <p class="felix-pkg-lead">Photo packages · buy at Aura&rsquo;s booth</p>
+              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P1_STRIP" type="button">
+                <span class="pkg-price">$7</span>
+                <span class="pkg-label">Quick &amp; Simple</span>
+                <span class="pkg-desc">2 sessions</span>
+              </button>
+              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P2_STRIP_GIF" type="button">
+                <span class="pkg-price">$13</span>
+                <span class="pkg-label">Most Popular</span>
+                <span class="pkg-desc">4 sessions</span>
+              </button>
+              <button class="btn btn-secondary felix-pkg-card" data-action="top-up-aura" data-pkg="P3_STRIP_GIF" type="button">
+                <span class="pkg-price">$18</span>
+                <span class="pkg-label">Best for Groups</span>
+                <span class="pkg-desc">6 sessions</span>
               </button>
             </div>
 
@@ -231,7 +242,7 @@
               <button class="bg-scroll-arrow bg-scroll-arrow--left" type="button" data-action="bg-scroll-left" aria-label="Previous">‹</button>
               <div class="background-grid" id="backgroundGrid">
                 <div class="background-card selected" data-background-id="bg_11" data-poses="4">
-                  <img src="backgrounds/bg_11.jpg" alt="Background 11">
+                  <img src="backgrounds/thumbs/bg_11.jpg" data-full-src="backgrounds/bg_11.jpg" loading="lazy" decoding="async" alt="Background 11">
                   <div class="bg-label">BG_11 – 4 poses</div>
                 </div>
               </div>
@@ -420,7 +431,7 @@
         <section class="screen" data-screen="THANKYOU">
           <div class="screen-content">
             <div class="brand-logo">
-              <img src="../../../assets/img/instapic_logo.png" alt="Instapic">
+              <img src="img/instapic_logo.jpg" alt="Instapic">
             </div>
             <h1 class="title-main">Thank you!</h1>
             <p class="subtitle">
@@ -448,6 +459,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=rec-1"></script>
+  <script src="felix-booth.js?v=speed-1"></script>
 </body>
 </html>

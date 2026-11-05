@@ -17,6 +17,8 @@
   };
 
   const FREE_BGS = ["bg_1", "bg_3", "bg_11", "bg_17", "bg_30", "bg_43"];
+  function bgThumb(id) { return "backgrounds/thumbs/" + id + ".jpg"; }
+  function bgFull(id) { return "backgrounds/" + id + ".jpg"; }
   const TRY_SAMPLE_ID = "bg_11";
   const LIVE_AUTOSTART_MS = 400;
   const MAX_RETAKES_PER_SESSION = 2;
@@ -361,15 +363,23 @@
     document.querySelectorAll(".background-card").forEach((card) => {
       card.classList.toggle("selected", bg && card === bg.element);
     });
-    if (templateBackground && bg) templateBackground.src = bg.src;
+    if (templateBackground && bg) {
+      const full = bg.src || bgFull(bg.id);
+      templateBackground.src = full;
+      // Warm the full-res file when guest picks a card (thumbs stay in the strip).
+      const warm = new Image();
+      warm.decoding = "async";
+      warm.src = full;
+    }
   }
 
   function bindCard(card) {
     const id = card.dataset.backgroundId;
+    const img = card.querySelector("img");
     const bg = {
       id,
       poses: 4,
-      src: card.querySelector("img").src,
+      src: (img && img.dataset.fullSrc) || bgFull(id),
       element: card,
       locked: card.classList.contains("is-locked"),
     };
@@ -418,7 +428,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=camera-sq-1").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=speed-1").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -430,18 +440,14 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=pass-2b").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=speed-1").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
     allBackgroundIds = (Array.isArray(ids) ? ids : []).filter((id) => /^bg_\d+$/.test(String(id)));
     if (!allBackgroundIds.length) allBackgroundIds = FREE_BGS.slice();
-    // Free set first, then locked.
-    const ordered = [
-      ...FREE_BGS.filter((id) => allBackgroundIds.includes(id)),
-      ...allBackgroundIds.filter((id) => !isFreeBg(id)),
-    ];
-    rebuildBackgroundGrid(ordered);
+    // Intentionally do NOT rebuild the grid here — building 96 <img> tags on
+    // ATTRACT floods phones. Grid is built when a session reaches BACKGROUNDS.
   }
 
   function rebuildBackgroundGrid(ids) {
@@ -458,7 +464,10 @@
       card.dataset.poses = "4";
       card.style.display = "";
       const img = card.querySelector("img") || card.appendChild(document.createElement("img"));
-      img.src = "backgrounds/" + id + ".jpg";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.dataset.fullSrc = bgFull(id);
+      img.src = bgThumb(id);
       img.alt = id.toUpperCase();
       let label = card.querySelector(".bg-label");
       if (!label) {
@@ -502,7 +511,7 @@
     return free || {
       id: TRY_SAMPLE_ID,
       poses: 4,
-      src: "backgrounds/" + TRY_SAMPLE_ID + ".jpg",
+      src: bgFull(TRY_SAMPLE_ID),
       element: null,
       locked: false,
     };
@@ -1245,7 +1254,7 @@
   }
 
   async function buildStrip() {
-    const bg = await loadImage(currentBackground?.src || "backgrounds/" + TRY_SAMPLE_ID + ".jpg");
+    const bg = await loadImage(currentBackground?.src || bgFull(TRY_SAMPLE_ID));
     // Always fill all 4 strip windows so unused poses are cream placeholders,
     // not empty see-through holes in the template.
     const photoSrcs = [];
@@ -1584,8 +1593,15 @@
       return;
     }
     if (action === "square-p2" || action === "square-p4" || action === "square-p6" || action === "top-up-aura") {
+      const pkg = (btn && btn.dataset && btn.dataset.pkg) || "";
+      const tip = {
+        P1_STRIP: "$7 · 2 sessions",
+        P2_STRIP_GIF: "$13 · 4 sessions",
+        P3_STRIP_GIF: "$18 · 6 sessions",
+      }[pkg];
       setPayBanner(
-        "Real-money packages ($7 / $13 / $18) are sold at Aura's booth. Pay there with Square \u2014 once Square approves, your photo session shows up here."
+        (tip ? tip + " — " : "") +
+          "sold at Aura's booth. Pay there with Square \u2014 credits appear here only after Square approves."
       );
       return;
     }

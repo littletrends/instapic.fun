@@ -58,7 +58,10 @@ function tillOpen() {
 }
 
 function packLine(pack) {
-  if (pack.kind === 'photo') return '1 photo booth session · Instapic bonus code';
+  if (pack.kind === 'photo') {
+    const sessions = ({P1_STRIP:2, P2_STRIP_GIF:4, P3_STRIP_GIF:6})[pack.id] || 1;
+    return sessions + ' Felix sessions · Instapic bonus code';
+  }
   const bits = [];
   if (pack.tickets) bits.push(pack.tickets === 1 ? '1 ticket' : pack.tickets + ' tickets');
   if (pack.pennies) bits.push(pack.pennies === 1 ? '1 penny' : pack.pennies + ' pennies');
