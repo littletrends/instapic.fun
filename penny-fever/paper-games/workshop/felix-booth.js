@@ -57,10 +57,10 @@
     else stopCollage();
   }
 
-  document.querySelectorAll(".background-card").forEach((card) => {
+  function bindBackgroundCard(card) {
     const bg = {
       id: card.dataset.backgroundId,
-      poses: 2,
+      poses: 4,
       src: card.querySelector("img").src,
       element: card,
     };
@@ -73,7 +73,33 @@
     };
     card.addEventListener("click", pick);
     if (card.classList.contains("selected")) currentBackground = bg;
-  });
+  }
+
+  async function loadBackgrounds() {
+    const grid = document.getElementById("backgroundGrid");
+    let ids = [];
+    try {
+      const res = await fetch("backgrounds.json?v=bg-sets-1");
+      ids = await res.json();
+    } catch (_) {
+      ids = ["bg_11", "bg_22"];
+    }
+    grid.replaceChildren();
+    ids.forEach((id, index) => {
+      const num = String(id).replace(/^bg_/, "");
+      const card = document.createElement("div");
+      card.className = "background-card" + (index === 0 ? " selected" : "");
+      card.dataset.backgroundId = id;
+      card.dataset.poses = "4";
+      card.innerHTML =
+        `<img src="backgrounds/${id}.jpg" alt="${id}">` +
+        `<div class="bg-label">${id.replace("_", " ").toUpperCase()} · Set ${num}</div>`;
+      grid.append(card);
+      bindBackgroundCard(card);
+    });
+    if (!currentBackground && backgrounds[0]) currentBackground = backgrounds[0];
+  }
+  loadBackgrounds();
 
   async function startCamera() {
     if (videoStream) {

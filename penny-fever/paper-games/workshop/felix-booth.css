@@ -75,8 +75,8 @@ body.felix-cyber .screen-content { padding-top: 12vh; }
 .screen[data-screen="LIVE"] .screen-content { padding: 0; }
 
 .background-grid {
-  width: min(92%, 520px);
-  grid-template-columns: 1fr;
+  width: min(92%, 640px);
+  grid-template-columns: 1fr 1fr;
   max-height: 52vh;
 }
 .background-preview-frame img {
