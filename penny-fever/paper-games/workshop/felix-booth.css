@@ -381,3 +381,29 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
   object-fit: cover;
   border-radius: 20px;
 }
+
+/* Single Set strip_web display (bg_N_strip_web) — not the dual print sheet */
+.felix-booth .template-preview,
+.screen[data-screen="LIVE"] .template-preview,
+.screen[data-screen="REVIEW"] .template-preview {
+  width: min(42vw, 220px);
+  max-width: 240px;
+}
+.felix-booth .template-bg,
+.screen[data-screen="LIVE"] .template-bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+/* Fallback % if JS has not applied slot boxes yet (416×1232 ref) */
+.screen[data-screen="LIVE"] .template-slot.slot-1 { top: 1.542%; left: 25.481%; width: 53.125%; height: 21.266%; transform: none; }
+.screen[data-screen="LIVE"] .template-slot.slot-2 { top: 22.971%; left: 25.481%; width: 53.125%; height: 21.591%; transform: none; }
+.screen[data-screen="LIVE"] .template-slot.slot-3 { top: 52.597%; left: 25.481%; width: 53.125%; height: 21.916%; transform: none; }
+.screen[data-screen="LIVE"] .template-slot.slot-4 { top: 74.838%; left: 25.481%; width: 53.125%; height: 22.970%; transform: none; }
+
+#finalStripPreview,
+#digitalStripPreview {
+  width: min(46vw, 240px);
+  height: auto;
+  object-fit: contain;
+}

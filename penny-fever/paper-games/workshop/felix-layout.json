@@ -1,32 +1,32 @@
 {
+  "slot_ref": {
+    "w": 416,
+    "h": 1232
+  },
   "slot_boxes": [
     {
-      "x": 94,
-      "y": 12,
-      "w": 248,
-      "h": 278,
-      "rotation": 0
+      "x": 106,
+      "y": 19,
+      "w": 221,
+      "h": 262
     },
     {
-      "x": 94,
-      "y": 286,
-      "w": 248,
-      "h": 278,
-      "rotation": 0
+      "x": 106,
+      "y": 283,
+      "w": 221,
+      "h": 266
     },
     {
-      "x": 94,
-      "y": 642,
-      "w": 248,
-      "h": 282,
-      "rotation": 0
+      "x": 106,
+      "y": 648,
+      "w": 221,
+      "h": 270
     },
     {
-      "x": 94,
-      "y": 920,
-      "w": 248,
-      "h": 282,
-      "rotation": 0
+      "x": 106,
+      "y": 922,
+      "w": 221,
+      "h": 283
     }
   ],
   "free_bgs": [
@@ -42,5 +42,10 @@
     "session_pennies": 5,
     "unlock_pennies": 2,
     "unlock_tickets": 1
-  }
+  },
+  "display": "single_strip_web",
+  "strip_path": "backgrounds/strips/{id}.jpg",
+  "thumb_path": "backgrounds/strips/thumbs/{id}.jpg",
+  "dual_print_path": "backgrounds/{id}.jpg",
+  "note": "Guests see Set bg_N_strip_web (single). bg_id still bg_N. Upload dual print composite to match booth booth_print_strip contract."
 }

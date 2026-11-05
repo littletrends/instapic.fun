@@ -17,9 +17,13 @@
   };
 
   const FREE_BGS = ["bg_1", "bg_3", "bg_11", "bg_17", "bg_30", "bg_43"];
-  function bgThumb(id) { return "backgrounds/thumbs/" + id + ".jpg"; }
-  function bgFull(id) { return "backgrounds/" + id + ".jpg"; }
+  // Guests SEE the Set single strip (bg_N_strip_web). Dual print art stays in
+  // backgrounds/bg_N.jpg only for MotherPC upload parity with the real booth.
+  function bgThumb(id) { return "backgrounds/strips/thumbs/" + id + ".jpg"; }
+  function bgFull(id) { return "backgrounds/strips/" + id + ".jpg"; }
+  function bgDualPrint(id) { return "backgrounds/" + id + ".jpg"; }
   const TRY_SAMPLE_ID = "bg_11";
+  const SLOT_REF = { w: 416, h: 1232 };
   const LIVE_AUTOSTART_MS = 400;
   const MAX_RETAKES_PER_SESSION = 2;
   // MotherPC (existing Instapic backend, via its Tailscale Funnel). Felix only
@@ -64,12 +68,13 @@
     unlocks: "felixBooth.unlockedBgs",
     credits: "felixBooth.sessionCredits",
   };
-  // Default Instapic double-strip slots (left half), mirrored to the right.
+  // Photo windows on single strip_web, coords on MotherPC half-ref 416×1232
+  // (left half of the 832×1232 dual print / Set bg_N_strip master).
   const DEFAULT_SLOT_BOXES = [
-    { x: 94, y: 12, w: 248, h: 278 },
-    { x: 94, y: 286, w: 248, h: 278 },
-    { x: 94, y: 642, w: 248, h: 282 },
-    { x: 94, y: 920, w: 248, h: 282 },
+    { x: 106, y: 19, w: 221, h: 262 },
+    { x: 106, y: 283, w: 221, h: 266 },
+    { x: 106, y: 648, w: 221, h: 270 },
+    { x: 106, y: 922, w: 221, h: 283 },
   ];
 
   const screens = [...document.querySelectorAll(".screen")];
@@ -131,6 +136,7 @@
   let backgrounds = [];
   let allBackgroundIds = [];
   let slotBoxes = DEFAULT_SLOT_BOXES.slice();
+  let slotRef = { w: SLOT_REF.w, h: SLOT_REF.h };
   let currentBackground = null;
   let totalPoses = 4;
   let currentPoseIndex = 0;
@@ -363,6 +369,32 @@
     isCaptureInProgress = false;
   }
 
+
+  function applyTemplateSlotCss() {
+    const refW = slotRef.w || SLOT_REF.w;
+    const refH = slotRef.h || SLOT_REF.h;
+    slotBoxes.forEach((box, i) => {
+      const el = document.querySelector(".template-slot.slot-" + (i + 1));
+      if (!el || !box) return;
+      el.style.left = ((box.x / refW) * 100).toFixed(3) + "%";
+      el.style.top = ((box.y / refH) * 100).toFixed(3) + "%";
+      el.style.width = ((box.w / refW) * 100).toFixed(3) + "%";
+      el.style.height = ((box.h / refH) * 100).toFixed(3) + "%";
+      el.style.transform = "none";
+    });
+  }
+
+  function scaleSlotBox(raw, canvasW, canvasH) {
+    const refW = slotRef.w || SLOT_REF.w;
+    const refH = slotRef.h || SLOT_REF.h;
+    return {
+      x: Math.round((raw.x / refW) * canvasW),
+      y: Math.round((raw.y / refH) * canvasH),
+      w: Math.round((raw.w / refW) * canvasW),
+      h: Math.round((raw.h / refH) * canvasH),
+    };
+  }
+
   function selectBackground(bg) {
     currentBackground = bg;
     if (bg && bg.id) {
@@ -373,8 +405,10 @@
     });
     if (templateBackground && bg) {
       const full = bg.src || bgFull(bg.id);
+      templateBackground.onload = () => applyTemplateSlotCss();
       templateBackground.src = full;
-      // Warm the full-res file when guest picks a card (thumbs stay in the strip).
+      applyTemplateSlotCss();
+      // Warm the full-res single strip when guest picks a card (thumbs stay lazy).
       const warm = new Image();
       warm.decoding = "async";
       warm.src = full;
@@ -436,7 +470,10 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=link-pay-2").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=strip-web-1").then((r) => r.json());
+      if (layout.slot_ref && layout.slot_ref.w && layout.slot_ref.h) {
+        slotRef = { w: Number(layout.slot_ref.w) || SLOT_REF.w, h: Number(layout.slot_ref.h) || SLOT_REF.h };
+      }
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -445,10 +482,11 @@
           h: Number(b.h) || 1,
         }));
       }
+      applyTemplateSlotCss();
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=link-pay-2").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=strip-web-1").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -567,8 +605,8 @@
 
   // ---- Bonus pack: hand the session to MotherPC's existing pipeline ----
   // Same path the Magic Mirror kiosks use: commit-used -> receive-assets with
-  // freeze_1..4.jpg (+ strip). MotherPC builds the bonus pack from
-  // Background Sets/Set_N for bg_N and bonus.html?code= shows it.
+  // freeze_1..4.jpg (+ dual print strip). Display uses Set bg_N_strip_web;
+  // MotherPC still keys the bonus pack off bg_id bg_N → Set_N.
   function setBonusUi(state, msg) {
     bonusState = state;
     const btn = document.getElementById("goBonusBtn");
@@ -623,6 +661,9 @@
       const commit = await api("/api/commit-used", { ticket_code: serverCode, bg_id: bgId });
       if (!commit.res.ok || !commit.data.ok) throw new Error("commit " + (commit.data.error || commit.res.status));
       if (!lastCompositeUrl) await buildStrip();
+      // Real booth uploads the dual print strip (booth_print_strip.jpg). Match that
+      // contract; guests still only see the single strip_web composite on screen.
+      const dualUrl = await buildDualStripForUpload();
       const form = new FormData();
       form.append("ticket_code", serverCode);
       form.append("bg_id", bgId);
@@ -631,7 +672,11 @@
         const blob = await freezeBlob(i);
         if (blob) form.append("freeze_" + (i + 1), blob, "freeze_" + (i + 1) + ".jpg");
       }
-      if (lastCompositeUrl) form.append("strip", await dataUrlToBlob(lastCompositeUrl), "felix_strip.jpg");
+      if (dualUrl) {
+        const dualBlob = await dataUrlToBlob(dualUrl);
+        form.append("strip", dualBlob, "felix_strip.jpg");
+        form.append("booth_print_strip.jpg", dualBlob, "booth_print_strip.jpg");
+      }
       // Booth contract: MotherPC builds collage / GIF / boomerang from
       // assets/video/session_video.(mp4|webm).
       stopRecording("pre-upload");
@@ -1261,8 +1306,7 @@
     ctx.restore();
   }
 
-  async function buildStrip() {
-    const bg = await loadImage(currentBackground?.src || bgFull(TRY_SAMPLE_ID));
+  async function loadSessionPhotos() {
     // Always fill all 4 strip windows so unused poses are cream placeholders,
     // not empty see-through holes in the template.
     const photoSrcs = [];
@@ -1273,36 +1317,65 @@
         photoSrcs.push(makeSilhouetteDataUrl(720, 1280));
       }
     }
-    const photos = await Promise.all(photoSrcs.map((src) => loadImage(src)));
+    return Promise.all(photoSrcs.map((src) => loadImage(src)));
+  }
+
+  // Guest-facing composite: single Set strip_web (bg_N_strip_web).
+  async function buildStrip() {
+    const bgId = currentBackground?.id || TRY_SAMPLE_ID;
+    const bg = await loadImage(currentBackground?.src || bgFull(bgId));
+    const photos = await loadSessionPhotos();
     const out = document.createElement("canvas");
     out.width = bg.width;
     out.height = bg.height;
     const ctx = out.getContext("2d");
     ctx.drawImage(bg, 0, 0);
 
-    const scaleX = bg.width / 832;
-    const scaleY = bg.height / 1232;
-    const half = Math.floor(bg.width / 2);
-
     for (let i = 0; i < 4; i++) {
       const photo = photos[i];
       if (!photo) continue;
       const raw = slotBoxes[i] || DEFAULT_SLOT_BOXES[i];
-      const leftBox = {
-        x: Math.round(raw.x * scaleX),
-        y: Math.round(raw.y * scaleY),
-        w: Math.round(raw.w * scaleX),
-        h: Math.round(raw.h * scaleY),
-      };
-      const rightBox = { ...leftBox, x: leftBox.x + half };
-      drawPhotoInBox(ctx, photo, leftBox);
-      drawPhotoInBox(ctx, photo, rightBox);
+      drawPhotoInBox(ctx, photo, scaleSlotBox(raw, out.width, out.height));
     }
 
     if (isTrySession) stampSample(ctx, out.width, out.height);
     lastCompositeUrl = out.toDataURL("image/jpeg", 0.92);
     if (finalStripPreview) finalStripPreview.src = lastCompositeUrl;
     if (digitalStripPreview) digitalStripPreview.src = lastCompositeUrl;
+    return lastCompositeUrl;
+  }
+
+  // MotherPC / real-booth contract: dual 832×1232 print strip (static/backgrounds
+  // bg_N.jpg == Set bg_N_strip). Uploaded as the strip asset; bonus still keyed by bg_id.
+  async function buildDualStripForUpload() {
+    const bgId = currentBackground?.id || TRY_SAMPLE_ID;
+    const bg = await loadImage(bgDualPrint(bgId));
+    const photos = await loadSessionPhotos();
+    const out = document.createElement("canvas");
+    out.width = bg.width;
+    out.height = bg.height;
+    const ctx = out.getContext("2d");
+    ctx.drawImage(bg, 0, 0);
+    const half = Math.floor(bg.width / 2);
+    // Dual master is 832×1232; left-half slots use the same 416-ref boxes, then mirror.
+    const leftRefW = slotRef.w || SLOT_REF.w;
+    const leftRefH = slotRef.h || SLOT_REF.h;
+    for (let i = 0; i < 4; i++) {
+      const photo = photos[i];
+      if (!photo) continue;
+      const raw = slotBoxes[i] || DEFAULT_SLOT_BOXES[i];
+      const leftBox = {
+        x: Math.round((raw.x / leftRefW) * half),
+        y: Math.round((raw.y / leftRefH) * out.height),
+        w: Math.round((raw.w / leftRefW) * half),
+        h: Math.round((raw.h / leftRefH) * out.height),
+      };
+      const rightBox = { ...leftBox, x: leftBox.x + half };
+      drawPhotoInBox(ctx, photo, leftBox);
+      drawPhotoInBox(ctx, photo, rightBox);
+    }
+    if (isTrySession) stampSample(ctx, out.width, out.height);
+    return out.toDataURL("image/jpeg", 0.92);
   }
 
   function adjustPrintScreenForMode() {
@@ -1533,7 +1606,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=link-pay-2";
+    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-1";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1549,7 +1622,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=link-pay-2");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-1");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1571,7 +1644,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=link-pay-2"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-1"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
