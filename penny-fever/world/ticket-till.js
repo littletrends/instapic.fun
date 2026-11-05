@@ -4,6 +4,27 @@ const FALLBACK_PACKS = [
   {id:'PF_ROLL', name:'Penny pack', blurb:'Ten pennies for another lap and the machines.', amount_cents:500, tickets:0, pennies:10},
   {id:'PF_POCKET', name:'Pocket pack', blurb:'Five tickets and ten pennies — enough for a little wander.', amount_cents:800, tickets:5, pennies:10},
 ];
+// Instapic photo booth packages — same ids/prices as instapic.fun/pay.html.
+// Charged server-side by MotherPC /api/pay-and-create-ticket (Square COMPLETED
+// check), which returns a real 6-digit Instapic code. That code is the only
+// thing Felix's booth accepts as a paid session.
+const PHOTO_PACKS = [
+  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Classic: 2 photo strips.', amount_cents:700},
+  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Perfect for sharing: 4 photo strips.', amount_cents:1300},
+  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'One session in Felix’s photo booth with a real Instapic bonus code. Full crew: 6 photo strips.', amount_cents:1800},
+];
+export const PHOTO_CODES_KEY = 'pf-photo-codes';
+export function photoCodes() {
+  try {
+    const list = JSON.parse(localStorage.getItem(PHOTO_CODES_KEY) || '[]');
+    return Array.isArray(list) ? list.filter(r => r && /^\d{6}$/.test(String(r.code))) : [];
+  } catch { return []; }
+}
+function addPhotoCode(rec) {
+  const list = photoCodes();
+  if (!list.some(r => r.code === rec.code)) list.push(rec);
+  try { localStorage.setItem(PHOTO_CODES_KEY, JSON.stringify(list)); } catch {}
+}
 const FALLBACK_SQUARE = {
   application_id: 'sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ',
   location_id: '9ZKNKQJ29QF50',
@@ -20,7 +41,7 @@ let selected = null;
 let paying = false;
 let walletBusy = false;
 let pinned = false;
-let config = {packs: FALLBACK_PACKS, ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
+let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;
 const isPreview = () => {
@@ -37,6 +58,7 @@ function tillOpen() {
 }
 
 function packLine(pack) {
+  if (pack.kind === 'photo') return '1 photo booth session · Instapic bonus code';
   const bits = [];
   if (pack.tickets) bits.push(pack.tickets === 1 ? '1 ticket' : pack.tickets + ' tickets');
   if (pack.pennies) bits.push(pack.pennies === 1 ? '1 penny' : pack.pennies + ' pennies');
@@ -260,7 +282,7 @@ function paintPacks() {
   for (const pack of config.packs) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'pf-till-pack';
+    button.className = 'pf-till-pack' + (pack.kind === 'photo' ? ' pf-till-pack--photo' : '');
     button.dataset.pack = pack.id;
     button.setAttribute('aria-pressed', String(selected?.id === pack.id));
     button.innerHTML = `<strong>${pack.name}</strong><em>${money(pack.amount_cents)} AUD</em><span>${packLine(pack)}</span><small>${pack.blurb}</small>`;
@@ -300,6 +322,7 @@ async function chargeToken(tokenResult, label) {
     const msg = tokenResult.errors?.map(e => e.message).filter(Boolean).join('; ') || tokenResult.status;
     throw new Error(msg || label + ' was not accepted.');
   }
+  if (selected.kind === 'photo') return chargePhotoPack(tokenResult);
   const res = await fetch(`${API_BASE}/api/penny-fever/pay-pack`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -323,12 +346,43 @@ async function chargeToken(tokenResult, label) {
   closeTill();
 }
 
+// Photo booth package: MotherPC charges Square and only answers ok once the
+// payment is COMPLETED, returning the issued Instapic code. Nothing is granted
+// on any other answer.
+async function chargePhotoPack(tokenResult) {
+  const pack = selected;
+  const res = await fetch(`${API_BASE}/api/pay-and-create-ticket`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      packageId: pack.id,
+      amountCents: pack.amount_cents,
+      sourceId: tokenResult.token,
+      source: 'penny-fever-aura-till',
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  const code = String(data.ticket_code || data.code || '');
+  if (!res.ok || data.ok === false || data.payment_status !== 'COMPLETED' || !/^\d{6}$/.test(code)) {
+    throw new Error(data.error ? 'Square did not approve: ' + data.error : `Payment not approved (${res.status})`);
+  }
+  addPhotoCode({code, pkg: pack.id, payment_id: data.payment_id || '', ts: Date.now()});
+  apiRef?.stampKeepsake?.('ticket-roll', 'aura-till');
+  try { localStorage.setItem('pf-last-till-payment', data.payment_id || ''); } catch {}
+  setStatus(`Approved. Photo session ready in Felix’s booth — your code is ${code}.`);
+  window.dispatchEvent(new CustomEvent('pf-photo-code', {detail: {code}}));
+}
+
 async function payWithCard() {
   if (paying || !selected) return;
   paying = true;
   $('pfTillPay').disabled = true;
   try {
     if (isPreview()) {
+      if (selected.kind === 'photo') {
+        setStatus('Preview till — photo sessions need a real Square approval on instapic.fun.');
+        return;
+      }
       creditPack(selected, 'preview');
       setStatus(`Preview fill. ${packLine(selected)} in your pocket.`);
       closeTill();
@@ -380,14 +434,14 @@ async function refreshConfig() {
     const data = await res.json();
     if (!res.ok || data.ok === false) throw new Error(data.error || 'till');
     config = {
-      packs: Array.isArray(data.packs) && data.packs.length ? data.packs : FALLBACK_PACKS,
+      packs: [...(Array.isArray(data.packs) && data.packs.length ? data.packs : FALLBACK_PACKS), ...PHOTO_PACKS],
       application_id: data.application_id || FALLBACK_SQUARE.application_id,
       location_id: data.location_id || FALLBACK_SQUARE.location_id,
       square_ready: !!data.square_ready,
       currency: data.currency || 'AUD',
     };
   } catch {
-    config = {packs: FALLBACK_PACKS, ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
+    config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
   }
   paintPacks();
 }
@@ -413,7 +467,7 @@ export function mountTill(api) {
     <button type="button" class="pf-till-close" id="pfTillClose" aria-label="Close the till">×</button>
     <p class="pf-till-kicker">Square till</p>
     <h2 id="pfTillTitle">Buy a pack</h2>
-    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. Trading pennies for tickets happens at Aura’s booth, not here.</p>
+    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. Scrip packs, or a photo booth session for Felix’s booth ($7 / $13 / $18). Nothing is added until Square approves.</p>
     <div class="pf-till-packs" id="pfTillPacks"></div>
     <div class="pf-till-pay">
       <div class="pf-till-wallets" id="pfTillWallets">
