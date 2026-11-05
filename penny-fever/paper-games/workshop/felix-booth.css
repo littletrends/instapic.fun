@@ -202,3 +202,4 @@ html, body {
 .felix-bonus-row{margin-top:10px}
 #goBonusBtn.is-disabled{opacity:.55;pointer-events:none}
 .felix-bonus-status{min-height:1.2em;text-align:center}
+#retryBonusBtn[hidden],#goBonusBtn[hidden]{display:none!important}
