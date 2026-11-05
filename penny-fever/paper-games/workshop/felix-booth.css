@@ -181,3 +181,21 @@ html, body {
 .no-camera-card .btn-secondary:hover {
   filter: brightness(1.08);
 }
+
+
+/* ---- camera-sq-1: enable-camera gate + error line ---- */
+.camera-enable-panel .no-camera-card {
+  border-color: #c9a227;
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.25);
+}
+.no-camera-error {
+  color: #8b2e2e;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.payment-packages-row .package-btn .pkg-desc {
+  display: block;
+  font-size: 0.78em;
+  opacity: 0.85;
+  margin-top: 0.2em;
+}

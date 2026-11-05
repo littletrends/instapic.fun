@@ -144,7 +144,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   frame=doc.createElement('iframe');frame.className='paper-game-frame';frame.title=game.host+' — '+game.title;
   frame.src='about:blank';
   if(game.id==='snap') {
-    frame.setAttribute('allow','camera;fullscreen');
+    frame.setAttribute('allow','camera; microphone; fullscreen');
     frame.setAttribute('scrolling','yes');
     frame.style.touchAction='auto';
   } else {

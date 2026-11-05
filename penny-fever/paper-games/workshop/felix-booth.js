@@ -19,8 +19,14 @@
   const FREE_BGS = ["bg_1", "bg_3", "bg_11", "bg_17", "bg_30", "bg_43"];
   const TRY_SAMPLE_ID = "bg_11";
   const LIVE_AUTOSTART_MS = 400;
-  const CAMERA_WAIT_MS = 1800;
   const MAX_RETAKES_PER_SESSION = 2;
+  // Square hosted checkout Payment Links (public URLs only — no access tokens).
+  // Honor-based unlock on redirect until a server webhook verifies.
+  const SQUARE_LINKS = {
+    P2: { url: "https://square.link/u/1XR6t22j", credits: 1, label: "$7 · 2 strips" },
+    P4: { url: "https://square.link/u/mJbnOorC", credits: 2, label: "$13 · 4 strips" },
+    P6: { url: "https://square.link/u/9idvZ3go", credits: 3, label: "$18 · 6 strips" },
+  };
   const PRICE = {
     sessionTickets: 1,
     sessionPennies: 5,
@@ -53,6 +59,11 @@
   const noCameraPanel = document.getElementById("noCameraPanel");
   const noCameraFile = document.getElementById("noCameraFile");
   const noCameraPoseHint = document.getElementById("noCameraPoseHint");
+  const noCameraTitle = document.getElementById("noCameraTitle");
+  const noCameraSubtitle = document.getElementById("noCameraSubtitle");
+  const noCameraErrorEl = document.getElementById("noCameraError");
+  const cameraEnablePanel = document.getElementById("cameraEnablePanel");
+  const cameraEnableHint = document.getElementById("cameraEnableHint");
   const templateBackground = document.getElementById("templateBackground");
   const slotImages = [0, 1, 2, 3].map((i) => document.getElementById("slotImage" + i));
   const selectedPhotoPreview = document.getElementById("selectedPhotoPreview");
@@ -83,7 +94,9 @@
   let isTrySession = false;
   let hasCommitted = false;
   let videoStream = null;
-  let cameraAvailable = null;
+  let cameraAvailable = null; // null=unknown, true=ready, false=failed/denied
+  let cameraErrorName = "";
+  let cameraRequestInFlight = false;
   let cueStepTimeout = null;
   let liveAutoSnapTimer = null;
   let reviewIdleTimer = null;
@@ -299,7 +312,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=pass-2b").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=camera-sq-1").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -457,39 +470,131 @@
     return c.toDataURL("image/jpeg", 0.92);
   }
 
-  async function probeCamera() {
-    if (cameraAvailable !== null) return cameraAvailable;
+  function attachStream(stream) {
+    videoStream = stream;
+    liveVideo.setAttribute("playsinline", "");
+    liveVideo.setAttribute("webkit-playsinline", "");
+    liveVideo.muted = true;
+    liveVideo.playsInline = true;
+    liveVideo.srcObject = stream;
+    return liveVideo.play().catch(() => {});
+  }
+
+  async function getUserMediaLoose() {
     if (!navigator.mediaDevices?.getUserMedia) {
-      cameraAvailable = false;
-      return false;
+      const err = new Error("mediaDevices.getUserMedia missing");
+      err.name = "UnsupportedError";
+      throw err;
     }
-    try {
-      const stream = await Promise.race([
-        navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } },
-          audio: false,
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), CAMERA_WAIT_MS)),
-      ]);
-      videoStream = stream;
-      liveVideo.srcObject = stream;
-      await liveVideo.play().catch(() => {});
-      cameraAvailable = true;
+    const attempts = [
+      {
+        video: {
+          facingMode: { ideal: "user" },
+          width: { ideal: 720 },
+          height: { ideal: 1280 },
+        },
+        audio: false,
+      },
+      { video: { facingMode: { ideal: "user" } }, audio: false },
+      { video: true, audio: false },
+    ];
+    let lastErr = null;
+    for (const constraints of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        lastErr = err;
+        // Keep trying looser constraints for Overconstrained / NotFound.
+        // Do NOT treat NotAllowed as retryable — user denied.
+        if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) throw err;
+      }
+    }
+    throw lastErr || new Error("getUserMedia failed");
+  }
+
+  function describeCameraError(err) {
+    const name = (err && err.name) || "Error";
+    cameraErrorName = name;
+    if (name === "NotAllowedError" || name === "SecurityError") {
+      return "Camera permission denied (" + name + "). Allow camera for instapic.fun in your phone settings, then tap Turn on camera again — or use a photo from your phone.";
+    }
+    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      return "No camera found (" + name + "). Use a photo from your phone instead.";
+    }
+    if (name === "NotReadableError" || name === "TrackStartError") {
+      return "Camera is busy in another app (" + name + "). Close it and try again, or use a photo from your phone.";
+    }
+    if (name === "OverconstrainedError") {
+      return "Camera could not match the requested settings (" + name + "). Try again, or use a photo from your phone.";
+    }
+    if (name === "UnsupportedError" || name === "TypeError") {
+      return "This browser cannot open a camera (" + name + "). Use a photo from your phone instead.";
+    }
+    return "Camera could not start (" + name + "). " + ((err && err.message) || "") + " Use a photo from your phone, or tap Turn on camera again.";
+  }
+
+  function showCameraEnable(msg) {
+    hideNoCamera();
+    if (!cameraEnablePanel) return;
+    cameraEnablePanel.classList.remove("hidden");
+    if (cameraEnableHint) {
+      cameraEnableHint.textContent =
+        msg ||
+        "Phones need a tap before the camera opens. Allow the permission when asked — we wait for your answer.";
+    }
+    stopLiveAutoSnapTimer();
+    clearCaptureSequenceTimers();
+    hideLiveCaptureCues();
+  }
+  function hideCameraEnable() {
+    cameraEnablePanel?.classList.add("hidden");
+  }
+
+  async function requestCameraFromGesture() {
+    if (cameraRequestInFlight) return false;
+    if (videoStream && cameraAvailable) {
+      hideCameraEnable();
+      hideNoCamera();
+      videoLayer.classList.remove("hidden");
       return true;
-    } catch (_) {
+    }
+    cameraRequestInFlight = true;
+    hideNoCamera();
+    if (cameraEnableHint) cameraEnableHint.textContent = "Asking for camera… tap Allow when your phone asks.";
+    try {
+      const stream = await getUserMediaLoose();
+      await attachStream(stream);
+      cameraAvailable = true;
+      cameraErrorName = "";
+      hideCameraEnable();
+      hideNoCamera();
+      videoLayer.classList.remove("hidden");
+      if (currentScreen === Screen.LIVE && !isCaptureInProgress) {
+        hideLiveCaptureCues();
+        startLiveAutoSnapTimer();
+      }
+      return true;
+    } catch (err) {
       cameraAvailable = false;
+      const detail = describeCameraError(err);
+      hideCameraEnable();
+      showNoCamera(detail);
       return false;
+    } finally {
+      cameraRequestInFlight = false;
     }
   }
 
   async function startCamera() {
-    const ok = await probeCamera();
-    if (ok) {
+    // Never call getUserMedia from a timer/auto path — iOS Safari needs a user gesture.
+    // If we already have a live stream, reuse it. Otherwise show the Turn on camera gate.
+    if (videoStream && cameraAvailable) {
       videoLayer.classList.remove("hidden");
       hideNoCamera();
+      hideCameraEnable();
       return true;
     }
-    showNoCamera();
+    showCameraEnable();
     return false;
   }
 
@@ -500,11 +605,29 @@
     }
     liveVideo.srcObject = null;
     videoLayer.classList.add("hidden");
+    // Drop sticky "ready" so the next LIVE visit re-attaches cleanly.
+    if (cameraAvailable === true) cameraAvailable = null;
   }
 
-  function showNoCamera() {
+  function showNoCamera(detailMsg) {
     if (!noCameraPanel) return;
+    hideCameraEnable();
     noCameraPanel.classList.remove("hidden");
+    if (noCameraTitle) {
+      noCameraTitle.textContent =
+        cameraErrorName === "NotAllowedError" || cameraErrorName === "SecurityError"
+          ? "Camera blocked"
+          : "Camera unavailable";
+    }
+    if (noCameraSubtitle) {
+      noCameraSubtitle.textContent =
+        detailMsg ||
+        "Pick a photo from your phone, or use a cream silhouette so the booth still finishes.";
+    }
+    if (noCameraErrorEl) {
+      noCameraErrorEl.textContent = cameraErrorName ? "Error: " + cameraErrorName : "";
+      noCameraErrorEl.classList.toggle("hidden", !cameraErrorName);
+    }
     if (noCameraPoseHint) {
       noCameraPoseHint.textContent = "Pose " + (currentPoseIndex + 1) + " of " + totalPoses;
     }
@@ -943,6 +1066,7 @@
       });
     } else {
       hideNoCamera();
+      hideCameraEnable();
       stopCamera();
       stopLiveAutoSnapTimer();
       clearCaptureSequenceTimers();
@@ -1006,19 +1130,22 @@
     });
   });
 
-  if (noCameraFile) {
-    noCameraFile.addEventListener("change", () => {
-      const file = noCameraFile.files && noCameraFile.files[0];
+  function bindPhotoFileInput(input) {
+    if (!input) return;
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         isCaptureInProgress = true;
         acceptPhotoDataUrl(String(reader.result || ""));
-        noCameraFile.value = "";
+        input.value = "";
       };
       reader.readAsDataURL(file);
     });
   }
+  bindPhotoFileInput(noCameraFile);
+  bindPhotoFileInput(document.getElementById("enableCameraFile"));
 
   document.addEventListener(
     "touchstart",
@@ -1090,16 +1217,41 @@
       setPayBanner("Booth credit used.");
       return startPaidSession();
     }
+    if (action === "square-p2" || action === "square-p4" || action === "square-p6") {
+      const pkg = action.replace("square-", "").toUpperCase();
+      const link = SQUARE_LINKS[pkg];
+      if (!link?.url) {
+        setPayBanner("Square link missing for " + pkg + ".");
+        return;
+      }
+      try {
+        sessionStorage.setItem("felixBooth.pendingPay", pkg);
+      } catch (_) {}
+      setPayBanner(
+        "Opening Square for " +
+          link.label +
+          ". After you pay, come back here — credits unlock on return (honor-based until webhook verifies)."
+      );
+      const opened = window.open(link.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        // Popup blocked — navigate same tab.
+        location.href = link.url;
+      }
+      return;
+    }
     if (action === "cashin-p2" || action === "cashin-p4" || action === "cashin-p6") {
+      // Kept for deep-links / older UI; prefer Square buttons above.
       pendingCashinPkg = action.replace("cashin-", "");
       const credits = CASHIN_CREDITS[pendingCashinPkg] || 1;
       if (cashinInput) cashinInput.value = "";
       if (cashinError) cashinError.textContent = "";
       if (cashinSubtitle) {
         cashinSubtitle.textContent =
-          "STUB only — enter any 6-digit code from a $" +
+          "Enter a 6-digit Instapic code from a $" +
           ({ p2: "7", p4: "13", p6: "18" }[pendingCashinPkg] || "?") +
-          " Instapic package. Grants " + credits + " booth credit(s). No real payment is checked.";
+          " package. Grants " +
+          credits +
+          " booth credit(s). Prefer Square pay above for a new purchase.";
       }
       return showScreen(Screen.CASHIN);
     }
@@ -1149,6 +1301,10 @@
       grid.scrollBy({ left: action === "bg-scroll-left" ? -220 : 220, behavior: "smooth" });
       return;
     }
+    if (action === "enable-camera" || action === "retry-camera") {
+      requestCameraFromGesture();
+      return;
+    }
     if (action === "use-silhouette") {
       isCaptureInProgress = true;
       acceptPhotoDataUrl(makeSilhouetteDataUrl(720, 1280));
@@ -1182,7 +1338,41 @@
     if (action === "error-to-attract") return showScreen(Screen.ATTRACT);
   });
 
+  function consumePaidReturn() {
+    try {
+      const params = new URLSearchParams(location.search);
+      const paid = String(params.get("paid") || "").toUpperCase();
+      if (!paid || !SQUARE_LINKS[paid]) return false;
+      const link = SQUARE_LINKS[paid];
+      const credits = Math.max(1, Number(params.get("credits")) || link.credits || 1);
+      addCredits(credits);
+      creditPennies(credits * 2);
+      refreshWalletUi();
+      try {
+        sessionStorage.removeItem("felixBooth.pendingPay");
+      } catch (_) {}
+      const url = new URL(location.href);
+      url.searchParams.delete("paid");
+      url.searchParams.delete("credits");
+      const cleaned = url.pathname + (url.search || "") + (url.hash || "");
+      try {
+        history.replaceState({}, "", cleaned);
+      } catch (_) {}
+      setPayBanner(
+        "Square return for " +
+          link.label +
+          ": +" +
+          credits +
+          " booth credit(s). Honor-based until a webhook verifies the payment."
+      );
+      showScreen(Screen.PAYMENT);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   window.addEventListener("pagehide", stopCamera);
   refreshWalletUi();
-  showScreen(Screen.ATTRACT);
+  if (!consumePaidReturn()) showScreen(Screen.ATTRACT);
 })();
