@@ -1,0 +1,46 @@
+{
+  "slot_boxes": [
+    {
+      "x": 94,
+      "y": 12,
+      "w": 248,
+      "h": 278,
+      "rotation": 0
+    },
+    {
+      "x": 94,
+      "y": 286,
+      "w": 248,
+      "h": 278,
+      "rotation": 0
+    },
+    {
+      "x": 94,
+      "y": 642,
+      "w": 248,
+      "h": 282,
+      "rotation": 0
+    },
+    {
+      "x": 94,
+      "y": 920,
+      "w": 248,
+      "h": 282,
+      "rotation": 0
+    }
+  ],
+  "free_bgs": [
+    "bg_1",
+    "bg_3",
+    "bg_11",
+    "bg_17",
+    "bg_30",
+    "bg_43"
+  ],
+  "prices": {
+    "session_tickets": 1,
+    "session_pennies": 5,
+    "unlock_pennies": 2,
+    "unlock_tickets": 1
+  }
+}

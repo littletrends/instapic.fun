@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=replica-1">
-  <link rel="stylesheet" href="branding.css?v=replica-1">
-  <link rel="stylesheet" href="patches.css?v=replica-1">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=replica-1">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=replica-1">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=replica-1">
-  <link rel="stylesheet" href="event_portal_patch.css?v=replica-1">
-  <link rel="stylesheet" href="felix-booth.css?v=replica-1">
+  <link rel="stylesheet" href="flow-booth.css?v=pass-2">
+  <link rel="stylesheet" href="branding.css?v=pass-2">
+  <link rel="stylesheet" href="patches.css?v=pass-2">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pass-2">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=pass-2">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pass-2">
+  <link rel="stylesheet" href="event_portal_patch.css?v=pass-2">
+  <link rel="stylesheet" href="felix-booth.css?v=pass-2">
 </head>
 <body>
   <div id="turn-phone">
@@ -69,35 +69,49 @@
           <div class="screen-content">
             <h1 class="title-main">Choose an option</h1>
             <p class="subtitle">
-              Pay now, use a prepaid code, or try it first.
+              Pay with tickets or pennies, cash in an Instapic code, or try it first.
             </p>
 
+            <div id="felix-wallet" class="felix-wallet" aria-live="polite">
+              <span id="felix-wallet-tickets">0 tickets</span>
+              <span class="felix-wallet-dot">·</span>
+              <span id="felix-wallet-pennies">0 pennies</span>
+              <span class="felix-wallet-dot">·</span>
+              <span id="felix-wallet-credits">0 booth credits</span>
+            </div>
+
+            <div class="button-row payment-options payment-pills-row">
+              <button class="btn btn-primary" data-action="pay-tickets">
+                PAY WITH TICKETS · 1
+              </button>
+              <button class="btn btn-primary" data-action="pay-pennies">
+                PAY WITH PENNIES · 5
+              </button>
+              <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden>
+                USE BOOTH CREDIT
+              </button>
+            </div>
+
             <div class="button-row payment-options payment-packages-row">
-              <button class="btn btn-primary package-btn" data-action="pay-p2">
-                <span class="pkg-price">$7.00 Quick & Simple </span>
-                <span class="pkg-desc">2 PHOTO STRIPS</span>
+              <button class="btn btn-secondary package-btn" data-action="cashin-p2">
+                <span class="pkg-price">$7 code → 1 credit</span>
+                <span class="pkg-desc">STUB · cash in Instapic P2</span>
               </button>
-              <button class="btn btn-primary package-btn" data-action="pay-p4">
-                <span class="pkg-price">$13.00 Most Popular ✨ </span>
-                <span class="pkg-desc">4 PHOTO STRIPS</span>
+              <button class="btn btn-secondary package-btn" data-action="cashin-p4">
+                <span class="pkg-price">$13 code → 2 credits</span>
+                <span class="pkg-desc">STUB · cash in Instapic P4</span>
               </button>
-              <button class="btn btn-primary package-btn" data-action="pay-p6">
-                <span class="pkg-price">$18.00 Best for Groups </span>
-                <span class="pkg-desc">6 PHOTO STRIPS</span>
-              </button>
-              <button class="btn btn-secondary" data-action="pay-cancel">
-                CANCEL PAYMENT
+              <button class="btn btn-secondary package-btn" data-action="cashin-p6">
+                <span class="pkg-price">$18 code → 3 credits</span>
+                <span class="pkg-desc">STUB · cash in Instapic P6</span>
               </button>
             </div>
 
             <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
 
             <div class="button-row payment-options payment-pills-row">
-              <button class="btn btn-secondary" data-action="enter-paynow">
-                ENTER PRIVATE EVENT
-              </button>
               <button class="btn btn-secondary" data-action="enter-prepaid">
-                I HAVE A PREPAID CODE
+                I HAVE A PREPAID / INSTAPIC CODE
               </button>
               <button class="btn btn-secondary" data-action="enter-try-info">
                 TRY IT FIRST
@@ -151,6 +165,29 @@
           </div>
         </section>
 
+        
+        <section class="screen" data-screen="CASHIN">
+          <div class="screen-content">
+            <h1 class="title-main">Cash in Instapic code</h1>
+            <p class="subtitle" id="cashinSubtitle">
+              STUB only — enter any 6-digit code. No real payment is checked.
+            </p>
+            <div class="code-input-wrapper">
+              <input id="cashinCodeInput"
+                     type="text"
+                     maxlength="6"
+                     inputmode="numeric"
+                     placeholder="6-digit code"
+                     autocomplete="off"
+                     spellcheck="false">
+            </div>
+            <p id="cashinError" class="error-msg"></p>
+            <div class="button-row">
+              <button class="btn btn-secondary" data-action="cashin-back">BACK</button>
+              <button class="btn btn-primary" data-action="cashin-continue">GRANT CREDITS (STUB)</button>
+            </div>
+          </div>
+        </section>
         <section class="screen" data-screen="PREPAID">
           <div class="screen-content">
             <h1 class="title-main">Prepaid Code</h1>
@@ -196,7 +233,7 @@
         <section class="screen" data-screen="BACKGROUNDS">
           <div class="screen-content">
             <h1 class="title-main">Choose a Background Template</h1>
-            <p class="subtitle">Select your photo strip design.</p>
+            <p class="subtitle" id="bgSubtitle">Free templates are open. Locked ones cost 2 pennies or 1 ticket.</p>
             <div class="background-scroll-wrapper">
               <button class="bg-scroll-arrow bg-scroll-arrow--left" type="button" data-action="bg-scroll-left" aria-label="Previous">‹</button>
               <div class="background-grid" id="backgroundGrid">
@@ -226,6 +263,25 @@
               <div class="lookup-arrow" aria-hidden="true">▲</div>
               <div class="lookup-label">Look up here</div>
               <div class="lookup-sub">Camera is above the screen</div>
+            </div>
+            
+            <div id="noCameraPanel" class="no-camera-panel hidden">
+              <div class="no-camera-card">
+                <h1 class="title-main">No camera on this device</h1>
+                <p class="subtitle">Pick a photo from your phone, or use a cream silhouette so the booth still finishes.</p>
+                <div class="button-row">
+                  <label class="btn btn-primary btn-big no-camera-file-label">
+                    UPLOAD / TAKE PHOTO
+                    <input id="noCameraFile" type="file" accept="image/*" capture="user" hidden>
+                  </label>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary btn-big" data-action="use-silhouette" type="button">
+                    USE CREAM SILHOUETTE
+                  </button>
+                </div>
+                <p class="subtitle small" id="noCameraPoseHint">Pose 1 of 2</p>
+              </div>
             </div>
             <div id="countdownOverlay" class="countdown-overlay hidden">
               <span id="countdownNumber">3</span>
@@ -286,9 +342,16 @@
                 <div>Have your phone ready to save it.</div>
               </div>
             </div>
+            <div class="button-row felix-save-row">
+              <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
+              <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE</button>
+            </div>
+            <div class="button-row">
+              <a class="btn btn-secondary" id="bonusLink" href="https://instapic.fun/bonus.html" target="_blank" rel="noopener">OPEN INSTAPIC BONUS</a>
+            </div>
             <div class="button-row">
               <button class="btn btn-primary btn-big" data-action="print-now">
-                PRINT MY PHOTO STRIP
+                CONTINUE
               </button>
             </div>
           </div>
@@ -320,9 +383,14 @@
                 </div>
               </div>
             </div>
+            <div class="button-row felix-save-row">
+              <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
+              <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE</button>
+              <a class="btn btn-secondary" id="bonusLinkDigital" href="https://instapic.fun/bonus.html" target="_blank" rel="noopener">BONUS PAGE</a>
+            </div>
             <div class="button-row">
               <button class="btn btn-primary btn-big" data-action="digital-done" type="button">
-                Continue — print my photos
+                Continue
               </button>
             </div>
           </div>
@@ -359,6 +427,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=replica-1"></script>
+  <script src="felix-booth.js?v=pass-2"></script>
 </body>
 </html>
