@@ -1,7 +1,7 @@
 import {games} from '../paper-games/catalogue.js?v=load-fix-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
-import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=entry-4';
+import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=lock-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
@@ -164,7 +164,7 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   if(door==='closed'||isClosed(game.id)){
     unload();
     status.hidden=false;
-    status.textContent='Felix’s Instapic photo booth is closed for maintenance. Come back later.';
+    status.textContent=game.id==='snap'?'Felix’s Instapic photo booth is closed for maintenance. Come back later.':'Under construction 🔒. Come back later.';
     return;
   }
   if(door==='ticket'){

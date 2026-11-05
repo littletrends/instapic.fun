@@ -133,10 +133,11 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
   note.textContent='Need five pennies for a ticket.';
   paintAuraWallet();
  };
+ {const b=panel.querySelector('#auraCounterLoan');b.disabled=true;b.textContent='Bank loan · Under construction 🔒';}
  panel.querySelector('#auraCounterLoan').onclick=()=>{
   if(!near())return;
-  const n=apiRef.addDemoCoins?.(100)||0;
-  panel.querySelector('#auraCounterMessage').textContent=n?('Bank loan · +'+n+' pennies.'):'The till is quiet.';
+  const n=0; /* loan locked: under construction */
+  panel.querySelector('#auraCounterMessage').textContent='Bank loan · Under construction 🔒';
   paintAuraWallet();
  };
  panel.querySelector('#auraCounterReset').onclick=()=>{

@@ -8,7 +8,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=phone-images-3";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=lock-1";
 import {openTill} from "./ticket-till.js?v=booth-till-1";
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
 import {installWallBackdrops} from "./walls/install.js?v=phone-images-3";
@@ -16,7 +16,7 @@ import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=tent-depth-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
-import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=entry-3";
+import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=lock-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -968,7 +968,7 @@ function attachHud() {
           </section>
           <button type="button" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
           <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
-          <button type="button" id="pfTillLoan">Bank loan · +100</button>
+          <button type="button" id="pfTillLoan" disabled>Bank loan · Under construction 🔒</button>
           <button type="button" id="pfTillReset">Reset game</button>
         </div>
         <div class="pf-stall-card-actions">
@@ -1244,8 +1244,8 @@ function bindHud() {
   const tillLoan = el("pfTillLoan");
   const tillReset = el("pfTillReset");
   if (tillLoan) tillLoan.addEventListener("click", () => {
-    const n = window.PennyFever?.addDemoCoins?.(100) || 0;
-    tillMessage = n ? ("Bank loan · +" + n + " pennies.") : "The till is quiet.";
+    const n = 0; /* loan locked: under construction */
+    tillMessage = "Bank loan · Under construction 🔒";
     tillMessageUntil = performance.now() + 4000;
     paintAuraWallet(el("pfStallCard"));
   });
@@ -1700,16 +1700,16 @@ function syncStallCard(best) {
         enter.hidden = false;
         if (isClosed(best.id)) {
           enter.disabled = true;
-          enter.textContent = "Closed for maintenance";
+          enter.textContent = enterLabel(best.id);
         } else {
           enter.disabled = false;
           enter.textContent = stallEnterLabel(best.id);
         }
       } else if (best.kind === "ride") {
-        const open = !!document.getElementById("cabinet-" + playIdFor(best.id));
-        enter.hidden = !open;
+        const open = !isClosed(playIdFor(best.id)) && !!document.getElementById("cabinet-" + playIdFor(best.id));
+        enter.hidden = !open && !isClosed(playIdFor(best.id));
         enter.disabled = !open;
-        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : "Ride closed for maintenance";
+        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : (isClosed(playIdFor(best.id)) ? "Under construction 🔒" : "Ride closed for maintenance");
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;

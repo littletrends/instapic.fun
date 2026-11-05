@@ -4,7 +4,7 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isClosed} from './stall-entry.js?v=entry-2';
+import {isClosed,isUnderConstruction} from './stall-entry.js?v=lock-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -221,8 +221,8 @@ try{
   $('#title').textContent=entry.title;
   $('#host').textContent=entry.host+"’s paper world";
   $('#intro').textContent=entry.blurb;
-  $('#instructions').textContent='This booth is closed for maintenance. Come back later.';
-  veil(entry.host,entry.title,'Closed for maintenance. Come back later.','Back to the map');
+  $('#instructions').textContent=isUnderConstruction(entry.id)?'Under construction 🔒. Come back later.':'This booth is closed for maintenance. Come back later.';
+  veil(entry.host,entry.title,isUnderConstruction(entry.id)?'Under construction 🔒. Come back later.':'Closed for maintenance. Come back later.','Back to the map');
   $('#begin').disabled=false;
   listen($('#begin'),'click',()=>{
    if(embedded)tellRoom('leave',{id:entry.id});
@@ -230,7 +230,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-12':entry.id==='lookup'?'celeste-feed-2':entry.id==='carousel'?'florence-race-2':entry.id==='plinko'?'peggy-mill-1':'load-fix-1'))).default;
+ engine=(await import(entry.module+'?v='+(entry.id==='curios'?'digby-claw-12':entry.id==='lookup'?'celeste-feed-2':entry.id==='carousel'?'florence-race-2':entry.id==='plinko'?'peggy-mill-1':'lock-1'))).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

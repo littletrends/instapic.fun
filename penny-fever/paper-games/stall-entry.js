@@ -21,12 +21,23 @@ export const PENNY_TENTS = [
 /** Felix: Instapic photo booth — paper sign, not a playable tent yet. */
 export const CLOSED_TENTS = ['snap'];
 
+/** Under construction (Lorie 05/11/2026). Delete ids here to reopen. */
+export const UNDER_CONSTRUCTION = [
+  'whisper', 'ball-toss', 'water-gun', 'cover-the-spot', 'mutoscope', 'high-striker',
+  'catoptromancy', 'bent-rings', 'plinko', 'fairy-floss', 'popcorn', 'duck-pond',
+  'skee-ball', 'penny-pitch', 'dunk-tank', 'marquee', 'pack', 'pass',
+  'carousel', 'balloons', 'swings', 'organ', 'mural',
+];
+export const UNDER_CONSTRUCTION_LABEL = 'Under construction 🔒';
+
 /** All eight Ride & Seek attractions. Door is free; first attempt of each chapter is unpaid practice. */
 export const RIDE_SEEKS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 
 const TICKET_SET = new Set(TICKET_TENTS);
 const PENNY_SET = new Set(PENNY_TENTS);
-const CLOSED_SET = new Set(CLOSED_TENTS);
+const CLOSED_SET = new Set([...CLOSED_TENTS, ...UNDER_CONSTRUCTION]);
+const BUILD_SET = new Set(UNDER_CONSTRUCTION);
+export function isUnderConstruction(id) { return BUILD_SET.has(id); }
 const RIDE_SET = new Set(RIDE_SEEKS);
 
 const PENNY_DOOR_LABEL = {
@@ -60,7 +71,7 @@ export function doorKind(id) {
 
 export function enterLabel(id) {
   const door = doorKind(id);
-  if (door === 'closed') return 'Closed for maintenance';
+  if (door === 'closed') return BUILD_SET.has(id) ? UNDER_CONSTRUCTION_LABEL : 'Closed for maintenance';
   if (door === 'ticket') return 'Sit down · 1 ticket';
   if (door === 'free') {
     if (RIDE_SET.has(id)) return 'Board · first go free';
