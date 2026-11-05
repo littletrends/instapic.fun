@@ -436,7 +436,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=speed-3").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=speed-3b").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -448,7 +448,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=speed-3").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=speed-3b").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }

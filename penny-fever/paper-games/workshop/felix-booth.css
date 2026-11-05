@@ -527,3 +527,29 @@ section.screen.active[data-screen="PAYMENT"] button[data-action="enter-prepaid"]
 section.screen.active[data-screen="PAYMENT"] button[data-action="enter-try-info"] {
   min-height: 200px !important;
 }
+
+/* speed-3b: honor hidden on pay-credit; bigger attract portal fills middle */
+#payCreditBtn[hidden],
+button#payCreditBtn[hidden],
+section.screen[data-screen="PAYMENT"] button[data-action="pay-credit"][hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"] {
+  width: min(820px, 86vw) !important;
+  height: min(820px, 86vw) !important;
+  min-width: 640px !important;
+  min-height: 640px !important;
+  font-size: 3.2rem !important;
+}
+section.screen.active[data-screen="ATTRACT"] .brand-logo img {
+  width: min(860px, 88vw) !important;
+}
