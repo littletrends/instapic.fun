@@ -3,7 +3,7 @@ import {paperRail} from './paper-guest-entrance.js?v=phone-images-3';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=names-1';
-import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=booth-till-3';
+import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=booth-till-4';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};

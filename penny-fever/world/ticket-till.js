@@ -72,13 +72,56 @@ export function tillPinned() {
   return pinned;
 }
 
+function updateFelixReturnChrome(show, code) {
+  if (!till) return;
+  let row = $('pfTillFelixReturn');
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'pfTillFelixReturn';
+    row.hidden = true;
+    row.innerHTML =
+      '<button type="button" class="pf-till-go pf-till-back-felix" id="pfTillBackFelix">' +
+      'Back to Felix — start session</button>';
+    const pay = till.querySelector('.pf-till-pay');
+    if (pay) pay.appendChild(row);
+    else till.appendChild(row);
+    $('pfTillBackFelix')?.addEventListener('click', () => {
+      const ret = (() => {
+        try { return sessionStorage.getItem('pf-till-return-url') || ''; } catch { return ''; }
+      })();
+      try { sessionStorage.removeItem('pf-till-from-felix'); } catch {}
+      closeTill();
+      if (ret && !/felix-booth\.html/i.test(location.pathname)) {
+        location.href = ret;
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('pf-felix-start-paid', {
+        detail: { code: code || '', source: 'till-return' },
+      }));
+    });
+  }
+  const fromFelix = till.dataset.fromFelix === '1' || (() => {
+    try { return sessionStorage.getItem('pf-till-from-felix') === '1'; } catch { return false; }
+  })();
+  row.hidden = !(show && fromFelix);
+  const btn = $('pfTillBackFelix');
+  if (btn && code) btn.dataset.code = code;
+}
+
 export function closeTill() {
   pinned = false;
   if (!till || till.hidden) return;
+  const fromFelix = till.dataset.fromFelix === '1';
   till.hidden = true;
   if (backdrop) backdrop.hidden = true;
   document.body.classList.remove('has-aura-till');
+  updateFelixReturnChrome(false);
+  if (till) delete till.dataset.fromFelix;
   window.dispatchEvent(new Event('pf-till-closed'));
+  // Cancel from Felix overlay: stay on Felix payment (no navigation).
+  if (fromFelix) {
+    try { sessionStorage.removeItem('pf-till-from-felix'); } catch {}
+  }
 }
 
 function showTill() {
@@ -373,7 +416,8 @@ async function chargePhotoPack(tokenResult) {
   apiRef?.stampKeepsake?.('ticket-roll', 'aura-till');
   try { localStorage.setItem('pf-last-till-payment', data.payment_id || ''); } catch {}
   setStatus(`Approved. Photo sessions ready in Felix’s booth — your code is ${code}.`);
-  window.dispatchEvent(new CustomEvent('pf-photo-code', {detail: {code}}));
+  window.dispatchEvent(new CustomEvent('pf-photo-code', {detail: {code, pkg: pack.id}}));
+  updateFelixReturnChrome(true, code);
 }
 
 async function payWithCard() {
@@ -513,12 +557,30 @@ export async function openTill(opts = {}) {
   if (opts.pin) pinned = true;
   if (!till) mountTill(apiRef);
   await refreshConfig();
-  if (!selected && config.packs[0]) choosePack(config.packs[0].id, false);
-  else paintPacks();
+  const want = String(opts.pack || opts.pkg || opts.packageId || '').trim();
+  if (want && config.packs.some((p) => p.id === want)) {
+    choosePack(want, false);
+  } else if (!selected && config.packs[0]) {
+    choosePack(config.packs[0].id, false);
+  } else {
+    paintPacks();
+  }
+  if (opts.fromFelix) {
+    try { sessionStorage.setItem('pf-till-from-felix', '1'); } catch {}
+    if (till) till.dataset.fromFelix = '1';
+  }
   showTill();
   try {
     await ensureSquare();
   } catch (err) {
     setStatus(err?.message || 'Square could not open on this device.');
   }
+  // Land on the money step for the preselected package (card / Apple / Google).
+  if (opts.focusPay !== false) {
+    requestAnimationFrame(() => {
+      const pay = $('pfTillPay') || till?.querySelector('.pf-till-pay');
+      pay?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    });
+  }
+  updateFelixReturnChrome(false);
 }

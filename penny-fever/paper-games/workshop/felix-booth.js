@@ -436,7 +436,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=patch-pay-1").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=link-pay-1").then((r) => r.json());
       if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
         slotBoxes = layout.slot_boxes.map((b) => ({
           x: Number(b.x) || 0,
@@ -448,7 +448,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=patch-pay-1").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=link-pay-1").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -1524,6 +1524,111 @@
     { passive: false }
   );
 
+
+  // ---- Aura till (Square) opened from package portals ----
+  // Same-origin overlay so Apple Pay / Google Pay / card work on instapic.fun.
+  // Money logic stays in ticket-till.js (credits only after COMPLETED).
+  let auraTillLoading = null;
+  function ensureTillCss() {
+    if (document.querySelector("link[data-pf-till-css]")) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/penny-fever/world/ticket-till.css?v=booth-till-4";
+    link.dataset.pfTillCss = "1";
+    document.head.appendChild(link);
+  }
+  async function openAuraTillForPackage(pkgId) {
+    const pkg = String(pkgId || "P1_STRIP");
+    try {
+      sessionStorage.setItem("pf-till-from-felix", "1");
+      sessionStorage.setItem(
+        "pf-till-return-url",
+        location.pathname + location.search + location.hash
+      );
+    } catch (_) {}
+    ensureTillCss();
+    try {
+      if (!auraTillLoading) {
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=booth-till-4");
+      }
+      const mod = await auraTillLoading;
+      if (typeof mod.mountTill === "function") mod.mountTill({});
+      await mod.openTill({
+        pack: pkg,
+        focusPay: true,
+        fromFelix: true,
+        pin: true,
+      });
+      const tip = {
+        P1_STRIP: "$7 · 2 sessions",
+        P2_STRIP_GIF: "$13 · 4 sessions",
+        P3_STRIP_GIF: "$18 · 6 sessions",
+      }[pkg];
+      setPayBanner(
+        (tip || "Photo package") +
+          " — pay with Apple Pay, Google Pay or card. Credits only after Square approves."
+      );
+    } catch (err) {
+      console.warn("[felix] till open failed", err);
+      const ret = encodeURIComponent(
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=link-pay-1"
+      );
+      location.href =
+        "/penny-fever/?till=photo&pkg=" +
+        encodeURIComponent(pkg) +
+        "&return=" +
+        ret +
+        "&style=paper&rail=paper";
+    }
+  }
+
+  function onPhotoCodeFromTill(ev) {
+    refreshWalletUi();
+    const code = (ev && ev.detail && ev.detail.code) || "";
+    const left = getCredits();
+    setPayBanner(
+      code
+        ? "Code " +
+          code +
+          " approved. " +
+          left +
+          (left === 1 ? " photo session" : " photo sessions") +
+          " ready — tap USE MY PHOTO SESSION, or Back to Felix — start session in the till."
+        : "Photo sessions ready — tap USE MY PHOTO SESSION."
+    );
+  }
+
+  function onFelixStartPaid() {
+    refreshWalletUi();
+    if (getCredits() < 1) {
+      setPayBanner("No photo sessions yet. Buy one at Aura's till.");
+      return showScreen(Screen.PAYMENT);
+    }
+    useCreditCode().then((r) => {
+      refreshWalletUi();
+      if (r.ok) {
+        setPayBanner(
+          "Code " +
+            r.code +
+            " approved." +
+            (r.info && r.info.total > 1
+              ? " Session " + r.info.no + " of " + r.info.total + "."
+              : "")
+        );
+        startPaidSession(r.code, r.info);
+      } else {
+        setPayBanner("Could not start the session. Try USE MY PHOTO SESSION.");
+        showScreen(Screen.PAYMENT);
+      }
+    });
+  }
+
+  window.addEventListener("pf-photo-code", onPhotoCodeFromTill);
+  window.addEventListener("pf-felix-start-paid", onFelixStartPaid);
+  window.addEventListener("pf-till-closed", () => {
+    refreshWalletUi();
+  });
+
   document.body.addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-action]");
     if (!btn) return;
@@ -1609,19 +1714,19 @@
       action === "pay-p4" ||
       action === "pay-p6"
     ) {
-      // Magic Mirror Screen 3 portals (pay_screen_buttons_patch). On Felix, real
-      // money is taken at Aura's till — never grant credits from a tap alone.
-      const fromAction = { "pay-p2": "P1_STRIP", "pay-p4": "P2_STRIP_GIF", "pay-p6": "P3_STRIP_GIF", "square-p2": "P1_STRIP", "square-p4": "P2_STRIP_GIF", "square-p6": "P3_STRIP_GIF" }[action] || "";
-      const pkg = (btn && btn.dataset && btn.dataset.pkg) || fromAction;
-      const tip = {
-        P1_STRIP: "$7.00 Quick & Simple · 2 photo strips / sessions",
-        P2_STRIP_GIF: "$13.00 Most Popular · 4 photo strips / sessions",
-        P3_STRIP_GIF: "$18.00 Best for Groups · 6 photo strips / sessions",
-      }[pkg];
-      setPayBanner(
-        (tip ? tip + " — " : "") +
-          "buy at Aura's booth with Square. Credits appear here only after Square approves."
-      );
+      // Magic Mirror Screen 3 portals → open Aura's Square till on THIS page
+      // (same-origin instapic.fun) with the package preselected at the pay step.
+      const fromAction = {
+        "pay-p2": "P1_STRIP",
+        "pay-p4": "P2_STRIP_GIF",
+        "pay-p6": "P3_STRIP_GIF",
+        "square-p2": "P1_STRIP",
+        "square-p4": "P2_STRIP_GIF",
+        "square-p6": "P3_STRIP_GIF",
+      }[action] || "";
+      const pkg = (btn && btn.dataset && btn.dataset.pkg) || fromAction || "P1_STRIP";
+      setPayBanner("Opening Aura's Square till…");
+      openAuraTillForPackage(pkg);
       return;
     }
     if (action === "cashin-p2" || action === "cashin-p4" || action === "cashin-p6") {
