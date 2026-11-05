@@ -199,3 +199,6 @@ html, body {
   opacity: 0.85;
   margin-top: 0.2em;
 }
+.felix-bonus-row{margin-top:10px}
+#goBonusBtn.is-disabled{opacity:.55;pointer-events:none}
+.felix-bonus-status{min-height:1.2em;text-align:center}

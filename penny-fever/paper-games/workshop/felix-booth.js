@@ -20,8 +20,12 @@
   const TRY_SAMPLE_ID = "bg_11";
   const LIVE_AUTOSTART_MS = 400;
   const MAX_RETAKES_PER_SESSION = 2;
-  // Square hosted checkout Payment Links (public URLs only — no access tokens).
-  // Credits are NEVER granted on redirect; only after server-side verification.
+  // MotherPC (existing Instapic backend, via its Tailscale Funnel). Felix only
+  // CALLS existing endpoints: redeem-ticket, commit-used, create-ticket,
+  // receive-assets. Real money is taken at Aura's booth (world/ticket-till.js).
+  const API_BASE = "https://motherpc.taild1a44c.ts.net";
+  const PHOTO_CODES_KEY = "pf-photo-codes"; // shared with Aura's till
+  // Legacy Payment Links — no longer used by Felix (kept for reference only).
   const SQUARE_LINKS = {
     P2: { url: "https://square.link/u/1XR6t22j", credits: 1, label: "$7 · 2 strips" },
     P4: { url: "https://square.link/u/mJbnOorC", credits: 2, label: "$13 · 4 strips" },
@@ -116,6 +120,10 @@
   let selectedSlotIndex = 0;
   let lastCompositeUrl = null;
   let localSessionCode = "";
+  // Real Instapic code for this session once MotherPC has approved it.
+  let serverCode = "";
+  let bonusState = "idle"; // idle | working | ready | failed
+  let bonusSessionKey = "";
   let pendingCashinPkg = "p2";
   let unlockedBgs = loadUnlocks();
 
@@ -175,8 +183,20 @@
     }
     return readLS(LS.tickets, 3);
   }
+  function photoCodes() {
+    try {
+      const list = JSON.parse(localStorage.getItem(PHOTO_CODES_KEY) || "[]");
+      return Array.isArray(list) ? list.filter((r) => r && /^\d{6}$/.test(String(r.code))) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+  function savePhotoCodes(list) {
+    try { localStorage.setItem(PHOTO_CODES_KEY, JSON.stringify(list)); } catch (_) {}
+  }
+  // Booth credits = Square-approved Instapic codes bought at Aura's booth.
   function getCredits() {
-    return readLS(LS.credits, 0);
+    return photoCodes().length;
   }
   function spendPennies(amount) {
     const PF = fever();
@@ -194,14 +214,41 @@
     writeLS(LS.tickets, have - 1);
     return true;
   }
-  function addCredits(n) {
-    return writeLS(LS.credits, getCredits() + n);
+  async function api(path, body) {
+    const res = await fetch(API_BASE + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { res, data };
   }
-  function spendCredit() {
-    const have = getCredits();
-    if (have < 1) return false;
-    writeLS(LS.credits, have - 1);
-    return true;
+  // Server check: only an ISSUED Instapic code becomes a session.
+  async function redeemCode(code) {
+    const { res, data } = await api("/api/redeem-ticket", { ticket_code: code });
+    if (res.ok && data.ok) return { ok: true };
+    if (res.status === 409) return { ok: false, used: true, status: data.status || "" };
+    if (res.status === 404) return { ok: false, missing: true };
+    return { ok: false, error: data.error || "HTTP " + res.status };
+  }
+  async function useCreditCode() {
+    const list = photoCodes();
+    const rec = list[0];
+    if (!rec) return { ok: false, error: "none" };
+    let check;
+    try {
+      check = await redeemCode(rec.code);
+    } catch (_) {
+      return { ok: false, error: "offline" };
+    }
+    // A code from our own approved purchase that was redeemed but never
+    // finished (status REDEEMED) may still run its session.
+    if (check.ok || (check.used && check.status === "REDEEMED")) {
+      savePhotoCodes(list.slice(1));
+      return { ok: true, code: rec.code };
+    }
+    if (check.used || check.missing) savePhotoCodes(list.slice(1));
+    return { ok: false, error: check.used ? "used" : check.missing ? "missing" : check.error };
   }
   function creditPennies(n) {
     const PF = fever();
@@ -233,7 +280,7 @@
   function refreshWalletUi() {
     if (walletTicketsEl) walletTicketsEl.textContent = getTickets() + " tickets";
     if (walletPenniesEl) walletPenniesEl.textContent = getPennies() + " pennies";
-    if (walletCreditsEl) walletCreditsEl.textContent = getCredits() + " booth credits";
+    if (walletCreditsEl) walletCreditsEl.textContent = getCredits() + (getCredits() === 1 ? " photo session" : " photo sessions");
     if (payCreditBtn) payCreditBtn.hidden = getCredits() < 1;
   }
 
@@ -406,7 +453,10 @@
     isTrySession = false;
     hasCommitted = true;
     totalPoses = 4;
-    localSessionCode = code || String(Math.floor(100000 + Math.random() * 900000));
+    serverCode = code && /^\d{6}$/.test(code) ? code : "";
+    localSessionCode = serverCode;
+    bonusState = "idle";
+    bonusSessionKey = String(Date.now());
     resetPhotoState();
     const ordered = [
       ...FREE_BGS.filter((id) => allBackgroundIds.includes(id)),
@@ -422,6 +472,8 @@
     hasCommitted = false;
     totalPoses = 2;
     localSessionCode = "";
+    serverCode = "";
+    bonusState = "idle";
     resetPhotoState();
     const ordered = [
       ...FREE_BGS.filter((id) => allBackgroundIds.includes(id)),
@@ -431,6 +483,87 @@
     if (!currentBackground || currentBackground.locked) selectBackground(sampleBackground());
     updateBonusLinks();
     showScreen(Screen.BACKGROUNDS);
+  }
+
+  // ---- Bonus pack: hand the session to MotherPC's existing pipeline ----
+  // Same path the Magic Mirror kiosks use: commit-used -> receive-assets with
+  // freeze_1..4.jpg (+ strip). MotherPC builds the bonus pack from
+  // Background Sets/Set_N for bg_N and bonus.html?code= shows it.
+  function setBonusUi(state, msg) {
+    bonusState = state;
+    const btn = document.getElementById("goBonusBtn");
+    const retry = document.getElementById("retryBonusBtn");
+    const status = document.getElementById("bonusStatus");
+    if (status) status.textContent = msg || "";
+    if (btn) {
+      const ready = state === "ready" && serverCode;
+      btn.classList.toggle("is-disabled", !ready);
+      btn.setAttribute("aria-disabled", String(!ready));
+      btn.href = ready ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(serverCode) : "#";
+      btn.textContent = ready ? "GO TO MY BONUS" : "MAKING YOUR BONUS\u2026";
+    }
+    if (retry) retry.hidden = state !== "failed";
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    return fetch(dataUrl).then((r) => r.blob());
+  }
+
+  async function freezeBlob(i) {
+    const src = capturedPhotos[i] || makeSilhouetteDataUrl(720, 1280);
+    const img = await loadImage(src);
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth || img.width;
+    c.height = img.naturalHeight || img.height;
+    c.getContext("2d").drawImage(img, 0, 0);
+    return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.92));
+  }
+
+  async function makeBonusPack() {
+    if (isTrySession) return;
+    if (bonusState === "working" || bonusState === "ready") {
+      setBonusUi(bonusState, bonusState === "ready" ? "Bonus pack ready." : "Making your bonus pack\u2026");
+      return;
+    }
+    setBonusUi("working", "Making your bonus pack\u2026");
+    try {
+      const bgId = currentBackground?.id || TRY_SAMPLE_ID;
+      if (!serverCode) {
+        // Ticket/penny session: ask MotherPC for an Instapic code (no charge).
+        const { res, data } = await api("/api/create-ticket", {
+          package_id: "PF_FELIX_SCRIP",
+          amount_cents: 0,
+          source: "penny-fever-felix",
+          reference_id: "felix-" + bonusSessionKey,
+        });
+        const code = String(data.ticket_code || "");
+        if (!res.ok || !/^\d{6}$/.test(code)) throw new Error("no code");
+        serverCode = code;
+        localSessionCode = code;
+        if (sessionCodeDisplay) sessionCodeDisplay.textContent = code;
+        updateBonusLinks();
+      }
+      const commit = await api("/api/commit-used", { ticket_code: serverCode, bg_id: bgId });
+      if (!commit.res.ok || !commit.data.ok) throw new Error("commit " + (commit.data.error || commit.res.status));
+      if (!lastCompositeUrl) await buildStrip();
+      const form = new FormData();
+      form.append("ticket_code", serverCode);
+      form.append("bg_id", bgId);
+      form.append("booth_id", "FELIX");
+      for (let i = 0; i < 4; i++) {
+        const blob = await freezeBlob(i);
+        if (blob) form.append("freeze_" + (i + 1), blob, "freeze_" + (i + 1) + ".jpg");
+      }
+      if (lastCompositeUrl) form.append("strip", await dataUrlToBlob(lastCompositeUrl), "felix_strip.jpg");
+      const up = await fetch(API_BASE + "/api/receive-assets", { method: "POST", body: form });
+      const upData = await up.json().catch(() => ({}));
+      if (!up.ok || !upData.ok) throw new Error("upload " + (upData.error || up.status));
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = serverCode;
+      setBonusUi("ready", "Bonus pack ready. Your code is " + serverCode + ".");
+    } catch (err) {
+      console.warn("Felix bonus", err);
+      setBonusUi("failed", "Couldn't make the bonus pack just now. Your strip is safe \u2014 tap Try again.");
+    }
   }
 
   function updateBonusLinks() {
@@ -1088,8 +1221,9 @@
       stopPrintTimer();
     }
     if (name === Screen.DIGITAL) {
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = localSessionCode;
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = localSessionCode || "\u2026";
       if (lastCompositeUrl && digitalStripPreview) digitalStripPreview.src = lastCompositeUrl;
+      makeBonusPack();
       startDigitalIdleTimer();
       updateBonusLinks();
     } else {
@@ -1176,7 +1310,10 @@
     }
     if (action === "enter-paynow") return showScreen(Screen.PRIVATE_EVENT);
     if (action === "payment-exit" || action === "pay-cancel") return showScreen(Screen.ATTRACT);
-    if (action === "event-paid") return startPaidSession();
+    if (action === "event-paid") {
+      setPayBanner("Private event sessions need an approved code. Use 'I have an Instapic code'.");
+      return showScreen(Screen.PAYMENT);
+    }
     if (action === "event-back" || action === "event-exit") return showScreen(Screen.PAYMENT);
 
     if (action === "pay-tickets") {
@@ -1208,35 +1345,26 @@
       return startPaidSession();
     }
     if (action === "pay-credit") {
-      if (!spendCredit()) {
-        setPayBanner("No booth credits left.");
+      setPayBanner("Checking your Instapic code\u2026");
+      useCreditCode().then((r) => {
         refreshWalletUi();
-        return;
-      }
-      refreshWalletUi();
-      setPayBanner("Booth credit used.");
-      return startPaidSession();
+        if (r.ok) {
+          setPayBanner("Approved code " + r.code + ".");
+          startPaidSession(r.code);
+        } else if (r.error === "none") {
+          setPayBanner("No photo sessions yet. Buy one at Aura's booth.");
+        } else if (r.error === "offline") {
+          setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
+        } else {
+          setPayBanner("That code was already used, so it was removed.");
+        }
+      });
+      return;
     }
-    if (action === "square-p2" || action === "square-p4" || action === "square-p6") {
-      const pkg = action.replace("square-", "").toUpperCase();
-      const link = SQUARE_LINKS[pkg];
-      if (!link?.url) {
-        setPayBanner("Square link missing for " + pkg + ".");
-        return;
-      }
-      try {
-        sessionStorage.setItem("felixBooth.pendingPay", pkg);
-      } catch (_) {}
+    if (action === "square-p2" || action === "square-p4" || action === "square-p6" || action === "top-up-aura") {
       setPayBanner(
-        "Opening Square for " +
-          link.label +
-          ". Credits are added only after Square approves the payment."
+        "Real-money packages ($7 / $13 / $18) are sold at Aura's booth. Pay there with Square \u2014 once Square approves, your photo session shows up here."
       );
-      const opened = window.open(link.url, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        // Popup blocked — navigate same tab.
-        location.href = link.url;
-      }
       return;
     }
     if (action === "cashin-p2" || action === "cashin-p4" || action === "cashin-p6") {
@@ -1256,31 +1384,36 @@
       return showScreen(Screen.CASHIN);
     }
     if (action === "cashin-back") return showScreen(Screen.PAYMENT);
-    if (action === "cashin-continue") {
-      const code = (cashinInput?.value || "").trim();
+    if (action === "cashin-continue" || action === "prepaid-continue") {
+      const input = action === "cashin-continue" ? cashinInput : prepaidInput;
+      const errEl = action === "cashin-continue" ? cashinError : prepaidError;
+      const code = (input?.value || "").trim();
       if (!/^\d{6}$/.test(code)) {
-        if (cashinError) cashinError.textContent = "STUB: code must be 6 digits.";
+        if (errEl) errEl.textContent = "Code should be 6 digits.";
         return;
       }
-      // No credits until the code is verified server-side.
-      if (cashinError)
-        cashinError.textContent = "Checking codes isn't switched on yet — no credits added.";
+      if (errEl) errEl.textContent = "Checking your code\u2026";
+      redeemCode(code)
+        .then((r) => {
+          if (r.ok) {
+            if (errEl) errEl.textContent = "";
+            setPayBanner("Code " + code + " approved.");
+            startPaidSession(code);
+          } else if (errEl) {
+            errEl.textContent = r.used
+              ? "That code has already been used."
+              : r.missing
+                ? "We couldn't find that code."
+                : "Couldn't check the code right now. Try again.";
+          }
+        })
+        .catch(() => {
+          if (errEl) errEl.textContent = "Couldn't reach Instapic. Try again.";
+        });
       return;
-      return showScreen(Screen.PAYMENT);
     }
 
     if (action === "prepaid-back" || action === "prepaid-exit") return showScreen(Screen.PAYMENT);
-    if (action === "prepaid-continue") {
-      const code = (prepaidInput.value || "").trim();
-      if (!/^\d{6}$/.test(code)) {
-        prepaidError.textContent = "Code should be 6 digits. (STUB — format only.)";
-        return;
-      }
-      prepaidError.textContent = "";
-      // No session until the prepaid code is verified server-side.
-      prepaidError.textContent = "Checking codes isn't switched on yet — please pay another way.";
-      return;
-    }
     if (action === "backgrounds-next") {
       if (!currentBackground || currentBackground.locked) {
         currentBackground = sampleBackground();
@@ -1330,6 +1463,11 @@
       return showScreen(Screen.DIGITAL);
     }
     if (action === "digital-done") return showScreen(Screen.THANKYOU);
+    if (action === "retry-bonus") {
+      bonusState = "idle";
+      makeBonusPack();
+      return;
+    }
     if (action === "error-retry") return showScreen(Screen.PAYMENT);
     if (action === "error-to-attract") return showScreen(Screen.ATTRACT);
   });

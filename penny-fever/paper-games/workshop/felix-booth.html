@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=pass-2">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pass-2">
   <link rel="stylesheet" href="event_portal_patch.css?v=pass-2">
-  <link rel="stylesheet" href="felix-booth.css?v=camera-sq-1">
+  <link rel="stylesheet" href="felix-booth.css?v=photo-till-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -69,7 +69,7 @@
           <div class="screen-content">
             <h1 class="title-main">Choose an option</h1>
             <p class="subtitle">
-              Pay with tickets or pennies, buy a strip with Square ($7 / $13 / $18), cash in a code, or try it first.
+              Pay with tickets or pennies, use a photo session bought at Aura's booth, enter an Instapic code, or try it first.
             </p>
 
             <div id="felix-wallet" class="felix-wallet" aria-live="polite">
@@ -77,7 +77,7 @@
               <span class="felix-wallet-dot">·</span>
               <span id="felix-wallet-pennies">0 pennies</span>
               <span class="felix-wallet-dot">·</span>
-              <span id="felix-wallet-credits">0 booth credits</span>
+              <span id="felix-wallet-credits">0 photo sessions</span>
             </div>
 
             <div class="button-row payment-options payment-pills-row">
@@ -88,22 +88,14 @@
                 PAY WITH PENNIES · 5
               </button>
               <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden>
-                USE BOOTH CREDIT
+                USE MY PHOTO SESSION
               </button>
             </div>
 
             <div class="button-row payment-options payment-packages-row">
-              <button class="btn btn-secondary package-btn" data-action="square-p2" type="button">
-                <span class="pkg-price">$7 · 2 strips</span>
-                <span class="pkg-desc">Pay with Square · 1 booth credit</span>
-              </button>
-              <button class="btn btn-secondary package-btn" data-action="square-p4" type="button">
-                <span class="pkg-price">$13 · 4 strips</span>
-                <span class="pkg-desc">Pay with Square · 2 booth credits</span>
-              </button>
-              <button class="btn btn-secondary package-btn" data-action="square-p6" type="button">
-                <span class="pkg-price">$18 · 6 strips</span>
-                <span class="pkg-desc">Pay with Square · 3 booth credits</span>
+              <button class="btn btn-secondary package-btn" data-action="top-up-aura" type="button">
+                <span class="pkg-price">$7 · $13 · $18 photo packages</span>
+                <span class="pkg-desc">Buy at Aura's booth with Square · shows here once approved</span>
               </button>
             </div>
 
@@ -150,8 +142,8 @@
               Tap your card on the reader to continue.
             </p>
             <div class="button-row">
-              <button class="btn btn-primary" data-action="event-paid">
-                I HAVE PAID
+              <button class="btn btn-primary" data-action="enter-prepaid">
+                I HAVE AN INSTAPIC CODE
               </button>
               <button class="btn btn-secondary" data-action="event-back">
                 BACK
@@ -170,7 +162,7 @@
           <div class="screen-content">
             <h1 class="title-main">Cash in Instapic code</h1>
             <p class="subtitle" id="cashinSubtitle">
-              Code check is not switched on yet — no credits are added until a payment is approved.
+              Enter a 6-digit Instapic code from a $7 / $13 / $18 package. It's checked with Instapic before your session starts.
             </p>
             <div class="code-input-wrapper">
               <input id="cashinCodeInput"
@@ -409,8 +401,12 @@
             <div class="button-row felix-save-row">
               <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
               <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE</button>
-              <a class="btn btn-secondary" id="bonusLinkDigital" href="https://instapic.fun/bonus.html" target="_blank" rel="noopener">BONUS PAGE</a>
             </div>
+            <div class="button-row felix-bonus-row">
+              <a class="btn btn-primary btn-big is-disabled" id="goBonusBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">MAKING YOUR BONUS…</a>
+              <button class="btn btn-secondary" data-action="retry-bonus" id="retryBonusBtn" type="button" hidden>TRY AGAIN</button>
+            </div>
+            <p class="subtitle small felix-bonus-status" id="bonusStatus" aria-live="polite"></p>
             <div class="button-row">
               <button class="btn btn-primary btn-big" data-action="digital-done" type="button">
                 Continue
@@ -450,6 +446,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=pay-lock-1"></script>
+  <script src="felix-booth.js?v=photo-till-1"></script>
 </body>
 </html>
