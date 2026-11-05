@@ -21,7 +21,7 @@
   const LIVE_AUTOSTART_MS = 400;
   const MAX_RETAKES_PER_SESSION = 2;
   // Square hosted checkout Payment Links (public URLs only — no access tokens).
-  // Honor-based unlock on redirect until a server webhook verifies.
+  // Credits are NEVER granted on redirect; only after server-side verification.
   const SQUARE_LINKS = {
     P2: { url: "https://square.link/u/1XR6t22j", credits: 1, label: "$7 · 2 strips" },
     P4: { url: "https://square.link/u/mJbnOorC", credits: 2, label: "$13 · 4 strips" },
@@ -1230,7 +1230,7 @@
       setPayBanner(
         "Opening Square for " +
           link.label +
-          ". After you pay, come back here — credits unlock on return (honor-based until webhook verifies)."
+          ". Credits are added only after Square approves the payment."
       );
       const opened = window.open(link.url, "_blank", "noopener,noreferrer");
       if (!opened) {
@@ -1262,12 +1262,10 @@
         if (cashinError) cashinError.textContent = "STUB: code must be 6 digits.";
         return;
       }
-      const credits = CASHIN_CREDITS[pendingCashinPkg] || 1;
-      addCredits(credits);
-      // Also drop a few pennies so unlocks work after cash-in on standalone.
-      creditPennies(credits * 2);
-      refreshWalletUi();
-      setPayBanner("STUB granted " + credits + " booth credit(s) for code " + code + ".");
+      // No credits until the code is verified server-side.
+      if (cashinError)
+        cashinError.textContent = "Checking codes isn't switched on yet — no credits added.";
+      return;
       return showScreen(Screen.PAYMENT);
     }
 
@@ -1279,10 +1277,8 @@
         return;
       }
       prepaidError.textContent = "";
-      // Treat prepaid as a stub cash-in of 1 credit then start.
-      addCredits(1);
-      spendCredit();
-      startPaidSession(code);
+      // No session until the prepaid code is verified server-side.
+      prepaidError.textContent = "Checking codes isn't switched on yet — please pay another way.";
       return;
     }
     if (action === "backgrounds-next") {
@@ -1338,38 +1334,40 @@
     if (action === "error-to-attract") return showScreen(Screen.ATTRACT);
   });
 
+  // Square return: NEVER grant credits from URL params. Credits only after a
+  // server-side check confirms the Square payment is COMPLETED (verifyPayment).
   function consumePaidReturn() {
     try {
       const params = new URLSearchParams(location.search);
       const paid = String(params.get("paid") || "").toUpperCase();
-      if (!paid || !SQUARE_LINKS[paid]) return false;
-      const link = SQUARE_LINKS[paid];
-      const credits = Math.max(1, Number(params.get("credits")) || link.credits || 1);
-      addCredits(credits);
-      creditPennies(credits * 2);
-      refreshWalletUi();
+      let pending = "";
       try {
-        sessionStorage.removeItem("felixBooth.pendingPay");
+        pending = sessionStorage.getItem("felixBooth.pendingPay") || "";
       } catch (_) {}
+      if (!paid && !pending) return false;
       const url = new URL(location.href);
       url.searchParams.delete("paid");
       url.searchParams.delete("credits");
-      const cleaned = url.pathname + (url.search || "") + (url.hash || "");
       try {
-        history.replaceState({}, "", cleaned);
+        history.replaceState({}, "", url.pathname + (url.search || "") + (url.hash || ""));
       } catch (_) {}
-      setPayBanner(
-        "Square return for " +
-          link.label +
-          ": +" +
-          credits +
-          " booth credit(s). Honor-based until a webhook verifies the payment."
-      );
       showScreen(Screen.PAYMENT);
+      setPayBanner("Checking your payment…");
+      verifyPayment(paid || pending);
       return true;
     } catch (_) {
       return false;
     }
+  }
+
+  // Server-side verification hook. Until a verify endpoint is live, nothing is granted.
+  function verifyPayment(pkg) {
+    const link = SQUARE_LINKS[pkg];
+    setPayBanner(
+      "Checking your payment… " +
+        (link ? link.label + ". " : "") +
+        "Credits are only added once Square approves the payment. If you were charged, show staff your Square receipt."
+    );
   }
 
   window.addEventListener("pagehide", stopCamera);
