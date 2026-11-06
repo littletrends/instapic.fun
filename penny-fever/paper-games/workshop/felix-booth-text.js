@@ -1,5 +1,5 @@
 (function () {
-  const SRC = "felix-booth-text.json?v=felix-text-3";
+  const SRC = "felix-booth-text.json?v=felix-text-4";
 
   function familyFromFile(file) {
     return String(file || "").replace(/\.[a-z0-9]+$/i, "") || "sans-serif";
@@ -39,7 +39,8 @@
     style.textContent = [...byFile.values()].map((spot) => {
       const family = familyName(spot);
       const file = spot.font;
-      const src = `url("${fontUrl(file)}") format("${fontFormat(file)}")`;
+      const woff2 = String(file).replace(/\.[a-z0-9]+$/i, ".woff2");
+      const src = `url("${fontUrl(woff2)}") format("woff2"), url("${fontUrl(file)}") format("${fontFormat(file)}")`;
       return [
         `@font-face{font-family:"${family}";src:${src};font-weight:100 900;font-style:normal;font-display:swap;}`,
         `@font-face{font-family:"${family}";src:${src};font-weight:400;font-style:normal;font-display:swap;}`,
