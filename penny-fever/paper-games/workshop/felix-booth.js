@@ -751,21 +751,28 @@
   // Same path the Magic Mirror kiosks use: commit-used -> receive-assets with
   // freeze_1..4.jpg (+ dual print strip). Display uses Set bg_N_strip_web;
   // MotherPC still keys the bonus pack off bg_id bg_N → Set_N.
+  function hasInstapicCode() {
+    return /^\d{6}$/.test(String(serverCode || localSessionCode || ""));
+  }
+
   function setBonusUi(state, msg) {
     bonusState = state;
     const btn = document.getElementById("goBonusBtn");
     const retry = document.getElementById("retryBonusBtn");
     const status = document.getElementById("bonusStatus");
-    if (status) status.textContent = msg || "";
+    const row = document.querySelector(".felix-bonus-row");
+    const hide = state === "none" || !hasInstapicCode();
+    if (status) status.textContent = hide ? "" : (msg || "");
+    if (row) row.hidden = hide;
     if (btn) {
-      const ready = state === "ready" && serverCode;
+      const ready = state === "ready" && hasInstapicCode();
+      btn.hidden = hide;
       btn.classList.toggle("is-disabled", !ready);
       btn.setAttribute("aria-disabled", String(!ready));
       btn.href = ready ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(serverCode) : "#";
       btn.textContent = ready ? "GO TO MY BONUS" : "MAKING YOUR BONUS\u2026";
     }
-    if (retry) retry.hidden = state !== "failed";
-    if (btn) btn.hidden = state === "none";
+    if (retry) retry.hidden = hide || state !== "failed";
   }
 
   function dataUrlToBlob(dataUrl) {
@@ -783,8 +790,10 @@
   }
 
   async function makeBonusPack() {
-    if (isTrySession) return;
-    if (bonusState === "none") return;
+    if (isTrySession || !hasInstapicCode()) {
+      setBonusUi("none", "");
+      return;
+    }
     if (bonusState === "working" || bonusState === "ready") {
       setBonusUi(bonusState, bonusState === "ready" ? "Bonus pack ready." : "Making your bonus pack\u2026");
       return;
@@ -792,16 +801,6 @@
     setBonusUi("working", "Making your bonus pack\u2026");
     try {
       const bgId = currentBackground?.id || TRY_SAMPLE_ID;
-      if (!serverCode) {
-        // Ticket/penny sessions have no Instapic code. MotherPC only mints
-        // codes for booths holding its secret (or after a Square payment at
-        // Aura's booth), so there is no bonus page for these sessions.
-        setBonusUi(
-          "none",
-          "Bonus pages come with Instapic photo sessions from Aura's booth. Save or share your strip here."
-        );
-        return;
-      }
       const commit = await api("/api/commit-used", { ticket_code: serverCode, bg_id: bgId });
       if (!commit.res.ok || !commit.data.ok) throw new Error("commit " + (commit.data.error || commit.res.status));
       if (!lastCompositeUrl) await buildStrip();
@@ -841,7 +840,7 @@
 
   function updateBonusLinks() {
     const code = localSessionCode || "";
-    const showBonus = !isTrySession && /^\d{6}$/.test(code);
+    const showBonus = !isTrySession && hasInstapicCode();
     const url = showBonus
       ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(code)
       : "https://instapic.fun/bonus.html";
@@ -1582,7 +1581,11 @@
     }
     if (isTrySession) {
       if (title) title.textContent = "Sample Preview";
-      if (subtitle) subtitle.textContent = "Try strip — " + totalPoses + " poses (repeated to fill the strip). Save or share below. Printing stays off in Try Mode.";
+      if (subtitle) subtitle.textContent = "Try strip — " + totalPoses + " poses (repeated to fill the strip). Save or share below.";
+      if (printPreviewNote) printPreviewNote.hidden = true;
+    } else if (!hasInstapicCode()) {
+      if (title) title.textContent = "Your Photo Strip";
+      if (subtitle) subtitle.textContent = "Save or share your strip. An Instapic bonus page comes with Square photo sessions.";
       if (printPreviewNote) printPreviewNote.hidden = true;
     } else {
       if (title) title.textContent = "Your Photo Strip";
@@ -1590,6 +1593,24 @@
       if (printPreviewNote) printPreviewNote.hidden = false;
     }
     updateBonusLinks();
+  }
+
+  function adjustDigitalScreenForMode() {
+    const coded = hasInstapicCode();
+    const screen = document.querySelector('[data-screen="DIGITAL"]');
+    const title = screen?.querySelector(".title-main");
+    const subtitle = screen?.querySelector(":scope > .screen-content > .subtitle");
+    const codeGroup = screen?.querySelector(".digital-code-group");
+    const qrGroup = screen?.querySelector(".digital-qr-group");
+    if (title) title.textContent = coded ? "Your Instapic Code" : "Your Photo Strip";
+    if (subtitle) {
+      subtitle.textContent = coded
+        ? "Your code is printed on your strip. Scan the QR anytime for free bonus pics on instapic.fun."
+        : "Ticket and penny sessions stay in Penny Fever. Save or share your strip here.";
+    }
+    if (codeGroup) codeGroup.hidden = !coded;
+    if (qrGroup) qrGroup.hidden = !coded;
+    if (!coded) setBonusUi("none", "");
   }
 
   function startPrintTimer() {
@@ -1716,8 +1737,9 @@
       stopPrintTimer();
     }
     if (name === Screen.DIGITAL) {
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = localSessionCode || "\u2026";
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = hasInstapicCode() ? localSessionCode : "";
       renderSessionCount();
+      adjustDigitalScreenForMode();
       buildStrip().then(applyCompositeToPreviews).catch(() => applyCompositeToPreviews());
       makeBonusPack();
       startDigitalIdleTimer();
@@ -1829,7 +1851,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-pennies-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=jasper-fix-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =

@@ -511,6 +511,71 @@ section.screen.active[data-screen="REVIEW"] .btn-big {
   padding: 0.65rem 1.5rem !important;
 }
 
+/* REVIEW: portrait stack so RETAKE / KEEP are fully on screen */
+section.screen.active[data-screen="REVIEW"] .review-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 18px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap {
+  width: auto !important;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 240px !important;
+  max-width: 240px !important;
+  height: auto !important;
+}
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel {
+  width: 100% !important;
+  max-width: 920px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2 {
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper {
+  width: 200px !important;
+  height: 250px !important;
+  max-width: 200px !important;
+  max-height: 250px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper .photo-preview {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .button-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 36px !important;
+  width: 100% !important;
+  margin: 8px 0 0 !important;
+  overflow: visible !important;
+}
+section.screen[data-screen="REVIEW"] {
+  --portal-size: 200px;
+  --portal-ring: 240px;
+  --portal-inset: 14px;
+  --portal-font: 0.95rem;
+}
+
 /* DIGITAL: Instapic tidy layout — code on top, white strip left, QR + portal right */
 section.screen[data-screen="DIGITAL"] {
   --portal-size: 220px;
