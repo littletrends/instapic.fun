@@ -10,9 +10,9 @@ const FALLBACK_PACKS = [
 // thing Felix's booth accepts as a paid session.
 const PHOTO_PACKS = [
   // Felix-only ids on MotherPC (Lorie 06/11/2026). Website/real booths keep P1_STRIP etc at $7/$13/$18.
-  {id:'FELIX_P1_STRIP', kind:'photo', name:'Felix booth · Quick & Simple', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:500, sessions:2, pennies_value:10},
-  {id:'FELIX_P2_STRIP_GIF', kind:'photo', name:'Felix booth · Most Popular', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:800, sessions:4, pennies_value:16},
-  {id:'FELIX_P3_STRIP_GIF', kind:'photo', name:'Felix booth · Best for Groups', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:1000, sessions:6, pennies_value:20},
+  {id:'FELIX_P1_STRIP', kind:'photo', name:'Felix booth · Pair pack', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:500, sessions:2, pennies_value:10},
+  {id:'FELIX_P2_STRIP_GIF', kind:'photo', name:'Felix booth · Fun pack', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:800, sessions:4, pennies_value:16},
+  {id:'FELIX_P3_STRIP_GIF', kind:'photo', name:'Felix booth · Crew pack', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:1000, sessions:6, pennies_value:20},
 ];
 export const PHOTO_CODES_KEY = 'pf-photo-codes';
 export function photoCodes() {

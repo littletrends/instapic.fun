@@ -48,17 +48,17 @@
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
-    unlockTickets: 1,
   };
   // Portal circles = penny purchase. Short purse → Aura penny top-up (PF_ROLL), not Square photo.
   // Square photo packs use Felix-only MotherPC ids (FELIX_*), 500/800/1000¢.
   const PORTAL_PACKS = {
-    "pay-p2": { pkg: "FELIX_P1_STRIP", pennies: 10, sessions: 2, dollars: "$5", label: "Quick & Simple" },
-    "pay-p4": { pkg: "FELIX_P2_STRIP_GIF", pennies: 16, sessions: 4, dollars: "$8", label: "Most Popular" },
-    "pay-p6": { pkg: "FELIX_P3_STRIP_GIF", pennies: 20, sessions: 6, dollars: "$10", label: "Best for Groups" },
+    "pay-p2": { pkg: "FELIX_P1_STRIP", pennies: 10, sessions: 2, dollars: "$5", label: "Pair pack" },
+    "pay-p4": { pkg: "FELIX_P2_STRIP_GIF", pennies: 16, sessions: 4, dollars: "$8", label: "Fun pack" },
+    "pay-p6": { pkg: "FELIX_P3_STRIP_GIF", pennies: 20, sessions: 6, dollars: "$10", label: "Crew pack" },
   };
   const PENNY_TOPUP_PACK = "PF_ROLL"; // Aura's $5 · 10 pennies
   let pendingPennyPack = null;
+  let pendingUnlockBg = null;
   const CASHIN_CREDITS = { p2: 2, p4: 4, p6: 6 };
   // Lorie (05/11/2026): $7 = 2 Felix sessions, $13 = 4, $18 = 6. Keyed by the
   // Instapic package_id MotherPC stores on the code (WEBSITE_PACKAGES).
@@ -461,6 +461,8 @@
     if (walletTicketsEl) walletTicketsEl.textContent = tickets + " tickets";
     if (walletPenniesEl) walletPenniesEl.textContent = pennies + " pennies";
     if (walletCreditsEl) walletCreditsEl.textContent = credits + (credits === 1 ? " photo session" : " photo sessions");
+    const purse = document.getElementById("bgPurseNote");
+    if (purse) purse.textContent = pennies + (pennies === 1 ? " penny in your purse" : " pennies in your purse");
     if (payCreditBtn) {
       payCreditBtn.hidden = credits < 1;
       payCreditBtn.textContent =
@@ -547,6 +549,7 @@
   }
 
   function selectBackground(bg) {
+    hideUnlockConfirm();
     currentBackground = bg;
     if (bg && bg.id) {
       try { sessionStorage.setItem("felix_bg_id", bg.id); } catch (_) {}
@@ -588,19 +591,43 @@
     return bg;
   }
 
+  function hideUnlockConfirm() {
+    pendingUnlockBg = null;
+    const box = document.getElementById("felix-unlock-confirm");
+    if (box) box.hidden = true;
+  }
+
+  function showUnlockConfirm(bg) {
+    pendingUnlockBg = bg;
+    const box = document.getElementById("felix-unlock-confirm");
+    const text = document.getElementById("felix-unlock-confirm-text");
+    if (text) {
+      text.textContent =
+        "Unlock " + bg.id.toUpperCase() + " for " + PRICE.unlockPennies +
+        " pennies? Taken from your purse.";
+    }
+    if (box) box.hidden = false;
+  }
+
   function tryUnlockBackground(bg) {
-    const penniesOk = getPennies() >= PRICE.unlockPennies;
-    const ticketsOk = getTickets() >= PRICE.unlockTickets;
-    if (!penniesOk && !ticketsOk) {
-      setPayBanner("Need 2 pennies or 1 ticket to unlock " + bg.id.toUpperCase() + ".");
-      showError("Need 2 pennies or 1 ticket to unlock.");
+    hideUnlockConfirm();
+    if (getPennies() < PRICE.unlockPennies) {
+      showError("Need " + PRICE.unlockPennies + " pennies in your purse to unlock this template.");
       return;
     }
-    let paid = false;
-    if (penniesOk) paid = spendPennies(PRICE.unlockPennies);
-    else paid = spendTicket("unlock-" + bg.id);
-    if (!paid) {
-      showError("Could not spend from your wallet.");
+    showUnlockConfirm(bg);
+  }
+
+  function confirmUnlockBackground() {
+    const bg = pendingUnlockBg;
+    hideUnlockConfirm();
+    if (!bg) return;
+    if (getPennies() < PRICE.unlockPennies) {
+      showError("Need " + PRICE.unlockPennies + " pennies in your purse to unlock this template.");
+      return;
+    }
+    if (!spendPennies(PRICE.unlockPennies)) {
+      showError("Could not spend pennies from your purse.");
       return;
     }
     unlockedBgs.add(bg.id);
@@ -615,7 +642,7 @@
     free.textContent = "UNLOCKED";
     bg.element.appendChild(free);
     selectBackground(bg);
-    setPayBanner("Unlocked " + bg.id.toUpperCase() + ".");
+    setPayBanner("Unlocked " + bg.id.toUpperCase() + " for " + PRICE.unlockPennies + " pennies.");
     showError("");
   }
 
@@ -678,7 +705,7 @@
       if (locked) {
         const badge = document.createElement("div");
         badge.className = "bg-lock-badge";
-        badge.textContent = "🔒 2¢ / 1 ticket";
+        badge.textContent = "🔒 2 pennies";
         card.appendChild(badge);
       } else if (isFreeBg(id)) {
         const badge = document.createElement("div");
@@ -903,21 +930,7 @@
     const w = liveVideo.videoWidth;
     const h = liveVideo.videoHeight;
     if (!w || !h || liveVideo.readyState < 2) return;
-    const c = rec.canvas;
-    const ctx = rec.ctx;
-    ctx.save();
-    if (rec.portrait) {
-      // Mirrored like the freezes (capturePhoto).
-      ctx.translate(c.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(liveVideo, 0, 0, c.width, c.height);
-    } else {
-      ctx.translate(c.width / 2, c.height / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.scale(1, -1);
-      ctx.drawImage(liveVideo, -c.height / 2, -c.width / 2, c.height, c.width);
-    }
-    ctx.restore();
+    bakeLiveFrame(rec.ctx, rec.canvas, liveVideo);
   }
   function startRecording(attempt) {
     try {
@@ -1035,6 +1048,39 @@
     return c.toDataURL("image/jpeg", 0.92);
   }
 
+  function isLandscapeSensor() {
+    const w = liveVideo && liveVideo.videoWidth;
+    const h = liveVideo && liveVideo.videoHeight;
+    return !!(w && h && w > h);
+  }
+
+  function syncLiveVideoFit() {
+    if (!liveVideo) return;
+    liveVideo.classList.toggle("is-landscape-sensor", isLandscapeSensor());
+    try { screen.orientation?.lock?.("portrait"); } catch (_) {}
+  }
+
+  function bakeLiveFrame(ctx, canvas, video) {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return;
+    ctx.save();
+    if (vh >= vw) {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Landscape sensor → upright portrait. Same as CSS
+      // translate(-50%,-50%) rotate(90deg) scaleX(-1). Dest size follows the
+      // canvas so session video (scaled) matches the freeze.
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
+    }
+    ctx.restore();
+  }
+
   function attachStream(stream) {
     videoStream = stream;
     liveVideo.setAttribute("playsinline", "");
@@ -1042,7 +1088,10 @@
     liveVideo.muted = true;
     liveVideo.playsInline = true;
     liveVideo.srcObject = stream;
-    return liveVideo.play().catch(() => {});
+    liveVideo.onloadedmetadata = () => syncLiveVideoFit();
+    liveVideo.onresize = () => syncLiveVideoFit();
+    syncLiveVideoFit();
+    return liveVideo.play().then(() => syncLiveVideoFit()).catch(() => {});
   }
 
   async function getUserMediaLoose() {
@@ -1052,14 +1101,6 @@
       throw err;
     }
     const attempts = [
-      {
-        video: {
-          facingMode: { ideal: "user" },
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-        },
-        audio: false,
-      },
       { video: { facingMode: { ideal: "user" } }, audio: false },
       { video: true, audio: false },
     ];
@@ -1327,24 +1368,9 @@
     }
     const ctx = captureCanvas.getContext("2d");
     const portrait = h >= w;
-    if (portrait) {
-      captureCanvas.width = w;
-      captureCanvas.height = h;
-      ctx.save();
-      ctx.translate(w, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(liveVideo, 0, 0, w, h);
-      ctx.restore();
-    } else {
-      captureCanvas.width = h;
-      captureCanvas.height = w;
-      ctx.save();
-      ctx.translate(h / 2, w / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.scale(1, -1);
-      ctx.drawImage(liveVideo, -w / 2, -h / 2, w, h);
-      ctx.restore();
-    }
+    captureCanvas.width = portrait ? w : h;
+    captureCanvas.height = portrait ? h : w;
+    bakeLiveFrame(ctx, captureCanvas, liveVideo);
     // Detect near-black frame
     try {
       const sample = ctx.getImageData(0, 0, Math.min(40, captureCanvas.width), Math.min(40, captureCanvas.height)).data;
@@ -1807,7 +1833,8 @@
         section.classList.toggle("active", section.dataset.screen === name);
       });
     }
-    if (name === Screen.PAYMENT) refreshWalletUi();
+    if (name === Screen.PAYMENT || name === Screen.BACKGROUNDS) refreshWalletUi();
+    if (name !== Screen.BACKGROUNDS) hideUnlockConfirm();
     if (name === Screen.LIVE) {
       startCamera().then((ok) => {
         if (ok && !isCaptureInProgress) {
@@ -1938,7 +1965,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=pay-pennies-1");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=cam-unlock-1");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1952,7 +1979,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=leftover-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=cam-unlock-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
@@ -2115,6 +2142,14 @@
     if (action === "pay-credit") {
       setPayBanner("Checking your photo sessions\u2026");
       startNextLeftoverSession();
+      return;
+    }
+    if (action === "unlock-confirm-yes") {
+      confirmUnlockBackground();
+      return;
+    }
+    if (action === "unlock-confirm-no") {
+      hideUnlockConfirm();
       return;
     }
     if (action === "penny-confirm-yes") {

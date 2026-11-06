@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=leftover-1">
-  <link rel="stylesheet" href="branding.css?v=leftover-1">
-  <link rel="stylesheet" href="patches.css?v=leftover-1">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=leftover-1">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=leftover-1">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=leftover-1">
-  <link rel="stylesheet" href="event_portal_patch.css?v=leftover-1">
-  <link rel="stylesheet" href="felix-booth.css?v=leftover-1">
+  <link rel="stylesheet" href="flow-booth.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="branding.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="patches.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=cam-unlock-1">
+  <link rel="stylesheet" href="felix-booth.css?v=cam-unlock-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -86,15 +86,15 @@
             <!-- Glowing portals = penny purchase (hero). Short purse → Aura penny top-up. -->
             <div class="button-row payment-options payment-packages-row">
               <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="FELIX_P1_STRIP" type="button">
-                <span class="pkg-price">$5.00 Quick &amp; Simple</span>
+                <span class="pkg-price">$5.00 Pair pack</span>
                 <span class="pkg-desc">10 pennies · 2 sessions</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="FELIX_P2_STRIP_GIF" type="button">
-                <span class="pkg-price">$8.00 Most Popular ✨</span>
+                <span class="pkg-price">$8.00 Fun pack ✨</span>
                 <span class="pkg-desc">16 pennies · 4 sessions</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="FELIX_P3_STRIP_GIF" type="button">
-                <span class="pkg-price">$10.00 Best for Groups</span>
+                <span class="pkg-price">$10.00 Crew pack</span>
                 <span class="pkg-desc">20 pennies · 6 sessions</span>
               </button>
             </div>
@@ -241,7 +241,15 @@
         <section class="screen" data-screen="BACKGROUNDS">
           <div class="screen-content">
             <h1 class="title-main">Choose a Background Template</h1>
-            <p class="subtitle" id="bgSubtitle">Free templates are open. Locked ones cost 2 pennies or 1 ticket.</p>
+            <p class="subtitle" id="bgSubtitle">Free templates are open. Locked ones cost 2 pennies from your purse.</p>
+            <p class="felix-bg-purse" id="bgPurseNote" aria-live="polite"></p>
+            <div id="felix-unlock-confirm" class="felix-penny-confirm" hidden>
+              <p id="felix-unlock-confirm-text" class="felix-penny-confirm-text"></p>
+              <div class="button-row felix-penny-confirm-actions">
+                <button class="btn btn-primary" data-action="unlock-confirm-yes" type="button">YES — 2 PENNIES</button>
+                <button class="btn btn-secondary" data-action="unlock-confirm-no" type="button">CANCEL</button>
+              </div>
+            </div>
             <div class="background-scroll-wrapper">
               <button class="bg-scroll-arrow bg-scroll-arrow--left" type="button" data-action="bg-scroll-left" aria-label="Previous">‹</button>
               <div class="background-grid" id="backgroundGrid">
@@ -475,6 +483,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=leftover-1"></script>
+  <script src="felix-booth.js?v=cam-unlock-1"></script>
 </body>
 </html>

@@ -30,14 +30,29 @@ html, body {
   background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
 }
 
-/* Phone camera is already portrait — keep the mirrored preview, drop kiosk -90deg. */
+/* Phone live preview: portrait buffer fills the stage; landscape buffer is
+   rotated 90° so a 16:9 selfie is not cover-cropped into a huge close-up. */
+#video-layer {
+  transform: none !important;
+}
 #liveVideo {
+  position: absolute !important;
+  object-fit: cover !important;
+  transform-origin: center center !important;
+}
+#liveVideo:not(.is-landscape-sensor) {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover;
-  transform: none !important;
   top: 0 !important;
   left: 0 !important;
+  transform: scaleX(-1) !important;
+}
+#liveVideo.is-landscape-sensor {
+  width: 1920px !important;
+  height: 1080px !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) rotate(90deg) scaleX(-1) !important;
 }
 #video-layer:not(.hidden) { z-index: 1; }
 .screen[data-screen="LIVE"].active { z-index: 2; }
@@ -787,6 +802,18 @@ section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn:disabled {
 }
 
 
+.felix-bg-purse {
+  margin: 0 auto 0.4rem;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffe9b8;
+}
+section.screen[data-screen="BACKGROUNDS"] .felix-penny-confirm {
+  position: relative;
+  z-index: 5;
+  max-width: 640px;
+}
 .felix-penny-confirm {
   margin: 0.55rem auto 0.2rem;
   max-width: 94%;
