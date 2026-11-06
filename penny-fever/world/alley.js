@@ -9,7 +9,7 @@ import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-relock-1";
-import {openTill} from "./ticket-till.js?v=link-pay-2";
+import {openTill} from "./ticket-till.js?v=pkg-5-8-10";
 
 /* Deep-link from Felix package portals: ?till=photo&pkg=P1_STRIP&return=... */
 (function pfTillBootFromQuery() {

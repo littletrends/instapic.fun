@@ -47,9 +47,14 @@
   };
   const PRICE = {
     sessionTickets: 1,
-    sessionPennies: 6,
     unlockPennies: 2,
     unlockTickets: 1,
+  };
+  // Local penny packages mirror Square packs (50¢/penny). No server code / no bonus.
+  const PENNY_PACKS = {
+    "penny-p1": { pkg: "P1_STRIP", pennies: 10, sessions: 2, label: "$5 Quick & Simple" },
+    "penny-p2": { pkg: "P2_STRIP_GIF", pennies: 16, sessions: 4, label: "$8 Most Popular" },
+    "penny-p3": { pkg: "P3_STRIP_GIF", pennies: 20, sessions: 6, label: "$10 Best for Groups" },
   };
   const CASHIN_CREDITS = { p2: 2, p4: 4, p6: 6 };
   // Lorie (05/11/2026): $7 = 2 Felix sessions, $13 = 4, $18 = 6. Keyed by the
@@ -165,7 +170,7 @@
   let bonusState = "idle"; // idle | working | ready | failed
   let bonusSessionKey = "";
   let pendingCashinPkg = "p2";
-  // { no, total, left } for multi-session codes ($7/$13/$18 packages).
+  // { no, total, left } for multi-session codes ($5/$8/$10 packages).
   let sessionInfo = null;
   let rec = null; // active MediaRecorder state
   let recPromise = null; // resolves to { blob, mime, ext } | null for this session
@@ -311,8 +316,21 @@
     const n = Number(r && r.left);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : codeTotal(r);
   }
+  function getLocalSessions() {
+    return readLs(LS.credits, 0);
+  }
+  function addLocalSessions(n) {
+    const add = Math.max(0, Math.floor(Number(n) || 0));
+    return writeLS(LS.credits, getLocalSessions() + add);
+  }
+  function spendLocalSession() {
+    const have = getLocalSessions();
+    if (have < 1) return false;
+    writeLS(LS.credits, have - 1);
+    return true;
+  }
   function getCredits() {
-    return photoCodes().reduce((sum, r) => sum + codeLeft(r), 0);
+    return photoCodes().reduce((sum, r) => sum + codeLeft(r), 0) + getLocalSessions();
   }
   function spendPennies(amount) {
     const PF = fever();
@@ -435,32 +453,35 @@
     if (payCreditBtn) payCreditBtn.hidden = credits < 1;
 
     const ticketBtn = document.querySelector('[data-action="pay-tickets"]');
-    const pennyBtn = document.querySelector('[data-action="pay-pennies"]');
     const canTicket = tickets >= PRICE.sessionTickets;
-    const canPenny = pennies >= PRICE.sessionPennies;
     if (ticketBtn) {
       ticketBtn.disabled = !canTicket;
       ticketBtn.classList.toggle("is-disabled", !canTicket);
       ticketBtn.setAttribute("aria-disabled", String(!canTicket));
       ticketBtn.title = canTicket ? "" : "Need 1 ticket — earn these in Penny Fever";
     }
-    if (pennyBtn) {
-      pennyBtn.disabled = !canPenny;
-      pennyBtn.classList.toggle("is-disabled", !canPenny);
-      pennyBtn.setAttribute("aria-disabled", String(!canPenny));
-      pennyBtn.title = canPenny ? "" : "Need 6 pennies — earn these in Penny Fever";
-    }
+    let anyPennyPack = false;
+    Object.keys(PENNY_PACKS).forEach((action) => {
+      const pack = PENNY_PACKS[action];
+      const btn = document.querySelector('[data-action="' + action + '"]');
+      if (!btn) return;
+      const ok = pennies >= pack.pennies;
+      if (ok) anyPennyPack = true;
+      btn.disabled = !ok;
+      btn.classList.toggle("is-disabled", !ok);
+      btn.setAttribute("aria-disabled", String(!ok));
+      btn.title = ok
+        ? pack.pennies + " pennies → " + pack.sessions + " Felix sessions (no bonus code)"
+        : "Need " + pack.pennies + " pennies for " + pack.sessions + " sessions";
+    });
     const note = document.getElementById("felix-scrip-note");
     if (note) {
-      if (!canTicket && !canPenny) {
+      if (!canTicket && !anyPennyPack && credits < 1) {
         note.hidden = false;
-        note.textContent = "Not enough tickets or pennies — earn these in Penny Fever, or buy a strip at Aura's booth.";
+        note.textContent = "Not enough tickets or pennies — earn these in Penny Fever, or buy a Square package at Aura's booth.";
       } else if (!canTicket) {
         note.hidden = false;
-        note.textContent = "Not enough tickets (need 1). Earn tickets in Penny Fever, or pay with pennies / a package.";
-      } else if (!canPenny) {
-        note.hidden = false;
-        note.textContent = "Not enough pennies (need 6). Earn pennies in Penny Fever, or pay with a ticket / a package.";
+        note.textContent = "Not enough tickets (need 1). Earn tickets in Penny Fever, or pay with a penny package / Square.";
       } else {
         note.hidden = true;
         note.textContent = "";
@@ -1769,7 +1790,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-4";
+    link.href = "/penny-fever/world/ticket-till.css?v=pkg-5-8-10";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1785,7 +1806,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-4");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=pkg-5-8-10");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1796,9 +1817,9 @@
         pin: true,
       });
       const tip = {
-        P1_STRIP: "$7 · 2 sessions",
-        P2_STRIP_GIF: "$13 · 4 sessions",
-        P3_STRIP_GIF: "$18 · 6 sessions",
+        P1_STRIP: "$5 · 10 pennies · 2 sessions",
+        P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
+        P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
       }[pkg];
       setPayBanner(
         (tip || "Photo package") +
@@ -1807,7 +1828,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-4"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=pkg-5-8-10"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
@@ -1903,22 +1924,34 @@
       setPayBanner("Ticket accepted.");
       return startPaidSession();
     }
-    if (action === "pay-pennies") {
+    if (PENNY_PACKS[action]) {
       refreshWalletUi();
-      if (getPennies() < PRICE.sessionPennies) {
-        setPayBanner("Need 6 pennies for a booth session.");
+      const pack = PENNY_PACKS[action];
+      if (getPennies() < pack.pennies) {
+        setPayBanner("Need " + pack.pennies + " pennies for " + pack.sessions + " sessions (" + pack.label + ").");
         return;
       }
-      if (!spendPennies(PRICE.sessionPennies)) {
+      if (!spendPennies(pack.pennies)) {
         setPayBanner("Could not spend pennies.");
         return;
       }
+      addLocalSessions(pack.sessions);
       refreshWalletUi();
-      setPayBanner("6 pennies accepted.");
-      return startPaidSession();
+      setPayBanner(
+        pack.pennies + " pennies → " + pack.sessions + " Felix sessions added. " +
+        "Bonus code comes with Square packages only."
+      );
+      // Spend one local session immediately so the guest starts shooting.
+      if (!spendLocalSession()) {
+        setPayBanner("Sessions saved in your wallet — tap USE MY PHOTO SESSION.");
+        return;
+      }
+      refreshWalletUi();
+      return startPaidSession("", { no: 1, total: pack.sessions, left: pack.sessions - 1, source: "pennies" });
     }
     if (action === "pay-credit") {
-      setPayBanner("Checking your Instapic code\u2026");
+      setPayBanner("Checking your photo sessions\u2026");
+      // Prefer Square Instapic codes; fall back to local penny-pack sessions (no code).
       useCreditCode().then((r) => {
         refreshWalletUi();
         if (r.ok) {
@@ -1927,8 +1960,21 @@
               (r.info && r.info.total > 1 ? " Session " + r.info.no + " of " + r.info.total + "." : "")
           );
           startPaidSession(r.code, r.info);
-        } else if (r.error === "none") {
-          setPayBanner("No photo sessions yet. Buy one at Aura's booth.");
+          return;
+        }
+        if (r.error === "none" && spendLocalSession()) {
+          refreshWalletUi();
+          const left = getLocalSessions();
+          setPayBanner(
+            "Penny-pack session started." +
+              (left > 0 ? " " + left + " local session" + (left === 1 ? "" : "s") + " left." : "") +
+              " Bonus code comes with Square packages only."
+          );
+          startPaidSession("", { no: 1, total: left + 1, left: left, source: "pennies" });
+          return;
+        }
+        if (r.error === "none") {
+          setPayBanner("No photo sessions yet. Buy a Square package at Aura's booth, or a penny package below.");
         } else if (r.error === "offline") {
           setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
         } else {
@@ -1976,7 +2022,7 @@
       if (cashinSubtitle) {
         cashinSubtitle.textContent =
           "Enter a 6-digit Instapic code from a $" +
-          ({ p2: "7", p4: "13", p6: "18" }[pendingCashinPkg] || "?") +
+          ({ p2: "5", p4: "8", p6: "10" }[pendingCashinPkg] || "?") +
           " package. Gives " +
           credits +
           " Felix photo sessions.";

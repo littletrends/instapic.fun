@@ -9,9 +9,11 @@ const FALLBACK_PACKS = [
 // check), which returns a real 6-digit Instapic code. That code is the only
 // thing Felix's booth accepts as a paid session.
 const PHOTO_PACKS = [
-  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'2 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:700},
-  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'4 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:1300},
-  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'6 sessions in Felix’s photo booth on one real Instapic bonus code.', amount_cents:1800},
+  // Client amounts Lorie set 06/11/2026 (50¢/penny). Server WEBSITE_PACKAGES must
+  // match 500/800/1000¢ — until then Square returns amount_mismatch (no credit).
+  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'10 pennies · 2 Felix sessions · 1 Instapic bonus code.', amount_cents:500, sessions:2, pennies_value:10},
+  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'16 pennies · 4 Felix sessions · 1 Instapic bonus code.', amount_cents:800, sessions:4, pennies_value:16},
+  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'20 pennies · 6 Felix sessions · 1 Instapic bonus code.', amount_cents:1000, sessions:6, pennies_value:20},
 ];
 export const PHOTO_CODES_KEY = 'pf-photo-codes';
 export function photoCodes() {
@@ -59,8 +61,9 @@ function tillOpen() {
 
 function packLine(pack) {
   if (pack.kind === 'photo') {
-    const sessions = ({P1_STRIP:2, P2_STRIP_GIF:4, P3_STRIP_GIF:6})[pack.id] || 1;
-    return sessions + ' Felix sessions · Instapic bonus code';
+    const sessions = pack.sessions || ({P1_STRIP:2, P2_STRIP_GIF:4, P3_STRIP_GIF:6})[pack.id] || 1;
+    const pennies = pack.pennies_value || ({P1_STRIP:10, P2_STRIP_GIF:16, P3_STRIP_GIF:20})[pack.id] || 0;
+    return (pennies ? pennies + ' pennies · ' : '') + sessions + ' Felix sessions · 1 Instapic bonus code';
   }
   const bits = [];
   if (pack.tickets) bits.push(pack.tickets === 1 ? '1 ticket' : pack.tickets + ' tickets');
@@ -409,8 +412,21 @@ async function chargePhotoPack(tokenResult) {
   });
   const data = await res.json().catch(() => ({}));
   const code = String(data.ticket_code || data.code || '');
+  const errKey = String(data.error || data.code_error || data.reason || '').toLowerCase();
+  if (errKey.includes('amount_mismatch') || errKey.includes('amount mismatch') || data.amount_mismatch) {
+    // Client already shows the new $5/$8/$10 prices; server still on old cents until the Square agent lands.
+    throw new Error(
+      'Price update in progress — the till charged the new amount but MotherPC still expects the old package price. ' +
+      'No credit was added (Square must say COMPLETED). Staff: update WEBSITE_PACKAGES to 500/800/1000¢, then retry.'
+    );
+  }
   if (!res.ok || data.ok === false || data.payment_status !== 'COMPLETED' || !/^\d{6}$/.test(code)) {
-    throw new Error(data.error ? 'Square did not approve: ' + data.error : `Payment not approved (${res.status})`);
+    // Never credit on anything except COMPLETED + a real 6-digit code.
+    throw new Error(
+      data.error
+        ? 'Square did not approve: ' + data.error + (data.payment_status ? ' (' + data.payment_status + ')' : '')
+        : `Payment not approved (${res.status}${data.payment_status ? ' · ' + data.payment_status : ''}). No credit added.`
+    );
   }
   addPhotoCode({code, pkg: pack.id, payment_id: data.payment_id || '', ts: Date.now()});
   apiRef?.stampKeepsake?.('ticket-roll', 'aura-till');
@@ -514,7 +530,7 @@ export function mountTill(api) {
     <button type="button" class="pf-till-close" id="pfTillClose" aria-label="Close the till">×</button>
     <p class="pf-till-kicker">Square till</p>
     <h2 id="pfTillTitle">Buy a pack</h2>
-    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. Scrip packs, or a photo booth session for Felix’s booth ($7 / $13 / $18). Nothing is added until Square approves.</p>
+    <p class="pf-till-lead">Real money through Square — Apple Pay, Google Pay or card. Scrip packs, or a Felix photo booth package ($5 / $8 / $10 = 10 / 16 / 20 pennies’ worth). Nothing is added until Square approves.</p>
     <div class="pf-till-packs" id="pfTillPacks"></div>
     <div class="pf-till-pay">
       <div class="pf-till-wallets" id="pfTillWallets">

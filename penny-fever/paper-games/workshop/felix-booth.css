@@ -692,3 +692,26 @@ section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn:disabled {
 #bonusLink[hidden] {
   display: none !important;
 }
+
+.felix-penny-pack-label {
+  margin: 0.35rem auto 0.15rem;
+  max-width: 94%;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(255, 230, 200, 0.88);
+  font-weight: 600;
+}
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn {
+  min-height: 96px !important;
+  font-size: 1.15rem !important;
+  padding: 0.55rem 0.4rem !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn.is-disabled,
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn:disabled {
+  opacity: 0.42 !important;
+  filter: grayscale(0.35);
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}

@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="branding.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="patches.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="event_portal_patch.css?v=digital-tidy-1">
-  <link rel="stylesheet" href="felix-booth.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="flow-booth.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="branding.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="patches.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="event_portal_patch.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="felix-booth.css?v=pkg-5-8-10">
 </head>
 <body>
   <div id="turn-phone">
@@ -84,20 +84,20 @@
             <!-- Screen 3 package portals — same markup as Magic Mirror flow.html + pay_screen_buttons_patch -->
             <div class="button-row payment-options payment-packages-row">
               <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="P1_STRIP" type="button">
-                <span class="pkg-price">$7.00 Quick &amp; Simple</span>
-                <span class="pkg-desc">2 PHOTO STRIPS</span>
+                <span class="pkg-price">$5.00 Quick &amp; Simple</span>
+                <span class="pkg-desc">2 PHOTO STRIPS · 10¢</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="P2_STRIP_GIF" type="button">
-                <span class="pkg-price">$13.00 Most Popular ✨</span>
-                <span class="pkg-desc">4 PHOTO STRIPS</span>
+                <span class="pkg-price">$8.00 Most Popular ✨</span>
+                <span class="pkg-desc">4 PHOTO STRIPS · 16¢</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="P3_STRIP_GIF" type="button">
-                <span class="pkg-price">$18.00 Best for Groups</span>
-                <span class="pkg-desc">6 PHOTO STRIPS</span>
+                <span class="pkg-price">$10.00 Best for Groups</span>
+                <span class="pkg-desc">6 PHOTO STRIPS · 20¢</span>
               </button>
             </div>
 
-            <p class="felix-pkg-note">Photo packages · buy at Aura&rsquo;s booth (Square). Credits only after approval.</p>
+            <p class="felix-pkg-note">Square packages ($5 / $8 / $10) · credits only after approval. Bonus code comes with Square packages.</p>
 
             <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
 
@@ -106,11 +106,20 @@
               <button class="btn btn-primary" data-action="pay-tickets">
                 PAY WITH TICKETS · 1
               </button>
-              <button class="btn btn-primary" data-action="pay-pennies">
-                PAY WITH PENNIES · 6
-              </button>
               <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden>
                 USE MY PHOTO SESSION
+              </button>
+            </div>
+            <p class="felix-penny-pack-label">Or pay with pennies (no Instapic bonus code — that comes with Square):</p>
+            <div class="button-row payment-options payment-pills-row felix-penny-packs-row">
+              <button class="btn btn-primary" data-action="penny-p1" data-pkg="P1_STRIP" type="button">
+                10 PENNIES · 2
+              </button>
+              <button class="btn btn-primary" data-action="penny-p2" data-pkg="P2_STRIP_GIF" type="button">
+                16 PENNIES · 4
+              </button>
+              <button class="btn btn-primary" data-action="penny-p3" data-pkg="P3_STRIP_GIF" type="button">
+                20 PENNIES · 6
               </button>
             </div>
             <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
@@ -176,7 +185,7 @@
           <div class="screen-content">
             <h1 class="title-main">Cash in Instapic code</h1>
             <p class="subtitle" id="cashinSubtitle">
-              Enter a 6-digit Instapic code from a $7 / $13 / $18 package. It's checked with Instapic before your session starts.
+              Enter a 6-digit Instapic code from a $5 / $8 / $10 Square package. It's checked with Instapic before your session starts.
             </p>
             <div class="code-input-wrapper">
               <input id="cashinCodeInput"
@@ -468,6 +477,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=digital-tidy-1"></script>
+  <script src="felix-booth.js?v=pkg-5-8-10"></script>
 </body>
 </html>
