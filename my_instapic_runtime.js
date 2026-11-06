@@ -97,7 +97,7 @@
         }
         if (feverLink) {
           const hash = String(fever.hash || "alley").replace(/^#/, "") || "alley";
-          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=vip-spot-1#" + encodeURIComponent(hash);
+          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=vip-spot-2#" + encodeURIComponent(hash);
         }
       }
 

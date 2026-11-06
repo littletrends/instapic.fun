@@ -40,10 +40,10 @@
   <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
-  <link rel="stylesheet" href="world/world.css?v=vip-spot-1">
+  <link rel="stylesheet" href="world/world.css?v=vip-spot-2">
   <script defer src="world/items/model.js?v=ritual-3"></script>
-  <script src="../guest_identity.js?v=vip-spot-1"></script>
-  <script defer src="app.js?v=vip-spot-1"></script>
+  <script src="../guest_identity.js?v=vip-spot-2"></script>
+  <script defer src="app.js?v=vip-spot-2"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
   <link rel="stylesheet" href="world/ticket-till.css?v=pay-pennies-1">
-  <script type="module" src="world/alley.js?v=vip-spot-1"></script>
+  <script type="module" src="world/alley.js?v=vip-spot-2"></script>
   <script type="module" src="world/crew-selector.js?v=rotate-1"></script>
   <link rel="stylesheet" href="world/crew-selector.css?v=rotate-1">
   <link rel="stylesheet" href="restyle.css?v=aura-tools-1">
@@ -77,7 +77,7 @@
     <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
       <aside class="workshop-stop" role="note">
         <strong>STOP. Do not work in this local workshop.</strong>
-        <p>This copy is leftover. Penny Fever work happens on <a href="https://instapic.fun/penny-fever/index.html?style=paper&amp;rail=paper&amp;v=vip-spot-1#door">instapic.fun live</a> — edit <code>/tmp/instapic.fun-live</code> (branch <code>main</code>), push, then test the live URL. Do not pull this tree into live.</p>
+        <p>This copy is leftover. Penny Fever work happens on <a href="https://instapic.fun/penny-fever/index.html?style=paper&amp;rail=paper&amp;v=vip-spot-2#door">instapic.fun live</a> — edit <code>/tmp/instapic.fun-live</code> (branch <code>main</code>), push, then test the live URL. Do not pull this tree into live.</p>
       </aside>
       <div class="door-cinematic" aria-hidden="true">
         <img id="doorStageArt" class="door-stage-art" src="assets/restyle/paper-aura-seated.png" alt="Papercut Aura welcomes you with a ticket" width="1024" height="1536" fetchpriority="high">
@@ -88,7 +88,8 @@
       <div class="admit-desk" id="admitDesk">
         <div id="admitIdle">
           <button class="ticket-button" id="takeTicket" type="button">Take a ticket · free tonight</button>
-          <p class="aura-whisper"><a class="site-back" id="pfVipDoor" href="/save.html">Join VIP Guest Area · keep pennies and this spot on any phone</a></p>
+          <p class="aura-whisper"><a class="site-back" id="pfVipDoor" href="/save.html">Join VIP to lock in this player · then come back from any phone</a></p>
+          <p class="muted" id="pfVipDoorHint">This phone already remembers your pennies if you come back here. VIP locks that player to your guest profile.</p>
         </div>
         <div id="admitHold" hidden>
           <div class="admit-stub" id="admitStub" aria-label="Admit-one ticket">

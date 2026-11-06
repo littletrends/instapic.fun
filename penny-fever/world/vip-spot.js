@@ -15,7 +15,7 @@ function guestEmail() {
 
 function feverReturnPath() {
   const hash = location.hash || "#alley";
-  return "/penny-fever/index.html?style=paper&rail=paper&v=vip-spot-1" + hash;
+  return "/penny-fever/index.html?style=paper&rail=paper&v=vip-spot-2" + hash;
 }
 
 function vipJoinUrl() {
@@ -107,16 +107,24 @@ function paintChip() {
   const inVip = signedIn();
   const email = guestEmail();
   const label = inVip ? "VIP · " + (email.split("@")[0] || "signed in") : "Join VIP";
+  const hint = document.getElementById("pfVipDoorHint");
   if (door) {
     door.textContent = inVip
-      ? "VIP signed in · your pennies and spot save with your guest area"
-      : "Join VIP Guest Area · keep pennies and this spot on any phone";
+      ? "VIP locked in · this player saves with your guest profile"
+      : "Join VIP to lock in this player · then come back from any phone";
     door.setAttribute("href", inVip ? "/my-instapic.html" : vipJoinUrl());
+  }
+  if (hint) {
+    hint.textContent = inVip
+      ? "Signed in. Pennies and this alley spot stay on your VIP profile, so any phone can pick them up."
+      : "This phone already remembers your pennies if you come back here. VIP locks that player to your guest profile.";
   }
   if (hud) {
     hud.textContent = label;
     hud.setAttribute("href", inVip ? "/my-instapic.html" : vipJoinUrl());
-    hud.title = inVip ? "Open your VIP Guest Area. This tent saves your purse and alley spot while you are signed in." : "Join Instapic VIP so this tent follows you to another phone or browser.";
+    hud.title = inVip
+      ? "Player locked to your VIP guest profile. Open Guest Area."
+      : "This phone keeps your purse. Join VIP to lock this player and return from any phone.";
   }
 }
 

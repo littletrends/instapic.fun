@@ -10,7 +10,7 @@ import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-image
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-relock-1";
 import {openTill} from "./ticket-till.js?v=pay-pennies-1";
-import { mountVipSpot } from "./vip-spot.js?v=vip-spot-1";
+import { mountVipSpot } from "./vip-spot.js?v=vip-spot-2";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
