@@ -493,3 +493,32 @@ section.screen.active[data-screen="PRINT"] .instapic-print-preview-note { displa
 /* No DOM slot overlays on PRINT/DIGITAL */
 .screen[data-screen="PRINT"] .template-slot,
 .screen[data-screen="DIGITAL"] .template-slot { display: none !important; }
+
+/* Kill flow-booth 60% width that fights the hero */
+.background-preview-frame img {
+  width: auto !important;
+}
+
+/* QA fix: grey out ticket/penny when wallet can't cover */
+section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn.is-disabled,
+section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn:disabled {
+  opacity: 0.42 !important;
+  filter: grayscale(0.35);
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+.felix-scrip-note {
+  margin: 0.15rem auto 0.35rem;
+  max-width: 92%;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(255, 220, 180, 0.88);
+  font-weight: 600;
+}
+#bonusLinkRow[hidden],
+#bonusLink[hidden] {
+  display: none !important;
+}

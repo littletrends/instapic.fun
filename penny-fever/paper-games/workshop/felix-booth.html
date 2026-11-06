@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=strip-web-4">
-  <link rel="stylesheet" href="branding.css?v=strip-web-4">
-  <link rel="stylesheet" href="patches.css?v=strip-web-4">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=strip-web-4">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=strip-web-4">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=strip-web-4">
-  <link rel="stylesheet" href="event_portal_patch.css?v=strip-web-4">
-  <link rel="stylesheet" href="felix-booth.css?v=strip-web-4">
+  <link rel="stylesheet" href="flow-booth.css?v=qa-fix-1">
+  <link rel="stylesheet" href="branding.css?v=qa-fix-1">
+  <link rel="stylesheet" href="patches.css?v=qa-fix-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=qa-fix-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=qa-fix-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=qa-fix-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=qa-fix-1">
+  <link rel="stylesheet" href="felix-booth.css?v=qa-fix-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -113,6 +113,7 @@
                 USE MY PHOTO SESSION
               </button>
             </div>
+            <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
 
             <div class="button-row payment-options payment-pills-row">
               <button class="btn btn-secondary" data-action="enter-prepaid">
@@ -134,8 +135,8 @@
           <div class="screen-content">
             <h1 class="title-main">Try It Mode</h1>
             <p class="subtitle">
-              Try the Magic Mirror.  No printing in Try Mode. <br> 2 Sample Photos &
-              You’ll see a sample preview, then return to payment options.
+              Two sample photos, then a preview. Printing stays off.
+              You’ll come back to payment if you want a real strip.
             </p>
             <div class="button-row">
               <button class="btn btn-primary" data-action="enter-try-mode">
@@ -378,7 +379,7 @@
               <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
               <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE</button>
             </div>
-            <div class="button-row">
+            <div class="button-row" id="bonusLinkRow">
               <a class="btn btn-secondary" id="bonusLink" href="https://instapic.fun/bonus.html" target="_blank" rel="noopener">OPEN INSTAPIC BONUS</a>
             </div>
             <div class="button-row">
@@ -464,6 +465,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=strip-web-4"></script>
+  <script src="felix-booth.js?v=qa-fix-1"></script>
 </body>
 </html>

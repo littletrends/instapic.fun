@@ -221,9 +221,15 @@
     return null;
   }
 
-  function readLS(key, fallback) {
+  const FEVER_STORE_KEY = "pennyFever.restyle.v1";
+
+  function readLs(key, fallback) {
     try {
-      const n = Number(JSON.parse(localStorage.getItem(key) || "null"));
+      const raw = localStorage.getItem(key);
+      // Missing key must use fallback — JSON.parse("null") → null → Number(null) === 0
+      // used to hide the fallback and show a fake empty wallet.
+      if (raw == null || raw === "") return fallback;
+      const n = Number(JSON.parse(raw));
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : fallback;
     } catch {
       return fallback;
@@ -234,13 +240,40 @@
     return Math.max(0, Math.floor(n));
   }
 
+  function readFeverStore() {
+    try {
+      const raw = localStorage.getItem(FEVER_STORE_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      return s && typeof s === "object" && !Array.isArray(s) ? s : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  function writeFeverStoreField(field, value) {
+    try {
+      const s = readFeverStore() || {};
+      s[field] = Math.max(0, Math.floor(Number(value) || 0));
+      localStorage.setItem(FEVER_STORE_KEY, JSON.stringify(s));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function getPennies() {
     const PF = fever();
     if (PF) {
       const n = Number(PF.pennies?.() ?? PF.getState?.()?.demoCoins);
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
     }
-    return readLS(LS.pennies, 24);
+    const store = readFeverStore();
+    if (store && store.demoCoins != null) {
+      const n = Number(store.demoCoins);
+      return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    }
+    // No invented starter credit — missing key means 0.
+    return readLS(LS.pennies, 0);
   }
   function getTickets() {
     const PF = fever();
@@ -248,7 +281,12 @@
       const n = Number(PF.tickets?.() ?? PF.getState?.()?.playTickets);
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
     }
-    return readLS(LS.tickets, 3);
+    const store = readFeverStore();
+    if (store && store.playTickets != null) {
+      const n = Number(store.playTickets);
+      return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    }
+    return readLS(LS.tickets, 0);
   }
   function photoCodes() {
     try {
@@ -281,7 +319,10 @@
     if (PF?.spendPennies) return !!PF.spendPennies(amount);
     const have = getPennies();
     if (have < amount) return false;
-    writeLS(LS.pennies, have - amount);
+    const next = have - amount;
+    const store = readFeverStore();
+    if (store && store.demoCoins != null) writeFeverStoreField("demoCoins", next);
+    writeLS(LS.pennies, next);
     return true;
   }
   function spendTicket(kind) {
@@ -289,7 +330,10 @@
     if (PF?.spendTicket) return !!PF.spendTicket(kind || "snap");
     const have = getTickets();
     if (have < 1) return false;
-    writeLS(LS.tickets, have - 1);
+    const next = have - 1;
+    const store = readFeverStore();
+    if (store && store.playTickets != null) writeFeverStoreField("playTickets", next);
+    writeLS(LS.tickets, next);
     return true;
   }
   async function api(path, body) {
@@ -382,10 +426,46 @@
   }
 
   function refreshWalletUi() {
-    if (walletTicketsEl) walletTicketsEl.textContent = getTickets() + " tickets";
-    if (walletPenniesEl) walletPenniesEl.textContent = getPennies() + " pennies";
-    if (walletCreditsEl) walletCreditsEl.textContent = getCredits() + (getCredits() === 1 ? " photo session" : " photo sessions");
-    if (payCreditBtn) payCreditBtn.hidden = getCredits() < 1;
+    const tickets = getTickets();
+    const pennies = getPennies();
+    const credits = getCredits();
+    if (walletTicketsEl) walletTicketsEl.textContent = tickets + " tickets";
+    if (walletPenniesEl) walletPenniesEl.textContent = pennies + " pennies";
+    if (walletCreditsEl) walletCreditsEl.textContent = credits + (credits === 1 ? " photo session" : " photo sessions");
+    if (payCreditBtn) payCreditBtn.hidden = credits < 1;
+
+    const ticketBtn = document.querySelector('[data-action="pay-tickets"]');
+    const pennyBtn = document.querySelector('[data-action="pay-pennies"]');
+    const canTicket = tickets >= PRICE.sessionTickets;
+    const canPenny = pennies >= PRICE.sessionPennies;
+    if (ticketBtn) {
+      ticketBtn.disabled = !canTicket;
+      ticketBtn.classList.toggle("is-disabled", !canTicket);
+      ticketBtn.setAttribute("aria-disabled", String(!canTicket));
+      ticketBtn.title = canTicket ? "" : "Need 1 ticket — earn these in Penny Fever";
+    }
+    if (pennyBtn) {
+      pennyBtn.disabled = !canPenny;
+      pennyBtn.classList.toggle("is-disabled", !canPenny);
+      pennyBtn.setAttribute("aria-disabled", String(!canPenny));
+      pennyBtn.title = canPenny ? "" : "Need 5 pennies — earn these in Penny Fever";
+    }
+    const note = document.getElementById("felix-scrip-note");
+    if (note) {
+      if (!canTicket && !canPenny) {
+        note.hidden = false;
+        note.textContent = "Not enough tickets or pennies — earn these in Penny Fever, or buy a strip at Aura's booth.";
+      } else if (!canTicket) {
+        note.hidden = false;
+        note.textContent = "Not enough tickets (need 1). Earn tickets in Penny Fever, or pay with pennies / a package.";
+      } else if (!canPenny) {
+        note.hidden = false;
+        note.textContent = "Not enough pennies (need 5). Earn pennies in Penny Fever, or pay with a ticket / a package.";
+      } else {
+        note.hidden = true;
+        note.textContent = "";
+      }
+    }
   }
 
   function resetPhotoState() {
@@ -540,7 +620,8 @@
       const card = template ? template.cloneNode(true) : document.createElement("div");
       card.className = "background-card" + (locked ? " is-locked" : "");
       card.dataset.backgroundId = id;
-      card.dataset.poses = "4";
+      const poseCount = isTrySession ? 2 : 4;
+      card.dataset.poses = String(poseCount);
       card.style.display = "";
       const img = card.querySelector("img") || card.appendChild(document.createElement("img"));
       img.loading = "lazy";
@@ -554,7 +635,7 @@
         label.className = "bg-label";
         card.appendChild(label);
       }
-      label.textContent = id.toUpperCase() + " – 4 poses";
+      label.textContent = id.toUpperCase() + " – " + poseCount + " poses";
       card.querySelectorAll(".bg-lock-badge, .bg-free-badge").forEach((el) => el.remove());
       if (locked) {
         const badge = document.createElement("div");
@@ -730,11 +811,23 @@
 
   function updateBonusLinks() {
     const code = localSessionCode || "";
-    const url = code
+    const showBonus = !isTrySession && /^\d{6}$/.test(code);
+    const url = showBonus
       ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(code)
       : "https://instapic.fun/bonus.html";
-    if (bonusLink) bonusLink.href = url;
-    if (bonusLinkDigital) bonusLinkDigital.href = url;
+    if (bonusLink) {
+      bonusLink.href = showBonus ? url : "#";
+      bonusLink.hidden = !showBonus;
+      bonusLink.setAttribute("aria-hidden", String(!showBonus));
+      if (!showBonus) bonusLink.removeAttribute("target");
+      else bonusLink.setAttribute("target", "_blank");
+    }
+    const bonusRow = document.getElementById("bonusLinkRow");
+    if (bonusRow) bonusRow.hidden = !showBonus;
+    if (bonusLinkDigital) {
+      bonusLinkDigital.href = showBonus ? url : "#";
+      bonusLinkDigital.hidden = !showBonus;
+    }
   }
 
   function sessionNoteSuffix() {
@@ -900,10 +993,8 @@
     ctx.quadraticCurveTo(w * 0.78, h * 0.55, w * 0.78, h * 0.95);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "rgba(59, 42, 26, 0.55)";
-    ctx.font = "700 " + Math.floor(w / 14) + "px Georgia, serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Instapic", w / 2, h * 0.12);
+    // Soft cream silhouette only — no brand word (Try Mode no longer uses these
+    // for empty slots; paid unused slots stay tidy).
     return c.toDataURL("image/jpeg", 0.92);
   }
 
@@ -1362,14 +1453,19 @@
   }
 
   async function loadSessionPhotos() {
-    // Always fill all 4 strip windows so unused poses are cream placeholders,
-    // not empty see-through holes in the template.
+    // Always fill all 4 locked strip windows. In Try Mode (2 poses) repeat the
+    // captured photos so the sample strip looks complete — no Instapic placeholders.
     const photoSrcs = [];
+    const cream = () => makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h);
     for (let i = 0; i < 4; i++) {
-      if (i < totalPoses) {
-        photoSrcs.push(capturedPhotos[i] || makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
+      if (isTrySession) {
+        const cycle = Math.max(totalPoses, 1);
+        const src = capturedPhotos[i % cycle] || capturedPhotos[0] || cream();
+        photoSrcs.push(src);
+      } else if (i < totalPoses) {
+        photoSrcs.push(capturedPhotos[i] || cream());
       } else {
-        photoSrcs.push(makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
+        photoSrcs.push(cream());
       }
     }
     return Promise.all(photoSrcs.map((src) => loadImage(src)));
@@ -1456,13 +1552,14 @@
     }
     if (isTrySession) {
       if (title) title.textContent = "Sample Preview";
-      if (subtitle) subtitle.textContent = "Try strip — " + totalPoses + " poses. Save or share below. Printing stays off in Try Mode.";
+      if (subtitle) subtitle.textContent = "Try strip — " + totalPoses + " poses (repeated to fill the strip). Save or share below. Printing stays off in Try Mode.";
       if (printPreviewNote) printPreviewNote.hidden = true;
     } else {
       if (title) title.textContent = "Your Photo Strip";
       if (subtitle) subtitle.textContent = "Save, share, or open the Instapic bonus page.";
       if (printPreviewNote) printPreviewNote.hidden = false;
     }
+    updateBonusLinks();
   }
 
   function startPrintTimer() {
