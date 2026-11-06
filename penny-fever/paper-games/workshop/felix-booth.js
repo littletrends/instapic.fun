@@ -1622,10 +1622,18 @@
     printTimer = null;
   }
 
+  function goToAfterReview() {
+    if (isTrySession) {
+      showScreen(Screen.PRINT);
+      return;
+    }
+    showScreen(Screen.DIGITAL);
+  }
+
   function startReviewIdleTimer() {
     stopReviewIdleTimer();
     reviewIdleTimer = setTimeout(() => {
-      if (currentScreen === Screen.REVIEW) showScreen(Screen.PRINT);
+      if (currentScreen === Screen.REVIEW) goToAfterReview();
     }, 20000);
   }
   function stopReviewIdleTimer() {
@@ -1851,7 +1859,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=jasper-fix-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=jasper-fix-2"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
@@ -2186,13 +2194,13 @@
       return;
     }
     if (action === "retake-photo") {
-      if (totalRetakesUsed >= MAX_RETAKES_PER_SESSION) return showScreen(Screen.PRINT);
+      if (totalRetakesUsed >= MAX_RETAKES_PER_SESSION) return goToAfterReview();
       totalRetakesUsed += 1;
       capturedPhotos[selectedSlotIndex] = null;
       currentPoseIndex = selectedSlotIndex;
       return showScreen(Screen.LIVE);
     }
-    if (action === "keep-photo") return showScreen(Screen.PRINT);
+    if (action === "keep-photo") return goToAfterReview();
     if (action === "save-strip") {
       saveStrip();
       return;
