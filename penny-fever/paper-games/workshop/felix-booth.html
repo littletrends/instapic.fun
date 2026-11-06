@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=price-6p">
-  <link rel="stylesheet" href="branding.css?v=price-6p">
-  <link rel="stylesheet" href="patches.css?v=price-6p">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=price-6p">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=price-6p">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=price-6p">
-  <link rel="stylesheet" href="event_portal_patch.css?v=price-6p">
-  <link rel="stylesheet" href="felix-booth.css?v=price-6p">
+  <link rel="stylesheet" href="flow-booth.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="branding.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="patches.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=digital-tidy-1">
+  <link rel="stylesheet" href="felix-booth.css?v=digital-tidy-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -394,29 +394,37 @@
           <div class="screen-content digital-screen">
             <h1 class="title-main">Your Instapic Code</h1>
             <p class="subtitle">
-              Your code is printed small on your photo strip. Scan the QR anytime for free bonus pics on instapic.fun.
+              Your code is printed on your strip. Scan the QR anytime for free bonus pics on instapic.fun.
             </p>
+
+            <div class="output-group digital-code-group">
+              <h2>Session code</h2>
+              <div id="sessionCodeDisplay" class="session-code-display"></div>
+              <p id="sessionCountNote" class="subtitle small felix-session-count" hidden></p>
+              <p class="subtitle small digital-code-hint">
+                Also printed small on the bottom of your photo strip.
+              </p>
+            </div>
+
             <div class="output-layout">
               <div class="background-preview-frame">
                 <img id="digitalStripPreview" alt="Photo strip preview">
               </div>
               <div class="output-options">
-                <div class="output-group digital-code-group">
-                  <h2>Session code</h2>
-                  <div id="sessionCodeDisplay" class="session-code-display"></div>
-                  <p id="sessionCountNote" class="subtitle small felix-session-count" hidden></p>
-                  <p class="subtitle small digital-code-hint">
-                    Also printed on the bottom of your strip next to the QR.
-                  </p>
-                </div>
                 <div class="output-group">
                   <h2>Scan to open Instapic.fun</h2>
                   <div class="qr-placeholder" id="qrPlaceholder">
                     <img src="img/instapic_fun.png" alt="instapic.fun">
                   </div>
                 </div>
+                <div class="button-row">
+                  <button class="btn btn-primary btn-big" data-action="digital-done" type="button">
+                    Continue
+                  </button>
+                </div>
               </div>
             </div>
+
             <div class="button-row felix-save-row">
               <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
               <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE</button>
@@ -426,11 +434,6 @@
               <button class="btn btn-secondary" data-action="retry-bonus" id="retryBonusBtn" type="button" hidden>TRY AGAIN</button>
             </div>
             <p class="subtitle small felix-bonus-status" id="bonusStatus" aria-live="polite"></p>
-            <div class="button-row">
-              <button class="btn btn-primary btn-big" data-action="digital-done" type="button">
-                Continue
-              </button>
-            </div>
           </div>
         </section>
 
@@ -465,6 +468,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=price-6p"></script>
+  <script src="felix-booth.js?v=digital-tidy-1"></script>
 </body>
 </html>

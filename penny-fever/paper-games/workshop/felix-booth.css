@@ -434,7 +434,6 @@ section.screen[data-screen="BACKGROUNDS"] .button-row {
 
 /* ---- Strip composite is the only on-screen strip (same canvas as bonus layout) ---- */
 section.screen.active[data-screen="PRINT"] .screen-content,
-section.screen.active[data-screen="DIGITAL"] .screen-content,
 section.screen.active[data-screen="REVIEW"] .screen-content {
   display: flex !important;
   flex-direction: column !important;
@@ -445,20 +444,17 @@ section.screen.active[data-screen="REVIEW"] .screen-content {
   padding-bottom: 28px !important;
 }
 section.screen.active[data-screen="PRINT"] .title-main,
-section.screen.active[data-screen="DIGITAL"] .title-main,
 section.screen.active[data-screen="REVIEW"] .title-main {
   margin: 0 !important;
   font-size: 2.5rem !important;
 }
 section.screen.active[data-screen="PRINT"] .subtitle,
-section.screen.active[data-screen="DIGITAL"] .subtitle,
 section.screen.active[data-screen="REVIEW"] .subtitle {
   margin: 0 !important;
   font-size: 1.3rem !important;
   max-width: 92%;
 }
 section.screen.active[data-screen="PRINT"] .background-preview-frame,
-section.screen.active[data-screen="DIGITAL"] .background-preview-frame,
 .review-strip-wrap {
   flex: 0 0 auto !important;
   display: flex !important;
@@ -470,7 +466,6 @@ section.screen.active[data-screen="DIGITAL"] .background-preview-frame,
 }
 /* Natural aspect of 416×1232 — never force a taller box that crops via layout */
 #finalStripPreview,
-#digitalStripPreview,
 #reviewStripPreview,
 .strip-composite-preview {
   width: 420px !important;
@@ -485,21 +480,149 @@ section.screen.active[data-screen="DIGITAL"] .background-preview-frame,
   display: block !important;
   background: #111;
 }
-.background-preview-frame img {
+section.screen.active[data-screen="PRINT"] .background-preview-frame img {
   width: 420px !important;
   height: auto !important;
 }
-section.screen.active[data-screen="PRINT"] .button-row,
-section.screen.active[data-screen="DIGITAL"] .button-row {
+section.screen.active[data-screen="PRINT"] .button-row {
   margin: 0 !important;
   gap: 16px !important;
 }
 section.screen.active[data-screen="PRINT"] .btn-big,
-section.screen.active[data-screen="DIGITAL"] .btn-big,
 section.screen.active[data-screen="REVIEW"] .btn-big {
   min-height: 92px !important;
   font-size: 1.55rem !important;
   padding: 0.65rem 1.5rem !important;
+}
+
+/* DIGITAL: Instapic tidy layout — code on top, white strip left, QR + portal right */
+section.screen[data-screen="DIGITAL"] {
+  --portal-size: 220px;
+  --portal-ring: 268px;
+  --portal-inset: 14px;
+  --portal-font: 1.05rem;
+}
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.7rem !important;
+  padding: 48px 36px 32px !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+section.screen.active[data-screen="DIGITAL"] .title-main {
+  margin: 0 !important;
+  font-size: 3.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] > .screen-content > .subtitle {
+  margin: 0 !important;
+  max-width: 40rem !important;
+  text-align: center !important;
+  font-size: 1.45rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  margin: 0.2rem 0 0.4rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-group h2 {
+  display: block !important;
+  margin: 0 0 0.35rem !important;
+  font-size: 1.35rem !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] #sessionCodeDisplay,
+section.screen.active[data-screen="DIGITAL"] .session-code-display {
+  font-size: 4.2rem !important;
+  letter-spacing: 0.22em !important;
+  font-weight: 800 !important;
+  padding: 0.28em 0.7em !important;
+  margin: 0 !important;
+  min-width: 14rem;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint,
+section.screen.active[data-screen="DIGITAL"] .felix-session-count {
+  margin: 0 !important;
+  max-width: 28rem !important;
+  text-align: center !important;
+  font-size: 1.15rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2.4rem !important;
+  width: 100% !important;
+  margin: 0.4rem 0 0 !important;
+  flex: 0 0 auto !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame {
+  margin: 0 !important;
+  width: auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  background: #fff !important;
+  padding: 0.7rem !important;
+  border-radius: 18px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  width: auto !important;
+  height: 700px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 12px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2.8rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder,
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder.has-qr {
+  margin: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0.85rem !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  border: 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img,
+section.screen.active[data-screen="DIGITAL"] .instapic-digital-qr,
+section.screen.active[data-screen="DIGITAL"] .qr-image-instapic {
+  width: 260px !important;
+  height: auto !important;
+  max-height: none !important;
+  display: block;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options .button-row {
+  margin: 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row,
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row {
+  margin: 0.4rem 0 0 !important;
+  gap: 16px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row .btn-big {
+  min-height: 72px !important;
+  font-size: 1.35rem !important;
+  padding: 0.5rem 1.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status {
+  margin: 0 !important;
+  font-size: 1.1rem !important;
 }
 section.screen.active[data-screen="PRINT"] .instapic-print-preview-note { display: none !important; }
 
