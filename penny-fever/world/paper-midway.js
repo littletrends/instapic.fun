@@ -133,11 +133,11 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
   note.textContent='Need five pennies for a ticket.';
   paintAuraWallet();
  };
- {const b=panel.querySelector('#auraCounterLoan');b.disabled=true;b.textContent='Bank loan · Under construction 🔒';}
+ /* TEMP 06/11/2026: +100 bank open for Lorie phone test — relock after */
  panel.querySelector('#auraCounterLoan').onclick=()=>{
   if(!near())return;
-  const n=0; /* loan locked: under construction */
-  panel.querySelector('#auraCounterMessage').textContent='Bank loan · Under construction 🔒';
+  const n=apiRef.addDemoCoins?.(100)||0;
+  panel.querySelector('#auraCounterMessage').textContent=n?('Bank loan · +'+n+' pennies.'):'The till is quiet.';
   paintAuraWallet();
  };
  panel.querySelector('#auraCounterReset').onclick=()=>{

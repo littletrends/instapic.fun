@@ -8,7 +8,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=photo-till-3";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-temp-1";
 import {openTill} from "./ticket-till.js?v=link-pay-2";
 
 /* Deep-link from Felix package portals: ?till=photo&pkg=P1_STRIP&return=... */
@@ -985,7 +985,7 @@ function attachHud() {
           </section>
           <button type="button" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
           <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
-          <button type="button" id="pfTillLoan" disabled>Bank loan · Under construction 🔒</button>
+          <button type="button" id="pfTillLoan">Bank loan · +100</button>
           <button type="button" id="pfTillReset">Reset game</button>
         </div>
         <div class="pf-stall-card-actions">
@@ -1261,8 +1261,9 @@ function bindHud() {
   const tillLoan = el("pfTillLoan");
   const tillReset = el("pfTillReset");
   if (tillLoan) tillLoan.addEventListener("click", () => {
-    const n = 0; /* loan locked: under construction */
-    tillMessage = "Bank loan · Under construction 🔒";
+    /* TEMP 06/11/2026: +100 bank open for Lorie phone test — relock after */
+    const n = window.PennyFever?.addDemoCoins?.(100) || 0;
+    tillMessage = n ? ("Bank loan · +" + n + " pennies.") : "The till is quiet.";
     tillMessageUntil = performance.now() + 4000;
     paintAuraWallet(el("pfStallCard"));
   });
