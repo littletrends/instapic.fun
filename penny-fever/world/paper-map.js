@@ -1,6 +1,6 @@
 import {games} from '../paper-games/catalogue.js?v=briefs-2';
 import {isClosed} from '../paper-games/stall-entry.js?v=felix-open-1';
-import {mountTill, openTill} from './ticket-till.js?v=bank-live-1';
+import {mountTill, openTill} from './ticket-till.js?v=bank-refresh-1';
 
 const root = document.createElement('main');
 root.id = 'pfPaperMap';

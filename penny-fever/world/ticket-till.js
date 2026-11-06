@@ -43,7 +43,6 @@ let paying = false;
 let walletBusy = false;
 let pinned = false;
 let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
-let bankWatch = 0;
 
 export function bankLoan() {
   const pennies = Math.max(1, Math.floor(Number(config.bank_loan_pennies) || 100));
@@ -538,21 +537,12 @@ async function refreshConfig() {
   window.dispatchEvent(new CustomEvent('pf-till-config', {detail: bankLoan()}));
 }
 
-function startBankWatch() {
-  if (bankWatch) return;
-  bankWatch = window.setInterval(() => { refreshConfig(); }, 8000);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) refreshConfig();
-  });
-}
-
 export function mountTill(api) {
   apiRef = api;
   const existing = document.querySelector('.aura-till');
   if (existing) {
     till = existing;
     backdrop = document.querySelector('.aura-till-backdrop');
-    startBankWatch();
     refreshConfig();
     return;
   }
@@ -606,7 +596,6 @@ export function mountTill(api) {
     if (e.key === 'Escape' && tillOpen()) closeTill();
   });
   paintPacks();
-  startBankWatch();
   refreshConfig();
 }
 
