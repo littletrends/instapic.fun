@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=polish-1">
+  <link rel="stylesheet" href="felix-booth.css?v=pay-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -74,34 +74,33 @@
               Short on pennies? Aura&rsquo;s booth tops you up.
             </p>
 
+            <div class="felix-pay-spacer" aria-hidden="true"></div>
+
             <div class="felix-wallet-row">
               <div id="felix-wallet" class="felix-wallet" aria-live="polite">
                 <span id="felix-wallet-tickets">0 tickets</span>
                 <span class="felix-wallet-dot">·</span>
                 <span id="felix-wallet-pennies">0 pennies</span>
-                <span class="felix-wallet-dot">·</span>
-                <span id="felix-wallet-credits">0 photo sessions</span>
               </div>
-              <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden type="button">
-                USE MY PHOTO SESSION
-              </button>
             </div>
+            <button class="btn felix-sessions-pill" data-action="pay-credit" id="payCreditBtn" type="button">
+              0 sessions left
+            </button>
 
             <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
+
+            <div class="felix-pay-spacer" aria-hidden="true"></div>
 
             <!-- Glowing portals = penny purchase (hero). Short purse → Aura penny top-up. -->
             <div class="button-row payment-options payment-packages-row">
               <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="FELIX_P1_STRIP" type="button">
-                <span class="pkg-price">$5.00 Pair pack</span>
-                <span class="pkg-desc">10 pennies · 2 sessions</span>
+                <span class="pkg-price">10 pennies<br>2 sessions</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="FELIX_P2_STRIP_GIF" type="button">
-                <span class="pkg-price">$8.00 Fun pack ✨</span>
-                <span class="pkg-desc">16 pennies · 4 sessions</span>
+                <span class="pkg-price">16 pennies<br>4 sessions</span>
               </button>
               <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="FELIX_P3_STRIP_GIF" type="button">
-                <span class="pkg-price">$10.00 Crew pack</span>
-                <span class="pkg-desc">20 pennies · 6 sessions</span>
+                <span class="pkg-price">20 pennies<br>6 sessions</span>
               </button>
             </div>
 
@@ -113,23 +112,23 @@
               </div>
             </div>
 
-            <p class="felix-pkg-note">Bonus code comes with a Square package from Aura. Pennies buy sessions only.</p>
+            <p class="felix-pkg-note">Pennies buy sessions only.</p>
+
+            <div class="felix-pay-spacer" aria-hidden="true"></div>
 
             <div class="button-row payment-options payment-pills-row felix-secondary-row">
               <button class="btn btn-secondary" data-action="enter-try-info" type="button">
                 TRY IT FIRST
               </button>
-            </div>
-            <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
-
-            <div class="button-row payment-options payment-pills-row">
               <button class="btn btn-secondary" data-action="enter-prepaid" type="button">
                 I HAVE AN INSTAPIC CODE
               </button>
-              <button class="btn btn-secondary" data-action="payment-exit" type="button">
-                EXIT TO START
-              </button>
             </div>
+            <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
+
+            <button class="btn felix-sessions-pill" data-action="payment-exit" type="button">
+              EXIT TO START
+            </button>
           </div>
         </section>
 
@@ -486,6 +485,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=polish-1"></script>
+  <script src="felix-booth.js?v=pay-1"></script>
 </body>
 </html>

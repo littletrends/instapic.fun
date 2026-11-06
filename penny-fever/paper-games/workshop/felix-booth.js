@@ -464,13 +464,9 @@
     const purse = document.getElementById("bgPurseNote");
     if (purse) purse.textContent = pennies + (pennies === 1 ? " penny in your purse" : " pennies in your purse");
     if (payCreditBtn) {
-      payCreditBtn.hidden = credits < 1;
+      payCreditBtn.hidden = false;
       payCreditBtn.textContent =
-        credits < 1
-          ? "USE MY PHOTO SESSION"
-          : credits === 1
-            ? "1 SESSION LEFT"
-            : credits + " SESSIONS LEFT";
+        credits === 1 ? "1 session left" : credits + " sessions left";
     }
 
     const ticketBtn = document.querySelector('[data-action="pay-tickets"]');
@@ -1666,7 +1662,7 @@
     const a = document.getElementById("felixVipJoin");
     if (!a) return;
     const code = sessionCodeNow();
-    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=polish-1";
+    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-1";
     let href = "/save.html?return=" + encodeURIComponent(ret);
     if (code) href += "&ticket_code=" + encodeURIComponent(code);
     a.href = href;
@@ -2025,7 +2021,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=polish-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =

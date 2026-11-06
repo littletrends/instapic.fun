@@ -1065,17 +1065,69 @@ section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
 /* ---- polish-1: pack screens to the top of the 1080 canvas ---- */
 section.screen.active[data-screen="PAYMENT"] .screen-content {
   justify-content: flex-start !important;
+  align-items: center !important;
   padding-top: 56px !important;
-  gap: 0.7rem !important;
+  gap: 0.55rem !important;
+  text-align: center !important;
 }
 section.screen.active[data-screen="PAYMENT"] .title-main {
-  margin: 0 0 0.35rem !important;
+  margin: 0 auto 0.35rem !important;
   font-size: 3.6rem !important;
+  text-align: center !important;
 }
 section.screen.active[data-screen="PAYMENT"] .subtitle {
-  margin: 0 0 0.4rem !important;
+  margin: 0 auto 0.2rem !important;
   font-size: 1.55rem !important;
   max-width: 46rem;
+  text-align: center !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pay-spacer {
+  display: block;
+  width: 100%;
+  height: 140px;
+  flex: 0 0 140px;
+}
+section.screen[data-screen="PAYMENT"] .felix-wallet-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+}
+section.screen[data-screen="PAYMENT"] .felix-wallet {
+  margin: 0 auto !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill,
+section.screen[data-screen="PAYMENT"] button.felix-sessions-pill,
+section.screen[data-screen="PAYMENT"] #payCreditBtn,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 280px !important;
+  min-height: 0 !important;
+  margin: 0.15rem auto 0 !important;
+  padding: 0.85rem 1.6rem !important;
+  border-radius: 999px !important;
+  border: 2px solid #e0c9a0 !important;
+  background: rgba(255, 248, 235, 0.95) !important;
+  box-shadow: 0 6px 0 #c9a873 !important;
+  color: #3b2a1a !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+  animation: none !important;
+  overflow: visible !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill::before,
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill::after,
+section.screen[data-screen="PAYMENT"] #payCreditBtn::before,
+section.screen[data-screen="PAYMENT"] #payCreditBtn::after,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"]::after {
+  display: none !important;
 }
 section.screen[data-screen="PAYMENT"] .payment-packages-row {
   gap: 28px !important;
@@ -1089,54 +1141,28 @@ section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p6"] {
   min-width: 280px !important;
   min-height: 280px !important;
 }
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-size: 2.15rem !important;
+  line-height: 1.15 !important;
+  max-width: 88%;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
+  display: none !important;
+}
 section.screen[data-screen="PAYMENT"] .felix-pkg-note,
 section.screen[data-screen="PAYMENT"] .felix-scrip-note {
   margin: 0.15rem auto !important;
   font-size: 1.15rem;
 }
-section.screen[data-screen="PAYMENT"] .felix-secondary-row {
-  margin: 0.2rem 0 0 !important;
-}
-section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"] {
-  width: 220px !important;
-  height: 220px !important;
-  min-width: 220px !important;
-  min-height: 220px !important;
-  border-radius: 50% !important;
-  border: 0 !important;
-  padding: 1rem !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-  font-size: 1.35rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.08em !important;
-  text-transform: uppercase !important;
-  color: #fff !important;
-  background:
-    radial-gradient(circle at 30% 28%,
-      var(--portal-hi) 0%,
-      var(--portal-pink) 14%,
-      var(--portal-magenta) 28%,
-      var(--portal-orange) 48%,
-      var(--portal-violet) 72%,
-      var(--portal-deep) 100%
-    ) !important;
-  box-shadow:
-    0 0 22px rgba(255,120,200,0.80),
-    0 0 70px rgba(255,110,170,0.45),
-    inset 0 0 28px rgba(255,255,255,0.50) !important;
-  animation: instapicPortalPulse 3.9s ease-in-out infinite;
-  overflow: visible !important;
-  position: relative !important;
-}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row,
 section.screen[data-screen="PAYMENT"] .payment-pills-row {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 28px !important;
+  gap: 36px !important;
   flex-wrap: wrap !important;
+  margin: 0.2rem 0 0.4rem !important;
+  width: 100% !important;
 }
 
 section.screen.active[data-screen="PREPAID"] .screen-content {
