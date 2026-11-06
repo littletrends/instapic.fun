@@ -322,34 +322,23 @@ section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p6"] {
   grid-template-columns: none !important;
 }
 section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
-  font-size: 4.2rem !important;
+  font-size: 2.35rem !important;
   font-weight: 900 !important;
   color: #ffcc88 !important;
-  line-height: 0.95 !important;
-  max-width: 90%;
-  letter-spacing: -0.02em !important;
-}
-section.screen[data-screen="PAYMENT"] button.package-btn .pkg-unit {
-  font-size: 1.15rem !important;
-  font-weight: 800 !important;
-  color: rgba(255,255,255,0.95) !important;
-  letter-spacing: 0.14em !important;
-  margin-top: 0.15rem !important;
+  line-height: 1.05 !important;
+  max-width: 86%;
+  letter-spacing: 0.04em !important;
+  text-shadow:
+    0 0 10px rgba(255,190,120,0.65),
+    0 0 26px rgba(255,150,90,0.45) !important;
 }
 section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
   font-size: 1.05rem !important;
   font-weight: 800 !important;
-  color: rgba(255,255,255,0.9) !important;
+  color: rgba(255,255,255,0.88) !important;
   letter-spacing: 0.08em !important;
-  max-width: 90%;
-  margin-top: 0.45rem !important;
-}
-section.screen[data-screen="PAYMENT"] button.package-btn .pkg-cash {
-  font-size: 0.92rem !important;
-  font-weight: 700 !important;
-  color: rgba(255,220,180,0.78) !important;
+  max-width: 86%;
   margin-top: 0.35rem !important;
-  letter-spacing: 0.04em !important;
 }
 .felix-pkg-note {
   margin: 0.2rem auto 0;

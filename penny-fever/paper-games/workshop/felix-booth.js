@@ -1859,7 +1859,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=jasper-fix-2"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-portals-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
