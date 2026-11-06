@@ -65,11 +65,15 @@
       <div id="saved-sessions-list" style="margin-top:1.25rem;"></div>
     </div>
 
-    <div class="info-callout" id="pf-spot-card" hidden style="margin-top:2rem;">
-      <h2>Penny Fever</h2>
-      <p id="pf-spot-summary">This VIP profile has a locked-in Penny Fever player. Continue loads that purse and alley spot.</p>
+    <div class="info-callout" id="pf-spot-card" style="margin-top:2rem;">
+      <h2>Play Penny Fever</h2>
+      <p id="pf-spot-summary">
+        A little doorway under Instapic. This VIP Guest Area can lock in your pennies and alley spot, then you can come back from any phone.
+      </p>
       <p style="margin-top:1rem;">
-        <a class="btn" id="pf-spot-continue" href="penny-fever/index.html?style=paper&amp;rail=paper&amp;v=vip-spot-2#alley">Continue in Penny Fever</a>
+        <a id="pf-spot-continue" class="portal-button" href="penny-fever/index.html?style=paper&amp;rail=paper&amp;v=pf-door-1#door">
+          <span class="portal-label" id="pf-spot-label">Play Penny Fever</span>
+        </a>
       </p>
     </div>
 
@@ -121,8 +125,8 @@
 
   <script src="assets/main.js"></script>
   <script src="branding.js"></script>
-  <script src="guest_identity.js?v=vip-spot-2"></script>
-  <script src="my_instapic_runtime.js?v=vip-spot-2"></script>
+  <script src="guest_identity.js?v=pf-door-1"></script>
+  <script src="my_instapic_runtime.js?v=pf-door-1"></script>
   <script src="guest_store_code_runtime.js"></script>
   <script src="guest_password_runtime.js"></script>
   <script src="guest_logout_runtime.js"></script>

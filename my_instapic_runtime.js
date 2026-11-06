@@ -82,23 +82,28 @@
       });
 
       const fever = data.guest_profile?.penny_fever;
-      const feverCard = qs("#pf-spot-card");
       const feverSummary = qs("#pf-spot-summary");
       const feverLink = qs("#pf-spot-continue");
-      if (feverCard && fever && (fever.pennies != null || fever.hash)) {
-        feverCard.hidden = false;
+      const feverLabel = qs("#pf-spot-label");
+      const hasSpot = !!(fever && (fever.pennies != null || fever.hash));
+      if (hasSpot) {
         const pennies = Number(fever.pennies) || 0;
         const tickets = Number(fever.tickets) || 0;
         if (feverSummary) {
           feverSummary.textContent =
+            "Your locked-in player is waiting: " +
             pennies + (pennies === 1 ? " penny" : " pennies") +
             " · " + tickets + (tickets === 1 ? " ticket" : " tickets") +
             " · last saved at the " + (fever.hash || "alley") + ".";
         }
+        if (feverLabel) feverLabel.textContent = "Continue in Penny Fever";
         if (feverLink) {
           const hash = String(fever.hash || "alley").replace(/^#/, "") || "alley";
-          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=vip-spot-2#" + encodeURIComponent(hash);
+          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=pf-door-1#" + encodeURIComponent(hash);
         }
+      } else if (feverSummary) {
+        feverSummary.textContent =
+          "A little doorway under Instapic. Walk through as this VIP guest and the tent can lock in your pennies and alley spot.";
       }
 
       const sessions = Array.isArray(data.guest_profile?.sessions) ? data.guest_profile.sessions : [];
