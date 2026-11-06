@@ -9,19 +9,20 @@ import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-relock-1";
-import {openTill} from "./ticket-till.js?v=pkg-5-8-10";
+import {openTill} from "./ticket-till.js?v=pay-pennies-1";
 
-/* Deep-link from Felix package portals: ?till=photo&pkg=P1_STRIP&return=... */
+/* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
   try {
     const q = new URLSearchParams(location.search);
     const tillMode = q.get('till');
     const pkg = q.get('pkg') || q.get('pack');
-    if (tillMode !== 'photo' && tillMode !== '1' && tillMode !== 'pay') return;
+    if (tillMode !== 'photo' && tillMode !== 'scrip' && tillMode !== '1' && tillMode !== 'pay') return;
     const ret = q.get('return') || '';
     if (ret) sessionStorage.setItem('pf-till-return-url', ret);
     sessionStorage.setItem('pf-till-from-felix', '1');
-    const start = () => openTill({ pack: pkg || 'P1_STRIP', focusPay: true, fromFelix: true, pin: true });
+    const fallback = tillMode === 'scrip' ? 'PF_ROLL' : 'FELIX_P1_STRIP';
+    const start = () => openTill({ pack: pkg || fallback, focusPay: true, fromFelix: true, pin: true });
     if (document.readyState === 'loading') window.addEventListener('load', () => setTimeout(start, 600));
     else setTimeout(start, 600);
   } catch (e) { console.warn('pf till boot', e); }

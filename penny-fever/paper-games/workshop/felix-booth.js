@@ -41,25 +41,36 @@
   const PHOTO_CODES_KEY = "pf-photo-codes"; // shared with Aura's till
   // Legacy Payment Links — no longer used by Felix (kept for reference only).
   const SQUARE_LINKS = {
-    P2: { url: "https://square.link/u/1XR6t22j", credits: 1, label: "$7 · 2 strips" },
-    P4: { url: "https://square.link/u/mJbnOorC", credits: 2, label: "$13 · 4 strips" },
-    P6: { url: "https://square.link/u/9idvZ3go", credits: 3, label: "$18 · 6 strips" },
+    P2: { url: "https://square.link/u/1XR6t22j", credits: 2, label: "$5 · 10 pennies · 2 sessions" },
+    P4: { url: "https://square.link/u/mJbnOorC", credits: 4, label: "$8 · 16 pennies · 4 sessions" },
+    P6: { url: "https://square.link/u/9idvZ3go", credits: 6, label: "$10 · 20 pennies · 6 sessions" },
   };
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
     unlockTickets: 1,
   };
-  // Local penny packages mirror Square packs (50¢/penny). No server code / no bonus.
-  const PENNY_PACKS = {
-    "penny-p1": { pkg: "P1_STRIP", pennies: 10, sessions: 2, label: "$5 Quick & Simple" },
-    "penny-p2": { pkg: "P2_STRIP_GIF", pennies: 16, sessions: 4, label: "$8 Most Popular" },
-    "penny-p3": { pkg: "P3_STRIP_GIF", pennies: 20, sessions: 6, label: "$10 Best for Groups" },
+  // Portal circles = penny purchase. Short purse → Aura penny top-up (PF_ROLL), not Square photo.
+  // Square photo packs use Felix-only MotherPC ids (FELIX_*), 500/800/1000¢.
+  const PORTAL_PACKS = {
+    "pay-p2": { pkg: "FELIX_P1_STRIP", pennies: 10, sessions: 2, dollars: "$5", label: "Quick & Simple" },
+    "pay-p4": { pkg: "FELIX_P2_STRIP_GIF", pennies: 16, sessions: 4, dollars: "$8", label: "Most Popular" },
+    "pay-p6": { pkg: "FELIX_P3_STRIP_GIF", pennies: 20, sessions: 6, dollars: "$10", label: "Best for Groups" },
   };
+  const PENNY_TOPUP_PACK = "PF_ROLL"; // Aura's $5 · 10 pennies
+  let pendingPennyPack = null;
   const CASHIN_CREDITS = { p2: 2, p4: 4, p6: 6 };
   // Lorie (05/11/2026): $7 = 2 Felix sessions, $13 = 4, $18 = 6. Keyed by the
   // Instapic package_id MotherPC stores on the code (WEBSITE_PACKAGES).
-  const SESSIONS_BY_PKG = { P1_STRIP: 2, P2_STRIP_GIF: 4, P3_STRIP_GIF: 6 };
+  const SESSIONS_BY_PKG = {
+    FELIX_P1_STRIP: 2,
+    FELIX_P2_STRIP_GIF: 4,
+    FELIX_P3_STRIP_GIF: 6,
+    // Fallback if an old deep-link still sends website/real-booth ids.
+    P1_STRIP: 2,
+    P2_STRIP_GIF: 4,
+    P3_STRIP_GIF: 6,
+  };
   // Booth-style session video (same contract as the Magic Mirror
   // video_capture_patch.js: one continuous upright clip, field "video",
   // file session_video.mp4|webm, max 40 s). Phone-friendly size.
@@ -460,28 +471,26 @@
       ticketBtn.setAttribute("aria-disabled", String(!canTicket));
       ticketBtn.title = canTicket ? "" : "Need 1 ticket — earn these in Penny Fever";
     }
-    let anyPennyPack = false;
-    Object.keys(PENNY_PACKS).forEach((action) => {
-      const pack = PENNY_PACKS[action];
+    // Portals stay enabled: enough pennies → confirm spend; short → Aura penny top-up.
+    Object.keys(PORTAL_PACKS).forEach((action) => {
+      const pack = PORTAL_PACKS[action];
       const btn = document.querySelector('[data-action="' + action + '"]');
       if (!btn) return;
       const ok = pennies >= pack.pennies;
-      if (ok) anyPennyPack = true;
-      btn.disabled = !ok;
-      btn.classList.toggle("is-disabled", !ok);
-      btn.setAttribute("aria-disabled", String(!ok));
+      btn.classList.toggle("can-afford", ok);
+      btn.classList.toggle("needs-topup", !ok);
       btn.title = ok
-        ? pack.pennies + " pennies → " + pack.sessions + " Felix sessions (no bonus code)"
-        : "Need " + pack.pennies + " pennies for " + pack.sessions + " sessions";
+        ? "Spend " + pack.pennies + " pennies for " + pack.sessions + " sessions"
+        : "Need " + pack.pennies + " pennies — tap to top up at Aura's booth";
     });
     const note = document.getElementById("felix-scrip-note");
     if (note) {
-      if (!canTicket && !anyPennyPack && credits < 1) {
+      if (!canTicket && credits < 1 && pennies < 10) {
         note.hidden = false;
-        note.textContent = "Not enough tickets or pennies — earn these in Penny Fever, or buy a Square package at Aura's booth.";
+        note.textContent = "Earn pennies on the midway, or tap a circle to top up at Aura's booth.";
       } else if (!canTicket) {
         note.hidden = false;
-        note.textContent = "Not enough tickets (need 1). Earn tickets in Penny Fever, or pay with a penny package / Square.";
+        note.textContent = "Tickets: need 1 for a single session. Circles spend pennies for multi-packs.";
       } else {
         note.hidden = true;
         note.textContent = "";
@@ -1790,12 +1799,12 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=pkg-5-8-10";
+    link.href = "/penny-fever/world/ticket-till.css?v=pay-pennies-1";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
-  async function openAuraTillForPackage(pkgId) {
-    const pkg = String(pkgId || "P1_STRIP");
+  async function openAuraTill(packId, banner) {
+    const pkg = String(packId || PENNY_TOPUP_PACK);
     try {
       sessionStorage.setItem("pf-till-from-felix", "1");
       sessionStorage.setItem(
@@ -1806,7 +1815,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=pkg-5-8-10");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=pay-pennies-1");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1816,27 +1825,83 @@
         fromFelix: true,
         pin: true,
       });
-      const tip = {
-        P1_STRIP: "$5 · 10 pennies · 2 sessions",
-        P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
-        P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
-      }[pkg];
-      setPayBanner(
-        (tip || "Photo package") +
-          " — pay with Apple Pay, Google Pay or card. Credits only after Square approves."
-      );
+      if (banner) setPayBanner(banner);
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=pkg-5-8-10"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-pennies-1"
       );
+      const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
-        "/penny-fever/?till=photo&pkg=" +
-        encodeURIComponent(pkg) +
-        "&return=" +
-        ret +
+        "/penny-fever/?till=" + (isPhoto ? "photo" : "scrip") +
+        "&pkg=" + encodeURIComponent(pkg) +
+        "&return=" + ret +
         "&style=paper&rail=paper";
     }
+  }
+  function openAuraTillForPackage(pkgId) {
+    const pkg = String(pkgId || "FELIX_P1_STRIP");
+    const tip = {
+      FELIX_P1_STRIP: "$5 · 10 pennies · 2 sessions",
+      FELIX_P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
+      FELIX_P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
+      P1_STRIP: "$5 · 10 pennies · 2 sessions",
+      P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
+      P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
+    }[pkg];
+    return openAuraTill(
+      pkg,
+      (tip || "Felix photo package") +
+        " — pay with Apple Pay, Google Pay or card. Credits only after Square approves."
+    );
+  }
+  function openAuraTillForPennyTopUp(needPennies) {
+    const need = Math.max(0, Math.floor(Number(needPennies) || 0));
+    return openAuraTill(
+      PENNY_TOPUP_PACK,
+      "Need " + need + " more pennies. Aura's penny pack is $5 for 10 pennies — then come back to Felix."
+    );
+  }
+  function hidePennyConfirm() {
+    pendingPennyPack = null;
+    const box = document.getElementById("felix-penny-confirm");
+    if (box) box.hidden = true;
+  }
+  function showPennyConfirm(pack) {
+    pendingPennyPack = pack;
+    const box = document.getElementById("felix-penny-confirm");
+    const text = document.getElementById("felix-penny-confirm-text");
+    if (text) {
+      text.textContent =
+        "Spend " + pack.pennies + " pennies for " + pack.sessions +
+        " photo sessions (" + pack.label + ")? No Instapic bonus code — that comes with Square.";
+    }
+    if (box) box.hidden = false;
+  }
+  function buyPortalWithPennies(pack) {
+    if (!pack) return;
+    if (getPennies() < pack.pennies) {
+      setPayBanner("Not enough pennies — opening Aura's penny top-up.");
+      hidePennyConfirm();
+      openAuraTillForPennyTopUp(pack.pennies - getPennies());
+      return;
+    }
+    if (!spendPennies(pack.pennies)) {
+      setPayBanner("Could not spend pennies.");
+      return;
+    }
+    addLocalSessions(pack.sessions);
+    hidePennyConfirm();
+    refreshWalletUi();
+    setPayBanner(
+      pack.pennies + " pennies → " + pack.sessions + " sessions. Bonus code comes with Square only."
+    );
+    if (!spendLocalSession()) {
+      setPayBanner("Sessions saved — tap USE MY PHOTO SESSION.");
+      return;
+    }
+    refreshWalletUi();
+    startPaidSession("", { no: 1, total: pack.sessions, left: pack.sessions - 1, source: "pennies" });
   }
 
   function onPhotoCodeFromTill(ev) {
@@ -1924,31 +1989,6 @@
       setPayBanner("Ticket accepted.");
       return startPaidSession();
     }
-    if (PENNY_PACKS[action]) {
-      refreshWalletUi();
-      const pack = PENNY_PACKS[action];
-      if (getPennies() < pack.pennies) {
-        setPayBanner("Need " + pack.pennies + " pennies for " + pack.sessions + " sessions (" + pack.label + ").");
-        return;
-      }
-      if (!spendPennies(pack.pennies)) {
-        setPayBanner("Could not spend pennies.");
-        return;
-      }
-      addLocalSessions(pack.sessions);
-      refreshWalletUi();
-      setPayBanner(
-        pack.pennies + " pennies → " + pack.sessions + " Felix sessions added. " +
-        "Bonus code comes with Square packages only."
-      );
-      // Spend one local session immediately so the guest starts shooting.
-      if (!spendLocalSession()) {
-        setPayBanner("Sessions saved in your wallet — tap USE MY PHOTO SESSION.");
-        return;
-      }
-      refreshWalletUi();
-      return startPaidSession("", { no: 1, total: pack.sessions, left: pack.sessions - 1, source: "pennies" });
-    }
     if (action === "pay-credit") {
       setPayBanner("Checking your photo sessions\u2026");
       // Prefer Square Instapic codes; fall back to local penny-pack sessions (no code).
@@ -1974,7 +2014,7 @@
           return;
         }
         if (r.error === "none") {
-          setPayBanner("No photo sessions yet. Buy a Square package at Aura's booth, or a penny package below.");
+          setPayBanner("No photo sessions yet. Tap a circle to spend pennies, or top up at Aura's booth.");
         } else if (r.error === "offline") {
           setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
         } else {
@@ -1989,28 +2029,50 @@
       });
       return;
     }
+    if (action === "penny-confirm-yes") {
+      const pack = pendingPennyPack;
+      hidePennyConfirm();
+      if (pack) buyPortalWithPennies(pack);
+      return;
+    }
+    if (action === "penny-confirm-no") {
+      hidePennyConfirm();
+      setPayBanner("");
+      return;
+    }
+    if (action === "top-up-aura") {
+      setPayBanner("Opening Aura's penny top-up…");
+      openAuraTillForPennyTopUp(10);
+      return;
+    }
     if (
       action === "square-p2" ||
       action === "square-p4" ||
       action === "square-p6" ||
-      action === "top-up-aura" ||
       action === "pay-p2" ||
       action === "pay-p4" ||
       action === "pay-p6"
     ) {
-      // Magic Mirror Screen 3 portals → open Aura's Square till on THIS page
-      // (same-origin instapic.fun) with the package preselected at the pay step.
-      const fromAction = {
-        "pay-p2": "P1_STRIP",
-        "pay-p4": "P2_STRIP_GIF",
-        "pay-p6": "P3_STRIP_GIF",
-        "square-p2": "P1_STRIP",
-        "square-p4": "P2_STRIP_GIF",
-        "square-p6": "P3_STRIP_GIF",
-      }[action] || "";
-      const pkg = (btn && btn.dataset && btn.dataset.pkg) || fromAction || "P1_STRIP";
-      setPayBanner("Opening Aura's Square till…");
-      openAuraTillForPackage(pkg);
+      // Circles: spend pennies when the purse covers it; otherwise Aura penny top-up.
+      // (Square photo package is available from Aura after top-up / separately — not the short-purse path.)
+      const pack =
+        PORTAL_PACKS[action] ||
+        Object.values(PORTAL_PACKS).find((p) => p.pkg === (btn && btn.dataset && btn.dataset.pkg)) ||
+        null;
+      if (!pack) {
+        openAuraTillForPennyTopUp(10);
+        return;
+      }
+      refreshWalletUi();
+      if (getPennies() >= pack.pennies) {
+        showPennyConfirm(pack);
+        setPayBanner("Confirm spending " + pack.pennies + " pennies for " + pack.sessions + " sessions.");
+        return;
+      }
+      setPayBanner(
+        "Need " + pack.pennies + " pennies (you have " + getPennies() + "). Opening Aura's penny pack…"
+      );
+      openAuraTillForPennyTopUp(pack.pennies - getPennies());
       return;
     }
     if (action === "cashin-p2" || action === "cashin-p4" || action === "cashin-p6") {

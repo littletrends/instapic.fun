@@ -9,11 +9,10 @@ const FALLBACK_PACKS = [
 // check), which returns a real 6-digit Instapic code. That code is the only
 // thing Felix's booth accepts as a paid session.
 const PHOTO_PACKS = [
-  // Client amounts Lorie set 06/11/2026 (50¢/penny). Server WEBSITE_PACKAGES must
-  // match 500/800/1000¢ — until then Square returns amount_mismatch (no credit).
-  {id:'P1_STRIP', kind:'photo', name:'Photo booth · Quick & Simple', blurb:'10 pennies · 2 Felix sessions · 1 Instapic bonus code.', amount_cents:500, sessions:2, pennies_value:10},
-  {id:'P2_STRIP_GIF', kind:'photo', name:'Photo booth · Most Popular', blurb:'16 pennies · 4 Felix sessions · 1 Instapic bonus code.', amount_cents:800, sessions:4, pennies_value:16},
-  {id:'P3_STRIP_GIF', kind:'photo', name:'Photo booth · Best for Groups', blurb:'20 pennies · 6 Felix sessions · 1 Instapic bonus code.', amount_cents:1000, sessions:6, pennies_value:20},
+  // Felix-only ids on MotherPC (Lorie 06/11/2026). Website/real booths keep P1_STRIP etc at $7/$13/$18.
+  {id:'FELIX_P1_STRIP', kind:'photo', name:'Felix booth · Quick & Simple', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:500, sessions:2, pennies_value:10},
+  {id:'FELIX_P2_STRIP_GIF', kind:'photo', name:'Felix booth · Most Popular', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:800, sessions:4, pennies_value:16},
+  {id:'FELIX_P3_STRIP_GIF', kind:'photo', name:'Felix booth · Best for Groups', blurb:'Card / Apple Pay / Google Pay · 1 Instapic bonus code after Square approves.', amount_cents:1000, sessions:6, pennies_value:20},
 ];
 export const PHOTO_CODES_KEY = 'pf-photo-codes';
 export function photoCodes() {
@@ -61,8 +60,14 @@ function tillOpen() {
 
 function packLine(pack) {
   if (pack.kind === 'photo') {
-    const sessions = pack.sessions || ({P1_STRIP:2, P2_STRIP_GIF:4, P3_STRIP_GIF:6})[pack.id] || 1;
-    const pennies = pack.pennies_value || ({P1_STRIP:10, P2_STRIP_GIF:16, P3_STRIP_GIF:20})[pack.id] || 0;
+    const sessions = pack.sessions || ({
+      FELIX_P1_STRIP:2, FELIX_P2_STRIP_GIF:4, FELIX_P3_STRIP_GIF:6,
+      P1_STRIP:2, P2_STRIP_GIF:4, P3_STRIP_GIF:6,
+    })[pack.id] || 1;
+    const pennies = pack.pennies_value || ({
+      FELIX_P1_STRIP:10, FELIX_P2_STRIP_GIF:16, FELIX_P3_STRIP_GIF:20,
+      P1_STRIP:10, P2_STRIP_GIF:16, P3_STRIP_GIF:20,
+    })[pack.id] || 0;
     return (pennies ? pennies + ' pennies · ' : '') + sessions + ' Felix sessions · 1 Instapic bonus code';
   }
   const bits = [];
@@ -84,7 +89,7 @@ function updateFelixReturnChrome(show, code) {
     row.hidden = true;
     row.innerHTML =
       '<button type="button" class="pf-till-go pf-till-back-felix" id="pfTillBackFelix">' +
-      'Back to Felix — start session</button>';
+      'Back to Felix</button>';
     const pay = till.querySelector('.pf-till-pay');
     if (pay) pay.appendChild(row);
     else till.appendChild(row);
@@ -334,7 +339,10 @@ function paintPacks() {
     button.className = 'pf-till-pack' + (pack.kind === 'photo' ? ' pf-till-pack--photo' : '');
     button.dataset.pack = pack.id;
     button.setAttribute('aria-pressed', String(selected?.id === pack.id));
-    button.innerHTML = `<strong>${pack.name}</strong><em>${money(pack.amount_cents)} AUD</em><span>${packLine(pack)}</span><small>${pack.blurb}</small>`;
+    const line = packLine(pack);
+    const blurb = String(pack.blurb || '').trim();
+    const small = blurb && blurb !== line && blurb !== line + '.' ? `<small>${blurb}</small>` : '';
+    button.innerHTML = `<strong>${pack.name}</strong><em>${money(pack.amount_cents)} AUD</em><span>${line}</span>${small}`;
     list.append(button);
   }
 }

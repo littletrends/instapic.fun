@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="branding.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="patches.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="event_portal_patch.css?v=pkg-5-8-10">
-  <link rel="stylesheet" href="felix-booth.css?v=pkg-5-8-10">
+  <link rel="stylesheet" href="flow-booth.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="branding.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="patches.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=pay-pennies-1">
+  <link rel="stylesheet" href="felix-booth.css?v=pay-pennies-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -69,8 +69,8 @@
           <div class="screen-content">
             <h1 class="title-main">Choose an option</h1>
             <p class="subtitle">
-              Pay now, use a prepaid code, or try it first.
-              <br>In Penny Fever you can also pay with tickets or pennies.
+              Tap a circle to spend pennies for photo sessions.
+              <br>Short on pennies? We&rsquo;ll send you to Aura&rsquo;s booth to top up.
             </p>
 
             <div id="felix-wallet" class="felix-wallet" aria-live="polite">
@@ -81,59 +81,58 @@
               <span id="felix-wallet-credits">0 photo sessions</span>
             </div>
 
-            <!-- Screen 3 package portals — same markup as Magic Mirror flow.html + pay_screen_buttons_patch -->
-            <div class="button-row payment-options payment-packages-row">
-              <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="P1_STRIP" type="button">
-                <span class="pkg-price">$5.00 Quick &amp; Simple</span>
-                <span class="pkg-desc">2 PHOTO STRIPS · 10¢</span>
-              </button>
-              <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="P2_STRIP_GIF" type="button">
-                <span class="pkg-price">$8.00 Most Popular ✨</span>
-                <span class="pkg-desc">4 PHOTO STRIPS · 16¢</span>
-              </button>
-              <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="P3_STRIP_GIF" type="button">
-                <span class="pkg-price">$10.00 Best for Groups</span>
-                <span class="pkg-desc">6 PHOTO STRIPS · 20¢</span>
-              </button>
-            </div>
-
-            <p class="felix-pkg-note">Square packages ($5 / $8 / $10) · credits only after approval. Bonus code comes with Square packages.</p>
-
             <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
 
-            <!-- Felix midway wallet (tickets / pennies / unused photo sessions) -->
-            <div class="button-row payment-options payment-pills-row felix-scrip-row">
-              <button class="btn btn-primary" data-action="pay-tickets">
-                PAY WITH TICKETS · 1
+            <!-- Glowing portals = penny purchase (hero). Short purse → Aura penny top-up. -->
+            <div class="button-row payment-options payment-packages-row">
+              <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="FELIX_P1_STRIP" type="button">
+                <span class="pkg-price">10</span>
+                <span class="pkg-unit">PENNIES</span>
+                <span class="pkg-desc">2 PHOTO STRIPS</span>
+                <span class="pkg-cash">or $5.00 · Square</span>
               </button>
-              <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden>
-                USE MY PHOTO SESSION
+              <button class="btn btn-primary package-btn popular" data-action="pay-p4" data-pkg="FELIX_P2_STRIP_GIF" type="button">
+                <span class="pkg-price">16</span>
+                <span class="pkg-unit">PENNIES ✨</span>
+                <span class="pkg-desc">4 PHOTO STRIPS</span>
+                <span class="pkg-cash">or $8.00 · Square</span>
+              </button>
+              <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="FELIX_P3_STRIP_GIF" type="button">
+                <span class="pkg-price">20</span>
+                <span class="pkg-unit">PENNIES</span>
+                <span class="pkg-desc">6 PHOTO STRIPS</span>
+                <span class="pkg-cash">or $10.00 · Square</span>
               </button>
             </div>
-            <p class="felix-penny-pack-label">Or pay with pennies (no Instapic bonus code — that comes with Square):</p>
-            <div class="button-row payment-options payment-pills-row felix-penny-packs-row">
-              <button class="btn btn-primary" data-action="penny-p1" data-pkg="P1_STRIP" type="button">
-                10 PENNIES · 2
+
+            <div id="felix-penny-confirm" class="felix-penny-confirm" hidden>
+              <p id="felix-penny-confirm-text" class="felix-penny-confirm-text"></p>
+              <div class="button-row felix-penny-confirm-actions">
+                <button class="btn btn-primary" data-action="penny-confirm-yes" type="button">YES — SPEND</button>
+                <button class="btn btn-secondary" data-action="penny-confirm-no" type="button">CANCEL</button>
+              </div>
+            </div>
+
+            <p class="felix-pkg-note">Bonus code comes with a Square package from Aura. Pennies buy sessions only.</p>
+
+            <div class="button-row payment-options payment-pills-row felix-secondary-row">
+              <button class="btn btn-secondary" data-action="enter-try-info" type="button">
+                TRY IT FIRST
               </button>
-              <button class="btn btn-primary" data-action="penny-p2" data-pkg="P2_STRIP_GIF" type="button">
-                16 PENNIES · 4
+              <button class="btn btn-secondary" data-action="pay-tickets" type="button">
+                1 TICKET · 1 SESSION
               </button>
-              <button class="btn btn-primary" data-action="penny-p3" data-pkg="P3_STRIP_GIF" type="button">
-                20 PENNIES · 6
+              <button class="btn btn-primary" data-action="pay-credit" id="payCreditBtn" hidden type="button">
+                USE MY PHOTO SESSION
               </button>
             </div>
             <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
 
             <div class="button-row payment-options payment-pills-row">
-              <button class="btn btn-secondary" data-action="enter-prepaid">
+              <button class="btn btn-secondary" data-action="enter-prepaid" type="button">
                 I HAVE A PREPAID CODE
               </button>
-              <button class="btn btn-secondary" data-action="enter-try-info">
-                TRY IT FIRST
-              </button>
-            </div>
-            <div class="button-row">
-              <button class="btn btn-secondary" data-action="payment-exit">
+              <button class="btn btn-secondary" data-action="payment-exit" type="button">
                 EXIT TO START
               </button>
             </div>
@@ -477,6 +476,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=pkg-5-8-10"></script>
+  <script src="felix-booth.js?v=pay-pennies-1"></script>
 </body>
 </html>
