@@ -9,9 +9,9 @@
   const codePattern = /^PF-[A-HJ-NP-Z]{6}$/;
   let renderCleanups = [];
   const variants = [
-    { id: "collage", label: "Collage movie", w: 720, h: 1440, frame: [186, 418, 349, 480], seconds: 28 },
-    { id: "gif", label: "GIF-style animation", w: 752, h: 1392, frame: [111, 102, 560, 1135], seconds: 5.5 },
-    { id: "boomerang", label: "Boomerang", w: 752, h: 1376, frame: [111, 100, 560, 1240], seconds: 8 },
+    { id: "collage", label: "Collage movie", description: "Your full session plays between all four photos.", exportLabel: "Download collage video (WebM)", w: 720, h: 1440, frame: [186, 418, 349, 480], seconds: 28 },
+    { id: "gif", label: "GIF-style animation", description: "Four short moments cut from across your session.", exportLabel: "Download animation (WebM)", w: 752, h: 1392, frame: [111, 102, 560, 1135], seconds: 5.5 },
+    { id: "boomerang", label: "Boomerang", description: "A short clip plays forward, then back.", exportLabel: "Download boomerang (WebM)", w: 752, h: 1376, frame: [111, 100, 560, 1240], seconds: 8 },
   ];
   const photoFrames = [
     [67, 68, 207, 326], [443, 68, 207, 326], [67, 922, 207, 326], [443, 922, 207, 326],
@@ -90,7 +90,8 @@
   function addDownload(canvas, label, filename, seconds) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = "Save " + label + " video";
+    button.textContent = label;
+    button.dataset.idleLabel = label;
     button.addEventListener("click", () => recordCanvas(canvas, seconds, filename, button));
     return button;
   }
@@ -98,7 +99,8 @@
   function addImageDownload(canvas, label, filename) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = "Save " + label + " image";
+    button.textContent = "Download still image";
+    button.className = "secondary";
     button.addEventListener("click", () => {
       canvas.toBlob((blob) => {
         if (!blob) return;
@@ -128,7 +130,7 @@
       button.disabled = true;
       button.textContent = "Rendering video…";
       recorder.ondataavailable = (event) => { if (event.data?.size) chunks.push(event.data); };
-      recorder.onerror = () => { button.disabled = false; button.textContent = "Save video"; };
+      recorder.onerror = () => { button.disabled = false; button.textContent = button.dataset.idleLabel; };
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
@@ -139,14 +141,14 @@
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
         button.disabled = false;
-        button.textContent = "Save video again";
+        button.textContent = "Download again";
       };
       recorder.start(500);
       setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, seconds * 1000);
     } catch (error) {
       stream?.getTracks().forEach((track) => track.stop());
       button.disabled = false;
-      button.textContent = "Save video";
+      button.textContent = button.dataset.idleLabel;
       status.textContent = "Video export could not start in this browser.";
     }
   }
@@ -182,14 +184,17 @@
       const mark = document.createElement("p");
       mark.className = "watermark";
       mark.textContent = `PENNY FEVER GAME · ${bgId.toUpperCase()}`;
+      const description = document.createElement("p");
+      description.className = "asset-copy";
+      description.textContent = variant.description;
       const canvas = document.createElement("canvas");
       canvas.width = variant.w;
       canvas.height = variant.h;
       canvas.setAttribute("aria-label", `${variant.label} using ${bgId} template`);
       const filename = `penny-fever-${code}-session-${number}-${variant.id}`;
       const imageDownload = addImageDownload(canvas, variant.label, filename);
-      const download = addDownload(canvas, variant.label, `penny-fever-${code}-session-${number}-${variant.id}`, variant.seconds);
-      article.append(heading, mark, canvas, imageDownload, download);
+      const download = addDownload(canvas, variant.exportLabel, `penny-fever-${code}-session-${number}-${variant.id}`, variant.seconds);
+      article.append(heading, mark, description, canvas, imageDownload, download);
       productGrid.append(article);
       cards.push({ variant, background, video: videoNodes[index], canvas, ctx: canvas.getContext("2d") });
     }
@@ -259,6 +264,27 @@
       const node = template.content.cloneNode(true);
       node.querySelector(".session-label").textContent = `GAME SESSION ${number}`;
       node.querySelector(".session-code").textContent = code;
+      const copyButton = node.querySelector(".copy-code");
+      copyButton.addEventListener("click", async () => {
+        let copied = false;
+        try {
+          await navigator.clipboard?.writeText(code);
+          copied = Boolean(navigator.clipboard);
+        } catch (_) {}
+        if (!copied) {
+          const helper = document.createElement("textarea");
+          helper.value = code;
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.append(helper);
+          helper.select();
+          try { copied = document.execCommand("copy"); } catch (_) {}
+          helper.remove();
+        }
+        copyButton.textContent = copied ? "COPIED" : "COPY FAILED";
+        status.textContent = copied ? "Game code copied. Your keepsakes are available in this browser." : "Copy the game code shown above.";
+        setTimeout(() => { copyButton.textContent = "COPY CODE"; }, 1800);
+      });
       const saved = session.savedAt ? new Date(session.savedAt) : null;
       node.querySelector(".saved-date").textContent = saved && !Number.isNaN(saved.valueOf()) ? `Saved ${saved.toLocaleString()}` : "Saved Penny Fever game session";
       node.querySelector(".strip").src = session.strip;
