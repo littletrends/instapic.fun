@@ -34,6 +34,7 @@
   const TRY_PREVIEW_MS = 8000;
   const MAX_RETAKES_PER_SESSION = 2;
   const GAME_FILES_KEY = "pennyFeverGameFiles";
+  const GAME_MEDIA_DB = "pennyFeverGameMedia";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
@@ -48,8 +49,8 @@
   let pendingUnlockBg = null;
   // Booth-style session video (same contract as the Magic Mirror
   // video_capture_patch.js: one continuous upright clip, field "video",
-  // file session_video.mp4|webm, max 40 s). Phone-friendly size.
-  const REC_MAX_MS = 40000;
+  // file session_video.mp4|webm, max 32 s). Phone-friendly size.
+  const REC_MAX_MS = 32000;
   const REC_LONG_SIDE = 960;
   const REC_FPS = 24;
   const REC_BPS = 1200000;
@@ -295,6 +296,28 @@
       showError("This browser is out of space. Download your strip, then clear old game keepsakes.");
       return false;
     }
+  }
+  function openGameMediaDb() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
+      const request = indexedDB.open(GAME_MEDIA_DB, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("sessions")) db.createObjectStore("sessions", { keyPath: "id" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("Could not open game media storage"));
+    });
+  }
+  async function saveGameMedia(record) {
+    const db = await openGameMediaDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("sessions", "readwrite");
+      tx.objectStore("sessions").put(record);
+      tx.oncomplete = () => { db.close(); resolve(record.id); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error("Could not save game media")); };
+      tx.onabort = () => { db.close(); reject(tx.error || new Error("Game media save was cancelled")); };
+    });
   }
   function findGameFile(code) {
     const normalized = String(code || "").trim().toUpperCase();
@@ -768,13 +791,32 @@
         files.unshift(file);
       }
       if (!Array.isArray(file.sessions)) file.sessions = [];
-      const session = { strip: "", bonus: "", savedAt: new Date().toISOString() };
+      const session = {
+        id: bonusSessionKey,
+        strip: "",
+        bonus: "",
+        bgId: currentBackground?.id || TRY_SAMPLE_ID,
+        savedAt: new Date().toISOString(),
+      };
       file.sessions.push(session);
       file.savedAt = new Date().toISOString();
       if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
       if (!lastCompositeUrl) await buildStrip();
       session.strip = lastCompositeUrl;
-      session.bonus = lastCompositeUrl;
+      const recorded = await waitForSessionVideo(12000);
+      const mediaId = code + "|" + bonusSessionKey;
+      await saveGameMedia({
+        id: mediaId,
+        code,
+        sessionId: bonusSessionKey,
+        bgId: session.bgId,
+        photos: capturedPhotos.slice(0, 4),
+        video: recorded?.blob || null,
+        videoMime: recorded?.mime || "",
+        videoExt: recorded?.ext || "",
+        savedAt: new Date().toISOString(),
+      });
+      session.mediaId = mediaId;
       session.savedAt = new Date().toISOString();
       file.savedAt = session.savedAt;
       if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
@@ -783,7 +825,9 @@
       paintDigitalQr();
       paintDigitalVipJoin();
       updateBonusLinks();
-      setBonusUi("ready", "Game code " + code + " saved in this browser. It cannot open a real booth session.");
+      setBonusUi("ready", recorded?.blob
+        ? "Game code " + code + " saved with your photos and session video in this browser. It cannot open a real booth session."
+        : "Game code " + code + " and photos saved in this browser. Video capture was unavailable; it cannot open a real booth session.");
     } catch (err) {
       console.warn("Felix bonus", err);
       setBonusUi("failed", "Couldn't save the game keepsake. Keep this page open and try again.");
@@ -1089,6 +1133,7 @@
       videoLayer.classList.remove("hidden");
       if (currentScreen === Screen.LIVE && !isCaptureInProgress) {
         hideLiveCaptureCues();
+        if (!isTrySession && currentPoseIndex === 0) startRecording();
         startLiveAutoSnapTimer();
       }
       return true;
@@ -1214,6 +1259,7 @@
       return;
     }
     isCaptureInProgress = true;
+    if (!isTrySession && currentPoseIndex === 0) startRecording();
     stopLiveAutoSnapTimer();
     clearCaptureSequenceTimers();
     const isFirstPose = capturedPhotos.filter(Boolean).length === 0;
@@ -1356,6 +1402,7 @@
     if (!reviewMode) {
       const next = firstEmptySlot();
       if (next === -1) {
+        stopRecording("session-complete");
         reviewMode = true;
         selectedSlotIndex = 0;
         showScreen(Screen.REVIEW);
