@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="felix-booth.css?v=felix-digital-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -404,7 +404,7 @@
           <div class="screen-content digital-screen">
             <h1 class="title-main">Your Instapic Code</h1>
             <p class="subtitle">
-              Your code is printed on your strip. Scan the QR anytime for free bonus pics on instapic.fun.
+              Your code is on this screen. Scan the QR for instapic.fun, then join VIP to keep this player.
             </p>
 
             <div class="output-group digital-code-group">
@@ -423,9 +423,12 @@
               <div class="output-options">
                 <div class="output-group digital-qr-group">
                   <h2>Scan to open Instapic.fun</h2>
-                  <div class="qr-placeholder" id="qrPlaceholder">
-                    <img src="img/instapic_fun.png" alt="instapic.fun">
+                  <div class="qr-placeholder has-qr" id="qrPlaceholder">
+                    <img class="qr-image-instapic instapic-digital-qr" src="img/instapic_fun.png" alt="Scan to open instapic.fun">
                   </div>
+                  <a class="btn btn-primary portal-button" id="felixVipJoin" href="/save.html">
+                    Join VIP Guest Area
+                  </a>
                 </div>
                 <div class="button-row">
                   <button class="btn btn-primary btn-big" data-action="digital-done" type="button">
@@ -483,6 +486,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=cam-portrait-1"></script>
+  <script src="felix-booth.js?v=felix-digital-1"></script>
 </body>
 </html>

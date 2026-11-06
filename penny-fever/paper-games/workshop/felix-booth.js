@@ -865,7 +865,9 @@
       const up = await fetch(API_BASE + "/api/receive-assets", { method: "POST", body: form });
       const upData = await up.json().catch(() => ({}));
       if (!up.ok || !upData.ok) throw new Error("upload " + (upData.error || up.status));
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = serverCode;
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCodeNow() || serverCode;
+      paintDigitalQr();
+      paintDigitalVipJoin();
       setBonusUi("ready", "Bonus pack ready. Your code is " + serverCode + "." + sessionNoteSuffix());
     } catch (err) {
       console.warn("Felix bonus", err);
@@ -1629,6 +1631,48 @@
     updateBonusLinks();
   }
 
+  function sessionCodeNow() {
+    const code = String(serverCode || localSessionCode || "").replace(/\D/g, "").slice(0, 6);
+    return /^\d{6}$/.test(code) ? code : "";
+  }
+
+  function paintDigitalQr() {
+    const placeholder = document.getElementById("qrPlaceholder");
+    const code = sessionCodeNow();
+    if (sessionCodeDisplay) sessionCodeDisplay.textContent = code || "————";
+    if (!placeholder) return;
+    placeholder.hidden = false;
+    placeholder.classList.add("has-qr");
+    let img = placeholder.querySelector("img");
+    if (!img) {
+      img = document.createElement("img");
+      img.className = "qr-image-instapic instapic-digital-qr";
+      placeholder.prepend(img);
+    }
+    img.src = "img/instapic_fun.png";
+    img.alt = "Scan to open instapic.fun";
+    let hint = placeholder.querySelector(".qr-hint-instapic");
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.className = "qr-hint-instapic";
+      placeholder.appendChild(hint);
+    }
+    hint.textContent = code
+      ? "Scan → instapic.fun → enter " + code
+      : "Scan to open instapic.fun, then join VIP to keep this player.";
+  }
+
+  function paintDigitalVipJoin() {
+    const a = document.getElementById("felixVipJoin");
+    if (!a) return;
+    const code = sessionCodeNow();
+    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-digital-1";
+    let href = "/save.html?return=" + encodeURIComponent(ret);
+    if (code) href += "&ticket_code=" + encodeURIComponent(code);
+    a.href = href;
+    a.textContent = code ? "Join VIP · save code " + code : "Join VIP Guest Area";
+  }
+
   function adjustDigitalScreenForMode() {
     const coded = hasInstapicCode();
     const screen = document.querySelector('[data-screen="DIGITAL"]');
@@ -1639,11 +1683,13 @@
     if (title) title.textContent = coded ? "Your Instapic Code" : "Your Photo Strip";
     if (subtitle) {
       subtitle.textContent = coded
-        ? "Your code is printed on your strip. Scan the QR anytime for free bonus pics on instapic.fun."
-        : "Ticket and penny sessions stay in Penny Fever. Save or share your strip here.";
+        ? "Your code is on this screen. Scan the QR for instapic.fun, then join VIP to keep this player."
+        : "Save your strip. Scan the QR for instapic.fun, then join VIP to lock this player to your guest profile.";
     }
-    if (codeGroup) codeGroup.hidden = !coded;
-    if (qrGroup) qrGroup.hidden = !coded;
+    if (codeGroup) codeGroup.hidden = false;
+    if (qrGroup) qrGroup.hidden = false;
+    paintDigitalQr();
+    paintDigitalVipJoin();
     if (!coded) setBonusUi("none", "");
   }
 
@@ -1865,7 +1911,7 @@
       stopPrintTimer();
     }
     if (name === Screen.DIGITAL) {
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = hasInstapicCode() ? localSessionCode : "";
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCodeNow() || "————";
       renderSessionCount();
       adjustDigitalScreenForMode();
       buildStrip().then(applyCompositeToPreviews).catch(() => applyCompositeToPreviews());
@@ -1979,7 +2025,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=walk-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-digital-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
