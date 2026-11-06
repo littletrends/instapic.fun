@@ -384,92 +384,112 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
 
 
 
-/* Hero single strip — sizes are DESIGN px inside the 1080×scaled booth.
-   Do NOT use vh here: vh is viewport px and then gets scaled again. */
+
+/* ---- Strip composite is the only on-screen strip (same canvas as bonus layout) ---- */
 section.screen.active[data-screen="PRINT"] .screen-content,
-section.screen.active[data-screen="DIGITAL"] .screen-content {
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content {
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
   align-items: center !important;
-  gap: 28px !important;
-  padding-top: 48px !important;
-  padding-bottom: 36px !important;
+  gap: 24px !important;
+  padding-top: 40px !important;
+  padding-bottom: 28px !important;
 }
 section.screen.active[data-screen="PRINT"] .title-main,
-section.screen.active[data-screen="DIGITAL"] .title-main {
+section.screen.active[data-screen="DIGITAL"] .title-main,
+section.screen.active[data-screen="REVIEW"] .title-main {
   margin: 0 !important;
-  font-size: 2.6rem !important;
+  font-size: 2.5rem !important;
 }
 section.screen.active[data-screen="PRINT"] .subtitle,
-section.screen.active[data-screen="DIGITAL"] .subtitle {
+section.screen.active[data-screen="DIGITAL"] .subtitle,
+section.screen.active[data-screen="REVIEW"] .subtitle {
   margin: 0 !important;
-  font-size: 1.35rem !important;
-  max-width: 90%;
+  font-size: 1.3rem !important;
+  max-width: 92%;
 }
 section.screen.active[data-screen="PRINT"] .background-preview-frame,
-section.screen.active[data-screen="DIGITAL"] .background-preview-frame {
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame,
+.review-strip-wrap {
   flex: 0 0 auto !important;
   display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  margin: 12px auto 8px !important;
-  min-height: 0 !important;
+  margin: 8px auto !important;
 }
-/* ~55–60% of a 1920 design stage, fills most of a 390×844 phone after scale */
-section.screen.active[data-screen="PRINT"] #finalStripPreview,
-section.screen.active[data-screen="DIGITAL"] #digitalStripPreview,
+/* Natural aspect of 416×1232 — never force a taller box that crops via layout */
 #finalStripPreview,
-#digitalStripPreview {
-  width: auto !important;
-  height: 1280px !important;
+#digitalStripPreview,
+#reviewStripPreview,
+.strip-composite-preview {
+  width: 420px !important;
+  height: auto !important;
+  max-width: 420px !important;
   max-height: none !important;
-  max-width: 480px !important;
   object-fit: contain !important;
+  object-position: center top !important;
   border-radius: 18px !important;
   border: 6px solid #fff !important;
   box-shadow: 0 0 40px rgba(0,0,0,0.55) !important;
+  display: block !important;
+  background: #111;
+}
+.background-preview-frame img {
+  width: 420px !important;
+  height: auto !important;
 }
 section.screen.active[data-screen="PRINT"] .button-row,
 section.screen.active[data-screen="DIGITAL"] .button-row {
   margin: 0 !important;
-  gap: 18px !important;
+  gap: 16px !important;
 }
 section.screen.active[data-screen="PRINT"] .btn-big,
-section.screen.active[data-screen="DIGITAL"] .btn-big {
-  min-height: 96px !important;
-  font-size: 1.6rem !important;
-  padding: 0.7rem 1.6rem !important;
+section.screen.active[data-screen="DIGITAL"] .btn-big,
+section.screen.active[data-screen="REVIEW"] .btn-big {
+  min-height: 92px !important;
+  font-size: 1.55rem !important;
+  padding: 0.65rem 1.5rem !important;
 }
 section.screen.active[data-screen="PRINT"] .instapic-print-preview-note { display: none !important; }
 
-/* LIVE template hero (design px) */
-.screen[data-screen="LIVE"] .template-preview,
-.screen[data-screen="REVIEW"] .template-preview {
-  width: 460px !important;
-  max-width: 460px !important;
-  height: auto !important;
-  max-height: none !important;
-  margin: 24px auto !important;
-}
-.screen[data-screen="LIVE"] .template-bg,
-.felix-booth .template-bg {
+/* REVIEW: composite strip + separate pose thumb row (not CSS-overlaid on template) */
+.review-screen .template-bg { display: none !important; }
+.pose-thumb-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 18px !important;
+  justify-content: center !important;
+  margin-top: 18px !important;
   width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
-  max-width: 460px !important;
-  object-fit: contain !important;
-  display: block;
-  margin: 0 auto;
-  border: 6px solid #fff;
-  border-radius: 18px;
+  position: static !important;
 }
-.screen[data-screen="LIVE"] .template-slot { transform: none !important; }
+.pose-thumb-row .template-slot {
+  position: static !important;
+  width: 140px !important;
+  height: 200px !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 3px solid rgba(255,255,255,0.7) !important;
+  flex: 0 0 auto !important;
+}
+.pose-thumb-row .template-slot img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+.review-screen .thumbs-title {
+  margin-top: 12px;
+  text-align: center;
+  color: rgba(255,255,255,0.85);
+}
+/* No DOM slot overlays on PRINT/DIGITAL */
 .screen[data-screen="PRINT"] .template-slot,
 .screen[data-screen="DIGITAL"] .template-slot { display: none !important; }
-
-/* Kill flow-booth 60% width that fights the hero */
-.background-preview-frame img {
-  width: auto !important;
-}

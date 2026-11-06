@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=strip-web-2">
-  <link rel="stylesheet" href="branding.css?v=strip-web-2">
-  <link rel="stylesheet" href="patches.css?v=strip-web-2">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=strip-web-2">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=strip-web-2">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=strip-web-2">
-  <link rel="stylesheet" href="event_portal_patch.css?v=strip-web-2">
-  <link rel="stylesheet" href="felix-booth.css?v=strip-web-2">
+  <link rel="stylesheet" href="flow-booth.css?v=strip-web-3">
+  <link rel="stylesheet" href="branding.css?v=strip-web-3">
+  <link rel="stylesheet" href="patches.css?v=strip-web-3">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=strip-web-3">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=strip-web-3">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=strip-web-3">
+  <link rel="stylesheet" href="event_portal_patch.css?v=strip-web-3">
+  <link rel="stylesheet" href="felix-booth.css?v=strip-web-3">
 </head>
 <body>
   <div id="turn-phone">
@@ -322,9 +322,10 @@
             <h1 class="title-main">Review Your Photo Strip</h1>
             <p class="subtitle">Tap a photo to select it. Retake or keep before we print.</p>
             <div class="review-layout">
-              <div class="template-preview">
+              <div class="review-strip-wrap">
+                <img id="reviewStripPreview" class="strip-composite-preview" alt="Your photo strip">
                 <div class="thumbs-title">Your photos — tap to select</div>
-                <img id="templateBackground" class="template-bg" src="" alt="Template background">
+                <div class="pose-thumb-row">
                 <div class="template-slot slot-1" data-slot-index="0">
                   <img id="slotImage0" alt="Photo 1">
                 </div>
@@ -337,6 +338,9 @@
                 <div class="template-slot slot-4" data-slot-index="3">
                   <img id="slotImage3" alt="Photo 4">
                 </div>
+                </div>
+                <!-- kept for JS refs / warm cache; not shown as overlay -->
+                <img id="templateBackground" class="template-bg" src="" alt="" hidden>
               </div>
               <div class="selected-photo-panel">
                 <h2>Selected Photo</h2>
@@ -460,6 +464,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=strip-web-2"></script>
+  <script src="felix-booth.js?v=strip-web-3"></script>
 </body>
 </html>

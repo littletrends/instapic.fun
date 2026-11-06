@@ -113,6 +113,7 @@
   const poseTotalLabel = document.getElementById("poseTotalLabel");
   const finalStripPreview = document.getElementById("finalStripPreview");
   const digitalStripPreview = document.getElementById("digitalStripPreview");
+  const reviewStripPreview = document.getElementById("reviewStripPreview");
   const prepaidInput = document.getElementById("prepaidCodeInput");
   const prepaidError = document.getElementById("prepaidError");
   const cashinInput = document.getElementById("cashinCodeInput");
@@ -186,6 +187,21 @@
   fitStage();
   window.addEventListener("resize", fitStage);
   window.addEventListener("orientationchange", fitStage);
+  window.__felixTest = {
+    setPhotos(urls) {
+      for (let i = 0; i < 4; i++) capturedPhotos[i] = urls[i] || null;
+      totalPoses = 4;
+    },
+    setBackground(id, src) {
+      const found = backgrounds.find((b) => b.id === id);
+      currentBackground = found
+        ? Object.assign({}, found, src ? { src: src } : {})
+        : { id: id, src: src || bgFull(id), poses: 4 };
+    },
+    buildStrip: () => buildStrip(),
+    getComposite: () => lastCompositeUrl,
+    slotsFor: (w, h) => slotsForStripSize(w, h),
+  };
 
   function showError(msg) {
     if (!errorBanner) return;
@@ -487,7 +503,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=strip-web-2").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=strip-web-3").then((r) => r.json());
       if (layout.slot_ref && layout.slot_ref.w && layout.slot_ref.h) {
         slotRef = { w: Number(layout.slot_ref.w) || SLOT_REF.w, h: Number(layout.slot_ref.h) || SLOT_REF.h };
       }
@@ -503,7 +519,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=strip-web-2").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=strip-web-3").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -1306,6 +1322,9 @@
     }
     if (poseNumberLabel) poseNumberLabel.textContent = selectedSlotIndex + 1;
     if (poseTotalLabel) poseTotalLabel.textContent = totalPoses;
+    if (currentScreen === Screen.REVIEW || currentScreen === Screen.PRINT || currentScreen === Screen.DIGITAL) {
+      buildStrip().catch(() => {});
+    }
   }
 
   function loadImage(src) {
@@ -1380,9 +1399,15 @@
 
     if (isTrySession) stampSample(ctx, out.width, out.height);
     lastCompositeUrl = out.toDataURL("image/jpeg", 0.92);
+    applyCompositeToPreviews();
+    return lastCompositeUrl;
+  }
+
+  function applyCompositeToPreviews() {
+    if (!lastCompositeUrl) return;
     if (finalStripPreview) finalStripPreview.src = lastCompositeUrl;
     if (digitalStripPreview) digitalStripPreview.src = lastCompositeUrl;
-    return lastCompositeUrl;
+    if (reviewStripPreview) reviewStripPreview.src = lastCompositeUrl;
   }
 
   // MotherPC / real-booth contract: dual 832×1232 print strip (static/backgrounds
@@ -1551,13 +1576,12 @@
     }
     if (name === Screen.REVIEW) {
       updateTemplateSlots();
-      if (templateBackground && currentBackground) templateBackground.src = currentBackground.src;
       startReviewIdleTimer();
     } else {
       stopReviewIdleTimer();
     }
     if (name === Screen.PRINT) {
-      buildStrip().catch(() => {});
+      buildStrip().then(applyCompositeToPreviews).catch(() => {});
       adjustPrintScreenForMode();
       startPrintTimer();
       updateBonusLinks();
@@ -1567,7 +1591,7 @@
     if (name === Screen.DIGITAL) {
       if (sessionCodeDisplay) sessionCodeDisplay.textContent = localSessionCode || "\u2026";
       renderSessionCount();
-      if (lastCompositeUrl && digitalStripPreview) digitalStripPreview.src = lastCompositeUrl;
+      buildStrip().then(applyCompositeToPreviews).catch(() => applyCompositeToPreviews());
       makeBonusPack();
       startDigitalIdleTimer();
       updateBonusLinks();
@@ -1648,7 +1672,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-2";
+    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-3";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1664,7 +1688,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-2");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-3");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1686,7 +1710,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-2"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-3"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
