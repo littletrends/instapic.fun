@@ -11,7 +11,7 @@ html, body {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   /* Cream papercut around the booth (any sub-pixel gap stays on-theme). */
@@ -25,7 +25,7 @@ html, body {
   height: 1920px;
   position: relative;
   flex-shrink: 0;
-  transform-origin: center center;
+  transform-origin: top center;
   overflow: hidden;
   background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
 }
@@ -274,9 +274,9 @@ section.screen.active[data-screen="PREPAID"] .screen-content {
   box-sizing: border-box !important;
   height: 100% !important;
   min-height: 100% !important;
-  justify-content: space-between !important;
-  padding: 4vh 4.5vw 3.5vh !important;
-  gap: 0.9rem !important;
+  justify-content: flex-start !important;
+  padding: 48px 48px 40px !important;
+  gap: 0.75rem !important;
 }
 section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen {
   justify-content: flex-start !important;
@@ -478,8 +478,9 @@ section.screen[data-screen="BACKGROUNDS"] .background-grid {
   align-items: center;
 }
 section.screen.active[data-screen="BACKGROUNDS"] .background-card {
-  width: auto !important;
+  width: 288px !important;
   min-width: 0 !important;
+  max-width: 288px !important;
   flex: 0 0 auto;
   padding: 10px;
   border-radius: 16px;
@@ -489,7 +490,7 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card {
 section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
   width: 264px !important;
   height: auto !important;
-  aspect-ratio: 416 / 1232;
+  aspect-ratio: auto;
   object-fit: contain !important;
   object-position: center top;
   border-radius: 12px;
@@ -497,7 +498,7 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
   background: transparent;
 }
 section.screen[data-screen="BACKGROUNDS"] .button-row {
-  margin-top: auto;
+  margin-top: 18px;
 }
 
 
@@ -539,9 +540,10 @@ section.screen.active[data-screen="PRINT"] .background-preview-frame,
 #finalStripPreview,
 #reviewStripPreview,
 .strip-composite-preview {
-  width: 420px !important;
+  width: 340px !important;
   height: auto !important;
-  max-width: 420px !important;
+  max-width: 340px !important;
+  aspect-ratio: 416 / 1232;
   max-height: none !important;
   object-fit: contain !important;
   object-position: center top !important;
@@ -1035,15 +1037,19 @@ section.screen[data-screen="REVIEW"] {
 }
 section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"],
 section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"],
 section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"],
 section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"],
 section.screen[data-screen="PREPAID"] button[data-action="prepaid-continue"],
 section.screen[data-screen="PREPAID"] button[data-action="prepaid-back"],
 section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"],
 section.screen[data-screen="PRINT"] button[data-action="print-now"],
-section.screen[data-screen="DIGITAL"] button[data-action="digital-done"],
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"] {
+  font-size: 1.45rem !important;
+  letter-spacing: 0.06em !important;
+}
 #felixVipJoin {
-  font-size: 1.7rem !important;
+  font-size: 1.45rem !important;
 }
 section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
 section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
@@ -1054,4 +1060,206 @@ section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
 }
 section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
   font-size: 1.2rem !important;
+}
+
+/* ---- polish-1: pack screens to the top of the 1080 canvas ---- */
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 56px !important;
+  gap: 0.7rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .title-main {
+  margin: 0 0 0.35rem !important;
+  font-size: 3.6rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .subtitle {
+  margin: 0 0 0.4rem !important;
+  font-size: 1.55rem !important;
+  max-width: 46rem;
+}
+section.screen[data-screen="PAYMENT"] .payment-packages-row {
+  gap: 28px !important;
+  margin: 0.2rem auto 0.3rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p2"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p4"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p6"] {
+  width: 280px !important;
+  height: 280px !important;
+  min-width: 280px !important;
+  min-height: 280px !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pkg-note,
+section.screen[data-screen="PAYMENT"] .felix-scrip-note {
+  margin: 0.15rem auto !important;
+  font-size: 1.15rem;
+}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row {
+  margin: 0.2rem 0 0 !important;
+}
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"] {
+  width: 220px !important;
+  height: 220px !important;
+  min-width: 220px !important;
+  min-height: 220px !important;
+  border-radius: 50% !important;
+  border: 0 !important;
+  padding: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 30% 28%,
+      var(--portal-hi) 0%,
+      var(--portal-pink) 14%,
+      var(--portal-magenta) 28%,
+      var(--portal-orange) 48%,
+      var(--portal-violet) 72%,
+      var(--portal-deep) 100%
+    ) !important;
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.80),
+    0 0 70px rgba(255,110,170,0.45),
+    inset 0 0 28px rgba(255,255,255,0.50) !important;
+  animation: instapicPortalPulse 3.9s ease-in-out infinite;
+  overflow: visible !important;
+  position: relative !important;
+}
+section.screen[data-screen="PAYMENT"] .payment-pills-row {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 28px !important;
+  flex-wrap: wrap !important;
+}
+
+section.screen.active[data-screen="PREPAID"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 40px !important;
+  gap: 0.45rem !important;
+}
+section.screen.active[data-screen="PREPAID"] .title-main {
+  margin: 0 0 0.2rem !important;
+  font-size: 3.4rem !important;
+}
+section.screen.active[data-screen="PREPAID"] .subtitle {
+  margin: 0 0 0.35rem !important;
+  font-size: 1.45rem !important;
+  max-width: 46rem;
+}
+section.screen[data-screen="PREPAID"] .code-input-wrapper {
+  margin: 0.4rem 0 0.3rem !important;
+}
+section.screen[data-screen="PREPAID"] .code-input-wrapper input {
+  font-size: 2.6rem !important;
+  padding: 0.65rem 1.2rem !important;
+  width: 24rem !important;
+  max-width: 90% !important;
+  letter-spacing: 0.16em;
+}
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  display: grid !important;
+  grid-template-columns: 220px 1fr 220px !important;
+  grid-template-rows: auto auto !important;
+  gap: 10px 28px !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0.4rem auto 0 !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 0 8px !important;
+  font-size: 1.25rem !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  width: fit-content !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-actions-row {
+  display: contents !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-back {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-continue {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-key-ok {
+  display: none !important;
+}
+
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content {
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  padding-top: 36px !important;
+}
+section.screen.active[data-screen="PRINT"] #finalStripPreview,
+section.screen.active[data-screen="PRINT"] .background-preview-frame img {
+  width: 340px !important;
+  max-width: 340px !important;
+  aspect-ratio: 416 / 1232;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 280px !important;
+  max-width: 280px !important;
+  aspect-ratio: 416 / 1232;
+}
+.felix-save-row {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 18px !important;
+  width: 100% !important;
+  margin: 0.3rem 0 0 !important;
+}
+section.screen .felix-save-row .btn,
+section.screen .felix-save-row .btn-big {
+  min-height: 88px !important;
+  min-width: 240px !important;
+  border-radius: 999px !important;
+  font-size: 1.45rem !important;
+  padding: 0.7rem 1.6rem !important;
+}
+
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  justify-content: flex-start !important;
+  padding: 36px 32px 28px !important;
+  gap: 0.55rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  align-items: flex-start !important;
+  gap: 1.6rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 620px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options {
+  gap: 1.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group {
+  gap: 0.7rem !important;
+}
+
+section.screen.active[data-screen="TRY_INFO"] .screen-content,
+section.screen.active[data-screen="THANKYOU"] .screen-content,
+section.screen.active[data-screen="CASHIN"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 64px !important;
 }
