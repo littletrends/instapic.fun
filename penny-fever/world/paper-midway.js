@@ -3,7 +3,7 @@ import {paperRail} from './paper-guest-entrance.js?v=phone-images-3';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=names-1';
-import {mountTill, openTill, closeTill, tillPinned} from './ticket-till.js?v=pay-pennies-1';
+import {mountTill, openTill, closeTill, tillPinned, bankLoan, paintBankLoan} from './ticket-till.js?v=bank-live-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -115,7 +115,7 @@ export function paintAuraWallet(root){
   trade.textContent=coins<5?'Need 5 pennies · 1 ticket':'Trade 5 pennies · 1 ticket';
  }
 }
-export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><section class="aura-counter-wallet" aria-label="Current wallet"><p class="aura-counter-kicker">Your pocket</p><ul id="auraCounterWalletList"></ul></section><div class="aura-counter-actions"><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button><button type="button" id="auraCounterLoan">Bank loan · +100</button><button type="button" id="auraCounterReset">Reset game</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Square is only for buying packs. Construction: loan and reset live here, not in the tents.</small>';document.body.append(panel);
+export function installTicketService(player,aura,api){if(!paperRail)return;playerRef=player;auraRef=aura;apiRef=api;mountTill(api);panel=document.createElement('aside');panel.className='aura-counter-service';panel.hidden=true;panel.setAttribute('aria-label',"Aura's ticket booth");panel.innerHTML='<button type="button" class="aura-counter-close" id="auraCounterClose" aria-label="Close ticket booth">×</button><strong>Aura’s ticket booth</strong><section class="aura-counter-wallet" aria-label="Current wallet"><p class="aura-counter-kicker">Your pocket</p><ul id="auraCounterWalletList"></ul></section><div class="aura-counter-actions"><button type="button" id="auraCounterAdmission">Show ticket</button><button type="button" id="auraCounterTrade">Trade 5 pennies · 1 ticket</button><button type="button" id="auraCounterCoins">Buy tickets &amp; pennies</button><button type="button" id="auraCounterLoan" disabled>Bank loan · Off</button><button type="button" id="auraCounterReset">Reset game</button></div><small id="auraCounterMessage" aria-live="polite">First walk is free. After that, a penny a lap. Square is only for buying packs. Reset lives here. Bank loan follows the admin switch.</small>';document.body.append(panel);
  panel.querySelector('#auraCounterClose').onclick=()=>{dismissed=true;panel.hidden=true;closeTill();};
  panel.querySelector('#auraCounterCoins').onclick=()=>{
   if(!near())return;
@@ -133,11 +133,18 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
   note.textContent='Need five pennies for a ticket.';
   paintAuraWallet();
  };
- {const b=panel.querySelector('#auraCounterLoan');b.disabled=true;b.textContent='Bank loan · Under construction 🔒';}
+ paintBankLoan();
+ window.addEventListener('pf-till-config', paintBankLoan);
  panel.querySelector('#auraCounterLoan').onclick=()=>{
   if(!near())return;
-  const n=0; /* loan locked: under construction */
-  panel.querySelector('#auraCounterMessage').textContent='Bank loan · Under construction 🔒';
+  const loan=bankLoan();
+  const note=panel.querySelector('#auraCounterMessage');
+  if(!loan.enabled){
+   note.textContent='Bank loan is off.';
+   return;
+  }
+  if(apiRef?.addDemoCoins) apiRef.addDemoCoins(loan.pennies);
+  note.textContent=`Bank loan · +${loan.pennies} pennies.`;
   paintAuraWallet();
  };
  panel.querySelector('#auraCounterReset').onclick=()=>{

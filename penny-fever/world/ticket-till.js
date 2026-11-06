@@ -42,7 +42,24 @@ let selected = null;
 let paying = false;
 let walletBusy = false;
 let pinned = false;
-let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
+let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
+let bankWatch = 0;
+
+export function bankLoan() {
+  const pennies = Math.max(1, Math.floor(Number(config.bank_loan_pennies) || 100));
+  return {enabled: !!config.bank_loan, pennies};
+}
+
+export function paintBankLoan() {
+  const loan = bankLoan();
+  const label = loan.enabled ? `Bank loan · +${loan.pennies}` : 'Bank loan · Off';
+  for (const id of ['auraCounterLoan', 'pfTillLoan']) {
+    const btn = document.getElementById(id);
+    if (!btn) continue;
+    btn.disabled = !loan.enabled;
+    btn.textContent = label;
+  }
+}
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;
 const isPreview = () => {
@@ -510,11 +527,23 @@ async function refreshConfig() {
       location_id: data.location_id || FALLBACK_SQUARE.location_id,
       square_ready: !!data.square_ready,
       currency: data.currency || 'AUD',
+      bank_loan: !!data.bank_loan,
+      bank_loan_pennies: Math.max(1, Math.floor(Number(data.bank_loan_pennies) || 100)),
     };
   } catch {
-    config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD'};
+    config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
   }
   paintPacks();
+  paintBankLoan();
+  window.dispatchEvent(new CustomEvent('pf-till-config', {detail: bankLoan()}));
+}
+
+function startBankWatch() {
+  if (bankWatch) return;
+  bankWatch = window.setInterval(() => { refreshConfig(); }, 8000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshConfig();
+  });
 }
 
 export function mountTill(api) {
@@ -523,6 +552,8 @@ export function mountTill(api) {
   if (existing) {
     till = existing;
     backdrop = document.querySelector('.aura-till-backdrop');
+    startBankWatch();
+    refreshConfig();
     return;
   }
   backdrop = document.createElement('div');
@@ -575,6 +606,8 @@ export function mountTill(api) {
     if (e.key === 'Escape' && tillOpen()) closeTill();
   });
   paintPacks();
+  startBankWatch();
+  refreshConfig();
 }
 
 export async function openTill(opts = {}) {

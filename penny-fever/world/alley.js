@@ -8,8 +8,8 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-relock-1";
-import {openTill} from "./ticket-till.js?v=pay-pennies-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=bank-live-1";
+import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-live-1";
 import { mountVipSpot } from "./vip-spot.js?v=vip-spot-2";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
@@ -988,7 +988,7 @@ function attachHud() {
           </section>
           <button type="button" id="pfTillTrade">Trade 5 pennies · 1 ticket</button>
           <button type="button" id="pfTillTickets">Buy tickets &amp; pennies</button>
-          <button type="button" id="pfTillLoan" disabled>Bank loan · Under construction 🔒</button>
+          <button type="button" id="pfTillLoan" disabled>Bank loan · Off</button>
           <button type="button" id="pfTillReset">Reset game</button>
         </div>
         <div class="pf-stall-card-actions">
@@ -1263,12 +1263,21 @@ function bindHud() {
   });
   const tillLoan = el("pfTillLoan");
   const tillReset = el("pfTillReset");
-  if (tillLoan) tillLoan.addEventListener("click", () => {
-    const n = 0; /* loan locked: under construction */
-    tillMessage = "Bank loan · Under construction 🔒";
-    tillMessageUntil = performance.now() + 4000;
-    paintAuraWallet(el("pfStallCard"));
-  });
+  if (tillLoan) {
+    paintBankLoan();
+    window.addEventListener("pf-till-config", paintBankLoan);
+    tillLoan.addEventListener("click", () => {
+      const loan = bankLoan();
+      if (!loan.enabled) {
+        tillMessage = "Bank loan is off.";
+      } else {
+        if (window.PennyFever?.addDemoCoins) window.PennyFever.addDemoCoins(loan.pennies);
+        tillMessage = `Bank loan · +${loan.pennies} pennies.`;
+      }
+      tillMessageUntil = performance.now() + 4000;
+      paintAuraWallet(el("pfStallCard"));
+    });
+  }
   if (tillReset) tillReset.addEventListener("click", () => {
     window.PennyFever?.resetVisit?.();
   });
