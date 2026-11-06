@@ -27,12 +27,13 @@
     const pkg = String(session.package_id || "").trim();
 
     wrap.innerHTML = `
+      <p class="vip-ticket-label">Saved Instapic booth code</p>
       <h2>${code}</h2>
-      ${pkg ? `<p class="muted" style="margin-top:0.5rem;">${pkg}</p>` : ""}
+      ${pkg ? `<p class="muted" style="margin-top:0.5rem;">Package: ${pkg}</p>` : ""}
 
       <div class="ticket-actions ticket-actions-main" style="margin-top:1rem;">
-        <button type="button" class="btn copy-code-btn" data-code="${code}">Copy Code</button>
-        <a href="session.html?code=${encodeURIComponent(code)}" class="btn">Open Bonus Portal</a>
+        <button type="button" class="btn copy-code-btn" data-code="${code}">Copy 6-digit code</button>
+        <a href="session.html?code=${encodeURIComponent(code)}" class="btn">Open photos &amp; bonuses</a>
       </div>
     `;
 
@@ -62,7 +63,7 @@
     }
 
     if (summary) {
-      summary.textContent = `Signed in as ${email}. Keep your saved booth codes together here so they’re easy to find when you arrive at the kiosk.`;
+      summary.textContent = `Signed in as ${email}. Your saved booth codes, bonus links and Penny Fever player are kept together here.`;
     }
 
     try {
@@ -103,7 +104,7 @@
         }
       } else if (feverSummary) {
         feverSummary.textContent =
-          "A little doorway under Instapic. Walk through as this VIP guest and the tent can lock in your pennies and alley spot.";
+          "Enter Penny Fever through Aura’s door to link your game to this guest profile. Your saved pennies and alley place can then follow you when you return.";
       }
 
       const sessions = Array.isArray(data.guest_profile?.sessions) ? data.guest_profile.sessions : [];
@@ -111,7 +112,7 @@
       if (list) {
         list.innerHTML = "";
         if (!sessions.length) {
-          list.innerHTML = '<p class="muted">No saved booth codes yet.</p>';
+          list.innerHTML = '<p class="vip-empty-note">No booth codes saved here yet. Use “Save a booth code” below to add one.</p>';
         } else {
           sessions.forEach((session) => {
             list.appendChild(makeTicketCard(session));

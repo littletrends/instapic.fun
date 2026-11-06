@@ -11,6 +11,26 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
   <style>
+    .vip-dashboard-intro{margin-bottom:1rem}
+    .vip-dashboard-intro .hero-text{max-width:46rem;margin:0 auto}
+    .vip-shortcuts{display:flex;justify-content:center;flex-wrap:wrap;gap:.55rem;margin:1.1rem 0 1.4rem}
+    .vip-shortcuts a{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(16,16,26,.76);color:inherit;text-decoration:none;font-size:.88rem;font-weight:700}
+    .vip-shortcuts a:hover,.vip-shortcuts a:focus-visible{border-color:rgba(255,209,122,.6);background:rgba(255,255,255,.08)}
+    .vip-shortcut-number,.vip-step{color:#ffd17a;font-size:.72rem;font-weight:900;letter-spacing:.1em}
+    .vip-section{margin-top:1rem!important;scroll-margin-top:1rem}
+    .vip-section-heading{margin-bottom:.4rem}
+    .vip-section-heading .vip-step{display:block;margin-bottom:.35rem;text-transform:uppercase}
+    .vip-section-heading h2{margin:.1rem 0 .4rem}
+    .vip-section-copy{max-width:48rem;color:rgba(255,255,255,.78)}
+    .vip-section .code-hint{max-width:44rem}
+    .vip-saved-list{display:grid;gap:.75rem;margin-top:1rem}
+    .vip-saved-list .dashboard-card{margin:0;padding:1rem 1.1rem}
+    .vip-ticket-label{margin:0 0 .3rem;color:rgba(255,255,255,.68);font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+    .vip-saved-list .ticket-actions-main{justify-content:flex-start}
+    .vip-saved-list .ticket-actions-main .btn{display:inline-flex;align-items:center;justify-content:center}
+    .vip-empty-note{padding:.9rem 1rem;border:1px dashed rgba(255,255,255,.18);border-radius:14px;color:rgba(255,255,255,.75)}
+    .vip-password-form{max-width:42rem}
+    @media(max-width:600px){.vip-shortcuts{justify-content:flex-start}.vip-shortcuts a{font-size:.82rem}.pf-aura-art{width:min(160px,46vw)}}
     .pf-doorway{display:grid;justify-items:center;gap:.85rem;margin-top:1.25rem;text-align:center}
     .pf-aura-trigger{display:grid;justify-items:center;gap:.55rem;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font:700 .9rem/1.35 system-ui,sans-serif}
     .pf-aura-trigger:focus-visible,.pf-game-door:focus-visible{outline:3px solid #f2d48a;outline-offset:5px}
@@ -36,22 +56,41 @@
   <main class="card dashboard-page">
     <div id="flash" hidden></div>
 
-    <section class="page-intro">
+    <section class="page-intro vip-dashboard-intro">
       <div class="bonus-kicker">VIP Guest Area</div>
       <h1>My Instapic</h1>
       <p id="guest-summary" class="hero-text hero-text-wide">
-        Keep your Instapic booth codes together in one place so they’re easy to find when you arrive at the kiosk.
+        Your booth codes, bonus links and Penny Fever player live together here.
       </p>
     </section>
 
-    <div class="dashboard-card">
-      <h2>Store My Code</h2>
-      <p>
-        Paste your copied 6-digit Instapic booth code here to save it to your VIP Guest Area.
-      </p>
+    <nav class="vip-shortcuts" aria-label="VIP Guest Area sections">
+      <a href="#saved-booth-codes"><span class="vip-shortcut-number">01</span> Saved codes</a>
+      <a href="#add-booth-code"><span class="vip-shortcut-number">02</span> Save a code</a>
+      <a href="#pf-spot-card"><span class="vip-shortcut-number">03</span> Penny Fever</a>
+      <a href="#account-settings"><span class="vip-shortcut-number">04</span> Password</a>
+    </nav>
+
+    <section class="info-callout vip-section" id="saved-booth-codes">
+      <div class="vip-section-heading">
+        <span class="vip-step">01 · Your booth codes</span>
+        <h2>Saved sessions</h2>
+      </div>
+      <p class="vip-section-copy">Open a saved code to view its photo strip and bonus content. Your codes stay here until you need them at the booth.</p>
+      <div id="saved-sessions-list" class="vip-saved-list" aria-live="polite">
+        <p class="vip-empty-note">Loading your saved codes…</p>
+      </div>
+    </section>
+
+    <section class="dashboard-card vip-section" id="add-booth-code">
+      <div class="vip-section-heading">
+        <span class="vip-step">02 · Add a code</span>
+        <h2>Save a booth code</h2>
+      </div>
+      <p class="vip-section-copy">Enter the 6-digit code printed above your photo strip. Saving it keeps it in this guest profile; it does not redeem or use it.</p>
 
       <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem;">
-        <label for="store_ticket_code" class="code-label">Paste your 6-digit booth code</label>
+        <label for="store_ticket_code" class="code-label">6-digit booth code</label>
 
         <div class="code-input-row code-input-row-stack">
           <input
@@ -63,33 +102,24 @@
             placeholder="123456"
             required
           >
-          <button type="submit" class="btn">Store My Code</button>
+          <button type="submit" class="btn">Save Code</button>
         </div>
 
         <p class="code-hint">
-          This saves your booth code to your VIP Guest Area. It does not redeem or use the code.
+          Only the 6-digit booth code goes here. Your 4-digit email sign-in code is different.
         </p>
       </form>
 
-      <div id="store-code-status" class="muted" style="margin-top:1rem;"></div>
-    </div>
+      <div id="store-code-status" class="muted" role="status" aria-live="polite" style="margin-top:1rem;"></div>
+    </section>
 
-    <div class="info-callout" style="margin-top:2rem;">
-      <h2>My Saved Sessions</h2>
-      <p>
-        Your saved Instapic booth codes appear here.
-      </p>
-      <p class="muted">
-        Use these codes at the booth, or keep them here to come back later.
-      </p>
-
-      <div id="saved-sessions-list" style="margin-top:1.25rem;"></div>
-    </div>
-
-    <div class="info-callout" id="pf-spot-card" style="margin-top:2rem;">
-      <h2>Penny Fever · A Little Doorway</h2>
+    <section class="info-callout vip-section" id="pf-spot-card">
+      <div class="vip-section-heading">
+        <span class="vip-step">03 · The game</span>
+        <h2>Penny Fever</h2>
+      </div>
       <p id="pf-spot-summary">
-        A little doorway under Instapic. This VIP Guest Area can lock in your pennies and alley spot, then you can come back from any phone.
+        Your Penny Fever player can be linked to this guest profile, so your pennies and alley place are waiting when you return.
       </p>
       <div class="pf-doorway">
         <button id="pf-aura-trigger" class="pf-aura-trigger" type="button" aria-expanded="false" aria-controls="pf-next-door">
@@ -106,16 +136,17 @@
           </a>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="info-callout" style="margin-top:2rem;">
-      <h2>Account Settings</h2>
-      <p>
-        Want faster sign-in next time? Create or update your simple VIP Guest Area password here.
-      </p>
+    <section class="info-callout vip-section" id="account-settings">
+      <div class="vip-section-heading">
+        <span class="vip-step">04 · Sign-in</span>
+        <h2>VIP password</h2>
+      </div>
+      <p class="vip-section-copy">Set or change the password for this email account. You can still sign in with an email code if you forget it.</p>
 
-      <form id="guest-password-set-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
-        <label for="guest_new_password" class="code-label">New password</label>
+      <form id="guest-password-set-form" class="form-shell vip-password-form" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_new_password" class="code-label">New 6–8 character password</label>
         <div class="code-input-row code-input-row-stack">
           <input
             type="password"
@@ -127,14 +158,14 @@
             required
             autocomplete="new-password"
           >
-          <button type="submit" class="btn">Save Password</button>
+          <button type="submit" class="btn">Update Password</button>
         </div>
 
         <p class="code-hint">
-          Simple 6 to 8 character password. No extra restrictions.
+          Use 6 to 8 characters. This changes sign-in only; it does not change your booth codes.
         </p>
       </form>
-    </div>
+    </section>
 
     <nav class="site-bottom-nav" aria-label="Site pages">
       <a href="session.html" class="secondary-link">Enter code</a>
@@ -157,7 +188,7 @@
   <script src="assets/main.js"></script>
   <script src="branding.js"></script>
   <script src="guest_identity.js?v=pf-door-1"></script>
-  <script src="my_instapic_runtime.js?v=pf-door-1"></script>
+  <script src="my_instapic_runtime.js?v=vip-area-polish-1"></script>
   <script src="assets/penny-fever-vip-door.js?v=vip-door-1"></script>
   <script src="guest_store_code_runtime.js"></script>
   <script src="guest_password_runtime.js"></script>
