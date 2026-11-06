@@ -461,7 +461,15 @@
     if (walletTicketsEl) walletTicketsEl.textContent = tickets + " tickets";
     if (walletPenniesEl) walletPenniesEl.textContent = pennies + " pennies";
     if (walletCreditsEl) walletCreditsEl.textContent = credits + (credits === 1 ? " photo session" : " photo sessions");
-    if (payCreditBtn) payCreditBtn.hidden = credits < 1;
+    if (payCreditBtn) {
+      payCreditBtn.hidden = credits < 1;
+      payCreditBtn.textContent =
+        credits < 1
+          ? "USE MY PHOTO SESSION"
+          : credits === 1
+            ? "1 SESSION LEFT"
+            : credits + " SESSIONS LEFT";
+    }
 
     const ticketBtn = document.querySelector('[data-action="pay-tickets"]');
     const canTicket = tickets >= PRICE.sessionTickets;
@@ -1649,18 +1657,103 @@
     digitalIdleTimer = null;
   }
 
+  function leftoverCredits() {
+    return getCredits();
+  }
+
+  function startNextLeftoverSession() {
+    return useCreditCode().then((r) => {
+      refreshWalletUi();
+      if (r.ok) {
+        setPayBanner(
+          "Approved code " +
+            r.code +
+            "." +
+            (r.info && r.info.total > 1 ? " Session " + r.info.no + " of " + r.info.total + "." : "")
+        );
+        startPaidSession(r.code, r.info);
+        return true;
+      }
+      if (r.error === "none" && spendLocalSession()) {
+        refreshWalletUi();
+        const left = getLocalSessions();
+        setPayBanner(
+          "Penny-pack session started." +
+            (left > 0 ? " " + left + " local session" + (left === 1 ? "" : "s") + " left." : "") +
+            " Bonus code comes with Square packages only."
+        );
+        startPaidSession("", { no: 1, total: left + 1, left: left, source: "pennies" });
+        return true;
+      }
+      if (r.error === "none") {
+        setPayBanner("No photo sessions yet. Tap a circle to spend pennies, or top up at Aura's booth.");
+      } else if (r.error === "offline") {
+        setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
+      } else {
+        setPayBanner(
+          r.error === "used"
+            ? "That code was already used, so it was removed."
+            : r.error === "missing"
+              ? "That code isn't valid, so it was removed."
+              : "Couldn't check your code. Try again."
+        );
+      }
+      return false;
+    });
+  }
+
+  function paintThankyou() {
+    const left = leftoverCredits();
+    const copy = document.getElementById("thankyouCopy");
+    const row = document.getElementById("thankyouNextRow");
+    if (row) row.hidden = left < 1;
+    const nextBtn = document.querySelector('[data-action="thankyou-next"]');
+    if (nextBtn) {
+      nextBtn.textContent =
+        left === 1 ? "START LAST SESSION" : "START NEXT SESSION · " + left + " LEFT";
+    }
+    if (copy) {
+      copy.innerHTML =
+        left > 0
+          ? "Save your strip if you want it.<br>" +
+            left +
+            (left === 1 ? " photo session left" : " photo sessions left") +
+            " on this pack. Next one in <span id=\"thankyouCountdown\">8</span> seconds."
+          : "Save your strip if you want it.<br>Returning to Felix in <span id=\"thankyouCountdown\">8</span> seconds.";
+    }
+  }
+
+  function leaveThankyou() {
+    stopThankyouTimer();
+    if (leftoverCredits() >= 1) {
+      refreshWalletUi();
+      const n = leftoverCredits();
+      setPayBanner(
+        n +
+          (n === 1 ? " photo session left" : " photo sessions left") +
+          " — tap " +
+          (n === 1 ? "1 SESSION LEFT" : n + " SESSIONS LEFT") +
+          " to keep going."
+      );
+      return showScreen(Screen.PAYMENT);
+    }
+    return showScreen(Screen.ATTRACT);
+  }
+
   function startThankyouTimer() {
+    paintThankyou();
     let remaining = 8;
-    if (thankyouCountdownEl) thankyouCountdownEl.textContent = remaining;
+    const tickEl = () => document.getElementById("thankyouCountdown");
+    if (tickEl()) tickEl().textContent = remaining;
     if (thankyouTimer) clearInterval(thankyouTimer);
     thankyouTimer = setInterval(() => {
       remaining -= 1;
       if (remaining <= 0) {
         clearInterval(thankyouTimer);
         thankyouTimer = null;
-        showScreen(Screen.ATTRACT);
-      } else if (thankyouCountdownEl) {
-        thankyouCountdownEl.textContent = remaining;
+        leaveThankyou();
+      } else if (tickEl()) {
+        tickEl().textContent = remaining;
       }
     }, 1000);
   }
@@ -1859,7 +1952,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-portals-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=leftover-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
@@ -2021,42 +2114,7 @@
     }
     if (action === "pay-credit") {
       setPayBanner("Checking your photo sessions\u2026");
-      // Prefer Square Instapic codes; fall back to local penny-pack sessions (no code).
-      useCreditCode().then((r) => {
-        refreshWalletUi();
-        if (r.ok) {
-          setPayBanner(
-            "Approved code " + r.code + "." +
-              (r.info && r.info.total > 1 ? " Session " + r.info.no + " of " + r.info.total + "." : "")
-          );
-          startPaidSession(r.code, r.info);
-          return;
-        }
-        if (r.error === "none" && spendLocalSession()) {
-          refreshWalletUi();
-          const left = getLocalSessions();
-          setPayBanner(
-            "Penny-pack session started." +
-              (left > 0 ? " " + left + " local session" + (left === 1 ? "" : "s") + " left." : "") +
-              " Bonus code comes with Square packages only."
-          );
-          startPaidSession("", { no: 1, total: left + 1, left: left, source: "pennies" });
-          return;
-        }
-        if (r.error === "none") {
-          setPayBanner("No photo sessions yet. Tap a circle to spend pennies, or top up at Aura's booth.");
-        } else if (r.error === "offline") {
-          setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
-        } else {
-          setPayBanner(
-            r.error === "used"
-              ? "That code was already used, so it was removed."
-              : r.error === "missing"
-                ? "That code isn't valid, so it was removed."
-                : "Couldn't check your code. Try again."
-          );
-        }
-      });
+      startNextLeftoverSession();
       return;
     }
     if (action === "penny-confirm-yes") {
@@ -2217,6 +2275,16 @@
       return showScreen(Screen.DIGITAL);
     }
     if (action === "digital-done") return showScreen(Screen.THANKYOU);
+    if (action === "thankyou-next") {
+      stopThankyouTimer();
+      refreshWalletUi();
+      if (leftoverCredits() < 1) return showScreen(Screen.PAYMENT);
+      setPayBanner("Starting your next session\u2026");
+      startNextLeftoverSession().then((ok) => {
+        if (!ok) showScreen(Screen.PAYMENT);
+      });
+      return;
+    }
     if (action === "retry-bonus") {
       bonusState = "idle";
       makeBonusPack();

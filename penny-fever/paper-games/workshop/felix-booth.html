@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Magic Mirror – Flow</title>
-  <link rel="stylesheet" href="flow-booth.css?v=pay-portals-1">
-  <link rel="stylesheet" href="branding.css?v=pay-portals-1">
-  <link rel="stylesheet" href="patches.css?v=pay-portals-1">
-  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=pay-portals-1">
-  <link rel="stylesheet" href="pay_packages_patch.css?v=pay-portals-1">
-  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=pay-portals-1">
-  <link rel="stylesheet" href="event_portal_patch.css?v=pay-portals-1">
-  <link rel="stylesheet" href="felix-booth.css?v=pay-portals-1">
+  <link rel="stylesheet" href="flow-booth.css?v=leftover-1">
+  <link rel="stylesheet" href="branding.css?v=leftover-1">
+  <link rel="stylesheet" href="patches.css?v=leftover-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=leftover-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=leftover-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=leftover-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=leftover-1">
+  <link rel="stylesheet" href="felix-booth.css?v=leftover-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -445,11 +445,16 @@
               <img src="img/instapic_logo.jpg" alt="Instapic">
             </div>
             <h1 class="title-main">Thank you!</h1>
-            <p class="subtitle">
+            <p class="subtitle" id="thankyouCopy">
               Save your strip if you want it.<br>
               Returning to Felix in
-              <span id="thankyouCountdown">10</span> seconds.
+              <span id="thankyouCountdown">8</span> seconds.
             </p>
+            <div class="button-row" id="thankyouNextRow" hidden>
+              <button class="btn btn-primary btn-big" data-action="thankyou-next" type="button">
+                START NEXT SESSION
+              </button>
+            </div>
           </div>
         </section>
 
@@ -470,6 +475,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=pay-portals-1"></script>
+  <script src="felix-booth.js?v=leftover-1"></script>
 </body>
 </html>
