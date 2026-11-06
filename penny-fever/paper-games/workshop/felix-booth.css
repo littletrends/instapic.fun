@@ -989,3 +989,69 @@ section.screen[data-screen="PAYMENT"] button.package-btn.can-afford {
     inset 0 0 50px rgba(255,255,255,0.18) !important;
 }
 /* Drop obsolete separate penny-pack row styles if still present — harmless */
+
+/* Portal labels — same family as the machines, sized to fill each orb. */
+section.screen button.portal-button,
+section.screen a.portal-button,
+section.screen button[data-action="wake-mirror"],
+section.screen button[data-action="enter-mirror"],
+section.screen button[data-action="enter-try-info"],
+section.screen button[data-action="enter-prepaid"],
+section.screen button[data-action="enter-try-mode"],
+section.screen button[data-action="try-info-back"],
+section.screen button[data-action="prepaid-continue"],
+section.screen button[data-action="prepaid-back"],
+section.screen button[data-action="backgrounds-next"],
+section.screen button[data-action="retake-photo"],
+section.screen button[data-action="keep-photo"],
+section.screen button[data-action="print-now"],
+section.screen button[data-action="digital-done"],
+#felixVipJoin {
+  font-family: var(--instapic-ui-font, system-ui, -apple-system, "Segoe UI", sans-serif) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.12 !important;
+  text-transform: uppercase !important;
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"],
+section.screen.active[data-screen="ATTRACT"] button[data-action="wake-mirror"] {
+  font-size: 3.4rem !important;
+  letter-spacing: 0.06em !important;
+}
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  font-size: 3.4rem !important;
+  letter-spacing: 0.08em !important;
+}
+section.screen[data-screen="PAYMENT"],
+section.screen[data-screen="TRY_INFO"],
+section.screen[data-screen="PREPAID"],
+section.screen[data-screen="BACKGROUNDS"],
+section.screen[data-screen="PRINT"],
+section.screen[data-screen="DIGITAL"] {
+  --portal-font: 1.7rem;
+}
+section.screen[data-screen="REVIEW"] {
+  --portal-font: 1.55rem;
+}
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"],
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-continue"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-back"],
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"],
+section.screen[data-screen="PRINT"] button[data-action="print-now"],
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"],
+#felixVipJoin {
+  font-size: 1.7rem !important;
+}
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
+  font-size: 1.55rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-size: 2.5rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
+  font-size: 1.2rem !important;
+}

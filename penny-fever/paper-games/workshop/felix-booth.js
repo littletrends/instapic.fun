@@ -1665,7 +1665,7 @@
     const a = document.getElementById("felixVipJoin");
     if (!a) return;
     const code = sessionCodeNow();
-    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-kiosk-1";
+    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=font1";
     let href = "/save.html?return=" + encodeURIComponent(ret);
     if (code) href += "&ticket_code=" + encodeURIComponent(code);
     a.href = href;
@@ -2024,7 +2024,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-kiosk-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=font1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
