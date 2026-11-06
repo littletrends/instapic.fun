@@ -10,6 +10,7 @@ import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-image
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=loan-relock-1";
 import {openTill} from "./ticket-till.js?v=pay-pennies-1";
+import { mountVipSpot } from "./vip-spot.js?v=vip-spot-1";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
@@ -945,6 +946,7 @@ function attachHud() {
         </nav>
         <div class="pf-world-tools">
           <button type="button" id="pfAlleyMapOpen">Map</button>
+          <a id="pfVipHud" href="/save.html">Join VIP</a>
           <button type="button" id="pfWorldLeave">Back to ticket booth</button>
           <a id="pfWorldHome" href="../index.html">Home</a>
         </div>
@@ -2753,6 +2755,7 @@ function start() {
 
 function startNow() {
   attachHud();
+  try { mountVipSpot(); } catch (err) { console.warn("[pf-vip]", err); }
   if (!canGL()) {
     api.ok = false;
     const fail = el("pfWorldFail");
@@ -2848,6 +2851,7 @@ function stop() {
 }
 
 function boot() {
+  try { mountVipSpot(); } catch (err) { console.warn("[pf-vip]", err); }
   if (window.PennyFever) window.PennyFever.world = api;
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {

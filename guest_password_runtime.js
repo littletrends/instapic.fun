@@ -82,10 +82,10 @@
         const data = await postJson("/api/guest/password-login", { email, password });
         writeVerifiedGuest(data.email, data.guest_profile);
 
-        const next = ticketCode
-          ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
-          : "my-instapic.html";
-        window.location.href = next;
+        window.location.href = window.InstapicVipReturn?.loginNext?.("my-instapic.html")
+          || (ticketCode
+            ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+            : "my-instapic.html");
       } catch (err) {
         showFlash(`Could not sign in with password: ${err.message}`);
       }

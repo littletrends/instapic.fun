@@ -3939,6 +3939,18 @@
     spendTicket,
     addDemoCoins,
     addTickets,
+    restorePocket(snap) {
+      const bag = snap || {};
+      if (bag.pennies != null) state.demoCoins = Math.max(0, Math.floor(Number(bag.pennies) || 0));
+      if (bag.tickets != null) state.playTickets = Math.max(0, Math.floor(Number(bag.tickets) || 0));
+      if (bag.admitPassed != null) state.admitPassed = !!bag.admitPassed;
+      if (bag.admitTicket != null) state.admitTicket = !!bag.admitTicket;
+      try { saveState(state); } catch (err) {
+        console.warn("[penny-fever] restorePocket", err);
+      }
+      refreshNightBoard();
+      return { pennies: pennies(), tickets: tickets() };
+    },
     resetVisit() {
       if (!window.confirm("Clear this visit? Pennies, tickets and treasures go back to empty.")) return false;
       try {

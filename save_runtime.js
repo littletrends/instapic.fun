@@ -94,10 +94,10 @@
     }
 
     if (window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
-      const next = ticketCode
-        ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
-        : "my-instapic.html";
-      window.location.href = next;
+      window.location.href = window.InstapicVipReturn?.loginNext?.("my-instapic.html")
+        || (ticketCode
+          ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+          : "my-instapic.html");
       return;
     }
 
@@ -165,10 +165,10 @@
           verified: false
         });
 
-        const next = ticketCode
-          ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
-          : "verify.html";
-        window.location.href = next;
+        window.location.href = window.InstapicVipReturn?.withReturn?.("verify.html")
+          || (ticketCode
+            ? `verify.html?ticket_code=${encodeURIComponent(ticketCode)}`
+            : "verify.html");
       } catch (err) {
         showFlash(`Could not start verification: ${err.message}`);
       }

@@ -159,6 +159,10 @@ body.paper-original-rail.is-in-world .pf-world-stage {
   flex-shrink: 0;
   gap: 0.35rem;
 }
+#pfVipHud {
+  color: #ffe9b8;
+  border-color: rgba(255, 180, 210, 0.55);
+}
 .pf-world-tools button,
 .pf-world-tools a {
   font: 650 0.72rem/1 "Segoe UI", system-ui, sans-serif;

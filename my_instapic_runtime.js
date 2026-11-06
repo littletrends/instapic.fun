@@ -81,6 +81,26 @@
         guest_profile: data.guest_profile || {}
       });
 
+      const fever = data.guest_profile?.penny_fever;
+      const feverCard = qs("#pf-spot-card");
+      const feverSummary = qs("#pf-spot-summary");
+      const feverLink = qs("#pf-spot-continue");
+      if (feverCard && fever && (fever.pennies != null || fever.hash)) {
+        feverCard.hidden = false;
+        const pennies = Number(fever.pennies) || 0;
+        const tickets = Number(fever.tickets) || 0;
+        if (feverSummary) {
+          feverSummary.textContent =
+            pennies + (pennies === 1 ? " penny" : " pennies") +
+            " · " + tickets + (tickets === 1 ? " ticket" : " tickets") +
+            " · last saved at the " + (fever.hash || "alley") + ".";
+        }
+        if (feverLink) {
+          const hash = String(fever.hash || "alley").replace(/^#/, "") || "alley";
+          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=vip-spot-1#" + encodeURIComponent(hash);
+        }
+      }
+
       const sessions = Array.isArray(data.guest_profile?.sessions) ? data.guest_profile.sessions : [];
 
       if (list) {

@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="workshop-mark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta http-equiv="Cache-Control" content="no-store">
   <meta name="theme-color" content="#160b10">
   <meta name="description" content="Private development preview of Aura's Penny Fever.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://web.squarecdn.com https://www.gstatic.com https://www.google.com; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://web.squarecdn.com; script-src 'self' https://web.squarecdn.com https://pay.google.com; connect-src 'self' https://motherpc.taild1a44c.ts.net https://pci-connect.squareup.com https://connect.squareup.com https://pci-connect.squareupsandbox.com https://connect.squareupsandbox.com https://web.squarecdn.com https://pay.google.com https://google.com https://www.google.com https://payments.googleapis.com https://applepay.cdn-apple.com https://pay.apple.com; frame-src 'self' https://web.squarecdn.com https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com https://pay.google.com https://js.squarecdn.com; form-action 'self' https://pci-connect.squareup.com https://pci-connect.squareupsandbox.com; base-uri 'none'">
@@ -39,9 +40,10 @@
   <link rel="stylesheet" href="vendors/penny-pitch.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/snap.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/water-gun.css?v=interior-cam-1">
-  <link rel="stylesheet" href="world/world.css?v=booth-till-1">
+  <link rel="stylesheet" href="world/world.css?v=vip-spot-1">
   <script defer src="world/items/model.js?v=ritual-3"></script>
-  <script defer src="app.js?v=sep17-4"></script>
+  <script src="../guest_identity.js?v=vip-spot-1"></script>
+  <script defer src="app.js?v=vip-spot-1"></script>
   <script defer src="vendors/kit.js?v=interior-cam-1"></script>
   <script defer src="vendors/runKit.js?v=treasures-1"></script>
   <script defer src="vendors/p0-merge.js?v=interior-cam-1"></script>
@@ -51,7 +53,7 @@
   <link rel="stylesheet" href="vendors/fortune.css?v=interior-cam-1">
   <link rel="stylesheet" href="vendors/pass.css?v=interior-cam-1">
   <link rel="stylesheet" href="world/ticket-till.css?v=pay-pennies-1">
-  <script type="module" src="world/alley.js?v=loan-relock-1"></script>
+  <script type="module" src="world/alley.js?v=vip-spot-1"></script>
   <script type="module" src="world/crew-selector.js?v=rotate-1"></script>
   <link rel="stylesheet" href="world/crew-selector.css?v=rotate-1">
   <link rel="stylesheet" href="restyle.css?v=aura-tools-1">
@@ -75,7 +77,7 @@
     <section class="discovery-door" id="discoveryDoor" aria-labelledby="doorTitle">
       <aside class="workshop-stop" role="note">
         <strong>STOP. Do not work in this local workshop.</strong>
-        <p>This copy is leftover. Penny Fever work happens on <a href="https://instapic.fun/penny-fever/index.html?style=paper&amp;rail=paper&amp;v=rotate-3#door">instapic.fun live</a> — edit <code>/tmp/instapic.fun-live</code> (branch <code>main</code>), push, then test the live URL. Do not pull this tree into live.</p>
+        <p>This copy is leftover. Penny Fever work happens on <a href="https://instapic.fun/penny-fever/index.html?style=paper&amp;rail=paper&amp;v=vip-spot-1#door">instapic.fun live</a> — edit <code>/tmp/instapic.fun-live</code> (branch <code>main</code>), push, then test the live URL. Do not pull this tree into live.</p>
       </aside>
       <div class="door-cinematic" aria-hidden="true">
         <img id="doorStageArt" class="door-stage-art" src="assets/restyle/paper-aura-seated.png" alt="Papercut Aura welcomes you with a ticket" width="1024" height="1536" fetchpriority="high">
@@ -86,6 +88,7 @@
       <div class="admit-desk" id="admitDesk">
         <div id="admitIdle">
           <button class="ticket-button" id="takeTicket" type="button">Take a ticket · free tonight</button>
+          <p class="aura-whisper"><a class="site-back" id="pfVipDoor" href="/save.html">Join VIP Guest Area · keep pennies and this spot on any phone</a></p>
         </div>
         <div id="admitHold" hidden>
           <div class="admit-stub" id="admitStub" aria-label="Admit-one ticket">

@@ -55,10 +55,10 @@
           guest_profile: data.guest_profile || {}
         });
 
-        const next = ticketCode
-          ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
-          : "my-instapic.html";
-        window.location.href = next;
+        window.location.href = window.InstapicVipReturn?.loginNext?.("my-instapic.html")
+          || (ticketCode
+            ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
+            : "my-instapic.html");
       } catch (err) {
         showFlash(`Could not verify code: ${err.message}`);
       }
