@@ -627,7 +627,7 @@
       img.loading = "lazy";
       img.decoding = "async";
       img.dataset.fullSrc = bgFull(id);
-      img.src = bgThumb(id);
+      img.src = bgFull(id);
       img.alt = id.toUpperCase();
       let label = card.querySelector(".bg-label");
       if (!label) {

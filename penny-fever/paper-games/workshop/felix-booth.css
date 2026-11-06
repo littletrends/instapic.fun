@@ -371,15 +371,62 @@ section.screen[data-screen="PAYMENT"] button[data-action="pay-credit"][hidden] {
   border: 0 !important;
   overflow: hidden !important;
 }
+/* Instapic BACKGROUNDS: full Set strip sits on the card (416×1232 strip_web). */
+section.screen[data-screen="BACKGROUNDS"] .screen-content {
+  padding-top: 80px !important;
+  padding-bottom: 36px !important;
+  justify-content: flex-start !important;
+  gap: 16px;
+}
+section.screen[data-screen="BACKGROUNDS"] .title-main {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  font-size: 3.4rem !important;
+}
+section.screen[data-screen="BACKGROUNDS"] .subtitle {
+  margin-bottom: 8px !important;
+  font-size: 1.55rem !important;
+  max-width: 90%;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-scroll-wrapper {
+  flex: 1 1 auto;
+  width: 94% !important;
+  max-width: 94% !important;
+  min-height: 0;
+  align-items: flex-end;
+  margin: 0 auto;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-grid {
+  max-width: none !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 8px 4px 12px !important;
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  align-items: flex-end;
+}
 section.screen.active[data-screen="BACKGROUNDS"] .background-card {
-  width: 300px !important;
-  min-width: 300px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  flex: 0 0 auto;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
 }
 section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
-  width: 300px !important;
-  height: 444px !important;
-  object-fit: cover;
-  border-radius: 20px;
+  width: 264px !important;
+  height: auto !important;
+  aspect-ratio: 416 / 1232;
+  object-fit: contain !important;
+  object-position: center top;
+  border-radius: 12px;
+  display: block;
+  background: transparent;
+}
+section.screen[data-screen="BACKGROUNDS"] .button-row {
+  margin-top: auto;
 }
 
 
