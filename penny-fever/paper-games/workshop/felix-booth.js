@@ -189,10 +189,15 @@
 
   function fitStage() {
     if (!boothStage) return;
-    // Phone iframe is the screen. Do not scale the 55" 1080×1920 kiosk canvas.
-    boothStage.style.width = "100%";
-    boothStage.style.height = "100%";
-    boothStage.style.transform = "none";
+    // Real booth is 1080×1920. Scale that canvas to the phone / alley iframe
+    // so kiosk fonts and layout stay in proportion.
+    const vw = Math.max(1, window.innerWidth || 390);
+    const vh = Math.max(1, window.innerHeight || 844);
+    const scale = vw / 1080;
+    const designH = Math.max(1920, Math.ceil(vh / scale));
+    boothStage.style.width = "1080px";
+    boothStage.style.height = designH + "px";
+    boothStage.style.transform = "scale(" + scale + ")";
   }
   fitStage();
   window.addEventListener("resize", fitStage);
@@ -1660,7 +1665,7 @@
     const a = document.getElementById("felixVipJoin");
     if (!a) return;
     const code = sessionCodeNow();
-    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-phone-2";
+    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-kiosk-1";
     let href = "/save.html?return=" + encodeURIComponent(ret);
     if (code) href += "&ticket_code=" + encodeURIComponent(code);
     a.href = href;
@@ -2019,7 +2024,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-phone-2"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=felix-kiosk-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
