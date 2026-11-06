@@ -23,7 +23,15 @@
   function bgFull(id) { return "backgrounds/strips/" + id + ".jpg"; }
   function bgDualPrint(id) { return "backgrounds/" + id + ".jpg"; }
   const TRY_SAMPLE_ID = "bg_11";
-  const SLOT_REF = { w: 416, h: 1232 };
+  // MotherPC bonus_pipeline STRIP_SLOTS left column on 784×1186 design grid.
+  const STRIP_SLOTS_LEFT = [
+    [100, 18, 208, 252],
+    [100, 272, 208, 256],
+    [100, 624, 208, 260],
+    [100, 888, 208, 272],
+  ];
+  const SLOT_REF = { w: 416, h: 1232 }; // left half of current 832×1232 dual
+  const FREEZE_PORTRAIT = { w: 1024, h: 1280 };
   const LIVE_AUTOSTART_MS = 400;
   const MAX_RETAKES_PER_SESSION = 2;
   // MotherPC (existing Instapic backend, via its Tailscale Funnel). Felix only
@@ -68,14 +76,19 @@
     unlocks: "felixBooth.unlockedBgs",
     credits: "felixBooth.sessionCredits",
   };
-  // Photo windows on single strip_web, coords on MotherPC half-ref 416×1232
-  // (left half of the 832×1232 dual print / Set bg_N_strip master).
-  const DEFAULT_SLOT_BOXES = [
-    { x: 106, y: 19, w: 221, h: 262 },
-    { x: 106, y: 283, w: 221, h: 266 },
-    { x: 106, y: 648, w: 221, h: 270 },
-    { x: 106, y: 922, w: 221, h: 283 },
-  ];
+  function slotsForStripSize(W, H) {
+    // strip_web is left half of dual (2W×H). Scale design grid like bonus_pipeline.
+    const sx = (W * 2) / 784;
+    const sy = H / 1186;
+    return STRIP_SLOTS_LEFT.map(([x, y, w, h]) => ({
+      x: Math.round(x * sx),
+      y: Math.round(y * sy),
+      w: Math.max(1, Math.round(w * sx)),
+      h: Math.max(1, Math.round(h * sy)),
+    }));
+  }
+  // Default = MotherPC slots for 416×1232 strip_web (left half of 832 dual).
+  const DEFAULT_SLOT_BOXES = slotsForStripSize(SLOT_REF.w, SLOT_REF.h);
 
   const screens = [...document.querySelectorAll(".screen")];
   const videoLayer = document.getElementById("video-layer");
@@ -370,10 +383,13 @@
   }
 
 
-  function applyTemplateSlotCss() {
-    const refW = slotRef.w || SLOT_REF.w;
-    const refH = slotRef.h || SLOT_REF.h;
-    slotBoxes.forEach((box, i) => {
+  function applyTemplateSlotCss(naturalW, naturalH) {
+    const refW = naturalW || (templateBackground && templateBackground.naturalWidth) || slotRef.w || SLOT_REF.w;
+    const refH = naturalH || (templateBackground && templateBackground.naturalHeight) || slotRef.h || SLOT_REF.h;
+    const boxes = slotsForStripSize(refW, refH);
+    slotBoxes = boxes;
+    slotRef = { w: refW, h: refH };
+    boxes.forEach((box, i) => {
       const el = document.querySelector(".template-slot.slot-" + (i + 1));
       if (!el || !box) return;
       el.style.left = ((box.x / refW) * 100).toFixed(3) + "%";
@@ -384,15 +400,16 @@
     });
   }
 
-  function scaleSlotBox(raw, canvasW, canvasH) {
-    const refW = slotRef.w || SLOT_REF.w;
-    const refH = slotRef.h || SLOT_REF.h;
-    return {
-      x: Math.round((raw.x / refW) * canvasW),
-      y: Math.round((raw.y / refH) * canvasH),
-      w: Math.round((raw.w / refW) * canvasW),
-      h: Math.round((raw.h / refH) * canvasH),
-    };
+  // Pillow ImageOps.fit(..., centering=(0.5,0.5)) — cover crop, centered.
+  function coverCropToCanvas(photo, w, h) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    const scale = Math.max(w / photo.width, h / photo.height);
+    const dw = photo.width * scale;
+    const dh = photo.height * scale;
+    ctx.drawImage(photo, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    return c;
   }
 
   function selectBackground(bg) {
@@ -470,7 +487,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=strip-web-1").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=strip-web-2").then((r) => r.json());
       if (layout.slot_ref && layout.slot_ref.w && layout.slot_ref.h) {
         slotRef = { w: Number(layout.slot_ref.w) || SLOT_REF.w, h: Number(layout.slot_ref.h) || SLOT_REF.h };
       }
@@ -486,7 +503,7 @@
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=strip-web-1").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=strip-web-2").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -629,7 +646,7 @@
   }
 
   async function freezeBlob(i) {
-    const src = capturedPhotos[i] || makeSilhouetteDataUrl(720, 1280);
+    const src = capturedPhotos[i] || makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h);
     const img = await loadImage(src);
     const c = document.createElement("canvas");
     c.width = img.naturalWidth || img.width;
@@ -1161,7 +1178,7 @@
     const h = liveVideo.videoHeight || 1280;
     // Guard: empty/black video → silhouette instead of a black box.
     if (!liveVideo.videoWidth || liveVideo.readyState < 2) {
-      acceptPhotoDataUrl(makeSilhouetteDataUrl(720, 1280));
+      acceptPhotoDataUrl(makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
       return;
     }
     const ctx = captureCanvas.getContext("2d");
@@ -1191,16 +1208,20 @@
       for (let i = 0; i < sample.length; i += 4) sum += sample[i] + sample[i + 1] + sample[i + 2];
       const avg = sum / ((sample.length / 4) * 3);
       if (avg < 8) {
-        acceptPhotoDataUrl(makeSilhouetteDataUrl(720, 1280));
+        acceptPhotoDataUrl(makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
         return;
       }
     } catch (_) {}
     acceptPhotoDataUrl(captureCanvas.toDataURL("image/jpeg", 0.9));
   }
 
-  function acceptPhotoDataUrl(dataUrl) {
-    capturedPhotos[currentPoseIndex] = dataUrl;
-    updateTemplateSlots();
+  async function normalizeFreezePortrait(dataUrl) {
+    const img = await loadImage(dataUrl);
+    const fitted = coverCropToCanvas(img, FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h);
+    return fitted.toDataURL("image/jpeg", 0.9);
+  }
+
+  function showFreezeFlash(dataUrl) {
     liveVideo.classList.add("hidden");
     const freeze = document.createElement("img");
     freeze.id = "freezeFrame";
@@ -1214,6 +1235,21 @@
       liveVideo.classList.remove("hidden");
       afterCapture();
     }, 700);
+  }
+
+  function acceptPhotoDataUrl(dataUrl) {
+    // Booth freezes are portrait 1024×1280; cover-crop to match MotherPC inputs.
+    Promise.resolve(normalizeFreezePortrait(dataUrl))
+      .then((portrait) => {
+        capturedPhotos[currentPoseIndex] = portrait;
+        updateTemplateSlots();
+        showFreezeFlash(portrait);
+      })
+      .catch(() => {
+        capturedPhotos[currentPoseIndex] = dataUrl;
+        updateTemplateSlots();
+        showFreezeFlash(dataUrl);
+      });
   }
 
   function firstEmptySlot() {
@@ -1312,15 +1348,15 @@
     const photoSrcs = [];
     for (let i = 0; i < 4; i++) {
       if (i < totalPoses) {
-        photoSrcs.push(capturedPhotos[i] || makeSilhouetteDataUrl(720, 1280));
+        photoSrcs.push(capturedPhotos[i] || makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
       } else {
-        photoSrcs.push(makeSilhouetteDataUrl(720, 1280));
+        photoSrcs.push(makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
       }
     }
     return Promise.all(photoSrcs.map((src) => loadImage(src)));
   }
 
-  // Guest-facing composite: single Set strip_web (bg_N_strip_web).
+  // Guest-facing composite: left half of dual (same as MotherPC strip_web.jpg).
   async function buildStrip() {
     const bgId = currentBackground?.id || TRY_SAMPLE_ID;
     const bg = await loadImage(currentBackground?.src || bgFull(bgId));
@@ -1331,11 +1367,15 @@
     const ctx = out.getContext("2d");
     ctx.drawImage(bg, 0, 0);
 
+    const boxes = slotsForStripSize(out.width, out.height);
+    slotBoxes = boxes;
+    slotRef = { w: out.width, h: out.height };
     for (let i = 0; i < 4; i++) {
       const photo = photos[i];
       if (!photo) continue;
-      const raw = slotBoxes[i] || DEFAULT_SLOT_BOXES[i];
-      drawPhotoInBox(ctx, photo, scaleSlotBox(raw, out.width, out.height));
+      const box = boxes[i];
+      const fitted = coverCropToCanvas(photo, box.w, box.h);
+      ctx.drawImage(fitted, box.x, box.y);
     }
 
     if (isTrySession) stampSample(ctx, out.width, out.height);
@@ -1356,23 +1396,25 @@
     out.height = bg.height;
     const ctx = out.getContext("2d");
     ctx.drawImage(bg, 0, 0);
-    const half = Math.floor(bg.width / 2);
-    // Dual master is 832×1232; left-half slots use the same 416-ref boxes, then mirror.
-    const leftRefW = slotRef.w || SLOT_REF.w;
-    const leftRefH = slotRef.h || SLOT_REF.h;
-    for (let i = 0; i < 4; i++) {
-      const photo = photos[i];
+    // Same as bonus_pipeline._scale_strip_geometry on the dual master.
+    const sx = out.width / 784;
+    const sy = out.height / 1186;
+    const leftDesign = STRIP_SLOTS_LEFT;
+    const rightDesign = STRIP_SLOTS_LEFT.map(([x, y, w, h]) => [x + 399, y, w, h]);
+    const all = leftDesign.concat(rightDesign);
+    const cycle = photos.concat(photos);
+    for (let i = 0; i < 8; i++) {
+      const photo = cycle[i];
       if (!photo) continue;
-      const raw = slotBoxes[i] || DEFAULT_SLOT_BOXES[i];
-      const leftBox = {
-        x: Math.round((raw.x / leftRefW) * half),
-        y: Math.round((raw.y / leftRefH) * out.height),
-        w: Math.round((raw.w / leftRefW) * half),
-        h: Math.round((raw.h / leftRefH) * out.height),
+      const [x, y, w, h] = all[i];
+      const box = {
+        x: Math.round(x * sx),
+        y: Math.round(y * sy),
+        w: Math.max(1, Math.round(w * sx)),
+        h: Math.max(1, Math.round(h * sy)),
       };
-      const rightBox = { ...leftBox, x: leftBox.x + half };
-      drawPhotoInBox(ctx, photo, leftBox);
-      drawPhotoInBox(ctx, photo, rightBox);
+      const fitted = coverCropToCanvas(photo, box.w, box.h);
+      ctx.drawImage(fitted, box.x, box.y);
     }
     if (isTrySession) stampSample(ctx, out.width, out.height);
     return out.toDataURL("image/jpeg", 0.92);
@@ -1606,7 +1648,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-1";
+    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-2";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1622,7 +1664,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-1");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-2");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1644,7 +1686,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-2"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
@@ -1889,7 +1931,7 @@
     }
     if (action === "use-silhouette") {
       isCaptureInProgress = true;
-      acceptPhotoDataUrl(makeSilhouetteDataUrl(720, 1280));
+      acceptPhotoDataUrl(makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h));
       return;
     }
     if (action === "retake-photo") {

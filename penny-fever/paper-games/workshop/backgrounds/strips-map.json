@@ -1,803 +1,3495 @@
 {
-  "slot_ref": {
-    "w": 416,
-    "h": 1232
-  },
-  "slot_boxes": [
+  "slot_design_left": [
     {
-      "x": 106,
-      "y": 19,
-      "w": 221,
-      "h": 262
+      "x": 100,
+      "y": 18,
+      "w": 208,
+      "h": 252
     },
     {
-      "x": 106,
-      "y": 283,
-      "w": 221,
-      "h": 266
+      "x": 100,
+      "y": 272,
+      "w": 208,
+      "h": 256
     },
     {
-      "x": 106,
-      "y": 648,
-      "w": 221,
-      "h": 270
+      "x": 100,
+      "y": 624,
+      "w": 208,
+      "h": 260
     },
     {
-      "x": 106,
-      "y": 922,
-      "w": 221,
-      "h": 283
+      "x": 100,
+      "y": 888,
+      "w": 208,
+      "h": 272
     }
   ],
+  "slot_rule": "left_half_of_dual; dual=2*web; sx=(2W)/784 sy=H/1186; ImageOps.fit cover center",
+  "freeze_target_portrait": {
+    "w": 1024,
+    "h": 1280,
+    "note": "booth freezes; cover-cropped per slot"
+  },
+  "size_hist": {
+    "416x1232": 96
+  },
   "backgrounds": [
     {
       "id": "bg_1",
-      "strip": "backgrounds/strips/bg_1.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_1.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_1_Enchanted_Forest_Glow/bg_1_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_1.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_1.jpg",
+      "source": "Set_1_Enchanted_Forest_Glow/bg_1_strip left-half"
     },
     {
       "id": "bg_2",
-      "strip": "backgrounds/strips/bg_2.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_2.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_2_Ocean_Wave_Serenity/bg_2_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_2.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_2.jpg",
+      "source": "Set_2_Ocean_Wave_Serenity/bg_2_strip left-half"
     },
     {
       "id": "bg_3",
-      "strip": "backgrounds/strips/bg_3.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_3.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_3_Cherry_Blossom_Whisper/bg_3_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_3.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_3.jpg",
+      "source": "Set_3_Cherry_Blossom_Whisper/bg_3_strip left-half"
     },
     {
       "id": "bg_4",
-      "strip": "backgrounds/strips/bg_4.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_4.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_4_Tropical_Paradise_Vibes/bg_4_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_4.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_4.jpg",
+      "source": "Set_4_Tropical_Paradise_Vibes/bg_4_strip left-half"
     },
     {
       "id": "bg_5",
-      "strip": "backgrounds/strips/bg_5.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_5.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_5_Sunflower_Sunshine/bg_5_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_5.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_5.jpg",
+      "source": "Set_5_Sunflower_Sunshine/bg_5_strip left-half"
     },
     {
       "id": "bg_6",
-      "strip": "backgrounds/strips/bg_6.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_6.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_6_Romantic_Rose_Bloom/bg_6_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_6.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_6.jpg",
+      "source": "Set_6_Romantic_Rose_Bloom/bg_6_strip left-half"
     },
     {
       "id": "bg_7",
-      "strip": "backgrounds/strips/bg_7.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_7.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_7_Cosmic_Planet_Odyssey/bg_7_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_7.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_7.jpg",
+      "source": "Set_7_Cosmic_Planet_Odyssey/bg_7_strip left-half"
     },
     {
       "id": "bg_8",
-      "strip": "backgrounds/strips/bg_8.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_8.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_8_Rainbow_Magic_Spectrum/bg_8_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_8.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_8.jpg",
+      "source": "Set_8_Rainbow_Magic_Spectrum/bg_8_strip left-half"
     },
     {
       "id": "bg_9",
-      "strip": "backgrounds/strips/bg_9.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_9.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_9_Construction_Zone_Alert/bg_9_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_9.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_9.jpg",
+      "source": "Set_9_Construction_Zone_Alert/bg_9_strip left-half"
     },
     {
       "id": "bg_10",
-      "strip": "backgrounds/strips/bg_10.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_10.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_10_Carnival_Carousel_Fun/bg_10_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_10.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_10.jpg",
+      "source": "Set_10_Carnival_Carousel_Fun/bg_10_strip left-half"
     },
     {
       "id": "bg_11",
-      "strip": "backgrounds/strips/bg_11.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_11.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_11_Mystic_Crystal_Fortune/bg_11_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_11.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_11.jpg",
+      "source": "Set_11_Mystic_Crystal_Fortune/bg_11_strip left-half"
     },
     {
       "id": "bg_12",
-      "strip": "backgrounds/strips/bg_12.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_12.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_12_Matryoshka_Nesting_Doll_Whimsy/bg_12_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_12.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_12.jpg",
+      "source": "Set_12_Matryoshka_Nesting_Doll_Whimsy/bg_12_strip left-half"
     },
     {
       "id": "bg_13",
-      "strip": "backgrounds/strips/bg_13.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_13.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_13_Cozy_Teddy_Bear_Ribbon_Cuddle/bg_13_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_13.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_13.jpg",
+      "source": "Set_13_Cozy_Teddy_Bear_Ribbon_Cuddle/bg_13_strip left-half"
     },
     {
       "id": "bg_14",
-      "strip": "backgrounds/strips/bg_14.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_14.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_14_Playful_Teddy_Bear_Party/bg_14_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_14.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_14.jpg",
+      "source": "Set_14_Playful_Teddy_Bear_Party/bg_14_strip left-half"
     },
     {
       "id": "bg_15",
-      "strip": "backgrounds/strips/bg_15.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_15.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_15_Enchanted_Fairy_Whispers/bg_15_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_15.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_15.jpg",
+      "source": "Set_15_Enchanted_Fairy_Whispers/bg_15_strip left-half"
     },
     {
       "id": "bg_16",
-      "strip": "backgrounds/strips/bg_16.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_16.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_16_Glamorous_Ballroom_Sparkle/bg_16_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_16.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_16.jpg",
+      "source": "Set_16_Glamorous_Ballroom_Sparkle/bg_16_strip left-half"
     },
     {
       "id": "bg_17",
-      "strip": "backgrounds/strips/bg_17.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_17.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_17_Adorable_Pet_Pals/bg_17_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_17.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_17.jpg",
+      "source": "Set_17_Adorable_Pet_Pals/bg_17_strip left-half"
     },
     {
       "id": "bg_18",
-      "strip": "backgrounds/strips/bg_18.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_18.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_18_Magical_Unicorn_Dreams/bg_18_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_18.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_18.jpg",
+      "source": "Set_18_Magical_Unicorn_Dreams/bg_18_strip left-half"
     },
     {
       "id": "bg_19",
-      "strip": "backgrounds/strips/bg_19.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_19.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_19_Fluttering_Butterfly_Garden/bg_19_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_19.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_19.jpg",
+      "source": "Set_19_Fluttering_Butterfly_Garden/bg_19_strip left-half"
     },
     {
       "id": "bg_20",
-      "strip": "backgrounds/strips/bg_20.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_20.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_20_Wise_Owl_Enchantment/bg_20_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_20.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_20.jpg",
+      "source": "Set_20_Wise_Owl_Enchantment/bg_20_strip left-half"
     },
     {
       "id": "bg_21",
-      "strip": "backgrounds/strips/bg_21.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_21.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_21_Majestic_Whale_Wonders/bg_21_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_21.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_21.jpg",
+      "source": "Set_21_Majestic_Whale_Wonders/bg_21_strip left-half"
     },
     {
       "id": "bg_22",
-      "strip": "backgrounds/strips/bg_22.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_22.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_22_Playful_Dolphin_Splash/bg_22_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_22.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_22.jpg",
+      "source": "Set_22_Playful_Dolphin_Splash/bg_22_strip left-half"
     },
     {
       "id": "bg_23",
-      "strip": "backgrounds/strips/bg_23.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_23.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_23_Snappy_Crocodile_Lagoon/bg_23_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_23.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_23.jpg",
+      "source": "Set_23_Snappy_Crocodile_Lagoon/bg_23_strip left-half"
     },
     {
       "id": "bg_24",
-      "strip": "backgrounds/strips/bg_24.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_24.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_24_Adorable_Safari_Squad/bg_24_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_24.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_24.jpg",
+      "source": "Set_24_Adorable_Safari_Squad/bg_24_strip left-half"
     },
     {
       "id": "bg_25",
-      "strip": "backgrounds/strips/bg_25.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_25.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_25_Elegant_Flamingo_Lagoon/bg_25_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_25.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_25.jpg",
+      "source": "Set_25_Elegant_Flamingo_Lagoon/bg_25_strip left-half"
     },
     {
       "id": "bg_26",
-      "strip": "backgrounds/strips/bg_26.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_26.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_26_Vibrant_Parrot_Paradise/bg_26_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_26.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_26.jpg",
+      "source": "Set_26_Vibrant_Parrot_Paradise/bg_26_strip left-half"
     },
     {
       "id": "bg_27",
-      "strip": "backgrounds/strips/bg_27.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_27.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_27_Mythical_Dragon_Realm/bg_27_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_27.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_27.jpg",
+      "source": "Set_27_Mythical_Dragon_Realm/bg_27_strip left-half"
     },
     {
       "id": "bg_28",
-      "strip": "backgrounds/strips/bg_28.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_28.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_28_Enchanting_Mushroom_Meadow/bg_28_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_28.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_28.jpg",
+      "source": "Set_28_Enchanting_Mushroom_Meadow/bg_28_strip left-half"
     },
     {
       "id": "bg_29",
-      "strip": "backgrounds/strips/bg_29.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_29.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_29_Vibrant_Coral_Reef_Magic/bg_29_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_29.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_29.jpg",
+      "source": "Set_29_Vibrant_Coral_Reef_Magic/bg_29_strip left-half"
     },
     {
       "id": "bg_30",
-      "strip": "backgrounds/strips/bg_30.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_30.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_30_Blooming_Bouquet_Bliss/bg_30_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_30.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_30.jpg",
+      "source": "Set_30_Blooming_Bouquet_Bliss/bg_30_strip left-half"
     },
     {
       "id": "bg_31",
-      "strip": "backgrounds/strips/bg_31.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_31.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_31_Celestial_Sun_Moon_Harmony/bg_31_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_31.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_31.jpg",
+      "source": "Set_31_Celestial_Sun_Moon_Harmony/bg_31_strip left-half"
     },
     {
       "id": "bg_32",
-      "strip": "backgrounds/strips/bg_32.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_32.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_32_Cuddly_Teddy_Bear_Baby_Bliss/bg_32_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_32.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_32.jpg",
+      "source": "Set_32_Cuddly_Teddy_Bear_Baby_Bliss/bg_32_strip left-half"
     },
     {
       "id": "bg_33",
-      "strip": "backgrounds/strips/bg_33.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_33.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_33_Adorable_Baby_Boy/bg_33_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_33.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_33.jpg",
+      "source": "Set_33_Adorable_Baby_Boy/bg_33_strip left-half"
     },
     {
       "id": "bg_34",
-      "strip": "backgrounds/strips/bg_34.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_34.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_34_Adorable_Baby_Girl/bg_34_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_34.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_34.jpg",
+      "source": "Set_34_Adorable_Baby_Girl/bg_34_strip left-half"
     },
     {
       "id": "bg_35",
-      "strip": "backgrounds/strips/bg_35.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_35.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_35_Glamorous_Champagne_Celebration/bg_35_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_35.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_35.jpg",
+      "source": "Set_35_Glamorous_Champagne_Celebration/bg_35_strip left-half"
     },
     {
       "id": "bg_36",
-      "strip": "backgrounds/strips/bg_36.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_36.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_36_Aussie_Day_Adventures/bg_36_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_36.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_36.jpg",
+      "source": "Set_36_Aussie_Day_Adventures/bg_36_strip left-half"
     },
     {
       "id": "bg_37",
-      "strip": "backgrounds/strips/bg_37.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_37.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_37_Aussie_Adventurers/bg_37_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_37.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_37.jpg",
+      "source": "Set_37_Aussie_Adventurers/bg_37_strip left-half"
     },
     {
       "id": "bg_38",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_38.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_38.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_38/bg_38_strip_web.jpg"
+      "source": "Set_38/bg_38_strip left-half"
     },
     {
       "id": "bg_39",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_39.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_39.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_39/bg_39_strip_web.jpg"
+      "source": "Set_39/bg_39_strip left-half"
     },
     {
       "id": "bg_40",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_40.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_40.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_40/bg_40_strip_web.jpg"
+      "source": "Set_40/bg_40_strip left-half"
     },
     {
       "id": "bg_41",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_41.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_41.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_41/bg_41_strip_web.jpg"
+      "source": "Set_41/bg_41_strip left-half"
     },
     {
       "id": "bg_42",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_42.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_42.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_42/bg_42_strip_web.jpg"
+      "source": "Set_42/bg_42_strip left-half"
     },
     {
       "id": "bg_43",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_43.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_43.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_43/bg_43_strip_web.jpg"
+      "source": "Set_43/bg_43_strip left-half"
     },
     {
       "id": "bg_44",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_44.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_44.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_44/bg_44_strip_web.jpg"
+      "source": "Set_44/bg_44_strip left-half"
     },
     {
       "id": "bg_45",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_45.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_45.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_45/bg_45_strip_web.jpg"
+      "source": "Set_45/bg_45_strip left-half"
     },
     {
       "id": "bg_46",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_46.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_46.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_46/bg_46_strip_web.jpg"
+      "source": "Set_46/bg_46_strip left-half"
     },
     {
       "id": "bg_47",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_47.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_47.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_47/bg_47_strip_web.jpg"
+      "source": "Set_47/bg_47_strip left-half"
     },
     {
       "id": "bg_48",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_48.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_48.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_48/bg_48_strip_web.jpg"
+      "source": "Set_48/bg_48_strip left-half"
     },
     {
       "id": "bg_49",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_49.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_49.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_49/bg_49_strip_web.jpg"
+      "source": "Set_49/bg_49_strip left-half"
     },
     {
       "id": "bg_50",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_50.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_50.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_50/bg_50_strip_web.jpg"
+      "source": "Set_50/bg_50_strip left-half"
     },
     {
       "id": "bg_51",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_51.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_51.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_51/bg_51_strip_web.jpg"
+      "source": "Set_51/bg_51_strip left-half"
     },
     {
       "id": "bg_52",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_52.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_52.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_52/bg_52_strip_web.jpg"
+      "source": "Set_52/bg_52_strip left-half"
     },
     {
       "id": "bg_53",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_53.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_53.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_53/bg_53_strip_web.jpg"
+      "source": "Set_53/bg_53_strip left-half"
     },
     {
       "id": "bg_54",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_54.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_54.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_54/bg_54_strip_web.jpg"
+      "source": "Set_54/bg_54_strip left-half"
     },
     {
       "id": "bg_55",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_55.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_55.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_55/bg_55_strip_web.jpg"
+      "source": "Set_55/bg_55_strip left-half"
     },
     {
       "id": "bg_56",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_56.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_56.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_56/bg_56_strip_web.jpg"
+      "source": "Set_56/bg_56_strip left-half"
     },
     {
       "id": "bg_57",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_57.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_57.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_57/bg_57_strip_web.jpg"
+      "source": "Set_57/bg_57_strip left-half"
     },
     {
       "id": "bg_58",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_58.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_58.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_58/bg_58_strip_web.jpg"
+      "source": "Set_58/bg_58_strip left-half"
     },
     {
       "id": "bg_59",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_59.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_59.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_59/bg_59_strip_web.jpg"
+      "source": "Set_59/bg_59_strip left-half"
     },
     {
       "id": "bg_60",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_60.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_60.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_60/bg_60_strip_web.jpg"
+      "source": "Set_60/bg_60_strip left-half"
     },
     {
       "id": "bg_61",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_61.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_61.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_61/bg_61_strip_web.jpg"
+      "source": "Set_61/bg_61_strip left-half"
     },
     {
       "id": "bg_62",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_62.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_62.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_62/bg_62_strip_web.jpg"
+      "source": "Set_62/bg_62_strip left-half"
     },
     {
       "id": "bg_63",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_63.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_63.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_63/bg_63_strip_web.jpg"
+      "source": "Set_63/bg_63_strip left-half"
     },
     {
       "id": "bg_64",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_64.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_64.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_64/bg_64_strip_web.jpg"
+      "source": "Set_64/bg_64_strip left-half"
     },
     {
       "id": "bg_65",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_65.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_65.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_65/bg_65_strip_web.jpg"
+      "source": "Set_65/bg_65_strip left-half"
     },
     {
       "id": "bg_66",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_66.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_66.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_66/bg_66_strip_web.jpg"
+      "source": "Set_66/bg_66_strip left-half"
     },
     {
       "id": "bg_67",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_67.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_67.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_67/bg_67_strip_web.jpg"
+      "source": "Set_67/bg_67_strip left-half"
     },
     {
       "id": "bg_68",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_68.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_68.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_68/bg_68_strip_web.jpg"
+      "source": "Set_68/bg_68_strip left-half"
     },
     {
       "id": "bg_69",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_69.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_69.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_69/bg_69_strip_web.jpg"
+      "source": "Set_69/bg_69_strip left-half"
     },
     {
       "id": "bg_70",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_70.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_70.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_70/bg_70_strip_web.jpg"
+      "source": "Set_70/bg_70_strip left-half"
     },
     {
       "id": "bg_71",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_71.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_71.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_71/bg_71_strip_web.jpg"
+      "source": "Set_71/bg_71_strip left-half"
     },
     {
       "id": "bg_72",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_72.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_72.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_72/bg_72_strip_web.jpg"
+      "source": "Set_72/bg_72_strip left-half"
     },
     {
       "id": "bg_73",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_73.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_73.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_73/bg_73_strip_web.jpg"
+      "source": "Set_73/bg_73_strip left-half"
     },
     {
       "id": "bg_74",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_74.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_74.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_74/bg_74_strip_web.jpg"
+      "source": "Set_74/bg_74_strip left-half"
     },
     {
       "id": "bg_75",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_75.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_75.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_75/bg_75_strip_web.jpg"
+      "source": "Set_75/bg_75_strip left-half"
     },
     {
       "id": "bg_76",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_76.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_76.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_76/bg_76_strip_web.jpg"
+      "source": "Set_76/bg_76_strip left-half"
     },
     {
       "id": "bg_77",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_77.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_77.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_77/bg_77_strip_web.jpg"
+      "source": "Set_77/bg_77_strip left-half"
     },
     {
       "id": "bg_78",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_78.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_78.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_78/bg_78_strip_web.jpg"
+      "source": "Set_78/bg_78_strip left-half"
     },
     {
       "id": "bg_79",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_79.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_79.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_79/bg_79_strip_web.jpg"
+      "source": "Set_79/bg_79_strip left-half"
     },
     {
       "id": "bg_80",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_80.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_80.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_80/bg_80_strip_web.jpg"
+      "source": "Set_80/bg_80_strip left-half"
     },
     {
       "id": "bg_81",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_81.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_81.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_81/bg_81_strip_web.jpg"
+      "source": "Set_81/bg_81_strip left-half"
     },
     {
       "id": "bg_82",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_82.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_82.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_82/bg_82_strip_web.jpg"
+      "source": "Set_82/bg_82_strip left-half"
     },
     {
       "id": "bg_83",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_83.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_83.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_83/bg_83_strip_web.jpg"
+      "source": "Set_83/bg_83_strip left-half"
     },
     {
       "id": "bg_84",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_84.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_84.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_84/bg_84_strip_web.jpg"
+      "source": "Set_84/bg_84_strip left-half"
     },
     {
       "id": "bg_85",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_85.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_85.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_85/bg_85_strip_web.jpg"
+      "source": "Set_85/bg_85_strip left-half"
     },
     {
       "id": "bg_86",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_86.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_86.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_86/bg_86_strip_web.jpg"
+      "source": "Set_86/bg_86_strip left-half"
     },
     {
       "id": "bg_87",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_87.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_87.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_87/bg_87_strip_web.jpg"
+      "source": "Set_87/bg_87_strip left-half"
     },
     {
       "id": "bg_88",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_88.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_88.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_88/bg_88_strip_web.jpg"
+      "source": "Set_88/bg_88_strip left-half"
     },
     {
       "id": "bg_89",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_89.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_89.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_89/bg_89_strip_web.jpg"
+      "source": "Set_89/bg_89_strip left-half"
     },
     {
       "id": "bg_90",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_90.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_90.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_90/bg_90_strip_web.jpg"
+      "source": "Set_90/bg_90_strip left-half"
     },
     {
       "id": "bg_91",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_91.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_91.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_91/bg_91_strip_web.jpg"
+      "source": "Set_91/bg_91_strip left-half"
     },
     {
       "id": "bg_92",
+      "width": 416,
+      "height": 1232,
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
       "strip": "backgrounds/strips/bg_92.jpg",
       "thumb": "backgrounds/strips/thumbs/bg_92.jpg",
-      "width": 392,
-      "height": 1186,
-      "source": "Set_92/bg_92_strip_web.jpg"
+      "source": "Set_92/bg_92_strip left-half"
     },
     {
       "id": "bg_93",
-      "strip": "backgrounds/strips/bg_93.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_93.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_93_Vintage_Floral_Lace/bg_93_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_93.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_93.jpg",
+      "source": "Set_93_Vintage_Floral_Lace/bg_93_strip left-half"
     },
     {
       "id": "bg_94",
-      "strip": "backgrounds/strips/bg_94.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_94.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_94_Street_Graffiti_Mono/bg_94_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_94.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_94.jpg",
+      "source": "Set_94_Street_Graffiti_Mono/bg_94_strip left-half"
     },
     {
       "id": "bg_95",
-      "strip": "backgrounds/strips/bg_95.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_95.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_95_Darwin_River_Rodeo/bg_95_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_95.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_95.jpg",
+      "source": "Set_95_Darwin_River_Rodeo/bg_95_strip left-half"
     },
     {
       "id": "bg_96",
-      "strip": "backgrounds/strips/bg_96.jpg",
-      "thumb": "backgrounds/strips/thumbs/bg_96.jpg",
       "width": 416,
       "height": 1232,
-      "source": "Set_96_Darwin_River_Tavern/bg_96_strip_web.jpg"
+      "dual_width": 832,
+      "dual_height": 1232,
+      "slot_boxes": [
+        {
+          "x": 106,
+          "y": 19,
+          "w": 221,
+          "h": 262
+        },
+        {
+          "x": 106,
+          "y": 283,
+          "w": 221,
+          "h": 266
+        },
+        {
+          "x": 106,
+          "y": 648,
+          "w": 221,
+          "h": 270
+        },
+        {
+          "x": 106,
+          "y": 922,
+          "w": 221,
+          "h": 283
+        }
+      ],
+      "strip": "backgrounds/strips/bg_96.jpg",
+      "thumb": "backgrounds/strips/thumbs/bg_96.jpg",
+      "source": "Set_96_Darwin_River_Tavern/bg_96_strip left-half"
     }
-  ],
-  "missing": []
+  ]
 }
