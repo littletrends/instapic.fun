@@ -197,7 +197,7 @@
     const designH = Math.max(1920, Math.ceil(vh / scale));
     boothStage.style.width = "1080px";
     boothStage.style.height = designH + "px";
-    boothStage.style.transformOrigin = "top center";
+    boothStage.style.transformOrigin = "center center";
     boothStage.style.transform = "scale(" + scale + ")";
   }
   fitStage();
@@ -1662,7 +1662,7 @@
     const a = document.getElementById("felixVipJoin");
     if (!a) return;
     const code = sessionCodeNow();
-    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-1";
+    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=center-1";
     let href = "/save.html?return=" + encodeURIComponent(ret);
     if (code) href += "&ticket_code=" + encodeURIComponent(code);
     a.href = href;
@@ -2021,7 +2021,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=pay-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=center-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =

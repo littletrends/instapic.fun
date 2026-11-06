@@ -11,7 +11,7 @@ html, body {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
   /* Cream papercut around the booth (any sub-pixel gap stays on-theme). */
@@ -25,7 +25,7 @@ html, body {
   height: 1920px;
   position: relative;
   flex-shrink: 0;
-  transform-origin: top center;
+  transform-origin: center center;
   overflow: hidden;
   background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
 }
@@ -274,7 +274,9 @@ section.screen.active[data-screen="PREPAID"] .screen-content {
   box-sizing: border-box !important;
   height: 100% !important;
   min-height: 100% !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
   padding: 48px 48px 40px !important;
   gap: 0.75rem !important;
 }
@@ -1288,4 +1290,55 @@ section.screen.active[data-screen="THANKYOU"] .screen-content,
 section.screen.active[data-screen="CASHIN"] .screen-content {
   justify-content: flex-start !important;
   padding-top: 64px !important;
+}
+
+/* Centre every booth screen in the canvas — left/right and top/bottom. */
+section.screen.active .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen,
+section.screen.active[data-screen="AWAKE"] .screen-content,
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen,
+section.screen.active[data-screen="PAYMENT"] .screen-content,
+section.screen.active[data-screen="TRY_INFO"] .screen-content,
+section.screen.active[data-screen="PRIVATE_EVENT"] .screen-content,
+section.screen.active[data-screen="CASHIN"] .screen-content,
+section.screen.active[data-screen="PREPAID"] .screen-content,
+section.screen.active[data-screen="BACKGROUNDS"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen,
+section.screen.active[data-screen="THANKYOU"] .screen-content,
+section.screen.active[data-screen="ERROR"] .screen-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+}
+section.screen.active[data-screen="LIVE"] .screen-content,
+section.screen.active[data-screen="LIVE"] .screen-content.live-screen {
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  align-items: center !important;
+  justify-content: center !important;
+}
+section.screen.active[data-screen="PAYMENT"] .title-main,
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="ATTRACT"] .attract-tagline,
+section.screen.active .title-main,
+section.screen.active .subtitle {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
