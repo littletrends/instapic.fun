@@ -503,23 +503,23 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=strip-web-3").then((r) => r.json());
+      const layout = await fetch("felix-layout.json?v=strip-web-4").then((r) => r.json());
+      // Locked 06/11/2026 Mother strip_web template — slots always from design_slots_left math.
+      if (layout.locked && Array.isArray(layout.design_slots_left) && layout.design_slots_left.length === 4) {
+        for (let i = 0; i < 4; i++) {
+          STRIP_SLOTS_LEFT[i] = layout.design_slots_left[i].map(Number);
+        }
+      }
       if (layout.slot_ref && layout.slot_ref.w && layout.slot_ref.h) {
         slotRef = { w: Number(layout.slot_ref.w) || SLOT_REF.w, h: Number(layout.slot_ref.h) || SLOT_REF.h };
       }
-      if (Array.isArray(layout.slot_boxes) && layout.slot_boxes.length === 4) {
-        slotBoxes = layout.slot_boxes.map((b) => ({
-          x: Number(b.x) || 0,
-          y: Number(b.y) || 0,
-          w: Number(b.w) || 1,
-          h: Number(b.h) || 1,
-        }));
-      }
+      // Prefer live scale from strip size; fall back to locked slot_boxes at slot_ref.
+      slotBoxes = slotsForStripSize(slotRef.w, slotRef.h);
       applyTemplateSlotCss();
     } catch (_) {}
     let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=strip-web-3").then((r) => r.json());
+      ids = await fetch("backgrounds.json?v=strip-web-4").then((r) => r.json());
     } catch (_) {
       ids = FREE_BGS.slice();
     }
@@ -1672,7 +1672,7 @@
     if (document.querySelector("link[data-pf-till-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-3";
+    link.href = "/penny-fever/world/ticket-till.css?v=strip-web-4";
     link.dataset.pfTillCss = "1";
     document.head.appendChild(link);
   }
@@ -1688,7 +1688,7 @@
     ensureTillCss();
     try {
       if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-3");
+        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=strip-web-4");
       }
       const mod = await auraTillLoading;
       if (typeof mod.mountTill === "function") mod.mountTill({});
@@ -1710,7 +1710,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-3"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=strip-web-4"
       );
       location.href =
         "/penny-fever/?till=photo&pkg=" +
