@@ -1,5 +1,9 @@
 {
-  "updated_at": "2026-11-06T19:27:52+09:30",
+  "updated_at": "2026-11-06T19:34:39+09:30",
+  "ui_font": "Unique.ttf",
+  "title_font": "Subotype Steady.otf",
+  "ui_family": "Unique",
+  "title_family": "Subotype Steady",
   "spots": [
     {
       "id": "attract.wake",

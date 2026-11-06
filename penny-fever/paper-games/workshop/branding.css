@@ -1,6 +1,50 @@
 /* =========================================================
-   INSTAPIC UI FONT (SAFE TEST)
+   INSTAPIC UI FONT — Unique + Subotype Steady, same as the machines.
+   Extra @font-face weights point at the same files so font-weight:800
+   stays Unique instead of falling back to system-ui.
    ========================================================= */
+@font-face{
+  font-family:"Unique";
+  src:url("fonts/Unique.ttf") format("truetype");
+  font-weight:100 900;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Unique";
+  src:url("fonts/Unique.ttf") format("truetype");
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Unique";
+  src:url("fonts/Unique.ttf") format("truetype");
+  font-weight:800;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Subotype Steady";
+  src:url("fonts/Subotype%20Steady.otf") format("opentype");
+  font-weight:100 900;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Subotype Steady";
+  src:url("fonts/Subotype%20Steady.otf") format("opentype");
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:"Subotype Steady";
+  src:url("fonts/Subotype%20Steady.otf") format("opentype");
+  font-weight:800;
+  font-style:normal;
+  font-display:swap;
+}
 
 /* ----------------------------------------------------------
    Instapic Magic Mirror – Branding Layer  FINAL CLEAN)
@@ -10,9 +54,9 @@
    ---------------------------------------------------------- */
 
 :root{
-  --instapic-ui-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --instapic-title-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --instapic-subtitle-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --instapic-ui-font: "Unique", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --instapic-title-font: "Subotype Steady", "Unique", system-ui, sans-serif;
+  --instapic-subtitle-font: "Subotype Steady", "Unique", system-ui, sans-serif;
 
   --instapic-pink: #ff5fa2;
   --instapic-pink-deep: #ff2f6c;
@@ -91,7 +135,7 @@ button.portal * {
   border: 1px solid transparent;
   padding: 10px 20px;
   font-size: 1.0rem;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--instapic-ui-font);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
