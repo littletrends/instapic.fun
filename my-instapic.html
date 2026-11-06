@@ -10,6 +10,27 @@
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="branding.css">
+  <style>
+    .pf-doorway{display:grid;justify-items:center;gap:.85rem;margin-top:1.25rem;text-align:center}
+    .pf-aura-trigger{display:grid;justify-items:center;gap:.55rem;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;font:700 .9rem/1.35 system-ui,sans-serif}
+    .pf-aura-trigger:focus-visible,.pf-game-door:focus-visible{outline:3px solid #f2d48a;outline-offset:5px}
+    .pf-aura-art{position:relative;display:block;width:min(170px,46vw);aspect-ratio:2/3;overflow:hidden;border:3px double #d2a65b;border-radius:48% 48% 10px 10px;background:radial-gradient(ellipse at top,#765027,#20180f 75%);box-shadow:0 0 22px #d2a65b24,0 12px 26px #0007;transition:transform .2s ease,box-shadow .2s ease}
+    .pf-aura-trigger:hover .pf-aura-art{transform:translateY(-3px);box-shadow:0 0 28px #d2a65b46,0 16px 30px #0008}
+    .pf-aura-art img{display:block;width:100%;height:100%;object-fit:contain;object-position:center 12%}
+    .pf-aura-boards{position:absolute;inset:27% 3% 18%;display:grid;align-content:center;justify-items:center;gap:.45rem;pointer-events:none}
+    .pf-aura-boards span{display:block;width:112%;padding:.48rem .2rem;border:1px solid #c9a36a88;background:linear-gradient(#7a4e2c,#5a3a22 55%,#3d2416);box-shadow:0 6px 12px #0008;color:#f6e2b8;font:800 .55rem/1.1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-8deg)}
+    .pf-aura-boards span+span{width:104%;font-size:.48rem;transform:rotate(6deg);opacity:.94}
+    .pf-aura-prompt{color:#d7bd91}
+    .pf-next-door{display:grid;justify-items:center;gap:.55rem;max-height:0;overflow:hidden;opacity:0;transform:translateY(8px);transition:max-height .38s ease,opacity .25s ease,transform .25s ease}
+    .pf-next-door[hidden]{display:none}
+    .pf-next-door.is-open{max-height:280px;opacity:1;transform:translateY(0)}
+    .pf-door-note{margin:0;color:#d0bea0;font:italic .95rem/1.4 Georgia,serif}
+    .pf-game-door{position:relative;display:flex;width:112px;height:142px;align-items:center;justify-content:center;border:3px double #e4bf77;border-radius:48% 48% 6px 6px;background:linear-gradient(90deg,#3b211b 0%,#68412b 48%,#362019 100%);box-shadow:inset 0 0 0 5px #241510,0 0 22px #d2a65b33;color:#f7e4b8;text-align:center;text-decoration:none;font:800 .68rem/1.25 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;transition:transform .18s ease,filter .18s ease}
+    .pf-game-door::before{content:"";position:absolute;inset:12px 11px 10px;border:1px solid #d2a65b77;border-radius:44% 44% 3px 3px;background:linear-gradient(90deg,transparent 49%,#d2a65b3b 50%,transparent 51%);pointer-events:none}
+    .pf-game-door::after{content:"";position:absolute;right:19px;top:54%;width:7px;height:7px;border-radius:50%;background:#f2d48a;box-shadow:0 0 8px #f2d48a88}
+    .pf-game-door:hover{transform:translateY(-3px);filter:brightness(1.14)}
+    @media(prefers-reduced-motion:reduce){.pf-aura-art,.pf-next-door,.pf-game-door{transition:none}}
+  </style>
 </head>
 <body class="page" data-page="my-instapic">
   <main class="card dashboard-page">
@@ -66,15 +87,25 @@
     </div>
 
     <div class="info-callout" id="pf-spot-card" style="margin-top:2rem;">
-      <h2>Play Penny Fever</h2>
+      <h2>Penny Fever · A Little Doorway</h2>
       <p id="pf-spot-summary">
         A little doorway under Instapic. This VIP Guest Area can lock in your pennies and alley spot, then you can come back from any phone.
       </p>
-      <p style="margin-top:1rem;">
-        <a id="pf-spot-continue" class="portal-button" href="penny-fever/index.html?style=paper&amp;rail=paper&amp;v=pf-door-1#door">
-          <span class="portal-label" id="pf-spot-label">Play Penny Fever</span>
-        </a>
-      </p>
+      <div class="pf-doorway">
+        <button id="pf-aura-trigger" class="pf-aura-trigger" type="button" aria-expanded="false" aria-controls="pf-next-door">
+          <span class="pf-aura-art" aria-hidden="true">
+            <img src="penny-fever/assets/restyle/paper-aura-seated.png" alt="" width="1024" height="1536" loading="lazy">
+            <span class="pf-aura-boards"><span>Under Construction</span><span>Paper Alley Ahead</span></span>
+          </span>
+          <span class="pf-aura-prompt">Tap Aura’s sign for a little door</span>
+        </button>
+        <div id="pf-next-door" class="pf-next-door" aria-live="polite" hidden>
+          <p class="pf-door-note">Aura has opened the way. Step through when you’re ready.</p>
+          <a id="pf-spot-continue" class="pf-game-door" href="penny-fever/index.html?style=paper&amp;rail=paper&amp;v=pf-door-1#door" aria-label="Enter Penny Fever">
+            <span class="portal-label" id="pf-spot-label">Enter Penny Fever</span>
+          </a>
+        </div>
+      </div>
     </div>
 
     <div class="info-callout" style="margin-top:2rem;">
@@ -127,6 +158,7 @@
   <script src="branding.js"></script>
   <script src="guest_identity.js?v=pf-door-1"></script>
   <script src="my_instapic_runtime.js?v=pf-door-1"></script>
+  <script src="assets/penny-fever-vip-door.js?v=vip-door-1"></script>
   <script src="guest_store_code_runtime.js"></script>
   <script src="guest_password_runtime.js"></script>
   <script src="guest_logout_runtime.js"></script>
