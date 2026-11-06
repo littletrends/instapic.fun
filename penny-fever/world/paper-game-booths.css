@@ -50,6 +50,38 @@ body .cabinet-interior.paper-game-cabinet {
 .paper-game-frame{display:block;flex:1 1 auto;width:100%;min-height:0;height:100%;border:0;background:#132831;}
 .paper-game-status{margin:0;padding:12px 18px;font:18px/1.45 Georgia,serif;background:#263c40;}
 .paper-game-status[hidden]{display:none;}
+.paper-door-desk{
+  flex:1;min-height:0;overflow:auto;padding:28px 22px 40px;
+  background:
+    radial-gradient(circle at 50% 0, #3a2a18 0, #1a1510 55%, #100d0a 100%);
+  color:#f3e4c6;
+}
+.paper-door-sign{
+  margin:0 0 10px;font:800 13px/1.2 system-ui,sans-serif;
+  letter-spacing:.14em;text-transform:uppercase;color:#e8b062;
+}
+.paper-door-greet{
+  margin:0 0 12px;max-width:34rem;font:italic 22px/1.35 Georgia,serif;
+}
+.paper-door-why{
+  margin:0 0 22px;max-width:34rem;font:18px/1.45 Georgia,serif;opacity:.92;
+}
+.paper-door-pad{
+  display:grid;gap:10px;max-width:28rem;
+  padding:16px;border:1px solid #ad9362;border-radius:12px;
+  background:#2a2116;
+}
+.paper-door-pad label{display:grid;gap:8px;font:16px/1.35 Georgia,serif;}
+.paper-door-pad input,.paper-door-pad textarea{
+  width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;
+  border:1px solid #8a7350;background:#140f0c;color:#f6e2b2;font:16px/1.4 Georgia,serif;
+}
+.paper-door-pad button{
+  justify-self:start;padding:10px 16px;border-radius:8px;
+  border:1px solid #a48c62;background:#233941;color:#f2d6a2;
+  font:18px/1.3 Georgia,serif;cursor:pointer;
+}
+.paper-door-thanks{margin:0;font:16px/1.4 Georgia,serif;color:#e8b062;}
 .paper-game-treasure{margin-left:auto;}
 .paper-game-treasure.is-prize-catch,
 #pfPocketChest.is-prize-catch{

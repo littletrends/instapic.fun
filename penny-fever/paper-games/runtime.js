@@ -4,7 +4,7 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=dress-3j';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isClosed,isUnderConstruction} from './stall-entry.js?v=felix-open-1';
+import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=park-doors-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -216,17 +216,18 @@ function move(e,type){if(e.cancelable)e.preventDefault();if(!playing)return;cons
 function dispose(){if(disposed)return;persist();disposed=true;stop();observer?.disconnect();abort.abort();engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
- if(isClosed(entry.id)){
+ await loadParkDoors();
+ if(embedded && parkDoorsLive() && isParkShut(entry.id)){
   document.title=entry.title+' · Penny Fever';
   $('#title').textContent=entry.title;
   $('#host').textContent=entry.host+"’s paper world";
+  const sign=parkSign(entry.id, entry.host);
   $('#intro').textContent=entry.blurb;
-  $('#instructions').textContent=isUnderConstruction(entry.id)?'Under construction 🔒. Come back later.':'This booth is closed for maintenance. Come back later.';
-  veil(entry.host,entry.title,isUnderConstruction(entry.id)?'Under construction 🔒. Come back later.':'Closed for maintenance. Come back later.','Back to the map');
+  $('#instructions').textContent=sign;
+  veil(entry.host,entry.title,sign,'Back to the alley');
   $('#begin').disabled=false;
   listen($('#begin'),'click',()=>{
-   if(embedded)tellRoom('leave',{id:entry.id});
-   else location.href='../index.html?style=paper&rail=paper&paperMap=1#paper-map';
+   tellRoom('leave',{id:entry.id});
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{

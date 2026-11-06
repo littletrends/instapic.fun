@@ -35,7 +35,8 @@ import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=tent-depth-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
-import {enterLabel, isClosed} from "../paper-games/stall-entry.js?v=felix-open-1";
+import {enterLabel} from "../paper-games/stall-entry.js?v=felix-open-1";
+import {isParkShut, loadParkDoors, parkSign} from "../paper-games/park-doors.js?v=park-doors-1";
 
 const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.png`;
 const STALLS = [
@@ -1171,7 +1172,6 @@ function stepOut(id) {
 function enterStallById(id) {
   if (!id) return false;
   id = playIdFor(id);
-  if (isClosed(id)) return false;
   if (!document.getElementById("cabinet-" + id)) return false;
   rememberAlleySpot(id);
   closeStallCard();
@@ -1727,18 +1727,21 @@ function syncStallCard(best) {
     if (enter) {
       if (best.kind === "stall") {
         enter.hidden = false;
-        if (isClosed(best.id)) {
-          enter.disabled = true;
-          enter.textContent = enterLabel(best.id);
+        enter.disabled = false;
+        if (isParkShut(best.id)) {
+          enter.textContent = "Step in";
+          if (lineEl) lineEl.textContent = parkSign(best.id, best.host);
         } else {
-          enter.disabled = false;
           enter.textContent = stallEnterLabel(best.id);
         }
       } else if (best.kind === "ride") {
-        const open = !isClosed(playIdFor(best.id)) && !!document.getElementById("cabinet-" + playIdFor(best.id));
-        enter.hidden = !open && !isClosed(playIdFor(best.id));
-        enter.disabled = !open;
-        enter.textContent = open ? stallEnterLabel(playIdFor(best.id)) : (isClosed(playIdFor(best.id)) ? "Under construction 🔒" : "Ride closed for maintenance");
+        const playId = playIdFor(best.id);
+        const shut = isParkShut(playId);
+        const cabinet = !!document.getElementById("cabinet-" + playId);
+        enter.hidden = !cabinet;
+        enter.disabled = !cabinet;
+        enter.textContent = shut ? "Step in" : stallEnterLabel(playId);
+        if (shut && lineEl) lineEl.textContent = parkSign(playId, best.host);
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;
@@ -2784,6 +2787,10 @@ function startNow() {
       return false;
     }
     bindHud();
+    loadParkDoors();
+    window.addEventListener("pennyfever:doors", () => {
+      if (nearest) syncStallCard(nearest);
+    });
   }
   api.ok = true;
   api.started = true;

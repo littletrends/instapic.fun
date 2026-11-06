@@ -1,7 +1,8 @@
 import {games} from '../paper-games/catalogue.js?v=center-1';
 import {spriteKey} from '../paper-games/prizes.js?v=ritual-3';
 import {frontUrl} from '../paper-games/sprites.js';
-import {doorKind, enterLabel, hasSat, markSat, isClosed} from '../paper-games/stall-entry.js?v=felix-open-1';
+import {doorKind, hasSat, markSat} from '../paper-games/stall-entry.js?v=felix-open-1';
+import {isParkShut, loadParkDoors, parkLabel, parkSign, leaveTentNote} from '../paper-games/park-doors.js?v=park-doors-1';
 
 const gameBase=new URL('../paper-games/',import.meta.url);
 export const paperGameRooms=games.filter(game=>game.ready&&!game.workshop).map(game=>({
@@ -155,8 +156,61 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
   frame.style.overscrollBehavior='none';
   stage.append(bar,status,frame);cabinet.append(stage);
  }
+ function hideDoorDesk(){
+  stage?.querySelector('.paper-door-desk')?.remove();
+  if(frame) frame.hidden=false;
+ }
+ function showDoorDesk(){
+  prepare();
+  unload();
+  hideDoorDesk();
+  if(frame) frame.hidden=true;
+  status.hidden=true;
+  const desk=doc.createElement('div');
+  desk.className='paper-door-desk';
+  const sign=doc.createElement('p');
+  sign.className='paper-door-sign';
+  sign.textContent=parkLabel(game.id);
+  const greet=doc.createElement('p');
+  greet.className='paper-door-greet';
+  greet.textContent=`“${game.blurb}”`;
+  const why=doc.createElement('p');
+  why.className='paper-door-why';
+  why.textContent=parkSign(game.id, game.host);
+  const pad=doc.createElement('form');
+  pad.className='paper-door-pad';
+  pad.innerHTML=`<label>Leave a note on ${game.host}’s notepad
+    <input name="name" maxlength="40" placeholder="Your name (optional)" autocomplete="nickname">
+    <textarea name="note" maxlength="200" rows="4" required placeholder="A little hello, a wish, a comment…"></textarea>
+  </label>
+  <button type="submit">Leave the note</button>
+  <p class="paper-door-thanks" hidden>Tucked under the clip. ${game.host} will see it.</p>`;
+  pad.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    const thanks=pad.querySelector('.paper-door-thanks');
+    const btn=pad.querySelector('button');
+    const note=pad.note.value.trim();
+    if(!note){thanks.hidden=false;thanks.textContent='Write a line first.';return;}
+    btn.disabled=true;
+    try{
+      const result=await leaveTentNote({stall:game.id, host:game.host, name:pad.name.value, note});
+      thanks.hidden=false;
+      thanks.textContent=result.ok
+        ? `Tucked under the clip. ${game.host} will see it.`
+        : 'The notepad is stuck. Try again in a moment.';
+      if(result.ok) pad.note.value='';
+    }catch{
+      thanks.hidden=false;
+      thanks.textContent='The notepad is stuck. Try again in a moment.';
+    }
+    btn.disabled=false;
+  });
+  desk.append(sign, greet, why, pad);
+  stage.append(desk);
+ }
  function unload(){
   clearTimeout(timer);timer=null;
+  hideDoorDesk();
   if(!frame)return;
   frame.onload=frame.onerror=null;
   stage?.querySelector('dialog[open]')?.close();
@@ -164,15 +218,17 @@ export function createPaperGameVendor(game,doc=globalThis.document,nav=globalThi
  }
  function load(restart=false){
   prepare();
+  loadParkDoors().then(()=>loadAfterDoors(restart));
+ }
+ function loadAfterDoors(restart=false){
+  if(isParkShut(game.id)){
+    showDoorDesk();
+    return;
+  }
+  hideDoorDesk();
   if(!restart&&frame.getAttribute('src')!=='about:blank')return;
   const PF=window.PennyFever;
   const door=doorKind(game.id);
-  if(door==='closed'||isClosed(game.id)){
-    unload();
-    status.hidden=false;
-    status.textContent=game.id==='snap'?'Felix’s Instapic photo booth is closed for maintenance. Come back later.':'Under construction 🔒. Come back later.';
-    return;
-  }
   if(door==='ticket'){
     if(!hasSat(game.id)){
       if(doorLock)return;

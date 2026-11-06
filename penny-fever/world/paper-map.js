@@ -1,5 +1,5 @@
 import {games} from '../paper-games/catalogue.js?v=briefs-2';
-import {isClosed} from '../paper-games/stall-entry.js?v=felix-open-1';
+import {isParkShut, loadParkDoors, parkSign} from '../paper-games/park-doors.js?v=park-doors-1';
 import {mountTill, openTill} from './ticket-till.js?v=bank-refresh-1';
 
 const root = document.createElement('main');
@@ -47,11 +47,7 @@ function showBooth(title, description) {
   if (!booth.open) booth.showModal();
 }
 function enterStall(game) {
-  if (isClosed(game.id)) {
-    showBooth(`${game.host} · ${game.title}`, isClosed(game.id)&&game.id!=='snap'?'Under construction 🔒. Come back later.':'Closed for maintenance. Come back later.');
-    return;
-  }
-  if (!api()?.getState?.()?.admitPassed) { aura(game); return; }
+  if (!api()?.getState?.()?.admitPassed && !isParkShut(game.id)) { aura(game); return; }
   booth.close();
   location.hash = 'cabinet/' + game.id;
 }
@@ -84,9 +80,9 @@ for (const game of games.filter(game => game.ready && !game.workshop)) {
   button.className = 'paper-map-stall';
   button.textContent = `${game.host} · ${game.title}`;
   button.onclick = () => {
-    showBooth(`${game.host} · ${game.title}`, game.blurb);
-    if (isClosed(game.id)) action(game.id!=='snap'?'Under construction 🔒':'Closed for maintenance', () => enterStall(game));
-    else action('Enter stall', () => enterStall(game));
+    const shut = isParkShut(game.id);
+    showBooth(`${game.host} · ${game.title}`, shut ? `${game.blurb}\n\n${parkSign(game.id, game.host)}` : game.blurb);
+    action(shut ? 'Greet / step in' : 'Enter stall', () => enterStall(game));
   };
   find('paperStalls').append(button);
 }
@@ -113,4 +109,5 @@ function sync() {
 }
 window.addEventListener('hashchange', sync);
 window.addEventListener('pennyfever:statechange', pocket);
+loadParkDoors().then(sync);
 sync();
