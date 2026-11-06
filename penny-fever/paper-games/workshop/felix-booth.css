@@ -47,6 +47,12 @@ html, body {
   transform: translate(-50%, -50%) rotate(-90deg) !important;
   transform-origin: center center !important;
 }
+/* Phone selfie camera is already portrait: no −90° turn, just fill + mirror. */
+#liveVideo.cam-portrait {
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate(-50%, -50%) !important;
+}
 #video-layer:not(.hidden) { z-index: 1; }
 .screen[data-screen="LIVE"].active { z-index: 2; }
 .screen[data-screen="LIVE"] .screen-content { padding: 0; }

@@ -946,8 +946,9 @@
       const even = (n) => Math.max(2, Math.round(n / 2) * 2);
       const canvas = document.createElement("canvas");
       // Same swap as video_capture_patch.js: canvas is portrait (sensor h × w).
-      canvas.width = even(h * scale);
-      canvas.height = even(w * scale);
+      const turn = w > h;
+      canvas.width = even((turn ? h : w) * scale);
+      canvas.height = even((turn ? w : h) * scale);
       const ctx = canvas.getContext("2d", { alpha: false });
       let stream = null;
       if (canvas.captureStream) stream = canvas.captureStream(REC_FPS);
@@ -1047,6 +1048,15 @@
     return c.toDataURL("image/jpeg", 0.92);
   }
 
+  // Booth sensor is landscape (needs the −90° turn); a phone selfie cam is portrait.
+  function camIsLandscape(video) {
+    return (video.videoWidth || 0) > (video.videoHeight || 0);
+  }
+  function syncCamOrientation() {
+    if (!liveVideo.videoWidth) return;
+    liveVideo.classList.toggle("cam-portrait", !camIsLandscape(liveVideo));
+  }
+
   function bakeLiveFrame(ctx, canvas, video) {
     const w = video.videoWidth;
     const h = video.videoHeight;
@@ -1055,6 +1065,14 @@
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.save();
+    if (!camIsLandscape(video)) {
+      // Phone front camera is already portrait: no −90° turn, mirror only.
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      return;
+    }
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.scale(1, -1);
@@ -1069,6 +1087,8 @@
     liveVideo.muted = true;
     liveVideo.playsInline = true;
     liveVideo.srcObject = stream;
+    liveVideo.addEventListener("loadedmetadata", syncCamOrientation);
+    liveVideo.addEventListener("resize", syncCamOrientation);
     try { screen.orientation?.lock?.("portrait"); } catch (_) {}
     return liveVideo.play().catch(() => {});
   }
@@ -1347,8 +1367,9 @@
     }
     const ctx = captureCanvas.getContext("2d");
     // Rotate into portrait — same as magic_mirror_v1/static/js/flow.js
-    captureCanvas.width = h;
-    captureCanvas.height = w;
+    const turn = w > h;
+    captureCanvas.width = turn ? h : w;
+    captureCanvas.height = turn ? w : h;
     bakeLiveFrame(ctx, captureCanvas, liveVideo);
     // Detect near-black frame
     try {
