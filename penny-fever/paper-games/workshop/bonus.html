@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Penny Fever · Game Bonus</title>
+  <style>
+    :root{color-scheme:dark;--ink:#f7f1ff;--muted:#c2b6d1;--pink:#ff5fa2;--gold:#ffc96c;--panel:#211932;--line:#59456d}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#593675 0,#1a1328 56%,#100d19 100%);color:var(--ink);font:500 16px/1.5 system-ui,sans-serif;min-height:100vh}
+    header{max-width:1100px;margin:auto;padding:20px;display:flex;justify-content:space-between;gap:12px;align-items:center}a{color:var(--gold)}.nav{font-weight:800;text-decoration:none}
+    main{max-width:1000px;margin:24px auto 60px;padding:0 20px}.hero,.session{background:linear-gradient(145deg,rgba(45,33,64,.97),rgba(25,20,37,.97));border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 55px #0005}
+    .hero{padding:clamp(22px,5vw,46px);text-align:center}.eyebrow{color:var(--gold);letter-spacing:.18em;font-size:.78rem;font-weight:900}.hero h1{font-size:clamp(2rem,6vw,4rem);line-height:1.03;margin:10px 0}.muted{color:var(--muted)}form{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:24px auto 8px;max-width:560px}input,button{font:inherit;border-radius:14px;padding:13px 16px}input{flex:1;min-width:210px;background:#100d19;color:var(--ink);border:1px solid #79618d;text-transform:uppercase;letter-spacing:.12em;font-weight:900}button{border:0;background:linear-gradient(120deg,var(--pink),#bb62ff);color:white;font-weight:900;cursor:pointer}.status{min-height:1.5em;color:#ffbdce;font-weight:700}.session{margin-top:22px;padding:clamp(18px,4vw,30px)}.session h2{margin:0 0 5px}.session-code{font-size:clamp(1.5rem,5vw,2.5rem);letter-spacing:.16em;color:var(--gold);font-weight:1000}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;margin-top:18px}.asset{background:#130f1d;border:1px solid #443555;border-radius:17px;padding:14px}.asset h3{margin:3px 0 12px}.asset img{display:block;width:100%;max-height:440px;object-fit:contain;background:#08070c;border-radius:10px}.asset a{display:inline-block;margin-top:12px;font-weight:800}.watermark{font-size:.75rem;color:var(--pink);font-weight:900;letter-spacing:.18em}.empty{display:none;margin-top:20px}.privacy{margin:22px 5px;color:var(--muted);font-size:.9rem;text-align:center}
+  </style>
+</head>
+<body>
+  <header><a class="nav" href="felix-booth.html">← Felix’s game booth</a><a class="nav" href="penny-fever-game-vip.html">Penny Fever Game VIP →</a></header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">PENNY FEVER · GAME BONUS</p>
+      <h1>Your game keepsakes</h1>
+      <p class="muted">Enter your PF game code to open the photo strip and bonus preview saved on this browser.</p>
+      <form id="redeem-form">
+        <input id="game-code" type="text" maxlength="9" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="PF-ABCDEF" aria-label="Penny Fever game code" required>
+        <button type="submit">OPEN MY BONUS</button>
+      </form>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+    <div id="bonus-results" aria-live="polite"></div>
+    <p class="privacy">Game bonus data is stored only in this browser. This page does not contact Instapic, MotherPC, or the real booth code system.</p>
+  </main>
+  <template id="session-template">
+    <section class="session">
+      <div class="eyebrow session-label"></div>
+      <h2>Penny Fever Game Code</h2>
+      <div class="session-code"></div>
+      <p class="muted saved-date"></p>
+      <div class="grid">
+        <article class="asset"><h3>Photo strip</h3><img class="strip" alt="Your Penny Fever photo strip"><a class="strip-download" download>Download strip</a></article>
+        <article class="asset"><h3>Game bonus preview</h3><p class="watermark">PENNY FEVER GAME SAMPLE</p><img class="bonus" alt="Your Penny Fever bonus preview"><a class="bonus-download" download>Download bonus preview</a></article>
+      </div>
+    </section>
+  </template>
+  <script>
+    (() => {
+      const STORAGE_KEY = "pennyFeverGameFiles";
+      const form = document.getElementById("redeem-form");
+      const input = document.getElementById("game-code");
+      const status = document.getElementById("status");
+      const results = document.getElementById("bonus-results");
+      const template = document.getElementById("session-template");
+      const codePattern = /^PF-[A-HJ-NP-Z]{6}$/;
+
+      function readFiles() {
+        try {
+          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          return Array.isArray(data) ? data.filter((file) => file && codePattern.test(String(file.code || ""))) : [];
+        } catch (_) { return []; }
+      }
+
+      function showCode(raw) {
+        const value = String(raw || "").trim().toUpperCase();
+        const code = codePattern.test(value) ? value : "";
+        results.replaceChildren();
+        if (!code) {
+          status.textContent = "Enter PF- followed by six letters. The letters I and O are not used.";
+          return;
+        }
+        const file = readFiles().find((item) => item.code === code);
+        if (!file) {
+          status.textContent = "That game code was not found in this browser. Real Instapic codes are not checked here.";
+          return;
+        }
+        const sessions = (Array.isArray(file.sessions) ? file.sessions : []).filter((session) =>
+          typeof session?.strip === "string" && session.strip.startsWith("data:image/")
+        );
+        if (!sessions.length) {
+          status.textContent = "This game code has no saved photo sessions.";
+          return;
+        }
+        status.textContent = `${sessions.length} game ${sessions.length === 1 ? "session" : "sessions"} opened.`;
+        sessions.slice().reverse().forEach((session, index) => {
+          const node = template.content.cloneNode(true);
+          node.querySelector(".session-label").textContent = `GAME SESSION ${sessions.length - index}`;
+          node.querySelector(".session-code").textContent = code;
+          const saved = session.savedAt ? new Date(session.savedAt) : null;
+          node.querySelector(".saved-date").textContent = saved && !Number.isNaN(saved.valueOf()) ? `Saved ${saved.toLocaleString()}` : "Saved Penny Fever game session";
+          const bonus = typeof session.bonus === "string" && session.bonus.startsWith("data:image/") ? session.bonus : session.strip;
+          node.querySelector(".strip").src = session.strip;
+          node.querySelector(".bonus").src = bonus;
+          node.querySelector(".strip-download").href = session.strip;
+          node.querySelector(".strip-download").download = `penny-fever-${code}-strip-${index + 1}.jpg`;
+          node.querySelector(".bonus-download").href = bonus;
+          node.querySelector(".bonus-download").download = `penny-fever-${code}-bonus-${index + 1}.jpg`;
+          results.append(node);
+        });
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        showCode(input.value);
+      });
+      const params = new URLSearchParams(location.search);
+      const queryCode = params.get("code") || "";
+      if (queryCode) {
+        input.value = queryCode;
+        showCode(queryCode);
+      }
+    })();
+  </script>
+</body>
+</html>

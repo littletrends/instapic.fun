@@ -1333,6 +1333,22 @@ section.screen.active[data-screen="DIGITAL"] .output-layout {
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* Keep live prompts clear of the Penny Fever game banner above the booth. */
+section.screen[data-screen="LIVE"] .overlay-top {
+  top: 15vh !important;
+}
+section.screen[data-screen="LIVE"] .lookup-overlay {
+  top: 11vh !important;
+  padding-top: 0 !important;
+}
+section.screen[data-screen="LIVE"] .countdown-overlay {
+  top: 12vh !important;
+  padding-top: 0 !important;
+}
+section.screen[data-screen="LIVE"] .countdown-overlay.is-ready {
+  top: 16vh !important;
+}
 section.screen.active[data-screen="PAYMENT"] .title-main,
 section.screen.active[data-screen="PAYMENT"] .subtitle,
 section.screen.active[data-screen="ATTRACT"] .attract-tagline,

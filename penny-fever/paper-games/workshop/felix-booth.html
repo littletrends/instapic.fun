@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Instapic Magic Mirror – Flow</title>
+  <title>Felix’s Penny Fever Photo Booth</title>
   <link rel="stylesheet" href="flow-booth.css?v=cam-portrait-1">
   <link rel="stylesheet" href="branding.css?v=cam-portrait-1">
   <link rel="stylesheet" href="patches.css?v=cam-portrait-1">
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=center-1">
+  <link rel="stylesheet" href="felix-booth.css?v=game-cues-2">
 </head>
 <body>
   <div id="turn-phone">
@@ -35,8 +35,8 @@
               <img src="img/instapic_logo.jpg" alt="Instapic">
             </div>
             <p class="attract-label"> </p>
-            <button class="portal-button" id="attractWakeButton" data-action="wake-mirror">
-              TAP TO WAKE<br>THE INSTAPIC<br>MAGICMIRROR
+              <button class="portal-button" id="attractWakeButton" data-action="wake-mirror">
+              TAP TO WAKE<br>FELIX’S GAME<br>PHOTO BOOTH
             </button>
             <p class="attract-tagline">✨ Moments Made Magical ✨</p>
           </div>
@@ -57,10 +57,8 @@
               </button>
             </div>
             <div class="awake-bottom">
-              <div class="awake-qr-label">Visit instapic.fun</div>
-              <div class="awake-qr">
-                <img class="awake-qr-img" src="img/instapic_fun.png" alt="Instapic QR">
-              </div>
+              <a class="awake-qr-label" href="penny-fever-game-vip.html">Penny Fever Game VIP</a>
+              <div class="awake-qr" aria-hidden="true">GAME FILES</div>
               <div class="awake-subtitle"></div>
             </div>
           </div>
@@ -121,7 +119,7 @@
                 TRY IT FIRST
               </button>
               <button class="btn btn-secondary" data-action="enter-prepaid" type="button">
-                I HAVE AN INSTAPIC CODE
+                I HAVE A PENNY FEVER GAME CODE
               </button>
             </div>
             <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
@@ -136,8 +134,8 @@
           <div class="screen-content">
             <h1 class="title-main">Try It Mode</h1>
             <p class="subtitle">
-              Two sample photos, then a preview. Printing stays off.
-              You’ll come back to payment if you want a real strip.
+              Take two quick sample photos, see a brief preview, then return to payment.
+              Try mode does not create a code or save a bonus.
             </p>
             <div class="button-row">
               <button class="btn btn-primary" data-action="enter-try-mode">
@@ -152,13 +150,13 @@
 
         <section class="screen" data-screen="PRIVATE_EVENT">
           <div class="screen-content">
-            <h1 class="title-main">Private Event</h1>
+            <h1 class="title-main">Game Event</h1>
             <p class="subtitle">
-              Tap your card on the reader to continue.
+              Event payment and real Instapic passes are not part of this game mock.
             </p>
             <div class="button-row">
               <button class="btn btn-primary" data-action="enter-prepaid">
-                I HAVE AN INSTAPIC CODE
+                OPEN A GAME BONUS
               </button>
               <button class="btn btn-secondary" data-action="event-back">
                 BACK
@@ -175,38 +173,38 @@
         
         <section class="screen" data-screen="CASHIN">
           <div class="screen-content">
-            <h1 class="title-main">Cash in Instapic code</h1>
+            <h1 class="title-main">Open Penny Fever Game Bonus</h1>
             <p class="subtitle" id="cashinSubtitle">
-              Enter a 6-digit Instapic code from a $5 / $8 / $10 Square package. It's checked with Instapic before your session starts.
+              Enter a Penny Fever PF code with six letters to open its game bonus. Real Instapic codes are not checked here.
             </p>
             <div class="code-input-wrapper">
               <input id="cashinCodeInput"
                      type="text"
-                     maxlength="6"
-                     inputmode="numeric"
-                     placeholder="6-digit code"
+                     maxlength="9"
+                     inputmode="text"
+                     placeholder="PF-ABCDEF"
                      autocomplete="off"
                      spellcheck="false">
             </div>
             <p id="cashinError" class="error-msg"></p>
             <div class="button-row">
               <button class="btn btn-secondary" data-action="cashin-back">BACK</button>
-              <button class="btn btn-primary" data-action="cashin-continue">CHECK CODE</button>
+              <button class="btn btn-primary" data-action="cashin-continue">OPEN GAME BONUS</button>
             </div>
           </div>
         </section>
         <section class="screen" data-screen="PREPAID">
           <div class="screen-content">
-            <h1 class="title-main">Instapic Code</h1>
+            <h1 class="title-main">Penny Fever Game Code</h1>
             <p class="subtitle">
-              Type the 6-digit code from Aura&rsquo;s Square pack or instapic.fun. Instapic checks it before the session starts.
+              Enter a PF game code with six letters to open its saved bonus. This does not start a photo session or check Instapic.
             </p>
             <div class="code-input-wrapper">
               <input id="prepaidCodeInput"
                      type="text"
-                     maxlength="6"
-                     inputmode="numeric"
-                     placeholder="Enter code"
+                     maxlength="9"
+                     inputmode="text"
+                     placeholder="PF-ABCDEF"
                      autocomplete="off"
                      autocorrect="off"
                      autocapitalize="off"
@@ -216,18 +214,32 @@
             <div class="keypad-wrapper">
               <p class="keypad-label">Touch to enter your code</p>
               <div class="keypad-grid">
-                <button class="keypad-key" data-key="1">1</button>
-                <button class="keypad-key" data-key="2">2</button>
-                <button class="keypad-key" data-key="3">3</button>
-                <button class="keypad-key" data-key="4">4</button>
-                <button class="keypad-key" data-key="5">5</button>
-                <button class="keypad-key" data-key="6">6</button>
-                <button class="keypad-key" data-key="7">7</button>
-                <button class="keypad-key" data-key="8">8</button>
-                <button class="keypad-key" data-key="9">9</button>
+                <button class="keypad-key" data-key="A">A</button>
+                <button class="keypad-key" data-key="B">B</button>
+                <button class="keypad-key" data-key="C">C</button>
+                <button class="keypad-key" data-key="D">D</button>
+                <button class="keypad-key" data-key="E">E</button>
+                <button class="keypad-key" data-key="F">F</button>
+                <button class="keypad-key" data-key="G">G</button>
+                <button class="keypad-key" data-key="H">H</button>
+                <button class="keypad-key" data-key="J">J</button>
+                <button class="keypad-key" data-key="K">K</button>
+                <button class="keypad-key" data-key="L">L</button>
+                <button class="keypad-key" data-key="M">M</button>
+                <button class="keypad-key" data-key="N">N</button>
+                <button class="keypad-key" data-key="P">P</button>
+                <button class="keypad-key" data-key="Q">Q</button>
+                <button class="keypad-key" data-key="R">R</button>
+                <button class="keypad-key" data-key="S">S</button>
+                <button class="keypad-key" data-key="T">T</button>
+                <button class="keypad-key" data-key="U">U</button>
+                <button class="keypad-key" data-key="V">V</button>
+                <button class="keypad-key" data-key="W">W</button>
+                <button class="keypad-key" data-key="X">X</button>
+                <button class="keypad-key" data-key="Y">Y</button>
+                <button class="keypad-key" data-key="Z">Z</button>
                 <button class="keypad-key keypad-key-wide" data-action="clear">CLEAR</button>
-                <button class="keypad-key" data-key="0">0</button>
-                <div class="keypad-key keypad-key-ok" aria-hidden="true"></div>
+                <div class="keypad-key keypad-key-ok" aria-hidden="true">PF-</div>
               </div>
               <div class="prepaid-actions-row">
                 <button class="btn btn-secondary prepaid-back" data-action="prepaid-back">BACK</button>
@@ -380,8 +392,8 @@
             <div class="instapic-print-preview-note" hidden>
               <div style="max-width:720px;margin:18px auto 0;padding:14px 18px;text-align:center;line-height:1.35;font-size:1.05rem;">
                 <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">Preview of your photo strip</div>
-                <div style="margin-bottom:6px;">Your 6-digit code is on the next screen.</div>
-                <div>Have your phone ready to save it.</div>
+                <div style="margin-bottom:6px;">Your Penny Fever game code is on the next screen.</div>
+                <div>It opens your game keepsake in this browser.</div>
               </div>
             </div>
             <div class="button-row felix-save-row">
@@ -389,7 +401,7 @@
               <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE TO SOCIALS</button>
             </div>
             <div class="button-row" id="bonusLinkRow">
-              <a class="btn btn-secondary" id="bonusLink" href="https://instapic.fun/bonus.html" target="_blank" rel="noopener">OPEN INSTAPIC BONUS</a>
+              <a class="btn btn-secondary" id="bonusLink" href="#">OPEN GAME BONUS</a>
             </div>
             <div class="button-row">
               <button class="btn btn-primary btn-big" data-action="print-now">
@@ -401,9 +413,9 @@
 
         <section class="screen" data-screen="DIGITAL">
           <div class="screen-content digital-screen">
-            <h1 class="title-main">Your Instapic Code</h1>
+            <h1 class="title-main">Your Penny Fever Game Code</h1>
             <p class="subtitle">
-              Your code is on this screen. Scan the QR for instapic.fun, then join VIP to keep this player.
+              Your game-only code opens the Penny Fever bonus and stays separate from real Instapic sessions.
             </p>
 
             <div class="output-group digital-code-group">
@@ -411,7 +423,7 @@
               <div id="sessionCodeDisplay" class="session-code-display"></div>
               <p id="sessionCountNote" class="subtitle small felix-session-count" hidden></p>
               <p class="subtitle small digital-code-hint">
-                Also printed small on the bottom of your photo strip.
+                Keep this PF code to reopen your game bonus on this browser.
               </p>
             </div>
 
@@ -421,12 +433,12 @@
               </div>
               <div class="output-options">
                 <div class="output-group digital-qr-group">
-                  <h2>Scan to open Instapic.fun</h2>
+                  <h2>Game keepsake</h2>
                   <div class="qr-placeholder has-qr" id="qrPlaceholder">
-                    <img class="qr-image-instapic instapic-digital-qr" src="img/instapic_fun.png" alt="Scan to open instapic.fun">
+                    <img class="qr-image-instapic instapic-digital-qr" src="img/instapic_logo.jpg" alt="Penny Fever game keepsake">
                   </div>
-                  <a class="btn btn-primary portal-button" id="felixVipJoin" href="/save.html">
-                    JOIN VIP · SAVE
+                  <a class="btn btn-primary portal-button" id="felixVipJoin" href="penny-fever-game-vip.html">
+                    OPEN GAME VIP
                   </a>
                 </div>
                 <div class="button-row">
@@ -485,6 +497,6 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=center-1"></script>
+  <script src="felix-booth.js?v=game-codes-local-2"></script>
 </body>
 </html>

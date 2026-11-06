@@ -17,13 +17,11 @@
   };
 
   const FREE_BGS = ["bg_1", "bg_3", "bg_11", "bg_17", "bg_30", "bg_43"];
-  // Guests SEE the Set single strip (bg_N_strip_web). Dual print art stays in
-  // backgrounds/bg_N.jpg only for MotherPC upload parity with the real booth.
+  // The game mock uses its local strip artwork and keepsakes only.
   function bgThumb(id) { return "backgrounds/strips/thumbs/" + id + ".jpg"; }
   function bgFull(id) { return "backgrounds/strips/" + id + ".jpg"; }
-  function bgDualPrint(id) { return "backgrounds/" + id + ".jpg"; }
   const TRY_SAMPLE_ID = "bg_11";
-  // MotherPC bonus_pipeline STRIP_SLOTS left column on 784×1186 design grid.
+  // Felix strip layout's left column on the 784×1186 design grid.
   const STRIP_SLOTS_LEFT = [
     [100, 18, 208, 252],
     [100, 272, 208, 256],
@@ -33,44 +31,21 @@
   const SLOT_REF = { w: 416, h: 1232 }; // left half of current 832×1232 dual
   const FREEZE_PORTRAIT = { w: 1024, h: 1280 };
   const LIVE_AUTOSTART_MS = 400;
+  const TRY_PREVIEW_MS = 8000;
   const MAX_RETAKES_PER_SESSION = 2;
-  // MotherPC (existing Instapic backend, via its Tailscale Funnel). Felix only
-  // CALLS existing endpoints: redeem-ticket, commit-used, create-ticket,
-  // receive-assets. Real money is taken at Aura's booth (world/ticket-till.js).
-  const API_BASE = "https://motherpc.taild1a44c.ts.net";
-  const PHOTO_CODES_KEY = "pf-photo-codes"; // shared with Aura's till
-  // Legacy Payment Links — no longer used by Felix (kept for reference only).
-  const SQUARE_LINKS = {
-    P2: { url: "https://square.link/u/1XR6t22j", credits: 2, label: "$5 · 10 pennies · 2 sessions" },
-    P4: { url: "https://square.link/u/mJbnOorC", credits: 4, label: "$8 · 16 pennies · 4 sessions" },
-    P6: { url: "https://square.link/u/9idvZ3go", credits: 6, label: "$10 · 20 pennies · 6 sessions" },
-  };
+  const GAME_FILES_KEY = "pennyFeverGameFiles";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
   };
-  // Portal circles = penny purchase. Short purse → Aura penny top-up (PF_ROLL), not Square photo.
-  // Square photo packs use Felix-only MotherPC ids (FELIX_*), 500/800/1000¢.
+  // Game portals spend Penny Fever pennies for local photo sessions.
   const PORTAL_PACKS = {
     "pay-p2": { pkg: "FELIX_P1_STRIP", pennies: 10, sessions: 2, dollars: "$5", label: "Pair pack" },
     "pay-p4": { pkg: "FELIX_P2_STRIP_GIF", pennies: 16, sessions: 4, dollars: "$8", label: "Fun pack" },
     "pay-p6": { pkg: "FELIX_P3_STRIP_GIF", pennies: 20, sessions: 6, dollars: "$10", label: "Crew pack" },
   };
-  const PENNY_TOPUP_PACK = "PF_ROLL"; // Aura's $5 · 10 pennies
   let pendingPennyPack = null;
   let pendingUnlockBg = null;
-  const CASHIN_CREDITS = { p2: 2, p4: 4, p6: 6 };
-  // Lorie (05/11/2026): $7 = 2 Felix sessions, $13 = 4, $18 = 6. Keyed by the
-  // Instapic package_id MotherPC stores on the code (WEBSITE_PACKAGES).
-  const SESSIONS_BY_PKG = {
-    FELIX_P1_STRIP: 2,
-    FELIX_P2_STRIP_GIF: 4,
-    FELIX_P3_STRIP_GIF: 6,
-    // Fallback if an old deep-link still sends website/real-booth ids.
-    P1_STRIP: 2,
-    P2_STRIP_GIF: 4,
-    P3_STRIP_GIF: 6,
-  };
   // Booth-style session video (same contract as the Magic Mirror
   // video_capture_patch.js: one continuous upright clip, field "video",
   // file session_video.mp4|webm, max 40 s). Phone-friendly size.
@@ -103,7 +78,7 @@
       h: Math.max(1, Math.round(h * sy)),
     }));
   }
-  // Default = MotherPC slots for 416×1232 strip_web (left half of 832 dual).
+  // Default strip slot geometry at 416×1232.
   const DEFAULT_SLOT_BOXES = slotsForStripSize(SLOT_REF.w, SLOT_REF.h);
 
   const screens = [...document.querySelectorAll(".screen")];
@@ -152,6 +127,7 @@
   let currentScreen = Screen.ATTRACT;
   let isTrySession = false;
   let hasCommitted = false;
+  const requestedGameCode = String(new URLSearchParams(location.search).get("gameCode") || "").trim().toUpperCase();
   let videoStream = null;
   let cameraAvailable = null; // null=unknown, true=ready, false=failed/denied
   let cameraErrorName = "";
@@ -175,12 +151,9 @@
   let reviewMode = false;
   let selectedSlotIndex = 0;
   let lastCompositeUrl = null;
-  let localSessionCode = "";
-  // Real Instapic code for this session once MotherPC has approved it.
-  let serverCode = "";
+  let localSessionCode = /^PF-[A-HJ-NP-Z]{6}$/.test(requestedGameCode) ? requestedGameCode : "";
   let bonusState = "idle"; // idle | working | ready | failed
   let bonusSessionKey = "";
-  let pendingCashinPkg = "p2";
   // { no, total, left } for multi-session codes ($5/$8/$10 packages).
   let sessionInfo = null;
   let rec = null; // active MediaRecorder state
@@ -304,28 +277,40 @@
     }
     return readLs(LS.tickets, 0);
   }
-  function photoCodes() {
+  function readGameFiles() {
     try {
-      const list = JSON.parse(localStorage.getItem(PHOTO_CODES_KEY) || "[]");
-      return Array.isArray(list) ? list.filter((r) => r && /^\d{6}$/.test(String(r.code))) : [];
+      const files = JSON.parse(localStorage.getItem(GAME_FILES_KEY) || "[]");
+      return Array.isArray(files)
+        ? files.filter((file) => file && /^PF-[A-HJ-NP-Z]{6}$/.test(String(file.code || "")))
+        : [];
     } catch (_) {
       return [];
     }
   }
-  function savePhotoCodes(list) {
-    try { localStorage.setItem(PHOTO_CODES_KEY, JSON.stringify(list)); } catch (_) {}
+  function writeGameFiles(files) {
+    try {
+      localStorage.setItem(GAME_FILES_KEY, JSON.stringify(files));
+      return true;
+    } catch (_) {
+      showError("This browser is out of space. Download your strip, then clear old game keepsakes.");
+      return false;
+    }
   }
-  // Booth credits = Square-approved Instapic codes bought at Aura's booth.
-  function sessionsForPkg(pkg) {
-    return SESSIONS_BY_PKG[String(pkg || "").toUpperCase()] || 1;
+  function findGameFile(code) {
+    const normalized = String(code || "").trim().toUpperCase();
+    return readGameFiles().find((file) => file.code === normalized) || null;
   }
-  function codeTotal(r) {
-    const n = Number(r && r.total);
-    return Number.isFinite(n) && n > 0 ? Math.floor(n) : sessionsForPkg(r && r.pkg);
-  }
-  function codeLeft(r) {
-    const n = Number(r && r.left);
-    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : codeTotal(r);
+  function generateGameCode() {
+    const existing = new Set(readGameFiles().map((file) => file.code));
+    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const values = new Uint32Array(6);
+      if (window.crypto?.getRandomValues) window.crypto.getRandomValues(values);
+      else for (let i = 0; i < values.length; i += 1) values[i] = Math.floor(Math.random() * 0x100000000);
+      const code = "PF-" + Array.from(values, (value) => letters[value % letters.length]).join("");
+      if (!existing.has(code)) return code;
+    }
+    return "PF-" + Array.from({ length: 6 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
   }
   function getLocalSessions() {
     return readLs(LS.credits, 0);
@@ -341,7 +326,7 @@
     return true;
   }
   function getCredits() {
-    return photoCodes().reduce((sum, r) => sum + codeLeft(r), 0) + getLocalSessions();
+    return getLocalSessions();
   }
   function spendPennies(amount) {
     const PF = fever();
@@ -364,68 +349,6 @@
     if (store && store.playTickets != null) writeFeverStoreField("playTickets", next);
     writeLS(LS.tickets, next);
     return true;
-  }
-  async function api(path, body) {
-    const res = await fetch(API_BASE + path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    const data = await res.json().catch(() => ({}));
-    return { res, data };
-  }
-  // Server check: only an ISSUED Instapic code becomes a session.
-  async function redeemCode(code) {
-    const { res, data } = await api("/api/redeem-ticket", { ticket_code: code });
-    if (res.ok && data.ok) return { ok: true, ticket: data.ticket || {} };
-    if (res.status === 409) return { ok: false, used: true, status: data.status || "" };
-    if (res.status === 404) return { ok: false, missing: true };
-    return { ok: false, error: data.error || "HTTP " + res.status };
-  }
-  // One Instapic code = N Felix sessions (2/4/6 by package). MotherPC's
-  // redeem-ticket is single-shot (ISSUED -> REDEEMED), so the first session
-  // redeems on the server and later sessions on the same code run from this
-  // wallet record; commit-used / receive-assets accept a USED code again.
-  async function useCreditCode(onlyCode) {
-    const list = photoCodes();
-    const idx = onlyCode ? list.findIndex((r) => String(r.code) === String(onlyCode)) : list.findIndex((r) => codeLeft(r) > 0);
-    const rec = list[idx];
-    if (!rec || codeLeft(rec) < 1) return { ok: false, error: "none" };
-    let check;
-    try {
-      check = await redeemCode(rec.code);
-    } catch (_) {
-      return { ok: false, error: "offline" };
-    }
-    const status = check.status || "";
-    const okFirst = check.ok;
-    // Already redeemed by this wallet (earlier session) or an interrupted first run.
-    const okAgain = check.used && (status === "REDEEMED" || (rec.redeemed && status === "USED"));
-    if (okFirst || okAgain) {
-      if (okFirst && check.ticket && check.ticket.package_id) rec.pkg = String(check.ticket.package_id);
-      const total = codeTotal(rec);
-      const left = codeLeft(rec);
-      rec.total = total;
-      rec.left = left - 1;
-      rec.redeemed = true;
-      const rest = list.filter((_, i) => i !== idx);
-      savePhotoCodes(rec.left > 0 ? [rec, ...rest] : rest);
-      return { ok: true, code: rec.code, info: { no: total - left + 1, total, left: rec.left } };
-    }
-    if (check.used || check.missing) savePhotoCodes(list.filter((_, i) => i !== idx));
-    return { ok: false, error: check.used ? "used" : check.missing ? "missing" : check.error };
-  }
-  // A code typed in by hand: first redeem decides how many sessions it holds.
-  function rememberTypedCode(code, ticket) {
-    const pkg = String((ticket && ticket.package_id) || "");
-    const total = sessionsForPkg(pkg);
-    const info = { no: 1, total, left: total - 1 };
-    if (info.left > 0) {
-      const list = photoCodes().filter((r) => String(r.code) !== String(code));
-      list.unshift({ code, pkg, total, left: info.left, redeemed: true, source: "typed", ts: Date.now() });
-      savePhotoCodes(list);
-    }
-    return info;
   }
   function creditPennies(n) {
     const PF = fever();
@@ -744,8 +667,11 @@
     isTrySession = false;
     hasCommitted = true;
     totalPoses = 4;
-    serverCode = code && /^\d{6}$/.test(code) ? code : "";
-    localSessionCode = serverCode;
+    const requested = String(code || localSessionCode || requestedGameCode || "").trim().toUpperCase();
+    localSessionCode = /^PF-[A-HJ-NP-Z]{6}$/.test(requested) && findGameFile(requested) ? requested : "";
+    // Issue the separate game code when the paid game session starts, then
+    // attach the finished strip to this same file on the DIGITAL screen.
+    prepareGameCode();
     bonusState = "idle";
     bonusSessionKey = String(Date.now());
     resetPhotoState();
@@ -765,7 +691,6 @@
     hasCommitted = false;
     totalPoses = 2;
     localSessionCode = "";
-    serverCode = "";
     bonusState = "idle";
     resetPhotoState();
     const ordered = [
@@ -773,17 +698,27 @@
       ...allBackgroundIds.filter((id) => !isFreeBg(id)),
     ];
     rebuildBackgroundGrid(ordered.length ? ordered : FREE_BGS.slice());
-    if (!currentBackground || currentBackground.locked) selectBackground(sampleBackground());
+    selectBackground(sampleBackground());
     updateBonusLinks();
-    showScreen(Screen.BACKGROUNDS);
+    showScreen(Screen.LIVE);
   }
 
-  // ---- Bonus pack: hand the session to MotherPC's existing pipeline ----
-  // Same path the Magic Mirror kiosks use: commit-used -> receive-assets with
-  // freeze_1..4.jpg (+ dual print strip). Display uses Set bg_N_strip_web;
-  // MotherPC still keys the bonus pack off bg_id bg_N → Set_N.
-  function hasInstapicCode() {
-    return /^\d{6}$/.test(String(serverCode || localSessionCode || ""));
+  // Game keepsakes stay in this browser and use PF-prefixed codes that the
+  // real booth's six-digit ticket system cannot redeem.
+  function hasGameCode() {
+    return /^PF-[A-HJ-NP-Z]{6}$/.test(String(localSessionCode || ""));
+  }
+
+  function prepareGameCode() {
+    if (!hasGameCode()) localSessionCode = generateGameCode();
+    const files = readGameFiles();
+    if (!files.some((file) => file.code === localSessionCode)) {
+      files.unshift({ code: localSessionCode, sessions: [], savedAt: new Date().toISOString() });
+      if (!writeGameFiles(files)) {
+        console.warn("Felix game code could not be saved yet; it will retry on the final screen.");
+      }
+    }
+    return localSessionCode;
   }
 
   function setBonusUi(state, msg) {
@@ -792,36 +727,22 @@
     const retry = document.getElementById("retryBonusBtn");
     const status = document.getElementById("bonusStatus");
     const row = document.querySelector(".felix-bonus-row");
-    const hide = state === "none" || !hasInstapicCode();
+    const hide = state === "none" || !hasGameCode();
     if (status) status.textContent = hide ? "" : (msg || "");
     if (row) row.hidden = hide;
     if (btn) {
-      const ready = state === "ready" && hasInstapicCode();
+      const ready = state === "ready" && hasGameCode();
       btn.hidden = hide;
       btn.classList.toggle("is-disabled", !ready);
       btn.setAttribute("aria-disabled", String(!ready));
-      btn.href = ready ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(serverCode) : "#";
-      btn.textContent = ready ? "GO TO MY BONUS" : "MAKING YOUR BONUS\u2026";
+      btn.href = ready ? "bonus.html?code=" + encodeURIComponent(localSessionCode) : "#";
+      btn.textContent = ready ? "OPEN GAME BONUS" : "SAVING GAME BONUS\u2026";
     }
     if (retry) retry.hidden = hide || state !== "failed";
   }
 
-  function dataUrlToBlob(dataUrl) {
-    return fetch(dataUrl).then((r) => r.blob());
-  }
-
-  async function freezeBlob(i) {
-    const src = capturedPhotos[i] || makeSilhouetteDataUrl(FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h);
-    const img = await loadImage(src);
-    const c = document.createElement("canvas");
-    c.width = img.naturalWidth || img.width;
-    c.height = img.naturalHeight || img.height;
-    c.getContext("2d").drawImage(img, 0, 0);
-    return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.92));
-  }
-
   async function makeBonusPack() {
-    if (isTrySession || !hasInstapicCode()) {
+    if (isTrySession) {
       setBonusUi("none", "");
       return;
     }
@@ -829,54 +750,52 @@
       setBonusUi(bonusState, bonusState === "ready" ? "Bonus pack ready." : "Making your bonus pack\u2026");
       return;
     }
-    setBonusUi("working", "Making your bonus pack\u2026");
+    // Show the game-only code before doing image work. Strip rendering can
+    // take a moment on phones; the guest should still see the code if preview
+    // composition is slow or fails.
+    const code = prepareGameCode();
+    if (sessionCodeDisplay) sessionCodeDisplay.textContent = code;
+    adjustDigitalScreenForMode();
+    paintDigitalQr();
+    paintDigitalVipJoin();
+    updateBonusLinks();
+    setBonusUi("working", "Saving your game keepsake\u2026");
     try {
-      const bgId = currentBackground?.id || TRY_SAMPLE_ID;
-      const commit = await api("/api/commit-used", { ticket_code: serverCode, bg_id: bgId });
-      if (!commit.res.ok || !commit.data.ok) throw new Error("commit " + (commit.data.error || commit.res.status));
+      const files = readGameFiles();
+      let file = files.find((item) => item.code === code);
+      if (!file) {
+        file = { code, sessions: [], savedAt: new Date().toISOString() };
+        files.unshift(file);
+      }
+      if (!Array.isArray(file.sessions)) file.sessions = [];
+      const session = { strip: "", bonus: "", savedAt: new Date().toISOString() };
+      file.sessions.push(session);
+      file.savedAt = new Date().toISOString();
+      if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
       if (!lastCompositeUrl) await buildStrip();
-      // Real booth uploads the dual print strip (booth_print_strip.jpg). Match that
-      // contract; guests still only see the single strip_web composite on screen.
-      const dualUrl = await buildDualStripForUpload();
-      const form = new FormData();
-      form.append("ticket_code", serverCode);
-      form.append("bg_id", bgId);
-      form.append("booth_id", "FELIX");
-      for (let i = 0; i < 4; i++) {
-        const blob = await freezeBlob(i);
-        if (blob) form.append("freeze_" + (i + 1), blob, "freeze_" + (i + 1) + ".jpg");
-      }
-      if (dualUrl) {
-        const dualBlob = await dataUrlToBlob(dualUrl);
-        form.append("strip", dualBlob, "felix_strip.jpg");
-        form.append("booth_print_strip.jpg", dualBlob, "booth_print_strip.jpg");
-      }
-      // Booth contract: MotherPC builds collage / GIF / boomerang from
-      // assets/video/session_video.(mp4|webm).
-      stopRecording("pre-upload");
-      const vid = await waitForSessionVideo(7000);
-      if (vid && vid.blob && vid.blob.size > 1000) {
-        form.append("video", vid.blob, "session_video." + vid.ext);
-      }
-      const up = await fetch(API_BASE + "/api/receive-assets", { method: "POST", body: form });
-      const upData = await up.json().catch(() => ({}));
-      if (!up.ok || !upData.ok) throw new Error("upload " + (upData.error || up.status));
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCodeNow() || serverCode;
+      session.strip = lastCompositeUrl;
+      session.bonus = lastCompositeUrl;
+      session.savedAt = new Date().toISOString();
+      file.savedAt = session.savedAt;
+      if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = code;
+      adjustDigitalScreenForMode();
       paintDigitalQr();
       paintDigitalVipJoin();
-      setBonusUi("ready", "Bonus pack ready. Your code is " + serverCode + "." + sessionNoteSuffix());
+      updateBonusLinks();
+      setBonusUi("ready", "Game code " + code + " saved in this browser. It cannot open a real booth session.");
     } catch (err) {
       console.warn("Felix bonus", err);
-      setBonusUi("failed", "Couldn't make the bonus pack just now. Your strip is safe \u2014 tap Try again.");
+      setBonusUi("failed", "Couldn't save the game keepsake. Keep this page open and try again.");
     }
   }
 
   function updateBonusLinks() {
     const code = localSessionCode || "";
-    const showBonus = !isTrySession && hasInstapicCode();
+    const showBonus = !isTrySession && hasGameCode();
     const url = showBonus
-      ? "https://instapic.fun/bonus.html?code=" + encodeURIComponent(code)
-      : "https://instapic.fun/bonus.html";
+      ? "bonus.html?code=" + encodeURIComponent(code)
+      : "#";
     if (bonusLink) {
       bonusLink.href = showBonus ? url : "#";
       bonusLink.hidden = !showBonus;
@@ -892,10 +811,6 @@
     }
   }
 
-  function sessionNoteSuffix() {
-    if (!sessionInfo || sessionInfo.total < 2) return "";
-    return " Your bonus page shows your latest session \u2014 save each strip.";
-  }
   function renderSessionCount() {
     const el = document.getElementById("sessionCountNote");
     if (!el) return;
@@ -906,10 +821,10 @@
     }
     el.hidden = false;
     el.textContent =
-      "Session " + sessionInfo.no + " of " + sessionInfo.total + " \u00b7 " +
+      "Game session " + sessionInfo.no + " of " + sessionInfo.total + " \u00b7 " +
       (sessionInfo.left > 0
-        ? sessionInfo.left + (sessionInfo.left === 1 ? " session" : " sessions") + " left on this code"
-        : "last session on this code");
+        ? sessionInfo.left + (sessionInfo.left === 1 ? " game session" : " game sessions") + " left"
+        : "last game session in this pack");
   }
 
   // ---- Session video (booth-style MediaRecorder) ----
@@ -932,7 +847,7 @@
   }
   function startRecording(attempt) {
     try {
-      if (isTrySession || !serverCode || rec || recPromise) return;
+      if (isTrySession || rec || recPromise) return;
       if (!window.MediaRecorder || !videoStream) return;
       const w = liveVideo.videoWidth;
       const h = liveVideo.videoHeight;
@@ -1277,7 +1192,6 @@
     stopLiveAutoSnapTimer();
     if (cameraAvailable === false) return;
     // Start the session video with the first pose (booth: LIVE up -> record).
-    if (cameraAvailable && capturedPhotos.filter(Boolean).length === 0) startRecording();
     liveAutoSnapTimer = setTimeout(() => {
       liveAutoSnapTimer = null;
       if (currentScreen === Screen.LIVE && !isCaptureInProgress && cameraAvailable) {
@@ -1406,7 +1320,7 @@
   }
 
   function acceptPhotoDataUrl(dataUrl) {
-    // Booth freezes are portrait 1024×1280; cover-crop to match MotherPC inputs.
+    // Keep portraits consistent for this game's strip layout.
     Promise.resolve(normalizeFreezePortrait(dataUrl))
       .then((portrait) => {
         capturedPhotos[currentPoseIndex] = portrait;
@@ -1532,7 +1446,7 @@
     return Promise.all(photoSrcs.map((src) => loadImage(src)));
   }
 
-  // Guest-facing composite: left half of dual (same as MotherPC strip_web.jpg).
+  // Guest-facing strip preview for the game mock.
   async function buildStrip() {
     const bgId = currentBackground?.id || TRY_SAMPLE_ID;
     const bg = await loadImage(currentBackground?.src || bgFull(bgId));
@@ -1567,69 +1481,37 @@
     if (reviewStripPreview) reviewStripPreview.src = lastCompositeUrl;
   }
 
-  // MotherPC / real-booth contract: dual 832×1232 print strip (static/backgrounds
-  // bg_N.jpg == Set bg_N_strip). Uploaded as the strip asset; bonus still keyed by bg_id.
-  async function buildDualStripForUpload() {
-    const bgId = currentBackground?.id || TRY_SAMPLE_ID;
-    const bg = await loadImage(bgDualPrint(bgId));
-    const photos = await loadSessionPhotos();
-    const out = document.createElement("canvas");
-    out.width = bg.width;
-    out.height = bg.height;
-    const ctx = out.getContext("2d");
-    ctx.drawImage(bg, 0, 0);
-    // Same as bonus_pipeline._scale_strip_geometry on the dual master.
-    const sx = out.width / 784;
-    const sy = out.height / 1186;
-    const leftDesign = STRIP_SLOTS_LEFT;
-    const rightDesign = STRIP_SLOTS_LEFT.map(([x, y, w, h]) => [x + 399, y, w, h]);
-    const all = leftDesign.concat(rightDesign);
-    const cycle = photos.concat(photos);
-    for (let i = 0; i < 8; i++) {
-      const photo = cycle[i];
-      if (!photo) continue;
-      const [x, y, w, h] = all[i];
-      const box = {
-        x: Math.round(x * sx),
-        y: Math.round(y * sy),
-        w: Math.max(1, Math.round(w * sx)),
-        h: Math.max(1, Math.round(h * sy)),
-      };
-      const fitted = coverCropToCanvas(photo, box.w, box.h);
-      ctx.drawImage(fitted, box.x, box.y);
-    }
-    if (isTrySession) stampSample(ctx, out.width, out.height);
-    return out.toDataURL("image/jpeg", 0.92);
-  }
-
   function adjustPrintScreenForMode() {
     const screen = document.querySelector('[data-screen="PRINT"]');
     const title = screen?.querySelector(".title-main");
     const subtitle = screen?.querySelector(".subtitle");
+    const saveRow = screen?.querySelector(".felix-save-row");
+    const bonusRow = document.getElementById("bonusLinkRow");
     if (printBtn) {
       printBtn.style.display = "";
       printBtn.classList.remove("hidden");
-      printBtn.textContent = isTrySession ? "BACK TO PAYMENT" : "CONTINUE";
+      printBtn.textContent = isTrySession ? "EXIT TRY MODE" : "CONTINUE";
     }
+    if (saveRow) saveRow.hidden = isTrySession;
+    if (bonusRow) bonusRow.hidden = isTrySession;
     if (isTrySession) {
       if (title) title.textContent = "Sample Preview";
-      if (subtitle) subtitle.textContent = "Try strip — " + totalPoses + " poses (repeated to fill the strip). Save or share below.";
+      if (subtitle) subtitle.textContent = "Two-photo sample. This preview closes in a few seconds.";
       if (printPreviewNote) printPreviewNote.hidden = true;
-    } else if (!hasInstapicCode()) {
-      if (title) title.textContent = "Your Photo Strip";
-      if (subtitle) subtitle.textContent = "Save or share your strip. An Instapic bonus page comes with Square photo sessions.";
+    } else if (!hasGameCode()) {
+      if (title) title.textContent = "Your Penny Fever Strip";
+      if (subtitle) subtitle.textContent = "Finish your Penny Fever game session to create a game-only code and keepsake.";
       if (printPreviewNote) printPreviewNote.hidden = true;
     } else {
-      if (title) title.textContent = "Your Photo Strip";
-      if (subtitle) subtitle.textContent = "Save, share, or open the Instapic bonus page.";
+      if (title) title.textContent = "Your Penny Fever Strip";
+      if (subtitle) subtitle.textContent = "Save, share, or open your game bonus.";
       if (printPreviewNote) printPreviewNote.hidden = false;
     }
     updateBonusLinks();
   }
 
   function sessionCodeNow() {
-    const code = String(serverCode || localSessionCode || "").replace(/\D/g, "").slice(0, 6);
-    return /^\d{6}$/.test(code) ? code : "";
+    return /^PF-[A-HJ-NP-Z]{6}$/.test(String(localSessionCode || "")) ? localSessionCode : "";
   }
 
   function paintDigitalQr() {
@@ -1645,8 +1527,9 @@
       img.className = "qr-image-instapic instapic-digital-qr";
       placeholder.prepend(img);
     }
-    img.src = "img/instapic_fun.png";
-    img.alt = "Scan to open instapic.fun";
+    img.hidden = false;
+    img.src = "img/instapic_logo.jpg";
+    img.alt = "Penny Fever game keepsake";
     let hint = placeholder.querySelector(".qr-hint-instapic");
     if (!hint) {
       hint = document.createElement("div");
@@ -1654,33 +1537,32 @@
       placeholder.appendChild(hint);
     }
     hint.textContent = code
-      ? "Scan → instapic.fun → enter " + code
-      : "Scan to open instapic.fun, then join VIP to keep this player.";
+      ? "This game code is stored in Penny Fever Game VIP on this browser."
+      : "Your Penny Fever game code is being saved.";
   }
 
   function paintDigitalVipJoin() {
     const a = document.getElementById("felixVipJoin");
     if (!a) return;
     const code = sessionCodeNow();
-    const ret = "/penny-fever/paper-games/workshop/felix-booth.html?v=center-1";
-    let href = "/save.html?return=" + encodeURIComponent(ret);
-    if (code) href += "&ticket_code=" + encodeURIComponent(code);
-    a.href = href;
-    a.textContent = code ? "Join VIP · save code " + code : "Join VIP Guest Area";
+    a.href = code
+      ? "penny-fever-game-vip.html?code=" + encodeURIComponent(code)
+      : "penny-fever-game-vip.html";
+    a.textContent = code ? "OPEN GAME VIP · " + code : "OPEN PENNY FEVER GAME VIP";
   }
 
   function adjustDigitalScreenForMode() {
-    const coded = hasInstapicCode();
+    const coded = hasGameCode();
     const screen = document.querySelector('[data-screen="DIGITAL"]');
     const title = screen?.querySelector(".title-main");
     const subtitle = screen?.querySelector(":scope > .screen-content > .subtitle");
     const codeGroup = screen?.querySelector(".digital-code-group");
     const qrGroup = screen?.querySelector(".digital-qr-group");
-    if (title) title.textContent = coded ? "Your Instapic Code" : "Your Photo Strip";
+    if (title) title.textContent = coded ? "Your Penny Fever Game Code" : "Saving Your Game Keepsake";
     if (subtitle) {
       subtitle.textContent = coded
-        ? "Your code is on this screen. Scan the QR for instapic.fun, then join VIP to keep this player."
-        : "Save your strip. Scan the QR for instapic.fun, then join VIP to lock this player to your guest profile.";
+        ? "This PF code opens your game bonus in Penny Fever Game VIP. It cannot unlock a real booth session."
+        : "Your game-only code and strip are being saved in this browser.";
     }
     if (codeGroup) codeGroup.hidden = false;
     if (qrGroup) qrGroup.hidden = false;
@@ -1691,11 +1573,28 @@
 
   function startPrintTimer() {
     stopPrintTimer();
-    // Don't auto-bounce while the guest may still be saving/sharing.
+    if (isTrySession) {
+      printTimer = setTimeout(() => {
+        if (currentScreen === Screen.PRINT && isTrySession) finishTrySession();
+      }, TRY_PREVIEW_MS);
+    }
   }
   function stopPrintTimer() {
     if (printTimer) clearTimeout(printTimer);
     printTimer = null;
+  }
+
+  function finishTrySession() {
+    if (!isTrySession) return;
+    stopPrintTimer();
+    isTrySession = false;
+    hasCommitted = false;
+    totalPoses = 4;
+    sessionInfo = null;
+    localSessionCode = "";
+    bonusState = "idle";
+    resetPhotoState();
+    showScreen(Screen.PAYMENT);
   }
 
   function goToAfterReview() {
@@ -1730,44 +1629,15 @@
   }
 
   function startNextLeftoverSession() {
-    return useCreditCode().then((r) => {
-      refreshWalletUi();
-      if (r.ok) {
-        setPayBanner(
-          "Approved code " +
-            r.code +
-            "." +
-            (r.info && r.info.total > 1 ? " Session " + r.info.no + " of " + r.info.total + "." : "")
-        );
-        startPaidSession(r.code, r.info);
-        return true;
-      }
-      if (r.error === "none" && spendLocalSession()) {
-        refreshWalletUi();
-        const left = getLocalSessions();
-        setPayBanner(
-          "Penny-pack session started." +
-            (left > 0 ? " " + left + " local session" + (left === 1 ? "" : "s") + " left." : "") +
-            " Bonus code comes with Square packages only."
-        );
-        startPaidSession("", { no: 1, total: left + 1, left: left, source: "pennies" });
-        return true;
-      }
-      if (r.error === "none") {
-        setPayBanner("No photo sessions yet. Tap a circle to spend pennies, or top up at Aura's booth.");
-      } else if (r.error === "offline") {
-        setPayBanner("Can't reach Instapic right now. Your session is kept \u2014 try again.");
-      } else {
-        setPayBanner(
-          r.error === "used"
-            ? "That code was already used, so it was removed."
-            : r.error === "missing"
-              ? "That code isn't valid, so it was removed."
-              : "Couldn't check your code. Try again."
-        );
-      }
-      return false;
-    });
+    refreshWalletUi();
+    if (!spendLocalSession()) {
+      setPayBanner("No game photo sessions yet. Earn Penny Fever pennies to get a session.");
+      return Promise.resolve(false);
+    }
+    const left = getLocalSessions();
+    setPayBanner("Game session started." + (left > 0 ? " " + left + " session" + (left === 1 ? "" : "s") + " left." : ""));
+    startPaidSession(localSessionCode || requestedGameCode, { no: 1, total: left + 1, left, source: "game-pennies" });
+    return Promise.resolve(true);
   }
 
   function paintThankyou() {
@@ -1857,8 +1727,8 @@
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
         await navigator.share({
           files: [file],
-          title: "My Instapic strip",
-          text: "Moments Made Magical — instapic.fun",
+          title: "My Penny Fever strip",
+          text: "My Penny Fever photo strip",
         });
         return;
       }
@@ -1907,7 +1777,8 @@
       stopPrintTimer();
     }
     if (name === Screen.DIGITAL) {
-      if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionCodeNow() || "————";
+      const displayCode = isTrySession ? "" : prepareGameCode();
+      if (sessionCodeDisplay) sessionCodeDisplay.textContent = displayCode || "————";
       renderSessionCount();
       adjustDigitalScreenForMode();
       buildStrip().then(applyCompositeToPreviews).catch(() => applyCompositeToPreviews());
@@ -1931,13 +1802,13 @@
       btn.addEventListener("click", (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        const digit = btn.dataset.key;
-        if (digit) {
-          if (prepaidInput.value.length >= 6) return;
-          prepaidInput.value += digit;
+        const letter = btn.dataset.key;
+        if (letter) {
+          if (prepaidInput.value.length >= 9) return;
+          prepaidInput.value += letter;
           return;
         }
-        if (btn.dataset.action === "clear") prepaidInput.value = "";
+        if (btn.dataset.action === "clear") prepaidInput.value = "PF-";
       });
     });
   }
@@ -1983,77 +1854,6 @@
   );
 
 
-  // ---- Aura till (Square) opened from package portals ----
-  // Same-origin overlay so Apple Pay / Google Pay / card work on instapic.fun.
-  // Money logic stays in ticket-till.js (credits only after COMPLETED).
-  let auraTillLoading = null;
-  function ensureTillCss() {
-    if (document.querySelector("link[data-pf-till-css]")) return;
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "/penny-fever/world/ticket-till.css?v=pay-pennies-1";
-    link.dataset.pfTillCss = "1";
-    document.head.appendChild(link);
-  }
-  async function openAuraTill(packId, banner) {
-    const pkg = String(packId || PENNY_TOPUP_PACK);
-    try {
-      sessionStorage.setItem("pf-till-from-felix", "1");
-      sessionStorage.setItem(
-        "pf-till-return-url",
-        location.pathname + location.search + location.hash
-      );
-    } catch (_) {}
-    ensureTillCss();
-    try {
-      if (!auraTillLoading) {
-        auraTillLoading = import("/penny-fever/world/ticket-till.js?v=cam-unlock-1");
-      }
-      const mod = await auraTillLoading;
-      if (typeof mod.mountTill === "function") mod.mountTill({});
-      await mod.openTill({
-        pack: pkg,
-        focusPay: true,
-        fromFelix: true,
-        pin: true,
-      });
-      if (banner) setPayBanner(banner);
-    } catch (err) {
-      console.warn("[felix] till open failed", err);
-      const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=center-1"
-      );
-      const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
-      location.href =
-        "/penny-fever/?till=" + (isPhoto ? "photo" : "scrip") +
-        "&pkg=" + encodeURIComponent(pkg) +
-        "&return=" + ret +
-        "&style=paper&rail=paper";
-    }
-  }
-  function openAuraTillForPackage(pkgId) {
-    const pkg = String(pkgId || "FELIX_P1_STRIP");
-    const tip = {
-      FELIX_P1_STRIP: "$5 · 10 pennies · 2 sessions",
-      FELIX_P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
-      FELIX_P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
-      P1_STRIP: "$5 · 10 pennies · 2 sessions",
-      P2_STRIP_GIF: "$8 · 16 pennies · 4 sessions",
-      P3_STRIP_GIF: "$10 · 20 pennies · 6 sessions",
-    }[pkg];
-    return openAuraTill(
-      pkg,
-      (tip || "Felix photo package") +
-        " — pay with Apple Pay, Google Pay or card. Credits only after Square approves."
-    );
-  }
-  function openAuraTillForPennyTopUp(needPennies) {
-    const need = Math.max(0, Math.floor(Number(needPennies) || 0));
-    return openAuraTill(
-      PENNY_TOPUP_PACK,
-      "Need " + need + " more pennies. Aura's penny pack is $5 for 10 pennies — then come back to Felix."
-    );
-  }
   function hidePennyConfirm() {
     pendingPennyPack = null;
     const box = document.getElementById("felix-penny-confirm");
@@ -2066,16 +1866,15 @@
     if (text) {
       text.textContent =
         "Spend " + pack.pennies + " pennies for " + pack.sessions +
-        " photo sessions (" + pack.label + ")? No Instapic bonus code — that comes with Square.";
+        " game photo sessions (" + pack.label + ")? This only spends Penny Fever game pennies.";
     }
     if (box) box.hidden = false;
   }
   function buyPortalWithPennies(pack) {
     if (!pack) return;
     if (getPennies() < pack.pennies) {
-      setPayBanner("Not enough pennies — opening Aura's penny top-up.");
+      setPayBanner("Not enough game pennies. Earn more in Penny Fever.");
       hidePennyConfirm();
-      openAuraTillForPennyTopUp(pack.pennies - getPennies());
       return;
     }
     if (!spendPennies(pack.pennies)) {
@@ -2086,7 +1885,7 @@
     hidePennyConfirm();
     refreshWalletUi();
     setPayBanner(
-      pack.pennies + " pennies → " + pack.sessions + " sessions. Bonus code comes with Square only."
+      pack.pennies + " game pennies → " + pack.sessions + " game photo sessions."
     );
     if (!spendLocalSession()) {
       setPayBanner("Sessions saved — tap USE MY PHOTO SESSION.");
@@ -2096,54 +1895,14 @@
     startPaidSession("", { no: 1, total: pack.sessions, left: pack.sessions - 1, source: "pennies" });
   }
 
-  function onPhotoCodeFromTill(ev) {
-    refreshWalletUi();
-    const code = (ev && ev.detail && ev.detail.code) || "";
-    const left = getCredits();
-    setPayBanner(
-      code
-        ? "Code " +
-          code +
-          " approved. " +
-          left +
-          (left === 1 ? " photo session" : " photo sessions") +
-          " ready — tap USE MY PHOTO SESSION, or Back to Felix — start session in the till."
-        : "Photo sessions ready — tap USE MY PHOTO SESSION."
-    );
-  }
-
   function onFelixStartPaid() {
     refreshWalletUi();
     if (getCredits() < 1) {
-      setPayBanner("No photo sessions yet. Buy one at Aura's till.");
+      setPayBanner("No game sessions yet. Earn Penny Fever pennies to get a session.");
       return showScreen(Screen.PAYMENT);
     }
-    useCreditCode().then((r) => {
-      refreshWalletUi();
-      if (r.ok) {
-        setPayBanner(
-          "Code " +
-            r.code +
-            " approved." +
-            (r.info && r.info.total > 1
-              ? " Session " + r.info.no + " of " + r.info.total + "."
-              : "")
-        );
-        startPaidSession(r.code, r.info);
-      } else {
-        setPayBanner("Could not start the session. Try USE MY PHOTO SESSION.");
-        showScreen(Screen.PAYMENT);
-      }
-    });
+    startNextLeftoverSession();
   }
-
-  window.addEventListener("pf-photo-code", onPhotoCodeFromTill);
-  window.addEventListener("pf-felix-start-paid", onFelixStartPaid);
-  window.addEventListener("pf-till-closed", () => {
-    refreshWalletUi();
-    // Cancel / close Aura till: stay on Felix payment screen (Magic Mirror Screen 3).
-    if (document.querySelector('[data-screen="PAYMENT"]')) showScreen(Screen.PAYMENT);
-  });
 
   document.body.addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-action]");
@@ -2155,14 +1914,14 @@
     if (action === "try-info-back" || action === "try-info-exit") return showScreen(Screen.PAYMENT);
     if (action === "enter-try-mode") return startTrySession();
     if (action === "enter-prepaid") {
-      if (prepaidInput) prepaidInput.value = "";
+      if (prepaidInput) prepaidInput.value = "PF-";
       if (prepaidError) prepaidError.textContent = "";
       return showScreen(Screen.PREPAID);
     }
     if (action === "enter-paynow") return showScreen(Screen.PRIVATE_EVENT);
     if (action === "payment-exit" || action === "pay-cancel") return showScreen(Screen.ATTRACT);
     if (action === "event-paid") {
-      setPayBanner("Private event sessions need an approved code. Use 'I have an Instapic code'.");
+      setPayBanner("Private event purchases are not part of this game mock.");
       return showScreen(Screen.PAYMENT);
     }
     if (action === "event-back" || action === "event-exit") return showScreen(Screen.PAYMENT);
@@ -2206,8 +1965,7 @@
       return;
     }
     if (action === "top-up-aura") {
-      setPayBanner("Opening Aura's penny top-up…");
-      openAuraTillForPennyTopUp(10);
+      setPayBanner("This game mock cannot open the real payment till. Earn game pennies in Penny Fever.");
       return;
     }
     if (
@@ -2218,14 +1976,13 @@
       action === "pay-p4" ||
       action === "pay-p6"
     ) {
-      // Circles: spend pennies when the purse covers it; otherwise Aura penny top-up.
-      // (Square photo package is available from Aura after top-up / separately — not the short-purse path.)
+      // Circles only spend in-game pennies in this mock.
       const pack =
         PORTAL_PACKS[action] ||
         Object.values(PORTAL_PACKS).find((p) => p.pkg === (btn && btn.dataset && btn.dataset.pkg)) ||
         null;
       if (!pack) {
-        openAuraTillForPennyTopUp(10);
+        setPayBanner("This game mock does not open the real payment till.");
         return;
       }
       refreshWalletUi();
@@ -2234,71 +1991,30 @@
         setPayBanner("Confirm spending " + pack.pennies + " pennies for " + pack.sessions + " sessions.");
         return;
       }
-      setPayBanner(
-        "Need " + pack.pennies + " pennies (you have " + getPennies() + "). Opening Aura's penny pack…"
-      );
-      openAuraTillForPennyTopUp(pack.pennies - getPennies());
+      setPayBanner("Need " + pack.pennies + " game pennies (you have " + getPennies() + "). Earn more in Penny Fever.");
       return;
     }
     if (action === "cashin-p2" || action === "cashin-p4" || action === "cashin-p6") {
-      // Kept for deep-links / older UI; prefer Square buttons above.
-      pendingCashinPkg = action.replace("cashin-", "");
-      const credits = CASHIN_CREDITS[pendingCashinPkg] || 1;
       if (cashinInput) cashinInput.value = "";
       if (cashinError) cashinError.textContent = "";
-      if (cashinSubtitle) {
-        cashinSubtitle.textContent =
-          "Enter a 6-digit Instapic code from a $" +
-          ({ p2: "5", p4: "8", p6: "10" }[pendingCashinPkg] || "?") +
-          " package. Gives " +
-          credits +
-          " Felix photo sessions.";
-      }
+      if (cashinSubtitle) cashinSubtitle.textContent = "Enter a PF game code to open its game bonus. Real Instapic codes are never checked here.";
       return showScreen(Screen.CASHIN);
     }
     if (action === "cashin-back") return showScreen(Screen.PAYMENT);
     if (action === "cashin-continue" || action === "prepaid-continue") {
       const input = action === "cashin-continue" ? cashinInput : prepaidInput;
       const errEl = action === "cashin-continue" ? cashinError : prepaidError;
-      const code = (input?.value || "").trim();
-      if (!/^\d{6}$/.test(code)) {
-        if (errEl) errEl.textContent = "Code should be 6 digits.";
+      const raw = String(input?.value || "").trim().toUpperCase();
+      const code = /^PF-[A-HJ-NP-Z]{6}$/.test(raw) ? raw : "";
+      if (!code) {
+        if (errEl) errEl.textContent = "Enter PF- followed by six letters.";
         return;
       }
-      if (errEl) errEl.textContent = "Checking your code\u2026";
-      // Code already in this wallet with sessions left -> next session on it.
-      if (photoCodes().some((r) => String(r.code) === code && codeLeft(r) > 0)) {
-        useCreditCode(code).then((r) => {
-          refreshWalletUi();
-          if (r.ok) {
-            if (errEl) errEl.textContent = "";
-            setPayBanner("Code " + code + " approved. Session " + r.info.no + " of " + r.info.total + ".");
-            startPaidSession(code, r.info);
-          } else if (errEl) {
-            errEl.textContent = r.error === "offline" ? "Couldn't reach Instapic. Try again." : "That code has no sessions left.";
-          }
-        });
+      if (!findGameFile(code)) {
+        if (errEl) errEl.textContent = "No game bonus with that code is saved in this browser. Real Instapic codes are not checked.";
         return;
       }
-      redeemCode(code)
-        .then((r) => {
-          if (r.ok) {
-            if (errEl) errEl.textContent = "";
-            const info = rememberTypedCode(code, r.ticket);
-            refreshWalletUi();
-            setPayBanner("Code " + code + " approved." + (info.total > 1 ? " " + info.total + " sessions on this code." : ""));
-            startPaidSession(code, info);
-          } else if (errEl) {
-            errEl.textContent = r.used
-              ? "That code has already been used."
-              : r.missing
-                ? "We couldn't find that code."
-                : "Couldn't check the code right now. Try again.";
-          }
-        })
-        .catch(() => {
-          if (errEl) errEl.textContent = "Couldn't reach Instapic. Try again.";
-        });
+      location.href = "bonus.html?code=" + encodeURIComponent(code);
       return;
     }
 
@@ -2346,8 +2062,7 @@
     }
     if (action === "print-now") {
       if (isTrySession) {
-        isTrySession = false;
-        return showScreen(Screen.PAYMENT);
+        return finishTrySession();
       }
       return showScreen(Screen.DIGITAL);
     }
@@ -2371,43 +2086,7 @@
     if (action === "error-to-attract") return showScreen(Screen.ATTRACT);
   });
 
-  // Square return: NEVER grant credits from URL params. Credits only after a
-  // server-side check confirms the Square payment is COMPLETED (verifyPayment).
-  function consumePaidReturn() {
-    try {
-      const params = new URLSearchParams(location.search);
-      const paid = String(params.get("paid") || "").toUpperCase();
-      let pending = "";
-      try {
-        pending = sessionStorage.getItem("felixBooth.pendingPay") || "";
-      } catch (_) {}
-      if (!paid && !pending) return false;
-      const url = new URL(location.href);
-      url.searchParams.delete("paid");
-      url.searchParams.delete("credits");
-      try {
-        history.replaceState({}, "", url.pathname + (url.search || "") + (url.hash || ""));
-      } catch (_) {}
-      showScreen(Screen.PAYMENT);
-      setPayBanner("Checking your payment…");
-      verifyPayment(paid || pending);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // Server-side verification hook. Until a verify endpoint is live, nothing is granted.
-  function verifyPayment(pkg) {
-    const link = SQUARE_LINKS[pkg];
-    setPayBanner(
-      "Checking your payment… " +
-        (link ? link.label + ". " : "") +
-        "Credits are only added once Square approves the payment. If you were charged, show staff your Square receipt."
-    );
-  }
-
   window.addEventListener("pagehide", stopCamera);
   refreshWalletUi();
-  if (!consumePaidReturn()) showScreen(Screen.ATTRACT);
+  showScreen(Screen.ATTRACT);
 })();
