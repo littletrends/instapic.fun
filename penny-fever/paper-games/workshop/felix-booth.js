@@ -273,7 +273,7 @@
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
     }
     // No invented starter credit — missing key means 0.
-    return readLS(LS.pennies, 0);
+    return readLs(LS.pennies, 0);
   }
   function getTickets() {
     const PF = fever();
@@ -286,7 +286,7 @@
       const n = Number(store.playTickets);
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
     }
-    return readLS(LS.tickets, 0);
+    return readLs(LS.tickets, 0);
   }
   function photoCodes() {
     try {
