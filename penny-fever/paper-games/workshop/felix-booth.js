@@ -942,13 +942,12 @@
         if ((attempt || 0) < 15) setTimeout(() => startRecording((attempt || 0) + 1), 200);
         return;
       }
-      const portrait = h >= w;
       const scale = Math.min(1, REC_LONG_SIDE / Math.max(w, h));
       const even = (n) => Math.max(2, Math.round(n / 2) * 2);
       const canvas = document.createElement("canvas");
-      // Upright portrait pixels, as the booth bakes them.
-      canvas.width = even((portrait ? w : h) * scale);
-      canvas.height = even((portrait ? h : w) * scale);
+      // Same swap as video_capture_patch.js: canvas is portrait (sensor h × w).
+      canvas.width = even(h * scale);
+      canvas.height = even(w * scale);
       const ctx = canvas.getContext("2d", { alpha: false });
       let stream = null;
       if (canvas.captureStream) stream = canvas.captureStream(REC_FPS);
@@ -960,7 +959,7 @@
       } catch (_) {
         recorder = new MediaRecorder(stream);
       }
-      rec = { recorder, chunks: [], canvas, ctx, portrait, stream, drawTimer: null, stopTimer: null, mime };
+      rec = { recorder, chunks: [], canvas, ctx, stream, drawTimer: null, stopTimer: null, mime };
       const mine = rec;
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1048,36 +1047,18 @@
     return c.toDataURL("image/jpeg", 0.92);
   }
 
-  function isLandscapeSensor() {
-    const w = liveVideo && liveVideo.videoWidth;
-    const h = liveVideo && liveVideo.videoHeight;
-    return !!(w && h && w > h);
-  }
-
-  function syncLiveVideoFit() {
-    if (!liveVideo) return;
-    liveVideo.classList.toggle("is-landscape-sensor", isLandscapeSensor());
-    try { screen.orientation?.lock?.("portrait"); } catch (_) {}
-  }
-
   function bakeLiveFrame(ctx, canvas, video) {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    if (!vw || !vh) return;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h) return;
+    // flow.js capturePhoto + video_capture_patch drawPortraitMirroredFrame
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    if (vh >= vw) {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    } else {
-      // Landscape sensor → upright portrait. Same as CSS
-      // translate(-50%,-50%) rotate(90deg) scaleX(-1). Dest size follows the
-      // canvas so session video (scaled) matches the freeze.
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(Math.PI / 2);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
-    }
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.scale(1, -1);
+    ctx.drawImage(video, -canvas.height / 2, -canvas.width / 2, canvas.height, canvas.width);
     ctx.restore();
   }
 
@@ -1088,10 +1069,8 @@
     liveVideo.muted = true;
     liveVideo.playsInline = true;
     liveVideo.srcObject = stream;
-    liveVideo.onloadedmetadata = () => syncLiveVideoFit();
-    liveVideo.onresize = () => syncLiveVideoFit();
-    syncLiveVideoFit();
-    return liveVideo.play().then(() => syncLiveVideoFit()).catch(() => {});
+    try { screen.orientation?.lock?.("portrait"); } catch (_) {}
+    return liveVideo.play().catch(() => {});
   }
 
   async function getUserMediaLoose() {
@@ -1367,9 +1346,9 @@
       return;
     }
     const ctx = captureCanvas.getContext("2d");
-    const portrait = h >= w;
-    captureCanvas.width = portrait ? w : h;
-    captureCanvas.height = portrait ? h : w;
+    // Rotate into portrait — same as magic_mirror_v1/static/js/flow.js
+    captureCanvas.width = h;
+    captureCanvas.height = w;
     bakeLiveFrame(ctx, captureCanvas, liveVideo);
     // Detect near-black frame
     try {
@@ -1396,7 +1375,7 @@
     const freeze = document.createElement("img");
     freeze.id = "freezeFrame";
     freeze.src = dataUrl;
-    freeze.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;";
+    freeze.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;transform:scaleX(-1);";
     videoLayer.appendChild(freeze);
     videoLayer.classList.remove("hidden");
     hideNoCamera();
@@ -1979,7 +1958,7 @@
     } catch (err) {
       console.warn("[felix] till open failed", err);
       const ret = encodeURIComponent(
-        "/penny-fever/paper-games/workshop/felix-booth.html?v=cam-unlock-1"
+        "/penny-fever/paper-games/workshop/felix-booth.html?v=walk-1"
       );
       const isPhoto = /^FELIX_P|^P[123]_STRIP/.test(pkg);
       location.href =
