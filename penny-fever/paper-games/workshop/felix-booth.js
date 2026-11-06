@@ -47,7 +47,7 @@
   };
   const PRICE = {
     sessionTickets: 1,
-    sessionPennies: 5,
+    sessionPennies: 6,
     unlockPennies: 2,
     unlockTickets: 1,
   };
@@ -448,7 +448,7 @@
       pennyBtn.disabled = !canPenny;
       pennyBtn.classList.toggle("is-disabled", !canPenny);
       pennyBtn.setAttribute("aria-disabled", String(!canPenny));
-      pennyBtn.title = canPenny ? "" : "Need 5 pennies — earn these in Penny Fever";
+      pennyBtn.title = canPenny ? "" : "Need 6 pennies — earn these in Penny Fever";
     }
     const note = document.getElementById("felix-scrip-note");
     if (note) {
@@ -460,7 +460,7 @@
         note.textContent = "Not enough tickets (need 1). Earn tickets in Penny Fever, or pay with pennies / a package.";
       } else if (!canPenny) {
         note.hidden = false;
-        note.textContent = "Not enough pennies (need 5). Earn pennies in Penny Fever, or pay with a ticket / a package.";
+        note.textContent = "Not enough pennies (need 6). Earn pennies in Penny Fever, or pay with a ticket / a package.";
       } else {
         note.hidden = true;
         note.textContent = "";
@@ -1906,7 +1906,7 @@
     if (action === "pay-pennies") {
       refreshWalletUi();
       if (getPennies() < PRICE.sessionPennies) {
-        setPayBanner("Need 5 pennies for a booth session.");
+        setPayBanner("Need 6 pennies for a booth session.");
         return;
       }
       if (!spendPennies(PRICE.sessionPennies)) {
@@ -1914,7 +1914,7 @@
         return;
       }
       refreshWalletUi();
-      setPayBanner("5 pennies accepted.");
+      setPayBanner("6 pennies accepted.");
       return startPaidSession();
     }
     if (action === "pay-credit") {
