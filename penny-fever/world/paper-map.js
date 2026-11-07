@@ -51,12 +51,32 @@ function enterStall(game) {
   booth.close();
   location.hash = 'cabinet/' + game.id;
 }
+const AURA_DOOR_TAPS_NEEDED = 3;
+let paperAuraTaps = 0;
 function aura(destination = null) {
-  showBooth('Aura’s ticket desk', 'Show your admission ticket, trade pennies, or choose a pack. Your place on the map will wait.');
-  action('Show ticket / pay for the next lap', () => {
+  paperAuraTaps = 0;
+  showBooth('Aura’s ticket desk', 'Show your admission ticket, trade pennies, or choose a pack. Tap Take ticket three times to walk in. Your place on the map will wait.');
+  action('Take ticket · 3 taps', () => {
     const state = api()?.getState?.();
     if (!state) return;
-    const admitted = state.admitPassed || api().admitAlleyLap((Number(state.alleyLaps) || 0) === 0 ? 'ticket' : 'penny');
+    const laps = Number(state.alleyLaps) || 0;
+    if (state.admitPassed) {
+      find('paperBoothText').textContent = 'This lap is punched. Choose a host and enjoy the midway.';
+      paperAuraTaps = 0;
+      pocket();
+      return;
+    }
+    paperAuraTaps += 1;
+    if (paperAuraTaps < AURA_DOOR_TAPS_NEEDED) {
+      find('paperBoothText').textContent = laps === 0
+        ? `Take the ticket · ${paperAuraTaps}/${AURA_DOOR_TAPS_NEEDED} taps.`
+        : `Pay a penny · ${paperAuraTaps}/${AURA_DOOR_TAPS_NEEDED} taps.`;
+      const btn = find('paperBoothActions').querySelector('button');
+      if (btn) btn.textContent = `${laps === 0 ? 'Take ticket' : 'Pay a penny'} · ${paperAuraTaps}/${AURA_DOOR_TAPS_NEEDED}`;
+      return;
+    }
+    const admitted = api().admitAlleyLap(laps === 0 ? 'ticket' : 'penny');
+    paperAuraTaps = admitted ? 0 : AURA_DOOR_TAPS_NEEDED - 1;
     find('paperBoothText').textContent = admitted ? 'Punched! Choose a host and enjoy the midway.' : 'You need a penny for the next lap.';
     if (admitted && destination) {
       showBooth('Your ticket is punched!', `${destination.host} is waiting at ${destination.title}. Ready to continue?`);

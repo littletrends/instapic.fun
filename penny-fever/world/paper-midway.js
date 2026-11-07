@@ -73,7 +73,15 @@ export function extendPaperAlley(scene,len){if(!paperRail)return;
  const sign=label('A PENNY · ANOTHER LAP',4.4,.65);sign.position.set(0,2.7,len+.32);sign.rotation.y=Math.PI;scene.add(sign);
 }
 let panel,playerRef,auraRef,apiRef,dismissed=false;
-function near(){return playerRef&&auraRef&&Math.hypot(playerRef.position.x-auraRef.position.x,playerRef.position.z-auraRef.position.z)<2.65}
+const AURA_DOOR_TAPS_NEEDED=3;
+let auraDoorTaps=0;
+let auraPanelSince=0;
+function near(){
+  if(!playerRef||!auraRef)return false;
+  const dx=playerRef.position.x-auraRef.position.x;
+  const dz=playerRef.position.z-auraRef.position.z;
+  return Math.hypot(dx,dz)<2.65 && playerRef.position.x<-0.28;
+}
 function pocketCount(){return Math.max(0,Math.floor(Number(apiRef?.getState?.()?.demoCoins)||0))}
 function ticketCount(){return Math.max(0,Math.floor(Number(apiRef?.tickets?.()??apiRef?.getState?.()?.playTickets)||0))}
 function walletLines(){
@@ -153,18 +161,34 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
  };
  panel.querySelector('#auraCounterAdmission').onclick=()=>{
   if(!near())return;
+  if(performance.now()-auraPanelSince<400)return;
   const state=apiRef.getState();
   const note=panel.querySelector('#auraCounterMessage');
   const laps=Number(state.alleyLaps)||0;
-  if(state.admitPassed){note.textContent='This lap is punched. Walk the boards.';return;}
+  if(state.admitPassed){note.textContent='This lap is punched. Walk the boards.';auraDoorTaps=0;return;}
+  auraDoorTaps+=1;
+  if(auraDoorTaps<AURA_DOOR_TAPS_NEEDED){
+    note.textContent=laps===0
+      ?`Take the ticket · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED} taps.`
+      :`Pay a penny · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED} taps.`;
+    paintAuraWallet();
+    return;
+  }
   if(laps===0){
     const had=!!state.admitTicket;
     apiRef.admitAlleyLap('ticket');
+    auraDoorTaps=0;
     note.textContent=had?'Ticket shown. Enjoy the walk.':'In you go.';
     paintAuraWallet();
     return;
   }
-  if(apiRef.admitAlleyLap('penny')){note.textContent='A penny for this lap. Enjoy the walk.';paintAuraWallet();return;}
+  if(apiRef.admitAlleyLap('penny')){
+    auraDoorTaps=0;
+    note.textContent='A penny for this lap. Enjoy the walk.';
+    paintAuraWallet();
+    return;
+  }
+  auraDoorTaps=AURA_DOOR_TAPS_NEEDED-1;
   note.textContent='Need a penny for the next walk. Trade five pennies for a ticket here, or buy a pack.';
  };
  window.addEventListener('pennyfever:statechange',()=>paintAuraWallet());
@@ -174,6 +198,7 @@ export function updateTicketService(){
  const here=!!near()&&document.body.classList.contains('is-in-world');
  if(!here){
   dismissed=false;
+  auraDoorTaps=0;
   panel.hidden=true;
   if(!tillPinned()) closeTill();
   return;
@@ -183,11 +208,14 @@ export function updateTicketService(){
   if(!tillPinned()) closeTill();
   return;
  }
+ if(panel.hidden) auraPanelSince=performance.now();
  panel.hidden=false;
  const state=apiRef.getState();
  const laps=Number(state.alleyLaps)||0;
  paintAuraWallet();
  const admit=panel.querySelector('#auraCounterAdmission');
  admit.disabled=!!state.admitPassed;
- admit.textContent=state.admitPassed?'This lap is punched ✓':laps===0?(state.admitTicket?'Show ticket · one lap':'Come through'):'Pay a penny · one lap';
+ if(state.admitPassed) admit.textContent='This lap is punched ✓';
+ else if(auraDoorTaps>0) admit.textContent=`${laps===0?'Take ticket':'Pay a penny'} · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED}`;
+ else admit.textContent=laps===0?'Take ticket · 3 taps':'Pay a penny · 3 taps';
 }

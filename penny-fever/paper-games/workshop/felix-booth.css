@@ -314,9 +314,34 @@ section.screen.active[data-screen="ATTRACT"] .attract-tagline {
   font-weight: 700;
 }
 section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen {
-  justify-content: space-between !important;
-  padding-top: 10vh !important;
-  padding-bottom: 9vh !important;
+  justify-content: center !important;
+  padding-top: 72px !important;
+  padding-bottom: 80px !important;
+  gap: 18px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-bottom {
+  margin-top: 0.4rem !important;
+  gap: 0.7rem;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label {
+  color: rgba(255, 246, 236, 0.92) !important;
+  text-decoration: none !important;
+  opacity: 0.92 !important;
+  font-size: clamp(0.95rem, 1.6vh, 1.25rem) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr {
+  display: block;
+  width: min(188px, 38vw);
+  padding: 0.65rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 .felix-wallet-row {
   display: flex;
@@ -1023,7 +1048,7 @@ section.screen.active[data-screen="ATTRACT"] button[data-action="wake-mirror"] {
   letter-spacing: 0.06em !important;
 }
 section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
-  font-size: 3.4rem !important;
+  font-size: 2.05rem !important;
   letter-spacing: 0.08em !important;
 }
 section.screen[data-screen="PAYMENT"],
@@ -1285,11 +1310,35 @@ section.screen.active[data-screen="DIGITAL"] .digital-qr-group {
   gap: 0.7rem !important;
 }
 
-section.screen.active[data-screen="TRY_INFO"] .screen-content,
 section.screen.active[data-screen="THANKYOU"] .screen-content,
 section.screen.active[data-screen="CASHIN"] .screen-content {
   justify-content: flex-start !important;
   padding-top: 64px !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .screen-content.try-screen {
+  justify-content: center !important;
+  padding: 8vh 8vw !important;
+  gap: 2.4rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  max-width: 28rem;
+  margin: 0;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .title-main {
+  margin: 0 !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .subtitle {
+  margin: 0 !important;
+  max-width: 22rem;
+  line-height: 1.45 !important;
+  opacity: 0.88;
+}
+section.screen.active[data-screen="TRY_INFO"] .button-row {
+  margin: 0 !important;
 }
 
 /* Centre every booth screen in the canvas — left/right and top/bottom. */
@@ -1357,4 +1406,73 @@ section.screen.active .subtitle {
   text-align: center !important;
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+section.screen.active[data-screen="TRY_INFO"] .screen-content.try-screen {
+  justify-content: center !important;
+  padding: 8vh 8vw !important;
+  gap: 3.2rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .title-main {
+  font-size: 2.6rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .subtitle {
+  font-size: 1.35rem !important;
+  line-height: 1.45 !important;
+}
+
+/* AWAKE: compact column so Welcome, logo, portal, and VIP QR all sit on the 1080×1920 stage. */
+section.screen[data-screen="AWAKE"] {
+  --portal-size: 420px;
+  --portal-ring: 455px;
+  --portal-font: 2.05rem;
+}
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen {
+  justify-content: center !important;
+  padding: 72px 64px 80px !important;
+  gap: 18px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-top {
+  gap: 10px;
+}
+section.screen.active[data-screen="AWAKE"] .awake-logo-wrap {
+  margin: 0 auto !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-logo {
+  width: 380px !important;
+  max-width: none !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-kicker {
+  font-size: 2.1rem !important;
+  letter-spacing: 0.08em !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-sparkle {
+  font-size: 1.7rem !important;
+  margin-top: 8px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-portal {
+  margin: 6px 0 2px;
+}
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  width: 420px !important;
+  height: 420px !important;
+  min-width: 420px !important;
+  min-height: 420px !important;
+  font-size: 2.05rem !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 0 18px rgba(255, 120, 200, 0.7),
+    0 0 48px rgba(255, 110, 170, 0.32),
+    inset 0 0 22px rgba(255, 255, 255, 0.45) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-bottom {
+  margin-top: 4px !important;
+  gap: 10px;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label {
+  font-size: 1.35rem !important;
+  margin: 0 auto 0 !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr {
+  width: 240px;
 }

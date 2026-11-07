@@ -414,10 +414,10 @@ section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="w
 /* Screen 2: AWAKE */
 
 section.screen[data-screen="AWAKE"]{
-  --portal-size: 600px;
-  --portal-ring: 650px;
-  --portal-inset: 15px;
-  --portal-font: 3.25rem;
+  --portal-size: 420px;
+  --portal-ring: 455px;
+  --portal-inset: 14px;
+  --portal-font: 2.05rem;
 }
 
 /* Awake screen supporting text – increased for better readability (still neat, portal is hero) */
@@ -426,7 +426,7 @@ section.screen.active[data-screen="AWAKE"] .subtitle,
 section.screen.active[data-screen="AWAKE"] .attract-label,   /* reused class or similar */
 section.screen.active[data-screen="AWAKE"] .brand-logo::after,
 section.screen.active[data-screen="AWAKE"] p,
-section.screen.active[data-screen="AWAKE"] div:not(.portal-button):not(.awake-logo-wrap):not(.awake-logo),
+section.screen.active[data-screen="AWAKE"] div:not(.portal-button):not(.awake-logo-wrap):not(.awake-logo):not(.awake-qr):not(.awake-bottom):not(.awake-portal):not(.awake-top):not(.awake-kicker):not(.awake-sparkle),
 section.screen.active[data-screen="AWAKE"] .event-info,
 section.screen.active[data-screen="AWAKE"] small {
   font-size: 1.85rem !important;          /* bumped up from 1.45rem – more readable on large screen */
@@ -528,10 +528,27 @@ section.screen[data-screen="AWAKE"] .awake-qr-label {
   line-height: 1.25 !important;
   letter-spacing: 0.03em !important;
   margin: 0 auto clamp(8px, 1vh, 16px) !important;
+  color: rgba(255, 246, 236, 0.92) !important;
+  text-decoration: none !important;
+}
+section.screen[data-screen="AWAKE"] .awake-qr {
+  display: block;
+  width: min(200px, 42vw);
+  margin: 0 auto;
+  padding: 0.7rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+section.screen[data-screen="AWAKE"] .awake-qr-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 section.screen[data-screen="AWAKE"] .awake-logo{
-  width: min(500px, 40vw);
+  width: 380px;
   height: auto;
   border-radius: 18px;
   box-shadow: 0 0 40px rgba(255,120,200,0.12);

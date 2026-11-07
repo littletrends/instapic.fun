@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-06T19:34:39+09:30",
+  "updated_at": "2026-11-07T11:13:26+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -42,7 +42,7 @@
       "html": false,
       "text": "Welcome to",
       "font": "Subotype Steady.otf",
-      "size": 0,
+      "size": 34,
       "x": 0,
       "y": 0,
       "family": "Subotype Steady"
@@ -56,7 +56,7 @@
       "html": false,
       "text": "\u2728 Are you ready to sparkle?",
       "font": "Subotype Steady.otf",
-      "size": 0,
+      "size": 27,
       "x": 0,
       "y": 0,
       "family": "Subotype Steady"
@@ -70,7 +70,7 @@
       "html": false,
       "text": "Touch to Start",
       "font": "Unique.ttf",
-      "size": 0,
+      "size": 33,
       "x": 0,
       "y": 0,
       "family": "Unique"
@@ -79,12 +79,12 @@
       "id": "awake.vip",
       "screen": "AWAKE",
       "screen_label": "Awake",
-      "label": "VIP link",
+      "label": "VIP label",
       "selector": ".awake-qr-label",
       "html": false,
-      "text": "Penny Fever Game VIP",
+      "text": "Join VIP Guest Area",
       "font": "Unique.ttf",
-      "size": 0,
+      "size": 22,
       "x": 0,
       "y": 0,
       "family": "Unique"
@@ -224,7 +224,7 @@
       "html": false,
       "text": "Try It Mode",
       "font": "Subotype Steady.otf",
-      "size": 0,
+      "size": 42,
       "x": 0,
       "y": 0,
       "family": "Subotype Steady"
@@ -238,7 +238,7 @@
       "html": false,
       "text": "Take two quick sample photos, see a brief preview, then return to payment.\nTry mode does not create a code or save a bonus.",
       "font": "Subotype Steady.otf",
-      "size": 0,
+      "size": 22,
       "x": 0,
       "y": 0,
       "family": "Subotype Steady"

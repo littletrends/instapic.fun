@@ -8,7 +8,7 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=bank-refresh-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-3tap-2";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=vip-spot-2";
 
@@ -900,6 +900,9 @@ let loopingAlley = false;
 let loopTimer = 0;
 let loopOpenTimer = 0;
 let gatePromptActive = false;
+const AURA_DOOR_TAPS_NEEDED = 3;
+let auraDoorTaps = 0;
+let auraTapArmedAt = 0;
 let guidanceText = "";
 let guidanceIndex = 0;
 const GUIDANCE_LINES = [
@@ -1745,12 +1748,16 @@ function syncStallCard(best) {
       } else if (best.kind === "aura") {
         const laps = Number(pfState().alleyLaps) || 0;
         enter.hidden = false;
-        enter.textContent = ticketPassed()
-          ? "This lap is punched"
-          : laps === 0
-            ? (hasAdmitTicket() ? "Show ticket" : "Come through")
-            : "Pay a penny";
         enter.disabled = !!ticketPassed();
+        if (ticketPassed()) {
+          enter.textContent = "This lap is punched";
+        } else if (auraDoorTaps > 0) {
+          enter.textContent = `Take ticket · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED}`;
+        } else if (laps === 0) {
+          enter.textContent = "Take ticket · 3 taps";
+        } else {
+          enter.textContent = "Pay a penny · 3 taps";
+        }
       } else {
         enter.hidden = true;
         enter.disabled = false;
@@ -1805,18 +1812,6 @@ function enterNearest() {
   if (handleGatePrompt()) return;
   if (!nearest || !nearest.atCounter) return;
   if (stallCardOpen && nearest.kind === "aura") {
-    if (ticketPassed()) return;
-    const PF = window.PennyFever;
-    const laps = Number(pfState().alleyLaps) || 0;
-    const kind = laps === 0 ? "ticket" : "penny";
-    if (PF && typeof PF.admitAlleyLap === "function") {
-      if (!PF.admitAlleyLap(kind) && kind === "penny") {
-        tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
-        tillMessageUntil = performance.now() + 7000;
-      }
-    }
-    stallCardId = "";
-    syncStallCard(nearest);
     return;
   }
   if (stallCardOpen && nearest.kind === "ride") {
@@ -2194,7 +2189,13 @@ function atAuraGate() {
 
 function handleGatePrompt() {
   if (ticketPassed()) return false;
-  if (!gatePromptActive && !atAuraGate() && !api.gateBump) return false;
+  const atDoor = gatePromptActive || atAuraGate() || api.gateBump || nearest?.kind === "aura";
+  if (!atDoor) return false;
+  if (!auraTapArmedAt) auraTapArmedAt = performance.now();
+  if (performance.now() - auraTapArmedAt < 400) return true;
+  auraDoorTaps += 1;
+  if (nearest?.kind === "aura") syncStallCard(nearest);
+  if (auraDoorTaps < AURA_DOOR_TAPS_NEEDED) return true;
   const PF = window.PennyFever;
   const laps = Number(pfState().alleyLaps) || 0;
   const kind = laps === 0 ? "ticket" : "penny";
@@ -2203,8 +2204,10 @@ function handleGatePrompt() {
       tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
       tillMessageUntil = performance.now() + 7000;
     }
+    auraDoorTaps = AURA_DOOR_TAPS_NEEDED - 1;
     return true;
   }
+  auraDoorTaps = 0;
   const prompt = el("pfWorldPrompt");
   if (prompt) prompt.classList.add("is-ticket-given");
   if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
@@ -2461,6 +2464,10 @@ function findNearest() {
   const speechText = el("pfWorldSpeechText");
   const z = pz;
   if (z < GATE_Z - 1.8) api.gateBump = false;
+  if (ticketPassed() || (!atAuraGate() && !api.gateBump && nearest?.kind !== "aura")) {
+    auraDoorTaps = 0;
+    auraTapArmedAt = 0;
+  }
   if (zone) {
     zone.textContent = z < FOYER_OUT ? "Pier" : `Hall · ${Math.max(0, Math.round(z))}`;
   }
