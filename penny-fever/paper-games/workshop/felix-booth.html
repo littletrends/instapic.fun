@@ -7,13 +7,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Instapic Penny Fever Photo Booth</title>
   <link rel="stylesheet" href="flow-booth.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="branding.css?v=awake-vip-qr-3">
+  <link rel="stylesheet" href="branding.css?v=carnival-11">
   <link rel="stylesheet" href="patches.css?v=cam-portrait-1">
   <link rel="stylesheet" href="core_pay_buttons_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=carnival-10">
+  <link rel="stylesheet" href="felix-booth.css?v=carnival-11">
 </head>
 <body>
   <div id="turn-phone">
@@ -87,28 +87,20 @@
 
         <section class="screen" data-screen="PAYMENT">
           <div class="screen-content">
-            <h1 class="title-main">Choose an option</h1>
-            <p class="subtitle">
-              Tap a pack to spend pennies for photo sessions.
-              Short on pennies? Aura&rsquo;s booth tops you up.
-            </p>
-
-            <div class="felix-pay-spacer" aria-hidden="true"></div>
-
-            <div class="felix-wallet-row">
+            <div class="felix-pay-top">
               <div id="felix-wallet" class="felix-wallet" aria-live="polite">
                 <span id="felix-wallet-tickets">0 tickets</span>
                 <span class="felix-wallet-dot">·</span>
                 <span id="felix-wallet-pennies">0 pennies</span>
               </div>
             </div>
-            <button class="btn felix-sessions-pill" data-action="pay-credit" id="payCreditBtn" type="button">
-              0 sessions left
-            </button>
+            <h1 class="title-main">Choose an option</h1>
+            <p class="subtitle">
+              Tap a pack to spend pennies for photo sessions.
+              Short on pennies? Aura&rsquo;s booth tops you up.
+            </p>
 
             <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
-
-            <div class="felix-pay-spacer" aria-hidden="true"></div>
 
             <!-- Glowing portals = penny purchase (hero). Short purse → Aura penny top-up. -->
             <div class="button-row payment-options payment-packages-row">
@@ -133,11 +125,13 @@
 
             <p class="felix-pkg-note">Pennies buy sessions only.</p>
 
-            <div class="felix-pay-spacer" aria-hidden="true"></div>
-
             <div class="button-row payment-options payment-pills-row felix-secondary-row">
               <button class="btn btn-secondary" data-action="enter-try-info" type="button">
                 TRY IT FIRST
+              </button>
+              <button class="btn btn-secondary" data-action="pay-credit" id="payCreditBtn" type="button">
+                <span id="payCreditCount">0</span>
+                <span class="session-left-label">sessions left</span>
               </button>
               <button class="btn btn-secondary" data-action="enter-prepaid" type="button">
                 I HAVE A PENNY FEVER GAME CODE
@@ -516,8 +510,8 @@
       </div>
     </div>
   </div>
-  <script src="pf-bonus-compose.js?v=carnival-10"></script>
-  <script src="felix-booth.js?v=carnival-10"></script>
-  <script src="felix-booth-text.js?v=carnival-10"></script>
+  <script src="pf-bonus-compose.js?v=carnival-11"></script>
+  <script src="felix-booth.js?v=carnival-11"></script>
+  <script src="felix-booth-text.js?v=carnival-11"></script>
 </body>
 </html>

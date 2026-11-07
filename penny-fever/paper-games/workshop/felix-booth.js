@@ -46,7 +46,7 @@
   const GAME_FILES_KEY = "pennyFeverGameFiles";
   const GAME_MEDIA_DB = "pennyFeverGameMedia";
   const MOTHERPC = "https://motherpc.taild1a44c.ts.net";
-  const CACHE = "carnival-10";
+  const CACHE = "carnival-11";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
@@ -511,8 +511,14 @@
     if (purse) purse.textContent = pennies + (pennies === 1 ? " penny in your purse" : " pennies in your purse");
     if (payCreditBtn) {
       payCreditBtn.hidden = false;
-      payCreditBtn.textContent =
-        credits === 1 ? "1 session left" : credits + " sessions left";
+      const countEl = document.getElementById("payCreditCount");
+      const labelEl = payCreditBtn.querySelector(".session-left-label");
+      if (countEl) countEl.textContent = String(credits);
+      if (labelEl) labelEl.textContent = credits === 1 ? "session left" : "sessions left";
+      else payCreditBtn.textContent = credits === 1 ? "1 session left" : credits + " sessions left";
+      payCreditBtn.disabled = credits < 1;
+      payCreditBtn.classList.toggle("is-disabled", credits < 1);
+      payCreditBtn.setAttribute("aria-disabled", String(credits < 1));
     }
 
     const ticketBtn = document.querySelector('[data-action="pay-tickets"]');
@@ -2078,6 +2084,7 @@
     if (name !== Screen.BACKGROUNDS) hideUnlockConfirm();
     const artScreens = {
       LIVE: true,
+      PAYMENT: true,
       REVIEW: true,
       PRINT: true,
       DIGITAL: true,
@@ -2298,6 +2305,10 @@
       return startPaidSession();
     }
     if (action === "pay-credit") {
+      if (leftoverCredits() < 1) {
+        setPayBanner("No game photo sessions yet. Earn Penny Fever pennies to get a session.");
+        return;
+      }
       setPayBanner("Checking your photo sessions\u2026");
       startNextLeftoverSession();
       return;
