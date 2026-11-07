@@ -2354,3 +2354,67 @@ section.screen.active[data-screen="DIGITAL"] .felix-bonus-row { margin: 0 !impor
   text-transform: uppercase;
   cursor: pointer;
 }
+
+/* carnival-18: one orb look everywhere (matches Open Game VIP), and the
+   game code screen fitted inside the stage. */
+section.screen.active button.portal-button,
+section.screen.active a.portal-button,
+section.screen.active button[data-action="wake-mirror"],
+section.screen.active button[data-action="enter-mirror"],
+section.screen.active button[data-action="retake-photo"],
+section.screen.active button[data-action="keep-photo"],
+section.screen.active button[data-action="backgrounds-next"],
+section.screen.active button[data-action="prepaid-continue"],
+section.screen.active button[data-action="enter-try-mode"],
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"],
+#booth-stage .live-start-btn,
+#goBonusBtn,
+#goBonusBtn.is-disabled {
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0 38%, transparent 39%),
+              conic-gradient(from 200deg, #ff3fa4, #ff8a3d, #ffd36b, #c04dff, #ff3fa4) !important;
+  border: 4px solid rgba(255, 236, 200, 0.9) !important;
+  box-shadow: 0 0 40px 10px rgba(255, 90, 180, 0.55), 0 0 90px 24px rgba(190, 80, 255, 0.35) !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(80, 0, 60, 0.85) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  animation: none !important;
+}
+#goBonusBtn.is-disabled { pointer-events: none !important; }
+
+/* Game code screen: fit everything above the bottom edge */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 110px !important;
+  gap: 0.6rem !important;
+  justify-content: flex-start !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 470px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img {
+  width: 190px !important;
+  height: 190px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 0.6rem 0 0.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  width: 230px !important;
+  height: 230px !important;
+  min-width: 230px !important;
+  min-height: 230px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row {
+  display: flex !important;
+  justify-content: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row[hidden],
+section.screen.active[data-screen="DIGITAL"] #retryBonusBtn[hidden] {
+  display: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status:empty { display: none !important; }
+.felix-split-pill { margin-top: 0.5rem; }
+.felix-social-row { margin-top: 0.7rem; }
+.felix-continue-pill { margin-top: 0.7rem; }
