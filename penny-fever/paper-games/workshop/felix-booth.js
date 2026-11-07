@@ -16,11 +16,19 @@
     ERROR: "ERROR",
   };
 
-  const FREE_BGS = ["bg_1", "bg_3", "bg_11", "bg_17", "bg_30", "bg_43"];
-  // The game mock uses its local strip artwork and keepsakes only.
-  function bgThumb(id) { return "backgrounds/strips/thumbs/" + id + ".jpg"; }
-  function bgFull(id) { return "backgrounds/strips/" + id + ".jpg"; }
-  const TRY_SAMPLE_ID = "bg_11";
+  let FREE_BGS = ["pf-felix", "pf-iris", "pf-aura"];
+  let carnivalSets = [];
+  const carnivalById = Object.create(null);
+  function carnivalSpec(id) { return carnivalById[id] || null; }
+  function bgThumb(id) {
+    const spec = carnivalSpec(id);
+    return (spec && spec.thumb) || ("backgrounds/carnival/thumbs/" + id + ".jpg");
+  }
+  function bgFull(id) {
+    const spec = carnivalSpec(id);
+    return (spec && spec.strip) || ("backgrounds/carnival/" + id + ".jpg");
+  }
+  const TRY_SAMPLE_ID = "pf-felix";
   // Felix strip layout's left column on the 784×1186 design grid.
   const STRIP_SLOTS_LEFT = [
     [100, 18, 208, 252],
@@ -124,6 +132,12 @@
   const payCreditBtn = document.getElementById("payCreditBtn");
   const bonusLink = document.getElementById("bonusLink");
   const bonusLinkDigital = document.getElementById("bonusLinkDigital");
+  const carnivalStage = document.getElementById("carnival-stage");
+  const carnivalWall = document.getElementById("carnivalWall");
+  const carnivalHost = document.getElementById("carnivalHost");
+  const carnivalPlate = document.getElementById("carnivalPlate");
+  const carnivalHostName = document.getElementById("carnivalHostName");
+  const carnivalSetTitle = document.getElementById("carnivalSetTitle");
 
   let currentScreen = Screen.ATTRACT;
   let isTrySession = false;
@@ -385,7 +399,7 @@
   function loadUnlocks() {
     try {
       const raw = JSON.parse(localStorage.getItem(LS.unlocks) || "[]");
-      return new Set(Array.isArray(raw) ? raw.filter((id) => /^bg_\d+$/.test(id)) : []);
+      return new Set(Array.isArray(raw) ? raw.filter((id) => /^pf-[a-z0-9-]+$/i.test(id) || /^bg_\d+$/.test(id)) : []);
     } catch {
       return new Set();
     }
@@ -490,6 +504,33 @@
     return c;
   }
 
+  function setName(bg) {
+    if (!bg) return "this set";
+    return bg.host || String(bg.id || "this set");
+  }
+
+  function paintCarnivalSet(bg) {
+    const spec = (bg && carnivalSpec(bg.id)) || bg || null;
+    const wallSrc = (bg && bg.liveWall) || (spec && spec.liveWall) || "";
+    const hostSrc = (bg && bg.hostArt) || (spec && spec.hostArt) || "";
+    const host = (bg && bg.host) || (spec && spec.host) || "Felix";
+    const title = (bg && bg.title) || (spec && spec.title) || "";
+    if (carnivalWall) {
+      carnivalWall.src = wallSrc;
+      carnivalWall.alt = host + " backdrop";
+    }
+    if (carnivalHost) {
+      carnivalHost.src = hostSrc || "";
+      carnivalHost.alt = host;
+      carnivalHost.hidden = !hostSrc;
+    }
+    if (carnivalHostName) carnivalHostName.textContent = String(host).toUpperCase();
+    if (carnivalSetTitle) carnivalSetTitle.textContent = title;
+    if (carnivalPlate) carnivalPlate.hidden = !host;
+    if (carnivalStage) carnivalStage.hidden = !wallSrc;
+    if (boothStage) boothStage.classList.toggle("carnival-live", Boolean(wallSrc));
+  }
+
   function selectBackground(bg) {
     hideUnlockConfirm();
     currentBackground = bg;
@@ -509,15 +550,21 @@
       warm.decoding = "async";
       warm.src = full;
     }
+    paintCarnivalSet(bg);
   }
 
   function bindCard(card) {
     const id = card.dataset.backgroundId;
     const img = card.querySelector("img");
+    const spec = carnivalSpec(id) || {};
     const bg = {
       id,
+      host: spec.host || "",
+      title: spec.title || "",
       poses: 4,
-      src: (img && img.dataset.fullSrc) || bgFull(id),
+      src: spec.strip || (img && img.dataset.fullSrc) || bgFull(id),
+      liveWall: spec.liveWall || "",
+      hostArt: spec.hostArt || "",
       element: card,
       locked: card.classList.contains("is-locked"),
     };
@@ -544,9 +591,10 @@
     const box = document.getElementById("felix-unlock-confirm");
     const text = document.getElementById("felix-unlock-confirm-text");
     if (text) {
+      const label = setName(bg);
       text.textContent =
-        "Unlock " + bg.id.toUpperCase() + " for " + PRICE.unlockPennies +
-        " pennies? Taken from your purse.";
+        "Unlock " + label + (bg.title ? " — " + bg.title : "") +
+        " for " + PRICE.unlockPennies + " pennies? Taken from your purse.";
     }
     if (box) box.hidden = false;
   }
@@ -584,7 +632,7 @@
     free.textContent = "UNLOCKED";
     bg.element.appendChild(free);
     selectBackground(bg);
-    setPayBanner("Unlocked " + bg.id.toUpperCase() + " for " + PRICE.unlockPennies + " pennies.");
+    setPayBanner("Unlocked " + setName(bg) + " for " + PRICE.unlockPennies + " pennies.");
     showError("");
   }
 
@@ -604,16 +652,20 @@
       slotBoxes = slotsForStripSize(slotRef.w, slotRef.h);
       applyTemplateSlotCss();
     } catch (_) {}
-    let ids = [];
     try {
-      ids = await fetch("backgrounds.json?v=strip-web-4").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-2").then((r) => r.json());
+      carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
+      Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
+      carnivalSets.forEach((row) => {
+        if (row && row.id) carnivalById[row.id] = row;
+      });
+      if (Array.isArray(payload.free) && payload.free.length) FREE_BGS = payload.free.slice();
+      allBackgroundIds = carnivalSets.map((row) => row.id).filter(Boolean);
     } catch (_) {
-      ids = FREE_BGS.slice();
+      allBackgroundIds = FREE_BGS.slice();
     }
-    allBackgroundIds = (Array.isArray(ids) ? ids : []).filter((id) => /^bg_\d+$/.test(String(id)));
     if (!allBackgroundIds.length) allBackgroundIds = FREE_BGS.slice();
-    // Intentionally do NOT rebuild the grid here — building 96 <img> tags on
-    // ATTRACT floods phones. Grid is built when a session reaches BACKGROUNDS.
+    // Grid is built when a session reaches BACKGROUNDS.
   }
 
   function rebuildBackgroundGrid(ids) {
@@ -630,19 +682,31 @@
       const poseCount = isTrySession ? 2 : 4;
       card.dataset.poses = String(poseCount);
       card.style.display = "";
+      const spec = carnivalSpec(id) || {};
       const img = card.querySelector("img") || card.appendChild(document.createElement("img"));
       img.loading = "lazy";
       img.decoding = "async";
-      img.dataset.fullSrc = bgFull(id);
-      img.src = bgFull(id);
-      img.alt = id.toUpperCase();
+      img.dataset.fullSrc = spec.strip || bgFull(id);
+      img.src = spec.thumb || spec.strip || bgThumb(id);
+      img.alt = spec.host || id;
       let label = card.querySelector(".bg-label");
       if (!label) {
         label = document.createElement("div");
         label.className = "bg-label";
         card.appendChild(label);
       }
-      label.textContent = id.toUpperCase() + " – " + poseCount + " poses";
+      label.textContent = (spec.host || id) + " – " + poseCount + " poses";
+      let setTitle = card.querySelector(".bg-set-title");
+      if (spec.title) {
+        if (!setTitle) {
+          setTitle = document.createElement("span");
+          setTitle.className = "bg-set-title";
+          label.appendChild(setTitle);
+        }
+        setTitle.textContent = spec.title;
+      } else if (setTitle) {
+        setTitle.remove();
+      }
       card.querySelectorAll(".bg-lock-badge, .bg-free-badge").forEach((el) => el.remove());
       if (locked) {
         const badge = document.createElement("div");
@@ -669,22 +733,28 @@
     if (firstOpen) selectBackground(firstOpen);
   }
 
-  loadLayoutAndBackgrounds();
+  const backgroundsReady = loadLayoutAndBackgrounds();
 
   function sampleBackground() {
     const hit = backgrounds.find((bg) => bg.id === TRY_SAMPLE_ID && !bg.locked);
     if (hit) return hit;
     const free = backgrounds.find((bg) => !bg.locked);
+    const spec = carnivalSpec(TRY_SAMPLE_ID) || {};
     return free || {
       id: TRY_SAMPLE_ID,
+      host: spec.host || "Felix",
+      title: spec.title || "Instapic Photo Booth",
       poses: 4,
-      src: bgFull(TRY_SAMPLE_ID),
+      src: spec.strip || bgFull(TRY_SAMPLE_ID),
+      liveWall: spec.liveWall || "",
+      hostArt: spec.hostArt || "",
       element: null,
       locked: false,
     };
   }
 
-  function startPaidSession(code, info) {
+  async function startPaidSession(code, info) {
+    await backgroundsReady;
     resetRecording();
     sessionInfo = info || null;
     isTrySession = false;
@@ -707,7 +777,8 @@
     showScreen(Screen.BACKGROUNDS);
   }
 
-  function startTrySession() {
+  async function startTrySession() {
+    await backgroundsReady;
     resetRecording();
     sessionInfo = null;
     isTrySession = true;
@@ -1795,6 +1866,7 @@
     if (name === Screen.PAYMENT || name === Screen.BACKGROUNDS) refreshWalletUi();
     if (name !== Screen.BACKGROUNDS) hideUnlockConfirm();
     if (name === Screen.LIVE) {
+      paintCarnivalSet(currentBackground || sampleBackground());
       startCamera().then((ok) => {
         if (ok && !isCaptureInProgress) {
           hideLiveCaptureCues();
@@ -1802,6 +1874,9 @@
         }
       });
     } else {
+      if (boothStage) boothStage.classList.remove("carnival-live");
+      if (carnivalStage) carnivalStage.hidden = true;
+      if (carnivalPlate) carnivalPlate.hidden = true;
       hideNoCamera();
       hideCameraEnable();
       stopCamera();

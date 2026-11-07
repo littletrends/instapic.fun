@@ -1476,3 +1476,101 @@ section.screen.active[data-screen="AWAKE"] .awake-qr-label {
 section.screen.active[data-screen="AWAKE"] .awake-qr {
   width: 240px;
 }
+
+/* ---- carnival-2: park wall + framed camera + host peek ---- */
+#carnival-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,0.4), transparent 42%),
+    #f3e6d2;
+}
+#carnival-stage[hidden] { display: none !important; }
+#carnivalWall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+#booth-stage.carnival-live {
+  background: #f3e6d2;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  inset: auto !important;
+  top: 10% !important;
+  left: 10% !important;
+  width: 80% !important;
+  height: 54% !important;
+  border-radius: 32px 32px 22px 22px;
+  box-shadow:
+    0 0 0 7px #d2b073,
+    0 0 0 16px #563e24,
+    0 28px 50px rgba(40, 20, 8, 0.45);
+  z-index: 1;
+  overflow: hidden;
+  background: #1a120c;
+}
+.carnival-host {
+  position: absolute;
+  right: -2%;
+  bottom: 0;
+  height: 32%;
+  width: auto;
+  z-index: 4;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(40, 18, 6, 0.4));
+}
+.carnival-host[hidden] { display: none !important; }
+.carnival-plate {
+  position: absolute;
+  left: 50%;
+  bottom: 6.5%;
+  transform: translateX(-50%);
+  z-index: 4;
+  min-width: 420px;
+  padding: 0.7rem 1.6rem 0.85rem;
+  text-align: center;
+  color: #392918;
+  background: rgba(255, 246, 236, 0.94);
+  border: 3px solid #d2b073;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(40, 18, 6, 0.22);
+  pointer-events: none;
+}
+.carnival-plate[hidden] { display: none !important; }
+#booth-stage.carnival-live .screen[data-screen="LIVE"],
+#booth-stage.carnival-live .screen[data-screen="LIVE"] .screen-content {
+  background: transparent !important;
+}
+#booth-stage.carnival-live .no-camera-panel {
+  background: rgba(243, 230, 210, 0.42);
+}
+.carnival-host-name {
+  font-family: "Unique", serif;
+  font-size: 2.1rem;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+.carnival-set-title {
+  font-family: "Subotype Steady", sans-serif;
+  font-size: 1.15rem;
+  color: #7a4a2a;
+  margin-top: 0.15rem;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-label {
+  margin-top: 0.45rem;
+  color: #ffe9b8;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-set-title {
+  display: block;
+  margin-top: 0.15rem;
+  color: rgba(255, 233, 184, 0.75);
+  font-size: 0.82rem;
+  font-weight: 600;
+}

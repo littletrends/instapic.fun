@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=awake-vip-qr-3">
+  <link rel="stylesheet" href="felix-booth.css?v=carnival-2">
 </head>
 <body>
   <div id="turn-phone">
@@ -22,6 +22,9 @@
 
   <div id="booth-frame">
     <div id="booth-stage">
+      <div id="carnival-stage" hidden>
+        <img id="carnivalWall" alt="">
+      </div>
       <div id="video-layer" class="hidden">
         <video id="liveVideo" autoplay muted playsinline webkit-playsinline></video>
         <canvas id="captureCanvas"></canvas>
@@ -254,8 +257,8 @@
 
         <section class="screen" data-screen="BACKGROUNDS">
           <div class="screen-content">
-            <h1 class="title-main">Choose a Background Template</h1>
-            <p class="subtitle" id="bgSubtitle">Free templates are open. Locked ones cost 2 pennies from your purse.</p>
+            <h1 class="title-main">Choose a carnival set</h1>
+            <p class="subtitle" id="bgSubtitle">Felix, Iris and Aura are free. Other park hosts cost 2 pennies from your purse.</p>
             <p class="felix-bg-purse" id="bgPurseNote" aria-live="polite"></p>
             <div id="felix-unlock-confirm" class="felix-penny-confirm" hidden>
               <p id="felix-unlock-confirm-text" class="felix-penny-confirm-text"></p>
@@ -267,9 +270,9 @@
             <div class="background-scroll-wrapper">
               <button class="bg-scroll-arrow bg-scroll-arrow--left" type="button" data-action="bg-scroll-left" aria-label="Previous">‹</button>
               <div class="background-grid" id="backgroundGrid">
-                <div class="background-card selected" data-background-id="bg_11" data-poses="4">
-                  <img src="backgrounds/thumbs/bg_11.jpg" data-full-src="backgrounds/bg_11.jpg" loading="lazy" decoding="async" alt="Background 11">
-                  <div class="bg-label">BG_11 – 4 poses</div>
+                <div class="background-card selected" data-background-id="pf-felix" data-poses="4">
+                  <img src="backgrounds/carnival/thumbs/pf-felix.jpg" data-full-src="backgrounds/carnival/pf-felix.jpg" loading="lazy" decoding="async" alt="Felix">
+                  <div class="bg-label">Felix – 4 poses</div>
                 </div>
               </div>
               <button class="bg-scroll-arrow bg-scroll-arrow--right" type="button" data-action="bg-scroll-right" aria-label="Next">›</button>
@@ -282,6 +285,11 @@
 
         <section class="screen" data-screen="LIVE">
           <div class="screen-content live-screen">
+            <img id="carnivalHost" class="carnival-host" alt="">
+            <div id="carnivalPlate" class="carnival-plate" hidden>
+              <div class="carnival-host-name" id="carnivalHostName">FELIX</div>
+              <div class="carnival-set-title" id="carnivalSetTitle">Instapic Photo Booth</div>
+            </div>
             <div id="liveOverlayTop" class="overlay-top hidden">
               <h1 class="title-main">Your session has started</h1>
               <p class="subtitle"></p>
@@ -500,7 +508,7 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=game-bonus-video-1"></script>
-  <script src="felix-booth-text.js?v=felix-text-6"></script>
+  <script src="felix-booth.js?v=carnival-2"></script>
+  <script src="felix-booth-text.js?v=carnival-2"></script>
 </body>
 </html>

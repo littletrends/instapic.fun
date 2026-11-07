@@ -1,0 +1,131 @@
+{
+  "updated": "carnival-2",
+  "free": [
+    "pf-felix",
+    "pf-iris",
+    "pf-aura"
+  ],
+  "sets": [
+    {
+      "id": "pf-felix",
+      "host": "Felix",
+      "title": "Instapic Photo Booth",
+      "free": true,
+      "strip": "backgrounds/carnival/pf-felix.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-felix.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-felix-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/felix/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-iris",
+      "host": "Iris",
+      "title": "Catch the Fortune",
+      "free": true,
+      "strip": "backgrounds/carnival/pf-iris.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-iris.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-iris-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/iris/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-aura",
+      "host": "Aura",
+      "title": "Palace Door",
+      "free": true,
+      "strip": "backgrounds/carnival/pf-aura.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-aura.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-aura-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/aura/welcoming/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-rosalie",
+      "host": "Rosalie",
+      "title": "Love Tester",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-rosalie.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-rosalie.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-rosalie-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/rosalie/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-celeste",
+      "host": "Celeste",
+      "title": "A Little Starlight",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-celeste.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-celeste.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-celeste-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/celeste/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-digby",
+      "host": "Digby",
+      "title": "Digger\u2019s Vault",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-digby.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-digby.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-digby-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/digby/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-copper",
+      "host": "Copper",
+      "title": "Copper Falls",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-copper.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-copper.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-copper-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/copper/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-mabel",
+      "host": "Mabel",
+      "title": "Milky Splash!",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-mabel.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-mabel.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-mabel-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/mabel/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-pip",
+      "host": "Pip",
+      "title": "Pinball Alley",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-pip.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-pip.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-pip-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/pip/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-tilly",
+      "host": "Tilly",
+      "title": "Spiral Slide",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-tilly.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-tilly.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-tilly-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/attendants/tilly/front.webp",
+      "poses": 4
+    },
+    {
+      "id": "pf-juno",
+      "host": "Juno",
+      "title": "Laughing Doorway",
+      "free": false,
+      "strip": "backgrounds/carnival/pf-juno.jpg",
+      "thumb": "backgrounds/carnival/thumbs/pf-juno.jpg",
+      "liveWall": "backgrounds/carnival/live/pf-juno-wall.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/attendants/juno/front.webp",
+      "poses": 4
+    }
+  ]
+}
