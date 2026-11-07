@@ -67,7 +67,7 @@ const STALLS = [
   { id: "pack", kind: "booth", art: CUTOUT("pack"), accent: 0x8a6230, line: "Tuck pennies. Nestle the unique." },
   { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
-const AURA_LINE = "Roll up, roll up! Tickets and pennies this way. First walk's free, then a penny a lap.";
+const AURA_LINE = "That’s the stub. Three taps and I punch you through — first walk is free.";
 const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
 for (const spec of STALLS) {
   const g = paperById[spec.id];
@@ -811,9 +811,9 @@ function makeLooseCoins() {
   return group;
 }
 
-const GATE_Z = paperRail ? COUNTER.z + 1.2 : -7.52;
-const AURA_DOOR = paperRail ? { x: -1.55, z: 6.2 } : { x: 0.12, z: -7.72 };
-const AURA_TILL = paperRail ? AURA_DOOR : { x: 2.15, z: 3.1 };
+const GATE_Z = paperRail ? FOYER_IN + 0.85 : -7.52;
+const AURA_DOOR = paperRail ? { x: -0.35, z: FOYER_IN + 0.45 } : { x: 0.12, z: -7.72 };
+const AURA_TILL = paperRail ? { x: COUNTER.x, z: COUNTER.z } : { x: 2.15, z: 3.1 };
 
 function pfState() {
   return (window.PennyFever && typeof window.PennyFever.getState === "function" && window.PennyFever.getState()) || {};
@@ -823,6 +823,48 @@ function ticketPassed() {
 }
 function hasAdmitTicket() {
   return !!pfState().admitTicket;
+}
+function auraSpot() {
+  return ticketPassed() ? AURA_TILL : AURA_DOOR;
+}
+function auraDoorCard() {
+  const spot = auraSpot();
+  return {
+    id: "aura",
+    kind: "aura",
+    name: ticketPassed() ? "Ticket booth" : "Palace door",
+    host: "Aura",
+    hostSlug: "",
+    line: AURA_LINE,
+    x: spot.x,
+    z: spot.z,
+    stallX: spot.x,
+    stallZ: spot.z,
+    side: -1,
+    dist: 0,
+  };
+}
+function paintAuraDoorActions(best) {
+  if (!best || best.kind !== "aura") return;
+  const enter = el("pfStallCardEnter");
+  const back = el("pfStallCardBack");
+  const till = el("pfStallCardTill");
+  const lineEl = el("pfStallCardLine");
+  const laps = Number(pfState().alleyLaps) || 0;
+  if (enter) {
+    enter.hidden = false;
+    enter.disabled = !!ticketPassed();
+    if (ticketPassed()) enter.textContent = "This lap is punched";
+    else if (auraDoorTaps > 0) enter.textContent = `${laps === 0 ? "Take ticket" : "Pay a penny"} · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED}`;
+    else enter.textContent = laps === 0 ? "Take ticket · 3 taps" : "Pay a penny · 3 taps";
+  }
+  if (back) back.textContent = ticketPassed() ? "Walk the boards" : "Wait at the door";
+  if (till) till.hidden = !ticketPassed();
+  if (lineEl && !ticketPassed()) {
+    lineEl.textContent = auraDoorTaps
+      ? `${AURA_DOOR_TAPS_NEEDED - auraDoorTaps} more tap${AURA_DOOR_TAPS_NEEDED - auraDoorTaps === 1 ? "" : "s"} for the free pass.`
+      : AURA_LINE;
+  }
 }
 function pocketPennies() {
   return Number(pfState().demoCoins) || 0;
@@ -1189,18 +1231,19 @@ function walkToMapPlace(place) {
   closeAlleyMap();
   if (place === "pier") {
     closeAlleyMap();
-    return warp(0, FOYER_IN + 1.2, 0);
+    return warp(0, ticketPassed() ? FOYER_IN + 1.2 : FOYER_IN - 1.75, 0);
   }
   if (place === "aura") {
     closeAlleyMap();
+    if (!ticketPassed()) return warp(0, FOYER_IN - 1.75, 0);
     return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
   }
   if (place === "end") {
     closeAlleyMap();
-    if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+    if (!ticketPassed()) return warp(0, FOYER_IN - 1.75, 0);
     return warp(0, hallLen - 2.4, 0);
   }
-  if (!ticketPassed()) return warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
+  if (!ticketPassed()) return warp(0, FOYER_IN - 1.75, 0);
   const s = stalls?.find((x) => x.userData.stall?.id === place);
   if (s) {
     const side = Math.sign(s.position.x) || 1;
@@ -1513,8 +1556,10 @@ function lookCardArt(best, view = "front") {
     };
   }
   return {
-    booth: `${root}/aura/ticket-booth/${v}.webp`,
-    vendor: `${root}/aura/welcoming/${v}.webp`,
+    booth: ticketPassed()
+      ? `${root}/aura/ticket-booth/${v}.webp`
+      : `${root}/aura/welcoming/${v}.webp`,
+    vendor: ticketPassed() ? `${root}/aura/welcoming/${v}.webp` : "",
     role: "proprietor",
   };
 }
@@ -1660,7 +1705,9 @@ function openBoothCard(best) {
   focus = best;
   nearest = { ...best, atCounter: true };
   hidePassChip();
+  if (best.kind === "aura" && !ticketPassed()) auraTapArmedAt = performance.now() - 500;
   syncStallCard(nearest);
+  if (best.kind === "aura") paintAuraDoorActions(nearest);
 }
 
 function closeStallCard() {
@@ -1746,18 +1793,7 @@ function syncStallCard(best) {
         enter.textContent = shut ? "Step in" : stallEnterLabel(playId);
         if (shut && lineEl) lineEl.textContent = parkSign(playId, best.host);
       } else if (best.kind === "aura") {
-        const laps = Number(pfState().alleyLaps) || 0;
-        enter.hidden = false;
-        enter.disabled = !!ticketPassed();
-        if (ticketPassed()) {
-          enter.textContent = "This lap is punched";
-        } else if (auraDoorTaps > 0) {
-          enter.textContent = `Take ticket · ${auraDoorTaps}/${AURA_DOOR_TAPS_NEEDED}`;
-        } else if (laps === 0) {
-          enter.textContent = "Take ticket · 3 taps";
-        } else {
-          enter.textContent = "Pay a penny · 3 taps";
-        }
+        paintAuraDoorActions(best);
       } else {
         enter.hidden = true;
         enter.disabled = false;
@@ -1768,10 +1804,13 @@ function syncStallCard(best) {
       chat.textContent = "Chat";
     }
     const back = el("pfStallCardBack");
-    if (back) back.textContent = best.kind === "aura" ? "Enter the sideshow alley" : "Back to the alley";
+    if (back && best.kind !== "aura") back.textContent = "Back to the alley";
     const till = el("pfStallCardTill");
-    if (till) till.hidden = best.kind !== "aura";
-    if (best.kind === "aura") paintAuraWallet(el("pfStallCard"));
+    if (till && best.kind !== "aura") till.hidden = true;
+    if (best.kind === "aura") {
+      paintAuraDoorActions(best);
+      paintAuraWallet(el("pfStallCard"));
+    }
     applyLookCardView("front");
   }
   stallCardOpen = true;
@@ -1912,10 +1951,10 @@ function buildWorld() {
   }
 
   player = makePerson({ kind: "guest", cloth: 0xb08a78, scale: 1.05 });
-  player.position.set(paperRail ? -0.6 : 0, 0, paperRail ? -18.2 : -16.2);
+  player.position.set(0, 0, paperRail ? FOYER_IN - 1.75 : -16.2);
   scene.add(player);
-  camera.position.set(paperRail ? -.12 : 0, paperRail ? 2.0 : 2.45, paperRail ? -21.6 : -22.2);
-  camera.lookAt(0, paperRail ? 1.05 : 1.2, paperRail ? -14.6 : -16.2);
+  camera.position.set(paperRail ? -.12 : 0, paperRail ? 2.0 : 2.45, paperRail ? FOYER_IN - 5.4 : -22.2);
+  camera.lookAt(0, paperRail ? 1.05 : 1.2, paperRail ? FOYER_IN + 0.4 : -16.2);
 
   aura = makePerson({ kind: "aura", cloth: DRESS, scale: 1.08, chibi: true });
   dressAura(aura);
@@ -2184,7 +2223,7 @@ function updatePlayer(dt) {
 }
 
 function atAuraGate() {
-  return !!(player && aura && player.position.distanceTo(aura.position) < 2.55 && !ticketPassed());
+  return !!(player && aura && player.position.distanceTo(aura.position) < 3.2 && !ticketPassed());
 }
 
 function handleGatePrompt() {
@@ -2194,7 +2233,10 @@ function handleGatePrompt() {
   if (!auraTapArmedAt) auraTapArmedAt = performance.now();
   if (performance.now() - auraTapArmedAt < 400) return true;
   auraDoorTaps += 1;
-  if (nearest?.kind === "aura") syncStallCard(nearest);
+  if (nearest?.kind === "aura") {
+    syncStallCard(nearest);
+    paintAuraDoorActions(nearest);
+  }
   if (auraDoorTaps < AURA_DOOR_TAPS_NEEDED) return true;
   const PF = window.PennyFever;
   const laps = Number(pfState().alleyLaps) || 0;
@@ -2208,6 +2250,7 @@ function handleGatePrompt() {
     return true;
   }
   auraDoorTaps = 0;
+  if (nearest?.kind === "aura") paintAuraDoorActions(nearest);
   const prompt = el("pfWorldPrompt");
   if (prompt) prompt.classList.add("is-ticket-given");
   if (navigator.vibrate) navigator.vibrate([35, 45, 70]);
@@ -2341,42 +2384,32 @@ function pickFocus(px, pz) {
     }, Math.abs(pz - fig.position.z));
   });
   if (paperRail) {
+    const spot = auraSpot();
     consider({
-      id: "aura",
-      kind: "aura",
-      name: "Ticket booth",
-      host: "Aura",
-      hostSlug: "",
-      line: AURA_LINE,
-      x: COUNTER.x,
-      z: COUNTER.z,
-      stallX: COUNTER.x,
-      stallZ: COUNTER.z,
-      side: -1,
-      dist: Math.hypot(px - COUNTER.x, pz - COUNTER.z),
-      dz: Math.abs(pz - COUNTER.z),
-    }, Math.abs(pz - COUNTER.z));
+      ...auraDoorCard(),
+      x: spot.x,
+      z: spot.z,
+      stallX: spot.x,
+      stallZ: spot.z,
+      dist: Math.hypot(px - spot.x, pz - spot.z),
+      dz: Math.abs(pz - spot.z),
+    }, Math.abs(pz - spot.z));
   }
   if (stallCardOpen && focus) return { passing, passingZ };
   const walkingStraight = Math.abs(moveIntent.iy) > 0.2 && Math.abs(moveIntent.ix) < 0.38;
-  const atTill = paperRail && aura && Math.hypot(px - COUNTER.x, pz - COUNTER.z) < 2.7 && px < -0.28;
-  if (walkingStraight && !atTill) {
+  const atAura = paperRail && aura && Math.hypot(px - aura.position.x, pz - aura.position.z) < 2.7;
+  const atTill = ticketPassed() && atAura && px < -0.28;
+  const atDoor = !ticketPassed() && atAura;
+  if (walkingStraight && !atTill && !atDoor) {
     focus = null;
     return { passing, passingZ };
   }
-  if (atTill) {
+  if (atDoor || atTill) {
     focus = {
-      id: "aura",
-      kind: "aura",
-      name: "Ticket booth",
-      line: AURA_LINE,
+      ...auraDoorCard(),
       x: aura.position.x,
       z: aura.position.z,
-      stallX: COUNTER.x,
-      stallZ: COUNTER.z,
-      side: -1,
       dist: Math.hypot(px - aura.position.x, pz - aura.position.z),
-      host: "Aura",
     };
     return { passing, passingZ };
   }
@@ -2820,7 +2853,7 @@ function startNow() {
     viewBlend = 0;
     lookZoom = 1;
     if (enteringFromDoor) {
-      warp(paperRail ? -0.6 : 0, paperRail ? -18.2 : -16.2, 0);
+      warp(0, paperRail ? FOYER_IN - 1.75 : -16.2, 0);
     } else if ((location.hash || "").replace(/^#/, "") === "booth") {
       warp(paperRail ? -0.45 : 0.4, COUNTER.z + 1.15, 0);
     } else {
@@ -2828,6 +2861,9 @@ function startNow() {
     }
   }
   loop();
+  if (enteringFromDoor && !ticketPassed()) {
+    requestAnimationFrame(() => openBoothCard(auraDoorCard()));
+  }
   window.dispatchEvent(new Event("pf-world-ready"));
   return true;
 }
