@@ -389,7 +389,7 @@ async function paintDisplay(id) {
       const job = new Promise((resolve,reject)=>{
         const img = new Image();
         img.onload=()=>resolve(img); img.onerror=reject;
-        img.src=`assets/restyle/game-sprites/doll-accessories/${scene.id}/front.png`;
+        img.src=`assets/restyle/game-sprites/doll-accessories/${scene.id}/front.webp`;
       });
       displayImages.set(scene.id,job);
       job.catch(()=>displayImages.delete(scene.id));

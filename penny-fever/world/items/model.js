@@ -230,20 +230,20 @@
     return 'rewards';
   }
   const bookMeta = [
-    {id:'penny-collector-book', title:'Penny collector book', kicker:'The whole midway', blurb:'Every keepsake in Penny Fever. Pages wait in silhouette until you bring each one home.', kind:'book', master:true, cover:'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png'},
-    {id:'curio-cabinet-album', title:'Curio cabinet album', kicker:'Cabinet of curios', blurb:'Little labelled niches for alley finds and machine guts.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/curio-cabinet-album/front.png'},
-    {id:'fortune-journal', title:'Fortune journal', kicker:'Future curios', blurb:'Moon-clasp pages for compasses, keys, bottles and secrets still on their way.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/fortune-journal/front.png'},
-    {id:'photo-accordion', title:'Photo accordion', kicker:'Wonders in frames', blurb:'Fold-out frames for peepshows, flickers, lockets and other sights worth keeping.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/photo-accordion/front.png'},
-    {id:'pressed-flower-book', title:'Pressed flower book', kicker:'Parlour keepsakes', blurb:'Vellum pockets for roses, lockboxes, cameras and other tender prizes.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/pressed-flower-book/front.png'},
-    {id:'ride-stamp-book', title:'Ride stamp book', kicker:'Ride keepsakes', blurb:'A cream passport waiting for every amusement’s coloured stamp.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/ride-stamp-book/front.png'},
-    {id:'charm-display-case', title:'Charm display case', kicker:'Things to wear', blurb:'Hooks and velvet paper for bows, pins, spectacles and hanging charms.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/charm-display-case/front.png'},
-    {id:'memory-scrapbook', title:'Memory scrapbook', kicker:'Tickets & awards', blurb:'Pockets for tickets, maps, ribbons and the night you first walked in.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/memory-scrapbook/front.png'},
-    {id:'garden-party-book', title:'Garden party book', kicker:'Garden prizes', blurb:'A costume book that also keeps dishes, clocks, ducks and garden souvenirs.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/garden-party-book/front.png'},
-    {id:'winter-lantern-book', title:'Winter lantern book', kicker:'Seasonal treasures', blurb:'Scarves, seeds, globes, fans and the little pumpkin who waits for autumn.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/winter-lantern-book/front.png'},
-    {id:'seaside-day-book', title:'Seaside day book', kicker:'Sweet treats', blurb:'A sailor’s album of floss, fizz, cocoa, toffee and picnic parcels.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/seaside-day-book/front.png'},
-    {id:'moonlight-wardrobe', title:'Moonlight wardrobe', kicker:'Costume book', blurb:'Crescent cloak pages. Outfit cutouts will settle here as they are found.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/moonlight-wardrobe/front.png'},
-    {id:'night-suitcase', title:'Night suitcase', kicker:'Parcels & tools', blurb:'A paper-lined case for wrapping, punches, tags and the kit that keeps the midway working.', kind:'case', cover:'assets/restyle/game-sprites/garden-prizes/night-suitcase/front.png'},
-    {id:'pocket-theatre', title:'Pocket theatre', kicker:'Toys & game prizes', blurb:'A tiny stage for prize-shelf friends, birds, boats and other trophies.', kind:'album', cover:'assets/restyle/game-sprites/toy-shelf/pocket-theatre/front.png'},
+    {id:'penny-collector-book', title:'Penny collector book', kicker:'The whole midway', blurb:'Every keepsake in Penny Fever. Pages wait in silhouette until you bring each one home.', kind:'book', master:true, cover:'assets/restyle/game-sprites/collector-books/penny-collector-book/front.webp'},
+    {id:'curio-cabinet-album', title:'Curio cabinet album', kicker:'Cabinet of curios', blurb:'Little labelled niches for alley finds and machine guts.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/curio-cabinet-album/front.webp'},
+    {id:'fortune-journal', title:'Fortune journal', kicker:'Future curios', blurb:'Moon-clasp pages for compasses, keys, bottles and secrets still on their way.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/fortune-journal/front.webp'},
+    {id:'photo-accordion', title:'Photo accordion', kicker:'Wonders in frames', blurb:'Fold-out frames for peepshows, flickers, lockets and other sights worth keeping.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/photo-accordion/front.webp'},
+    {id:'pressed-flower-book', title:'Pressed flower book', kicker:'Parlour keepsakes', blurb:'Vellum pockets for roses, lockboxes, cameras and other tender prizes.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/pressed-flower-book/front.webp'},
+    {id:'ride-stamp-book', title:'Ride stamp book', kicker:'Ride keepsakes', blurb:'A cream passport waiting for every amusement’s coloured stamp.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/ride-stamp-book/front.webp'},
+    {id:'charm-display-case', title:'Charm display case', kicker:'Things to wear', blurb:'Hooks and velvet paper for bows, pins, spectacles and hanging charms.', kind:'album', cover:'assets/restyle/game-sprites/collector-books/charm-display-case/front.webp'},
+    {id:'memory-scrapbook', title:'Memory scrapbook', kicker:'Tickets & awards', blurb:'Pockets for tickets, maps, ribbons and the night you first walked in.', kind:'book', cover:'assets/restyle/game-sprites/collector-books/memory-scrapbook/front.webp'},
+    {id:'garden-party-book', title:'Garden party book', kicker:'Garden prizes', blurb:'A costume book that also keeps dishes, clocks, ducks and garden souvenirs.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/garden-party-book/front.webp'},
+    {id:'winter-lantern-book', title:'Winter lantern book', kicker:'Seasonal treasures', blurb:'Scarves, seeds, globes, fans and the little pumpkin who waits for autumn.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/winter-lantern-book/front.webp'},
+    {id:'seaside-day-book', title:'Seaside day book', kicker:'Sweet treats', blurb:'A sailor’s album of floss, fizz, cocoa, toffee and picnic parcels.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/seaside-day-book/front.webp'},
+    {id:'moonlight-wardrobe', title:'Moonlight wardrobe', kicker:'Costume book', blurb:'Crescent cloak pages. Outfit cutouts will settle here as they are found.', kind:'book', cover:'assets/restyle/game-sprites/paper-doll-books/moonlight-wardrobe/front.webp'},
+    {id:'night-suitcase', title:'Night suitcase', kicker:'Parcels & tools', blurb:'A paper-lined case for wrapping, punches, tags and the kit that keeps the midway working.', kind:'case', cover:'assets/restyle/game-sprites/garden-prizes/night-suitcase/front.webp'},
+    {id:'pocket-theatre', title:'Pocket theatre', kicker:'Toys & game prizes', blurb:'A tiny stage for prize-shelf friends, birds, boats and other trophies.', kind:'album', cover:'assets/restyle/game-sprites/toy-shelf/pocket-theatre/front.webp'},
   ];
   const bookIds = new Set(bookMeta.map(b => b.id));
   const albumBook = {
@@ -282,7 +282,7 @@
     return Object.freeze({
       id,name,category,kind,key,source,hint,depth,collection,album,book,
       alpha: true,
-      asset: `assets/restyle/game-sprites/${collection}/${id}/front.png`,
+      asset: `assets/restyle/game-sprites/${collection}/${id}/front.webp`,
       columns: 1,
       rows: 1,
       hinged: false,

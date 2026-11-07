@@ -510,7 +510,7 @@ const TURN_VIEWS = ['front', 'left', 'back', 'right'];
 function itemFace(item, view) {
   const name = TURN_VIEWS[((view % TURN_VIEWS.length) + TURN_VIEWS.length) % TURN_VIEWS.length];
   if (!item.turnaround || !item.asset) return item.asset;
-  return item.asset.replace(/front\.png$/, name + '.png');
+  return item.asset.replace(/front\.webp$/, name + '.webp');
 }
 function poseFoundCard(card, view) {
   const img = card.querySelector('.found-doll');
@@ -670,7 +670,7 @@ function paintIdle() {
   const cover = $('stallCover');
   cover.decoding = 'async';
   cover.loading = 'lazy';
-  cover.src = 'assets/restyle/game-sprites/collector-books/penny-collector-book/front.png';
+  cover.src = 'assets/restyle/game-sprites/collector-books/penny-collector-book/front.webp';
   cover.alt = 'Penny collector book';
   $('stallCoverBtn').classList.toggle('is-missing', !bookOwned(entries()));
   $('stallCoverBtn').setAttribute('aria-label', 'Inspect the penny collector book');

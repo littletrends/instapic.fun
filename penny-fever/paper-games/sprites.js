@@ -61,7 +61,7 @@ export function matteImage(image, opts = {}) {
 }
 
 export function frontUrl(key) {
-  return new URL(key.replace(/^\/+/, '') + '/front.png', root).href;
+  return new URL(key.replace(/^\/+/, '') + '/front.webp', root).href;
 }
 
 export async function loadSprite(key, size = 160) {

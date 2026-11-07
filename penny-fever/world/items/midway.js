@@ -36,7 +36,7 @@ export const extras = [
     workshop: false,
     extra: true,
     prizes: ['moonlight-wardrobe'],
-    cover: 'assets/restyle/game-sprites/paper-doll-books/moonlight-wardrobe/front.png',
+    cover: 'assets/restyle/game-sprites/paper-doll-books/moonlight-wardrobe/front.webp',
   },
 ];
 

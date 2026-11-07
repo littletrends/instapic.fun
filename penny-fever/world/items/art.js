@@ -43,9 +43,9 @@ export async function loadArt(item) {
   const size = faceSize();
   const pending = (async () => {
     if (item.turnaround && item.collection) {
-      const root = item.asset.replace(/front\.png$/, '');
+      const root = item.asset.replace(/front\.webp$/, '');
       const loaded = await Promise.all(VIEWS.map(view =>
-        loadImage(root + view + '.png').catch(() => null)
+        loadImage(root + view + '.webp').catch(() => null)
       ));
       if (!loaded[0]) throw new Error('The item picture could not be loaded.');
       return pack(loaded.filter(Boolean).map(image => drawFit(image, size)), size);
