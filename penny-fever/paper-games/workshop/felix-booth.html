@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=carnival-2">
+  <link rel="stylesheet" href="felix-booth.css?v=carnival-3">
 </head>
 <body>
   <div id="turn-phone">
@@ -306,10 +306,15 @@
             <div id="cameraEnablePanel" class="no-camera-panel camera-enable-panel hidden">
               <div class="no-camera-card">
                 <h1 class="title-main">Turn on camera</h1>
-                <p class="subtitle" id="cameraEnableHint">Phones need a tap before the camera opens. Allow the permission when asked — we wait for your answer.</p>
+                <p class="subtitle" id="cameraEnableHint">Phones need a tap before the camera opens. Bots and testers can use the paper player.</p>
                 <div class="button-row">
                   <button class="btn btn-primary btn-big" data-action="enable-camera" type="button" id="enableCameraBtn">
                     TURN ON CAMERA
+                  </button>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary btn-big" data-action="use-paper-player" type="button" id="enablePaperPlayerBtn">
+                    USE PAPER PLAYER
                   </button>
                 </div>
                 <div class="button-row">
@@ -323,7 +328,7 @@
             <div id="noCameraPanel" class="no-camera-panel hidden">
               <div class="no-camera-card">
                 <h1 class="title-main" id="noCameraTitle">Camera unavailable</h1>
-                <p class="subtitle" id="noCameraSubtitle">Pick a photo from your phone, or use a cream silhouette so the booth still finishes.</p>
+                <p class="subtitle" id="noCameraSubtitle">Pick a photo from your phone, or use the paper player so the booth still finishes.</p>
                 <p class="subtitle small no-camera-error hidden" id="noCameraError"></p>
                 <div class="button-row">
                   <button class="btn btn-primary btn-big" data-action="retry-camera" type="button">
@@ -337,8 +342,8 @@
                   </label>
                 </div>
                 <div class="button-row">
-                  <button class="btn btn-secondary btn-big" data-action="use-silhouette" type="button">
-                    USE CREAM SILHOUETTE
+                  <button class="btn btn-primary btn-big" data-action="use-paper-player" type="button">
+                    USE PAPER PLAYER
                   </button>
                 </div>
                 <p class="subtitle small" id="noCameraPoseHint">Pose 1 of 2</p>
@@ -355,7 +360,7 @@
             <h1 class="title-main">Review Your Photo Strip</h1>
             <p class="subtitle">Tap a photo to select it. Retake or keep.</p>
             <div class="review-layout">
-              <div class="review-strip-wrap">
+              <div class="review-strip-wrap strip-on-paper">
                 <img id="reviewStripPreview" class="strip-composite-preview" alt="Your photo strip">
                 <div class="thumbs-title">Your photos — tap to select</div>
                 <div class="pose-thumb-row">
@@ -397,7 +402,7 @@
           <div class="screen-content">
             <h1 class="title-main">Ready to Print</h1>
             <p class="subtitle">Checkout your photo strip below!</p>
-            <div class="background-preview-frame">
+            <div class="background-preview-frame strip-on-paper">
               <img id="finalStripPreview" alt="Final photo strip">
             </div>
             <div class="instapic-print-preview-note" hidden>
@@ -439,7 +444,7 @@
             </div>
 
             <div class="output-layout">
-              <div class="background-preview-frame">
+              <div class="background-preview-frame strip-on-paper">
                 <img id="digitalStripPreview" alt="Photo strip preview">
               </div>
               <div class="output-options">
@@ -508,7 +513,7 @@
       </div>
     </div>
   </div>
-  <script src="felix-booth.js?v=carnival-2"></script>
-  <script src="felix-booth-text.js?v=carnival-2"></script>
+  <script src="felix-booth.js?v=carnival-3"></script>
+  <script src="felix-booth-text.js?v=carnival-3"></script>
 </body>
 </html>

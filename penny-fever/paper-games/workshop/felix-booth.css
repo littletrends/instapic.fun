@@ -1574,3 +1574,20 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-set-title 
   font-size: 0.82rem;
   font-weight: 600;
 }
+
+.strip-on-paper {
+  background-image: url("backgrounds/carnival/paper/felix-game-paper.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 1.35rem 1.1rem !important;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 6px #d2b073,
+    0 18px 36px rgba(40, 18, 6, 0.35);
+}
+.strip-on-paper #reviewStripPreview,
+.strip-on-paper #finalStripPreview,
+.strip-on-paper #digitalStripPreview,
+.strip-on-paper .strip-composite-preview {
+  box-shadow: 0 10px 24px rgba(40, 18, 6, 0.28) !important;
+}
