@@ -107,7 +107,7 @@ function mount() {
   const door = document.getElementById('discoveryDoor');
   if (!studio && door) {
     const back = door.querySelector('.site-back');
-    door.insertBefore(launch, back || null);
+    if (back && back.parentNode) back.parentNode.insertBefore(launch, back); else door.append(launch);
   } else document.body.append(launch);
   launch.addEventListener('click', () => open());
 
