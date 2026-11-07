@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07T13:21:20+09:30",
+  "updated_at": "2026-11-07T13:22:17+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -12,7 +12,7 @@
       "label": "Wake button",
       "selector": "#attractWakeButton",
       "html": true,
-      "text": "TAP TO WAKE\nFELIX\u2019S GAME\nPHOTO BOOTH",
+      "text": "TAP TO WAKE\nTHE\nPHOTOBOOTH",
       "font": "Unique.ttf",
       "size": 100,
       "x": 0,
