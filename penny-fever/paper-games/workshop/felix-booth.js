@@ -2077,6 +2077,21 @@
     await saveStrip();
   }
 
+  async function shareSocial(net) {
+    const link = "https://instapic.fun/penny-fever/";
+    const text = "My Penny Fever photo strip from Felix's booth";
+    const urls = {
+      facebook: "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(link),
+      x: "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(link),
+      whatsapp: "https://wa.me/?text=" + encodeURIComponent(text + " " + link),
+    };
+    if (urls[net]) {
+      window.open(urls[net], "_blank", "noopener");
+      return;
+    }
+    await shareStrip();
+  }
+
   function showScreen(name) {
     const same = currentScreen === name;
     currentScreen = name;
@@ -2435,6 +2450,10 @@
     }
     if (action === "share-strip") {
       shareStrip();
+      return;
+    }
+    if (action === "share-social") {
+      shareSocial(btn.dataset.net);
       return;
     }
     if (action === "print-now") {
