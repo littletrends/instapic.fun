@@ -2023,3 +2023,38 @@ section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
 section.screen.active[data-screen="DIGITAL"] .felix-bonus-status {
   margin: 0.5rem 0 0 !important;
 }
+
+/* carnival-13: oval a touch lower and right; cues at the top of the oval,
+   under the camera, not over the face. */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 17.5% !important;
+  left: 10% !important;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  top: 6% !important;
+  transform: none !important;
+  justify-content: flex-start !important;
+}
+
+/* Game code screen: VIP QR straight on the grass (no white box);
+   light modules on clear background so it reads on the dark garden. */
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder,
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder.has-qr {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Review screen: no inner background box; strip and photos sit straight
+   on the main background. */
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap,
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
