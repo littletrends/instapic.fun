@@ -1,6 +1,6 @@
 {
-  "updated": "carnival-8",
-  "note": "Penny Fever SNAP keepsake geometry. Not Darwin bonus_pipeline.",
+  "updated": "carnival-9",
+  "note": "Penny Fever SNAP keepsake geometry. Not Darwin bonus_pipeline. GIF/boom clip sits inside the cream oval, clear of the brass ring.",
   "size": [1080, 1920],
   "collage": {
     "photos": [
@@ -11,17 +11,17 @@
     ]
   },
   "gif": {
-    "x": 128,
-    "y": 318,
-    "w": 824,
-    "h": 900,
+    "x": 176,
+    "y": 366,
+    "w": 728,
+    "h": 804,
     "shape": "ellipse"
   },
   "boomerang": {
-    "x": 128,
-    "y": 318,
-    "w": 824,
-    "h": 900,
+    "x": 176,
+    "y": 366,
+    "w": 728,
+    "h": 804,
     "shape": "ellipse"
   }
 }

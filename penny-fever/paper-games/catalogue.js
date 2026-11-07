@@ -5,7 +5,7 @@ const rows = [
   ['love','Rosalie','Love Tester','Write the names. Count the letters. Add them down.'],
   ['curios','Digby','Digger’s Vault','Aim the claw. Drop on a glass capsule. Catch Digby’s curios.'],
   ['lookup','Celeste','A Little Starlight','Turn brass glasses to wake constellations.'],
-  ['snap','Felix','Instapic Penny Fever Photo Booth','Webcam Try, then the website bonus preview. Game-only. Not the Darwin machines.', 'workshop/felix-booth.html?v=carnival-8'],
+  ['snap','Felix','Instapic Penny Fever Photo Booth','Webcam Try, then the website bonus preview. Game-only. Not the Darwin machines.', 'workshop/felix-booth.html?v=carnival-9'],
   ['whisper','Willa','Whisper Run','Read the secret. Cross the board. Pick the phrase you remember.'],
   ['ball-toss','Bess','Impossible Plates','Three balls, a barely-fit plate. Pull back and throw clean through.'],
   ['coin-pusher','Copper','Copper Falls','Every penny leaves its mark. Push the unique over the edge.'],

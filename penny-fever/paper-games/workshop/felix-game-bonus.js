@@ -77,13 +77,67 @@
     };
   }
 
-  function dl(href, name, label, extraClass) {
-    const a = document.createElement("a");
-    a.className = extraClass ? "btn " + extraClass : "btn";
-    a.href = href;
-    a.download = name;
-    a.textContent = label;
-    return a;
+  function actionBtn(label, extraClass) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = extraClass ? "btn " + extraClass : "btn";
+    btn.textContent = label;
+    return btn;
+  }
+
+  function downloadUrl(href, name, label, extraClass) {
+    const btn = actionBtn(label, extraClass);
+    btn.addEventListener("click", async () => {
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Saving…";
+      try {
+        const res = await fetch(href);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
+        btn.textContent = "Saved";
+        setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 1200);
+      } catch (_) {
+        window.open(href, "_blank", "noopener,noreferrer");
+        btn.textContent = old;
+        btn.disabled = false;
+      }
+    });
+    return btn;
+  }
+
+  function shareBtn(label, href) {
+    const btn = actionBtn("Share " + label, "alt");
+    btn.addEventListener("click", async () => {
+      const payload = {
+        title: "My Penny Fever " + label,
+        text: "My Instapic Penny Fever SNAP ✨ Moments Made Magical — instapic.fun",
+        url: location.href,
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+      }
+      try {
+        await navigator.clipboard.writeText(payload.url);
+        btn.textContent = "Link copied";
+        setTimeout(() => { btn.textContent = "Share " + label; }, 1200);
+      } catch (_) {
+        window.open(href || payload.url, "_blank", "noopener,noreferrer");
+      }
+    });
+    return btn;
   }
 
   function put(id, node) {
@@ -109,16 +163,150 @@
   }
 
   async function ensureBaked(media) {
-    if (media?.collage && media?.gifFrames?.length) return media;
     const photos = media?.photos || [];
     if (!photos.length || !window.PfBonus) return media || {};
     try {
       const baked = await PfBonus.bake(photos);
-      return Object.assign({}, media, baked);
+      return Object.assign({}, media, {
+        collage: media.collage || baked.collage,
+        gifFrames: baked.gifFrames || media.gifFrames || [],
+        boomFrames: baked.boomFrames || media.boomFrames || [],
+      });
     } catch (err) {
       console.warn("bonus bake", err);
       return media || {};
     }
+  }
+
+  function loadVideoEl(src) {
+    if (!src) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.loop = true;
+      video.preload = "auto";
+      video.crossOrigin = "anonymous";
+      video.src = src;
+      video.addEventListener("loadeddata", () => finish(video), { once: true });
+      video.addEventListener("error", () => finish(null), { once: true });
+      setTimeout(() => finish(video.readyState >= 2 ? video : null), 8000);
+    });
+  }
+
+  async function playCollageVideo(frame, photos, videoSrc) {
+    if (!window.PfBonus) return false;
+    const layout = await PfBonus.loadLayout();
+    const background = await PfBonus.loadImage(PfBonus.SRC.collage);
+    const photoImgs = await Promise.all(
+      (photos || []).slice(0, 4).map((src) => (src ? PfBonus.loadImage(src).catch(() => null) : Promise.resolve(null)))
+    );
+    const canvas = document.createElement("canvas");
+    const [W, H] = layout.size || [1080, 1920];
+    canvas.width = W;
+    canvas.height = H;
+    canvas.setAttribute("aria-label", "SNAP collage video");
+    const ctx = canvas.getContext("2d");
+    const video = await loadVideoEl(videoSrc);
+    frame.replaceChildren(canvas);
+    PfBonus.drawCollageFrame(ctx, background, layout, photoImgs, null);
+    if (!video) return true;
+    const play = video.play();
+    if (play && play.catch) play.catch(() => {});
+    let raf = 0;
+    const tick = () => {
+      PfBonus.drawCollageFrame(ctx, background, layout, photoImgs, video);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    renderCleanups.push(() => {
+      cancelAnimationFrame(raf);
+      try { video.pause(); } catch (_) {}
+    });
+    return true;
+  }
+
+  function grabVideoFrame(video, time) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (value) => {
+        if (done) return;
+        done = true;
+        resolve(value);
+      };
+      const shoot = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 720;
+        canvas.height = 900;
+        const ctx = canvas.getContext("2d");
+        if (window.PfBonus) window.PfBonus.drawCover(ctx, video, 0, 0, canvas.width, canvas.height);
+        else ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        finish(canvas.toDataURL("image/jpeg", 0.86));
+      };
+      const onSeek = () => {
+        video.removeEventListener("seeked", onSeek);
+        shoot();
+      };
+      video.addEventListener("seeked", onSeek);
+      setTimeout(() => {
+        video.removeEventListener("seeked", onSeek);
+        shoot();
+      }, 700);
+      try {
+        video.pause();
+        video.currentTime = Math.max(0, Math.min(time, (video.duration || time) - 0.05));
+      } catch (_) {
+        video.removeEventListener("seeked", onSeek);
+        finish("");
+      }
+    });
+  }
+
+  function renderFreezeCard(grid, src, index, video, stem) {
+    const card = document.createElement("section");
+    card.className = "card";
+    card.innerHTML = '<div class="card-head"><h3>Photo ' + (index + 1) + '</h3><p>Your captured freeze frame.</p></div>';
+    const wrap = document.createElement("div");
+    wrap.className = "media-wrap";
+    const frame = document.createElement("div");
+    frame.className = "media-frame";
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "SNAP " + (index + 1);
+    frame.appendChild(img);
+    wrap.appendChild(frame);
+    card.appendChild(wrap);
+
+    let offset = 0;
+    const row = document.createElement("div");
+    row.className = "freeze-adjust-row";
+    const back = actionBtn("◀", "alt");
+    const readout = document.createElement("div");
+    readout.className = "freeze-adjust-readout";
+    readout.textContent = "+0.0s";
+    const fwd = actionBtn("▶", "alt");
+    const applyOffset = async (delta) => {
+      if (!video || !Number.isFinite(video.duration)) return;
+      offset = Math.max(-2.5, Math.min(2.5, offset + delta));
+      readout.textContent = (offset >= 0 ? "+" : "") + offset.toFixed(1) + "s";
+      const base = ((index + 0.55) / 4) * video.duration;
+      const next = await grabVideoFrame(video, base + offset);
+      if (next) img.src = next;
+    };
+    back.addEventListener("click", () => applyOffset(-0.2));
+    fwd.addEventListener("click", () => applyOffset(0.2));
+    if (video) {
+      row.append(back, readout, fwd);
+      card.appendChild(row);
+    }
+    grid.appendChild(card);
   }
 
   async function renderSession(session, code, number, mediaIn) {
@@ -133,34 +321,28 @@
       img.src = stripSrc;
       img.alt = "Penny Fever photo strip";
       stripFrame.replaceChildren(img);
-      stripActions.append(dl(stripSrc, stem + "strip.jpg", "Download strip"));
+      stripActions.append(downloadUrl(stripSrc, stem + "strip.jpg", "Download strip"), shareBtn("strip", stripSrc));
     } else {
-      stripFrame.innerHTML = '<div class="empty">No strip saved.</div>';
+      stripFrame.innerHTML = '<div class="empty-note">No strip saved.</div>';
     }
-
-    const stills = document.getElementById("stills-grid");
-    stills.replaceChildren();
-    (media?.photos || []).forEach((src, i) => {
-      if (!src) return;
-      const img = document.createElement("img");
-      img.src = src;
-      img.alt = "SNAP " + (i + 1);
-      stills.append(img);
-    });
 
     const collageSrc = media?.collage || "";
     const collageFrame = document.getElementById("collage-frame");
     const collageActions = document.getElementById("collage-actions");
     collageActions.replaceChildren();
-    if (collageSrc) {
+    const videoHref = media?.videoUrl || (media?.video ? URL.createObjectURL(media.video) : "");
+    if (media?.video && !media?.videoUrl) renderCleanups.push(() => URL.revokeObjectURL(videoHref));
+    const played = await playCollageVideo(collageFrame, media?.photos || [], videoHref).catch(() => false);
+    if (!played && collageSrc) {
       const img = document.createElement("img");
       img.src = collageSrc;
       img.alt = "SNAP collage";
       collageFrame.replaceChildren(img);
-      collageActions.append(dl(collageSrc, stem + "collage.jpg", "Download collage"));
-    } else {
-      collageFrame.innerHTML = '<div class="empty">Collage could not be built.</div>';
+    } else if (!played) {
+      collageFrame.innerHTML = '<div class="empty-note">Collage could not be built.</div>';
     }
+    if (collageSrc) collageActions.append(downloadUrl(collageSrc, stem + "collage.jpg", "Download collage"), shareBtn("collage", collageSrc));
+    if (videoHref) collageActions.append(downloadUrl(videoHref, stem + "session.webm", "Download session video", "alt"));
 
     const gifImg = document.createElement("img");
     gifImg.alt = "SNAP GIF";
@@ -170,9 +352,9 @@
     const gifFrames = (media?.gifFrames || []).filter(Boolean);
     if (gifFrames.length) {
       renderCleanups.push(playFlip(gifImg, gifFrames, false, 380));
-      gifActions.append(dl(gifFrames[0], stem + "gif-still.jpg", "Download GIF still"));
+      gifActions.append(downloadUrl(gifFrames[0], stem + "gif-still.jpg", "Download GIF"), shareBtn("GIF", gifFrames[0]));
     } else {
-      gifImg.replaceWith(Object.assign(document.createElement("div"), { className: "empty", textContent: "GIF could not be built." }));
+      gifImg.replaceWith(Object.assign(document.createElement("div"), { className: "empty-note", textContent: "GIF could not be built." }));
     }
 
     const boomImg = document.createElement("img");
@@ -183,19 +365,19 @@
     const boomFrames = (media?.boomFrames || []).filter(Boolean);
     if (boomFrames.length) {
       renderCleanups.push(playFlip(boomImg, boomFrames, true, 280));
-      boomActions.append(dl(boomFrames[0], stem + "boomerang-still.jpg", "Download boomerang still"));
+      boomActions.append(downloadUrl(boomFrames[0], stem + "boomerang-still.jpg", "Download boomerang"), shareBtn("boomerang", boomFrames[0]));
     } else {
-      boomImg.replaceWith(Object.assign(document.createElement("div"), { className: "empty", textContent: "Boomerang could not be built." }));
+      boomImg.replaceWith(Object.assign(document.createElement("div"), { className: "empty-note", textContent: "Boomerang could not be built." }));
     }
 
-    const videoHref = media?.videoUrl || "";
-    if (videoHref) {
-      collageActions.append(dl(videoHref, stem + "session.webm", "Download session video", "alt"));
-    } else if (media?.video) {
-      const url = URL.createObjectURL(media.video);
-      renderCleanups.push(() => URL.revokeObjectURL(url));
-      collageActions.append(dl(url, stem + "session." + (media.videoExt || "webm"), "Download session video", "alt"));
-    }
+    const stills = document.getElementById("stills-grid");
+    stills.replaceChildren();
+    const freezeVideo = videoHref ? await loadVideoEl(videoHref) : null;
+    if (freezeVideo) renderCleanups.push(() => { try { freezeVideo.pause(); } catch (_) {} });
+    (media?.photos || []).forEach((src, i) => {
+      if (!src) return;
+      renderFreezeCard(stills, src, i, freezeVideo, stem);
+    });
   }
 
   async function showCode(raw) {

@@ -1,5 +1,5 @@
 (() => {
-  const CACHE = "carnival-8";
+  const CACHE = "carnival-9";
   const PfBonus = {
     CACHE,
     LAYOUT_URL: "pf-bonus-layout.json?v=" + CACHE,
@@ -54,16 +54,22 @@
     return canvas;
   }
 
-  function composeCollage(background, layout, photos) {
+  function composeCollage(background, layout, photos, video) {
     const [W, H] = layout.size || [background.naturalWidth, background.naturalHeight];
     const canvas = makeCanvas(W, H);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(background, 0, 0, W, H);
-    (layout.collage?.photos || []).forEach((box, i) => {
-      const photo = photos[i];
-      if (photo) drawCover(ctx, photo, box[0], box[1], box[2], box[3]);
-    });
+    drawCollageFrame(ctx, background, layout, photos, video);
     return canvas;
+  }
+
+  function drawCollageFrame(ctx, background, layout, photos, video) {
+    const [W, H] = layout.size || [background.naturalWidth, background.naturalHeight];
+    ctx.drawImage(background, 0, 0, W, H);
+    const live = video && video.readyState >= 2 ? video : null;
+    (layout.collage?.photos || []).forEach((box, i) => {
+      const src = live || photos[i];
+      if (src) drawCover(ctx, src, box[0], box[1], box[2], box[3]);
+    });
   }
 
   function composeOval(background, box, image, layout) {
@@ -99,6 +105,7 @@
   PfBonus.loadLayout = loadLayout;
   PfBonus.drawCover = drawCover;
   PfBonus.drawOvalCover = drawOvalCover;
+  PfBonus.drawCollageFrame = drawCollageFrame;
   PfBonus.composeCollage = composeCollage;
   PfBonus.composeOval = composeOval;
   PfBonus.toJpeg = toJpeg;

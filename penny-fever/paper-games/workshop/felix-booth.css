@@ -1599,11 +1599,11 @@ section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
   background: #7aa05a;
 }
 #booth-stage.carnival-live #video-layer:not(.hidden) {
-  top: 22% !important;
-  left: 24% !important;
-  width: 52% !important;
-  height: 36.6% !important;
-  border-radius: 36px;
+  top: 15.5% !important;
+  left: 11% !important;
+  width: 78% !important;
+  height: 53% !important;
+  border-radius: 50%;
   box-shadow:
     0 0 0 6px rgba(210, 176, 115, 0.88),
     0 0 0 14px rgba(42, 74, 68, 0.42),

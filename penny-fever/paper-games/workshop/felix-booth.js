@@ -46,7 +46,7 @@
   const GAME_FILES_KEY = "pennyFeverGameFiles";
   const GAME_MEDIA_DB = "pennyFeverGameMedia";
   const MOTHERPC = "https://motherpc.taild1a44c.ts.net";
-  const CACHE = "carnival-8";
+  const CACHE = "carnival-9";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
