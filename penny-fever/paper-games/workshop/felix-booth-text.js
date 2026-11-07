@@ -1,5 +1,5 @@
 (function () {
-  const SRC = "felix-booth-text.json?v=carnival-3";
+  const SRC = "felix-booth-text.json?v=carnival-4";
 
   function familyFromFile(file) {
     return String(file || "").replace(/\.[a-z0-9]+$/i, "") || "sans-serif";

@@ -687,7 +687,7 @@
       applyTemplateSlotCss();
     } catch (_) {}
     try {
-      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-3").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-4").then((r) => r.json());
       carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
       Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
       carnivalSets.forEach((row) => {
