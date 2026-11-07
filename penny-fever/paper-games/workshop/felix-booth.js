@@ -46,7 +46,7 @@
   const GAME_FILES_KEY = "pennyFeverGameFiles";
   const GAME_MEDIA_DB = "pennyFeverGameMedia";
   const MOTHERPC = "https://motherpc.taild1a44c.ts.net";
-  const CACHE = "carnival-9";
+  const CACHE = "carnival-10";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
@@ -238,6 +238,7 @@
     buildStrip: () => buildStrip(),
     getComposite: () => lastCompositeUrl,
     slotsFor: (w, h) => slotsForStripSize(w, h),
+    showScreen: (name) => showScreen(name),
   };
 
   function showError(msg) {
@@ -831,9 +832,9 @@
     const h = paperLiveCanvas.height;
     const t = performance.now() / 1000;
     const lawn = ctx.createRadialGradient(w * 0.5, h * 0.58, 40, w * 0.5, h * 0.52, w * 0.72);
-    lawn.addColorStop(0, "#c5de90");
-    lawn.addColorStop(0.55, "#8fb86a");
-    lawn.addColorStop(1, "#5f8a48");
+    lawn.addColorStop(0, "#7aaa58");
+    lawn.addColorStop(0.55, "#5f8a48");
+    lawn.addColorStop(1, "#3f6a38");
     ctx.fillStyle = lawn;
     ctx.fillRect(0, 0, w, h);
     const img = paperPoses[currentPoseIndex] || paperPoses[0];
@@ -2075,8 +2076,30 @@
     }
     if (name === Screen.PAYMENT || name === Screen.BACKGROUNDS) refreshWalletUi();
     if (name !== Screen.BACKGROUNDS) hideUnlockConfirm();
-    if (name === Screen.LIVE) {
+    const artScreens = {
+      LIVE: true,
+      REVIEW: true,
+      PRINT: true,
+      DIGITAL: true,
+      PREPAID: true,
+      THANKYOU: true,
+    };
+    if (artScreens[name]) {
       paintCarnivalSet(currentBackground || sampleBackground());
+      if (boothStage) {
+        boothStage.classList.toggle("carnival-live", name === Screen.LIVE);
+        boothStage.classList.toggle("carnival-ui", name !== Screen.LIVE);
+      }
+      if (carnivalPlate) carnivalPlate.hidden = name !== Screen.LIVE;
+    } else {
+      if (boothStage) {
+        boothStage.classList.remove("carnival-live");
+        boothStage.classList.remove("carnival-ui");
+      }
+      if (carnivalStage) carnivalStage.hidden = true;
+      if (carnivalPlate) carnivalPlate.hidden = true;
+    }
+    if (name === Screen.LIVE) {
       if (wantPaperPlayer || sessionUsesPaperPlayer) {
         startPaperSession();
         return;
@@ -2089,9 +2112,6 @@
         }
       });
     } else {
-      if (boothStage) boothStage.classList.remove("carnival-live");
-      if (carnivalStage) carnivalStage.hidden = true;
-      if (carnivalPlate) carnivalPlate.hidden = true;
       hideNoCamera();
       hideCameraEnable();
       stopCamera();

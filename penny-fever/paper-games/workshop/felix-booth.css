@@ -1720,3 +1720,127 @@ section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
 #booth-stage.carnival-live .no-camera-panel {
   background: rgba(231, 239, 228, 0.42);
 }
+
+/* carnival-10: garden chrome, SNAP art on retake/code, orbs on canvas */
+html, body {
+  background: #1c2a24 !important;
+}
+#booth-frame {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(122, 170, 88, 0.22), transparent 42%),
+    radial-gradient(circle at 80% 90%, rgba(42, 74, 70, 0.38), transparent 48%),
+    #1c2a24 !important;
+}
+#carnival-stage {
+  background: #3f6a38 !important;
+}
+#booth-stage.carnival-live {
+  background: #3f6a38 !important;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 13% !important;
+  left: 8.5% !important;
+  width: 83% !important;
+  height: 56% !important;
+  background: #5f8a48;
+}
+
+#booth-stage.carnival-ui #carnival-stage {
+  display: block !important;
+  z-index: 0;
+}
+#booth-stage.carnival-ui #carnival-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 22, 18, 0.42) 0%, rgba(12, 22, 18, 0.62) 100%);
+  pointer-events: none;
+}
+#booth-stage.carnival-ui .screen.active {
+  background: transparent !important;
+  z-index: 2;
+}
+#booth-stage.carnival-ui .screen.active .screen-content {
+  background: transparent !important;
+}
+
+section.screen[data-screen="REVIEW"] {
+  --portal-size: 148px;
+  --portal-ring: 172px;
+  --portal-inset: 12px;
+  --portal-font: 1.05rem;
+}
+section.screen.active[data-screen="REVIEW"] .screen-content {
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 28px 36px 24px !important;
+}
+section.screen.active[data-screen="REVIEW"] .title-main {
+  font-size: 2.1rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .subtitle {
+  font-size: 1.15rem !important;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 188px !important;
+  max-width: 188px !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
+  padding: 0.7rem 0.7rem 0.5rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row {
+  gap: 12px !important;
+  margin-top: 8px !important;
+}
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row .template-slot {
+  width: 92px !important;
+  height: 116px !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper {
+  width: 148px !important;
+  height: 186px !important;
+  max-width: 148px !important;
+  max-height: 186px !important;
+  padding: 0.45rem !important;
+  background: rgba(255, 246, 236, 0.16) !important;
+  box-shadow: 0 0 0 3px rgba(210, 176, 115, 0.7) !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .template-slot::before {
+  background: transparent !important;
+  filter: none !important;
+  box-shadow: 0 0 0 3px rgba(210, 176, 115, 0.75) !important;
+  opacity: 1 !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .button-row {
+  margin: 4px 0 0 !important;
+  gap: 28px !important;
+}
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
+  width: 148px !important;
+  height: 148px !important;
+  min-width: 148px !important;
+  min-height: 148px !important;
+  font-size: 1.15rem !important;
+  overflow: visible !important;
+}
+
+section.screen.active[data-screen="PREPAID"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="THANKYOU"] .screen-content {
+  text-shadow: 0 2px 12px rgba(8, 16, 12, 0.55);
+}
+section.screen[data-screen="PREPAID"] {
+  --portal-size: 168px;
+  --portal-ring: 196px;
+}
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-continue"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-back"] {
+  width: 168px !important;
+  height: 168px !important;
+  min-width: 168px !important;
+  min-height: 168px !important;
+}
