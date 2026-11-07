@@ -127,6 +127,7 @@
   const countdownNumber = document.getElementById("countdownNumber");
   const liveOverlayTop = document.getElementById("liveOverlayTop");
   const lookUpOverlay = document.getElementById("lookUpOverlay");
+  const liveStartBtn = document.getElementById("liveStartBtn");
   const noCameraPanel = document.getElementById("noCameraPanel");
   const noCameraFile = document.getElementById("noCameraFile");
   const noCameraPoseHint = document.getElementById("noCameraPoseHint");
@@ -883,7 +884,6 @@
       videoLayer.classList.remove("hidden");
       if (!isCaptureInProgress) {
         hideLiveCaptureCues();
-        if (!isTrySession && currentPoseIndex === 0) startRecording();
         startLiveAutoSnapTimer();
       }
     } catch (err) {
@@ -1408,7 +1408,6 @@
       videoLayer.classList.remove("hidden");
       if (currentScreen === Screen.LIVE && !isCaptureInProgress) {
         hideLiveCaptureCues();
-        if (!isTrySession && currentPoseIndex === 0) startRecording();
         startLiveAutoSnapTimer();
       }
       return true;
@@ -1512,6 +1511,12 @@
   function startLiveAutoSnapTimer() {
     stopLiveAutoSnapTimer();
     if (cameraAvailable === false) return;
+    // Online hold: before the first photo, wait for the player to tap START SESSION
+    // (the real booth starts straight away; online players can set up first).
+    if (capturedPhotos.filter(Boolean).length === 0) {
+      liveStartBtn?.classList.remove("hidden");
+      return;
+    }
     // Start the session video with the first pose (booth: LIVE up -> record).
     liveAutoSnapTimer = setTimeout(() => {
       liveAutoSnapTimer = null;
@@ -1522,6 +1527,7 @@
   }
 
   function stopLiveAutoSnapTimer() {
+    liveStartBtn?.classList.add("hidden");
     if (liveAutoSnapTimer) {
       clearTimeout(liveAutoSnapTimer);
       liveAutoSnapTimer = null;
@@ -2114,7 +2120,6 @@
       startCamera().then((ok) => {
         if (ok && !isCaptureInProgress) {
           hideLiveCaptureCues();
-          if (!isTrySession && currentPoseIndex === 0) startRecording();
           startLiveAutoSnapTimer();
         }
       });
@@ -2401,6 +2406,11 @@
     if (action === "bg-scroll-left" || action === "bg-scroll-right") {
       const grid = document.getElementById("backgroundGrid");
       grid.scrollBy({ left: action === "bg-scroll-left" ? -220 : 220, behavior: "smooth" });
+      return;
+    }
+    if (action === "start-live-session") {
+      liveStartBtn?.classList.add("hidden");
+      if (currentScreen === Screen.LIVE && !isCaptureInProgress) startCountdownAndCapture();
       return;
     }
     if (action === "enable-camera" || action === "retry-camera") {
