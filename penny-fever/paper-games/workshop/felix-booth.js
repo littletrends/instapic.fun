@@ -678,22 +678,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const layout = await fetch("felix-layout.json?v=strip-web-4").then((r) => r.json());
-      // Locked 06/11/2026 Mother strip_web template — slots always from design_slots_left math.
-      if (layout.locked && Array.isArray(layout.design_slots_left) && layout.design_slots_left.length === 4) {
-        for (let i = 0; i < 4; i++) {
-          STRIP_SLOTS_LEFT[i] = layout.design_slots_left[i].map(Number);
-        }
-      }
-      if (layout.slot_ref && layout.slot_ref.w && layout.slot_ref.h) {
-        slotRef = { w: Number(layout.slot_ref.w) || SLOT_REF.w, h: Number(layout.slot_ref.h) || SLOT_REF.h };
-      }
-      // Prefer live scale from strip size; fall back to locked slot_boxes at slot_ref.
-      slotBoxes = slotsForStripSize(slotRef.w, slotRef.h);
-      applyTemplateSlotCss();
-    } catch (_) {}
-    try {
-      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-6").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-7").then((r) => r.json());
       carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
       Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
       carnivalSets.forEach((row) => {
@@ -949,7 +934,7 @@
       btn.hidden = hide;
       btn.classList.toggle("is-disabled", !ready);
       btn.setAttribute("aria-disabled", String(!ready));
-      btn.href = ready ? "bonus.html?code=" + encodeURIComponent(localSessionCode) : "#";
+      btn.href = ready ? "bonus.html?code=" + encodeURIComponent(localSessionCode) + "&v=carnival-7" : "#";
       btn.textContent = ready ? "OPEN GAME BONUS" : "SAVING GAME BONUS\u2026";
     }
     if (retry) retry.hidden = hide || state !== "failed";
@@ -996,6 +981,12 @@
       session.strip = lastCompositeUrl;
       const recorded = await waitForSessionVideo(12000);
       const mediaId = code + "|" + bonusSessionKey;
+      let baked = {};
+      try {
+        if (window.PfBonus?.bake) baked = await PfBonus.bake(capturedPhotos.slice(0, 4));
+      } catch (err) {
+        console.warn("Felix SNAP bake", err);
+      }
       await saveGameMedia({
         id: mediaId,
         code,
@@ -1005,6 +996,9 @@
         video: recorded?.blob || null,
         videoMime: recorded?.mime || "",
         videoExt: recorded?.ext || "",
+        collage: baked.collage || "",
+        gifFrames: baked.gifFrames || [],
+        boomFrames: baked.boomFrames || [],
         savedAt: new Date().toISOString(),
       });
       session.mediaId = mediaId;
@@ -1035,8 +1029,7 @@
       bonusLink.href = showBonus ? url : "#";
       bonusLink.hidden = !showBonus;
       bonusLink.setAttribute("aria-hidden", String(!showBonus));
-      if (!showBonus) bonusLink.removeAttribute("target");
-      else bonusLink.setAttribute("target", "_blank");
+      bonusLink.removeAttribute("target");
     }
     const bonusRow = document.getElementById("bonusLinkRow");
     if (bonusRow) bonusRow.hidden = !showBonus;

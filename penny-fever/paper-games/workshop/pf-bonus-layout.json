@@ -1,0 +1,27 @@
+{
+  "updated": "carnival-7",
+  "note": "Penny Fever SNAP keepsake geometry. Not Darwin bonus_pipeline.",
+  "size": [1080, 1920],
+  "collage": {
+    "photos": [
+      [186, 352, 340, 425],
+      [554, 352, 340, 425],
+      [186, 805, 340, 425],
+      [554, 805, 340, 425]
+    ]
+  },
+  "gif": {
+    "x": 128,
+    "y": 318,
+    "w": 824,
+    "h": 900,
+    "shape": "ellipse"
+  },
+  "boomerang": {
+    "x": 128,
+    "y": 318,
+    "w": 824,
+    "h": 900,
+    "shape": "ellipse"
+  }
+}
