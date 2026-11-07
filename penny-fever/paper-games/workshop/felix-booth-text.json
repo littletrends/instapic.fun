@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07T13:16:04+09:30",
+  "updated_at": "2026-11-07T13:17:29+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -14,7 +14,7 @@
       "html": true,
       "text": "TAP TO WAKE\nFELIX\u2019S GAME\nPHOTO BOOTH",
       "font": "Unique.ttf",
-      "size": 55,
+      "size": 100,
       "x": 0,
       "y": 0,
       "family": "Unique"
@@ -28,7 +28,7 @@
       "html": false,
       "text": "\u2728 Moments Made Magical \u2728",
       "font": "Subotype Steady.otf",
-      "size": 35,
+      "size": 100,
       "x": 0,
       "y": 26,
       "family": "Subotype Steady"
