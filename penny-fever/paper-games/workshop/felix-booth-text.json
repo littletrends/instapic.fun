@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07T13:20:13+09:30",
+  "updated_at": "2026-11-07T13:21:20+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -28,9 +28,9 @@
       "html": false,
       "text": "\u2728 Moments Made Magical \u2728",
       "font": "Subotype Steady.otf",
-      "size": 70,
+      "size": 55,
       "x": 0,
-      "y": 26,
+      "y": 56,
       "family": "Subotype Steady"
     },
     {
