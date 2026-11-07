@@ -924,6 +924,21 @@ const irisChats = [
   'A missed sign still has a story. Read what the glass leaves for you.',
   'Six chapters, six treasures. Your Treasure Book will keep them safe.',
 ];
+const SAVE_REMINDER_LINES = [
+  'A little save note: this device remembers your stall games. VIP carries your pennies and alley spot across devices.',
+  'Keep your midway close: stall game saves stay in this browser. VIP can carry your pennies and alley spot to another device.',
+  'Clearing this site’s stored data can erase stall saves on this device. VIP keeps your pennies and alley spot with your guest profile.',
+];
+const SAVE_REMINDER_COOLDOWN_MS = 20 * 60 * 1000;
+let lastSaveReminderAt = 0;
+try { lastSaveReminderAt = Number(localStorage.getItem('pf-save-reminder-at')) || 0; } catch {}
+function occasionalSaveReminder() {
+  const now = Date.now();
+  if (now - lastSaveReminderAt < SAVE_REMINDER_COOLDOWN_MS || Math.random() >= 0.2) return '';
+  lastSaveReminderAt = now;
+  try { localStorage.setItem('pf-save-reminder-at', String(now)); } catch {}
+  return SAVE_REMINDER_LINES[Math.floor(Math.random() * SAVE_REMINDER_LINES.length)];
+}
 let moveIntent = { ix: 0, iy: 0 };
 let stallCardOpen = false;
 let ticketDeskReturn = null;
@@ -953,6 +968,7 @@ const GUIDANCE_LINES = [
   "Aura can trade five pennies for one ticket. Open Ticket Desk for trading or to buy a pack through Square. Tap Aura’s Tips for another tip.",
   "Not sure where to begin? Open Map, pick a stall that catches your eye, and walk over to see what it offers. Tap Aura’s Tips for another tip.",
   "Try finding your first keepsake. Open Treasures to browse your books and see the empty places waiting to be filled. Tap Aura’s Tips for another tip.",
+  "Your stall game saves stay on this device. VIP carries your pennies and alley spot across devices; clearing this site’s stored data can erase local saves.",
 ];
 try {
   const savedGuidanceIndex = Number(localStorage.getItem("pf-guidance-next"));
@@ -1837,7 +1853,8 @@ function talkToFocus() {
   speech.hidden = false;
   if (speechName) speechName.textContent = who.host || who.name || "Aura";
   vendorChatId = who.id || who.kind;
-  vendorChatText = who.id === 'fortune' ? irisChats[irisChatIndex++ % irisChats.length] : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
+  const usualLine = who.id === 'fortune' ? irisChats[irisChatIndex++ % irisChats.length] : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
+  vendorChatText = occasionalSaveReminder() || usualLine;
   speechText.textContent = vendorChatText;
   speech.classList.toggle("is-left", (who.side || -1) < 0);
   speech.classList.toggle("is-right", (who.side || -1) >= 0);

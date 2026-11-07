@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07T17:37:04+09:30",
+  "updated_at": "2026-11-07T19:02:58+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -12,9 +12,9 @@
       "label": "Wake button",
       "selector": "#attractWakeButton",
       "html": true,
-      "text": "TAP TO WAKE\nTHE\nPHOTOBOOTH",
+      "text": "TAP TO \nWAKE THE\nPHOTOBOOTH",
       "font": "Unique.ttf",
-      "size": 100,
+      "size": 90,
       "x": 0,
       "y": 0,
       "family": "Unique"
@@ -30,7 +30,7 @@
       "font": "Subotype Steady.otf",
       "size": 55,
       "x": 0,
-      "y": 56,
+      "y": 68,
       "family": "Subotype Steady"
     },
     {
