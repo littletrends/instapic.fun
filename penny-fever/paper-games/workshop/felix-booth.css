@@ -1615,23 +1615,37 @@ section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
     #e7efe4;
 }
 #carnivalWall {
-  object-fit: contain;
-  object-position: center 42%;
-  background: #e7efe4;
+  object-fit: cover;
+  object-position: center 40%;
+  background: #7aa05a;
 }
 #booth-stage.carnival-live {
-  background: #e7efe4;
+  background: #7aa05a;
 }
 #booth-stage.carnival-live #video-layer:not(.hidden) {
-  top: 11% !important;
-  left: 14% !important;
-  width: 72% !important;
-  height: 50% !important;
-  border-radius: 36px 36px 88px 88px;
+  top: 16.5% !important;
+  left: 11% !important;
+  width: 78% !important;
+  height: 46% !important;
+  border-radius: 50%;
   box-shadow:
-    0 0 0 7px #d2b073,
-    0 0 0 16px #2a4a44,
-    0 28px 50px rgba(16, 32, 28, 0.45);
+    0 0 0 6px rgba(210, 176, 115, 0.88),
+    0 0 0 14px rgba(42, 74, 68, 0.42),
+    0 22px 44px rgba(16, 32, 28, 0.38);
+  background: #6e9a52;
+}
+#booth-stage.carnival-live .carnival-host {
+  display: none !important;
+}
+#paperLiveCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+#video-layer.paper-feed #liveVideo {
+  display: none !important;
 }
 .carnival-plate {
   color: #1c2624;

@@ -60,7 +60,7 @@
   // Booth-style session video (same contract as the Magic Mirror
   // video_capture_patch.js: one continuous upright clip, field "video",
   // file session_video.mp4|webm, max 32 s). Phone-friendly size.
-  const REC_MAX_MS = 32000;
+  const REC_MAX_MS = 96000;
   const REC_LONG_SIDE = 960;
   const REC_FPS = 24;
   const REC_BPS = 1200000;
@@ -119,6 +119,7 @@
   const screens = [...document.querySelectorAll(".screen")];
   const videoLayer = document.getElementById("video-layer");
   const liveVideo = document.getElementById("liveVideo");
+  const paperLiveCanvas = document.getElementById("paperLiveCanvas");
   const captureCanvas = document.getElementById("captureCanvas");
   const countdownOverlay = document.getElementById("countdownOverlay");
   const countdownNumber = document.getElementById("countdownNumber");
@@ -200,6 +201,10 @@
   let rec = null; // active MediaRecorder state
   let recPromise = null; // resolves to { blob, mime, ext } | null for this session
   let unlockedBgs = loadUnlocks();
+  let sessionUsesPaperPlayer = false;
+  let paperMode = false;
+  let paperAnim = 0;
+  let paperPoses = [];
 
   function fitStage() {
     if (!boothStage) return;
@@ -498,6 +503,7 @@
     selectedSlotIndex = 0;
     lastCompositeUrl = null;
     isCaptureInProgress = false;
+    sessionUsesPaperPlayer = wantPaperPlayer;
   }
 
 
@@ -687,7 +693,7 @@
       applyTemplateSlotCss();
     } catch (_) {}
     try {
-      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-5").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-6").then((r) => r.json());
       carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
       Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
       carnivalSets.forEach((row) => {
@@ -769,41 +775,89 @@
 
   const backgroundsReady = loadLayoutAndBackgrounds();
 
-  async function usePaperPlayer() {
+  function stopPaperPlayer() {
+    paperMode = false;
+    if (paperAnim) {
+      cancelAnimationFrame(paperAnim);
+      paperAnim = 0;
+    }
+    if (paperLiveCanvas) paperLiveCanvas.classList.add("hidden");
+    videoLayer?.classList.remove("paper-feed");
+  }
+
+  function drawPaperFrame() {
+    if (!paperMode || !paperLiveCanvas) return;
+    const ctx = paperLiveCanvas.getContext("2d", { alpha: false });
+    const w = paperLiveCanvas.width;
+    const h = paperLiveCanvas.height;
+    const t = performance.now() / 1000;
+    const lawn = ctx.createRadialGradient(w * 0.5, h * 0.58, 40, w * 0.5, h * 0.52, w * 0.72);
+    lawn.addColorStop(0, "#c5de90");
+    lawn.addColorStop(0.55, "#8fb86a");
+    lawn.addColorStop(1, "#5f8a48");
+    ctx.fillStyle = lawn;
+    ctx.fillRect(0, 0, w, h);
+    const img = paperPoses[currentPoseIndex] || paperPoses[0];
+    if (img && img.width) {
+      const bob = Math.sin(t * 2.1) * 12;
+      const scale = 1 + Math.sin(t * 1.35) * 0.018;
+      const targetH = h * 0.92 * scale;
+      const s = targetH / img.height;
+      const dw = img.width * s;
+      const dh = img.height * s;
+      ctx.drawImage(img, (w - dw) / 2, h - dh - 6 + bob, dw, dh);
+    }
+    paperAnim = requestAnimationFrame(drawPaperFrame);
+  }
+
+  async function attachPaperPlayer() {
+    const spec = currentBackground || sampleBackground();
+    const list = (spec.paperPlayer && spec.paperPlayer.length ? spec.paperPlayer : sampleBackground().paperPlayer).slice();
+    paperPoses = await Promise.all(list.map((src) => loadImage(src)));
+    if (!paperLiveCanvas) throw new Error("paper canvas missing");
+    paperLiveCanvas.width = 720;
+    paperLiveCanvas.height = 1280;
+    paperLiveCanvas.classList.remove("hidden");
+    videoLayer.classList.add("paper-feed");
+    paperMode = true;
+    sessionUsesPaperPlayer = true;
+    cameraAvailable = true;
+    cameraErrorName = "";
+    if (paperAnim) cancelAnimationFrame(paperAnim);
+    drawPaperFrame();
+    videoLayer.classList.remove("hidden");
+    liveVideo.classList.add("cam-portrait");
+  }
+
+  async function startPaperSession() {
     hideCameraEnable();
     hideNoCamera();
+    try {
+      if (!paperMode) await attachPaperPlayer();
+      videoLayer.classList.remove("hidden");
+      if (!isCaptureInProgress) {
+        hideLiveCaptureCues();
+        if (!isTrySession && currentPoseIndex === 0) startRecording();
+        startLiveAutoSnapTimer();
+      }
+    } catch (err) {
+      console.warn("Paper player failed", err);
+      paperMode = false;
+      cameraAvailable = false;
+      showNoCamera("Paper player could not load. Try again.");
+    }
+  }
+
+  async function usePaperPlayer() {
+    sessionUsesPaperPlayer = true;
+    if (currentScreen !== Screen.LIVE) {
+      return showScreen(Screen.LIVE);
+    }
     stopLiveAutoSnapTimer();
     clearCaptureSequenceTimers();
     hideLiveCaptureCues();
-    isCaptureInProgress = true;
-    cameraAvailable = false;
-    const spec = currentBackground || sampleBackground();
-    const n = isTrySession ? 2 : 4;
-    const list = (spec.paperPlayer && spec.paperPlayer.length ? spec.paperPlayer : sampleBackground().paperPlayer).slice(0, n);
-    try {
-      const portraits = await Promise.all(
-        list.map((src) =>
-          loadImage(src).then((img) => coverCropToCanvas(img, FREEZE_PORTRAIT.w, FREEZE_PORTRAIT.h).toDataURL("image/jpeg", 0.9))
-        )
-      );
-      capturedPhotos = [null, null, null, null];
-      portraits.forEach((url, i) => {
-        capturedPhotos[i] = url;
-      });
-      currentPoseIndex = n - 1;
-      isCaptureInProgress = false;
-      updateTemplateSlots();
-      if (isTrySession) showScreen(Screen.PRINT);
-      else {
-        reviewMode = true;
-        selectedSlotIndex = 0;
-        showScreen(Screen.REVIEW);
-      }
-      buildStrip().then(applyCompositeToPreviews).catch(() => {});
-    } catch (err) {
-      isCaptureInProgress = false;
-      showNoCamera("Paper player could not load. Try again.");
-    }
+    isCaptureInProgress = false;
+    await startPaperSession();
   }
 
   function sampleBackground() {
@@ -818,10 +872,10 @@
       hostArt: spec.hostArt || "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/felix/front.webp",
       paper: spec.paper || "backgrounds/carnival/paper/felix-game-paper.jpg",
       paperPlayer: spec.paperPlayer || [
-        "backgrounds/carnival/paper-player/pose-1.jpg",
-        "backgrounds/carnival/paper-player/pose-2.jpg",
-        "backgrounds/carnival/paper-player/pose-3.jpg",
-        "backgrounds/carnival/paper-player/pose-4.jpg",
+        "backgrounds/carnival/paper-player/oliver-1.png",
+        "backgrounds/carnival/paper-player/oliver-2.png",
+        "backgrounds/carnival/paper-player/oliver-3.png",
+        "backgrounds/carnival/paper-player/oliver-4.png",
       ],
       slots: spec.slots,
       slotRef: spec.slotRef,
@@ -1021,6 +1075,18 @@
   }
   function drawRecFrame() {
     if (!rec || !rec.ctx) return;
+    if (paperMode && paperLiveCanvas && paperLiveCanvas.width) {
+      const ctx = rec.ctx;
+      const canvas = rec.canvas;
+      ctx.fillStyle = "#6e9a52";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(paperLiveCanvas, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      return;
+    }
     const w = liveVideo.videoWidth;
     const h = liveVideo.videoHeight;
     if (!w || !h || liveVideo.readyState < 2) return;
@@ -1029,9 +1095,11 @@
   function startRecording(attempt) {
     try {
       if (isTrySession || rec || recPromise) return;
-      if (!window.MediaRecorder || !videoStream) return;
-      const w = liveVideo.videoWidth;
-      const h = liveVideo.videoHeight;
+      if (!window.MediaRecorder) return;
+      const paperReady = paperMode && paperLiveCanvas && paperLiveCanvas.width;
+      if (!videoStream && !paperReady) return;
+      const w = paperReady ? paperLiveCanvas.width : liveVideo.videoWidth;
+      const h = paperReady ? paperLiveCanvas.height : liveVideo.videoHeight;
       if (!w || !h) {
         if ((attempt || 0) < 15) setTimeout(() => startRecording((attempt || 0) + 1), 200);
         return;
@@ -1300,6 +1368,7 @@
 
   function stopCamera() {
     stopRecording("camera-off");
+    stopPaperPlayer();
     if (videoStream) {
       videoStream.getTracks().forEach((t) => t.stop());
       videoStream = null;
@@ -1453,6 +1522,20 @@
   }
 
   function capturePhoto() {
+    if (paperMode && paperLiveCanvas && paperLiveCanvas.width) {
+      const ctx = captureCanvas.getContext("2d");
+      captureCanvas.width = FREEZE_PORTRAIT.w;
+      captureCanvas.height = FREEZE_PORTRAIT.h;
+      ctx.fillStyle = "#6e9a52";
+      ctx.fillRect(0, 0, captureCanvas.width, captureCanvas.height);
+      ctx.save();
+      ctx.translate(captureCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(paperLiveCanvas, 0, 0, captureCanvas.width, captureCanvas.height);
+      ctx.restore();
+      acceptPhotoDataUrl(captureCanvas.toDataURL("image/jpeg", 0.9));
+      return;
+    }
     const w = liveVideo.videoWidth || 720;
     const h = liveVideo.videoHeight || 1280;
     // Guard: empty/black video → silhouette instead of a black box.
@@ -1931,13 +2014,14 @@
     if (name !== Screen.BACKGROUNDS) hideUnlockConfirm();
     if (name === Screen.LIVE) {
       paintCarnivalSet(currentBackground || sampleBackground());
-      if (wantPaperPlayer && !capturedPhotos.some(Boolean) && !isCaptureInProgress) {
-        usePaperPlayer();
+      if (wantPaperPlayer || sessionUsesPaperPlayer) {
+        startPaperSession();
         return;
       }
       startCamera().then((ok) => {
         if (ok && !isCaptureInProgress) {
           hideLiveCaptureCues();
+          if (!isTrySession && currentPoseIndex === 0) startRecording();
           startLiveAutoSnapTimer();
         }
       });
