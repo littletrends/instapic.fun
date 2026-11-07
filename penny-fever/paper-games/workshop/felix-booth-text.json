@@ -656,7 +656,7 @@
       "label": "Title",
       "selector": "[data-screen=\"REVIEW\"] .title-main",
       "html": false,
-      "text": "Review Your Photo Strip",
+      "text": "Review Your Photos",
       "font": "Subotype Steady.otf",
       "size": 0,
       "x": 0,
