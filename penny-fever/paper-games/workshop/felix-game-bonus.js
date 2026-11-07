@@ -3,19 +3,24 @@
   const DB_NAME = "pennyFeverGameMedia";
   const form = document.getElementById("redeem-form");
   const input = document.getElementById("game-code");
-  const status = document.getElementById("status");
-  const results = document.getElementById("bonus-results");
-  const template = document.getElementById("session-template");
+  const status = document.getElementById("bonus-status");
+  const sessionBlock = document.getElementById("session-block");
+  const sessionCodeEl = document.getElementById("session-code");
   const codePattern = /^PF-[A-HJ-NP-Z]{6}$/;
   let renderCleanups = [];
+
   const variants = [
-    { id: "collage", label: "Collage movie", description: "Your full session plays between all four photos.", exportLabel: "Download collage video (WebM)", w: 720, h: 1440, frame: [186, 418, 349, 480], seconds: 28 },
-    { id: "gif", label: "GIF-style animation", description: "Four short moments cut from across your session.", exportLabel: "Download animation (WebM)", w: 752, h: 1392, frame: [111, 102, 560, 1135], seconds: 5.5 },
-    { id: "boomerang", label: "Boomerang", description: "A short clip plays forward, then back.", exportLabel: "Download boomerang (WebM)", w: 752, h: 1376, frame: [111, 100, 560, 1240], seconds: 8 },
+    { id: "collage", label: "Collage Video", exportLabel: "Download collage (WebM)", w: 720, h: 1440, frame: [186, 418, 349, 480], seconds: 28, frameId: "collage-frame", actionsId: "collage-actions" },
+    { id: "gif", label: "GIF", exportLabel: "Download GIF (WebM)", w: 752, h: 1392, frame: [111, 102, 560, 1135], seconds: 5.5, frameId: "gif-frame", actionsId: "gif-actions" },
+    { id: "boomerang", label: "Boomerang", exportLabel: "Download boomerang (WebM)", w: 752, h: 1376, frame: [111, 100, 560, 1240], seconds: 8, frameId: "boomerang-frame", actionsId: "boomerang-actions" },
   ];
   const photoFrames = [
     [67, 68, 207, 326], [443, 68, 207, 326], [67, 922, 207, 326], [443, 922, 207, 326],
   ];
+
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
 
   function readFiles() {
     try {
@@ -28,6 +33,10 @@
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
       const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("sessions")) db.createObjectStore("sessions", { keyPath: "id" });
+      };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error || new Error("Could not open game media"));
     });
@@ -66,6 +75,10 @@
     });
   }
 
+  function bonusSrc(kind) {
+    return "backgrounds/carnival/bonus/pf-felix_" + kind + ".jpg?v=carnival-5-bonus-1";
+  }
+
   function drawCover(ctx, image, x, y, w, h) {
     const sw = image.videoWidth || image.naturalWidth;
     const sh = image.videoHeight || image.naturalHeight;
@@ -76,10 +89,30 @@
     ctx.drawImage(image, (sw - cropW) / 2, (sh - cropH) / 2, cropW, cropH, x, y, w, h);
   }
 
-  function drawBonus(ctx, variant, background, photos, video) {
+  function livePhotos(photos) {
+    return (photos || []).filter(Boolean);
+  }
+
+  function stillFor(photos, elapsed, kind) {
+    const live = livePhotos(photos);
+    if (!live.length) return null;
+    if (kind === "gif") return live[Math.floor(elapsed / 0.35) % live.length];
+    if (kind === "boomerang") {
+      const seq = live.concat(live.slice(1, -1).reverse());
+      return seq[Math.floor(elapsed / 0.4) % seq.length];
+    }
+    return live[Math.floor(elapsed / 1.2) % live.length];
+  }
+
+  function drawBonus(ctx, variant, background, photos, video, elapsed) {
     ctx.clearRect(0, 0, variant.w, variant.h);
     ctx.drawImage(background, 0, 0, variant.w, variant.h);
-    if (video.readyState >= 2) drawCover(ctx, video, ...variant.frame);
+    const hasVideo = video && video.readyState >= 2 && (video.videoWidth || 0) > 0;
+    if (hasVideo) drawCover(ctx, video, ...variant.frame);
+    else {
+      const still = stillFor(photos, elapsed, variant.id);
+      if (still) drawCover(ctx, still, ...variant.frame);
+    }
     if (variant.id === "collage") {
       photos.forEach((photo, index) => {
         if (photo) drawCover(ctx, photo, ...photoFrames[index]);
@@ -87,37 +120,9 @@
     }
   }
 
-  function addDownload(canvas, label, filename, seconds) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = label;
-    button.dataset.idleLabel = label;
-    button.addEventListener("click", () => recordCanvas(canvas, seconds, filename, button));
-    return button;
-  }
-
-  function addImageDownload(canvas, label, filename) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = "Download still image";
-    button.className = "secondary";
-    button.addEventListener("click", () => {
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename + ".jpg";
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      }, "image/jpeg", 0.92);
-    });
-    return button;
-  }
-
   function recordCanvas(canvas, seconds, filename, button) {
     if (!canvas.captureStream || !window.MediaRecorder) {
-      status.textContent = "This browser can preview the bonus but cannot export a composed video.";
+      setStatus("This browser can preview the bonus but cannot export a composed video.");
       return;
     }
     let stream;
@@ -145,95 +150,162 @@
       };
       recorder.start(500);
       setTimeout(() => { if (recorder.state !== "inactive") recorder.stop(); }, seconds * 1000);
-    } catch (error) {
+    } catch (_) {
       stream?.getTracks().forEach((track) => track.stop());
       button.disabled = false;
       button.textContent = button.dataset.idleLabel;
-      status.textContent = "Video export could not start in this browser.";
+      setStatus("Video export could not start in this browser.");
     }
   }
 
-  async function renderProducts(container, session, code, number) {
-    const media = await getMedia(session.mediaId);
-    const bgId = /^bg_\d+$/.test(String(media?.bgId || session.bgId || "")) ? (media?.bgId || session.bgId) : "bg_1";
-    const productGrid = document.createElement("div");
-    productGrid.className = "product-grid";
-    container.append(productGrid);
-    if (!media?.video) {
-      const note = document.createElement("p");
-      note.className = "muted";
-      note.textContent = "This session has its matching bonus designs and strip, but no session video was saved.";
-      productGrid.append(note);
-      return;
+  function addVideoDownload(canvas, label, filename, seconds) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn";
+    button.textContent = label;
+    button.dataset.idleLabel = label;
+    button.addEventListener("click", () => recordCanvas(canvas, seconds, filename, button));
+    return button;
+  }
+
+  function addStillDownload(canvas, filename) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn alt";
+    button.textContent = "Download still";
+    button.addEventListener("click", () => {
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename + ".jpg";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }, "image/jpeg", 0.92);
+    });
+    return button;
+  }
+
+  function putMedia(frame, node) {
+    frame.replaceChildren(node);
+  }
+
+  function clearActions(id) {
+    const el = document.getElementById(id);
+    if (el) el.replaceChildren();
+  }
+
+  async function renderSession(session, code, number) {
+    const media = await getMedia(session.mediaId).catch(() => null);
+    const photos = await Promise.all((media?.photos || []).slice(0, 4).map((src) => loadImage(src).catch(() => null)));
+    const stripFrame = document.getElementById("strip-frame");
+    const stripActions = document.getElementById("strip-actions");
+    stripFrame.replaceChildren();
+    stripActions.replaceChildren();
+    if (session.strip) {
+      const img = document.createElement("img");
+      img.src = session.strip;
+      img.alt = "Your Penny Fever photo strip";
+      stripFrame.append(img);
+      const a = document.createElement("a");
+      a.className = "btn";
+      a.href = session.strip;
+      a.download = `penny-fever-${code}-strip-${number}.jpg`;
+      a.textContent = "Download strip";
+      stripActions.append(a);
     }
 
-    const videoUrl = URL.createObjectURL(media.video);
-    const stills = await Promise.all((media.photos || []).slice(0, 4).map((src) => loadImage(src).catch(() => null)));
-    const videoNodes = await Promise.all(variants.map(() => loadVideo(videoUrl)));
-    const durations = [Math.max(0.1, videoNodes[0].duration || 28), Math.max(0.1, videoNodes[1].duration || 28), Math.max(0.1, videoNodes[2].duration || 28)];
+    const stills = document.getElementById("stills-grid");
+    stills.replaceChildren();
+    photos.forEach((photo, i) => {
+      if (!photo) return;
+      const card = document.createElement("article");
+      card.className = "card freeze-card";
+      const wrap = document.createElement("div");
+      wrap.className = "media-wrap";
+      const img = document.createElement("img");
+      img.src = photo.src;
+      img.alt = "Freeze " + (i + 1);
+      wrap.append(img);
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const a = document.createElement("a");
+      a.className = "btn";
+      a.href = photo.src;
+      a.download = `penny-fever-${code}-freeze-${i + 1}.jpg`;
+      a.textContent = "Download";
+      actions.append(a);
+      card.append(wrap, actions);
+      stills.append(card);
+    });
+
+    let video = null;
+    let videoUrl = "";
+    if (media?.video) {
+      videoUrl = URL.createObjectURL(media.video);
+      try { video = await loadVideo(videoUrl); } catch (_) { video = null; }
+    }
+
     const start = performance.now();
     const cards = [];
-
-    for (let index = 0; index < variants.length; index += 1) {
-      const variant = variants[index];
-      const background = await loadImage(`backgrounds/bonuses/${bgId}_${variant.id}.jpg`);
-      const article = document.createElement("article");
-      article.className = "asset";
-      const heading = document.createElement("h3");
-      heading.textContent = variant.label;
-      const mark = document.createElement("p");
-      mark.className = "watermark";
-      mark.textContent = `PENNY FEVER GAME · ${bgId.toUpperCase()}`;
-      const description = document.createElement("p");
-      description.className = "asset-copy";
-      description.textContent = variant.description;
+    for (const variant of variants) {
+      const background = await loadImage(bonusSrc(variant.id));
       const canvas = document.createElement("canvas");
       canvas.width = variant.w;
       canvas.height = variant.h;
-      canvas.setAttribute("aria-label", `${variant.label} using ${bgId} template`);
-      const filename = `penny-fever-${code}-session-${number}-${variant.id}`;
-      const imageDownload = addImageDownload(canvas, variant.label, filename);
-      const download = addDownload(canvas, variant.exportLabel, `penny-fever-${code}-session-${number}-${variant.id}`, variant.seconds);
-      article.append(heading, mark, description, canvas, imageDownload, download);
-      productGrid.append(article);
-      cards.push({ variant, background, video: videoNodes[index], canvas, ctx: canvas.getContext("2d") });
+      canvas.setAttribute("aria-label", variant.label);
+      putMedia(document.getElementById(variant.frameId), canvas);
+      const actions = document.getElementById(variant.actionsId);
+      actions.replaceChildren();
+      const stem = `penny-fever-${code}-session-${number}-${variant.id}`;
+      actions.append(
+        addVideoDownload(canvas, variant.exportLabel, stem, variant.seconds),
+        addStillDownload(canvas, stem)
+      );
+      cards.push({ variant, background, canvas, ctx: canvas.getContext("2d") });
+    }
+
+    if (videoUrl) {
+      const srcBtn = document.createElement("a");
+      srcBtn.className = "btn alt";
+      srcBtn.href = videoUrl;
+      srcBtn.download = `penny-fever-${code}-session-${number}-camera.${media.videoExt || "webm"}`;
+      srcBtn.textContent = "Download original session video";
+      document.getElementById("collage-actions").append(srcBtn);
     }
 
     let frameId = 0;
+    const duration = Math.max(0.1, video?.duration || 28);
     const tick = (now) => {
-      cards.forEach(({ variant, background, video, canvas, ctx }, index) => {
-        if (index === 1) {
-          const duration = durations[index];
-          const local = ((now - start) / 1000) % variant.seconds;
-          const burst = Math.min(3, Math.floor(local / (variant.seconds / 4)));
-          const inBurst = local % (variant.seconds / 4);
-          const target = Math.min(duration - 0.08, (duration / 4) * burst + inBurst * 0.5);
-          if (Math.abs(video.currentTime - target) > 0.3 && video.readyState >= 2) video.currentTime = target;
-        } else if (index === 2) {
-          const duration = Math.min(4, durations[index]);
-          const phase = ((now - start) / 1000) % variant.seconds;
-          const t = phase <= duration ? phase : Math.max(0, duration - (phase - duration));
-          if (Math.abs(video.currentTime - t) > 0.25 && video.readyState >= 2) video.currentTime = t;
-        } else if (video.paused) {
-          video.play().catch(() => {});
+      const elapsed = (now - start) / 1000;
+      cards.forEach(({ variant, background, canvas, ctx }) => {
+        if (video && video.readyState >= 2) {
+          if (variant.id === "gif") {
+            const local = elapsed % variant.seconds;
+            const burst = Math.min(3, Math.floor(local / (variant.seconds / 4)));
+            const inBurst = local % (variant.seconds / 4);
+            const target = Math.min(duration - 0.08, (duration / 4) * burst + inBurst * 0.5);
+            if (Math.abs(video.currentTime - target) > 0.3) video.currentTime = target;
+          } else if (variant.id === "boomerang") {
+            const forward = Math.min(4, duration);
+            const phase = elapsed % variant.seconds;
+            const t = phase <= forward ? phase : Math.max(0, forward - (phase - forward));
+            if (Math.abs(video.currentTime - t) > 0.25) video.currentTime = t;
+          } else if (video.paused) {
+            video.play().catch(() => {});
+          }
         }
-        drawBonus(ctx, variant, background, stills, video);
+        drawBonus(ctx, variant, background, photos, video, elapsed);
       });
       frameId = requestAnimationFrame(tick);
     };
     frameId = requestAnimationFrame(tick);
     renderCleanups.push(() => {
       cancelAnimationFrame(frameId);
-      videoNodes.forEach((video) => { video.pause(); video.removeAttribute("src"); video.load(); });
-      URL.revokeObjectURL(videoUrl);
+      if (video) { video.pause(); video.removeAttribute("src"); video.load(); }
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
     });
-
-    const sourceDownload = document.createElement("a");
-    sourceDownload.href = videoUrl;
-    sourceDownload.download = `penny-fever-${code}-session-${number}-camera.${media.videoExt || "webm"}`;
-    sourceDownload.textContent = "Download original session video";
-    sourceDownload.className = "source-download";
-    productGrid.append(sourceDownload);
   }
 
   async function showCode(raw) {
@@ -241,65 +313,40 @@
     const code = codePattern.test(value) ? value : "";
     renderCleanups.forEach((cleanup) => cleanup());
     renderCleanups = [];
-    results.replaceChildren();
+    sessionBlock.hidden = true;
+    sessionCodeEl.hidden = true;
+    variants.forEach((v) => {
+      document.getElementById(v.frameId).innerHTML = '<div class="empty-note">Loading…</div>';
+      clearActions(v.actionsId);
+    });
+    document.getElementById("stills-grid").replaceChildren();
     if (!code) {
-      status.textContent = "Enter PF- followed by six letters. The letters I and O are not used.";
+      setStatus("Enter PF- followed by six letters. The letters I and O are not used.");
       return;
     }
     const file = readFiles().find((item) => item.code === code);
     if (!file) {
-      status.textContent = "That game code was not found in this browser. Real Instapic codes are not checked here.";
+      setStatus("That game code was not found in this browser. Real Instapic codes are not checked here.");
       return;
     }
     const sessions = (Array.isArray(file.sessions) ? file.sessions : []).filter((session) =>
       typeof session?.strip === "string" && session.strip.startsWith("data:image/")
     );
     if (!sessions.length) {
-      status.textContent = "This game code has no saved photo sessions.";
+      setStatus("This game code has no saved photo sessions.");
       return;
     }
-    status.textContent = `${sessions.length} game ${sessions.length === 1 ? "session" : "sessions"} opened.`;
-    for (const [index, session] of sessions.slice().reverse().entries()) {
-      const number = sessions.length - index;
-      const node = template.content.cloneNode(true);
-      node.querySelector(".session-label").textContent = `GAME SESSION ${number}`;
-      node.querySelector(".session-code").textContent = code;
-      const copyButton = node.querySelector(".copy-code");
-      copyButton.addEventListener("click", async () => {
-        let copied = false;
-        try {
-          await navigator.clipboard?.writeText(code);
-          copied = Boolean(navigator.clipboard);
-        } catch (_) {}
-        if (!copied) {
-          const helper = document.createElement("textarea");
-          helper.value = code;
-          helper.style.position = "fixed";
-          helper.style.opacity = "0";
-          document.body.append(helper);
-          helper.select();
-          try { copied = document.execCommand("copy"); } catch (_) {}
-          helper.remove();
-        }
-        copyButton.textContent = copied ? "COPIED" : "COPY FAILED";
-        status.textContent = copied ? "Game code copied. Your keepsakes are available in this browser." : "Copy the game code shown above.";
-        setTimeout(() => { copyButton.textContent = "COPY CODE"; }, 1800);
-      });
-      const saved = session.savedAt ? new Date(session.savedAt) : null;
-      node.querySelector(".saved-date").textContent = saved && !Number.isNaN(saved.valueOf()) ? `Saved ${saved.toLocaleString()}` : "Saved Penny Fever game session";
-      node.querySelector(".strip").src = session.strip;
-      node.querySelector(".strip-download").href = session.strip;
-      node.querySelector(".strip-download").download = `penny-fever-${code}-strip-${number}.jpg`;
-      const products = node.querySelector(".products");
-      results.append(node);
-      try {
-        await renderProducts(products, session, code, number);
-      } catch (error) {
-        const note = document.createElement("p");
-        note.className = "muted";
-        note.textContent = "The matching game bonus previews could not be loaded on this browser.";
-        products.append(note);
-      }
+    const session = sessions[sessions.length - 1];
+    const number = sessions.length;
+    sessionCodeEl.hidden = false;
+    sessionCodeEl.textContent = code;
+    sessionBlock.hidden = false;
+    setStatus(`${sessions.length} game ${sessions.length === 1 ? "session" : "sessions"} opened. Showing the latest.`);
+    try {
+      await renderSession(session, code, number);
+    } catch (err) {
+      console.warn("game bonus", err);
+      setStatus("The matching game bonus previews could not be loaded on this browser.");
     }
   }
 
