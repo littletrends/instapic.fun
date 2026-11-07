@@ -1,6 +1,7 @@
 (() => {
   const STORAGE_KEY = "pennyFeverGameFiles";
   const DB_NAME = "pennyFeverGameMedia";
+  const API_BASE = "https://motherpc.taild1a44c.ts.net";
   const form = document.getElementById("redeem-form");
   const input = document.getElementById("game-code");
   const status = document.getElementById("bonus-status");
@@ -11,6 +12,12 @@
 
   function setStatus(text) {
     if (status) status.textContent = text;
+  }
+
+  function absUrl(path) {
+    if (!path) return "";
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return API_BASE + path;
   }
 
   function readFiles() {
@@ -44,6 +51,30 @@
       request.onsuccess = () => { db.close(); resolve(request.result || null); };
       request.onerror = () => { db.close(); reject(request.error || new Error("Could not load game media")); };
     });
+  }
+
+  async function fetchUsb(code) {
+    try {
+      const res = await fetch(API_BASE + "/api/penny-fever/felix-session/" + encodeURIComponent(code), {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data && data.ok ? data : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function usbToMedia(data) {
+    return {
+      photos: (data.photos || []).map(absUrl),
+      collage: absUrl(data.collage),
+      gifFrames: (data.gif_frames || []).map(absUrl),
+      boomFrames: (data.boom_frames || []).map(absUrl),
+      videoUrl: absUrl(data.video),
+      strip: absUrl(data.strip),
+    };
   }
 
   function dl(href, name, label, extraClass) {
@@ -90,11 +121,10 @@
     }
   }
 
-  async function renderSession(session, code, number) {
-    const media = await ensureBaked(await getMedia(session.mediaId).catch(() => null));
+  async function renderSession(session, code, number, mediaIn) {
+    const media = await ensureBaked(mediaIn || await getMedia(session.mediaId).catch(() => null));
     const stem = "penny-fever-" + code + "-session-" + number + "-";
-
-    const stripSrc = session.strip || "";
+    const stripSrc = media?.strip || session.strip || "";
     const stripFrame = document.getElementById("strip-frame");
     const stripActions = document.getElementById("strip-actions");
     stripActions.replaceChildren();
@@ -158,11 +188,13 @@
       boomImg.replaceWith(Object.assign(document.createElement("div"), { className: "empty", textContent: "Boomerang could not be built." }));
     }
 
-    if (media?.video) {
+    const videoHref = media?.videoUrl || "";
+    if (videoHref) {
+      collageActions.append(dl(videoHref, stem + "session.webm", "Download session video", "alt"));
+    } else if (media?.video) {
       const url = URL.createObjectURL(media.video);
       renderCleanups.push(() => URL.revokeObjectURL(url));
-      const a = dl(url, stem + "session." + (media.videoExt || "webm"), "Download session video", "alt");
-      collageActions.append(a);
+      collageActions.append(dl(url, stem + "session." + (media.videoExt || "webm"), "Download session video", "alt"));
     }
   }
 
@@ -177,14 +209,26 @@
       setStatus("Enter PF- followed by six letters. I and O are not used.");
       return;
     }
-    const file = readFiles().find((item) => item.code === code);
-    if (!file) {
-      setStatus("That PF code is not saved in this browser. Open the keepsake on the same phone or computer that ran the booth.");
+    const usb = await fetchUsb(code);
+    if (usb && (usb.collage || usb.strip || (usb.photos || []).length)) {
+      sessionCodeEl.hidden = false;
+      sessionCodeEl.textContent = code;
+      sessionBlock.hidden = false;
+      setStatus("Loaded from Felix photo booth.");
+      try {
+        await renderSession({ strip: absUrl(usb.strip), mediaId: "" }, code, 1, usbToMedia(usb));
+      } catch (err) {
+        console.warn("game bonus", err);
+        setStatus("The SNAP keepsake could not be opened.");
+      }
       return;
     }
-    const sessions = (Array.isArray(file.sessions) ? file.sessions : []).filter((session) =>
-      typeof session?.strip === "string" && session.strip.startsWith("data:image/")
-    );
+    const file = readFiles().find((item) => item.code === code);
+    if (!file) {
+      setStatus("That PF code is not on Felix photo booth yet. Run the SNAP session, then open bonuses with the same code.");
+      return;
+    }
+    const sessions = (Array.isArray(file.sessions) ? file.sessions : []).filter((session) => session && (session.usb || session.mediaId || (typeof session.strip === "string" && session.strip.startsWith("data:image/"))));
     if (!sessions.length) {
       setStatus("This game code has no saved photo sessions yet.");
       return;
@@ -193,7 +237,7 @@
     sessionCodeEl.hidden = false;
     sessionCodeEl.textContent = code;
     sessionBlock.hidden = false;
-    setStatus(sessions.length + " SNAP " + (sessions.length === 1 ? "session" : "sessions") + " found. Showing the latest.");
+    setStatus(sessions.length + " SNAP " + (sessions.length === 1 ? "session" : "sessions") + " found on this browser. Showing the latest.");
     try {
       await renderSession(session, code, sessions.length);
     } catch (err) {

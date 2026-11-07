@@ -1383,21 +1383,7 @@ section.screen.active[data-screen="DIGITAL"] .output-layout {
   justify-content: center !important;
 }
 
-/* Keep live prompts clear of the Penny Fever game banner above the booth. */
-section.screen[data-screen="LIVE"] .overlay-top {
-  top: 15vh !important;
-}
-section.screen[data-screen="LIVE"] .lookup-overlay {
-  top: 11vh !important;
-  padding-top: 0 !important;
-}
-section.screen[data-screen="LIVE"] .countdown-overlay {
-  top: 12vh !important;
-  padding-top: 0 !important;
-}
-section.screen[data-screen="LIVE"] .countdown-overlay.is-ready {
-  top: 16vh !important;
-}
+/* Live prompts sit inside #video-layer #liveCues (portrait camera window). */
 section.screen.active[data-screen="PAYMENT"] .title-main,
 section.screen.active[data-screen="PAYMENT"] .subtitle,
 section.screen.active[data-screen="ATTRACT"] .attract-tagline,
@@ -1501,18 +1487,8 @@ section.screen.active[data-screen="AWAKE"] .awake-qr {
 }
 #booth-stage.carnival-live #video-layer:not(.hidden) {
   inset: auto !important;
-  top: 10% !important;
-  left: 10% !important;
-  width: 80% !important;
-  height: 54% !important;
-  border-radius: 32px 32px 22px 22px;
-  box-shadow:
-    0 0 0 7px #d2b073,
-    0 0 0 16px #563e24,
-    0 28px 50px rgba(40, 20, 8, 0.45);
   z-index: 1;
   overflow: hidden;
-  background: #1a120c;
 }
 .carnival-host {
   position: absolute;
@@ -1623,16 +1599,92 @@ section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
   background: #7aa05a;
 }
 #booth-stage.carnival-live #video-layer:not(.hidden) {
-  top: 16.5% !important;
-  left: 11% !important;
-  width: 78% !important;
-  height: 46% !important;
-  border-radius: 50%;
+  top: 22% !important;
+  left: 24% !important;
+  width: 52% !important;
+  height: 36.6% !important;
+  border-radius: 36px;
   box-shadow:
     0 0 0 6px rgba(210, 176, 115, 0.88),
     0 0 0 14px rgba(42, 74, 68, 0.42),
     0 22px 44px rgba(16, 32, 28, 0.38);
   background: #6e9a52;
+}
+#video-layer #liveCues {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  transform: scaleX(-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 7% 8% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  transform: none;
+  z-index: 9;
+}
+#video-layer #liveCues .overlay-top .title-main,
+#video-layer #liveCues .live-cue-text,
+#video-layer #liveCues .lookup-label,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  color: #fff;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  text-shadow:
+    0 0 16px rgba(0, 0, 0, 0.95),
+    0 2px 10px rgba(0, 0, 0, 0.9);
+}
+#video-layer #liveCues .overlay-top .title-main,
+#video-layer #liveCues .live-cue-text,
+#video-layer #liveCues .lookup-label,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  font-size: 1.85rem;
+}
+#video-layer #liveCues .countdown-overlay {
+  font-size: 4.6rem;
+  padding-top: 5%;
+  line-height: 1;
+}
+#video-layer #liveCues .countdown-overlay.is-ready {
+  font-size: 1.85rem;
+  padding-top: 8%;
+}
+#video-layer #liveCues .lookup-arrow {
+  font-size: 3rem;
+  margin: 0;
+  color: #ffe566;
+}
+#video-layer #liveCues .lookup-label {
+  margin-top: 0.15rem;
+  font-size: 1.85rem;
+}
+#video-layer #liveCues .lookup-sub {
+  display: none;
 }
 #booth-stage.carnival-live .carnival-host {
   display: none !important;

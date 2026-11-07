@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=carnival-7">
+  <link rel="stylesheet" href="felix-booth.css?v=carnival-8">
 </head>
 <body>
   <div id="turn-phone">
@@ -29,6 +29,22 @@
         <video id="liveVideo" autoplay muted playsinline webkit-playsinline></video>
         <canvas id="paperLiveCanvas" class="hidden"></canvas>
         <canvas id="captureCanvas"></canvas>
+        <div id="liveCues">
+          <div id="liveOverlayTop" class="overlay-top hidden">
+            <h1 class="title-main">Your session has started</h1>
+            <p class="subtitle"></p>
+          </div>
+          <div id="liveCueOverlay" class="live-cue-overlay hidden" aria-live="assertive">
+            <div id="liveCueText" class="live-cue-text"></div>
+          </div>
+          <div id="lookUpOverlay" class="lookup-overlay hidden" aria-live="assertive">
+            <div class="lookup-arrow" aria-hidden="true">▲</div>
+            <div class="lookup-label">Look up here</div>
+          </div>
+          <div id="countdownOverlay" class="countdown-overlay hidden">
+            <span id="countdownNumber">3</span>
+          </div>
+        </div>
       </div>
 
       <div id="ui-layer">
@@ -291,19 +307,6 @@
               <div class="carnival-host-name" id="carnivalHostName">FELIX</div>
               <div class="carnival-set-title" id="carnivalSetTitle">Instapic Penny Fever Photo Booth</div>
             </div>
-            <div id="liveOverlayTop" class="overlay-top hidden">
-              <h1 class="title-main">Your session has started</h1>
-              <p class="subtitle"></p>
-            </div>
-            <div id="liveCueOverlay" class="live-cue-overlay hidden" aria-live="assertive">
-              <div id="liveCueText" class="live-cue-text"></div>
-            </div>
-            <div id="lookUpOverlay" class="lookup-overlay hidden" aria-live="assertive">
-              <div class="lookup-arrow" aria-hidden="true">▲</div>
-              <div class="lookup-label">Look up here</div>
-              <div class="lookup-sub">Camera is above the screen</div>
-            </div>
-            
             <div id="cameraEnablePanel" class="no-camera-panel camera-enable-panel hidden">
               <div class="no-camera-card">
                 <h1 class="title-main">Turn on camera</h1>
@@ -349,9 +352,6 @@
                 </div>
                 <p class="subtitle small" id="noCameraPoseHint">Pose 1 of 2</p>
               </div>
-            </div>
-            <div id="countdownOverlay" class="countdown-overlay hidden">
-              <span id="countdownNumber">3</span>
             </div>
           </div>
         </section>
@@ -516,8 +516,8 @@
       </div>
     </div>
   </div>
-  <script src="pf-bonus-compose.js?v=carnival-7"></script>
-  <script src="felix-booth.js?v=carnival-7"></script>
-  <script src="felix-booth-text.js?v=carnival-7"></script>
+  <script src="pf-bonus-compose.js?v=carnival-8"></script>
+  <script src="felix-booth.js?v=carnival-8"></script>
+  <script src="felix-booth-text.js?v=carnival-8"></script>
 </body>
 </html>

@@ -45,6 +45,8 @@
   const MAX_RETAKES_PER_SESSION = 2;
   const GAME_FILES_KEY = "pennyFeverGameFiles";
   const GAME_MEDIA_DB = "pennyFeverGameMedia";
+  const MOTHERPC = "https://motherpc.taild1a44c.ts.net";
+  const CACHE = "carnival-8";
   const PRICE = {
     sessionTickets: 1,
     unlockPennies: 2,
@@ -364,6 +366,58 @@
       tx.onabort = () => { db.close(); reject(tx.error || new Error("Game media save was cancelled")); };
     });
   }
+  function dataUrlToBlob(dataUrl) {
+    if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) return null;
+    const comma = dataUrl.indexOf(",");
+    if (comma < 0) return null;
+    const header = dataUrl.slice(0, comma);
+    const mime = (header.match(/data:([^;]+)/) || [])[1] || "application/octet-stream";
+    try {
+      const bin = atob(dataUrl.slice(comma + 1));
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i += 1) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    } catch (_) {
+      return null;
+    }
+  }
+  function appendBlob(form, field, blob, filename) {
+    if (!blob) return;
+    form.append(field, blob, filename);
+  }
+  async function uploadFelixSession(code, payload) {
+    const form = new FormData();
+    form.append("code", code);
+    form.append("session_id", payload.sessionId || "");
+    form.append("bg_id", payload.bgId || "");
+    const strip = dataUrlToBlob(payload.strip);
+    if (strip) appendBlob(form, "strip", strip, "strip.jpg");
+    const collage = dataUrlToBlob(payload.collage);
+    if (collage) appendBlob(form, "collage", collage, "collage.jpg");
+    (payload.photos || []).forEach((src, i) => {
+      const blob = dataUrlToBlob(src);
+      if (blob) appendBlob(form, "freeze_" + (i + 1), blob, "freeze_" + (i + 1) + ".jpg");
+    });
+    (payload.gifFrames || []).slice(0, 8).forEach((src, i) => {
+      const blob = dataUrlToBlob(src);
+      if (blob) appendBlob(form, "gif_" + (i + 1), blob, "gif_" + (i + 1) + ".jpg");
+    });
+    (payload.boomFrames || []).slice(0, 8).forEach((src, i) => {
+      const blob = dataUrlToBlob(src);
+      if (blob) appendBlob(form, "boom_" + (i + 1), blob, "boom_" + (i + 1) + ".jpg");
+    });
+    if (payload.video) {
+      const ext = payload.videoExt || (String(payload.videoMime || "").includes("mp4") ? "mp4" : "webm");
+      appendBlob(form, "video", payload.video, "session_video." + ext);
+    }
+    const res = await fetch(MOTHERPC + "/api/penny-fever/felix-session", {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "usb_save_failed");
+    return data;
+  }
   function findGameFile(code) {
     const normalized = String(code || "").trim().toUpperCase();
     return readGameFiles().find((file) => file.code === normalized) || null;
@@ -678,7 +732,7 @@
 
   async function loadLayoutAndBackgrounds() {
     try {
-      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-7").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=" + CACHE).then((r) => r.json());
       carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
       Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
       carnivalSets.forEach((row) => {
@@ -934,7 +988,7 @@
       btn.hidden = hide;
       btn.classList.toggle("is-disabled", !ready);
       btn.setAttribute("aria-disabled", String(!ready));
-      btn.href = ready ? "bonus.html?code=" + encodeURIComponent(localSessionCode) + "&v=carnival-7" : "#";
+      btn.href = ready ? "bonus.html?code=" + encodeURIComponent(localSessionCode) + "&v=" + CACHE : "#";
       btn.textContent = ready ? "OPEN GAME BONUS" : "SAVING GAME BONUS\u2026";
     }
     if (retry) retry.hidden = hide || state !== "failed";
@@ -976,9 +1030,8 @@
       };
       file.sessions.push(session);
       file.savedAt = new Date().toISOString();
-      if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
+      writeGameFiles(files);
       if (!lastCompositeUrl) await buildStrip();
-      session.strip = lastCompositeUrl;
       const recorded = await waitForSessionVideo(12000);
       const mediaId = code + "|" + bonusSessionKey;
       let baked = {};
@@ -987,32 +1040,49 @@
       } catch (err) {
         console.warn("Felix SNAP bake", err);
       }
-      await saveGameMedia({
-        id: mediaId,
-        code,
+      try {
+        await saveGameMedia({
+          id: mediaId,
+          code,
+          sessionId: bonusSessionKey,
+          bgId: session.bgId,
+          photos: capturedPhotos.slice(0, 4),
+          video: recorded?.blob || null,
+          videoMime: recorded?.mime || "",
+          videoExt: recorded?.ext || "",
+          collage: baked.collage || "",
+          gifFrames: baked.gifFrames || [],
+          boomFrames: baked.boomFrames || [],
+          savedAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn("Felix local media", err);
+      }
+      await uploadFelixSession(code, {
         sessionId: bonusSessionKey,
         bgId: session.bgId,
+        strip: lastCompositeUrl,
+        collage: baked.collage || "",
         photos: capturedPhotos.slice(0, 4),
+        gifFrames: baked.gifFrames || [],
+        boomFrames: baked.boomFrames || [],
         video: recorded?.blob || null,
         videoMime: recorded?.mime || "",
         videoExt: recorded?.ext || "",
-        collage: baked.collage || "",
-        gifFrames: baked.gifFrames || [],
-        boomFrames: baked.boomFrames || [],
-        savedAt: new Date().toISOString(),
       });
       session.mediaId = mediaId;
+      session.usb = true;
       session.savedAt = new Date().toISOString();
       file.savedAt = session.savedAt;
-      if (!writeGameFiles(files)) throw new Error("local game storage unavailable");
+      writeGameFiles(files);
       if (sessionCodeDisplay) sessionCodeDisplay.textContent = code;
       adjustDigitalScreenForMode();
       paintDigitalQr();
       paintDigitalVipJoin();
       updateBonusLinks();
       setBonusUi("ready", recorded?.blob
-        ? "Game code " + code + " saved with your photos and session video in this browser. It cannot open a real booth session."
-        : "Game code " + code + " and photos saved in this browser. Video capture was unavailable; it cannot open a real booth session.");
+        ? "Game code " + code + " saved to Felix photo booth with photos and session video. Open bonuses with this code on any phone."
+        : "Game code " + code + " and photos saved to Felix photo booth. Video capture was unavailable.");
     } catch (err) {
       console.warn("Felix bonus", err);
       setBonusUi("failed", "Couldn't save the game keepsake. Keep this page open and try again.");
