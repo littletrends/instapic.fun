@@ -687,7 +687,7 @@
       applyTemplateSlotCss();
     } catch (_) {}
     try {
-      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-4").then((r) => r.json());
+      const payload = await fetch("backgrounds/carnival-sets.json?v=carnival-5").then((r) => r.json());
       carnivalSets = Array.isArray(payload.sets) ? payload.sets : [];
       Object.keys(carnivalById).forEach((key) => { delete carnivalById[key]; });
       carnivalSets.forEach((row) => {
@@ -1712,17 +1712,15 @@
       placeholder.prepend(img);
     }
     img.hidden = false;
-    img.src = "img/instapic_logo.jpg";
-    img.alt = "Penny Fever game keepsake";
+    img.src = "img/instapic_vip.png";
+    img.alt = "Scan to join or sign in to the Instapic VIP Guest Area";
     let hint = placeholder.querySelector(".qr-hint-instapic");
     if (!hint) {
       hint = document.createElement("div");
       hint.className = "qr-hint-instapic";
       placeholder.appendChild(hint);
     }
-    hint.textContent = code
-      ? "This game code is stored in Penny Fever Game VIP on this browser."
-      : "Your Penny Fever game code is being saved.";
+    hint.textContent = "Scan to join Instapic VIP · instapic.fun/save";
   }
 
   function paintDigitalVipJoin() {

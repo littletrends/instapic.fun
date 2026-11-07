@@ -1591,3 +1591,66 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-set-title 
 .strip-on-paper .strip-composite-preview {
   box-shadow: 0 10px 24px rgba(40, 18, 6, 0.28) !important;
 }
+
+/* carnival-5: SNAP teal / brass session chrome */
+#booth-frame {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(232, 244, 236, 0.55), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(42, 74, 70, 0.28), transparent 45%),
+    #e8f0e6;
+}
+#booth-stage {
+  background: radial-gradient(circle at top, #2a3a38 0, #101816 55%, #080c0b 100%);
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"],
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  box-shadow:
+    0 0 18px rgba(210, 176, 115, 0.7),
+    0 0 48px rgba(58, 110, 102, 0.38),
+    inset 0 0 22px rgba(255, 255, 255, 0.35) !important;
+}
+#carnival-stage {
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,0.35), transparent 42%),
+    #e7efe4;
+}
+#carnivalWall {
+  object-fit: contain;
+  object-position: center 42%;
+  background: #e7efe4;
+}
+#booth-stage.carnival-live {
+  background: #e7efe4;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 11% !important;
+  left: 14% !important;
+  width: 72% !important;
+  height: 50% !important;
+  border-radius: 36px 36px 88px 88px;
+  box-shadow:
+    0 0 0 7px #d2b073,
+    0 0 0 16px #2a4a44,
+    0 28px 50px rgba(16, 32, 28, 0.45);
+}
+.carnival-plate {
+  color: #1c2624;
+  background: rgba(255, 246, 236, 0.94);
+  border: 3px solid #d2b073;
+}
+.carnival-set-title {
+  color: #3a5a52;
+}
+.strip-on-paper {
+  box-shadow:
+    0 0 0 6px #d2b073,
+    0 0 0 12px #2a4a44,
+    0 18px 36px rgba(16, 32, 28, 0.35);
+}
+.felix-save-row[hidden],
+#bonusLinkRow[hidden] {
+  display: none !important;
+}
+#booth-stage.carnival-live .no-camera-panel {
+  background: rgba(231, 239, 228, 0.42);
+}

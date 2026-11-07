@@ -1,5 +1,5 @@
 {
-  "updated": "carnival-4",
+  "updated": "carnival-5",
   "free": [
     "pf-felix"
   ],
@@ -7,7 +7,7 @@
     {
       "id": "pf-felix",
       "host": "Felix",
-      "title": "Penny Fever Photo Booth",
+      "title": "Instapic Penny Fever Photo Booth",
       "free": true,
       "strip": "backgrounds/carnival/pf-felix.jpg",
       "thumb": "backgrounds/carnival/thumbs/pf-felix.jpg",
@@ -27,30 +27,37 @@
       },
       "slots": [
         [
-          120,
-          196,
-          176,
-          220
+          122,
+          156,
+          172,
+          215
         ],
         [
-          120,
-          424,
-          176,
-          220
+          122,
+          386,
+          172,
+          215
         ],
         [
-          120,
-          714,
-          176,
-          220
+          122,
+          616,
+          172,
+          215
         ],
         [
-          120,
-          942,
-          176,
-          220
+          122,
+          846,
+          172,
+          215
         ]
-      ]
+      ],
+      "qr": {
+        "x": 169,
+        "y": 1118,
+        "w": 78,
+        "h": 78,
+        "href": "https://instapic.fun/save.html"
+      }
     }
   ]
 }
