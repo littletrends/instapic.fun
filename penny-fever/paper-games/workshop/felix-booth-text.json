@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07T19:02:58+09:30",
+  "updated_at": "2026-11-07T19:06:57+09:30",
   "ui_font": "Unique.ttf",
   "title_font": "Subotype Steady.otf",
   "ui_family": "Unique",
@@ -14,7 +14,7 @@
       "html": true,
       "text": "TAP TO \nWAKE THE\nPHOTOBOOTH",
       "font": "Unique.ttf",
-      "size": 90,
+      "size": 85,
       "x": 0,
       "y": 0,
       "family": "Unique"
