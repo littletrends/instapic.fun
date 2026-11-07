@@ -2418,3 +2418,57 @@ section.screen.active[data-screen="DIGITAL"] .felix-bonus-status:empty { display
 .felix-split-pill { margin-top: 0.5rem; }
 .felix-social-row { margin-top: 0.7rem; }
 .felix-continue-pill { margin-top: 0.7rem; }
+
+/* carnival-19: game code screen orbs in one row of three, like the packages. */
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  flex-wrap: nowrap !important;
+  gap: 36px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  width: 260px !important;
+  height: 260px !important;
+  min-width: 260px !important;
+  min-height: 260px !important;
+  font-size: 1.5rem !important;
+}
+
+/* carnival-20: game code screen as code / strip+QR row / three orbs.
+   Strip left, QR + 2x3 share icons right. Save/Share pill removed. */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 170px !important;
+  gap: 0.9rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-digital-stack {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 70px !important;
+  margin-top: 0.6rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 600px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img {
+  width: 240px !important;
+  height: 240px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-hint-instapic {
+  max-width: 300px !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group .felix-social-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, 92px) !important;
+  gap: 22px 28px !important;
+  justify-content: center !important;
+  margin: 1.2rem 0 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-social-btn {
+  width: 92px !important;
+  height: 92px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 1.4rem 0 0 !important;
+}
