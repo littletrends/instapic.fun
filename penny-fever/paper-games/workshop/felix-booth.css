@@ -2058,3 +2058,51 @@ section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
   box-shadow: none !important;
   border: 0 !important;
 }
+
+/* Round 3: readable text on phones (bolder cream text with a soft dark
+   shadow over the grass), brass review thumbs, no grey lines. */
+section.screen.active[data-screen="AWAKE"] .awake-kicker,
+section.screen.active[data-screen="AWAKE"] .awake-sparkle,
+section.screen.active[data-screen="AWAKE"] .awake-qr-label,
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-note,
+section.screen.active[data-screen="PAYMENT"] .felix-wallet,
+section.screen.active[data-screen="REVIEW"] .subtitle,
+section.screen.active[data-screen="REVIEW"] .thumbs-title,
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2,
+section.screen.active[data-screen="DIGITAL"] .subtitle,
+section.screen.active[data-screen="DIGITAL"] .output-group h2 {
+  color: #fbf1d8 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(20, 36, 32, 0.85), 0 0 10px rgba(20, 36, 32, 0.6) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label { font-size: 1.35rem !important; }
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-note { font-size: 1.3rem !important; }
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(20, 36, 32, 0.8) !important;
+}
+section.screen[data-screen="PAYMENT"] .session-left-label { opacity: 1 !important; font-size: 1.05em !important; }
+.carnival-plate .carnival-set-title {
+  color: #2a4a44 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .thumbs-title { font-size: 1.25rem !important; }
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2 { font-size: 1.6rem !important; }
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row .template-slot {
+  border: 4px solid #d2b073 !important;
+  box-shadow: 0 0 0 2px #2a4a44, 0 4px 10px rgba(0, 0, 0, 0.35) !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint,
+section.screen.active[data-screen="DIGITAL"] .felix-session-count,
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status { font-size: 1.3rem !important; }
+section.screen.active[data-screen="DIGITAL"] .output-group,
+section.screen.active[data-screen="DIGITAL"] .output-layout,
+section.screen.active[data-screen="DIGITAL"] hr {
+  border-color: rgba(210, 176, 115, 0.9) !important;
+}
