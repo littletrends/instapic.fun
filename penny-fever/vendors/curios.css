@@ -1,0 +1,334 @@
+/* Digger’s Vault — 3D claw tent. PF only. Never booth/port 6000. */
+
+#cabinet-curios.cabinet-interior--curios {
+  max-width: 74rem;
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(212, 164, 90, 0.22), transparent 48%),
+    radial-gradient(ellipse at 18% 88%, rgba(61, 138, 138, 0.16), transparent 42%),
+    radial-gradient(ellipse at 82% 70%, rgba(123, 39, 67, 0.28), transparent 46%),
+    #12080c;
+}
+#cabinet-curios .interior-sky--vault {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(242, 199, 92, 0.18), transparent 42%),
+    linear-gradient(180deg, #1c0e12, transparent 72%);
+  pointer-events: none;
+}
+#cabinet-curios .curios-room { max-width: 74rem; }
+
+.curios-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(54, 22, 32, 0.92), rgba(12, 6, 10, 0.95));
+  border-color: rgba(212, 164, 90, 0.4);
+}
+.curios-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 0.42rem;
+  background: repeating-linear-gradient(90deg, #76213d 0 11%, #c4964c 11% 22%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vendor-stage--vault {
+  position: relative;
+  height: min(74vh, 760px);
+  min-height: 440px;
+  margin: 0.65rem 0 0.7rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 164, 90, 0.48);
+  background: #070406;
+  box-shadow: inset 0 0 56px rgba(0, 0, 0, 0.7), 0 12px 40px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+  user-select: none;
+}
+.vendor-stage--vault canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  background: #070406;
+}
+.curios-card.is-playing .vendor-stage--vault canvas { cursor: crosshair; }
+
+.curios-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.7rem 0.8rem 0.75rem;
+  z-index: 2;
+}
+.curios-hud-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+.curios-hud-floor {
+  margin: 0;
+  max-width: 72%;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(12, 4, 10, 0.78);
+  border: 1px solid rgba(242, 199, 92, 0.45);
+  font: 700 0.76rem/1.3 Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  text-shadow: 0 1px 8px #000;
+}
+.curios-hud-score {
+  font: 700 0.85rem/1 Georgia, serif;
+  color: #f7e6c0;
+  background: rgba(12, 4, 10, 0.74);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+}
+.curios-hud-hint {
+  margin: 0 auto;
+  max-width: 36rem;
+  text-align: center;
+  font: italic 1.02rem/1.35 Georgia, serif;
+  color: #f7e6c0;
+  text-shadow: 0 2px 10px #000;
+}
+.curios-toast {
+  pointer-events: none;
+  align-self: center;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(90, 28, 48, 0.92);
+  color: #fff4ea;
+  font: 700 0.95rem/1.2 Georgia, serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.curios-toast.is-on { opacity: 1; transform: translateY(0) scale(1); }
+.curios-toast.is-good { background: rgba(40, 90, 55, 0.92); }
+.curios-toast.is-bad { background: rgba(140, 24, 48, 0.92); }
+
+.curios-hud-bottom { display: flex; flex-direction: column; gap: 0.4rem; }
+.curios-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  justify-content: center;
+  padding: 0.45rem 0.55rem;
+  border-radius: 12px;
+  background: rgba(8, 4, 8, 0.8);
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  color: #f7e6c0;
+  font: 700 0.72rem/1.3 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px #000;
+}
+.curios-controls span { display: inline-flex; align-items: center; gap: 0.28rem; }
+.curios-controls kbd {
+  display: inline-block;
+  padding: 0.08rem 0.38rem;
+  border-radius: 5px;
+  border: 1px solid rgba(242, 199, 92, 0.55);
+  background: rgba(48, 22, 28, 0.9);
+  color: #f2c75c;
+  font: 700 0.68rem/1.2 Georgia, serif;
+}
+
+.curios-start-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 5.4rem;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+.curios-start-overlay[hidden] { display: none; }
+.curios-start-overlay .ticket-button {
+  min-width: 14rem;
+  box-shadow: 0 0 0 1px rgba(242, 199, 92, 0.55), 0 0 28px rgba(196, 30, 58, 0.35);
+}
+.curios-start-note {
+  margin: 0;
+  color: #f0d09a;
+  font: italic 0.85rem/1.3 Georgia, serif;
+  text-shadow: 0 2px 8px #000;
+}
+
+.curios-drop-fab {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 5.5rem;
+  z-index: 3;
+  pointer-events: auto;
+  display: none;
+  place-items: center;
+  width: 4.8rem;
+  height: 4.8rem;
+  border: 2px solid #f2c75c;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f0d09a, #c41e3a 70%);
+  color: #1a0c10;
+  font: 800 0.82rem/1 Georgia, serif;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(242, 199, 92, 0.18);
+  touch-action: manipulation;
+}
+.curios-card.is-playing .curios-drop-fab { display: grid; }
+.curios-card.is-playing.is-decide .curios-drop-fab,
+.curios-card.is-playing.is-empty .curios-drop-fab,
+.curios-drop-fab[hidden] { display: none; }
+.curios-drop-fab:active { transform: scale(0.94); }
+
+.curios-greed {
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  width: min(94%, 30rem);
+  padding: 0.85rem 1rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(42, 16, 24, 0.96), rgba(12, 6, 9, 0.97));
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  z-index: 4;
+  pointer-events: auto;
+}
+.curios-greed p { margin: 0 0 0.55rem; color: #f0d09a; font-family: Georgia, serif; }
+.curios-greed-tease {
+  margin: 0 0 0.35rem;
+  font: 700 0.72rem/1.3 Georgia, serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e07a9a;
+}
+.curios-greed-timer {
+  margin: 0.2rem 0 0.55rem;
+  font: italic 0.78rem/1.3 Georgia, serif;
+  color: #f2c75c;
+}
+.curios-greed-bar {
+  height: 0.38rem;
+  margin: 0 0 0.7rem;
+  border-radius: 99px;
+  background: rgba(8, 4, 8, 0.8);
+  border: 1px solid rgba(196, 30, 58, 0.45);
+  overflow: hidden;
+}
+.curios-greed-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #c41e3a, #f2c75c);
+  transform-origin: left center;
+}
+.curios-greed-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+.curios-descend-risk {
+  background: #5a1428;
+  border-color: #c41e3a;
+  color: #f7e6c0;
+}
+.curios-card.is-playing.is-decide #curiosDescend.cash-scream,
+.curios-descend-risk.cash-scream {
+  animation: curios-cash-pulse 0.7s ease-in-out infinite;
+}
+
+.curios-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  gap: 0.35rem;
+  background: radial-gradient(ellipse at 50% 60%, rgba(80, 10, 20, 0.35), rgba(4, 2, 4, 0.78));
+  pointer-events: none;
+  text-align: center;
+}
+.curios-empty[hidden] { display: none; }
+.curios-empty strong {
+  font: 800 clamp(2rem, 8vw, 3.4rem)/0.95 Georgia, serif;
+  letter-spacing: 0.12em;
+  color: #c41e3a;
+  text-shadow: 0 0 18px rgba(196, 30, 58, 0.65), 0 4px 0 #1a0c10;
+  transform: rotate(-8deg);
+}
+.curios-empty em {
+  font: italic 1rem/1.35 Georgia, serif;
+  color: #f0d09a;
+}
+
+.curios-webgl-fail {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1.5rem;
+  color: #f0d09a;
+  background: rgba(10, 6, 10, 0.86);
+  z-index: 5;
+  font: 1rem/1.45 Georgia, serif;
+  text-align: center;
+}
+.curios-webgl-fail[hidden] { display: none; }
+
+.curios-card.is-playing .vendor-vestibule-only,
+.curios-card.is-result .vendor-vestibule-only { display: none; }
+.curios-card .vendor-play-only { display: none; }
+.curios-card.is-playing .vendor-play-only { display: inline-flex; }
+.curios-card.is-playing #curiosStart { display: none; }
+.curios-card.is-playing .curios-start-overlay { display: none; }
+.curios-card.is-playing .barker-call { letter-spacing: 0.1em; color: #f2c75c; }
+.curios-card.is-playing #curiosCash.cash-scream,
+.curios-card.is-playing #curiosGreedCash.cash-scream,
+.curios-card.is-playing #curiosDescend.cash-scream {
+  animation: curios-cash-pulse 0.9s ease-in-out infinite;
+}
+@keyframes curios-cash-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 164, 90, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(212, 164, 90, 0.18); }
+}
+
+.curios-pocket {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: -1px;
+}
+.curios-actions { margin-top: 0.55rem; }
+
+@media (max-width: 640px) {
+  .vendor-stage--vault { min-height: min(78vh, 640px); height: min(78vh, 640px); }
+  .curios-hud-hint { font-size: 0.86rem; }
+  .curios-greed { width: 96%; bottom: 0.55rem; padding: 0.7rem 0.75rem 0.8rem; }
+  .curios-drop-fab { width: 5.4rem; height: 5.4rem; right: 0.55rem; bottom: 6.2rem; font-size: 0.9rem; }
+  .curios-controls { font-size: 0.64rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .curios-card.is-playing #curiosCash.cash-scream,
+  .curios-card.is-playing #curiosGreedCash.cash-scream,
+  .curios-card.is-playing #curiosDescend.cash-scream { animation: none; }
+}

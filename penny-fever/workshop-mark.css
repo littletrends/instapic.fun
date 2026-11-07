@@ -1,0 +1,10 @@
+/* Visible only on localhost / Tailscale. Public instapic.fun never loads this far. */
+.pf-workshop-banner{
+  position:sticky;top:0;z-index:10000;
+  margin:0;padding:.5rem .9rem;
+  background:#7a3140;color:#fff6df;
+  font:700 13px/1.35 system-ui,sans-serif;
+  letter-spacing:.06em;text-transform:uppercase;
+  text-align:center;
+}
+body.is-in-world .pf-workshop-banner{position:fixed;left:0;right:0;}

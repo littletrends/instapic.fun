@@ -1,0 +1,531 @@
+/* Bent Ring Pegs — 3D crooked hook garden. PF only. Never booth/port 6000. */
+#cabinet-bent-rings.cabinet-interior {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #12070c;
+}
+#cabinet-bent-rings .interior-sky,
+#cabinet-bent-rings .interior-room::before,
+#cabinet-bent-rings .interior-room::after {
+  display: none;
+}
+#cabinet-bent-rings .interior-room {
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+}
+#cabinet-bent-rings .interior-header { display: none; }
+#cabinet-bent-rings .interior-stage {
+  perspective: none;
+  height: 100vh;
+  height: 100dvh;
+}
+#cabinet-bent-rings .interior-stage .attraction-card,
+#cabinet-bent-rings .bentring-card {
+  position: relative;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  animation: none;
+  overflow: hidden;
+}
+#cabinet-bent-rings .bentring-card.has-focus::after { display: none; }
+
+#bentRingStage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: #14080e;
+  box-shadow: none;
+}
+#bentRingCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  background: #14080e;
+  user-select: none;
+}
+#cabinet-bent-rings .vendor-stage canvas {
+  width: 100%;
+  height: 100%;
+}
+.bentring-card.is-playing #bentRingCanvas { cursor: grab; }
+.bentring-card.is-playing #bentRingCanvas.is-pulling { cursor: grabbing; }
+.bentring-card.is-vestibule #bentRingCanvas { cursor: pointer; }
+
+#cabinet-bent-rings .br-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(0.5rem + env(safe-area-inset-top)) 0.65rem calc(0.55rem + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(12, 5, 9, 0.7) 0%, transparent 16%, transparent 58%, rgba(12, 5, 9, 0.88) 100%);
+}
+#cabinet-bent-rings .br-overlay button,
+#cabinet-bent-rings .br-overlay .vendor-result,
+#cabinet-bent-rings .br-overlay .br-vestibule,
+#cabinet-bent-rings .br-overlay .depth-readout,
+#cabinet-bent-rings .br-overlay .vendor-actions,
+#cabinet-bent-rings .br-overlay .br-controls,
+#cabinet-bent-rings .br-overlay .br-howto {
+  pointer-events: auto;
+}
+
+#cabinet-bent-rings .br-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem 0.7rem;
+}
+#cabinet-bent-rings .br-top .interior-back {
+  margin: 0;
+  background: rgba(12, 6, 9, 0.78);
+  border-color: rgba(212, 164, 90, 0.45);
+}
+#cabinet-bent-rings .br-titleblock {
+  text-align: right;
+  min-width: 0;
+}
+#cabinet-bent-rings .br-titleblock .plaque-kicker {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f0d09a;
+  text-shadow: 0 1px 8px #000;
+}
+#cabinet-bent-rings .br-titleblock h1 {
+  margin: 0.1rem 0 0;
+  font-size: clamp(1.15rem, 3.4vw, 1.85rem);
+  color: #fff6ec;
+  text-shadow: 0 2px 14px #000;
+}
+#cabinet-bent-rings .br-titleblock .interior-blurb {
+  margin: 0.15rem 0 0;
+  font-size: 0.74rem;
+  max-width: 28rem;
+  margin-left: auto;
+  color: #f0d09a;
+  text-shadow: 0 1px 8px #000;
+}
+.bentring-card.is-playing .br-titleblock .interior-blurb { display: none; }
+
+#cabinet-bent-rings .br-howto {
+  position: absolute;
+  left: 0.7rem;
+  top: 4.4rem;
+  width: min(17.4rem, calc(100% - 1.4rem));
+  padding: 0.55rem 0.7rem 0.6rem;
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  border-radius: 0.7rem;
+  background: rgba(10, 5, 8, 0.78);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  color: #fff6ec;
+}
+#cabinet-bent-rings .br-howto-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #d4a45a;
+}
+#cabinet-bent-rings .br-howto ol {
+  margin: 0;
+  padding: 0 0 0 1.05rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+#cabinet-bent-rings .br-howto li { margin: 0.08rem 0; }
+#cabinet-bent-rings .br-howto b { color: #f0d09a; }
+#cabinet-bent-rings .br-howto-keys {
+  margin: 0.4rem 0 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e8a0b8;
+}
+.bentring-card.is-result .br-howto { display: none; }
+#cabinet-bent-rings .br-howto.is-compact {
+  padding: 0.4rem 0.55rem 0.45rem;
+  width: min(15.2rem, calc(100% - 1.4rem));
+}
+#cabinet-bent-rings .br-howto.is-compact ol { font-size: 0.66rem; }
+#cabinet-bent-rings .br-howto.is-compact .br-howto-keys { display: none; }
+
+#cabinet-bent-rings .br-hud {
+  position: absolute;
+  right: 0.7rem;
+  top: 5.6rem;
+  width: min(15.2rem, calc(100% - 1.4rem));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+  pointer-events: none;
+  z-index: 3;
+}
+#cabinet-bent-rings .br-hud .depth-readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.28rem;
+  margin: 0;
+}
+#cabinet-bent-rings .depth-readout span {
+  padding: 0.28rem 0.2rem;
+  border: 1px solid rgba(212, 164, 90, 0.28);
+  border-radius: 0.5rem;
+  background: rgba(8, 4, 8, 0.55);
+  text-align: center;
+}
+#cabinet-bent-rings .depth-readout small {
+  display: block;
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4a45a;
+}
+#cabinet-bent-rings .depth-readout strong {
+  font-size: 1rem;
+  color: #fff6ec;
+}
+#cabinet-bent-rings .br-hud .depth-hud {
+  position: static;
+  left: auto;
+  top: auto;
+  transform: none;
+  margin: 0;
+  padding: 0.28rem 0.45rem;
+  color: #f0d09a;
+  font: 700 0.72rem/1.2 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px #000;
+  text-align: right;
+  white-space: normal;
+}
+#cabinet-bent-rings .br-need {
+  margin: 0;
+  color: #b8e8e0;
+  font: 700 0.78rem/1.2 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-align: right;
+  text-shadow: 0 2px 8px #000;
+}
+#cabinet-bent-rings .br-hud .strike-pips {
+  align-self: flex-end;
+}
+
+#cabinet-bent-rings .br-vestibule {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: min(36rem, calc(100% - 1.4rem));
+  padding: 0.95rem 1.05rem 1.05rem;
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(42, 16, 22, 0.92), rgba(10, 5, 8, 0.94));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45), inset 0 0 28px rgba(196, 30, 58, 0.1);
+  text-align: center;
+}
+#cabinet-bent-rings .br-vestibule[hidden],
+#cabinet-bent-rings .bentring-card.is-playing .br-vestibule,
+#cabinet-bent-rings .bentring-card.is-result .br-vestibule {
+  display: none !important;
+}
+#cabinet-bent-rings .br-vestibule h2 {
+  margin: 0.15rem 0 0.25rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  color: #fff6ec;
+}
+#cabinet-bent-rings .br-vestibule .tent-mouth-joke,
+#cabinet-bent-rings .br-vestibule [data-pf-depth-copy] {
+  margin: 0.25rem 0;
+  color: #f0d09a;
+  font-size: 0.88rem;
+}
+#cabinet-bent-rings .br-vestibule .machine-number {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e8a0b8;
+}
+#cabinet-bent-rings .br-vestibule .barker-call {
+  margin: 0.55rem 0 0.2rem;
+  letter-spacing: 0.1em;
+}
+
+#cabinet-bent-rings .br-toast {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translate(-50%, 0);
+  margin: 0;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  border-radius: 999px;
+  background: rgba(12, 6, 9, 0.82);
+  color: #fff6ec;
+  font: 700 0.82rem/1.2 Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+  pointer-events: none;
+}
+#cabinet-bent-rings .br-roomcard {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  transform: translate(-50%, 0);
+  min-width: 14rem;
+  padding: 0.7rem 1.1rem 0.8rem;
+  border: 1px solid rgba(240, 208, 154, 0.55);
+  border-radius: 0.7rem;
+  background: rgba(12, 6, 9, 0.88);
+  text-align: center;
+  pointer-events: none;
+}
+#cabinet-bent-rings .br-roomcard small {
+  display: block;
+  color: #d4a45a;
+  letter-spacing: 0.18em;
+  font-size: 0.62rem;
+}
+#cabinet-bent-rings .br-roomcard strong {
+  display: block;
+  margin: 0.2rem 0 0.15rem;
+  color: #fff6ec;
+  font-size: 1.25rem;
+  font-family: var(--font-display, Georgia, serif);
+}
+#cabinet-bent-rings .br-roomcard em {
+  display: block;
+  color: #e8a0b8;
+  font-size: 0.78rem;
+}
+
+#cabinet-bent-rings .br-power {
+  position: absolute;
+  left: 50%;
+  bottom: 8.6rem;
+  transform: translateX(-50%);
+  width: min(16rem, 68vw);
+  height: 0.7rem;
+  border-radius: 99px;
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  background: rgba(8, 4, 8, 0.55);
+  overflow: hidden;
+  pointer-events: none;
+}
+#cabinet-bent-rings .br-power small {
+  position: absolute;
+  left: 0.55rem;
+  top: -1.05rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  color: #f0d09a;
+  text-shadow: 0 1px 6px #000;
+}
+#cabinet-bent-rings .br-power .br-sweet {
+  position: absolute;
+  left: 52%;
+  width: 38%;
+  top: 0;
+  bottom: 0;
+  background: rgba(212, 164, 90, 0.32);
+  pointer-events: none;
+}
+#cabinet-bent-rings .br-power i {
+  display: block;
+  position: relative;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #7b2743, #d4a45a 52%, #f0d09a);
+}
+
+#cabinet-bent-rings .br-tilt {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 8.6rem;
+  width: 6.4rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  border-radius: 0.6rem;
+  background: rgba(10, 5, 8, 0.72);
+  text-align: center;
+  pointer-events: none;
+}
+#cabinet-bent-rings .br-tilt small {
+  display: block;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4a45a;
+}
+#cabinet-bent-rings .br-tilt-dial {
+  display: block;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: 0.25rem auto 0;
+  border: 2px solid rgba(240, 208, 154, 0.55);
+  border-radius: 50%;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, rgba(196, 30, 58, 0.18), transparent 62%);
+}
+#cabinet-bent-rings .br-tilt-dial i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.28rem;
+  height: 1.05rem;
+  margin: -1.05rem 0 0 -0.14rem;
+  border-radius: 99px;
+  background: #f0d09a;
+  transform-origin: 50% 100%;
+  transform: rotate(0deg);
+}
+
+#cabinet-bent-rings .br-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+#cabinet-bent-rings .br-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+}
+#cabinet-bent-rings .br-hint {
+  margin: 0;
+  color: #fff6ec;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+  opacity: 0.9;
+}
+.bentring-card.is-vestibule .br-hint,
+.bentring-card.is-result .br-hint,
+.bentring-card.is-playing.is-aiming .br-hint,
+.bentring-card.is-playing.is-flying .br-hint {
+  visibility: hidden;
+}
+#cabinet-bent-rings .br-bottom .status-ticket {
+  margin: 0;
+  flex: 1 1 12rem;
+  color: #f0d09a;
+  text-shadow: 0 2px 8px #000;
+}
+#cabinet-bent-rings .br-bottom .barker-call {
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 10px #000;
+}
+#cabinet-bent-rings .br-keys {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e8a0b8;
+  text-shadow: 0 1px 6px #000;
+}
+#cabinet-bent-rings .br-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr;
+  gap: 0.32rem;
+  width: 100%;
+}
+#cabinet-bent-rings .br-ctl {
+  margin: 0;
+  min-height: 2.7rem;
+  padding: 0.35rem 0.2rem;
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  border-radius: 0.65rem;
+  background: rgba(18, 8, 12, 0.82);
+  color: #fff6ec;
+  font: 700 0.72rem/1 Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#cabinet-bent-rings .br-ctl:active,
+#cabinet-bent-rings .br-ctl.is-held {
+  background: rgba(123, 39, 67, 0.85);
+  border-color: #f0d09a;
+  transform: translateY(1px);
+}
+#cabinet-bent-rings .br-ctl-throw {
+  background: linear-gradient(180deg, #8a2545, #4a1020);
+  border-color: #d4a45a;
+  font-size: 0.78rem;
+  color: #fff6ec;
+}
+#cabinet-bent-rings .vendor-result {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(34rem, calc(100% - 1.4rem));
+  z-index: 4;
+}
+#cabinet-bent-rings .vendor-actions { margin-top: 0.15rem; }
+#cabinet-bent-rings .vendor-result .ticket-button {
+  margin-top: 0.65rem;
+}
+
+@media (max-width: 720px) {
+  #cabinet-bent-rings .br-howto {
+    position: static;
+    width: auto;
+    margin: 0.2rem 0 0;
+  }
+  #cabinet-bent-rings .br-hud {
+    position: static;
+    width: auto;
+    align-items: stretch;
+  }
+  #cabinet-bent-rings .br-hud .depth-hud,
+  #cabinet-bent-rings .br-need { text-align: left; }
+  #cabinet-bent-rings .br-hud .strike-pips { align-self: flex-start; }
+  #cabinet-bent-rings .br-titleblock { text-align: left; }
+  #cabinet-bent-rings .br-titleblock .interior-blurb { margin-left: 0; }
+  #cabinet-bent-rings .br-controls {
+    grid-template-columns: 1fr 1fr 1.3fr 1fr 1fr;
+    gap: 0.22rem;
+  }
+  #cabinet-bent-rings .br-ctl { min-height: 2.5rem; font-size: 0.62rem; }
+  #cabinet-bent-rings .br-tilt { bottom: 9.4rem; }
+  #cabinet-bent-rings .br-power { bottom: 9.4rem; }
+}
+@media (max-width: 420px) {
+  #cabinet-bent-rings .br-howto ol { font-size: 0.66rem; }
+  #cabinet-bent-rings .br-keys { display: none; }
+}

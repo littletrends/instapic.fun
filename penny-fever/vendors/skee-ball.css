@@ -1,0 +1,404 @@
+/* Skee-Ball Alley — fullscreen 3D wax lane. PF only. Never booth/port 6000. */
+#cabinet-skee-ball.cabinet-interior {
+  max-width: none;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #12080c;
+}
+#cabinet-skee-ball .interior-sky,
+#cabinet-skee-ball .interior-room::before,
+#cabinet-skee-ball .interior-room::after { display: none; }
+
+#cabinet-skee-ball .skee-card {
+  position: relative;
+  max-width: none;
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  background: #12080c;
+  box-shadow: none;
+  transform: none !important;
+  animation: none;
+  overflow: hidden;
+  padding: 0;
+}
+
+#skeeCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  touch-action: none;
+  cursor: grab;
+  background: #12080c;
+  user-select: none;
+}
+.skee-card.is-playing #skeeCanvas { cursor: grab; }
+.skee-card.is-playing #skeeCanvas.is-pulling,
+.skee-card.is-playing #skeeCanvas:active { cursor: grabbing; }
+.skee-card.is-vestibule #skeeCanvas { cursor: pointer; }
+
+.skee-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 48%, transparent 36%, rgba(10, 4, 8, 0.55) 100%),
+    linear-gradient(180deg, rgba(40, 12, 10, 0.38) 0%, transparent 18%, transparent 68%, rgba(10, 4, 8, 0.7) 100%);
+}
+
+.skee-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(0.7rem + env(safe-area-inset-top)) 0.9rem 0;
+  pointer-events: none;
+}
+.skee-top .interior-back {
+  pointer-events: auto;
+  margin: 0;
+  background: rgba(12, 6, 10, 0.62);
+  backdrop-filter: blur(8px);
+}
+.skee-titleblock {
+  text-align: right;
+  text-shadow: 0 2px 10px #000;
+}
+.skee-titleblock .plaque-kicker {
+  margin: 0;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  color: #e8a070;
+}
+.skee-titleblock h1 {
+  margin: 0.1rem 0 0;
+  font-size: clamp(1.15rem, 3.4vw, 1.85rem);
+  color: #ffe7c2;
+}
+
+.skee-card .depth-hud {
+  position: absolute;
+  top: calc(3.55rem + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  padding: 0.28rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  background: rgba(12, 6, 9, 0.76);
+  color: #f0d09a;
+  font: 700 0.78rem/1.2 Georgia, serif;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.skee-hud {
+  position: absolute;
+  top: calc(5.35rem + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 1rem;
+  background: rgba(16, 8, 8, 0.74);
+  border: 1px solid rgba(212, 164, 90, 0.32);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.skee-scoreboard {
+  display: flex;
+  gap: 0.85rem;
+}
+.skee-scoreboard span {
+  display: flex;
+  flex-direction: column;
+  min-width: 4.2rem;
+}
+.skee-scoreboard small {
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e8a070;
+}
+.skee-scoreboard strong {
+  font-size: 1.08rem;
+  color: #fff6ec;
+}
+.skee-scoreboard em {
+  font-style: normal;
+  font-size: 0.78rem;
+  color: #e8a0b8;
+}
+#cabinet-skee-ball .strike-pips {
+  display: flex;
+  gap: 0.22rem;
+  position: static;
+  transform: none;
+  margin: 0;
+}
+#cabinet-skee-ball .strike-pips i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid rgba(196, 30, 58, 0.55);
+  background: rgba(18, 8, 12, 0.5);
+}
+#cabinet-skee-ball .strike-pips i.on {
+  background: #c41e3a;
+  box-shadow: 0 0 10px #c41e3a;
+  border-color: #fff6ec;
+}
+
+.skee-cheat {
+  position: absolute;
+  top: calc(8.2rem + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffe6c2;
+  background: rgba(80, 18, 28, 0.78);
+  border: 1px solid rgba(232, 160, 184, 0.45);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.skee-power {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 22px;
+  height: min(46vh, 280px);
+  border-radius: 999px;
+  background: rgba(12, 6, 9, 0.72);
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  overflow: hidden;
+  pointer-events: none;
+}
+.skee-power i {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 0%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #c41e3a, #d4a45a 55%, #3d8a8a);
+}
+.skee-power b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18%;
+  background: rgba(212, 164, 90, 0.38);
+  border-top: 1px solid rgba(255, 246, 236, 0.55);
+  border-bottom: 1px solid rgba(255, 246, 236, 0.55);
+}
+.skee-power.is-gold i {
+  background: linear-gradient(180deg, #fff6ec, #d4a45a 40%, #f0d09a);
+}
+.skee-power.is-lie { border-color: #e8a0b8; }
+.skee-card:not(.is-playing) .skee-power { display: none; }
+
+.skee-call {
+  position: absolute;
+  left: 50%;
+  bottom: calc(7.6rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 6;
+  margin: 0;
+  padding: 0.28rem 0.9rem;
+  border-radius: 999px;
+  font: 700 0.78rem/1.2 Georgia, serif;
+  letter-spacing: 0.16em;
+  color: #ffe7c2;
+  background: rgba(12, 6, 9, 0.7);
+  border: 1px solid rgba(212, 164, 90, 0.35);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.skee-help {
+  position: absolute;
+  left: 0.75rem;
+  top: calc(4.4rem + env(safe-area-inset-top));
+  bottom: auto;
+  z-index: 6;
+  max-width: min(22rem, 42vw);
+  padding: 0.7rem 0.85rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(12, 6, 9, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  color: #fff6ec;
+  pointer-events: none;
+}
+.skee-help-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #d4a45a;
+}
+.skee-help ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.skee-help b { color: #f0d09a; }
+.skee-card.is-playing .skee-help { display: none; }
+
+.skee-card.is-vestibule .skee-call,
+.skee-card.is-vestibule .skee-cheat { display: none; }
+.skee-cheat:empty { display: none; }
+.skee-aura-line {
+  position: absolute;
+  right: 0.75rem;
+  top: calc(4.4rem + env(safe-area-inset-top));
+  bottom: auto;
+  z-index: 6;
+  max-width: min(20rem, 42vw);
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 12px 12px 4px 12px;
+  font-size: 0.78rem;
+  color: #fff6ec;
+  background: rgba(30, 107, 60, 0.82);
+  border: 1px solid rgba(232, 184, 74, 0.55);
+  pointer-events: none;
+}
+
+.skee-vestibule {
+  position: absolute;
+  left: 50%;
+  bottom: calc(1.15rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 7;
+  width: min(36rem, 92vw);
+  padding: 0.85rem 1rem 0.95rem;
+  border-radius: 16px;
+  background: rgba(12, 6, 9, 0.82);
+  border: 1px solid rgba(212, 164, 90, 0.42);
+  text-align: center;
+  color: #fff6ec;
+  backdrop-filter: blur(10px);
+}
+.skee-vestibule .machine-number { margin: 0; color: #e8a070; }
+.skee-vestibule h2 { margin: 0.2rem 0 0.25rem; color: #ffe7c2; }
+.skee-vestibule .tent-mouth-joke { margin: 0 0 0.4rem; color: #f0d09a; }
+.skee-vestibule [data-pf-depth-copy] {
+  margin: 0 auto 0.55rem;
+  max-width: 34rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #e8d0b8;
+}
+.skee-vestibule .depth-readout {
+  justify-content: center;
+  margin: 0.35rem 0 0.55rem;
+}
+.skee-vestibule .barker-call {
+  margin: 0 0 0.45rem;
+  letter-spacing: 0.12em;
+}
+.skee-vestibule .ticket-button { margin: 0 auto; }
+.skee-vestibule .status-ticket { margin: 0.4rem 0 0; color: #f0d09a; }
+.skee-card.is-playing .skee-vestibule,
+.skee-card.is-playing .skee-help { display: none; }
+.skee-card.is-playing .skee-call { bottom: calc(1.4rem + env(safe-area-inset-bottom)); top: auto; }
+.skee-card.is-playing .skee-aura-line { top: auto; bottom: calc(1.4rem + env(safe-area-inset-bottom)); }
+
+.skee-popup {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  font-family: Georgia, "Palatino Linotype", serif;
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  font-weight: 700;
+  color: #fff6ec;
+  text-shadow: 0 0 22px rgba(212, 164, 90, 0.9), 0 4px 0 #7a1820;
+  pointer-events: none;
+  animation: skee-pop 0.7s ease-out both;
+}
+.skee-popup.is-miss { color: #e8a0b8; }
+.skee-popup.is-fifty { color: #ffe7a0; }
+@keyframes skee-pop {
+  0% { transform: translate(-50%, -30%) scale(0.4); opacity: 0; }
+  35% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+  100% { transform: translate(-50%, -72%) scale(1); opacity: 0; }
+}
+
+.skee-stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 8;
+  background: rgba(40, 4, 8, 0.28);
+}
+.skee-stamp b {
+  display: block;
+  padding: 0.35rem 1.1rem;
+  border: 6px solid #c41e3a;
+  color: #c41e3a;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  letter-spacing: 0.18em;
+  transform: rotate(-14deg);
+  background: rgba(255, 246, 236, 0.08);
+  animation: skee-stamp 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes skee-stamp {
+  0% { transform: rotate(-14deg) scale(1.6); opacity: 0; }
+  100% { transform: rotate(-14deg) scale(1); opacity: 1; }
+}
+
+.skee-card.is-result .vendor-result {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  z-index: 9;
+  width: min(26rem, 92vw);
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(12, 6, 9, 0.9);
+  border: 1px solid rgba(212, 164, 90, 0.45);
+}
+
+@media (max-width: 720px) {
+  .skee-help { max-width: 92vw; left: 4vw; top: calc(4.2rem + env(safe-area-inset-top)); }
+  .skee-aura-line { max-width: 92vw; right: 4vw; left: auto; top: auto; bottom: calc(10.4rem + env(safe-area-inset-bottom)); }
+  .skee-cheat { font-size: 0.58rem; }
+  .skee-power { right: 0.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skee-popup, .skee-stamp b { animation-duration: 0.01ms; }
+}

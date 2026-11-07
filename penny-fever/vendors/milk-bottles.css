@@ -1,0 +1,346 @@
+/* Weighted Bottles tent — PF only. Never booth/port 6000. */
+body:has(#cabinet-milk-bottles:not([hidden])) .arcade-shell {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+#cabinet-milk-bottles.cabinet-interior {
+  max-width: none !important;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #10080c;
+}
+#cabinet-milk-bottles .milk-card.attraction-card,
+#cabinet-milk-bottles .milk-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #10080c;
+  box-shadow: none !important;
+  transform: none !important;
+  animation: none;
+}
+#cabinet-milk-bottles .milk-chrome {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.85rem 0.5rem;
+  background:
+    linear-gradient(180deg, rgba(18, 8, 12, 0.86), rgba(18, 8, 12, 0.42) 70%, transparent);
+  pointer-events: none;
+}
+#cabinet-milk-bottles .milk-chrome > * { pointer-events: auto; }
+#cabinet-milk-bottles .milk-chrome-copy {
+  flex: 1 1 12rem;
+  min-width: 0;
+  text-align: left;
+}
+#cabinet-milk-bottles .milk-chrome-copy .plaque-kicker {
+  margin: 0;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  color: #e8c48a;
+}
+#cabinet-milk-bottles .milk-chrome-copy h1 {
+  margin: 0.05rem 0 0;
+  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  color: #ffe9c2;
+  text-shadow: 0 2px 10px #000;
+}
+#cabinet-milk-bottles .interior-back {
+  margin: 0;
+}
+#cabinet-milk-bottles .depth-readout {
+  display: flex;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0.25rem 0.45rem;
+  background: rgba(12, 6, 9, 0.55);
+  border: 1px solid rgba(212, 164, 90, 0.28);
+  border-radius: 0.4rem;
+}
+#cabinet-milk-bottles .depth-readout span {
+  display: flex;
+  flex-direction: column;
+  min-width: 3.4rem;
+}
+#cabinet-milk-bottles .depth-readout small {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c4a070;
+}
+#cabinet-milk-bottles .depth-readout strong {
+  color: #ffe6a6;
+  font-size: 0.95rem;
+}
+
+.milk-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+}
+#milkCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(20, 8, 12, 0.2), #14080c 72%),
+    url("../assets/prepared/milk-bottle-pyramid.webp") center 42%/cover no-repeat,
+    #14080c;
+}
+#milkCard.is-vestibule #milkCanvas { cursor: pointer; }
+
+.milk-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.6rem 0.8rem 1.1rem;
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(10, 4, 8, 0.55) 100%);
+}
+.milk-overlay .ticket-button,
+.milk-overlay .vendor-result,
+.milk-overlay .quiet-button {
+  pointer-events: auto;
+}
+
+.milk-howto {
+  position: absolute;
+  top: 3.1rem;
+  left: 0.7rem;
+  max-width: 18.5rem;
+  padding: 0.7rem 0.85rem 0.75rem;
+  background: rgba(12, 6, 9, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.45);
+  border-radius: 0.55rem;
+  color: #f0d09a;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+.milk-howto-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffe6a6;
+  font-weight: 700;
+}
+.milk-howto ol {
+  margin: 0;
+  padding: 0 0 0 1.05rem;
+}
+.milk-howto li {
+  margin: 0 0 0.28rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.milk-howto b { color: #ffe9c2; }
+.milk-tell {
+  position: absolute;
+  top: 3.15rem;
+  right: 0.7rem;
+  margin: 0;
+  max-width: 14rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgba(154, 160, 168, 0.7);
+  background: rgba(12, 6, 9, 0.78);
+  color: #c8ccd0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: right;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px #000;
+}
+#milkCard.is-result .milk-tell { display: none; }
+#milkCard.is-playing .milk-howto { opacity: 0.92; }
+#milkCard.is-playing.is-taught .milk-howto { display: none; }
+#milkCard.is-result .milk-howto { display: none; }
+
+.milk-legend {
+  display: none;
+  gap: 0.4rem;
+  margin: 0 0 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.milk-legend span {
+  padding: 0.18rem 0.5rem;
+  border: 1px solid rgba(212, 164, 90, 0.5);
+  background: rgba(12, 6, 9, 0.7);
+  color: #ffe6a6;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+#milkCard.is-playing .milk-legend { display: flex; }
+#milkCard.is-result .milk-legend { display: none; }
+
+.milk-power {
+  width: min(16rem, 70vw);
+  height: 0.72rem;
+  margin: 0 0 0.45rem;
+  border: 1px solid rgba(212, 164, 90, 0.55);
+  background: rgba(12, 6, 9, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+.milk-power i {
+  display: block;
+  height: 100%;
+  width: 20%;
+  background: linear-gradient(90deg, #d4a45a, #ffe6a6);
+  box-shadow: 0 0 12px rgba(255, 230, 166, 0.45);
+}
+.milk-power em {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  color: #1a0c10;
+  font-style: normal;
+  font-weight: 800;
+}
+
+#milkCard .milk-rk-hud {
+  position: absolute;
+  top: 0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  min-height: 1.1em;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  background: rgba(12, 6, 9, 0.62);
+  color: #ffe6a6;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#milkCard:not(.is-playing) .milk-rk-hud { display: none; }
+
+#milkCard .barker-call {
+  margin: 0 0 0.35rem;
+  max-width: 36rem;
+  text-align: center;
+  color: #ffe6a6;
+  font-size: clamp(0.72rem, 2.2vw, 0.92rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+}
+
+.milk-throws {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0 0.45rem;
+}
+.milk-throws i {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6e4, #d4a45a 55%, #7a4a18);
+  box-shadow: 0 0 0 1px rgba(255, 230, 166, 0.35), 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+.milk-throws i.is-spent {
+  opacity: 0.22;
+  filter: grayscale(0.7);
+}
+#milkCard:not(.is-playing) .milk-throws { display: none; }
+
+#milkCard .status-ticket {
+  margin: 0 0 0.25rem;
+  color: #f0d09a;
+  text-align: center;
+  text-shadow: 0 2px 8px #000;
+}
+.milk-hint {
+  margin: 0 0 0.55rem;
+  color: rgba(240, 208, 154, 0.72);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+#milkCard.is-playing .milk-hint { color: #e8c48a; }
+#milkCard.is-result .milk-hint { display: none; }
+
+#milkCard #milkStart {
+  margin: 0.15rem 0 0.2rem;
+  min-width: 14rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+#milkCard.is-playing #milkStart {
+  display: none;
+}
+#milkCard.is-result #milkStart {
+  display: inline-block;
+  margin-top: 0.55rem;
+}
+
+#milkCard .vendor-result {
+  pointer-events: auto;
+  margin-top: 0.4rem;
+  max-width: 22rem;
+  padding: 0.85rem 1rem 0.95rem;
+  background: rgba(16, 8, 12, 0.88);
+  border: 1px solid rgba(196, 30, 58, 0.55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+#milkCard.is-result .barker-call,
+#milkCard.is-result .status-ticket,
+#milkCard.is-result .milk-throws {
+  display: none;
+}
+
+#milkCard .love-verdict {
+  color: #e8a0b8;
+  text-align: center;
+  text-shadow: 0 2px 8px #000;
+}
+
+@media (max-width: 640px) {
+  #cabinet-milk-bottles .milk-chrome {
+    padding: 0.4rem 0.55rem;
+  }
+  #cabinet-milk-bottles .depth-readout {
+    width: 100%;
+    justify-content: space-between;
+  }
+  #cabinet-milk-bottles .milk-chrome-copy h1 {
+    font-size: 1.05rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cabinet-milk-bottles .milk-card { animation: none; }
+}

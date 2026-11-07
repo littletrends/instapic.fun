@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+const original=JSON.stringify({v:2,tables:{'0':{credit:2,score:1234}}});let writes=0;
+globalThis.localStorage={getItem:k=>k==='pennyFever.pinballAlley'?original:null,setItem(){writes++;}};
+globalThis.window={location:{search:'?stall=pinball'}};window.parent=window;
+const e=(await import('./stalls/pinball.js?v=pip-pass-1')).default;
+const s=e.create(0);assert.equal(s.score,0);assert.equal(s.credit,0);
+e.action(s,'plunge',true);for(let i=0;i<42;i++)e.update(s,1/60,{actions:new Set(['plunge']),keys:new Set()});e.action(s,'plunge',false);
+for(let i=0;i<400;i++)e.update(s,1/60,{actions:new Set(),keys:new Set()});e.persist(s);
+assert.equal(writes,0);assert.equal(localStorage.getItem('pennyFever.pinballAlley'),original);
+console.log('PASS: standalone practice neither reads paid progress nor writes to it.');

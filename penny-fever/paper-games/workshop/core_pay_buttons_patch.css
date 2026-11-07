@@ -1,0 +1,25 @@
+#pay-banner.ok   { /* green */ }
+#pay-banner.wait { /* neutral/blue */ }
+#pay-banner.warn { /* orange/grey */ }
+#pay-banner.bad  { /* red */ }
+.core-pay-banner{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  top:40px;
+  bottom:auto;
+  width:min(720px,92vw);
+  padding:14px 18px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:rgba(0,0,0,0.78);
+  color:#fff;
+  font-size:18px;
+  font-weight:600;
+  text-align:center;
+  z-index:2147483647;
+  backdrop-filter:blur(6px);
+  display:none;
+}
+.core-pay-banner[data-type="ok"]{ background:rgba(25,95,55,0.85); }
+.core-pay-banner[data-type="error"]{ background:rgba(120,40,40,0.85); }
