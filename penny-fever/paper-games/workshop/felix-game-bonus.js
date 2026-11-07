@@ -163,24 +163,61 @@
   }
 
   async function ensureBaked(media) {
-    const photos = media?.photos || [];
-    if (!photos.length || !window.PfBonus) return media || {};
+    media = media || {};
+    const hasGif = (media.gifFrames || []).filter(Boolean).length;
+    const hasBoom = (media.boomFrames || []).filter(Boolean).length;
+    const hasCollage = !!media.collage;
+    if (hasGif && hasBoom && hasCollage) return media;
+    const photos = media.photos || [];
+    if (!photos.length || !window.PfBonus) return media;
     try {
       const baked = await PfBonus.bake(photos);
       return Object.assign({}, media, {
         collage: media.collage || baked.collage,
-        gifFrames: baked.gifFrames || media.gifFrames || [],
-        boomFrames: baked.boomFrames || media.boomFrames || [],
+        gifFrames: hasGif ? media.gifFrames : (baked.gifFrames || []),
+        boomFrames: hasBoom ? media.boomFrames : (baked.boomFrames || []),
       });
     } catch (err) {
       console.warn("bonus bake", err);
-      return media || {};
+      return media;
     }
+  }
+
+  const blobCache = Object.create(null);
+  async function fetchBlobUrl(src) {
+    if (!src) return "";
+    if (/^(blob:|data:)/i.test(src)) return src;
+    if (blobCache[src]) return blobCache[src];
+    try {
+      const res = await fetch(src, { mode: "cors", credentials: "omit" });
+      if (!res.ok) throw new Error("fetch " + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      blobCache[src] = url;
+      renderCleanups.push(() => {
+        URL.revokeObjectURL(url);
+        delete blobCache[src];
+      });
+      return url;
+    } catch (_) {
+      return src;
+    }
+  }
+
+  function bindVideo(video, src) {
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.loop = true;
+    video.preload = "auto";
+    video.autoplay = true;
+    video.src = src;
   }
 
   function loadVideoEl(src) {
     if (!src) return Promise.resolve(null);
-    return new Promise((resolve) => {
+    return fetchBlobUrl(src).then((url) => new Promise((resolve) => {
       let settled = false;
       const finish = (value) => {
         if (settled) return;
@@ -188,49 +225,86 @@
         resolve(value);
       };
       const video = document.createElement("video");
-      video.muted = true;
-      video.playsInline = true;
-      video.setAttribute("playsinline", "");
-      video.loop = true;
-      video.preload = "auto";
-      video.crossOrigin = "anonymous";
-      video.src = src;
-      video.addEventListener("loadeddata", () => finish(video), { once: true });
+      bindVideo(video, url);
+      const ready = () => {
+        if (video.videoWidth && video.readyState >= 2) finish(video);
+      };
+      video.addEventListener("loadeddata", ready);
+      video.addEventListener("playing", ready);
       video.addEventListener("error", () => finish(null), { once: true });
-      setTimeout(() => finish(video.readyState >= 2 ? video : null), 8000);
-    });
+      setTimeout(() => finish(video.videoWidth ? video : null), 8000);
+    }));
   }
 
-  async function playCollageVideo(frame, photos, videoSrc) {
+  async function playCollageVideo(frame, photos, videoSrc, collageSrc) {
     if (!window.PfBonus) return false;
     const layout = await PfBonus.loadLayout();
+    const [W, H] = layout.size || [1080, 1920];
+    const boxes = layout.collage?.photos || [];
+    const blobUrl = videoSrc ? await fetchBlobUrl(videoSrc) : "";
+    if (blobUrl && boxes.length) {
+      const stage = document.createElement("div");
+      stage.className = "collage-live";
+      stage.setAttribute("aria-label", "SNAP collage video");
+      const bg = document.createElement("img");
+      bg.className = "collage-live-bg";
+      bg.alt = "SNAP collage";
+      bg.src = collageSrc || PfBonus.SRC.collage;
+      stage.appendChild(bg);
+      const videos = [];
+      boxes.forEach((box) => {
+        const hole = document.createElement("div");
+        hole.className = "collage-live-hole";
+        hole.style.left = (box[0] / W) * 100 + "%";
+        hole.style.top = (box[1] / H) * 100 + "%";
+        hole.style.width = (box[2] / W) * 100 + "%";
+        hole.style.height = (box[3] / H) * 100 + "%";
+        const video = document.createElement("video");
+        bindVideo(video, blobUrl);
+        hole.appendChild(video);
+        stage.appendChild(hole);
+        videos.push(video);
+      });
+      frame.replaceChildren(stage);
+      const kick = () => {
+        const lead = videos[0];
+        videos.forEach((video) => {
+          try {
+            if (lead && video !== lead && Number.isFinite(lead.currentTime)) {
+              video.currentTime = lead.currentTime;
+            }
+          } catch (_) {}
+          const play = video.play();
+          if (play && play.catch) play.catch(() => {});
+        });
+      };
+      kick();
+      stage.addEventListener("click", kick);
+      renderCleanups.push(() => {
+        videos.forEach((video) => {
+          try { video.pause(); video.removeAttribute("src"); video.load(); } catch (_) {}
+        });
+      });
+      return true;
+    }
+    if (collageSrc) {
+      const img = document.createElement("img");
+      img.src = collageSrc;
+      img.alt = "SNAP collage";
+      frame.replaceChildren(img);
+      return true;
+    }
+    if (!boxes.length) return false;
     const background = await PfBonus.loadImage(PfBonus.SRC.collage);
     const photoImgs = await Promise.all(
       (photos || []).slice(0, 4).map((src) => (src ? PfBonus.loadImage(src).catch(() => null) : Promise.resolve(null)))
     );
     const canvas = document.createElement("canvas");
-    const [W, H] = layout.size || [1080, 1920];
     canvas.width = W;
     canvas.height = H;
-    canvas.setAttribute("aria-label", "SNAP collage video");
-    const ctx = canvas.getContext("2d");
-    const video = await loadVideoEl(videoSrc);
+    PfBonus.drawCollageFrame(canvas.getContext("2d"), background, layout, photoImgs, null);
     frame.replaceChildren(canvas);
-    PfBonus.drawCollageFrame(ctx, background, layout, photoImgs, null);
-    if (!video) return true;
-    const play = video.play();
-    if (play && play.catch) play.catch(() => {});
-    let raf = 0;
-    const tick = () => {
-      PfBonus.drawCollageFrame(ctx, background, layout, photoImgs, video);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    renderCleanups.push(() => {
-      cancelAnimationFrame(raf);
-      try { video.pause(); } catch (_) {}
-    });
-    return true;
+    return photoImgs.some(Boolean);
   }
 
   function grabVideoFrame(video, time) {
@@ -332,17 +406,12 @@
     collageActions.replaceChildren();
     const videoHref = media?.videoUrl || (media?.video ? URL.createObjectURL(media.video) : "");
     if (media?.video && !media?.videoUrl) renderCleanups.push(() => URL.revokeObjectURL(videoHref));
-    const played = await playCollageVideo(collageFrame, media?.photos || [], videoHref).catch(() => false);
-    if (!played && collageSrc) {
-      const img = document.createElement("img");
-      img.src = collageSrc;
-      img.alt = "SNAP collage";
-      collageFrame.replaceChildren(img);
-    } else if (!played) {
+    const played = await playCollageVideo(collageFrame, media?.photos || [], videoHref, collageSrc).catch(() => false);
+    if (!played) {
       collageFrame.innerHTML = '<div class="empty-note">Collage could not be built.</div>';
     }
     if (collageSrc) collageActions.append(downloadUrl(collageSrc, stem + "collage.jpg", "Download collage"), shareBtn("collage", collageSrc));
-    if (videoHref) collageActions.append(downloadUrl(videoHref, stem + "session.webm", "Download session video", "alt"));
+    if (videoHref) collageActions.append(downloadUrl(videoHref, stem + "session.mp4", "Download session video", "alt"));
 
     const gifImg = document.createElement("img");
     gifImg.alt = "SNAP GIF";

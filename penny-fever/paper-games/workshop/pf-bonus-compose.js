@@ -1,5 +1,5 @@
 (() => {
-  const CACHE = "carnival-9";
+  const CACHE = "carnival-14";
   const PfBonus = {
     CACHE,
     LAYOUT_URL: "pf-bonus-layout.json?v=" + CACHE,
