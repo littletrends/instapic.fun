@@ -68,6 +68,41 @@ const STALLS = [
   { id: "pass", kind: "tent", art: CUTOUT("pass"), accent: 0x5a2030, line: "Walk the gaps. Catch the hanging prize." },
 ];
 const AURA_LINE = "That’s the stub. Three taps and I punch you through — first walk is free.";
+const VENDOR_CHAT_VARIANTS = {
+  love: ["The numbers have a way of telling a story. Give them two names to begin."],
+  curios: ["Easy now, darling. The smallest things on these shelves have the longest stories."],
+  lookup: ["The sky is patient. Turn the brass until one little star wakes up."],
+  snap: ["Take your time finding the light. A little smile makes a lovely keepsake."],
+  whisper: ["Fold the secret close. A soft little message can travel a long way."],
+  "ball-toss": ["A gentle throw can be braver than a wild one. Pick your moment."],
+  "coin-pusher": ["Watch the copper tide for a while. The edge has its own rhythm."],
+  pinball: ["The silver ball has a mind of its own. Keep an eye on the flippers."],
+  "water-gun": ["Those little boats never sit still for long. Find your moment."],
+  "milk-bottles": ["The tallest stack looks proud. Let’s see if it can keep its balance."],
+  "cover-the-spot": ["Keep your eye on the gold patch. It likes to play hide and seek."],
+  mutoscope: ["Every little frame has a secret. Let the reel tell you when to stop."],
+  "high-striker": ["Listen for the bell that calls your name. Then give it your best swing."],
+  catoptromancy: ["Turn the glass gently. A different angle can change the whole reflection."],
+  "bent-rings": ["Give the ring a little curve and see where the wishing branch takes it."],
+  plinko: ["The gates have their own ideas. Watch how the marble finds its way."],
+  "fairy-floss": ["Keep your sugar cloud smooth. The prettiest shapes take a little patience."],
+  popcorn: ["The kettle’s popping. Keep your basket ready for the next little flurry."],
+  "duck-pond": ["One well-turned pad can send the whole duckling family waddling home."],
+  "skee-ball": ["The moon is hanging just there. Give your ball a chance to find it."],
+  "penny-pitch": ["A penny can skip farther than you think. Give it a little room."],
+  "dunk-tank": ["The pipes are telling you something. Watch the water before you make your move."],
+  marquee: ["The lights love a steady hand. Wake them one little star at a time."],
+  pack: ["There’s always room for one more little wonder, if you pack it just so."],
+  pass: ["The velvet wings are waiting. Guide that key as if the whole theatre were asleep."],
+  carousel: ["Pick your lane and keep your eyes open. There are little wonders along the way."],
+  balloons: ["Some balloons glow brighter than the rest. They may be showing you the way."],
+  ferris: ["The wheel takes its time. Look around while the lights come up."],
+  helter: ["Find the slide’s rhythm and keep your feet ready for the cushions."],
+  swings: ["Wait for the green lines to meet. Then let the sky have you."],
+  funhouse: ["Every doorway has a trick to it. Keep moving and mind the corners."],
+  organ: ["Each glowing pipe has a note to share. Listen for the one that answers."],
+  mural: ["The painted wall is waking up one little patch at a time."],
+};
 const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
 for (const spec of STALLS) {
   const g = paperById[spec.id];
@@ -925,9 +960,9 @@ const irisChats = [
   'Six chapters, six treasures. Your Treasure Book will keep them safe.',
 ];
 const SAVE_REMINDER_LINES = [
-  'A little save note: this device remembers your stall games. VIP carries your pennies and alley spot across devices.',
-  'Keep your midway close: stall game saves stay in this browser. VIP can carry your pennies and alley spot to another device.',
-  'Clearing this site’s stored data can erase stall saves on this device. VIP keeps your pennies and alley spot with your guest profile.',
+  'A little save note: your Penny Fever pocket is remembered on this device. VIP carries your pennies and alley spot across devices.',
+  'Want to visit from another phone? VIP carries your Penny Fever pocket and alley spot with your guest profile.',
+  'Clearing this site’s stored data can erase local Penny Fever details. VIP keeps your pennies and alley spot with your guest profile.',
 ];
 const SAVE_REMINDER_COOLDOWN_MS = 20 * 60 * 1000;
 let lastSaveReminderAt = 0;
@@ -968,7 +1003,7 @@ const GUIDANCE_LINES = [
   "Aura can trade five pennies for one ticket. Open Ticket Desk for trading or to buy a pack through Square. Tap Aura’s Tips for another tip.",
   "Not sure where to begin? Open Map, pick a stall that catches your eye, and walk over to see what it offers. Tap Aura’s Tips for another tip.",
   "Try finding your first keepsake. Open Treasures to browse your books and see the empty places waiting to be filled. Tap Aura’s Tips for another tip.",
-  "Your stall game saves stay on this device. VIP carries your pennies and alley spot across devices; clearing this site’s stored data can erase local saves.",
+  "Your Penny Fever pocket is remembered on this device. VIP carries your pennies and alley spot across devices; clearing site data can erase local details.",
 ];
 try {
   const savedGuidanceIndex = Number(localStorage.getItem("pf-guidance-next"));
@@ -1853,7 +1888,12 @@ function talkToFocus() {
   speech.hidden = false;
   if (speechName) speechName.textContent = who.host || who.name || "Aura";
   vendorChatId = who.id || who.kind;
-  const usualLine = who.id === 'fortune' ? irisChats[irisChatIndex++ % irisChats.length] : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
+  const variants = VENDOR_CHAT_VARIANTS[who.id] || [];
+  const usualLine = who.id === 'fortune'
+    ? irisChats[irisChatIndex++ % irisChats.length]
+    : variants.length && Math.random() < 0.5
+      ? variants[Math.floor(Math.random() * variants.length)]
+      : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
   vendorChatText = occasionalSaveReminder() || usualLine;
   speechText.textContent = vendorChatText;
   speech.classList.toggle("is-left", (who.side || -1) < 0);
