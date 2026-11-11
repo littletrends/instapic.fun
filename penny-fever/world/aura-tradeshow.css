@@ -125,5 +125,29 @@
   border-style:solid;border-color:#c9a24a;cursor:pointer;
   background:linear-gradient(180deg,#7a5728,#4a3518);
 }
+.aura-xrp-till[hidden]{display:none}
+.aura-xrp-till{
+  position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+  background:rgba(12,6,8,.72);padding:1rem;
+}
+.aura-xrp-till-card{
+  position:relative;width:min(22rem,100%);padding:1.1rem 1rem .9rem;
+  background:#1e1014;border:1px solid rgba(244,228,194,.35);border-radius:12px;
+  display:flex;flex-direction:column;gap:.35rem;align-items:center;text-align:center;
+}
+.aura-xrp-till-card img{
+  width:9.5rem;height:9.5rem;object-fit:contain;background:#efe3c6;border-radius:8px;
+}
+.aura-xrp-till-card h2{margin:0;font-size:1rem}
+.aura-xrp-till-card p{margin:0;font-size:.78rem;color:#e8d0a0}
+.aura-xrp-till-close{
+  position:absolute;top:.4rem;right:.4rem;min-width:2rem;height:2rem;border:0;border-radius:8px;
+  background:#6b3a3a;color:#fff0d0;font:700 18px/1 Georgia,serif;cursor:pointer;
+}
+.aura-xrp-till-ready{
+  margin-top:.35rem;width:100%;padding:.45rem .4rem;border-radius:8px;cursor:pointer;
+  border:1px solid #c9a24a;background:linear-gradient(180deg,#7a5728,#4a3518);
+  color:#fff6ec;font:700 .85rem/1.2 Georgia,serif;
+}
 body.aura-tradeshow-open .pf-stall-card,
 body.aura-tradeshow-open .aura-counter-service{display:none}

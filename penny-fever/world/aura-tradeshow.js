@@ -8,9 +8,10 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-1';
+const NFT_VER = 'nft-host-2';
+const SITTINGS_BY_CAP = {1888: 4, 1555: 6, 1222: 8, 888: 10, 666: 14, 444: 16, 555: 8};
 
-let stock = {default_remaining: 0, items: {}};
+let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 15, hold_pct: 0.1};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -23,7 +24,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-1' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-2' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -39,14 +40,37 @@ export function remainingFor(id) {
   const fallback = Number(stock.default_remaining);
   return Number.isFinite(fallback) ? Math.max(0, Math.floor(fallback)) : 0;
 }
+function ceilingFor(id) {
+  const n = Number(stock.ceilings?.[id]);
+  if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  return remainingFor(id);
+}
+function holdFloor(id) {
+  const cap = ceilingFor(id);
+  const pct = Number.isFinite(Number(stock.hold_pct)) ? Number(stock.hold_pct) : 0.1;
+  const floor = Number.isFinite(Number(stock.hold_floor)) ? Number(stock.hold_floor) : 15;
+  return Math.max(floor, Math.ceil(cap * pct));
+}
+function shopHolding(id) {
+  const left = remainingFor(id);
+  return left > 0 && left <= holdFloor(id);
+}
+function sittingsFor(id) {
+  return SITTINGS_BY_CAP[ceilingFor(id)] || 8;
+}
 function loadStock() {
   return fetch(FILE.href, {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : {}))
     .then((data) => {
       const fallback = Number(data.default_remaining);
+      const items = data.items && typeof data.items === 'object' ? data.items : {};
+      const ceilings = data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : items;
       stock = {
         default_remaining: Number.isFinite(fallback) ? fallback : 0,
-        items: data.items && typeof data.items === 'object' ? data.items : {},
+        items,
+        ceilings,
+        hold_floor: Number.isFinite(Number(data.hold_floor)) ? Number(data.hold_floor) : 15,
+        hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0.1,
       };
     })
     .catch(() => {});
@@ -80,8 +104,12 @@ function faceSrc(item, view) {
   const ver = (asset.match(/\?[^#]*$/) || [''])[0];
   return asset.replace(/front\.webp(\?.*)?$/, `${view}.webp${ver}`);
 }
-function formatStock(n) {
-  return n.toLocaleString('en-AU') + ' remaining';
+function formatStock(id) {
+  const n = remainingFor(id);
+  const left = n.toLocaleString('en-AU') + ' remaining';
+  if (n <= 0) return left + ' · trade later';
+  if (shopHolding(id)) return left + ' · last copies held for play';
+  return left;
 }
 
 function ensureOverlay() {
@@ -112,6 +140,17 @@ function ensureOverlay() {
     <div class="aura-tradeshow-main">
       <nav class="aura-tradeshow-tree" id="auraTradeshowTree" aria-label="Penny Fever Collection"></nav>
       <div class="aura-tradeshow-body" id="auraTradeshowBody"></div>
+    </div>
+    <div class="aura-xrp-till" id="auraXrpTill" hidden>
+      <div class="aura-xrp-till-card" role="dialog" aria-labelledby="auraXrpTillName">
+        <button type="button" class="aura-xrp-till-close" data-xrp-close aria-label="Close XRP till">×</button>
+        <img id="auraXrpTillImg" alt="" width="220" height="220">
+        <h2 id="auraXrpTillName"></h2>
+        <p id="auraXrpTillStock"></p>
+        <p id="auraXrpTillPrice"></p>
+        <p id="auraXrpTillCopy">Aura takes XRP here next. Play to win stays live. Nothing leaves a wallet yet.</p>
+        <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Hold my place</button>
+      </div>
     </div>`;
   document.body.append(overlay);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
@@ -156,10 +195,21 @@ function ensureOverlay() {
       setCardView(viewBtn.closest('.aura-tradeshow-card'), viewBtn.dataset.view);
       return;
     }
+    if (e.target.id === 'auraXrpTill' || e.target.closest('[data-xrp-close]')) {
+      e.preventDefault();
+      closeXrpTill();
+      return;
+    }
+    const hold = e.target.closest('[data-xrp-hold]');
+    if (hold && hold.dataset.item) {
+      e.preventDefault();
+      queueXrpPlace(hold.dataset.item);
+      return;
+    }
     const buy = e.target.closest('[data-buy]');
     if (buy && !buy.disabled) {
       e.preventDefault();
-      readyBuy(buy.dataset.buy);
+      openXrpTill(buy.dataset.buy);
       return;
     }
     const spin = e.target.closest('[data-spin], .aura-tradeshow-stage');
@@ -200,7 +250,10 @@ function actionFor(item, stallInfo) {
   if (remainingFor(item.id) <= 0) {
     return {label: 'Aura’s pile is gone · trade later', disabled: true};
   }
-  return {label: 'Buy with XRP (get ready)', disabled: false, ready: true};
+  if (shopHolding(item.id)) {
+    return {label: 'Last copies reserved for play', disabled: true};
+  }
+  return {label: `Buy with XRP · ~${sittingsFor(item.id)} sittings`, disabled: false, ready: true};
 }
 function claimLine(item, stallInfo) {
   if (isFelix(item)) {
@@ -242,13 +295,32 @@ function setCardView(card, mode) {
   if (img) img.src = faceSrc({asset: card.dataset.asset}, face);
   if (label) label.textContent = face;
 }
-function readyBuy(id) {
+function closeXrpTill() {
+  const till = overlay?.querySelector('#auraXrpTill');
+  if (till) till.hidden = true;
+}
+function openXrpTill(id) {
+  const till = overlay?.querySelector('#auraXrpTill');
+  if (!till) return;
+  const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
+  const name = item?.name || id;
+  const img = till.querySelector('#auraXrpTillImg');
+  const hold = till.querySelector('[data-xrp-hold]');
+  if (img) img.src = nftPlates.has(id) ? nftPlateSrc(id) : faceSrc(item || {asset: ''}, 'front');
+  till.querySelector('#auraXrpTillName').textContent = name;
+  till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
+  till.querySelector('#auraXrpTillPrice').textContent = `About ${sittingsFor(id)} sittings in XRP, once the till is live.`;
+  if (hold) hold.dataset.item = id;
+  till.hidden = false;
+}
+function queueXrpPlace(id) {
   const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
   const name = item?.name || id;
   const note = overlay?.querySelector('#auraTradeshowNote');
   if (note) {
-    note.textContent = `XRP till getting ready — ${name} is queued for Buy with XRP. Aura will take XRP here next. Play to win stays live.`;
+    note.textContent = `Place held for ${name} · ~${sittingsFor(id)} sittings in XRP next. Play to win stays live.`;
   }
+  closeXrpTill();
 }
 function goPlayAtStall(place) {
   closeTradeshow({stayInAlley: true});
@@ -380,7 +452,7 @@ function appendCards(grid, items, stall) {
       </div>
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
-      ${felix ? '' : `<p class="stock">${formatStock(remainingFor(item.id))}</p>`}
+      ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       <p class="claim">${claimLine(item, info)}</p>
       <button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>
       ${felix ? '' : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`}`;
@@ -504,6 +576,7 @@ export function openTradeshow() {
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
   overlay.hidden = true;
+  closeXrpTill();
   document.body.classList.remove('aura-tradeshow-open');
   if (resumeWorld && document.body.classList.contains('is-in-world')) {
     window.PennyFeverWorld?.resume();
