@@ -1,11 +1,13 @@
 import * as THREE from '../lib/three.module.min.js';
 import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=names-1';
-import {loadWallArt,disposeWallArt} from './art.js?v=phone-images-3';
-import {buildWall,disposeWall} from './models.js?v=names-1';
-import {WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
+import {loadWallArt,disposeWallArt,prefetchWallArt,clearIdleWallArt} from './art.js?v=wall-cutouts-1';
+import {buildWall,disposeWall} from './models.js?v=wall-cutouts-1';
+import {phoneLane,WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
+// Warm the next few walls past load range (in the walking direction) while nothing nearer is loading.
+const WALL_AHEAD=phoneLane?8:14,WALL_AHEAD_COUNT=phoneLane?2:3;
 
 // Scenery only: never changes player collision, booth entry, wallet or game state.
-export function installWallBackdrops(scene,len,{load=loadWallArt,stallStart=14,stallStep=6.6,lots=null}={}){
+export function installWallBackdrops(scene,len,{load=loadWallArt,prefetch=prefetchWallArt,stallStart=14,stallStep=6.6,lots=null}={}){
  const root=new THREE.Group();root.name='Matching paper alley walls';scene.add(root);
  const sites=wallPlacements(len,{stallStart,stallStep,lots}).map(p=>({...p,model:null,loading:false,retryAt:0}));
  const wood=new THREE.MeshStandardMaterial({color:'#3c3326',roughness:1});
@@ -51,12 +53,17 @@ export function installWallBackdrops(scene,len,{load=loadWallArt,stallStart=14,s
    if(!next)break;
    start(next);
   }
+  if(!inflight.length&&prefetch){
+   const ahead=sites.filter(p=>!p.model&&!wanted.has(p)&&p.z>z&&p.z-z<WALL_NEAR+WALL_AHEAD)
+    .sort((a,b)=>a.z-b.z).slice(0,WALL_AHEAD_COUNT);
+   for(const site of ahead)prefetch(site.id,{side:site.side||0,angled:!!site.side});
+  }
   status.loaded=sites.filter(p=>p.model).length;
  }
  function pause(){active=false;wanted.clear();inflight.slice().forEach(job=>job.controller.abort());sites.forEach(release);status.loaded=0;}
  function resume(){if(dead)return;active=true;tick=1;update(currentZ);}
  function dispose(){
-  if(dead)return;pause();dead=true;root.removeFromParent();unit.dispose();wood.dispose();edge.dispose();
+  if(dead)return;pause();dead=true;clearIdleWallArt();root.removeFromParent();unit.dispose();wood.dispose();edge.dispose();
  }
  root.userData.wallStatus=status;
  return {update,pause,resume,dispose,status,sites};
