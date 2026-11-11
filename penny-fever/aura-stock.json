@@ -16,6 +16,7 @@
     },
     "default": 0
   },
+  "aura_xrp_address": "",
   "default_remaining": 0,
   "items": {
     "alley-collector-cup": 888,

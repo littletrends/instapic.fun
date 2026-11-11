@@ -1,5 +1,6 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-3';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -8,10 +9,10 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-2';
+const NFT_VER = 'nft-host-3';
 const SITTINGS_BY_CAP = {1888: 4, 1555: 6, 1222: 8, 888: 10, 666: 14, 444: 16, 555: 8};
 
-let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 15, hold_pct: 0.1};
+let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 15, hold_pct: 0.1, aura_xrp_address: ''};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -24,7 +25,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-2' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-3' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -71,6 +72,7 @@ function loadStock() {
         ceilings,
         hold_floor: Number.isFinite(Number(data.hold_floor)) ? Number(data.hold_floor) : 15,
         hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0.1,
+        aura_xrp_address: String(data.aura_xrp_address || '').trim(),
       };
     })
     .catch(() => {});
@@ -110,6 +112,23 @@ function formatStock(id) {
   if (n <= 0) return left + ' · trade later';
   if (shopHolding(id)) return left + ' · last copies held for play';
   return left;
+}
+function auraWallet() {
+  const addr = String(stock.aura_xrp_address || '').trim();
+  return /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(addr) ? addr : '';
+}
+function buyPayload(id) {
+  const addr = auraWallet();
+  if (addr) return addr;
+  const origin = (location.origin && location.origin.startsWith('http')) ? location.origin : 'https://instapic.fun';
+  return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
+}
+function buyQrSrc(id) {
+  try {
+    return qrDataUrl(buyPayload(id), 5, 8);
+  } catch {
+    return '';
+  }
 }
 
 function ensureOverlay() {
@@ -287,8 +306,12 @@ function setCardView(card, mode) {
   });
   const label = card.querySelector('[data-face-label]');
   if (next === 'nft') {
-    if (img) img.src = nftPlateSrc(id);
-    if (label) label.textContent = 'nft';
+    const qr = buyQrSrc(id);
+    if (img) {
+      img.src = qr || faceSrc({asset: card.dataset.asset}, 'front');
+      img.alt = auraWallet() ? 'Scan Aura’s XRP wallet to buy' : 'Scan to open Aura’s XRP till';
+    }
+    if (label) label.textContent = auraWallet() ? 'scan wallet' : 'scan to buy';
     return;
   }
   const face = VIEWS[Number(card.dataset.face) || 0] || 'front';
@@ -306,10 +329,16 @@ function openXrpTill(id) {
   const name = item?.name || id;
   const img = till.querySelector('#auraXrpTillImg');
   const hold = till.querySelector('[data-xrp-hold]');
-  if (img) img.src = nftPlates.has(id) ? nftPlateSrc(id) : faceSrc(item || {asset: ''}, 'front');
+  const qr = buyQrSrc(id);
+  if (img) {
+    img.src = qr || faceSrc(item || {asset: ''}, 'front');
+    img.alt = 'Buy with XRP QR';
+  }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
-  till.querySelector('#auraXrpTillPrice').textContent = `About ${sittingsFor(id)} sittings in XRP, once the till is live.`;
+  till.querySelector('#auraXrpTillPrice').textContent = auraWallet()
+    ? `Scan Aura’s wallet · about ${sittingsFor(id)} sittings in XRP.`
+    : `Scan to hold this piece · about ${sittingsFor(id)} sittings in XRP once the till is live.`;
   if (hold) hold.dataset.item = id;
   till.hidden = false;
 }
@@ -434,7 +463,7 @@ function appendCards(grid, items, stall) {
     card.dataset.face = '0';
     VIEWS.forEach((view) => { card.dataset[view] = item.turnaround || view === 'front' ? '1' : '0'; });
     const felix = isFelix(item);
-    const hasNft = nftPlates.has(item.id);
+    const showQr = !felix && !MONEY.has(item.kind) && !info.money;
     const chipClass = felix ? 'is-felix' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'));
     const chipText = felix ? 'Photo booth' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'));
     const act = actionFor(item, info);
@@ -448,7 +477,7 @@ function appendCards(grid, items, stall) {
       </div>
       <div class="aura-tradeshow-views">
         <button type="button" data-view="website" aria-pressed="true">Website</button>
-        <button type="button" data-view="nft" ${hasNft ? '' : 'disabled'} aria-pressed="false">${hasNft ? 'NFT' : 'NFT soon'}</button>
+        <button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>
       </div>
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
@@ -596,8 +625,13 @@ window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: trad
 try {
   const q = new URLSearchParams(location.search);
   const fromHash = () => (location.hash || '').replace(/^#/, '') === HASH;
-  if (q.get('tradeshow') === '1' || fromHash()) {
-    const boot = () => { if (!tradeshowBlocked()) openTradeshow(); };
+  const buyId = String(q.get('buy') || '').trim();
+  if (q.get('tradeshow') === '1' || fromHash() || buyId) {
+    const boot = () => {
+      if (tradeshowBlocked()) return;
+      if (!openTradeshow()) return;
+      if (buyId) loadStock().then(() => openXrpTill(buyId));
+    };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 600));
     else setTimeout(boot, 600);
   }
