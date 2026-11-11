@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Instapic Penny Fever Photo Booth</title>
+  <link rel="stylesheet" href="flow-booth.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="branding.css?v=carnival-11">
+  <link rel="stylesheet" href="patches.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="core_pay_buttons_patch.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
+  <link rel="stylesheet" href="felix-booth.css?v=carnival-46">
+  <link rel="stylesheet" href="felix-live-setup.css?v=aura-layout-1">
+</head>
+<body>
+  <div id="turn-phone">
+    <p>Hold your phone upright — this booth is portrait, like the real machine.</p>
+  </div>
+
+  <div id="booth-frame">
+    <div id="booth-stage">
+      <div id="carnival-stage" hidden>
+        <img id="carnivalWall" alt="">
+      </div>
+      <div id="video-layer" class="hidden">
+        <video id="liveVideo" autoplay muted playsinline webkit-playsinline></video>
+        <canvas id="paperLiveCanvas" class="hidden"></canvas>
+        <canvas id="captureCanvas"></canvas>
+        <div id="liveCues">
+          <div id="liveOverlayTop" class="overlay-top hidden">
+            <h1 class="title-main">Your session has started</h1>
+            <p class="subtitle"></p>
+          </div>
+          <div id="liveCueOverlay" class="live-cue-overlay hidden" aria-live="assertive">
+            <div id="liveCueText" class="live-cue-text"></div>
+          </div>
+          <div id="lookUpOverlay" class="lookup-overlay hidden" aria-live="assertive">
+            <div class="lookup-arrow" aria-hidden="true">▲</div>
+            <div class="lookup-label">Look up here</div>
+          </div>
+          <div id="countdownOverlay" class="countdown-overlay hidden">
+            <span id="countdownNumber">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="ui-layer">
+
+        <section class="screen active" data-screen="ATTRACT">
+          <div class="screen-content attract-screen">
+            <div class="brand-logo">
+              <img id="attractLogo" src="../../assets/restyle/scene-turnarounds-2026-09-09/stalls/snap/front.webp" alt="Felix photo booth">
+            </div>
+            <p class="attract-label"> </p>
+              <button class="portal-button" id="attractWakeButton" data-action="wake-mirror">
+              TAP TO WAKE<br>INSTAPIC<br>PENNY FEVER<br>PHOTO BOOTH
+            </button>
+            <p class="attract-tagline">✨ Moments Made Magical ✨</p>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="AWAKE">
+          <div class="awake-bg" aria-hidden="true"><img id="awakeBg" src="../../assets/restyle/scene-turnarounds-2026-09-09/stalls/snap/back.webp" alt=""></div>
+          <div class="screen-content awake-screen">
+            <div class="awake-top">
+              <div class="awake-kicker">Welcome to</div>
+              <div class="awake-logo-wrap">
+                <img class="awake-logo" src="img/instapic_logo.jpg" alt="Instapic">
+                <div class="awake-sparkle">✨ Are you ready to sparkle?</div>
+              </div>
+            </div>
+            <div class="awake-portal">
+              <button class="btn btn-primary btn-big" data-action="enter-mirror">
+                Touch to Start
+              </button>
+            </div>
+            <div class="awake-bottom">
+              <a class="awake-qr-label" href="https://instapic.fun/save.html" target="_blank" rel="noopener noreferrer">Join VIP Guest Area</a>
+              <a class="awake-qr" href="https://instapic.fun/save.html" target="_blank" rel="noopener noreferrer">
+                <img class="awake-qr-img" src="img/instapic_vip.png" width="378" height="378" alt="Scan to join or sign in to the Instapic VIP Guest Area">
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="PAYMENT">
+          <div class="screen-content">
+            <div class="felix-pay-top">
+              <div id="felix-wallet" class="felix-wallet" aria-live="polite">
+                <span id="felix-wallet-tickets">0 tickets</span>
+                <span class="felix-wallet-dot">·</span>
+                <span id="felix-wallet-pennies">0 pennies</span>
+              </div>
+            </div>
+            <h1 class="title-main">Choose an option</h1>
+            <p class="subtitle">
+              Tap a pack to spend pennies for photo sessions.
+              Short on pennies? Aura&rsquo;s booth tops you up.
+            </p>
+
+            <div id="pay-banner" class="core-pay-banner" aria-live="polite"></div>
+
+            <!-- Glowing portals = penny purchase (hero). Short purse → Aura penny top-up. -->
+            <div class="button-row payment-options payment-packages-row">
+              <button class="btn btn-primary package-btn" data-action="pay-p2" data-pkg="FELIX_P1_STRIP" type="button">
+                <span class="pkg-price">10 pennies<br>2 sessions</span>
+              </button>
+              <button class="btn btn-primary package-btn" data-action="pay-p4" data-pkg="FELIX_P2_STRIP_GIF" type="button">
+                <span class="pkg-price">16 pennies<br>4 sessions</span>
+              </button>
+              <button class="btn btn-primary package-btn" data-action="pay-p6" data-pkg="FELIX_P3_STRIP_GIF" type="button">
+                <span class="pkg-price">20 pennies<br>6 sessions</span>
+              </button>
+            </div>
+
+            <div id="felix-penny-confirm" class="felix-penny-confirm" hidden>
+              <p id="felix-penny-confirm-text" class="felix-penny-confirm-text"></p>
+              <div class="button-row felix-penny-confirm-actions">
+                <button class="btn btn-primary" data-action="penny-confirm-yes" type="button">YES — SPEND</button>
+                <button class="btn btn-secondary" data-action="penny-confirm-no" type="button">CANCEL</button>
+              </div>
+            </div>
+
+            <p class="felix-pkg-note">Pennies buy sessions only.</p>
+
+            <div class="button-row payment-options payment-pills-row felix-secondary-row">
+              <button class="btn btn-secondary" data-action="enter-try-info" type="button">
+                TRY IT FIRST
+              </button>
+              <button class="btn btn-secondary" data-action="pay-credit" id="payCreditBtn" type="button">
+                <span id="payCreditCount">0</span>
+                <span class="session-left-label">sessions left</span>
+              </button>
+              <button class="btn btn-secondary" data-action="enter-prepaid" type="button">
+                I HAVE A PENNY FEVER GAME CODE
+              </button>
+            </div>
+            <p id="felix-scrip-note" class="felix-scrip-note" hidden></p>
+
+            <button class="btn felix-sessions-pill" data-action="payment-exit" type="button">
+              EXIT TO START
+            </button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="TRY_INFO">
+          <div class="screen-content try-screen">
+            <div class="try-copy">
+              <h1 class="title-main">Try It Mode</h1>
+              <p class="subtitle">
+                Take two quick sample photos, see a brief preview, then return to payment.
+                Try mode does not create a code or save a bonus.
+              </p>
+            </div>
+            <div class="button-row">
+              <button class="btn btn-primary" data-action="enter-try-mode">
+                START TRY MODE
+              </button>
+              <button class="btn btn-secondary" data-action="try-info-back">
+                BACK
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="PRIVATE_EVENT">
+          <div class="screen-content">
+            <h1 class="title-main">Game Event</h1>
+            <p class="subtitle">
+              Event payment and real Instapic passes are not part of this game mock.
+            </p>
+            <div class="button-row">
+              <button class="btn btn-primary" data-action="enter-prepaid">
+                OPEN A GAME BONUS
+              </button>
+              <button class="btn btn-secondary" data-action="event-back">
+                BACK
+              </button>
+            </div>
+            <div class="button-row">
+              <button class="btn btn-ghost" data-action="event-exit">
+                EXIT TO PAYMENT
+              </button>
+            </div>
+          </div>
+        </section>
+
+        
+        <section class="screen" data-screen="CASHIN">
+          <div class="screen-content">
+            <h1 class="title-main">Open Penny Fever Game Bonus</h1>
+            <p class="subtitle" id="cashinSubtitle">
+              Enter a Penny Fever PF code with six letters to open its game bonus. Real Instapic codes are not checked here.
+            </p>
+            <div class="code-input-wrapper">
+              <input id="cashinCodeInput"
+                     type="text"
+                     maxlength="9"
+                     inputmode="text"
+                     placeholder="PF-ABCDEF"
+                     autocomplete="off"
+                     spellcheck="false">
+            </div>
+            <p id="cashinError" class="error-msg"></p>
+            <div class="button-row">
+              <button class="btn btn-secondary" data-action="cashin-back">BACK</button>
+              <button class="btn btn-primary" data-action="cashin-continue">OPEN GAME BONUS</button>
+            </div>
+          </div>
+        </section>
+        <section class="screen" data-screen="PREPAID">
+          <div class="screen-content">
+            <h1 class="title-main">Penny Fever Game Code</h1>
+            <p class="subtitle">
+              Enter a PF game code with six letters to open its saved bonus. This does not start a photo session or check Instapic.
+            </p>
+            <div class="code-input-wrapper">
+              <input id="prepaidCodeInput"
+                     type="text"
+                     maxlength="9"
+                     inputmode="text"
+                     placeholder="PF-ABCDEF"
+                     autocomplete="off"
+                     autocorrect="off"
+                     autocapitalize="off"
+                     spellcheck="false">
+            </div>
+            <p id="prepaidError" class="error-msg"></p>
+            <div class="keypad-wrapper">
+              <p class="keypad-label">Touch to enter your code</p>
+              <div class="keypad-grid">
+                <button class="keypad-key" data-key="A">A</button>
+                <button class="keypad-key" data-key="B">B</button>
+                <button class="keypad-key" data-key="C">C</button>
+                <button class="keypad-key" data-key="D">D</button>
+                <button class="keypad-key" data-key="E">E</button>
+                <button class="keypad-key" data-key="F">F</button>
+                <button class="keypad-key" data-key="G">G</button>
+                <button class="keypad-key" data-key="H">H</button>
+                <button class="keypad-key" data-key="J">J</button>
+                <button class="keypad-key" data-key="K">K</button>
+                <button class="keypad-key" data-key="L">L</button>
+                <button class="keypad-key" data-key="M">M</button>
+                <button class="keypad-key" data-key="N">N</button>
+                <button class="keypad-key" data-key="P">P</button>
+                <button class="keypad-key" data-key="Q">Q</button>
+                <button class="keypad-key" data-key="R">R</button>
+                <button class="keypad-key" data-key="S">S</button>
+                <button class="keypad-key" data-key="T">T</button>
+                <button class="keypad-key" data-key="U">U</button>
+                <button class="keypad-key" data-key="V">V</button>
+                <button class="keypad-key" data-key="W">W</button>
+                <button class="keypad-key" data-key="X">X</button>
+                <button class="keypad-key" data-key="Y">Y</button>
+                <button class="keypad-key" data-key="Z">Z</button>
+                <button class="keypad-key keypad-key-wide" data-action="clear">CLEAR</button>
+                <div class="keypad-key keypad-key-ok" aria-hidden="true">PF-</div>
+              </div>
+              <div class="prepaid-actions-row">
+                <button class="btn btn-secondary prepaid-back" data-action="prepaid-back">BACK</button>
+                <button class="btn btn-primary prepaid-continue" data-action="prepaid-continue">CONTINUE</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="BACKGROUNDS">
+          <div class="screen-content">
+            <h1 class="title-main">Choose your photo set</h1>
+            <p class="subtitle" id="bgSubtitle">Felix’s set is free. Unlock another alley stallholder’s set for 5 game pennies. Amusement rides are limited edition — available soon.</p>
+            <p class="felix-bg-purse" id="bgPurseNote" aria-live="polite"></p>
+            <div id="felix-unlock-confirm" class="felix-penny-confirm" hidden>
+              <p id="felix-unlock-confirm-text" class="felix-penny-confirm-text"></p>
+              <div class="button-row felix-penny-confirm-actions">
+                <button class="btn btn-primary" data-action="unlock-confirm-yes" type="button">YES — 5 PENNIES</button>
+                <button class="btn btn-secondary" data-action="unlock-confirm-no" type="button">CANCEL</button>
+              </div>
+            </div>
+            <div class="background-scroll-wrapper">
+              <button class="bg-scroll-arrow bg-scroll-arrow--left" type="button" data-action="bg-scroll-left" aria-label="Previous">‹</button>
+              <div class="background-grid" id="backgroundGrid">
+                <div class="background-card selected" data-background-id="pf-felix" data-poses="4">
+                  <img src="backgrounds/carnival/thumbs/pf-felix.jpg" data-full-src="backgrounds/carnival/pf-felix.jpg" loading="lazy" decoding="async" alt="Felix">
+                  <div class="bg-label">Felix – 4 poses</div>
+                </div>
+              </div>
+              <button class="bg-scroll-arrow bg-scroll-arrow--right" type="button" data-action="bg-scroll-right" aria-label="Next">›</button>
+            </div>
+            <div class="button-row">
+              <button class="btn btn-primary" data-action="backgrounds-next">SELECT &amp; CONTINUE</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="LIVE">
+          <div class="screen-content live-screen">
+            <img id="carnivalHost" class="carnival-host" alt="">
+            <div id="carnivalPlate" class="carnival-plate" hidden>
+              <div class="carnival-host-name" id="carnivalHostName">FELIX</div>
+              <div class="carnival-set-title" id="carnivalSetTitle">Instapic Penny Fever Photo Booth</div>
+            </div>
+            <button id="liveStartBtn" class="btn btn-primary btn-big portal-button live-start-btn hidden" data-action="start-live-session" type="button">START<br>SESSION</button>
+            <div id="cameraEnablePanel" class="no-camera-panel camera-enable-panel hidden">
+              <div class="no-camera-card">
+                <h1 class="title-main">Turn on camera</h1>
+                <p class="subtitle" id="cameraEnableHint">Phones need a tap before the camera opens. Bots and testers can use the paper player.</p>
+                <div class="button-row">
+                  <button class="btn btn-primary btn-big" data-action="enable-camera" type="button" id="enableCameraBtn">
+                    TURN ON CAMERA
+                  </button>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-secondary btn-big" data-action="use-paper-player" type="button" id="enablePaperPlayerBtn">
+                    USE PAPER PLAYER
+                  </button>
+                </div>
+                <div class="button-row">
+                  <label class="btn btn-secondary btn-big no-camera-file-label">
+                    USE PHOTO FROM PHONE
+                    <input type="file" accept="image/*" capture="user" hidden id="enableCameraFile">
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div id="noCameraPanel" class="no-camera-panel hidden">
+              <div class="no-camera-card">
+                <h1 class="title-main" id="noCameraTitle">Camera unavailable</h1>
+                <p class="subtitle" id="noCameraSubtitle">Pick a photo from your phone, or use the paper player so the booth still finishes.</p>
+                <p class="subtitle small no-camera-error hidden" id="noCameraError"></p>
+                <div class="button-row">
+                  <button class="btn btn-primary btn-big" data-action="retry-camera" type="button">
+                    TRY CAMERA AGAIN
+                  </button>
+                </div>
+                <div class="button-row">
+                  <label class="btn btn-primary btn-big no-camera-file-label">
+                    UPLOAD / TAKE PHOTO
+                    <input id="noCameraFile" type="file" accept="image/*" capture="user" hidden>
+                  </label>
+                </div>
+                <div class="button-row">
+                  <button class="btn btn-primary btn-big" data-action="use-paper-player" type="button">
+                    USE PAPER PLAYER
+                  </button>
+                </div>
+                <p class="subtitle small" id="noCameraPoseHint">Pose 1 of 2</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="REVIEW">
+          <div class="screen-content review-screen">
+            <h1 class="title-main">Review Your Photos</h1>
+            <p class="subtitle">Tap a photo to select it. Retake or keep.</p>
+            <div class="review-layout">
+              <div class="review-strip-wrap strip-on-paper">
+                <img id="reviewStripPreview" class="strip-composite-preview" alt="Your photo strip">
+                <div class="thumbs-title">Your photos — tap to select</div>
+                <div class="pose-thumb-row">
+                <div class="template-slot slot-1" data-slot-index="0">
+                  <img id="slotImage0" alt="Photo 1">
+                </div>
+                <div class="template-slot slot-2" data-slot-index="1">
+                  <img id="slotImage1" alt="Photo 2">
+                </div>
+                <div class="template-slot slot-3" data-slot-index="2">
+                  <img id="slotImage2" alt="Photo 3">
+                </div>
+                <div class="template-slot slot-4" data-slot-index="3">
+                  <img id="slotImage3" alt="Photo 4">
+                </div>
+                </div>
+                <!-- kept for JS refs / warm cache; not shown as overlay -->
+                <img id="templateBackground" class="template-bg" src="" alt="" hidden>
+              </div>
+              <div class="selected-photo-panel">
+                <h2>Selected Photo</h2>
+                <div class="photo-preview-wrapper">
+                  <img id="selectedPhotoPreview" class="photo-preview" alt="Selected photo">
+                </div>
+                <p class="subtitle">
+                  Photo <span id="poseNumberLabel">1</span> of
+                  <span id="poseTotalLabel">4</span>
+                </p>
+                <div class="button-row">
+                  <button class="btn btn-secondary btn-big" data-action="retake-photo">RETAKE</button>
+                  <button class="btn btn-primary btn-big" data-action="keep-photo">KEEP</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="PRINT">
+          <div class="screen-content">
+            <h1 class="title-main">Ready to Print</h1>
+            <p class="subtitle">Checkout your photo strip below!</p>
+            <div class="background-preview-frame strip-on-paper">
+              <img id="finalStripPreview" alt="Final photo strip">
+            </div>
+            <div class="instapic-print-preview-note" hidden>
+              <div style="max-width:720px;margin:18px auto 0;padding:14px 18px;text-align:center;line-height:1.35;font-size:1.05rem;">
+                <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">Preview of your photo strip</div>
+                <div style="margin-bottom:6px;">Your Penny Fever game code is on the next screen.</div>
+                <div>It opens your game keepsake in this browser.</div>
+              </div>
+            </div>
+            <div class="button-row felix-save-row">
+              <button class="btn btn-primary btn-big" data-action="save-strip" type="button">SAVE STRIP</button>
+              <button class="btn btn-secondary btn-big" data-action="share-strip" type="button">SHARE TO SOCIALS</button>
+            </div>
+            <div class="button-row" id="bonusLinkRow">
+              <a class="btn btn-secondary" id="bonusLink" href="#">OPEN GAME BONUS</a>
+            </div>
+            <div class="button-row">
+              <button class="btn btn-primary btn-big" data-action="print-now">
+                CONTINUE
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="DIGITAL">
+          <div class="screen-content digital-screen">
+            <h1 class="title-main">Your Penny Fever Game Code</h1>
+            <p class="subtitle">
+              Your game-only code opens the Penny Fever bonus and stays separate from real Instapic sessions.
+            </p>
+
+            <div class="output-group digital-code-group">
+              <h2>Session code</h2>
+              <div id="sessionCodeDisplay" class="session-code-display"></div>
+              <p id="sessionCountNote" class="subtitle small felix-session-count" hidden></p>
+              <p class="subtitle small digital-code-hint">
+                Keep this PF code to reopen your game bonus on this browser.
+              </p>
+            </div>
+
+            <div class="felix-digital-stack">
+              <div class="background-preview-frame strip-on-paper">
+                <img id="digitalStripPreview" alt="Photo strip preview">
+              </div>
+              <div class="output-group digital-qr-group">
+                <div class="qr-placeholder has-qr" id="qrPlaceholder">
+                  <a href="https://instapic.fun/save.html" target="_blank" rel="noopener noreferrer">
+                      <img class="qr-image-instapic instapic-digital-qr" src="img/instapic_vip_onbg.png?v=carnival-13" width="378" height="378" alt="Scan to join or sign in to the Instapic VIP Guest Area">
+                    </a>
+                </div>
+                <div class="felix-social-row" aria-label="Share to">
+                    <button class="felix-social-btn felix-social-facebook" data-action="share-social" data-net="facebook" type="button" aria-label="Share to Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14 8h3V4h-3c-2.8 0-4 1.8-4 4.3V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.7-.6z"/></svg></button>
+                    <button class="felix-social-btn felix-social-x" data-action="share-social" data-net="x" type="button" aria-label="Share to X"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.8 3h3.1l-6.8 7.8L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8zm-1.1 16.2h1.7L7.4 4.7H5.6z"/></svg></button>
+                    <button class="felix-social-btn felix-social-instagram" data-action="share-social" data-net="instagram" type="button" aria-label="Share to Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7.3A4.7 4.7 0 1 0 12 16.7 4.7 4.7 0 0 0 12 7.3zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm4.9-9.1a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM12 2.5c-2.6 0-2.9 0-3.9.1C4.6 2.8 2.8 4.6 2.6 8.1 2.5 9.1 2.5 9.4 2.5 12s0 2.9.1 3.9c.2 3.5 2 5.3 5.5 5.5 1 .1 1.3.1 3.9.1s2.9 0 3.9-.1c3.5-.2 5.3-2 5.5-5.5.1-1 .1-1.3.1-3.9s0-2.9-.1-3.9c-.2-3.5-2-5.3-5.5-5.5-1-.1-1.3-.1-3.9-.1zm0 1.7c2.5 0 2.8 0 3.8.1 2.6.1 3.8 1.3 3.9 3.9.1 1 .1 1.3.1 3.8s0 2.8-.1 3.8c-.1 2.6-1.3 3.8-3.9 3.9-1 .1-1.3.1-3.8.1s-2.8 0-3.8-.1c-2.6-.1-3.8-1.3-3.9-3.9-.1-1-.1-1.3-.1-3.8s0-2.8.1-3.8C4.4 5.6 5.6 4.4 8.2 4.3c1-.1 1.3-.1 3.8-.1z"/></svg></button>
+                    <button class="felix-social-btn felix-social-tiktok" data-action="share-social" data-net="tiktok" type="button" aria-label="Share to TikTok"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.6 2h-3.4v13.4a2.9 2.9 0 1 1-2.1-2.8V9.2a6.3 6.3 0 1 0 5.5 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.6a4.4 4.4 0 0 1-4.4-4.6z"/></svg></button>
+                    <button class="felix-social-btn felix-social-whatsapp" data-action="share-social" data-net="whatsapp" type="button" aria-label="Share to WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg></button>
+                    <button class="felix-social-btn felix-social-download" data-action="save-strip" type="button" aria-label="Download strip"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16 6.3 10.3l1.4-1.4L11 12.2zM4 18h16v2H4z"/></svg></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-row felix-portal-row">
+              <a class="btn btn-primary portal-button" id="felixVipJoin" href="/my-instapic.html#saved-pf-codes" target="_blank" rel="noopener">OPEN VIP GUEST AREA</a>
+              <a class="btn btn-primary btn-big portal-button is-disabled" id="goBonusBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">MAKING YOUR BONUS…</a>
+              <button class="btn btn-primary portal-button felix-continue-orb" data-action="digital-done" type="button">CONTINUE</button>
+            </div>
+            <div class="button-row felix-bonus-row">
+              <button class="btn btn-secondary" data-action="retry-bonus" id="retryBonusBtn" type="button" hidden>TRY AGAIN</button>
+            </div>
+
+
+
+            <p class="subtitle small felix-bonus-status" id="bonusStatus" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="THANKYOU">
+          <div class="screen-content">
+            <div class="brand-logo">
+              <img src="img/instapic_logo.jpg" alt="Instapic">
+            </div>
+            <h1 class="title-main">Thank you!</h1>
+            <p class="subtitle" id="thankyouCopy">
+              Save your strip if you want it.<br>
+              Returning to Felix in
+              <span id="thankyouCountdown">8</span> seconds.
+            </p>
+            <div class="button-row" id="thankyouNextRow" hidden>
+              <button class="btn btn-primary btn-big" data-action="thankyou-next" type="button">
+                START NEXT SESSION
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="ERROR">
+          <div class="screen-content">
+            <h1 class="title-main">Oops… Something went wrong</h1>
+            <p class="subtitle" id="errorDetail">
+              Please ask a staff member for help.
+            </p>
+            <div class="button-row">
+              <button class="btn btn-primary" data-action="error-retry">TRY AGAIN</button>
+              <button class="btn btn-secondary" data-action="error-to-attract">BACK TO START</button>
+            </div>
+          </div>
+        </section>
+
+        <div id="errorMessage" class="error-banner hidden"></div>
+      </div>
+    </div>
+  </div>
+  <script src="pf-bonus-compose.js?v=collage-centre-1"></script>
+  <script src="felix-live-setup.js?v=live-bg-1"></script>
+  <script src="felix-booth.js?v=treasure-design-1"></script>
+  <script src="attract-spin.js?v=attract-spin-3"></script>
+  <script src="felix-booth-text.js?v=carnival-36"></script>
+</body>
+</html>

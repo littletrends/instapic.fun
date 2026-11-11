@@ -1,0 +1,104 @@
+.crew-entry,#discoveryDoor .door-crew{margin:1rem auto;padding:.8rem;max-width:350px;border:3px double #b49360;background:#e8d4ad;color:#382816;box-sizing:border-box}
+.crew-entry p{margin:0 0 .5rem;font:15px Georgia}
+#discoveryDoor .door-crew .crew-entry{margin:0;padding:0;max-width:none;border:0;background:transparent}
+#discoveryDoor .door-crew details{margin-top:.7rem;border-top:1px dashed #a17c43;padding-top:.35rem;color:#382816;font:14px Georgia}
+#discoveryDoor .door-crew summary{cursor:pointer;padding:.45rem 0;border:0;font:600 15px Georgia}
+#discoveryDoor .door-crew img{display:block;width:100%;height:auto;margin-top:.55rem;border:2px solid #b49360;border-radius:8px}
+.crew-book{width:min(860px,92vw);max-height:90dvh;overflow:auto;box-sizing:border-box;padding:26px;color:#382816;background:linear-gradient(90deg,#ead6b1,#f5e8cf 48%,#dfc69a 50%,#f5e8cf 52%);border:5px double #a17c43;box-shadow:8px 12px 30px #0008;font:16px/1.5 Georgia;z-index:10000}.crew-book::backdrop{background:#160e09cc}
+dialog.crew-book.is-open,dialog.crew-book[open]{display:block;position:fixed;inset:auto;margin:0;top:50%;left:50%;transform:translate(-50%,-50%);max-height:90dvh}.crew-book h2{margin:.2rem 0}.crew-kicker{font-size:12px;letter-spacing:.12em}.crew-close{float:right;background:#ead6b1;border:1px solid #987345;color:#382816;font-size:26px;cursor:pointer}.crew-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.crew-grid button{padding:6px;border:2px dashed #b49360;background:#fffaf0;color:#382816;cursor:pointer;font:13px Georgia}.crew-grid button[aria-pressed=true]{border:3px solid #435637;background:#e4e9da}.crew-grid strong,.crew-grid small{display:block}.crew-grid small{font-size:11px;margin-top:4px}.crew-portrait{display:block;aspect-ratio:3/4;background-size:400% 100%;background-position:0 0;background-repeat:no-repeat}.crew-collections{border-top:1px dashed #a17c43;padding:12px 0;margin:12px 0}
+.crew-collections p{margin:.4rem 0 .8rem}
+.crew-done{margin:14px 0 6px}
+.doll-torso-row{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.doll-torso-preview{display:flex;flex-direction:column;align-items:center;padding:10px 12px 6px;background:#fffaf0;border:1px solid #c4a46a;border-radius:12px}
+.doll-maker-parts{flex:1;min-width:220px}
+.crew-collections .ticket-button{margin-top:10px}
+.doll-tray{margin-top:10px}
+.doll-layer-row .doll-piece{margin:0}
+.doll-books button{padding:0;border:2px solid #c4a46a;background:#fffaf0;color:#382816;cursor:pointer;border-radius:8px;overflow:hidden;text-align:left}
+.doll-books button[aria-pressed=true],.doll-books button.is-on{border-color:#435637}
+.doll-books img{display:block;width:100%;height:auto}
+.doll-books strong{display:block;padding:5px 8px;font:600 12px Georgia}
+#dollBookBack{border:0;background:none;color:#6b4e2e;cursor:pointer;font:13px Georgia;padding:0 0 6px}
+#dollBookTitle{margin:0 0 8px;font:600 18px Georgia,#3c2a16}
+.doll-piece{display:inline-flex;align-items:center;gap:6px}
+.doll-piece-thumb{width:44px;height:58px;overflow:hidden;border:1px solid #d4b882;border-radius:4px;background:#f3e6c8;flex:0 0 44px}
+.doll-piece-thumb img{display:block;height:100%;width:400%;max-width:none;object-fit:fill}
+.doll-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+.doll-row strong{width:100%;font:600 11px/1.2 Georgia,serif;letter-spacing:.1em;text-transform:uppercase;color:#6b4e2e;margin-bottom:2px}
+.doll-chip{border:1px solid #c4a46a;background:#fffaf0;color:#382816;padding:6px 10px;border-radius:999px;cursor:pointer;font:13px Georgia}
+.doll-chip[aria-pressed=true]{border:2px solid #435637;background:#e4e9da}
+.doll-chip.is-swatch{width:30px;height:30px;padding:0;border-radius:50%;text-indent:-99px;overflow:hidden;background:var(--swatch,#c4a06a);border:2px solid #fffaf0;box-shadow:0 0 0 1px #c4a46a}
+.doll-chip.is-swatch[aria-pressed=true]{box-shadow:0 0 0 3px #435637}
+.doll-wheel{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;font:13px Georgia;color:#6b4e2e}
+.doll-wheel input[type=color]{width:42px;height:28px;padding:0;border:1px solid #c4a46a;background:#fffaf0;cursor:pointer}
+.doll-preview-stage{width:120px;height:160px;overflow:hidden;background:#f3e6c8;border:1px solid #d4b882;border-radius:8px;box-shadow:0 6px 8px #0003}
+.doll-preview-stage canvas{display:block;width:100%;height:100%;max-width:none}
+.crew-book button:focus-visible{outline:3px solid #853f50;outline-offset:3px}
+.crew-runway{position:relative;margin:12px auto 8px;height:280px;max-width:420px;overflow:hidden;border:3px double #a17c43;background:linear-gradient(#cbb892 0 18%,#ead6b1 18% 100%)}
+.crew-runway-board{position:absolute;left:8%;right:8%;bottom:18px;height:42px;background:repeating-linear-gradient(90deg,#8a6230 0 12px,#d2b073 12px 24px);transform:perspective(240px) rotateX(58deg);transform-origin:bottom center;box-shadow:0 10px 18px #0004}
+.crew-runway-stage{position:absolute;inset:12px 12px 48px;display:grid;place-items:end center}
+.crew-runway-doll{width:min(180px,46%);filter:drop-shadow(0 10px 10px #0005);transform-origin:50% 100%;cursor:ew-resize;touch-action:pan-y;user-select:none}
+.crew-runway-doll.is-falling{animation:crew-fall .45s ease-in forwards}
+.crew-runway-doll.is-arriving{animation:crew-arrive .4s ease-out}
+.crew-runway-turn{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0 14px}
+.crew-runway-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia;white-space:nowrap}
+.crew-runway-turn span{min-width:4.5rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 12px system-ui}
+@keyframes crew-fall{to{transform:translateY(130%) rotateZ(22deg);opacity:0}}
+@keyframes crew-arrive{from{transform:translateY(-28%) scale(.92);opacity:0}to{transform:none;opacity:1}}
+.crew-book.is-open-album{width:min(960px,96vw);height:min(92dvh,820px);display:flex;flex-direction:column;padding:16px 18px}
+.crew-book.is-open-album .crew-runway,
+.crew-book.is-open-album .crew-grid,
+.crew-book.is-open-album .crew-done,
+.crew-book.is-open-album .crew-kicker,
+.crew-book.is-open-album #crewTitle,
+.crew-book.is-open-album .crew-collections > p,
+.crew-book.is-open-album .crew-runway-turn:not(.doll-torso-preview .crew-runway-turn){display:none}
+.crew-book.is-open-album .crew-collections{border:0;margin:0;padding:0;flex:1;min-height:0;display:flex;flex-direction:column}
+.crew-book.is-open-album .doll-torso-row{flex:1;min-height:0;align-items:stretch}
+.crew-book.is-open-album .doll-torso-preview{position:sticky;top:0}
+.crew-book.is-open-album .doll-preview-stage{width:150px;height:200px}
+.crew-book.is-open-album #dollCollection{flex:1;min-height:0;overflow:auto}
+.crew-book.is-open-album .doll-piece-thumb{width:52px;height:70px;flex-basis:52px}
+.crew-book.is-open-album .doll-chip.doll-piece{border-radius:10px;padding:6px 10px 6px 6px}
+@media(max-width:640px){.crew-grid{grid-template-columns:repeat(3,1fr)}.crew-runway{height:240px}.crew-book{padding:18px}.doll-torso-preview{width:100%}.doll-maker-parts{width:100%}.doll-books{grid-template-columns:1fr 1fr}.crew-book.is-open-album{height:96dvh;padding:12px}.crew-book.is-open-album .doll-torso-row{flex-direction:column}.crew-book.is-open-album .doll-preview-stage{width:110px;height:146px}}
+
+.crew-entry{display:flex;align-items:center;gap:14px;text-align:left}.crew-entry > div{flex:1;min-width:0}#chosenCrewPortrait{width:76px;flex:0 0 76px;height:101px;border:1px solid #b49360;border-radius:6px;background-color:#fffaf0;background-size:400% 100%;background-position:0 0;background-repeat:no-repeat}
+
+.doll-item-section{margin:0 0 8px;border:1px solid #d4b882;border-radius:8px;background:#fffaf0}
+.doll-item-section>summary{cursor:pointer;padding:12px;font:600 15px/1.3 Georgia,serif;color:#6b4e2e;min-height:44px;box-sizing:border-box}
+.doll-item-section>summary:focus-visible{outline:2px solid #6b4e2e;outline-offset:2px}
+.doll-item-section>.doll-layer-row{padding:0 10px 10px;margin:0}
+
+.crew-runway{isolation:isolate;height:auto;aspect-ratio:420/320;background:radial-gradient(ellipse at center,#fffaf0,#e0cda9)}
+#crewDisplayScene{z-index:0;position:absolute;width:100%;height:100%;object-fit:contain;inset:0;pointer-events:none}
+.crew-runway-stage{z-index:1;inset:0;padding-bottom:25%;box-sizing:border-box}
+.crew-runway-doll{width:34.5%;max-width:none}
+.crew-runway[data-scene="travel-stage"] .crew-runway-doll{width:26%}
+.crew-runway[data-scene="travel-stage"] .crew-runway-stage{padding-bottom:21%}
+.crew-runway[data-scene="fold-out-bedroom"] .crew-runway-doll{width:30%;position:relative;left:-10%}
+.crew-runway[data-scene="fold-out-bedroom"] .crew-runway-stage{padding-bottom:15%}
+.crew-background-menu{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 12px;font-size:14px}
+.crew-background-menu select{max-width:70%;min-height:40px;padding:6px 10px;border:1px solid #987345;border-radius:6px;background:#fffaf0;color:#382816;font:inherit}
+.crew-book.is-open-album .crew-background-menu,.crew-book.is-open-album #crewDisplayStatus{display:none}
+
+/* iPhone: avoid form-focus zoom and selection/callouts while using cutouts. */
+.crew-book{touch-action:manipulation;overscroll-behavior:contain}
+.crew-book button,.crew-book summary,.crew-book label,.crew-book canvas,.crew-book .crew-portrait,.crew-book .doll-piece-thumb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media (pointer:coarse){
+  .crew-book select,.crew-book input,.crew-book button,.crew-book summary{font-size:16px}
+  .crew-book select,.crew-book button,.crew-book summary{touch-action:manipulation}
+}
+
+/* Original stage is the reliable phone default: no background canvas loads. */
+.crew-runway:not([data-scene="original"]) .crew-runway-board{display:none}
+.crew-runway[data-scene="original"]{height:280px;aspect-ratio:auto;background:linear-gradient(#cbb892 0 18%,#ead6b1 18% 100%)}
+.crew-runway[data-scene="original"] #crewDisplayScene{display:none}
+.crew-runway[data-scene="original"] .crew-runway-stage{inset:12px 12px 48px;padding:0}
+.crew-runway[data-scene="original"] .crew-runway-doll{width:min(180px,46%)}
+.is-phone-display .crew-background-menu,.is-phone-display #crewDisplayStatus{display:none}
+.doll-set-name{display:block;margin-top:12px;font-size:16px}
+#dollSetName{width:100%;max-width:260px;min-height:40px;box-sizing:border-box;font:16px Georgia;padding:8px;border:1px solid #987345;border-radius:6px;background:#fffaf0;color:#382816}
+#dollSaveStatus{max-width:260px;font-size:14px}
+.doll-torso-preview{box-sizing:border-box;max-width:100%}
+.crew-grid strong{overflow-wrap:anywhere}
+@media(max-width:640px){.crew-runway[data-scene="original"]{height:240px}}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Verify Your Email</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="verify">
+  <main class="card save-flow-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <div class="bonus-kicker">VIP Guest Area</div>
+      <h1>Enter your 4-digit sign-in code</h1>
+      <p class="hero-text hero-text-wide">
+        Enter the 4-digit code sent to your email to continue into your VIP Guest Area.
+      </p>
+      <p class="muted">
+        This 4-digit sign-in code is for VIP access only. It is not your 6-digit Instapic booth code.
+      </p>
+    </section>
+
+    <form id="verify-form" class="form-shell" novalidate autocomplete="off">
+      <label for="verify_code" class="code-label">4-digit sign-in code</label>
+
+      <div class="code-input-row code-input-row-stack">
+        <input
+          type="text"
+          id="verify_code"
+          name="verify_code"
+          maxlength="4"
+          inputmode="numeric"
+          placeholder="1234"
+          required
+          autocomplete="one-time-code"
+        >
+        <button type="submit" class="btn">Sign In & Continue</button>
+      </div>
+
+      <p class="code-hint">
+        Once verified, you’ll enter your VIP Guest Area where your Instapic sessions and saved tickets can live.
+      </p>
+    </form>
+
+    <div class="info-callout" style="margin-top:1.5rem;">
+      <h2>Need your session now?</h2>
+      <p>
+        If you already have your 6-digit Instapic booth code, you can go straight to the session page instead.
+      </p>
+    </div>
+
+    <nav class="site-bottom-nav" aria-label="Site pages">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="save.html" class="secondary-link">VIP Guest Area</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+    </nav>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script src="branding.js"></script>
+  <script src="guest_identity.js?v=vip-spot-2"></script>
+  <script src="guest_return.js?v=vip-spot-2"></script>
+  <script src="verify_runtime.js?v=vip-spot-2"></script>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+</html>

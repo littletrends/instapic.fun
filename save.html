@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — VIP Guest Area</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="save">
+  <main class="card save-flow-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <div class="bonus-kicker">VIP Guest Area</div>
+      <h1>VIP Guest Area ✨</h1>
+      <p class="hero-text hero-text-wide">
+        Keep booth codes here. Join from Penny Fever to lock that player to this guest profile — then you can pick up your pennies and alley spot on any phone.
+      </p>
+    </section>
+
+    <div class="guest-auth-switch" role="tablist" aria-label="VIP Guest Area access">
+      <button type="button" class="guest-auth-tab is-active" data-guest-panel="email-sign-in-block" role="tab" aria-selected="true">Join / email code</button>
+      <button type="button" class="guest-auth-tab" data-guest-panel="password-sign-in-block" role="tab" aria-selected="false">Sign in</button>
+    </div>
+
+    <div class="info-callout" id="email-sign-in-block">
+      <h2>Join or sign in by email</h2>
+      <p>We’ll email you a 4-digit VIP sign-in code.</p>
+
+      <form id="save-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_email" class="code-label">Email address</label>
+
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="email"
+            id="guest_email"
+            name="guest_email"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn" id="email-code-submit">Email my sign-in code</button>
+        </div>
+
+        <p class="code-hint">New here, forgot your password, or prefer an email code? Use this option.</p>
+      </form>
+    </div>
+
+    <div class="info-callout" id="password-sign-in-block" hidden>
+      <h2>Welcome back</h2>
+      <p>Sign in with your VIP Guest Area password.</p>
+
+      <form id="password-login-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_email_password" class="code-label">Email address</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="email"
+            id="guest_email_password"
+            name="guest_email_password"
+            inputmode="email"
+            placeholder="you@example.com"
+            required
+            autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          >
+        </div>
+
+        <label for="guest_password" class="code-label" style="margin-top:1rem;">Password</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="password"
+            id="guest_password"
+            name="guest_password"
+            minlength="6"
+            maxlength="8"
+            placeholder="6 to 8 characters"
+            required
+            autocomplete="current-password"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+          >
+          <button type="submit" class="btn">Sign in with password ✨</button>
+        </div>
+
+        <p class="code-hint">
+          Password is 6 to 8 characters. Forgot it? Use the email code option below.
+        </p>
+      </form>
+    </div>
+
+    <p class="guest-code-note">The 4-digit email sign-in code is different from your 6-digit booth code.</p>
+
+    <nav class="site-bottom-nav" aria-label="Site pages">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="pay.html" class="secondary-link">Prepay</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="event.html" class="secondary-link">Private event</a>
+    </nav>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script src="branding.js"></script>
+  <script src="guest_identity.js?v=vip-spot-2"></script>
+  <script src="guest_return.js?v=vip-spot-2"></script>
+  <script src="save_runtime.js?v=vip-spot-2"></script>
+  <script src="guest_password_runtime.js?v=vip-spot-2"></script>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+</html>

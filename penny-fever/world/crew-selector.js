@@ -1,0 +1,585 @@
+import {phoneLane} from './phone-lane.js?v=keep-light-1';
+import {phoneArt} from './phone-art.js';
+import {
+  SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
+  MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine, getDollSets, getDollSet, saveDollSet,
+} from './paper-dolls.js?v=doll-saved-sets-12';
+
+export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
+const key = 'pf-selected-crew-v1';
+const VIEWS = ['front', 'left', 'back', 'right'];
+const artBase = new URL('../assets/restyle/crew/', import.meta.url);
+const boot = globalThis.__pfDoll || (globalThis.__pfDoll = {
+  selected: 'oliver',
+  listeners: new Set(),
+  viewIndex: 0,
+  falling: false,
+  hydrated: false,
+  mode: 'crew',
+  draft: blankDraft(),
+  previewUrl: '',
+  dollView: 0,
+});
+
+function isCrew(id) {
+  return CREW_IDS.includes(id);
+}
+function isPlayable(id) {
+  return isCrew(id) || id === MINE_ID || !!getDollSet(id);
+}
+if (!boot.hydrated) {
+  try {
+    const saved = localStorage.getItem(key);
+    if (isPlayable(saved)) boot.selected = saved;
+    if (saved === MINE_ID || getDollSet(saved)) {
+      boot.mode = 'custom';
+      boot.draft = { ...blankDraft(), ...(getDollSet(saved) || getMine() || {}) };
+    }
+  } catch {}
+  boot.hydrated = true;
+}
+
+export const crewArt = id => phoneArt(new URL(`${isCrew(id) ? id : 'oliver'}-turnaround.webp`, artBase).href);
+
+export async function artUrl(id) {
+  const saved=getDollSet(id);
+  if (saved) return composeDoll(saved);
+  if (id === MINE_ID) {
+    const spec = getMine() || boot.draft;
+    return composeDoll(spec);
+  }
+  return crewArt(isCrew(id) ? id : 'oliver');
+}
+
+export const getDoll = () => ({ crew: boot.selected });
+export function onDollChange(fn) {
+  boot.listeners.add(fn);
+  return () => boot.listeners.delete(fn);
+}
+
+function name(id) {
+  const saved=getDollSet(id);
+  if (saved) return saved.name;
+  if (id === MINE_ID) return (boot.draft.name || getMine()?.name || 'Paper doll');
+  return id[0].toUpperCase() + id.slice(1);
+}
+
+function poseDoll(el, id, view) {
+  if (!el) return;
+  el.dataset.crew = id;
+  el.dataset.view = String(view % 4);
+  artUrl(id).then(url => {
+    if (el.dataset.crew !== id) return;
+    el.style.backgroundImage = `url('${url}')`;
+    el.style.backgroundPosition = `${(view % 4) * 33.333}% 0`;
+  }).catch(() => {});
+}
+
+function paintViewLabel() {
+  const label = document.getElementById('crewViewLabel');
+  if (label) label.textContent = VIEWS[boot.viewIndex % 4];
+  const doll = document.getElementById('dollViewLabel');
+  if (doll) doll.textContent = VIEWS[boot.dollView % 4];
+}
+
+function optionRow(title, key, items, swatch) {
+  return `<div class="doll-row"><strong>${title}</strong>${items.map(item => {
+    const color = swatch && item.rgb ? `style="--swatch:rgb(${item.rgb.join(',')})"` : (swatch && !item.rgb ? 'style="--swatch:#c4a06a"' : '');
+    return `<button type="button" class="doll-chip${swatch ? ' is-swatch' : ''}" data-doll-key="${key}" data-doll-val="${item.id}" ${color} aria-pressed="false">${item.label}</button>`;
+  }).join('')}</div>`;
+}
+
+function layerRow(title, key, items, folder) {
+  return `<details class="doll-item-section"><summary>${title}</summary><div class="doll-row doll-layer-row">${items.map(item => {
+    const thumb = item.id === 'none' || !folder
+      ? ''
+      : `<span class="doll-piece-thumb"><img data-doll-src="assets/restyle/paper-dolls/thumbnails/${folder}/${item.id}.webp" loading="lazy" fetchpriority="low" decoding="async" alt=""></span>`;
+    return `<button type="button" class="doll-chip doll-piece" data-doll-key="${key}" data-doll-val="${item.id}" aria-pressed="false">${thumb}${item.id === 'none' ? 'None' : item.label}</button>`;
+  }).join('')}</div></details>`;
+}
+
+let draftPaintVersion = 0;
+let draftFrame = 0;
+let draftRendering = false;
+let draftWaiting = false;
+function queueDraftRender() {
+  if (draftRendering) { draftWaiting = true; return; }
+  if (!draftFrame) draftFrame = requestAnimationFrame(() => {
+    draftFrame = 0;
+    renderDraft();
+  });
+}
+
+function paintPreviewSheet() {
+  const canvas = document.getElementById('dollPreviewCanvas');
+  if (!canvas || !boot.previewSheet) return;
+  const context = canvas.getContext('2d');
+  const view = ((Number(boot.dollView) || 0) % 4 + 4) % 4;
+  // Fixed one-pose canvas avoids CSS sprite offsets and oversized image layers.
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(boot.previewSheet, view*384, 0, 384, 512, 0, 0, canvas.width, canvas.height);
+}
+
+async function renderDraft() {
+  draftRendering = true;
+  draftWaiting = false;
+  const paintVersion = draftPaintVersion;
+  const spec = boot.draft;
+  const preview = document.getElementById('dollPreview');
+  preview?.setAttribute('aria-busy', 'true');
+  try {
+    const sheet = await composeDollCanvas(spec);
+    if (paintVersion !== draftPaintVersion) return;
+    boot.previewSheet = sheet;
+    paintPreviewSheet();
+    if (boot.selected === MINE_ID) {
+      const url = await composeDoll(spec);
+      if (paintVersion !== draftPaintVersion) return;
+      boot.previewUrl = url;
+      const portrait = document.getElementById('chosenCrewPortrait');
+      if (portrait) portrait.style.backgroundImage = `url('${url}')`;
+      const runway = document.getElementById('crewRunwayDoll');
+      if (runway && !boot.falling) {
+        runway.style.backgroundImage = `url('${url}')`;
+        runway.style.backgroundPosition = `${(boot.viewIndex % 4) * 33.333}% 0`;
+      }
+    }
+    const status = document.getElementById('dollRenderStatus');
+    if (status) status.textContent = '';
+  } catch {
+    const status = document.getElementById('dollRenderStatus');
+    if (status) status.textContent = 'Couldn’t load that piece. Please choose it again.';
+  } finally {
+    preview?.setAttribute('aria-busy', 'false');
+    draftRendering = false;
+    if (draftWaiting) queueDraftRender();
+  }
+}
+function paintDraft() {
+  ++draftPaintVersion;
+  const spec = boot.draft;
+  document.querySelectorAll('[data-doll-key]').forEach(b => {
+    b.setAttribute('aria-pressed', String(spec[b.dataset.dollKey] === b.dataset.dollVal));
+  });
+  const skinWheel = document.getElementById('skinWheel');
+  const eyesWheel = document.getElementById('eyesWheel');
+  if (skinWheel && spec.skinHex) skinWheel.value = spec.skinHex;
+  if (eyesWheel && spec.eyesHex) eyesWheel.value = spec.eyesHex;
+
+  const status = document.getElementById('dollRenderStatus');
+  if (status) status.textContent = boot.previewSheet ? 'Updating your doll…' : 'Loading your doll…';
+  queueDraftRender();
+}
+
+function refresh() {
+  const selected = boot.selected;
+  document.querySelectorAll('.crew-book [data-crew]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.crew === selected));
+  });
+  const label = document.getElementById('chosenCrew');
+  if (label) label.textContent = `Playing as ${name(selected)}`;
+  const portrait = document.getElementById('chosenCrewPortrait');
+  if (portrait) {
+    poseDoll(portrait, selected, 0);
+    portrait.setAttribute('aria-label', name(selected));
+  }
+  const status = document.getElementById('crewStatus');
+  if (status) {
+    status.textContent = selected === MINE_ID
+      ? 'Playing as your cardboard cut-out.'
+      : `${name(selected)} is ready for the midway.`;
+  }
+  const runwayDoll = document.getElementById('crewRunwayDoll');
+  if (runwayDoll && !boot.falling) poseDoll(runwayDoll, boot.selected, boot.viewIndex);
+  paintViewLabel();
+  if (document.querySelector("dialog.crew-book[open] .crew-collections[open]")) paintDraft();
+}
+
+function turn(dir) {
+  boot.viewIndex = (boot.viewIndex + dir + 4) % 4;
+  poseDoll(document.getElementById('crewRunwayDoll'), boot.selected, boot.viewIndex);
+  paintViewLabel();
+}
+
+function turnDoll(dir) {
+  boot.dollView = (boot.dollView + dir + 4) % 4;
+  paintPreviewSheet();
+  paintViewLabel();
+}
+
+function setPart(key, val) {
+  const next = { ...boot.draft, [key]: val };
+  if (key === 'top' || key === 'bottom') next.outfit = 'none';
+  if (key === 'outfit' && val !== 'none') { next.top = 'none'; next.bottom = 'none'; }
+  if (key === 'skin') next.skinHex = '';
+  if (key === 'eyes') next.eyesHex = '';
+  boot.draft = next;
+  paintDraft();
+}
+
+function setWheel(kind, hex) {
+  if (kind === 'skin') boot.draft = { ...boot.draft, skin: 'custom', skinHex: hex };
+  if (kind === 'eyes') boot.draft = { ...boot.draft, eyes: 'custom', eyesHex: hex };
+  paintDraft();
+}
+
+export function chooseCrew(id) {
+  if (!isPlayable(id)) return false;
+  boot.mode = isCrew(id) ? 'crew' : 'custom';
+  if (id === boot.selected && boot.mode === 'crew') {
+    refresh();
+    return true;
+  }
+  const next = id;
+  const runwayDoll = document.getElementById('crewRunwayDoll');
+  const commit = () => {
+    boot.selected = next;
+    const saved=getDollSet(next);
+    if (saved) {boot.draft={...blankDraft(),...saved};const input=document.getElementById('dollSetName');if(input) input.value=saved.name;}
+    boot.viewIndex = 0;
+    try { localStorage.setItem(key, boot.selected); } catch {}
+    refresh();
+    boot.listeners.forEach(fn => fn(getDoll()));
+  };
+  if (!runwayDoll || boot.falling) {
+    commit();
+    return true;
+  }
+  boot.falling = true;
+  runwayDoll.classList.remove('is-arriving');
+  runwayDoll.classList.add('is-falling');
+  const finish = () => {
+    runwayDoll.removeEventListener('animationend', finish);
+    boot.falling = false;
+    commit();
+    if (boot.mode === 'crew') poseDoll(runwayDoll, boot.selected, 0);
+    runwayDoll.classList.remove('is-falling');
+    runwayDoll.classList.add('is-arriving');
+  };
+  runwayDoll.addEventListener('animationend', finish, { once: true });
+  setTimeout(() => { if (boot.falling) finish(); }, 520);
+  return true;
+}
+
+function keepMe() {
+  document.querySelector('dialog.crew-book')?.close();
+}
+
+function keepCutout() {
+  keepMine(boot.draft);
+  chooseCrew(MINE_ID);
+}
+
+function fillSavedSets() {
+  const grid=document.querySelector('.crew-grid');
+  if (!grid) return;
+  grid.querySelectorAll('[data-saved-doll]').forEach(button=>button.remove());
+  for (const saved of getDollSets()) {
+    const button=document.createElement('button');button.type='button';button.dataset.crew=saved.id;button.dataset.savedDoll='true';
+    button.setAttribute('aria-pressed',String(boot.selected===saved.id));
+    const art=document.createElement('span');art.className='crew-portrait';art.setAttribute('aria-hidden','true');
+    const title=document.createElement('strong');title.textContent=saved.name;
+    const subtitle=document.createElement('small');subtitle.textContent='Saved doll set';
+    button.append(art,title,subtitle);grid.append(button);poseDoll(art,saved.id,0);
+  }
+}
+let savingDollSet=false;
+async function saveNamedSet() {
+  if (savingDollSet) return;
+  const button=document.getElementById('dollSaveSet'),status=document.getElementById('dollSaveStatus');
+  const input=document.getElementById('dollSetName');
+  if (!input.value.trim()) {status.textContent='Name your doll set first.';input.focus();return;}
+  savingDollSet=true;button.disabled=true;status.textContent='Saving your doll set…';
+  const spec={...boot.draft},title=input.value;
+  try {
+    await composeDollCanvas(spec);
+    const saved=saveDollSet(spec,title,window.PennyFever);
+    fillSavedSets();chooseCrew(saved.id);
+    status.textContent=`${saved.name} saved with the characters above. 5 pennies spent.`;
+  } catch(error) {status.textContent=error.message || 'Couldn’t save this doll. Please try again.';}
+  finally {savingDollSet=false;button.disabled=false;}
+}
+
+function fillArt(root) {
+  root.querySelectorAll('[data-crew-art]').forEach(el => {
+    el.style.backgroundImage = `url('${el.dataset.crewArt}')`;
+  });
+}
+
+function positionCrewBook() {
+  const book=document.querySelector('dialog.crew-book[open]');
+  const viewport=window.visualViewport;
+  if (!book || !viewport) return;
+  // Do not chase Safari focus/pinch zoom: moving and shrinking the dialog
+  // during that gesture makes it appear stuck and interferes with panning.
+  if (viewport.scale > 1.05) return;
+  // Mobile layout viewports may be wider than the visible screen (overflow,
+  // zoom or the keyboard). Centre on the visible viewport, not that page width.
+  book.style.left=`${viewport.offsetLeft+viewport.width/2}px`;
+  book.style.top=`${viewport.offsetTop+viewport.height/2}px`;
+  book.style.width=`${Math.min(860,viewport.width*.92)}px`;
+  book.style.maxHeight=`${viewport.height*.9}px`;
+}
+window.visualViewport?.addEventListener('resize',positionCrewBook);
+window.visualViewport?.addEventListener('scroll',positionCrewBook);
+
+function openCrewBook(event) {
+  if (event) event.preventDefault();
+  if (!document.querySelector('dialog.crew-book')) mount();
+  const book = document.querySelector('dialog.crew-book');
+  if (!book) return;
+  paintDisplay(book.querySelector('#crewBackground').value);
+  fillSavedSets();
+  fillArt(book);
+  boot.viewIndex = 0;
+  boot.mode = isCrew(boot.selected) ? 'crew' : 'custom';
+  boot.draft = { ...blankDraft(), ...(getDollSet(boot.selected) || getMine() || boot.draft) };
+  refresh();
+
+  try {
+    if (typeof book.showModal === 'function') {
+      if (!book.open) book.showModal();
+
+    } else {
+      book.setAttribute('open', '');
+      book.classList.add('is-open');
+    }
+  } catch {
+    book.setAttribute('open', '');
+    book.classList.add('is-open');
+  }
+  positionCrewBook();
+}
+
+let dollThumbnailObserver;
+function observeDollThumbnails(book) {
+  const loadThumb = img => {
+    img.src = img.dataset.dollSrc;
+    delete img.dataset.dollSrc;
+  };
+  if (!('IntersectionObserver' in window)) {
+    book.querySelectorAll('img[data-doll-src]').forEach(loadThumb);
+    return;
+  }
+  if (!dollThumbnailObserver) dollThumbnailObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      if (entry.target.dataset.dollSrc) loadThumb(entry.target);
+      dollThumbnailObserver.unobserve(entry.target);
+    });
+  }, {root: book, rootMargin: '100px'});
+  book.querySelectorAll('img[data-doll-src]').forEach(img => dollThumbnailObserver.observe(img));
+}
+
+const DISPLAY_SCENES = [
+  {id:'original',label:'Original display'},
+  {id:'travel-stage',label:'Travel theatre'},
+  {id:'fold-out-bedroom',label:'Bedroom'},
+];
+const displayImages = new Map();
+let displayVersion = 0;
+async function paintDisplay(id) {
+  const scene = !phoneLane && DISPLAY_SCENES.find(item=>item.id===id) || DISPLAY_SCENES[0];
+  const version = ++displayVersion;
+  const canvas = document.getElementById('crewDisplayScene');
+  if (!canvas) return;
+  if (scene.id==='original') {canvas.getContext('2d').clearRect(0,0,420,320);canvas.closest('.crew-runway').dataset.scene='original';document.getElementById('crewBackground').value='original';document.getElementById('crewDisplayStatus').textContent='';try{localStorage.setItem('pf-doll-display-v2','original');}catch{}return;}
+  try {
+    if (!displayImages.has(scene.id)) {
+      const job = new Promise((resolve,reject)=>{
+        const img = new Image();
+        img.onload=()=>resolve(img); img.onerror=reject;
+        img.src=`assets/restyle/game-sprites/doll-accessories/${scene.id}/front.webp`;
+      });
+      displayImages.set(scene.id,job);
+      job.catch(()=>displayImages.delete(scene.id));
+    }
+    const img = await displayImages.get(scene.id);
+    if (version !== displayVersion) return;
+    const buffer=document.createElement('canvas');buffer.width=420;buffer.height=320;
+    const ctx=buffer.getContext('2d');
+    const scale=Math.min(400/img.naturalWidth,310/img.naturalHeight);
+    const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+    ctx.drawImage(img,(420-w)/2,320-h,w,h);
+    // Existing prize masters use a cyan key; remove it only in the display
+    // canvas, leaving source artwork untouched and avoiding new image generation.
+    const pixels=ctx.getImageData(0,0,420,320),d=pixels.data;
+    for(let i=0;i<d.length;i+=4) if(d[i+1]>d[i]+65 && d[i+2]>d[i]+65) d[i+3]=0;
+    ctx.putImageData(pixels,0,0);
+    const target=canvas.getContext('2d');target.clearRect(0,0,420,320);target.drawImage(buffer,0,0);
+    canvas.closest('.crew-runway').dataset.scene=scene.id;
+    document.getElementById('crewBackground').value=scene.id;
+    document.getElementById('crewDisplayStatus').textContent='';
+    try {localStorage.setItem('pf-doll-display-v2',scene.id);}catch{}
+  } catch {
+    document.getElementById('crewDisplayStatus').textContent='Couldn’t load that background. Please choose it again.';
+  }
+}
+
+function mount() {
+  const door = document.getElementById('discoveryDoor');
+  if (!door) return;
+
+  let opener = document.getElementById('editCrew');
+  if (!opener) {
+    const panel = document.createElement('div');
+    panel.className = 'crew-entry';
+    panel.innerHTML = `<span id="chosenCrewPortrait" class="crew-portrait" role="img" aria-label="Oliver" style="background-image:url('${crewArt('oliver')}')"></span><div><p id="chosenCrew">Playing as Oliver</p><button type="button" id="editCrew" class="ticket-button">Edit character</button></div>`;
+    const box = door.querySelector('.door-crew');
+    if (box) box.prepend(panel);
+    else door.insertBefore(panel, door.querySelector('.admit-desk'));
+    opener = panel.querySelector('#editCrew');
+  }
+
+  let book = document.querySelector('dialog.crew-book');
+  if (!book) {
+    book = document.createElement('dialog');
+    book.className = 'crew-book';
+    book.setAttribute('aria-labelledby', 'crewTitle');
+    book.innerHTML = `<form method="dialog"><button class="crew-close" aria-label="Close character book">×</button></form>
+<p class="crew-kicker">Penny Fever · The original crew</p>
+<h2 id="crewTitle">Choose your paper doll</h2>
+<p>They take a little runway turn. Pick one and the last doll falls away.</p>
+<div class="crew-runway" data-scene="original" aria-hidden="true">
+ <div class="crew-runway-board"></div>
+ <canvas id="crewDisplayScene" width="420" height="320"></canvas>
+ <div class="crew-runway-stage"><div id="crewRunwayDoll" class="crew-runway-doll crew-portrait"></div></div>
+</div>
+<div class="crew-runway-turn">
+ <span id="crewViewLabel" aria-live="polite">front</span>
+ <button type="button" id="crewRotate" aria-label="Rotate">Rotate</button>
+</div>
+<label class="crew-background-menu">Background <select id="crewBackground">${DISPLAY_SCENES.map(scene=>`<option value="${scene.id}">${scene.label}</option>`).join('')}</select></label><p id="crewDisplayStatus" role="status"></p>
+<div class="crew-grid">${CREW_IDS.map(id => `<button type="button" data-crew="${id}" aria-pressed="false"><span class="crew-portrait" data-crew-art="${crewArt(id)}" aria-hidden="true"></span><strong>${name(id)}</strong><small>Included</small></button>`).join('')}</div>
+<form method="dialog" class="crew-done"><button type="button" class="ticket-button" id="crewDone">That’s me</button></form>
+<p id="crewStatus" role="status"></p>
+<details class="crew-collections">
+<summary>Make a doll</summary>
+<p>Mix a top and bottom, or choose a dress or full outfit. Add a cardigan and pick your shoes. Some costumes stay together as full outfits.</p>
+<div class="doll-torso-row">
+  <div class="doll-torso-preview">
+    <div id="dollPreview" class="doll-preview-stage" aria-label="Paper doll preview"><canvas id="dollPreviewCanvas" width="384" height="512" role="img" aria-label="Your paper doll"></canvas></div><p id="dollRenderStatus" role="status"></p>
+    <div class="crew-runway-turn">
+      <span id="dollViewLabel">front</span>
+      <button type="button" id="dollRotate" aria-label="Rotate">Rotate</button>
+    </div>
+    <button type="button" class="ticket-button" id="dollKeep">Keep this cut-out</button>
+    <label class="doll-set-name" for="dollSetName">Name this doll set</label>
+    <input id="dollSetName" type="text" maxlength="32" placeholder="My doll set" autocomplete="off">
+    <button type="button" class="ticket-button" id="dollSaveSet">Save doll set — 5 pennies</button>
+    <p id="dollSaveStatus" role="status"></p>
+  </div>
+  <div class="doll-maker-parts">
+    ${optionRow('Skin', 'skin', SKINS, true)}
+    <label class="doll-wheel">Any skin <input type="color" id="skinWheel" value="#e0ac84" aria-label="Skin colour wheel"></label>
+    ${optionRow('Eyes', 'eyes', EYE_COLORS, true)}
+    <label class="doll-wheel">Any eyes <input type="color" id="eyesWheel" value="#488ac4" aria-label="Eye colour wheel"></label>
+  </div>
+</div>
+<div class="doll-tray">
+  ${layerRow('Hair', 'hair', HAIR_STYLES, 'hair-clean')}
+  ${layerRow('Hats', 'hat', HATS, 'hats-clean')}
+  ${layerRow('Tops', 'top', TOPS, 'outfits')}
+  ${layerRow('Bottoms', 'bottom', BOTTOMS, 'outfits')}
+  ${layerRow('Dresses & dungarees', 'outfit', DRESSES, 'outfits')}
+  ${layerRow('Full outfits', 'outfit', FULL_OUTFITS, 'outfits')}
+  ${layerRow('Add-ons', 'addon', ADDONS, 'outfits')}
+  ${layerRow('Shoes & socks', 'footwear', FOOTWEAR, 'outfits')}
+</div>
+</details>`;
+    document.body.append(book);
+    fillSavedSets();
+    book.querySelector('#crewBackground').addEventListener('change',e=>paintDisplay(e.target.value));
+    let background='original';
+    try {background=localStorage.getItem('pf-doll-display-v2') || background;}catch{}
+    if (phoneLane) {background='original';book.classList.add('is-phone-display');}
+    book.querySelector('#crewBackground').value=DISPLAY_SCENES.some(scene=>scene.id===background)?background:'original';
+    book.addEventListener('click', e => {
+      if (e.target.closest('#crewRotate')) { turn(1); return; }
+      if (e.target.closest('#dollRotate')) { turnDoll(1); return; }
+      const part = e.target.closest('[data-doll-key]');
+      if (part) { setPart(part.dataset.dollKey, part.dataset.dollVal); return; }
+      if (e.target.closest('#crewDone')) { keepMe(); return; }
+      if (e.target.closest('#dollSaveSet')) {saveNamedSet();return;}
+      if (e.target.closest('#dollKeep')) { keepCutout(); return; }
+      const b = e.target.closest('[data-crew]');
+      if (b) chooseCrew(b.dataset.crew);
+    });
+    book.querySelector('.crew-collections').addEventListener('toggle', e => {
+      if (!e.currentTarget.open) return;
+      paintDraft();
+      observeDollThumbnails(book);
+    });
+    book.querySelector('#skinWheel')?.addEventListener('input', e => setWheel('skin', e.target.value));
+    book.querySelector('#eyesWheel')?.addEventListener('input', e => setWheel('eyes', e.target.value));
+    book.addEventListener('close', () => document.getElementById('editCrew')?.focus({preventScroll:true}));
+    const doll = book.querySelector('#crewRunwayDoll');
+    if (doll) {
+      let drag = null;
+      doll.style.touchAction = 'pan-y';
+      doll.style.cursor = 'ew-resize';
+      doll.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        drag = {id: e.pointerId, x: e.clientX, accum: 0};
+        try { doll.setPointerCapture(e.pointerId); } catch {}
+      });
+      doll.addEventListener('pointermove', e => {
+        if (drag?.id !== e.pointerId) return;
+        const dx = e.clientX - drag.x;
+        drag.x = e.clientX;
+        drag.accum += dx;
+        if (Math.abs(drag.accum) > 42) {
+          turn(drag.accum > 0 ? 1 : -1);
+          drag.accum = 0;
+        }
+      });
+      const end = e => { if (drag?.id === e.pointerId) drag = null; };
+      doll.addEventListener('pointerup', end);
+      doll.addEventListener('pointercancel', end);
+    }
+    const preview = book.querySelector('#dollPreview');
+    if (preview) {
+      let drag = null;
+      preview.style.touchAction = 'pan-y';
+      preview.style.cursor = 'ew-resize';
+      preview.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        drag = {id: e.pointerId, x: e.clientX, accum: 0};
+        try { preview.setPointerCapture(e.pointerId); } catch {}
+      });
+      preview.addEventListener('pointermove', e => {
+        if (drag?.id !== e.pointerId) return;
+        const dx = e.clientX - drag.x;
+        drag.x = e.clientX;
+        drag.accum += dx;
+        if (Math.abs(drag.accum) > 42) {
+          turnDoll(drag.accum > 0 ? 1 : -1);
+          drag.accum = 0;
+        }
+      });
+      const end = e => { if (drag?.id === e.pointerId) drag = null; };
+      preview.addEventListener('pointerup', end);
+      preview.addEventListener('pointercancel', end);
+    }
+  }
+
+  if (opener && opener.dataset.crewBound !== '1') {
+    opener.dataset.crewBound = '1';
+    opener.addEventListener('click', openCrewBook);
+  }
+  globalThis.PennyFeverDoll = { open: openCrewBook, close: () => book.close(), get: getDoll };
+  refresh();
+}
+
+if (!globalThis.__pfCrewClick) {
+  globalThis.__pfCrewClick = true;
+  document.addEventListener('click', e => {
+    if (e.target.closest('#editCrew')) {
+      if (!globalThis.PennyFeverDoll) mount();
+      globalThis.PennyFeverDoll?.open();
+    }
+  });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+else mount();

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Enter Your Code</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+  <style>
+    body[data-page="session"] #flash {
+      position: relative;
+      z-index: 20;
+      margin: 0 0 1rem 0;
+      padding: 0.85rem 1rem;
+      border-radius: 18px;
+      background: rgba(18, 18, 30, 0.96);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+      font-size: 0.98rem;
+      line-height: 1.35;
+      color: #fff;
+      text-align: center;
+    }
+
+    body[data-page="session"] #flash[hidden] {
+      display: none !important;
+    }
+
+    body[data-page="session"] .page-intro {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    body[data-page="session"] .bonus-kicker {
+      margin-bottom: 0.75rem;
+      text-align: center;
+    }
+
+    body[data-page="session"] .page-intro h1 {
+      font-size: clamp(2.15rem, 7vw, 3.35rem);
+      line-height: 1.02;
+      letter-spacing: 0.01em;
+      margin: 0 0 0.85rem 0;
+      text-align: center;
+      text-wrap: balance;
+      text-shadow: 0 3px 18px rgba(0,0,0,0.22);
+      background: linear-gradient(90deg, #ff4fa0 0%, #ff6f8f 45%, #ffb35c 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+    }
+
+    body[data-page="session"] .hero-text,
+    body[data-page="session"] .muted,
+    body[data-page="session"] .code-hint,
+    body[data-page="session"] .info-callout p {
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+    }
+
+    body[data-page="session"] .hero-text,
+    body[data-page="session"] .info-callout p {
+      font-size: 1rem;
+      line-height: 1.32;
+    }
+
+    body[data-page="session"] .muted,
+    body[data-page="session"] .code-hint {
+      font-size: 0.96rem;
+      line-height: 1.28;
+    }
+
+    body[data-page="session"] .code-card,
+    body[data-page="session"] .info-callout {
+      background: rgba(8, 8, 24, 0.9);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.2);
+    }
+
+    body[data-page="session"] .code-label,
+    body[data-page="session"] .info-callout h2 {
+      color: #fff;
+      text-align: center;
+    }
+
+    body[data-page="session"] #ticket_code {
+      font-size: 1.15rem;
+      letter-spacing: 0.22em;
+      text-align: center;
+      color: #fff;
+    }
+
+    body[data-page="session"] .keypad {
+      margin-top: 1rem;
+    }
+
+    body[data-page="session"] .keypad-key {
+      font-size: 1.22rem;
+      font-weight: 600;
+    }
+
+    body[data-page="session"] .session-code-row {
+      justify-content: center;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    body[data-page="session"] .session-code-row input {
+      flex: 1 1 100%;
+      width: 100%;
+      text-align: center;
+    }
+
+    body[data-page="session"] .session-primary-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin: 1rem auto 0.35rem;
+      width: 100%;
+    }
+
+    body[data-page="session"] .session-primary-actions .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 200px;
+      text-align: center;
+      margin: 0;
+    }
+
+    body[data-page="session"] .session-help {
+      margin-top: 1rem;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    body[data-page="session"] .session-help summary {
+      padding: 1rem 1.15rem;
+      color: #fff;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    body[data-page="session"] .session-help p {
+      margin: 0;
+      padding: 0 1.15rem 1rem;
+    }
+
+    body[data-page="session"] .site-bottom-nav,
+    body[data-page="session"] .site-bottom-note,
+    body[data-page="session"] .code-hint,
+    body[data-page="session"] .code-label {
+      text-align: center;
+    }
+
+    body[data-page="session"] .site-bottom-note {
+      display: block;
+      margin: 0.45rem auto 0;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.72);
+      max-width: 28rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 640px) {
+      body[data-page="session"] .page-intro h1 {
+        font-size: 2.45rem;
+      }
+
+      body[data-page="session"] .hero-text {
+        font-size: 0.98rem;
+      }
+    }
+  </style>
+</head>
+<body class="page" data-page="session">
+  <main class="card enter-code-redesign">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <div class="bonus-kicker">Guest Area</div>
+      <h1>Open your session</h1>
+      <p class="hero-text hero-text-wide">
+        Enter your 6-digit booth code to view your photos and bonus content.
+      </p>
+    </section>
+
+    <form id="session-form" class="code-card code-card-center" novalidate autocomplete="off">
+      <label for="ticket_code" class="code-label">Your 6-digit booth code</label>
+
+      <div class="code-input-row code-input-row-stack session-code-row">
+        <input
+          type="text"
+          id="ticket_code"
+          name="ticket_code"
+          maxlength="6"
+          pattern="[0-9]{6}"
+          inputmode="numeric"
+          placeholder="123456"
+          required
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          enterkeyhint="done"
+        >
+      </div>
+
+      <div class="session-primary-actions">
+        <button type="submit" class="btn">Open My Session</button>
+      </div>
+
+      <p id="processing" class="muted" hidden>Checking your code…</p>
+      <p class="code-hint">Use the keypad or your keyboard.</p>
+
+      <div class="keypad">
+        <div class="keypad-row">
+          <button type="button" class="keypad-key" data-key="1">1</button>
+          <button type="button" class="keypad-key" data-key="2">2</button>
+          <button type="button" class="keypad-key" data-key="3">3</button>
+        </div>
+        <div class="keypad-row">
+          <button type="button" class="keypad-key" data-key="4">4</button>
+          <button type="button" class="keypad-key" data-key="5">5</button>
+          <button type="button" class="keypad-key" data-key="6">6</button>
+        </div>
+        <div class="keypad-row">
+          <button type="button" class="keypad-key" data-key="7">7</button>
+          <button type="button" class="keypad-key" data-key="8">8</button>
+          <button type="button" class="keypad-key" data-key="9">9</button>
+        </div>
+        <div class="keypad-row">
+          <button type="button" class="keypad-key keypad-key-clear" data-action="clear">Clear</button>
+          <button type="button" class="keypad-key" data-key="0">0</button>
+          <button type="button" class="keypad-key keypad-key-back" data-action="back">←</button>
+        </div>
+      </div>
+    </form>
+
+    <details class="info-callout session-help">
+      <summary>Where do I find my code?</summary>
+      <p>
+        It appears after website payment and after your booth session. It may also be saved in your VIP Guest Area.
+      </p>
+    </details>
+
+    <nav class="site-bottom-nav" aria-label="Site pages">
+      <a href="save.html" class="secondary-link">VIP Guest Area</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="pay.html" class="secondary-link">Prepay</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="event.html" class="secondary-link">Private event</a>
+    </nav>
+    <p class="site-bottom-note">
+      Hosts: use Private event above to unlock with your event PIN
+    </p>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script src="site_core.js?v=20261020-lna"></script>
+  <script src="branding.js"></script>
+  <script src="session_runtime.js"></script>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+</html>

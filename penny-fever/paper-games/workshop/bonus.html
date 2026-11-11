@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Penny Fever SNAP Keepsake</title>
+  <link rel="stylesheet" href="branding.css?v=carnival-14">
+  <style>
+    :root {
+      --page-bg: #101816;
+      --page-bg-2: #1a2420;
+      --text: #fff6ec;
+      --muted: #d7e0dc;
+      --card-bg: rgba(255,255,255,0.06);
+      --card-border: rgba(210,176,115,0.28);
+      --shadow: 0 14px 38px rgba(0,0,0,0.28);
+      --radius: 20px;
+      --brass: #d2b073;
+    }
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Subotype Steady", "Unique", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(210,176,115,.18), transparent 36%),
+        linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg-2) 100%);
+    }
+    .bonus-shell { max-width: 1180px; margin: 0 auto; padding: 28px 16px 56px; }
+    .bonus-brand-top { display: flex; justify-content: center; margin: 4px 0 14px; }
+    .hero-logo {
+      width: min(320px, 78vw); height: auto; display: block;
+      background: #fff; border-radius: 16px; padding: 12px 18px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.4);
+    }
+    .bonus-nav {
+      display: flex; flex-wrap: wrap; gap: 10px 14px;
+      justify-content: center; margin: 0 0 18px;
+    }
+    .bonus-nav a {
+      color: var(--text); text-decoration: none; font-size: .95rem;
+      padding: 10px 16px; border-radius: 999px;
+      border: 1px solid rgba(210,176,115,.4);
+      background: rgba(255,255,255,.06);
+    }
+    .bonus-head { text-align: center; margin-bottom: 26px; }
+    .bonus-head h1 {
+      font-family: "Unique", serif; margin: 0 0 8px;
+      font-size: clamp(30px, 4vw, 48px); line-height: 1.05;
+    }
+    .bonus-head p { margin: 0; color: var(--muted); font-size: 16px; }
+    form {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 16px 0 0;
+    }
+    form input, form button { font: inherit; border-radius: 14px; padding: 12px 14px; }
+    form input {
+      flex: 1; min-width: 180px; max-width: 280px; background: #0c1210; color: var(--text);
+      border: 1px solid var(--brass); text-transform: uppercase; letter-spacing: .12em; font-weight: 800;
+    }
+    form button {
+      border: 0; cursor: pointer; font-family: "Unique", serif; font-weight: 800;
+      background: linear-gradient(120deg, #d2b073, #8a6a3a); color: #1a1208;
+    }
+    .status {
+      margin: 18px auto 0; max-width: 760px;
+      background: rgba(255,255,255,.08); border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 12px 14px; color: var(--muted); font-size: 14px;
+    }
+    .code {
+      font-family: "Unique", serif; text-align: center; color: var(--brass);
+      letter-spacing: .14em; font-size: 1.6rem; margin: 12px 0 18px;
+    }
+    .hero-grid, .motion-grid, .stills-grid { display: grid; gap: 18px; }
+    .hero-grid { grid-template-columns: 1.5fr 0.9fr; align-items: start; margin-bottom: 22px; }
+    .motion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 22px; }
+    .stills-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-head { padding: 16px 16px 8px; }
+    .card-head h2, .card-head h3 { font-family: "Unique", serif; margin: 0 0 6px; line-height: 1.15; }
+    .card-head p { margin: 0; color: var(--muted); font-size: 14px; }
+    .media-wrap { padding: 0 16px 16px; }
+    .media-frame {
+      width: 100%; background: rgba(255,255,255,.04); border-radius: 16px;
+      overflow: hidden; border: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center; min-height: 240px;
+    }
+    .media-frame.hero { min-height: 620px; }
+    .media-frame video, .media-frame img, .media-frame canvas {
+      width: auto !important; height: auto !important;
+      max-width: 100% !important; max-height: min(70vh, 720px) !important;
+      object-fit: contain !important; display: block; margin: 0 auto;
+    }
+    .media-frame.hero video, .media-frame.hero img, .media-frame.hero canvas {
+      max-height: min(78vh, 820px) !important;
+    }
+    .collage-live {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+      line-height: 0;
+      cursor: pointer;
+    }
+    .collage-live-bg {
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: min(78vh, 820px) !important;
+      display: block;
+    }
+    .collage-live-hole {
+      position: absolute;
+      overflow: hidden;
+      pointer-events: none;
+      background: #5f8a48;
+    }
+    .collage-live-hole video,
+    .collage-live-hole img {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+      object-fit: cover !important;
+      display: block !important;
+      margin: 0 !important;
+    }
+    #strip-frame img {
+      max-width: min(100%, 360px) !important;
+      max-height: min(78vh, 900px) !important;
+    }
+    .actions {
+      display: flex; flex-wrap: wrap; gap: 10px; padding: 0 16px 16px;
+      justify-content: center; align-items: center;
+    }
+    .btn {
+      appearance: none; border: 0; border-radius: 999px; padding: 10px 18px;
+      font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #101214; background: #fff6ec; min-width: 120px; font-family: inherit;
+    }
+    .btn.alt {
+      background: rgba(255,255,255,.14); color: #fff;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .paper-background-select { display: block; width: min(100%, 360px); margin-top: 8px; padding: 10px; border-radius: 8px; font: inherit; color: #1a1208; background: #fff6ec; }
+    .paper-background-select[hidden] { display: none; }
+    #paper-background-picker { margin-bottom: 22px; }
+    .section-title { margin: 30px 0 14px; font-size: 24px; font-family: "Unique", serif; }
+    .empty-note, .empty { padding: 18px; color: var(--muted); font-size: 14px; text-align: center; }
+    .freeze-adjust-row {
+      display: flex; gap: 6px; align-items: center; justify-content: center;
+      padding: 0 8px 12px; flex-wrap: nowrap;
+    }
+    .freeze-adjust-row .btn { min-width: 0; width: 40px; height: 40px; padding: 0; flex: 0 0 40px; }
+    .freeze-adjust-readout {
+      min-width: 48px; text-align: center; font-size: 13px; color: rgba(255,255,255,.86);
+    }
+    .bonus-foot {
+      margin-top: 36px; padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,.1); text-align: center;
+    }
+    .bonus-foot p { color: var(--muted); font-size: .85rem; }
+    @media (max-width: 980px) {
+      .hero-grid, .motion-grid { grid-template-columns: 1fr; }
+      .stills-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .media-frame.hero { min-height: 420px; }
+    }
+    @media (max-width: 520px) {
+      .actions { flex-direction: column; gap: 8px; }
+      .actions .btn { width: min(240px, 100%); min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bonus-shell">
+    <div class="bonus-brand-top">
+      <img class="hero-logo" src="img/instapic_logo.jpg" alt="Instapic">
+    </div>
+    <nav class="bonus-nav" aria-label="Bonus page navigation">
+      <a href="felix-booth.html?v=collage-wait-1">SNAP booth</a>
+      <a href="/my-instapic.html#saved-pf-codes">VIP Guest Area</a>
+    </nav>
+    <div class="bonus-head">
+      <h1>Your SNAP Bonus</h1>
+      <p>Your strip, collage video, motion extras, and freeze frames.</p>
+      <form id="redeem-form">
+        <input id="game-code" maxlength="9" autocomplete="off" autocapitalize="characters" placeholder="PF-ABCDEF" aria-label="Penny Fever game code" required>
+        <button type="submit">OPEN</button>
+      </form>
+      <div id="bonus-status" class="status">Enter the PF code from your session.</div>
+      <div class="code" id="session-code" hidden></div>
+    </div>
+
+    <div id="session-block" hidden>
+      <section class="card" id="paper-background-picker" hidden>
+        <div class="card-head">
+          <h2>Photo background</h2>
+          <p>Choose a Penny Fever scene for your photos. Your original strip and session video stay as captured; the video in the collage keeps its original background.</p>
+          <label for="paper-background-select">Background</label>
+          <select id="paper-background-select" class="paper-background-select"></select>
+          <p id="paper-background-status" aria-live="polite"></p>
+        </div>
+      </section>
+      <div class="hero-grid">
+        <section class="card">
+          <div class="card-head">
+            <h2>Collage Video</h2>
+            <p>Four stills in the corners, and your whole session video in the centre.</p>
+          </div>
+          <div class="media-wrap">
+            <div class="media-frame hero" id="collage-frame"><div class="empty-note">Collage video not ready yet.</div></div>
+          </div>
+          <div class="actions" id="collage-actions"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>Photo Strip</h2>
+            <p>Your souvenir strip from this SNAP.</p>
+          </div>
+          <div class="media-wrap">
+            <div class="media-frame hero" id="strip-frame"><div class="empty-note">Photo strip not ready yet.</div></div>
+          </div>
+          <div class="actions" id="strip-actions"></div>
+        </section>
+      </div>
+
+      <div class="motion-grid">
+        <section class="card">
+          <div class="card-head">
+            <h3>Boomerang</h3>
+            <p>Forward and back through the lawn oval.</p>
+          </div>
+          <div class="media-wrap">
+            <div class="media-frame" id="boomerang-frame"><div class="empty-note">Boomerang not ready yet.</div></div>
+          </div>
+          <div class="actions" id="boomerang-actions"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h3>GIF</h3>
+            <p>The four poses flipping in the lawn oval.</p>
+          </div>
+          <div class="media-wrap">
+            <div class="media-frame" id="gif-frame"><div class="empty-note">GIF not ready yet.</div></div>
+          </div>
+          <div class="actions" id="gif-actions"></div>
+        </section>
+      </div>
+
+      <h2 class="section-title">Freeze Frames</h2>
+      <div class="stills-grid" id="stills-grid"></div>
+    </div>
+
+    <div class="bonus-foot">
+      <nav class="bonus-nav">
+        <a href="felix-booth.html?v=collage-wait-1">Back to the booth</a>
+        <a href="/my-instapic.html#saved-pf-codes">VIP Guest Area</a>
+      </nav>
+      <p>Keepsakes are stored on Felix photo booth and open with your PF code. They do not open a Darwin booth session.</p>
+      <p>Instapic by Little Trends — Moments Made Magical ✨</p>
+    </div>
+  </div>
+  <script src="pf-bonus-compose.js?v=collage-centre-1"></script>
+  <script src="felix-game-bonus.js?v=live-bg-1"></script>
+</body>
+</html>

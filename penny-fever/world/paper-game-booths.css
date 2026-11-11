@@ -1,0 +1,146 @@
+body .cabinet-interior.paper-game-cabinet {
+ position:fixed!important;inset:0!important;z-index:2000;
+ width:100%!important;max-width:none!important;height:100vh!important;height:100dvh!important;
+ min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;
+ background:#132831;color:#f3e4c6;
+}
+.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-fortune.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-love.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-curios.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-lookup.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-snap.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-whisper.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-ball-toss.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-coin-pusher.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-pinball.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-water-gun.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-milk-bottles.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-cover-the-spot.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-mutoscope.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-high-striker.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-catoptromancy.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-bent-rings.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-plinko.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-fairy-floss.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-popcorn.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-duck-pond.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-skee-ball.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-penny-pitch.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-dunk-tank.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-marquee.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-pack.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-pass.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-carousel.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-balloons.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-ferris.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-helter.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-swings.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-funhouse.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-organ.paper-game-cabinet> :not(.paper-game-room),
+#cabinet-mural.paper-game-cabinet> :not(.paper-game-room){
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+.paper-game-room{display:flex;flex-direction:column;width:100%;height:100%;min-height:100dvh;isolation:isolate;}
+.paper-game-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:#0f1a22;border-bottom:1px solid #ad9362;z-index:5;position:relative;}
+.paper-game-bar h1{flex:1;margin:0;font:400 24px/1.3 Georgia,serif;letter-spacing:normal;text-transform:none;}
+.paper-game-bar button,.paper-game-bar a{font:18px/1.3 Georgia,serif;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;padding:10px 14px;text-decoration:none;cursor:pointer;}
+.paper-game-wallet{font:18px/1.3 Georgia,serif;color:#f6e2b2;white-space:nowrap;}
+.paper-game-wallet.is-on-bar{flex-shrink:0;font-size:15px;}
+.paper-game-frame{display:block;flex:1 1 auto;width:100%;min-height:0;height:100%;border:0;background:#132831;}
+.paper-game-status{margin:0;padding:12px 18px;font:18px/1.45 Georgia,serif;background:#263c40;}
+.paper-game-status[hidden]{display:none;}
+.paper-door-desk{
+  flex:1;min-height:0;overflow:auto;padding:28px 22px 40px;
+  background:
+    radial-gradient(circle at 50% 0, #3a2a18 0, #1a1510 55%, #100d0a 100%);
+  color:#f3e4c6;
+}
+.paper-door-sign{
+  margin:0 0 10px;font:800 13px/1.2 system-ui,sans-serif;
+  letter-spacing:.14em;text-transform:uppercase;color:#e8b062;
+}
+.paper-door-greet{
+  margin:0 0 12px;max-width:34rem;font:italic 22px/1.35 Georgia,serif;
+}
+.paper-door-why{
+  margin:0 0 22px;max-width:34rem;font:18px/1.45 Georgia,serif;opacity:.92;
+}
+.paper-door-pad{
+  display:grid;gap:10px;max-width:28rem;
+  padding:16px;border:1px solid #ad9362;border-radius:12px;
+  background:#2a2116;
+}
+.paper-door-pad label{display:grid;gap:8px;font:16px/1.35 Georgia,serif;}
+.paper-door-pad input,.paper-door-pad textarea{
+  width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;
+  border:1px solid #8a7350;background:#140f0c;color:#f6e2b2;font:16px/1.4 Georgia,serif;
+}
+.paper-door-pad button{
+  justify-self:start;padding:10px 16px;border-radius:8px;
+  border:1px solid #a48c62;background:#233941;color:#f2d6a2;
+  font:18px/1.3 Georgia,serif;cursor:pointer;
+}
+.paper-door-thanks{margin:0;font:16px/1.4 Georgia,serif;color:#e8b062;}
+.paper-door-board{display:grid;gap:10px;max-width:28rem;margin:0 0 14px;}
+.paper-door-note{
+  padding:12px 14px;border:1px solid #ad9362;border-radius:12px;background:#24180f;
+}
+.paper-door-who{margin:0 0 4px;font:800 12px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#e8b062;}
+.paper-door-note p{margin:0;font:16px/1.4 Georgia,serif;}
+.paper-door-reply{margin-top:8px;color:#f6e2c4;}
+.paper-game-treasure{margin-left:auto;}
+.paper-game-treasure.is-prize-catch,
+#pfPocketChest.is-prize-catch{
+ animation:pf-prize-catch .7s ease;
+}
+@keyframes pf-prize-catch{
+ 0%{transform:scale(1)}
+ 35%{transform:scale(1.16);color:#fff6ec;box-shadow:0 0 18px #f4d590aa}
+ 100%{transform:scale(1)}
+}
+.pf-prize-fly{
+ position:fixed;z-index:5000;pointer-events:none;width:72px;height:72px;object-fit:contain;
+ filter:drop-shadow(0 8px 14px #0008);
+ transform:scale(1.15) rotate(0deg);opacity:1;
+ transition:transform .62s cubic-bezier(.2,.75,.2,1),opacity .62s ease;
+}
+@media(prefers-reduced-motion:reduce){
+ .paper-game-treasure.is-prize-catch,#pfPocketChest.is-prize-catch{animation:none}
+ .pf-prize-fly{transition:transform .4s ease,opacity .4s ease}
+}
+
+.paper-game-bar{flex-wrap:nowrap;gap:8px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));}
+.paper-game-bar h1{font-size:18px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.paper-game-bar button,.paper-game-bar a,.paper-chapter-name{font:16px/1.3 Georgia,serif;padding:8px 10px;min-height:40px;white-space:nowrap;}
+.paper-game-bar button:disabled{opacity:.4;cursor:default;}
+.paper-chapter-nav{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.paper-chapter-name{display:inline-flex;align-items:center;justify-content:center;min-width:92px;color:#f2d6a2;}
+.paper-chapter-tab{min-width:34px;padding:6px 8px;font:700 15px/1 Georgia,serif;}
+.paper-chapter-tab[aria-pressed="true"]{background:#6a5130;border-color:#f0d59a;color:#fff6d8;}
+.paper-chapter-tab[hidden]{display:none;}
+.paper-game-bar .chapter-prize{position:relative;width:42px;height:42px;flex-shrink:0;margin:0;border:1px solid #9a845e;border-radius:10px;background:#122335cc;overflow:hidden;}
+.paper-game-bar .chapter-prize[hidden]{display:none;}
+.paper-game-bar .chapter-prize img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}
+.paper-game-bar .chapter-prize.is-locked img{opacity:.72;filter:grayscale(.15);}
+.paper-game-bar .chapter-prize-stamp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-18deg);padding:2px 4px;border:2px solid #ead6a4;border-radius:4px;background:#1a1208c4;color:#ead6a4;font:800 8px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;pointer-events:none;}
+.paper-game-bar .chapter-prize.is-unlocked .chapter-prize-stamp{border-color:#c8e878;color:#c8e878;background:#102008c4;}
+.paper-game-treasure{margin-left:0;}
+.paper-game-trade{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:24px;color:#f3e4c6;background:#172831;border:1px solid #ad9362;border-radius:16px;font:17px/1.5 Georgia,serif;touch-action:pan-y;}
+.paper-game-trade::backdrop{background:#06121bbd;}
+.paper-game-trade{position:relative;}
+.paper-game-trade .paper-game-wallet{display:block;white-space:normal;margin:8px 40px 12px 0;}
+.paper-game-trade button{font:inherit;color:#f2d6a2;background:#233941;border:1px solid #a48c62;border-radius:8px;padding:10px;cursor:pointer;}
+.paper-game-menu-close{position:absolute;right:8px;top:8px;min-width:44px;min-height:44px;}
+.paper-trade-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.paper-trade-status:empty{display:none;}
+.paper-trade-status{margin:10px 0 0;font-size:15px;}
+@media(max-width:700px){
+ .paper-game-bar{display:flex;flex-wrap:nowrap;gap:5px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));}
+ .paper-game-bar h1{display:none;}
+ .paper-game-bar button,.paper-game-bar a,.paper-chapter-name{font-size:13px;padding:7px;min-height:38px;}
+ .paper-chapter-nav{flex:1;justify-content:center;}
+ .paper-chapter-name{min-width:72px;}
+ .paper-chapter-tab{min-width:30px;padding:6px 6px;font-size:14px;}
+ .paper-game-wallet.is-on-bar{font-size:12px;}
+}

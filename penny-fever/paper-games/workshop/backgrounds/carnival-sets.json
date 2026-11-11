@@ -1,0 +1,66 @@
+{
+  "updated": "carnival-11",
+  "free": [
+    "pf-felix"
+  ],
+  "sets": [
+    {
+      "id": "pf-felix",
+      "gameId": "snap",
+      "host": "Felix",
+      "title": "Instapic Penny Fever Photo Booth",
+      "free": true,
+      "strip": "backgrounds/carnival/pf-felix.jpg?v=garden-1",
+      "thumb": "backgrounds/carnival/thumbs/pf-felix.jpg?v=garden-1",
+      "liveWall": "backgrounds/carnival/live/pf-felix-wall.jpg",
+      "paper": "backgrounds/carnival/paper/felix-game-paper.jpg",
+      "hostArt": "../../assets/restyle/scene-turnarounds-2026-09-09/vendors/felix/front.webp",
+      "paperPlayer": [
+        "backgrounds/carnival/paper-player/oliver-1.png",
+        "backgrounds/carnival/paper-player/oliver-2.png",
+        "backgrounds/carnival/paper-player/oliver-3.png",
+        "backgrounds/carnival/paper-player/oliver-4.png"
+      ],
+      "poses": 4,
+      "slotRef": {
+        "w": 416,
+        "h": 1232
+      },
+      "slots": [
+        [
+          122,
+          156,
+          172,
+          215
+        ],
+        [
+          122,
+          386,
+          172,
+          215
+        ],
+        [
+          122,
+          616,
+          172,
+          215
+        ],
+        [
+          122,
+          846,
+          172,
+          215
+        ]
+      ],
+      "qr": {
+        "x": 169,
+        "y": 1118,
+        "w": 78,
+        "h": 78,
+        "href": "https://instapic.fun/save.html"
+      },
+      "ready": true,
+      "inPicker": true
+    }
+  ]
+}

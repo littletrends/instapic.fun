@@ -1,0 +1,2250 @@
+:root {
+  --bg: #05040a;
+  --card: #10101a;
+  --accent: #ff3370;
+  --accent-soft: #ff7a7a;
+  --teal: #20c6c8;
+  --text: #ffffff;
+  --muted: #b0b0c0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1b1024, #05040a 60%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header,
+.site-footer {
+  padding: 1rem 1.5rem;
+}
+
+.site-main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-main {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.brand-accent {
+  color: var(--accent);
+}
+
+.brand-sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.site-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.hero,
+.prepay,
+.ticket,
+.enter-code,
+.error {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.hero {
+  max-width: 540px;
+  margin: 1.5rem auto 0;
+}
+
+.hero-logo {
+  width: 200px;
+  max-width: 60vw;
+  height: auto;
+  margin-bottom: 0.75rem;
+}
+
+.hero-text {
+  color: var(--muted);
+  max-width: 520px;
+  margin: 0.5rem auto 1.5rem;
+}
+
+.hero-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.hero-qr {
+  width: 200px;
+  max-width: 40vw;
+  background: #ffffff;
+  padding: 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+
+.hero-links {
+  margin-top: 1.5rem;
+}
+
+.secondary-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.secondary-link:hover {
+  text-decoration: underline;
+}
+
+/* Generic pill button */
+
+.portal-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 0 18px rgba(255, 64, 129, 0.6);
+}
+
+.portal-button.small {
+  padding: 0.55rem 1.3rem;
+  font-size: 0.9rem;
+  box-shadow: 0 0 14px rgba(255, 64, 129, 0.6);
+}
+
+.portal-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Big orb on homepage */
+
+.portal-orb {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  text-decoration: none;
+  position: relative;
+  margin-top: 1.5rem;
+}
+
+.portal-orb::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 0, rgba(255, 51, 112, 0.9), rgba(32, 198, 200, 0.4));
+  filter: blur(8px);
+  opacity: 0.8;
+}
+
+.portal-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 0, #ff5b9b, #ff3370 60%, #ff9f6b 95%);
+}
+
+.portal-orb-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 1.5rem;
+  color: #fff;
+}
+
+.portal-orb-main {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.portal-orb-sub {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #ffe7f0;
+}
+
+.portal-orb:hover {
+  transform: translateY(-2px);
+}
+
+.portal-orb:hover::before {
+  opacity: 1;
+}
+
+/* Steps chips */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.steps-chips {
+  margin-bottom: 0.5rem;
+}
+
+.step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.8rem;
+}
+
+.step-number {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.step-word {
+  font-weight: 600;
+}
+
+/* Prepay packages */
+
+.package-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.package-card {
+  background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.15), rgba(0,0,0,0.9) 60%);
+  border-radius: 999px;
+  width: 220px;
+  height: 220px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 34px rgba(0, 255, 255, 0.18);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pkg-name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pkg-desc {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.pkg-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.dev-note {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Ticket */
+
+.ticket-code {
+  font-size: 2.2rem;
+  letter-spacing: 0.18em;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  background: var(--card);
+  display: inline-block;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.ticket-help {
+  color: var(--muted);
+}
+
+/* Code page */
+
+.code-card {
+  max-width: 500px;
+  margin: 1.2rem auto 0;
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+  text-align: left;
+}
+
+.code-label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.code-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.code-input-row input {
+  flex: 1;
+  padding: 0.65rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.code-input-row input::placeholder {
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.code-hint {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.code-result {
+  max-width: 600px;
+  margin: 1.5rem auto 0;
+  text-align: center;
+}
+
+.code-summary {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.code-pill {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.3rem;
+}
+
+.code-package {
+  margin-bottom: 0.3rem;
+}
+
+.code-status {
+  margin-bottom: 0.3rem;
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-issued {
+  background: rgba(32, 198, 200, 0.25);
+  border: 1px solid rgba(32, 198, 200, 0.8);
+}
+
+.status-used {
+  background: rgba(255, 51, 112, 0.25);
+  border: 1px solid rgba(255, 51, 112, 0.8);
+}
+
+.gallery img {
+  max-width: 100%;
+  border-radius: 18px;
+  margin-top: 1rem;
+}
+
+/* On-screen keypad */
+
+.keypad {
+  margin-top: 0.75rem;
+}
+
+.keypad-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.keypad-key {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.keypad-key-clear,
+.keypad-key-back {
+  font-size: 0.8rem;
+}
+
+/* Debug tickets table */
+
+.tickets-table-wrap {
+  margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.tickets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tickets-table th,
+.tickets-table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.tickets-table thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tickets-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tickets-table code {
+  font-family: monospace;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------
+   Homepage portal expansion
+   -------------------------------------------------- */
+
+.hero-home {
+  max-width: 980px;
+}
+
+.hero-text-wide {
+  max-width: 720px;
+}
+
+.portal-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.portal-stack-main {
+  margin-bottom: 2rem;
+}
+
+.portal-orb-primary::after {
+  background: radial-gradient(circle at 30% 0, #ff5b9b, #ff3370 60%, #ff9f6b 95%);
+}
+
+.portal-orb-secondary::after {
+  background: radial-gradient(circle at 30% 0, #33d6ff, #20c6c8 60%, #7af7ff 95%);
+}
+
+.portal-orb-tertiary::before {
+  background: radial-gradient(circle at 30% 0, rgba(171, 105, 255, 0.92), rgba(255, 174, 92, 0.48));
+}
+
+.portal-orb-tertiary::after {
+  background: radial-gradient(circle at 30% 0, #c184ff, #8348dc 60%, #ffad62 95%);
+}
+
+.hero-qr-block {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.hero-qr-copy {
+  max-width: 360px;
+  text-align: left;
+}
+
+.hero-links-compact {
+  margin-top: 1rem;
+}
+
+.site-footer {
+  position: relative;
+}
+
+.penny-fever-hatch {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+  color: transparent;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 0.28;
+}
+
+.penny-fever-hatch-arch {
+  display: block;
+  width: 14px;
+  height: 22px;
+  border-radius: 7px 7px 2px 2px;
+  border: 1px solid rgba(168, 138, 92, 0.38);
+  background:
+    linear-gradient(180deg, transparent 44%, rgba(72, 46, 28, 0.75) 44%, rgba(72, 46, 28, 0.75) 56%, transparent 56%),
+    radial-gradient(ellipse at top, #3a2718, #120c0a 78%);
+  box-shadow: inset 0 6px 8px #0006;
+}
+
+.penny-fever-hatch:hover,
+.penny-fever-hatch:focus-visible {
+  opacity: 0.7;
+  transform: none;
+  border-color: transparent;
+  outline: none;
+}
+
+@media (max-width: 700px) {
+  .portal-orb {
+    width: 220px;
+    height: 220px;
+  }
+
+  .hero-qr-copy {
+    text-align: center;
+  }
+}
+
+/* --------------------------------------------------
+   Shared site chrome (uniform bottom nav + back)
+   -------------------------------------------------- */
+
+.site-bottom-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.55rem;
+  text-align: center;
+  margin: 2rem auto 0.5rem;
+  max-width: 720px;
+  line-height: 1.5;
+}
+
+.site-bottom-nav .nav-dot {
+  opacity: 0.45;
+  user-select: none;
+}
+
+.site-bottom-note {
+  text-align: center;
+  margin: 0.4rem auto 0;
+  max-width: 28rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* --------------------------------------------------
+   Public gallery and homepage preview
+   -------------------------------------------------- */
+
+.gallery-hero {
+  max-width: 680px;
+  margin: 1.2rem auto 1.5rem;
+  text-align: center;
+  padding: 0 0.25rem;
+}
+
+.gallery-hero h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.55rem, 6.5vw, 2.4rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.gallery-hero p {
+  margin: 0 auto;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 36rem;
+}
+
+.gallery-kicker {
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.public-gallery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.public-gallery-filter {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.public-gallery-filter.active,
+.public-gallery-filter:hover {
+  border-color: rgba(32, 198, 200, 0.75);
+  background: rgba(32, 198, 200, 0.16);
+}
+
+/* Legacy flat grid (kept for any older markup) */
+.public-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Product sections: one carousel row per type */
+.public-gallery-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.public-gallery-section {
+  min-width: 0;
+  padding: 0.85rem 0 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.public-gallery-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.public-gallery-section[hidden] {
+  display: none;
+}
+
+.public-gallery-section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem 0.85rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
+  padding: 0 0.15rem;
+}
+
+.public-gallery-section-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.public-gallery-section-blurb {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.public-gallery-section-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.public-gallery-section-nav {
+  display: flex;
+  gap: 0.4rem;
+  align-self: center;
+}
+
+.public-gallery-scroll {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.public-gallery-scroll:hover {
+  border-color: rgba(32, 198, 200, 0.7);
+  background: rgba(32, 198, 200, 0.16);
+}
+
+.public-gallery-track {
+  display: flex;
+  gap: 0.9rem;
+  overflow-x: auto;
+  /* Do not clip tall portrait cards on iOS (overflow-y:hidden was cutting them) */
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 0.15rem 0.15rem 0.85rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  align-items: flex-start;
+}
+
+.public-gallery-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.public-gallery-track::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+/*
+  Booth products are portrait. Cards stay phone-narrow on desktop;
+  on phones they go nearly full width (same idea as bonus.html).
+*/
+.public-gallery-track .public-gallery-card {
+  flex: 0 0 min(78vw, 300px);
+  scroll-snap-align: start;
+  max-width: min(78vw, 300px);
+}
+
+.public-gallery-section.is-collage .public-gallery-card,
+.public-gallery-section.is-strip .public-gallery-card,
+.public-gallery-section.is-motion .public-gallery-card {
+  flex-basis: min(72vw, 280px);
+  max-width: min(72vw, 280px);
+}
+
+.public-gallery-section.is-photo .public-gallery-card,
+.public-gallery-section.is-social .public-gallery-card {
+  flex-basis: min(82vw, 320px);
+  max-width: min(82vw, 320px);
+}
+
+.public-gallery-card {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(16, 16, 26, 0.92);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  /* visible so portrait media is never half-clipped by the card shell */
+  overflow: visible;
+}
+
+.public-gallery-card[hidden] {
+  display: none;
+}
+
+/*
+  Same portrait rules as bonus.html media-frame:
+  - NEVER width:100% + max-height together (iOS Safari squashes / crops)
+  - width/height auto, max-width + max-height only
+  - no forced aspect-ratio box that clips the video
+*/
+.public-gallery-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  padding: 0.55rem;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 51, 112, 0.22), transparent 42%),
+    #08070d;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.public-gallery-media img,
+.public-gallery-media video {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: min(70vh, 720px) !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+.public-gallery-media-slides,
+.public-gallery-media-slide {
+  width: 100%;
+}
+
+.public-gallery-media-slide[hidden] {
+  display: none;
+}
+
+.public-gallery-media-nav {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(8, 7, 13, 0.82);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.public-gallery-media-nav.is-prev {
+  left: 0.8rem;
+}
+
+.public-gallery-media-nav.is-next {
+  right: 0.8rem;
+}
+
+.public-gallery-media-count {
+  position: absolute;
+  z-index: 3;
+  top: 0.85rem;
+  right: 0.85rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(8, 7, 13, 0.82);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+/* Photostrip is extra tall/narrow — same treatment as #strip-frame on bonus */
+.public-gallery-media.is-strip img,
+.public-gallery-media.is-strip video {
+  max-width: min(100%, 360px) !important;
+  max-height: min(78vh, 900px) !important;
+}
+
+/* Collage / motion — hero-ish on gallery, still full portrait */
+.public-gallery-media.is-collage img,
+.public-gallery-media.is-collage video,
+.public-gallery-media.is-gif img,
+.public-gallery-media.is-gif video,
+.public-gallery-media.is-boomerang video,
+.public-gallery-media.is-video video,
+.public-gallery-media.is-portrait img,
+.public-gallery-media.is-portrait video {
+  max-width: min(100%, 420px) !important;
+  max-height: min(78vh, 820px) !important;
+}
+
+/* Soft stills (photo / social) — still never force a crop box */
+.public-gallery-media.is-photo img,
+.public-gallery-media.is-social img {
+  max-width: 100% !important;
+  max-height: min(70vh, 720px) !important;
+}
+
+.public-gallery-type {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(5, 4, 10, 0.82);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.public-gallery-social-placeholder {
+  padding: 1rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.public-gallery-copy {
+  padding: 1rem;
+}
+
+.public-gallery-copy h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.public-gallery-date {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+/* First line of each gallery post */
+.public-gallery-date-top {
+  padding: 0.85rem 1rem 0;
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.public-gallery-copy p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.public-gallery-caption {
+  white-space: pre-wrap;
+}
+
+.public-gallery-caption.collapsed {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 7;
+}
+
+.public-gallery-continue {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.public-gallery-continue:hover {
+  text-decoration: underline;
+}
+
+.public-gallery-social-link {
+  display: inline-block;
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+  text-align: right;
+}
+
+.public-gallery-social-link:hover {
+  text-decoration: underline;
+}
+
+.public-gallery-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.public-gallery-actions > * {
+  min-width: 0;
+}
+
+.public-gallery-continue {
+  align-self: flex-start;
+  text-align: left;
+}
+
+.public-gallery-social-link {
+  align-self: flex-end;
+  text-align: right;
+}
+
+@media (max-width: 420px) {
+  .public-gallery-actions {
+    gap: 0.5rem;
+  }
+
+  .public-gallery-social-link,
+  .public-gallery-continue {
+    font-size: 0.8rem;
+  }
+}
+
+.public-gallery-empty,
+.public-gallery-status {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  text-align: center;
+}
+
+.gallery-booking-callout {
+  margin: 2rem auto 0;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.gallery-booking-callout h2 {
+  margin: 0;
+}
+
+.gallery-booking-callout p {
+  color: var(--muted);
+}
+
+/*
+  PHONE LAYOUT — do not use horizontal carousels for tall portrait booth media.
+  Stack full-width cards vertically, same sizing rules as bonus.html media-frame.
+*/
+@media (max-width: 700px) {
+  .site-main.gallery-page {
+    padding: 1rem 0.75rem 1.5rem;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .public-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-gallery-filters {
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    padding: 0 0.15rem;
+  }
+
+  .public-gallery-filter {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.88rem;
+  }
+
+  .public-gallery-section {
+    padding-top: 0.55rem;
+  }
+
+  .public-gallery-section-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+    padding: 0 0.15rem;
+  }
+
+  .public-gallery-section-count,
+  .public-gallery-section-nav {
+    display: none;
+  }
+
+  .public-gallery-section-title {
+    font-size: 1.12rem;
+  }
+
+  .public-gallery-section-blurb {
+    font-size: 0.84rem;
+  }
+
+  /* Vertical stack — no side-swipe, no half-peek cards */
+  .public-gallery-track {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .public-gallery-track .public-gallery-card,
+  .public-gallery-section.is-collage .public-gallery-card,
+  .public-gallery-section.is-strip .public-gallery-card,
+  .public-gallery-section.is-motion .public-gallery-card,
+  .public-gallery-section.is-photo .public-gallery-card,
+  .public-gallery-section.is-social .public-gallery-card {
+    flex: none;
+    flex-basis: auto;
+    width: 100%;
+    max-width: 100%;
+    scroll-snap-align: none;
+  }
+
+  .public-gallery-card {
+    overflow: hidden; /* rounded corners only — media sizes itself inside */
+    border-radius: 16px;
+  }
+
+  /* Match bonus.html .media-frame exactly on phone */
+  .public-gallery-media {
+    width: 100%;
+    min-height: 240px;
+    padding: 12px 12px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0;
+    overflow: visible;
+  }
+
+  .public-gallery-media img,
+  .public-gallery-media video {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: min(70vh, 720px) !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+
+  /* Strips are taller/narrower — same as bonus #strip-frame */
+  .public-gallery-media.is-strip img,
+  .public-gallery-media.is-strip video {
+    max-width: min(100%, 360px) !important;
+    max-height: min(78vh, 900px) !important;
+  }
+
+  /* Collage + motion — hero-ish, still full portrait, never cropped */
+  .public-gallery-media.is-collage img,
+  .public-gallery-media.is-collage video,
+  .public-gallery-media.is-gif img,
+  .public-gallery-media.is-gif video,
+  .public-gallery-media.is-boomerang video,
+  .public-gallery-media.is-video video,
+  .public-gallery-media.is-portrait img,
+  .public-gallery-media.is-portrait video {
+    max-width: min(100%, 420px) !important;
+    max-height: min(78vh, 820px) !important;
+  }
+
+  .public-gallery-copy {
+    padding: 0.75rem 0.9rem 1rem;
+  }
+
+  .public-gallery-copy h3 {
+    font-size: 1rem;
+  }
+
+  .public-gallery-date-top {
+    padding: 0.7rem 0.9rem 0;
+    font-size: 0.78rem;
+  }
+
+  .public-gallery-type {
+    top: 0.55rem;
+    right: 0.55rem;
+  }
+}
+
+/* Uniform “Back to start” under page nav (and under primary actions where used) */
+.page-back,
+.session-bottom {
+  text-align: center;
+  margin: 0.9rem auto 0.25rem;
+}
+
+.page-back .btn,
+.session-bottom .btn,
+a.page-back-btn.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  text-decoration: none;
+}
+
+/* --------------------------------------------------
+   Info / explainer pages
+   -------------------------------------------------- */
+
+.page-intro {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.info-page,
+.bonus-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.info-grid,
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-card,
+.info-callout,
+.status-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.info-card h2,
+.info-callout h2,
+.status-card h2 {
+  margin-top: 0;
+}
+
+.step-number-large {
+  width: 42px;
+  height: 42px;
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+/* --------------------------------------------------
+   Ticket handoff page
+   -------------------------------------------------- */
+
+.ticket-redesign .ticket-code {
+  font-size: 2.6rem;
+  margin: 1rem auto 0.75rem;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ticket-actions .btn,
+.ticket-actions .portal-button {
+  min-width: 180px;
+}
+
+@media (max-width: 700px) {
+  .ticket-actions .btn,
+  .ticket-actions .portal-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* --------------------------------------------------
+   Session entry redesign
+   -------------------------------------------------- */
+
+.enter-code-redesign {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.code-card-center {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.code-input-row-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.code-input-row-stack input {
+  flex: 1 1 260px;
+}
+
+.code-input-row-stack button,
+.code-input-row-stack .btn {
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------
+   Bonus finale page
+   -------------------------------------------------- */
+
+.preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.preview img {
+  max-width: 100%;
+  border-radius: 14px;
+}
+
+.bonus-gallery h2 {
+  margin-bottom: 1rem;
+}
+
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* --------------------------------------------------
+   Guest / dashboard page
+   -------------------------------------------------- */
+
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------
+   Guest sign-in / verify / dashboard pages
+   -------------------------------------------------- */
+
+.save-flow-page,
+.dashboard-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.guest-auth-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 18px 0 14px;
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+}
+
+.guest-auth-tab {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.guest-auth-tab.is-active {
+  color: #12101a;
+  background: linear-gradient(90deg, #ff4f9a, #ff9c6b);
+  box-shadow: 0 8px 22px rgba(255,79,154,0.24);
+}
+
+.save-flow-page .info-callout {
+  margin-top: 0;
+}
+
+.guest-code-note {
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.save-flow-page [hidden] {
+  display: none !important;
+}
+
+.form-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.form-shell h2 {
+  margin-top: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------
+   Pay page polish
+   -------------------------------------------------- */
+
+.pay-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.package-grid-pay {
+  margin-bottom: 2rem;
+}
+
+.package-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.payment-shell {
+  max-width: 760px;
+  margin: 0 auto 1.5rem;
+  padding: 1.25rem;
+  border-radius: 22px;
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.payment-status {
+  margin-bottom: 1rem;
+}
+
+.wallet-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 auto 1rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.apple-pay-wrap,
+.google-pay-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  min-height: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.google-pay-wrap[hidden] {
+  display: none !important;
+}
+
+/* Official Google Pay button mount (Square draws the logo button) */
+#google-pay-button {
+  width: 100%;
+  min-height: 48px;
+}
+
+#google-pay-button iframe,
+#google-pay-button button,
+#google-pay-button div {
+  max-width: 100%;
+}
+
+.payment-or-divider {
+  text-align: center;
+  margin: 0.25rem 0 0.85rem;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.payment-or-divider[hidden] {
+  display: none !important;
+}
+
+/* Official Apple Pay system button ("Pay with Pay") */
+#apple-pay-button.apple-pay-button,
+#apple-pay-button {
+  display: none;
+  width: 100%;
+  max-width: 320px;
+  height: 48px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-appearance: -apple-pay-button;
+  -apple-pay-button-type: pay;
+  -apple-pay-button-style: white;
+}
+
+/* Non-Safari fallback: black "Pay with Pay" style pill */
+#apple-pay-button.apple-pay-button-fallback {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: #000 !important;
+  color: #fff !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+#apple-pay-button.apple-pay-button-fallback .apple-pay-fallback-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
+#apple-pay-button.apple-pay-button-fallback .apple-pay-mark {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#apple-pay-button.apple-pay-button-fallback strong {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.card-container {
+  margin: 1rem 0;
+}
+
+.payment-note {
+  margin-top: 14px;
+}
+
+/* --------------------------------------------------
+   Bonus download buttons
+   -------------------------------------------------- */
+
+.bonus-card {
+  background: rgba(16, 16, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 0.8rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.bonus-media {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+}
+
+.bonus-card-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.bonus-download-btn {
+  min-width: 140px;
+}
+
+/* =========================================================
+   WEBSITE BRAND PASS — inspired by kiosk look
+   ========================================================= */
+
+:root{
+  --insta-pink: #ff5fa2;
+  --insta-pink-deep: #ff2f6c;
+  --insta-gold: #ffbf5f;
+  --insta-cream: #fff9f5;
+  --insta-night: #171320;
+  --insta-glow: rgba(255,120,200,0.35);
+  --insta-glow-soft: rgba(255,180,120,0.18);
+}
+
+/* Shared page shell polish */
+body {
+  background:
+    radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
+}
+
+.card,
+.payment-shell,
+.info-card,
+.info-callout,
+.status-card,
+.dashboard-card,
+.form-shell,
+.code-card,
+.bonus-card {
+  background: rgba(16, 16, 26, 0.94);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.38),
+    0 0 22px rgba(255,120,200,0.06);
+}
+
+/* Titles / headings */
+h1, h2, h3,
+.brand-main,
+.portal-orb-main,
+.pkg-name,
+.ticket-code {
+  letter-spacing: 0.06em;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  text-transform: uppercase;
+  color: var(--insta-cream);
+  text-shadow:
+    0 0 10px rgba(255,120,200,0.12),
+    0 0 22px rgba(255,180,120,0.07);
+}
+
+h2 {
+  color: var(--insta-cream);
+}
+
+/* Main website buttons */
+.btn,
+.portal-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0.75rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    linear-gradient(135deg,
+      var(--insta-pink),
+      var(--insta-pink-deep),
+      var(--insta-gold)
+    );
+  color: #130d16;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    0 0 18px rgba(255,95,162,0.32),
+    0 10px 24px rgba(0,0,0,0.45);
+}
+
+.btn:hover,
+.portal-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 26px rgba(255,95,162,0.46),
+    0 14px 28px rgba(0,0,0,0.52);
+}
+
+/* Secondary text links */
+.secondary-link {
+  color: #8ef0f2;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Portal orbs */
+.portal-orb {
+  box-shadow:
+    0 0 24px rgba(255,120,200,0.26),
+    0 0 64px rgba(255,180,120,0.10);
+}
+
+.portal-orb-main {
+  font-size: 1.25rem;
+}
+
+.portal-orb-sub {
+  color: rgba(255,245,250,0.88);
+}
+
+/* Pay page package cards — move away from dull circles */
+.package-grid-pay {
+  gap: 1.4rem;
+}
+
+.package-card {
+  width: 250px;
+  height: 250px;
+  border-radius: 30px;
+  padding: 1.15rem;
+  background:
+    radial-gradient(circle at 25% 18%,
+      rgba(255,255,255,0.20),
+      rgba(255,190,230,0.14) 18%,
+      rgba(255,110,170,0.18) 42%,
+      rgba(255,120,60,0.16) 64%,
+      rgba(20,8,28,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.22),
+    0 0 54px rgba(255,180,120,0.10),
+    inset 0 0 18px rgba(255,255,255,0.12);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.package-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 34px rgba(255,120,200,0.30),
+    0 0 72px rgba(255,180,120,0.14),
+    inset 0 0 18px rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.16);
+}
+
+.package-badge {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.82);
+  font-weight: 700;
+}
+
+.pkg-name {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  color: var(--insta-cream);
+  margin-top: 0.2rem;
+}
+
+.pkg-desc {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.pkg-price {
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #ffcf8f;
+  text-shadow:
+    0 0 10px rgba(255,190,120,0.30),
+    0 0 20px rgba(255,150,90,0.18);
+}
+
+/* Payment shell */
+.payment-shell {
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.38),
+    0 0 26px rgba(255,120,200,0.10);
+}
+
+#selected-package-label {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Apple Pay wrapper stays clean — official button supplies its own chrome */
+.apple-pay-wrap {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Card entry box */
+.card-container {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  padding: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Ticket code */
+.ticket-code {
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0.06),
+      rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--insta-cream);
+  text-shadow: 0 0 18px rgba(255,120,200,0.16);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="tel"],
+input[type="email"] {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* Keypad feel */
+.keypad-key {
+  background: rgba(255,255,255,0.10);
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,0.08),
+    0 0 12px rgba(255,120,200,0.08);
+}
+
+.keypad-key:active {
+  transform: scale(0.97);
+}
+
+/* Bonus hero and cards */
+.preview img,
+.bonus-media {
+  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+}
+
+/* Small responsive tidy */
+@media (max-width: 700px) {
+  .package-card {
+    width: min(100%, 320px);
+    height: auto;
+    min-height: 240px;
+  }
+
+  .pkg-price {
+    font-size: 1.65rem;
+  }
+}
+
+/* --------------------------------------------------
+   Apple Pay button hover (fallback only — system button handles its own)
+   -------------------------------------------------- */
+
+.apple-pay-wrap #apple-pay-button.apple-pay-button-fallback:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* --------------------------------------------------
+   Bonus page glow-up
+   -------------------------------------------------- */
+
+.bonus-page-glow {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bonus-kicker {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-intro {
+  margin-bottom: 1.75rem;
+}
+
+.bonus-actions-top {
+  margin-bottom: 1.5rem;
+}
+
+.bonus-hero-shell {
+  margin-top: 1rem;
+}
+
+.bonus-hero-label {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-hero-frame {
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.bonus-hero-frame img,
+.bonus-hero-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
+.bonus-status-card {
+  min-height: 140px;
+}
+
+.bonus-gallery-shell {
+  margin-top: 2rem;
+}
+
+.bonus-section-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bonus-callout {
+  text-align: center;
+}
+
+.bonus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bonus-card {
+  padding: 0.8rem;
+  border-radius: 24px;
+}
+
+.bonus-card .hero-label {
+  text-align: center;
+  margin-top: 0.7rem;
+  color: rgba(255,255,255,0.84);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Bonus page glow-up
+   -------------------------------------------------- */
+
+.bonus-page-glow {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.bonus-kicker {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-intro {
+  margin-bottom: 1.75rem;
+}
+
+.bonus-actions-top {
+  margin-bottom: 1.5rem;
+}
+
+.bonus-hero-shell {
+  margin-top: 1rem;
+}
+
+.bonus-hero-label {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.8rem;
+}
+
+.bonus-hero-frame {
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.bonus-hero-frame img,
+.bonus-hero-frame video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
+.bonus-status-card {
+  min-height: 140px;
+}
+
+.bonus-gallery-shell {
+  margin-top: 2rem;
+}
+
+.bonus-section-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bonus-callout {
+  text-align: center;
+}
+
+.bonus-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.bonus-card {
+  padding: 0.8rem;
+  border-radius: 24px;
+}
+
+.bonus-card .hero-label {
+  text-align: center;
+  margin-top: 0.7rem;
+  color: rgba(255,255,255,0.84);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Template-set deliverables bonus layout
+   -------------------------------------------------- */
+
+.bonus-deliverables-shell {
+  margin-top: 2rem;
+}
+
+.deliverable-block {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(16,16,26,0.62);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+}
+
+.deliverable-head {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.deliverable-head h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deliverable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 700px) {
+  .deliverable-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------
+   Ticket handoff page polish
+   -------------------------------------------------- */
+
+.ticket-page-glow {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.ticket-code-shell {
+  text-align: center;
+  margin-top: 1.25rem;
+  padding: 1.5rem 1rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 18%,
+      rgba(255,255,255,0.14),
+      rgba(255,180,230,0.10) 20%,
+      rgba(255,110,170,0.14) 42%,
+      rgba(255,120,60,0.12) 64%,
+      rgba(16,16,26,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.18),
+    0 0 54px rgba(255,180,120,0.08),
+    inset 0 0 18px rgba(255,255,255,0.08);
+}
+
+.ticket-code-label {
+  color: rgba(255,255,255,0.82);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.ticket-code-big {
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 1;
+  padding: 1.2rem 1rem;
+  margin: 0 auto;
+  max-width: 560px;
+}
+
+.ticket-help {
+  margin-top: 1rem;
+}
+
+.ticket-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.ticket-actions-main .btn {
+  min-width: 180px;
+}
+
+.ticket-callout {
+  text-align: center;
+}

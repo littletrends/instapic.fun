@@ -1,0 +1,17 @@
+{
+  "updated": "collage-centre-1",
+  "note": "Penny Fever bonus geometry, amusement template style. Each type has its own canvas size. Collage: 4 stills in the corner windows, and the full session video in the centre window. GIF/boom: rounded-rect window.",
+  "collage": {
+    "size": [720, 1440],
+    "photos": [
+      [68, 69, 206, 325],
+      [444, 69, 206, 325],
+      [68, 923, 206, 325],
+      [444, 923, 206, 325]
+    ],
+    "radius": 12,
+    "branding": [186, 418, 349, 480]
+  },
+  "gif": { "size": [752, 1392], "x": 112, "y": 97, "w": 559, "h": 1140, "shape": "roundrect", "radius": 20 },
+  "boomerang": { "size": [752, 1376], "x": 112, "y": 95, "w": 559, "h": 1245, "shape": "roundrect", "radius": 20 }
+}

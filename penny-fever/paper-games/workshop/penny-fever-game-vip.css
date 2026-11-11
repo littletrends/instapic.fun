@@ -1,0 +1,106 @@
+/* Penny Fever Game VIP — Felix carnival look (pf-game-vip-2) */
+* { box-sizing: border-box; }
+:root {
+  color-scheme: light;
+  --cream: #f3e6d2;
+  --card: rgba(255, 250, 240, 0.78);
+  --gold: #c9973f;
+  --gold-soft: rgba(201, 151, 63, 0.55);
+  --brown: #3b2413;
+  --brown-soft: #6a4a30;
+  --ui: var(--instapic-ui-font, "Unique", system-ui, sans-serif);
+  --title: var(--instapic-title-font, "Subotype Steady", "Unique", serif);
+}
+html, body { margin: 0; min-height: 100vh; background: var(--cream); color: var(--brown); }
+body {
+  font-family: var(--title);
+  font-size: 17px;
+  line-height: 1.5;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 214, 140, 0.55), transparent 55%),
+    radial-gradient(circle at 0% 100%, rgba(255, 160, 190, 0.25), transparent 45%),
+    var(--cream);
+}
+a { color: inherit; }
+.masthead { display: flex; justify-content: space-between; max-width: 960px; margin: 0 auto; padding: 16px 22px; }
+.back-link { font-family: var(--ui); font-size: 15px; text-decoration: none; color: var(--brown-soft); }
+.back-link:hover { color: var(--brown); }
+main { width: min(920px, calc(100% - 28px)); margin: 0 auto; padding: 8px 0 48px; }
+.welcome { text-align: center; padding: 10px 8px 22px; }
+.welcome h1 { font-family: var(--ui); font-weight: normal; font-size: clamp(26px, 5vw, 40px); line-height: 1.1; margin: 0 0 10px; }
+.welcome p { max-width: 560px; margin: 0 auto; font-size: 17px; color: var(--brown-soft); }
+.label { margin: 0; font-family: var(--ui); font-size: 13px; letter-spacing: .14em; color: var(--brown-soft); }
+.file-count { text-align: center; font-family: var(--ui); font-size: 15px; color: var(--brown-soft); margin: 0 0 14px; }
+
+.session-card, .empty-state {
+  background: var(--card);
+  border: 3px solid var(--gold);
+  border-radius: 26px;
+  box-shadow: 0 12px 34px rgba(90, 55, 20, 0.18), inset 0 0 0 1px rgba(255,255,255,.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: clamp(18px, 4vw, 30px);
+  text-align: center;
+}
+.session-list { display: grid; gap: 22px; }
+.session-code { margin: 6px 0 4px; font-family: var(--ui); font-weight: normal; font-size: clamp(28px, 6vw, 40px); letter-spacing: .12em; color: var(--gold); text-shadow: 0 1px 0 #fff8; }
+.session-count { margin: 0 0 18px; font-size: 16px; color: var(--brown-soft); }
+
+/* Felix orb (copied from felix-booth.css, felixOrbSpin) */
+.vip-orb {
+  position: relative; isolation: isolate;
+  display: inline-grid; place-items: center;
+  width: 190px; height: 190px; margin: 6px auto 22px;
+  border-radius: 50%;
+  text-decoration: none; text-align: center;
+  font-family: var(--ui); font-size: 20px; line-height: 1.1; color: #fff;
+  text-shadow: 0 2px 6px rgba(60, 20, 40, 0.55);
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.45), rgba(255,255,255,.08) 60%);
+  border: 2px solid rgba(255,255,255,.55);
+}
+.vip-orb span { position: relative; z-index: 1; padding: 0 22px; }
+.vip-orb::before {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%; z-index: -1; pointer-events: none;
+  background: conic-gradient(from 0deg, rgba(255,140,70,.98), rgba(255,60,170,.98), rgba(255,215,120,.98), rgba(170,70,255,.98), rgba(255,140,70,.98));
+  filter: blur(10px) saturate(1.25); opacity: .95;
+  animation: felixOrbSpin 4.6s linear infinite;
+}
+.vip-orb::after {
+  content: ""; position: absolute; inset: 14px; border-radius: 50%; pointer-events: none;
+  border: 2px solid rgba(255,255,255,.25);
+  box-shadow: inset 0 0 16px rgba(255,255,255,.32), 0 0 24px rgba(255,120,200,.28);
+}
+.vip-orb:active { transform: scale(.97); }
+@keyframes felixOrbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .vip-orb::before { animation: none; } }
+
+.strips-label { margin-bottom: 10px; }
+.sessions-list { display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 10px; justify-content: center; flex-wrap: wrap; }
+.strip-thumb { margin: 0; display: grid; justify-items: center; gap: 6px; width: 120px; }
+.strip-image { width: 120px; height: 220px; object-fit: contain; background: #fff; border: 2px solid var(--gold-soft); border-radius: 12px; box-shadow: 0 6px 14px rgba(90,55,20,.15); }
+.game-session-label { font-family: var(--ui); font-size: 13px; letter-spacing: .1em; color: var(--brown-soft); }
+
+.pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; padding: 0 16px; border-radius: 999px;
+  border: 2px solid var(--gold); background: rgba(255, 236, 200, .85);
+  font-family: var(--ui); font-size: 14px; color: var(--brown); text-decoration: none; cursor: pointer;
+}
+.pill:hover { background: #ffe1a8; }
+.pill.small { min-height: 32px; padding: 0 12px; font-size: 13px; }
+.card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; margin-top: 14px; }
+.remove-file { border: 0; background: none; padding: 6px 4px; font-family: var(--ui); font-size: 14px; color: #9b3b2a; text-decoration: underline; cursor: pointer; }
+.saved-date { margin: 12px 0 0; font-size: 14px; color: var(--brown-soft); }
+
+.empty-state[hidden] { display: none; }
+.empty-stall { width: min(240px, 60vw); height: auto; display: block; margin: 0 auto 10px; }
+.empty-state h2 { margin: 0 0 6px; font-family: var(--ui); font-weight: normal; font-size: 26px; }
+.empty-state p { margin: 0 auto 14px; max-width: 440px; font-size: 17px; color: var(--brown-soft); }
+
+.privacy-note { margin: 26px 8px 0; text-align: center; font-size: 15px; color: var(--brown-soft); }
+@media (max-width: 560px) {
+  .masthead { padding: 12px 14px; }
+  .vip-orb { width: 170px; height: 170px; font-size: 18px; }
+  .strip-thumb { width: 100px; }
+  .strip-image { width: 100px; height: 190px; }
+}

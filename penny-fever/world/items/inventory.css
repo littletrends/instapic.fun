@@ -1,0 +1,318 @@
+.treasure-launch{position:fixed;bottom:20px;left:20px;z-index:9000;border:2px solid #b49450;border-radius:24px;padding:12px 20px;background:#304537;color:#fff0cd;font:700 16px Georgia,serif;cursor:pointer;box-shadow:0 4px 18px #0006}
+#discoveryDoor .door-pocket{display:block;width:100%;max-width:22rem;margin:1.25rem auto 0;box-sizing:border-box}
+.is-in-world .treasure-launch,.is-in-world .door-pocket{display:none}
+.has-treasure-open{overflow:hidden;overscroll-behavior:none}
+.treasure-book{width:min(1180px,96vw);max-width:none;height:min(860px,94dvh);max-height:94dvh;padding:0;border:0;border-radius:18px;background:transparent;color:#3d2c1f;box-shadow:none;font:17px/1.45 Georgia,serif;overflow:hidden;z-index:10000}
+.treasure-book::backdrop{background:#120c0ad4}
+.treasure-book[open],.treasure-book:modal,.treasure-book.is-open{display:flex;flex-direction:column;max-width:min(1180px,96vw);max-height:94dvh}
+.treasure-book[hidden],.treasure-book [hidden]{display:none!important}
+.treasure-book img[data-src]{background:radial-gradient(ellipse at 50% 58%,#efe4c8 0%,#e4d0a8 72%)}
+.treasure-book button,.treasure-book input,.treasure-book select{font:inherit}
+.treasure-book button{border:1px solid #ad8b53;background:#fff8e9;color:#3d2c1f;border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px;box-shadow:none}
+.treasure-book button:hover{background:#e9d9b6}
+.treasure-book .penny-convert{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.treasure-book .penny-convert[hidden]{display:none!important}
+.treasure-book .penny-convert button{flex:1;min-width:140px;min-height:44px;background:#7b345a;color:#fff8e9;border-color:#5a2440}
+.treasure-book .penny-convert button:hover{background:#5a2440}
+.treasure-book .penny-convert button:disabled{opacity:.45;background:#fff8e9;color:#8a7460;border-color:#c9ae7b}
+.treasure-book :focus-visible{outline:3px solid #7b345a;outline-offset:3px}
+body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none}
+
+.pocket-shell{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;height:100%;background:linear-gradient(180deg,#2a1c16,#1a120f 40%,#241810);border:3px solid #c4a064;border-radius:18px;box-shadow:0 22px 80px #000a,inset 0 0 0 1px #7a523288;overflow:hidden}
+.pocket-header{position:relative;z-index:6;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:16px 20px 12px;color:#fff0cd}
+.pocket-header h1{font-size:clamp(26px,4vw,36px);margin:0;letter-spacing:.02em}
+.pocket-header p{margin:2px 0}
+.pocket-eyebrow{font:700 11px/1.6 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#e2c48a}
+.pocket-close{background:#3a2a22;color:#fff0cd;border-color:#c4a064}
+.pocket-save{margin:0;padding:8px 20px;background:#ffe6b8;color:#5a3a28}
+
+.pocket-menu{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 16px 12px}
+.pocket-tabs{display:flex;gap:4px}
+.pocket-tabs button{min-height:36px;padding:6px 14px;border-radius:999px;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.pocket-tabs button[aria-selected=true]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
+.pocket-menu input[type=search]{flex:1 1 180px;min-width:0;width:100%;padding:8px 12px;border:1px solid #ac8b59;background:#fff9ed;border-radius:8px;color:#3d2c1f;font-size:16px}
+.pocket-filters{display:flex;gap:4px}
+.pocket-filters button{min-height:36px;padding:6px 12px;border-radius:999px;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.pocket-filters button[aria-pressed=true]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
+.shelf-back{background:#3a2a22;color:#fff0cd;border-color:#c4a064;font:700 13px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+
+.shelf-view{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:
+  linear-gradient(90deg,#0000 22px,#c9ae7b66 22px 23px,#0000 23px) 0 0/100% 100%,
+  linear-gradient(#0000 0 27px,#e2c48a55 27px 28px,#0000 28px) 0 8px/100% 28px,
+  linear-gradient(180deg,#f4e6c8,#efe0c0)}
+.shelf-intro{margin:0 8px 14px;color:#6a5340;font-size:16px}
+.shelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:18px 14px;align-content:start}
+.stall-list{display:flex;flex-direction:column;gap:10px}
+.stall-group{margin:12px 4px 2px;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7a3040}
+.treasure-book .stall-row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:10px 12px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;text-align:left;min-height:0;box-shadow:0 3px 0 #e4d0a8}
+.treasure-book .stall-row:hover{border-color:#7a3040;transform:translateY(-2px);background:#fffdf6}
+.stall-cover{display:grid;place-items:center;width:76px;height:76px;background:radial-gradient(ellipse at 50% 58%,#efe4c8 0%,#e4d0a8 72%);border-radius:12px;overflow:hidden;box-shadow:inset 0 2px 10px #6a4a2814}
+.stall-cover img{width:90%;height:90%;object-fit:contain;display:block;filter:drop-shadow(0 4px 8px #0004)}
+.stall-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stall-copy em{font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.stall-copy strong{font-size:18px;font-weight:400;color:#3d2c1f}
+.stall-mark{font:700 12px/1.3 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#7a3040}
+.stall-pips{display:flex;gap:4px;flex-wrap:wrap;max-width:84px;justify-content:flex-end}
+.stall-pips i{width:8px;height:8px;border-radius:99px;background:#d7c199;box-shadow:inset 0 0 0 1px #c4a06466}
+.stall-pips i.is-on{background:#7a3040}
+.treasure-book .stall-row.is-complete{box-shadow:0 3px 0 #e4d0a8,0 0 0 2px #c4a064}
+.treasure-book .stall-row.is-complete .stall-mark{color:#38583b}
+.treasure-book .stall-row.is-locked .stall-cover img{filter:grayscale(1) brightness(.58) contrast(1.12) drop-shadow(0 4px 8px #0004);opacity:.8}
+.treasure-book .stall-row.is-locked .stall-mark{color:#8a7460}
+.treasure-book .stall-row.is-collection{background:linear-gradient(90deg,#fffaf0,#f4e6c8)}
+.treasure-book .stall-row.is-workshop{opacity:.88}
+.chapter-slot{display:grid;grid-template-columns:76px minmax(0,1fr);grid-template-areas:"well num" "well name" "well mark";gap:2px 10px;align-items:center;width:100%;padding:8px;text-align:left}
+.chapter-slot .slot-well{grid-area:well;width:76px;aspect-ratio:1}
+.chapter-num{grid-area:num;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7a3040}
+.chapter-slot strong{grid-area:name;font-size:16px;margin:0}
+.chapter-slot em{grid-area:mark}
+.album-chapter-link{display:block;width:100%;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;text-align:left;min-height:0;box-shadow:none}
+.album-chapter-link:hover{color:#7a3040;text-decoration:underline}
+.treasure-book .shelf-book{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 10px 12px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;min-height:0;text-align:center;box-shadow:0 3px 0 #e4d0a8}
+.treasure-book .shelf-book:hover{border-color:#7a3040;transform:translateY(-3px);background:#fffdf6}
+.shelf-cover{display:grid;place-items:center;width:100%;aspect-ratio:1;background:radial-gradient(ellipse at 50% 58%,#efe4c8 0%,#e4d0a8 72%);border-radius:12px;overflow:hidden;box-shadow:inset 0 2px 10px #6a4a2814}
+.shelf-cover img{width:90%;height:90%;object-fit:contain;display:block;filter:drop-shadow(0 6px 10px #0005)}
+.treasure-book .shelf-book.is-missing .shelf-cover img{filter:grayscale(1) brightness(.58) contrast(1.12) drop-shadow(0 6px 10px #0004);opacity:.8}
+.treasure-book .shelf-book strong{font-size:15px;font-weight:400;color:#3d2c1f}
+.treasure-book .shelf-book em{font:700 11px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.treasure-book .shelf-book.is-missing strong{color:#8a7460;font-style:italic}
+.treasure-book .shelf-book.is-missing em{color:#9a8a74}
+.treasure-book .shelf-book.is-complete{box-shadow:0 3px 0 #e4d0a8,0 0 0 2px #c4a064}
+.treasure-book .shelf-book.is-complete em{color:#38583b}
+
+.treasure-tree{padding:12px 10px 18px;overflow:auto}
+.tree-group{margin:12px 6px 6px;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7a3040}
+.tree-group:first-child{margin-top:0}
+.treasure-tree details{margin:0 0 6px;border:1px solid #e4d0a8;border-radius:12px;background:#fffaf0}
+.treasure-tree details.is-current{border-color:#7a3040;box-shadow:0 0 0 1px #7a304055}
+.treasure-tree details.is-complete summary .tree-mark{color:#38583b}
+.treasure-tree summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;cursor:pointer;list-style:none;font:16px/1.3 Georgia,serif;color:#3d2c1f}
+.treasure-tree summary::-webkit-details-marker,.treasure-tree summary::marker{display:none;content:''}
+.treasure-tree summary::before{content:'▸';color:#7a3040;margin-right:6px;font-size:12px}
+.treasure-tree details[open]>summary::before{content:'▾'}
+.tree-vendor{width:36px;height:48px;object-fit:contain;flex:0 0 36px;filter:drop-shadow(0 2px 4px #0003)}
+.tree-name{flex:1;min-width:0}
+.tree-mark{font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a3040;white-space:nowrap}
+.treasure-book .tree-prize{display:grid;grid-template-columns:1.4rem minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;margin:0;padding:6px 12px 6px 28px;border:0;border-top:1px solid #efe4c8;border-radius:0;background:transparent;color:#3d2c1f;text-align:left;min-height:0;box-shadow:none;font:15px/1.3 Georgia,serif}
+.treasure-book .tree-prize:hover{background:#fff6e0}
+.tree-ch{font:700 11px/1 system-ui,sans-serif;letter-spacing:.08em;color:#7a3040}
+.tree-prize em{font:700 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.tree-prize.is-missing{color:#8a7460}
+.tree-prize.is-missing em{color:#9a8a74}
+.tree-stall-head .book-cover-btn{max-width:220px}
+@media(min-width:841px){
+  .treasure-book .shelf-back{display:none!important}
+  .pocket-shell.is-book-open .shelf-back{display:inline-flex!important}
+}
+.pocket-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,.4fr) minmax(0,1fr);background:#c4a064;overflow:hidden}
+.pocket-body.is-book{grid-template-columns:minmax(240px,.42fr) minmax(0,1fr)}
+.pocket-body.is-book .treasure-tree,.pocket-body.is-book #stallHead{display:none!important}
+.pocket-spread{position:relative;display:grid;grid-template-columns:1fr 1fr;min-height:0;background:#e9d7b4;box-shadow:inset 0 0 80px #0002}
+.pocket-page{padding:22px 26px 18px;overflow:auto;min-width:0;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pocket-page.is-left{background:
+  linear-gradient(90deg,#0000 18px,#c9ae7b 18px 19px,#0000 19px) 0 28px/100% 28px,
+  linear-gradient(90deg,#f4e6c8,#efe0c0 88%,#e4d0a8)}
+.pocket-page.is-right{background:
+  linear-gradient(90deg,#0000 18px,#c9ae7b 18px 19px,#0000 19px) 0 28px/100% 28px,
+  linear-gradient(90deg,#e4d0a8,#efe0c0 12%,#f4e6c8)}
+.treasure-book .book-cover-btn{display:block;width:100%;padding:10px;margin:0 0 12px;background:radial-gradient(ellipse at 50% 58%,#fffaf0 0%,#efe4c8 75%);border:1px solid #c9ae7b;border-radius:16px;min-height:0;box-shadow:inset 0 2px 12px #6a4a2814}
+.book-cover-btn img{width:100%;height:min(280px,36dvh);object-fit:contain;display:block;filter:drop-shadow(0 10px 16px #0004)}
+.treasure-book .book-cover-btn.is-missing img{filter:grayscale(1) brightness(.58) contrast(1.12) drop-shadow(0 10px 16px #0003);opacity:.82}
+.treasure-book .book-cover-btn:hover{background:radial-gradient(ellipse at 50% 58%,#fffdf6 0%,#f4e6c8 75%)}
+.pocket-kicker{font:700 11px/1.6 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7a3040;margin:0}
+.pocket-page h2{font-size:clamp(22px,3vw,32px);margin:4px 0 8px}
+.pocket-blurb{color:#6a5340;margin:0 0 14px}
+.pocket-progress{height:8px;border-radius:99px;background:#d7c199;overflow:hidden;margin:0 0 8px}
+.pocket-progress>i{display:block;height:100%;background:linear-gradient(90deg,#7a3040,#c4a064);border-radius:99px}
+.pocket-count{font:700 13px/1.4 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a3040;margin:0 0 16px}
+
+.album-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px;align-content:start}
+.album-slots.is-chapters{grid-template-columns:1fr;gap:10px}
+.album-chapter{grid-column:1/-1;margin:6px 0 0;padding:10px 0 0;border-top:1px solid #c9ae7b;font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7a3040}
+.album-chapter:first-child{border-top:0;padding-top:0;margin-top:0}
+.treasure-book .album-slot{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0;background:transparent;border:0;border-radius:12px;min-height:0;text-align:center}
+.treasure-book .album-slot.chapter-slot{display:grid;grid-template-columns:76px minmax(0,1fr);grid-template-areas:"well num" "well name" "well mark";gap:2px 10px;align-items:center;width:100%;padding:8px 10px;text-align:left;background:#fffaf0;border:1px solid #e4d0a8;border-radius:14px}
+.album-slot:hover .slot-well{border-color:#7a3040;transform:translateY(-2px)}
+.album-slot[aria-pressed=true] .slot-well{border-color:#38583b;box-shadow:inset 0 2px 10px #6a4a2822,0 0 0 2px #38583b}
+.slot-well{display:grid;place-items:center;width:100%;aspect-ratio:1;background:#efe4c8;border:1.5px dashed #c4a064;border-radius:14px;box-shadow:inset 0 3px 10px #6a4a2818;overflow:hidden}
+.album-slot.is-found .slot-well{border-style:solid;background:#fffaf0;box-shadow:inset 0 0 0 1px #e2c48a66,0 2px 0 #e4d0a8}
+.slot-art{width:78%;height:78%;object-fit:contain;display:block}
+.album-slot.is-missing .slot-art{filter:grayscale(1) brightness(.52) contrast(1.18);opacity:.72}
+.album-slot strong{font-size:13px;font-weight:400;color:#3d2c1f}
+.album-slot.is-missing strong{color:#8a7460;font-style:italic}
+.album-slot em{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#a1783a;font-style:normal}
+.album-slot.is-missing em{color:#9a8a74}
+
+.pocket-inspect{position:absolute;top:122px;left:12px;right:12px;bottom:12px;z-index:5;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:0;background:#1a120f;border:2px solid #c4a064;border-radius:16px;box-shadow:0 18px 50px #000a;overflow:hidden}
+.pocket-inspect[hidden]{display:none!important}
+.pocket-inspect.is-prize-arrive{animation:prize-zoom 1.05s cubic-bezier(.15,1.25,.35,1)}
+.pocket-stage.is-prize-chest{box-shadow:inset 0 0 0 10px #c4a064,inset 0 0 40px #6b3a24aa;background:radial-gradient(ellipse at 50% 40%,#5a4030 0%,#1a120f 70%)}
+@keyframes prize-zoom{0%{transform:scale(.28);opacity:0}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.pocket-stage{min-width:0;min-height:320px;height:100%;background:radial-gradient(ellipse at 50% 42%,#3a2e24 0%,#1a120f 72%);touch-action:none;cursor:grab}
+.pocket-stage:active{cursor:grabbing}
+.pocket-stage canvas{display:block;width:100%;height:100%}
+.pocket-card{padding:22px 20px;background:#f4e6c8;color:#3d2c1f;overflow:auto}
+.pocket-card h2{font-size:28px;margin:4px 0}
+.pocket-card p{margin:8px 0}
+.pocket-how{font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7a3040}
+.pocket-hint{color:#6a5340}
+.pocket-inspect-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+.found-view{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:linear-gradient(180deg,#f4e6c8,#efe0c0)}
+.found-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px 14px;align-content:start}
+.found-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 10px 12px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;text-align:center;box-shadow:0 3px 0 #e4d0a8}
+.found-runway{display:grid;place-items:end center;width:100%;aspect-ratio:3/4;margin:0;padding:8px 8px 0;border:3px double #a17c43;border-radius:12px;background:linear-gradient(#cbb892 0 16%,#ead6b1 16% 100%);cursor:pointer;min-height:0}
+.found-runway:hover{border-color:#7a3040}
+.found-doll{max-width:78%;max-height:92%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 8px 10px #0004)}
+.found-runway{touch-action:pan-y;cursor:ew-resize;user-select:none}
+.pocket-inspect-turn{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
+.pocket-inspect-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia,serif;white-space:nowrap}
+.pocket-inspect-turn span{min-width:4.5rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 12px system-ui,sans-serif;color:#7a3040}
+.found-turn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px}
+.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:4px 10px;min-height:32px;font:13px Georgia,serif;cursor:pointer;white-space:nowrap}
+.found-view-label{min-width:4.2rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 11px system-ui,sans-serif;color:#7a3040}
+.found-card strong{font-size:15px;font-weight:400}
+.found-card em{font:700 11px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#38583b;font-style:normal}
+
+.treasure-notice{position:fixed;right:18px;bottom:80px;z-index:9500;max-width:min(380px,90vw);padding:12px 18px;border:1px solid #c4a064;border-radius:12px;background:#304537;color:#fff0cd;box-shadow:0 4px 20px #0005;font:15px/1.4 Georgia,serif;pointer-events:none}
+.treasure-notice[hidden]{display:none}
+
+@media(max-width:840px){
+  .treasure-book[open],.treasure-book:modal,.treasure-book.is-open{
+    position:fixed;inset:0;width:100%;max-width:none;height:100%;max-height:none;
+    height:100dvh;height:-webkit-fill-available;margin:0;padding:0;border-radius:0;
+  }
+  .pocket-shell{
+    border-radius:0;border-width:0 0 0 0;box-shadow:none;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .pocket-header{padding:10px 12px 8px;padding-top:max(10px,env(safe-area-inset-top))}
+  .pocket-header h1{font-size:22px}
+  .pocket-header p{font-size:13px}
+  .pocket-menu{padding:0 12px 10px;align-items:stretch}
+  .pocket-tabs{width:100%}
+  .pocket-tabs button{flex:1}
+  .pocket-body.is-tree-spread:not(.has-stall) .is-right{display:none}
+  .pocket-body.is-tree-spread.has-stall .treasure-tree{display:none}
+  #bookPane{
+    display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-areas:"cover kicker" "cover title" "cover bar" "cover count";
+    gap:2px 12px;align-items:center;padding:10px 12px;overflow:hidden;
+  }
+  #bookPane .book-cover-btn{grid-area:cover;max-width:72px;width:72px;margin:0;padding:4px}
+  #bookPane .book-cover-btn img{height:64px}
+  #bookPane .pocket-kicker{grid-area:kicker;margin:0}
+  #bookPane h2{grid-area:title;font-size:18px;margin:0}
+  #bookPane .pocket-progress{grid-area:bar;margin:4px 0}
+  #bookPane .pocket-count{grid-area:count;margin:0;font-size:11px}
+  #bookPane .pocket-blurb{display:none}
+  .pocket-filters{width:100%}
+  .pocket-filters button{flex:1}
+  .shelf-intro{font-size:14px;margin:0 4px 10px}
+  .stall-list{gap:8px}
+  .treasure-book .stall-row{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"cover copy" "cover pips";padding:8px 10px}
+  .stall-cover{width:64px;height:64px;grid-area:cover}
+  .stall-copy{grid-area:copy}
+  .stall-pips{grid-area:pips;justify-content:flex-start;max-width:none}
+  .stall-copy strong{font-size:16px}
+  .pocket-body{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .treasure-tree{padding:10px}
+  .tree-stall-head{
+    display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-areas:"cover kicker" "cover title" "cover bar" "cover count";
+    gap:2px 12px;align-items:center;margin-bottom:10px;
+  }
+  .tree-stall-head .book-cover-btn{grid-area:cover;max-width:72px;width:72px;margin:0;padding:4px}
+  .tree-stall-head .book-cover-btn img{height:64px}
+  .tree-stall-head .pocket-kicker{grid-area:kicker;margin:0}
+  .tree-stall-head h2{grid-area:title;font-size:18px;margin:0}
+  .tree-stall-head .pocket-progress{grid-area:bar;margin:4px 0}
+  .tree-stall-head .pocket-count{grid-area:count;margin:0;font-size:11px}
+  .pocket-blurb{display:none}
+  .pocket-page.is-right{padding:10px 12px 18px}
+  .album-slots{grid-template-columns:1fr;gap:8px}
+  .pocket-inspect{inset:0;top:0;border-radius:0;z-index:8;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+  .pocket-stage{min-height:0;height:auto}
+  .pocket-card{max-height:42dvh;padding:14px 16px;padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .pocket-inspect-bar{position:sticky;bottom:0;background:#f4e6c8}
+}
+@media(max-width:520px){
+  .shelf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .album-slots.is-chapters{grid-template-columns:1fr}
+  .album-slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pocket-header{padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top))}
+  .pocket-menu{padding:0 10px 8px}
+  .treasure-book .shelf-back{width:100%}
+  .pocket-menu input[type=search]{flex:1 1 100%}
+  .treasure-book .album-slot strong{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .shelf-book,.album-slot .slot-well{transition:none}
+  .shelf-book:hover,.album-slot:hover .slot-well{transform:none}
+}
+
+/* Collection navigation stays beside the book images, including on phones. */
+#collectionLayout{flex:1;min-height:0;overflow:hidden}
+#collectionLayout.has-collection-tree{display:grid;grid-template-columns:220px minmax(0,1fr)}
+#collectionPages{min-width:0;min-height:0;height:100%;overflow:auto}
+#collectionSidebar{overflow:auto;padding:12px 8px;border-right:1px solid #c9ae7b;background:#ead8b3}
+#collectionSidebar summary{cursor:pointer;padding:10px 4px;font:600 14px/1.35 Georgia,serif;overflow-wrap:anywhere}
+#collectionSidebar details details{margin-left:8px;border-left:1px solid #c9ae7b;padding-left:5px}
+#collectionSidebar summary[aria-current]{color:#7a3040;background:#fff6df}
+#collectionSidebar button{display:block;width:100%;text-align:left;border:0;border-radius:0;box-shadow:none;background:none;color:#493424;padding:9px 5px;min-height:40px;font:14px/1.3 Georgia,serif;overflow-wrap:anywhere}
+#collectionPages .pocket-body.is-book{display:block;height:auto;min-height:100%}
+#collectionPages .is-book #bookPane{border:0;box-shadow:none;padding:10px;margin-bottom:12px}
+#collectionPages .is-book #bookCoverBtn{max-width:100px}
+#collectionPages .is-book .is-right{overflow:visible}
+.treasure-book [data-return-game]{font-size:14px;min-height:44px}
+@media(max-width:680px){
+ #collectionLayout.has-collection-tree{grid-template-columns:126px minmax(0,1fr)}
+ #collectionSidebar{padding:5px 3px}
+ #collectionSidebar summary,#collectionSidebar button{font-size:12px}
+ #collectionSidebar details details{margin-left:3px;padding-left:2px}
+ #collectionPages .shelf-grid,#collectionPages .album-slots{grid-template-columns:1fr}
+ #collectionPages .shelf-view{padding:8px}
+ #collectionPages .is-book #bookPane{display:block;padding:4px}
+ .pocket-header{flex-wrap:wrap}
+}
+#collectionPages>.pocket-body:not(.is-book){height:100%}
+#collectionPages .is-book #bookPane{display:grid;grid-template-columns:100px minmax(0,1fr);grid-template-areas:"cover kicker" "cover title" "cover blurb" "cover bar" "cover count";gap:3px 14px;align-items:center}
+#collectionPages #bookPane .book-cover-btn{grid-area:cover;width:100px;margin:0;padding:6px}
+#collectionPages #bookPane .book-cover-btn img{height:100px;width:100%;object-fit:contain}
+#collectionPages #bookKicker{grid-area:kicker;margin:0}
+#collectionPages #bookTitle{grid-area:title;margin:0}
+#collectionPages #bookBlurb{grid-area:blurb;margin:0}
+#collectionPages #bookPane .pocket-progress{grid-area:bar;margin:3px 0}
+#collectionPages #bookCount{grid-area:count;margin:0}
+@media(max-width:680px){
+ #collectionPages .is-book #bookPane{grid-template-columns:55px minmax(0,1fr);gap:3px 6px}
+ #collectionPages #bookPane .book-cover-btn{width:55px;padding:2px}
+ #collectionPages #bookPane .book-cover-btn img{height:64px}
+ #collectionPages #bookTitle{font-size:16px}
+ .pocket-header:has([data-return-game]:not([hidden])){display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}
+ .pocket-header:has([data-return-game]:not([hidden]))>div{grid-row:1/3}
+}
+
+@media(max-width:680px){
+ #collectionPages .pocket-body.is-tree-spread.has-stall{grid-template-columns:126px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ #collectionPages .pocket-body.is-tree-spread.has-stall .treasure-tree{display:block;padding:4px}
+ .has-stall .treasure-tree summary{font-size:12px;padding:9px 4px;gap:3px}
+ .has-stall .treasure-tree .tree-vendor{display:none}
+ .has-stall .treasure-tree .tree-prize{font-size:12px;grid-template-columns:minmax(0,1fr);padding:8px 4px 8px 12px;gap:2px;min-height:44px}
+ #collectionPages .has-stall .tree-stall-head{display:block}
+}
+
+.treasure-tree details[data-tree-group]{border:0;background:transparent;box-shadow:none}
+.treasure-tree details[data-tree-group]>summary{font-weight:bold;min-height:44px}
+.treasure-tree details[data-tree-group]>details{margin-left:5px}
+.pocket-inspect .pocket-inspect-bar{position:sticky;top:0;bottom:auto;z-index:2;background:#f4e6c8;margin-bottom:10px}
+
+.treasure-book [data-look-collection]{min-height:44px;font-size:13px}
+@media(max-width:680px){
+ .pocket-header:has([data-return-game]:not([hidden]))>div{grid-row:1/4}
+ .pocket-header [data-look-collection],.pocket-header [data-return-game]{max-width:175px;font-size:12px;padding:8px}
+}
+
+/* Locked folders remain visible without revealing their pages. */
+.treasure-book .collection-lock-notice{margin:0 16px 8px;padding:9px 12px;border:1px solid #c59a5b;border-radius:8px;background:#fff1cf;color:#543719;font:14px/1.4 system-ui,sans-serif}
+.treasure-book .collection-lock-notice[hidden]{display:none}
+.treasure-book .shelf-book.is-missing:hover{transform:none}
+#collectionSidebar summary[aria-disabled="true"]{color:#86735e;font-style:italic}

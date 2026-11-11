@@ -1,0 +1,598 @@
+{
+  "version": 1,
+  "published_at": "2026-08-08T19:44:04+0930",
+  "items": [
+    {
+      "id": "1b70512edae9",
+      "type": "social",
+      "title": "#1 The Day Mirror 1 Arrived!",
+      "caption": "It was 29 October 2025\n\nThis was the day my first Magic Mirror arrived.\n\nGemma and I unpacked it and couldn\u2019t wait to try it.\n\nThe mirror was exactly what I\u2019d hoped for\u2026\n\nThe software wasn\u2019t.\n\nIt wasn\u2019t terrible.\n\nIt just wasn\u2019t really\u2026 anything.\n\nAnd it definitely wasn\u2019t me.\n\nSo I did what anyone would do.\n\nI started searching online for another program.\n\nSurely someone had already built exactly what I wanted?\n\nI found lots of options.\n\nSome looked okay.\n\nBut every one of them wanted another monthly subscription, and none of them felt quite right.\n\nAt the time I wasn\u2019t thinking,\n\n\u201cI\u2019m going to build my own software.\u201d\n\nI was thinking,\n\n\u201cThere has to be something out there that does exactly what I want.\u201d\n\nI kept looking.\n\nAnd looking.\n\nEventually I realised\u2026\n\nI was describing a product that didn\u2019t seem to exist.\n\nAt some point I stopped searching for software\u2026\n\n\u2026and started making a list of everything I wished it could do.\n\nThen that list kept growing.\n\nNot just with the things I wanted\u2026\n\n\u2026but with ideas I didn\u2019t even know I wanted in a photo booth.\n\nI never planned to build software.\n\nI never planned to build a website.\n\nI definitely never planned to spend the next nine months learning things I\u2019d never even heard of.\n\nI just couldn\u2019t settle for \u201cgood enough.\u201d\n\nOne idea became another.\n\nThen another.\n\nThen another.\n\nUntil one day\u2026\n\nInstapic existed.\n\nToday, exactly nine months later\u2026\n\nI\u2019m proud.\n\nNot because it\u2019s finished\u2026\n\n(it probably never will be!)\n\nBut because an idea scribbled on a piece of paper somehow became something real.\n\nSomething that didn\u2019t exist before.\n\nAnd something that\u2019s unmistakably me.\n\n\u2764\ufe0f Lorie x",
+      "alt": "Gemma and I posing together in front of our first Magic Mirror on the day it arrived.",
+      "category": "Behind the build",
+      "social_url": "https://www.instagram.com/reel/DbV3eGNy8iW/",
+      "media_url": "assets/gallery/1b70512edae9.jpeg",
+      "media_urls": [
+        "assets/gallery/1b70512edae9.jpeg"
+      ],
+      "share_media_url": "assets/gallery/1b70512edae9_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/1b70512edae9_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-29T13:22:06+0930",
+      "published_at": "2026-07-29T19:10:01+0930",
+      "featured": false,
+      "order": 1
+    },
+    {
+      "id": "7164ee7084f3",
+      "type": "strip",
+      "title": "Game Day Duo \u2014 Photo Strip",
+      "caption": "",
+      "alt": "",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/7164ee7084f3.jpg",
+      "media_urls": [
+        "assets/gallery/7164ee7084f3.jpg"
+      ],
+      "share_media_url": "assets/gallery/7164ee7084f3_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/7164ee7084f3_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 1
+    },
+    {
+      "id": "8ce33891aa53",
+      "type": "social",
+      "title": "#2 I Accidentally Built Something Else Today",
+      "caption": "I walked into my office this morning with absolutely no intention of building anything new.\n\nI already had a list.\n\nA sensible list.\n\nThings to test.\nThings to tidy.\nThings I had already started.\n\nThen I noticed one small thing missing from the Instapic website:\n\nA gallery.\n\nThat should have been simple.\n\nJust make a page, add a few photos and call it done\u2026 right?\n\nExcept a website gallery wasn\u2019t enough.\n\nBecause I didn\u2019t want to open website files, resize and move media, edit data by hand, remember which posts were drafts, then run Git commands every single time I wanted to add something new.\n\nI wanted the gallery to work the way the rest of Instapic works:\n\nFrom one place.\nUnder my control.\nAnd connected properly to everything behind it.\n\nSo I built the public gallery.\n\nIt can display photo strips, individual photos, collages, GIFs, Boomerangs, videos and social posts. It sorts them into sections, keeps the portrait media looking like phone stories and lets visitors move through the moments without cluttering the homepage.\n\nThen, naturally, I built the system behind the gallery too.\n\nInside my Instapic MotherPC Admin area, I can now:\n\n\u2022 Upload media\n\u2022 Create titles and captions\n\u2022 Add image descriptions\n\u2022 Choose content types and categories\n\u2022 Arrange the display order\n\u2022 Save unfinished ideas as private drafts\n\u2022 Edit or delete posts\n\u2022 Approve exactly what is allowed to appear publicly\n\u2022 Publish the finished gallery directly to the live website\n\nAnd because apparently even that wasn\u2019t enough, pressing Publish does more than update a page.\n\nIt gathers only the approved content, prepares the website gallery, copies the correct media, records the change in Git and pushes a fresh backup to GitHub before it goes live.\n\nThe screenshot on the left is what everyone sees.\n\nThe screenshot on the right is the part I decided I also needed to build so I could create and publish it myself.\n\nI didn\u2019t just add a gallery to a website.\n\nI built the content system that runs it.\n\nI had absolutely no plan to do any of this when I walked into the office this morning.\n\nI just thought:\n\n\u201cWe\u2019re probably missing a gallery.\u201d\n\nThis keeps happening.\n\nI notice one small thing.\n\nThen I wonder if it could work a little better.\n\nOne idea becomes another.\n\nThen another.\n\nThen apparently I\u2019ve built an entire gallery, content-management system and direct publishing pipeline before I\u2019ve even had time to reconsider the original idea.\n\nSo yes\u2014I accidentally built something else today.\n\nI just didn\u2019t know I was going to when I arrived.\n\n\u2764\ufe0f Lorie x",
+      "alt": "Side-by-side screenshots showing the live Instapic gallery and the MotherPC Gallery and Content publishing workspace used to manage it.",
+      "category": "Behind the build",
+      "social_url": "https://www.instagram.com/p/DbaVzQZkXoc/",
+      "media_url": "assets/gallery/8ce33891aa53_1.png",
+      "media_urls": [
+        "assets/gallery/8ce33891aa53_1.png",
+        "assets/gallery/8ce33891aa53_2.png"
+      ],
+      "share_media_url": "assets/gallery/8ce33891aa53_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/8ce33891aa53_1_social_4x5.jpg",
+        "assets/gallery/8ce33891aa53_2_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-30T17:04:34+0930",
+      "published_at": "2026-07-30T17:07:56+0930",
+      "featured": false,
+      "order": 2
+    },
+    {
+      "id": "5c6b4746d2f8",
+      "type": "collage",
+      "title": "Game Day Duo \u2014 Collage",
+      "caption": "",
+      "alt": "Game Day Duo \u2014 Collage",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/5c6b4746d2f8.mp4",
+      "media_urls": [
+        "assets/gallery/5c6b4746d2f8.mp4"
+      ],
+      "share_media_url": "assets/gallery/5c6b4746d2f8_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/5c6b4746d2f8_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 2
+    },
+    {
+      "id": "3da5879948cb",
+      "type": "social",
+      "title": "#3 I\u2019m Glad I Didn\u2019t Know AI Agents Existed",
+      "caption": "When I started building instapic, I didn\u2019t even know connected AI coding agents existed.\n\nI had ChatGPT & Grok.\n\nI would explain what I wanted to build, & they would give me Bash commands or blocks of code.\n\nThen I had to take those instructions to the terminal myself.\n\nOpen the terminal.\n\nType the command.\n\nFind the file.\n\nOpen it in nano.\n\nWork out where the new code belonged.\n\nPaste it.\n\nSave it.\n\nExit.\n\nRestart the program.\n\nTest it.\n\nThen go back & explain what worked, what broke & what happened next.\n\nAt the time, I had no idea there would eventually be AI agents that could open files, navigate the project & make changes directly.\n\nHonestly, I\u2019m glad I didn\u2019t know.\n\nIf I\u2019d had that from the beginning, I might never have learnt what I did.\n\nThe manual process forced me to understand where every file lived, what each section controlled & how every hook connected to the next part of the system.\n\nI had to know whether a change belonged in the booth, Mother PC, the website, a Python route, a JavaScript runtime, a service file or one of the growing collection of patches.\n\nWhen something broke, I could usually remember where we had been, what we had changed & why two pieces were probably conflicting.\n\nNot always immediately & definitely not without frustration.\n\nBut I wasn\u2019t pressing a button & waiting for software to appear.\n\nI was inside the build.\n\nI saw every command.\n\nI opened every file.\n\nI followed every path.\n\nI tested every connection.\n\nI learnt how the whole system fitted together because I had no other way to build it.\n\nToday, connected AI agents help me move faster. They inspect the project, trace problems & even work directly across the system.\n\nBut they\u2019re working inside an architecture I already understand\u2014because I built it the slow way first.\n\nWould I want to go back to copying every Bash command, opening nano & closing it again thousands of times?\n\nAbsolutely not \ud83d\ude02\n\nBut I wouldn\u2019t trade what that process taught me.\n\nAI helped me work out how to build Instapic.\n\nI was still the person at the terminal, making the decisions, performing the changes, testing every result & refusing to stop when it broke.\n\nAnd I\u2019m glad I learnt it that way.\n\n\u2764\ufe0f Lorie x",
+      "alt": "Behind the scenes during the development of Instapic. These terminal sessions capture the reality of building the system from scratch\u2014testing, debugging, fixing errors and learning Linux one command at a time.",
+      "category": "Behind the build",
+      "social_url": "https://www.instagram.com/p/DbiK8qIkdUM/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "media_url": "assets/gallery/3da5879948cb_1.jpg",
+      "media_urls": [
+        "assets/gallery/3da5879948cb_1.jpg",
+        "assets/gallery/3da5879948cb_2.jpeg"
+      ],
+      "share_media_url": "assets/gallery/3da5879948cb_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/3da5879948cb_1_social_4x5.jpg",
+        "assets/gallery/3da5879948cb_2_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-02T19:46:24+0930",
+      "published_at": "2026-08-02T19:50:25+0930",
+      "featured": false,
+      "order": 3
+    },
+    {
+      "id": "a511deaee02b",
+      "type": "gif",
+      "title": "Game Day Duo \u2014 GIF",
+      "caption": "GIF motion from the duo session.",
+      "alt": "Game Day Duo \u2014 GIF",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/a511deaee02b.mp4",
+      "media_urls": [
+        "assets/gallery/a511deaee02b.mp4"
+      ],
+      "share_media_url": "assets/gallery/a511deaee02b_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/a511deaee02b_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 3
+    },
+    {
+      "id": "5292335c76b9",
+      "type": "social",
+      "title": "#4 8th Dec 2025, FUCK UP OF A DAY!!!",
+      "caption": "I\u2019ve been digging through the very sophisticated notebook I kept during the early instapic build.\n\nApparently, on the 8th of December 2025, things were going exceptionally well.\n\nAs you can see from my extremely detailed technical documentation:\n\nFUCK UP OF A DAY!!!\n\nIn red pen.\n\nReal helpful for future Lorie. \ud83d\ude02\n\nUnderneath it:\n\nBUTTONS / PORTALS\n\nAt this point I was still very early into rebuilding the software that ran the Magic Mirrors, and I was learning everything as I went.\n\nThe portals and buttons were driving me absolutely insane.\n\nI\u2019d change the styling and one button would change.\n\nGreat!\n\nExcept another one wouldn\u2019t.\n\nI\u2019d change something else.\n\nDifferent button changed.\n\nThe one I actually wanted to change didn\u2019t.\n\nSomewhere amongst all the files, I was trying to work out what controlled what.\n\nSo I did what seemed perfectly sensible at the time.\n\nI created a new CSS file.\n\nSurely if I cleaned everything up and started fresh, I\u2019d finally get control of the bloody thing.\n\nI apparently spent most of the day proving that theory completely wrong.\n\nAnd after all of that?\n\nFLOW \u2192 STILL NOT DONE.\n\n\ud83d\ude02\n\nBut my favourite part is the note I left myself for the following day:\n\n9th Dec: Delete new CSS & focus on flow.css.\n\nIn other words:\n\nTomorrow, delete everything you spent today doing and go back to where you started.\nLooking at that notebook entry now makes me laugh because there\u2019s virtually no explanation of what actually happened.\n\nNo carefully documented problem.\n\nNo list of things I\u2019d tried.\n\nNo technical analysis.\n\nJust:\n\nFUCK UP OF A DAY!!!\n\nAt the time, days like this felt like a complete waste.\n\nBut every rabbit hole taught me a little more.\n\nWhere things lived.\n\nWhich files controlled what.\n\nWhat happened when I changed something.\n\nAnd occasionally, when the best solution was simply:\n\nDelete today\u2019s brilliant idea and go back to yesterday\u2019s working one. \ud83d\ude02\n\nThere would be quite a few more days like this.\n\nSome considerably worse.\n\nJudging by the rest of this notebook, Past Lorie had a very sophisticated system for documenting particularly difficult technical problems.\n\nUsually involving a red pen.\n\nAnd swearing.\n\nLots of swearing.\n\n\u2764\ufe0f Lorie x",
+      "alt": "A sophisticated notebook entry I kept during the early instapic build of 8th Dec 2025.",
+      "category": "instagram post",
+      "social_url": "https://www.instagram.com/p/DbxnUPwkjmG/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+      "media_url": "assets/gallery/5292335c76b9_1.jpeg",
+      "media_urls": [
+        "assets/gallery/5292335c76b9_1.jpeg"
+      ],
+      "share_media_url": "assets/gallery/5292335c76b9_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/5292335c76b9_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-08T19:41:15+0930",
+      "published_at": "2026-08-08T19:43:55+0930",
+      "featured": false,
+      "order": 4
+    },
+    {
+      "id": "a27ef16661c0",
+      "type": "boomerang",
+      "title": "Game Day Duo \u2014 Boomerang",
+      "caption": "Boomerang from the duo session.",
+      "alt": "Game Day Duo \u2014 Boomerang",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/a27ef16661c0.mp4",
+      "media_urls": [
+        "assets/gallery/a27ef16661c0.mp4"
+      ],
+      "share_media_url": "assets/gallery/a27ef16661c0_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/a27ef16661c0_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 4
+    },
+    {
+      "id": "fceb11d8a883",
+      "type": "strip",
+      "title": "Girls Just Wanna Have Fun \u2014 Photo Strip",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Four girls having fun together in an Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/fceb11d8a883.jpg",
+      "media_urls": [
+        "assets/gallery/fceb11d8a883.jpg"
+      ],
+      "share_media_url": "assets/gallery/fceb11d8a883_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/fceb11d8a883_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 4
+    },
+    {
+      "id": "834150523421",
+      "type": "strip",
+      "title": "Gemma \u2014 Photo Strip",
+      "caption": "Gemma on the tropical backdrop \u2014 a clean solo strip from a recent Photo Booth 1 session.",
+      "alt": "Gemma \u2014 Photo Strip",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/834150523421.jpg",
+      "media_urls": [
+        "assets/gallery/834150523421.jpg"
+      ],
+      "share_media_url": "assets/gallery/834150523421_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/834150523421_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 5
+    },
+    {
+      "id": "ed33427def2c",
+      "type": "strip",
+      "title": "Katie & Lorie \u2014 Mirror Fun Strip",
+      "caption": "Another Katie and Lorie moment from the booth \u2014 pink ribbon collage backdrop.",
+      "alt": "Katie & Lorie \u2014 Mirror Fun Strip",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/ed33427def2c.jpg",
+      "media_urls": [
+        "assets/gallery/ed33427def2c.jpg"
+      ],
+      "share_media_url": "assets/gallery/ed33427def2c_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/ed33427def2c_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-07-29T21:21:35+0930",
+      "published_at": "2026-07-29T21:21:35+0930",
+      "featured": false,
+      "order": 5
+    },
+    {
+      "id": "4df539d30c2f",
+      "type": "strip",
+      "title": "Friday Night Testing 1 \u2014 Photo Strip",
+      "caption": "Katie & Jemma - Friday-night testing session at the instapic Magic Mirror 2.",
+      "alt": "Katie & Jemma posing together in a finished Instapic Magic Mirror 2 photo strip.",
+      "category": "Magic Mirror 2",
+      "social_url": "",
+      "media_url": "assets/gallery/4df539d30c2f_1.jpg",
+      "media_urls": [
+        "assets/gallery/4df539d30c2f_1.jpg"
+      ],
+      "share_media_url": "assets/gallery/4df539d30c2f_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/4df539d30c2f_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 6
+    },
+    {
+      "id": "f2a0820e949e",
+      "type": "collage",
+      "title": "Gemma \u2014 Collage",
+      "caption": "Branded collage video from Gemma\u2019s session.",
+      "alt": "Gemma \u2014 Collage",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/f2a0820e949e.mp4",
+      "media_urls": [
+        "assets/gallery/f2a0820e949e.mp4"
+      ],
+      "share_media_url": "assets/gallery/f2a0820e949e_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/f2a0820e949e_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 6
+    },
+    {
+      "id": "7f95306b83c0",
+      "type": "strip",
+      "title": "Friday Night Testing 2 \u2014 Photo Strip",
+      "caption": "Friday-night testing katie & Jemma at the Photo Booth 1.",
+      "alt": "Katie & Jem posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Photo Booth 1",
+      "social_url": "",
+      "media_url": "assets/gallery/7f95306b83c0_1.jpg",
+      "media_urls": [
+        "assets/gallery/7f95306b83c0_1.jpg"
+      ],
+      "share_media_url": "assets/gallery/7f95306b83c0_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/7f95306b83c0_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 7
+    },
+    {
+      "id": "34e11bbcbd5f",
+      "type": "gif",
+      "title": "Gemma \u2014 GIF",
+      "caption": "Short motion GIF from the same session.",
+      "alt": "Gemma \u2014 GIF",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/34e11bbcbd5f.mp4",
+      "media_urls": [
+        "assets/gallery/34e11bbcbd5f.mp4"
+      ],
+      "share_media_url": "assets/gallery/34e11bbcbd5f_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/34e11bbcbd5f_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:11:24+0930",
+      "published_at": "2026-07-29T21:11:24+0930",
+      "featured": false,
+      "order": 7
+    },
+    {
+      "id": "83757e097530",
+      "type": "strip",
+      "title": "Friday Night Testing 3 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls posing together in a finished Instapic Magic Mirror photo strip.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/83757e097530_1.jpg",
+      "media_urls": [
+        "assets/gallery/83757e097530_1.jpg"
+      ],
+      "share_media_url": "assets/gallery/83757e097530_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/83757e097530_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 8
+    },
+    {
+      "id": "a067ada55202",
+      "type": "strip",
+      "title": "Friday Night Testing 4 \u2014 Photo Strip",
+      "caption": "Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Jem & Kenzie testing the instapic Photobooth 1.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/a067ada55202_1.jpg",
+      "media_urls": [
+        "assets/gallery/a067ada55202_1.jpg"
+      ],
+      "share_media_url": "assets/gallery/a067ada55202_1_social_4x5.jpg",
+      "share_media_urls": [
+        "assets/gallery/a067ada55202_1_social_4x5.jpg"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 9
+    },
+    {
+      "id": "d01f6b2d38f0",
+      "type": "collage",
+      "title": "Katie & Lorie \u2014 Mirror Fun Collage",
+      "caption": "Collage video from Katie and Lorie\u2019s pink ribbon session.",
+      "alt": "Katie & Lorie \u2014 Mirror Fun Collage",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d01f6b2d38f0.mp4",
+      "media_urls": [
+        "assets/gallery/d01f6b2d38f0.mp4"
+      ],
+      "share_media_url": "assets/gallery/d01f6b2d38f0_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/d01f6b2d38f0_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T21:21:35+0930",
+      "published_at": "2026-07-29T21:21:35+0930",
+      "featured": false,
+      "order": 25
+    },
+    {
+      "id": "68b3be58b60a",
+      "type": "collage",
+      "title": "Girls Just Wanna Have Fun \u2014 Collage",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Animated collage created from a group Magic Mirror session.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/68b3be58b60a.mp4",
+      "media_urls": [
+        "assets/gallery/68b3be58b60a.mp4"
+      ],
+      "share_media_url": "assets/gallery/68b3be58b60a_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/68b3be58b60a_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 101
+    },
+    {
+      "id": "e612fb52705c",
+      "type": "gif",
+      "title": "Girls Just Wanna Have Fun \u2014 GIF",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Animated GIF of four girls posing together at the Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e612fb52705c.gif",
+      "media_urls": [
+        "assets/gallery/e612fb52705c.gif"
+      ],
+      "share_media_url": "assets/gallery/e612fb52705c_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/e612fb52705c_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 102
+    },
+    {
+      "id": "f4e2c7f2ced2",
+      "type": "boomerang",
+      "title": "Girls Just Wanna Have Fun \u2014 Boomerang",
+      "caption": "A fun Instapic Magic Mirror session\u2014from the printed strip to the animated bonus memories.",
+      "alt": "Boomerang moment from a group of girls at the Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/f4e2c7f2ced2.mp4",
+      "media_urls": [
+        "assets/gallery/f4e2c7f2ced2.mp4"
+      ],
+      "share_media_url": "assets/gallery/f4e2c7f2ced2_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/f4e2c7f2ced2_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-07-29T19:58:31+0930",
+      "published_at": "2026-07-29T19:58:31+0930",
+      "featured": false,
+      "order": 103
+    },
+    {
+      "id": "d10cd1f23fa8",
+      "type": "collage",
+      "title": "Friday Night Fun 2 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d10cd1f23fa8_1.mp4",
+      "media_urls": [
+        "assets/gallery/d10cd1f23fa8_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/d10cd1f23fa8_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/d10cd1f23fa8_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 122
+    },
+    {
+      "id": "e7770396783f",
+      "type": "collage",
+      "title": "Friday Night Fun 3 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e7770396783f_1.mp4",
+      "media_urls": [
+        "assets/gallery/e7770396783f_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/e7770396783f_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/e7770396783f_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 123
+    },
+    {
+      "id": "9bd5e6ea7600",
+      "type": "collage",
+      "title": "Friday Night Fun 4 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/9bd5e6ea7600_1.mp4",
+      "media_urls": [
+        "assets/gallery/9bd5e6ea7600_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/9bd5e6ea7600_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/9bd5e6ea7600_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 124
+    },
+    {
+      "id": "b532cc933e82",
+      "type": "collage",
+      "title": "Friday Night Fun 5 \u2014 Collage",
+      "caption": "Portrait collage video from the same Friday-night Magic Mirror session.",
+      "alt": "Animated portrait collage showing two girls posing together at the Instapic Magic Mirror.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/b532cc933e82_1.mp4",
+      "media_urls": [
+        "assets/gallery/b532cc933e82_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/b532cc933e82_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/b532cc933e82_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T20:46:48+0930",
+      "published_at": "2026-08-02T20:46:48+0930",
+      "featured": false,
+      "order": 125
+    },
+    {
+      "id": "d8d2565a36d6",
+      "type": "gif",
+      "title": "Friday Night Testing 1 \u2014 GIF",
+      "caption": "Animated GIF paired with Friday Night Testing 1 \u2014 Photo Strip.",
+      "alt": "Two girls posing together in an animated Instapic Magic Mirror GIF.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/d8d2565a36d6_1.gif",
+      "media_urls": [
+        "assets/gallery/d8d2565a36d6_1.gif"
+      ],
+      "share_media_url": "assets/gallery/d8d2565a36d6_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/d8d2565a36d6_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T21:28:36+0930",
+      "published_at": "2026-08-02T21:28:36+0930",
+      "featured": false,
+      "order": 131
+    },
+    {
+      "id": "e06a7d2abf13",
+      "type": "boomerang",
+      "title": "Friday Night Fun 5 \u2014 Boomerang",
+      "caption": "A short motion moment from Friday-night fun at the Instapic Magic Mirror.",
+      "alt": "Two girls having fun and posing together in an animated Instapic Magic Mirror moment.",
+      "category": "Magic Mirror moments",
+      "social_url": "",
+      "media_url": "assets/gallery/e06a7d2abf13_1.mp4",
+      "media_urls": [
+        "assets/gallery/e06a7d2abf13_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/e06a7d2abf13_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/e06a7d2abf13_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-02T21:18:43+0930",
+      "published_at": "2026-08-02T21:18:43+0930",
+      "featured": false,
+      "order": 134
+    },
+    {
+      "id": "ded616d2a1d2",
+      "type": "gif",
+      "title": "The Before Darwin Cup Shenanigans \u2014 GIF",
+      "caption": "The boys testing before leaving to Darwin Cup.",
+      "alt": "Instapic Magic Mirror 1 test session.",
+      "category": "Magic Mirror 1",
+      "social_url": "",
+      "media_url": "assets/gallery/ded616d2a1d2_1.mp4",
+      "media_urls": [
+        "assets/gallery/ded616d2a1d2_1.mp4"
+      ],
+      "share_media_url": "assets/gallery/ded616d2a1d2_1_social_4x5.mp4",
+      "share_media_urls": [
+        "assets/gallery/ded616d2a1d2_1_social_4x5.mp4"
+      ],
+      "uploaded_at": "2026-08-03T12:28:48+0930",
+      "published_at": "2026-08-03T12:28:48+0930",
+      "featured": false,
+      "order": 135
+    }
+  ]
+}

@@ -1,0 +1,346 @@
+/* Mutoscope Hood 3D peep parlor — namespaced. PF only. Never booth/port 6000. */
+#cabinet-mutoscope.mutoscope-3d {
+  max-width: none;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+#cabinet-mutoscope .muto-sky {
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(138, 48, 48, 0.28), transparent 46%),
+    radial-gradient(ellipse at 18% 88%, rgba(212, 164, 90, 0.1), transparent 42%),
+    linear-gradient(180deg, #14080c 0%, #080406 52%, #050204 100%);
+}
+#cabinet-mutoscope .muto-sky::after { opacity: 0.18; }
+#cabinet-mutoscope .interior-room {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+#cabinet-mutoscope .interior-room::before,
+#cabinet-mutoscope .interior-room::after { display: none; }
+
+#cabinet-mutoscope .muto-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  margin: 0;
+  padding: 0.7rem 1rem 2.6rem;
+  border: 0;
+  background: linear-gradient(180deg, rgba(8, 3, 6, 0.82) 0%, rgba(8, 3, 6, 0.2) 68%, transparent 100%);
+  pointer-events: none;
+}
+#cabinet-mutoscope .muto-header .interior-back {
+  pointer-events: auto;
+  margin-bottom: 0.25rem;
+}
+#cabinet-mutoscope .muto-header .plaque-kicker,
+#cabinet-mutoscope .muto-header h1,
+#cabinet-mutoscope .muto-header .interior-blurb {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+#cabinet-mutoscope .muto-stage { perspective: none; }
+#cabinet-mutoscope .mutoscope-card {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none !important;
+  animation: none;
+}
+#cabinet-mutoscope .mutoscope-card.has-focus::after { display: none; }
+
+.muto-world {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 520px;
+  overflow: hidden;
+  background: #080406;
+}
+#mutoscopeCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: none;
+  pointer-events: auto;
+  user-select: none;
+}
+#mutoscopeCard.is-vestibule #mutoscopeCanvas { cursor: pointer; }
+#mutoscopeCard.is-playing #mutoscopeCanvas { cursor: none; }
+#mutoscopeCard.is-playing #mutoscopeCanvas.is-grabbing { cursor: grabbing; }
+#mutoscopeCard.is-playing #mutoscopeCanvas.is-aim { cursor: pointer; }
+.mutoscope-card.is-vestibule .vendor-stage:has(canvas.is-locked)::after { content: none; }
+
+.muto-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 48%, transparent 48%, rgba(6, 2, 4, 0.42) 100%),
+    linear-gradient(180deg, rgba(8, 3, 6, 0.12), transparent 16%, transparent 74%, rgba(8, 3, 6, 0.62));
+}
+#mutoscopeCard.is-playing .muto-vignette {
+  background:
+    radial-gradient(ellipse at 50% 46%, transparent 22%, rgba(4, 1, 3, 0.55) 78%, rgba(0, 0, 0, 0.88) 100%);
+}
+.muto-iris-ring {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 3;
+  width: min(72vw, 38rem);
+  height: min(72vw, 38rem);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 14px rgba(18, 8, 10, 0.0),
+    0 0 0 0 rgba(212, 164, 90, 0);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#mutoscopeCard.is-playing .muto-iris-ring {
+  opacity: 0.55;
+  box-shadow:
+    inset 0 0 120px rgba(0, 0, 0, 0.55),
+    0 0 40px rgba(212, 164, 90, 0.12);
+}
+
+.muto-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  padding: 4.8rem 0.9rem 7.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.32rem;
+}
+#cabinet-mutoscope.is-playing .muto-hud { padding-top: 4.6rem; }
+.muto-hud .machine-number {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240, 208, 154, 0.72);
+  text-shadow: 0 1px 8px #000;
+}
+.mutoscope-card .barker-call {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  color: #f0d09a;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+}
+.mutoscope-card.is-playing .barker-call { font-size: 0.7rem; opacity: 0.92; }
+.muto-hud .tent-mouth-joke {
+  margin: 0;
+  max-width: 34rem;
+  color: rgba(244, 226, 196, 0.9);
+  text-shadow: 0 1px 8px #000;
+}
+.mutoscope-card.is-playing .tent-mouth-joke { font-size: 0.82rem; }
+.muto-hud .depth-readout {
+  margin-top: 0.12rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  max-width: 28rem;
+}
+.muto-hud .depth-readout span {
+  padding: 0.28rem 0.4rem;
+  border-radius: 8px;
+  background: rgba(12, 6, 9, 0.62);
+  border: 1px solid rgba(212, 164, 90, 0.28);
+  backdrop-filter: blur(6px);
+}
+.mutoscope-card.is-playing .depth-readout strong { color: #f7e2b0; }
+
+.mutoscope-card .depth-hud {
+  position: static;
+  transform: none;
+  align-self: flex-start;
+  margin: 0.15rem 0 0;
+}
+#mutoscopeCard:not(.is-playing) .depth-hud { display: none; }
+
+.muto-hint {
+  margin: 0.35rem 0 0;
+  max-width: 36rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 3.2vw, 1.7rem);
+  letter-spacing: 0.06em;
+  color: #ffe6a6;
+  text-shadow: 0 2px 16px #000, 0 0 18px rgba(196, 30, 58, 0.35);
+}
+.muto-hint.is-warn { color: #ffd0a8; }
+.muto-hint.is-poison { color: #ff8aa0; }
+.muto-hint.is-slam { color: #c41e3a; }
+
+.muto-vestibule {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 8.4rem;
+  z-index: 6;
+  max-width: 30rem;
+  pointer-events: none;
+  text-shadow: 0 1px 10px #000;
+}
+.muto-hud-tag {
+  margin: 0.4rem 0 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(212, 164, 90, 0.85);
+}
+.muto-help {
+  position: absolute;
+  right: 0.85rem;
+  top: 5.2rem;
+  z-index: 7;
+  width: min(22rem, 42vw);
+  padding: 0.7rem 0.85rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(12, 6, 9, 0.78);
+  border: 1px solid rgba(212, 164, 90, 0.38);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  color: #f4e2c4;
+  text-shadow: 0 1px 8px #000;
+  pointer-events: none;
+}
+.muto-help strong {
+  display: block;
+  margin: 0 0 0.35rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  color: #f0d09a;
+}
+.muto-help ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.muto-help li { margin: 0.18rem 0; }
+.muto-help b { color: #ffe6a6; }
+#mutoscopeCard.is-playing .muto-help {
+  top: auto;
+  bottom: 7.4rem;
+  opacity: 0.92;
+}
+@media (max-width: 720px) {
+  .muto-help { left: 0.65rem; right: 0.65rem; width: auto; top: auto; bottom: 8.6rem; }
+}
+
+#mutoscopeCard .strike-pips {
+  position: absolute;
+  top: 5.4rem;
+  right: 0.9rem;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  z-index: 6;
+}
+#mutoscopeCard:not(.is-playing) .strike-pips { display: none; }
+
+.mutoscope-flash {
+  z-index: 4;
+  inset: 0;
+  border-radius: 0;
+  background: #fff6ec;
+}
+.vendor-stage--hood.is-flash .mutoscope-flash { opacity: 0.72; }
+
+.muto-gl-fail {
+  position: absolute;
+  inset: auto 1rem 42%;
+  z-index: 9;
+  text-align: center;
+  color: #f0d09a;
+  text-shadow: 0 2px 12px #000;
+}
+
+#mutoscopeCard .vendor-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3.55rem;
+  z-index: 8;
+  justify-content: center;
+  padding: 0 0.8rem;
+  pointer-events: none;
+}
+#mutoscopeCard .vendor-actions .ticket-button,
+#mutoscopeCard .vendor-actions .quiet-button {
+  pointer-events: auto;
+  min-height: 2.6rem;
+  padding: 0.55rem 1.2rem;
+}
+.mutoscope-card .vendor-play-only { display: none; }
+.mutoscope-card.is-playing .vendor-play-only { display: inline-flex; }
+.mutoscope-card.is-playing #mutoscopeStart { display: none; }
+.mutoscope-card.is-playing .vendor-vestibule-only,
+.mutoscope-card.is-result .vendor-vestibule-only { display: none; }
+
+#mutoscopeCard .status-ticket {
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  bottom: 1.15rem;
+  z-index: 8;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 1px 8px #000;
+}
+#mutoscopeCard .tier-pill,
+#mutoscopeCard .love-verdict {
+  position: absolute;
+  left: 50%;
+  bottom: 6.5rem;
+  z-index: 8;
+  transform: translateX(-50%);
+}
+
+#mutoscopeCard .vendor-result {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  z-index: 10;
+  transform: translate(-50%, -40%);
+  width: min(92vw, 22rem);
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(16, 8, 12, 0.92);
+  border: 1px solid rgba(212, 164, 90, 0.4);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+.mutoscope-card.is-result .vendor-stage,
+.mutoscope-card.is-result .muto-world { opacity: 1; }
+
+#mutoscopeArt { display: none; }
+
+@media (max-width: 640px) {
+  .muto-hud { padding: 4.6rem 0.65rem 8.2rem; }
+  .muto-hud .depth-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+  .muto-vestibule { bottom: 9rem; }
+  #mutoscopeCard .strike-pips { top: 4.8rem; right: 0.55rem; }
+}

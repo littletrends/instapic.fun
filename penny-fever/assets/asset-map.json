@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "note": "Codex may point src to prepared files; keep keys stable.",
+  "assets": {
+    "whisper_cabinet": {
+      "src": "assets/prepared/whisper-cabinet.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "whisperCard"
+    },
+    "love_thermometer_cabinet": {
+      "src": "assets/prepared/love-thermometer-tease.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "loveCard"
+    },
+    "fortune_mailbox": {
+      "src": "assets/prepared/fortune-mailbox.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "fortuneCard"
+    },
+    "door_beckon": {
+      "src": "assets/prepared/doorway-beckon.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "discoveryDoor"
+    },
+    "ticket_booth": {
+      "src": "assets/prepared/ticket-booth-lean.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "foyer"
+    },
+    "snap_stage": {
+      "src": "assets/prepared/snap-freeze-flash.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "snapCard"
+    },
+    "showman_pass": {
+      "src": "assets/prepared/showmans-pass.webp",
+      "kind": "still",
+      "priority": "P3",
+      "location": "passCard"
+    },
+    "lookup_sky": {
+      "src": "assets/prepared/lookup-wonder.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "lookupCard"
+    },
+    "foyer_hall": {
+      "src": "assets/prepared/arcade-hall-wide.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "arcadeHall"
+    },
+    "welcome_proprietor": {
+      "src": "assets/prepared/welcome-proprietor.webp",
+      "kind": "still",
+      "priority": "P1",
+      "location": "auraPortrait"
+    },
+    "ball_toss_board": {
+      "src": "assets/prepared/ball-toss-board.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "ballTossCard"
+    },
+    "coin_pusher_shelf": {
+      "src": "assets/prepared/coin-pusher-greed.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "pusherCard"
+    },
+    "pinball_backglass": {
+      "src": "assets/prepared/pinball-neon-playfield.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "pinballCard"
+    },
+    "water_gun_duel": {
+      "src": "assets/prepared/water-gun-duel.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "waterGunCard"
+    },
+    "mutoscope_hood": {
+      "src": "assets/prepared/mutoscope-peephole-glow.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "mutoscopeCard"
+    },
+    "milk_bottle_pyramid": {
+      "src": "assets/prepared/milk-bottle-pyramid.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "milkBottlesCard"
+    },
+    "cover_the_spot": {
+      "src": "assets/prepared/cover-the-spot.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "coverSpotCard"
+    },
+    "fairy_floss_tent": {
+      "src": "assets/prepared/fairy-floss-sugar-tent.webp",
+      "kind": "still",
+      "priority": "P2",
+      "location": "fairyFlossCard"
+    }
+  }
+}

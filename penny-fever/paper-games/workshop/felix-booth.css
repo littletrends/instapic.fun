@@ -1,0 +1,3040 @@
+/* Scale the real 1080×1920 kiosk UI into the phone / alley iframe. */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #f3e6d2;
+}
+#booth-frame {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Keep browser pinch gestures from zooming/re-centering the game canvas. */
+  touch-action: pan-x pan-y;
+  /* Cream papercut around the booth (any sub-pixel gap stays on-theme). */
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(230,200,160,0.35), transparent 45%),
+    #f3e6d2;
+}
+#booth-stage {
+  width: 1080px;
+  height: 1920px;
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #252038 0, #080611 55%, #030207 100%);
+}
+
+/* Same LIVE feed as the machines (flow.css + patches.css): landscape sensor
+   rotated −90°, mirrored on #video-layer. 100vh is the phone iframe, so size
+   is the 1080×1920 stage height instead. */
+#video-layer {
+  transform: scaleX(-1) !important;
+  transform-origin: center center !important;
+}
+#liveVideo {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 1920px !important;
+  height: auto !important;
+  object-fit: cover !important;
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform-origin: center center !important;
+}
+/* Phone selfie camera is already portrait: no −90° turn, just fill + mirror. */
+#liveVideo.cam-portrait {
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate(-50%, -50%) !important;
+}
+#video-layer:not(.hidden) { z-index: 1; }
+.screen[data-screen="LIVE"].active { z-index: 2; }
+.screen[data-screen="LIVE"] .screen-content { padding: 0; }
+
+#turn-phone {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  color: #fff;
+  font-size: 2rem;
+  text-align: center;
+  padding: 2rem;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  #turn-phone { display: flex !important; }
+  #booth-frame { display: none !important; }
+}
+
+.hidden { display: none !important; }
+
+.screen[data-screen="PAYMENT"] .screen-content,
+.screen[data-screen="BACKGROUNDS"] .screen-content,
+.screen[data-screen="REVIEW"] .screen-content {
+  overflow-y: auto;
+}
+
+/* ---- pass-2: wallet, locks, no-camera, save ---- */
+.felix-wallet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  justify-content: center;
+  align-items: center;
+  margin: 0.75rem auto 1.25rem;
+  padding: 0.7rem 1.1rem;
+  max-width: 92%;
+  border-radius: 999px;
+  background: rgba(255, 248, 235, 0.92);
+  color: #3b2a1a;
+  font-weight: 700;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+.felix-wallet-dot { opacity: 0.45; }
+
+.background-card {
+  position: relative;
+}
+.background-card.is-locked {
+  opacity: 0.72;
+}
+.background-card .bg-lock-badge {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  background: rgba(20, 12, 8, 0.82);
+  color: #ffe9b8;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+.background-card .bg-free-badge {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 2;
+  background: rgba(46, 120, 64, 0.9);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.background-card.is-locked img {
+  filter: grayscale(0.35) brightness(0.9);
+}
+
+.no-camera-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top, #fff6e4 0%, #f3e0c2 42%, #e7d0a8 100%);
+}
+.no-camera-panel.hidden { display: none !important; }
+.no-camera-card {
+  width: min(860px, 100%);
+  text-align: center;
+  color: #3b2a1a;
+  background: rgba(255,252,245,0.92);
+  border: 3px solid #d7b88a;
+  border-radius: 28px;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 18px 40px rgba(80,40,10,0.18);
+}
+.no-camera-card .title-main { color: #3b2a1a; }
+.no-camera-card .subtitle { color: #5a4330; }
+.no-camera-file-label { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+
+.felix-save-row {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.felix-save-row .btn,
+.felix-save-row a.btn {
+  text-decoration: none;
+}
+
+.review-screen .template-slot.is-unused {
+  outline: 2px dashed rgba(255,255,255,0.35);
+}
+.review-screen .template-slot.is-unused img {
+  opacity: 0.55;
+}
+
+.core-pay-banner {
+  min-height: 1.4rem;
+  margin: 0.6rem auto;
+  text-align: center;
+  color: #ffe9b8;
+  font-weight: 700;
+}
+
+.no-camera-card .btn-secondary {
+  background: #3b2a1a;
+  color: #fff6e4;
+  border: 2px solid #3b2a1a;
+}
+.no-camera-card .btn-secondary:active,
+.no-camera-card .btn-secondary:hover {
+  filter: brightness(1.08);
+}
+
+
+/* ---- camera-sq-1: enable-camera gate + error line ---- */
+.camera-enable-panel .no-camera-card {
+  border-color: #c9a227;
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.25);
+}
+.no-camera-error {
+  color: #8b2e2e;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.payment-packages-row .package-btn .pkg-desc {
+  display: block;
+  font-size: 0.78em;
+  opacity: 0.85;
+  margin-top: 0.2em;
+}
+.felix-bonus-row{margin-top:10px}
+#goBonusBtn.is-disabled{opacity:.55;pointer-events:none}
+.felix-bonus-status{min-height:1.2em;text-align:center}
+#retryBonusBtn[hidden],#goBonusBtn[hidden]{display:none!important}
+
+/* ---- rec-1: roomy "$7 · $13 · $18" package circle ---- */
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"]{
+  gap: 6px !important;
+  padding: 0 26px !important;
+  letter-spacing: 0.04em !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-price{
+  font-size: 1.9rem !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.02em !important;
+  position: relative; z-index: 2;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-label{
+  position: relative; z-index: 2;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #fff;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="top-up-aura"] .pkg-desc{
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+  max-width: 180px;
+}
+.felix-session-count{font-weight:800;color:#7a2a5a;margin:.35em 0 0}
+.felix-session-count[hidden]{display:none!important}
+
+/* ---- patch-pay-1: match Magic Mirror Screen 3 package portals; keep phone fill ---- */
+#booth-frame {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.55), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(230,200,160,0.35), transparent 45%),
+    #f3e6d2;
+}
+html, body { background: #f3e6d2; }
+#booth-stage { min-height: 1920px; }
+
+section.screen.active .screen-content,
+section.screen.active[data-screen="PAYMENT"] .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content,
+section.screen.active[data-screen="AWAKE"] .screen-content,
+section.screen.active[data-screen="BACKGROUNDS"] .screen-content,
+section.screen.active[data-screen="TRY_INFO"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="PREPAID"] .screen-content {
+  box-sizing: border-box !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding: 48px 48px 40px !important;
+  gap: 0.75rem !important;
+}
+section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen {
+  justify-content: flex-start !important;
+  padding-top: 7vh !important;
+  gap: 1.4rem !important;
+}
+section.screen.active[data-screen="ATTRACT"] .brand-logo::after {
+  content: none !important;
+  display: none !important;
+}
+section.screen.active[data-screen="ATTRACT"] .brand-logo img {
+  width: min(520px, 62vw) !important;
+  max-width: none !important;
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"] {
+  width: min(760px, 78vw) !important;
+  height: min(760px, 78vw) !important;
+  min-width: 600px !important;
+  min-height: 600px !important;
+  margin-top: 0.4rem !important;
+  font-size: 3.05rem !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0.08em !important;
+}
+section.screen.active[data-screen="ATTRACT"] .attract-tagline {
+  margin: 0.2rem auto 0 !important;
+  text-align: center;
+  font-size: 1.55rem !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  text-shadow: 0 0 18px rgba(255,140,210,0.18);
+  font-weight: 700;
+}
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen {
+  justify-content: center !important;
+  padding-top: 72px !important;
+  padding-bottom: 80px !important;
+  gap: 18px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-bottom {
+  margin-top: 0.4rem !important;
+  gap: 0.7rem;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label {
+  color: rgba(255, 246, 236, 0.92) !important;
+  text-decoration: none !important;
+  opacity: 0.92 !important;
+  font-size: clamp(0.95rem, 1.6vh, 1.25rem) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr {
+  display: block;
+  width: min(188px, 38vw);
+  padding: 0.65rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.felix-wallet-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem 1rem;
+  width: 100%;
+}
+.felix-wallet-row #payCreditBtn {
+  margin: 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  padding: 0.7rem 1.2rem !important;
+  border-radius: 999px !important;
+  font-size: 1.15rem !important;
+  letter-spacing: 0.06em;
+  width: auto !important;
+  height: auto !important;
+  background: #3b2a1a !important;
+  color: #ffe9b8 !important;
+  border: 2px solid #e0c9a0 !important;
+  box-shadow: 0 6px 0 #c9a873 !important;
+  animation: none !important;
+}
+.felix-wallet-row #payCreditBtn::before,
+.felix-wallet-row #payCreditBtn::after {
+  display: none !important;
+}
+
+/* Payment: MM-style circular package portals — bigger for phone tap after scale */
+section.screen[data-screen="PAYMENT"] .payment-packages-row {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 36px !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  margin: 0.4rem auto !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p2"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p4"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p6"] {
+  width: 300px !important;
+  height: 300px !important;
+  min-width: 300px !important;
+  min-height: 300px !important;
+  border-radius: 50% !important;
+  /* undo any cream-card leftovers */
+  background:
+    radial-gradient(circle at 30% 28%,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,190,230,0.18) 20%,
+      rgba(255,150,200,0.12) 42%,
+      rgba(255,180,120,0.09) 60%,
+      rgba(80,0,60,0.14) 78%,
+      rgba(10,0,14,0.26) 100%
+    ) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow:
+    0 0 30px rgba(255,160,220,0.30),
+    0 0 90px rgba(255,130,200,0.20),
+    inset 0 0 50px rgba(255,255,255,0.16) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 18px !important;
+  grid-template-columns: none !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-size: 2.35rem !important;
+  font-weight: 900 !important;
+  color: #ffcc88 !important;
+  line-height: 1.05 !important;
+  max-width: 86%;
+  letter-spacing: 0.04em !important;
+  text-shadow:
+    0 0 10px rgba(255,190,120,0.65),
+    0 0 26px rgba(255,150,90,0.45) !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: rgba(255,255,255,0.88) !important;
+  letter-spacing: 0.08em !important;
+  max-width: 86%;
+  margin-top: 0.35rem !important;
+}
+.felix-pkg-note {
+  margin: 0.2rem auto 0;
+  text-align: center;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  color: rgba(255,248,235,0.78);
+  font-weight: 700;
+  max-width: 92%;
+}
+.felix-wallet {
+  margin: 0.2rem auto !important;
+  font-size: 1.35rem;
+  padding: 0.85rem 1.3rem !important;
+  background: rgba(255, 248, 235, 0.95) !important;
+  border: 2px solid #e0c9a0;
+  box-shadow: 0 6px 0 #c9a873;
+  color: #3b2a1a;
+}
+section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn {
+  min-height: 110px !important;
+  font-size: 1.5rem !important;
+}
+#payCreditBtn[hidden],
+button#payCreditBtn[hidden],
+section.screen[data-screen="PAYMENT"] button[data-action="pay-credit"][hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+/* Instapic BACKGROUNDS: full Set strip sits on the card (416×1232 strip_web). */
+section.screen[data-screen="BACKGROUNDS"] .screen-content {
+  padding-top: 80px !important;
+  padding-bottom: 36px !important;
+  justify-content: flex-start !important;
+  gap: 16px;
+}
+section.screen[data-screen="BACKGROUNDS"] .title-main {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  font-size: 3.4rem !important;
+}
+section.screen[data-screen="BACKGROUNDS"] .subtitle {
+  margin-bottom: 8px !important;
+  font-size: 1.55rem !important;
+  max-width: 90%;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-scroll-wrapper {
+  flex: 0 0 auto;
+  width: 94% !important;
+  max-width: 94% !important;
+  min-height: 0;
+  align-items: center;
+  margin: 12px auto 0;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-grid {
+  max-width: none !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 8px 4px 12px !important;
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  align-items: center;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card {
+  width: 288px !important;
+  min-width: 0 !important;
+  max-width: 288px !important;
+  flex: 0 0 auto;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card img {
+  width: 264px !important;
+  height: auto !important;
+  aspect-ratio: auto;
+  object-fit: contain !important;
+  object-position: center top;
+  border-radius: 12px;
+  display: block;
+  background: transparent;
+}
+section.screen[data-screen="BACKGROUNDS"] .button-row {
+  margin-top: 18px;
+}
+
+
+
+
+/* ---- Strip composite is the only on-screen strip (same canvas as bonus layout) ---- */
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 24px !important;
+  padding-top: 40px !important;
+  padding-bottom: 28px !important;
+}
+section.screen.active[data-screen="PRINT"] .title-main,
+section.screen.active[data-screen="REVIEW"] .title-main {
+  margin: 0 !important;
+  font-size: 2.5rem !important;
+}
+section.screen.active[data-screen="PRINT"] .subtitle,
+section.screen.active[data-screen="REVIEW"] .subtitle {
+  margin: 0 !important;
+  font-size: 1.3rem !important;
+  max-width: 92%;
+}
+section.screen.active[data-screen="PRINT"] .background-preview-frame,
+.review-strip-wrap {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  margin: 8px auto !important;
+}
+/* Natural aspect of 416×1232 — never force a taller box that crops via layout */
+#finalStripPreview,
+#reviewStripPreview,
+.strip-composite-preview {
+  width: 340px !important;
+  height: auto !important;
+  max-width: 340px !important;
+  aspect-ratio: 416 / 1232;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+  border-radius: 18px !important;
+  border: 6px solid #fff !important;
+  box-shadow: 0 0 40px rgba(0,0,0,0.55) !important;
+  display: block !important;
+  background: #111;
+}
+section.screen.active[data-screen="PRINT"] .background-preview-frame img {
+  width: 420px !important;
+  height: auto !important;
+}
+section.screen.active[data-screen="PRINT"] .button-row {
+  margin: 0 !important;
+  gap: 16px !important;
+}
+section.screen.active[data-screen="PRINT"] .btn-big,
+section.screen.active[data-screen="REVIEW"] .btn-big {
+  min-height: 92px !important;
+  font-size: 1.55rem !important;
+  padding: 0.65rem 1.5rem !important;
+}
+
+/* REVIEW: portrait stack so RETAKE / KEEP are fully on screen */
+section.screen.active[data-screen="REVIEW"] .review-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 18px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap {
+  width: auto !important;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 240px !important;
+  max-width: 240px !important;
+  height: auto !important;
+}
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel {
+  width: 100% !important;
+  max-width: 920px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2 {
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper {
+  width: 200px !important;
+  height: 250px !important;
+  max-width: 200px !important;
+  max-height: 250px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper .photo-preview {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .button-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 36px !important;
+  width: 100% !important;
+  margin: 8px 0 0 !important;
+  overflow: visible !important;
+}
+section.screen[data-screen="REVIEW"] {
+  --portal-size: 200px;
+  --portal-ring: 240px;
+  --portal-inset: 14px;
+  --portal-font: 0.95rem;
+}
+
+/* DIGITAL: Instapic tidy layout — code on top, white strip left, QR + portal right */
+section.screen[data-screen="DIGITAL"] {
+  --portal-size: 220px;
+  --portal-ring: 268px;
+  --portal-inset: 14px;
+  --portal-font: 1.05rem;
+}
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.7rem !important;
+  padding: 48px 36px 32px !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+section.screen.active[data-screen="DIGITAL"] .title-main {
+  margin: 0 !important;
+  font-size: 3.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] > .screen-content > .subtitle {
+  margin: 0 !important;
+  max-width: 40rem !important;
+  text-align: center !important;
+  font-size: 1.45rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  margin: 0.2rem 0 0.4rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-group h2 {
+  display: block !important;
+  margin: 0 0 0.35rem !important;
+  font-size: 1.35rem !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] #sessionCodeDisplay,
+section.screen.active[data-screen="DIGITAL"] .session-code-display {
+  font-size: 4.2rem !important;
+  letter-spacing: 0.22em !important;
+  font-weight: 800 !important;
+  padding: 0.28em 0.7em !important;
+  margin: 0 !important;
+  min-width: 14rem;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint,
+section.screen.active[data-screen="DIGITAL"] .felix-session-count {
+  margin: 0 !important;
+  max-width: 28rem !important;
+  text-align: center !important;
+  font-size: 1.15rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2.4rem !important;
+  width: 100% !important;
+  margin: 0.4rem 0 0 !important;
+  flex: 0 0 auto !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame {
+  margin: 0 !important;
+  width: auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  background: #fff !important;
+  padding: 0.7rem !important;
+  border-radius: 18px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  width: auto !important;
+  height: 700px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 12px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2.8rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder,
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder.has-qr {
+  margin: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0.85rem !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  border: 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img,
+section.screen.active[data-screen="DIGITAL"] .instapic-digital-qr,
+section.screen.active[data-screen="DIGITAL"] .qr-image-instapic {
+  width: 260px !important;
+  height: auto !important;
+  max-height: none !important;
+  display: block;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-hint-instapic {
+  margin: 0.45rem 0 0 !important;
+  color: #3b2a1a;
+  font-size: 0.95rem !important;
+  font-weight: 700;
+  text-align: center;
+  max-width: 16rem;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 1.1rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] #felixVipJoin {
+  width: 220px !important;
+  height: 220px !important;
+  min-width: 220px !important;
+  min-height: 220px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em;
+  line-height: 1.12 !important;
+  padding: 1rem !important;
+  color: #fff !important;
+  border: 0 !important;
+  background:
+    radial-gradient(circle at 30% 28%,
+      var(--portal-hi) 0%,
+      var(--portal-pink) 14%,
+      var(--portal-magenta) 28%,
+      var(--portal-orange) 48%,
+      var(--portal-violet) 72%,
+      var(--portal-deep) 100%
+    ) !important;
+  box-shadow:
+    0 0 22px rgba(255,120,200,0.80),
+    0 0 70px rgba(255,110,170,0.45),
+    0 0 120px rgba(255,140,70,0.28),
+    inset 0 0 28px rgba(255,255,255,0.50) !important;
+  position: relative !important;
+  overflow: visible !important;
+  animation: instapicPortalPulse 3.9s ease-in-out infinite;
+}
+section.screen.active[data-screen="DIGITAL"] #felixVipJoin::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 268px;
+  height: 268px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    conic-gradient(from 0deg,
+      rgba(255,140,70,0.98),
+      rgba(255,60,170,0.98),
+      rgba(255,215,120,0.98),
+      rgba(170,70,255,0.98),
+      rgba(255,140,70,0.98)
+    );
+  filter: blur(10px) saturate(1.25);
+  opacity: 0.95;
+  animation: instapicPortalSpin 4.6s linear infinite;
+}
+section.screen.active[data-screen="DIGITAL"] #felixVipJoin::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow:
+    inset 0 0 16px rgba(255,255,255,0.32),
+    0 0 24px rgba(255,120,200,0.28);
+  opacity: 0.92;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options .button-row {
+  margin: 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row,
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row {
+  margin: 0.4rem 0 0 !important;
+  gap: 16px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row .btn-big {
+  min-height: 72px !important;
+  font-size: 1.35rem !important;
+  padding: 0.5rem 1.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status {
+  margin: 0 !important;
+  font-size: 1.1rem !important;
+}
+section.screen.active[data-screen="PRINT"] .instapic-print-preview-note { display: none !important; }
+
+/* REVIEW: composite strip + separate pose thumb row (not CSS-overlaid on template) */
+.review-screen .template-bg { display: none !important; }
+.pose-thumb-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 18px !important;
+  justify-content: center !important;
+  margin-top: 18px !important;
+  width: 100% !important;
+  position: static !important;
+}
+.pose-thumb-row .template-slot {
+  position: static !important;
+  width: 140px !important;
+  height: 200px !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 3px solid rgba(255,255,255,0.7) !important;
+  flex: 0 0 auto !important;
+}
+.pose-thumb-row .template-slot img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+.review-screen .thumbs-title {
+  margin-top: 12px;
+  text-align: center;
+  color: rgba(255,255,255,0.85);
+}
+/* No DOM slot overlays on PRINT/DIGITAL */
+.screen[data-screen="PRINT"] .template-slot,
+.screen[data-screen="DIGITAL"] .template-slot { display: none !important; }
+
+/* Kill flow-booth 60% width that fights the hero */
+.background-preview-frame img {
+  width: auto !important;
+}
+
+/* QA fix: grey out ticket/penny when wallet can't cover */
+section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn.is-disabled,
+section.screen[data-screen="PAYMENT"] .felix-scrip-row .btn:disabled {
+  opacity: 0.42 !important;
+  filter: grayscale(0.35);
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+.felix-scrip-note {
+  margin: 0.15rem auto 0.35rem;
+  max-width: 92%;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(255, 220, 180, 0.88);
+  font-weight: 600;
+}
+#bonusLinkRow[hidden],
+#bonusLink[hidden] {
+  display: none !important;
+}
+
+.felix-penny-pack-label {
+  margin: 0.35rem auto 0.15rem;
+  max-width: 94%;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(255, 230, 200, 0.88);
+  font-weight: 600;
+}
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn {
+  min-height: 96px !important;
+  font-size: 1.15rem !important;
+  padding: 0.55rem 0.4rem !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn.is-disabled,
+section.screen[data-screen="PAYMENT"] .felix-penny-packs-row .btn:disabled {
+  opacity: 0.42 !important;
+  filter: grayscale(0.35);
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+
+.felix-bg-purse {
+  margin: 0 auto 0.4rem;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffe9b8;
+}
+section.screen[data-screen="BACKGROUNDS"] .felix-penny-confirm {
+  position: relative;
+  z-index: 5;
+  max-width: 640px;
+}
+.felix-penny-confirm {
+  margin: 0.55rem auto 0.2rem;
+  max-width: 94%;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: rgba(20, 8, 28, 0.88);
+  border: 2px solid rgba(255, 190, 140, 0.55);
+  box-shadow: 0 0 28px rgba(255, 140, 200, 0.25);
+  text-align: center;
+}
+.felix-penny-confirm-text {
+  margin: 0 0 0.7rem;
+  color: #fff6e8;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+.felix-penny-confirm-actions {
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: center !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row .btn {
+  min-height: 96px !important;
+  font-size: 1.25rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn.needs-topup {
+  box-shadow:
+    0 0 24px rgba(255,190,120,0.22),
+    0 0 70px rgba(255,160,90,0.12),
+    inset 0 0 40px rgba(255,255,255,0.10) !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn.can-afford {
+  box-shadow:
+    0 0 34px rgba(120,255,180,0.28),
+    0 0 90px rgba(255,130,200,0.22),
+    inset 0 0 50px rgba(255,255,255,0.18) !important;
+}
+/* Drop obsolete separate penny-pack row styles if still present — harmless */
+
+/* Portal labels — same family as the machines, sized to fill each orb. */
+section.screen button.portal-button,
+section.screen a.portal-button,
+section.screen button[data-action="wake-mirror"],
+section.screen button[data-action="enter-mirror"],
+section.screen button[data-action="enter-try-info"],
+section.screen button[data-action="enter-prepaid"],
+section.screen button[data-action="pay-credit"],
+section.screen button[data-action="enter-try-mode"],
+section.screen button[data-action="try-info-back"],
+section.screen button[data-action="prepaid-continue"],
+section.screen button[data-action="prepaid-back"],
+section.screen button[data-action="backgrounds-next"],
+section.screen button[data-action="retake-photo"],
+section.screen button[data-action="keep-photo"],
+section.screen button[data-action="print-now"],
+section.screen button[data-action="digital-done"],
+#felixVipJoin {
+  font-family: var(--instapic-ui-font, system-ui, -apple-system, "Segoe UI", sans-serif) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.12 !important;
+  text-transform: uppercase !important;
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"],
+section.screen.active[data-screen="ATTRACT"] button[data-action="wake-mirror"] {
+  font-size: 3.4rem !important;
+  letter-spacing: 0.06em !important;
+}
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  font-size: 2.05rem !important;
+  letter-spacing: 0.08em !important;
+}
+section.screen[data-screen="PAYMENT"],
+section.screen[data-screen="TRY_INFO"],
+section.screen[data-screen="PREPAID"],
+section.screen[data-screen="BACKGROUNDS"],
+section.screen[data-screen="PRINT"],
+section.screen[data-screen="DIGITAL"] {
+  --portal-font: 1.7rem;
+}
+section.screen[data-screen="REVIEW"] {
+  --portal-font: 1.55rem;
+}
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen[data-screen="PAYMENT"] button[data-action="pay-credit"],
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"],
+section.screen[data-screen="TRY_INFO"] button[data-action="enter-try-mode"],
+section.screen[data-screen="TRY_INFO"] button[data-action="try-info-back"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-continue"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-back"],
+section.screen[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"],
+section.screen[data-screen="PRINT"] button[data-action="print-now"],
+section.screen[data-screen="DIGITAL"] button[data-action="digital-done"] {
+  font-size: 1.45rem !important;
+  letter-spacing: 0.06em !important;
+}
+#felixVipJoin {
+  font-size: 1.45rem !important;
+}
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
+  font-size: 1.55rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-size: 2.5rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
+  font-size: 1.2rem !important;
+}
+
+/* ---- polish-1: pack screens to the top of the 1080 canvas ---- */
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  justify-content: flex-start !important;
+  align-items: center !important;
+  padding-top: 56px !important;
+  gap: 0.55rem !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="PAYMENT"] .title-main {
+  margin: 0 auto 0.35rem !important;
+  font-size: 3.6rem !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="PAYMENT"] .subtitle {
+  margin: 0 auto 0.2rem !important;
+  font-size: 1.55rem !important;
+  max-width: 46rem;
+  text-align: center !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pay-spacer {
+  display: block;
+  width: 100%;
+  height: 140px;
+  flex: 0 0 140px;
+}
+section.screen[data-screen="PAYMENT"] .felix-wallet-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+}
+section.screen[data-screen="PAYMENT"] .felix-wallet {
+  margin: 0 auto !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill,
+section.screen[data-screen="PAYMENT"] button.felix-sessions-pill,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 280px !important;
+  min-height: 0 !important;
+  margin: 0.15rem auto 0 !important;
+  padding: 0.85rem 1.6rem !important;
+  border-radius: 999px !important;
+  border: 2px solid #e0c9a0 !important;
+  background: rgba(255, 248, 235, 0.95) !important;
+  box-shadow: 0 6px 0 #c9a873 !important;
+  color: #3b2a1a !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: none !important;
+  animation: none !important;
+  overflow: visible !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill::before,
+section.screen[data-screen="PAYMENT"] .felix-sessions-pill::after,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"]::before,
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"]::after {
+  display: none !important;
+}
+section.screen[data-screen="PAYMENT"] .payment-packages-row {
+  gap: 28px !important;
+  margin: 0.2rem auto 0.3rem !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p2"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p4"],
+section.screen[data-screen="PAYMENT"] button.package-btn[data-action="pay-p6"] {
+  width: 280px !important;
+  height: 280px !important;
+  min-width: 280px !important;
+  min-height: 280px !important;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-size: 2.15rem !important;
+  line-height: 1.15 !important;
+  max-width: 88%;
+}
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-desc {
+  display: none !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pkg-note,
+section.screen[data-screen="PAYMENT"] .felix-scrip-note {
+  margin: 0.15rem auto !important;
+  font-size: 1.15rem;
+}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row,
+section.screen[data-screen="PAYMENT"] .payment-pills-row {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 36px !important;
+  flex-wrap: wrap !important;
+  margin: 0.2rem 0 0.4rem !important;
+  width: 100% !important;
+}
+
+section.screen.active[data-screen="PREPAID"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 40px !important;
+  gap: 0.45rem !important;
+}
+section.screen.active[data-screen="PREPAID"] .title-main {
+  margin: 0 0 0.2rem !important;
+  font-size: 3.4rem !important;
+}
+section.screen.active[data-screen="PREPAID"] .subtitle {
+  margin: 0 0 0.35rem !important;
+  font-size: 1.45rem !important;
+  max-width: 46rem;
+}
+section.screen[data-screen="PREPAID"] .code-input-wrapper {
+  margin: 0.4rem 0 0.3rem !important;
+}
+section.screen[data-screen="PREPAID"] .code-input-wrapper input {
+  font-size: 2.6rem !important;
+  padding: 0.65rem 1.2rem !important;
+  width: 24rem !important;
+  max-width: 90% !important;
+  letter-spacing: 0.16em;
+}
+section.screen[data-screen="PREPAID"] .keypad-wrapper {
+  display: grid !important;
+  grid-template-columns: 220px 1fr 220px !important;
+  grid-template-rows: auto auto !important;
+  gap: 10px 28px !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0.4rem auto 0 !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin: 0 0 8px !important;
+  font-size: 1.25rem !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-grid {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  width: fit-content !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-actions-row {
+  display: contents !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-back {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+}
+section.screen[data-screen="PREPAID"] .prepaid-continue {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+}
+section.screen[data-screen="PREPAID"] .keypad-key-ok {
+  display: none !important;
+}
+
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content {
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  padding-top: 36px !important;
+}
+section.screen.active[data-screen="PRINT"] #finalStripPreview,
+section.screen.active[data-screen="PRINT"] .background-preview-frame img {
+  width: 340px !important;
+  max-width: 340px !important;
+  aspect-ratio: 416 / 1232;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 280px !important;
+  max-width: 280px !important;
+  aspect-ratio: 416 / 1232;
+}
+.felix-save-row {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 18px !important;
+  width: 100% !important;
+  margin: 0.3rem 0 0 !important;
+}
+section.screen .felix-save-row .btn,
+section.screen .felix-save-row .btn-big {
+  min-height: 88px !important;
+  min-width: 240px !important;
+  border-radius: 999px !important;
+  font-size: 1.45rem !important;
+  padding: 0.7rem 1.6rem !important;
+}
+
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  justify-content: flex-start !important;
+  padding: 36px 32px 28px !important;
+  gap: 0.55rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  align-items: flex-start !important;
+  gap: 1.6rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 620px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-options {
+  gap: 1.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group {
+  gap: 0.7rem !important;
+}
+
+section.screen.active[data-screen="THANKYOU"] .screen-content,
+section.screen.active[data-screen="CASHIN"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 64px !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .screen-content.try-screen {
+  justify-content: center !important;
+  padding: 8vh 8vw !important;
+  gap: 2.4rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  max-width: 28rem;
+  margin: 0;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .title-main {
+  margin: 0 !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .subtitle {
+  margin: 0 !important;
+  max-width: 22rem;
+  line-height: 1.45 !important;
+  opacity: 0.88;
+}
+section.screen.active[data-screen="TRY_INFO"] .button-row {
+  margin: 0 !important;
+}
+
+/* Centre every booth screen in the canvas — left/right and top/bottom. */
+section.screen.active .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content,
+section.screen.active[data-screen="ATTRACT"] .screen-content.attract-screen,
+section.screen.active[data-screen="AWAKE"] .screen-content,
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen,
+section.screen.active[data-screen="PAYMENT"] .screen-content,
+section.screen.active[data-screen="TRY_INFO"] .screen-content,
+section.screen.active[data-screen="PRIVATE_EVENT"] .screen-content,
+section.screen.active[data-screen="CASHIN"] .screen-content,
+section.screen.active[data-screen="PREPAID"] .screen-content,
+section.screen.active[data-screen="BACKGROUNDS"] .screen-content,
+section.screen.active[data-screen="REVIEW"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen,
+section.screen.active[data-screen="THANKYOU"] .screen-content,
+section.screen.active[data-screen="ERROR"] .screen-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  padding-top: 48px !important;
+  padding-bottom: 48px !important;
+}
+section.screen.active[data-screen="LIVE"] .screen-content,
+section.screen.active[data-screen="LIVE"] .screen-content.live-screen {
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+section.screen.active[data-screen="DIGITAL"] .output-layout {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Live prompts sit inside #video-layer #liveCues (portrait camera window). */
+section.screen.active[data-screen="PAYMENT"] .title-main,
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="ATTRACT"] .attract-tagline,
+section.screen.active .title-main,
+section.screen.active .subtitle {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+section.screen.active[data-screen="TRY_INFO"] .screen-content.try-screen {
+  justify-content: center !important;
+  padding: 8vh 8vw !important;
+  gap: 3.2rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .title-main {
+  font-size: 2.6rem !important;
+}
+section.screen.active[data-screen="TRY_INFO"] .try-copy .subtitle {
+  font-size: 1.35rem !important;
+  line-height: 1.45 !important;
+}
+
+/* AWAKE: compact column so Welcome, logo, portal, and VIP QR all sit on the 1080×1920 stage. */
+section.screen[data-screen="AWAKE"] {
+  --portal-size: 420px;
+  --portal-ring: 455px;
+  --portal-font: 2.05rem;
+}
+section.screen.active[data-screen="AWAKE"] .screen-content.awake-screen {
+  justify-content: center !important;
+  padding: 72px 64px 80px !important;
+  gap: 18px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-top {
+  gap: 10px;
+}
+section.screen.active[data-screen="AWAKE"] .awake-logo-wrap {
+  margin: 0 auto !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-logo {
+  width: 380px !important;
+  max-width: none !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-kicker {
+  font-size: 2.1rem !important;
+  letter-spacing: 0.08em !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-sparkle {
+  font-size: 1.7rem !important;
+  margin-top: 8px !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-portal {
+  margin: 6px 0 2px;
+}
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  width: 420px !important;
+  height: 420px !important;
+  min-width: 420px !important;
+  min-height: 420px !important;
+  font-size: 2.05rem !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 0 18px rgba(255, 120, 200, 0.7),
+    0 0 48px rgba(255, 110, 170, 0.32),
+    inset 0 0 22px rgba(255, 255, 255, 0.45) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-bottom {
+  margin-top: 4px !important;
+  gap: 10px;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label {
+  font-size: 1.35rem !important;
+  margin: 0 auto 0 !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr {
+  width: 240px;
+}
+
+/* ---- carnival-2: park wall + framed camera + host peek ---- */
+#carnival-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,0.4), transparent 42%),
+    #f3e6d2;
+}
+#carnival-stage[hidden] { display: none !important; }
+#carnivalWall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+#booth-stage.carnival-live {
+  background: #f3e6d2;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  inset: auto !important;
+  z-index: 1;
+  overflow: hidden;
+}
+.carnival-host {
+  position: absolute;
+  right: -2%;
+  bottom: 0;
+  height: 32%;
+  width: auto;
+  z-index: 4;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(40, 18, 6, 0.4));
+}
+.carnival-host[hidden] { display: none !important; }
+.carnival-plate {
+  position: absolute;
+  left: 50%;
+  bottom: 6.5%;
+  transform: translateX(-50%);
+  z-index: 4;
+  min-width: 420px;
+  padding: 0.7rem 1.6rem 0.85rem;
+  text-align: center;
+  color: #392918;
+  background: rgba(255, 246, 236, 0.94);
+  border: 3px solid #d2b073;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(40, 18, 6, 0.22);
+  pointer-events: none;
+}
+.carnival-plate[hidden] { display: none !important; }
+#booth-stage.carnival-live .screen[data-screen="LIVE"],
+#booth-stage.carnival-live .screen[data-screen="LIVE"] .screen-content {
+  background: transparent !important;
+}
+#booth-stage.carnival-live .no-camera-panel {
+  background: rgba(243, 230, 210, 0.42);
+}
+.carnival-host-name {
+  font-family: "Unique", serif;
+  font-size: 2.1rem;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+.carnival-set-title {
+  font-family: "Subotype Steady", sans-serif;
+  font-size: 1.15rem;
+  color: #7a4a2a;
+  margin-top: 0.15rem;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-label {
+  margin-top: 0.45rem;
+  color: #ffe9b8;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-set-title {
+  display: block;
+  margin-top: 0.15rem;
+  color: rgba(255, 233, 184, 0.75);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.strip-on-paper {
+  background-image: url("backgrounds/carnival/paper/felix-game-paper.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 1.35rem 1.1rem !important;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 6px #d2b073,
+    0 18px 36px rgba(40, 18, 6, 0.35);
+}
+.strip-on-paper #reviewStripPreview,
+.strip-on-paper #finalStripPreview,
+.strip-on-paper #digitalStripPreview,
+.strip-on-paper .strip-composite-preview {
+  box-shadow: 0 10px 24px rgba(40, 18, 6, 0.28) !important;
+}
+
+/* carnival-5: SNAP teal / brass session chrome */
+#booth-frame {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(232, 244, 236, 0.55), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(42, 74, 70, 0.28), transparent 45%),
+    #e8f0e6;
+}
+#booth-stage {
+  background: radial-gradient(circle at top, #2a3a38 0, #101816 55%, #080c0b 100%);
+}
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"],
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  box-shadow:
+    0 0 18px rgba(210, 176, 115, 0.7),
+    0 0 48px rgba(58, 110, 102, 0.38),
+    inset 0 0 22px rgba(255, 255, 255, 0.35) !important;
+}
+#carnival-stage {
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,0.35), transparent 42%),
+    #e7efe4;
+}
+#carnivalWall {
+  object-fit: cover;
+  object-position: center 40%;
+  background: #7aa05a;
+}
+#booth-stage.carnival-live {
+  background: #7aa05a;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 15.5% !important;
+  left: 11% !important;
+  width: 78% !important;
+  height: 53% !important;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 6px rgba(210, 176, 115, 0.88),
+    0 0 0 14px rgba(42, 74, 68, 0.42),
+    0 22px 44px rgba(16, 32, 28, 0.38);
+  background: #6e9a52;
+}
+#video-layer #liveCues {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  transform: scaleX(-1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 7% 8% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  transform: none;
+  z-index: 9;
+}
+#video-layer #liveCues .overlay-top .title-main,
+#video-layer #liveCues .live-cue-text,
+#video-layer #liveCues .lookup-label,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  color: #fff;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  text-shadow:
+    0 0 16px rgba(0, 0, 0, 0.95),
+    0 2px 10px rgba(0, 0, 0, 0.9);
+}
+#video-layer #liveCues .overlay-top .title-main,
+#video-layer #liveCues .live-cue-text,
+#video-layer #liveCues .lookup-label,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  font-size: 1.85rem;
+}
+#video-layer #liveCues .countdown-overlay {
+  font-size: 4.6rem;
+  padding-top: 5%;
+  line-height: 1;
+}
+#video-layer #liveCues .countdown-overlay.is-ready {
+  font-size: 1.85rem;
+  padding-top: 8%;
+}
+#video-layer #liveCues .lookup-arrow {
+  font-size: 3rem;
+  margin: 0;
+  color: #ffe566;
+}
+#video-layer #liveCues .lookup-label {
+  margin-top: 0.15rem;
+  font-size: 1.85rem;
+}
+#video-layer #liveCues .lookup-sub {
+  display: none;
+}
+#booth-stage.carnival-live .carnival-host {
+  display: none !important;
+}
+#paperLiveCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+#video-layer.paper-feed #liveVideo {
+  display: none !important;
+}
+.carnival-plate {
+  color: #1c2624;
+  background: rgba(255, 246, 236, 0.94);
+  border: 3px solid #d2b073;
+}
+.carnival-set-title {
+  color: #3a5a52;
+}
+.strip-on-paper {
+  box-shadow:
+    0 0 0 6px #d2b073,
+    0 0 0 12px #2a4a44,
+    0 18px 36px rgba(16, 32, 28, 0.35);
+}
+.felix-save-row[hidden],
+#bonusLinkRow[hidden] {
+  display: none !important;
+}
+#booth-stage.carnival-live .no-camera-panel {
+  background: rgba(231, 239, 228, 0.42);
+}
+
+/* carnival-10: garden chrome, SNAP art on retake/code, orbs on canvas */
+html, body {
+  background: #1c2a24 !important;
+}
+#booth-frame {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(122, 170, 88, 0.22), transparent 42%),
+    radial-gradient(circle at 80% 90%, rgba(42, 74, 70, 0.38), transparent 48%),
+    #1c2a24 !important;
+}
+#carnival-stage {
+  background: #3f6a38 !important;
+}
+#booth-stage.carnival-live {
+  background: #3f6a38 !important;
+}
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 13% !important;
+  left: 8.5% !important;
+  width: 83% !important;
+  height: 56% !important;
+  background: #5f8a48;
+}
+
+#booth-stage.carnival-ui #carnival-stage {
+  display: block !important;
+  z-index: 0;
+}
+#booth-stage.carnival-ui #carnival-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 22, 18, 0.42) 0%, rgba(12, 22, 18, 0.62) 100%);
+  pointer-events: none;
+}
+#booth-stage.carnival-ui .screen.active {
+  background: transparent !important;
+  z-index: 2;
+}
+#booth-stage.carnival-ui .screen.active .screen-content {
+  background: transparent !important;
+}
+
+section.screen[data-screen="REVIEW"] {
+  --portal-size: 148px;
+  --portal-ring: 172px;
+  --portal-inset: 12px;
+  --portal-font: 1.05rem;
+}
+section.screen.active[data-screen="REVIEW"] .screen-content {
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 28px 36px 24px !important;
+}
+section.screen.active[data-screen="REVIEW"] .title-main {
+  font-size: 2.1rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .subtitle {
+  font-size: 1.15rem !important;
+}
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview {
+  width: 188px !important;
+  max-width: 188px !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
+  padding: 0.7rem 0.7rem 0.5rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row {
+  gap: 12px !important;
+  margin-top: 8px !important;
+}
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row .template-slot {
+  width: 92px !important;
+  height: 116px !important;
+}
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper {
+  width: 148px !important;
+  height: 186px !important;
+  max-width: 148px !important;
+  max-height: 186px !important;
+  padding: 0.45rem !important;
+  background: rgba(255, 246, 236, 0.16) !important;
+  box-shadow: 0 0 0 3px rgba(210, 176, 115, 0.7) !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .template-slot::before {
+  background: transparent !important;
+  filter: none !important;
+  box-shadow: 0 0 0 3px rgba(210, 176, 115, 0.75) !important;
+  opacity: 1 !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .button-row {
+  margin: 4px 0 0 !important;
+  gap: 28px !important;
+}
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
+  width: 148px !important;
+  height: 148px !important;
+  min-width: 148px !important;
+  min-height: 148px !important;
+  font-size: 1.15rem !important;
+  overflow: visible !important;
+}
+
+section.screen.active[data-screen="PREPAID"] .screen-content,
+section.screen.active[data-screen="DIGITAL"] .screen-content,
+section.screen.active[data-screen="PRINT"] .screen-content,
+section.screen.active[data-screen="THANKYOU"] .screen-content {
+  text-shadow: 0 2px 12px rgba(8, 16, 12, 0.55);
+}
+section.screen[data-screen="PREPAID"] {
+  --portal-size: 168px;
+  --portal-ring: 196px;
+}
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-continue"],
+section.screen[data-screen="PREPAID"] button[data-action="prepaid-back"] {
+  width: 168px !important;
+  height: 168px !important;
+  min-width: 168px !important;
+  min-height: 168px !important;
+}
+
+/* carnival-11: PAYMENT purse on top, sessions-left as middle orb, packs up */
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  justify-content: flex-start !important;
+  padding-top: 36px !important;
+  padding-bottom: 28px !important;
+  gap: 0.4rem !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pay-spacer {
+  display: none !important;
+  height: 0 !important;
+  flex: 0 0 0 !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pay-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0 0 0.15rem;
+}
+section.screen[data-screen="PAYMENT"] .felix-pay-top .felix-wallet,
+section.screen[data-screen="PAYMENT"] .felix-wallet {
+  margin: 0 auto !important;
+}
+section.screen.active[data-screen="PAYMENT"] .title-main {
+  margin: 0.15rem auto 0.1rem !important;
+  font-size: 3.2rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .subtitle {
+  margin: 0 auto 0.15rem !important;
+  font-size: 1.35rem !important;
+}
+section.screen[data-screen="PAYMENT"] .payment-packages-row {
+  margin: 0.15rem auto 0.2rem !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-pkg-note {
+  margin: 0.1rem auto 0.15rem !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row {
+  margin: 0.15rem 0 0.25rem !important;
+  gap: 28px !important;
+  flex-wrap: nowrap !important;
+}
+section.screen[data-screen="PAYMENT"] .felix-secondary-row .btn,
+section.screen[data-screen="PAYMENT"] button[data-action="enter-try-info"],
+section.screen[data-screen="PAYMENT"] button[data-action="enter-prepaid"],
+section.screen[data-screen="PAYMENT"] button[data-action="pay-credit"],
+section.screen[data-screen="PAYMENT"] #payCreditBtn {
+  width: 220px !important;
+  height: 220px !important;
+  min-width: 220px !important;
+  min-height: 220px !important;
+  max-width: 220px !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  padding: 0.85rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: instapicPortalPulse 3.9s ease-in-out infinite;
+}
+section.screen[data-screen="PAYMENT"] #payCreditCount {
+  font-size: 2.55rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+section.screen[data-screen="PAYMENT"] #payCreditBtn .session-left-label {
+  font-size: 1.05rem;
+  line-height: 1.15;
+  max-width: 9.5rem;
+  margin-top: 0.2rem;
+}
+section.screen[data-screen="PAYMENT"] #payCreditBtn.is-disabled,
+section.screen[data-screen="PAYMENT"] #payCreditBtn:disabled {
+  opacity: 0.55;
+  filter: saturate(0.7);
+}
+section.screen[data-screen="PAYMENT"] button[data-action="payment-exit"] {
+  margin-top: 0.2rem !important;
+}
+
+/* carnival-12 (Auralia polish): online START hold, cues centred in the oval,
+   camera oval and screens nudged down clear of the top border. */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 16% !important;
+}
+#video-layer #liveCues {
+  justify-content: center;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  top: 50% !important;
+  bottom: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding: 0 10% !important;
+  transform: translateY(-50%) !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.live-start-btn {
+  position: absolute !important;
+  left: 50% !important;
+  top: 74% !important;
+  transform: translateX(-50%) !important;
+  z-index: 7 !important;
+  width: 200px !important;
+  height: 200px !important;
+  border-radius: 50% !important;
+  font-size: 1.5rem !important;
+  line-height: 1.15 !important;
+  pointer-events: auto !important;
+}
+.live-start-btn.hidden { display: none !important; }
+section.screen.active:not([data-screen="LIVE"]) .screen-content {
+  padding-top: 96px !important;
+}
+
+/* Live window: clip the camera to a clean oval (Safari drew a beige
+   rectangle around it) and draw the brass ring on top of the feed. */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-clip-path: ellipse(50% 50% at 50% 50%);
+  clip-path: ellipse(50% 50% at 50% 50%);
+}
+#booth-stage.carnival-live #video-layer #liveCues {
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 7px rgba(210, 176, 115, 0.95),
+    inset 0 0 0 12px rgba(42, 74, 68, 0.55);
+}
+
+/* Game code screen: nudge down, matching save/share pills, bonus pill below. */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 84px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 580px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row {
+  margin: 1.1rem 0 0 !important;
+  gap: 24px !important;
+  flex-wrap: nowrap !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row .btn,
+section.screen.active[data-screen="DIGITAL"] .felix-save-row .btn-big,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 300px !important;
+  min-height: 80px !important;
+  padding: 0.6rem 1.6rem !important;
+  border-radius: 999px !important;
+  font-size: 1.35rem !important;
+  line-height: 1.1 !important;
+  text-decoration: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-save-row .btn-secondary {
+  background: rgba(255, 246, 236, 0.94) !important;
+  color: #1c2624 !important;
+  border: 3px solid #d2b073 !important;
+  text-shadow: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row {
+  margin: 1rem 0 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  min-width: 624px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status {
+  margin: 0.5rem 0 0 !important;
+}
+
+/* carnival-13: oval a touch lower and right; cues at the top of the oval,
+   under the camera, not over the face. */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 17.5% !important;
+  left: 10% !important;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  top: 6% !important;
+  transform: none !important;
+  justify-content: flex-start !important;
+}
+
+/* Game code screen: VIP QR straight on the grass (no white box);
+   light modules on clear background so it reads on the dark garden. */
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder,
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder.has-qr {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Review screen: no inner background box; strip and photos sit straight
+   on the main background. */
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap,
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* Round 3: readable text on phones (bolder cream text with a soft dark
+   shadow over the grass), brass review thumbs, no grey lines. */
+section.screen.active[data-screen="AWAKE"] .awake-kicker,
+section.screen.active[data-screen="AWAKE"] .awake-sparkle,
+section.screen.active[data-screen="AWAKE"] .awake-qr-label,
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-note,
+section.screen.active[data-screen="PAYMENT"] .felix-wallet,
+section.screen.active[data-screen="REVIEW"] .subtitle,
+section.screen.active[data-screen="REVIEW"] .thumbs-title,
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2,
+section.screen.active[data-screen="DIGITAL"] .subtitle,
+section.screen.active[data-screen="DIGITAL"] .output-group h2 {
+  color: #fbf1d8 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(20, 36, 32, 0.85), 0 0 10px rgba(20, 36, 32, 0.6) !important;
+}
+section.screen.active[data-screen="AWAKE"] .awake-qr-label { font-size: 1.35rem !important; }
+section.screen.active[data-screen="PAYMENT"] .subtitle,
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-note { font-size: 1.3rem !important; }
+section.screen[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(20, 36, 32, 0.8) !important;
+}
+section.screen[data-screen="PAYMENT"] .session-left-label { opacity: 1 !important; font-size: 1.05em !important; }
+.carnival-plate .carnival-set-title {
+  color: #2a4a44 !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+}
+section.screen.active[data-screen="REVIEW"] .thumbs-title { font-size: 1.25rem !important; }
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2 { font-size: 1.6rem !important; }
+section.screen.active[data-screen="REVIEW"] .pose-thumb-row .template-slot {
+  border: 4px solid #d2b073 !important;
+  box-shadow: 0 0 0 2px #2a4a44, 0 4px 10px rgba(0, 0, 0, 0.35) !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint,
+section.screen.active[data-screen="DIGITAL"] .felix-session-count,
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status { font-size: 1.3rem !important; }
+section.screen.active[data-screen="DIGITAL"] .output-group,
+section.screen.active[data-screen="DIGITAL"] .output-layout,
+section.screen.active[data-screen="DIGITAL"] hr {
+  border-color: rgba(210, 176, 115, 0.9) !important;
+}
+
+/* Review screen: photos only, no strip (carnival-15) */
+section.screen.active[data-screen="REVIEW"] #reviewStripPreview,
+section.screen.active[data-screen="REVIEW"] .strip-composite-preview,
+section.screen.active[data-screen="REVIEW"] .selected-photo-panel h2 {
+  display: none !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-strip-wrap.strip-on-paper {
+  background: none !important; box-shadow: none !important; border: 0 !important; padding: 0 !important;
+}
+section.screen.active[data-screen="REVIEW"] .thumbs-title { font-size: 1.05rem !important; margin-top: 6px !important; }
+section.screen.active[data-screen="REVIEW"] .photo-preview-wrapper {
+  width: 230px !important; height: 288px !important; max-width: 230px !important; max-height: 288px !important;
+}
+
+/* carnival-15b: live cues truly centred (padding was overflowing the
+   oval and pushing them right), oval a touch lower/right, choose-option
+   screen lower with more breathing room, small print readable on phones
+   (stage is 1080px wide, shown at ~0.4x on a phone). */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 19% !important;
+  left: 11% !important;
+}
+#video-layer #liveCues .overlay-top,
+#video-layer #liveCues .live-cue-overlay,
+#video-layer #liveCues .lookup-overlay,
+#video-layer #liveCues .countdown-overlay,
+#video-layer #liveCues .countdown-overlay.is-ready {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding: 0 !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+#video-layer #liveCues .lookup-label,
+#video-layer #liveCues .countdown-overlay.is-ready,
+#video-layer #liveCues .live-cue-text {
+  font-size: 2.6rem !important;
+}
+#video-layer #liveCues .countdown-overlay:not(.is-ready) {
+  font-size: 6rem !important;
+}
+
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  padding-top: 170px !important;
+  gap: 1.6rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .title-main {
+  margin-bottom: 0.4rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .subtitle {
+  font-size: 2.1rem !important;
+  line-height: 1.35 !important;
+  margin: 0.6rem 0 1.4rem !important;
+}
+section.screen.active[data-screen="PAYMENT"] .felix-pkg-note,
+section.screen.active[data-screen="PAYMENT"] .felix-wallet {
+  font-size: 1.9rem !important;
+  margin: 1.2rem 0 !important;
+}
+section.screen.active[data-screen="PAYMENT"] .payment-packages-row,
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row {
+  margin: 1.4rem 0 !important;
+}
+
+/* Game code screen small print */
+section.screen.active[data-screen="DIGITAL"] .subtitle,
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status,
+section.screen.active[data-screen="DIGITAL"] .qr-caption,
+section.screen.active[data-screen="DIGITAL"] small {
+  font-size: 1.9rem !important;
+  line-height: 1.3 !important;
+}
+
+/* carnival-17: price packs become the bright portals, secondary row calm;
+   game code screen restacked (strip, QR, two portals, split pill, social
+   icons, continue). */
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"],
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button {
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0 38%, transparent 39%),
+              conic-gradient(from 200deg, #ff3fa4, #ff8a3d, #ffd36b, #c04dff, #ff3fa4) !important;
+  border: 4px solid rgba(255, 236, 200, 0.9) !important;
+  box-shadow: 0 0 40px 10px rgba(255, 90, 180, 0.55), 0 0 90px 24px rgba(190, 80, 255, 0.35) !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(80, 0, 60, 0.85) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+section.screen.active[data-screen="PAYMENT"] button.package-btn .pkg-price {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(80, 0, 60, 0.85) !important;
+}
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row .btn {
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 88px !important;
+  padding: 0.7rem 2rem !important;
+  border-radius: 999px !important;
+  background: rgba(255, 246, 236, 0.92) !important;
+  background-image: none !important;
+  border: 3px solid #d2b073 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  color: #1c2624 !important;
+  text-shadow: none !important;
+  font-size: 1.6rem !important;
+  filter: none !important;
+}
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row .btn::before,
+section.screen.active[data-screen="PAYMENT"] .payment-pills-row .btn::after {
+  display: none !important;
+}
+
+/* Game code screen */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 130px !important;
+  gap: 1rem !important;
+  align-items: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint,
+section.screen.active[data-screen="DIGITAL"] > .screen-content > .subtitle {
+  display: inline-block !important;
+  font-size: 1.8rem !important;
+  line-height: 1.3 !important;
+  padding: 0.3rem 1rem !important;
+  border-radius: 14px !important;
+  background: rgba(10, 24, 20, 0.55) !important;
+  max-width: 900px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-code-group h2 { display: none !important; }
+.felix-digital-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 520px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group {
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group h2 { display: none !important; }
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img {
+  width: 230px !important;
+  height: 230px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-hint-instapic {
+  margin-top: 0.4rem !important;
+  font-size: 1.6rem !important;
+  color: #fff !important;
+  padding: 0.2rem 0.9rem !important;
+  border-radius: 12px !important;
+  background: rgba(10, 24, 20, 0.55) !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 60px !important;
+  margin: 1rem 0 0.4rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 250px !important;
+  height: 250px !important;
+  min-width: 250px !important;
+  min-height: 250px !important;
+  padding: 1.5rem !important;
+  border-radius: 50% !important;
+  font-size: 1.55rem !important;
+  line-height: 1.15 !important;
+  text-decoration: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn.is-disabled {
+  opacity: 0.75 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row { margin: 0 !important; }
+.felix-split-pill {
+  display: flex;
+  margin: 0.8rem auto 0;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 3px solid #d2b073;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.felix-split-half {
+  min-width: 300px;
+  min-height: 84px;
+  border: 0;
+  font: 800 1.45rem/1 var(--instapic-ui-font, system-ui, sans-serif);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  background: linear-gradient(90deg, #ff3fa4, #ff8a3d);
+  color: #fff;
+}
+.felix-split-half + .felix-split-half {
+  background: rgba(255, 246, 236, 0.95);
+  color: #1c2624;
+  border-left: 3px solid #d2b073;
+}
+.felix-social-row {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  margin: 1.1rem auto 0;
+}
+.felix-social-btn {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 236, 200, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+.felix-social-btn svg { width: 44px; height: 44px; }
+.felix-social-facebook { background: #1877f2; }
+.felix-social-x { background: #111; }
+.felix-social-instagram { background: radial-gradient(circle at 30% 110%, #fdf497 0 10%, #fd5949 45%, #d6249f 60%, #285aeb 95%); }
+.felix-social-tiktok { background: #111; box-shadow: -3px 0 0 #25f4ee, 3px 0 0 #fe2c55, 0 3px 10px rgba(0,0,0,0.4); }
+.felix-social-whatsapp { background: #25d366; }
+.felix-social-download { background: #2a4a44; }
+.felix-continue-pill {
+  margin: 1.1rem auto 0;
+  min-width: 260px;
+  min-height: 72px;
+  border-radius: 999px;
+  border: 3px solid #d2b073;
+  background: rgba(255, 246, 236, 0.95);
+  color: #1c2624;
+  font: 800 1.4rem/1 var(--instapic-ui-font, system-ui, sans-serif);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* carnival-18: one orb look everywhere (matches Open Game VIP), and the
+   game code screen fitted inside the stage. */
+section.screen.active button.portal-button,
+section.screen.active a.portal-button,
+section.screen.active button[data-action="wake-mirror"],
+section.screen.active button[data-action="enter-mirror"],
+section.screen.active button[data-action="retake-photo"],
+section.screen.active button[data-action="keep-photo"],
+section.screen.active button[data-action="backgrounds-next"],
+section.screen.active button[data-action="prepaid-continue"],
+section.screen.active button[data-action="enter-try-mode"],
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"],
+#booth-stage .live-start-btn,
+#goBonusBtn,
+#goBonusBtn.is-disabled {
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0 38%, transparent 39%),
+              conic-gradient(from 200deg, #ff3fa4, #ff8a3d, #ffd36b, #c04dff, #ff3fa4) !important;
+  border: 4px solid rgba(255, 236, 200, 0.9) !important;
+  box-shadow: 0 0 40px 10px rgba(255, 90, 180, 0.55), 0 0 90px 24px rgba(190, 80, 255, 0.35) !important;
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(80, 0, 60, 0.85) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  animation: none !important;
+}
+#goBonusBtn.is-disabled { pointer-events: none !important; }
+
+/* Game code screen: fit everything above the bottom edge */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 110px !important;
+  gap: 0.6rem !important;
+  justify-content: flex-start !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 470px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img {
+  width: 190px !important;
+  height: 190px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 0.6rem 0 0.2rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  width: 230px !important;
+  height: 230px !important;
+  min-width: 230px !important;
+  min-height: 230px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row {
+  display: flex !important;
+  justify-content: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-row[hidden],
+section.screen.active[data-screen="DIGITAL"] #retryBonusBtn[hidden] {
+  display: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-bonus-status:empty { display: none !important; }
+.felix-split-pill { margin-top: 0.5rem; }
+.felix-social-row { margin-top: 0.7rem; }
+.felix-continue-pill { margin-top: 0.7rem; }
+
+/* carnival-19: game code screen orbs in one row of three, like the packages. */
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  flex-wrap: nowrap !important;
+  gap: 36px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row .portal-button,
+section.screen.active[data-screen="DIGITAL"] #goBonusBtn {
+  width: 260px !important;
+  height: 260px !important;
+  min-width: 260px !important;
+  min-height: 260px !important;
+  font-size: 1.5rem !important;
+}
+
+/* carnival-20: game code screen as code / strip+QR row / three orbs.
+   Strip left, QR + 2x3 share icons right. Save/Share pill removed. */
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 170px !important;
+  gap: 0.9rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-digital-stack {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 70px !important;
+  margin-top: 0.6rem !important;
+}
+section.screen.active[data-screen="DIGITAL"] .background-preview-frame img,
+section.screen.active[data-screen="DIGITAL"] #digitalStripPreview {
+  height: 600px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img {
+  width: 240px !important;
+  height: 240px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .qr-hint-instapic {
+  max-width: 300px !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="DIGITAL"] .digital-qr-group .felix-social-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, 92px) !important;
+  gap: 22px 28px !important;
+  justify-content: center !important;
+  margin: 1.2rem 0 0 !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-social-btn {
+  width: 92px !important;
+  height: 92px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 1.4rem 0 0 !important;
+}
+
+/* carnival-21: every orb gets the Open Game VIP glow and spinning ring;
+   live oval/cues lower-right, start orb lower; review centred lower;
+   game code screen extra text trimmed, status moved to the bottom. */
+section.screen.active button.portal-button,
+section.screen.active a.portal-button,
+section.screen.active button[data-action="wake-mirror"],
+section.screen.active button[data-action="enter-mirror"],
+section.screen.active button[data-action="retake-photo"],
+section.screen.active button[data-action="keep-photo"],
+section.screen.active button[data-action="backgrounds-next"],
+section.screen.active button[data-action="prepaid-continue"],
+section.screen.active button[data-action="enter-try-mode"],
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"],
+#booth-stage .live-start-btn,
+#goBonusBtn,
+#goBonusBtn.is-disabled {
+  background: radial-gradient(circle at 30% 28%,
+      rgba(255,255,255,0.95) 0%, rgba(255,180,230,0.90) 14%,
+      rgba(255,110,170,0.85) 28%, rgba(255,120,60,0.85) 48%,
+      rgba(140,0,90,0.90) 72%, rgba(10,0,14,0.98) 100%) !important;
+  border: 0 !important;
+  box-shadow: 0 0 22px rgba(255,120,200,0.80), 0 0 70px rgba(255,110,170,0.45),
+              0 0 120px rgba(255,140,70,0.28), inset 0 0 28px rgba(255,255,255,0.50) !important;
+  overflow: visible !important;
+}
+section.screen.active button.portal-button:not(.live-start-btn),
+section.screen.active a.portal-button,
+section.screen.active button[data-action="wake-mirror"],
+section.screen.active button[data-action="enter-mirror"],
+section.screen.active button[data-action="retake-photo"],
+section.screen.active button[data-action="keep-photo"],
+section.screen.active button[data-action="backgrounds-next"],
+section.screen.active button[data-action="prepaid-continue"],
+section.screen.active button[data-action="enter-try-mode"],
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"],
+#goBonusBtn {
+  position: relative !important;
+}
+section.screen.active button.portal-button::before,
+section.screen.active a.portal-button::before,
+section.screen.active button[data-action="wake-mirror"]::before,
+section.screen.active button[data-action="enter-mirror"]::before,
+section.screen.active button[data-action="retake-photo"]::before,
+section.screen.active button[data-action="keep-photo"]::before,
+section.screen.active button[data-action="backgrounds-next"]::before,
+section.screen.active button[data-action="prepaid-continue"]::before,
+section.screen.active button[data-action="enter-try-mode"]::before,
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"]::before,
+#booth-stage .live-start-btn::before,
+#goBonusBtn::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -16px !important;
+  width: auto !important;
+  height: auto !important;
+  transform: none;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  background: conic-gradient(from 0deg, rgba(255,140,70,0.98), rgba(255,60,170,0.98),
+              rgba(255,215,120,0.98), rgba(170,70,255,0.98), rgba(255,140,70,0.98)) !important;
+  filter: blur(10px) saturate(1.25) !important;
+  opacity: 0.95 !important;
+  animation: felixOrbSpin 4.6s linear infinite !important;
+}
+section.screen.active button.portal-button::after,
+section.screen.active a.portal-button::after,
+section.screen.active button[data-action="retake-photo"]::after,
+section.screen.active button[data-action="keep-photo"]::after,
+section.screen.active[data-screen="PAYMENT"] button.package-btn[data-action^="pay-p"]::after,
+#booth-stage .live-start-btn::after,
+#goBonusBtn::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 14px !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  border: 2px solid rgba(255,255,255,0.25) !important;
+  box-shadow: inset 0 0 16px rgba(255,255,255,0.32), 0 0 24px rgba(255,120,200,0.28) !important;
+  background: none !important;
+}
+@keyframes felixOrbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Live screen: oval and its cues a bit lower and right; start orb lower */
+#booth-stage.carnival-live #video-layer:not(.hidden) {
+  top: 21% !important;
+  left: 13% !important;
+}
+#booth-stage .live-start-btn { top: 78% !important; }
+
+/* Review: photos and Retake/Keep centred lower in the open grass */
+section.screen.active[data-screen="REVIEW"] .screen-content.review-screen {
+  padding-top: 520px !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+}
+section.screen.active[data-screen="REVIEW"] .review-screen .button-row {
+  justify-content: center !important;
+  margin-top: 30px !important;
+  gap: 60px !important;
+}
+
+/* Game code screen: drop the explainer lines, status at the bottom */
+section.screen.active[data-screen="DIGITAL"] .digital-screen > .subtitle,
+section.screen.active[data-screen="DIGITAL"] .digital-code-hint {
+  display: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] #bonusStatus {
+  position: absolute !important;
+  left: 0 !important; right: 0 !important;
+  bottom: 40px !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 1.9rem !important;
+}
+section.screen[data-screen="REVIEW"] button[data-action="retake-photo"],
+section.screen[data-screen="REVIEW"] button[data-action="keep-photo"] {
+  width: 180px !important; height: 180px !important;
+  min-width: 180px !important; min-height: 180px !important;
+  white-space: nowrap !important; letter-spacing: 0.06em !important;
+  font-size: 1.3rem !important;
+}
+
+/* carnival-22: wake orb ring centred on the orb (old 1440px ripple size
+   was winning and pushing the ring off to the right). */
+section.screen.active[data-screen="ATTRACT"] button.portal-button[data-action="wake-mirror"]::before,
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"]::before {
+  width: auto !important;
+  height: auto !important;
+  inset: -24px !important;
+  left: -24px !important;
+  top: -24px !important;
+}
+/* carnival-22: game code orbs locked while saving */
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row.felix-locked .portal-button {
+  pointer-events: none !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row.felix-locked #felixVipJoin,
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row.felix-locked .felix-continue-orb {
+  filter: saturate(0.7) brightness(0.9) !important;
+}
+
+/* carnival-23: live plate hidden (editable later in admin), start orb in
+   the water; game code screen lower; pennies pill gone; choose-option
+   lower; camera card see-through. */
+.carnival-plate { display: none !important; }
+#booth-stage .live-start-btn { top: 83% !important; }
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 300px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 3.2rem 0 0 !important;
+}
+section.screen.active[data-screen="PAYMENT"] .felix-pay-top { display: none !important; }
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  padding-top: 260px !important;
+}
+.camera-enable-panel .no-camera-card,
+.no-camera-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.camera-enable-panel .no-camera-card .title-main,
+.camera-enable-panel .no-camera-card .subtitle {
+  color: #2a1c10 !important;
+  text-shadow: 0 0 10px rgba(255,250,235,0.95), 0 0 3px rgba(255,250,235,0.95) !important;
+}
+
+/* carnival-24: bigger Touch to Start; framed camera card text; see-through
+   Start Session orb; game code screen lower still. */
+section.screen.active[data-screen="AWAKE"] button[data-action="enter-mirror"] {
+  width: 560px !important;
+  height: 560px !important;
+  min-width: 560px !important;
+  min-height: 560px !important;
+  font-size: 2.6rem !important;
+}
+.camera-enable-panel .no-camera-card {
+  max-width: 820px !important;
+  margin: 0 auto !important;
+  padding: 3rem 3.2rem !important;
+  background: rgba(255, 250, 238, 0.28) !important;
+  border: 3px solid rgba(210, 176, 115, 0.85) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 0 0 8px rgba(255, 250, 238, 0.12) !important;
+}
+.camera-enable-panel .no-camera-card .title-main {
+  font-size: 3rem !important;
+  margin-bottom: 1.2rem !important;
+}
+.camera-enable-panel .no-camera-card .subtitle {
+  font-size: 2rem !important;
+  line-height: 1.45 !important;
+  margin-bottom: 2rem !important;
+}
+.camera-enable-panel .no-camera-card .button-row {
+  margin: 1.4rem 0 0 !important;
+}
+#booth-stage .live-start-btn {
+  background: radial-gradient(circle at 30% 28%,
+      rgba(255,255,255,0.55) 0%, rgba(255,180,230,0.45) 18%,
+      rgba(255,110,170,0.40) 38%, rgba(255,120,60,0.35) 60%,
+      rgba(140,0,90,0.40) 100%) !important;
+}
+#booth-stage .live-start-btn::before { opacity: 0.55 !important; }
+section.screen.active[data-screen="DIGITAL"] .screen-content.digital-screen {
+  padding-top: 400px !important;
+}
+section.screen.active[data-screen="DIGITAL"] .felix-portal-row {
+  margin: 2.6rem 0 0 !important;
+}
+
+/* carnival-25: choose-option screen starts lower, under the camera art */
+section.screen.active[data-screen="PAYMENT"] .screen-content {
+  padding-top: 430px !important;
+  justify-content: flex-start !important;
+}
+
+/* carnival-26: share icons wait for the save to finish */
+.felix-social-row.felix-locked .felix-social-btn {
+  opacity: 0.35;
+  filter: grayscale(0.7);
+  pointer-events: none;
+}
+
+/* carnival-27: keep the VIP QR square even when its column is narrow */
+section.screen.active[data-screen="DIGITAL"] .qr-placeholder img,
+section.screen.active[data-screen="DIGITAL"] .instapic-digital-qr,
+section.screen.active[data-screen="DIGITAL"] .qr-image-instapic {
+  width: 240px !important;
+  max-width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: contain !important;
+}
+
+/* carnival-29: Start Session orb sits in the middle of the live oval */
+#booth-stage .live-start-btn {
+  top: 44% !important;
+  left: 54.5% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+}
+
+/* carnival-31: Attract screen — stall front as the logo only (no background image). */
+section.screen.active[data-screen="ATTRACT"] .brand-logo img#attractLogo {
+  width: min(520px, 62vw) !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1;
+  object-fit: contain !important;
+  background: transparent !important;
+}
+
+/* carnival-34: Awake background — stall back FITTED behind the Awake content (admin: awake.bg_*). */
+section.screen[data-screen="AWAKE"] {
+  overflow: hidden !important;
+}
+section.screen[data-screen="AWAKE"] .awake-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+section.screen[data-screen="AWAKE"] .awake-bg[hidden] {
+  display: none !important;
+}
+section.screen[data-screen="AWAKE"] .awake-bg img {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  flex: none;
+  object-fit: contain;
+}
+section.screen[data-screen="AWAKE"] .screen-content.awake-screen {
+  position: relative;
+  z-index: 1;
+}
+
+/* carnival-35: make the picked photo set glow and lift above its neighbours.
+   Keep the carousel controls and purchase/continue actions on top and usable. */
+section.screen[data-screen="BACKGROUNDS"] .screen-content {
+  isolation: isolate;
+}
+section.screen[data-screen="BACKGROUNDS"] .background-scroll-wrapper {
+  position: relative;
+  z-index: 1;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card {
+  position: relative;
+  z-index: 1;
+  transform-origin: center center;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-grid {
+  padding: 22px 12px 26px !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.selected,
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-focused {
+  z-index: 4;
+  transform: translateY(-6px) scale(1.085) !important;
+  filter: saturate(1.28) brightness(1.12) drop-shadow(0 0 12px rgba(255, 198, 75, 0.9));
+  box-shadow: 0 0 0 4px #fff4c7,
+              0 0 26px 10px rgba(255, 190, 75, 1),
+              0 0 56px 18px rgba(255, 74, 169, 0.82),
+              0 18px 34px rgba(0, 0, 0, 0.72) !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-lock-badge,
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-free-badge {
+  z-index: 9;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card .bg-lock-badge {
+  top: 14px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  padding: 0.55rem 0.8rem;
+  color: #fff;
+  background: rgba(28, 8, 24, 0.94);
+  border: 2px solid rgba(255, 225, 155, 0.95);
+  box-shadow: 0 0 16px rgba(255, 110, 170, 0.8);
+  font-size: clamp(0.72rem, 1.5vw, 0.95rem);
+  white-space: nowrap;
+}
+section.screen[data-screen="BACKGROUNDS"] .felix-penny-confirm {
+  position: relative;
+  z-index: 30;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .bg-scroll-arrow {
+  z-index: 12;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .button-row {
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
+}
+section.screen.active[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"] {
+  position: relative !important;
+  z-index: 21 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  section.screen.active[data-screen="BACKGROUNDS"] .background-card {
+    transition: none;
+  }
+}
+
+/* carnival-39: keep the copy on its existing lines, centered over the picker,
+   with the continue portal below the photo carousel. */
+section.screen.active[data-screen="BACKGROUNDS"] .screen-content {
+  display: grid !important;
+  box-sizing: border-box !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: max-content max-content max-content max-content minmax(0, 1fr) max-content !important;
+  align-content: stretch !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+  gap: 12px 28px !important;
+  padding: 180px 72px 150px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .title-main {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: center;
+  max-width: 650px;
+  margin: 0 !important;
+  text-align: center !important;
+  line-height: 1.05 !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #bgSubtitle {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
+  max-width: 620px;
+  margin: 0 !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #bgPurseNote {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  margin: 0 !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #felix-unlock-confirm {
+  grid-column: 1;
+  grid-row: 4;
+  justify-self: center;
+  width: min(620px, 100%);
+  box-sizing: border-box;
+  margin: 0 !important;
+  text-align: center !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #felix-unlock-confirm .felix-penny-confirm-actions {
+  justify-content: center !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] > .screen-content > .button-row {
+  grid-column: 1;
+  grid-row: 6;
+  justify-self: center;
+  align-self: end;
+  margin: 0 !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-scroll-wrapper {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  align-self: end;
+  transform: translateY(60px);
+  width: 100% !important;
+  max-width: none !important;
+  height: 100%;
+  min-height: 0;
+  margin: 0 !important;
+  overflow: visible;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-grid {
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  scroll-padding-inline: 34px;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.selected,
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-focused {
+  transform: translate3d(0, -24px, 70px) scale(1.16) !important;
+  box-shadow: 0 0 0 6px #fff7d1,
+              0 0 34px 14px rgba(255, 194, 58, 1),
+              0 0 76px 24px rgba(255, 58, 178, 0.9),
+              0 28px 48px rgba(0, 0, 0, 0.82) !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"]:disabled {
+  opacity: 0.58 !important;
+  filter: saturate(0.55) !important;
+  cursor: not-allowed !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-locked {
+  opacity: 1 !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-locked img {
+  filter: none !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card button.bg-lock-badge {
+  appearance: none;
+  display: block;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto !important;
+}
+
+/* attract-spin-2: hold-and-spin 4-view stall + Felix on the Attract screen. */
+section.screen[data-screen="ATTRACT"] .brand-logo { position: relative; }
+section.screen[data-screen="ATTRACT"] .spin-card {
+  position: relative;
+  touch-action: none; /* attract-spin-3: stop the phone grabbing the drag as a scroll */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+section.screen[data-screen="ATTRACT"] .spin-card.is-spinning { cursor: grabbing; }
+section.screen[data-screen="ATTRACT"] .spin-card.spin-stall { width: min(520px, 62vw); margin: 0 auto; aspect-ratio: 1 / 1; }
+section.screen.active[data-screen="ATTRACT"] .spin-card img.spin-face,
+section.screen.active[data-screen="ATTRACT"] .brand-logo .spin-card img#attractLogo {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: contain !important;
+  pointer-events: none;
+  will-change: transform;
+}
+section.screen[data-screen="ATTRACT"] .spin-card.spin-felix {
+  position: absolute;
+  width: 34%;
+  aspect-ratio: 1 / 1;
+  right: -6%;
+  bottom: -4%;
+  z-index: 2;
+}
+
+/* bg-picker-1: readable title/subtitle and a proper portal orb on the Backgrounds screen (phone-first;
+   sizes are on the 1080 stage, shown ~0.4x on a phone). */
+section.screen.active[data-screen="BACKGROUNDS"] .title-main,
+section.screen.active[data-screen="BACKGROUNDS"] #bgSubtitle,
+section.screen.active[data-screen="BACKGROUNDS"] #bgPurseNote {
+  position: relative;
+  z-index: 15;
+  color: #fff4d6 !important;
+  opacity: 1 !important;
+  -webkit-text-stroke: 0 !important;
+  text-shadow: 0 2px 0 rgba(40, 22, 6, 0.95), 0 0 6px rgba(20, 10, 2, 0.95),
+               0 0 18px rgba(0, 0, 0, 0.85) !important;
+  background: rgba(22, 14, 6, 0.62) !important;
+  border: 2px solid rgba(214, 170, 82, 0.85) !important;
+  border-radius: 22px !important;
+  padding: 10px 26px !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45) !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .title-main {
+  font-size: 64px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  color: #ffe9a8 !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #bgSubtitle,
+section.screen.active[data-screen="BACKGROUNDS"] #bgPurseNote {
+  font-size: 34px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+section.screen.active[data-screen="BACKGROUNDS"] #bgPurseNote:empty { display: none !important; }
+/* CONTINUE: same pink/orange glowing portal orb as Awake "Touch to Start" / OPEN BONUS, sized for phone. */
+section.screen.active[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"] {
+  width: 300px !important;
+  height: 300px !important;
+  min-width: 300px !important;
+  min-height: 300px !important;
+  padding: 0 24px !important;
+  border-radius: 50% !important;
+  justify-self: center !important;
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #fffaf0 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: 0 2px 0 rgba(60, 0, 40, 0.95), 0 0 10px rgba(40, 0, 30, 0.9) !important;
+  animation: bgPickerOrbPulse 2.4s ease-in-out infinite;
+}
+section.screen.active[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"]:disabled {
+  opacity: 0.85 !important;
+  filter: saturate(0.7) brightness(0.9) !important;
+  animation: none;
+}
+@keyframes bgPickerOrbPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  section.screen.active[data-screen="BACKGROUNDS"] button[data-action="backgrounds-next"] { animation: none; }
+}
+
+
+/* felix-ride-soon-1: Available soon badge on ride cards */
+section.screen.active[data-screen="BACKGROUNDS"] .bg-soon-badge {
+  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+  z-index: 5; padding: 10px 18px; border-radius: 999px;
+  background: rgba(20,12,6,0.82); color: #ffe9a8; border: 2px solid rgba(214,170,82,0.9);
+  font-weight: 800; font-size: 22px; pointer-events: none; white-space: nowrap;
+}
+section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-coming-soon {
+  opacity: 0.92; filter: saturate(0.92);
+}

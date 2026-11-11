@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — Prepay a Session</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Choose and prepay for your Instapic photo booth or magic mirror package, then receive a 6-digit booth code with no expiry while unused.">
+  <link rel="canonical" href="https://instapic.fun/pay.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Instapic Fun">
+  <meta property="og:title" content="Prepay an Instapic Session">
+  <meta property="og:description" content="Choose your package and receive a 6-digit code for an Instapic booth or magic mirror session.">
+  <meta property="og:url" content="https://instapic.fun/pay.html">
+  <meta property="og:image" content="https://instapic.fun/assets/img/instapic_logo.png">
+  <meta property="og:image:alt" content="Instapic by Little Trends">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+</head>
+<body class="page" data-page="pay">
+  <main class="card pay-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro">
+      <h1>Choose your Instapic package</h1>
+      <p class="hero-text hero-text-wide">
+        Pay online now, receive your booth code instantly, and enter it at the mirror when it’s your turn.
+      </p>
+      <p class="muted">
+        Your booth code will appear right after payment. Make sure you save it before leaving this page.
+      </p>
+    </section>
+
+    <div class="package-grid package-grid-pay">
+      <button type="button" class="package-card package-portal" data-package-id="P1_STRIP" data-amount-cents="700">
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$7.00 Quick &amp; Simple</h2>
+        <p class="pkg-desc">Classic booth print</p>
+        <div class="pkg-price">2 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
+      </button>
+
+      <button type="button" class="package-card package-portal" data-package-id="P2_STRIP_GIF" data-amount-cents="1300">
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$13.00 Most Popular ✨</h2>
+        <p class="pkg-desc">Perfect for sharing</p>
+        <div class="pkg-price">4 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
+      </button>
+
+      <button type="button" class="package-card package-portal" data-package-id="P3_STRIP_GIF" data-amount-cents="1800">
+        <div class="package-badge">Instapic Package</div>
+        <h2 class="pkg-name">$18.00 Best for Groups</h2>
+        <p class="pkg-desc">Best value for the full crew</p>
+        <div class="pkg-price">6 PHOTO STRIPS</div>
+        <div class="btn">Choose this</div>
+      </button>
+    </div>
+
+    <section
+      id="payment-panel"
+      class="payment-shell"
+      hidden
+      data-square-application-id="sq0idp-tUY7HoJ1TvvIAYwpsIh2KQ"
+      data-square-location-id="9ZKNKQJ29QF50"
+    >
+      <h2>Secure payment</h2>
+      <p id="selected-package-label" class="muted">No package selected yet.</p>
+
+      <div id="payment-status" class="muted payment-status"></div>
+
+      <div class="wallet-stack">
+        <div class="apple-pay-wrap">
+          <button id="apple-pay-button" type="button" hidden style="display:none;"></button>
+        </div>
+
+        <!-- Square injects the official Google Pay logo button here -->
+        <div class="google-pay-wrap" id="google-pay-wrap" hidden>
+          <div id="google-pay-button"></div>
+        </div>
+      </div>
+
+      <p class="muted payment-or-divider" id="payment-or-divider" hidden>or pay by card</p>
+
+      <div id="card-container" class="card-container"></div>
+
+      <button id="card-pay-button" type="button" class="btn">Pay now</button>
+
+      <p class="muted payment-note">
+        Apple Pay and Google Pay appear automatically on supported phones and browsers. Everyone can also pay by card.
+      </p>
+    </section>
+
+    <div id="ticket-result" hidden>
+      <h2>Your booth code</h2>
+      <div id="ticket-code" class="ticket-code">------</div>
+      <p class="muted">Redirecting to your ticket page…</p>
+    </div>
+
+    <p class="muted">
+      Tip: take a screenshot of your code so you don’t lose it.
+    </p>
+
+    <nav class="site-bottom-nav" aria-label="Site pages">
+      <a href="session.html" class="secondary-link">I already have a code</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="save.html" class="secondary-link">VIP Guest Area</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="event.html" class="secondary-link">Private event</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="terms.html" class="secondary-link">Terms</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="privacy.html" class="secondary-link">Privacy</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="guest-contact.html" class="secondary-link">Contact</a>
+    </nav>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+  <script src="assets/main.js"></script>
+  <script src="site_core.js?v=20261020-lna"></script>
+  <script src="branding.js"></script>
+  <script src="pay_runtime.js?v=20260725-googlepay"></script>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+</html>

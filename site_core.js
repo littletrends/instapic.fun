@@ -1,0 +1,175 @@
+(function () {
+  const API_BASE = "https://motherpc.taild1a44c.ts.net";
+
+  function qs(sel, root = document) {
+    return root.querySelector(sel);
+  }
+
+  function qsa(sel, root = document) {
+    return Array.from(root.querySelectorAll(sel));
+  }
+
+  function dataPage() {
+    return document.body?.dataset?.page || "";
+  }
+
+  function getCodeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("code") || "").trim();
+  }
+
+  function showFlash(message, level = "error") {
+    const el = qs("#flash");
+    if (!el) {
+      console.warn("[InstapicCore flash]", level, message);
+      return;
+    }
+    el.hidden = false;
+    el.textContent = message;
+    el.className = `flash flash-${level}`;
+  }
+
+  async function readJson(res) {
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(`Invalid server response (${res.status})`);
+    }
+  }
+
+  // On MotherPC itself, Funnel DNS is 100.x. Brave 142+ then blocks
+  // public https://instapic.fun from fetching it unless the request is
+  // tagged local (and the guest Allows local network access).
+  async function fetchApi(url, opts) {
+    try {
+      return await fetch(url, opts);
+    } catch (err) {
+      try {
+        return await fetch(url, Object.assign({}, opts, { targetAddressSpace: "local" }));
+      } catch {
+        throw err;
+      }
+    }
+  }
+
+  async function createTicket(packageId, amountCents, source = "website_test_bypass") {
+    const res = await fetchApi(`${API_BASE}/api/create-ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        package_id: packageId,
+        amount_cents: amountCents,
+        source: source
+      })
+    });
+
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
+    }
+
+    const code = data.ticket_code || data.code || data.ticketCode;
+    if (!code) {
+      throw new Error("No code returned from MotherPC");
+    }
+
+    return {
+      ok: true,
+      code: String(code)
+    };
+  }
+
+  async function payAndCreateTicket(payload) {
+    const res = await fetchApi(`${API_BASE}/api/pay-and-create-ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {})
+    });
+
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
+    }
+
+    const code = data.ticket_code || data.code || data.ticketCode;
+    if (!code) {
+      throw new Error("No code returned from website backend");
+    }
+
+    return {
+      ok: true,
+      code: String(code),
+      payment_id: data.payment_id || null
+    };
+  }
+
+  function anonymousVisitorId() {
+    let visitorId = "";
+    try {
+      visitorId = localStorage.getItem("instapic.anonymousVisitor.v1") || "";
+      if (!visitorId) {
+        visitorId = (window.crypto && typeof window.crypto.randomUUID === "function")
+          ? window.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem("instapic.anonymousVisitor.v1", visitorId);
+      }
+    } catch (_) {
+      visitorId = "";
+    }
+
+    return visitorId;
+  }
+
+  async function getBonus(code) {
+    const clean = String(code || "").trim();
+    if (!/^\d{6}$/.test(clean)) {
+      throw new Error("Enter a valid 6-digit code");
+    }
+
+    const visitorId = anonymousVisitorId();
+    const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
+    const res = await fetchApi(
+      `${API_BASE}/api/get-bonus/${encodeURIComponent(clean)}${visitorQuery}`
+    );
+    const data = await readJson(res);
+
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || data.reason || `HTTP ${res.status}`);
+    }
+
+    return data;
+  }
+
+  function trackBonusEvent(event, asset, detail) {
+    const code = getCodeFromUrl();
+    if (!/^\d{6}$/.test(code)) return Promise.resolve(false);
+    const visitorId = anonymousVisitorId();
+    const visitorQuery = visitorId ? `?visitor=${encodeURIComponent(visitorId)}` : "";
+    return fetchApi(
+      `${API_BASE}/api/bonus-analytics/${encodeURIComponent(code)}${visitorQuery}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event, asset: asset || "", detail: detail || "" }),
+        keepalive: true
+      }
+    ).then((res) => res.ok).catch(() => false);
+  }
+
+  window.InstapicCore = {
+    BASE: API_BASE,
+    API_BASE,
+    qs,
+    qsa,
+    dataPage,
+    getCodeFromUrl,
+    showFlash,
+    createTicket,
+    payAndCreateTicket,
+    getBonus,
+    trackBonusEvent,
+  };
+})();

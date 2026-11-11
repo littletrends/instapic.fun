@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instapic Fun — My Instapic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/img/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="branding.css">
+  <style>
+    .vip-dashboard-intro{margin-bottom:1rem}
+    .vip-dashboard-intro .hero-text{max-width:46rem;margin:0 auto}
+    .vip-shortcuts{display:flex;justify-content:center;flex-wrap:wrap;gap:.55rem;margin:1.1rem 0 1.4rem}
+    .vip-shortcuts a{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(16,16,26,.76);color:inherit;text-decoration:none;font-size:.88rem;font-weight:700}
+    .vip-shortcuts a:hover,.vip-shortcuts a:focus-visible{border-color:rgba(255,209,122,.6);background:rgba(255,255,255,.08)}
+    .vip-shortcut-number,.vip-step{color:#ffd17a;font-size:.72rem;font-weight:900;letter-spacing:.1em}
+    .vip-section{margin-top:1rem!important;scroll-margin-top:1rem}
+    .vip-section-heading{margin-bottom:.4rem}
+    .vip-section-heading .vip-step{display:block;margin-bottom:.35rem;text-transform:uppercase}
+    .vip-section-heading h2{margin:.1rem 0 .4rem}
+    .vip-section-copy{max-width:48rem;color:rgba(255,255,255,.78)}
+    .vip-section .code-hint{max-width:44rem}
+    .vip-saved-list{display:grid;gap:.75rem;margin-top:1rem}
+    .vip-saved-list .dashboard-card{margin:0;padding:1rem 1.1rem}
+    .vip-ticket-label{margin:0 0 .3rem;color:rgba(255,255,255,.68);font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+    .vip-saved-list .ticket-actions-main{justify-content:flex-start}
+    .vip-saved-list .ticket-actions-main .btn{display:inline-flex;align-items:center;justify-content:center}
+    .vip-empty-note{padding:.9rem 1rem;border:1px dashed rgba(255,255,255,.18);border-radius:14px;color:rgba(255,255,255,.75)}
+    .vip-password-form{max-width:42rem}
+    @media(max-width:600px){.vip-shortcuts{justify-content:flex-start}.vip-shortcuts a{font-size:.82rem}.pf-aura-art{width:min(160px,46vw)}}
+    .pf-doorway{display:grid;justify-items:center;gap:.85rem;margin-top:1.25rem;text-align:center}
+    .pf-aura-art{position:relative;display:block;width:min(170px,46vw);aspect-ratio:2/3;overflow:hidden;border:3px double #d2a65b;border-radius:48% 48% 10px 10px;background:radial-gradient(ellipse at top,#765027,#20180f 75%);box-shadow:0 0 22px #d2a65b24,0 12px 26px #0007;transition:transform .2s ease,box-shadow .2s ease}
+    .pf-aura-art img{display:block;width:100%;height:100%;object-fit:contain;object-position:center 12%}
+    .pf-aura-boards{position:absolute;inset:27% 3% 18%;display:grid;align-content:center;justify-items:center;gap:.45rem;pointer-events:none}
+    .pf-aura-boards span{display:block;width:112%;padding:.48rem .2rem;border:1px solid #c9a36a88;background:linear-gradient(#7a4e2c,#5a3a22 55%,#3d2416);box-shadow:0 6px 12px #0008;color:#f6e2b8;font:800 .55rem/1.1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-8deg)}
+    .pf-aura-boards span+span{width:104%;font-size:.48rem;transform:rotate(6deg);opacity:.94}
+    .pf-aura-prompt{color:#d7bd91}
+    .pf-next-door{display:grid;justify-items:center;gap:.55rem;max-height:0;overflow:hidden;opacity:0;transform:translateY(8px);transition:max-height .38s ease,opacity .25s ease,transform .25s ease}
+    .pf-next-door[hidden]{display:none}
+    .pf-next-door.is-open{max-height:280px;opacity:1;transform:translateY(0)}
+    .pf-door-note{margin:0;color:#d0bea0;font:italic .95rem/1.4 Georgia,serif}
+    @media(prefers-reduced-motion:reduce){.pf-aura-art,.pf-next-door{transition:none}}
+    /* A lighter, readable guest area, scoped to this page only. */
+    body[data-page="my-instapic"] { color:#35271e; background:radial-gradient(circle at 15% 0%,#fff5e1,#f5e7e6 55%,#eadce7); }
+    body[data-page="my-instapic"] .dashboard-page { background:#fffaf4; border:1px solid #e6cdb8; box-shadow:0 12px 35px #6a3a3126; }
+    body[data-page="my-instapic"] .vip-section { background:#fff; border:1px solid #ead8c7; box-shadow:0 4px 16px #61453310; }
+    body[data-page="my-instapic"] .vip-saved-list .dashboard-card { background:#fff8f2; border:1px solid #efddcb; box-shadow:none; }
+    body[data-page="my-instapic"] h1, body[data-page="my-instapic"] h2, body[data-page="my-instapic"] h3 { color:#38271f; text-shadow:none; }
+    body[data-page="my-instapic"] .hero-text, body[data-page="my-instapic"] .vip-section-copy, body[data-page="my-instapic"] .muted, body[data-page="my-instapic"] .code-hint, body[data-page="my-instapic"] .vip-ticket-label { color:#655248; }
+    body[data-page="my-instapic"] .vip-step, body[data-page="my-instapic"] .vip-shortcut-number, body[data-page="my-instapic"] .bonus-kicker { color:#99552f; }
+    body[data-page="my-instapic"] .vip-shortcuts a { color:#50352d; background:#fff; border-color:#dfc7b6; }
+    body[data-page="my-instapic"] .vip-shortcuts a:hover { background:#fff4e9; }
+    body[data-page="my-instapic"] .vip-empty-note { color:#655248; border-color:#e5cdbc; }
+    body[data-page="my-instapic"] .pf-aura-prompt, body[data-page="my-instapic"] .pf-door-note { color:#6b4a32; }
+    body[data-page="my-instapic"] .secondary-link, body[data-page="my-instapic"] .site-bottom-nav button { color:#774a66 !important; }
+    body[data-page="my-instapic"] input { color:#35271e; background:#fff; border:1px solid #c5a897; }
+    body[data-page="my-instapic"] input::placeholder { color:#826c60; opacity:1; }
+    body[data-page="my-instapic"] .form-shell { background:#fff9f3; color:#35271e; border:1px solid #ead8c7; box-shadow:none; }
+    body[data-page="my-instapic"] .form-shell label { color:#503a30; }
+    .vip-pf-code { display:block; padding:0; background:#fff8f2; border:1px solid #efddcb; border-radius:9px; }
+    .vip-pf-code strong { font-size:1.25rem; letter-spacing:.08em; }
+    .vip-pf-form { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:1rem; }
+    .vip-pf-form input { width:12rem; max-width:100%; padding:.75rem; border-radius:10px; font:inherit; text-transform:uppercase; }
+    .vip-pf-status { margin:.6rem 0 0; color:#655248; }
+
+    .vip-search-label{display:block;font-weight:700;margin:1rem 0 .35rem}
+    .vip-code-search{width:min(100%,22rem);padding:.7rem .8rem;border-radius:10px;font:inherit}
+    .vip-code-card[hidden]{display:none!important}
+    .vip-code-card{background:#fff8f2;border:1px solid #efddcb;border-radius:14px;overflow:hidden}
+    .vip-code-card summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.85rem 1rem;list-style:none}
+    .vip-code-card summary::-webkit-details-marker{display:none}
+    .vip-code-card summary::after{content:'+';font-size:1.35rem;color:#99552f}
+    .vip-code-card[open] summary::after{content:'−'}
+    .vip-code-card summary:focus-visible{outline:3px solid #bd7b4f;outline-offset:-3px}
+    .vip-code-label{font-weight:800;letter-spacing:.08em;font-size:1.05rem;color:#38271f}
+    .vip-code-details{padding:0 1rem 1rem}
+    .vip-code-details .ticket-actions{display:flex;flex-wrap:wrap;gap:.55rem}
+    .vip-no-match{margin-top:.8rem;color:#655248}
+    .vip-pf-area{border-top:1px solid #ead8c7;margin-top:1.5rem;padding-top:1rem}
+    .vip-pf-heading{display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline}
+    .vip-pf-heading h3{margin:0;font-size:1rem}.vip-pf-heading span{color:#99552f;font-size:.75rem;font-weight:700}
+    .vip-pf-area .vip-saved-list{gap:.4rem;margin-top:.6rem}
+    .vip-pf-area .vip-code-card{border-radius:9px}
+    .vip-pf-area .vip-code-card summary{padding:.45rem .65rem}
+    .vip-pf-area .vip-code-label{font-size:.88rem}
+    .vip-pf-area .vip-code-details{padding:0 .65rem .6rem}
+    .vip-pf-area .vip-code-details .btn{padding:.45rem .7rem;font-size:.8rem}
+    .pf-doorway{margin:1rem 0 .5rem}
+    .pf-little-door{display:grid;place-items:center;width:36px;height:42px;margin:1.15rem auto 0;padding:0;border:0;background:transparent;color:transparent;cursor:pointer;opacity:.2}
+    .pf-little-door-arch{display:block;width:14px;height:22px;border-radius:7px 7px 2px 2px;border:1px solid rgba(232,214,196,.7);background:linear-gradient(180deg,transparent 44%,rgba(226,204,184,.45) 44%,rgba(226,204,184,.45) 56%,transparent 56%),radial-gradient(ellipse at top,#fff,#f4ebe3 78%);box-shadow:inset 0 4px 6px rgba(180,150,130,.12)}
+    .pf-little-door:hover,.pf-little-door:focus-visible{opacity:.55}
+    .pf-little-door:focus-visible{outline:3px solid rgba(226,200,170,.75);outline-offset:4px}
+    .pf-under-construction{display:grid;justify-items:center;gap:.85rem;margin-top:.35rem}
+    .pf-under-construction[hidden]{display:none}
+    .pf-ticket-desk{display:inline-flex;align-items:center;justify-content:center;min-height:2.6rem;padding:.7rem 1.2rem;border-radius:999px;text-decoration:none;font:700 .9rem/1.2 system-ui,sans-serif;color:#1a120c;background:linear-gradient(180deg,#f2d48a,#d2a65b 58%,#a87932);box-shadow:0 0 16px #d2a65b44}
+    .pf-ticket-desk:hover,.pf-ticket-desk:focus-visible{filter:brightness(1.06)}
+    .pf-ticket-desk:focus-visible{outline:3px solid #f2d48a;outline-offset:5px}
+
+  </style>
+</head>
+<body class="page" data-page="my-instapic">
+  <main class="card dashboard-page">
+    <div id="flash" hidden></div>
+
+    <section class="page-intro vip-dashboard-intro">
+      <div class="bonus-kicker">VIP Guest Area</div>
+      <h1>My Instapic</h1>
+      <p id="guest-summary" class="hero-text hero-text-wide">
+        Find your Instapic photo booth codes here.
+      </p>
+    </section>
+
+    <nav class="vip-shortcuts" aria-label="VIP Guest Area sections">
+      <a href="#saved-booth-codes">Instapic Photo Booth Codes</a>
+      <a href="#add-booth-code">Save Booth Code</a>
+    </nav>
+
+    <section class="dashboard-card vip-section" id="add-booth-code">
+      <div class="vip-section-heading">
+        <span class="vip-step">6-digit booth code</span>
+        <h2>Save a booth code</h2>
+      </div>
+      <p class="vip-section-copy">Enter the 6-digit code printed above your photo strip. Saving it keeps it in this guest profile; it does not redeem or use it.</p>
+
+      <form id="store-code-form" class="form-shell" novalidate autocomplete="off" style="margin-top:1.25rem;">
+        <label for="store_ticket_code" class="code-label">6-digit booth code</label>
+
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="text"
+            id="store_ticket_code"
+            name="store_ticket_code"
+            maxlength="6"
+            inputmode="numeric"
+            placeholder="123456"
+            required
+          >
+          <button type="submit" class="btn">Save Code</button>
+        </div>
+
+        <p class="code-hint">
+          Only the 6-digit booth code goes here. Your 4-digit email sign-in code is different.
+        </p>
+      </form>
+
+      <div id="store-code-status" class="muted" role="status" aria-live="polite" style="margin-top:1rem;"></div>
+    </section>
+
+    <section class="info-callout vip-section" id="saved-booth-codes">
+      <div class="vip-section-heading">
+        <span class="vip-step">6-digit codes</span>
+        <h2>Photo booth sessions</h2>
+      </div>
+      <p class="vip-section-copy">Open a saved code to view its photo strip and bonus content. Your codes stay here until you need them at the booth.</p>
+      <label class="vip-search-label" for="booth-code-search">Find a booth code</label>
+      <input id="booth-code-search" class="vip-code-search" type="search" inputmode="numeric" placeholder="Search your codes" autocomplete="off">
+      <div id="saved-sessions-list" class="vip-saved-list" aria-live="polite">
+        <p class="vip-empty-note">Loading your saved codes…</p>
+      </div>
+    </section>
+
+    <section class="info-callout vip-section" id="pf-spot-card">
+      <div class="vip-section-heading"><h2>Penny Fever</h2></div>
+      <p id="pf-spot-summary">Your Penny Fever player can be linked to this guest profile, so your pennies and alley place are waiting when you return.</p>
+      <div class="pf-doorway">
+        <button type="button" id="pf-little-door" class="pf-little-door" aria-label="Door" aria-expanded="false" aria-controls="pf-under-construction">
+          <span class="pf-little-door-arch" aria-hidden="true"></span>
+        </button>
+        <div id="pf-under-construction" class="pf-under-construction" hidden>
+          <div class="pf-aura-art" aria-hidden="true">
+            <img src="penny-fever/assets/restyle/paper-aura-seated.webp" alt="" width="1024" height="1536" loading="lazy">
+            <span class="pf-aura-boards"><span>Under Construction</span><span>Paper Alley Ahead</span></span>
+          </div>
+          <p class="pf-door-note">“The alley is still being papered, darling. Take a ticket at the desk — I’ll see you at the booth.”</p>
+          <a id="pf-spot-continue" class="pf-ticket-desk" href="penny-fever/index.html?style=paper&amp;rail=paper&amp;v=vip-spot-2#door">
+            <span class="portal-label" id="pf-spot-label">Step inside · ticket desk</span>
+          </a>
+        </div>
+      </div>
+      <div class="vip-pf-area" id="saved-pf-codes">
+      <div class="vip-pf-heading"><h3>Penny Fever photo codes</h3><span>PF- codes</span></div>
+      <p class="vip-section-copy">Your Felix game codes. Open one to see its strip and bonuses.</p>
+      <div id="saved-pf-list" class="vip-saved-list" aria-live="polite"></div>
+      <p class="vip-section-copy">Codes marked “On this device” are not yet in your VIP account. Tap “Save to VIP” to keep them in your account.</p>
+      <form id="save-pf-form" class="vip-pf-form" novalidate>
+        <label for="save-pf-code">Save a PF code to VIP</label>
+        <input id="save-pf-code" type="text" maxlength="9" placeholder="PF-ABCDEF" autocomplete="off" autocapitalize="characters">
+        <button class="btn" type="submit">Save PF code</button>
+      </form>
+      <p id="save-pf-status" class="vip-pf-status" role="status"></p>
+      </div>
+    </section>
+
+    <section class="info-callout vip-section" id="account-settings">
+      <div class="vip-section-heading">
+        <h2>VIP password</h2>
+      </div>
+      <p class="vip-section-copy">Set or change the password for this email account. You can still sign in with an email code if you forget it.</p>
+
+      <form id="guest-password-set-form" class="form-shell vip-password-form" novalidate autocomplete="off" style="margin-top:1rem;">
+        <label for="guest_new_password" class="code-label">New 6–8 character password</label>
+        <div class="code-input-row code-input-row-stack">
+          <input
+            type="password"
+            id="guest_new_password"
+            name="guest_new_password"
+            minlength="6"
+            maxlength="8"
+            placeholder="6 to 8 characters"
+            required
+            autocomplete="new-password"
+          >
+          <button type="submit" class="btn">Update Password</button>
+        </div>
+
+        <p class="code-hint">
+          Use 6 to 8 characters. This changes sign-in only; it does not change your booth codes.
+        </p>
+      </form>
+    </section>
+
+    <nav class="site-bottom-nav" aria-label="Site pages">
+      <a href="session.html" class="secondary-link">Enter code</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="pay.html" class="secondary-link">Prepay</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <a href="how-it-works.html" class="secondary-link">How it works</a>
+      <span class="nav-dot" aria-hidden="true">·</span>
+      <button type="button" id="guest-logout-btn" class="secondary-link" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:inherit;">Log out</button>
+    </nav>
+    <p class="page-back">
+      <a class="btn" href="index.html">Back to start</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <small>Instapic by Little Trends — Moments Made Magical ✨</small>
+  </footer>
+
+  <script src="assets/main.js"></script>
+  <script src="branding.js"></script>
+  <script src="guest_identity.js?v=pf-door-1"></script>
+  <script src="my_instapic_runtime.js?v=vip-door-flow-1"></script>
+  <script src="assets/penny-fever-vip-door.js?v=vip-door-flow-1"></script>
+  <script src="guest_store_code_runtime.js"></script>
+  <script src="guest_password_runtime.js"></script>
+  <script src="guest_logout_runtime.js"></script>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+</html>
