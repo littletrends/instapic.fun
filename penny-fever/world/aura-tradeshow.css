@@ -86,6 +86,18 @@
   cursor:pointer;border:1px solid #8a6230;border-radius:5px;background:linear-gradient(180deg,#f5dda7,#d4a45a);
   color:#160b10;font:700 .58rem/1 system-ui,sans-serif;padding:.18rem .32rem;
 }
+.aura-tradeshow-views{
+  display:flex;gap:.18rem;
+}
+.aura-tradeshow-views button{
+  flex:1;cursor:pointer;border:1px solid rgba(244,228,194,.4);border-radius:5px;
+  background:#3a2840;color:#fff6ec;font:700 .58rem/1 system-ui,sans-serif;
+  padding:.2rem .22rem;
+}
+.aura-tradeshow-views button[aria-pressed="true"]{background:#6b4e24;border-color:#c9a24a}
+.aura-tradeshow-views button:disabled{opacity:.45;cursor:default}
+.aura-tradeshow-card.is-nft .aura-tradeshow-stage{background:#efe3c6}
+.aura-tradeshow-card.is-nft .aura-tradeshow-turn{display:none}
 .aura-tradeshow-card h3{margin:0;font-size:.72rem;line-height:1.2}
 .aura-tradeshow-card .stock{margin:0;font-size:.62rem;color:#e8d0a0}
 .aura-tradeshow-card .claim{
@@ -109,5 +121,9 @@
   background:#5a4a48;color:#fff6ec;font:700 .62rem/1.15 Georgia,serif;cursor:default;
 }
 .aura-tradeshow-buy:disabled{background:#5a4a48;cursor:default}
+.aura-tradeshow-buy.is-ready{
+  border-style:solid;border-color:#c9a24a;cursor:pointer;
+  background:linear-gradient(180deg,#7a5728,#4a3518);
+}
 body.aura-tradeshow-open .pf-stall-card,
 body.aura-tradeshow-open .aura-counter-service{display:none}

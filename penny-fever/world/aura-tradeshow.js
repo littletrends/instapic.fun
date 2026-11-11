@@ -7,8 +7,11 @@ const VIEWS = ['front', 'left', 'back', 'right'];
 const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
+const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
+const NFT_VER = 'nft-host-1';
 
-let stock = {default_remaining: 5000, items: {}};
+let stock = {default_remaining: 0, items: {}};
+let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
 let folder = 'book:penny-collector-book';
@@ -20,7 +23,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=aura-tradeshow-7' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-1' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -32,17 +35,30 @@ export function tradeshowBlocked() {
 }
 export function remainingFor(id) {
   const n = stock.items?.[id];
-  const value = Number.isFinite(Number(n)) ? Number(n) : Number(stock.default_remaining) || 5000;
-  return Math.max(0, Math.floor(value));
+  if (Number.isFinite(Number(n))) return Math.max(0, Math.floor(Number(n)));
+  const fallback = Number(stock.default_remaining);
+  return Number.isFinite(fallback) ? Math.max(0, Math.floor(fallback)) : 0;
 }
 function loadStock() {
   return fetch(FILE.href, {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : {}))
     .then((data) => {
+      const fallback = Number(data.default_remaining);
       stock = {
-        default_remaining: Number(data.default_remaining) || 5000,
+        default_remaining: Number.isFinite(fallback) ? fallback : 0,
         items: data.items && typeof data.items === 'object' ? data.items : {},
       };
+    })
+    .catch(() => {});
+}
+function nftPlateSrc(id) {
+  return `${NFT_HOST}/api/penny-fever/nft-plate/${encodeURIComponent(id)}.webp?v=${NFT_VER}`;
+}
+function loadPlates() {
+  return fetch(`${NFT_HOST}/api/penny-fever/nft-plates?v=${NFT_VER}`, {cache: 'no-store'})
+    .then((res) => (res.ok ? res.json() : []))
+    .then((list) => {
+      nftPlates = new Set(Array.isArray(list) ? list : []);
     })
     .catch(() => {});
 }
@@ -134,9 +150,22 @@ function ensureOverlay() {
       goPlayAtStall(go.dataset.goStall);
       return;
     }
+    const viewBtn = e.target.closest('[data-view]');
+    if (viewBtn) {
+      e.preventDefault();
+      setCardView(viewBtn.closest('.aura-tradeshow-card'), viewBtn.dataset.view);
+      return;
+    }
+    const buy = e.target.closest('[data-buy]');
+    if (buy && !buy.disabled) {
+      e.preventDefault();
+      readyBuy(buy.dataset.buy);
+      return;
+    }
     const spin = e.target.closest('[data-spin], .aura-tradeshow-stage');
     if (!spin) return;
     const card = spin.closest('.aura-tradeshow-card');
+    if (!card || card.dataset.mode === 'nft') return;
     const img = card?.querySelector('img');
     if (!img) return;
     const views = VIEWS.filter((view) => card.dataset[view] === '1');
@@ -171,7 +200,7 @@ function actionFor(item, stallInfo) {
   if (remainingFor(item.id) <= 0) {
     return {label: 'Aura’s pile is gone · trade later', disabled: true};
   }
-  return {label: 'Buy with XRP · till coming', disabled: true};
+  return {label: 'Buy with XRP (get ready)', disabled: false, ready: true};
 }
 function claimLine(item, stallInfo) {
   if (isFelix(item)) {
@@ -181,8 +210,8 @@ function claimLine(item, stallInfo) {
   const stall = stallForPrize(item);
   const host = stall?.host || 'Aura';
   const title = stall?.title || 'her booth';
-  if (stall?.id === 'ticket-booth') return `Claim at Aura · ${title} · buy with XRP in VIP when the till is live`;
-  return `Play for it at ${host} · ${title} · buy with XRP in VIP when the till is live`;
+  if (stall?.id === 'ticket-booth') return `Claim at Aura · ${title} · Buy with XRP (get ready)`;
+  return `Play for it at ${host} · ${title} · Buy with XRP (get ready)`;
 }
 function playTap(item, stallInfo, stall) {
   if (isFelix(item)) {
@@ -192,6 +221,34 @@ function playTap(item, stallInfo, stall) {
     return {id: 'aura', label: 'Go to Aura’s till'};
   }
   return {id: stall.id, label: `Play at ${stall.host || 'this stall'}`};
+}
+function setCardView(card, mode) {
+  if (!card) return;
+  const next = mode === 'nft' ? 'nft' : 'website';
+  const img = card.querySelector('img');
+  const id = card.dataset.item;
+  card.dataset.mode = next;
+  card.classList.toggle('is-nft', next === 'nft');
+  card.querySelectorAll('[data-view]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.view === next));
+  });
+  const label = card.querySelector('[data-face-label]');
+  if (next === 'nft') {
+    if (img) img.src = nftPlateSrc(id);
+    if (label) label.textContent = 'nft';
+    return;
+  }
+  const face = VIEWS[Number(card.dataset.face) || 0] || 'front';
+  if (img) img.src = faceSrc({asset: card.dataset.asset}, face);
+  if (label) label.textContent = face;
+}
+function readyBuy(id) {
+  const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
+  const name = item?.name || id;
+  const note = overlay?.querySelector('#auraTradeshowNote');
+  if (note) {
+    note.textContent = `XRP till getting ready — ${name} is queued for Buy with XRP. Aura will take XRP here next. Play to win stays live.`;
+  }
 }
 function goPlayAtStall(place) {
   closeTradeshow({stayInAlley: true});
@@ -300,9 +357,12 @@ function appendCards(grid, items, stall) {
     const card = document.createElement('article');
     card.className = 'aura-tradeshow-card';
     card.dataset.asset = item.asset;
+    card.dataset.item = item.id;
+    card.dataset.mode = 'website';
     card.dataset.face = '0';
     VIEWS.forEach((view) => { card.dataset[view] = item.turnaround || view === 'front' ? '1' : '0'; });
     const felix = isFelix(item);
+    const hasNft = nftPlates.has(item.id);
     const chipClass = felix ? 'is-felix' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'));
     const chipText = felix ? 'Photo booth' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'));
     const act = actionFor(item, info);
@@ -314,12 +374,16 @@ function appendCards(grid, items, stall) {
         <span data-face-label>front</span>
         <button type="button" data-spin="1" aria-label="Rotate">Rotate</button>
       </div>
+      <div class="aura-tradeshow-views">
+        <button type="button" data-view="website" aria-pressed="true">Website</button>
+        <button type="button" data-view="nft" ${hasNft ? '' : 'disabled'} aria-pressed="false">${hasNft ? 'NFT' : 'NFT soon'}</button>
+      </div>
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
       ${felix ? '' : `<p class="stock">${formatStock(remainingFor(item.id))}</p>`}
       <p class="claim">${claimLine(item, info)}</p>
       <button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>
-      ${felix ? '' : `<button type="button" class="aura-tradeshow-buy" disabled>${act.label}</button>`}`;
+      ${felix ? '' : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`}`;
     grid.append(card);
   }
 }
@@ -431,6 +495,7 @@ export function openTradeshow() {
   document.body.classList.add('aura-tradeshow-open');
   overlay.hidden = false;
   loadStock().then(paint);
+  Promise.all([loadStock(), loadPlates()]).then(paint);
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
   return true;
@@ -452,6 +517,7 @@ export function tradeshowSign() {
 }
 
 loadStock();
+loadPlates();
 window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus};
 
 try {

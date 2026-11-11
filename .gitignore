@@ -51,3 +51,9 @@ README*.txt
 !penny-fever/paper-games/workshop/assets/vision/LICENSE.txt
 !penny-fever/paper-games/workshop/assets/vision/NOTICE.txt
 tests/
+
+# Mint plates stay on MotherPC disk. Never publish to GitHub Pages.
+penny-fever/assets/nft-plates/
+**/*nft-plates*
+NFT finals/
+*.nft-master.png
