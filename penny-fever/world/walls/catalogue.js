@@ -412,7 +412,8 @@ const rows=[
 ];
 export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
 // Sit behind the centred wall-bay attractions (x=±3.24) and the old paper trim (~4.2).
-export const WALL_RADIAL=4.86;
+// Lorie 12/11: backdrops sent back 0.54 (was 4.86) to give the rides room.
+export const WALL_RADIAL=5.4;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{
  stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.1,foyerStart=1.2,lots=null

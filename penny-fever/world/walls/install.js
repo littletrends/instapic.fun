@@ -1,7 +1,7 @@
 import * as THREE from '../lib/three.module.min.js';
-import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=names-1';
-import {loadWallArt,disposeWallArt,prefetchWallArt,clearIdleWallArt} from './art.js?v=wall-front-1';
-import {buildWall,disposeWall} from './models.js?v=wall-front-1';
+import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=wall-back-1';
+import {loadWallArt,disposeWallArt,prefetchWallArt,clearIdleWallArt} from './art.js?v=wall-back-1';
+import {buildWall,disposeWall} from './models.js?v=wall-back-1';
 import {phoneLane,WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 // Warm the next few walls past load range (in the walking direction) while nothing nearer is loading.
 const WALL_AHEAD=phoneLane?8:14,WALL_AHEAD_COUNT=phoneLane?2:3;

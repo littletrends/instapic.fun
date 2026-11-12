@@ -31,8 +31,8 @@ import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.j
 })();
 
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
-import {installWallBackdrops} from "./walls/install.js?v=wall-front-1";
-import {installPapercutRides} from "./amusements/install.js?v=rides-angled-1";
+import {installWallBackdrops} from "./walls/install.js?v=wall-back-1";
+import {installPapercutRides} from "./amusements/install.js?v=rides-even-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
@@ -783,7 +783,7 @@ function makePier(group) {
 function makeHall(group, len) {
   const floorT = woodTex("#4a3424", "rgba(20,10,0,0.2)");
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(paperRail ? 9.8 : 8.6, len + 4),
+    new THREE.PlaneGeometry(paperRail ? 11.2 : 8.6, len + 4),
     makeMat(0x4a3424, { map: floorT, roughness: 0.78 })
   );
   floor.rotation.x = -Math.PI / 2;

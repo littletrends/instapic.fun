@@ -10,17 +10,17 @@ const HOST_HEIGHT=1.7;
 // Hosts stand out on the boards like the stall vendors (alley.js: side*1.68, z-.85, facing the foyer).
 const HOST_AISLE=1.68;
 const HOST_ALONG=-.85;
-// Lorie 12/11: rides come forward out of the back wall, slide a little toward
-// Aura's booth (-Z) away from the stall behind, and angle like the stalls.
-const RIDE_PULL=.64;
-const RIDE_NUDGE_Z=-1.0;
+// Lorie 12/11: rides angle like the stalls and sit evenly between the stalls
+// either side of them (equal gaps), instead of a fixed nudge.
 const FACE_PULL=3.2; // same as alley.js FACE_PULL on the paper rail
-// Stalls are 3.5 tall. Rides dwarf them and sit further back (RIDE_X 3.82),
-// so side cards stay out of the aisle (1.62) and short of the wall (4.86).
-const RIDE_SCALE=2.35;
-const RIDE_HEIGHT_MIN=8;
-const RIDE_MAX_WIDTH=9.2;
+// Stalls are 3.5 tall; rides stay bigger but fit between the walkway edge (1.62)
+// and the backdrops (5.4). Centred at 3.51 and angled like the stalls, a 4.8-wide
+// sheet spans x 1.89–5.13; height is capped so wide drawings shrink, not squash.
+const RIDE_SCALE=1.75;
+const RIDE_HEIGHT_MIN=5.6;
+const RIDE_MAX_WIDTH=4.8;
 const RIDE_SIDE_WIDTH=2.2;
+const RIDE_CENTRE_X=3.51;
 
 export function amusementYaw(x){return x>0?-Math.PI/2:Math.PI/2;}
 // Local +Z toward the foyer, so fronts greet a guest walking +Z down the alley.
@@ -41,13 +41,22 @@ function rideViewIndex(figure,eye){
  return view;
 }
 
+// Spread the rides between the neighbouring stalls so every gap is equal; past
+// the last stall a ride keeps its lot slot.
+function rideZ(lots,i,z0,step){
+ let p=i,n=i;
+ while(p>=0&&lots[p].kind!=='stall')p--;
+ while(n<lots.length&&lots[n].kind!=='stall')n++;
+ if(p<0||n>=lots.length)return z0+i*step;
+ return z0+step*(p+(n-p)*(i-p)/(n-p));
+}
 export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}={}){
  const root=new THREE.Group();root.name='Papercut midway rides';scene.add(root);
  const figures=[];
  for(const [i,lot] of (lots||[]).entries()){
   if(lot.kind!=='ride')continue;
   const id=lot.id,d=AMUSEMENT_ART[id];if(!d)continue;
-  const x=lot.side*((RIDE_X||3.74)-RIDE_PULL),z=z0+i*step+RIDE_NUDGE_Z,yaw=Math.atan2(-x,-FACE_PULL),side=lot.side||Math.sign(x)||1;
+  const x=lot.side*RIDE_CENTRE_X,z=rideZ(lots,i,z0,step),yaw=Math.atan2(-x,-FACE_PULL),side=lot.side||Math.sign(x)||1;
   const ride=new THREE.Group();ride.name=d.name+' · papercut';ride.position.set(x,0,z);ride.rotation.y=yaw;
   ride.userData={amusementId:id,kind:'ride'};root.add(ride);
   const host=new THREE.Group();host.name=d.host+' · attendant';
@@ -61,7 +70,7 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
   const d=AMUSEMENT_ART[figure.userData.amusementId];
   return figure.userData.kind==='host'
    ?{height:HOST_HEIGHT,maxWidth:1.2,sideWidth:.55,layout:'stand'}
-   :{height:Math.max(RIDE_HEIGHT_MIN,(d.height||3.5)*RIDE_SCALE),maxWidth:RIDE_MAX_WIDTH,sideWidth:RIDE_SIDE_WIDTH,layout:'stand'};
+   :{height:figure.userData.fitHeight||Math.max(RIDE_HEIGHT_MIN,(d.height||3.5)*RIDE_SCALE),maxWidth:RIDE_MAX_WIDTH,sideWidth:RIDE_SIDE_WIDTH,layout:'stand'};
  }
  function release(figure){
   const job=inflight.find(j=>j.figure===figure);
@@ -70,9 +79,10 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
   figure.userData.loading=false;
  }
  async function run(job){
-  const {figure,controller}=job,id=figure.userData.amusementId,kind=figure.userData.kind,opts=optsFor(figure);
+  const {figure,controller}=job,id=figure.userData.amusementId,kind=figure.userData.kind;let opts=optsFor(figure);
   try{
    const front=await load(id,{kind,view:'front',signal:controller.signal});
+   if(kind==='ride'&&front.aspect>0){figure.userData.fitHeight=Math.min(opts.height,RIDE_MAX_WIDTH/front.aspect);opts=optsFor(figure);}
    if(dead||!active||controller.signal.aborted||!figure.parent||figure.userData.papercutStand){front.texture?.dispose();return;}
    const cut=buildPapercut({front},opts);
    figure.add(cut);figure.userData.papercutViews=cut.userData.papercutViews;figure.userData.papercutStand=cut;
