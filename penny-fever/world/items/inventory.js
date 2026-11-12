@@ -397,10 +397,15 @@ function bookStats(all, id) {
   const cover = all.find(i => i.id === id);
   return {group, have, cover, ownedCover: !cover || !!cover.owned};
 }
+function bookLooksOpen(all, id) {
+  const book = model.books.find(b => b.id === id);
+  if (book?.tradeshow) return true;
+  return bookStats(all, id).ownedCover;
+}
 
 function openBook(id) {
   const book = model.books.find(item => item.id === id);
-  if (!book || !bookStats(entries(), id).ownedCover) {
+  if (!book || !bookLooksOpen(entries(), id)) {
     tab = 'collection';
     bookId = null;
     hideInspect();
@@ -600,10 +605,11 @@ function paintCollectionTree(all) {
   const master=model.books.find(b=>b.master);
   function branch(book,parent){
     const owned=bookStats(all,book.id).ownedCover;
-    const section=document.createElement('details');section.open=owned && collectionExpanded.has(book.id);
+    const open=bookLooksOpen(all,book.id);
+    const section=document.createElement('details');section.open=open && collectionExpanded.has(book.id);
     const summary=document.createElement('summary');summary.dataset.collectionBook=book.id;
-    summary.textContent=book.title + (owned ? '' : ' · Locked');
-    if(!owned) summary.setAttribute('aria-disabled','true');
+    summary.textContent=book.title + (owned ? '' : (book.tradeshow ? ' · Tradeshow' : ' · Locked'));
+    if(!open) summary.setAttribute('aria-disabled','true');
     if(book.id===bookId)summary.setAttribute('aria-current','page');section.append(summary);parent.append(section);return section;
   }
   // Keep the shelf's other folders accessible even before the main folder is found.
@@ -612,7 +618,7 @@ function paintCollectionTree(all) {
   const trunk=masterOwned?masterBranch:root;
   for(const book of model.books.filter(b=>!b.master)){
     const section=branch(book,trunk);
-    if(!bookStats(all,book.id).ownedCover) continue;
+    if(!bookLooksOpen(all,book.id)) continue;
     for(const item of bookItems(all,book.id)){
       const button=document.createElement('button');button.type='button';button.dataset.collectionItem=item.id;button.textContent=item.name;
       section.append(button);
@@ -641,10 +647,11 @@ function paintShelf(all) {
     shown++;
     const b = document.createElement('button');
     b.type = 'button';
+    const browse = bookLooksOpen(all, book.id);
     b.className = 'shelf-book' + (have === group.length && group.length ? ' is-complete' : '') + (ownedCover ? '' : ' is-missing');
     b.dataset.book = book.id;
-    b.setAttribute('aria-label', book.title + (ownedCover ? ', ' + have + ' of ' + group.length + ' found' : ', Locked'));
-    if (!ownedCover) b.setAttribute('aria-disabled', 'true');
+    b.setAttribute('aria-label', book.title + (ownedCover ? ', ' + have + ' of ' + group.length + ' found' : (book.tradeshow ? ', Aura’s VIP tradeshow' : ', Locked')));
+    if (!browse) b.setAttribute('aria-disabled', 'true');
     const well = document.createElement('span');
     well.className = 'shelf-cover';
     const img = document.createElement('img');
@@ -654,9 +661,9 @@ function paintShelf(all) {
     const name = document.createElement('strong');
     name.textContent = book.title;
     const mark = document.createElement('em');
-    mark.textContent = !ownedCover ? 'Locked' : group.length
-      ? (have === group.length ? 'Complete' : have + ' / ' + group.length)
-      : 'Collected';
+    mark.textContent = !ownedCover && !book.tradeshow ? 'Locked' : group.length
+      ? ((book.tradeshow && !ownedCover ? 'Tradeshow · ' : '') + (have === group.length ? 'Complete' : have + ' / ' + group.length))
+      : (book.tradeshow && !ownedCover ? 'Tradeshow' : 'Collected');
     b.append(well, name, mark);
     root.append(b);
   }
@@ -685,7 +692,7 @@ function paintBook(all) {
   $('bookCoverBtn').setAttribute('aria-label', 'Inspect ' + book.title);
   const shown = bookItems(all, bookId).filter(item => {
     if (!book.master || item.id === item.book || item.book === book.id) return true;
-    return !model.books.some(b => b.id === item.book) || bookStats(all,item.book).ownedCover;
+    return !model.books.some(b => b.id === item.book) || bookLooksOpen(all, item.book);
   });
   $('treasureEmpty').hidden = shown.length !== 0;
   paintSlots(shown.map(item => ({item})), {album: true, groupByBook: !!book.master});
@@ -895,7 +902,7 @@ function paintSlots(shown, opts = {}) {
     }
     const well = document.createElement('span');
     well.className = 'slot-well';
-    if (item.turnaround && item.asset) {
+    if (item.asset) {
       const img = document.createElement('img');
       img.className = 'slot-art';
       img.alt = ''; img.width = 96; img.height = 96;

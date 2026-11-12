@@ -1,6 +1,6 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
-import {qrDataUrl} from './qrcode-generator.js?v=nft-host-7';
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-8';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -9,13 +9,22 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-7';
+const NFT_VER = 'nft-host-10';
+const TOKEN_NAMES = {
+  'everyday-penny': ['everyday penny', 'everyday pennies'],
+  'star-token': ['star token', 'star tokens'],
+  'moon-penny': ['moon penny', 'moon pennies'],
+  'rose-penny': ['rose penny', 'rose pennies'],
+  'crown-token': ['crown token', 'crown tokens'],
+};
 const XRP_BY_CAP = {
   11111111: '0.0001',
   2222222: '0.0022',
   333333: '0.00333',
   44444: '0.04444',
   5555: '0.55555',
+  555: '0.55555',
+  222: '2',
   666: '6.66666',
 };
 const WALLET_BUY_BY_CAP = {
@@ -24,10 +33,17 @@ const WALLET_BUY_BY_CAP = {
   333333: 3333,
   44444: 444,
   5555: 55,
+  555: 1,
+  222: 1,
   666: 6,
 };
+const LIMITED = new Set([
+  'aura-treasures-collector-book',
+  'alley-backgrounds-collector-book',
+  'aura-and-carnival-collector-book',
+]);
 
-let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, wallet_buy_cap: WALLET_BUY_BY_CAP};
+let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, xrp_by_id: {}, wallet_buy_cap: WALLET_BUY_BY_CAP, token_claims: {}};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -40,7 +56,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-7' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-10' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -69,11 +85,15 @@ function holdFloor(id) {
   return Math.max(floor, Math.ceil(cap * pct));
 }
 function shopHolding(id) {
+  const row = window.PennyFeverInventoryModel?.definitions?.find((it) => it.id === id);
+  if (row?.collection === 'aura-limited' || LIMITED.has(id)) return false;
   const left = remainingFor(id);
   const hold = holdFloor(id);
   return hold > 0 && left > 0 && left <= hold;
 }
 function xrpPriceFor(id) {
+  const byId = stock.xrp_by_id?.[id];
+  if (byId != null && String(byId).trim()) return String(byId).trim();
   const cap = ceilingKey(id);
   const fromStock = stock.xrp_by_ceiling?.[String(cap)] ?? stock.xrp_by_ceiling?.[cap];
   if (fromStock != null && String(fromStock).trim()) return String(fromStock).trim();
@@ -94,7 +114,98 @@ function walletCount(id) {
     return 0;
   }
 }
+function tokenClaim(id) {
+  const spec = stock.token_claims?.[id];
+  return spec && typeof spec === 'object' ? spec : null;
+}
+function tokenHave(id) {
+  if (id === 'everyday-penny') return Math.max(0, Math.floor(Number(window.PennyFever?.pennies?.()) || 0));
+  return walletCount(id);
+}
+function formatTokenCost(cost) {
+  return Object.entries(cost || {}).map(([id, n]) => {
+    const need = Math.max(0, Math.floor(Number(n) || 0));
+    const names = TOKEN_NAMES[id];
+    const name = Array.isArray(names) ? names[need === 1 ? 0 : 1] : (names || id);
+    return `${need} ${name}`;
+  }).join(' + ');
+}
+function tokenAfford(cost) {
+  return Object.entries(cost || {}).every(([id, n]) => {
+    const need = Math.max(0, Math.floor(Number(n) || 0));
+    return tokenHave(id) >= need;
+  });
+}
+function spendTokenCost(cost) {
+  const PF = window.PennyFever;
+  const state = PF?.getState?.();
+  if (!state) return false;
+  const rows = Object.entries(cost || {}).map(([id, n]) => [id, Math.max(0, Math.floor(Number(n) || 0))]).filter(([, n]) => n > 0);
+  for (const [id, need] of rows) {
+    if (tokenHave(id) < need) return false;
+  }
+  if (!state.paperInventory || typeof state.paperInventory !== 'object') state.paperInventory = {version: 1, items: {}};
+  if (!state.paperInventory.items || typeof state.paperInventory.items !== 'object') state.paperInventory.items = {};
+  const items = state.paperInventory.items;
+  let penniesNeed = 0;
+  for (const [id, need] of rows) {
+    if (id === 'everyday-penny') penniesNeed += need;
+  }
+  if (penniesNeed && !PF.spendPennies?.(penniesNeed, {allowPass: false})) return false;
+  for (const [id, need] of rows) {
+    if (id === 'everyday-penny') continue;
+    const row = items[id];
+    const have = Number.isFinite(Number(row?.qty)) ? Math.max(0, Number(row.qty)) : (row ? 1 : 0);
+    const left = have - need;
+    if (left <= 0) delete items[id];
+    else row.qty = left;
+  }
+  PF.saveState?.();
+  return true;
+}
+function claimWithTokens(id) {
+  const spec = tokenClaim(id);
+  const note = overlay?.querySelector('#auraTradeshowNote');
+  const say = (text) => { if (note) note.textContent = text; };
+  if (!spec) return;
+  if (!vip()) {
+    say('Join VIP to claim with tokens.');
+    return;
+  }
+  if (walletAtCap(id)) {
+    say('Already in your wallet.');
+    return;
+  }
+  if (remainingFor(id) <= 0) {
+    say('Aura’s pile is gone · trade later.');
+    return;
+  }
+  if (!tokenAfford(spec.cost)) {
+    say(`Need ${formatTokenCost(spec.cost)}.`);
+    return;
+  }
+  if (!spendTokenCost(spec.cost)) {
+    say('Those tokens would not spend.');
+    return;
+  }
+  const PF = window.PennyFever;
+  if (!PF?.stampKeepsake?.(id, 'token-claim')) {
+    say('Claim did not land. Tell Aura if tokens left the purse.');
+    paint();
+    return;
+  }
+  const left = remainingFor(id);
+  if (left > 0) {
+    stock.items = stock.items || {};
+    stock.items[id] = left - 1;
+  }
+  const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
+  say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
+  paint();
+}
 function walletBuyCap(id) {
+  const claim = tokenClaim(id);
+  if (claim && Number.isFinite(Number(claim.wallet))) return Math.max(0, Math.floor(Number(claim.wallet)));
   const key = ceilingKey(id);
   const raw = stock.wallet_buy_cap?.[String(key)] ?? stock.wallet_buy_cap?.[key] ?? WALLET_BUY_BY_CAP[key];
   if (raw == null) return Infinity;
@@ -113,7 +224,9 @@ function loadStock() {
       const items = data.items && typeof data.items === 'object' ? data.items : {};
       const ceilings = data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : items;
       const xrp = data.xrp_by_ceiling && typeof data.xrp_by_ceiling === 'object' ? data.xrp_by_ceiling : XRP_BY_CAP;
+      const byId = data.xrp_by_id && typeof data.xrp_by_id === 'object' ? data.xrp_by_id : {};
       const buy = data.wallet_buy_cap && typeof data.wallet_buy_cap === 'object' ? data.wallet_buy_cap : WALLET_BUY_BY_CAP;
+      const claims = data.token_claims && typeof data.token_claims === 'object' ? data.token_claims : {};
       stock = {
         default_remaining: Number.isFinite(fallback) ? fallback : 0,
         items,
@@ -122,7 +235,9 @@ function loadStock() {
         hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0,
         aura_xrp_address: String(data.aura_xrp_address || '').trim(),
         xrp_by_ceiling: xrp,
+        xrp_by_id: byId,
         wallet_buy_cap: buy,
+        token_claims: claims,
       };
     })
     .catch(() => {});
@@ -204,6 +319,7 @@ function ensureOverlay() {
       <button type="button" data-folder="all">All</button>
       <button type="button" data-folder="open">Open stalls</button>
       <button type="button" data-folder="book:penny-collector-book" aria-pressed="true">Penny collector book</button>
+      <button type="button" data-folder="limited">Aura Limited</button>
       <button type="button" data-folder="felix">Felix’s Photo Booth</button>
     </div>
     <div class="aura-tradeshow-main">
@@ -240,10 +356,13 @@ function ensureOverlay() {
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
-      if (folder.startsWith('book:') || folder === 'open' || folder === 'felix') openNodes.add(folder);
+      if (folder.startsWith('book:') || folder === 'open' || folder === 'felix' || folder === 'limited') openNodes.add(folder);
+      if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) openNodes.add('limited');
       if (folder.startsWith('item:')) {
         const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5));
-        if (item?.book) {
+        if (item && isLimited(item)) {
+          openNodes.add('limited');
+        } else if (item?.book) {
           openNodes.add('book:penny-collector-book');
           openNodes.add('book:' + item.book);
         }
@@ -275,13 +394,19 @@ function ensureOverlay() {
       queueXrpPlace(hold.dataset.item);
       return;
     }
+    const claimBtn = e.target.closest('[data-claim]');
+    if (claimBtn && !claimBtn.disabled) {
+      e.preventDefault();
+      claimWithTokens(claimBtn.dataset.claim);
+      return;
+    }
     const buy = e.target.closest('[data-buy]');
     if (buy && !buy.disabled) {
       e.preventDefault();
       openXrpTill(buy.dataset.buy);
       return;
     }
-    const spin = e.target.closest('[data-spin], .aura-tradeshow-stage');
+    const spin = e.target.closest('[data-spin]');
     if (!spin) return;
     const card = spin.closest('.aura-tradeshow-card');
     if (!card || card.dataset.mode === 'nft') return;
@@ -303,6 +428,22 @@ function ensureOverlay() {
 function actionFor(item, stallInfo) {
   if (isFelix(item)) {
     return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true};
+  }
+  const claim = tokenClaim(item.id);
+  if (claim) {
+    const cost = formatTokenCost(claim.cost);
+    if (!vip()) return {label: `Join VIP to claim · ${cost}`, disabled: true, claim: true};
+    if (walletAtCap(item.id)) return {label: 'Already in your wallet', disabled: true, claim: true};
+    if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
+    if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
+    return {label: `Claim · ${cost}`, disabled: false, ready: true, claim: true};
+  }
+  if (isLimited(item)) {
+    const xrp = formatXrp(item.id);
+    if (!vip()) return {label: xrp ? `Join VIP to buy · ${xrp}` : 'Join VIP to buy with XRP', disabled: true, limited: true};
+    if (walletAtCap(item.id)) return {label: 'Already in your wallet', disabled: true, limited: true};
+    if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, limited: true};
+    return {label: xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)', disabled: false, ready: true, limited: true};
   }
   if (MONEY.has(item.kind) || stallInfo.money) {
     return {label: 'Sold at the dollar till', disabled: true};
@@ -334,6 +475,12 @@ function claimLine(item, stallInfo) {
   if (isFelix(item)) {
     return 'Unlock a session at Felix’s Instapic Photo Booth, run the sitting, then the portrait NFT is yours. Not for sale here.';
   }
+  const claim = tokenClaim(item.id);
+  if (claim) return `Token claim · ${formatTokenCost(claim.cost)} · one per wallet`;
+  if (isLimited(item)) {
+    const xrp = formatXrp(item.id);
+    return xrp ? `Limited edition · ${xrp} · one per wallet` : 'Limited edition · Buy with XRP (get ready) · one per wallet';
+  }
   if (MONEY.has(item.kind) || stallInfo.money) return 'Claim at Aura’s dollar till';
   const stall = stallForPrize(item);
   const host = stall?.host || 'Aura';
@@ -342,6 +489,7 @@ function claimLine(item, stallInfo) {
   return `Play for it at ${host} · ${title} · Buy with XRP (get ready)`;
 }
 function playTap(item, stallInfo, stall) {
+  if (isLimited(item)) return null;
   if (isFelix(item)) {
     return {id: 'snap', label: 'Go to Felix’s booth'};
   }
@@ -439,7 +587,45 @@ function goPlayAtStall(place) {
 }
 
 function isFelix(item) {
-  return item.collection === 'penny-fever-vendors' || item.id === 'felix-vendor-portrait-book';
+  return item.collection === 'penny-fever-vendors';
+}
+function isLimited(item) {
+  return item.collection === 'aura-limited' || LIMITED.has(item.id);
+}
+function modelItem(id) {
+  return (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id) || {};
+}
+function folderIsLimited() {
+  if (folder === 'limited') return true;
+  if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) return true;
+  if (folder.startsWith('item:') && isLimited(modelItem(folder.slice(5)))) return true;
+  return false;
+}
+function folderIsFelix() {
+  if (folder === 'felix') return true;
+  if (folder.startsWith('item:') && isFelix(modelItem(folder.slice(5)))) return true;
+  return false;
+}
+function limitedBookSections(books, itemsByBook, limitedItems) {
+  let list = books.filter((b) => LIMITED.has(b.id));
+  if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) {
+    list = list.filter((b) => b.id === folder.slice(5));
+  } else if (folder.startsWith('item:')) {
+    const it = modelItem(folder.slice(5));
+    const bid = LIMITED.has(it.id) ? it.id : it.book;
+    if (bid) list = list.filter((b) => b.id === bid);
+  }
+  return list.map((b) => {
+    const grouped = itemsByBook.get(b.id) || [];
+    const cover = limitedItems.find((it) => it.id === b.id) || grouped.find((it) => it.id === b.id);
+    const pieces = grouped.filter((it) => it.id !== b.id);
+    return {
+      title: b.title,
+      line: b.kicker || 'Aura Limited · optional binder',
+      items: [cover, ...pieces].filter(Boolean),
+      stall: stallById('ticket-booth'),
+    };
+  });
 }
 function albumTitle(model, id) {
   return (model?.albums || []).find((a) => a.id === id)?.title || id;
@@ -447,10 +633,11 @@ function albumTitle(model, id) {
 function itemMatches(item, stall, info) {
   if (query && !`${item.name} ${stall.host} ${stall.title} ${item.album || ''} ${item.book || ''} ${item.collection || ''}`.toLowerCase().includes(query)) return false;
   if (folder === 'all') return true;
-  if (folder === 'open') return info.mintable && !MONEY.has(item.kind);
+  if (folder === 'open') return info.mintable && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
   if (folder === 'felix') return isFelix(item);
-  if (folder === 'book:penny-collector-book') return !isFelix(item);
-  if (folder.startsWith('stall:')) return stall.id === folder.slice(6);
+  if (folder === 'limited') return isLimited(item);
+  if (folder === 'book:penny-collector-book') return !isFelix(item) && !isLimited(item);
+  if (folder.startsWith('stall:')) return stall.id === folder.slice(6) && !isLimited(item);
   if (folder.startsWith('book:')) return item.book === folder.slice(5) || item.id === folder.slice(5);
   if (folder.startsWith('item:')) return item.id === folder.slice(5);
   return true;
@@ -486,14 +673,14 @@ function treeKids() {
   d.className = 'aura-tradeshow-tree-kids';
   return d;
 }
-function paintTree(nav, stallRows, books, itemsByBook, felixItems) {
+function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems) {
   nav.replaceChildren();
   const root = document.createElement('div');
   root.className = 'aura-tradeshow-tree-root';
   root.append(treeRow('book:penny-collector-book', 'Penny collector book', {root: true}));
   if (openNodes.has('book:penny-collector-book')) {
     const bookWrap = treeKids();
-    const nested = books.filter((b) => b.id !== 'penny-collector-book' && b.id !== 'felix-vendor-portrait-book');
+    const nested = books.filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id));
     for (const book of nested) {
       const bid = 'book:' + book.id;
       bookWrap.append(treeRow(bid, book.title));
@@ -510,6 +697,22 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems) {
       bookWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
     }
     root.append(bookWrap);
+  }
+  root.append(treeRow('limited', 'Aura Limited', {root: true}));
+  if (openNodes.has('limited')) {
+    const limWrap = treeKids();
+    for (const item of limitedItems) {
+      const bid = 'book:' + item.id;
+      limWrap.append(treeRow(bid, item.name));
+      if (openNodes.has(bid)) {
+        const itemWrap = treeKids();
+        for (const piece of (itemsByBook.get(item.id) || []).filter((it) => it.id !== item.id)) {
+          itemWrap.append(treeRow('item:' + piece.id, piece.name, {leaf: true}));
+        }
+        limWrap.append(itemWrap);
+      }
+    }
+    root.append(limWrap);
   }
   root.append(treeRow('open', 'Open stalls'));
   if (openNodes.has('open')) {
@@ -541,18 +744,24 @@ function appendCards(grid, items, stall) {
     card.dataset.face = '0';
     VIEWS.forEach((view) => { card.dataset[view] = item.turnaround || view === 'front' ? '1' : '0'; });
     const felix = isFelix(item);
-    const showQr = !felix && !MONEY.has(item.kind) && !info.money;
-    const chipClass = felix ? 'is-felix' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'));
-    const chipText = felix ? 'Photo booth' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'));
+    const claim = tokenClaim(item.id);
+    const limited = isLimited(item);
+    const showQr = limited || (!felix && !claim && !MONEY.has(item.kind) && !info.money);
+    const chipClass = felix ? 'is-felix' : (limited ? 'is-limited' : (claim ? 'is-claim' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'))));
+    const chipText = felix ? 'Photo booth' : (limited ? 'Limited' : (claim ? 'Token claim' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'))));
     const act = actionFor(item, info);
     const play = playTap(item, info, stall);
+    const canSpin = !!item.turnaround;
+    const shopBtn = felix ? '' : (act.claim
+      ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
+      : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
-      <div class="aura-tradeshow-stage" data-spin="1" title="Tap to spin"><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
-      <div class="aura-tradeshow-turn">
+      <div class="aura-tradeshow-stage"${canSpin ? ' data-spin="1" title="Tap to spin"' : ''}><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
+      ${canSpin ? `<div class="aura-tradeshow-turn">
         <button type="button" data-spin="-1" aria-label="Previous view">←</button>
         <span data-face-label>front</span>
         <button type="button" data-spin="1" aria-label="Rotate">Rotate</button>
-      </div>
+      </div>` : ''}
       <div class="aura-tradeshow-views">
         <button type="button" data-view="website" aria-pressed="true">Website</button>
         <button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>
@@ -561,8 +770,8 @@ function appendCards(grid, items, stall) {
       <h3>${item.name}</h3>
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       <p class="claim">${claimLine(item, info)}</p>
-      <button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>
-      ${felix ? '' : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`}`;
+      ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
+      ${shopBtn}`;
     grid.append(card);
   }
 }
@@ -580,16 +789,19 @@ function paint() {
   } else {
     vipEl.innerHTML = `<a href="${vipJoin()}">Join VIP</a> to mint and buy. Looking is open.`;
   }
-  overlay.querySelector('#auraTradeshowNote').textContent = folder === 'felix' || (folder.startsWith('item:') && isFelix((window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5)) || {}))
+  overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
-    : 'Expand the Penny collector book for books and albums, then their items. Open stalls and Felix sit underneath.';
+    : folderIsLimited()
+      ? 'Aura Limited · optional 5 XRP books. Charms 2 XRP · alley and carnival 0.55555 XRP. One per wallet. You can collect the set without the book.'
+      : 'Expand the Penny collector book for books and albums, then their items. Open stalls, Aura Limited, and Felix sit underneath.';
   overlay.querySelectorAll('.aura-tradeshow-tools [data-folder]').forEach((b) => {
     const id = b.dataset.folder;
     const on = folder === id
       || (id === 'open' && folder.startsWith('stall:'))
-      || (id === 'felix' && folder.startsWith('item:') && isFelix((window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5)) || {}))
-      || (id === 'book:penny-collector-book' && (folder.startsWith('book:') || folder.startsWith('item:')));
-    b.setAttribute('aria-pressed', String(on && !(id === 'book:penny-collector-book' && folder === 'felix')));
+      || (id === 'felix' && folderIsFelix())
+      || (id === 'limited' && folderIsLimited())
+      || (id === 'book:penny-collector-book' && (folder.startsWith('book:') || folder.startsWith('item:')) && !folderIsLimited() && !folderIsFelix());
+    b.setAttribute('aria-pressed', String(on));
   });
 
   const model = window.PennyFeverInventoryModel;
@@ -599,11 +811,19 @@ function paint() {
   const stallGroups = new Map();
   const itemsByBook = new Map();
   const felixItems = [];
+  const limitedItems = [];
   for (const stall of stalls) {
     if (stall.extra && stall.id !== 'ticket-booth') continue;
     stallGroups.set(stall.id, {stall, items: []});
   }
   for (const item of items) {
+    if (isLimited(item)) {
+      if (LIMITED.has(item.id)) limitedItems.push(item);
+      const book = item.book || 'penny-collector-book';
+      if (!itemsByBook.has(book)) itemsByBook.set(book, []);
+      itemsByBook.get(book).push(item);
+      continue;
+    }
     const stall = stallForPrize(item);
     const key = stall?.id || 'ticket-booth';
     if (!stallGroups.has(key)) stallGroups.set(key, {stall: stall || {id: key, host: 'Aura', title: 'Collection'}, items: []});
@@ -612,7 +832,7 @@ function paint() {
       felixItems.push(item);
       continue;
     }
-    if (bookIds.has(item.id)) continue;
+    if (bookIds.has(item.id) && !tokenClaim(item.id)) continue;
     const book = item.book || 'penny-collector-book';
     if (!itemsByBook.has(book)) itemsByBook.set(book, []);
     itemsByBook.get(book).push(item);
@@ -626,7 +846,7 @@ function paint() {
     return String(a.stall.host).localeCompare(String(b.stall.host));
   });
 
-  paintTree(overlay.querySelector('#auraTradeshowTree'), stallRows, books, itemsByBook, felixItems);
+  paintTree(overlay.querySelector('#auraTradeshowTree'), stallRows, books, itemsByBook, felixItems, limitedItems);
 
   const body = overlay.querySelector('#auraTradeshowBody');
   body.replaceChildren();
@@ -641,16 +861,21 @@ function paint() {
         stall: row.stall,
       };
     })
-    : (folder === 'felix'
+    : (folderIsFelix()
       ? [{title: 'Felix’s Instapic Photo Booth', line: 'Unlock with a photo session', items: felixItems, stall: stallById('snap')}]
+      : folderIsLimited()
+        ? limitedBookSections(books, itemsByBook, limitedItems)
       : books
-        .filter((b) => b.id !== 'felix-vendor-portrait-book')
+        .filter((b) => !LIMITED.has(b.id))
         .map((b) => ({
           title: b.title,
           line: b.kicker || 'Book',
           items: itemsByBook.get(b.id) || [],
           stall: stallForPrize((itemsByBook.get(b.id) || [])[0]) || stallById('ticket-booth'),
-        })).concat(folder === 'all' ? [{title: 'Felix’s Instapic Photo Booth', line: 'Unlock with a photo session', items: felixItems, stall: stallById('snap')}] : []));
+        })).concat(folder === 'all' ? [
+          ...limitedBookSections(books, itemsByBook, limitedItems),
+          {title: 'Felix’s Instapic Photo Booth', line: 'Unlock with a photo session', items: felixItems, stall: stallById('snap')},
+        ] : []));
   for (const section of sections) {
     const shown = section.items.filter((item) => itemMatches(item, stallForPrize(item) || section.stall, stallDoor(stallForPrize(item) || section.stall)));
     if (!shown.length) continue;

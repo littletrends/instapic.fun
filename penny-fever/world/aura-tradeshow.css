@@ -77,6 +77,7 @@
   position:relative;height:6.2rem;background:#14090d;border-radius:6px;overflow:hidden;
   touch-action:pan-y;
 }
+.aura-tradeshow-stage[data-spin]{cursor:pointer}
 .aura-tradeshow-stage img{width:100%;height:100%;object-fit:contain;pointer-events:none}
 .aura-tradeshow-turn{
   display:flex;align-items:center;justify-content:space-between;gap:.2rem;
@@ -112,6 +113,8 @@
 .aura-tradeshow-card .chip.is-open{background:#435637}
 .aura-tradeshow-card .chip.is-coming{background:#5a3a62}
 .aura-tradeshow-card .chip.is-felix{background:#3a2840}
+.aura-tradeshow-card .chip.is-claim{background:#3d4a5c}
+.aura-tradeshow-card .chip.is-limited{background:#6b3a2a}
 .aura-tradeshow-card .chip.is-money{background:#6b4e24}
 .aura-tradeshow-play{
   margin-top:auto;padding:.28rem .32rem;border-radius:6px;border:1px solid rgba(244,228,194,.4);
