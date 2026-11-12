@@ -462,11 +462,11 @@
       alpha: true,
       asset: id === 'felix-vendor-portrait-book'
         ? 'assets/restyle/game-sprites/collector-books/felix-vendor-portrait-book/front.webp?v=nft-art-1'
-        : `assets/restyle/game-sprites/${collection}/${id}/front.webp?v=${collection === 'aura-limited' ? 'limited-1' : 'nft-art-1'}`,
+        : `assets/restyle/game-sprites/${collection}/${id}/front.webp?v=${collection === 'aura-limited' ? 'limited-2' : 'nft-art-1'}`,
       columns: 1,
       rows: 1,
       hinged: false,
-      turnaround: collection !== 'aura-limited' || bookIds.has(id),
+      turnaround: true,
     });
   }).concat(photoVendorRows.map(([slug,name,photoSetId,group]) => Object.freeze({
     id: `vendor-portrait-${slug}`,
