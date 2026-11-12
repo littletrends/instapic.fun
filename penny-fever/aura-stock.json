@@ -254,7 +254,7 @@
     "ch1": {
       "ceiling": 11111111,
       "xrp": "0.0001",
-      "wallet": 11111111,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -263,7 +263,7 @@
           "xrp": "0.0001",
           "taxon": null,
           "background": null,
-          "wallet": 11111111
+          "wallet": null
         }
       }
     },
