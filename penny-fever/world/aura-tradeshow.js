@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-4';
+const NFT_VER = 'nft-host-5';
 const XRP_BY_CAP = {
   11111111: '0.0001',
   2222222: '0.0022',
@@ -32,7 +32,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-4' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-5' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -393,10 +393,17 @@ function queueXrpPlace(id) {
 function goPlayAtStall(place) {
   closeTradeshow({stayInAlley: true});
   const world = window.PennyFeverWorld;
-  if (!world) return;
-  if (world.paused) world.resume();
-  if ((location.hash || '').replace(/^#/, '') === HASH) location.hash = 'alley';
-  world.walkTo?.(place || 'aura');
+  if (world?.paused) world.resume();
+  if (place === 'aura') {
+    if ((location.hash || '').replace(/^#/, '') === HASH) location.hash = 'alley';
+    world?.walkTo?.('aura');
+    return;
+  }
+  const slug = place || 'fortune';
+  const PF = window.PennyFever;
+  if (typeof PF?.enterTent === 'function') PF.enterTent(slug);
+  else if (typeof world?.enterStall === 'function') world.enterStall(slug);
+  else location.hash = 'cabinet/' + slug;
 }
 
 function isFelix(item) {
