@@ -1,10 +1,10 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
-import {takeAttempt} from '../stall-entry.js?v=insights-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=ch2-lock-1';
+import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
-  fortuneFor, resultNumber, isIrisWin, symbolName, slotAt,
-} from "../fortune-globe.js?v=treasure-design-1";
+  fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
+} from "../fortune-globe.js?v=ch2-lock-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -162,8 +162,12 @@ function finishGaze(s) {
       markOwned(s.level);
       s.won = true;
     } else if (hit) {
-      s.ordinary = "star-token";
-      keep("star-token", "fortune");
+      const drop = ordinaryFor(n);
+      if (keepOrdinaryAllowed(drop, s.level)) {
+        s.ordinary = drop;
+        if (drop === 'everyday-penny') credit(1);
+        else keep(drop, 'fortune');
+      }
     }
   } else if (treasureOk) {
     markOwned(s.level);
@@ -179,9 +183,15 @@ function finishGaze(s) {
   } else if (treasureOk) {
     s.note = "All signs caught on a winning number (" + n + ") — bonus Unlocked.";
   } else if (chapterOwned(s.level)) {
-    s.note = s.ordinary === "star-token" ? "Star token kept. This chapter’s bonus is already Unlocked — it won’t drop twice." : "This chapter’s bonus is already Unlocked — it won’t drop twice.";
+    s.note = s.ordinary
+      ? (s.ordinary === 'everyday-penny' ? 'A penny back to the purse. ' : 'Token kept. ') + "This chapter’s bonus is already Unlocked — it won’t drop twice."
+      : "This chapter’s bonus is already Unlocked — it won’t drop twice.";
+  } else if (s.ordinary === 'everyday-penny') {
+    s.note = "All signs caught. A penny returns to the purse. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked.";
+  } else if (s.ordinary) {
+    s.note = "All signs caught — token kept. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked.";
   } else {
-    s.note = "All signs caught — star token kept. The glass read " + n + ", not one of this chapter’s winning numbers, so the bonus stays Locked.";
+    s.note = "All signs caught. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked. Try again.";
   }
   persist(s);
 }

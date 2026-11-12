@@ -2,7 +2,7 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
+import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 // Winning windows are whole elapsed seconds, including second 100.
@@ -173,6 +173,7 @@ function loosenMark(level) {
 }
 function bumperItem(s,b){return ['moon-penny','rose-penny','star-token','crown-token'][(s.bumpers.indexOf(b)+s.level)%4];}
 function ordinaryReturn(s, id, x, y) {
+  if(!keepOrdinaryAllowed(id, s.level))return;
   if(id==='everyday-penny'){
     if(s.t<s.rewardAt || s.ballPennies>=2)return;
     s.ballPennies++;s.rewardAt=s.t+8;
@@ -276,6 +277,7 @@ function seatLane(s) {
 }
 function canAfford(s) {
   if(s.activeBall)return true;
+  if (isChapterOne(s.level)) return true;
   if (!alleyPlay) return s.ammo > 0;
   return !!s.activeBall || (s.credit||0)>0 || (pocket() || 0) >= 1;
 }

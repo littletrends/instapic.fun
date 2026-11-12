@@ -4,7 +4,7 @@
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=insights-1';
-import {hasUsedFirst, takeAttempt} from './stall-entry.js?v=insights-1';
+import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ch2-lock-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 export const BOOK_KEY = 'pennyFever.rideSeek';
@@ -97,14 +97,16 @@ export function boardRide(rideId, chapter) {
     if (rideId === 'funhouse') return {ok: true, practice: false, paid: false};
     return {ok: true, practice: true, paid: false};
   }
-  const practice = !hasUsedFirst(rideId, chapter);
+  if (isChapterOne(chapter)) return {ok: true, practice: false, paid: false};
   const ok = takeAttempt(rideId, chapter);
-  return {ok, practice, paid: ok && !practice};
+  return {ok, practice: false, paid: ok};
 }
 
 export function recordFind(s, id, stall) {
   if (!s || !id) return false;
   s.collected.push({id, kind: 'ordinary', t: s.t});
+  const chapter = s.level ?? s.chapter;
+  if (!keepOrdinaryAllowed(id, chapter)) return true;
   if (!s.practice && alleyPlay) keep(id, stall, {celebrate: false});
   return true;
 }
@@ -148,7 +150,7 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
   }
 
   const ordinary = challengeOk && !collected ? (completionFind || 'everyday-penny') : null;
-  if (ordinary && alleyPlay) keep(ordinary, stall || rideId, {celebrate: false});
+  if (ordinary && alleyPlay && keepOrdinaryAllowed(ordinary, chapter)) keep(ordinary, stall || rideId, {celebrate: false});
 
   if (challengeOk && collected) {
     return {

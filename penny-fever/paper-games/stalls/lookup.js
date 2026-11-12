@@ -1,9 +1,9 @@
 import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from '../first-prize.js?v=first-prize-1';
+import {firstPrizeEligible} from '../first-prize.js?v=ch2-lock-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
@@ -270,6 +270,7 @@ function disturbPath(s) {
 }
 function ordinary(s, n) {
   const drop = ordinaryDrop(n);
+  if (!keepOrdinaryAllowed(drop, s.level)) return;
   const c = CHAPTERS[s.chapter];
   const [rx, ry] = c.receiver;
   if (alleyPlay) {

@@ -1,5 +1,5 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
+import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
 /** Deterministic mysteries for The Cabinet That Lies. Each puzzle has one solution. */
 
 function rng(seed) {

@@ -26,7 +26,7 @@ import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=pf-clarity-1';
+} from '../ride-seek.js?v=ch2-lock-1';
 
 const RIDE = 'helter';
 const TREASURES = chapterKits['helter'].prizes;

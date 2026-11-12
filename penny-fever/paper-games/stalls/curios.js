@@ -2,9 +2,9 @@ import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=prize-hud-1';
 import {matteImage} from '../sprites.js?v=load-fix-1';
 import {alleyPlay, pocket, tickets, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=ch2-lock-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
-import {CABINET_PRIZES} from '../cabinet-puzzles.js?v=treasure-design-1';
+import {CABINET_PRIZES} from '../cabinet-puzzles.js?v=ch2-lock-1';
 
 /** Digby — Digger's Vault claw. Rail at the top, pile on the floor, one-way stick. */
 const BOOK = 'pennyFever.capsuleCabinet.v5';

@@ -1,12 +1,12 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=treasure-design-1';
+} from '../love-arithmetic.js?v=ch2-lock-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -301,15 +301,15 @@ function finishMath(s) {
   s.charged = false;
   s.mercury = 1;
   const drop = ordinaryFor(pct);
-  s.lastDrop = alleyPlay ? drop : null;
+  s.lastDrop = alleyPlay && keepOrdinaryAllowed(drop, s.level) ? drop : null;
   s.alreadyPaid = chapterPaid(s.level);
   const prize = LOVE_CHAPTERS[s.level].prize;
   const win = isLoveWin(s.level, pct) && !chapterPaid(s.level) && !s.won;
   // s.won also means "already owned"; the result panel uses this sitting's outcome only.
   s.sittingWon = win;
   if (alleyPlay) {
-    if (drop === 'everyday-penny') credit(1);
-    else keep(drop, 'love');
+    if (s.lastDrop === 'everyday-penny') credit(1);
+    else if (s.lastDrop) keep(s.lastDrop, 'love');
     if (win) {
       keep(prize, 'love');
       markPaid(s.level);

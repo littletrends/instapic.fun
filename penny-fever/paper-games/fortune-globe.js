@@ -1,5 +1,5 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
+import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
 /** Isolated Catch the Fortune: rings, symbols, fortunes, hidden 1–100. */
 
 export const SYMBOLS = [

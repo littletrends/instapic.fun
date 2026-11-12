@@ -5,9 +5,9 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=map-doors-3';
+import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=ch2-lock-1';
 import {noteVisit} from './insights.js?v=insights-1';
-import {entryFor, hasUsedFirst} from './stall-entry.js?v=insights-1';
+import {entryFor, isChapterOne} from './stall-entry.js?v=ch2-lock-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -32,31 +32,30 @@ const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how
 function keyHints(){const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
  if(!embedded)return 'Play again';
- const fixed={'coin-pusher':'Play again · 1 penny a drop',pinball:'Play again · 1 penny = 3 balls'}[entry?.id];
- if(fixed)return fixed;
+ if(entry?.id==='coin-pusher')return 'Play again · real pennies';
+ if(isChapterOne(level))return 'Play again · free until the prize second';
+ if(entry?.id==='pinball')return 'Play again · 1 penny = 3 balls';
  const spec=entryFor(entry.id);
- if(entry.id==='lookup')return hasUsedFirst(entry.id,level)?'Play again · 1 penny a comet':'Play again · first comet free';
  if(spec.inside==='none')return 'Play again';
- if(spec.inside==='first-free-then-penny'&&!hasUsedFirst(entry.id,level))return 'Play again · free';
  return 'Play again · 1 penny';
 }
 function costLine(){
  if(!embedded)return 'Workshop play is free and keeps nothing.';
+ if(entry?.id==='coin-pusher')return 'Every push spends a real penny from the purse, including Chapter 1. The alley starts you with a few pennies — Copper is where they work.';
+ if(isChapterOne(level))return 'Chapter 1 is free for guest and VIP. Play until the prize second hits. That chapter’s bonus drops once. Everyday pennies still return to the purse.';
  const spec=entryFor(entry.id),u=GO_UNIT[entry.id]||'go';
  if(spec.inside==='none')return '';
- if(entry.id==='pinball')return 'Each penny loads 3 balls of 100 seconds.';
- if(entry.id==='curios')return 'A ticket opens the vault door; each claw then costs 1 penny from your purse.';
- if(spec.inside==='penny')return 'Each '+u+' costs 1 penny from your purse.';
- if(hasUsedFirst(entry.id,level))return 'This chapter’s free '+u+' is used — each new '+u+' costs 1 penny.';
- return 'Your first '+u+' in this chapter is free'+(entry.id==='helter'?' practice (nothing is kept)':'')+'; after that each '+u+' costs 1 penny.';
+ if(entry.id==='pinball')return 'Each penny loads 3 balls of 100 seconds. Hit a bumper on the prize second for the one bonus.';
+ return 'Each '+u+' costs 1 penny. Play until the prize second hits. That chapter’s bonus drops once. Everyday pennies still return to the purse.';
 }
 function treasureLine(){
  if(!entry||entry.id==='snap')return '';
  const prize=chapterKeep();if(!prize)return '';
  const name=itemName(prize);
- return prizeUnlocked(prize)
-  ?'Chapter treasure: '+name+' — Unlocked (already yours). It won’t drop twice; ordinary finds still can.'
-  :'Chapter treasure: '+name+' — Locked until you win it in this chapter.';
+ if(prizeUnlocked(prize)){
+  return 'Chapter treasure: '+name+' — Unlocked. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
+ }
+ return 'Chapter treasure: '+name+' — Locked until the prize second hits. One bonus per game chapter.';
 }
 function goBack(){
  persist();
@@ -344,7 +343,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=pf-polish-1')).default;
+ engine=(await import(entry.module+'?allocation=treasure-design-1&v=ch2-lock-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

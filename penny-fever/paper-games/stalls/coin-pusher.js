@@ -1,5 +1,6 @@
 import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, keep, owned} from '../wallet.js?v=insights-1';
+
 import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive, packAll as pursePackAll } from "../cabinet-wallet.js?v=insights-1";
 
 const BOOK = alleyPlay ? "pennyFever.copperFalls.v6" : "pennyFever.copperFalls.practice.v6";
@@ -361,7 +362,7 @@ export default {
   create(level) {
     refillIfEmpty(24);
     const book = readBook();
-    const practice = !book.practiceUsed;
+    const practice = alleyPlay ? false : !book.practiceUsed;
     const tray = practice ? (book.practice?.level === level ? book.practice.tray : {...freshTray(level), mark:999}) : loadTray(level);
     const oldMark=tray.mark, oldTreasureOn=tray.treasureOn;
     if(!practice)tray.mark=RELEASE_PENNIES;

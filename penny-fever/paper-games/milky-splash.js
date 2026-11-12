@@ -1,6 +1,6 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
 import {DELIVERY_LAYOUTS} from './milky-deliveries.js?v=milk-delivery-1';
-import {firstPrizeEligible} from './first-prize.js?v=first-prize-1';
+import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
 export const FLAVOURS = [
@@ -523,7 +523,7 @@ export function makeDeliveryBoard(level, seed, {allowUnique=true}={}) {
  const layouts=DELIVERY_LAYOUTS[level]||DELIVERY_LAYOUTS[0];
  const plan=layouts[Math.abs(Math.trunc(Number(seed)||0))%layouts.length];
  const board=makeBoard(level,plan.seed,{allowUnique:false});
- spawnUnique(board,plan.col);
+ if(isMabelWin(level, resultNumber(seed))) spawnUnique(board,plan.col);
  repairBoard(board);
  return board;
 }

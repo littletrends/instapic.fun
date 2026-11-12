@@ -70,16 +70,35 @@ export function doorKind(id) {
   return entryFor(id).door;
 }
 
+/** Chapter tabs are 1–6; engines store them as level 0–5. */
+export function isChapterOne(chapter) {
+  return Math.max(0, Math.floor(Number(chapter) || 0)) === 0;
+}
+
+const DRIP_IDS = ['star-token', 'moon-penny', 'rose-penny', 'crown-token'];
+export function isDripId(id) {
+  return DRIP_IDS.includes(id);
+}
+
+/** Chapter bonus is one copy. Everyday pennies still pay the purse. Drips wait until chapter 2. */
+export function keepOrdinaryAllowed(id, chapter) {
+  if (!id) return false;
+  if (id === 'everyday-penny' || id === 'five-penny-stack') return true;
+  if (isChapterOne(chapter) && isDripId(id)) return false;
+  return true;
+}
+
 export function enterLabel(id) {
   const door = doorKind(id);
   if (door === 'closed') return BUILD_SET.has(id) ? UNDER_CONSTRUCTION_LABEL : 'Closed for maintenance';
-  if (door === 'ticket') return 'Sit down · 1 ticket';
+  if (id === 'coin-pusher') return 'The trays · real pennies';
+  if (door === 'ticket') return 'Sit down · Chapter 1 free';
   if (door === 'free') {
     if (id === 'snap') return 'Instapic booth · try it';
-    if (RIDE_SET.has(id)) return 'Board · first go free';
-    return PENNY_DOOR_LABEL[id] || 'Enter · pennies';
+    if (RIDE_SET.has(id)) return 'Board · Chapter 1 free';
+    return PENNY_DOOR_LABEL[id] || 'Enter · Chapter 1 free';
   }
-  return 'Enter · 1 penny';
+  return 'Enter · Chapter 1 free';
 }
 
 function emptyBook() {
@@ -131,14 +150,11 @@ export function retryNote() {
     : 'Practice pennies are spent.';
 }
 
-/** Inside the paper room: workshop is always free. */
+/** Inside the paper room: workshop is always free. Chapter 1 is free (Copper spends real pennies itself). Chapter 2–6 costs 1 penny a go. */
 export function takeAttempt(stallId, chapter) {
   if (!alleyPlay) return true;
   const spec = entryFor(stallId);
   if (spec.inside === 'none') return true;
-  if (spec.inside === 'first-free-then-penny') {
-    if (claimFirstChapter(stallId, chapter)) return true;
-    return spend(1);
-  }
+  if (isChapterOne(chapter)) return true;
   return spend(1);
 }

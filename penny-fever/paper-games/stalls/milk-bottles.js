@@ -1,14 +1,14 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=first-prize-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=ch2-lock-1';
 import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-clean-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf,
-} from '../milky-splash.js?v=treasure-design-1';
+  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf,
+} from '../milky-splash.js?v=ch2-lock-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -77,6 +77,7 @@ function ordinaryReward(s){
  if(s.rewardCommitted)return '';
  s.rewardCommitted=true;
  const drop=ordinaryFor(s.resultN||resultNumber(s.seed));
+ if(!keepOrdinaryAllowed(drop,s.level))return '';
  persist(s);
  if(alleyPlay){if(drop==='everyday-penny')credit(1);else keep(drop,'milk-bottles');}
  // Label the tray tip so a silent +1 in the purse has a visible reason.
@@ -85,9 +86,9 @@ function ordinaryReward(s){
 function finishWin(s){
  if(s.phase==='result'||!isDelivered(s.board))return;
  const prize=MABEL_CHAPTERS[s.level].prize;
- // Seeing the earned bottle is the eligibility decision. Never roll again on delivery.
- const win=!chapterPaid(s.level);
- s.phase='result';s.charged=false;s.won=win;s.resultN ||= resultNumber(s.seed);
+ s.resultN ||= resultNumber(s.seed);
+ const win=isMabelWin(s.level, s.resultN) && !chapterPaid(s.level);
+ s.phase='result';s.charged=false;s.won=win;
  const tip=ordinaryReward(s);
  if(win){
   if(alleyPlay){keep(prize,'milk-bottles');markPaid(s.level);}
@@ -209,7 +210,7 @@ export default {
     // Honour an in-progress paid/included legacy board without buying another allowance.
     if(alleyPlay&&s.charged&&s.phase==='play'&&!prizeAttempts('milk-bottles',level))recordPrizeAttempt('milk-bottles',level);
     if(s.board&&!s.board.delivered){
-      if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)){
+      if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)&&isMabelWin(level,s.resultN||resultNumber(s.seed))){
         spawnUnique(s.board);
         // A completed empty legacy tray never offered its prize. Restore one
         // allowance without charging or paying its ordinary reward twice.
