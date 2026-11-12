@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08T18:14:45+09:30",
+  "updated_at": "2026-11-12T23:54:20+09:30",
   "games": {
     "milk-bottles": "open",
     "lookup": "open",
@@ -35,6 +35,6 @@
     "carousel": "closed",
     "popcorn": "closed",
     "balloons": "closed",
-    "aura-tradeshow": "test"
+    "aura-tradeshow": "open"
   }
 }
