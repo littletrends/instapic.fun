@@ -1,6 +1,6 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
-import {qrDataUrl} from './qrcode-generator.js?v=nft-host-4';
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-7';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-5';
+const NFT_VER = 'nft-host-7';
 const XRP_BY_CAP = {
   11111111: '0.0001',
   2222222: '0.0022',
@@ -18,8 +18,16 @@ const XRP_BY_CAP = {
   5555: '0.55555',
   666: '6.66666',
 };
+const WALLET_BUY_BY_CAP = {
+  11111111: Infinity,
+  2222222: 22222,
+  333333: 3333,
+  44444: 444,
+  5555: 55,
+  666: 6,
+};
 
-let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, one_per_wallet: true};
+let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, wallet_buy_cap: WALLET_BUY_BY_CAP};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -32,7 +40,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-5' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-7' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -43,47 +51,59 @@ export function tradeshowBlocked() {
   return status === 'closed' || status === 'maintenance';
 }
 export function remainingFor(id) {
-  const n = stock.items?.[id];
-  if (Number.isFinite(Number(n))) return Math.max(0, Math.floor(Number(n)));
+  const n = Number(stock.items?.[id] ?? stock.ceilings?.[id] ?? stock.default_remaining);
+  if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
   const fallback = Number(stock.default_remaining);
   return Number.isFinite(fallback) ? Math.max(0, Math.floor(fallback)) : 0;
 }
-function ceilingFor(id) {
-  const n = Number(stock.ceilings?.[id]);
-  if (Number.isFinite(n) && n > 0) return Math.floor(n);
+function ceilingKey(id) {
+  const n = Number(stock.ceilings?.[id] ?? stock.items?.[id]);
+  if (Number.isFinite(n) && n > 0) return n;
   return remainingFor(id);
 }
 function holdFloor(id) {
-  const cap = ceilingFor(id);
-  const pct = Number.isFinite(Number(stock.hold_pct)) ? Number(stock.hold_pct) : 0.1;
-  const floor = Number.isFinite(Number(stock.hold_floor)) ? Number(stock.hold_floor) : 15;
+  const cap = Number(ceilingKey(id));
+  if (!Number.isFinite(cap) || cap <= 0) return 0;
+  const pct = Number.isFinite(Number(stock.hold_pct)) ? Number(stock.hold_pct) : 0;
+  const floor = Number.isFinite(Number(stock.hold_floor)) ? Number(stock.hold_floor) : 111;
   return Math.max(floor, Math.ceil(cap * pct));
 }
 function shopHolding(id) {
   const left = remainingFor(id);
-  return left > 0 && left <= holdFloor(id);
+  const hold = holdFloor(id);
+  return hold > 0 && left > 0 && left <= hold;
 }
 function xrpPriceFor(id) {
-  const cap = ceilingFor(id);
+  const cap = ceilingKey(id);
   const fromStock = stock.xrp_by_ceiling?.[String(cap)] ?? stock.xrp_by_ceiling?.[cap];
   if (fromStock != null && String(fromStock).trim()) return String(fromStock).trim();
-  return XRP_BY_CAP[cap] || '';
+  return XRP_BY_CAP[cap] || XRP_BY_CAP[String(cap)] || '';
 }
 function formatXrp(id) {
   const p = xrpPriceFor(id);
   return p ? `${p} XRP` : '';
 }
-function walletOwns(id) {
-  if (stock.one_per_wallet === false) return false;
+function walletCount(id) {
   try {
     const row = window.PennyFever?.getState?.()?.paperInventory?.items?.[id];
-    if (!row) return false;
+    if (!row) return 0;
     const qty = Number(row.qty);
-    if (Number.isFinite(qty)) return qty > 0;
-    return true;
+    if (Number.isFinite(qty)) return Math.max(0, qty);
+    return 1;
   } catch {
-    return false;
+    return 0;
   }
+}
+function walletBuyCap(id) {
+  const key = ceilingKey(id);
+  const raw = stock.wallet_buy_cap?.[String(key)] ?? stock.wallet_buy_cap?.[key] ?? WALLET_BUY_BY_CAP[key];
+  if (raw == null) return Infinity;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return Infinity;
+  return Math.floor(n);
+}
+function walletAtCap(id) {
+  return walletCount(id) >= walletBuyCap(id);
 }
 function loadStock() {
   return fetch(FILE.href, {cache: 'no-store'})
@@ -93,6 +113,7 @@ function loadStock() {
       const items = data.items && typeof data.items === 'object' ? data.items : {};
       const ceilings = data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : items;
       const xrp = data.xrp_by_ceiling && typeof data.xrp_by_ceiling === 'object' ? data.xrp_by_ceiling : XRP_BY_CAP;
+      const buy = data.wallet_buy_cap && typeof data.wallet_buy_cap === 'object' ? data.wallet_buy_cap : WALLET_BUY_BY_CAP;
       stock = {
         default_remaining: Number.isFinite(fallback) ? fallback : 0,
         items,
@@ -101,7 +122,7 @@ function loadStock() {
         hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0,
         aura_xrp_address: String(data.aura_xrp_address || '').trim(),
         xrp_by_ceiling: xrp,
-        one_per_wallet: data.one_per_wallet !== false,
+        wallet_buy_cap: buy,
       };
     })
     .catch(() => {});
@@ -295,8 +316,10 @@ function actionFor(item, stallInfo) {
   if (!vip()) {
     return {label: 'Join VIP to buy with XRP', disabled: true};
   }
-  if (walletOwns(item.id)) {
-    return {label: 'Already in your wallet', disabled: true};
+  if (walletAtCap(item.id)) {
+    const cap = walletBuyCap(item.id);
+    if (cap <= 1) return {label: 'Already in your wallet', disabled: true};
+    return {label: `Wallet cap ${cap.toLocaleString('en-AU')}`, disabled: true};
   }
   if (remainingFor(item.id) <= 0) {
     return {label: 'Aura’s pile is gone · trade later', disabled: true};
@@ -356,9 +379,14 @@ function closeXrpTill() {
   if (till) till.hidden = true;
 }
 function openXrpTill(id) {
-  if (walletOwns(id)) {
+  if (walletAtCap(id)) {
     const note = overlay?.querySelector('#auraTradeshowNote');
-    if (note) note.textContent = 'Already in your wallet · one copy per guest.';
+    const cap = walletBuyCap(id);
+    if (note) {
+      note.textContent = cap <= 1
+        ? 'Already in your wallet · one copy on this piece.'
+        : `Wallet cap reached · ${cap.toLocaleString('en-AU')} of this piece.`;
+    }
     return;
   }
   const till = overlay?.querySelector('#auraXrpTill');
@@ -375,9 +403,13 @@ function openXrpTill(id) {
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
   const xrp = formatXrp(id);
+  const cap = walletBuyCap(id);
+  const capLine = !Number.isFinite(cap) ? 'VIP can hold as many as remain.'
+    : cap <= 1 ? 'One copy per wallet.'
+    : `Up to ${cap.toLocaleString('en-AU')} in this wallet.`;
   till.querySelector('#auraXrpTillPrice').textContent = auraWallet()
-    ? `Scan Aura’s wallet · ${xrp || 'XRP'} · one copy per wallet.`
-    : `Scan to hold this piece · ${xrp || 'XRP'} once the till is live · one copy per wallet.`;
+    ? `Scan Aura’s wallet · ${xrp || 'XRP'} · ${capLine}`
+    : `Scan to hold this piece · ${xrp || 'XRP'} once the till is live · ${capLine}`;
   if (hold) hold.dataset.item = id;
   till.hidden = false;
 }
@@ -386,7 +418,7 @@ function queueXrpPlace(id) {
   const name = item?.name || id;
   const note = overlay?.querySelector('#auraTradeshowNote');
   if (note) {
-    note.textContent = `Place held for ${name} · ${formatXrp(id) || 'XRP'} next · one copy per wallet. Play to win stays live.`;
+    note.textContent = `Place held for ${name} · ${formatXrp(id) || 'XRP'} next. Play to win stays live.`;
   }
   closeXrpTill();
 }

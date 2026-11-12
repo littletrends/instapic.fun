@@ -1,6 +1,6 @@
 {
   "updated_at": "2026-11-12",
-  "note": "Ceiling, not a print run. Table A XRP for chapter objects. One copy per wallet. Felix/vendor portraits: session only, no Aura XRP. Hold last 111. Plates off git.",
+  "note": "Table A supply. Per-wallet buy: ch1 unlimited, ch2 22222, ch3 3333, ch4 444, ch5 55, ch6 6 (~1% of shelf). Play still one win. Felix session-only. Hold last 111. Never raise supply after mint.",
   "recipe": {
     "chapters": [
       11111111,
@@ -18,7 +18,15 @@
       "0.55555",
       "6.66666"
     ],
-    "one_per_wallet": true,
+    "wallet_buy_cap": {
+      "11111111": null,
+      "2222222": 22222,
+      "333333": 3333,
+      "44444": 444,
+      "5555": 55,
+      "666": 6
+    },
+    "one_per_wallet": false,
     "hold_floor": 111,
     "hold_pct": 0,
     "open_portraits": 5555,
@@ -166,7 +174,6 @@
     "vendor-portrait-rosalie": 5555,
     "vendor-portrait-tilly": 5555
   },
-  "one_per_wallet": true,
   "xrp_by_ceiling": {
     "11111111": "0.0001",
     "2222222": "0.0022",
@@ -174,5 +181,13 @@
     "44444": "0.04444",
     "5555": "0.55555",
     "666": "6.66666"
+  },
+  "wallet_buy_cap": {
+    "11111111": null,
+    "2222222": 22222,
+    "333333": 3333,
+    "44444": 444,
+    "5555": 55,
+    "666": 6
   }
 }
