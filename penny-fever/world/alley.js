@@ -10,7 +10,7 @@ import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-image
 import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=nft-host-11";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
-import { mountVipSpot } from "./vip-spot.js?v=nft-host-11";
+import { mountVipSpot } from "./vip-spot.js?v=pf-clarity-1";
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=nft-host-11";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
@@ -45,7 +45,7 @@ const CUTOUT = (id) => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}
 const STALLS = [
   { id: "fortune", kind: "tent", art: CUTOUT("fortune"), accent: 0x6b3a8a, line: "Gaze into the crystal. A keepsake is hiding in the mist." },
   { id: "love", kind: "cabinet", art: CUTOUT("love"), accent: 0xc43a5a, line: "Two names. Count the loves. Read the heat." },
-  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Reconnect the tracks. The beetle only walks the glow." },
+  { id: "curios", kind: "cabinet", art: CUTOUT("curios"), accent: 0x8a6230, line: "Send the claw across, then drop on NOW over the glow." },
   { id: "lookup", kind: "tent", art: CUTOUT("lookup"), accent: 0x3d6a8a, line: "Turn the brass glasses. Wake the sky." },
   { id: "snap", kind: "cabinet", art: CUTOUT("snap"), accent: 0xe8d0a0, line: "Instapic photo booth. Try a couple of selfies." },
   { id: "whisper", kind: "tent", art: CUTOUT("whisper"), accent: 0x8a4a6a, line: "Stamp a letter. Fan it home." },
@@ -53,7 +53,7 @@ const STALLS = [
   { id: "coin-pusher", kind: "cabinet", art: CUTOUT("coin-pusher"), accent: 0xd4a45a, line: "A penny shoves the tide. Walk away — the trays stay." },
   { id: "pinball", kind: "cabinet", art: CUTOUT("pinball"), accent: 0x3a8a6a, line: "A penny pulls the spring. Tap the bats. The glass always smiles last." },
   { id: "water-gun", kind: "booth", art: CUTOUT("water-gun"), accent: 0x3a7aaa, line: "Nudge a little sailboat through a paper harbour." },
-  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "A penny a bead. Two or three throws. The shelf or the book." },
+  { id: "milk-bottles", kind: "booth", art: CUTOUT("milk-bottles"), accent: 0xc0c4cc, line: "Swap the bottles, make rows of three, walk the gold one home." },
   { id: "cover-the-spot", kind: "booth", art: CUTOUT("cover-the-spot"), accent: 0xc45a6a, line: "Cover the moon. Don’t get greedy." },
   { id: "mutoscope", kind: "cabinet", art: CUTOUT("mutoscope"), accent: 0x8a3030, line: "Crank the reel. Light the story." },
   { id: "high-striker", kind: "booth", art: CUTOUT("high-striker"), accent: 0xd45a3a, line: "One penny, one strike. Ring the lit mouth." },
@@ -106,6 +106,54 @@ const VENDOR_CHAT_VARIANTS = {
   organ: ["Each glowing pipe has a note to share. Listen for the one that answers."],
   mural: ["The painted wall is waking up one little patch at a time."],
 };
+/** Rotating how-to tips at the tent door (Lorie clarity pass). Short, in the vendor's voice:
+ *  how to play, what a go costs, what can drop. Rotated in order with the usual line. */
+const VENDOR_TIPS = {
+  love: [
+    "Write two names, count the letters I ask for, and Enter reads the heat.",
+    "First sitting each chapter is on me, darling. After that, a penny a sitting.",
+    "Land on one of tonight's numbers and a valentine drops. Every sitting leaves a little something.",
+    "Same two names, same answer. Try a nickname for a fresh reading.",
+  ],
+  curios: [
+    "Hold right and the claw rides the rail. It never comes back, mind.",
+    "Tap when NOW lights and the claw is over the glow. Early or late, it closes on air.",
+    "A penny a claw, every claw. The ticket only gets you through my door.",
+  ],
+  lookup: [
+    "Turning the glasses is free. Space or the FEED button sends a comet.",
+    "Your first comet each chapter is on me. Then a penny a comet.",
+    "Wake the stars, then strike the bell on a winning number. Misses still shed starlight.",
+    "Lost the path? X for a hint, Z to undo a turn.",
+  ],
+  "coin-pusher": [
+    "Space or a tap drops a penny. Watch the shelf, then drop.",
+    "A penny a drop. Whatever tumbles over the lip comes back to your purse.",
+    "Your first paid penny each chapter lets the prize onto the tray. Push it over the edge to keep it.",
+  ],
+  pinball: [
+    "Hold Space to pull the spring, let go to launch. Z and X work the bats.",
+    "One penny, three balls, a hundred seconds a ball.",
+    "Hit a bumper on a winning second and the chapter bonus drops.",
+    "Lights out? Enter or R gives you a quick launch.",
+  ],
+  "milk-bottles": [
+    "Tap two neighbours to swap. Only a real match spends a move.",
+    "First round each chapter is on me. After that, a penny buys a full tray of moves.",
+    "Walk the gold bottle down into the crate and the chapter treasure is yours.",
+  ],
+  helter: [
+    "Right arrow taps you along, Space jumps the next cell. Cushions bounce you up.",
+    "Your first ride each chapter is free practice and keeps nothing. Then a penny a ride.",
+    "Grab the keepsake and reach the crest on a paid ride to keep it.",
+  ],
+  funhouse: [
+    "Arrows or the stick to walk. Space shuts the punchline door.",
+    "First go each chapter is free. After that, a penny a ride.",
+    "Pick up the key, then clear the chips to keep it. A laugh-face touch sends you back.",
+  ],
+};
+const vendorTipIndex = Object.create(null);
 const paperById = Object.fromEntries((paperGames || []).map((g) => [g.id, g]));
 for (const spec of STALLS) {
   const g = paperById[spec.id];
@@ -960,7 +1008,9 @@ const irisChats = [
   'Watch the sign I show you, then catch it in the glow at the top of each ring.',
   'Tap the heart of the globe to gaze. Tap again when you want a ring to stop.',
   'The outer ring goes first. Give each little circle its own moment.',
-  'Your first gaze is practice. After that, each new gaze costs one penny.',
+  'Your first gaze in each chapter is on the house. After that, each new gaze costs one penny.',
+  'Catch every sign and the glass pays a star token. Catch them on a winning number and the keepsake is yours.',
+  'Space or a tap on the globe starts the gaze. Space again stops each ring.',
   'A missed sign still has a story. Read what the glass leaves for you.',
   'Six chapters, six treasures. Your Treasure Book will keep them safe.',
 ];
@@ -972,7 +1022,24 @@ const SAVE_REMINDER_LINES = [
 const SAVE_REMINDER_COOLDOWN_MS = 20 * 60 * 1000;
 let lastSaveReminderAt = 0;
 try { lastSaveReminderAt = Number(localStorage.getItem('pf-save-reminder-at')) || 0; } catch {}
+function vipSignedIn() {
+  try { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); } catch { return false; }
+}
+/** Guests only: a friendly VIP nudge mixed into the rotating vendor chat (about 1 chat in 4). Never for signed-in VIPs. */
+const GUEST_VIP_TIPS = [
+  'Playing as a guest, love? Sign in as VIP and your pennies and treasures follow you to any phone.',
+  'Your pocket lives on this phone for now. VIP keeps your pennies and Treasure Book safe across phones.',
+  'Treasures you win stay on this device. Sign in as VIP and they come with you wherever you play.',
+];
+let guestChatCount = 0, guestTipIndex = 0;
+function guestVipNudge() {
+  if (vipSignedIn()) return '';
+  guestChatCount += 1;
+  if (guestChatCount % 4 !== 3) return '';
+  return GUEST_VIP_TIPS[guestTipIndex++ % GUEST_VIP_TIPS.length];
+}
 function occasionalSaveReminder() {
+  if (vipSignedIn()) return '';
   const now = Date.now();
   if (now - lastSaveReminderAt < SAVE_REMINDER_COOLDOWN_MS || Math.random() >= 0.2) return '';
   lastSaveReminderAt = now;
@@ -1974,12 +2041,16 @@ function talkToFocus() {
   if (speechName) speechName.textContent = who.host || who.name || "Aura";
   vendorChatId = who.id || who.kind;
   const variants = VENDOR_CHAT_VARIANTS[who.id] || [];
+  const tips = VENDOR_TIPS[who.id] || [];
+  const tipPool = tips.length ? [who.line, ...tips, ...variants].filter(Boolean) : [];
   const usualLine = who.id === 'fortune'
     ? irisChats[irisChatIndex++ % irisChats.length]
+    : tipPool.length
+      ? tipPool[(vendorTipIndex[who.id] = ((vendorTipIndex[who.id] ?? -1) + 1)) % tipPool.length]
     : variants.length && Math.random() < 0.5
       ? variants[Math.floor(Math.random() * variants.length)]
       : (who.line || (who.kind === 'aura' ? AURA_LINE : ''));
-  vendorChatText = occasionalSaveReminder() || usualLine;
+  vendorChatText = occasionalSaveReminder() || guestVipNudge() || usualLine;
   speechText.textContent = vendorChatText;
   speech.classList.toggle("is-left", (who.side || -1) < 0);
   speech.classList.toggle("is-right", (who.side || -1) >= 0);

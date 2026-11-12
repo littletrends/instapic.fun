@@ -262,10 +262,65 @@ function paintChip() {
     }
   }
   if (hud) {
-    hud.textContent = (progressConflict || collectionChoice) ? "Choose your player" : "Aura’s VIP";
-    hud.setAttribute("href", "#aura-tradeshow");
-    hud.title = "Open Aura’s VIP NFT Tradeshow. Instapic VIP is on Home.";
+    // Lorie: the chip says who is playing. Long emails are trimmed (shorter on phones); full address in the tooltip.
+    const choosing = !!(progressConflict || collectionChoice);
+    const who = inVip ? "Signed in as " + shortEmail(email) : "Playing as guest";
+    hud.textContent = choosing ? who + " · Choose player" : who;
+    hud.classList.toggle("needs-choice", choosing);
+    // Inline so no world.css tag bump is needed (index.html is someone else’s dirty file). Emails read better un-capitalised.
+    hud.style.textTransform = "none";
+    hud.style.boxShadow = choosing ? "0 0 0 2px #ffb4d2" : "";
+    hud.setAttribute("href", choosing ? "#choose-player" : "#aura-tradeshow");
+    hud.title = choosing
+      ? "Tap to choose which player and balance to keep."
+      : (inVip ? "Signed in as " + (email || "VIP") + ". " : "Playing as guest on this device. ") + "Tap for Aura’s VIP NFT Tradeshow.";
   }
+}
+
+function shortEmail(email) {
+  const text = String(email || "").trim();
+  if (!text) return "VIP";
+  const phone = typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches;
+  const max = phone ? 14 : 26;
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
+}
+
+/** Chip tap while a choice is pending: reopen the matching choice instead of the tradeshow. */
+function openPlayerChoice() {
+  if (collectionChoice) {
+    const dialog = document.getElementById("pfCollectionChoiceDialog");
+    if (!dialog) { paintCollectionDialog(); return true; }
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector("button")?.focus();
+    return true;
+  }
+  if (progressConflict) { paintConflictDialog(); return true; }
+  return false;
+}
+
+function paintConflictDialog() {
+  let dialog = document.getElementById("pfProgressConflictDialog");
+  if (!dialog) {
+    dialog = document.createElement("dialog"); dialog.id = "pfProgressConflictDialog"; dialog.setAttribute("aria-labelledby", "pfProgressConflictTitle");
+    dialog.style.cssText = "max-width:min(92vw,460px);padding:22px;border:2px solid #d9aa66;border-radius:14px;background:#291d35;color:#fff3df;font:16px/1.45 system-ui;";
+    const title = document.createElement("h2"); title.id = "pfProgressConflictTitle"; title.textContent = "Choose which balance to keep";
+    const description = document.createElement("p"); description.textContent = "VIP save paused because this account changed on another device. Your treasures are kept. Choose which penny balance to keep:";
+    dialog.append(title, description);
+    for (const [label, local] of [["Keep this device's balance", true], ["Use VIP balance", false]]) {
+      const button = document.createElement("button"); button.type = "button"; button.textContent = label;
+      button.style.cssText = "display:block;width:100%;margin:10px 0;padding:10px;border-radius:8px;cursor:pointer;font-weight:700;";
+      button.addEventListener("click", () => resolveProgressConflict(local)
+        .then(() => { if (dialog.open) dialog.close(); dialog.remove(); })
+        .catch(err => { description.textContent = "Could not resolve the save yet. Your progress is still on this device."; console.warn("[pf-vip] resolve", err); }));
+      dialog.append(button);
+    }
+    const later = document.createElement("button"); later.type = "button"; later.textContent = "Decide later";
+    later.style.cssText = "display:block;margin:6px auto 0;background:none;border:0;color:#f0dcc2;text-decoration:underline;cursor:pointer;";
+    later.addEventListener("click", () => dialog.close());
+    dialog.append(later);
+    document.body.append(dialog);
+  }
+  if (!dialog.open) dialog.showModal();
 }
 
 function meaningfulProgress(progress) {
@@ -446,6 +501,7 @@ export function mountVipSpot() {
   const hud = document.getElementById("pfVipHud");
   hud?.addEventListener("click", (event) => {
     event.preventDefault();
+    if (openPlayerChoice()) return;
     if (signedIn()) {
       try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {}
       pushSave().catch((err) => console.warn("[pf-vip] save", err));
