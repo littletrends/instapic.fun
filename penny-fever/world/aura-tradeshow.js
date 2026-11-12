@@ -1,6 +1,6 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
-import {qrDataUrl} from './qrcode-generator.js?v=nft-host-8';
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-10';
+const NFT_VER = 'nft-host-11';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -17,36 +17,18 @@ const TOKEN_NAMES = {
   'rose-penny': ['rose penny', 'rose pennies'],
   'crown-token': ['crown token', 'crown tokens'],
 };
-const XRP_BY_CAP = {
-  11111111: '0.0001',
-  2222222: '0.0022',
-  333333: '0.00333',
-  44444: '0.04444',
-  5555: '0.55555',
-  555: '0.55555',
-  222: '2',
-  666: '6.66666',
-};
-const WALLET_BUY_BY_CAP = {
-  11111111: Infinity,
-  2222222: 22222,
-  333333: 3333,
-  44444: 444,
-  5555: 55,
-  555: 1,
-  222: 1,
-  666: 6,
-};
 const LIMITED = new Set([
   'aura-treasures-collector-book',
   'alley-backgrounds-collector-book',
   'aura-and-carnival-collector-book',
 ]);
 
-let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, xrp_by_id: {}, wallet_buy_cap: WALLET_BUY_BY_CAP, token_claims: {}};
+let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', token_claims: {}};
+let minted = {};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
+let lastFocus = null;
 let folder = 'book:penny-collector-book';
 let query = '';
 const openNodes = new Set(['book:penny-collector-book']);
@@ -56,7 +38,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-10' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -66,42 +48,62 @@ export function tradeshowBlocked() {
   const status = tradeshowStatus();
   return status === 'closed' || status === 'maintenance';
 }
-export function remainingFor(id) {
-  const n = Number(stock.items?.[id] ?? stock.ceilings?.[id] ?? stock.default_remaining);
-  if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
-  const fallback = Number(stock.default_remaining);
-  return Number.isFinite(fallback) ? Math.max(0, Math.floor(fallback)) : 0;
+function groupKey(id) {
+  return String(stock.sku?.[id] || '');
 }
-function ceilingKey(id) {
-  const n = Number(stock.ceilings?.[id] ?? stock.items?.[id]);
-  if (Number.isFinite(n) && n > 0) return n;
-  return remainingFor(id);
+function groupSpec(id) {
+  const g = stock.groups?.[groupKey(id)];
+  return g && typeof g === 'object' ? g : {};
+}
+function editionSpec(id) {
+  const g = groupSpec(id);
+  const n = String(g.current_edition || 1);
+  const ed = g.editions?.[n] || g.editions?.[Number(n)];
+  return ed && typeof ed === 'object' ? ed : {};
+}
+function onShelf(id) {
+  return !!groupKey(id);
+}
+function ceilingFor(id) {
+  const n = Number(stock.ceilings?.[id] ?? editionSpec(id).ceiling ?? groupSpec(id).ceiling);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+export function remainingFor(id) {
+  if (!onShelf(id)) return 0;
+  const cap = ceilingFor(id);
+  const used = Math.max(0, Math.floor(Number(minted[id]) || 0));
+  return Math.max(0, cap - used);
 }
 function holdFloor(id) {
-  const cap = Number(ceilingKey(id));
-  if (!Number.isFinite(cap) || cap <= 0) return 0;
-  const pct = Number.isFinite(Number(stock.hold_pct)) ? Number(stock.hold_pct) : 0;
-  const floor = Number.isFinite(Number(stock.hold_floor)) ? Number(stock.hold_floor) : 111;
-  return Math.max(floor, Math.ceil(cap * pct));
+  if (!groupSpec(id).hold) return 0;
+  const cap = ceilingFor(id);
+  const floor = Number(stock.hold_floor);
+  const pct = Number(stock.hold_pct);
+  const fromFloor = Number.isFinite(floor) && floor > 0 ? Math.floor(floor) : 0;
+  const fromPct = Number.isFinite(pct) && pct > 0 ? Math.floor(cap * pct) : 0;
+  return Math.max(fromFloor, fromPct);
 }
 function shopHolding(id) {
-  const row = window.PennyFeverInventoryModel?.definitions?.find((it) => it.id === id);
-  if (row?.collection === 'aura-limited' || LIMITED.has(id)) return false;
-  const left = remainingFor(id);
+  if (!onShelf(id) || tokenClaim(id)) return false;
+  if (LIMITED.has(id) || String(groupKey(id)).startsWith('le-')) return false;
   const hold = holdFloor(id);
+  const left = remainingFor(id);
   return hold > 0 && left > 0 && left <= hold;
 }
 function xrpPriceFor(id) {
-  const byId = stock.xrp_by_id?.[id];
-  if (byId != null && String(byId).trim()) return String(byId).trim();
-  const cap = ceilingKey(id);
-  const fromStock = stock.xrp_by_ceiling?.[String(cap)] ?? stock.xrp_by_ceiling?.[cap];
-  if (fromStock != null && String(fromStock).trim()) return String(fromStock).trim();
-  return XRP_BY_CAP[cap] || XRP_BY_CAP[String(cap)] || '';
+  const raw = editionSpec(id).xrp ?? groupSpec(id).xrp;
+  const s = String(raw ?? '').trim();
+  return s ? s : '';
 }
 function formatXrp(id) {
   const p = xrpPriceFor(id);
   return p ? `${p} XRP` : '';
+}
+function capLine(id) {
+  const cap = walletBuyCap(id);
+  if (!Number.isFinite(cap)) return 'VIP can hold as many as remain';
+  if (cap <= 1) return 'one per wallet';
+  return `up to ${cap.toLocaleString('en-AU')} in this wallet`;
 }
 function walletCount(id) {
   try {
@@ -184,20 +186,16 @@ function claimWithTokens(id) {
     say(`Need ${formatTokenCost(spec.cost)}.`);
     return;
   }
-  if (!spendTokenCost(spec.cost)) {
-    say('Those tokens would not spend.');
-    return;
-  }
   const PF = window.PennyFever;
   if (!PF?.stampKeepsake?.(id, 'token-claim')) {
-    say('Claim did not land. Tell Aura if tokens left the purse.');
+    say(walletAtCap(id) ? 'Already in your wallet.' : 'Claim did not land.');
     paint();
     return;
   }
-  const left = remainingFor(id);
-  if (left > 0) {
-    stock.items = stock.items || {};
-    stock.items[id] = left - 1;
+  if (!spendTokenCost(spec.cost)) {
+    say('Keepsake stamped · tokens did not spend. Tell Aura.');
+    paint();
+    return;
   }
   const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
   say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
@@ -206,9 +204,8 @@ function claimWithTokens(id) {
 function walletBuyCap(id) {
   const claim = tokenClaim(id);
   if (claim && Number.isFinite(Number(claim.wallet))) return Math.max(0, Math.floor(Number(claim.wallet)));
-  const key = ceilingKey(id);
-  const raw = stock.wallet_buy_cap?.[String(key)] ?? stock.wallet_buy_cap?.[key] ?? WALLET_BUY_BY_CAP[key];
-  if (raw == null) return Infinity;
+  const raw = editionSpec(id).wallet ?? groupSpec(id).wallet;
+  if (raw == null || raw === '') return Infinity;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return Infinity;
   return Math.floor(n);
@@ -220,25 +217,30 @@ function loadStock() {
   return fetch(FILE.href, {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : {}))
     .then((data) => {
-      const fallback = Number(data.default_remaining);
-      const items = data.items && typeof data.items === 'object' ? data.items : {};
-      const ceilings = data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : items;
-      const xrp = data.xrp_by_ceiling && typeof data.xrp_by_ceiling === 'object' ? data.xrp_by_ceiling : XRP_BY_CAP;
-      const byId = data.xrp_by_id && typeof data.xrp_by_id === 'object' ? data.xrp_by_id : {};
-      const buy = data.wallet_buy_cap && typeof data.wallet_buy_cap === 'object' ? data.wallet_buy_cap : WALLET_BUY_BY_CAP;
-      const claims = data.token_claims && typeof data.token_claims === 'object' ? data.token_claims : {};
+      const recipe = data.recipe && typeof data.recipe === 'object' ? data.recipe : {};
+      const claims = (data.token_claims && typeof data.token_claims === 'object' && data.token_claims)
+        || (recipe.token_claims && typeof recipe.token_claims === 'object' && recipe.token_claims)
+        || {};
+      const holdRaw = data.hold_floor ?? recipe.hold_floor;
+      const pctRaw = data.hold_pct ?? recipe.hold_pct;
       stock = {
-        default_remaining: Number.isFinite(fallback) ? fallback : 0,
-        items,
-        ceilings,
-        hold_floor: Number.isFinite(Number(data.hold_floor)) ? Number(data.hold_floor) : 111,
-        hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0,
+        groups: data.groups && typeof data.groups === 'object' ? data.groups : {},
+        sku: data.sku && typeof data.sku === 'object' ? data.sku : {},
+        ceilings: data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : {},
+        hold_floor: Number.isFinite(Number(holdRaw)) ? Number(holdRaw) : 111,
+        hold_pct: Number.isFinite(Number(pctRaw)) ? Number(pctRaw) : 0,
         aura_xrp_address: String(data.aura_xrp_address || '').trim(),
-        xrp_by_ceiling: xrp,
-        xrp_by_id: byId,
-        wallet_buy_cap: buy,
         token_claims: claims,
       };
+    })
+    .catch(() => {});
+}
+function loadMinted() {
+  return fetch(`${NFT_HOST}/api/penny-fever/minted?v=${NFT_VER}`, {cache: 'no-store'})
+    .then((res) => (res.ok ? res.json() : {}))
+    .then((data) => {
+      const counts = data && typeof data === 'object' ? (data.counts || data) : {};
+      minted = counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
     })
     .catch(() => {});
 }
@@ -272,21 +274,34 @@ function faceSrc(item, view) {
   return asset.replace(/front\.webp(\?.*)?$/, `${view}.webp${ver}`);
 }
 function formatStock(id) {
+  if (!onShelf(id)) return 'Not on the shelf yet';
   const n = remainingFor(id);
   const left = n.toLocaleString('en-AU') + ' remaining';
   if (n <= 0) return left + ' · trade later';
   if (shopHolding(id)) return left + ' · last copies held for play';
   return left;
 }
-function auraWallet() {
-  const addr = String(stock.aura_xrp_address || '').trim();
-  return /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(addr) ? addr : '';
+function guestRef() {
+  try {
+    const id = window.InstapicGuestIdentity;
+    return String(id?.read?.()?.email || id?.guestId?.() || id?.id?.() || '').trim();
+  } catch {
+    return '';
+  }
+}
+function checkoutUrl(id) {
+  const origin = (location.origin && location.origin.startsWith('http')) ? location.origin : 'https://instapic.fun';
+  const qs = new URLSearchParams({
+    item: id,
+    amount: xrpPriceFor(id) || '',
+    edition: String(groupSpec(id).current_edition || 1),
+    guest: guestRef(),
+    return: `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`,
+  });
+  return `${NFT_HOST}/api/penny-fever/xaman-checkout?${qs}`;
 }
 function buyPayload(id) {
-  const addr = auraWallet();
-  if (addr) return addr;
-  const origin = (location.origin && location.origin.startsWith('http')) ? location.origin : 'https://instapic.fun';
-  return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
+  return checkoutUrl(id);
 }
 function buyQrSrc(id) {
   try {
@@ -302,6 +317,7 @@ function ensureOverlay() {
   overlay.className = 'aura-tradeshow';
   overlay.hidden = true;
   overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'auraTradeshowTitle');
   overlay.innerHTML = `
     <div class="aura-tradeshow-bar">
@@ -327,17 +343,18 @@ function ensureOverlay() {
       <div class="aura-tradeshow-body" id="auraTradeshowBody"></div>
     </div>
     <div class="aura-xrp-till" id="auraXrpTill" hidden>
-      <div class="aura-xrp-till-card" role="dialog" aria-labelledby="auraXrpTillName">
+      <div class="aura-xrp-till-card" role="dialog" aria-modal="true" aria-labelledby="auraXrpTillName">
         <button type="button" class="aura-xrp-till-close" data-xrp-close aria-label="Close XRP till">×</button>
         <img id="auraXrpTillImg" alt="" width="220" height="220">
         <h2 id="auraXrpTillName"></h2>
         <p id="auraXrpTillStock"></p>
         <p id="auraXrpTillPrice"></p>
-        <p id="auraXrpTillCopy">Aura takes XRP here next. Play to win stays live. Nothing leaves a wallet yet.</p>
-        <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Hold my place</button>
+        <p id="auraXrpTillCopy">MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.</p>
+        <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
       </div>
     </div>`;
   document.body.append(overlay);
+  document.addEventListener('keydown', onOverlayKey, true);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
   overlay.querySelector('#auraTradeshowSearch').addEventListener('input', (e) => {
     query = e.target.value.trim().toLowerCase();
@@ -429,21 +446,25 @@ function actionFor(item, stallInfo) {
   if (isFelix(item)) {
     return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true};
   }
+  if (!onShelf(item.id)) {
+    return {label: 'Not on the shelf yet', disabled: true};
+  }
   const claim = tokenClaim(item.id);
   if (claim) {
     const cost = formatTokenCost(claim.cost);
     if (!vip()) return {label: `Join VIP to claim · ${cost}`, disabled: true, claim: true};
-    if (walletAtCap(item.id)) return {label: 'Already in your wallet', disabled: true, claim: true};
+    if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
     if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
     return {label: `Claim · ${cost}`, disabled: false, ready: true, claim: true};
   }
   if (isLimited(item)) {
     const xrp = formatXrp(item.id);
+    const buy = xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)';
     if (!vip()) return {label: xrp ? `Join VIP to buy · ${xrp}` : 'Join VIP to buy with XRP', disabled: true, limited: true};
-    if (walletAtCap(item.id)) return {label: 'Already in your wallet', disabled: true, limited: true};
+    if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, limited: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, limited: true};
-    return {label: xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)', disabled: false, ready: true, limited: true};
+    return {label: `${buy} · ${capLine(item.id)}`, disabled: false, ready: true, limited: true};
   }
   if (MONEY.has(item.kind) || stallInfo.money) {
     return {label: 'Sold at the dollar till', disabled: true};
@@ -454,13 +475,13 @@ function actionFor(item, stallInfo) {
   if (!stallInfo.mintable) {
     return {label: 'Coming when this stall opens', disabled: true};
   }
+  const xrp = formatXrp(item.id);
+  const buy = xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)';
   if (!vip()) {
-    return {label: 'Join VIP to buy with XRP', disabled: true};
+    return {label: xrp ? `Join VIP to buy · ${xrp}` : 'Join VIP to buy with XRP', disabled: true};
   }
   if (walletAtCap(item.id)) {
-    const cap = walletBuyCap(item.id);
-    if (cap <= 1) return {label: 'Already in your wallet', disabled: true};
-    return {label: `Wallet cap ${cap.toLocaleString('en-AU')}`, disabled: true};
+    return {label: `Wallet cap reached · ${capLine(item.id)}`, disabled: true};
   }
   if (remainingFor(item.id) <= 0) {
     return {label: 'Aura’s pile is gone · trade later', disabled: true};
@@ -468,25 +489,27 @@ function actionFor(item, stallInfo) {
   if (shopHolding(item.id)) {
     return {label: 'Last copies reserved for play', disabled: true};
   }
-  const xrp = formatXrp(item.id);
-  return {label: xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)', disabled: false, ready: true};
+  return {label: `${buy} · ${capLine(item.id)}`, disabled: false, ready: true};
+}
+function shopAction(id) {
+  const item = modelItem(id);
+  const stall = stallForPrize(item);
+  return actionFor(item, stallDoor(stall));
 }
 function claimLine(item, stallInfo) {
   if (isFelix(item)) {
     return 'Unlock a session at Felix’s Instapic Photo Booth, run the sitting, then the portrait NFT is yours. Not for sale here.';
   }
+  const act = actionFor(item, stallInfo);
   const claim = tokenClaim(item.id);
-  if (claim) return `Token claim · ${formatTokenCost(claim.cost)} · one per wallet`;
-  if (isLimited(item)) {
-    const xrp = formatXrp(item.id);
-    return xrp ? `Limited edition · ${xrp} · one per wallet` : 'Limited edition · Buy with XRP (get ready) · one per wallet';
-  }
+  if (claim) return `Token claim · ${act.label}`;
+  if (isLimited(item)) return `Limited edition · ${act.label}`;
   if (MONEY.has(item.kind) || stallInfo.money) return 'Claim at Aura’s dollar till';
   const stall = stallForPrize(item);
   const host = stall?.host || 'Aura';
   const title = stall?.title || 'her booth';
-  if (stall?.id === 'ticket-booth') return `Claim at Aura · ${title} · Buy with XRP (get ready)`;
-  return `Play for it at ${host} · ${title} · Buy with XRP (get ready)`;
+  if (stall?.id === 'ticket-booth') return `Claim at Aura · ${title} · ${act.label}`;
+  return `Play for it at ${host} · ${title} · ${act.label}`;
 }
 function playTap(item, stallInfo, stall) {
   if (isLimited(item)) return null;
@@ -511,62 +534,70 @@ function setCardView(card, mode) {
   const label = card.querySelector('[data-face-label]');
   if (next === 'nft') {
     const qr = buyQrSrc(id);
+    const name = card.dataset.name || id;
     if (img) {
       img.src = qr || faceSrc({asset: card.dataset.asset}, 'front');
-      img.alt = auraWallet() ? 'Scan Aura’s XRP wallet to buy' : 'Scan to open Aura’s XRP till';
+      img.alt = `${name} · Xaman checkout`;
     }
-    if (label) label.textContent = auraWallet() ? 'scan wallet' : 'scan to buy';
+    if (label) label.textContent = 'scan to sign';
     return;
   }
   const face = VIEWS[Number(card.dataset.face) || 0] || 'front';
-  if (img) img.src = faceSrc({asset: card.dataset.asset}, face);
+  if (img) {
+    img.src = faceSrc({asset: card.dataset.asset}, face);
+    img.alt = card.dataset.name || '';
+  }
   if (label) label.textContent = face;
 }
 function closeXrpTill() {
   const till = overlay?.querySelector('#auraXrpTill');
   if (till) till.hidden = true;
+  overlay?.querySelector('#auraTradeshowClose')?.focus();
 }
 function openXrpTill(id) {
-  if (walletAtCap(id)) {
+  const act = shopAction(id);
+  if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
-    const cap = walletBuyCap(id);
-    if (note) {
-      note.textContent = cap <= 1
-        ? 'Already in your wallet · one copy on this piece.'
-        : `Wallet cap reached · ${cap.toLocaleString('en-AU')} of this piece.`;
-    }
+    if (note) note.textContent = act.label || 'This card is not for XRP yet.';
     return;
   }
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till) return;
-  const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
+  const item = modelItem(id);
   const name = item?.name || id;
   const img = till.querySelector('#auraXrpTillImg');
   const hold = till.querySelector('[data-xrp-hold]');
   const qr = buyQrSrc(id);
   if (img) {
     img.src = qr || faceSrc(item || {asset: ''}, 'front');
-    img.alt = 'Buy with XRP QR';
+    img.alt = `${name} · Xaman checkout`;
   }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
-  const xrp = formatXrp(id);
-  const cap = walletBuyCap(id);
-  const capLine = !Number.isFinite(cap) ? 'VIP can hold as many as remain.'
-    : cap <= 1 ? 'One copy per wallet.'
-    : `Up to ${cap.toLocaleString('en-AU')} in this wallet.`;
-  till.querySelector('#auraXrpTillPrice').textContent = auraWallet()
-    ? `Scan Aura’s wallet · ${xrp || 'XRP'} · ${capLine}`
-    : `Scan to hold this piece · ${xrp || 'XRP'} once the till is live · ${capLine}`;
+  till.querySelector('#auraXrpTillPrice').textContent = `${act.label}. Scan to open a Xaman sign request. We never hold guest keys.`;
+  const copy = till.querySelector('#auraXrpTillCopy');
+  if (copy) copy.textContent = 'MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.';
   if (hold) hold.dataset.item = id;
   till.hidden = false;
+  till.querySelector('[data-xrp-close]')?.focus();
+  fetch(checkoutUrl(id), {cache: 'no-store'})
+    .then((res) => (res.ok ? res.json() : {}))
+    .then((data) => {
+      if (till.hidden || !copy) return;
+      if (data?.payload) {
+        copy.textContent = 'Sign this Xaman request on your phone. We never hold guest keys.';
+        return;
+      }
+      copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
+    })
+    .catch(() => {});
 }
 function queueXrpPlace(id) {
-  const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
+  const item = modelItem(id);
   const name = item?.name || id;
   const note = overlay?.querySelector('#auraTradeshowNote');
   if (note) {
-    note.textContent = `Place held for ${name} · ${formatXrp(id) || 'XRP'} next. Play to win stays live.`;
+    note.textContent = `We’ll tell you when ${name} can be bought · ${formatXrp(id) || 'XRP'}. Nothing is reserved yet.`;
   }
   closeXrpTill();
 }
@@ -740,6 +771,7 @@ function appendCards(grid, items, stall) {
     card.className = 'aura-tradeshow-card';
     card.dataset.asset = item.asset;
     card.dataset.item = item.id;
+    card.dataset.name = item.name || item.id;
     card.dataset.mode = 'website';
     card.dataset.face = '0';
     VIEWS.forEach((view) => { card.dataset[view] = item.turnaround || view === 'front' ? '1' : '0'; });
@@ -772,6 +804,8 @@ function appendCards(grid, items, stall) {
       <p class="claim">${claimLine(item, info)}</p>
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
       ${shopBtn}`;
+    const pic = card.querySelector('img');
+    if (pic) pic.alt = item.name || '';
     grid.append(card);
   }
 }
@@ -785,14 +819,18 @@ function paint() {
   const vipEl = overlay.querySelector('#auraTradeshowVip');
   if (vip()) {
     const email = String(window.InstapicGuestIdentity?.read?.()?.email || '').split('@')[0];
-    vipEl.innerHTML = 'VIP · ' + (email || 'signed in');
+    vipEl.replaceChildren();
+    vipEl.textContent = 'VIP · ' + (email || 'signed in');
   } else {
-    vipEl.innerHTML = `<a href="${vipJoin()}">Join VIP</a> to mint and buy. Looking is open.`;
+    const a = document.createElement('a');
+    a.href = vipJoin();
+    a.textContent = 'Join VIP';
+    vipEl.replaceChildren(a, document.createTextNode(' to mint and buy. Looking is open.'));
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
     : folderIsLimited()
-      ? 'Aura Limited · optional 5 XRP books. Charms 2 XRP · alley and carnival 0.55555 XRP. One per wallet. You can collect the set without the book.'
+      ? limitedShelfNote()
       : 'Expand the Penny collector book for books and albums, then their items. Open stalls, Aura Limited, and Felix sit underneath.';
   overlay.querySelectorAll('.aura-tradeshow-tools [data-folder]').forEach((b) => {
     const id = b.dataset.folder;
@@ -856,7 +894,7 @@ function paint() {
       const info = stallDoor(row.stall);
       return {
         title: `${row.stall.host} · ${row.stall.title}`,
-        line: info.money ? 'Dollar till' : (info.mintable ? 'Open · mintable' : 'Coming'),
+        line: info.money ? 'Dollar till' : (info.mintable ? 'Open' : 'Coming'),
         items: row.items,
         stall: row.stall,
       };
@@ -890,16 +928,60 @@ function paint() {
   }
 }
 
+function limitedShelfNote() {
+  const g = stock.groups || {};
+  const xrp = (key) => String(g[key]?.xrp || '').trim();
+  const books = xrp('le-books') || '5';
+  const charms = xrp('le-charms') || '2';
+  const rest = xrp('le-alley') || xrp('le-carnival') || '0.55555';
+  return `Aura Limited · optional ${books} XRP books. Charms ${charms} XRP · alley and carnival ${rest} XRP. One per wallet. You can collect the set without the book.`;
+}
+function focusables(root) {
+  if (!root) return [];
+  return [...root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => el.offsetParent !== null && !el.closest('[hidden]'));
+}
+function tillOpen() {
+  const till = overlay?.querySelector('#auraXrpTill');
+  return !!(till && !till.hidden);
+}
+function onOverlayKey(e) {
+  if (!overlay || overlay.hidden) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    if (tillOpen()) closeXrpTill();
+    else closeTradeshow();
+    return;
+  }
+  if (e.key !== 'Tab') return;
+  const root = tillOpen() ? overlay.querySelector('.aura-xrp-till-card') : overlay;
+  const list = focusables(root);
+  if (!list.length) return;
+  const first = list[0];
+  const last = list[list.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  } else if (!root.contains(document.activeElement)) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 export function openTradeshow() {
   if (tradeshowBlocked()) return false;
   ensureOverlay();
   const world = window.PennyFeverWorld;
   resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
   if (resumeWorld) world.pause();
+  lastFocus = document.activeElement;
   document.body.classList.add('aura-tradeshow-open');
   overlay.hidden = false;
-  loadStock().then(paint);
-  Promise.all([loadStock(), loadPlates()]).then(paint);
+  Promise.all([loadMinted(), loadPlates()]).then(paint);
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
   return true;
@@ -907,13 +989,18 @@ export function openTradeshow() {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  const till = overlay.querySelector('#auraXrpTill');
+  if (till) till.hidden = true;
   overlay.hidden = true;
-  closeXrpTill();
   document.body.classList.remove('aura-tradeshow-open');
   if (resumeWorld && document.body.classList.contains('is-in-world')) {
     window.PennyFeverWorld?.resume();
   }
   resumeWorld = false;
+  if (lastFocus && typeof lastFocus.focus === 'function') {
+    try { lastFocus.focus(); } catch {}
+  }
+  lastFocus = null;
   if (!opts.stayInAlley && (location.hash || '').replace(/^#/, '') === HASH) location.hash = 'booth';
 }
 
@@ -922,6 +1009,7 @@ export function tradeshowSign() {
 }
 
 loadStock();
+loadMinted();
 loadPlates();
 window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus};
 
@@ -933,7 +1021,7 @@ try {
     const boot = () => {
       if (tradeshowBlocked()) return;
       if (!openTradeshow()) return;
-      if (buyId) loadStock().then(() => openXrpTill(buyId));
+      if (buyId) Promise.all([loadStock(), loadMinted()]).then(() => openXrpTill(buyId));
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 600));
     else setTimeout(boot, 600);

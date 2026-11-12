@@ -62,6 +62,20 @@
 @media (max-width:720px){
   .aura-tradeshow-main{flex-direction:column}
   .aura-tradeshow-tree{width:auto;flex:0 0 auto;max-height:28vh;border-right:0;border-bottom:1px solid rgba(244,228,194,.18)}
+  .aura-tradeshow-tools button,
+  .aura-tradeshow-play,
+  .aura-tradeshow-buy,
+  .aura-tradeshow-views button,
+  .aura-tradeshow-turn button,
+  .aura-tradeshow-tree-btn,
+  .aura-xrp-till-ready{
+    min-height:44px;
+    font-size:.72rem;
+    padding:.45rem .4rem;
+  }
+  .aura-tradeshow-tree-toggle{
+    min-width:44px;min-height:44px;flex-basis:44px;width:44px;height:44px;
+  }
 }
 .aura-tradeshow-stall{margin:0 0 .85rem}
 .aura-tradeshow-stall h2{margin:0 0 .1rem;font-size:.92rem}
