@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-11';
+const NFT_VER = 'nft-host-12';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -29,6 +29,7 @@ let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
 let lastFocus = null;
+let tillPoll = 0;
 let folder = 'book:penny-collector-book';
 let query = '';
 const openNodes = new Set(['book:penny-collector-book']);
@@ -289,23 +290,21 @@ function guestRef() {
     return '';
   }
 }
-function checkoutUrl(id) {
+function tillLink(id) {
   const origin = (location.origin && location.origin.startsWith('http')) ? location.origin : 'https://instapic.fun';
+  return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
+}
+function checkoutUrl(id) {
   const qs = new URLSearchParams({
     item: id,
-    amount: xrpPriceFor(id) || '',
-    edition: String(groupSpec(id).current_edition || 1),
     guest: guestRef(),
-    return: `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`,
+    return: tillLink(id),
   });
   return `${NFT_HOST}/api/penny-fever/xaman-checkout?${qs}`;
 }
-function buyPayload(id) {
-  return checkoutUrl(id);
-}
 function buyQrSrc(id) {
   try {
-    return qrDataUrl(buyPayload(id), 5, 8);
+    return qrDataUrl(tillLink(id), 5, 8);
   } catch {
     return '';
   }
@@ -549,10 +548,53 @@ function setCardView(card, mode) {
   }
   if (label) label.textContent = face;
 }
+function stopTillPoll() {
+  if (tillPoll) {
+    clearInterval(tillPoll);
+    tillPoll = 0;
+  }
+}
 function closeXrpTill() {
+  stopTillPoll();
   const till = overlay?.querySelector('#auraXrpTill');
   if (till) till.hidden = true;
   overlay?.querySelector('#auraTradeshowClose')?.focus();
+}
+function showTillQr(img, name, text) {
+  if (!img) return;
+  try {
+    img.src = qrDataUrl(text, 5, 8);
+    img.alt = `${name} · Xaman sign`;
+  } catch {
+    img.alt = `${name} · Xaman`;
+  }
+}
+function watchXamanPayload(till, uuid) {
+  stopTillPoll();
+  const copy = till.querySelector('#auraXrpTillCopy');
+  const tick = () => {
+    if (till.hidden) {
+      stopTillPoll();
+      return;
+    }
+    fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, {cache: 'no-store'})
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data) => {
+        if (till.hidden || !copy) return;
+        if (data?.status === 'signed') {
+          stopTillPoll();
+          copy.textContent = data.message || 'Signed. Mint is next. We never hold guest keys.';
+          return;
+        }
+        if (data?.status && data.status !== 'open') {
+          stopTillPoll();
+          copy.textContent = data.message || 'This sign request closed.';
+        }
+      })
+      .catch(() => {});
+  };
+  tillPoll = setInterval(tick, 2500);
+  tick();
 }
 function openXrpTill(id) {
   const act = shopAction(id);
@@ -563,34 +605,35 @@ function openXrpTill(id) {
   }
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till) return;
+  stopTillPoll();
   const item = modelItem(id);
   const name = item?.name || id;
   const img = till.querySelector('#auraXrpTillImg');
   const hold = till.querySelector('[data-xrp-hold]');
-  const qr = buyQrSrc(id);
-  if (img) {
-    img.src = qr || faceSrc(item || {asset: ''}, 'front');
-    img.alt = `${name} · Xaman checkout`;
-  }
+  const copy = till.querySelector('#auraXrpTillCopy');
+  showTillQr(img, name, tillLink(id));
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
-  till.querySelector('#auraXrpTillPrice').textContent = `${act.label}. Scan to open a Xaman sign request. We never hold guest keys.`;
-  const copy = till.querySelector('#auraXrpTillCopy');
-  if (copy) copy.textContent = 'MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.';
+  till.querySelector('#auraXrpTillPrice').textContent = `${act.label}. Scan in Xaman. We never hold guest keys.`;
+  if (copy) copy.textContent = 'Opening a Xaman sign request…';
   if (hold) hold.dataset.item = id;
   till.hidden = false;
   till.querySelector('[data-xrp-close]')?.focus();
   fetch(checkoutUrl(id), {cache: 'no-store'})
-    .then((res) => (res.ok ? res.json() : {}))
+    .then((res) => (res.ok ? res.json() : Promise.reject()))
     .then((data) => {
       if (till.hidden || !copy) return;
-      if (data?.payload) {
-        copy.textContent = 'Sign this Xaman request on your phone. We never hold guest keys.';
+      if (data?.deep_link) {
+        showTillQr(img, name, data.deep_link);
+        copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
+        if (data.payload) watchXamanPayload(till, data.payload);
         return;
       }
       copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
     })
-    .catch(() => {});
+    .catch(() => {
+      if (copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
+    });
 }
 function queueXrpPlace(id) {
   const item = modelItem(id);
@@ -989,6 +1032,7 @@ export function openTradeshow() {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  stopTillPoll();
   const till = overlay.querySelector('#auraXrpTill');
   if (till) till.hidden = true;
   overlay.hidden = true;

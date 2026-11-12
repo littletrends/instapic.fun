@@ -210,7 +210,7 @@
           "moon-penny": 1
         },
         "wallet": 1,
-        "label": "Felix’s photo book"
+        "label": "Felix\u2019s photo book"
       },
       "penny-collector-book": {
         "cost": {
@@ -224,7 +224,7 @@
       }
     }
   },
-  "aura_xrp_address": "",
+  "aura_xrp_address": "rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL",
   "hold_floor": 111,
   "hold_pct": 0,
   "groups": {
@@ -877,7 +877,7 @@
         "moon-penny": 1
       },
       "wallet": 1,
-      "label": "Felix’s photo book"
+      "label": "Felix\u2019s photo book"
     },
     "penny-collector-book": {
       "cost": {
