@@ -745,9 +745,7 @@ function initMazePlay(s) {
   s.maskFlash = 0;
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
   logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
-  s.note = s.practice
-    ? `Free practice · nothing kept. Eat ${maze.clearGoal}+ chips · power tokens let you chase the faces.`
-    : (s.eligible
+  s.note = (s.eligible
       ? `The keepsake is in the maze this time! Eat ${maze.clearGoal}+ chips · pick up the bonus key · keep away from the faces (a catch relocks it).`
       : `Eat ${maze.clearGoal}+ chips and keep away from the laughing faces.`);
 }
@@ -2343,21 +2341,7 @@ export default {
       }
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
-      if (s.practice) {
-        if (startRoom?.teachFinale) {
-          s.note = 'Free practice · nothing kept. LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teachEcho) {
-          s.note = 'Free practice · nothing kept. HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teachShrink) {
-          s.note = 'Free practice · nothing kept. MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
-        } else if (startRoom?.teachRotate) {
-          s.note = 'Free practice · nothing kept. MARK THE DOORS — then SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teach) {
-          s.note = 'Free practice · nothing kept. MIRROR LIES — SHUT THE PUNCHLINE.';
-        } else {
-          s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
-        }
-      } else if (startRoom?.teachFinale) {
+      if (startRoom?.teachFinale) {
         s.note = 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
       } else if (startRoom?.teachEcho) {
         s.note = 'HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
