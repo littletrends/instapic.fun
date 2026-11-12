@@ -23,12 +23,85 @@ import {kits as chapterKits} from '../prizes.js?v=prize-hud-1';
  */
 import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=prize-hud-1';
+import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=prize-sec-1';
+} from '../ride-seek.js?v=keep-finish-1';
 
 const RIDE = 'helter';
+const BOOK = 'pennyFever.helter';
+const HELTER_SNAP = [
+  'boarded', 'practice', 'broke', 'eligible', 'spawnId', 'hiddenResult', 'slot', 'preserved',
+  'treasureCollected', 'treasureRevealed', 'treasure', 'finds', 'collected',
+  'hits', 'cushionsBounced', 'slidesSurvived', 'tokensTaken', 'keepsakeTaken',
+  'youCell', 'lastCell', '_ballCleared', 'youX', 'youY', 'moving', 'moveT', 'moveDur',
+  'moveFrom', 'moveTo', '_moveAx', '_moveAy', '_moveBx', '_moveBy', '_moveArc', 'moveReason',
+  'previewing', 'previewT', 'launched', 'tappedOnce', 'jumpedOnce',
+  'matPulse', 'finishPulse', 'slideFlash', 'cushionFlash', 'statusCopy',
+  'challengeOkFlash', 'pendingLand',
+  'ballU', 'ballX', 'ballY', 'ballRolling', 'ballActive', 'ballWait',
+  't', 'progress', 'note', 'houseLeft', 'prizeKept', 'prizePosted',
+  'planTreasureCell', 'duration', 'frozenChapter', 'reduced',
+];
+function emptyBook() { return {v: 1, sittings: {}}; }
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
+}
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function cloneJson(v) {
+  try { return JSON.parse(JSON.stringify(v)); } catch { return v; }
+}
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.currentChapter = s.level;
+  if (s.result || s.broke) {
+    delete book.sittings[String(s.level)];
+    writeBook(book);
+    return;
+  }
+  if (!s.boarded) return;
+  const snap = {};
+  for (const key of HELTER_SNAP) if (s[key] !== undefined) snap[key] = s[key];
+  snap.slides = (s.slides || []).map((S) => ({cell: S.cell, used: !!S.used, boost: S.boost, teach: !!S.teach}));
+  snap.cushions = (s.cushions || []).map((C) => ({cell: C.cell, used: !!C.used, boost: C.boost, teach: !!C.teach}));
+  snap.tokens = (s.tokens || []).map((T) => ({cell: T.cell, id: T.id, taken: !!T.taken}));
+  book.sittings[String(s.level)] = cloneJson(snap);
+  writeBook(book);
+}
+function reviveSitting(s, saved) {
+  if (!saved || !saved.boarded) return false;
+  for (const key of HELTER_SNAP) if (saved[key] !== undefined) s[key] = cloneJson(saved[key]);
+  s.boarded = true;
+  if (Array.isArray(saved.slides)) {
+    for (const S of s.slides || []) {
+      const row = saved.slides.find((x) => x.cell === S.cell);
+      if (row) S.used = !!row.used;
+    }
+  }
+  if (Array.isArray(saved.cushions)) {
+    for (const C of s.cushions || []) {
+      const row = saved.cushions.find((x) => x.cell === C.cell);
+      if (row) C.used = !!row.used;
+    }
+  }
+  if (Array.isArray(saved.tokens)) {
+    for (const T of s.tokens || []) {
+      const row = saved.tokens.find((x) => x.cell === T.cell);
+      if (row) T.taken = !!row.taken;
+    }
+  }
+  return true;
+}
 const TREASURES = chapterKits['helter'].prizes;
 const LEVEL_NAMES = [
   'First Spiral',
@@ -431,26 +504,28 @@ function tryCollectToken(s, idx) {
 
 function tryCollectTreasure(s, idx) {
   if (!s.treasure || s.treasure.taken || s.treasure.cell !== idx) return;
-  // Collect whenever the ride is live (practice OR paid) — Lorie: claim on pass.
   if (s.result || s.broke) return;
-  if (s.eligible) {
-    recordTreasure(s, s.treasure.id);
-    logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
-    s.note = 'KEEPSAKE! Spiral tower secured.';
-    s.statusCopy = 'KEEPSAKE!';
-  } else {
-    s.note = 'KEEPSAKE! Practice glimpse — paid rides can keep it.';
-    s.statusCopy = 'KEEPSAKE!';
-    logAction(s, 'treasure-practice', {cell: idx});
-  }
+  // Carry only. The book slot stays Locked until crest + keepsake.
   s.treasure.taken = true;
   s.treasureRevealed = true;
   s.keepsakeTaken = true;
+  logAction(s, 'treasure-carry', {cell: idx, id: s.treasure.id});
+  s.note = 'Keepsake in hand — reach the crest to keep it. A ball dump puts it back.';
+  s.statusCopy = 'CARRY';
   const c = cellAt(s, idx);
   pushSparks(s, c.x, c.y, false);
   s.matPulse = 1.0;
-  s.ladderFlash = 0.9; // reuse cream flash as claim pop
-  pushFx(s, {kind: 'label', x: c.x, y: c.y - 50, text: 'KEEPSAKE!', life: 1.2, soft: false});
+  s.ladderFlash = 0.9;
+  pushFx(s, {kind: 'label', x: c.x, y: c.y - 50, text: 'CARRY!', life: 1.2, soft: false});
+}
+
+function dropKeepsake(s) {
+  if (!s.keepsakeTaken && !s.treasure?.taken) return false;
+  if (s.result || s.broke || s.prizeKept) return false;
+  s.keepsakeTaken = false;
+  s.treasureCollected = null;
+  if (s.treasure) s.treasure.taken = false;
+  return true;
 }
 
 /** Claim keepsake + tokens on every cell traversed from→to inclusive. */
@@ -479,7 +554,10 @@ function maybeBallKnock(s, opts) {
   // PIXEL meet only — cell-index false-fires across stacked spiral layers.
   if (!ballMeetsYou(s)) return false;
   logAction(s, 'ball-knock', {cell: idx, ballU: s.ballU, dist: s._ballDist});
-  s.note = 'BALL DUMP! Soft dump to the bottom — ride continues.';
+  const dropped = dropKeepsake(s);
+  s.note = dropped
+    ? 'BALL DUMP! Keepsake back on the coil — reach the crest to keep it.'
+    : 'BALL DUMP! Soft dump to the bottom — ride continues.';
   s.statusCopy = 'BALL DUMP';
   s.slideFlash = 1.1;
   s.matPulse = 0.85;
@@ -739,8 +817,9 @@ function maybeFinish(s, why) {
     s.matPulse = 0.55;
     s.statusCopy = ok ? 'Clear!' : 'Short';
     s.note = ok
-      ? (atTop ? 'Crest + keepsake — Practice clear!' : 'Crest + keepsake — spiral clear!')
-      : 'Need keepsake and crest (or 3 cushions). Ride returns.';
+      ? 'Crest with the keepsake — chapter bonus Collected.'
+      : 'Need the keepsake and the crest. Ride returns.';
+    if (ok) recordTreasure(s, s.treasureId);
     const c = cellAt(s, s.youCell | 0);
     pushSparks(s, c.x, c.y, !ok);
     finishRide(s, {
@@ -749,6 +828,7 @@ function maybeFinish(s, why) {
       challengeOk: ok,
       completionFind: 'star-token',
     });
+    persist(s);
   }
 }
 
@@ -921,13 +1001,15 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Climb the red coil to the crest and grab the chapter keepsake on the way. Chapter 1 is free; later chapters cost a penny. The bonus sits on this ride’s prize roll.',
-  instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Grab the keepsake AND reach the crest to clear the chapter.',
+  intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Chapter 1 is free; later chapters cost a penny.',
+  instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Carry the keepsake to the crest to collect it — a ball dump before the top puts it back.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
   houseSeconds: 100,
   actions: [],
+  persist,
+  selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().currentChapter) || 0)); },
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
     const plan = ch1Board(); // Ch2–6 frozen: same First Spiral board until Aura reopens
@@ -937,7 +1019,7 @@ export default {
     const tokens = plan.tokens.map((T) => ({...T, taken: false}));
     const start = cells[0];
     const crest = spiralPoint(1);
-    return makeRideState(level, rand, {
+    const s = makeRideState(level, rand, {
       hits: 0,
       cushionsBounced: 0,
       slidesSurvived: 0,
@@ -984,10 +1066,15 @@ export default {
       ballActive: true,
       ballWait: 0,
     });
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || null) : null;
+    if (reviveSitting(s, saved) && s.launched && !s.treasure) spawnTreasure(s);
+    return s;
   },
   update(s, dt, input) {
     tickFx(s, dt);
-    if (s.result || s.broke) return;
+    if (s.result || s.broke) { persist(s); return; }
+    s.saveClock = (s.saveClock || 0) + dt;
+    if (s.saveClock >= 1) { s.saveClock = 0; persist(s); }
 
     const spawnIds = (s.cells || []).map((_, i) => 'cell-' + i);
     if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-17', 'cell-9'])) {
@@ -1045,6 +1132,7 @@ export default {
         s.planTreasureCell = clamp(raw, prefer - 2, prefer + 2);
       }
       logAction(s, 'preview', {secs: PREVIEW_SECS});
+      persist(s);
     }
     if (s.result) return;
 
@@ -1059,6 +1147,7 @@ export default {
         s.statusCopy = 'Climbing';
         logAction(s, 'release', {});
         spawnTreasure(s);
+        persist(s);
       }
       return;
     }
@@ -1228,7 +1317,7 @@ export default {
         } catch {
           d.star(tc.x, tc.y, 10, CREAM);
         }
-        d.text('Unlocked', tc.x, tc.y - 22, 10, GOLD);
+        d.text('Locked', tc.x, tc.y - 22, 10, GOLD);
       }
     }
 
@@ -1259,6 +1348,14 @@ export default {
     d.ellipse(yx + 2, yy + 18, 22, 8, TRACK_SHADOW + '44');
     ensureSkipProps();
     const beaOk = placeDress(d, beaPlayerImg, yx, yy - 8, 56);
+    if (s.keepsakeTaken && s.treasure && !s.result) {
+      try {
+        const key = typeof spriteKey === 'function' ? spriteKey(s.treasure.id) : s.treasure.id;
+        d.item?.(key, yx + 18, yy - 28, {w: 26, alpha: 0.95});
+      } catch {
+        d.star(yx + 18, yy - 28, 10, GOLD);
+      }
+    }
     if (!beaOk) {
       d.circle(yx, yy, 14, YOU_FILL + 'ee', CREAM_DEEP, 2);
       d.text('YOU', yx, yy + 1, 11, BURGUNDY_DEEP);

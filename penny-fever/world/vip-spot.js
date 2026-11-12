@@ -550,8 +550,10 @@ export function mountVipSpot() {
     try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {}
     if (!signedIn()) door.setAttribute("href", vipJoinUrl());
   });
-  const hud = document.getElementById("pfVipHud");
-  hud?.addEventListener("click", (event) => {
+  // The alley creates its HUD after the first mount. Delegate so that new
+  // HUD nodes get the same VIP gate without mounting save listeners twice.
+  document.addEventListener("click", (event) => {
+    if (!event.target?.closest?.("#pfVipHud")) return;
     event.preventDefault();
     if (openPlayerChoice()) return;
     if (signedIn()) {

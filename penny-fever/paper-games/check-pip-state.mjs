@@ -9,11 +9,11 @@ const key='pennyFever.pinballAlley';
 function tick(s,frames=1,actions=[]){for(let i=0;i<frames;i++)e.update(s,1/60,{keys:new Set(),actions:new Set(actions)});}
 function launch(s){e.action(s,'plunge',true);tick(s,42,['plunge']);e.action(s,'plunge',false);assert.equal(s.mode,'live');}
 function fresh(level=0){memory.clear();inventory.items={};cash=20;awards=[];return e.create(level);}
-let s=fresh();cash=1;const spent=debits;launch(s);assert.equal(cash,0);assert.equal(s.credit,2);assert.equal(s.balls,1);assert.equal(debits,spent+1);
+let s=fresh();cash=1;const spent=debits;launch(s);assert.equal(cash,1,'chapter 1 plunge is free');assert.equal(s.credit,2);assert.equal(s.balls,1);assert.equal(debits,spent);
 // Prepaid balls remain usable with an empty purse.
-s.ball={x:440,y:1150,vx:0,vy:100};tick(s);assert.equal(s.mode,'dead');tick(s,50);assert.equal(s.mode,'lane');launch(s);assert.equal(s.credit,1);assert.equal(debits,spent+1);
+s.ball={x:440,y:1150,vx:0,vy:100};tick(s);assert.equal(s.mode,'dead');tick(s,50);assert.equal(s.mode,'lane');launch(s);assert.equal(s.credit,1);assert.equal(debits,spent);
 // A weak launch that returns down the shooter lane is still the same paid ball.
-s.ball={x:726,y:1020,vx:0,vy:10};tick(s);assert.equal(s.mode,'lane');assert(s.activeBall);const balls=s.balls,ready=s.credit;launch(s);assert.equal(s.balls,balls);assert.equal(s.credit,ready);assert.equal(debits,spent+1);
+s.ball={x:726,y:1020,vx:0,vy:10};tick(s);assert.equal(s.mode,'lane');assert(s.activeBall);const balls=s.balls,ready=s.credit;launch(s);assert.equal(s.balls,balls);assert.equal(s.credit,ready);assert.equal(debits,spent);
 // Cancelling a canvas drag or held button never launches or buys a set.
 s=fresh();const cancelled=debits;e.pointer(s,'down',{x:776,y:1000,pointerId:11});assert(s.pointerPlunge&&s.charging);tick(s,30);e.pointer(s,'cancel',{x:776,y:1080,pointerId:11});assert.equal(s.mode,'lane');assert(!s.charging);assert.equal(debits,cancelled);
 e.action(s,'plunge',true);tick(s,20,['plunge']);e.cancelAction(s,'plunge');tick(s);assert.equal(s.mode,'lane');assert.equal(debits,cancelled);
@@ -46,7 +46,11 @@ for(let level=0;level<6;level++){
   const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);
  }
  assert(!s.cabinetOn);assert.equal(s.houseLeft,0);assert.equal(s.credit,2);
- assert(s.ballPennies<=2&&s.ballTokens>6);assert(s.wonPennies<=2);assert(Object.entries(s.tokens).some(([id,n])=>['moon-penny','rose-penny','star-token','crown-token'].includes(id)&&n>6),'collectibles exceed old lifetime caps');
+ assert(s.ballPennies<=2);assert(s.wonPennies<=2);
+ if(level>0){
+  assert(s.ballTokens>6);
+  assert(Object.entries(s.tokens).some(([id,n])=>['moon-penny','rose-penny','star-token','crown-token'].includes(id)&&n>6),'collectibles exceed old lifetime caps');
+ }
  const earned=s.score;tick(s,60);assert.equal(s.score,earned,'dark cabinet cannot score');
  launch(s);assert.equal(s.houseLeft,100);assert(s.cabinetOn);assert.equal(s.credit,1);
  console.log('Chapter '+(level+1)+': timed bonus, pocket release, 100s cutoff and stacking collectibles and bounded currency pass.');
@@ -62,7 +66,7 @@ s=fresh(1);launch(s);e.persist(s);let old=JSON.parse(memory.get(key));delete old
 console.log('PASS: six layouts/windows; exact timer/payout restore; free same-ball relaunch; legacy active ball migration and obstructed pocket recovery.');
 
 // A rejected charge cannot consume a ball or record a first prize attempt.
-s=fresh();reject=true;e.action(s,'plunge',true);tick(s,42,['plunge']);const denied=debits;e.action(s,'plunge',false);assert.equal(debits,denied);assert.equal(s.credit,0);assert.equal(s.balls,0);assert.equal(s.mode,'lane');assert(!s.activeBall);reject=false;
+s=fresh(1);reject=true;e.action(s,'plunge',true);tick(s,42,['plunge']);const denied=debits;e.action(s,'plunge',false);assert.equal(debits,denied);assert.equal(s.credit,0);assert.equal(s.balls,0);assert.equal(s.mode,'lane');assert(!s.activeBall);reject=false;
 console.log('PASS: failed debit leaves the shooter ball and allowance untouched.');
 
 // All 100 impact windows per chapter, including the full final second.

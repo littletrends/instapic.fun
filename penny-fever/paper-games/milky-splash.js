@@ -1,7 +1,7 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
 import {DELIVERY_LAYOUTS} from './milky-deliveries.js?v=milk-delivery-1';
-import {firstPrizeEligible} from './first-prize.js?v=prize-sec-1';
-import {WIN_SECONDS} from './prize-seconds.js?v=prize-sec-1';
+import {firstPrizeEligible} from './first-prize.js?v=keep-finish-1';
+import {WIN_SECONDS} from './prize-seconds.js?v=keep-finish-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
 export const FLAVOURS = [

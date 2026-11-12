@@ -1,6 +1,6 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=prize-sec-1';
-import {WIN_SECONDS} from './prize-seconds.js?v=prize-sec-1';
+import {firstPrizeEligible} from './first-prize.js?v=keep-finish-1';
+import {WIN_SECONDS} from './prize-seconds.js?v=keep-finish-1';
 /** Isolated schoolyard reducer for Rosalie's tester. Not wired into rendering. */
 
 export function normalizeName(text) {

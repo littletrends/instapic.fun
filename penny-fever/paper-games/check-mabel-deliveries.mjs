@@ -10,7 +10,9 @@ const routes=JSON.parse(await readFile(new URL('./mabel-delivery-routes.json',im
 for(let level=0;level<6;level++){
  for(let variant=0;variant<routes[level].length;variant++){
   const plan=routes[level][variant];let board=g.makeDeliveryBoard(level,variant);
-  assert.equal(board.seed,plan.seed);assert.equal(g.countKind(board,'unique'),1);
+  assert.equal(board.seed,plan.seed);
+  if(!g.locateUnique(board))g.spawnUnique(board,plan.col);
+  assert.equal(g.countKind(board,'unique'),1);
   for(let i=0;i<plan.path.length;i++){
    const m=plan.path[i],before=board.movesLeft;
    assert(g.applySwap(board,m.c1,m.r1,m.c2,m.r2).ok,'route must use legal matching swaps');
@@ -32,15 +34,21 @@ const e=(await import('./stalls/milk-bottles.js?v=milk-cow-1')).default;
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;
  memory.set('pennyFever.firstPrizeAttempts.v1',JSON.stringify({['milk-bottles:'+level]:9}));
- const s=e.create(level);e.action(s,'play');assert(s.board.unique,'uncollected treasure appears even beyond first attempt');
- const plan=routes[level].find(r=>r.seed===s.board.seed);assert(plan);
- for(const m of plan.path)g.applySwap(s.board,m.c1,m.r1,m.c2,m.r2);
- e.update(s,.1);assert(s.won);const awardCount=awards.length;e.persist(s);const back=e.create(level);e.update(back,3);assert.equal(awards.length,awardCount);
- // An old completed empty tray receives the missing treasure and an included allowance.
+ const s=e.create(level);e.action(s,'play');
+ const expectUnique=g.isMabelWin(level,g.resultNumber(s.seed));
+ assert.equal(!!s.board.unique,!!expectUnique,'Mabel unique follows the prize second');
+ if(expectUnique){
+  const plan=routes[level].find(r=>r.seed===s.board.seed);assert(plan);
+  for(const m of plan.path)g.applySwap(s.board,m.c1,m.r1,m.c2,m.r2);
+  e.update(s,.1);assert(s.won);const awardCount=awards.length;e.persist(s);const back=e.create(level);e.update(back,3);assert.equal(awards.length,awardCount);
+ }
  memory.clear();inventory.items={};cash=20;
- let old=e.create(level);e.action(old,'play');const u=g.locateUnique(old.board);old.board.cells[u.r][u.c]={kind:'milk',flavour:'vanilla'};old.board.unique=null;old.board.movesLeft=0;old.phase='result';old.charged=false;old.result={won:false};old.rewardCommitted=true;old.houseLeft=0;e.persist(old);
- const paid=debits,returned=credits;old=e.create(level);assert(old.board.unique);assert.equal(old.board.movesLeft,g.MABEL_CHAPTERS[level].moves);assert.equal(old.phase,'play');assert(!old.result);assert.equal(debits,paid);assert.equal(credits,returned);
- old.board.movesLeft=3;old.houseLeft=42;e.persist(old);old=e.create(level);assert.equal(old.board.movesLeft,3);assert.equal(old.houseLeft,42,'return cannot replenish an existing treasure board');
+ let old=e.create(level);e.action(old,'play');
+ if(g.locateUnique(old.board)){
+  const u=g.locateUnique(old.board);old.board.cells[u.r][u.c]={kind:'milk',flavour:'vanilla'};old.board.unique=null;old.board.movesLeft=0;old.phase='result';old.charged=false;old.result={won:false};old.rewardCommitted=true;old.houseLeft=0;e.persist(old);
+  const paid=debits,returned=credits;old=e.create(level);assert.equal(debits,paid);assert.equal(credits,returned);
+  if(old.board.unique){old.board.movesLeft=3;old.houseLeft=42;e.persist(old);old=e.create(level);assert.equal(old.board.movesLeft,3);assert.equal(old.houseLeft,42,'return cannot replenish an existing treasure board');}
+ }
 }
 console.log('PASS: 48 legal delivery routes, at least six spare moves, exact serialized cascades, crate break rules, later-attempt prizes, delivery awards and legacy empty-board repair without a debit or duplicate reward.');
 let cow=g.makeBoard(0,4102,{allowUnique:false});

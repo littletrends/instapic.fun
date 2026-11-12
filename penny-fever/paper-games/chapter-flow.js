@@ -16,7 +16,7 @@ export function chapterOutcome(id, state, dismissed = false) {
       won: true, prize: null, handled: true};
   }
   if (id === 'pinball' && state.prizeKept && state.prizeJustWon) {
-    return {title: 'Bonus unlocked', detail: 'Your ball and unused plays are saved. Visit the next table or keep playing here.',
+    return {title: 'Bonus collected', detail: 'Your ball and unused plays are saved. Visit the next table or keep playing here.',
       won: true, prize: null, handled: true};
   }
   return null;

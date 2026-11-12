@@ -1,13 +1,13 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
-import {secondsNote} from '../prize-seconds.js?v=prize-sec-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
+import {secondsNote} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
   isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters, LOVE_WINS,
-} from '../love-arithmetic.js?v=prize-sec-1';
+} from '../love-arithmetic.js?v=keep-finish-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -363,7 +363,7 @@ function clearSitting(s, note) {
 /** Clarity pass: say what this sitting's ordinary drop was. */
 function keptNote(s) {
   if (!s.lastDrop) return '';
-  return s.lastDrop === 'everyday-penny' ? ' A penny went back into your purse.' : ' Kept: ' + itemName(s.lastDrop) + '.';
+  return s.lastDrop === 'everyday-penny' ? ' A penny went back into your purse.' : ' Collected: ' + itemName(s.lastDrop) + '.';
 }
 
 export default {
@@ -512,7 +512,7 @@ export default {
     if (s.phase === 'edit' || s.phase === 'wait') {
       d.text(ch.word, 450 + jx, 372, 42, '#c45a6a');
     }
-    // Chapter bonus badge — same Locked / Unlocked language as every tent.
+    // Chapter bonus badge — same Locked / Collected language as every tent.
     {
       const owned = chapterPaid(s.level) || s.won;
       const px = 640, py = 318;
@@ -520,7 +520,7 @@ export default {
       c.globalAlpha = owned ? 1 : 0.55;
       d.item(spriteKey(ch.prize), px, py, {w: 40, fallback: () => d.heart(px, py, 16, '#c45a6a')});
       c.restore();
-      d.text(owned ? 'Unlocked' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
+      d.text(owned ? 'Collected' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
     }
 
     const tubeX = 218, tubeY = 300, tubeH = 64;

@@ -5,10 +5,10 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=prize-sec-1';
+import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=keep-finish-1';
 import {noteVisit} from './insights.js?v=insights-1';
-import {entryFor, isChapterOne} from './stall-entry.js?v=prize-sec-1';
-import {secondsNote} from './prize-seconds.js?v=prize-sec-1';
+import {entryFor, isChapterOne} from './stall-entry.js?v=keep-finish-1';
+import {secondsNote} from './prize-seconds.js?v=keep-finish-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -54,7 +54,7 @@ function treasureLine(){
  const prize=chapterKeep();if(!prize)return '';
  const name=itemName(prize);
  if(prizeUnlocked(prize)){
-  return 'Chapter treasure: '+name+' — Unlocked. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
+  return 'Chapter treasure: '+name+' — Collected. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
  }
  return 'Chapter treasure: '+name+' — Locked until the prize second hits. One bonus per game chapter.';
 }
@@ -140,7 +140,7 @@ function showPrize(id){
  const key=spriteKey(id),art=draw?.art?.[key];
  img.hidden=false;
  img.src=art?art.toDataURL():frontUrl(key);
- if(cap){cap.hidden=false;cap.textContent='Unlocked: '+itemName(id);}
+ if(cap){cap.hidden=false;cap.textContent='Collected: '+itemName(id);}
 }
 function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();veilShownAt=performance.now();$('#veil').hidden=false;}
 function clearInput(){input.keys.clear();input.actions.clear();input.down=false;if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
@@ -237,9 +237,9 @@ function paintChapterPrize(){
  box.hidden=false;
  box.classList.toggle('is-unlocked',unlocked);
  box.classList.toggle('is-locked',!unlocked);
- box.title=name+' · '+(unlocked?'Unlocked':'Locked');
+ box.title=name+' · '+(unlocked?'Collected':'Locked');
  if(img){img.alt=name;img.src=frontUrl(spriteKey(id));}
- if(stamp)stamp.textContent=unlocked?'Unlocked':'Locked';
+ if(stamp)stamp.textContent=unlocked?'Collected':'Locked';
  tellRoom('bonus',{id:entry.id,item:id,name,unlocked,key:spriteKey(id)});
 }
 function handPrize(id,from){
@@ -371,7 +371,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=prize-sec-1')).default;
+ engine=(await import(entry.module+'?allocation=treasure-design-1&v=keep-finish-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;
@@ -385,7 +385,7 @@ try{
      ?'No practice ride here — every ride, including the free first one, can keep the bonus. The details: the same maze layout is used in every chapter; later chapters are tougher. Chips are the small dots; you need the shown number to clear. The bonus key sits mid-court — once you hold it, a catch puts it back (Locked) until you finish the chips. The two curtain doorways on the side edges are linked both ways. Glowing power tokens make the faces flash and let you chase them for a few seconds. When the house clock runs out the ride simply ends; nothing is lost.'
      :'Straight into eligible maze — no practice chapter. Mouse, touch and keyboard are listed above. Leaving or hiding this page pauses the room.';
    }else if(embedded){
-    note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. The first round of each chapter is included; extra rounds cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A ticket sits you down at this tent; the cost line above says what each go inside costs. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
+    note.textContent=entry.id==='coin-pusher'?'Three trays. Every drop is a real purse penny, including chapter 1. The bonus only hangs on a prize second, then push it over the lip. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. Chapter 1 is free; later plunges cost a penny. Tap the flippers. The bonus only drops on a winning bumper second. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. Chapter 1 is free; later trays cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. Chapter 1 is free; later chapters cost one penny from the purse. The bonus only sits on a prize roll.':'Chapter 1 is free to play until the prize second. Later chapters cost a penny a go. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
    }
   }
  }

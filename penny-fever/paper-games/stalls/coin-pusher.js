@@ -2,7 +2,7 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, keep, owned} from '../wallet.js?v=insights-1';
 
 import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive, packAll as pursePackAll } from "../cabinet-wallet.js?v=insights-1";
-import {clockNumber, isWinSecond, winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
+import {clockNumber, isWinSecond, winningSeconds} from '../prize-seconds.js?v=keep-finish-1';
 
 const BOOK = alleyPlay ? "pennyFever.copperFalls.v6" : "pennyFever.copperFalls.practice.v6";
 const TAU = Math.PI * 2;
@@ -280,7 +280,7 @@ function maybeReleaseTreasure(s) {
 
 function prizeStatus(s) {
   if(s.practice)return "Workshop practice · no charge or prizes";
-  if(s.tray.treasureOwned)return "Treasure already Unlocked";
+  if(s.tray.treasureOwned)return "Treasure already Collected";
   if(s.tray.treasureOn)return "Prize on tray — push it over the edge";
   if((s.tray.paidCount||0)<RELEASE_PENNIES)return "Drop a real penny while the clock is lit";
   return isWinSecond(s.level, clockNumber(s.clock||0)) ? "Clock is lit — drop now" : "Wait for the clock to light, then drop";
@@ -625,7 +625,7 @@ export default {
       c.globalAlpha = 1;
       d.text("Locked", 450, 312, 14, "#ead6a4");
     } else if (s.tray.treasureOwned) {
-      d.text("Unlocked", 450, 268, 16, "#c8e878");
+      d.text("Collected", 450, 268, 16, "#c8e878");
     }
     if (s.flash > 0) {
       c.fillStyle = `rgba(255, 220, 120, ${s.flash * 0.25})`;

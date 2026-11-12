@@ -339,7 +339,7 @@ function mount() {
     const ids = e.detail?.ids || [];
     const names = ids.map(id => model.definitions.find(d => d.id === id)?.name).filter(Boolean);
     if (!names.length) return;
-    notice.textContent = 'Kept in the treasure book: ' + names.join(' · ');
+    notice.textContent = 'Collected in the treasure book: ' + names.join(' · ');
     notice.hidden = false;
     clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { notice.hidden = true; }, 6500);
     if (e.detail?.celebrate !== false && ids[0]) celebrate(ids[0]);

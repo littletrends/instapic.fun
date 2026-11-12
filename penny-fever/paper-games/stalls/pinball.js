@@ -2,8 +2,8 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
-import {clockNumber} from '../prize-seconds.js?v=prize-sec-1';
+import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
+import {clockNumber} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 // Winning windows are whole elapsed seconds, including second 100.
@@ -94,7 +94,7 @@ function releaseInput(s){
  if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
 }
 function prizeStatus(s){
- if(!pickUnique(s))return 'Bonus Unlocked';
+ if(!pickUnique(s))return 'Bonus Collected';
  return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
@@ -674,7 +674,7 @@ export default {
     d.text(String(n), 86, 108, 18, '#fff6d8');
     d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 44, alpha:pickUnique(s)?1:.45, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
-    d.text(pickUnique(s)?'Locked':'Unlocked',792,132,12,'#f4e2a8');
+    d.text(pickUnique(s)?'Locked':'Collected',792,132,12,'#f4e2a8');
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
       const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64,startX=f.x*1.35-204;

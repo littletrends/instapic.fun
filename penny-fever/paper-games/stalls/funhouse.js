@@ -29,14 +29,71 @@
  * Source of truth: Lorie GREENLIGHT + addendum (tagline: Every door tells a different joke).
  */
 import {spriteKey} from '../prizes.js?v=prize-hud-1';
+import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=prize-sec-1';
+} from '../ride-seek.js?v=keep-finish-1';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
 } from './funhouse-rooms.js?v=juno-prize-1';
+
+const BOOK = 'pennyFever.funhouse';
+const FUNHOUSE_SNAP = [
+  'boarded', 'practice', 'broke', 'eligible', 'spawnId', 'hiddenResult', 'slot', 'preserved',
+  'treasureCollected', 'treasureRevealed', 'treasure', 'finds', 'collected',
+  'roomId', 'phase', 'phaseT', 'maze', 'player', 'faces',
+  'pelletsLeft', 'pelletsTaken', 'powerLeft', 'dir', 'wantDir',
+  'mazeCleared', 'starKeyTaken', 'houseLeft', 'houseSeconds',
+  'doorShut', 'portalCool', 'portalFx', 'bombFx', 'maskFlash', 'tagStun', 'facesGulped',
+  'cleared', 'goal', 't', 'progress', 'note', 'prizeKept', 'prizePosted', 'treasureWindow',
+  'holdBeat', 'pendingExit', 'reduced', 'cleared',
+];
+function emptyBook() { return {v: 1, sittings: {}}; }
+function readBook() {
+  if (typeof localStorage === 'undefined') return emptyBook();
+  try {
+    const blob = JSON.parse(localStorage.getItem(BOOK) || 'null');
+    if (blob && blob.v === 1) return {sittings: {}, ...blob};
+  } catch {}
+  return emptyBook();
+}
+function writeBook(book) {
+  if (!alleyPlay || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(BOOK, JSON.stringify(book)); } catch {}
+}
+function cloneJson(v) {
+  try { return JSON.parse(JSON.stringify(v)); } catch { return v; }
+}
+function mazeOk(maze) {
+  return !!(maze && Array.isArray(maze.grid) && Array.isArray(maze.pellets) && maze.start);
+}
+function persist(s) {
+  if (!alleyPlay || !s) return;
+  const book = readBook();
+  book.currentChapter = s.level;
+  if (s.result || s.broke) {
+    delete book.sittings[String(s.level)];
+    writeBook(book);
+    return;
+  }
+  if (!s.boarded || !mazeOk(s.maze)) return;
+  const snap = {};
+  for (const key of FUNHOUSE_SNAP) if (s[key] !== undefined) snap[key] = s[key];
+  book.sittings[String(s.level)] = cloneJson(snap);
+  writeBook(book);
+}
+function reviveSitting(s, saved) {
+  if (!saved || !saved.boarded || !mazeOk(saved.maze)) return false;
+  for (const key of FUNHOUSE_SNAP) if (saved[key] !== undefined) s[key] = cloneJson(saved[key]);
+  s.boarded = true;
+  s.practice = false;
+  s.heldDirs = {up: false, down: false, left: false, right: false};
+  s.stick = null;
+  s.swipe = null;
+  return true;
+}
 
 const GOLD = '#e8b84a';
 const CREAM = '#f3e2bd';
@@ -1010,7 +1067,7 @@ function awardBonusOnClear(s) {
   if (!s.mazeCleared || !s.starKeyTaken) return false;
   if (!s.treasure || s.treasure.taken) return false;
   if (!takeTreasure(s)) return false;
-  s.note = 'Screen clear! Chapter bonus Unlocked!';
+  s.note = 'Screen clear! Chapter bonus Collected!';
   return true;
 }
 
@@ -2242,7 +2299,7 @@ function updateDoorChapter(s, dt) {
 export default {
   title: 'Laughing Doorway',
   intro: 'Juno’s Laughing Maze. Eat the chips, grab the chapter bonus in the middle, and keep away from the laughing faces.',
-  instructions: 'Steer with the arrows, WASD, a swipe or the MOVE stick at the bottom. Pick up the bonus key in the middle, then eat enough chips to keep it. If a laughing face catches you, you go back to the entrance and an unkept bonus is Locked again — glowing power tokens let you chase the faces for a moment.',
+  instructions: 'Steer with the arrows, WASD, a swipe or the MOVE stick at the bottom. Pick up the bonus key in the middle, then eat enough chips to keep it. If a laughing face catches you, you go back to the entrance and an uncollected bonus is Locked again — glowing power tokens let you chase the faces for a moment.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -2251,6 +2308,8 @@ export default {
   houseDetail: 'Ordinary exit — the maze stays open for another go.',
   // Centre MOVE stick + keyboard/swipe — no arrow pads; no shell arrow dock; no curtain pads.
   actions: [],
+  persist,
+  selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().currentChapter) || 0)); },
   create(level, rng) {
     const graph = chapterGraph(level);
     const mazeMode = graph.mode === 'maze';
@@ -2258,7 +2317,7 @@ export default {
     const houseSecs = mazeMode
       ? (graph.houseSeconds || MAZE_HOUSE)
       : ((level === 1 || level === 2 || level === 3 || level === 4 || level === 5) ? 52 : 90);
-    return makeRideState(level, rng, {
+    const s = makeRideState(level, rng, {
       // Lorie 5f: no practice chapter — start non-practice so HUD never paints Practice pill pre-board.
       practice: false,
       graph,
@@ -2304,9 +2363,14 @@ export default {
       bombFx: 0,
       maskFlash: 0,
     });
+    const saved = alleyPlay ? (readBook().sittings[String(level)] || null) : null;
+    reviveSitting(s, saved);
+    return s;
   },
   update(s, dt) {
-    if (s.result || s.broke) return;
+    if (s.result || s.broke) { persist(s); return; }
+    s.saveClock = (s.saveClock || 0) + dt;
+    if (s.saveClock >= 1) { s.saveClock = 0; persist(s); }
     if (ensureBoarded(s, RIDE, s.treasureId, SPAWN_IDS)) {
       // Lorie 5f: ALWAYS force non-practice right after board (before initMazePlay / any paint).
       // Workshop boardRide used to set practice:true (!alleyPlay); do not rely on one-shot race.
@@ -2333,6 +2397,7 @@ export default {
         ensureBeaProps();
         s.practice = false; // belt: again immediately before maze paint path
         initMazePlay(s);
+        persist(s);
         return;
       }
       if (s.level === 1 || s.level === 2 || s.level === 3 || s.level === 4 || s.level === 5) {

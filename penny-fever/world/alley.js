@@ -36,8 +36,8 @@ import {installPapercutRides} from "./amusements/install.js?v=rides-step-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
-import {enterLabel} from "../paper-games/stall-entry.js?v=prize-sec-1";
-import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=prize-sec-1";
+import {enterLabel} from "../paper-games/stall-entry.js?v=keep-finish-1";
+import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=keep-finish-1";
 import {noteVisit} from "../paper-games/insights.js?v=insights-1";
 noteVisit("");
 
@@ -122,14 +122,14 @@ const VENDOR_TIPS = {
   ],
   lookup: [
     "Turning the glasses is free. Space or the FEED button sends a comet.",
-    "Your first comet each chapter is on me. Then a penny a comet.",
+    "Chapter 1 is free. Later chapters cost a penny a comet.",
     "Wake the stars, then strike the bell on a winning number. Misses still shed starlight.",
     "Lost the path? X for a hint, Z to undo a turn.",
   ],
   "coin-pusher": [
     "Space or a tap drops a penny. Watch the shelf, then drop.",
     "A penny a drop. Whatever tumbles over the lip comes back to your purse.",
-    "Your first paid penny each chapter lets the prize onto the tray. Push it over the edge to keep it.",
+    "Every drop is a real penny, even chapter 1. The bonus only hangs on a prize second — then push it over the lip.",
   ],
   pinball: [
     "Hold Space to pull the spring, let go to launch. Z and X work the bats.",
@@ -139,17 +139,17 @@ const VENDOR_TIPS = {
   ],
   "milk-bottles": [
     "Tap two neighbours to swap. Only a real match spends a move.",
-    "First round each chapter is on me. After that, a penny buys a full tray of moves.",
+    "Chapter 1 is free. Later chapters cost a penny for a full tray of moves.",
     "Walk the gold bottle down into the crate and the chapter treasure is yours.",
   ],
   helter: [
     "Right arrow taps you along, Space jumps the next cell. Cushions bounce you up.",
-    "Your first ride each chapter is free practice and keeps nothing. Then a penny a ride.",
-    "Grab the keepsake and reach the crest on a paid ride to keep it.",
+    "Chapter 1 is free. Later chapters cost a penny a ride.",
+    "Grab the keepsake and reach the crest to collect it.",
   ],
   funhouse: [
     "Arrows or the stick to walk. Space shuts the punchline door.",
-    "First go each chapter is free. After that, a penny a ride.",
+    "Chapter 1 is free. Later chapters cost a penny a ride.",
     "Pick up the key, then clear the chips to keep it. A laugh-face touch sends you back.",
   ],
 };

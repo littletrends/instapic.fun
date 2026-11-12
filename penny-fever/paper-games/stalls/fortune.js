@@ -1,11 +1,11 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=prize-sec-1';
-import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=keep-finish-1';
+import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
   IRIS_WINS, clockNumber as irisClock,
-} from "../fortune-globe.js?v=prize-sec-1";
+} from "../fortune-globe.js?v=keep-finish-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -182,15 +182,15 @@ function finishGaze(s) {
   } else if (s.practice) {
     s.note = "All signs caught — but this was practice, so nothing is kept.";
   } else if (treasureOk) {
-    s.note = "All signs caught on a winning number (" + n + ") — bonus Unlocked.";
+    s.note = "Bonus collected.";
   } else if (chapterOwned(s.level)) {
     s.note = s.ordinary
-      ? (s.ordinary === 'everyday-penny' ? 'A penny back to the purse. ' : 'Token kept. ') + "This chapter’s bonus is already Unlocked — it won’t drop twice."
-      : "This chapter’s bonus is already Unlocked — it won’t drop twice.";
+      ? (s.ordinary === 'everyday-penny' ? 'A penny back to the purse. ' : 'Token collected. ') + "Bonus already collected."
+      : "Bonus already collected.";
   } else if (s.ordinary === 'everyday-penny') {
-    s.note = "All signs caught. A penny returns to the purse. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked.";
+    s.note = "All signs caught. A penny returns to the purse. The glass read " + n + ", not this chapter’s prize second, so the bonus stays locked.";
   } else if (s.ordinary) {
-    s.note = "All signs caught — token kept. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked.";
+    s.note = "All signs caught — token collected. The glass read " + n + ", not this chapter’s prize second, so the bonus stays locked.";
   } else {
     s.note = "All signs caught. The glass read " + n + ", not this chapter’s prize second, so the bonus stays Locked. Try again.";
   }
@@ -230,8 +230,8 @@ export default {
     const n = irisClock(s.clock || 0);
     return {n, total: 100, lit: isIrisWin(s.level, n)};
   },
-  intro: "Iris’s fortune globe. A sign flashes — remember it. Stop each spinning ring so its sign sits in the bright glow at the top. The clock lights on this chapter’s prize seconds — a clean catch while it is lit unlocks the bonus.",
-  instructions: "Tap the centre of the globe (or Space/Enter) to gaze. Remember the signs, then tap the globe again to stop each ring in the glow, outside ring first. The badge shows Locked until a catch unlocks this chapter’s bonus, then Unlocked.",
+  intro: "Iris’s fortune globe. A sign flashes — remember it. Stop each spinning ring so its sign sits in the bright glow at the top. The clock lights on this chapter’s prize seconds — a clean catch while it is lit collects the bonus.",
+  instructions: "Tap the centre of the globe (or Space/Enter) to gaze. Remember the signs, then tap the globe again to stop each ring in the glow, outside ring first. The badge shows Locked until a catch collects this chapter’s bonus, then Collected.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   prizes: IRIS_CHAPTERS.map(c => c.prize),
   images: {
@@ -264,7 +264,7 @@ export default {
     if (alleyPlay) book.pennies = pocket();
     const cash = s?.practice && s.phase !== "idle" ? "Practice" : (book.pennies + (book.pennies === 1 ? " penny" : " pennies"));
     const ch = IRIS_CHAPTERS[s?.level || 0];
-    const keep = chapterOwned(s?.level || 0) ? "Bonus Unlocked" : ("Ch " + ((s?.level || 0) + 1));
+    const keep = chapterOwned(s?.level || 0) ? "Bonus Collected" : ("Ch " + ((s?.level || 0) + 1));
     return { cash, keep: keep + " · " + ch.title };
   },
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
@@ -287,7 +287,7 @@ export default {
       won: !!saved.won || chapterOwned(level),
       hold: 0, click: 0,
       reduced: !!saved.reduced || reducedMotion(),
-      note: ({"Bonus collected.":"Bonus unlocked.","Already collected.":"Already unlocked."}[saved.note] || saved.note) || (resume ? "Stop the rings." : "Gaze when you are ready."),
+      note: String(saved.note || "").replace(/Unlocked/g, "Collected").replace(/unlocked/g, "collected") || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
     if ((s.phase === "flash" || s.phase === "spin") && !s.globe) s.globe = makeGlobe(level, s.seed);
     s.preview = makeGlobe(level, s.seed);
@@ -460,7 +460,7 @@ export default {
       d.glow(px, py, 70, s.won ? "#c8e878" : "#e8c878");
       d.sprite(prizeImg, px, py, { w: 118, h: 118 });
       c.restore();
-      const plabel = chapterOwned(s.level) || s.won ? "Unlocked" : "Locked";
+      const plabel = chapterOwned(s.level) || s.won ? "Collected" : "Locked";
       d.text(plabel, px, py + 78, 16, "#fff0c8");
     }
     if (s.practice && s.phase !== "idle") {

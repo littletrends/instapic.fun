@@ -4,8 +4,8 @@
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=insights-1';
-import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=prize-sec-1';
-import {WIN_COUNTS} from './prize-seconds.js?v=prize-sec-1';
+import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=keep-finish-1';
+import {WIN_COUNTS} from './prize-seconds.js?v=keep-finish-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 export const BOOK_KEY = 'pennyFever.rideSeek';
@@ -137,9 +137,10 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     };
   }
 
-  if (collected && alleyPlay) keep(art, stall || rideId, {celebrate: true});
-  if (collected) markSlotOwned(slot, art, s.attemptId);
-  if (collected) writeMissed(rideId, chapter, null);
+  const kept = !!(collected && challengeOk);
+  if (kept && alleyPlay) keep(art, stall || rideId, {celebrate: true});
+  if (kept) markSlotOwned(slot, art, s.attemptId);
+  if (kept) writeMissed(rideId, chapter, null);
   else if (revealed && eligible) {
     writeMissed(rideId, chapter, {
       eligible: true,
@@ -161,9 +162,9 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
   }
   if (!challengeOk && collected) {
     return {
-      settle, won: false, prize: art, chapterAdvances: false,
-      title: 'Keepsake found',
-      detail: 'The treasure is yours, but the ride challenge is not complete. Try the chapter again.',
+      settle, won: false, prize: false, chapterAdvances: false,
+      title: 'The ride returns',
+      detail: 'You had the keepsake, but the ride was not finished, so it is Locked again.',
     };
   }
   if (challengeOk && eligible && revealed && !collected) {
@@ -177,7 +178,7 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     return {
       settle, won: true, prize: ordinary || false, chapterAdvances: true,
       title: 'Ride complete',
-      detail: (ordinary ? 'Kept ' + ordinary.replace(/-/g, ' ') + '. ' : 'The ride finished. ')
+      detail: (ordinary ? 'Collected ' + ordinary.replace(/-/g, ' ') + '. ' : 'The ride finished. ')
         + (slotOwned(slot)
           ? 'This chapter’s treasure is already yours, so it no longer rides.'
           : 'The chapter treasure did not turn up on this ride — it can on a later paid ride.'),

@@ -1,6 +1,6 @@
 /** Live park doors from Penny Fever admin. Fallback: stall-entry under-construction list. */
 
-import {isClosed, isUnderConstruction} from './stall-entry.js?v=prize-sec-1';
+import {isClosed, isUnderConstruction} from './stall-entry.js?v=keep-finish-1';
 
 const FILE = new URL('../game-doors.json?t=' + Date.now(), import.meta.url);
 const NOTE_API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/tent-note';

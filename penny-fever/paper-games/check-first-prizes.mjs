@@ -4,10 +4,10 @@ let cash=40,debits=0,credits=0,reject=false,awards=[];const inventory={items:{}}
 globalThis.CustomEvent=class{constructor(type,init){this.type=type;this.detail=init?.detail;}};
 globalThis.window={location:{search:'?stall=milk-bottles&room=alley'},matchMedia:()=>({matches:false}),parent:{PennyFever:{getState:()=>({demoCoins:cash,paperInventory:inventory}),spendPennies:n=>{if(reject||cash<n)return false;cash-=n;debits++;return true;},addDemoCoins:n=>{credits+=n;cash+=n;return cash;},saveState(){}},PennyFeverInventoryModel:{recordPaperPrize:(s,p)=>{if(inventory.items[p.item])return [];inventory.items[p.item]={qty:1};awards.push(p.item);return [p.item];}},dispatchEvent(){},postMessage(){}}};
 const gates={"cabinet-puzzles": "curios", "milky-splash": "milk-bottles", "love-arithmetic": "love", "fortune-globe": "fortune"};
-const policy=await import('./first-prize.js?v=prize-sec-1');
-const entry=await import('./stall-entry.js?v=prize-sec-1');
+const policy=await import('./first-prize.js?v=keep-finish-1');
+const entry=await import('./stall-entry.js?v=keep-finish-1');
 for(const [file,id] of Object.entries(gates)){
- const core=await import('./'+file+'.js?v=prize-sec-1');
+ const core=await import('./'+file+'.js?v=keep-finish-1');
  const gate=Object.entries(core).find(([name])=>/^is.*Win$/.test(name))[1];
  for(let level=0;level<6;level++){
   memory.clear();cash=100;reject=false;
@@ -21,7 +21,7 @@ for(const [file,id] of Object.entries(gates)){
  }
 }
 console.log('PASS: 4 game prize gates × six chapters; prize second only, chapter 1 free, chapter 2–6 spend a penny.');
-const rides=await import('./ride-seek.js?v=prize-sec-1');
+const rides=await import('./ride-seek.js?v=keep-finish-1');
 for(const id of ['helter','funhouse']){
  memory.clear();cash=10;
  const ch1=rides.boardRide(id,0);assert(ch1.ok);assert.equal(ch1.practice,false);assert.equal(cash,10);
@@ -30,8 +30,8 @@ for(const id of ['helter','funhouse']){
  const miss=rides.sealAttempt({rng:()=>0.999,chapter:1,practice:false,rideId:id,spawnIds:['target']});assert.equal(miss.eligible,false);
 }
 console.log('PASS: rides chapter 1 free and live; chapter 2 paid; treasure follows eligibility, not a first-try gift.');
-const mabel=(await import('./stalls/milk-bottles.js?v=prize-sec-1')).default;
-const splash=await import('./milky-splash.js?v=prize-sec-1');
+const mabel=(await import('./stalls/milk-bottles.js?v=keep-finish-1')).default;
+const splash=await import('./milky-splash.js?v=keep-finish-1');
 for(let level=0;level<6;level++){
  memory.clear();cash=20;const s=mabel.create(level);mabel.action(s,'play');assert.equal(cash,level===0?20:19);
  const expectUnique=splash.isMabelWin(level,splash.resultNumber(s.seed));
@@ -47,15 +47,15 @@ for(let level=0;level<6;level++){
  }
 }
 console.log('PASS: all six Mabel first boards, exact return state, and uncharged legacy missing-prize recovery.');
-const lookup=await import('./stalls/lookup.js?v=prize-sec-1');
+const lookup=await import('./stalls/lookup.js?v=keep-finish-1');
 for(let level=0;level<6;level++){
  memory.clear();cash=20;
  const hits=Array.from({length:100},(_,i)=>lookup.isWinningNumber(level,i+1));
  assert(hits.some(v=>v));assert(hits.some(v=>!v));
 }
 console.log('PASS: telescope prize seconds stay mixed hits and misses on every chapter.');
-const iris=(await import('./stalls/fortune.js?v=prize-sec-1')).default;
-const {IRIS_CHAPTERS,IRIS_WINS}=await import('./fortune-globe.js?v=prize-sec-1');
+const iris=(await import('./stalls/fortune.js?v=keep-finish-1')).default;
+const {IRIS_CHAPTERS,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
@@ -69,7 +69,7 @@ for(let level=0;level<6;level++){
  iris.persist(s);const qty=awards.length;iris.create(level);assert.equal(awards.length,qty);
 }
 console.log('PASS: Iris awards the chapter bonus on a prize-second catch and keeps one copy.');
-const pinball=(await import('./stalls/pinball.js?v=prize-sec-1')).default;
+const pinball=(await import('./stalls/pinball.js?v=keep-finish-1')).default;
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
  const s=pinball.create(level);pinball.action(s,'plunge',true);s.charge=.8;pinball.action(s,'plunge',false);assert.equal(cash,level===0?20:19);
@@ -79,7 +79,7 @@ for(let level=0;level<6;level++){
  assert(awards.includes(pinball.prizes[level]),'first ball can release bonus on a winning-second impact');
 }
 console.log('PASS: pinball first paid ball has each chapter bonus available on a winning-second impact.');
-const {WIN_COUNTS, winningSeconds, isWinSecond, elapsedSecond, clockNumber}=await import('./prize-seconds.js?v=prize-sec-1');
+const {WIN_COUNTS, winningSeconds, isWinSecond, elapsedSecond, clockNumber}=await import('./prize-seconds.js?v=keep-finish-1');
 assert.deepEqual(WIN_COUNTS,[50,40,30,25,20,15]);
 assert.equal(winningSeconds(0).length,50);
 assert.equal(isWinSecond(0,1),true);
@@ -95,8 +95,8 @@ memory.clear();cash=10;
 assert(entry.takeAttempt('snap',0));assert.equal(cash,10);
 assert(entry.takeAttempt('snap',1));assert.equal(cash,9);
 console.log('PASS: Snap chapter 1 free, chapter 2 spends a penny.');
-const curios=(await import('./stalls/curios.js?v=prize-sec-1')).default;
-const {isCabinetWin}=await import('./cabinet-puzzles.js?v=prize-sec-1');
+const curios=(await import('./stalls/curios.js?v=keep-finish-1')).default;
+const {isCabinetWin}=await import('./cabinet-puzzles.js?v=keep-finish-1');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
  const s=curios.create(level);
@@ -122,3 +122,38 @@ const {kits}=await import('./prizes.js?v=nft-art-1');
 assert.equal(kits.helter.prizes.includes('star-token'),false);
 assert.equal(kits.helter.prizes.length,6);
 console.log('PASS: Helter chapter bonuses are real objects, not a drip.');
+if(typeof globalThis.Image==='undefined')globalThis.Image=class{constructor(){this.naturalWidth=1;this.naturalHeight=1;}};
+const helter=(await import('./stalls/helter.js?v=keep-finish-1')).default;
+memory.clear();inventory.items={};cash=10;awards=[];
+const tilly=helter.create(1);
+helter.update(tilly,1/60,{keys:new Set(),actions:new Set()});
+assert.equal(tilly.boarded,true);assert.equal(cash,9);
+tilly.youCell=6;tilly.youX=400;tilly.youY=700;tilly.tokensTaken=2;
+if(tilly.tokens?.[0])tilly.tokens[0].taken=true;
+tilly.launched=true;tilly.previewing=false;
+helter.persist(tilly);
+const tillyBack=helter.create(1);
+assert.equal(tillyBack.boarded,true);
+assert.equal(tillyBack.youCell,6);
+assert.equal(tillyBack.tokensTaken,2);
+assert.equal(!!tillyBack.tokens?.[0]?.taken,true);
+helter.update(tillyBack,1/60,{keys:new Set(),actions:new Set()});
+assert.equal(cash,9,'Tilly restore does not debit a second penny');
+assert.equal(tillyBack.youCell,6,'Tilly restore keeps the spiral cell');
+console.log('PASS: Tilly spiral sitting restores cell, tokens and boarding without a second charge.');
+const juno=(await import('./stalls/funhouse.js?v=keep-finish-1')).default;
+memory.clear();inventory.items={};cash=10;awards=[];
+const maze=juno.create(1);
+juno.update(maze,1/60);
+assert.equal(maze.boarded,true);assert(maze.maze);assert.equal(cash,9);
+maze.player.c=4;maze.player.r=7;maze.pelletsTaken=5;maze.starKeyTaken=true;
+juno.persist(maze);
+const mazeBack=juno.create(1);
+assert.equal(mazeBack.boarded,true);
+assert.equal(mazeBack.player.c,4);assert.equal(mazeBack.player.r,7);
+assert.equal(mazeBack.pelletsTaken,5);assert.equal(mazeBack.starKeyTaken,true);
+juno.update(mazeBack,1/60);
+assert.equal(cash,9,'Juno restore does not debit a second penny');
+assert.equal(mazeBack.player.c,4,'Juno restore keeps maze position');
+assert.equal(mazeBack.pelletsTaken,5);
+console.log('PASS: Juno maze sitting restores player, chips and key without a second charge.');

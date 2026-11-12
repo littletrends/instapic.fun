@@ -25,6 +25,7 @@ const LIMITED = new Set([
 
 let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', token_claims: {}};
 let minted = {};
+let mintedReady = false;
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -331,12 +332,20 @@ function loadStock() {
 }
 function loadMinted() {
   return fetch(`${NFT_HOST}/api/penny-fever/minted?v=${NFT_VER}`, {cache: 'no-store'})
-    .then((res) => (res.ok ? res.json() : {}))
-    .then((data) => {
-      const counts = data && typeof data === 'object' ? (data.counts || data) : {};
-      minted = counts && typeof counts === 'object' && !Array.isArray(counts) ? counts : {};
+    .then((res) => {
+      if (!res.ok) throw new Error('Supply unavailable');
+      return res.json();
     })
-    .catch(() => {});
+    .then((data) => {
+      const counts = data && typeof data === 'object' ? (data.counts || data) : null;
+      if (data?.ok === false || !counts || typeof counts !== 'object' || Array.isArray(counts)
+          || Object.values(counts).some((n) => !Number.isSafeInteger(n) || n < 0)) {
+        throw new Error('Supply unavailable');
+      }
+      minted = counts;
+      mintedReady = true;
+    })
+    .catch(() => { mintedReady = false; });
 }
 function nftPlateSrc(id) {
   return `${NFT_HOST}/api/penny-fever/nft-plate/${encodeURIComponent(id)}.webp?v=${NFT_VER}`;
@@ -369,6 +378,7 @@ function faceSrc(item, view) {
 }
 function formatStock(id) {
   if (!onShelf(id)) return 'Not on the shelf yet';
+  if (!mintedReady) return 'Supply unavailable · reopen to retry';
   const n = remainingFor(id);
   const left = n.toLocaleString('en-AU') + ' remaining';
   if (n <= 0) return left + ' · trade later';
@@ -543,6 +553,9 @@ function snapMint(item) {
   return {label: xrp ? `Claim and mint · ${xrp}` : 'Claim and mint', disabled: false, ready: true, snap: true};
 }
 function actionFor(item, stallInfo) {
+  if (onShelf(item.id) && !mintedReady) {
+    return {label: 'Supply unavailable · reopen to retry', disabled: true};
+  }
   if (isFelix(item)) {
     return snapMint(item) || {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true};
   }
@@ -1148,7 +1161,7 @@ export function openTradeshow() {
   lastFocus = document.activeElement;
   document.body.classList.add('aura-tradeshow-open');
   overlay.hidden = false;
-  Promise.all([loadMinted(), loadPlates(), loadSnap()]).then(paint);
+  Promise.all([loadStock(), loadMinted(), loadPlates(), loadSnap()]).then(paint);
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
   return true;

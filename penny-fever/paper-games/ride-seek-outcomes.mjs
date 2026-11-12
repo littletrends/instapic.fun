@@ -6,9 +6,9 @@ function eq(name, got, want) {
 }
 
 eq('ch1 percent', eligibilityPercent(0), 50);
-eq('ch2 percent', eligibilityPercent(1), 50);
-eq('ch3 percent', eligibilityPercent(2), 40);
-eq('ch6 percent', eligibilityPercent(5), 30);
+eq('ch2 percent', eligibilityPercent(1), 40);
+eq('ch3 percent', eligibilityPercent(2), 30);
+eq('ch6 percent', eligibilityPercent(5), 15);
 
 const practiceSeal = sealAttempt({rng: () => 0.01, chapter: 0, practice: true, treasureId: 'music-carousel', rideId: 'carousel', spawnIds: ['saddle']});
 if (practiceSeal.eligible) fail.push('practice must be ineligible');
@@ -29,7 +29,7 @@ const collected = settleArrival({practice: false, eligible: true, treasureCollec
 eq('treasure prize', collected.prize, 'music-carousel');
 
 const failedTreasure = settleArrival({practice: false, eligible: true, treasureCollected: 'music-carousel', collected: []}, {rideId: 'carousel', chapter: 0, treasureId: 'music-carousel', challengeOk: false});
-eq('failed challenge still settles treasure', {won: failedTreasure.won, prize: failedTreasure.prize}, {won: false, prize: 'music-carousel'});
+eq('unfinished ride drops the keepsake', {won: failedTreasure.won, prize: failedTreasure.prize}, {won: false, prize: false});
 
 if (fail.length) {
   console.error(fail.join('\n'));

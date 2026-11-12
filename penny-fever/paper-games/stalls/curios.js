@@ -2,10 +2,10 @@ import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=prize-hud-1';
 import {matteImage} from '../sprites.js?v=load-fix-1';
 import {alleyPlay, pocket, tickets, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=prize-sec-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
-import {CABINET_PRIZES, isCabinetWin} from '../cabinet-puzzles.js?v=prize-sec-1';
-import {elapsedSecond, winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
+import {CABINET_PRIZES, isCabinetWin} from '../cabinet-puzzles.js?v=keep-finish-1';
+import {elapsedSecond, winningSeconds} from '../prize-seconds.js?v=keep-finish-1';
 
 /** Digby — Digger's Vault claw. Rail at the top, pile on the floor, one-way stick. */
 const BOOK = 'pennyFever.capsuleCabinet.v5';
@@ -272,7 +272,7 @@ function awardCatch(s, cap) {
   s.caughtNow = !already;
   s.caughtAgain = already;
   if (already) {
-    s.note = 'The claw held the bonus, but this chapter’s bonus is already Unlocked — no second prize.';
+    s.note = 'The claw held the bonus, but this chapter’s bonus is already Collected — no second prize.';
     return true;
   }
   if (alleyPlay) {
@@ -558,12 +558,12 @@ export default {
       s.hold -= dt;
       if (s.hold <= 0) {
         if (s.caughtNow) {
-          done(s, 'Bonus unlocked',
+          done(s, 'Bonus collected',
             itemName(CABINET_PRIZES[s.level]) + ' is yours. Stay on this chapter or visit the next.',
             {prize: CABINET_PRIZES[s.level], won: true});
         } else if (s.caughtAgain) {
           done(s, 'Already unlocked',
-            s.note || 'The claw held the bonus, but this chapter’s bonus is already Unlocked — no second prize.',
+            s.note || 'The claw held the bonus, but this chapter’s bonus is already Collected — no second prize.',
             {won: true, prize: null});
         } else {
           done(s, 'Empty claws',
@@ -632,7 +632,7 @@ export default {
         w: PRIZE_SPOT.w,
         fallback: () => d.star(PRIZE_SPOT.x, PRIZE_SPOT.y, 22),
       });
-      d.text(collected ? 'Unlocked' : 'Locked', PRIZE_SPOT.x, PRIZE_SPOT.y + 50, 14, collected ? '#c8e878' : '#ead6a4');
+      d.text(collected ? 'Collected' : 'Locked', PRIZE_SPOT.x, PRIZE_SPOT.y + 50, 14, collected ? '#c8e878' : '#ead6a4');
       d.text(LEVELS[s.level], PRIZE_SPOT.x, PRIZE_SPOT.y + 70, 13, '#d2b98c');
     }
 

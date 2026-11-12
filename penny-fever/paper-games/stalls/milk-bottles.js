@@ -1,15 +1,15 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=prize-sec-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=keep-finish-1';
 import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-clean-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
-import {secondsNote} from '../prize-seconds.js?v=prize-sec-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
+import {secondsNote} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
   isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf, MABEL_WINS,
-} from '../milky-splash.js?v=prize-sec-1';
+} from '../milky-splash.js?v=keep-finish-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -97,7 +97,7 @@ function finishWin(s){
   takePrize(s,prize,cellCenter(s.board,u.c,u.r));
  }
  s.hold=win?1.8:0;
- s.note=(win?'The sealed bottle opens in Mabel’s crate.':'This treasure is already Unlocked — it won’t drop twice.')+tip;
+ s.note=(win?'The sealed bottle opens in Mabel’s crate.':'This treasure is already Collected — it won’t drop twice.')+tip;
  if(!win)done(s,'Delivery complete',s.note,{won:false,prize:null,settle:true});
  persist(s);
 }
@@ -227,7 +227,7 @@ export default {
     if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
     if(s.board?.delivered&&chapterPaid(level)&&s.phase==='play'){s.phase='result';s.won=true;s.charged=false;s.hold=0;}
     if(s.phase==='result'&&!s.result&&s.hold<=0){
-      done(s,s.won?'Bonus unlocked':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
+      done(s,s.won?'Bonus collected':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
     }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     if (s.won && s.chapterPrize) s.chapterPrize.field = false;
@@ -337,7 +337,7 @@ export default {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
     const moves = s.board ? s.board.movesLeft + ' moves' : 'idle';
-    const u = chapterPaid(s.level) ? 'chapter treasure already Unlocked' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'treasure delivered' : 'gold treasure on the board — match beneath it') : 'treasure appears when you play';
+    const u = chapterPaid(s.level) ? 'chapter treasure already Collected' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'treasure delivered' : 'gold treasure on the board — match beneath it') : 'treasure appears when you play';
     // Three short lines: purse and moves, treasure status, then what just happened.
     return purse + ' · ' + moves + '\n' + u[0].toUpperCase() + u.slice(1) + '\n' + (s.note || '');
   },

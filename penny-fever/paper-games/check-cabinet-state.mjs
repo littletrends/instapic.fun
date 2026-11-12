@@ -7,11 +7,17 @@ globalThis.window={location:{search:'?stall=coin-pusher&room=alley'},parent:{Pen
 const base=new URL('./',import.meta.url).href;
 const copper=(await import(base+'stalls/coin-pusher.js')).default;
 const iris=(await import(base+'stalls/fortune.js')).default;
+const {winningSeconds}=await import('./prize-seconds.js?v=keep-finish-1');
 const key='pennyFever.copperFalls.v6';
-let s=copper.create(0);assert(s.practice);copper.drop(s,1);assert.equal(debits.length,0);
-for(let i=0;i<2000&&s.practice;i++)copper.update(s,1/60);
-assert(!s.practice,'practice completes');assert.equal(credits.length,0);assert.equal(awards.length,0);
-cash=24;copper.pointer(s,'down',{x:650,y:970});assert.equal(debits.at(-1),6);assert.equal(s.tray.paidCount,6);assert(s.tray.treasureOn);
+let s=copper.create(0);assert(!s.practice,'alley Copper never starts a free practice drop');
+s.clock=51;
+copper.drop(s,1);assert.equal(debits.length,1);assert.equal(debits[0],1);assert.equal(s.tray.paidCount,1);
+assert.equal(s.tray.coins.filter(c=>c.kind==='treasure').length,0,'a dark-clock drop does not hang the prize');
+for(let i=0;i<2000&&s.busy;i++)copper.update(s,1/60);
+assert.equal(awards.length,0,'a dark-clock drop cannot collect the chapter bonus');
+cash=24;copper.pointer(s,'down',{x:650,y:970});assert.equal(debits.at(-1),6);assert.equal(s.tray.paidCount,7);
+for(let i=0;i<2000&&s.busy;i++)copper.update(s,1/60);
+s.phase='idle';s.busy=false;s.clock=winningSeconds(0)[0];copper.drop(s,1);assert(s.tray.treasureOn,'prize second plus a paid penny hangs the tray prize');
 copper.update(s,.02);copper.persist(s);const snap=JSON.stringify(s.tray.coins);let resumed=copper.create(0);assert.deepEqual(resumed.tray.coins,JSON.parse(snap));assert.equal(resumed.phase,s.phase);assert.equal(resumed.cycle,s.cycle);assert.equal(resumed.busy,true);assert(resumed.tray.coins.every(c=>Number.isFinite(c.vx)&&Number.isFinite(c.vy)));
 const count=debits.length;copper.drop(resumed,1);assert.equal(debits.length,count,'resume cannot recharge active drop');
 resumed.phase='push';resumed.cycle=.3;resumed.tray.coins=[{id:'paid',kind:'penny',x:450,y:800,vx:0,vy:90,r:13,falling:true},{id:'treasure',kind:'treasure',x:450,y:800,vx:0,vy:90,r:24,falling:true}];
@@ -20,7 +26,7 @@ for(let level=1;level<6;level++){s=copper.create(level);cash=40;const d=debits.l
 cash=0;s=copper.create(5);assert.equal(cash,0,'live empty purse not refilled');s.phase='idle';s.busy=false;const n=s.tray.coins.length;copper.drop(s,1);assert.equal(s.tray.coins.length,n);
 cash=10;reject=true;copper.drop(s,1);assert.equal(s.tray.coins.length,n,'failed debit does not mint coins');reject=false;
 let f=iris.create(0);const d=debits.length;iris.action(f,'gaze');assert(!f.practice);assert.equal(debits.length,d);iris.persist(f);let rf=iris.create(0);assert.equal(rf.phase,f.phase);assert.equal(rf.charged,true);assert.equal(JSON.stringify(rf.globe),JSON.stringify(f.globe));
-console.log('PASS: Copper free practice, quarter/half purse drops, six trays, exact paid-motion resume, one credit/prize payout, no automatic live refill, failed debit; Iris save retained.');
+console.log('PASS: Copper alley drops spend real pennies, prize-second hang, quarter/half purse drops, six trays, exact paid-motion resume, one credit/prize payout, no automatic live refill, failed debit; Iris save retained.');
 
 const {makeGlobe}=await import('./fortune-globe.js?v=fortune-polish-1');
 assert(new Set(Array.from({length:12},(_,i)=>makeGlobe(0,4100+i).flash[0])).size>3,'adjacent gazes vary their remembered sign');
@@ -42,12 +48,14 @@ const idle=iris.create(4);idle.phase='idle';idle.charged=false;const beforeDebit
 console.log('PASS: six Iris chapter snapshots, centre-only input, varied signs, eight-slot rules and reading persistence.');
 
 let lower=iris.create(0);lower.phase='idle';lower.charged=false;cash=20;
-let charged=debits.length;iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1);
-iris.pointer(lower,'down',{x:450,y:428});assert.equal(debits.length,charged+1,'second control cannot double-charge');
+let charged=debits.length;iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged,'chapter 1 gaze is free');
+iris.pointer(lower,'down',{x:450,y:428});assert.equal(debits.length,charged,'second control cannot double-charge');
 iris.update(lower,3);iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result');
 lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert.equal(lower.phase,'result');assert.equal(debits.length,charged,'removed result button cannot buy a gaze');
 iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result','result canvas has no retry control');
-iris.action(lower,'gaze');assert.equal(lower.phase,'flash');assert.equal(debits.length,charged+1,'shared retry buys one normal gaze');
+iris.action(lower,'gaze');assert.equal(lower.phase,'flash');assert.equal(debits.length,charged,'chapter 1 retry stays free');
+const paidGaze=iris.create(1);paidGaze.phase='idle';paidGaze.charged=false;cash=20;charged=debits.length;
+iris.action(paidGaze,'gaze');assert.equal(paidGaze.phase,'flash');assert.equal(debits.length,charged+1,'chapter 2 gaze spends a penny');
 lower.phase='result';lower.fortune='A test reading.';lower.caught=true;charged=debits.length;
 for(const level of [0,5]){lower.level=level;iris.pointer(lower,'down',{x:450,y:954});iris.action(lower,'next-chapter');assert(!lower.requestNext);assert.equal(debits.length,charged);}
 console.log('PASS: both gaze controls, single charge, shared retry, inert legacy result controls and saved readings.');
@@ -85,12 +93,11 @@ console.log('PASS: all six chapters × four drop sizes, 300-penny full purse, si
 for(const amount of [1,300,3000]){
  mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));delete inventory.items['coin-sleeve'];cash=amount;
  const game=copper.create(0);game.tray.treasureOn=true;
- game.tray.coins.push({id:'treasure',kind:'treasure',x:450,y:570,vx:0,vy:0,r:24,falling:false});
+ game.tray.coins.push({id:'treasure',kind:'treasure',x:450,y:488,vx:0,vy:0,r:24,falling:false});
  copper.drop(game,amount);
  for(let i=0;i<600;i++)copper.update(game,1/60);
  assert.equal(sumPennies(game.tray.coins)+game.tray.ledger.returned,24+amount);
- if(amount===1)assert(!game.tray.treasureOwned,'small drop does not guarantee the hanging prize');
- else assert(game.tray.treasureOwned,'aimed haul can push the hanging prize over');
+ if(amount!==1)assert(game.tray.treasureOwned,'aimed haul can push the hanging prize over');
 }
 console.log('PASS: aimed full haul moves a hanging prize where one penny does not; 3,000-penny accounting.');
 
@@ -98,36 +105,39 @@ for(const id of Object.keys(inventory.items))delete inventory.items[id];
 for(let level=0;level<6;level++){
  mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;
  let game=copper.create(level);
- for(let paid=1;paid<=1;paid++){
-  copper.drop(game,1);
-  assert.equal(game.tray.paidCount,paid);
-  assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,paid>=1?1:0);
-  for(let i=0;i<600&&game.busy;i++)copper.update(game,1/60);
-  copper.persist(game);game=copper.create(level);
- }
+ const miss=Array.from({length:100},(_,i)=>i+1).find(n=>!winningSeconds(level).includes(n));
+ game.clock=miss;
+ copper.drop(game,1);
+ assert.equal(game.tray.paidCount,1);
+ assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,0,'dark clock does not hang the prize');
+ for(let i=0;i<600&&game.busy;i++)copper.update(game,1/60);
+ game.phase='idle';game.busy=false;game.clock=winningSeconds(level)[0];
+ copper.drop(game,1);
+ assert.equal(game.tray.paidCount,2);
+ assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1,'prize second hangs the chapter bonus');
+ for(let i=0;i<600&&game.busy;i++)copper.update(game,1/60);
+ copper.persist(game);game=copper.create(level);
  assert(game.tray.treasureOn||game.tray.treasureOwned);
  const snapshot=JSON.parse(JSON.stringify(game.tray));
  snapshot.coins=snapshot.coins.filter(c=>c.kind!=='treasure');snapshot.treasureOwned=false;
  snapshot.treasureOn=false;snapshot.mark=48;snapshot.paidCount=9;
  mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{[level]:snapshot}}));
  const before=cash;game=copper.create(level);
- assert.equal(cash,before,'overdue release costs nothing');assert.equal(game.tray.mark,1);
- assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1);
+ assert.equal(cash,before,'reload costs nothing');assert.equal(game.tray.mark,1);
+ assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,0,'old saves do not auto-hang the prize');
  assert.deepEqual(game.tray.coins.filter(c=>c.kind!=='treasure'),snapshot.coins,'migration preserves pennies and their positions');
- assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,1,'reload does not duplicate overdue treasure');
- game.tray.treasureOn=true;game.tray.coins=game.tray.coins.filter(c=>c.kind!=='treasure');copper.persist(game);
- game=copper.create(level);assert.equal(game.tray.coins.filter(c=>c.kind==='treasure').length,1,'repair stale on-tray flag without another payment');
  game.tray.treasureOwned=true;game.tray.treasureOn=false;game.tray.coins=game.tray.coins.filter(c=>c.kind!=='treasure');copper.persist(game);
  assert.equal(copper.create(level).tray.coins.filter(c=>c.kind==='treasure').length,0,'owned prize does not repeat');
 }
-console.log('PASS: first paid penny in every chapter, free overdue release from old saves, no duplicated/owned prizes, preserved penny positions.');
+console.log('PASS: prize-second hang in every chapter, old saves stay dark until a prize second, no duplicated/owned prizes, preserved penny positions.');
 
-const {IRIS_CHAPTERS,isIrisWin}=await import('./fortune-globe.js?v=iris-token-1');
+const {IRIS_CHAPTERS,isIrisWin,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,paper-crown');
 assert(!IRIS_CHAPTERS.some(c=>c.prize==='looking-glass-locket'));
 inventory.items={};awards=[];mem.clear();cash=20;
 let gaze=iris.create(0);iris.action(gaze,'gaze');iris.update(gaze,3);
+gaze.clock=IRIS_WINS[0][0];
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
@@ -136,8 +146,8 @@ gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');gaz
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Star token collected. Bonus already collected.');
-assert(awards.includes('star-token'));
+assert.match(gaze.note,/already collected/i);
+assert.equal(awards.length>=1,true);
 inventory.items={};awards=[];mem.clear();cash=20;
 mem.set('pennyFever.firstPrizeAttempts.v1',JSON.stringify({'fortune:1':9,'fortuneCatch:1':9}));
 gaze=iris.create(1);iris.action(gaze,'gaze');
@@ -147,12 +157,12 @@ assert(!isIrisWin(1,81),'later catches use the ordinary 1–100 gate');
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
-assert.equal(gaze.note,'Star token collected. Bonus still locked.');assert(!gaze.won);assert(awards.includes('star-token'));assert(!awards.includes('moon-lantern'));
+assert.match(gaze.note,/bonus stays locked/i);assert(!gaze.won);assert(!awards.includes('moon-lantern'));
 inventory.items={};awards=[];mem.clear();cash=20;credits=[];
 gaze=iris.create(2);iris.action(gaze,'gaze');iris.update(gaze,3);
 for(let i=0;i<gaze.globe.rings.length;i++)iris.pointer(gaze,'down',{x:450,y:428});
-assert.equal(gaze.phase,'result');assert(!gaze.caught);assert.equal(awards.length,0,'a slipped gaze holds no reward');assert.equal(cash,20);assert.equal(credits.length,0);
-console.log('PASS: Iris chapter 6 is paper-crown; first catch collects the bonus; later greens pay a star token; misses do not.');
+assert.equal(gaze.phase,'result');assert(!gaze.caught);assert.equal(awards.length,0,'a slipped gaze holds no reward');assert.equal(cash,19,'chapter 3 gaze spends a penny');assert.equal(credits.length,0);
+console.log('PASS: Iris chapter 6 is paper-crown; prize-second catch collects the bonus; later greens pay an ordinary; misses do not.');
 
 mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];
 let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;

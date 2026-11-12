@@ -1,10 +1,10 @@
 import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from '../first-prize.js?v=prize-sec-1';
-import {winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
+import {firstPrizeEligible} from '../first-prize.js?v=keep-finish-1';
+import {winningSeconds} from '../prize-seconds.js?v=keep-finish-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
@@ -84,7 +84,7 @@ function chapterOwned(level) {
   const set = SETS[level] || SETS[0];
   return (alleyPlay && owned(set.prize)) || !!readSky(level).paid;
 }
-/** Fresh sitting: keep Unlocked, wipe glasses/stars/flight so Play again never sticks. */
+/** Fresh sitting: keep Collected, wipe glasses/stars/flight so Play again never sticks. */
 function clearSitting(s) {
   const c = CHAPTERS[s.chapter];
   s.phase = 'playing';
@@ -116,7 +116,7 @@ function clearSitting(s) {
   s.houseLeft = null;
   refresh(s);
   s.note = s.paid
-    ? itemName(s.prize) + ' stays Unlocked. Turn the glasses for another sky.'
+    ? itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.'
     : (alleyPlay
       ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then press FEED or Space/Enter to send a comet. After a miss, the last glass drifts — line it up again.'
       : 'Turn the glasses, then feed a practice penny along the path.');
@@ -385,11 +385,11 @@ function hydrate(level, saved) {
     s.turns = saved.turns || 0;
     s.hints = saved.hints || 0;
   }
-  // Wallet can show Unlocked even if an older save missed paid.
+  // Wallet can show Collected even if an older save missed paid.
   if (!s.paid && alleyPlay && owned(s.prize)) s.paid = true;
   const reopenFresh = !!s.paid && !saved.flying;
   if (reopenFresh) {
-    // Finished sky: keep Unlocked, clear the board so re-entry / Play again is playable.
+    // Finished sky: keep Collected, clear the board so re-entry / Play again is playable.
     s.keptLit = c.stars.map(() => false);
     s.bellLit = false;
     s.angles = c.initial.map(i => i * STEP);
@@ -418,7 +418,7 @@ function hydrate(level, saved) {
   if (s.phase === 'flying') {
     s.note = 'The comet is still travelling.';
   } else if (reopenFresh) {
-    s.note = itemName(s.prize) + ' stays Unlocked. Turn the glasses for another sky.';
+    s.note = itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.';
   } else if (s.paid) {
     s.note = itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.';
   } else if (alleyPlay) {
@@ -477,7 +477,7 @@ export default {
   },
   clockRuns(s) {
     // Freeze the house clock while a comet flies or the win settles — avoids
-    // a timeout veil stealing the Unlocked result mid-celebration.
+    // a timeout veil stealing the Collected result mid-celebration.
     return !!s && s.phase === 'playing' && !s.result;
   },
   onTimeout(s) {
@@ -648,7 +648,7 @@ export default {
         w: 64, shadow: false,
         fallback: () => d.star(800, 130, 22, '#e7c789'),
       });
-      d.text(got ? 'Unlocked' : 'Locked', 800, 182, 14, got ? '#c8e878' : '#ead6a4');
+      d.text(got ? 'Collected' : 'Locked', 800, 182, 14, got ? '#c8e878' : '#ead6a4');
     }
     const [sx, sy] = c.source;
     d.glow(sx, sy, s.phase === 'flying' ? 56 : 36, '#f0d18f');
