@@ -32,7 +32,7 @@ import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.j
 
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
 import {installWallBackdrops} from "./walls/install.js?v=wall-front-1";
-import {installPapercutRides} from "./amusements/install.js?v=rides-4view-1";
+import {installPapercutRides} from "./amusements/install.js?v=rides-angled-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";

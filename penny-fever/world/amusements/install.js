@@ -7,8 +7,14 @@ const NEAR=PAPERCUT_NEAR;
 const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
 const HOST_HEIGHT=1.7;
-const HOST_AISLE=2.28;
-const HOST_ALONG=-1.25;
+// Hosts stand out on the boards like the stall vendors (alley.js: side*1.68, z-.85, facing the foyer).
+const HOST_AISLE=1.68;
+const HOST_ALONG=-.85;
+// Lorie 12/11: rides come forward out of the back wall, slide a little toward
+// Aura's booth (-Z) away from the stall behind, and angle like the stalls.
+const RIDE_PULL=.64;
+const RIDE_NUDGE_Z=-1.0;
+const FACE_PULL=3.2; // same as alley.js FACE_PULL on the paper rail
 // Stalls are 3.5 tall. Rides dwarf them and sit further back (RIDE_X 3.82),
 // so side cards stay out of the aisle (1.62) and short of the wall (4.86).
 const RIDE_SCALE=2.35;
@@ -41,7 +47,7 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
  for(const [i,lot] of (lots||[]).entries()){
   if(lot.kind!=='ride')continue;
   const id=lot.id,d=AMUSEMENT_ART[id];if(!d)continue;
-  const x=lot.side*(RIDE_X||3.74),z=z0+i*step,yaw=amusementYaw(x),side=lot.side||Math.sign(x)||1;
+  const x=lot.side*((RIDE_X||3.74)-RIDE_PULL),z=z0+i*step+RIDE_NUDGE_Z,yaw=Math.atan2(-x,-FACE_PULL),side=lot.side||Math.sign(x)||1;
   const ride=new THREE.Group();ride.name=d.name+' · papercut';ride.position.set(x,0,z);ride.rotation.y=yaw;
   ride.userData={amusementId:id,kind:'ride'};root.add(ride);
   const host=new THREE.Group();host.name=d.host+' · attendant';
