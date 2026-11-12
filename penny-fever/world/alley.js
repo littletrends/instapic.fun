@@ -8,10 +8,10 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wall-front-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=wall-front-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-front-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=walls-fix-1";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=pf-clarity-1";
-import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=nft-host-11";
+import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=nft-host-12";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
@@ -31,8 +31,8 @@ import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.j
 })();
 
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
-import {installWallBackdrops} from "./walls/install.js?v=wall-back-1";
-import {installPapercutRides} from "./amusements/install.js?v=rides-even-1";
+import {installWallBackdrops} from "./walls/install.js?v=wall-step-1";
+import {installPapercutRides} from "./amusements/install.js?v=rides-step-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
@@ -178,8 +178,21 @@ const BRASS = 0xd4a45a;
 /* Straight sideshow alley: pier → palace door → stalls L/R → dead end.
  * Stalls sit off the walk, faces angled toward incoming walkers. Tap a door. */
 const STALL_X = paperRail ? 2.52 : 2.62;
-const STALL_STEP = paperRail ? 6.6 : 2.68;
+// Lorie 12/11: lots spread from 6.6 to 7.6 so stalls get room either side of the rides.
+const STALL_STEP = paperRail ? 7.6 : 2.68;
 const STALL_Z0 = paperRail ? 14 : 8;
+// Lorie 12/11: step the alley back after each ride — every lot past a ride moves
+// RIDE_AFTER_STEP further down, and the offsets add up ride by ride.
+const RIDE_AFTER_STEP = paperRail ? 3 : 0;
+function lotPositions(lots) {
+  const zs = [];
+  let z = STALL_Z0;
+  lots.forEach((lot, i) => {
+    if (i > 0) z += STALL_STEP + (lots[i - 1].kind === "ride" ? RIDE_AFTER_STEP : 0);
+    zs.push(z);
+  });
+  return zs;
+}
 const AISLE = 1.62;
 const WALK_X = AISLE;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
@@ -783,7 +796,7 @@ function makePier(group) {
 function makeHall(group, len) {
   const floorT = woodTex("#4a3424", "rgba(20,10,0,0.2)");
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(paperRail ? 11.2 : 8.6, len + 4),
+    new THREE.PlaneGeometry(paperRail ? 12 : 8.6, len + 4),
     makeMat(0x4a3424, { map: floorT, roughness: 0.78 })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -2120,7 +2133,8 @@ function buildWorld() {
   renderer.setClearColor(0x070b16, 1);
 
   const lots = midwayLots(STALLS.map((s) => s.id));
-  hallLen = STALL_Z0 + lots.length * STALL_STEP + 8;
+  const lotZ = lotPositions(lots);
+  hallLen = (lotZ.length ? lotZ[lotZ.length - 1] : STALL_Z0 - STALL_STEP) + STALL_STEP + 8;
   // Dome must enclose the last stall — radius 90 cut the aisle after Catoptromancy.
   const skyR = Math.max(180, hallLen + 48);
 
@@ -2152,7 +2166,7 @@ function buildWorld() {
     const lotI = lots.findIndex((l) => l.kind === "stall" && l.id === spec.id);
     const side = lotI >= 0 ? lots[lotI].side : (i % 2 === 0 ? -1 : 1);
     const x = side * STALL_X;
-    const z = STALL_Z0 + (lotI >= 0 ? lotI : i) * STALL_STEP;
+    const z = lotI >= 0 ? lotZ[lotI] : STALL_Z0 + i * STALL_STEP;
     const yaw = Math.atan2(-x, -FACE_PULL);
     const s = makeStall(spec, x, z, yaw);
     s.userData.side = side;
@@ -2246,9 +2260,9 @@ function buildWorld() {
     installIndividualVendors(stalls, scene);
     vendorCutouts = installVendorCutouts(barkers);
     stallCutouts = installStallCutouts(stalls);
-    papercutRides = installPapercutRides(scene, STALL_Z0, STALL_STEP, lots);
+    papercutRides = installPapercutRides(scene, STALL_Z0, STALL_STEP, lots, {lotZ});
     extendPaperAlley(scene, hallLen);
-    wallBackdrops = installWallBackdrops(scene, hallLen, {stallStart: STALL_Z0, stallStep: STALL_STEP, lots});
+    wallBackdrops = installWallBackdrops(scene, hallLen, {stallStart: STALL_Z0, stallStep: STALL_STEP, lots, lotZ});
     installTicketService(player, aura, window.PennyFever);
     curtain.visible = false;
     endSign.visible = false;

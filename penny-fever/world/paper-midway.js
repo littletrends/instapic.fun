@@ -5,7 +5,7 @@ import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,showPapercutView} from './amusements/cutouts.js?v=names-1';
 import {stallViewIndex} from './stall-cutouts.js?v=aura-front-1';
 import {mountTill, openTill, closeTill, tillPinned, bankLoan, paintBankLoan} from './ticket-till.js?v=bank-refresh-1';
-import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=nft-host-11';
+import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=nft-host-12';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -53,18 +53,18 @@ export function makePaperWalls(scene,len){
  const street=new THREE.Group();street.name='Layered paper sideshow street';scene.add(street);
  const unit=new THREE.BoxGeometry(1,1,1),batches=new Map();
  function card(mat,w,h,d,x,y,z){if(!batches.has(mat))batches.set(mat,[]);batches.get(mat).push({w,h,d,x,y,z});}
- // Rear backing only — behind the illustrated walls at x=±4.86. Front bay
- // cards used to hide those walls; that gap stays free for later 3D booths.
+ // Rear backing only — behind the illustrated walls at x=±5.4 (walls/catalogue WALL_RADIAL).
+ // Keep it past the walls or it hides them (it sat at 5.28 when the walls moved to 5.4).
  for(const side of [-1,1]){
-  card(mats.dark,.2,4.7,len+2,side*5.28,2.35,len/2);
-  card(mats.kraft,.16,.12,len+2,side*5.14,.12,len/2);
+  card(mats.dark,.2,4.7,len+2,side*5.9,2.35,len/2);
+  card(mats.kraft,.16,.12,len+2,side*5.76,.12,len/2);
  }
  // A paper boardwalk and narrow red borders tie the shopfronts together.
  card(mats.kraft,3.45,.018,len,0,.025,len/2);
  for(const side of [-1,1])card(mats.red,.09,.025,len,side*1.69,.041,len/2);
  for(let z=.6;z<len;z+=1.34)card(mats.dark,3.3,.008,.018,0,.038,z);
- card(mats.green,9.8,3.6,.18,0,1.8,len+1.6);
- for(let x=-4;x<=4;x+=.8)card(mats.kraft,.07,3.6,.08,x,1.8,len+1.47);
+ card(mats.green,12,3.6,.18,0,1.8,len+1.6);
+ for(let x=-4.8;x<=4.8;x+=.8)card(mats.kraft,.07,3.6,.08,x,1.8,len+1.47);
  const dummy=new THREE.Object3D();
  for(const [mat,parts] of batches){
   const mesh=new THREE.InstancedMesh(unit,mat,parts.length);
@@ -75,7 +75,7 @@ export function makePaperWalls(scene,len){
  // Illustrated stall walls replace the repeating printed murals.
 }
 export function extendPaperAlley(scene,len){if(!paperRail)return;
- for(let z=1;z<len;z+=6.6)for(const side of [-1,1]){box(scene,.11,3.9,.12,side*5.36,1.95,z,mats.kraft);box(scene,.16,.12,2.5,side*5.38,3.55,z+1.25,mats.red)}
+ for(let z=1;z<len;z+=6.6)for(const side of [-1,1]){box(scene,.11,3.9,.12,side*5.96,1.95,z,mats.kraft);box(scene,.16,.12,2.5,side*5.98,3.55,z+1.25,mats.red)}
  const sign=label('A PENNY · ANOTHER LAP',4.4,.65);sign.position.set(0,2.7,len+.32);sign.rotation.y=Math.PI;scene.add(sign);
 }
 let panel,playerRef,auraRef,apiRef,dismissed=false;

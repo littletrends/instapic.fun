@@ -1,6 +1,6 @@
 import {phoneArt} from '../phone-art.js';
 import * as THREE from '../lib/three.module.min.js';
-import {WALL_ART} from './catalogue.js?v=wall-back-1';
+import {WALL_ART} from './catalogue.js?v=wall-step-1';
 import {phoneLane} from '../phone-lane.js?v=keep-light-1';
 
 // Pre-cut transparent wall faces: elevation() below, baked offline (agent-notes/tools/cut-wall-views.py).

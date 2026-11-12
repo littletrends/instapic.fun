@@ -50,13 +50,13 @@ function rideZ(lots,i,z0,step){
  if(p<0||n>=lots.length)return z0+i*step;
  return z0+step*(p+(n-p)*(i-p)/(n-p));
 }
-export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}={}){
+export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace,lotZ=null}={}){
  const root=new THREE.Group();root.name='Papercut midway rides';scene.add(root);
  const figures=[];
  for(const [i,lot] of (lots||[]).entries()){
   if(lot.kind!=='ride')continue;
   const id=lot.id,d=AMUSEMENT_ART[id];if(!d)continue;
-  const x=lot.side*RIDE_CENTRE_X,z=rideZ(lots,i,z0,step),yaw=Math.atan2(-x,-FACE_PULL),side=lot.side||Math.sign(x)||1;
+  const x=lot.side*RIDE_CENTRE_X,z=lotZ?lotZ[i]:rideZ(lots,i,z0,step),yaw=Math.atan2(-x,-FACE_PULL),side=lot.side||Math.sign(x)||1;
   const ride=new THREE.Group();ride.name=d.name+' · papercut';ride.position.set(x,0,z);ride.rotation.y=yaw;
   ride.userData={amusementId:id,kind:'ride'};root.add(ride);
   const host=new THREE.Group();host.name=d.host+' · attendant';

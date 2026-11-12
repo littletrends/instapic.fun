@@ -1,7 +1,7 @@
 import * as THREE from '../lib/three.module.min.js';
-import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=wall-back-1';
-import {loadWallArt,disposeWallArt,prefetchWallArt,clearIdleWallArt} from './art.js?v=wall-back-1';
-import {buildWall,disposeWall} from './models.js?v=wall-back-1';
+import {wallPlacements,WALL_RADIAL} from './catalogue.js?v=wall-step-1';
+import {loadWallArt,disposeWallArt,prefetchWallArt,clearIdleWallArt} from './art.js?v=wall-step-1';
+import {buildWall,disposeWall} from './models.js?v=wall-step-1';
 import {phoneLane,WALL_NEAR,WALL_RESIDENT,PAPERCUT_INFLIGHT} from '../phone-lane.js?v=keep-light-1';
 // Warm the next few walls past load range (in the walking direction) while nothing nearer is loading.
 const WALL_AHEAD=phoneLane?8:14,WALL_AHEAD_COUNT=phoneLane?2:3;
@@ -12,9 +12,9 @@ const WALL_LOAD=WALL_NEAR+(phoneLane?8:12),WALL_KEEP=WALL_RESIDENT+(phoneLane?2:
 const BEHIND=2;
 
 // Scenery only: never changes player collision, booth entry, wallet or game state.
-export function installWallBackdrops(scene,len,{load=loadWallArt,prefetch=prefetchWallArt,stallStart=14,stallStep=6.6,lots=null}={}){
+export function installWallBackdrops(scene,len,{load=loadWallArt,prefetch=prefetchWallArt,stallStart=14,stallStep=6.6,lots=null,lotZ=null}={}){
  const root=new THREE.Group();root.name='Matching paper alley walls';scene.add(root);
- const sites=wallPlacements(len,{stallStart,stallStep,lots}).map(p=>({...p,model:null,loading:false,retryAt:0}));
+ const sites=wallPlacements(len,{stallStart,stallStep,lots,lotZ}).map(p=>({...p,model:null,loading:false,retryAt:0}));
  const wood=new THREE.MeshStandardMaterial({color:'#3c3326',roughness:1});
  const edge=new THREE.MeshStandardMaterial({color:'#a28350',roughness:1});
  const unit=new THREE.BoxGeometry(1,1,1);

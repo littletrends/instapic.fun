@@ -416,7 +416,7 @@ export const WALL_ART=Object.fromEntries(rows.map(d=>[d.id,d]));
 export const WALL_RADIAL=5.4;
 export const WALL_VIEWS=['front','back','left-three-quarter','right-three-quarter'];
 export function wallPlacements(len,{
- stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.1,foyerStart=1.2,lots=null
+ stallStart=14,stallStep=6.6,wallX=WALL_RADIAL,overlap=.1,foyerStart=1.2,lots=null,lotZ=null
 }={}){
  const stallIds=Object.values(VENDOR_DESIGNS).sort((a,b)=>a.index-b.index).map(d=>d.id);
  const sequence=lots||midwayLots(stallIds);
@@ -435,9 +435,15 @@ export function wallPlacements(len,{
   panel('foyer',1,stallStart-stallStep),
  ];
  sequence.forEach((lot,i)=>{
-  const z=stallStart+i*stallStep;
+  const z=lotZ?lotZ[i]:stallStart+i*stallStep;
   result.push(panel(lot.id,lot.side,z));
   result.push(panel(FILL,-lot.side,z));
+  // The alley steps back after a ride: fill the extra gap with a bay set a
+  // hair behind its neighbours (no z-fighting where they overlap).
+  const next=lotZ&&lotZ[i+1];
+  if(next&&next-z>stallStep+.01)for(const side of [-1,1]){
+   const fill=panel(FILL,side,(z+next)/2);fill.x=side*(wallX+.06);result.push(fill);
+  }
  });
  result.push({id:'end-curtain',key:'end-curtain',side:0,x:0,z:len+1.5,width:wallX*2.15,height:4.2,fit:'width',yaw:Math.PI});
  return result;
