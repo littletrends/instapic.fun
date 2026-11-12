@@ -968,7 +968,7 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Climb the red coil to the crest. Every chapter 1 ride is free; in later chapters your first ride is free, then each ride costs a penny. Before each ride a roll (50% / 40% / 30% by chapter) decides whether the keepsake rides the coil — if you see it, grab it and reach the crest to keep it.',
+  intro: 'Tilly’s spiral slide. Climb the red coil to the crest. Every chapter 1 ride is free; chapters 2–6 cost a penny a ride. Before each ride a roll (50% / 40% / 30% by chapter) decides whether the keepsake rides the coil — if you see it, grab it and reach the crest to keep it.',
   instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Reach the crest to clear the chapter — and if the keepsake is on the coil, grab it on the way.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),

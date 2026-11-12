@@ -144,12 +144,12 @@ const VENDOR_TIPS = {
   ],
   helter: [
     "Right arrow taps you along, Space jumps the next cell. Cushions bounce you up.",
-    "Chapter 1 rides are always free. Later chapters: first ride free, then a penny a ride.",
+    "Chapter 1 rides are always free. Chapters 2–6 cost a penny a ride.",
     "Before each ride a roll decides if the keepsake rides the coil. If you see it, grab it and reach the crest to keep it.",
   ],
   funhouse: [
     "Eat the chips, grab the key, dodge the laughing faces.",
-    "Chapter 1 rides are always free. Later chapters: first go free, then a penny a ride.",
+    "Chapter 1 rides are always free. Chapters 2–6 cost a penny a ride.",
     "When the keepsake key is in the maze, pick it up and clear the chips to keep it. A laugh-face touch sends you back.",
   ],
 };
