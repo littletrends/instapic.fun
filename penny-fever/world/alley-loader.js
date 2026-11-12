@@ -12,7 +12,7 @@ function loadAlley() {
     link.href = phoneArt('assets/restyle/paper-entrance-cutout.webp');
     link.dataset.alleyArchPreload = ''; document.head.append(link);
   }
-  loading = import('./alley.js?v=alley-tweaks-8').catch(error => {
+  loading = import('./alley.js?v=alley-tweaks-9').catch(error => {
     loading = null;
     console.warn('Penny Fever alley could not load', error);
     if (needsAlley()) window.dispatchEvent(new Event('pf-world-error'));

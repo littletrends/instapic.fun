@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-13';
+const NFT_VER = 'nft-host-14';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -77,8 +77,7 @@ function loadSnap() {
   });
 }
 function vipJoin() {
-  const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + '#aura-tradeshow';
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -934,7 +933,7 @@ function paint() {
     const a = document.createElement('a');
     a.href = vipJoin();
     a.textContent = 'Join VIP';
-    vipEl.replaceChildren(a, document.createTextNode(' to mint and buy. Looking is open.'));
+    vipEl.replaceChildren(a, document.createTextNode(' to open Aura’s tradeshow.'));
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
@@ -1083,6 +1082,10 @@ function onOverlayKey(e) {
 
 export function openTradeshow() {
   if (tradeshowBlocked()) return false;
+  if (!vip()) {
+    location.assign(vipJoin());
+    return false;
+  }
   ensureOverlay();
   const world = window.PennyFeverWorld;
   resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
