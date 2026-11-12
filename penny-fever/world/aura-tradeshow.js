@@ -1,6 +1,6 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
-import {qrDataUrl} from './qrcode-generator.js?v=nft-host-3';
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-4';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -9,10 +9,17 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-3';
-const SITTINGS_BY_CAP = {1888: 4, 1555: 6, 1222: 8, 888: 10, 666: 14, 444: 16, 555: 8};
+const NFT_VER = 'nft-host-4';
+const XRP_BY_CAP = {
+  11111111: '0.0001',
+  2222222: '0.0022',
+  333333: '0.00333',
+  44444: '0.04444',
+  5555: '0.55555',
+  666: '6.66666',
+};
 
-let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 15, hold_pct: 0.1, aura_xrp_address: ''};
+let stock = {default_remaining: 0, items: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', xrp_by_ceiling: XRP_BY_CAP, one_per_wallet: true};
 let nftPlates = new Set();
 let overlay = null;
 let resumeWorld = false;
@@ -25,7 +32,7 @@ function vip() {
 }
 function vipJoin() {
   const hash = location.hash || '#alley';
-  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-3' + hash;
+  const path = '/penny-fever/index.html?style=paper&rail=paper&v=nft-host-4' + hash;
   return '/save.html?return=' + encodeURIComponent(path);
 }
 export function tradeshowStatus() {
@@ -56,8 +63,27 @@ function shopHolding(id) {
   const left = remainingFor(id);
   return left > 0 && left <= holdFloor(id);
 }
-function sittingsFor(id) {
-  return SITTINGS_BY_CAP[ceilingFor(id)] || 8;
+function xrpPriceFor(id) {
+  const cap = ceilingFor(id);
+  const fromStock = stock.xrp_by_ceiling?.[String(cap)] ?? stock.xrp_by_ceiling?.[cap];
+  if (fromStock != null && String(fromStock).trim()) return String(fromStock).trim();
+  return XRP_BY_CAP[cap] || '';
+}
+function formatXrp(id) {
+  const p = xrpPriceFor(id);
+  return p ? `${p} XRP` : '';
+}
+function walletOwns(id) {
+  if (stock.one_per_wallet === false) return false;
+  try {
+    const row = window.PennyFever?.getState?.()?.paperInventory?.items?.[id];
+    if (!row) return false;
+    const qty = Number(row.qty);
+    if (Number.isFinite(qty)) return qty > 0;
+    return true;
+  } catch {
+    return false;
+  }
 }
 function loadStock() {
   return fetch(FILE.href, {cache: 'no-store'})
@@ -66,13 +92,16 @@ function loadStock() {
       const fallback = Number(data.default_remaining);
       const items = data.items && typeof data.items === 'object' ? data.items : {};
       const ceilings = data.ceilings && typeof data.ceilings === 'object' ? data.ceilings : items;
+      const xrp = data.xrp_by_ceiling && typeof data.xrp_by_ceiling === 'object' ? data.xrp_by_ceiling : XRP_BY_CAP;
       stock = {
         default_remaining: Number.isFinite(fallback) ? fallback : 0,
         items,
         ceilings,
-        hold_floor: Number.isFinite(Number(data.hold_floor)) ? Number(data.hold_floor) : 15,
-        hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0.1,
+        hold_floor: Number.isFinite(Number(data.hold_floor)) ? Number(data.hold_floor) : 111,
+        hold_pct: Number.isFinite(Number(data.hold_pct)) ? Number(data.hold_pct) : 0,
         aura_xrp_address: String(data.aura_xrp_address || '').trim(),
+        xrp_by_ceiling: xrp,
+        one_per_wallet: data.one_per_wallet !== false,
       };
     })
     .catch(() => {});
@@ -266,13 +295,17 @@ function actionFor(item, stallInfo) {
   if (!vip()) {
     return {label: 'Join VIP to buy with XRP', disabled: true};
   }
+  if (walletOwns(item.id)) {
+    return {label: 'Already in your wallet', disabled: true};
+  }
   if (remainingFor(item.id) <= 0) {
     return {label: 'Aura’s pile is gone · trade later', disabled: true};
   }
   if (shopHolding(item.id)) {
     return {label: 'Last copies reserved for play', disabled: true};
   }
-  return {label: `Buy with XRP · ~${sittingsFor(item.id)} sittings`, disabled: false, ready: true};
+  const xrp = formatXrp(item.id);
+  return {label: xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)', disabled: false, ready: true};
 }
 function claimLine(item, stallInfo) {
   if (isFelix(item)) {
@@ -323,6 +356,11 @@ function closeXrpTill() {
   if (till) till.hidden = true;
 }
 function openXrpTill(id) {
+  if (walletOwns(id)) {
+    const note = overlay?.querySelector('#auraTradeshowNote');
+    if (note) note.textContent = 'Already in your wallet · one copy per guest.';
+    return;
+  }
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till) return;
   const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id);
@@ -336,9 +374,10 @@ function openXrpTill(id) {
   }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
+  const xrp = formatXrp(id);
   till.querySelector('#auraXrpTillPrice').textContent = auraWallet()
-    ? `Scan Aura’s wallet · about ${sittingsFor(id)} sittings in XRP.`
-    : `Scan to hold this piece · about ${sittingsFor(id)} sittings in XRP once the till is live.`;
+    ? `Scan Aura’s wallet · ${xrp || 'XRP'} · one copy per wallet.`
+    : `Scan to hold this piece · ${xrp || 'XRP'} once the till is live · one copy per wallet.`;
   if (hold) hold.dataset.item = id;
   till.hidden = false;
 }
@@ -347,7 +386,7 @@ function queueXrpPlace(id) {
   const name = item?.name || id;
   const note = overlay?.querySelector('#auraTradeshowNote');
   if (note) {
-    note.textContent = `Place held for ${name} · ~${sittingsFor(id)} sittings in XRP next. Play to win stays live.`;
+    note.textContent = `Place held for ${name} · ${formatXrp(id) || 'XRP'} next · one copy per wallet. Play to win stays live.`;
   }
   closeXrpTill();
 }
