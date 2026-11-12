@@ -227,7 +227,7 @@
   "aura_xrp_address": "rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL",
   "xrpl": {
     "issuer": "rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL",
-    "transfer_fee": 15890,
+    "transfer_fee": 1590,
     "taxons": {
       "play": 1,
       "limited": 555,
