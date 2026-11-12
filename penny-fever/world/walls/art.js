@@ -3,17 +3,6 @@ import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=names-1';
 import {phoneLane} from '../phone-lane.js?v=keep-light-1';
 
-// Pre-cut transparent wall faces (cream removed offline, trimmed to the wall).
-// One folder: <id>-front|left|right.webp (full size, desktop) and <id>-<view>-phone.webp (384px).
-// Missing files fall back to cutting the old four-view sheet in the browser.
-const CUTOUT_ROOT='assets/restyle/walls/cutouts/';
-const VIEW_FILE={'front':'front','left-three-quarter':'left','right-three-quarter':'right'};
-export function wallCutoutUrl(id,view){return CUTOUT_ROOT+id+'-'+VIEW_FILE[view]+(phoneLane?'-phone':'')+'.webp';}
-// Faces stay in memory after their wall model is retired, so walking back is instant.
-const KEEP_IDLE=phoneLane?6:12;
-const PREFETCH_MAX=phoneLane?1:2;
-const cache=new Map();let prefetching=0;
-
 function clearParchment(data,w,h){
  const n=w*h,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
  const bg=i=>{const p=i*4,r=data[p],g=data[p+1],b=data[p+2];
@@ -83,83 +72,24 @@ function elevation(image,column,row=0){
  texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;
  return {texture,aspect:out.width/out.height,profile};
 }
-function cutoutFace(image){
- const w=image.naturalWidth,h=image.naturalHeight;
- // Alpha is already baked in; only a small canvas is read for the wall's top outline.
- const pw=Math.min(256,w),ph=Math.max(1,Math.round(h*pw/w));
- const canvas=document.createElement('canvas');canvas.width=pw;canvas.height=ph;
- const c=canvas.getContext('2d',{willReadFrequently:true});c.drawImage(image,0,0,pw,ph);
- const profile=topProfile(c.getImageData(0,0,pw,ph).data,pw,ph,phoneLane?48:64);
- canvas.width=canvas.height=1;
- const texture=new THREE.Texture(image);texture.needsUpdate=true;texture.colorSpace=THREE.SRGBColorSpace;
- texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;
- return {texture,aspect:w/h,profile,cutout:true};
-}
-function aisleViewFor(side=0,angled=false){
+export async function loadWallArt(id,{signal,side=0,angled=false}={}){
+ const d=WALL_ART[id];if(!d)throw Error('Unknown wall '+id);
+ const image=await imageAt(phoneArt(d.source),signal);
+ await new Promise(resolve=>setTimeout(resolve,0));
+ if(signal?.aborted)throw Error('Wall load cancelled');
  // Alley uses the bottom-row three-quarter drawings: left wall → left view,
  // right wall → right view, so the near edge matches the side you are walking.
- const useAngle=angled&&side;
- return useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front';
-}
-async function makeFace(id,view){
- const d=WALL_ART[id];
- try{return cutoutFace(await imageAt(wallCutoutUrl(id,view)));}
- catch(error){console.info('[Penny Fever walls] no cut-out for',id,view,'- using sheet');}
- const image=await imageAt(phoneArt(d.source));
- await new Promise(resolve=>setTimeout(resolve,0));
  // Skip the reverse face — it is not visible from the aisle and doubled the flood-fill hitch.
- const col=view==='right-three-quarter'?1:0,row=view==='front'?0:1;
- return elevation(image,col,row);
+ const useAngle=angled&&side;
+ const aisleCol=useAngle?(side<0?0:1):0;
+ const aisleRow=useAngle?1:0;
+ const front=elevation(image,aisleCol,aisleRow);
+ return {front,aisleView:useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front'};
 }
-function disposeFace(face){
- face?.texture?.dispose();
- const img=face?.texture?.image;
- if(img instanceof HTMLCanvasElement){img.width=1;img.height=1;}
-}
-function trimCache(keep=KEEP_IDLE){
- const idle=[...cache.values()].filter(e=>e.users<=0&&e.face).sort((a,b)=>a.lastUsed-b.lastUsed);
- while(idle.length>keep){const e=idle.shift();cache.delete(e.key);disposeFace(e.face);}
-}
-function park(entry){if(entry.users<=0){entry.users=0;entry.lastUsed=performance.now();trimCache();}}
-function entryFor(id,view){
- const key=id+':'+view;let entry=cache.get(key);
- if(!entry){
-  entry={key,users:0,face:null,lastUsed:performance.now()};
-  entry.promise=makeFace(id,view).then(face=>{entry.face=face;return face;},error=>{cache.delete(key);throw error;});
-  cache.set(key,entry);
- }
- return entry;
-}
-function untilAbort(promise,signal){
- if(!signal)return promise;
- if(signal.aborted)return Promise.reject(Error('Wall load cancelled'));
- return new Promise((resolve,reject)=>{
-  const abort=()=>reject(Error('Wall load cancelled'));
-  signal.addEventListener('abort',abort,{once:true});
-  promise.then(v=>{signal.removeEventListener('abort',abort);resolve(v);},e=>{signal.removeEventListener('abort',abort);reject(e);});
- });
-}
-export async function loadWallArt(id,{signal,side=0,angled=false}={}){
- if(!WALL_ART[id])throw Error('Unknown wall '+id);
- const aisleView=aisleViewFor(side,angled);
- const entry=entryFor(id,aisleView);entry.users++;
- let face;
- // A cancelled wall keeps downloading into the cache, so it is ready if the player turns back.
- try{face=await untilAbort(entry.promise,signal);}
- catch(error){entry.users--;entry.promise.then(()=>park(entry),()=>{});throw error;}
- let released=false;
- return {front:face,aisleView,release(){if(released)return;released=true;entry.users--;park(entry);}};
-}
-// Low-priority warm-up for walls just beyond load range (download + decode only).
-export function prefetchWallArt(id,{side=0,angled=false}={}){
- if(!WALL_ART[id]||prefetching>=PREFETCH_MAX)return false;
- const key=id+':'+aisleViewFor(side,angled);if(cache.has(key))return false;
- const entry=entryFor(id,aisleViewFor(side,angled));prefetching++;
- entry.promise.then(()=>park(entry),()=>{}).finally(()=>{prefetching--;});
- return true;
-}
-export function clearIdleWallArt(){trimCache(0);}
 export function disposeWallArt(art){
- if(art?.release){art.release();return;}
- for(const face of Object.values(art||{}))if(face?.texture)disposeFace(face);
+ for(const face of Object.values(art||{}))if(face.texture){
+  face.texture.dispose();
+  // Canvas-backed image data is no longer needed after the model retires.
+  if(face.texture.image){face.texture.image.width=1;face.texture.image.height=1;}
+ }
 }
