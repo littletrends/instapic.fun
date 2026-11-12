@@ -4,11 +4,11 @@ import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=wall-cutouts-2";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=wall-front-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=alley-tweaks-2";
-import { installIndividualVendors } from "./paper-vendors.js?v=alley-tweaks-2";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-tweaks-2";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wall-front-1";
+import { installIndividualVendors } from "./paper-vendors.js?v=wall-front-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=aura-front-1";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=pf-clarity-1";
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=nft-host-11";
@@ -31,10 +31,10 @@ import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.j
 })();
 
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
-import {installWallBackdrops} from "./walls/install.js?v=wall-cutouts-2";
-import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
+import {installWallBackdrops} from "./walls/install.js?v=wall-front-1";
+import {installPapercutRides} from "./amusements/install.js?v=rides-4view-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=alley-tweaks-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
 import {enterLabel} from "../paper-games/stall-entry.js?v=insights-1";
 import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=map-doors-3";
@@ -3029,7 +3029,7 @@ function loop() {
   updateCrewGuest(player, camera, dt);
   updatePaperCrew(guests, camera);
   const eye = player;
-  if (paperRail) updateTicketBooth(eye);
+  if (paperRail) updateTicketBooth(eye, camera);
   if (paperRail && vendorCutouts) vendorCutouts.update(camera, player.position.z, eye);
   if (paperRail && stallCutouts) stallCutouts.update(camera, player.position.z, eye);
   if (paperRail && papercutRides) papercutRides.update(camera, player.position.z, eye);

@@ -1,6 +1,6 @@
 import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART,plannedSecrets} from './catalogue.js?v=names-1';
-import {disposeWallArt} from './art.js?v=wall-cutouts-2';
+import {disposeWallArt} from './art.js?v=wall-front-1';
 
 export function buildWall(id,art,{width=6.4,height=4.2,depth=.22,fit='contain'}={}){
  const d=WALL_ART[id];if(!d)throw Error('Unknown wall '+id);

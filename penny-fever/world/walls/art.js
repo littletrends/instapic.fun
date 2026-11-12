@@ -96,10 +96,9 @@ function cutoutFace(image){
  return {texture,aspect:w/h,profile,cutout:true};
 }
 function aisleViewFor(side=0,angled=false){
- // Alley uses the bottom-row three-quarter drawings: left wall → left view,
- // right wall → right view, so the near edge matches the side you are walking.
- const useAngle=angled&&side;
- return useAngle?(side<0?'left-three-quarter':'right-three-quarter'):'front';
+ // Lorie 12/11: every alley wall shows its flat front drawing, facing the path.
+ // (The three-quarter views read as angled; side/angled are kept for callers.)
+ return 'front';
 }
 async function makeFace(id,view){
  const d=WALL_ART[id];

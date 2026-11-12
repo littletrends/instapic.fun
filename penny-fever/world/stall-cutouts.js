@@ -12,7 +12,7 @@ const SIDE_NEAR=PAPERCUT_SIDES;
 // keeps the front art up while walking up, and only turns to the side once the
 // camera is truly alongside.
 const FRONT_HOLD=Math.PI*56/180,FRONT_BACK=Math.PI*46/180;
-function stallViewIndex(figure,eye){
+export function stallViewIndex(figure,eye){
  const p=eye&&(eye.position||eye);
  const bearing=Math.atan2((p?.x??0)-figure.position.x,(p?.z??0)-figure.position.z);
  const yaw=figure.rotation.y;

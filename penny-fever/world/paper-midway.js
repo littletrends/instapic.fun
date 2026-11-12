@@ -1,8 +1,9 @@
 import * as THREE from './lib/three.module.min.js';
-import {paperRail} from './paper-guest-entrance.js?v=wall-cutouts-2';
+import {paperRail} from './paper-guest-entrance.js?v=wall-front-1';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView} from './amusements/cutouts.js?v=names-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,showPapercutView} from './amusements/cutouts.js?v=names-1';
+import {stallViewIndex} from './stall-cutouts.js?v=aura-front-1';
 import {mountTill, openTill, closeTill, tillPinned, bankLoan, paintBankLoan} from './ticket-till.js?v=bank-refresh-1';
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=nft-host-11';
 // Ticket service just inside the alley, clear of the foyer passage.
@@ -16,7 +17,9 @@ let ticketBooth=null;
 export function makeVisibleTicketBooth(scene){
  if(!paperRail)return;
  const g=new THREE.Group();g.name='Aura ticket booth · papercut';
- g.position.set(COUNTER.x-.35,0,COUNTER.z-.15);g.rotation.y=Math.PI/2;scene.add(g);ticketBooth=g;
+ g.position.set(COUNTER.x-.35,0,COUNTER.z-.15);
+ // Angled toward walkers coming up the alley, the same way the stalls are (alley.js FACE_PULL 3.2 on the paper rail).
+ g.rotation.y=Math.atan2(-(COUNTER.x-.35),-3.2);scene.add(g);ticketBooth=g;
  const stub=new THREE.Group();stub.name='Ticket booth placeholder';
  box(stub,1.6,2.4,.7,0,1.2,0,mats.green);
  box(stub,1.7,.12,.78,0,2.42,0,mats.gold);
@@ -38,9 +41,11 @@ export function makeVisibleTicketBooth(scene){
  const warm=new THREE.PointLight(0xffddaa,1.7,5,2);warm.position.set(COUNTER.x,1.6,COUNTER.z-1);scene.add(warm);
  return g;
 }
-export function updateTicketBooth(eye){
- if(!ticketBooth?.userData.papercutViews||!eye)return;
- showPapercutView(ticketBooth, Number.isInteger(ticketBooth.userData.pinView)?ticketBooth.userData.pinView:papercutViewIndex(ticketBooth,eye));
+export function updateTicketBooth(eye,camera){
+ // Same as the stalls: face picked from the camera (what the guest sees), with front hysteresis.
+ const look=camera||eye;
+ if(!ticketBooth?.userData.papercutViews||!look)return;
+ showPapercutView(ticketBooth, Number.isInteger(ticketBooth.userData.pinView)?ticketBooth.userData.pinView:stallViewIndex(ticketBooth,look));
 }
 // Shallow scenery behind the stalls leaves the playable aisle clear.
 // Reuse box geometry and materials to keep the long street inexpensive to draw.

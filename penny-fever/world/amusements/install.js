@@ -19,6 +19,21 @@ const RIDE_SIDE_WIDTH=2.2;
 export function amusementYaw(x){return x>0?-Math.PI/2:Math.PI/2;}
 // Local +Z toward the foyer, so fronts greet a guest walking +Z down the alley.
 export const APPROACH_YAW=Math.PI;
+// Rides use their full four-view turnaround again (front, left, back, right), picked
+// from the camera as you pass. Hysteresis around the 45°/135° edges stops flicker.
+const RIDE_EDGE=Math.PI/4,RIDE_BACK=Math.PI*3/4,RIDE_HYST=Math.PI*8/180;
+function rideViewIndex(figure,eye){
+ const p=eye&&(eye.position||eye);
+ const bearing=Math.atan2((p?.x??0)-figure.position.x,(p?.z??0)-figure.position.z);
+ const yaw=figure.rotation.y;
+ const angle=Math.atan2(Math.sin(bearing-yaw),Math.cos(bearing-yaw)),a=Math.abs(angle);
+ const was=figure.userData.autoView;
+ const front=RIDE_EDGE+(was===0?RIDE_HYST:-RIDE_HYST);
+ const back=RIDE_BACK+(was===2?-RIDE_HYST:RIDE_HYST);
+ const view=a<front?0:a>back?2:angle>0?3:1;
+ figure.userData.autoView=view;
+ return view;
+}
 
 export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}={}){
  const root=new THREE.Group();root.name='Papercut midway rides';scene.add(root);
@@ -96,13 +111,13 @@ export function installPapercutRides(scene,z0,step,lots,{load=loadPapercutFace}=
  function update(camera,z,eye){
   if(camera)currentCam=camera;
   if(typeof z==='number')currentZ=z;else if(camera)currentZ=camera.position.z;
-  const look=eye||currentCam;
+  const look=currentCam||eye;
   if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    // Hosts face down the alley. Rides keep the aisle face — switching to
-    // left/right pointed the sheet down the walk and hid the stand.
-    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:0);
+    // Hosts keep facing down the alley; rides turn through their four views.
+    const pin=figure.userData.pinView;
+    showPapercutView(figure, Number.isInteger(pin)?pin:figure.userData.kind==='ride'?rideViewIndex(figure,look):0);
    }
   }
   if(dead||!active)return;
