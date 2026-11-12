@@ -1,5 +1,4 @@
 import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from '../first-prize.js?v=ch2-lock-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
@@ -34,7 +33,7 @@ export function contactFromLaunch(counterT, pathLength, speed) {
   return skyNumber(counterT + travel, speed);
 }
 export function isWinningNumber(level, n) {
-  if(firstPrizeEligible('lookup',level))return true;
+  // First-try-always-wins is Iris only (Lorie 13/11/2026); this booth uses its normal odds.
   const sky = SKY[level] || SKY[0];
   return sky.wins.includes(n);
 }

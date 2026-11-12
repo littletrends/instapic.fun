@@ -152,7 +152,8 @@ function finishGaze(s) {
   s.caught = hit;
   let treasureOk = false;
   if (hit && !s.practice && !chapterOwned(s.level)) {
-    recordPrizeAttempt("fortuneCatch", s.level);
+    // Only alley gazes use up Iris's guaranteed first win (workshop play must not).
+    if (alleyPlay) recordPrizeAttempt("fortuneCatch", s.level);
     treasureOk = isIrisWin(s.level, n);
   }
   s.ordinary = null;

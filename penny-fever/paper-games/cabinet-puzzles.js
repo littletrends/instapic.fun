@@ -1,5 +1,4 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
 /** Deterministic mysteries for The Cabinet That Lies. Each puzzle has one solution. */
 
 function rng(seed) {
@@ -49,7 +48,7 @@ export const CABINET_PRIZES = [
 CABINET_PRIZES.splice(0, CABINET_PRIZES.length, ...chapterKits.curios.prizes);
 
 export function isCabinetWin(level, n) {
-  if(firstPrizeEligible('curios',level))return true;
+  // First-try-always-wins is Iris only (Lorie 13/11/2026); this booth uses its normal odds.
   return (CABINET_WINS[level] || CABINET_WINS[0]).includes(n);
 }
 
