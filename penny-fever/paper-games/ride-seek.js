@@ -3,7 +3,7 @@
  */
 
 import {done} from './draw.js';
-import {alleyPlay, keep} from './wallet.js?v=insights-1';
+import {alleyPlay, keep, credit, owned} from './wallet.js?v=insights-1';
 import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ch2-lock-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
@@ -72,7 +72,8 @@ export function markSlotOwned(slot, artId, attemptId) {
 export function sealAttempt({rng, chapter, practice, treasureId, rideId, spawnIds}) {
   const slot = rideId != null ? treasureSlotId(rideId, chapter) : null;
   const missed = !practice && rideId != null ? readMissed(rideId, chapter) : null;
-  if (missed?.eligible && missed.spawnId && (spawnIds || []).includes(missed.spawnId) && !slotOwned(slot)) {
+  if (missed?.eligible && missed.spawnId && (spawnIds || []).includes(missed.spawnId) && !slotOwned(slot)
+    && !(alleyPlay && treasureId && owned(treasureId))) {
     return {
       hiddenResult: missed.hiddenResult,
       eligible: true,
@@ -82,7 +83,8 @@ export function sealAttempt({rng, chapter, practice, treasureId, rideId, spawnId
     };
   }
   const roll = Math.min(100, Math.max(1, Math.floor((rng?.() ?? Math.random()) * 100) + 1));
-  const alreadyOwned = slotOwned(slot);
+  // Already in the inventory (any source) also blocks a re-drop.
+  const alreadyOwned = slotOwned(slot) || (alleyPlay && !!treasureId && owned(treasureId));
   const eligible = !practice && !alreadyOwned && roll <= eligibilityPercent(chapter);
   const spawnId = eligible && spawnIds?.length
     ? spawnIds[Math.floor((rng?.() ?? Math.random()) * spawnIds.length)]
@@ -107,7 +109,7 @@ export function recordFind(s, id, stall) {
   s.collected.push({id, kind: 'ordinary', t: s.t});
   const chapter = s.level ?? s.chapter;
   if (!keepOrdinaryAllowed(id, chapter)) return true;
-  if (!s.practice && alleyPlay) keep(id, stall, {celebrate: false});
+  if (!s.practice && alleyPlay) payOrdinary(id, stall);
   return true;
 }
 
@@ -116,6 +118,13 @@ export function recordTreasure(s, id) {
   s.treasureCollected = id;
   s.treasureRevealed = true;
   return true;
+}
+
+/** Everyday pennies are spendable money: they go to the purse, not Treasures. */
+export function payOrdinary(id, stall) {
+  if (!id || !alleyPlay) return false;
+  if (id === 'everyday-penny') return credit(1) > 0;
+  return keep(id, stall, {celebrate: false});
 }
 
 export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeOk, completionFind}) {
@@ -137,10 +146,11 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     };
   }
 
+  // Only a real alley ride may fill the slot (a workshop collect must not block the alley prize).
   if (collected && alleyPlay) keep(art, stall || rideId, {celebrate: true});
-  if (collected) markSlotOwned(slot, art, s.attemptId);
-  if (collected) writeMissed(rideId, chapter, null);
-  else if (revealed && eligible) {
+  if (collected && alleyPlay) markSlotOwned(slot, art, s.attemptId);
+  if (collected && alleyPlay) writeMissed(rideId, chapter, null);
+  else if (revealed && eligible && alleyPlay) {
     writeMissed(rideId, chapter, {
       eligible: true,
       spawnId: s.spawnId,
@@ -150,7 +160,7 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
   }
 
   const ordinary = challengeOk && !collected ? (completionFind || 'everyday-penny') : null;
-  if (ordinary && alleyPlay && keepOrdinaryAllowed(ordinary, chapter)) keep(ordinary, stall || rideId, {celebrate: false});
+  if (ordinary && alleyPlay && keepOrdinaryAllowed(ordinary, chapter)) payOrdinary(ordinary, stall || rideId);
 
   if (challengeOk && collected) {
     return {
@@ -170,17 +180,17 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     return {
       settle, won: true, prize: ordinary || false, chapterAdvances: true,
       title: 'Treasure escaped',
-      detail: 'It can return on a later paid ride. An ordinary find is yours for finishing.',
+      detail: 'It can return on a later ride. An ordinary find is yours for finishing.',
     };
   }
   if (challengeOk) {
     return {
       settle, won: true, prize: ordinary || false, chapterAdvances: true,
       title: 'Ride complete',
-      detail: (ordinary ? 'Kept ' + ordinary.replace(/-/g, ' ') + '. ' : 'The ride finished. ')
+      detail: (ordinary === 'everyday-penny' ? 'A penny went into your purse. ' : ordinary ? 'Kept ' + ordinary.replace(/-/g, ' ') + '. ' : 'The ride finished. ')
         + (slotOwned(slot)
           ? 'This chapter’s treasure is already yours, so it no longer rides.'
-          : 'The chapter treasure did not turn up on this ride — it can on a later paid ride.'),
+          : 'The chapter keepsake was not on the track this time — it can be on a later ride.'),
     };
   }
   return {
@@ -251,7 +261,7 @@ export function drawHud(d, s, {goal, count, label}) {
   const lap = Math.min(1, (s.progress ?? 0));
   d.poly([[30, 18], [870, 18], [870, s.practice ? 168 : 138], [30, s.practice ? 168 : 138]], '#122335d8', '#d2a65b', 2);
   d.arc(78, 86, 32, -Math.PI / 2, -Math.PI / 2 + lap * Math.PI * 2, '#f0d09a', 7);
-  d.text(s.practice ? 'Practice' : 'Paid ride', 450, 62, 30, '#f0d09a');
+  d.text(s.practice ? 'Practice' : (s.eligible ? 'Keepsake ride' : 'Ride'), 450, 62, 30, '#f0d09a');
   d.text((count ?? 0) + ' / ' + goal + ' ' + (label || 'complete'), 450, 102, 26, '#fff6d8');
   if (s.practice) d.text('Practice — no items awarded', 450, 142, 22, '#e8d0a0');
   if (s.treasureCollected) d.text('Chapter treasure caught', 450, s.practice ? 176 : 142, 24, '#f4d590');

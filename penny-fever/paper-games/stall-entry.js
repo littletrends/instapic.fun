@@ -30,7 +30,7 @@ export const UNDER_CONSTRUCTION = [
 ];
 export const UNDER_CONSTRUCTION_LABEL = 'Under construction 🔒';
 
-/** All eight Ride & Seek attractions. Door is free; first attempt of each chapter is unpaid practice. */
+/** All eight Ride & Seek attractions. Door is free; chapter 1 rides are always free; later chapters: first ride free, then a penny. No practice rides. */
 export const RIDE_SEEKS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 
 const TICKET_SET = new Set(TICKET_TENTS);
