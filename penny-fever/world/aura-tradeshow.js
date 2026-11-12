@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-12';
+const NFT_VER = 'nft-host-13';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -572,6 +572,8 @@ function showTillQr(img, name, text) {
 function watchXamanPayload(till, uuid) {
   stopTillPoll();
   const copy = till.querySelector('#auraXrpTillCopy');
+  const img = till.querySelector('#auraXrpTillImg');
+  const name = till.querySelector('#auraXrpTillName')?.textContent || 'card';
   const tick = () => {
     if (till.hidden) {
       stopTillPoll();
@@ -581,9 +583,20 @@ function watchXamanPayload(till, uuid) {
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
         if (till.hidden || !copy) return;
-        if (data?.status === 'signed') {
+        const mint = data?.mint;
+        if (mint?.accept_deep_link && mint.status !== 'accepted') {
+          showTillQr(img, name, mint.accept_deep_link);
+          copy.textContent = mint.message || 'Signed. Scan again in Xaman to receive the card.';
+          return;
+        }
+        if (mint?.status === 'accepted') {
           stopTillPoll();
-          copy.textContent = data.message || 'Signed. Mint is next. We never hold guest keys.';
+          copy.textContent = mint.message || 'The card is in your wallet.';
+          loadMinted();
+          return;
+        }
+        if (data?.status === 'signed') {
+          copy.textContent = (mint && mint.message) || data.message || 'Signed. Minting your card…';
           return;
         }
         if (data?.status && data.status !== 'open') {
