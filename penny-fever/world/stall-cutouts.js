@@ -1,12 +1,27 @@
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {STALL_FRAMES} from './papercut-frames.js';
-import {loadFramedPng,buildPapercut,setPapercutFace,papercutViewIndex,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=names-1';
+import {loadFramedPng,buildPapercut,setPapercutFace,showPapercutView,disposePapercutStand} from './amusements/cutouts.js?v=names-1';
 import {PAPERCUT_NEAR,PAPERCUT_FAR,PAPERCUT_SIDES,PAPERCUT_INFLIGHT} from './phone-lane.js?v=keep-light-1';
 
 const ROOT='assets/restyle/scene-turnarounds-2026-09-09/stalls/';
 const NEAR=PAPERCUT_NEAR;
 const FAR=PAPERCUT_FAR;
 const SIDE_NEAR=PAPERCUT_SIDES;
+// Pick the stall face from the camera (what the guest actually sees), not the
+// paper doll, which walks several metres ahead of the camera. A little hysteresis
+// keeps the front art up while walking up, and only turns to the side once the
+// camera is truly alongside.
+const FRONT_HOLD=Math.PI*56/180,FRONT_BACK=Math.PI*46/180;
+function stallViewIndex(figure,eye){
+ const p=eye&&(eye.position||eye);
+ const bearing=Math.atan2((p?.x??0)-figure.position.x,(p?.z??0)-figure.position.z);
+ const yaw=figure.rotation.y;
+ const angle=Math.atan2(Math.sin(bearing-yaw),Math.cos(bearing-yaw)),a=Math.abs(angle);
+ const was=figure.userData.autoView??0;
+ const view=a<(was===0?FRONT_HOLD:FRONT_BACK)?0:a>Math.PI*3/4?2:angle>0?3:1;
+ figure.userData.autoView=view;
+ return view;
+}
 
 function optsFor(id){
  const tall=id==='high-striker';
@@ -96,11 +111,11 @@ export function installStallCutouts(stalls,{load=loadFramedPng}={}){
  function update(camera,z,eye){
   if(camera)currentCam=camera;
   if(typeof z==='number')currentZ=z;else if(camera)currentZ=camera.position.z;
-  const look=eye||currentCam;
+  const look=currentCam||eye;
   if(look){
    for(const figure of figures){
     if(!figure.userData.papercutViews)continue;
-    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:papercutViewIndex(figure,look));
+    showPapercutView(figure, Number.isInteger(figure.userData.pinView)?figure.userData.pinView:stallViewIndex(figure,look));
    }
   }
   if(dead||!active)return;

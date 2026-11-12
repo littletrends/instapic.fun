@@ -4,11 +4,11 @@ import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=phone-images-3";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=wall-cutouts-2";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=phone-images-3";
-import { installIndividualVendors } from "./paper-vendors.js?v=tent-depth-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=nft-host-11";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=alley-tweaks-2";
+import { installIndividualVendors } from "./paper-vendors.js?v=alley-tweaks-2";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=alley-tweaks-2";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=pf-clarity-1";
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=nft-host-11";
@@ -31,10 +31,10 @@ import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.j
 })();
 
 import {BAY_X, AMUSEMENT_ART, midwayLots} from "./amusements/catalogue.js?v=alley-lots-1";
-import {installWallBackdrops} from "./walls/install.js?v=phone-images-3";
+import {installWallBackdrops} from "./walls/install.js?v=wall-cutouts-2";
 import {installPapercutRides} from "./amusements/install.js?v=alley-lots-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
-import {installStallCutouts} from "./stall-cutouts.js?v=tent-depth-1";
+import {installStallCutouts} from "./stall-cutouts.js?v=alley-tweaks-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=ride-seek-2";
 import {enterLabel} from "../paper-games/stall-entry.js?v=insights-1";
 import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=map-doors-3";
@@ -184,6 +184,13 @@ const AISLE = 1.62;
 const WALK_X = AISLE;
 const FACE_PULL = paperRail ? 3.2 : 1.7;
 const DOOR_REACH = 2.6;
+/* Stall name chip while walking up: fades in this far ahead of the stall, holds,
+ * then fades out around where it used to first appear (≈2.2 ahead). */
+const CHIP_FROM = 6.2;
+const CHIP_FULL = 5.0;
+const CHIP_HOLD = 2.8;
+const CHIP_GONE = 1.6;
+let approachPlace = null;
 const COUNTER_X = 0.58;
 const COUNTER_Z = 1.18;
 const COUNTER_REACH = 1.92;
@@ -1892,14 +1899,24 @@ function hidePassChip() {
   if (chip) chip.hidden = true;
 }
 
-function showPassChip(place) {
+function showPassChip(place, opacity = 1) {
   const chip = el("pfPassChip");
   if (!chip || !place) return hidePassChip();
   const host = el("pfPassChipHost");
   const name = el("pfPassChipName");
   if (host) host.textContent = place.host || (place.kind === "aura" ? "Aura" : "");
   if (name) name.textContent = place.name || "";
+  chip.style.transition = "opacity 0.2s ease";
+  chip.style.opacity = String(opacity);
+  chip.style.pointerEvents = opacity < 0.35 ? "none" : "";
   chip.hidden = false;
+}
+
+function approachChipOpacity(ahead) {
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const fadeIn = clamp01((CHIP_FROM - ahead) / (CHIP_FROM - CHIP_FULL));
+  const fadeOut = clamp01((ahead - CHIP_GONE) / (CHIP_HOLD - CHIP_GONE));
+  return Math.min(fadeIn, fadeOut);
 }
 
 function openBoothCard(best) {
@@ -2541,7 +2558,14 @@ function inFrontOf(px, pz, x, z, side, reach = 4.4, band = 2.05) {
 function pickFocus(px, pz) {
   let passing = null;
   let passingZ = 99;
+  let approachAhead = CHIP_FROM;
+  approachPlace = null;
   function consider(place, dz) {
+    const ahead = place.z - pz;
+    if (ahead > CHIP_GONE && ahead < approachAhead) {
+      approachAhead = ahead;
+      approachPlace = place;
+    }
     if (dz > 2.8) return;
     const onThisSide = Math.sign(px || place.side) === place.side;
     if (passing && Math.abs(dz - passingZ) < 0.7) {
@@ -2693,9 +2717,18 @@ function findNearest() {
     hidePassChip();
     syncStallCard(nearest);
   } else {
-    nearest = passing && passingZ < 2.2 ? passing : null;
+    const walkingUp = paperRail && Math.abs(moveIntent.iy) > 0.2;
+    let chipOpacity = 1;
+    if (walkingUp) {
+      // Walking: show the chip as the stall comes up ahead, fade it once alongside.
+      nearest = approachPlace;
+      chipOpacity = approachPlace ? approachChipOpacity(approachPlace.z - pz) : 0;
+    } else {
+      // Stopped beside a stall: keep the old tap-to-enter chip.
+      nearest = passing && passingZ < 2.2 ? passing : null;
+    }
     if (stallCardOpen) closeStallCard();
-    if (lookCardKind(nearest)) showPassChip(nearest);
+    if (lookCardKind(nearest) && chipOpacity > 0.02) showPassChip(nearest, chipOpacity);
     else hidePassChip();
   }
   const rig = el("pfLookRig");
@@ -2817,13 +2850,20 @@ function updateHudAnchor() {
   const head = projectWorld(px, 2.08, pz);
   const feet = projectWorld(px, 0.06, pz);
 
-  const joy = el("pfJoy");
-  if (joy) {
-    joy.classList.remove("is-anchored");
-    joy.style.left = "";
-    joy.style.top = "";
-    joy.style.bottom = "";
-    joy.style.transform = "";
+  // Walk pad sits on the paper doll's lower back (below the face), and stays put
+  // while a thumb is on it so the drag maths keep a steady centre.
+  const joyEl = el("pfJoy");
+  if (joyEl && !joyEl.hidden && !joy.active) {
+    joyEl.classList.remove("is-anchored");
+    const r = (joyEl.offsetWidth || 148) / 2;
+    const back = projectWorld(px, 0.8, pz);
+    const neck = projectWorld(px, 1.25, pz);
+    const cx = clamp(back.x, r + 8, w - r - 8);
+    const cy = clamp(Math.max(back.y, neck.y + r), r + 72, h - r - 8);
+    joyEl.style.left = `${cx}px`;
+    joyEl.style.top = `${cy}px`;
+    joyEl.style.bottom = "auto";
+    joyEl.style.transform = "translate(-50%, -50%)";
   }
 
   const speech = el("pfWorldSpeech");
