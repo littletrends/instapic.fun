@@ -191,6 +191,9 @@ const CHIP_FULL = 5.0;
 const CHIP_HOLD = 2.8;
 const CHIP_GONE = 1.6;
 let approachPlace = null;
+// The chip that appeared while walking up stays up (full, tappable) once the thumb
+// leaves the walk pad, until the guest walks on or the stall is well behind them.
+let chipStick = null;
 const COUNTER_X = 0.58;
 const COUNTER_Z = 1.18;
 const COUNTER_REACH = 1.92;
@@ -2723,9 +2726,17 @@ function findNearest() {
       // Walking: show the chip as the stall comes up ahead, fade it once alongside.
       nearest = approachPlace;
       chipOpacity = approachPlace ? approachChipOpacity(approachPlace.z - pz) : 0;
+      chipStick = approachPlace && chipOpacity > 0.02 ? approachPlace : null;
     } else {
-      // Stopped beside a stall: keep the old tap-to-enter chip.
+      // Stopped: the stall right beside you, or else the one whose chip was showing as you
+      // walked up. Either stays at full strength and tappable while you stand still.
       nearest = passing && passingZ < 2.2 ? passing : null;
+      if (!nearest && chipStick) {
+        const ahead = chipStick.z - pz;
+        if (ahead > -2.2 && ahead < CHIP_FROM + 0.5) nearest = chipStick;
+        else chipStick = null;
+      }
+      if (nearest) chipStick = nearest;
     }
     if (stallCardOpen) closeStallCard();
     if (lookCardKind(nearest) && chipOpacity > 0.02) showPassChip(nearest, chipOpacity);
