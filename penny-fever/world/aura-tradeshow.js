@@ -9,7 +9,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-14';
+const NFT_VER = 'nft-host-15';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -41,6 +41,7 @@ function vip() {
 // saved session on the USB) and whether the photo booth book was claimed.
 const SNAP_BOOK = 'felix-vendor-portrait-book';
 let snapElig = {portraits: new Set(), book: false};
+let dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
 function vipEmail() {
   try {
     return vip() ? String(window.InstapicGuestIdentity?.read?.()?.email || '').trim() : '';
@@ -66,15 +67,29 @@ function loadSnap() {
   const email = vipEmail();
   if (!email) {
     snapElig = {portraits: new Set(), book: false};
+    dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
     return Promise.resolve();
   }
-  return postSnap('recheck', {email}).then((data) => {
-    setSnapElig(data);
-    if (data && !data.book?.claimed && walletCount(SNAP_BOOK) > 0) {
-      return postSnap('book-claim', {email, cost: tokenClaim(SNAP_BOOK)?.cost || null}).then(setSnapElig);
-    }
-    return null;
-  });
+  return Promise.all([
+    postSnap('recheck', {email}).then(setSnapElig),
+    loadDrips(),
+  ]);
+}
+function loadDrips() {
+  const email = vipEmail();
+  dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+  if (!email) return Promise.resolve();
+  return fetch(`${NFT_HOST}/api/penny-fever/drips?email=${encodeURIComponent(email)}`, {cache: 'no-store'})
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      const purse = data?.purse;
+      if (!purse || typeof purse !== 'object') return;
+      DRIPS.forEach((id) => {
+        const n = Math.floor(Number(purse[id]) || 0);
+        dripPurse[id] = n > 0 ? n : 0;
+      });
+    })
+    .catch(() => {});
 }
 function vipJoin() {
   const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + '#aura-tradeshow';
@@ -174,6 +189,7 @@ function formatTokenCost(cost) {
 function tokenAfford(cost) {
   return Object.entries(cost || {}).every(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
+    if (DRIPS.has(id)) return (dripPurse[id] || 0) >= need;
     return tokenHave(id) >= need;
   });
 }
@@ -204,13 +220,17 @@ function spendTokenCost(cost) {
   PF.saveState?.();
   return true;
 }
+function dripCost(cost) {
+  const keys = Object.keys(cost || {});
+  return keys.length > 0 && keys.every((id) => DRIPS.has(id));
+}
 function claimWithTokens(id) {
   const spec = tokenClaim(id);
   const note = overlay?.querySelector('#auraTradeshowNote');
   const say = (text) => { if (note) note.textContent = text; };
   if (!spec) return;
   if (!vip()) {
-    say('Join VIP to claim with tokens.');
+    say('Join VIP to unlock this book with tokens.');
     return;
   }
   if (walletAtCap(id)) {
@@ -219,6 +239,41 @@ function claimWithTokens(id) {
   }
   if (remainingFor(id) <= 0) {
     say('Aura’s pile is gone · trade later.');
+    return;
+  }
+  if (dripCost(spec.cost)) {
+    if (!tokenAfford(spec.cost)) {
+      say(`Need ${formatTokenCost(spec.cost)} banked from VIP play.`);
+      return;
+    }
+    const email = vipEmail();
+    fetch(`${NFT_HOST}/api/penny-fever/drips/claim`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, item: id}),
+    }).then((res) => res.json().then((data) => ({ok: res.ok, data})))
+      .then(({ok, data}) => {
+        if (!ok || !data?.ok) {
+          say(data?.error === 'need_tokens'
+            ? `Need ${formatTokenCost(spec.cost)} banked from VIP play.`
+            : 'Claim did not land. Play as VIP to bank tokens.');
+          if (data?.purse) {
+            DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
+          }
+          paint();
+          return;
+        }
+        if (data.purse) {
+          DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
+        }
+        setSnapElig(data);
+        const PF = window.PennyFever;
+        PF?.stampKeepsake?.(id, 'token-claim');
+        const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
+        say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
+        paint();
+      })
+      .catch(() => { say('Claim did not land.'); });
     return;
   }
   if (!tokenAfford(spec.cost)) {
@@ -238,9 +293,6 @@ function claimWithTokens(id) {
   }
   const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
   say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
-  if (id === SNAP_BOOK && vipEmail()) {
-    postSnap('book-claim', {email: vipEmail(), cost: spec.cost}).then((data) => { setSnapElig(data); paint(); });
-  }
   paint();
 }
 function walletBuyCap(id) {
@@ -503,7 +555,7 @@ function actionFor(item, stallInfo) {
   }
   if (claim) {
     const cost = formatTokenCost(claim.cost);
-    if (!vip()) return {label: `Join VIP to claim · ${cost}`, disabled: true, claim: true};
+    if (!vip()) return {label: `Join VIP to unlock · ${cost}`, disabled: true, claim: true};
     if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
     if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
@@ -939,7 +991,7 @@ function paint() {
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
     : folderIsLimited()
       ? limitedShelfNote()
-      : 'Expand the Penny collector book for books and albums, then their items. Open stalls, Aura Limited, and Felix sit underneath.';
+      : 'Expand the Penny collector book for books and albums, then their items. Star, moon, rose and crown bank from VIP play — guest finds stay paper and do not unlock books.';
   overlay.querySelectorAll('.aura-tradeshow-tools [data-folder]').forEach((b) => {
     const id = b.dataset.folder;
     const on = folder === id

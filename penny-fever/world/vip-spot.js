@@ -1,6 +1,6 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
-import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=nft-host-14";
+import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=nft-host-15";
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
 const PENDING_KEY = "pf-vip-pending";
 const HELD_PLAYER_KEY = "pf-device-player-on-hold.v1";
@@ -567,6 +567,15 @@ export function mountVipSpot() {
     if (!ids.length) return;
     rememberPortraitAccount();
     pushSave().catch(err => console.warn("[pf-vip] Felix collection save", err));
+    const drips = new Set(["star-token", "moon-penny", "rose-penny", "crown-token"]);
+    const email = guestEmail();
+    ids.filter((id) => drips.has(id)).forEach((item) => {
+      fetch(`${API_BASE}/api/penny-fever/drips/credit`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({email, item, stall: event.detail?.stall || "vip-play"}),
+      }).catch(() => {});
+    });
   });
   setInterval(() => {
     if (!signedIn()) {
