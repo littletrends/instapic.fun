@@ -1,3 +1,4 @@
+import {isParkShut} from '../../paper-games/park-doors.js?v=map-doors-3';
 const model = globalThis.PennyFeverInventoryModel;
 let midwayApi = null;
 let midwayWait = null;
@@ -478,13 +479,16 @@ function render() {
   if (!dialog.open) return;
   watchPics();
   const all = entries();
-  const filled = all.filter(i => i.owned).length;
+  // Book total counts only keepsakes from tents that are open tonight (plus Aura's booth extras).
+  if (!studio && !midwayApi) needMidway().then(() => { if (dialog.open) render(); });
+  const counted = studio || !midwayApi ? all : all.filter(i => { const s = stallForItem(i.id); return !!s && (s.extra || !isParkShut(s.id)); });
+  const filled = counted.filter(i => i.owned).length;
   const pennies = all.find(i => i.id === 'everyday-penny')?.quantity || 0;
   const packs = all.find(i => i.id === 'five-penny-stack')?.quantity || 0;
   const tix = all.find(i => i.id === 'ticket-roll')?.quantity || 0;
   text('treasureCount', studio
     ? all.length + ' individual paper objects'
-    : filled + ' of ' + all.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies') + (packs ? ' · ' + packs + (packs === 1 ? ' pack' : ' packs') : ''));
+    : filled + ' of ' + counted.length + ' keepsakes · ' + tix + (tix === 1 ? ' ticket' : ' tickets') + ' · ' + pennies + (pennies === 1 ? ' penny' : ' pennies') + (packs ? ' · ' + packs + (packs === 1 ? ' pack' : ' packs') : ''));
 
   dialog.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
   dialog.querySelectorAll('[data-look-collection]').forEach(b=>{b.hidden=tab!=='games';});

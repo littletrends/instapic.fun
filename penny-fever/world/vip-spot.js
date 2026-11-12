@@ -9,6 +9,8 @@ let progressRevision = 0;
 let progressConflict = false;
 let collectionChoice = null;
 let saveQueue = Promise.resolve();
+let sessionLapsed = false; // VIP sign-in ran out (server said so or the 1 h client clock passed)
+let lapseBannerHidden = false;
 const FELIX_ACCOUNT_KEY = "pf-felix-portrait-owner.v1";
 
 function guestApi() {
@@ -16,7 +18,35 @@ function guestApi() {
 }
 
 function signedIn() {
-  return !!guestApi()?.isVerifiedSessionActive?.();
+  return !sessionLapsed && !!guestApi()?.isVerifiedSessionActive?.();
+}
+
+/** Bug 8: saves were silently refused after the sign-in window. Keep the device copy, say so, and offer Sign in again. */
+function markLapsed(email) {
+  const key = String(email || guestEmail()).toLowerCase();
+  sessionLapsed = true; syncReady = false; lapseBannerHidden = false;
+  if (key) { try { localStorage.setItem('pf-vip-lapsed:' + key, JSON.stringify({snapshot: snapshot(), at: Date.now()})); } catch {} }
+  paintChip();
+}
+
+function paintLapseBanner() {
+  const id = guestApi()?.read?.() || {};
+  const show = !lapseBannerHidden && !!(id.verified && id.email) && !signedIn();
+  let bar = document.getElementById("pfVipLapse");
+  if (!show) { bar?.remove(); return; }
+  if (bar) return;
+  bar = document.createElement("div"); bar.id = "pfVipLapse"; bar.setAttribute("role", "status");
+  bar.style.cssText = "position:fixed;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);z-index:9999;width:max-content;max-width:min(94vw,520px);padding:10px 12px;border:2px solid #d9aa66;border-radius:12px;background:#291d35;color:#fff3df;font:14px/1.4 system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center;";
+  const msg = document.createElement("span");
+  msg.textContent = "Your VIP sign-in timed out, so VIP saving is paused. Your pennies and treasures are kept on this phone.";
+  const go = document.createElement("a"); go.href = vipJoinUrl(); go.textContent = "Sign in again";
+  go.style.cssText = "flex:none;padding:7px 10px;border-radius:8px;background:#ffb4d2;color:#291d35;font-weight:700;text-decoration:none;";
+  go.addEventListener("click", () => { try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {} });
+  const hide = document.createElement("button"); hide.type = "button"; hide.textContent = "×"; hide.setAttribute("aria-label", "Hide");
+  hide.style.cssText = "flex:none;background:none;border:0;color:#f0dcc2;font-size:20px;line-height:1;cursor:pointer;";
+  hide.addEventListener("click", () => { lapseBannerHidden = true; bar.remove(); });
+  bar.append(msg, go, hide);
+  document.body.append(bar);
 }
 
 function guestEmail() {
@@ -186,7 +216,9 @@ function pushSave(blob, replaceCollection = false) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) {
-      if (data.error === "penny_progress_conflict") {
+      if (res.status === 401 || data.error === "verification_required") {
+        markLapsed(email);
+      } else if (data.error === "penny_progress_conflict") {
         progressConflict = true; syncReady = false;
         try { localStorage.setItem('pf-vip-conflict:'+email, JSON.stringify({snapshot:snapshot(),at:Date.now()})); } catch {}
         paintChip();
@@ -198,6 +230,8 @@ function pushSave(blob, replaceCollection = false) {
       throw new Error(data.message || data.error || "save_failed");
     }
     if (Number.isSafeInteger(data.penny_fever?.progress_revision)) progressRevision = data.penny_fever.progress_revision;
+    // Each good save slides the sign-in (motherpc caps it at 12 h from sign-in).
+    if (Number(data.session_until) > 0) guestApi()?.extendSession?.(Number(data.session_until) * 1000);
     return data.penny_fever;
   });
   saveQueue = task;
@@ -228,6 +262,7 @@ function paintCollectionDialog() {
 
 function paintChip() {
   paintCollectionDialog();
+  paintLapseBanner();
   const door = document.getElementById("pfVipDoor");
   const hud = document.getElementById("pfVipHud");
   const inVip = signedIn();
@@ -438,6 +473,23 @@ async function syncOnArrival() {
     // This is an empty VIP account: attach the existing device player only.
     pending=null;
   }
+  const lapsedKey = 'pf-vip-lapsed:' + email;
+  let lapsed = null;
+  try { lapsed = JSON.parse(localStorage.getItem(lapsedKey) || "null"); } catch {}
+  if (lapsed && existingCloud && owner === email && Number.isSafeInteger(existingCloud.progress_revision)) {
+    // Signed in again after a lapse: keep what this phone earned meanwhile, then save it to the VIP.
+    const local = snapshot();
+    progressRevision = existingCloud.progress_revision;
+    applySnapshot(existingCloud); // union of treasures and doll sets
+    window.PennyFever?.restorePocket?.({pennies:local.pennies,tickets:local.tickets,admitPassed:local.admitPassed,admitTicket:local.admitTicket});
+    const state = window.PennyFever?.getState?.();
+    if (state) { state.pennyPacks = local.penny_packs; window.PennyFever?.saveState?.(); }
+    syncReady = true;
+    try { if (await pushSave(snapshot())) localStorage.removeItem(lapsedKey); }
+    catch (err) { console.warn("[pf-vip] resync after sign-in", err); }
+    paintChip();
+    return;
+  }
   syncReady = true;
   const cloud = profile && profile.penny_fever;
   progressRevision = Number.isSafeInteger(cloud?.progress_revision) ? cloud.progress_revision : 0;
@@ -517,7 +569,11 @@ export function mountVipSpot() {
     pushSave().catch(err => console.warn("[pf-vip] Felix collection save", err));
   });
   setInterval(() => {
-    if (!signedIn()) return;
+    if (!signedIn()) {
+      // The sign-in clock ran out mid-visit: stop quietly pretending to save.
+      if (syncReady && guestEmail()) markLapsed(guestEmail());
+      return;
+    }
     pushSave().catch(() => {});
     applyPendingWarp();
   }, 20000);
