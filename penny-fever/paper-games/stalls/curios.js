@@ -109,8 +109,14 @@ function missNote(s) {
 
 function clawMin() { return CASE.x + 36; }
 function clawMax() { return CASE.x + CASE.w - 36; }
-function grabBeatOf(seed) {
-  return 1 + Math.floor(rng(seed + 91)() * SWEEP_SECONDS);
+function grabBeatOf(seed, capsules) {
+  const rolled = 1 + Math.floor(rng(seed + 91)() * SWEEP_SECONDS);
+  // Fix 13/11/2026: never light NOW before the claw can physically reach the glowing capsule
+  // (claw starts at clawMin and rides right at 170px/s; ~34px grab reach).
+  const bonus = Array.isArray(capsules) ? capsules.find(c => c && c.bonus) : null;
+  if (!bonus) return rolled;
+  const need = Math.ceil(((bonus.homeX ?? bonus.x) - 34 - clawMin()) / 170);
+  return Math.min(SWEEP_SECONDS, Math.max(rolled, need, 1));
 }
 function sweepBeat(s) {
   return Math.min(SWEEP_SECONDS, Math.max(1, Math.ceil(s.sweepT || 0.01)));
@@ -236,7 +242,7 @@ function beginSitting(s) {
     s.prizeKept = false;
     s.caughtNow = false;
     s.caughtAgain = false;
-    s.grabBeat = grabBeatOf(s.seed);
+    s.grabBeat = grabBeatOf(s.seed, s.capsules);
     s.dropBeat = 0;
     s.timed = false;
     s.lined = false;
@@ -469,7 +475,7 @@ export default {
       dropT: 0,
       dropPhase: null,
       stick: null,
-      grabBeat: saved.grabBeat || grabBeatOf(saved.seed || (level + 1) * 7919),
+      grabBeat: saved.grabBeat || grabBeatOf(saved.seed || (level + 1) * 7919, pileOk(saved.capsules) ? saved.capsules : null),
       dropBeat: 0,
       timed: false,
       lined: false,

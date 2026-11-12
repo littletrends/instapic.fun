@@ -135,7 +135,7 @@ const VENDOR_TIPS = {
     "Hold Space to pull the spring, let go to launch. Z and X work the bats.",
     "One penny, three balls, a hundred seconds a ball.",
     "Hit a bumper on a winning second and the chapter bonus drops.",
-    "Lights out? Enter or R gives you a quick launch.",
+    "Lights out? Enter gives you a quick launch.",
   ],
   "milk-bottles": [
     "Tap two neighbours to swap. Only a real match spends a move.",
@@ -144,13 +144,13 @@ const VENDOR_TIPS = {
   ],
   helter: [
     "Right arrow taps you along, Space jumps the next cell. Cushions bounce you up.",
-    "Your first ride each chapter is free practice and keeps nothing. Then a penny a ride.",
-    "Grab the keepsake and reach the crest on a paid ride to keep it.",
+    "Chapter 1 rides are always free. Chapters 2–6 cost a penny a ride.",
+    "Before each ride a roll decides if the keepsake rides the coil. If you see it, grab it and reach the crest to keep it.",
   ],
   funhouse: [
-    "Arrows or the stick to walk. Space shuts the punchline door.",
-    "First go each chapter is free. After that, a penny a ride.",
-    "Pick up the key, then clear the chips to keep it. A laugh-face touch sends you back.",
+    "Eat the chips, grab the key, dodge the laughing faces.",
+    "Chapter 1 rides are always free. Chapters 2–6 cost a penny a ride.",
+    "When the keepsake key is in the maze, pick it up and clear the chips to keep it. A laugh-face touch sends you back.",
   ],
 };
 const vendorTipIndex = Object.create(null);

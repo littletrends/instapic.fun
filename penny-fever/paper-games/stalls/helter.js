@@ -1,6 +1,6 @@
 import {kits as chapterKits} from '../prizes.js?v=prize-hud-1';
 /*
- * Spiral Slide (helter) — Ch1 First Spiral live; Ch2–6 titles frozen (same board until Aura reopens).
+ * Spiral Slide (helter) — six authored boards (Ch1 First Spiral … Ch6 Impossible Descent).
  *
  * TAP-TAP-TAP + JUMP model (cushions bounce up; slides soft-dump down):
  *   ONE Archimedean spiral path, BOTTOM → TOP, sampled into cells.
@@ -22,7 +22,7 @@ import {kits as chapterKits} from '../prizes.js?v=prize-hud-1';
  * d.glow() — 6-digit hex only. Do NOT set canvasControls.
  */
 import {clamp} from '../draw.js';
-import {spriteKey} from '../prizes.js?v=prize-hud-1';
+import {spriteKey, items as PRIZE_ITEMS} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
@@ -142,7 +142,7 @@ function placeDress(d, img, x, y, w, angle, h) {
 
 
 /**
- * Ch1 authored board (also used for frozen Ch2–6 stubs).
+ * Ch1 authored board. Ch2–6 boards: chapterBoard(level) below (Lorie 13/11/2026).
  * Slides soft-dump DOWN; cushions bounce UP.
  * Keepsake + tokens sit on coil cells.
  */
@@ -183,6 +183,52 @@ function ch1Board() {
  * coils wrapping a tower — not a flat front-view zigzag.
  * ang starts at -PI/2 (bottom-front). depth = sin(ang): +1 back, -1 front.
  */
+/**
+ * Ch2–6 authored boards (13/11/2026). Same coil; each chapter adds slides and
+ * moves cushions/keepsake. Keepsake cells sit OFF every cushion arc (c, c+boost]
+ * so a bounce never auto-claims it; cushion landings never land on a slide.
+ */
+const CHAPTER_BOARDS = [
+  null, // ch1 → ch1Board()
+  { // Bunting Bend
+    slides: [{cell: 4, dump: 4, teach: true}, {cell: 12, dump: 6}, {cell: 21, dump: 6}],
+    cushions: [{cell: 6, boost: 3, teach: true}, {cell: 14, boost: 4}, {cell: 19, boost: 4}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 10, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 11,
+  },
+  { // Tunnel Turn
+    slides: [{cell: 3, dump: 3, teach: true}, {cell: 9, dump: 6}, {cell: 16, dump: 7}, {cell: 22, dump: 6}],
+    cushions: [{cell: 6, boost: 4, teach: true}, {cell: 13, boost: 5}, {cell: 19, boost: 4}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 11, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 12,
+  },
+  { // Three-Way Tower
+    slides: [{cell: 3, dump: 3, teach: true}, {cell: 8, dump: 5}, {cell: 14, dump: 7}, {cell: 21, dump: 8}],
+    cushions: [{cell: 5, boost: 4, teach: true}, {cell: 11, boost: 5}, {cell: 18, boost: 4}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 10, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 17,
+  },
+  { // Runaway Keepsake
+    slides: [{cell: 2, dump: 2, teach: true}, {cell: 7, dump: 6}, {cell: 13, dump: 8}, {cell: 19, dump: 9}, {cell: 23, dump: 6}],
+    cushions: [{cell: 4, boost: 4, teach: true}, {cell: 10, boost: 5}, {cell: 16, boost: 4}],
+    tokens: [{cell: 1, id: 'star-token'}, {cell: 9, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 22,
+  },
+  { // The Impossible Descent
+    slides: [{cell: 2, dump: 2, teach: true}, {cell: 6, dump: 5}, {cell: 11, dump: 8}, {cell: 15, dump: 9}, {cell: 20, dump: 10}, {cell: 23, dump: 8}],
+    cushions: [{cell: 4, boost: 3, teach: true}, {cell: 9, boost: 4}, {cell: 17, boost: 4}],
+    tokens: [{cell: 1, id: 'star-token'}, {cell: 8, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 14,
+  },
+];
+
+function chapterBoard(level) {
+  const base = ch1Board();
+  const spec = CHAPTER_BOARDS[level | 0];
+  if (!spec) return base;
+  return {...base, ...spec, slides: spec.slides.map((S) => ({teach: false, ...S})), cushions: spec.cushions.map((C) => ({teach: false, ...C}))};
+}
+
 function spiralPoint(u) {
   const ang = ANG0 + u * TURNS * TAU;
   const r = R_BOT + (R_TOP - R_BOT) * u;
@@ -417,11 +463,11 @@ function tryCollectToken(s, idx) {
   tok.taken = true;
   s.tokensTaken = (s.tokensTaken || 0) + 1;
   logAction(s, 'token', {cell: idx, id: tok.id});
-  if (s.eligible) {
+  if (!s.practice) {
     recordFind(s, tok.id, RIDE);
-    s.note = 'Token! ' + tok.id.replace(/-/g, ' ');
+    s.note = tok.id === 'everyday-penny' ? 'Penny! Into your purse.' : 'Token! ' + tok.id.replace(/-/g, ' ');
   } else {
-    s.note = 'Practice token glimpse — paid rides keep finds.';
+    s.note = 'Token glimpse — workshop rides keep nothing.';
   }
   s.statusCopy = 'Token';
   const c = cellAt(s, idx);
@@ -436,12 +482,11 @@ function tryCollectTreasure(s, idx) {
   if (s.eligible) {
     recordTreasure(s, s.treasure.id);
     logAction(s, 'treasure', {cell: idx, id: s.treasure.id});
-    s.note = 'KEEPSAKE! Spiral tower secured.';
+    s.note = 'KEEPSAKE! ' + ((PRIZE_ITEMS[s.treasure.id] && PRIZE_ITEMS[s.treasure.id].name) || 'Keepsake') + ' secured.';
     s.statusCopy = 'KEEPSAKE!';
   } else {
-    s.note = 'KEEPSAKE! Practice glimpse — paid rides can keep it.';
-    s.statusCopy = 'KEEPSAKE!';
-    logAction(s, 'treasure-practice', {cell: idx});
+    // Not reachable in the alley: the keepsake is only placed on eligible rides.
+    return;
   }
   s.treasure.taken = true;
   s.treasureRevealed = true;
@@ -516,7 +561,6 @@ function resolveLanding(s) {
       C.used = true;
       s.cushionsBounced = (s.cushionsBounced || 0) + 1;
       logAction(s, 'cushion', {cell: idx, dest, n: s.cushionsBounced, teach: !!C.teach});
-      recordFind(s, 'cell-' + idx, RIDE);
       s.note = C.teach
         ? 'CUSHION UP! Bounce up the coil.'
         : 'CUSHION UP! ' + s.cushionsBounced + '/' + CUSHION_GOAL;
@@ -555,7 +599,8 @@ function resolveLanding(s) {
 }
 
 function clearOk(s) {
-  const keepsake = !!(s.keepsakeTaken || (s.treasure && s.treasure.taken));
+  // Keepsake only rides on an eligible (rolled) ride; otherwise the crest alone clears.
+  const keepsake = !s.eligible || !!(s.keepsakeTaken || (s.treasure && s.treasure.taken));
   const atTop = (s.youCell | 0) >= ((s.cells || []).length - 1);
   // Crest required — cushion boosts help climb but must not finish the ride early.
   return keepsake && atTop;
@@ -753,6 +798,8 @@ function maybeFinish(s, why) {
 }
 
 function spawnTreasure(s) {
+  // Lorie 13/11/2026: the keepsake is shown on the track only when this ride can keep it.
+  if (!s.eligible) { s.treasure = null; s.keepsakeTaken = false; return; }
   const cell = s.planTreasureCell != null ? s.planTreasureCell : 13;
   s.treasure = {
     id: s.treasureId || TREASURES[0],
@@ -921,8 +968,8 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Climb the red coil to the crest and grab the chapter keepsake on the way. Your first ride each chapter is free practice and keeps nothing; later rides cost a penny.',
-  instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Grab the keepsake AND reach the crest to clear the chapter.',
+  intro: 'Tilly’s spiral slide. Climb the red coil to the crest. Every chapter 1 ride is free; chapters 2–6 cost a penny a ride. Before each ride a roll (50% / 40% / 30% by chapter) decides whether the keepsake rides the coil — if you see it, grab it and reach the crest to keep it.',
+  instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Reach the crest to clear the chapter — and if the keepsake is on the coil, grab it on the way.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,
@@ -930,7 +977,7 @@ export default {
   actions: [],
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
-    const plan = ch1Board(); // Ch2–6 frozen: same First Spiral board until Aura reopens
+    const plan = chapterBoard(level);
     const cells = buildSpiral(plan.cellCount);
     const slides = plan.slides.map((S) => ({...S, used: false}));
     const cushions = plan.cushions.map((C) => ({...C, used: false}));
@@ -952,7 +999,7 @@ export default {
       hopper: plan.hopper,
       planTreasureCell: plan.treasureCell,
       duration: plan.duration,
-      frozenChapter: level > 0,
+      frozenChapter: false,
       youCell: 0,
       lastCell: 0,
       _ballCleared: false,
@@ -1027,8 +1074,8 @@ export default {
         const bp = spiralPoint(1);
         s.ballX = bp.x; s.ballY = bp.y;
       }
-      s.note = s.frozenChapter
-        ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). TAP up.'
+      s.note = s.eligible
+        ? 'The keepsake is riding this time! TAP up — grab it on the way.'
         : 'TAP along the spiral — JUMP onto cushions, over slides';
       if (s.eligible) {
         const prefer = s.planTreasureCell != null ? s.planTreasureCell : 17;
@@ -1041,8 +1088,8 @@ export default {
           s.spawnId = preferred;
         }
         const idx = Number(String(s.spawnId).replace('cell-', ''));
-        const raw = Number.isFinite(idx) ? idx : prefer;
-        s.planTreasureCell = clamp(raw, prefer - 2, prefer + 2);
+        // Authored seat only: ±2 could land on a cushion/slide or a bounce arc.
+        s.planTreasureCell = prefer;
       }
       logAction(s, 'preview', {secs: PREVIEW_SECS});
     }

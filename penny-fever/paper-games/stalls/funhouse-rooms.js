@@ -62,8 +62,8 @@ export const SPAWN_IDS = ['last-laugh'];
 export const STAGE = {xMin: 200, xMax: 700, yMin: 450, yMax: 900};
 
 /**
- * ONE shared 11×13 corridor maze inside cream oval (cell 40px).
- * All chapters use this exact layout — fairness varies elsewhere.
+ * Ch1 11×13 corridor maze inside cream oval (cell 40px). Ch2–6 have their own
+ * layouts below (13/11/2026); fairness still varies per chapter.
  * A/B = paired two-way portal mouths (widened AA….BB corridor) on middle left/right edge walls.
  * K = starKey mid-court (was treasure seat). D = punchline door. F = face house. S = start.
  * dress-ready-5d: restore all inner walls; only two open bricks behind each curtain (A...###...B).
@@ -85,10 +85,87 @@ const SHARED_MAZE_LAYOUT = [
   '###########',
 ];
 
+/** Distinct per-chapter layouts (Lorie 13/11/2026). Same legend; A/B portals stay on row 6. */
+const MIRROR_MAZE_LAYOUT = [
+  '###########',
+  '#o.......o#',
+  '#.##.#.##.#',
+  '#....#....#',
+  '#.##.F.##.#',
+  '#...#K#...#',
+  'A.........B',
+  '#.#.###.#.#',
+  '#.#..D..#.#',
+  '#o..#.#..o#',
+  '#.#.....#.#',
+  '#....S....#',
+  '###########',
+];
+const UPSIDE_MAZE_LAYOUT = [
+  '###########',
+  '#o..#.#..o#',
+  '#.#.....#.#',
+  '#.#.###.#.#',
+  '#....F....#',
+  '##.#.K.#.##',
+  'A..#...#..B',
+  '#.##.#.##.#',
+  '#....D....#',
+  '#.#.#.#.#.#',
+  '#o#.....#o#',
+  '#...#S#...#',
+  '###########',
+];
+const SHRINK_MAZE_LAYOUT = [
+  '###########',
+  '#o.......o#',
+  '#.#.#.#.#.#',
+  '#.#.....#.#',
+  '#...#F#...#',
+  '#.#..K..#.#',
+  'A.#.###.#.B',
+  '#.........#',
+  '#.##.D.##.#',
+  '#o.#.#.#.o#',
+  '##.......##',
+  '#....S....#',
+  '###########',
+];
+const ECHO_MAZE_LAYOUT = [
+  '###########',
+  '#o.......o#',
+  '#.#.###.#.#',
+  '#.#..F..#.#',
+  '#...#.#...#',
+  '###.#K#.###',
+  'A.........B',
+  '#.#.#.#.#.#',
+  '#...#D#...#',
+  '#o#.....#o#',
+  '#.#.#.#.#.#',
+  '#....S....#',
+  '###########',
+];
+const LAST_MAZE_LAYOUT = [
+  '###########',
+  '#o#.....#o#',
+  '#.#.#.#.#.#',
+  '#...#F#...#',
+  '#.#.....#.#',
+  '#.#.#K#.#.#',
+  'A...#.#...B',
+  '##.......##',
+  '#..#.D.#..#',
+  '#o.#.#.#.o#',
+  '#.#.....#.#',
+  '#...#S#...#',
+  '###########',
+];
+
 function mazeChapter(spec) {
   const {
     id, title, caption, clearGoal, faceSpeed, powerSec, faceCount,
-    playerSpeed = 140, houseSeconds = 100, scenery = 'full',
+    playerSpeed = 140, houseSeconds = 100, scenery = 'full', layout = SHARED_MAZE_LAYOUT,
   } = spec;
   return {
     id,
@@ -123,7 +200,7 @@ function mazeChapter(spec) {
       faceCount,
       /** # wall  . pellet  o power  + empty  S start  F face  D punchline-door
        *  A/B portals  K starKey mid-court */
-      layout: SHARED_MAZE_LAYOUT,
+      layout,
     },
   };
 }
@@ -144,7 +221,8 @@ export const CHAPTER1 = mazeChapter({
 export const CHAPTER2 = mazeChapter({
   id: 'mirror-joke-maze',
   title: 'Mirror Joke',
-  caption: 'Same corridors — chomp a few more chips; faces a touch faster.',
+  caption: 'New mirrored corridors — chomp a few more chips; faces a touch faster.',
+  layout: MIRROR_MAZE_LAYOUT,
   clearGoal: 18,
   faceSpeed: 52,
   playerSpeed: 140,
@@ -157,7 +235,8 @@ export const CHAPTER2 = mazeChapter({
 export const CHAPTER3 = mazeChapter({
   id: 'upside-down-maze',
   title: 'Upside Down',
-  caption: 'Same maze verb — power window shorter, chase stays fair.',
+  caption: 'Twisting new halls — power window shorter, chase stays fair.',
+  layout: UPSIDE_MAZE_LAYOUT,
   clearGoal: 20,
   faceSpeed: 56,
   playerSpeed: 144,
@@ -170,7 +249,8 @@ export const CHAPTER3 = mazeChapter({
 export const CHAPTER4 = mazeChapter({
   id: 'shrinking-hall-maze',
   title: 'Shrinking Hall',
-  caption: 'Same lanes — more chips to clear, faces lean in.',
+  caption: 'Pinched lanes — more chips to clear, faces lean in.',
+  layout: SHRINK_MAZE_LAYOUT,
   clearGoal: 22,
   faceSpeed: 60,
   playerSpeed: 148,
@@ -183,7 +263,8 @@ export const CHAPTER4 = mazeChapter({
 export const CHAPTER5 = mazeChapter({
   id: 'midway-echoes-maze',
   title: 'Midway Echoes',
-  caption: 'Same corridors — denser props, brisk faces, brief punchline power.',
+  caption: 'Echoing crossroads — brisk faces, brief punchline power.',
+  layout: ECHO_MAZE_LAYOUT,
   clearGoal: 24,
   faceSpeed: 64,
   playerSpeed: 152,
@@ -196,7 +277,8 @@ export const CHAPTER5 = mazeChapter({
 export const CHAPTER6 = mazeChapter({
   id: 'last-laugh-maze',
   title: 'The Last Laugh',
-  caption: 'Finale fairness on the same maze — fullest chase, clear the big chomp.',
+  caption: 'The finale maze — fullest chase, clear the big chomp.',
+  layout: LAST_MAZE_LAYOUT,
   clearGoal: 26,
   faceSpeed: 70,
   playerSpeed: 156,

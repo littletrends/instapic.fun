@@ -838,3 +838,9 @@ body.pf-alley-map-open .pf-world-compass {
 }
 
 
+
+/* Fix (13/11/2026): the map is a modal — sit above the top HUD and pocket bar so
+   Close is not under Home (desktop) or Treasures (phone). */
+body.pf-alley-map-open .pf-alley-map { z-index: 40; }
+body.pf-alley-map-open .pf-world-tools,
+body.pf-alley-map-open .pf-world-pocket { visibility: hidden; }

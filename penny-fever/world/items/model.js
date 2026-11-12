@@ -19,7 +19,7 @@
     ['coin-slot','Coin slot','Machine Guts','curio','coin_slot','Backstage · Bea','Complete a backstage stage, or try the demo Showman pass.',.085,'machine-curios'],
     ['marquee-bulb','Marquee bulb','Machine Guts','curio','marquee_bulb','Boardwalk Lights · Lumi','Light the marquee, or find an olive-lamp fortune.',.14,'machine-curios'],
     ['night-suitcase','Night suitcase','Collection rewards','reward',null,'Aura’s welcome','Yours after handing Aura your admission ticket.',.24,'garden-prizes'],
-    ['moonlight-wardrobe','Moonlight wardrobe','Collection rewards','reward',null,'Alley collection','Collect all six Alley Ephemera to receive this costume keepsake book.',.12,'paper-doll-books'],
+    ['moonlight-wardrobe','Moonlight wardrobe','Collection rewards','reward',null,'A Little Starlight · Celeste','Win it in chapter 4 of Celeste’s telescope.',.12,'paper-doll-books'],
     ['coin-sleeve','Coin sleeve','Workshop prizes','prize',null,'Copper Falls · Copper','Catch pennies at Copper Falls.',.08,'gift-wrapping'],
     ['copper-cascade','Copper cascade','Workshop prizes','prize',null,'Copper Falls · Copper','Finish the moon mint at Copper Falls.',.12,'game-prizes'],
     ['penny-tree','Penny tree','Workshop prizes','prize',null,'Copper Falls · Copper','Settle the crowded mint at Copper Falls.',.14,'game-prizes'],
@@ -203,7 +203,7 @@
   // Chapter designer treasures with preserved, stable item IDs.
   rows.push(
     ["film-reel", "Film Reel", "Workshop prizes", "prize", null, "Penny Fever chapter", "Find this treasure in its assigned chapter.", 0.1, "parlour-prizes"],
-    ["film-frame", "Film Frame", "Workshop prizes", "prize", null, "Penny Fever chapter", "Find this treasure in its assigned chapter.", 0.1, "parlour-prizes"],
+    ["film-frame", "Film Frame", "Collection rewards", "reward", null, "Alley collection", "Collect all six Alley Ephemera to receive this keepsake.", 0.1, "parlour-prizes"],
     ["curtained-stage", "Curtained Stage", "Workshop prizes", "prize", null, "Penny Fever chapter", "Find this treasure in its assigned chapter.", 0.1, "toy-shelf"],
     ["alley-panel-kit", "Alley Panel Kit", "Workshop prizes", "prize", null, "Penny Fever chapter", "Find this treasure in its assigned chapter.", 0.1, "ride-keepsakes"],
     ["cabinet-key", "Cabinet Key", "Workshop prizes", "prize", null, "Penny Fever chapter", "Find this treasure in its assigned chapter.", 0.1, "parlour-prizes"],
@@ -504,7 +504,7 @@
       state.paperInventory.items[id]={at:now,source};changed=true;
     };
     if (state.admitPassed) give('night-suitcase','admission');
-    if (definitions.filter(d=>d.category==='Alley Ephemera').every(d=>!!state.curios?.[d.key])) give('moonlight-wardrobe','alley-complete');
+    if (definitions.filter(d=>d.category==='Alley Ephemera').every(d=>!!state.curios?.[d.key])) give('film-frame','alley-complete'); // was moonlight-wardrobe, which is Celeste ch4's unique prize (13/11/2026)
     return changed;
   }
   function entries(state={},today=day()) {

@@ -443,6 +443,8 @@ function startChoose(s, room) {
 
 function maybeRevealTreasure(s, room) {
   if (!room?.treasure || s.treasureCollected) return;
+  if (!s.eligible) return; // shown only when this ride can keep it
+
   if (s.spawnId && room.treasure.spawnId && s.spawnId !== room.treasure.spawnId) return;
   // Chapter bonus sits on the mid-court key cell — pick it up, keep it only after screen clear.
   if (!s.treasure) {
@@ -470,7 +472,7 @@ function maybeRevealTreasure(s, room) {
 function takeTreasure(s) {
   if (!s.treasure || s.treasure.taken) return false;
   if (!s.mazeCleared || !s.starKeyTaken) return false;
-  s.eligible = true;
+  if (!s.eligible) return false; // Lorie 13/11/2026: keepsake only on the sealed % roll.
   s.treasure.taken = true;
   s.treasure.locked = false;
   s.treasureWindow = false;
@@ -735,17 +737,17 @@ function initMazePlay(s) {
   }
   s.roomId = 'maze';
   s.starKeyTaken = false;
-  s.eligible = true;
-  s.spawnId = 'last-laugh';
+  // Lorie 13/11/2026: respect the sealed roll (and owned slot) — no forced keepsake.
+  if (s.eligible) s.spawnId = 'last-laugh';
   s.portalCool = 0;
   s.portalFx = null;
   s.bombFx = 0;
   s.maskFlash = 0;
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
   logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
-  s.note = s.practice
-    ? `Free practice · nothing kept. Eat ${maze.clearGoal}+ chips · power tokens let you chase the faces.`
-    : `Eat ${maze.clearGoal}+ chips · pick up the bonus key · keep away from the faces (a catch relocks the bonus).`;
+  s.note = (s.eligible
+      ? `The keepsake is in the maze this time! Eat ${maze.clearGoal}+ chips · pick up the bonus key · keep away from the faces (a catch relocks it).`
+      : `Eat ${maze.clearGoal}+ chips and keep away from the laughing faces.`);
 }
 
 function setWantDir(s, id, down) {
@@ -987,11 +989,10 @@ function tryPortalTeleport(s) {
 /** Mid-court chapter bonus — pick up to carry. Header stays Locked until the chip goal. */
 function collectStarKey(s) {
   const maze = s.maze;
-  if (!maze?.keyCell || s.starKeyTaken || s.treasure?.taken) return false;
+  if (!s.eligible || !s.treasure || !maze?.keyCell || s.starKeyTaken || s.treasure?.taken) return false;
   const p = s.player;
   if (!p || p.c !== maze.keyCell.c || p.r !== maze.keyCell.r) return false;
   s.starKeyTaken = true;
-  s.eligible = true;
   logAction(s, 'star-key', {c: maze.keyCell.c, r: maze.keyCell.r});
   const room = roomOf(s.graph, 'maze');
   maybeRevealTreasure(s, room);
@@ -2340,21 +2341,7 @@ export default {
       }
       enterRoom(s, s.graph.start);
       const startRoom = roomOf(s.graph, s.graph.start);
-      if (s.practice) {
-        if (startRoom?.teachFinale) {
-          s.note = 'Free practice · nothing kept. LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teachEcho) {
-          s.note = 'Free practice · nothing kept. HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teachShrink) {
-          s.note = 'Free practice · nothing kept. MARK THE SETUP — WHICH IS NEAR? SHUT THE NEAR PUNCHLINE.';
-        } else if (startRoom?.teachRotate) {
-          s.note = 'Free practice · nothing kept. MARK THE DOORS — then SHUT THE PUNCHLINE.';
-        } else if (startRoom?.teach) {
-          s.note = 'Free practice · nothing kept. MIRROR LIES — SHUT THE PUNCHLINE.';
-        } else {
-          s.note = 'Free practice · nothing kept. SHUT THE PUNCHLINE.';
-        }
-      } else if (startRoom?.teachFinale) {
+      if (startRoom?.teachFinale) {
         s.note = 'LAST LAUGH — TRUST THE SETUP → SHUT THE PUNCHLINE.';
       } else if (startRoom?.teachEcho) {
         s.note = 'HEAR THE ECHO → MATCH THE RIDE → SHUT THE PUNCHLINE.';
