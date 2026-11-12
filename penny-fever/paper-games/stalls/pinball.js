@@ -319,8 +319,11 @@ function releasePlunger(s) {
   if(!s.activeBall){s.balls++;s.houseLeft=BALL_SECONDS;s.ballPennies=0;s.ballTokens=0;s.rewardAt=s.t+3;s.saucer.hold=0;s.saucer.armed=true;}
   s.cabinetOn=true;
   s.activeBall=true;
-  s.ball.vx = -18 - power * 28;
-  s.ball.vy = -460 - power * 760;
+  // Fix 13/11/2026: soft pulls rolled back down the shooter lane (≤0.5 on most tables).
+  // Map any real pull onto a launch that always clears the lane; full pull is unchanged.
+  const launch = 0.55 + 0.45 * power;
+  s.ball.vx = -18 - launch * 28;
+  s.ball.vy = -460 - launch * 760;
   s.note = power > 0.72 ? 'A strong plunge.' : 'The silver ball is in play.';
   writeBook(s);
 }

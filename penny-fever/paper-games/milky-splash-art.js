@@ -68,6 +68,7 @@ export function drawMilkySplash(s,d,chapter){
     x=originX+(from.c+(col-from.c)*progress)*size;y=originY+(from.r+(r-from.r)*progress)*size;
    }
   }
+  if(s.kbShow&&s.kbCursor&&s.kbCursor.c===col&&s.kbCursor.r===r){c.save();c.setLineDash([7,5]);c.lineWidth=4;c.strokeStyle='#d7a437';c.strokeRect(originX+col*size+3,originY+r*size+3,size-6,size-6);c.restore();}
   if(cell?.kind==='hole')continue;
   box(c,originX+col*size+2,originY+r*size+2,size-4,size-4,12,null,'#fffaf050');
   if(!cell)continue;

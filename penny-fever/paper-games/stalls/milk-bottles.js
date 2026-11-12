@@ -297,7 +297,11 @@ export default {
       // Keyboard play: arrows move the cursor; Space/Enter picks the bottle under it;
       // with a bottle picked, an arrow swaps it with that neighbour (same rules as a tap swap).
       const b = s.board;
-      if (!s.kbCursor) s.kbCursor = {c: Math.floor(b.cols / 2), r: Math.floor(b.rows / 2)};
+      // Fix 13/11/2026: cursor is drawn from the first key press and starts on the gold PRIZE bottle.
+      const firstKey = !s.kbShow;
+      s.kbShow = true;
+      if (!s.kbCursor) s.kbCursor = b.unique && Number.isFinite(b.unique.c) ? {c: b.unique.c, r: b.unique.r} : {c: Math.floor(b.cols / 2), r: Math.floor(b.rows / 2)};
+      if (firstKey && dirs[k]) return; // first arrow just reveals the cursor
       if (dirs[k]) {
         const [dc, dr] = dirs[k];
         const to = {c: Math.max(0, Math.min(b.cols - 1, s.kbCursor.c + dc)), r: Math.max(0, Math.min(b.rows - 1, s.kbCursor.r + dr))};
