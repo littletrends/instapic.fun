@@ -1,6 +1,7 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
 import {DELIVERY_LAYOUTS} from './milky-deliveries.js?v=milk-delivery-1';
-import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
+import {firstPrizeEligible} from './first-prize.js?v=prize-sec-1';
+import {WIN_SECONDS} from './prize-seconds.js?v=prize-sec-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
 export const FLAVOURS = [
@@ -22,21 +23,8 @@ export const MABEL_CHAPTERS = [
 ];
 MABEL_CHAPTERS.forEach((chapter, i) => { chapter.prize = chapterKits['milk-bottles'].prizes[i] || chapter.prize; });
 
-function span(a, b, step = 1) {
-  const out = [];
-  for (let n = a; n <= b; n += step) out.push(n);
-  return out;
-}
-
 /** Provisional 50/40/30/25/20/15. Editable. */
-export const MABEL_WINS = [
-  span(1, 50),
-  span(2, 80, 2),
-  span(3, 90, 3),
-  span(76, 100),
-  span(5, 100, 5),
-  [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47],
-];
+export const MABEL_WINS = WIN_SECONDS;
 
 export function isMabelWin(level, n) {
   if(firstPrizeEligible('milk-bottles',level))return true;

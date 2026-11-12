@@ -5,9 +5,10 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=ch2-lock-1';
+import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=prize-sec-1';
 import {noteVisit} from './insights.js?v=insights-1';
-import {entryFor, isChapterOne} from './stall-entry.js?v=ch2-lock-1';
+import {entryFor, isChapterOne} from './stall-entry.js?v=prize-sec-1';
+import {secondsNote} from './prize-seconds.js?v=prize-sec-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -20,7 +21,7 @@ const GO_UNIT={fortune:'gaze',love:'sitting',curios:'claw',lookup:'comet','coin-
 const TENT_KEYS={
  fortune:'Space/Enter gaze, then stop each ring',
  love:'Type the names (? opens help while a name box is active) · Tab other name (two-name chapters) · Enter read · 0–9 counts · H how to play while counting',
- curios:'Hold → (or D) or the stick to send the claw — it only travels one way · Tap or Space/Enter to drop on NOW',
+ curios:'Hold → (or D) or the stick to send the claw — it only travels one way · Tap or Space/Enter while the clock is lit',
  lookup:'Drag a glass, or ↑/↓ pick one and ←/→ turn it · Space/Enter or FEED sends a comet · Z undo · X hint',
  'coin-pusher':'The hopper sweeps by itself — Space/Enter drops 1 penny when it is over your spot · tap Drop 1 penny, ¼ purse, ½ purse or Drop purse',
  pinball:'Hold Space (or drag the spring) to pull the plunger · Enter quick launch · Z/← and X/→ flippers',
@@ -56,6 +57,11 @@ function treasureLine(){
   return 'Chapter treasure: '+name+' — Unlocked. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
  }
  return 'Chapter treasure: '+name+' — Locked until the prize second hits. One bonus per game chapter.';
+}
+function secondsLine(){
+ if(typeof engine?.secondsNote==='function')return engine.secondsNote(level,state)||'';
+ if(typeof engine?.winningSeconds==='function')return secondsNote(level,engine.winningSeconds(level));
+ return '';
 }
 function goBack(){
  persist();
@@ -141,7 +147,7 @@ function clearInput(){input.keys.clear();input.actions.clear();input.down=false;
 function persist(){try{engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch{}}
 function hold(reason){if(holds.has(reason))return;if(!holds.size)resumeAfterHold=playing;holds.add(reason);persist();stop();}
 function release(reason){if(!holds.has(reason))return;holds.delete(reason);if(!holds.size&&resumeAfterHold){resumeAfterHold=false;if(!ended)start();}}
-function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
+function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
 function closeHelp(){$('#game-help').close();release('help');}
 function publishChapter(){
  const count=engine?.levels?.length||0;
@@ -274,19 +280,41 @@ function paintHud(){
   mode.textContent=practice?'Practice — no items awarded':'';
  }
  const clock=$('#hud-house');
- if(clock){
-  const house=houseSpec();
-  if(house&&state&&state.houseLeft!=null&&playing){
-   clock.hidden=false;
-   clock.textContent=Math.max(0,Math.ceil(state.houseLeft))+'s';
-  }else{clock.hidden=true;clock.textContent='';}
- }
+ if(clock){clock.hidden=true;clock.textContent='';}
+ paintPrizeClock();
 
+}
+function paintPrizeClock(){
+ const el=$('#prize-clock');
+ if(!el)return;
+ if(!playing||completion||!state){
+  el.hidden=true;el.classList.remove('is-lit','is-dark');el.textContent='';
+  return;
+ }
+ if(typeof engine?.prizeClock==='function'){
+  const spec=engine.prizeClock(state);
+  if(!spec||spec.n==null){el.hidden=true;el.classList.remove('is-lit','is-dark');return;}
+  const total=spec.total||100;
+  el.hidden=false;
+  el.textContent=spec.n+' / '+total;
+  el.classList.toggle('is-lit',!!spec.lit);
+  el.classList.toggle('is-dark',!spec.lit);
+  return;
+ }
+ const house=houseSpec();
+ if(house&&state.houseLeft!=null){
+  el.hidden=false;
+  el.textContent=Math.max(0,Math.ceil(state.houseLeft))+'s';
+  el.classList.remove('is-lit');
+  el.classList.add('is-dark');
+  return;
+ }
+ el.hidden=true;el.classList.remove('is-lit','is-dark');el.textContent='';
 }
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();}
 function goNextChapter(){goChapter(level+1);}
 function markChapters(){}
-function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
+function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
 function start(){if(disposed||!engine||!state||playing||ended||holds.size)return;ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
@@ -343,7 +371,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=ch2-lock-1')).default;
+ engine=(await import(entry.module+'?allocation=treasure-design-1&v=prize-sec-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

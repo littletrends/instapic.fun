@@ -1,5 +1,6 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
+import {firstPrizeEligible} from './first-prize.js?v=prize-sec-1';
+import {WIN_SECONDS} from './prize-seconds.js?v=prize-sec-1';
 /** Deterministic mysteries for The Cabinet That Lies. Each puzzle has one solution. */
 
 function rng(seed) {
@@ -22,21 +23,8 @@ const NAMES = ['left', 'middle', 'right', 'far'];
 const EMBLEMS = ['moon', 'key', 'moth', 'heart', 'star'];
 const COLORS = ['brass', 'green', 'plum', 'cream'];
 
-function span(a, b, step = 1) {
-  const out = [];
-  for (let n = a; n <= b; n += step) out.push(n);
-  return out;
-}
-
-/** Provisional 50/40/30/25/20/15 curve. Editable; not final odds. */
-export const CABINET_WINS = [
-  span(1, 50),
-  span(2, 80, 2),
-  span(3, 90, 3),
-  span(76, 100),
-  span(5, 100, 5),
-  [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47],
-];
+/** Provisional 50/40/30/25/20/15 curve. Shared with the house clock. */
+export const CABINET_WINS = WIN_SECONDS;
 
 export const CABINET_PRIZES = [
   'clockwork-key',

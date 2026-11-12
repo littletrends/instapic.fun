@@ -2,7 +2,8 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
+import {clockNumber} from '../prize-seconds.js?v=prize-sec-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
 // Winning windows are whole elapsed seconds, including second 100.
@@ -351,6 +352,11 @@ function shouldDrain(s, p) {
 export default {
   title: 'Pinball Alley',
   winningSeconds:level=>WIN_SECONDS[level].slice(),
+  prizeClock(s){
+    if(!s||!(s.cabinetOn||s.activeBall))return null;
+    const n=clockNumber(BALL_SECONDS-(s.houseLeft||0));
+    return {n,total:BALL_SECONDS,lit:WIN_SECONDS[s.level].includes(n)};
+  },
   live: alleyPlay,
   chapterNavigation:true,
   fullInstructions:true,

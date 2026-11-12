@@ -336,8 +336,8 @@ export const kits = {
     prizes: ['paper-negative', 'surprise-parcel', 'cabinet-key', 'shutter-click', 'repair-toolbox', 'pocket-wheel'],
   },
   helter: {
-    sprites: ['spiral-tower', 'lucky-match', 'mercury-bead', 'star-token', 'moon-penny', 'ride-ticket', 'everyday-penny', 'prize-bag'],
-    prizes: ['spiral-tower', 'lucky-match', 'mercury-bead', 'star-token', 'moon-penny', 'ride-ticket'],
+    sprites: ['spiral-tower', 'lucky-match', 'mercury-bead', 'film-frame', 'moon-penny', 'ride-ticket', 'everyday-penny', 'prize-bag'],
+    prizes: ['spiral-tower', 'lucky-match', 'mercury-bead', 'film-frame', 'moon-penny', 'ride-ticket'],
   },
   swings: {
     sprites: ['ticket-stub', 'flight-bell', 'heart-gear', 'clockwork-butterfly', 'friendship-pins', 'swing-spinner'],

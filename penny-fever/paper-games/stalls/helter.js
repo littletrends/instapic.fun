@@ -26,7 +26,7 @@ import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=ch2-lock-1';
+} from '../ride-seek.js?v=prize-sec-1';
 
 const RIDE = 'helter';
 const TREASURES = chapterKits['helter'].prizes;
@@ -921,7 +921,7 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Climb the red coil to the crest and grab the chapter keepsake on the way. Your first ride each chapter is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Tilly’s spiral slide. Climb the red coil to the crest and grab the chapter keepsake on the way. Chapter 1 is free; later chapters cost a penny. The bonus sits on this ride’s prize roll.',
   instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Grab the keepsake AND reach the crest to clear the chapter.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),

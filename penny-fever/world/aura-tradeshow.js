@@ -924,9 +924,12 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   }
   nav.append(root);
 }
-function appendCards(grid, items, stall) {
-  const info = stallDoor(stall);
+function appendCards(grid, items) {
   for (const item of items) {
+    // Books mix vendors. Resolve each card from its own chapter/portrait ID,
+    // just as filters and checkout do, rather than inheriting the book's host.
+    const stall = stallForPrize(item);
+    const info = stallDoor(stall);
     const card = document.createElement('article');
     card.className = 'aura-tradeshow-card';
     card.dataset.asset = item.asset;
@@ -1082,7 +1085,7 @@ function paint() {
     wrap.innerHTML = `<h2>${section.title}</h2><p>${section.line} · ${shown.length} piece${shown.length === 1 ? '' : 's'}</p>`;
     const grid = document.createElement('div');
     grid.className = 'aura-tradeshow-grid';
-    appendCards(grid, shown, section.stall);
+    appendCards(grid, shown);
     wrap.append(grid);
     body.append(wrap);
   }

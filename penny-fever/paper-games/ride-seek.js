@@ -4,7 +4,8 @@
 
 import {done} from './draw.js';
 import {alleyPlay, keep} from './wallet.js?v=insights-1';
-import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=prize-sec-1';
+import {WIN_COUNTS} from './prize-seconds.js?v=prize-sec-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 export const BOOK_KEY = 'pennyFever.rideSeek';
@@ -12,9 +13,8 @@ export const BOOK_KEY = 'pennyFever.rideSeek';
 const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
 
 export function eligibilityPercent(chapter) {
-  if (chapter <= 1) return 50;
-  if (chapter <= 3) return 40;
-  return 30;
+  const lv = Math.max(0, Math.min(5, chapter | 0));
+  return WIN_COUNTS[lv] ?? 15;
 }
 
 export function emptyBook() {

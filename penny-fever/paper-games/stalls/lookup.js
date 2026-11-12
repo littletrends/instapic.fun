@@ -1,9 +1,10 @@
 import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from '../first-prize.js?v=ch2-lock-1';
+import {firstPrizeEligible} from '../first-prize.js?v=prize-sec-1';
+import {winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
@@ -13,18 +14,13 @@ const BOOK = 'pennyFever.littleStarlight';
 const GLASS = ['I', 'II', 'III', 'IV', 'V'];
 const FLIGHT_SPEED = 410;
 const FLIGHT_EXTRA = 25;
-function span(a, b, step = 1) {
-  const out = [];
-  for (let n = a; n <= b; n += step) out.push(n);
-  return out;
-}
 export const SKY = [
-  {wins: span(1, 50), speed: 8, clue: 'Tonight favours numbers below fifty.', disturb: 1, memory: 0},
-  {wins: span(2, 80, 2), speed: 11, clue: 'Even lights under eighty.', disturb: 1, memory: 0},
-  {wins: span(3, 90, 3), speed: 14, clue: 'Count by threes.', disturb: 1, memory: 0},
-  {wins: span(76, 100), speed: 17, clue: 'The high numbers — seventy-six and up.', disturb: 2, memory: 0},
-  {wins: span(5, 100, 5), speed: 20, clue: 'The fives.', disturb: 2, memory: 2.6},
-  {wins: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47], speed: 24, clue: 'The lonely primes.', disturb: 2, memory: 1.8},
+  {wins: winningSeconds(0), speed: 8, clue: 'Tonight favours numbers below fifty.', disturb: 1, memory: 0},
+  {wins: winningSeconds(1), speed: 11, clue: 'Even lights under eighty.', disturb: 1, memory: 0},
+  {wins: winningSeconds(2), speed: 14, clue: 'Count by threes.', disturb: 1, memory: 0},
+  {wins: winningSeconds(3), speed: 17, clue: 'The high numbers — seventy-six and up.', disturb: 2, memory: 0},
+  {wins: winningSeconds(4), speed: 20, clue: 'The fives.', disturb: 2, memory: 2.6},
+  {wins: winningSeconds(5), speed: 24, clue: 'The lonely primes.', disturb: 2, memory: 1.8},
 ];
 export function skyNumber(counterT, speed) {
   return 1 + (((Math.floor(Math.max(0, counterT) * speed) % 100) + 100) % 100);
@@ -439,14 +435,21 @@ export default {
   tables: true,
   chapterEnds: true,
   retryButton: 'Play again',
+  winningSeconds: level => (SKY[level] || SKY[0]).wins.slice(),
+  prizeClock(s) {
+    if (!s || s.phase === 'ready' || s.result) return null;
+    const sky = SKY[s.level] || SKY[0];
+    const n = skyNumber(s.counterT || 0, sky.speed);
+    return {n, total: 100, lit: isWinningNumber(s.level, n)};
+  },
   intro: alleyPlay
-    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turning the glasses is free. The first comet of each chapter is free; after that each comet costs a penny. Wake the stars, then time the 1–100 bell — only tonight’s numbers drop the unique. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
+    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turning the glasses is free. Chapter 1 is free; later chapters cost a penny a comet. Wake the stars, then time the 1–100 bell — the clock lights on tonight’s numbers. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
     : 'Celeste’s workshop sky. Turn the brass glasses, then feed practice pennies along the path. Workshop scores never enter your wallet.',
   instructions: alleyPlay
     ? 'Tap or drag a glass (free), or ↑/↓ pick one and ←/→ turn it. Press FEED or Space/Enter to launch a comet along the current path. Stars stay remembered. When the numbered bell is awake, time the comet so it strikes a winning number. Remember: after a miss the last glass drifts, so line it up again before the next comet. Z undo, X hint.'
     : 'Turn the glasses, then feed a practice penny. Light the stars, then time the numbered bell. Workshop play is free and writes nothing.',
   tableDetail: alleyPlay
-    ? 'Glasses are free. The first comet each chapter is free, then a penny a comet. The unique hangs until a winning strike. Walk away — the sky waits.'
+    ? 'Glasses are free. Chapter 1 is free, then a penny a comet. The bonus hangs until a winning strike. Walk away — the sky waits.'
     : 'Turn the glasses, then feed a practice penny. This sky keeps while you are here.',
   liveTitle: 'A Little Starlight',
   liveDetail: alleyPlay

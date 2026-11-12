@@ -2,6 +2,7 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, keep, owned} from '../wallet.js?v=insights-1';
 
 import { pennies as pursePennies, debit as purseDebit, credit as purseCredit, refillIfEmpty, packs as pursePacks, packFive as pursePackFive, unpackFive as purseUnpackFive, packAll as pursePackAll } from "../cabinet-wallet.js?v=insights-1";
+import {clockNumber, isWinSecond, winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
 
 const BOOK = alleyPlay ? "pennyFever.copperFalls.v6" : "pennyFever.copperFalls.practice.v6";
 const TAU = Math.PI * 2;
@@ -13,7 +14,7 @@ const BACK = CAB.y + CAB.h * 0.36;
 const FRONT = CAB.y + CAB.h * 0.66;
 const COIN_R = 13;
 const TREASURE_R = 24;
-/** Every chapter releases its unique by the first paid penny. */
+/** Treasure still needs at least one real penny on the tray this sitting. */
 const RELEASE_PENNIES = 1;
 const CHAPTERS = [
   { id: "shallow", title: "The Shallow Tray", prize: "coin-sleeve", divider: false, pegs: 0, upper: false, dead: false, speed: 0.55, push: 36, rows: 3, cols: 8, lipGap: 18 },
@@ -137,7 +138,7 @@ function persistState(s) {
   const book = readBook();
   book.selected = s.level;
   const session = {};
-  for (const key of ['t','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle','handful']) session[key] = s[key];
+  for (const key of ['t','clock','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle','handful']) session[key] = s[key];
   const tray = {...s.tray, coins:s.tray.coins.map(c=>({...c})), session};
   if (s.practice) book.practice = {level:s.level, tray};
   else book.trays[String(s.level)] = tray;
@@ -263,6 +264,7 @@ function hitButton(s, p) {
 function maybeReleaseTreasure(s) {
   if (s.practice || s.tray.treasureOn || s.tray.treasureOwned) return;
   if (s.tray.paidCount < RELEASE_PENNIES) return;
+  if (!isWinSecond(s.level, clockNumber(s.clock || 0))) return;
   s.tray.treasureOn = true;
   s.tray.coins.push({
     id: "treasure",
@@ -270,18 +272,18 @@ function maybeReleaseTreasure(s) {
     x: 450, y: BACK + 70,
     vx: 0, vy: 12, r: TREASURE_R, falling: false,
   });
-  s.note = "The latch opens. Push it over the edge.";
+  s.note = "The latch opens on second " + clockNumber(s.clock || 0) + ". Push it over the edge.";
   s.flash = 1.2;
   clink(880, 0.35, 0.1);
   return true;
 }
 
 function prizeStatus(s) {
-  if(s.practice)return "Free practice · no charge or prizes";
+  if(s.practice)return "Workshop practice · no charge or prizes";
   if(s.tray.treasureOwned)return "Treasure already Unlocked";
   if(s.tray.treasureOn)return "Prize on tray — push it over the edge";
-  const left=Math.max(0,RELEASE_PENNIES-s.tray.paidCount);
-  return "Prize releases in "+left+" paid "+(left===1?"penny":"pennies");
+  if((s.tray.paidCount||0)<RELEASE_PENNIES)return "Drop a real penny while the clock is lit";
+  return isWinSecond(s.level, clockNumber(s.clock||0)) ? "Clock is lit — drop now" : "Wait for the clock to light, then drop";
 }
 
 function collectOff(s) {
@@ -331,8 +333,14 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The hopper sweeps side to side by itself — time your drop. Pennies pushed over the lip come back to your purse, and your tray is saved exactly as you leave it. The chapter prize joins the tray with the first paid penny; then push it over the edge.",
-  instructions: "Watch the hopper sweep, then tap Drop 1 penny, ¼ purse, ½ purse or Drop purse (Space/Enter drops 1). A big dump asks once before it falls. Pack 5 pennies keeps five out of play; Open 5-pack brings them back. Your very first drop here is a free practice drop — no charge, no prizes.",
+  winningSeconds: level => winningSeconds(level),
+  prizeClock(s) {
+    if (!s || s.practice) return null;
+    const n = clockNumber(s.clock || 0);
+    return {n, total: 100, lit: isWinSecond(s.level, n)};
+  },
+  intro: "Copper’s coin pusher. The hopper sweeps side to side by itself — time your drop. Every push spends a real penny, including Chapter 1. Pennies over the lip come back to your purse. The chapter prize joins the tray when a paid drop lands on a lit prize second; then push it over the edge.",
+  instructions: "Watch the hopper sweep, then tap Drop 1 penny, ¼ purse, ½ purse or Drop purse (Space/Enter drops 1). A big dump asks once before it falls. Pack 5 pennies keeps five out of play; Open 5-pack brings them back. Drop while the clock is lit to release this chapter’s bonus.",
   levels: CHAPTERS.map(c => c.title),
   prizes: CHAPTERS.map(c => c.prize),
   images: {
@@ -375,7 +383,7 @@ export default {
     }
     if(!tray.treasureOwned)tray.treasureOn=tray.coins.some(c=>c.kind==='treasure');
     const state = {
-      level, t: 0, practice,
+      level, t: 0, clock: 0, practice,
       phase: "idle",
       pegs: pegsFor(CHAPTERS[level]),
       tray,
@@ -392,13 +400,12 @@ export default {
         : "The tray is as you left it. One handful, one push.",
       ...(tray.session || {}),
     };
-    // Honour already-paid pennies immediately, without buying another drop.
-    const released=maybeReleaseTreasure(state);
-    if(!practice&&(released||oldMark!==tray.mark||oldTreasureOn!==tray.treasureOn))persistState(state);
+    if(!practice&&(oldMark!==tray.mark||oldTreasureOn!==tray.treasureOn))persistState(state);
     return state;
   },
   update(s, dt) {
     s.t += dt;
+    if (!s.practice) s.clock = (s.clock || 0) + dt;
     s.flash = Math.max(0, s.flash - dt);
     const ch = CHAPTERS[s.level];
     if (typeof document !== "undefined" && document.hidden) return;

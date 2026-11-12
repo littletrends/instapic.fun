@@ -1,14 +1,15 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=ch2-lock-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=prize-sec-1';
 import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=milk-clean-1';
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
+import {secondsNote} from '../prize-seconds.js?v=prize-sec-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf,
-} from '../milky-splash.js?v=ch2-lock-1';
+  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf, MABEL_WINS,
+} from '../milky-splash.js?v=prize-sec-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=160;
@@ -178,6 +179,8 @@ export default {
   chapterEnds: true,
   persist,
   houseSeconds: HOUSE_SECONDS,
+  winningSeconds:level=>(MABEL_WINS[level]||MABEL_WINS[0]).slice(),
+  secondsNote:level=>secondsNote(level).replace('The clock lights on','This board keeps the bonus when its hidden number lands on'),
   clockRuns:s=>s.phase==='play'&&!isSliding(s),
   onTimeout(s){restSitting(s,'Time is up. Your board is saved. Press Play for another allowance.');},
   retryAttempt(s){this.action(s,'again');},
@@ -186,7 +189,7 @@ export default {
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. A ticket enters the dairy; the first round of each chapter is free. Extra rounds are a penny — one charge, a full move tray. Every board holds the chapter’s treasure until you collect it. Match it down into the crate. The board waits if moves run out.'
+    ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. Chapter 1 is free; later chapters cost a penny for a full move tray. The treasure only sits on boards whose hidden number is a prize second. Match it down into the crate. The board waits if moves run out.'
     : 'Drag or tap two neighbouring bottles to swap them. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
     ? 'Drag or tap two neighbouring bottles to swap them (keyboard: arrows move, Space/Enter picks, an arrow swaps). Only a real match spends a move. Cascades are free. The gold PRIZE bottle must reach the bottom delivery crate. Match beneath it to make it fall. Wooden crates are obstacles: an adjacent match breaks them; they do not need delivering. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'

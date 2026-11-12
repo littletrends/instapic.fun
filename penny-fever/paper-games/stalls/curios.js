@@ -2,9 +2,10 @@ import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=prize-hud-1';
 import {matteImage} from '../sprites.js?v=load-fix-1';
 import {alleyPlay, pocket, tickets, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, retryNote} from '../stall-entry.js?v=prize-sec-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
-import {CABINET_PRIZES} from '../cabinet-puzzles.js?v=ch2-lock-1';
+import {CABINET_PRIZES, isCabinetWin} from '../cabinet-puzzles.js?v=prize-sec-1';
+import {elapsedSecond, winningSeconds} from '../prize-seconds.js?v=prize-sec-1';
 
 /** Digby — Digger's Vault claw. Rail at the top, pile on the floor, one-way stick. */
 const BOOK = 'pennyFever.capsuleCabinet.v5';
@@ -15,7 +16,6 @@ const CASE = {x: 268, y: 348, w: 364, h: 318};
 const RAIL_Y = CASE.y + 10;
 const FLOOR_Y = CASE.y + CASE.h - 16;
 const HOUSE_SECONDS = 100;
-const SWEEP_SECONDS = 5;
 const PIECE_CACHE = 'game-webp-1';
 const GRAB_REACH = 34;
 const PRIZE_SPOT = {x: 738, y: 758, w: 68};
@@ -93,28 +93,27 @@ function persist(s) {
     phase: s.phase, seed: s.seed, charged: !!s.charged,
     aimX: s.aimX, clawX: s.clawX, capsules: s.capsules,
     won: !!s.won, note: s.note, drops: s.drops || 0, houseLeft: s.houseLeft,
-    grabBeat: s.grabBeat,
   };
   writeBook(book);
 }
 
-/** Early/late feedback for a missed claw (bug 1/6). */
+function houseSecond(s) {
+  return elapsedSecond(s.houseLeft, HOUSE_SECONDS);
+}
+function clockLit(s) {
+  return isCabinetWin(s.level, houseSecond(s));
+}
+
+/** Early/late feedback for a missed claw. */
 function missNote(s) {
-  if (s.timed) return 'NOW, but the claws were not over the glow.';
-  const g = s.grabBeat;
-  if (!s.swept) return 'Too early — hold right first. NOW lights on second ' + g + '.';
-  const d = s.dropBeat || sweepBeat(s);
-  return (d < g ? 'Too early' : 'Too late') + ' — you dropped on second ' + d + ', NOW was second ' + g + '. Empty claws.';
+  if (!s.swept) return 'Too early — hold right first, then drop while the clock is lit.';
+  const d = s.dropBeat || houseSecond(s);
+  if (s.timed) return 'The clock was lit on second ' + d + ', but the claws were not over the glow.';
+  return 'Dropped on second ' + d + ' — the clock was dark. Empty claws.';
 }
 
 function clawMin() { return CASE.x + 36; }
 function clawMax() { return CASE.x + CASE.w - 36; }
-function grabBeatOf(seed) {
-  return 1 + Math.floor(rng(seed + 91)() * SWEEP_SECONDS);
-}
-function sweepBeat(s) {
-  return Math.min(SWEEP_SECONDS, Math.max(1, Math.ceil(s.sweepT || 0.01)));
-}
 function pieceArt(d, key) {
   const img = d.art && d.art[key];
   if (!img) return null;
@@ -236,12 +235,11 @@ function beginSitting(s) {
     s.prizeKept = false;
     s.caughtNow = false;
     s.caughtAgain = false;
-    s.grabBeat = grabBeatOf(s.seed);
     s.dropBeat = 0;
     s.timed = false;
     s.lined = false;
     s.houseLeft = HOUSE_SECONDS;
-    s.note = 'Hold right. TAP on NOW when the claw is over the glow.';
+    s.note = 'Hold right. Park over the glow, then TAP while the clock is lit.';
     persist(s);
   } finally {
     s.chargeLock = false;
@@ -255,8 +253,8 @@ function startDrop(s) {
   s.dropT = 0;
   s._riseFromY = null;
   s.held = null;
-  s.dropBeat = sweepBeat(s);
-  s.timed = s.dropBeat === s.grabBeat;
+  s.dropBeat = houseSecond(s);
+  s.timed = isCabinetWin(s.level, s.dropBeat);
   const bonus = bonusCapsule(s);
   s.lined = !!(s.timed && clawOver(s, bonus));
   s.target = s.lined ? bonus : null;
@@ -393,7 +391,7 @@ function drawStick(s, d) {
     d.ellipse(nx - 4, L.cy - 6, L.knobR * 0.4, L.knobR * 0.26, CREAM + 'aa');
   }
   const waiting = s.phase === 'aim' && !s.swept;
-  const now = s.phase === 'aim' && s.swept && sweepBeat(s) === s.grabBeat;
+  const now = s.phase === 'aim' && s.swept && clockLit(s);
   const label = s.phase === 'aim' ? (waiting ? 'HOLD →' : (now ? 'NOW' : 'HOLD →')) : 'TAP';
   d.text(label, L.cx, L.cy - L.baseRy - 6, 16, now ? '#c42848' : '#fff6d8');
 }
@@ -420,12 +418,18 @@ export default {
   },
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
+  winningSeconds: level => winningSeconds(level),
+  prizeClock(s) {
+    if (!s || (s.phase !== 'aim' && s.phase !== 'drop')) return null;
+    const n = houseSecond(s);
+    return {n, total: HOUSE_SECONDS, lit: isCabinetWin(s.level, n)};
+  },
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop when NOW lights to lift the chapter bonus.'
-    : 'Digby’s claw only travels one way. Line it over the glow and drop when NOW lights. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop while the clock is lit to lift the chapter bonus.'
+    : 'Digby’s claw only travels one way. Line it over the glow and drop while the clock is lit. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. After it starts moving, a five-second drop counts down. Tap the vault or press Space/Enter when NOW lights AND the claw is over the glow.'
-    : 'Hold the stick right (or → / D) to sweep — one way only. Tap or press Space/Enter when NOW lights and the claw is over the glow.',
+    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. You can stop over the glow and wait. Tap the vault or press Space/Enter when the clock lights AND the claw is over the glow.'
+    : 'Hold the stick right (or → / D) to sweep — one way only. Stop over the glow if you need to wait. Tap or press Space/Enter while the clock is lit.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -469,12 +473,11 @@ export default {
       dropT: 0,
       dropPhase: null,
       stick: null,
-      grabBeat: saved.grabBeat || grabBeatOf(saved.seed || (level + 1) * 7919),
       dropBeat: 0,
       timed: false,
       lined: false,
       swept: false,
-      note: saved.note || 'Aim the claw — TAP the glowing second',
+      note: saved.note || 'Aim the claw — TAP while the clock is lit',
     };
     if (resume && !s.capsules) s.capsules = makeCapsules(level, s.seed);
     if (s.phase === 'drop') {
@@ -499,13 +502,9 @@ export default {
       s.clawX = s.aimX;
       s.clawY = RAIL_Y + 28;
       if (s.swept) {
-        s.sweepT = (s.sweepT || 0) + dt;
-        const left = Math.max(0, SWEEP_SECONDS - s.sweepT);
-        const beat = sweepBeat(s);
-        if (beat === s.grabBeat) s.note = 'NOW — TAP!';
-        else if (left <= 2.2 && left > 0) s.note = 'Drop in ' + Math.ceil(left) + '…';
-        else s.note = 'Sweep right. TAP on the glowing second.';
-        if (s.sweepT >= SWEEP_SECONDS) startDrop(s);
+        const n = houseSecond(s);
+        if (clockLit(s)) s.note = 'NOW — TAP! Second ' + n + ' is lit.';
+        else s.note = 'Second ' + n + ' is dark. Wait over the glow.';
       } else {
         s.note = 'Hold right to send the claw across.';
       }
@@ -666,17 +665,8 @@ export default {
     }
     c.restore();
 
-    if (s.phase === 'aim' && s.swept) {
-      const beat = sweepBeat(s);
-      for (let i = 1; i <= SWEEP_SECONDS; i++) {
-        const x = CASE.x + 48 + (i - 1) * 38;
-        const y = CASE.y + 18;
-        const now = beat === i && i === s.grabBeat;
-        d.circle(x, y, now ? 8 : 5, now ? GOLD : (i === beat ? CREAM : '#3a181888'), GOLD, 1.5);
-      }
-    }
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
-      if (s.phase === 'aim' && s.swept && sweepBeat(s) === s.grabBeat) d.glow(s.clawX, s.clawY, 46, GOLD);
+      if (s.phase === 'aim' && s.swept && clockLit(s)) d.glow(s.clawX, s.clawY, 46, GOLD);
       drawClaw(d, s.clawX, s.clawY, !!s.held);
       if (s.held) {
         drawCapsule(d, Object.assign({}, s.held, {

@@ -1,5 +1,6 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
-import {firstPrizeEligible} from './first-prize.js?v=ch2-lock-1';
+import {firstPrizeEligible} from './first-prize.js?v=prize-sec-1';
+import {WIN_SECONDS} from './prize-seconds.js?v=prize-sec-1';
 /** Isolated schoolyard reducer for Rosalie's tester. Not wired into rendering. */
 
 export function normalizeName(text) {
@@ -87,21 +88,8 @@ export const LOVE_CHAPTERS = [
 ];
 LOVE_CHAPTERS.forEach((chapter, i) => { chapter.prize = chapterKits['love'].prizes[i] || chapter.prize; });
 
-function span(a, b, step = 1) {
-  const out = [];
-  for (let n = a; n <= b; n += step) out.push(n);
-  return out;
-}
-
-/** Provisional 50/40/30/25/20/15 curve. Editable; not final odds. */
-export const LOVE_WINS = [
-  span(1, 50),
-  span(2, 80, 2),
-  span(3, 90, 3),
-  span(76, 100),
-  span(5, 100, 5),
-  [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47],
-];
+/** Provisional 50/40/30/25/20/15 curve. The reading (1–100) must land on these. */
+export const LOVE_WINS = WIN_SECONDS;
 
 export function isLoveWin(level, n) {
   if(firstPrizeEligible('love',level))return true;

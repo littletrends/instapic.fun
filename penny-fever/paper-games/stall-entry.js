@@ -58,7 +58,7 @@ export function isClosed(id) {
 
 export function entryFor(id) {
   if (CLOSED_SET.has(id)) return {door: 'closed', inside: 'none', firstChapterFree: false};
-  if (id === 'snap') return {door: 'free', inside: 'none', firstChapterFree: true};
+  if (id === 'snap') return {door: 'free', inside: 'penny', firstChapterFree: true};
   if (id === 'curios') return {door: 'ticket', inside: 'penny', firstChapterFree: false};
   if (RIDE_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
   if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: false};
@@ -94,7 +94,7 @@ export function enterLabel(id) {
   if (id === 'coin-pusher') return 'The trays · real pennies';
   if (door === 'ticket') return 'Sit down · Chapter 1 free';
   if (door === 'free') {
-    if (id === 'snap') return 'Instapic booth · try it';
+    if (id === 'snap') return 'Instapic booth · Chapter 1 free';
     if (RIDE_SET.has(id)) return 'Board · Chapter 1 free';
     return PENNY_DOOR_LABEL[id] || 'Enter · Chapter 1 free';
   }

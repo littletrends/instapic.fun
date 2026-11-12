@@ -1,12 +1,13 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
+import {secondsNote} from '../prize-seconds.js?v=prize-sec-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   LOVE_CHAPTERS, normalizeName, normalizeKey, countWord, addDown, sumPair,
-  isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters,
-} from '../love-arithmetic.js?v=ch2-lock-1';
+  isLoveWin, readingFor, ordinaryFor, lettersOnly, repeatedLetters, LOVE_WINS,
+} from '../love-arithmetic.js?v=prize-sec-1';
 
 const BOOK = 'pennyFever.rosalieTester';
 const KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(['space', 'del']);
@@ -376,6 +377,8 @@ export default {
   clockRuns: s => s.phase === 'count' || s.phase === 'add',
   // Runtime: H types a letter only while a name box is active; while counting/adding H opens help.
   typing: s => s.phase === 'edit',
+  winningSeconds: level => (LOVE_WINS[level] || LOVE_WINS[0]).slice(),
+  secondsNote: level => secondsNote(level).replace('The clock lights on', 'Tonight’s reading must land on'),
   intro: alleyPlay
     ? 'Rosalie’s schoolyard fortune machine. Write the names, count the letters, then add them down until a number from 1 to 100 remains. The chapter valentine only drops on tonight’s numbers. Same names, same answer — always. Not medical advice, even on the health sitting.'
     : 'Write the names, count the letters, add them down. Workshop sittings are free and write nothing.',

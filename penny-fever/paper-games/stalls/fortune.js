@@ -1,10 +1,11 @@
-import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=ch2-lock-1';
-import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=ch2-lock-1';
+import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=prize-sec-1';
+import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=prize-sec-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
-} from "../fortune-globe.js?v=ch2-lock-1";
+  IRIS_WINS, clockNumber as irisClock,
+} from "../fortune-globe.js?v=prize-sec-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -223,7 +224,13 @@ export default {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
-  intro: "Iris’s fortune globe. A sign flashes — remember it. Stop each spinning ring so its sign sits in the bright glow at the top. Every clean catch reads a fortune; only some catches unlock the chapter bonus.",
+  winningSeconds: level => (IRIS_WINS[level] || IRIS_WINS[0]).slice(),
+  prizeClock(s) {
+    if (!s || s.phase === 'result' || s.phase === 'idle') return null;
+    const n = irisClock(s.clock || 0);
+    return {n, total: 100, lit: isIrisWin(s.level, n)};
+  },
+  intro: "Iris’s fortune globe. A sign flashes — remember it. Stop each spinning ring so its sign sits in the bright glow at the top. The clock lights on this chapter’s prize seconds — a clean catch while it is lit unlocks the bonus.",
   instructions: "Tap the centre of the globe (or Space/Enter) to gaze. Remember the signs, then tap the globe again to stop each ring in the glow, outside ring first. The badge shows Locked until a catch unlocks this chapter’s bonus, then Unlocked.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   prizes: IRIS_CHAPTERS.map(c => c.prize),

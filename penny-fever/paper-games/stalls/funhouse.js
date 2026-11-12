@@ -32,7 +32,7 @@ import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=ch2-lock-1';
+} from '../ride-seek.js?v=prize-sec-1';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
