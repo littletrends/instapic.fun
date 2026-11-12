@@ -7,7 +7,7 @@ import {takeAttempt, retryNote} from '../stall-entry.js?v=insights-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique,
+  ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf,
 } from '../milky-splash.js?v=treasure-design-1';
 
 const BOOK = 'pennyFever.milkySplash';
@@ -74,11 +74,13 @@ function revive(blob, level, seed) {
 }
 
 function ordinaryReward(s){
- if(s.rewardCommitted)return;
+ if(s.rewardCommitted)return '';
  s.rewardCommitted=true;
  const drop=ordinaryFor(s.resultN||resultNumber(s.seed));
  persist(s);
  if(alleyPlay){if(drop==='everyday-penny')credit(1);else keep(drop,'milk-bottles');}
+ // Label the tray tip so a silent +1 in the purse has a visible reason.
+ return ' Mabel’s tray tip: '+(drop==='everyday-penny'?'+1 penny to your purse':(itemName(drop)||drop)+' to your treasures')+'.';
 }
 function finishWin(s){
  if(s.phase==='result'||!isDelivered(s.board))return;
@@ -86,14 +88,14 @@ function finishWin(s){
  // Seeing the earned bottle is the eligibility decision. Never roll again on delivery.
  const win=!chapterPaid(s.level);
  s.phase='result';s.charged=false;s.won=win;s.resultN ||= resultNumber(s.seed);
- ordinaryReward(s);
+ const tip=ordinaryReward(s);
  if(win){
   if(alleyPlay){keep(prize,'milk-bottles');markPaid(s.level);}
   const u=s.board.unique||{c:0,r:s.board.rows-1};
   takePrize(s,prize,cellCenter(s.board,u.c,u.r));
  }
  s.hold=win?1.8:0;
- s.note=win?'The sealed bottle opens in Mabel’s crate.':'This treasure is already in your collection.';
+ s.note=(win?'The sealed bottle opens in Mabel’s crate.':'This treasure is already Unlocked — it won’t drop twice.')+tip;
  if(!win)done(s,'Delivery complete',s.note,{won:false,prize:null,settle:true});
  persist(s);
 }
@@ -103,7 +105,9 @@ function restSitting(s,why){
  const waiting=!!(s.board&&locateUnique(s.board)&&!s.board.delivered);
  s.phase=waiting?'rest':'result';s.hold=0;
  s.note=why||(waiting?'Moves used. Your bottle stays here. Play buys more moves.':'Moves used. This tray is complete.');
- if(!waiting){ordinaryReward(s);done(s,'Tray complete',s.note,{won:false,prize:null,settle:true});}
+ if(!waiting){s.note+=ordinaryReward(s);done(s,'Tray complete',s.note,{won:false,prize:null,settle:true});}
+ // A waiting board also opens the result panel, so "Play again · 1 penny" is a real button (bug 2).
+ else done(s,'Moves used',s.note,{won:false,prize:null,settle:true});
  persist(s);
 }
 
@@ -181,11 +185,11 @@ export default {
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Swap neighbouring bottles. A ticket enters the dairy; the first try of each chapter is included. Extra rounds are a penny — one charge, a full move tray. Every board holds the chapter’s treasure until you collect it. Match it down into the crate. The board waits if moves run out.'
-    : 'Swap neighbouring bottles. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
+    ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. A ticket enters the dairy; the first round of each chapter is free. Extra rounds are a penny — one charge, a full move tray. Every board holds the chapter’s treasure until you collect it. Match it down into the crate. The board waits if moves run out.'
+    : 'Drag or tap two neighbouring bottles to swap them. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
-    ? 'Tap two neighbours to swap. Only a real match spends a move. Cascades are free. The gold PRIZE bottle must reach the bottom delivery crate. Match beneath it to make it fall. Wooden crates are obstacles: an adjacent match breaks them; they do not need delivering. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
-    : 'Tap two neighbours. Practice writes nothing.',
+    ? 'Drag or tap two neighbouring bottles to swap them (keyboard: arrows move, Space/Enter picks, an arrow swaps). Only a real match spends a move. Cascades are free. The gold PRIZE bottle must reach the bottom delivery crate. Match beneath it to make it fall. Wooden crates are obstacles: an adjacent match breaks them; they do not need delivering. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
+    : 'Drag or tap two neighbouring bottles to swap them. Practice writes nothing.',
   levels: MABEL_CHAPTERS.map(c => c.title),
   sprites: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn', 'moon-penny', 'star-token', 'everyday-penny'],
   prizes: MABEL_CHAPTERS.map(c => c.prize),
@@ -199,7 +203,7 @@ export default {
       charged: !!saved.charged, resultN: saved.resultN || 0,
       won: !!saved.won && !!saved.board?.delivered, hold:saved.hold||0, result:saved.result||null, rewardCommitted:saved.rewardCommitted??(saved.phase==='result'), reduced: !!saved.reduced,
       selected: saved.selected || null, lock: false,
-      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Tap the board when you are ready.',
+      note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Tap the board or press Space/Enter when you are ready.',
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeDeliveryBoard(level, s.seed,{allowUnique:!chapterPaid(level)});
     // Honour an in-progress paid/included legacy board without buying another allowance.
@@ -219,7 +223,7 @@ export default {
     if(s.board?.delivered&&!chapterPaid(level)&&s.phase==='result'){s.phase='play';s.won=false;delete s.result;}
     if(s.board?.delivered&&chapterPaid(level)&&s.phase==='play'){s.phase='result';s.won=true;s.charged=false;s.hold=0;}
     if(s.phase==='result'&&!s.result&&s.hold<=0){
-      done(s,s.won?'Bonus collected':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
+      done(s,s.won?'Bonus unlocked':'Tray complete',s.note,{won:s.won,prize:s.won?this.prizes[level]:null,settle:true});
     }
     bindPrize(s, this.prizes[level] || this.prizes[0], (this.live || this.tables) ? {field: true} : null);
     if (s.won && s.chapterPrize) s.chapterPrize.field = false;
@@ -287,14 +291,50 @@ export default {
   },
   key(s, k, down) {
     if (!down) return;
+    const dirs = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]};
+    if (s.phase === 'play' && s.board && !s.result) {
+      // Keyboard play: arrows move the cursor; Space/Enter picks the bottle under it;
+      // with a bottle picked, an arrow swaps it with that neighbour (same rules as a tap swap).
+      const b = s.board;
+      if (!s.kbCursor) s.kbCursor = {c: Math.floor(b.cols / 2), r: Math.floor(b.rows / 2)};
+      if (dirs[k]) {
+        const [dc, dr] = dirs[k];
+        const to = {c: Math.max(0, Math.min(b.cols - 1, s.kbCursor.c + dc)), r: Math.max(0, Math.min(b.rows - 1, s.kbCursor.r + dr))};
+        if (s.selected && (to.c !== s.selected.c || to.r !== s.selected.r)) {
+          const from = s.selected;
+          s.kbCursor = to;
+          trySwap(s, from, to);
+        } else s.kbCursor = to;
+        return;
+      }
+      if (k === ' ' || k === 'Enter') {
+        const cur = s.kbCursor;
+        if (s.selected && s.selected.c === cur.c && s.selected.r === cur.r) { s.selected = null; s.note = 'Bottle put back. Pick another with Space/Enter.'; }
+        else if (!isSliding(s)) { s.selected = {c: cur.c, r: cur.r}; s.note = 'Bottle picked — press an arrow to swap it with that neighbour.'; }
+        return;
+      }
+      return;
+    }
     if (k === ' ' || k === 'Enter') this.action(s, 'play');
   },
-  draw(s,d){drawMilkySplash(s,d,MABEL_CHAPTERS[s.level]);},
+  draw(s,d){
+    drawMilkySplash(s,d,MABEL_CHAPTERS[s.level]);
+    if (s.kbCursor && s.phase === 'play' && s.board) {
+      const L = layoutOf(s.board), c = d.c;
+      c.save();
+      c.strokeStyle = '#2f5f9e';
+      c.lineWidth = 5;
+      c.setLineDash([10, 6]);
+      c.strokeRect(L.originX + s.kbCursor.c * L.size + 4, L.originY + s.kbCursor.r * L.size + 4, L.size - 8, L.size - 8);
+      c.restore();
+    }
+  },
   readout: s => {
     const n = alleyPlay ? pocket() : null;
     const purse = n == null ? 'practice' : n + (n === 1 ? ' penny' : ' pennies');
     const moves = s.board ? s.board.movesLeft + ' moves' : 'idle';
-    const u = chapterPaid(s.level) ? 'bonus collected' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'delivered' : 'gold treasure on board') : 'treasure ready when you play';
-    return purse + ' · ' + moves + ' · ' + u + ' · ' + s.note;
+    const u = chapterPaid(s.level) ? 'chapter treasure already Unlocked' : s.board && locateUnique(s.board) ? (s.board.delivered ? 'treasure delivered' : 'gold treasure on the board — match beneath it') : 'treasure appears when you play';
+    // Three short lines: purse and moves, treasure status, then what just happened.
+    return purse + ' · ' + moves + '\n' + u[0].toUpperCase() + u.slice(1) + '\n' + (s.note || '');
   },
 };

@@ -277,7 +277,7 @@ function maybeReleaseTreasure(s) {
 
 function prizeStatus(s) {
   if(s.practice)return "Free practice · no charge or prizes";
-  if(s.tray.treasureOwned)return "Treasure already in your collection";
+  if(s.tray.treasureOwned)return "Treasure already Unlocked";
   if(s.tray.treasureOn)return "Prize on tray — push it over the edge";
   const left=Math.max(0,RELEASE_PENNIES-s.tray.paidCount);
   return "Prize releases in "+left+" paid "+(left===1?"penny":"pennies");
@@ -304,13 +304,17 @@ function collectOff(s) {
     if (penniesWon) {
       purseCredit(penniesWon);
       s.lastWin = (s.lastWin || 0) + penniesWon;
-      s.note = s.lastWin === 1 ? "One penny over the lip." : s.lastWin + " pennies over the lip.";
+      // Visible receipt for the last drop: pennies in, pennies back, net change.
+      const paidIn = Math.max(0, s.handful || 0), net = s.lastWin - paidIn;
+      s.note = "Receipt · " + paidIn + (paidIn === 1 ? " penny" : " pennies") + " in · " + s.lastWin + " back over the lip"
+        + (paidIn ? " (" + (net >= 0 ? "+" : "") + net + ")" : "") + ".";
     }
     if (treasureWon && !s.tray.treasureOwned) {
       if (alleyPlay) keep(CHAPTERS[s.level].prize, "coin-pusher");
       s.tray.treasureOwned = true;
       s.tray.treasureOn = false;
       s.won = true;
+      s.treasureJustWon = true;
       s.note = "Treasure over the edge.";
       clink(700, 0.4, 0.12);
     }
@@ -326,8 +330,8 @@ export default {
   tables: true,
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
   houseSeconds: 0,
-  intro: "Copper’s coin pusher. The tray starts loaded and stays how you left it. Early chapters sit fat near the lip — later ones are stingy. Pack five pennies to keep a bundle out of the machine; Drop purse only dumps what is still loose, and a big dump asks once before it falls. The chapter prize unlatches on the first paid penny, then you still have to push it over the edge.",
-  instructions: "Aim the hopper, then drop 1, ¼, ½ or the loose purse. Pack 5 pennies into a 5-pack to keep them out of play; open a pack when you want them back. A large dump warns first — packed coins stay safe. One dump, one shove. The unique only joins the tray by the first paid penny in each chapter — never on the practice drop — and it never falls in by itself.",
+  intro: "Copper’s coin pusher. The hopper sweeps side to side by itself — time your drop. Pennies pushed over the lip come back to your purse, and your tray is saved exactly as you leave it. The chapter prize joins the tray with the first paid penny; then push it over the edge.",
+  instructions: "Watch the hopper sweep, then tap Drop 1 penny, ¼ purse, ½ purse or Drop purse (Space/Enter drops 1). A big dump asks once before it falls. Pack 5 pennies keeps five out of play; Open 5-pack brings them back. Your very first drop here is a free practice drop — no charge, no prizes.",
   levels: CHAPTERS.map(c => c.title),
   prizes: CHAPTERS.map(c => c.prize),
   images: {
@@ -480,7 +484,7 @@ export default {
     else {
       const have = pursePennies();
       if (have < 1) {
-        s.note = "Purse is empty. Knock some over the lip.";
+        s.note = "Purse is empty. Cash a ticket on the bar for five pennies, or top up your purse at Aura’s booth.";
         return;
       }
       n = Math.min(n, have);
@@ -613,7 +617,7 @@ export default {
       c.globalAlpha = 1;
       d.text("Locked", 450, 312, 14, "#ead6a4");
     } else if (s.tray.treasureOwned) {
-      d.text("Collected", 450, 268, 16, "#c8e878");
+      d.text("Unlocked", 450, 268, 16, "#c8e878");
     }
     if (s.flash > 0) {
       c.fillStyle = `rgba(255, 220, 120, ${s.flash * 0.25})`;

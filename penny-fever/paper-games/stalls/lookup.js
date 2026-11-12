@@ -88,7 +88,7 @@ function chapterOwned(level) {
   const set = SETS[level] || SETS[0];
   return (alleyPlay && owned(set.prize)) || !!readSky(level).paid;
 }
-/** Fresh sitting: keep Collected, wipe glasses/stars/flight so Play again never sticks. */
+/** Fresh sitting: keep Unlocked, wipe glasses/stars/flight so Play again never sticks. */
 function clearSitting(s) {
   const c = CHAPTERS[s.chapter];
   s.phase = 'playing';
@@ -120,9 +120,9 @@ function clearSitting(s) {
   s.houseLeft = null;
   refresh(s);
   s.note = s.paid
-    ? itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.'
+    ? itemName(s.prize) + ' stays Unlocked. Turn the glasses for another sky.'
     : (alleyPlay
-      ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then feed a penny of starlight.'
+      ? 'The ' + itemName(s.prize) + ' hangs at the sky bell. Turn the glasses, then press FEED or Space/Enter to send a comet. After a miss, the last glass drifts — line it up again.'
       : 'Turn the glasses, then feed a practice penny along the path.');
   s.dirty = true;
 }
@@ -191,7 +191,7 @@ function guidance(s) {
   const n = (s.keptLit || []).filter(Boolean).length;
   const need = CHAPTERS[s.chapter].stars.length;
   if (n) return n + ' of ' + need + ' stars remembering. Glass ' + GLASS[s.selected] + ' — tap to turn, or feed the lantern.';
-  return 'Glass ' + GLASS[s.selected] + ' selected. Turn the glasses, then feed a penny of starlight.';
+  return 'Glass ' + GLASS[s.selected] + ' selected. Turn the glasses, then FEED (Space/Enter) a comet.' + (s.started ? '' : ' After a miss, the last glass drifts — line it up again.');
 }
 function emptyNote() {
   return alleyPlay
@@ -388,11 +388,11 @@ function hydrate(level, saved) {
     s.turns = saved.turns || 0;
     s.hints = saved.hints || 0;
   }
-  // Wallet can show Collected even if an older save missed paid.
+  // Wallet can show Unlocked even if an older save missed paid.
   if (!s.paid && alleyPlay && owned(s.prize)) s.paid = true;
   const reopenFresh = !!s.paid && !saved.flying;
   if (reopenFresh) {
-    // Finished sky: keep Collected, clear the board so re-entry / Play again is playable.
+    // Finished sky: keep Unlocked, clear the board so re-entry / Play again is playable.
     s.keptLit = c.stars.map(() => false);
     s.bellLit = false;
     s.angles = c.initial.map(i => i * STEP);
@@ -421,7 +421,7 @@ function hydrate(level, saved) {
   if (s.phase === 'flying') {
     s.note = 'The comet is still travelling.';
   } else if (reopenFresh) {
-    s.note = itemName(s.prize) + ' stays Collected. Turn the glasses for another sky.';
+    s.note = itemName(s.prize) + ' stays Unlocked. Turn the glasses for another sky.';
   } else if (s.paid) {
     s.note = itemName(s.prize) + ' already left this sky. Feed pennies if you like — ordinary lights still fall.';
   } else if (alleyPlay) {
@@ -439,13 +439,13 @@ export default {
   chapterEnds: true,
   retryButton: 'Play again',
   intro: alleyPlay
-    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turn the glasses for free. Each penny is a comet. Wake the stars, then time the 1–100 bell — only tonight’s numbers drop the unique. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
+    ? 'Celeste’s observatory is a living paper sky. Six constellations, each hanging one keepsake at the numbered sky bell. Turning the glasses is free. The first comet of each chapter is free; after that each comet costs a penny. Wake the stars, then time the 1–100 bell — only tonight’s numbers drop the unique. Miss, and ordinary starlight still falls. Walk away — this sky waits.'
     : 'Celeste’s workshop sky. Turn the brass glasses, then feed practice pennies along the path. Workshop scores never enter your wallet.',
   instructions: alleyPlay
-    ? 'Tap or drag a glass (free). Space feeds one penny and launches a comet along the current path. Stars stay remembered. When the numbered bell is awake, time the comet so it strikes a winning number. After a miss the last glass drifts — line it up again. Z undo, X hint.'
+    ? 'Tap or drag a glass (free), or ↑/↓ pick one and ←/→ turn it. Press FEED or Space/Enter to launch a comet along the current path. Stars stay remembered. When the numbered bell is awake, time the comet so it strikes a winning number. Remember: after a miss the last glass drifts, so line it up again before the next comet. Z undo, X hint.'
     : 'Turn the glasses, then feed a practice penny. Light the stars, then time the numbered bell. Workshop play is free and writes nothing.',
   tableDetail: alleyPlay
-    ? 'Glasses are free. A penny launches one comet. The unique hangs until a winning strike. Walk away — the sky waits.'
+    ? 'Glasses are free. The first comet each chapter is free, then a penny a comet. The unique hangs until a winning strike. Walk away — the sky waits.'
     : 'Turn the glasses, then feed a practice penny. This sky keeps while you are here.',
   liveTitle: 'A Little Starlight',
   liveDetail: alleyPlay
@@ -473,7 +473,7 @@ export default {
   },
   clockRuns(s) {
     // Freeze the house clock while a comet flies or the win settles — avoids
-    // a timeout veil stealing the Collected result mid-celebration.
+    // a timeout veil stealing the Unlocked result mid-celebration.
     return !!s && s.phase === 'playing' && !s.result;
   },
   onTimeout(s) {
@@ -588,6 +588,8 @@ export default {
         s.note = 'Glass ' + GLASS[h.index] + ': ' + h.text;
         return;
       }
+      s.note = 'No hint needed — every glass is lined up. Feed a penny to send the comet.';
+      return;
     }
     if (s.phase === 'playing') s.note = s.note || guidance(s);
   },
@@ -597,8 +599,9 @@ export default {
     if (k === 'ArrowDown') s.selected = Math.min(s.angles.length - 1, s.selected + 1);
     if (k === ' ') feed(s);
     if (k === 'Enter') feed(s);
-    if (k === 'z') { if (undo(s)) s.dirty = true; }
-    if (k === 'x') this.action(s, 'hint');
+    if (k === 'z' || k === 'Z') { if (undo(s)) s.dirty = true; }
+    // Return after the hint so the guidance line below does not overwrite it straight away.
+    if (k === 'x' || k === 'X') { this.action(s, 'hint'); return; }
     if (s.phase === 'playing' && k !== ' ' && k !== 'Enter') s.note = guidance(s);
   },
   draw(s, d) {
@@ -641,7 +644,7 @@ export default {
         w: 64, shadow: false,
         fallback: () => d.star(800, 130, 22, '#e7c789'),
       });
-      d.text(got ? 'Collected' : 'Locked', 800, 182, 14, got ? '#c8e878' : '#ead6a4');
+      d.text(got ? 'Unlocked' : 'Locked', 800, 182, 14, got ? '#c8e878' : '#ead6a4');
     }
     const [sx, sy] = c.source;
     d.glow(sx, sy, s.phase === 'flying' ? 56 : 36, '#f0d18f');

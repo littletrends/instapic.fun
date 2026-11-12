@@ -144,3 +144,14 @@ body .cabinet-interior.paper-game-cabinet {
  .paper-chapter-tab{min-width:30px;padding:6px 6px;font-size:14px;}
  .paper-game-wallet.is-on-bar{font-size:12px;}
 }
+@media(max-width:700px){
+ .paper-game-bar{flex-wrap:wrap;row-gap:4px;}
+ .paper-game-bar .paper-chapter-nav{order:10;flex:1 0 100%;justify-content:center;}
+}
+@media(max-width:420px){
+ .paper-game-bar{gap:4px;padding-left:6px;padding-right:6px;}
+ .paper-game-bar button,.paper-game-bar a{padding:6px;}
+ .paper-game-bar .paper-game-treasure{font-size:0;padding:7px 9px;}
+ .paper-game-bar .paper-game-treasure span{font-size:16px;}
+ .paper-game-bar .paper-game-wallet.is-on-bar{margin-left:auto;}
+}

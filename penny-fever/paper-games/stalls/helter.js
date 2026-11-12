@@ -26,7 +26,7 @@ import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=insights-1';
+} from '../ride-seek.js?v=pf-clarity-1';
 
 const RIDE = 'helter';
 const TREASURES = chapterKits['helter'].prizes;
@@ -921,8 +921,8 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Choose your spiral. Catch what tumbles. TAP along Tilly’s helter — JUMP onto cream cushions to bounce up; JUMP over deep-red slides (or ride the soft dump — never aborts). Collect the spiral-tower keepsake, then climb all the way to the crest to clear.',
-  instructions: 'Climb with ← JUMP → in the cream (or arrows / space). ←/→ TAP along the coil; JUMP leaps over the next cell. Land on a slide = soft dump down (ride continues). JUMP onto a cushion = bounce up. Collect keepsake + tokens on the track. Clear Practice: keepsake AND crest (cushions help climb; they do not finish early). First chapter ride is free practice and keeps nothing; later rides cost a penny.',
+  intro: 'Tilly’s spiral slide. Climb the red coil to the crest and grab the chapter keepsake on the way. Your first ride each chapter is free practice and keeps nothing; later rides cost a penny.',
+  instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Grab the keepsake AND reach the crest to clear the chapter.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
   prizes: TREASURES,

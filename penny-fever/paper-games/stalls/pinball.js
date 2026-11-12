@@ -93,7 +93,7 @@ function releaseInput(s){
  if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
 }
 function prizeStatus(s){
- if(!pickUnique(s))return 'Bonus collected';
+ if(!pickUnique(s))return 'Bonus Unlocked';
  return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
@@ -162,7 +162,7 @@ function pay(s, id, x, y) {
     s.specials++;
     s.tokens[id] = (s.tokens[id] || 0) + 1;
     if (alleyPlay) keep(id, 'pinball');
-    if (id === chapterPrize(s)) takePrize(s, id, {x:x*1.35-204, y});
+    if (id === chapterPrize(s)) { takePrize(s, id, {x:x*1.35-204, y}); s.prizeJustWon = true; }
     s.note = itemName(id) + (unique ? ' — a rare from the glass!' : ' into the treasure book.');
   }
   if(id!==chapterPrize(s))fly(s, id, x, y, special);
@@ -358,14 +358,14 @@ export default {
   onTimeout(s){
     if(!s.activeBall)return;
     s.houseLeft=0;drain(s);
-    s.note='100 seconds — lights out. Launch the next ball.';
+    s.note='100 seconds — lights out. Hold Space (or press Enter) to launch the next ball.';
     writeBook(s);
   },
   selectedChapter(){return Math.max(0,Math.min(5,Number(readStore().currentChapter)||0));},
   releaseInput,
   cancelAction(s,id){if(id==='plunge'){s.pointerPlunge=false;s.dragPlunge=false;s.charging=false;s.charge=0;if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};}else if(id==='left'||id==='right')s[id]=false;},
   hud(s){return {cash:alleyPlay?(pocket()||0)+' pennies':'Practice',keep:(s.mode==='live'?'Ball in play · ':'')+(alleyPlay?Math.max(0,s.credit||0)+' ready':s.ammo+' ready')};},
-  actionStates(s,input){return {left:s.left||input.actions.has('left')||input.keys.has('z')||input.keys.has('ArrowLeft'),right:s.right||input.actions.has('right')||input.keys.has('x')||input.keys.has('ArrowRight'),plunge:s.charging};},
+  actionStates(s,input){return {left:s.left||input.actions.has('left')||input.keys.has('z')||input.keys.has('Z')||input.keys.has('ArrowLeft'),right:s.right||input.actions.has('right')||input.keys.has('x')||input.keys.has('X')||input.keys.has('ArrowRight'),plunge:s.charging};},
   actionEnabled(s){return {plunge:canPull(s)&&canAfford(s)};},
   actionLabels(s){return {plunge:returningBall(s)?'Pull back · ball returning':s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
@@ -373,8 +373,8 @@ export default {
     ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter bonus. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. Z/X and Space also work. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
-    : 'Hold Plunge and release. Tap Left and Right flippers. Z, X and Space work on a keyboard. Each chapter is a different cabinet.',
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. On a keyboard: hold Space to pull the plunger (Space is the plunger, not a flipper), Z or ← for the left flipper, X or → for the right, and Enter for a quick launch. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
+    : 'Hold Plunge and release. Tap Left and Right flippers. Keyboard: hold Space to plunge, Z/← and X/→ flippers, Enter quick launch. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
     ? 'Hold the plunger, let go, then tap the flippers. One penny, three balls. Each ball lasts up to 100 seconds.'
@@ -578,6 +578,13 @@ export default {
     }
   },
   key(s, k, down) {
+    // Enter: quick launch at a medium pull (restart after LIGHTS OUT without holding Space).
+    // R is left to the shared player (Play again on the result panel) so the key means one thing.
+    if (down && k === 'Enter' && s.mode === 'lane' && !s.charging) {
+      beginCharge(s);
+      if (s.charging) { s.charge = 0.6; s.ball.y = LANE.y + s.charge * LANE.pull; releasePlunger(s); }
+      return;
+    }
     if ((k === 'z' || k === 'Z' || k === 'ArrowLeft') && !down) s.left = false;
     if ((k === 'x' || k === 'X' || k === 'ArrowRight') && !down) s.right = false;
     if (k === ' ') {
@@ -592,7 +599,7 @@ export default {
     d.poly([[96, 30], [804, 30], [804, 172], [96, 172]], '#161022f2', '#e6c57a', 2);
     d.text('PIP’S', 450, 58, 14, '#e8c878');
     d.text('PINBALL ALLEY', 450, 90, 34, '#fff3d0');
-    d.text(String(s.score).padStart(6, '0')+'  ·  '+(s.cabinetOn?Math.min(100,Math.floor(100-s.houseLeft)+1)+'/100':'LIGHTS OUT'),450,128,23,'#f0d49a');
+    d.text(String(s.score).padStart(6, '0')+'  ·  '+(s.cabinetOn?'SECOND '+Math.min(100,Math.floor(100-s.houseLeft)+1)+'/100':'LIGHTS OUT'),450,128,23,'#f0d49a');
     for (let i = 0; i < 3; i++) d.circle(390 + i * 50, 152, 8, s.lights[i] ? '#f0c060' : '#2a2428', '#e8d4a0', 1);
     const c=d.c;c.save();c.translate(-204,0);c.scale(1.35,1);
     d.text(['THUNDER GARDEN','MOONLIT BUMPERS','LANTERN LANES','BRASS ORCHARD','STORM GLASS','MIDNIGHT SPARK'][s.level],440,925,18,'#d3c293');
@@ -642,6 +649,13 @@ export default {
     d.ball(s.ball.x,s.ball.y,R+1,'#c5d5e2');
     if(!s.cabinetOn)d.poly([[210,200],[640,200],[720,188],[758,228],[758,1148],[228,1148]],'#06091299');
     c.restore();
+    if (!s.cabinetOn && s.mode === 'lane') {
+      // On-table prompt while the lights are out: how to launch the next ball.
+      const ready = alleyPlay ? (s.credit > 0 ? s.credit + (s.credit === 1 ? ' ball' : ' balls') + ' ready on this penny' : 'One penny buys three balls') : s.ammo + ' practice balls';
+      d.text('LIGHTS OUT', 450, 560, 30, '#fff3d0');
+      d.wrap('Hold SPACE or drag the spring down to launch. Enter for a quick launch.', 450, 610, 19, '#f0d49a', 520);
+      d.text(ready, 450, 700, 17, '#e8c878');
+    }
     d.poly([[118, 1120], [782, 1120], [798, 1172], [102, 1172]], '#2a1c16ee', '#e6c57a', 2);
     d.circle(210, 1146, 16, leftOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
     d.circle(690, 1146, 16, rightOn ? '#f0d080' : '#6a3a48', '#ead6a4', 2);
@@ -652,7 +666,7 @@ export default {
     d.text(String(n), 86, 108, 18, '#fff6d8');
     d.poly([[760, 44], [828, 48], [824, 108], [756, 104]], '#6b3a3a', '#e8d4a0', 2);
     d.item(spriteKey(set.prize), 792, 76, {w: 44, alpha:pickUnique(s)?1:.45, fallback: () => d.star(792, 76, 12, '#f4e2a8')});
-    d.text(pickUnique(s)?'Locked':'Collected',792,132,12,'#f4e2a8');
+    d.text(pickUnique(s)?'Locked':'Unlocked',792,132,12,'#f4e2a8');
     for (const f of s.fly) {
       const u = Math.min(1, f.t / f.dur), e = 1 - (1 - u) * (1 - u);
       const destX = f.prize ? 792 : 86, destY = f.prize ? 76 : 64,startX=f.x*1.35-204;

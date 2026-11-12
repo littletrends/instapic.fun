@@ -9,12 +9,14 @@ export function chapterOutcome(id, state, dismissed = false) {
       detail: [state.fortune, state.note].filter(Boolean).join(' '),
       won: !!state.caught, prize: null, handled: true};
   }
-  if (id === 'coin-pusher' && state.tray?.treasureOwned && !state.busy && state.phase === 'idle') {
-    return {title: 'Treasure collected', detail: 'Your tray is saved. Visit the next chapter or keep playing here.',
+  // treasureJustWon / prizeJustWon are set only when the prize is won in this visit (not persisted),
+  // so reopening a chapter whose prize is already owned no longer shows a false "unlocked" panel.
+  if (id === 'coin-pusher' && state.treasureJustWon && state.tray?.treasureOwned && !state.busy && state.phase === 'idle') {
+    return {title: 'Treasure unlocked', detail: 'Your tray is saved. Visit the next chapter or keep playing here.',
       won: true, prize: null, handled: true};
   }
-  if (id === 'pinball' && state.prizeKept) {
-    return {title: 'Bonus collected', detail: 'Your ball and unused plays are saved. Visit the next table or keep playing here.',
+  if (id === 'pinball' && state.prizeKept && state.prizeJustWon) {
+    return {title: 'Bonus unlocked', detail: 'Your ball and unused plays are saved. Visit the next table or keep playing here.',
       won: true, prize: null, handled: true};
   }
   return null;

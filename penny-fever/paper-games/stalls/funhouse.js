@@ -32,7 +32,7 @@ import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=insights-1';
+} from '../ride-seek.js?v=pf-clarity-1';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
@@ -744,8 +744,8 @@ function initMazePlay(s) {
   maybeRevealTreasure(s, roomOf(s.graph, 'maze'));
   logAction(s, 'maze-start', {pellets: maze.pelletTotal, clearGoal: maze.clearGoal});
   s.note = s.practice
-    ? `Free practice · nothing kept. Chomp ${maze.clearGoal}+ chips · POWER chase-back.`
-    : `MOVE · CHOMP ${maze.clearGoal}+ · pick up the bonus · clear chips to keep it · dodge faces (BOMB relocks).`;
+    ? `Free practice · nothing kept. Eat ${maze.clearGoal}+ chips · power tokens let you chase the faces.`
+    : `Eat ${maze.clearGoal}+ chips · pick up the bonus key · keep away from the faces (a catch relocks the bonus).`;
 }
 
 function setWantDir(s, id, down) {
@@ -877,8 +877,8 @@ function softBombToStart(s) {
   s.bombFx = 0.6;
   const dropped = dropStarKey(s);
   s.note = dropped
-    ? 'BOMBED OUT! The bonus locked again.'
-    : 'BOMBED OUT! Back to the entrance!';
+    ? 'Caught! Bonus relocked, back to the entrance.'
+    : 'Caught! Back to the entrance.';
   logAction(s, 'face-bomb', {soft: true, dropped});
 }
 
@@ -1000,7 +1000,7 @@ function collectStarKey(s) {
   } else {
     if (s.treasure) s.treasure.locked = true;
     s.treasureWindow = false;
-    s.note = 'Bonus in hand — clear the chips to keep it. A bomb locks it again.';
+    s.note = 'Bonus in hand — eat the chips to keep it. If a face catches you it is Locked again.';
   }
   return true;
 }
@@ -1010,7 +1010,7 @@ function awardBonusOnClear(s) {
   if (!s.mazeCleared || !s.starKeyTaken) return false;
   if (!s.treasure || s.treasure.taken) return false;
   if (!takeTreasure(s)) return false;
-  s.note = 'Screen clear! Chapter bonus collected!';
+  s.note = 'Screen clear! Chapter bonus Unlocked!';
   return true;
 }
 
@@ -1306,7 +1306,7 @@ function drawMazeCourt(s, d) {
   }
   if (s.bombFx > 0) {
     d.glow(s.player.x, s.player.y, 48, '#c42848');
-    d.text('BOMBED OUT!', 450, 500, 18, BURGUNDY);
+    d.text(s.note && s.note.includes('relocked') ? 'CAUGHT! Bonus relocked' : 'CAUGHT!', 450, 500, 18, BURGUNDY);
   }
 
   // Path chips — simple geometric dots only (NOT catalogue coins / faces).
@@ -2112,7 +2112,7 @@ function drawRoom(s, d) {
     } catch {
       d.heart(tx, ty, 10);
     }
-    d.text(dim ? 'Unlocked' : 'Collected', tx, ty - 22, 10, dim ? INK : GOLD);
+    d.text('Locked', tx, ty - 22, 10, dim ? INK : GOLD);
   }
   drawFlies(d, s);
   drawClarityChrome(s, d);
@@ -2241,8 +2241,8 @@ function updateDoorChapter(s, dt) {
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Every door tells a different joke. In the Laughing Maze, chomp midway chips, walk the paired laughing doorways, pick up the mid-court chapter bonus, and dodge laugh-faces (a touch bombs you back to the entrance and relocks an unkept bonus).',
-  instructions: 'Laughing Maze (all 6 chapters): use the centre MOVE stick on the canvas bottom — or swipe / keyboard arrows. Chomp midway chips. Walk through either mid-edge curtain doorway to pop out the other side (two-way). The mid-court key is this chapter’s bonus — pick it up, then clear the chips to keep it. The header stays Locked until the maze is cleared. Laugh-faces chase you — power / invisible tokens flash the masks and let you chase back; without power, a touch BOMBS you back to the entrance and relocks the bonus if you have not finished. Soft house clock — timer end is an ordinary exit. Same maze layout every chapter; later chapters tighten fairness only.',
+  intro: 'Juno’s Laughing Maze. Eat the chips, grab the chapter bonus in the middle, and keep away from the laughing faces.',
+  instructions: 'Steer with the arrows, WASD, a swipe or the MOVE stick at the bottom. Pick up the bonus key in the middle, then eat enough chips to keep it. If a laughing face catches you, you go back to the entrance and an unkept bonus is Locked again — glowing power tokens let you chase the faces for a moment.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),
   prizes: TREASURES,
@@ -2454,6 +2454,10 @@ export default {
             else if (dr === -1) setWantDir(s, 'up', true);
           } else if (s.maze.doorCell && hitCircle(p, cellCenter(s.maze, s.maze.doorCell.c, s.maze.doorCell.r).x, cellCenter(s.maze, s.maze.doorCell.c, s.maze.doorCell.r).y, 28)) {
             shutPunchlineDoor(s);
+          } else if (dc || dr) {
+            // A tap further away steers toward it (dominant axis) instead of being ignored.
+            if (Math.abs(dc) >= Math.abs(dr)) setWantDir(s, dc > 0 ? 'right' : 'left', true);
+            else setWantDir(s, dr > 0 ? 'down' : 'up', true);
           }
         }
         s.tapping = false;

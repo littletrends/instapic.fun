@@ -98,6 +98,15 @@ function persist(s) {
   writeBook(book);
 }
 
+/** Early/late feedback for a missed claw (bug 1/6). */
+function missNote(s) {
+  if (s.timed) return 'NOW, but the claws were not over the glow.';
+  const g = s.grabBeat;
+  if (!s.swept) return 'Too early — hold right first. NOW lights on second ' + g + '.';
+  const d = s.dropBeat || sweepBeat(s);
+  return (d < g ? 'Too early' : 'Too late') + ' — you dropped on second ' + d + ', NOW was second ' + g + '. Empty claws.';
+}
+
 function clawMin() { return CASE.x + 36; }
 function clawMax() { return CASE.x + CASE.w - 36; }
 function grabBeatOf(seed) {
@@ -225,6 +234,8 @@ function beginSitting(s) {
     s.dropT = 0;
     s.dropPhase = null;
     s.prizeKept = false;
+    s.caughtNow = false;
+    s.caughtAgain = false;
     s.grabBeat = grabBeatOf(s.seed);
     s.dropBeat = 0;
     s.timed = false;
@@ -249,9 +260,7 @@ function startDrop(s) {
   const bonus = bonusCapsule(s);
   s.lined = !!(s.timed && clawOver(s, bonus));
   s.target = s.lined ? bonus : null;
-  s.note = s.timed
-    ? (s.lined ? 'The second is true — lifting the glow…' : 'NOW, but the claws were not over the glow.')
-    : 'Wrong second — empty claws.';
+  s.note = s.lined ? 'The second is true — lifting the glow…' : missNote(s);
   persist(s);
 }
 
@@ -261,8 +270,11 @@ function awardCatch(s, cap) {
   const already = chapterPaid(s.level) || s.won;
   s.won = true;
   s.paid = true;
+  // Per-go flags: s.won also means "already owned", so it cannot decide this go's result.
+  s.caughtNow = !already;
+  s.caughtAgain = already;
   if (already) {
-    s.note = 'The claw held the bonus. This chapter is already kept.';
+    s.note = 'The claw held the bonus, but this chapter’s bonus is already Unlocked — no second prize.';
     return true;
   }
   if (alleyPlay) {
@@ -288,9 +300,7 @@ function resolveDrop(s) {
   if (!s.timed || !s.lined || !aimed) {
     if (aimed) dropCapsuleHome(aimed);
     s.held = null;
-    s.note = s.timed
-      ? 'NOW, but the claws were not over the glow.'
-      : 'Wrong second — empty claws.';
+    s.note = missNote(s);
     finishMiss(s);
     return;
   }
@@ -411,11 +421,11 @@ export default {
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail. Capsules sit on the vault floor. The stick only sweeps one way. Hold right to start the claw; it will not auto-drop until it has moved. TAP on NOW when the claw is over the glow to lift and keep the chapter bonus. A ticket sits you at the door; each claw costs a penny.'
-    : 'Hold right to start the claw. It will not auto-drop until it has moved. TAP on NOW when the claw is over the glow. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop when NOW lights to lift the chapter bonus.'
+    : 'Digby’s claw only travels one way. Line it over the glow and drop when NOW lights. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right to send the claw across. It never comes back. The five-second drop starts after it moves. TAP when NOW lights AND the claw is over the glow. Each go costs a penny.'
-    : 'Hold right to sweep. The auto-drop starts after the claw moves. TAP when NOW lights and the claw is over the glow.',
+    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. After it starts moving, a five-second drop counts down. Tap the vault or press Space/Enter when NOW lights AND the claw is over the glow.'
+    : 'Hold the stick right (or → / D) to sweep — one way only. Tap or press Space/Enter when NOW lights and the claw is over the glow.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
@@ -522,9 +532,7 @@ export default {
           }
           s.dropPhase = 'rise';
           s.dropT = 0;
-          s.note = cap
-            ? 'The glow is in the claws…'
-            : (s.timed ? 'NOW, but the claws were not over the glow.' : 'Wrong second — empty claws.');
+          s.note = cap ? 'The glow is in the claws…' : missNote(s);
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;
@@ -550,10 +558,14 @@ export default {
     if (s.phase === 'result' && s.hold > 0 && !s.result) {
       s.hold -= dt;
       if (s.hold <= 0) {
-        if (s.won) {
-          done(s, 'Bonus collected',
+        if (s.caughtNow) {
+          done(s, 'Bonus unlocked',
             itemName(CABINET_PRIZES[s.level]) + ' is yours. Stay on this chapter or visit the next.',
             {prize: CABINET_PRIZES[s.level], won: true});
+        } else if (s.caughtAgain) {
+          done(s, 'Already unlocked',
+            s.note || 'The claw held the bonus, but this chapter’s bonus is already Unlocked — no second prize.',
+            {won: true, prize: null});
         } else {
           done(s, 'Empty claws',
             s.note || 'The claw came up empty. Stay on this chapter or visit the next.',

@@ -1,4 +1,4 @@
-import {chapterOutcome} from './chapter-flow.js?v=chapter-tabs-1';
+import {chapterOutcome} from './chapter-flow.js?v=pf-polish-1';
 import {owned} from './wallet.js?v=insights-1';
 import {byId} from './catalogue.js?v=load-fix-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
@@ -7,6 +7,7 @@ import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
 import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=map-doors-3';
 import {noteVisit} from './insights.js?v=insights-1';
+import {entryFor, hasUsedFirst} from './stall-entry.js?v=insights-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
@@ -14,10 +15,76 @@ let completion=null, adapterDismissed=false, navigationKey;
 const holds=new Set();let resumeAfterHold=false;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
 if (id) noteVisit(id);
+// Clarity pass (Lorie): one vocabulary for every tent — Play · Play again · <cost> · How to play · Back to the alley.
+const GO_UNIT={fortune:'gaze',love:'sitting',curios:'claw',lookup:'comet','coin-pusher':'drop',pinball:'penny','milk-bottles':'round',helter:'ride',funhouse:'ride'};
+const TENT_KEYS={
+ fortune:'Space/Enter gaze, then stop each ring',
+ love:'Type the names (? opens help while a name box is active) · Tab other name (two-name chapters) · Enter read · 0–9 counts · H how to play while counting',
+ curios:'Hold → (or D) or the stick to send the claw — it only travels one way · Tap or Space/Enter to drop on NOW',
+ lookup:'Drag a glass, or ↑/↓ pick one and ←/→ turn it · Space/Enter or FEED sends a comet · Z undo · X hint',
+ 'coin-pusher':'The hopper sweeps by itself — Space/Enter drops 1 penny when it is over your spot · tap Drop 1 penny, ¼ purse, ½ purse or Drop purse',
+ pinball:'Hold Space (or drag the spring) to pull the plunger · Enter quick launch · Z/← and X/→ flippers',
+ 'milk-bottles':'Drag or tap two neighbours to swap · Keyboard: arrows move the cursor, Space/Enter picks a bottle, then an arrow swaps it',
+ helter:'→ or tap the track ahead step on · ← step back (pad or key only) · Space/↑/Enter/J jump',
+ funhouse:'Maze: arrows or WASD steer (or swipe / the MOVE stick) · walk into a curtain doorway to pop out the other side',
+};
+const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how to play · Esc pause, then back to the alley';
+function keyHints(){const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
+function retryLabel(){
+ if(!embedded)return 'Play again';
+ const fixed={'coin-pusher':'Play again · 1 penny a drop',pinball:'Play again · 1 penny = 3 balls'}[entry?.id];
+ if(fixed)return fixed;
+ const spec=entryFor(entry.id);
+ if(entry.id==='lookup')return hasUsedFirst(entry.id,level)?'Play again · 1 penny a comet':'Play again · first comet free';
+ if(spec.inside==='none')return 'Play again';
+ if(spec.inside==='first-free-then-penny'&&!hasUsedFirst(entry.id,level))return 'Play again · free';
+ return 'Play again · 1 penny';
+}
+function costLine(){
+ if(!embedded)return 'Workshop play is free and keeps nothing.';
+ const spec=entryFor(entry.id),u=GO_UNIT[entry.id]||'go';
+ if(spec.inside==='none')return '';
+ if(entry.id==='pinball')return 'Each penny loads 3 balls of 100 seconds.';
+ if(entry.id==='curios')return 'A ticket opens the vault door; each claw then costs 1 penny from your purse.';
+ if(spec.inside==='penny')return 'Each '+u+' costs 1 penny from your purse.';
+ if(hasUsedFirst(entry.id,level))return 'This chapter’s free '+u+' is used — each new '+u+' costs 1 penny.';
+ return 'Your first '+u+' in this chapter is free'+(entry.id==='helter'?' practice (nothing is kept)':'')+'; after that each '+u+' costs 1 penny.';
+}
+function treasureLine(){
+ if(!entry||entry.id==='snap')return '';
+ const prize=chapterKeep();if(!prize)return '';
+ const name=itemName(prize);
+ return prizeUnlocked(prize)
+  ?'Chapter treasure: '+name+' — Unlocked (already yours). It won’t drop twice; ordinary finds still can.'
+  :'Chapter treasure: '+name+' — Locked until you win it in this chapter.';
+}
+function goBack(){
+ persist();
+ if(embedded){tellRoom('leave',{id:entry?.id});return;}
+ location.href=$('.play-header a')?.href||'../index.html?style=paper&rail=paper#alley';
+}
+let lastPurse=null,receiptTimer=0;
+function purseReceipt(n){
+ if(!embedded||!Number.isFinite(n))return;
+ if(lastPurse!=null&&n!==lastPurse){
+  const d=n-lastPurse,el=$('#purse-receipt');
+  if(el){
+   el.textContent=(d<0?'−':'+')+Math.abs(d)+' '+(Math.abs(d)===1?'penny':'pennies')+(d<0?' spent':' in')+' · '+n+' in the purse';
+   el.classList.toggle('is-out',d<0);el.hidden=false;
+   clearTimeout(receiptTimer);receiptTimer=setTimeout(()=>{el.hidden=true;},2600);
+  }
+ }
+ lastPurse=n;
+}
+let veilShownAt=0;
 const embedded=window.parent!==window&&new URLSearchParams(location.search).get('room')==='alley';
+// House clock fallback. houseSpec() prefers the engine's own houseSeconds, so these rows only
+// apply to engines without one (love, lookup and closed tents). Overridden by the engine:
+// fortune & coin-pusher (houseSeconds 0 = no clock), pinball (100 s per ball), curios, milk-bottles,
+// helter and funhouse (own houseSeconds). Rows kept only as fallbacks; behaviour unchanged.
 const HOUSE={
  fortune:{seconds:100,title:'The globe went still',detail:'Iris covers the glass. Another gaze when you are ready.'},
- love:{seconds:100,title:'The tester slept',detail:'Rosalie blots the page. Another sitting when you are ready.'},
+ love:{seconds:180,title:'The tester slept',detail:'Rosalie blots the page. Another sitting when you are ready.'},
  curios:{seconds:100,title:'The cabinet closed',detail:'Digby latches the glass. Another claw when you have a penny.'},
  lookup:{seconds:100,title:'The sky went quiet',detail:'Celeste covers the lantern. Another sitting when you are ready.'},
  snap:{seconds:45,title:'The shutter slept',detail:'Felix winds a fresh plate. Try this woodland again.'},
@@ -68,14 +135,14 @@ function showPrize(id){
  const key=spriteKey(id),art=draw?.art?.[key];
  img.hidden=false;
  img.src=art?art.toDataURL():frontUrl(key);
- if(cap){cap.hidden=false;cap.textContent='Collected: '+itemName(id);}
+ if(cap){cap.hidden=false;cap.textContent='Unlocked: '+itemName(id);}
 }
-function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);$('#veil').hidden=false;}
+function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();veilShownAt=performance.now();$('#veil').hidden=false;}
 function clearInput(){input.keys.clear();input.actions.clear();input.down=false;if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
 function persist(){try{engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch{}}
 function hold(reason){if(holds.has(reason))return;if(!holds.size)resumeAfterHold=playing;holds.add(reason);persist();stop();}
 function release(reason){if(!holds.has(reason))return;holds.delete(reason);if(!holds.size&&resumeAfterHold){resumeAfterHold=false;if(!ended)start();}}
-function openHelp(){hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
+function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
 function closeHelp(){$('#game-help').close();release('help');}
 function publishChapter(){
  const count=engine?.levels?.length||0;
@@ -119,11 +186,8 @@ function retryChapter(){
 function finishChapter(result){
  completion=result;ended=true;persist();stop();paint();
  const won=result.won!==false,canAdvance=level<engine.levels.length-1;
- const retry=String(engine.retryButton||'');
- const charge=retry.match(/(?:·|—)\s*(.+)$/);
- const stayLabel=won
-  ?(charge?'Stay on this chapter · '+charge[1]:'Stay on this chapter')
-  :(engine.retryButton||'Try this chapter again');
+ // One label everywhere: Play again · <what the next go costs>.
+ const stayLabel=retryLabel();
  veil(won?'Chapter complete':'Round finished',result.title,result.detail,stayLabel,result.prize||null);
  $('#result-retry').hidden=true;
  $('#result-next').hidden=!canAdvance;
@@ -132,7 +196,10 @@ function finishChapter(result){
 }
 
 function stop(){playing=false;cancelAnimationFrame(raf);raf=0;last=0;clearInput();}
-function pause(){if(!playing)return;persist();stop();veil('Take your time','The room is resting.','Nothing moves until you return.','Continue');$('#pause').textContent='Continue';}
+function restVeil(){veil('Paused','The room is resting.','Nothing moves until you return. Space/Enter or Continue to play on · Esc back to the alley.','Continue');$('#pause').textContent='Continue';}
+function pause(){if(!playing)return;persist();stop();restVeil();}
+// Esc in the help panel: close help and leave the room paused (Esc again goes back to the alley).
+function escHelp(){const wasPlaying=resumeAfterHold;resumeAfterHold=false;closeHelp();if(wasPlaying&&!ended&&state&&!disposed)restVeil();}
 function chapterKeep(){return engine?.prizes?.[level]||engine?.prizes?.[engine.prizes.length-1]||null;}
 function plantChapter(s){
  if(!s)return s;
@@ -142,7 +209,8 @@ function plantChapter(s){
 }
 function prizeUnlocked(id){
  if(!id)return false;
- if(state?.prizeKept||state?.won||state?.paid)return true;
+ // state.paid must be exactly true: pinball keeps an array in s.paid, and [] is truthy.
+ if(state?.prizeKept||state?.won||state?.paid===true)return true;
  try{if(owned(id))return true;}catch{}
  return false;
 }
@@ -191,6 +259,7 @@ function paintHud(){
  const practice=!!state?.practice;
  if(cash){
   const n=penniesNow();
+  purseReceipt(n);
   if(embedded) cash.textContent=wonPurse()?(n+' '+(n===1?'penny':'pennies')+' in the purse'):(n+' '+(n===1?'penny':'pennies'));
   // Lorie 5f: workshop funhouse is non-practice — never leave a Practice cash pill after Begin.
   else if(entry?.id==='funhouse' && state && !practice) cash.textContent=(n? (n+' '+(n===1?'penny':'pennies')) : 'Eligible');
@@ -218,7 +287,7 @@ function paintHud(){
 function paint(){if(!draw||!state)return;draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();}
 function goNextChapter(){goChapter(level+1);}
 function markChapters(){}
-function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('','','','Play chapter '+(level+1));$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
+function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
 function start(){if(disposed||!engine||!state||playing||ended||holds.size)return;ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
@@ -275,7 +344,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=juno-prize-1')).default;
+ engine=(await import(entry.module+'?allocation=treasure-design-1&v=pf-polish-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;
@@ -286,10 +355,10 @@ try{
   if(note){
    if(entry.id==='funhouse'){
     note.textContent=embedded
-     ?'Alley ride. Straight into eligible maze — no practice chapter. Later goes cost one penny from the purse.'
+     ?'No practice ride here — every ride, including the free first one, can keep the bonus. The details: the same maze layout is used in every chapter; later chapters are tougher. Chips are the small dots; you need the shown number to clear. The bonus key sits mid-court — once you hold it, a catch puts it back (Locked) until you finish the chips. The two curtain doorways on the side edges are linked both ways. Glowing power tokens make the faces flash and let you chase them for a few seconds. When the house clock runs out the ride simply ends; nothing is lost.'
      :'Straight into eligible maze — no practice chapter. Mouse, touch and keyboard are listed above. Leaving or hiding this page pauses the room.';
    }else if(embedded){
-    note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'A penny a bead. Two or three throws. Knock every bottle for this dairy’s prize. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A penny sits you down. Extra plays inside some rooms cost another penny. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
+    note.textContent=entry.id==='coin-pusher'?'Three trays. Drop a penny or dump the pocket. The machine sleeps until you drop, and the trays are saved when you leave. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. A penny pulls the plunger. Tap the flippers. Pennies and stars drip back; uniques almost never leave the glass, and even the small wins dry up. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. The first round of each chapter is included; extra rounds cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','balloons','mural'].includes(entry.id)?'Alley ride. First go of this chapter is free practice and keeps nothing. Later goes cost one penny from the purse.':'A ticket sits you down at this tent; the cost line above says what each go inside costs. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
    }
   }
  }
@@ -306,9 +375,14 @@ try{
  listen($('#menu-toggle'),'click',openHelp);
  listen($('#menu-close'),'click',closeHelp);
  listen($('#game-help'),'close',()=>release('help'));
+ listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
  listen($('#begin'),'click',()=>{if(!ended){start();return;}retryChapter();});
+ // Tapping the dimmed backdrop (not the card) continues a not-yet-ended room. Never buys a retry.
+ listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||$('#begin').disabled)return;start();});
  listen($('#result-retry'),'click',retryChapter);
  listen($('#result-next'),'click',goNextChapter);
+ listen($('#veil-help'),'click',openHelp);
+ listen($('#veil-back'),'click',goBack);
  const saveTimer=setInterval(()=>{if(playing)persist();},1000);
  listen(window,'pagehide',()=>clearInterval(saveTimer));
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});
@@ -318,19 +392,34 @@ try{
  listen(canvas,'lostpointercapture',e=>{if(!playing)return;input.down=false;engine?.pointer?.(state,'cancel',input.pointer||point(e)||{x:450,y:1136},input);input.pointer=null;paint();});
  listen(window,'blur',()=>{if(!playing)return;clearInput();paint();});
  listen(window,'keydown',e=>{
-  if(!playing||e.repeat)return;
+  if(e.repeat||disposed||!engine||!state)return;
   const tag=e.target?.tagName;
-  if(tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA'||tag==='BUTTON'||tag==='A')return;
+  if(tag==='SELECT'||tag==='INPUT'||tag==='TEXTAREA')return;
   const k=e.key;
+  // Shared keys (every tent): H or ? how to play · Space/Enter play · R play again · Esc back.
+  if($('#game-help').open){if(k==='h'||k==='H'||k==='?'){e.preventDefault();closeHelp();}return;}
+  const typing=playing&&!!engine.typing?.(state);
+  if(k==='?'||((k==='h'||k==='H')&&!typing)){e.preventDefault();openHelp();return;}
+  if(!playing){
+   if($('#veil').hidden)return;
+   if(k==='Escape'){e.preventDefault();goBack();return;}
+   // Ended rooms never buy a go on Space/Enter — only R or the button (and not in the first 0.8s).
+   if((k===' '||k==='Enter')&&!ended&&tag!=='BUTTON'&&tag!=='A'&&!$('#begin').disabled){e.preventDefault();$('#begin').click();return;}
+   if((k==='r'||k==='R')&&ended&&!$('#begin').disabled&&performance.now()-veilShownAt>800){e.preventDefault();$('#begin').click();return;}
+   if((k==='n'||k==='N')&&ended&&!$('#result-next').hidden){e.preventDefault();goNextChapter();}
+   return;
+  }
+  if(tag==='BUTTON'||tag==='A')return;
   const gameKey=k.length===1||['Backspace','Tab','Enter','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k);
   if(!gameKey)return;
   e.preventDefault();
   input.keys.add(k);
-  if(k==='Escape')openHelp();
+  if(k==='Escape')pause();
   else engine.key?.(state,k,true,input);
   paint();
  });
- listen(window,'keyup',e=>{input.keys.delete(e.key);if(playing)engine.key?.(state,e.key,false,input);});
+ // Release both letter cases so a Shift/Caps change mid-hold never leaves a key stuck down (pinball Z/X).
+ listen(window,'keyup',e=>{input.keys.delete(e.key);if(e.key.length===1){input.keys.delete(e.key.toLowerCase());input.keys.delete(e.key.toUpperCase());}if(playing)engine.key?.(state,e.key,false,input);});
  const actBox=$('#actions');if(actBox){actBox.hidden=true;actBox.replaceChildren();}
  const hud=$('#hud');if(hud)hud.hidden=true;
  listen(document,'visibilitychange',()=>document.hidden?hold('visibility'):release('visibility'));
@@ -340,6 +429,8 @@ try{
   if(d.type==='pause')hold('parent');
   if(d.type==='resume')release('parent');
   if(d.type==='menu')openHelp();
+  // Alley 'How to play' button (.paper-game-help): same toggle as pressing H.
+  if(d.type==='help'&&engine&&state){if($('#game-help').open)closeHelp();else openHelp();}
   if(d.type==='chapter')goChapter(d.level);
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});

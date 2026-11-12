@@ -145,6 +145,11 @@ function emptyNote() {
     : 'Fill the paper, then begin.';
 }
 
+/** One empty-name message per chapter: one-name chapters ask for a name, two-name chapters for both. */
+function emptyNameNote(ch) {
+  return ch && ch.bLabel ? 'Write both names, then Enter.' : 'Write a name, then Enter.';
+}
+
 function beginAttempt(s) {
   if (s.phase !== 'edit' && s.phase !== 'wait') return;
   if (s.chargeLock) return;
@@ -152,7 +157,7 @@ function beginAttempt(s) {
   const you = normalizeName(s.you);
   const them = ch.bLabel ? normalizeName(s.them) : '';
   if (!you || (ch.bLabel && !them)) {
-    s.note = 'Fill the paper, darling.';
+    s.note = emptyNameNote(ch);
     s.shake = 0.35;
     return;
   }
@@ -296,8 +301,12 @@ function finishMath(s) {
   s.charged = false;
   s.mercury = 1;
   const drop = ordinaryFor(pct);
+  s.lastDrop = alleyPlay ? drop : null;
+  s.alreadyPaid = chapterPaid(s.level);
   const prize = LOVE_CHAPTERS[s.level].prize;
   const win = isLoveWin(s.level, pct) && !chapterPaid(s.level) && !s.won;
+  // s.won also means "already owned"; the result panel uses this sitting's outcome only.
+  s.sittingWon = win;
   if (alleyPlay) {
     if (drop === 'everyday-penny') credit(1);
     else keep(drop, 'love');
@@ -350,6 +359,12 @@ function clearSitting(s, note) {
   s.note = note || 'Names stay — change one, or sit again.';
 }
 
+/** Clarity pass: say what this sitting's ordinary drop was. */
+function keptNote(s) {
+  if (!s.lastDrop) return '';
+  return s.lastDrop === 'everyday-penny' ? ' A penny went back into your purse.' : ' Kept: ' + itemName(s.lastDrop) + '.';
+}
+
 export default {
   title: 'Love Tester',
   live: alleyPlay,
@@ -357,11 +372,15 @@ export default {
   chapterEnds: true,
   retryButton: 'Play again',
   persist,
+  // House clock runs only while counting/adding, not while typing names (bug 6).
+  clockRuns: s => s.phase === 'count' || s.phase === 'add',
+  // Runtime: H types a letter only while a name box is active; while counting/adding H opens help.
+  typing: s => s.phase === 'edit',
   intro: alleyPlay
-    ? 'Rosalie’s schoolyard fortune machine. Write the names. Count the letters. Add them down until 1–100 remains. A penny a sitting. The unique valentine only drops on tonight’s numbers. Same names, same answer — always. Not medical advice, even on the health sitting.'
+    ? 'Rosalie’s schoolyard fortune machine. Write the names, count the letters, then add them down until a number from 1 to 100 remains. The chapter valentine only drops on tonight’s numbers. Same names, same answer — always. Not medical advice, even on the health sitting.'
     : 'Write the names, count the letters, add them down. Workshop sittings are free and write nothing.',
   instructions: alleyPlay
-    ? 'Fill the paper. Count each letter of the chapter word, then add neighbours in full (7+4 writes 11). Wrong counts are free to correct. A penny starts a new sitting. Same names will not be charged again.'
+    ? 'Type the name(s) and press Enter (or tap the Enter button). Count each letter of the chapter word with 0–9, then add neighbours in full (7+4 writes 11). Wrong counts are free to correct. Same names give the same answer, so they are never charged twice — try a nickname.'
     : 'Type, count, add. Practice writes nothing.',
   levels: LOVE_CHAPTERS.map(c => c.title),
   sprites: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox', 'rose-penny', 'heart-biscuit', 'everyday-penny', 'pressed-heart'],
@@ -417,13 +436,16 @@ export default {
         const ch = LOVE_CHAPTERS[s.level];
         const score = (s.pct != null ? s.pct : '—') + '%';
         const reason = s.reading || 'The paper is full.';
-        if (s.won) {
+        if (s.sittingWon) {
           done(s, score + ' — valentine',
-            reason + ' Unique drop: ' + itemName(ch.prize) + '.',
+            reason + ' ' + s.pct + '% is one of tonight’s valentine numbers. Chapter bonus: ' + itemName(ch.prize) + '.' + keptNote(s),
             {prize: ch.prize, won: true, handled: true});
         } else {
           done(s, score,
-            reason + ' Another sitting when you are ready.',
+            reason + ' ' + (s.alreadyPaid
+              ? 'This chapter’s valentine is already yours — it won’t drop twice.'
+              : (s.pct != null ? s.pct + '% isn’t one of tonight’s valentine numbers, so no valentine this sitting.' : 'No valentine this sitting.'))
+              + keptNote(s) + ' Another sitting when you are ready.',
             {won: false, prize: null, handled: true});
         }
       }
@@ -438,7 +460,7 @@ export default {
       if (two && hit(p, plateBox(1, two))) { s.phase = 'edit'; s.focus = 1; return; }
       if ((s.phase === 'edit' || s.phase === 'wait') && hit(p, enterBox())) {
         if (namesReady(s)) this.action(s, 'read');
-        else { s.note = 'Write both names, then Enter.'; persist(s); }
+        else { s.note = emptyNameNote(ch); persist(s); }
         return;
       }
       if (s.phase === 'edit') {
@@ -464,7 +486,8 @@ export default {
     if (!down) return;
     if (k === 'Enter') this.action(s, 'read');
     if (k === 'Tab') {
-      s.focus = s.focus ? 0 : 1;
+      // Only two-name chapters have a second box to move to.
+      if (LOVE_CHAPTERS[s.level]?.bLabel) s.focus = s.focus ? 0 : 1;
       return;
     }
     if (s.phase === 'edit') {
@@ -486,7 +509,7 @@ export default {
     if (s.phase === 'edit' || s.phase === 'wait') {
       d.text(ch.word, 450 + jx, 372, 42, '#c45a6a');
     }
-    // Chapter bonus badge — same Locked / Collected language as Iris’s globe.
+    // Chapter bonus badge — same Locked / Unlocked language as every tent.
     {
       const owned = chapterPaid(s.level) || s.won;
       const px = 640, py = 318;
@@ -494,7 +517,7 @@ export default {
       c.globalAlpha = owned ? 1 : 0.55;
       d.item(spriteKey(ch.prize), px, py, {w: 40, fallback: () => d.heart(px, py, 16, '#c45a6a')});
       c.restore();
-      d.text(owned ? 'Collected' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
+      d.text(owned ? 'Unlocked' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
     }
 
     const tubeX = 218, tubeY = 300, tubeH = 64;

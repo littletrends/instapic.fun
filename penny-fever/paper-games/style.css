@@ -49,3 +49,12 @@ body:not(.workshop){height:100dvh;display:flex;flex-direction:column;}
 .veil button[hidden]{display:none;}
 .veil-prize{width:80px;height:80px;}
 button:disabled{cursor:default;}
+/* pf-clarity-1: shared How to play / Back buttons, key hints, purse receipts */
+.veil .veil-more{display:flex;gap:8px;margin-top:8px}.veil .veil-more button{margin-top:0;flex:1;font-size:.9em;background:transparent}
+.key-hints{font-size:13px!important;opacity:.75;margin:.6em 0 0;line-height:1.4}
+@media (hover:none) and (pointer:coarse){.key-hints{display:none}}
+.purse-receipt{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;margin:0;padding:4px 12px;border-radius:999px;background:#1f3a2acc;border:1px solid #8fc79a;color:#eaf7e6;font-size:14px;white-space:nowrap;pointer-events:none}
+.purse-receipt.is-out{background:#3a2a1fcc;border-color:#d2a65b;color:#fff0ce}.purse-receipt[hidden]{display:none}
+
+/* pf-polish-1: engines may return multi-line readouts (Milky Splash). */
+#readout{white-space:pre-line;}

@@ -175,7 +175,10 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     return {
       settle, won: true, prize: ordinary || false, chapterAdvances: true,
       title: 'Ride complete',
-      detail: ordinary ? 'Kept ' + ordinary.replace(/-/g, ' ') + '.' : 'The ride finished.',
+      detail: (ordinary ? 'Kept ' + ordinary.replace(/-/g, ' ') + '. ' : 'The ride finished. ')
+        + (slotOwned(slot)
+          ? 'This chapter’s treasure is already yours, so it no longer rides.'
+          : 'The chapter treasure did not turn up on this ride — it can on a later paid ride.'),
     };
   }
   return {

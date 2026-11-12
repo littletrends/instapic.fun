@@ -78,7 +78,7 @@ function beginGaze(s) {
     const book = readBook();
     if (!s.charged) {
       if (alleyPlay) {
-        if(!takeAttempt('fortune',s.level)){s.note="No pennies left in the purse.";return;}
+        if(!takeAttempt('fortune',s.level)){s.note="No pennies left in the purse — a gaze costs 1 penny. Cash a booth ticket at Aura’s for five.";return;}
         s.practice=false;
       } else if (!book.practiceUsed) {
         s.practice = true;
@@ -119,11 +119,25 @@ function brake(s) {
   if (s.phase !== "spin" || !s.globe) return;
   const i = nextLiveRing(s.globe);
   if (i < 0) return;
+  const ring = s.globe.rings[i];
+  const dir = ring && ring.speed < 0 ? -1 : 1;
   brakeRing(s.globe, i);
+  // Early/late feedback: how many signs short of (early) or past (late) the target the ring stopped.
+  if (ring && ring.slipped) {
+    const slot = slotAt(ring.angle, ring.n);
+    const ahead = (((ring.targetSlot - slot) * dir) % ring.n + ring.n) % ring.n;
+    ring.miss = ahead <= ring.n / 2 ? 'early' : 'late';
+    ring.missBy = ahead <= ring.n / 2 ? ahead : ring.n - ahead;
+  }
   s.click = 1;
   beep(180 + i * 40, 0.09, "triangle", 0.1);
   if (allStopped(s.globe)) finishGaze(s);
-  else s.note = "Ring " + (i + 1) + " holds. Stop the next.";
+  else {
+    const r = s.globe.rings[i];
+    s.note = r && r.miss
+      ? "Ring " + (i + 1) + " stopped " + r.missBy + (r.missBy === 1 ? " sign " : " signs ") + (r.miss === "early" ? "too early" : "too late") + ". Stop the next."
+      : "Ring " + (i + 1) + " holds on the sign. Stop the next.";
+  }
   persist(s);
 }
 
@@ -158,16 +172,16 @@ function finishGaze(s) {
   if (treasureOk) beep(660, 0.22, "sine", 0.08);
   else beep(hit ? 420 : 160, 0.16, hit ? "sine" : "square", 0.06);
   if (!hit) {
-    const slipped = s.globe.rings.map((ring, i) => ring.slipped ? "ring " + (i + 1) : null).filter(Boolean).join(" and ");
-    s.note = "Near miss — " + slipped + " slipped.";
+    const slipped = s.globe.rings.map((ring, i) => ring.slipped ? "ring " + (i + 1) + (ring.miss ? " " + ring.miss : "") : null).filter(Boolean).join(" and ");
+    s.note = "Near miss — " + slipped + ". Every ring must hold its sign for a prize; nothing drops this gaze.";
   } else if (s.practice) {
-    s.note = "Practice — bonus stays locked.";
+    s.note = "All signs caught — but this was practice, so nothing is kept.";
   } else if (treasureOk) {
-    s.note = "Bonus collected.";
+    s.note = "All signs caught on a winning number (" + n + ") — bonus Unlocked.";
   } else if (chapterOwned(s.level)) {
-    s.note = s.ordinary === "star-token" ? "Star token collected. Bonus already collected." : "Already collected.";
+    s.note = s.ordinary === "star-token" ? "Star token kept. This chapter’s bonus is already Unlocked — it won’t drop twice." : "This chapter’s bonus is already Unlocked — it won’t drop twice.";
   } else {
-    s.note = "Star token collected. Bonus still locked.";
+    s.note = "All signs caught — star token kept. The glass read " + n + ", not one of this chapter’s winning numbers, so the bonus stays Locked.";
   }
   persist(s);
 }
@@ -199,8 +213,8 @@ export default {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
-  intro: "Iris’s fortune globe. A sign flashes. Stop each spinning ring so that sign sits in the bright glow at the top. Catching the signs always reads a fortune. The chapter bonus only unlocks on some catches — LOCKED means the bonus stayed shut, COLLECTED means it is yours. Ticket entry includes the first gaze in each chapter, and that first gaze can unlock the bonus.",
-  instructions: "Tap Gaze in the centre of the globe. Remember the signs, then tap Stop to catch each ring in the glow at the top, working from the outside in. A clean catch reads a fortune. COLLECTED means the chapter bonus is in your Treasures; LOCKED means this catch did not release it — try another gaze. Later gazes cost one penny.",
+  intro: "Iris’s fortune globe. A sign flashes — remember it. Stop each spinning ring so its sign sits in the bright glow at the top. Every clean catch reads a fortune; only some catches unlock the chapter bonus.",
+  instructions: "Tap the centre of the globe (or Space/Enter) to gaze. Remember the signs, then tap the globe again to stop each ring in the glow, outside ring first. The badge shows Locked until a catch unlocks this chapter’s bonus, then Unlocked.",
   levels: IRIS_CHAPTERS.map(c => c.title),
   prizes: IRIS_CHAPTERS.map(c => c.prize),
   images: {
@@ -233,7 +247,7 @@ export default {
     if (alleyPlay) book.pennies = pocket();
     const cash = s?.practice && s.phase !== "idle" ? "Practice" : (book.pennies + (book.pennies === 1 ? " penny" : " pennies"));
     const ch = IRIS_CHAPTERS[s?.level || 0];
-    const keep = chapterOwned(s?.level || 0) ? "Bonus collected" : ("Ch " + ((s?.level || 0) + 1));
+    const keep = chapterOwned(s?.level || 0) ? "Bonus Unlocked" : ("Ch " + ((s?.level || 0) + 1));
     return { cash, keep: keep + " · " + ch.title };
   },
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().selected) || 0)); },
@@ -256,7 +270,7 @@ export default {
       won: !!saved.won || chapterOwned(level),
       hold: 0, click: 0,
       reduced: !!saved.reduced || reducedMotion(),
-      note: ({"Bonus unlocked.":"Bonus collected.","Already unlocked.":"Already collected."}[saved.note] || saved.note) || (resume ? "Stop the rings." : "Gaze when you are ready."),
+      note: ({"Bonus collected.":"Bonus unlocked.","Already collected.":"Already unlocked."}[saved.note] || saved.note) || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
     if ((s.phase === "flash" || s.phase === "spin") && !s.globe) s.globe = makeGlobe(level, s.seed);
     s.preview = makeGlobe(level, s.seed);
@@ -296,7 +310,11 @@ export default {
     // Chapter results and retries belong to the shared player.
     if (s.phase === 'result') return;
     const inGlobe = Math.hypot(p.x - CX, p.y - CY) <= 82 || Math.hypot(p.x - CX, p.y - LOWER_CY) <= 82;
-    if (!inGlobe) return;
+    if (!inGlobe) {
+      // Missed taps get a reason instead of silence.
+      if (s.phase === "idle" || s.phase === "spin") s.note = s.phase === "spin" ? "Tap the globe to stop the ring." : "Tap the globe to gaze.";
+      return;
+    }
     if (s.phase === "idle" || s.phase === "result") beginGaze(s);
     else if (s.phase === "spin") brake(s);
   },
@@ -425,7 +443,7 @@ export default {
       d.glow(px, py, 70, s.won ? "#c8e878" : "#e8c878");
       d.sprite(prizeImg, px, py, { w: 118, h: 118 });
       c.restore();
-      const plabel = chapterOwned(s.level) || s.won ? "Collected" : "Locked";
+      const plabel = chapterOwned(s.level) || s.won ? "Unlocked" : "Locked";
       d.text(plabel, px, py + 78, 16, "#fff0c8");
     }
     if (s.practice && s.phase !== "idle") {
