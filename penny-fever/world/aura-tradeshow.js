@@ -37,6 +37,45 @@ const openNodes = new Set(['book:penny-collector-book']);
 function vip() {
   return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.();
 }
+// Snap: Mother records which Felix booth portraits this VIP won (proved by the
+// saved session on the USB) and whether the photo booth book was claimed.
+const SNAP_BOOK = 'felix-vendor-portrait-book';
+let snapElig = {portraits: new Set(), book: false};
+function vipEmail() {
+  try {
+    return vip() ? String(window.InstapicGuestIdentity?.read?.()?.email || '').trim() : '';
+  } catch {
+    return '';
+  }
+}
+function setSnapElig(data) {
+  if (!data || data.ok === false) return;
+  snapElig = {
+    portraits: new Set((data.portraits || []).filter((r) => r && r.can_mint).map((r) => r.item)),
+    book: !!data.book?.can_mint,
+  };
+}
+function postSnap(path, body) {
+  return fetch(`${NFT_HOST}/api/penny-fever/snap/${path}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  }).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+}
+function loadSnap() {
+  const email = vipEmail();
+  if (!email) {
+    snapElig = {portraits: new Set(), book: false};
+    return Promise.resolve();
+  }
+  return postSnap('recheck', {email}).then((data) => {
+    setSnapElig(data);
+    if (data && !data.book?.claimed && walletCount(SNAP_BOOK) > 0) {
+      return postSnap('book-claim', {email, cost: tokenClaim(SNAP_BOOK)?.cost || null}).then(setSnapElig);
+    }
+    return null;
+  });
+}
 function vipJoin() {
   const hash = location.hash || '#alley';
   const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + hash;
@@ -200,6 +239,9 @@ function claimWithTokens(id) {
   }
   const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
   say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
+  if (id === SNAP_BOOK && vipEmail()) {
+    postSnap('book-claim', {email: vipEmail(), cost: spec.cost}).then((data) => { setSnapElig(data); paint(); });
+  }
   paint();
 }
 function walletBuyCap(id) {
@@ -298,6 +340,7 @@ function checkoutUrl(id) {
   const qs = new URLSearchParams({
     item: id,
     guest: guestRef(),
+    vip: vipEmail(),
     return: tillLink(id),
   });
   return `${NFT_HOST}/api/penny-fever/xaman-checkout?${qs}`;
@@ -441,14 +484,24 @@ function ensureOverlay() {
   return overlay;
 }
 
+function snapMint(item) {
+  if (!onShelf(item.id)) return null;
+  const ok = item.id === SNAP_BOOK ? snapElig.book : snapElig.portraits.has(item.id);
+  if (!ok || !vip()) return null;
+  const xrp = formatXrp(item.id);
+  return {label: xrp ? `Claim and mint · ${xrp}` : 'Claim and mint', disabled: false, ready: true, snap: true};
+}
 function actionFor(item, stallInfo) {
   if (isFelix(item)) {
-    return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true};
+    return snapMint(item) || {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true};
   }
   if (!onShelf(item.id)) {
     return {label: 'Not on the shelf yet', disabled: true};
   }
   const claim = tokenClaim(item.id);
+  if (claim && item.id === SNAP_BOOK && walletAtCap(item.id) && snapMint(item)) {
+    return snapMint(item);
+  }
   if (claim) {
     const cost = formatTokenCost(claim.cost);
     if (!vip()) return {label: `Join VIP to claim · ${cost}`, disabled: true, claim: true};
@@ -840,7 +893,7 @@ function appendCards(grid, items, stall) {
     const act = actionFor(item, info);
     const play = playTap(item, info, stall);
     const canSpin = !!item.turnaround;
-    const shopBtn = felix ? '' : (act.claim
+    const shopBtn = (felix && !act.snap) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
@@ -1037,7 +1090,7 @@ export function openTradeshow() {
   lastFocus = document.activeElement;
   document.body.classList.add('aura-tradeshow-open');
   overlay.hidden = false;
-  Promise.all([loadMinted(), loadPlates()]).then(paint);
+  Promise.all([loadMinted(), loadPlates(), loadSnap()]).then(paint);
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
   return true;
@@ -1078,7 +1131,7 @@ try {
     const boot = () => {
       if (tradeshowBlocked()) return;
       if (!openTradeshow()) return;
-      if (buyId) Promise.all([loadStock(), loadMinted()]).then(() => openXrpTill(buyId));
+      if (buyId) Promise.all([loadStock(), loadMinted(), loadSnap()]).then(() => openXrpTill(buyId));
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 600));
     else setTimeout(boot, 600);

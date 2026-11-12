@@ -429,14 +429,14 @@
     },
     "token-felix-book": {
       "ceiling": 5555,
-      "xrp": "",
+      "xrp": "0.0001",
       "wallet": 1,
       "hold": false,
       "current_edition": 1,
       "editions": {
         "1": {
           "ceiling": 5555,
-          "xrp": "",
+          "xrp": "0.0001",
           "taxon": null,
           "background": null,
           "wallet": 1
@@ -461,7 +461,7 @@
     },
     "portraits": {
       "ceiling": 5555,
-      "xrp": "",
+      "xrp": "0.0001",
       "wallet": 1,
       "hold": false,
       "felix": true,
@@ -469,7 +469,7 @@
       "editions": {
         "1": {
           "ceiling": 5555,
-          "xrp": "",
+          "xrp": "0.0001",
           "taxon": null,
           "background": null,
           "wallet": 1
@@ -478,7 +478,7 @@
     },
     "felix-portrait": {
       "ceiling": 55555,
-      "xrp": "",
+      "xrp": "0.0001",
       "wallet": 1,
       "hold": false,
       "felix": true,
@@ -486,7 +486,7 @@
       "editions": {
         "1": {
           "ceiling": 55555,
-          "xrp": "",
+          "xrp": "0.0001",
           "taxon": null,
           "background": null,
           "wallet": 1
@@ -662,7 +662,6 @@
     "paper-crown": "ch5",
     "penny-purse": "ch2",
     "penny-tree": "ch5",
-    "photo-accordion": "ch2",
     "pocket-observatory": "ch6",
     "ride-explorer-pennant": "ch1",
     "rose-hair-bow": "ch5",
@@ -684,11 +683,27 @@
     "vendor-portrait-digby": "portraits",
     "vendor-portrait-felix": "felix-portrait",
     "vendor-portrait-iris": "portraits",
-    "vendor-portrait-juno": "portraits",
     "vendor-portrait-mabel": "portraits",
     "vendor-portrait-pip": "portraits",
     "vendor-portrait-rosalie": "portraits",
-    "vendor-portrait-tilly": "portraits"
+    "vendor-portrait-willa": "portraits",
+    "vendor-portrait-bess": "portraits",
+    "vendor-portrait-marina": "portraits",
+    "vendor-portrait-dot": "portraits",
+    "vendor-portrait-milo": "portraits",
+    "vendor-portrait-magnus": "portraits",
+    "vendor-portrait-opal": "portraits",
+    "vendor-portrait-ringo": "portraits",
+    "vendor-portrait-peggy": "portraits",
+    "vendor-portrait-flossie": "portraits",
+    "vendor-portrait-poppy": "portraits",
+    "vendor-portrait-dottie": "portraits",
+    "vendor-portrait-skip": "portraits",
+    "vendor-portrait-penelope": "portraits",
+    "vendor-portrait-duncan": "portraits",
+    "vendor-portrait-lumi": "portraits",
+    "vendor-portrait-kit": "portraits",
+    "vendor-portrait-bea": "portraits"
   },
   "ceilings": {
     "aura-treasures-collector-book": 555,
@@ -884,7 +899,25 @@
     "vendor-portrait-mabel": 5555,
     "vendor-portrait-pip": 5555,
     "vendor-portrait-rosalie": 5555,
-    "vendor-portrait-tilly": 5555
+    "vendor-portrait-tilly": 5555,
+    "vendor-portrait-willa": 5555,
+    "vendor-portrait-bess": 5555,
+    "vendor-portrait-marina": 5555,
+    "vendor-portrait-dot": 5555,
+    "vendor-portrait-milo": 5555,
+    "vendor-portrait-magnus": 5555,
+    "vendor-portrait-opal": 5555,
+    "vendor-portrait-ringo": 5555,
+    "vendor-portrait-peggy": 5555,
+    "vendor-portrait-flossie": 5555,
+    "vendor-portrait-poppy": 5555,
+    "vendor-portrait-dottie": 5555,
+    "vendor-portrait-skip": 5555,
+    "vendor-portrait-penelope": 5555,
+    "vendor-portrait-duncan": 5555,
+    "vendor-portrait-lumi": 5555,
+    "vendor-portrait-kit": 5555,
+    "vendor-portrait-bea": 5555
   },
   "token_claims": {
     "aura-keepsake": {
