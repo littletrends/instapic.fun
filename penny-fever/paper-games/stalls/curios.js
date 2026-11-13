@@ -200,6 +200,7 @@ function grabTarget(s) {
   return null;
 }
 function ordinaryForCap(s, cap) {
+  if (s.level > 0 && (s.drops || 0) % 10 === 0) return 'five-penny-stack';
   const drip = cap?.drip || EVERYDAY_DROP[(s.drops || 0) % EVERYDAY_DROP.length];
   if (keepOrdinaryAllowed(drip, s.level)) return drip;
   return 'everyday-penny';
@@ -380,6 +381,9 @@ function awardOrdinary(s, cap) {
   if (drop === 'everyday-penny') {
     credit(1);
     s.note = 'A penny back to the purse. Keep clawing until the glass latches.';
+  } else if (drop === 'five-penny-stack') {
+    credit(5);
+    s.note = 'Five pennies back to the purse — a good claw. Keep playing until the glass latches.';
   } else {
     keep(drop, 'curios');
     s.note = (itemName(drop) || drop) + ' — keep clawing until the glass latches.';
@@ -521,7 +525,7 @@ export default {
   },
   sprites: [
     'clockwork-key', 'display-dome', 'clockwork-butterfly', 'tin-style-robot',
-    'crystal-cradle', 'curio-cabinet-album', 'penny-purse', 'star-token', 'moon-penny', 'crown-token', 'everyday-penny',
+    'crystal-cradle', 'curio-cabinet-album', 'penny-purse', 'star-token', 'moon-penny', 'crown-token', 'everyday-penny', 'five-penny-stack',
   ],
   prizes: CABINET_PRIZES.slice(),
   actions: [],

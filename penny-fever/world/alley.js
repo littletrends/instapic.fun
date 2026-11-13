@@ -897,6 +897,16 @@ function makeFireflies() {
 
 function makeLooseCoins() {
   const group = new THREE.Group();
+  const coinBookKey = 'pennyFever.alleyLooseCoins.v1';
+  const now = Date.now();
+  let coinBook = {expiresAt: 0, collected: []};
+  try {
+    const saved = JSON.parse(localStorage.getItem(coinBookKey) || 'null');
+    if (saved && Number(saved.expiresAt) > now) coinBook = {
+      expiresAt: Number(saved.expiresAt),
+      collected: Array.isArray(saved.collected) ? saved.collected.map(Boolean) : [],
+    };
+  } catch {}
   const face = makeMat(0xe8b84a, { metalness: 0.72, roughness: 0.24, emissive: 0x6a3d00, emissiveIntensity: 0.55 });
   const mark = makeMat(0x8a5418, { metalness: 0.75, roughness: 0.3 });
   const count = 7;
@@ -914,9 +924,13 @@ function makeLooseCoins() {
     coin.position.set((Math.random() - 0.5) * 2.05, 0.55, STALL_Z0 + 2.5 + segment * (i + 0.35 + Math.random() * 0.35));
     coin.userData.baseY = coin.position.y;
     coin.userData.phase = Math.random() * Math.PI * 2;
-    coin.userData.collected = false;
+    coin.userData.index = i;
+    coin.userData.collected = !!coinBook.collected[i];
+    coin.visible = !coin.userData.collected;
     group.add(coin);
   }
+  group.userData.coinBookKey = coinBookKey;
+  group.userData.coinBook = coinBook;
   return group;
 }
 
@@ -3017,6 +3031,11 @@ function updateFx(t) {
       if (dx * dx + dz * dz < 0.58) {
         coin.userData.collected = true;
         coin.visible = false;
+        const book = looseCoins.userData.coinBook || {expiresAt: 0, collected: []};
+        if (!book.expiresAt || book.expiresAt <= Date.now()) book.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        book.collected[coin.userData.index] = true;
+        looseCoins.userData.coinBook = book;
+        try { localStorage.setItem(looseCoins.userData.coinBookKey, JSON.stringify(book)); } catch {}
         const PF = window.PennyFever;
         if (PF && typeof PF.addDemoCoins === "function") PF.addDemoCoins(1);
         if (navigator.vibrate) navigator.vibrate(24);

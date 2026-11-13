@@ -64,6 +64,7 @@ export function resultNumber(elapsed) {
 }
 
 export function ordinaryFor(n) {
+  if (n % 25 === 0) return "five-penny-stack";
   if (n % 10 === 0) return "moon-penny";
   if (n % 2 === 0) return "star-token";
   return "everyday-penny";

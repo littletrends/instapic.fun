@@ -121,6 +121,7 @@ function bounceCircle(p, c, r, kick) {
   return true;
 }
 function pickToken(s) {
+  if (random(s) < 0.03) return 'five-penny-stack';
   const options = TOKENS.filter(t => {
     if (t.id === 'everyday-penny') return true;
     return (s.tokens[t.id] || 0) < t.cap;
@@ -165,12 +166,17 @@ function pay(s, id, x, y) {
   if (ONCE.includes(id) && (s.paid.includes(id) || s.seen.includes(id))) id = pickToken(s);
   else if (ONCE.includes(id)) { s.seen.push(id); s.paid.push(id); }
   const unique = ONCE.includes(id);
-  const special = id !== 'everyday-penny';
+  const special = id !== 'everyday-penny' && id !== 'five-penny-stack';
   if (id === 'everyday-penny') {
     s.score += 50;
     s.wonPennies++;
     if (alleyPlay) credit(1);
     s.note = 'A penny back into the purse.';
+  } else if (id === 'five-penny-stack') {
+    s.score += 250;
+    s.wonPennies += 5;
+    if (alleyPlay) credit(5);
+    s.note = 'Five pennies back into the purse — the table paid out.';
   } else {
     s.score += unique ? 2500 : 400;
     s.specials++;

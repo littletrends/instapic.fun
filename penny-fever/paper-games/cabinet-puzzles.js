@@ -49,6 +49,7 @@ export function resultNumber(seed, _cluesOpened, _mistakes, _hints) {
 }
 
 export function ordinaryFor(n) {
+  if (n % 25 === 0) return 'five-penny-stack';
   if (n % 10 === 0) return 'heart-gear';
   if (n % 2 === 0) return 'cabinet-key';
   return 'everyday-penny';

@@ -1,7 +1,7 @@
 import {done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
-import {alleyPlay, pocket, spend, keep, credit} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
+import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
 import {secondsNote} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
@@ -50,8 +50,26 @@ function plateBox(which, two) {
   return which === 0 ? {x: 250, y: 400, w, h} : {x: 482, y: 400, w, h};
 }
 function enterBox() {
-  // Edit-only: under plates, above keyboard.
-  return {x: 300, y: 520, w: 300, h: 48};
+  return {x: 248, y: 520, w: 196, h: 48};
+}
+function editClearBox() {
+  return {x: 456, y: 520, w: 196, h: 48};
+}
+function sitClearBox() {
+  return {x: 248, y: 838, w: 196, h: 44};
+}
+function sitHintBox() {
+  return {x: 456, y: 838, w: 196, h: 44};
+}
+function paintBtn(d, b, label, ready) {
+  const c = d.c;
+  roundRect(c, b.x, b.y, b.w, b.h, 14);
+  c.fillStyle = ready ? '#c45a6aee' : '#a08088aa';
+  c.fill();
+  c.strokeStyle = ready ? '#5a2030' : '#806068';
+  c.lineWidth = 2;
+  c.stroke();
+  d.text(label, b.x + b.w / 2, b.y + b.h * 0.68, 20, ready ? '#fff6f8' : '#f0e0e4');
 }
 function namesReady(s) {
   const ch = LOVE_CHAPTERS[s.level] || LOVE_CHAPTERS[0];
@@ -310,6 +328,7 @@ function finishMath(s) {
   s.sittingWon = win;
   if (alleyPlay) {
     if (s.lastDrop === 'everyday-penny') credit(1);
+    else if (s.lastDrop === 'five-penny-stack') credit(5);
     else if (s.lastDrop) keep(s.lastDrop, 'love');
     if (win) {
       keep(prize, 'love');
@@ -340,7 +359,7 @@ function hint(s) {
 
 
 /** Wipe the finished (or mid) paper so Play again does not reopen the same result. */
-function clearSitting(s, note) {
+function clearSitting(s, note, keepCharge = false) {
   s.phase = 'edit';
   s.result = null;
   s.hold = 0;
@@ -354,16 +373,38 @@ function clearSitting(s, note) {
   s.addBuf = '';
   s.pct = 0;
   s.reading = '';
-  s.charged = false;
+  s.sittingWon = false;
+  s.lastDrop = null;
+  if (!keepCharge) s.charged = false;
   s.mercury = 0;
   s.shake = 0;
   s.note = note || 'Names stay — change one, or sit again.';
 }
 
+function clearNames(s) {
+  const paid = !!s.charged;
+  s.you = '';
+  s.them = '';
+  s.focus = 0;
+  clearSitting(s, 'Paper cleared. Write the names, then Enter.', paid);
+}
+
+function valentineCollected(s) {
+  const prize = LOVE_CHAPTERS[s.level]?.prize;
+  if (s.prizeKept || s.sittingWon || s.won) return true;
+  if (chapterPaid(s.level)) return true;
+  try { if (prize && owned(prize)) return true; } catch {}
+  return false;
+}
+
 /** Clarity pass: say what this sitting's ordinary drop was. */
 function keptNote(s) {
   if (!s.lastDrop) return '';
-  return s.lastDrop === 'everyday-penny' ? ' A penny went back into your purse.' : ' Collected: ' + itemName(s.lastDrop) + '.';
+  return s.lastDrop === 'everyday-penny'
+    ? ' A penny went back into your purse.'
+    : s.lastDrop === 'five-penny-stack'
+      ? ' Five pennies went back into your purse.'
+    : ' ' + itemName(s.lastDrop) + ' went to the purse.';
 }
 
 export default {
@@ -387,21 +428,22 @@ export default {
   // Runtime: H types a letter only while a name box is active; while counting/adding H opens help.
   typing: s => s.phase === 'edit',
   winningSeconds: level => (LOVE_WINS[level] || LOVE_WINS[0]).slice(),
-  secondsNote: level => secondsNote(level).replace('The clock lights on', 'Tonight’s reading must land on'),
+  secondsNote: level => 'The 100s clock is the sitting. The valentine is the % you add down to. Tonight that reading must land on ' + secondsNote(level).replace(/^The clock lights on /, ''),
+  prizeClock(s) {
+    if (s.phase === 'result' && s.pct) return {n: s.pct, total: 100, lit: !!s.sittingWon};
+    return null;
+  },
   intro: alleyPlay
-    ? 'Rosalie’s schoolyard fortune machine. Write the names, count the letters, then add them down until a number from 1 to 100 remains. The chapter valentine only drops on tonight’s numbers. Same names, same answer — always. Not medical advice, even on the health sitting.'
+    ? 'Rosalie’s schoolyard fortune machine. The 100s clock is the sitting — finish the paper before it sleeps. The valentine is the 1–100 reading you add down to, not a tap on the clock. Same names, same answer — always. Not medical advice, even on the health sitting.'
     : 'Write the names, count the letters, add them down. Workshop sittings are free and write nothing.',
   instructions: alleyPlay
-    ? 'Type the name(s) and press Enter (or tap the Enter button). Count each letter of the chapter word with 0–9, then add neighbours in full (7+4 writes 11). Wrong counts are free to correct. Same names give the same answer, so they are never charged twice — try a nickname.'
-    : 'Type, count, add. Practice writes nothing.',
+    ? 'Type the name(s) and tap Enter. Count each letter of the chapter word with 0–9, then add neighbours in full (7+4 writes 11). Stuck? Tap Clear paper to go back to the names without waiting out the clock. Same names give the same answer — try a nickname for a new reading.'
+    : 'Type, count, add. Clear paper returns to the names. Practice writes nothing.',
   levels: LOVE_CHAPTERS.map(c => c.title),
-  sprites: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox', 'rose-penny', 'heart-biscuit', 'everyday-penny', 'pressed-heart'],
+  sprites: ['rose-hair-bow', 'kindness-heart', 'ribbon-gift-box', 'friendship-pins', 'rose-press', 'rose-lockbox', 'rose-penny', 'heart-biscuit', 'everyday-penny', 'five-penny-stack', 'pressed-heart'],
   prizes: LOVE_CHAPTERS.map(c => c.prize),
-  actions: [
-    {id: 'read', label: 'Begin sitting · Enter'},
-    {id: 'hint', label: 'A little hint'},
-    {id: 'again', label: alleyPlay ? 'New sitting · 1 penny' : 'New sitting'},
-  ],
+  actions: [],
+  canvasControls: true,
   create(level) {
     const ch = LOVE_CHAPTERS[level] || LOVE_CHAPTERS[0];
     const saved = alleyPlay ? (readBook().sittings[String(level)] || {}) : {};
@@ -433,7 +475,7 @@ export default {
     return s;
   },
   retryAttempt(s) {
-    clearSitting(s, 'Names stay — change one, or sit again.');
+    clearSitting(s, 'Names stay — change one, or sit again.', false);
     s.result = null;
     s.hold = 0;
     persist(s);
@@ -468,7 +510,7 @@ export default {
     if (type !== 'down' || s.result) return;
     const ch = LOVE_CHAPTERS[s.level];
     const two = !!ch.bLabel;
-    if (s.phase === 'edit' || s.phase === 'wait' || (s.phase === 'result' && !s.won)) {
+    if (s.phase === 'edit' || s.phase === 'wait' || (s.phase === 'result' && !s.sittingWon)) {
       if (hit(p, plateBox(0, two))) { s.phase = 'edit'; s.focus = 0; return; }
       if (two && hit(p, plateBox(1, two))) { s.phase = 'edit'; s.focus = 1; return; }
       if ((s.phase === 'edit' || s.phase === 'wait') && hit(p, enterBox())) {
@@ -476,18 +518,41 @@ export default {
         else { s.note = emptyNameNote(ch); persist(s); }
         return;
       }
+      if ((s.phase === 'edit' || s.phase === 'wait') && hit(p, editClearBox())) {
+        this.action(s, 'clear');
+        return;
+      }
       if (s.phase === 'edit') {
         for (let i = 0; i < KEYS.length; i++) if (hit(p, keyBox(i))) { typeInto(s, KEYS[i]); return; }
       }
     }
     if (s.phase === 'count' || s.phase === 'add') {
+      if (hit(p, sitClearBox())) { this.action(s, 'clear'); return; }
+      if (hit(p, sitHintBox())) { this.action(s, 'hint'); return; }
       for (let i = 0; i < DIGITS.length; i++) if (hit(p, digitBox(i))) { enterDigit(s, DIGITS[i]); return; }
     }
   },
   action(s, id) {
-    if (id === 'read' || id === 'again') {
+    if (id === 'clear' || id === 'again') {
+      if (s.phase === 'count' || s.phase === 'add') {
+        clearSitting(s, 'Paper cleared. Names stay — Enter when you are ready.', true);
+        persist(s);
+        return;
+      }
+      if (s.phase === 'edit' || s.phase === 'wait') {
+        clearNames(s);
+        persist(s);
+        return;
+      }
+      if (s.phase === 'result') {
+        clearSitting(s, 'Names stay — change one, or sit again.', false);
+        persist(s);
+        return;
+      }
+    }
+    if (id === 'read') {
       if (s.phase === 'result' || s.phase === 'wait') {
-        clearSitting(s);
+        clearSitting(s, 'Names stay — change one, or sit again.', false);
         persist(s);
         return;
       }
@@ -497,7 +562,7 @@ export default {
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === 'Enter') this.action(s, 'read');
+    if (k === 'Enter' && (s.phase === 'edit' || s.phase === 'wait' || s.phase === 'result')) this.action(s, 'read');
     if (k === 'Tab') {
       // Only two-name chapters have a second box to move to.
       if (LOVE_CHAPTERS[s.level]?.bLabel) s.focus = s.focus ? 0 : 1;
@@ -524,13 +589,13 @@ export default {
     }
     // Chapter bonus badge — same Locked / Collected language as every tent.
     {
-      const owned = chapterPaid(s.level) || s.won;
+      const got = valentineCollected(s);
       const px = 640, py = 318;
       c.save();
-      c.globalAlpha = owned ? 1 : 0.55;
+      c.globalAlpha = got ? 1 : 0.55;
       d.item(spriteKey(ch.prize), px, py, {w: 40, fallback: () => d.heart(px, py, 16, '#c45a6a')});
       c.restore();
-      d.text(owned ? 'Collected' : 'Locked', px, py + 36, 12, owned ? '#5a8040' : '#a05060');
+      d.text(got ? 'Collected' : 'Locked', px, py + 36, 12, got ? '#5a8040' : '#a05060');
     }
 
     const tubeX = 218, tubeY = 300, tubeH = 64;
@@ -627,15 +692,13 @@ export default {
 
 
     if (s.phase === 'edit' || s.phase === 'wait') {
-      const eb = enterBox();
-      const ready = namesReady(s);
-      roundRect(c, eb.x, eb.y, eb.w, eb.h, 14);
-      c.fillStyle = ready ? '#c45a6aee' : '#a08088aa';
-      c.fill();
-      c.strokeStyle = ready ? '#5a2030' : '#806068';
-      c.lineWidth = 2;
-      c.stroke();
-      d.text(ready ? 'Enter' : 'Enter names first', eb.x + eb.w / 2, eb.y + 34, 22, ready ? '#fff6f8' : '#f0e0e4');
+      paintBtn(d, enterBox(), namesReady(s) ? 'Enter' : 'Enter names', namesReady(s));
+      paintBtn(d, editClearBox(), 'Clear names', !!(s.you || s.them));
+      wrapLine(d, 'The 100s clock is the sitting. The valentine is the % you add down to.', 450, 582, 16, '#7a3040', 640);
+    }
+    if (s.phase === 'count' || s.phase === 'add') {
+      paintBtn(d, sitClearBox(), 'Clear paper', true);
+      paintBtn(d, sitHintBox(), 'Hint', true);
     }
 
     if (s.phase === 'edit') {

@@ -167,6 +167,7 @@ function finishGaze(s) {
       if (keepOrdinaryAllowed(drop, s.level)) {
         s.ordinary = drop;
         if (drop === 'everyday-penny') credit(1);
+        else if (drop === 'five-penny-stack') credit(5);
         else keep(drop, 'fortune');
       }
     }

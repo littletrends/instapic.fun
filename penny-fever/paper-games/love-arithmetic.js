@@ -149,6 +149,7 @@ export function readingFor(level, n) {
 }
 
 export function ordinaryFor(n) {
+  if (n % 25 === 0) return 'five-penny-stack';
   if (n % 10 === 0) return 'rose-penny';
   if (n % 2 === 0) return 'heart-biscuit';
   return 'everyday-penny';

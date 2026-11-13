@@ -83,8 +83,8 @@ export function isDripId(id) {
 /** Chapter bonus is one copy. Everyday pennies still pay the purse. Drips wait until chapter 2. */
 export function keepOrdinaryAllowed(id, chapter) {
   if (!id) return false;
+  if (isChapterOne(chapter) && (isDripId(id) || id === 'five-penny-stack')) return false;
   if (id === 'everyday-penny' || id === 'five-penny-stack') return true;
-  if (isChapterOne(chapter) && isDripId(id)) return false;
   return true;
 }
 

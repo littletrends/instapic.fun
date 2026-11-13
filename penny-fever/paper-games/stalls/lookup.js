@@ -45,7 +45,7 @@ const SETS = [
 SETS.forEach((chapter, i) => { chapter.prize = chapterKits['lookup'].prizes[i] || chapter.prize; });
 const SPRITES = [
   'star-fragment', 'star-spectacles', 'pocket-observatory', 'moon-rabbit', 'dapper-fox', 'moon-lantern',
-  'sleepy-compass', 'midnight-invitation', 'aura-keepsake', 'everyday-penny', 'penny-purse', 'moon-penny', 'star-token', 'gyro-ghost',
+  'sleepy-compass', 'midnight-invitation', 'aura-keepsake', 'everyday-penny', 'five-penny-stack', 'penny-purse', 'moon-penny', 'star-token', 'gyro-ghost',
 ];
 
 function readStore() {
@@ -271,9 +271,12 @@ function ordinary(s, n) {
   const [rx, ry] = c.receiver;
   if (alleyPlay) {
     if (drop === 'everyday-penny') credit(1);
+    else if (drop === 'five-penny-stack') credit(5);
     else keep(drop, 'lookup');
   }
-  takePrize(s, drop, {x: rx, y: ry});
+  // Ordinary returns animate from the receiver; never route them through
+  // takePrize(), which is reserved for the chapter keepsake and would mark
+  // the unique prize as collected on a replay.
   s.fly = s.fly || [];
   s.fly.push({id: drop, x: rx, y: ry, t: 0, dur: 0.55, prize: false});
 }

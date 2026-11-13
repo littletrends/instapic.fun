@@ -7,7 +7,7 @@ import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
 import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=keep-finish-1';
 import {noteVisit} from './insights.js?v=insights-1';
-import {entryFor, isChapterOne} from './stall-entry.js?v=keep-finish-1';
+import {entryFor, isChapterOne} from './stall-entry.js?v=ride-coil-1';
 import {secondsNote} from './prize-seconds.js?v=keep-finish-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
@@ -20,7 +20,7 @@ if (id) noteVisit(id);
 const GO_UNIT={fortune:'gaze',love:'sitting',curios:'claw',lookup:'comet','coin-pusher':'drop',pinball:'penny','milk-bottles':'round',helter:'ride',funhouse:'ride'};
 const TENT_KEYS={
  fortune:'Space/Enter gaze, then stop each ring',
- love:'Type the names (? opens help while a name box is active) · Tab other name (two-name chapters) · Enter read · 0–9 counts · H how to play while counting',
+ love:'Type the names · Tab other name · Enter start · Clear paper to unstick · 0–9 counts · H how to play while counting',
  curios:'Hold → (or D) or the stick to send the claw — it only travels one way · Tap or Space/Enter while the clock is lit',
  lookup:'Drag a glass, or ↑/↓ pick one and ←/→ turn it · Space/Enter or FEED sends a comet · Z undo · X hint',
  'coin-pusher':'The hopper sweeps by itself — Space/Enter drops 1 penny when it is over your spot · tap Drop 1 penny, ¼ purse, ½ purse or Drop purse',
@@ -47,6 +47,7 @@ function costLine(){
  const spec=entryFor(entry.id),u=GO_UNIT[entry.id]||'go';
  if(spec.inside==='none')return '';
  if(entry.id==='pinball')return 'Each penny loads 3 balls of 100 seconds. Hit a bumper on the prize second for the one bonus.';
+ if(u==='ride')return 'Ticket ride. Chapter 1 is the free ride. Chapters 2–6 cost 1 penny a go. The bonus only sits on a prize roll.';
  return 'Each '+u+' costs 1 penny. Play until the prize second hits. That chapter’s bonus drops once. Everyday pennies still return to the purse.';
 }
 function treasureLine(){
@@ -432,6 +433,7 @@ try{
    if(k==='Escape'){e.preventDefault();goBack();return;}
    // Ended rooms never buy a go on Space/Enter — only R or the button (and not in the first 0.8s).
    if((k===' '||k==='Enter')&&!ended&&tag!=='BUTTON'&&tag!=='A'&&!$('#begin').disabled){e.preventDefault();$('#begin').click();return;}
+   if(k==='Enter'&&ended&&!$('#begin').disabled&&performance.now()-veilShownAt>800){e.preventDefault();$('#begin').click();return;}
    if((k==='r'||k==='R')&&ended&&!$('#begin').disabled&&performance.now()-veilShownAt>800){e.preventDefault();$('#begin').click();return;}
    if((k==='n'||k==='N')&&ended&&!$('#result-next').hidden){e.preventDefault();goNextChapter();}
    return;
