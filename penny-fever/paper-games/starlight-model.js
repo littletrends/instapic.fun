@@ -94,7 +94,7 @@ export function mirrorEnds(center, angle) {
   return [[center[0] - x, center[1] - y], [center[0] + x, center[1] + y]];
 }
 export function trace(g) {
-  const c = CHAPTERS[g.chapter], segments = [], lit = c.stars.map(() => false), visited = new Set();
+  const c = CHAPTERS[g.chapter], segments = [], lit = c.stars.map(() => false), mirrorsHit = c.mirrors.map(() => false), visited = new Set();
   let origin = [...c.source], dir = [0, -1], receiverLit = false, loop = false, blocked = null, length = 0;
   const bounds = [[[150, 290], [750, 290]], [[750, 290], [750, 1090]], [[750, 1090], [150, 1090]], [[150, 1090], [150, 290]]];
   for (let bounce = 0; bounce < 32; bounce++) {
@@ -109,6 +109,7 @@ export function trace(g) {
     segments.push({ a: [...origin], b: end, length: hit.t, end: hit.kind, mirror: hit.index }); length += hit.t;
     if (hit.kind === 'receiver') { receiverLit = true; break; }
     if (hit.kind !== 'mirror') { blocked = hit.kind; break; }
+    mirrorsHit[hit.index] = true;
     const angle = g.angles[hit.index];
     const outAngle = 2 * angle - Math.atan2(dir[1], dir[0]);
     dir = [Math.cos(outAngle), Math.sin(outAngle)];
@@ -118,7 +119,8 @@ export function trace(g) {
     origin = [end[0] + dir[0] * .04, end[1] + dir[1] * .04];
   }
   if (segments.length >= 32) loop = true;
-  return { segments, lit, receiverLit, loop, blocked, length, solved: lit.every(Boolean) && receiverLit && !loop };
+  const fullPath = lit.every(Boolean) && mirrorsHit.every(Boolean) && receiverLit && !loop;
+  return { segments, lit, mirrorsHit, receiverLit, loop, blocked, length, solved: fullPath };
 }
 export function refresh(g) { g.ray = trace(g); }
 export function beginTurn(g, index) {

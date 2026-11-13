@@ -50,7 +50,7 @@ for(let level=0;level<6;level++){
 }
 console.log('PASS: all six Mabel first boards, exact return state, and uncharged legacy missing-prize recovery.');
 const lookup=await import('./stalls/lookup.js?v=celeste-clock-1');
-const starlight=await import('../experiments/celestes-starlight/model.js?v=celeste-clock-1');
+const starlight=await import('./starlight-model.js?v=celeste-clock-1');
 for(let level=0;level<6;level++){
  memory.clear();cash=20;
  const hits=Array.from({length:100},(_,i)=>lookup.isWinningNumber(level,i+1));

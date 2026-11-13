@@ -8,7 +8,7 @@ import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=k
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,
-} from '../../experiments/celestes-starlight/model.js?v=treasure-design-1';
+} from '../starlight-model.js?v=celeste-clock-1';
 
 const BOOK = 'pennyFever.littleStarlight';
 const GLASS = ['I', 'II', 'III', 'IV', 'V'];
