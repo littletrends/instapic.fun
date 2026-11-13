@@ -138,7 +138,7 @@ function persistState(s) {
   const book = readBook();
   book.selected = s.level;
   const session = {};
-  for (const key of ['t','clock','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle','handful']) session[key] = s[key];
+  for (const key of ['t','clock','phase','slider','sliderDir','dropX','pusherT','cycle','flash','lastWin','won','busy','note','settle','handful','dropChoice']) session[key] = s[key];
   const tray = {...s.tray, coins:s.tray.coins.map(c=>({...c})), session};
   if (s.practice) book.practice = {level:s.level, tray};
   else book.trays[String(s.level)] = tray;
@@ -226,6 +226,19 @@ function shouldWarn(s, id, n) {
   return false;
 }
 
+function dropChoiceOf(s) {
+  return s.dropChoice || 'drop1';
+}
+function choiceFace(s, id) {
+  const n = s.practice ? 1 : pursePennies();
+  const q = n ? Math.max(1, Math.floor(n / 4)) : 0;
+  const h = n ? Math.max(1, Math.floor(n / 2)) : 0;
+  if (s.practice || id === 'drop1') return {id: 'drop1', label: s.practice ? 'Practice drop' : 'Drop 1 penny', count: 1};
+  if (id === 'drop14') return {id, label: 'Drop ¼ purse · ' + q, count: q};
+  if (id === 'drop12') return {id, label: 'Drop ½ purse · ' + h, count: h};
+  if (id === 'dropall') return {id, label: 'Drop purse · ' + n, count: n};
+  return {id: 'drop1', label: 'Drop 1 penny', count: 1};
+}
 function uiButtons(s) {
   const n = s.practice ? 1 : pursePennies();
   const packed = s.practice ? 0 : pursePacks();
@@ -242,19 +255,24 @@ function uiButtons(s) {
   }
   if (s.practice) {
     return [
-      {id:'drop1',label:'Practice drop',x:30,y:942,w:410,h:84,count:1,on:can&&n>=1},
-      {id:'drop14',label:'¼ purse · 1',x:460,y:942,w:410,h:84,count:1,on:false},
-      {id:'drop12',label:'½ purse · 1',x:30,y:1036,w:410,h:84,count:1,on:false},
-      {id:'dropall',label:'Drop purse · 1',x:460,y:1036,w:410,h:84,count:1,on:false},
+      {id:'drop1',label:'Practice drop',x:30,y:960,w:840,h:88,count:1,on:can&&n>=1},
     ];
   }
+  if (s.trayOpen) {
+    return [
+      {id:'tray-close',label:'Close tray',x:30,y:688,w:840,h:48,on:true},
+      {id:'pack5',label:n>=5?'Pack 5 pennies':'Need 5 to pack',x:30,y:748,w:410,h:64,on:can&&n>=5},
+      {id:'unpack5',label:packed?('Open 5-pack · '+packed):'No 5-packs yet',x:460,y:748,w:410,h:64,on:can&&packed>=1},
+      {id:'drop1',label:'Drop 1 penny',x:30,y:824,w:410,h:72,count:1,on:can&&n>=1},
+      {id:'drop14',label:'¼ purse · '+q,x:460,y:824,w:410,h:72,count:q,on:can&&n>=1},
+      {id:'drop12',label:'½ purse · '+h,x:30,y:908,w:410,h:72,count:h,on:can&&n>=1},
+      {id:'dropall',label:'Drop purse · '+n,x:460,y:908,w:410,h:72,count:n,on:can&&n>=1},
+    ];
+  }
+  const face = choiceFace(s, dropChoiceOf(s));
   return [
-    {id:'pack5',label:n>=5?'Pack 5 pennies':'Need 5 to pack',x:30,y:888,w:410,h:64,on:can&&n>=5},
-    {id:'unpack5',label:packed?('Open 5-pack · '+packed):'No 5-packs yet',x:460,y:888,w:410,h:64,on:can&&packed>=1},
-    {id:'drop1',label:'Drop 1 penny',x:30,y:960,w:410,h:72,count:1,on:can&&n>=1},
-    {id:'drop14',label:'¼ purse · '+q,x:460,y:960,w:410,h:72,count:q,on:can&&n>=1},
-    {id:'drop12',label:'½ purse · '+h,x:30,y:1040,w:410,h:72,count:h,on:can&&n>=1},
-    {id:'dropall',label:'Drop purse · '+n,x:460,y:1040,w:410,h:72,count:n,on:can&&n>=1},
+    {id:'tray-open',label:'Pack & amounts',x:30,y:888,w:840,h:48,on:true},
+    {id:'drop-repeat',label:face.label,x:30,y:952,w:840,h:92,count:face.count,on:can&&n>=1},
   ];
 }
 function hitButton(s, p) {
@@ -340,7 +358,7 @@ export default {
     return {n, total: 100, lit: isWinSecond(s.level, n)};
   },
   intro: "Copper’s coin pusher. The hopper sweeps side to side by itself — time your drop. Every push spends a real penny, including Chapter 1. Pennies over the lip come back to your purse. The chapter prize joins the tray when a paid drop lands on a lit prize second; then push it over the edge.",
-  instructions: "Watch the hopper sweep, then tap Drop 1 penny, ¼ purse, ½ purse or Drop purse (Space/Enter drops 1). A big dump asks once before it falls. Pack 5 pennies keeps five out of play; Open 5-pack brings them back. Drop while the clock is lit to release this chapter’s bonus.",
+  instructions: "Watch the hopper sweep, then tap the big drop button. Pack & amounts opens a tray for Pack 5, Open pack, Drop 1, ¼, ½ or the whole purse — pick one and the tray closes, leaving that drop on the big button. Space/Enter uses the same choice. A big dump asks once before it falls. Drop while the clock is lit to release this chapter’s bonus.",
   levels: CHAPTERS.map(c => c.title),
   prizes: CHAPTERS.map(c => c.prize),
   images: {
@@ -525,10 +543,24 @@ export default {
   },
   action(s, id, count) {
     if (s.warn && id !== "warn-pack" && id !== "warn-dump" && id !== "warn-keep") return;
+    if (id === "tray-open") {
+      if (s.practice || s.warn) return;
+      s.trayOpen = true;
+      return;
+    }
+    if (id === "tray-close") {
+      s.trayOpen = false;
+      return;
+    }
+    if (id === "drop-repeat") {
+      this.action(s, dropChoiceOf(s));
+      return;
+    }
     if (id === "pack5") {
       if (s.practice || s.busy || s.phase !== "idle") return;
       if (pursePackFive()) {
         s.note = "Five pennies packed. They stay out of the machine.";
+        s.trayOpen = false;
         persistState(s);
       } else s.note = "Need five loose pennies to pack.";
       return;
@@ -537,6 +569,7 @@ export default {
       if (s.practice || s.busy || s.phase !== "idle") return;
       if (purseUnpackFive()) {
         s.note = "Five pennies back in the purse.";
+        s.trayOpen = false;
         persistState(s);
       } else s.note = "No 5-packs to open.";
       return;
@@ -561,6 +594,10 @@ export default {
       if (n) this.drop(s, n);
       return;
     }
+    if (id === "drop1" || id === "drop" || id === "drop14" || id === "drop12" || id === "dropall") {
+      if (id !== "drop") s.dropChoice = id === "drop1" ? "drop1" : id;
+      s.trayOpen = false;
+    }
     if (id === "drop1" || id === "drop") this.drop(s, 1);
     if (id === "drop14" || id === "drop12" || id === "dropall") {
       const purse=pursePennies();
@@ -575,7 +612,7 @@ export default {
   },
   key(s, k, down) {
     if (!down) return;
-    if (k === " " || k === "Enter") this.drop(s, 1);
+    if (k === " " || k === "Enter") this.action(s, dropChoiceOf(s));
   },
   draw(s, d) {
     const c = d.c;
@@ -635,6 +672,19 @@ export default {
     c.fillStyle = "rgba(20, 10, 8, 0.55)";
     c.fillRect(LEFT, FRONT, RIGHT - LEFT, 18);
     d.text("Collection lip", 450, FRONT + 32, 14, "#e8c878");
+
+    if (s.trayOpen && !s.warn) {
+      c.fillStyle = "rgba(10, 6, 8, 0.55)";
+      c.fillRect(0, 150, 900, 730);
+      c.beginPath();
+      if (c.roundRect) c.roundRect(18, 668, 864, 330, 22); else c.rect(18, 668, 864, 330);
+      c.fillStyle = "rgba(36, 22, 18, 0.96)";
+      c.fill();
+      c.strokeStyle = "#e8c878";
+      c.lineWidth = 3;
+      c.stroke();
+      d.text("Pack or pick a drop", 450, 656, 22, "#fff1d1");
+    }
 
     if (s.warn) {
       c.fillStyle = "rgba(10, 6, 8, 0.72)";

@@ -61,4 +61,13 @@ assert.equal(g.applySwap(cow,2,2,2,1).reason,'no-match','cow on banana will not 
 assert(g.applySwap(cow,2,2,3,2).ok,'cow on banana splashes into a banana line');
 assert.equal(g.countKind(cow,'unique'),1);
 assert.equal(cow.cells.flat().filter(c=>c?.kind==='unique')[0].flavour,'banana');
+cow=g.makeBoard(0,4102,{allowUnique:false});
+cow.cells[2][0]={kind:'unique',flavour:'banana'};
+cow.cells[2][1]={kind:'milk',flavour:'strawberry'};
+cow.cells[2][2]={kind:'milk',flavour:'banana'};
+cow.cells[2][3]={kind:'milk',flavour:'banana'};
+cow.cells[1][0]={kind:'milk',flavour:'strawberry'};
+cow.movesLeft=10;g.locateUnique(cow);
+assert(g.applySwap(cow,0,2,1,2).ok,'yellow prize spins into a yellow line through a different colour');
+assert.equal(g.countKind(cow,'unique'),1);
 console.log('PASS: prize cow keeps the flavour it sits on and matches that colour.');

@@ -165,25 +165,25 @@ function specialSwap(a,b){
 }
 function swapMatches(board,c1,r1,c2,r2){
  if(findMatches(board).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2))) return true;
- const a=cellAt(board,c1,r1), b=cellAt(board,c2,r2);
- const unique=a?.kind==='unique'?a:b?.kind==='unique'?b:null;
- const other=unique===a?b:a;
- if(!unique||!other) return false;
- const flav=unique.flavour||'banana';
- if(flavourId(other)!==flav) return false;
  return findMatches(board,true).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2));
 }
-export function legalMoves(board) {
+function collectMoves(board, matchFn) {
  const moves=[];
  for(let r=0;r<board.rows;r++)for(let c=0;c<board.cols;c++)for(const [dc,dr] of [[1,0],[0,1]]){
   const c2=c+dc,r2=r+dr,a=cellAt(board,c,r),b=cellAt(board,c2,r2);
   if(!swappable(a)||!swappable(b))continue;
   setCell(board,c,r,b);setCell(board,c2,r2,a);
-  const ok=specialSwap(a,b)||swapMatches(board,c,r,c2,r2);
+  const ok=specialSwap(a,b)||matchFn(board,c,r,c2,r2);
   setCell(board,c,r,a);setCell(board,c2,r2,b);
   if(ok)moves.push({c1:c,r1:r,c2,r2});
  }
  return moves;
+}
+export function legalMoves(board) {
+ return collectMoves(board, swapMatches);
+}
+function ordinaryMoves(board) {
+ return collectMoves(board, (b,c1,r1,c2,r2)=>findMatches(b).some(h=>(h.c===c1&&h.r===r1)||(h.c===c2&&h.r===r2)));
 }
 
 export function locateUnique(board) {
@@ -363,9 +363,9 @@ export function reshuffle(board) {
 }
 
 function ensureMoves(board){
- if(!findMatches(board).length&&legalMoves(board).length)return board;
+ if(!findMatches(board).length&&ordinaryMoves(board).length)return board;
  // Shuffle only ordinary/special bottles: obstacles and earned treasure stay put.
- for(let i=0;i<48;i++){reshuffle(board);if(!findMatches(board).length&&legalMoves(board).length){board.reshuffled=true;return board;}}
+ for(let i=0;i<48;i++){reshuffle(board);if(!findMatches(board).length&&ordinaryMoves(board).length){board.reshuffled=true;return board;}}
  // Dense old sour saves can have no usable patch. Open the smallest 2x3 patch
  // without touching a hole or treasure, then plant a deterministic legal swap.
  const patches=[];
@@ -388,7 +388,7 @@ function ensureMoves(board){
    const col=patch.c+(patch.w===3?x:y),row=patch.r+(patch.w===3?y:x);
    cellAt(board,col,row).flavour=pattern[y][x];
   }
-  if(!findMatches(board).length&&legalMoves(board).length){board.reshuffled=true;locateUnique(board);return board;}
+  if(!findMatches(board).length&&ordinaryMoves(board).length){board.reshuffled=true;locateUnique(board);return board;}
  }
  throw Error('The dairy could not arrange a legal swap.');
 }

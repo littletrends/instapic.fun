@@ -192,7 +192,7 @@ export default {
     ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. Chapter 1 is free; later chapters cost a penny for a full move tray. The treasure only sits on boards whose hidden number is a prize second. Match it down into the crate. The board waits if moves run out.'
     : 'Drag or tap two neighbouring bottles to swap them. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
-    ? 'Drag or tap two neighbouring bottles to swap them (keyboard: arrows move, Space/Enter picks, an arrow swaps). Only a real match spends a move. Cascades are free. The gold PRIZE bottle must reach the bottom delivery crate. Match beneath it to make it fall. Wooden crates are obstacles: an adjacent match breaks them; they do not need delivering. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
+    ? 'Drag or tap two neighbouring bottles to swap them (keyboard: arrows move, Space/Enter picks, an arrow swaps). Only a real match spends a move. Cascades are free. The gold PRIZE bottle is the flavour it sits in — spin it into a line of that same colour and the match holds. It still has to reach the bottom crate. Wooden crates are obstacles: an adjacent match breaks them. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
     : 'Drag or tap two neighbouring bottles to swap them. Practice writes nothing.',
   levels: MABEL_CHAPTERS.map(c => c.title),
   sprites: ['dairy-calf', 'lucky-dish', 'alley-collector-cup', 'cocoa-cup', 'crown-hatbox', 'cream-churn', 'moon-penny', 'star-token', 'everyday-penny'],

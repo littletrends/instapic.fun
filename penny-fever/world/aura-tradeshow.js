@@ -35,6 +35,8 @@ let resumeWorld = false;
 let lastFocus = null;
 let tillPoll = 0;
 let tillRevision = 0;
+let tradeshowAccount = '';
+let vipCheckTimer = 0;
 let folder = 'book:penny-collector-book';
 let query = '';
 const openNodes = new Set(['book:penny-collector-book']);
@@ -47,11 +49,61 @@ function vip() {
 const SNAP_BOOK = 'felix-vendor-portrait-book';
 let snapElig = {portraits: new Set(), book: false};
 let dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+let eligibilityAccount = '';
+let eligibilityRevision = 0;
+const claimReceipts = new Map();
+const tokenClaimsInFlight = new Set();
 function vipEmail() {
   try {
     return vip() ? String(window.InstapicGuestIdentity?.read?.()?.email || '').trim() : '';
   } catch {
     return '';
+  }
+}
+function vipAccount() {
+  return vipEmail().toLowerCase();
+}
+function clearEligibility(account = '') {
+  eligibilityAccount = account;
+  snapElig = {portraits: new Set(), book: false};
+  dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+}
+function claimReceiptKey(account, id) {
+  return `pennyFever.tradeshowClaimReceipt.v1:${encodeURIComponent(account)}:${id}`;
+}
+function rememberClaimReceipt(account, id) {
+  const key = claimReceiptKey(account, id);
+  const receipt = {v: 1, account, id};
+  claimReceipts.set(key, receipt);
+  try { localStorage.setItem(key, JSON.stringify(receipt)); } catch {}
+}
+function deliverClaimReceipts() {
+  const delivered = new Set();
+  const account = vipAccount();
+  if (!account) return delivered;
+  for (const [id, spec] of Object.entries(stock.token_claims || {})) {
+    if (!dripCost(spec.cost)) continue;
+    const key = claimReceiptKey(account, id);
+    let receipt = claimReceipts.get(key);
+    if (!receipt) { try { receipt = JSON.parse(localStorage.getItem(key) || 'null'); } catch {} }
+    if (receipt?.v !== 1 || receipt.account !== account || receipt.id !== id) continue;
+    if (walletCount(id) > 0 || window.PennyFever?.stampKeepsake?.(id, 'token-claim')) {
+      delivered.add(id);
+      claimReceipts.delete(key);
+      try { localStorage.removeItem(key); } catch {}
+    }
+  }
+  return delivered;
+}
+function checkVipSession() {
+  const account = vipAccount();
+  if (eligibilityAccount && account !== eligibilityAccount) {
+    eligibilityRevision += 1;
+    clearEligibility();
+  }
+  if (overlay && !overlay.hidden && account !== tradeshowAccount) {
+    closeTradeshow({stayInAlley: true});
+    if (!account) location.assign(vipJoin());
   }
 }
 function setSnapElig(data) {
@@ -70,23 +122,23 @@ function postSnap(path, body) {
 }
 function loadSnap() {
   const email = vipEmail();
-  if (!email) {
-    snapElig = {portraits: new Set(), book: false};
-    dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
-    return Promise.resolve();
-  }
+  const account = email.toLowerCase();
+  const revision = ++eligibilityRevision;
+  clearEligibility(account);
+  if (!email) return Promise.resolve();
   return Promise.all([
-    postSnap('recheck', {email}).then(setSnapElig),
-    loadDrips(),
-  ]);
+    postSnap('recheck', {email}).then((data) => {
+      if (revision === eligibilityRevision && account === vipAccount()) setSnapElig(data);
+    }),
+    loadDrips(email, revision),
+  ]).then(deliverClaimReceipts);
 }
-function loadDrips() {
-  const email = vipEmail();
-  dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+function loadDrips(email, revision) {
   if (!email) return Promise.resolve();
   return fetch(`${NFT_HOST}/api/penny-fever/drips?email=${encodeURIComponent(email)}`, {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
+      if (revision !== eligibilityRevision || email.toLowerCase() !== vipAccount()) return;
       const purse = data?.purse;
       if (!purse || typeof purse !== 'object') return;
       DRIPS.forEach((id) => {
@@ -194,7 +246,7 @@ function formatTokenCost(cost) {
 function tokenAfford(cost) {
   return Object.entries(cost || {}).every(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
-    if (DRIPS.has(id)) return (dripPurse[id] || 0) >= need;
+    if (DRIPS.has(id)) return eligibilityAccount === vipAccount() && !!eligibilityAccount && (dripPurse[id] || 0) >= need;
     return tokenHave(id) >= need;
   });
 }
@@ -238,6 +290,11 @@ function claimWithTokens(id) {
     say('Join VIP to unlock this book with tokens.');
     return;
   }
+  const action = shopAction(id);
+  if (action.disabled) {
+    say(action.label);
+    return;
+  }
   if (walletAtCap(id)) {
     say('Already in your wallet.');
     return;
@@ -247,38 +304,63 @@ function claimWithTokens(id) {
     return;
   }
   if (dripCost(spec.cost)) {
+    const account = vipAccount();
+    const receiptKey = claimReceiptKey(account, id);
+    if (tokenClaimsInFlight.has(receiptKey)) {
+      say('Claim in progress.');
+      return;
+    }
     if (!tokenAfford(spec.cost)) {
       say(`Need ${formatTokenCost(spec.cost)} banked from VIP play.`);
       return;
     }
     const email = vipEmail();
+    const revision = eligibilityRevision;
+    tokenClaimsInFlight.add(receiptKey);
     fetch(`${NFT_HOST}/api/penny-fever/drips/claim`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, item: id}),
     }).then((res) => res.json().then((data) => ({ok: res.ok, data})))
       .then(({ok, data}) => {
+        if (ok && data?.ok && (String(data.email || email).toLowerCase() !== account || (data.item && data.item !== id))) {
+          if (account === vipAccount()) say('The claim reply did not match this account and item. Nothing was added here.');
+          return;
+        }
+        if (ok && data?.ok && String(data.email || email).toLowerCase() === account) {
+          // Keep an already committed receipt for its owner even if they leave.
+          rememberClaimReceipt(account, id);
+        }
+        if (account !== vipAccount()) return;
         if (!ok || !data?.ok) {
           say(data?.error === 'need_tokens'
             ? `Need ${formatTokenCost(spec.cost)} banked from VIP play.`
             : 'Claim did not land. Play as VIP to bank tokens.');
-          if (data?.purse) {
+          if (revision === eligibilityRevision && data?.purse) {
             DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
           }
-          paint();
           return;
         }
-        if (data.purse) {
+        if (revision === eligibilityRevision && data.purse) {
           DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
         }
-        setSnapElig(data);
-        const PF = window.PennyFever;
-        PF?.stampKeepsake?.(id, 'token-claim');
+        if (revision === eligibilityRevision) setSnapElig(data);
+        const delivered = deliverClaimReceipts();
         const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
-        say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
-        paint();
+        say(delivered.has(id)
+          ? `Claimed ${name} · ${formatTokenCost(spec.cost)}.`
+          : 'Your claim is recorded. Reopen the tradeshow to add it to Treasures.');
       })
-      .catch(() => { say('Claim did not land.'); });
+      .catch(() => { if (account === vipAccount()) say('Claim did not land.'); })
+      .finally(() => {
+        tokenClaimsInFlight.delete(receiptKey);
+        if (account === vipAccount()) {
+          const message = note?.textContent;
+          paint();
+          if (message) say(message);
+        }
+      });
+    paint();
     return;
   }
   if (!tokenAfford(spec.cost)) {
@@ -362,7 +444,7 @@ function loadPlates() {
     })
     .catch(() => {});
 }
-function stallForPrize(item) {
+function stallForPrize(item = {}) {
   if (item.id === 'felix-vendor-portrait-book' || item.photoSetId === 'pf-felix') return stallById('snap');
   if (item.photoSetId?.startsWith('pf-')) return stallById(item.photoSetId.slice(3)) || stallById('snap');
   const playStalls = stalls.filter((s) => !s.extra || s.id === 'ticket-booth');
@@ -733,7 +815,7 @@ function openInspect(id) {
 function snapMint(item) {
   if (!onShelf(item.id)) return null;
   const ok = item.id === SNAP_BOOK ? snapElig.book : snapElig.portraits.has(item.id);
-  if (!ok || !vip()) return null;
+  if (!ok || !vip() || eligibilityAccount !== vipAccount()) return null;
   const xrp = formatXrp(item.id);
   return {label: xrp ? `Claim and mint · ${xrp}` : 'Claim and mint', disabled: false, ready: true, snap: true};
 }
@@ -754,6 +836,7 @@ function actionFor(item, stallInfo) {
   if (claim) {
     const cost = formatTokenCost(claim.cost);
     if (!vip()) return {label: `Join VIP to unlock · ${cost}`, disabled: true, claim: true};
+    if (tokenClaimsInFlight.has(claimReceiptKey(vipAccount(), item.id))) return {label: 'Claim in progress.', disabled: true, claim: true};
     if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
     if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
@@ -873,8 +956,8 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
-function watchXamanPayload(till, uuid, revision) {
-  if (revision !== tillRevision) return;
+function watchXamanPayload(till, uuid, revision, account) {
+  if (revision !== tillRevision || account !== vipAccount()) return;
   stopTillPoll();
   const pollRevision = tillRevision;
   const copy = till.querySelector('#auraXrpTillCopy');
@@ -882,14 +965,14 @@ function watchXamanPayload(till, uuid, revision) {
   const name = till.querySelector('#auraXrpTillName')?.textContent || 'card';
   const tick = () => {
     if (pollRevision !== tillRevision) return;
-    if (till.hidden) {
+    if (till.hidden || account !== vipAccount()) {
       stopTillPoll();
       return;
     }
     fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, {cache: 'no-store'})
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
-        if (pollRevision !== tillRevision || till.hidden || !copy) return;
+        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
         const mint = data?.mint;
         if (mint?.accept_deep_link && mint.status !== 'accepted') {
           showTillQr(img, name, mint.accept_deep_link);
@@ -927,6 +1010,7 @@ function openXrpTill(id) {
   if (!till) return;
   stopTillPoll();
   const revision = tillRevision;
+  const account = vipAccount();
   const item = modelItem(id);
   const name = item?.name || id;
   const img = till.querySelector('#auraXrpTillImg');
@@ -943,17 +1027,17 @@ function openXrpTill(id) {
   fetch(checkoutUrl(id), {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : Promise.reject()))
     .then((data) => {
-      if (revision !== tillRevision || till.hidden || !copy) return;
+      if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
       if (data?.deep_link) {
         showTillQr(img, name, data.deep_link);
         copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
-        if (data.payload) watchXamanPayload(till, data.payload, revision);
+        if (data.payload) watchXamanPayload(till, data.payload, revision, account);
         return;
       }
       copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
     })
     .catch(() => {
-      if (revision === tillRevision && copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
+      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
     });
 }
 function queueXrpPlace(id) {
@@ -1352,6 +1436,8 @@ export function openTradeshow() {
     location.assign(vipJoin());
     return false;
   }
+  const account = vipAccount();
+  if (tradeshowAccount && tradeshowAccount !== account) closeTradeshow({stayInAlley: true});
   ensureOverlay();
   const world = window.PennyFeverWorld;
   resumeWorld = !!(world?.started && !world.paused && document.body.classList.contains('is-in-world'));
@@ -1359,7 +1445,13 @@ export function openTradeshow() {
   lastFocus = document.activeElement;
   document.body.classList.add('aura-tradeshow-open');
   overlay.hidden = false;
-  Promise.all([loadStock(), loadMinted(), loadPlates(), loadSnap()]).then(paint);
+  tradeshowAccount = account;
+  if (!vipCheckTimer) vipCheckTimer = setInterval(checkVipSession, 1000);
+  Promise.all([loadStock(), loadMinted(), loadPlates(), loadSnap()]).then(() => {
+    checkVipSession();
+    deliverClaimReceipts();
+    paint();
+  });
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
   return true;
@@ -1368,6 +1460,9 @@ export function openTradeshow() {
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
   stopTillPoll();
+  if (vipCheckTimer) clearInterval(vipCheckTimer);
+  vipCheckTimer = 0;
+  tradeshowAccount = '';
   const inspect = overlay.querySelector('#auraTradeshowInspect');
   if (inspect) inspect.hidden = true;
   inspectItem = null;
@@ -1393,6 +1488,9 @@ export function tradeshowSign() {
 loadStock();
 loadMinted();
 loadPlates();
+window.addEventListener('storage', (event) => {
+  if (event.key === null || event.key === 'instapic_guest_identity') checkVipSession();
+});
 window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus};
 
 try {

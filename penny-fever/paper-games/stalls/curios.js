@@ -1,8 +1,8 @@
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=prize-hud-1';
 import {matteImage} from '../sprites.js?v=load-fix-1';
-import {alleyPlay, pocket, tickets, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote} from '../stall-entry.js?v=keep-finish-1';
+import {alleyPlay, pocket, tickets, keep, owned, credit} from '../wallet.js?v=insights-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {CABINET_PRIZES, isCabinetWin} from '../cabinet-puzzles.js?v=keep-finish-1';
 import {elapsedSecond, winningSeconds} from '../prize-seconds.js?v=keep-finish-1';
@@ -186,6 +186,21 @@ function clawOver(s, cap) {
   const reach = Math.max(GRAB_REACH, (cap.size || 50) * 0.52);
   return Math.abs((s.clawX || 0) - cap.x) <= reach;
 }
+function capsuleUnder(s) {
+  const caps = (s.capsules || []).filter(c => c && !c.taken);
+  let best = null, bestD = 1e9;
+  for (const cap of caps) {
+    if (!clawOver(s, cap)) continue;
+    const d = Math.abs((s.clawX || 0) - cap.x);
+    if (d < bestD) { best = cap; bestD = d; }
+  }
+  return best;
+}
+function ordinaryForCap(s, cap) {
+  const drip = cap?.drip || EVERYDAY_DROP[(s.drops || 0) % EVERYDAY_DROP.length];
+  if (keepOrdinaryAllowed(drip, s.level)) return drip;
+  return 'everyday-penny';
+}
 
 function stickLayout() {
   return {cx: 450, cy: 1058, baseRx: 118, baseRy: 70, knobR: 32, maxPull: 48, dead: 14};
@@ -257,10 +272,14 @@ function startDrop(s) {
   s.held = null;
   s.dropBeat = houseSecond(s);
   s.timed = isCabinetWin(s.level, s.dropBeat);
-  const bonus = bonusCapsule(s);
-  s.lined = !!(s.timed && clawOver(s, bonus));
-  s.target = s.lined ? bonus : null;
-  s.note = s.lined ? 'The second is true — lifting the glow…' : missNote(s);
+  const aimed = s.timed ? capsuleUnder(s) : null;
+  s.lined = !!aimed;
+  s.target = aimed;
+  if (aimed && aimed.bonus && !s.keepsakeTaken && !chapterPaid(s.level)) {
+    s.note = 'The second is true — lifting the glow…';
+  } else if (aimed) {
+    s.note = 'The clock is lit — lifting a tray find…';
+  } else s.note = missNote(s);
   persist(s);
 }
 
@@ -333,11 +352,30 @@ function resolveDrop(s) {
   }
   aimed.taken = true;
   aimed.lift = 0;
-  aimed.x = PRIZE_SPOT.x;
-  aimed.y = PRIZE_SPOT.y;
   s.held = null;
-  awardCatch(s, aimed);
+  if (aimed.bonus && !s.keepsakeTaken && !chapterPaid(s.level) && !s.prizeKept) {
+    aimed.x = PRIZE_SPOT.x;
+    aimed.y = PRIZE_SPOT.y;
+    awardCatch(s, aimed);
+  } else {
+    awardOrdinary(s, aimed);
+  }
   resumeAim(s);
+}
+
+function awardOrdinary(s, cap) {
+  const drop = ordinaryForCap(s, cap);
+  if (!alleyPlay) {
+    s.note = 'Workshop find — ' + (itemName(drop) || drop) + '. The sitting writes nothing.';
+    return;
+  }
+  if (drop === 'everyday-penny') {
+    credit(1);
+    s.note = 'A penny back to the purse. Keep clawing until the glass latches.';
+  } else {
+    keep(drop, 'curios');
+    s.note = (itemName(drop) || drop) + ' — keep clawing until the glass latches.';
+  }
 }
 
 function finishMiss(s) {
@@ -454,11 +492,11 @@ export default {
     return {n, total: HOUSE_SECONDS, lit: isCabinetWin(s.level, n)};
   },
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop while the clock is lit to lift the chapter bonus. Lifting it is a carry — Digby has to latch the glass at the end of the sitting before it is Collected.'
-    : 'Digby’s claw only travels one way. Line it over the glow and drop while the clock is lit. Workshop sittings write nothing.',
+    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Keep dropping until the 100s glass latches. A lit second over the glow carries the chapter bonus; later lit seconds pay a penny, or a token from chapter 2. The bonus stays Locked until Digby latches the glass.'
+    : 'Digby’s claw only travels one way. Keep dropping while the clock is lit. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. You can stop over the glow and wait. Tap the vault or press Space/Enter when the clock lights AND the claw is over the glow. A catch stays in the claws until the 100s cabinet closes; leaving before that leaves it Locked.'
-    : 'Hold the stick right (or → / D) to sweep — one way only. Stop over the glow if you need to wait. Tap or press Space/Enter while the clock is lit.',
+    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. You can stop over the glow and wait. Tap the vault or press Space/Enter when the clock lights. First glow catch carries the bonus; every later lit second with a capsule in the claws pays a penny (chapter 1) or a token (chapter 2–6). Stay until the cabinet closes to keep the bonus.'
+    : 'Hold the stick right (or → / D) to sweep — one way only. Keep dropping on lit seconds until time is up.',
   levels: LEVELS,
   images: {
     cabinet: '../assets/restyle/scene-turnarounds-2026-09-09/stalls/curios/front.webp',
