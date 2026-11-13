@@ -3,12 +3,11 @@ import {drawMilkySplash, splashSwap, isSliding} from '../milky-splash-art.js?v=m
 import {done} from '../draw.js';
 import {itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
-import {secondsNote} from '../prize-seconds.js?v=keep-finish-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, settleBoard, layoutOf, MABEL_WINS,
+  cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, settleBoard, layoutOf,
 } from '../milky-splash.js?v=prize-drop-1';
 
 const BOOK = 'pennyFever.milkySplash';
@@ -77,7 +76,10 @@ function revive(blob, level, seed) {
 function ordinaryReward(s){
  if(s.rewardCommitted)return '';
  s.rewardCommitted=true;
- const drop=ordinaryFor(s.resultN||resultNumber(s.seed));
+ // The first successful delivery releases the chapter keepsake only. Once
+ // that account has it, the same board slot becomes an ordinary penny return.
+ if(!chapterPaid(s.level))return '';
+ const drop='everyday-penny';
  if(!keepOrdinaryAllowed(drop,s.level))return '';
  persist(s);
  if(alleyPlay){if(drop==='everyday-penny')credit(1);else keep(drop,'milk-bottles');}
@@ -88,7 +90,7 @@ function finishWin(s){
  if(s.phase==='result'||!isDelivered(s.board))return;
  const prize=MABEL_CHAPTERS[s.level].prize;
  s.resultN ||= resultNumber(s.seed);
- const win=isMabelWin(s.level, s.resultN) && !chapterPaid(s.level);
+ const win=!chapterPaid(s.level);
  s.phase='result';s.charged=false;s.won=win;
  const tip=ordinaryReward(s);
  if(win){
@@ -131,7 +133,7 @@ function beginPlay(s) {
         s.seed = (s.seed || (s.level + 1) * 4099) + 1;
         s.board = makeDeliveryBoard(s.level, s.seed,{allowUnique:false});
         s.resultN = resultNumber(s.seed);
-        if (!chapterPaid(s.level) && isMabelWin(s.level, s.resultN)) {
+        if (!chapterPaid(s.level)) {
           spawnUnique(s.board, null, 'bottom');
           settleBoard(s.board);
           if ((s.board.movesLeft || 0) < 8) s.board.movesLeft = 8;
@@ -184,8 +186,7 @@ export default {
   chapterEnds: true,
   persist,
   houseSeconds: HOUSE_SECONDS,
-  winningSeconds:level=>(MABEL_WINS[level]||MABEL_WINS[0]).slice(),
-  secondsNote:level=>secondsNote(level).replace('The clock lights on','This board keeps the bonus when its hidden number lands on'),
+  secondsNote:()=> 'The dairy uses the live 100-second game clock. Deliver the sealed bottle before time runs out.',
   clockRuns:s=>s.phase==='play'&&!isSliding(s),
   onTimeout(s){restSitting(s,'Time is up. Your board is saved. Press Play for another allowance.');},
   retryAttempt(s){this.action(s,'again');},
@@ -194,7 +195,7 @@ export default {
   houseTitle: 'The dairy closes',
   houseDetail: 'Mabel covers the crate. Another sitting when you are ready.',
   intro: alleyPlay
-    ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. Chapter 1 is free; later chapters cost a penny for a full move tray. The treasure only sits on boards whose hidden number is a prize second. Match it down into the crate. The board waits if moves run out.'
+    ? 'Mabel’s match-three dairy. Drag or tap two neighbouring bottles to swap them. Chapter 1 is free; later chapters cost a penny for a full move tray. Every uncollected chapter starts with its sealed treasure bottle on the board. Deliver it before the 100-second dairy clock runs out. Once collected, that chapter returns an ordinary penny instead.'
     : 'Drag or tap two neighbouring bottles to swap them. Workshop sittings are free and write nothing. Walk a sealed bottle into the crate when one appears.',
   instructions: alleyPlay
     ? 'Drag or tap two neighbouring bottles to swap them (keyboard: arrows move, Space/Enter picks, an arrow swaps). Only a real match spends a move. Cascades are free. The gold PRIZE bottle is the flavour it sits in — spin it into a line of that same colour and the match holds. It still has to reach the bottom crate. Wooden crates are obstacles: an adjacent match breaks them. Weighted bottles need two adjacent hits. Sour milk spreads every third move, so clear it early.'
@@ -216,7 +217,7 @@ export default {
     };
     if ((s.phase === 'play' || s.phase === 'rest') && !s.board) {
       s.board = makeDeliveryBoard(level, s.seed,{allowUnique:false});
-      if (!chapterPaid(level) && isMabelWin(level, s.resultN || resultNumber(s.seed))) {
+      if (!chapterPaid(level)) {
         spawnUnique(s.board, null, 'bottom');
         settleBoard(s.board);
       }
@@ -224,7 +225,7 @@ export default {
     // Honour an in-progress paid/included legacy board without buying another allowance.
     if(alleyPlay&&s.charged&&s.phase==='play'&&!prizeAttempts('milk-bottles',level))recordPrizeAttempt('milk-bottles',level);
     if(s.board&&!s.board.delivered){
-      if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)&&isMabelWin(level,s.resultN||resultNumber(s.seed))){
+      if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)){
         spawnUnique(s.board, null, 'bottom');
         settleBoard(s.board);
         // A completed empty legacy tray never offered its prize. Restore one

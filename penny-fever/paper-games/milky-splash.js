@@ -1,7 +1,5 @@
 import {kits as chapterKits} from './prizes.js?v=nft-art-1';
 import {DELIVERY_LAYOUTS} from './milky-deliveries.js?v=milk-delivery-1';
-import {firstPrizeEligible} from './first-prize.js?v=keep-finish-1';
-import {WIN_SECONDS} from './prize-seconds.js?v=keep-finish-1';
 /** Isolated Milky Splash: match-three dairy bottles, unique crate delivery, 1–100. */
 
 export const FLAVOURS = [
@@ -22,14 +20,6 @@ export const MABEL_CHAPTERS = [
   {id: 'midnight', title: 'Midnight Dairy', cols: 8, rows: 9, moves: 14, flavours: 6, crates: 4, weighted: 4, sour: 6, mixed: true, prize: 'cream-churn'},
 ];
 MABEL_CHAPTERS.forEach((chapter, i) => { chapter.prize = chapterKits['milk-bottles'].prizes[i] || chapter.prize; });
-
-/** Provisional 50/40/30/25/20/15. Editable. */
-export const MABEL_WINS = WIN_SECONDS;
-
-export function isMabelWin(level, n) {
-  if(firstPrizeEligible('milk-bottles',level))return true;
-  return (MABEL_WINS[level] || MABEL_WINS[0]).includes(n);
-}
 
 export function resultNumber(seed) {
   const raw = Math.abs((Number(seed) || 0) * 17 + 11);
@@ -481,7 +471,7 @@ export function makeBoard(level, seed, {allowUnique=true}={}) {
   board.roll = () => rollOf(board.rng);
   placeObstacles(board, ch, roll);
   if (findMatches(board).length) resolveBoard(board);
-  if (allowUnique && isMabelWin(level, resultNumber(seed))) spawnUnique(board);
+  if (allowUnique) spawnUnique(board);
   ensureMoves(board);
   locateUnique(board);
   return board;
@@ -514,7 +504,7 @@ export function makeDeliveryBoard(level, seed, {allowUnique=true}={}) {
  const layouts=DELIVERY_LAYOUTS[level]||DELIVERY_LAYOUTS[0];
  const plan=layouts[Math.abs(Math.trunc(Number(seed)||0))%layouts.length];
  const board=makeBoard(level,plan.seed,{allowUnique:false});
- if(allowUnique && isMabelWin(level, resultNumber(seed))) spawnUnique(board,plan.col);
+ if(allowUnique) spawnUnique(board,plan.col);
  repairBoard(board);
  return board;
 }

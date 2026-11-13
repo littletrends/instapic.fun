@@ -3,9 +3,9 @@ const memory=new Map();globalThis.localStorage={getItem:k=>memory.get(k)??null,s
 let cash=40,debits=0,credits=0,reject=false,awards=[];const inventory={items:{}};
 globalThis.CustomEvent=class{constructor(type,init){this.type=type;this.detail=init?.detail;}};
 globalThis.window={location:{search:'?stall=milk-bottles&room=alley'},matchMedia:()=>({matches:false}),parent:{PennyFever:{getState:()=>({demoCoins:cash,paperInventory:inventory}),spendPennies:n=>{if(reject||cash<n)return false;cash-=n;debits++;return true;},addDemoCoins:n=>{credits+=n;cash+=n;return cash;},saveState(){}},PennyFeverInventoryModel:{recordPaperPrize:(s,p)=>{if(inventory.items[p.item])return [];inventory.items[p.item]={qty:1};awards.push(p.item);return [p.item];}},dispatchEvent(){},postMessage(){}}};
-const gates={"cabinet-puzzles": "curios", "milky-splash": "milk-bottles", "love-arithmetic": "love", "fortune-globe": "fortune"};
+const gates={"cabinet-puzzles": "curios", "love-arithmetic": "love", "fortune-globe": "fortune"};
 const policy=await import('./first-prize.js?v=keep-finish-1');
-const entry=await import('./stall-entry.js?v=keep-finish-1');
+const entry=await import('./stall-entry.js?v=ride-coil-1');
 for(const [file,id] of Object.entries(gates)){
  const core=await import('./'+file+'.js?v=keep-finish-1');
  const gate=Object.entries(core).find(([name])=>/^is.*Win$/.test(name))[1];
@@ -20,23 +20,24 @@ for(const [file,id] of Object.entries(gates)){
   assert.deepEqual(Array.from({length:100},(_,i)=>gate(level,i+1)),baseline,'odds stay on the prize second');
  }
 }
-console.log('PASS: 4 game prize gates × six chapters; prize second only, chapter 1 free, chapter 2–6 spend a penny.');
-const rides=await import('./ride-seek.js?v=keep-finish-1');
+console.log('PASS: 3 timed game prize gates × six chapters; chapter 1 free, chapter 2–6 spend a penny.');
+const rides=await import('./ride-seek.js?v=ride-coil-1');
 for(const id of ['helter','funhouse']){
  memory.clear();cash=10;
+ assert.equal(entry.entryFor(id).door,'ticket',id+' is a ticket ride');
  const ch1=rides.boardRide(id,0);assert(ch1.ok);assert.equal(ch1.practice,false);assert.equal(cash,10);
  const ch2=rides.boardRide(id,1);assert(ch2.paid);assert.equal(ch2.practice,false);assert.equal(cash,9);
  const sealed=rides.sealAttempt({rng:()=>0.01,chapter:1,practice:false,rideId:id,spawnIds:['target']});assert(sealed.eligible);assert.equal(sealed.spawnId,'target');
  const miss=rides.sealAttempt({rng:()=>0.999,chapter:1,practice:false,rideId:id,spawnIds:['target']});assert.equal(miss.eligible,false);
 }
-console.log('PASS: rides chapter 1 free and live; chapter 2 paid; treasure follows eligibility, not a first-try gift.');
+assert.equal(entry.enterLabel('helter'),'Board · ticket · Chapter 1 free');
+console.log('PASS: rides ticket door, chapter 1 free ride, chapter 2 a penny; treasure follows eligibility.');
 const mabel=(await import('./stalls/milk-bottles.js?v=keep-finish-1')).default;
 const splash=await import('./milky-splash.js?v=keep-finish-1');
 for(let level=0;level<6;level++){
  memory.clear();cash=20;const s=mabel.create(level);mabel.action(s,'play');assert.equal(cash,level===0?20:19);
- const expectUnique=splash.isMabelWin(level,splash.resultNumber(s.seed));
- assert.equal(!!s.board.unique,!!expectUnique,'Mabel unique follows the prize second');
- if(s.board.unique)assert(s.board.unique.r>=Math.max(0,s.board.rows-3),'live prize sits near the crate, not the top row');
+ assert(s.board.unique,'Mabel starts every uncollected chapter with its prize bottle');
+ assert(s.board.unique.r>=Math.max(0,s.board.rows-3),'live prize sits near the crate, not the top row');
  s.houseLeft=80;mabel.persist(s);
  const snapshot=JSON.stringify(s.board.cells),moves=s.board.movesLeft;
  const back=mabel.create(level);assert.equal(JSON.stringify(back.board.cells),snapshot);assert.equal(back.board.movesLeft,moves);assert.equal(back.houseLeft,80);assert.equal(cash,level===0?20:19);
@@ -48,13 +49,65 @@ for(let level=0;level<6;level++){
  }
 }
 console.log('PASS: all six Mabel first boards, exact return state, and uncharged legacy missing-prize recovery.');
-const lookup=await import('./stalls/lookup.js?v=keep-finish-1');
+const lookup=await import('./stalls/lookup.js?v=celeste-clock-1');
+const starlight=await import('../experiments/celestes-starlight/model.js?v=celeste-clock-1');
 for(let level=0;level<6;level++){
  memory.clear();cash=20;
  const hits=Array.from({length:100},(_,i)=>lookup.isWinningNumber(level,i+1));
  assert(hits.some(v=>v));assert(hits.some(v=>!v));
 }
 console.log('PASS: telescope prize seconds stay mixed hits and misses on every chapter.');
+function flyComet(engine,s){
+ engine.action(s,'feed');
+ assert.equal(s.phase,'flying');
+ const need=((s.frozenRay?.length||0)+25)/410+0.3;
+ for(let t=0;t<need && s.phase==='flying';t+=0.1) engine.update(s,0.1);
+ assert.notEqual(s.phase,'flying','comet lands');
+}
+{
+ const engine=lookup.default;
+ for(let level=0;level<6;level++){
+  const g=starlight.createGame(level);
+  assert.equal(g.ray.solved,false,'chapter '+(level+1)+' starts unsolved');
+  assert.equal((g.ray.mirrorsHit||[]).every(Boolean),false,'chapter '+(level+1)+' starts with a skipped glass');
+  g.angles=starlight.CHAPTERS[level].solution.slice();
+  starlight.refresh(g);
+  assert(g.ray.solved,'chapter '+(level+1)+' solution is a full path');
+  assert((g.ray.mirrorsHit||[]).every(Boolean),'chapter '+(level+1)+' solution hits every glass');
+ }
+ memory.clear();cash=20;awards=[];inventory.items={};
+ const miss=engine.create(0);
+ engine.update(miss,0.01);
+ miss.houseLeft=99;
+ assert.equal(engine.prizeClock(miss).n,1);
+ assert.notEqual(engine.prizeClock(miss).n,lookup.skyNumber(1,lookup.SKY[0].speed),'house clock is not the sky-speed cycle');
+ flyComet(engine,miss);
+ assert.equal(miss.paid,false,'incomplete path never claims');
+ assert.equal(miss.won,false);
+ assert.match(miss.note||engine.readout(miss)||'',/glass/i,'skipped-glass note');
+ memory.clear();cash=20;awards=[];inventory.items={};
+ const hit=engine.create(0);
+ engine.update(hit,0.01);
+ hit.angles=starlight.CHAPTERS[0].solution.slice();
+ starlight.refresh(hit);
+ hit.houseLeft=99;
+ assert(hit.ray.solved);
+ flyComet(engine,hit);
+ assert.equal(hit.paid,true,'full path on a lit second claims');
+ assert(awards.includes(hit.prize));
+ memory.clear();cash=20;awards=[];inventory.items={};
+ const late=engine.create(0);
+ engine.update(late,0.01);
+ late.angles=starlight.CHAPTERS[0].solution.slice();
+ starlight.refresh(late);
+ late.houseLeft=40;
+ assert.equal(engine.prizeClock(late).n,60);
+ assert.equal(lookup.isWinningNumber(0,60),false);
+ flyComet(engine,late);
+ assert.equal(late.paid,false,'full path on a dark second does not claim');
+ assert.equal(engine.clockRuns(Object.assign(engine.create(0),{phase:'flying'})),true);
+}
+console.log('PASS: Celeste one house clock; every glass on the scoring comet; skipped glass spends the penny.');
 const iris=(await import('./stalls/fortune.js?v=keep-finish-1')).default;
 const {IRIS_CHAPTERS,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
@@ -80,8 +133,11 @@ for(let level=0;level<6;level++){
  const b=s.bumpers[0];s.ball.x=b.x+1;s.ball.y=b.y;s.ball.vx=0;s.ball.vy=0;pinball.update(s,.001);
  assert(s.hits>=1);assert(!awards.includes(pinball.prizes[level]),'first basic hit is not an automatic bonus');
  s.houseLeft=101-pinball.winningSeconds(level)[0]-.2;b.cool=0;s.ball={x:b.x+1,y:b.y,vx:0,vy:0};pinball.update(s,.001);
- assert(s.prizeCarried,'first ball can carry bonus on a winning-second impact');
- assert(!awards.includes(pinball.prizes[level]),'bumper carry is not Collected until the ball drains');
+ assert(s.prizePosted,'first ball releases bonus on a winning-second impact');
+ assert(!s.prizeCarried,'released bonus still needs the prize target');
+ s.ball={x:s.prizeTarget.x+s.prizeTarget.r+10,y:s.prizeTarget.y,vx:-100,vy:0};pinball.update(s,.001);
+ assert(s.prizeCarried,'first ball catches the released bonus');
+ assert(!awards.includes(pinball.prizes[level]),'caught bonus is not Collected until the ball drains');
  s.ball={x:440,y:1150,vx:0,vy:100};pinball.update(s,.02);
  assert(awards.includes(pinball.prizes[level]),'drain keeps the carried bonus');
 }
@@ -169,7 +225,7 @@ assert.equal(kits.helter.prizes.includes('star-token'),false);
 assert.equal(kits.helter.prizes.length,6);
 console.log('PASS: Helter chapter bonuses are real objects, not a drip.');
 if(typeof globalThis.Image==='undefined')globalThis.Image=class{constructor(){this.naturalWidth=1;this.naturalHeight=1;}};
-const helter=(await import('./stalls/helter.js?v=keep-finish-1')).default;
+const helter=(await import('./stalls/helter.js?v=ride-coil-1')).default;
 memory.clear();inventory.items={};cash=10;awards=[];
 const tilly=helter.create(1);
 helter.update(tilly,1/60,{keys:new Set(),actions:new Set()});
@@ -187,7 +243,23 @@ helter.update(tillyBack,1/60,{keys:new Set(),actions:new Set()});
 assert.equal(cash,9,'Tilly restore does not debit a second penny');
 assert.equal(tillyBack.youCell,6,'Tilly restore keeps the spiral cell');
 console.log('PASS: Tilly spiral sitting restores cell, tokens and boarding without a second charge.');
-const juno=(await import('./stalls/funhouse.js?v=keep-finish-1')).default;
+const tillySeats=[];
+for(let lv=0;lv<6;lv++){
+ memory.clear();cash=10;
+ const s=helter.create(lv);
+ helter.update(s,1/60,{keys:new Set(),actions:new Set()});
+ tillySeats.push(s.planTreasureCell);
+ assert.equal(cash,lv===0?10:9,'Tilly chapter '+(lv+1)+' charge');
+}
+assert.deepEqual(tillySeats,[17,8,21,16,24,15]);
+assert.equal(new Set(tillySeats).size,6,'each Tilly chapter seats the prize on a different coil cell');
+const ball=helter.create(0);
+helter.update(ball,1/60,{keys:new Set(),actions:new Set()});
+ball.previewing=false;ball.launched=true;ball.ballU=1;ball.ballActive=true;ball.ballRolling=true;ball.ballWait=0;
+helter.update(ball,1,{keys:new Set(),actions:new Set()});
+assert(ball.ballU<0.94 && ball.ballU>0.8,'gold ball rolls faster than the old 14s crest drop');
+console.log('PASS: Tilly prize seats move by chapter and the gold ball is quicker.');
+const juno=(await import('./stalls/funhouse.js?v=ride-coil-1')).default;
 memory.clear();inventory.items={};cash=10;awards=[];
 const maze=juno.create(1);
 juno.update(maze,1/60);
@@ -203,9 +275,25 @@ assert.equal(cash,9,'Juno restore does not debit a second penny');
 assert.equal(mazeBack.player.c,4,'Juno restore keeps maze position');
 assert.equal(mazeBack.pelletsTaken,5);
 console.log('PASS: Juno maze sitting restores player, chips and key without a second charge.');
-const love=(await import('./stalls/love.js?v=keep-finish-1')).default;
+const love=(await import('./stalls/love.js?v=rosalie-clear-1')).default;
+memory.clear();inventory.items={};cash=20;awards=[];
+const ros=love.create(1);
+ros.you='Ann';ros.them='Bob';
+love.action(ros,'read');
+assert.equal(ros.phase,'count');
+assert.equal(cash,19);
+love.action(ros,'clear');
+assert.equal(ros.phase,'edit');
+assert.equal(ros.you,'Ann');
+assert.equal(cash,19);
+love.action(ros,'read');
+assert.equal(ros.phase,'count');
+assert.equal(cash,19,'Clear paper keeps the sitting so chapter 2 is not charged twice');
+assert.equal(love.prizeClock(ros),null);
+assert.match(love.secondsNote(1),/reading/i);
+console.log('PASS: Rosalie Clear paper unsticks a sitting without a second penny.');
 const copper=(await import('./stalls/coin-pusher.js?v=keep-finish-1')).default;
-const celeste=(await import('./stalls/lookup.js?v=keep-finish-1')).default;
+const celeste=(await import('./stalls/lookup.js?v=celeste-clock-1')).default;
 const openIds=['fortune','love','curios','lookup','coin-pusher','pinball','milk-bottles','helter','funhouse','snap'];
 for(const id of openIds){
  assert.equal(policy.firstPrizeEligible(id,0),false,id+' never auto-wins on first try');
@@ -224,4 +312,11 @@ assert.equal(pinball.houseSeconds,100);assert.equal(curios.houseSeconds,100);
 assert.equal(mabel.houseSeconds,100);assert.equal(helter.houseSeconds,100);
 assert.equal(juno.houseSeconds,100);assert.equal(love.houseSeconds,100);
 assert.equal(celeste.houseSeconds,100);
+assert.equal(entry.entryFor('fortune').door,'free');
+assert.equal(entry.entryFor('love').door,'free');
+assert.equal(entry.entryFor('curios').door,'free');
+assert.equal(entry.entryFor('lookup').door,'free');
+assert.equal(entry.entryFor('coin-pusher').door,'free');
+assert.equal(entry.entryFor('pinball').door,'free');
+assert.equal(entry.entryFor('milk-bottles').door,'free');
 console.log('PASS: open games share ch1-free / ch2-6 penny, six bonuses, Collected copy, and declared house clocks.');

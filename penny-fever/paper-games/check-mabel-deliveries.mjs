@@ -35,8 +35,8 @@ for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;
  memory.set('pennyFever.firstPrizeAttempts.v1',JSON.stringify({['milk-bottles:'+level]:9}));
  const s=e.create(level);e.action(s,'play');
- const expectUnique=g.isMabelWin(level,g.resultNumber(s.seed));
- assert.equal(!!s.board.unique,!!expectUnique,'Mabel unique follows the prize second');
+ const expectUnique=true;
+ assert.equal(!!s.board.unique,expectUnique,'Mabel starts every uncollected chapter with its prize bottle');
  if(expectUnique){
   const u=g.locateUnique(s.board);assert(u);assert(u.r>=Math.max(0,s.board.rows-3),'live prize sits near the crate');
   assert(s.board.movesLeft>=8,'dropping the prize near the crate leaves moves to walk it in');

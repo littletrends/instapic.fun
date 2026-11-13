@@ -2,7 +2,7 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=keep-finish-1';
+import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
 import {clockNumber} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 
@@ -80,7 +80,7 @@ function writeBook(s) {
   } catch { /* quota */ }
 }
 
-const SNAPSHOT_FIELDS=['houseLeft','cabinetOn','layoutVersion','rewardAt','ballPennies','ballTokens','t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver','prizeCarried'];
+const SNAPSHOT_FIELDS=['houseLeft','cabinetOn','layoutVersion','rewardAt','ballPennies','ballTokens','t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeTarget','prizeDeliver','prizeCarried'];
 function snapshotOf(s){
  const snap={v:1};
  for(const key of SNAPSHOT_FIELDS)if(s[key]!==undefined)snap[key]=s[key];
@@ -96,6 +96,7 @@ function releaseInput(s){
 function prizeStatus(s){
  if(s.prizeKept||!pickUnique(s))return 'Bonus Collected';
  if(s.prizeCarried)return 'Bonus in the glass — drain this ball to keep it';
+ if(s.prizePosted)return 'Bonus released — hit the lit prize target to grab it';
  return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
@@ -180,6 +181,15 @@ function pay(s, id, x, y) {
   fly(s, id, x, y, special);
   writeBook(s);
 }
+function postBonus(s, x, y) {
+  const id = pickUnique(s);
+  if (!id || s.prizePosted || s.prizeCarried) return false;
+  s.prizePosted = true;
+  s.prizeTarget = {x: 615, y: 320, r: 32, sourceX: x, sourceY: y};
+  s.note = itemName(id) + ' released — hit the lit prize target to grab it, then drain the ball.';
+  writeBook(s);
+  return true;
+}
 function commitBonus(s) {
   const id = chapterPrize(s);
   if (!s.prizeCarried || s.prizeKept || !id) return false;
@@ -199,7 +209,11 @@ function commitBonus(s) {
 function loosenMark(level) {
   return [6, 8, 10, 12, 14, 16][level] || 10;
 }
-function bumperItem(s,b){return ['moon-penny','rose-penny','star-token','crown-token'][(s.bumpers.indexOf(b)+s.level)%4];}
+function bumperItem(s,b){
+  const id=['moon-penny','rose-penny','star-token','crown-token'][(s.bumpers.indexOf(b)+s.level)%4];
+  const token=TOKENS.find(t=>t.id===id);
+  return token?.cap && (s.tokens[id]||0)>=token.cap ? 'everyday-penny' : id;
+}
 function ordinaryReturn(s, id, x, y) {
   if(!keepOrdinaryAllowed(id, s.level))return;
   if(id==='everyday-penny'){
@@ -214,7 +228,7 @@ function dropFromHit(s, kind, x, y) {
   if(kind==='bumper'){
     s.hits++;
     if(WIN_SECONDS[s.level].includes(second)){
-      const id=pickUnique(s);if(id)pay(s,id,x,y);
+      postBonus(s,x,y);
     }
   }
   const jackpot=s.lights.every(Boolean);
@@ -410,10 +424,10 @@ export default {
   actionLabels(s){return {plunge:returningBall(s)?'Pull back · ball returning':s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
   intro: alleyPlay
-    ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to carry the chapter bonus; drain that ball to keep it. The timer and unused balls stay saved.'
+    ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter prize, catch it in the lit target, then drain that ball to keep it. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. On a keyboard: hold Space to pull the plunger (Space is the plunger, not a flipper), Z or ← for the left flipper, X or → for the right, and Enter for a quick launch. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to carry the bonus; it stays Locked until that ball drains. Leaving mid-ball leaves it Locked. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. On a keyboard: hold Space to pull the plunger, Z or ← for the left flipper, X or → for the right, and Enter for a quick launch. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds. Match a listed whole second with a bumper impact to release the bonus, then hit the lit prize target to grab it; drain that ball to keep it. Each bumper awards its pictured collectible only while its chapter cap has room. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Keyboard: hold Space to plunge, Z/← and X/→ flippers, Enter quick launch. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay
@@ -443,7 +457,8 @@ export default {
       seen: book.seen, paid: book.paid, tokens: book.tokens, fly: [], trail: [], stuck: 0,
       hits: book.hits || 0, mark: book.mark || loosenMark(level), credit: book.credit || 0,
       ammo: alleyPlay ? 0 : Math.max(4, 9 - level),
-      note: alleyPlay ? 'Launch a ball: 100 seconds. Match a winning second with a bumper hit.' : 'Pull the spring.',
+      prizeTarget: null,
+      note: alleyPlay ? 'Launch a ball: 100 seconds. Hit a winning-second bumper, then catch the released prize target.' : 'Pull the spring.',
       set, ...built,
     };
     seatLane(s);
@@ -512,6 +527,14 @@ export default {
         const tip = {x: f.x + Math.cos(f.a) * FLIP, y: f.y + Math.sin(f.a) * FLIP};
         const slap = Math.abs(f.w) > 2 ? 1.96 : 1.26;
         collide(p, f, tip, 13, f.w, f, slap);
+      }
+      if (s.prizePosted && s.prizeTarget && !s.prizeCarried
+        && Math.hypot(p.x - s.prizeTarget.x, p.y - s.prizeTarget.y) < s.prizeTarget.r + R) {
+        s.prizePosted = false;
+        s.prizeCarried = true;
+        s.note = itemName(chapterPrize(s)) + ' in the glass — drain this ball to keep it.';
+        s.score += 500;
+        writeBook(s);
       }
       for (const b of s.bumpers) {
         if (bounceCircle(p, b, b.r, 430 + s.combo * 8)) {
@@ -683,7 +706,13 @@ export default {
       d.line({x: LANE.x - 9, y: cy}, {x: LANE.x + 9, y: cy}, '#d2b07a', 2);
     }
     d.circle(LANE.x, springY + 28, 15, '#8a3030', '#f0d0a8', 2);
-    if(pickUnique(s)){
+    if (s.prizePosted && s.prizeTarget) {
+      d.glow(s.prizeTarget.x, s.prizeTarget.y, 58, '#f2d17f');
+      d.circle(s.prizeTarget.x, s.prizeTarget.y, 36, '#8a5a28cc', '#ffe7a0', 3);
+      d.item(spriteKey(set.prize), s.prizeTarget.x, s.prizeTarget.y, {w: 42, fallback: () => d.star(s.prizeTarget.x, s.prizeTarget.y, 16, '#f5d58b')});
+      d.text('GRAB', s.prizeTarget.x, s.prizeTarget.y + 50, 13, '#ffe8a6');
+    }
+    if(pickUnique(s) && !s.prizePosted && !s.prizeCarried){
       d.glow(615,320,39,'#f2d17f');
       d.item(spriteKey(set.prize),615,320,{w:50,fallback:()=>d.star(615,320,19,'#f5d58b')});
       d.text('CHAPTER PRIZE',615,361,12,'#ffe8a6');

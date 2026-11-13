@@ -3,11 +3,9 @@ import * as g from './milky-splash.js';
 const uniqueCount=b=>g.countKind(b,'unique');
 const stable=b=>{assert.equal(g.findMatches(b).length,0,'no unresolved matches');assert(g.legalMoves(b).length,'legal swap available');assert(b.cells.every(row=>row.every(Boolean)),'all active segments refill');assert(uniqueCount(b)<=1);};
 for(let level=0;level<6;level++){
- let wins=0,seed=(level+1)*4099;
- for(let i=0;i<100;i++)if(g.isMabelWin(level,g.resultNumber(++seed)))wins++;
- assert.equal(wins,[50,40,30,25,20,15][level]);
+ let seed=(level+1)*4099;
  for(let n=0;n<20;n++){
-  let b=g.makeBoard(level,seed+n);stable(b);const hasPrize=uniqueCount(b);
+  let b=g.makeBoard(level,seed+n);stable(b);assert.equal(uniqueCount(b),1,'every uncollected chapter starts with its prize bottle');const hasPrize=uniqueCount(b);
   for(let turn=0;turn<8&&!b.delivered;turn++){
    const move=g.legalMoves(b)[turn%g.legalMoves(b).length],copy=g.cloneBoard(b),left=b.movesLeft;
    const args=[move.c1,move.r1,move.c2,move.r2];

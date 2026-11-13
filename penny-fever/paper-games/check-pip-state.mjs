@@ -35,8 +35,9 @@ for(let level=0;level<6;level++){
  layouts.add(JSON.stringify([s.bumpers,s.targets,s.saucer]));windows.add(JSON.stringify(e.winningSeconds(level)));
  const hit=(second)=>{s.houseLeft=101-second-.2;s.mode='live';s.cabinetOn=true;const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);};
  hit(1);assert(!s.prizeCarried,'ordinary first hit cannot carry bonus');assert(!awards.includes(e.prizes[level]),'ordinary first hit cannot release bonus');
- hit(e.winningSeconds(level)[0]);assert(s.prizeCarried,'winning second carries chapter '+(level+1));assert(!awards.includes(e.prizes[level]),'carry is not Collected until the ball drains');
- e.persist(s);const count=awards.length;r=e.create(level);tick(r);assert.equal(awards.length,count);assert(r.prizeCarried,'resume still carries the unkept bonus');
+ hit(e.winningSeconds(level)[0]);assert(s.prizePosted,'winning second releases chapter '+(level+1));assert(!s.prizeCarried,'release still needs a physical catch');assert(!awards.includes(e.prizes[level]),'release is not Collected until the ball catches and drains');
+ s.ball={x:s.prizeTarget.x+s.prizeTarget.r+10,y:s.prizeTarget.y,vx:-100,vy:0};tick(s);assert(s.prizeCarried,'ball catches the released prize target');
+ e.persist(s);const count=awards.length;r=e.create(level);tick(r);assert.equal(awards.length,count);assert(r.prizeCarried,'resume still carries the caught unkept bonus');
  s.ball={x:440,y:1150,vx:0,vy:100};tick(s);assert(awards.includes(e.prizes[level]),'drain keeps the carried bonus');assert(!s.prizeCarried);assert(s.prizeKept);
  // Every pocket must eject, and cannot recapture until the lower field is reached.
  s=fresh(level);launch(s);s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert(s.saucer.hold>0);
@@ -49,8 +50,10 @@ for(let level=0;level<6;level++){
  assert(!s.cabinetOn);assert.equal(s.houseLeft,0);assert.equal(s.credit,2);
  assert(s.ballPennies<=2);assert(s.wonPennies<=2);
  if(level>0){
-  assert(s.ballTokens>6);
-  assert(Object.entries(s.tokens).some(([id,n])=>['moon-penny','rose-penny','star-token','crown-token'].includes(id)&&n>6),'collectibles exceed old lifetime caps');
+  for(const [id,n] of Object.entries(s.tokens)){
+   const cap={'moon-penny':6,'rose-penny':5,'star-token':4,'crown-token':3}[id];
+   if(cap)assert(n<=cap,id+' stays within its rare-token cap');
+  }
  }
  const earned=s.score;tick(s,60);assert.equal(s.score,earned,'dark cabinet cannot score');
  launch(s);assert.equal(s.houseLeft,100);assert(s.cabinetOn);assert.equal(s.credit,1);
@@ -73,8 +76,9 @@ console.log('PASS: failed debit leaves the shooter ball and allowance untouched.
 // All 100 impact windows per chapter, including the full final second.
 for(let level=0;level<6;level++)for(let second=1;second<=100;second++){
  const q=fresh(level);launch(q);q.houseLeft=101-second-.5;const b=q.bumpers[0];q.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(q);
- assert.equal(!!q.prizeCarried,e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
- assert.equal(awards.includes(e.prizes[level]),false,'bumper carry does not keep on chapter '+level+' second '+second);
+ assert.equal(!!q.prizePosted,e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
+ assert.equal(!!q.prizeCarried,false,'bumper release does not carry until the target is hit');
+ assert.equal(awards.includes(e.prizes[level]),false,'bumper release does not keep on chapter '+level+' second '+second);
 }
 console.log('PASS: all 600 winning/non-winning second windows, including second 100.');
 
