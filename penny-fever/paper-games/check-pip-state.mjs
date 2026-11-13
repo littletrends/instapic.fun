@@ -34,9 +34,10 @@ for(let level=0;level<6;level++){
  s=fresh(level);launch(s);
  layouts.add(JSON.stringify([s.bumpers,s.targets,s.saucer]));windows.add(JSON.stringify(e.winningSeconds(level)));
  const hit=(second)=>{s.houseLeft=101-second-.2;s.mode='live';s.cabinetOn=true;const b=s.bumpers[0];b.cool=0;s.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(s);};
- hit(1);assert(!awards.includes(e.prizes[level]),'ordinary first hit cannot release bonus');
- hit(e.winningSeconds(level)[0]);assert(awards.includes(e.prizes[level]),'winning second releases chapter '+(level+1));
- e.persist(s);const count=awards.length;r=e.create(level);tick(r);assert.equal(awards.length,count);
+ hit(1);assert(!s.prizeCarried,'ordinary first hit cannot carry bonus');assert(!awards.includes(e.prizes[level]),'ordinary first hit cannot release bonus');
+ hit(e.winningSeconds(level)[0]);assert(s.prizeCarried,'winning second carries chapter '+(level+1));assert(!awards.includes(e.prizes[level]),'carry is not Collected until the ball drains');
+ e.persist(s);const count=awards.length;r=e.create(level);tick(r);assert.equal(awards.length,count);assert(r.prizeCarried,'resume still carries the unkept bonus');
+ s.ball={x:440,y:1150,vx:0,vy:100};tick(s);assert(awards.includes(e.prizes[level]),'drain keeps the carried bonus');assert(!s.prizeCarried);assert(s.prizeKept);
  // Every pocket must eject, and cannot recapture until the lower field is reached.
  s=fresh(level);launch(s);s.ball={x:s.saucer.x,y:s.saucer.y,vx:0,vy:0};tick(s);assert(s.saucer.hold>0);
  tick(s,35);assert.equal(s.saucer.hold,0);assert(Math.hypot(s.ball.x-s.saucer.x,s.ball.y-s.saucer.y)>30);
@@ -72,7 +73,8 @@ console.log('PASS: failed debit leaves the shooter ball and allowance untouched.
 // All 100 impact windows per chapter, including the full final second.
 for(let level=0;level<6;level++)for(let second=1;second<=100;second++){
  const q=fresh(level);launch(q);q.houseLeft=101-second-.5;const b=q.bumpers[0];q.ball={x:b.x+b.r+10,y:b.y,vx:-100,vy:0};tick(q);
- assert.equal(awards.includes(e.prizes[level]),e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
+ assert.equal(!!q.prizeCarried,e.winningSeconds(level).includes(second),'chapter '+level+' second '+second);
+ assert.equal(awards.includes(e.prizes[level]),false,'bumper carry does not keep on chapter '+level+' second '+second);
 }
 console.log('PASS: all 600 winning/non-winning second windows, including second 100.');
 

@@ -28,9 +28,13 @@ let minted = {};
 let mintedReady = false;
 let nftPlates = new Set();
 let overlay = null;
+let inspectItem = null;
+let inspectMode = 'website';
+let inspectFace = 0;
 let resumeWorld = false;
 let lastFocus = null;
 let tillPoll = 0;
+let tillRevision = 0;
 let folder = 'book:penny-collector-book';
 let query = '';
 const openNodes = new Set(['book:penny-collector-book']);
@@ -413,6 +417,12 @@ function buyQrSrc(id) {
     return '';
   }
 }
+function nftViewSrc(id) {
+  return nftPlates.has(id) ? nftPlateSrc(id) : buyQrSrc(id);
+}
+function nftViewAvailable(item, stallInfo) {
+  return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
+}
 
 function ensureOverlay() {
   if (overlay) return overlay;
@@ -456,12 +466,55 @@ function ensureOverlay() {
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
       </div>
     </div>`;
+  const inspect = document.createElement('div');
+  inspect.className = 'aura-tradeshow-inspect';
+  inspect.id = 'auraTradeshowInspect';
+  inspect.hidden = true;
+  inspect.setAttribute('role', 'dialog');
+  inspect.setAttribute('aria-modal', 'true');
+  inspect.setAttribute('aria-labelledby', 'auraTradeshowInspectName');
+  inspect.innerHTML = `
+    <div class="aura-tradeshow-inspect-card">
+      <button type="button" class="aura-tradeshow-inspect-close" data-inspect-close aria-label="Close item details">×</button>
+      <div class="aura-tradeshow-inspect-stage" id="auraTradeshowInspectStage">
+        <img id="auraTradeshowInspectImg" alt="" draggable="false">
+      </div>
+      <div class="aura-tradeshow-inspect-turn">
+        <button type="button" data-inspect-spin="-1" aria-label="Previous view">←</button>
+        <span id="auraTradeshowInspectFace" aria-live="polite">front</span>
+        <button type="button" data-inspect-spin="1" aria-label="Rotate">Rotate</button>
+      </div>
+      <section class="aura-tradeshow-inspect-copy">
+        <p class="aura-tradeshow-inspect-kicker" id="auraTradeshowInspectSource"></p>
+        <h2 id="auraTradeshowInspectName"></h2>
+        <p id="auraTradeshowInspectNote"></p>
+        <p id="auraTradeshowInspectStock"></p>
+        <p id="auraTradeshowInspectNftNote" hidden>NFT artwork is not previewed here until it has been bought. This view is the Xaman purchase QR.</p>
+        <div class="aura-tradeshow-views aura-tradeshow-inspect-views">
+          <button type="button" data-inspect-view="website" aria-pressed="true">Website</button>
+          <button type="button" data-inspect-view="nft">NFT</button>
+        </div>
+        <div class="aura-tradeshow-inspect-actions">
+          <button type="button" data-inspect-play hidden></button>
+          <button type="button" data-inspect-buy hidden></button>
+          <button type="button" data-inspect-claim hidden></button>
+        </div>
+        <button type="button" class="aura-tradeshow-inspect-back" data-inspect-close>← Back to tradeshow</button>
+      </section>
+    </div>`;
+  overlay.append(inspect);
   document.body.append(overlay);
   document.addEventListener('keydown', onOverlayKey, true);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
   overlay.querySelector('#auraTradeshowSearch').addEventListener('input', (e) => {
     query = e.target.value.trim().toLowerCase();
     paint();
+  });
+  overlay.addEventListener('keydown', (e) => {
+    const stage = e.target.closest('[data-inspect]');
+    if (!stage || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    openInspect(stage.dataset.inspect);
   });
   overlay.addEventListener('click', (e) => {
     const tog = e.target.closest('[data-toggle]');
@@ -489,6 +542,49 @@ function ensureOverlay() {
         if (item && isFelix(item)) openNodes.add('felix');
       }
       paint();
+      return;
+    }
+    const inspectClose = e.target.closest('[data-inspect-close]');
+    if (inspectClose || e.target === overlay.querySelector('#auraTradeshowInspect')) {
+      e.preventDefault();
+      closeInspect();
+      return;
+    }
+    const inspectView = e.target.closest('[data-inspect-view]');
+    if (inspectView) {
+      e.preventDefault();
+      setInspectMode(inspectView.dataset.inspectView);
+      return;
+    }
+    const inspectSpin = e.target.closest('[data-inspect-spin]');
+    if (inspectSpin) {
+      e.preventDefault();
+      stepInspect(Number(inspectSpin.dataset.inspectSpin || 1));
+      return;
+    }
+    const inspectPlay = e.target.closest('[data-inspect-play]');
+    if (inspectPlay && !inspectPlay.disabled) {
+      e.preventDefault();
+      goPlayAtStall(inspectPlay.dataset.goStall);
+      return;
+    }
+    const inspectBuy = e.target.closest('[data-inspect-buy]');
+    if (inspectBuy && !inspectBuy.disabled) {
+      e.preventDefault();
+      closeInspect();
+      openXrpTill(inspectBuy.dataset.buy);
+      return;
+    }
+    const inspectClaim = e.target.closest('[data-inspect-claim]');
+    if (inspectClaim && !inspectClaim.disabled) {
+      e.preventDefault();
+      claimWithTokens(inspectClaim.dataset.claim);
+      return;
+    }
+    const inspectStage = e.target.closest('[data-inspect]');
+    if (inspectStage) {
+      e.preventDefault();
+      openInspect(inspectStage.dataset.inspect);
       return;
     }
     const go = e.target.closest('[data-go-stall]');
@@ -543,6 +639,95 @@ function ensureOverlay() {
     if (label) label.textContent = views[next];
   });
   return overlay;
+}
+
+function inspectViews(item) {
+  return VIEWS.filter((view) => item?.turnaround || view === 'front');
+}
+
+function closeInspect() {
+  const panel = overlay?.querySelector('#auraTradeshowInspect');
+  if (!panel) return;
+  panel.hidden = true;
+  inspectItem = null;
+  overlay?.querySelector('.aura-tradeshow-card [data-inspect]')?.focus?.();
+}
+
+function setInspectMode(mode) {
+  if (!inspectItem) return;
+  const inspectInfo = stallDoor(stallForPrize(inspectItem));
+  const nftAvailable = nftViewAvailable(inspectItem, inspectInfo);
+  inspectMode = mode === 'nft' && nftAvailable ? 'nft' : 'website';
+  const img = overlay?.querySelector('#auraTradeshowInspectImg');
+  const label = overlay?.querySelector('#auraTradeshowInspectFace');
+  if (inspectMode === 'nft') {
+    const ownedPlate = nftPlates.has(inspectItem.id);
+    const preview = nftViewSrc(inspectItem.id);
+    if (img) { img.src = preview || faceSrc(inspectItem, 'front'); img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`; }
+    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan to sign';
+  } else {
+    const views = inspectViews(inspectItem);
+    inspectFace = Math.max(0, Math.min(inspectFace, views.length - 1));
+    const face = views[inspectFace] || 'front';
+    if (img) { img.src = faceSrc(inspectItem, face); img.alt = inspectItem.name || ''; }
+    if (label) label.textContent = face;
+  }
+  const nftNote = overlay?.querySelector('#auraTradeshowInspectNftNote');
+  if (nftNote) {
+    nftNote.hidden = inspectMode !== 'nft';
+    if (inspectMode === 'nft') nftNote.textContent = nftPlates.has(inspectItem.id)
+      ? 'NFT artwork supplied by MotherPC after purchase.'
+      : 'NFT artwork is not previewed here until it has been bought. This view is the Xaman purchase QR.';
+  }
+  overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
+    button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
+    button.setAttribute('aria-pressed', String(button.dataset.inspectView === inspectMode));
+  });
+  overlay?.querySelectorAll('[data-inspect-spin]').forEach((button) => { button.disabled = inspectMode === 'nft'; });
+}
+
+function stepInspect(dir) {
+  if (!inspectItem || inspectMode === 'nft') return;
+  const views = inspectViews(inspectItem);
+  if (views.length < 2) return;
+  inspectFace = (inspectFace + dir + views.length) % views.length;
+  setInspectMode('website');
+}
+
+function openInspect(id) {
+  const item = modelItem(id);
+  if (!item?.id) return;
+  inspectItem = item;
+  inspectMode = 'website';
+  inspectFace = 0;
+  const stall = stallForPrize(item);
+  const info = stallDoor(stall);
+  const act = actionFor(item, info);
+  const play = playTap(item, info, stall);
+  const panel = overlay?.querySelector('#auraTradeshowInspect');
+  if (!panel) return;
+  panel.hidden = false;
+  panel.querySelector('#auraTradeshowInspectName').textContent = item.name || item.id;
+  panel.querySelector('#auraTradeshowInspectSource').textContent = stall ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow');
+  panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
+  panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
+  const playButton = panel.querySelector('[data-inspect-play]');
+  playButton.hidden = !play;
+  if (play) { playButton.textContent = play.label; playButton.dataset.goStall = play.id; }
+  const buyButton = panel.querySelector('[data-inspect-buy]');
+  const claimButton = panel.querySelector('[data-inspect-claim]');
+  buyButton.hidden = !!act.claim;
+  buyButton.disabled = !!act.disabled;
+  buyButton.textContent = act.label;
+  buyButton.dataset.buy = item.id;
+  claimButton.hidden = !act.claim;
+  claimButton.disabled = !!act.disabled;
+  claimButton.textContent = act.label;
+  claimButton.dataset.claim = item.id;
+  const nftButton = panel.querySelector('[data-inspect-view="nft"]');
+  nftButton.hidden = !nftViewAvailable(item, info);
+  setInspectMode('website');
+  panel.querySelector('[data-inspect-close]')?.focus();
 }
 
 function snapMint(item) {
@@ -649,13 +834,13 @@ function setCardView(card, mode) {
   });
   const label = card.querySelector('[data-face-label]');
   if (next === 'nft') {
-    const qr = buyQrSrc(id);
     const name = card.dataset.name || id;
+    const ownedPlate = nftPlates.has(id);
     if (img) {
-      img.src = qr || faceSrc({asset: card.dataset.asset}, 'front');
-      img.alt = `${name} · Xaman checkout`;
+      img.src = nftViewSrc(id) || faceSrc({asset: card.dataset.asset}, 'front');
+      img.alt = `${name} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`;
     }
-    if (label) label.textContent = 'scan to sign';
+    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan to sign';
     return;
   }
   const face = VIEWS[Number(card.dataset.face) || 0] || 'front';
@@ -666,6 +851,8 @@ function setCardView(card, mode) {
   if (label) label.textContent = face;
 }
 function stopTillPoll() {
+  // Closing or replacing the till also invalidates replies already in flight.
+  tillRevision += 1;
   if (tillPoll) {
     clearInterval(tillPoll);
     tillPoll = 0;
@@ -686,12 +873,15 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
-function watchXamanPayload(till, uuid) {
+function watchXamanPayload(till, uuid, revision) {
+  if (revision !== tillRevision) return;
   stopTillPoll();
+  const pollRevision = tillRevision;
   const copy = till.querySelector('#auraXrpTillCopy');
   const img = till.querySelector('#auraXrpTillImg');
   const name = till.querySelector('#auraXrpTillName')?.textContent || 'card';
   const tick = () => {
+    if (pollRevision !== tillRevision) return;
     if (till.hidden) {
       stopTillPoll();
       return;
@@ -699,7 +889,7 @@ function watchXamanPayload(till, uuid) {
     fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, {cache: 'no-store'})
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
-        if (till.hidden || !copy) return;
+        if (pollRevision !== tillRevision || till.hidden || !copy) return;
         const mint = data?.mint;
         if (mint?.accept_deep_link && mint.status !== 'accepted') {
           showTillQr(img, name, mint.accept_deep_link);
@@ -736,6 +926,7 @@ function openXrpTill(id) {
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till) return;
   stopTillPoll();
+  const revision = tillRevision;
   const item = modelItem(id);
   const name = item?.name || id;
   const img = till.querySelector('#auraXrpTillImg');
@@ -752,17 +943,17 @@ function openXrpTill(id) {
   fetch(checkoutUrl(id), {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : Promise.reject()))
     .then((data) => {
-      if (till.hidden || !copy) return;
+      if (revision !== tillRevision || till.hidden || !copy) return;
       if (data?.deep_link) {
         showTillQr(img, name, data.deep_link);
         copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
-        if (data.payload) watchXamanPayload(till, data.payload);
+        if (data.payload) watchXamanPayload(till, data.payload, revision);
         return;
       }
       copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
     })
     .catch(() => {
-      if (copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
+      if (revision === tillRevision && copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
     });
 }
 function queueXrpPlace(id) {
@@ -954,7 +1145,7 @@ function appendCards(grid, items) {
     const felix = isFelix(item);
     const claim = tokenClaim(item.id);
     const limited = isLimited(item);
-    const showQr = limited || (!felix && !claim && !MONEY.has(item.kind) && !info.money);
+    const showQr = nftViewAvailable(item, info);
     const chipClass = felix ? 'is-felix' : (limited ? 'is-limited' : (claim ? 'is-claim' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'))));
     const chipText = felix ? 'Photo booth' : (limited ? 'Limited' : (claim ? 'Token claim' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'))));
     const act = actionFor(item, info);
@@ -964,7 +1155,7 @@ function appendCards(grid, items) {
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
-      <div class="aura-tradeshow-stage"${canSpin ? ' data-spin="1" title="Tap to spin"' : ''}><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
+      <div class="aura-tradeshow-stage" data-inspect="${item.id}" role="button" tabindex="0" aria-label="Inspect ${item.name || item.id}" title="Open details"><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
       ${canSpin ? `<div class="aura-tradeshow-turn">
         <button type="button" data-spin="-1" aria-label="Previous view">←</button>
         <span data-face-label>front</span>
@@ -1121,17 +1312,24 @@ function tillOpen() {
   const till = overlay?.querySelector('#auraXrpTill');
   return !!(till && !till.hidden);
 }
+function inspectOpen() {
+  const panel = overlay?.querySelector('#auraTradeshowInspect');
+  return !!(panel && !panel.hidden);
+}
 function onOverlayKey(e) {
   if (!overlay || overlay.hidden) return;
   if (e.key === 'Escape') {
     e.preventDefault();
     e.stopPropagation();
-    if (tillOpen()) closeXrpTill();
+    if (inspectOpen()) closeInspect();
+    else if (tillOpen()) closeXrpTill();
     else closeTradeshow();
     return;
   }
   if (e.key !== 'Tab') return;
-  const root = tillOpen() ? overlay.querySelector('.aura-xrp-till-card') : overlay;
+  const root = inspectOpen()
+    ? overlay.querySelector('.aura-tradeshow-inspect-card')
+    : (tillOpen() ? overlay.querySelector('.aura-xrp-till-card') : overlay);
   const list = focusables(root);
   if (!list.length) return;
   const first = list[0];
@@ -1170,6 +1368,9 @@ export function openTradeshow() {
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
   stopTillPoll();
+  const inspect = overlay.querySelector('#auraTradeshowInspect');
+  if (inspect) inspect.hidden = true;
+  inspectItem = null;
   const till = overlay.querySelector('#auraXrpTill');
   if (till) till.hidden = true;
   overlay.hidden = true;

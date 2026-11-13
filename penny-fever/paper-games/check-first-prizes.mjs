@@ -76,7 +76,10 @@ for(let level=0;level<6;level++){
  const b=s.bumpers[0];s.ball.x=b.x+1;s.ball.y=b.y;s.ball.vx=0;s.ball.vy=0;pinball.update(s,.001);
  assert(s.hits>=1);assert(!awards.includes(pinball.prizes[level]),'first basic hit is not an automatic bonus');
  s.houseLeft=101-pinball.winningSeconds(level)[0]-.2;b.cool=0;s.ball={x:b.x+1,y:b.y,vx:0,vy:0};pinball.update(s,.001);
- assert(awards.includes(pinball.prizes[level]),'first ball can release bonus on a winning-second impact');
+ assert(s.prizeCarried,'first ball can carry bonus on a winning-second impact');
+ assert(!awards.includes(pinball.prizes[level]),'bumper carry is not Collected until the ball drains');
+ s.ball={x:440,y:1150,vx:0,vy:100};pinball.update(s,.02);
+ assert(awards.includes(pinball.prizes[level]),'drain keeps the carried bonus');
 }
 console.log('PASS: pinball first paid ball has each chapter bonus available on a winning-second impact.');
 const {WIN_COUNTS, winningSeconds, isWinSecond, elapsedSecond, clockNumber}=await import('./prize-seconds.js?v=keep-finish-1');
@@ -117,6 +120,23 @@ for(let level=0;level<6;level++){
  curios.action(s,'drop');
  assert.equal(s.timed,false);
 }
+memory.clear();inventory.items={};cash=20;awards=[];
+const claw=curios.create(0);
+curios.action(claw,'play');
+const glow=(claw.capsules||[]).find(c=>c.bonus);
+claw.swept=true;claw.clawX=glow.x;claw.houseLeft=99.5;
+curios.action(claw,'drop');
+for(let i=0;i<180&&claw.phase==='drop';i++)curios.update(claw,1/60);
+assert.equal(claw.keepsakeTaken,true,'prize-second line-up carries the glow');
+assert.equal(awards.length,0,'a catch is not Collected until the cabinet latches');
+assert.equal(claw.phase,'aim');
+curios.persist(claw);
+const clawBack=curios.create(0);
+assert.equal(clawBack.keepsakeTaken,true);
+assert.equal(awards.length,0,'leave and resume still leave the book Locked');
+curios.onTimeout(clawBack);
+assert(awards.includes('clockwork-key'),'latching the glass keeps the carried bonus');
+assert.equal(clawBack.prizeKept,true);
 console.log('PASS: Digby awards on the 1–100 house prize second plus glow line-up.');
 const {kits}=await import('./prizes.js?v=nft-art-1');
 assert.equal(kits.helter.prizes.includes('star-token'),false);

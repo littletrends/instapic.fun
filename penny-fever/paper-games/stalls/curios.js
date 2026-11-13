@@ -93,6 +93,7 @@ function persist(s) {
     phase: s.phase, seed: s.seed, charged: !!s.charged,
     aimX: s.aimX, clawX: s.clawX, capsules: s.capsules,
     won: !!s.won, note: s.note, drops: s.drops || 0, houseLeft: s.houseLeft,
+    keepsakeTaken: !!s.keepsakeTaken, caughtNow: !!s.caughtNow, caughtAgain: !!s.caughtAgain,
   };
   writeBook(book);
 }
@@ -233,6 +234,7 @@ function beginSitting(s) {
     s.dropT = 0;
     s.dropPhase = null;
     s.prizeKept = false;
+    s.keepsakeTaken = false;
     s.caughtNow = false;
     s.caughtAgain = false;
     s.dropBeat = 0;
@@ -265,23 +267,48 @@ function startDrop(s) {
 function awardCatch(s, cap) {
   if (!cap || !cap.bonus) return false;
   const prize = CABINET_PRIZES[s.level];
-  const already = chapterPaid(s.level) || s.won;
-  s.won = true;
-  s.paid = true;
-  // Per-go flags: s.won also means "already owned", so it cannot decide this go's result.
+  const already = chapterPaid(s.level) || s.prizeKept;
   s.caughtNow = !already;
   s.caughtAgain = already;
   if (already) {
     s.note = 'The claw held the bonus, but this chapter’s bonus is already Collected — no second prize.';
     return true;
   }
+  // Carry only. Digby latches the glass at 100s — that sitting end writes Collected.
+  s.keepsakeTaken = true;
+  s.note = 'Keepsake in the claws — stay until Digby latches the glass to keep it.';
+  return true;
+}
+
+function commitKeep(s) {
+  if (!s.keepsakeTaken || s.prizeKept || chapterPaid(s.level)) return false;
+  const prize = CABINET_PRIZES[s.level];
   if (alleyPlay) {
     keep(prize, 'curios');
     markPaid(s.level);
   }
   takePrize(s, prize, {x: PRIZE_SPOT.x, y: PRIZE_SPOT.y});
-  s.note = 'The claw held the ' + (itemName(prize) || prize) + '!';
+  s.won = true;
+  s.paid = true;
+  s.caughtNow = true;
   return true;
+}
+
+function resumeAim(s) {
+  s.phase = 'aim';
+  s.aimX = clawMin();
+  s.clawX = clawMin();
+  s.clawY = RAIL_Y + 28;
+  s.sweepT = 0;
+  s.swept = false;
+  s.held = null;
+  s.dropT = 0;
+  s.dropPhase = null;
+  s._riseFromY = null;
+  s.timed = false;
+  s.lined = false;
+  s.target = null;
+  persist(s);
 }
 
 function dropCapsuleHome(cap) {
@@ -298,27 +325,23 @@ function resolveDrop(s) {
   if (!s.timed || !s.lined || !aimed) {
     if (aimed) dropCapsuleHome(aimed);
     s.held = null;
-    s.note = missNote(s);
-    finishMiss(s);
+    s.note = s.keepsakeTaken
+      ? missNote(s) + ' Keepsake still in the claws — stay until the glass latches.'
+      : missNote(s);
+    resumeAim(s);
     return;
   }
   aimed.taken = true;
   aimed.lift = 0;
-  aimed.x = s.clawX;
-  aimed.y = s.clawY + 52;
-  s.held = aimed;
+  aimed.x = PRIZE_SPOT.x;
+  aimed.y = PRIZE_SPOT.y;
+  s.held = null;
   awardCatch(s, aimed);
-  s.phase = 'result';
-  s.charged = false;
-  s.hold = s.won ? 2.2 : 1.6;
-  persist(s);
+  resumeAim(s);
 }
 
 function finishMiss(s) {
-  s.phase = 'result';
-  s.charged = false;
-  s.hold = 0.7;
-  persist(s);
+  resumeAim(s);
 }
 
 function drawClaw(d, x, y, shut) {
@@ -408,13 +431,19 @@ export default {
   houseDetail: 'Digby latches the glass. Another claw when you have a penny.',
   clockRuns: s => s.phase === 'aim' || s.phase === 'drop',
   onTimeout(s) {
-    if (s.phase === 'aim' || s.phase === 'drop') {
-      s.phase = 'result';
-      s.charged = false;
-      s.note = 'Time is up. The claw rests.';
-      s.hold = 0.5;
-      persist(s);
+    if (s.phase !== 'aim' && s.phase !== 'drop') return;
+    if (s.phase === 'drop' && s.lined && s.timed && s.target && !s.keepsakeTaken) {
+      s.target.taken = true;
+      awardCatch(s, s.target);
     }
+    const kept = commitKeep(s);
+    s.phase = 'result';
+    s.charged = false;
+    s.hold = 0.45;
+    if (kept) s.note = 'Digby latched the glass. ' + (itemName(CABINET_PRIZES[s.level]) || 'The bonus') + ' is Collected.';
+    else if (s.caughtAgain || chapterPaid(s.level)) s.note = 'The cabinet closed. This chapter’s bonus is already Collected.';
+    else s.note = 'Time is up. The claw rests.';
+    persist(s);
   },
   retryAttempt(s) { this.action(s, 'again'); },
   retryButton: alleyPlay ? 'Play again · 1 penny' : 'Play again',
@@ -425,10 +454,10 @@ export default {
     return {n, total: HOUSE_SECONDS, lit: isCabinetWin(s.level, n)};
   },
   intro: alleyPlay
-    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop while the clock is lit to lift the chapter bonus.'
+    ? 'Digby’s claw rides the top rail over the vault floor. It only travels one way — left to right — so pick your moment. Line the claw over the glowing capsule and drop while the clock is lit to lift the chapter bonus. Lifting it is a carry — Digby has to latch the glass at the end of the sitting before it is Collected.'
     : 'Digby’s claw only travels one way. Line it over the glow and drop while the clock is lit. Workshop sittings write nothing.',
   instructions: alleyPlay
-    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. You can stop over the glow and wait. Tap the vault or press Space/Enter when the clock lights AND the claw is over the glow.'
+    ? 'Hold the stick right (or hold → / D) to send the claw across — it never comes back. You can stop over the glow and wait. Tap the vault or press Space/Enter when the clock lights AND the claw is over the glow. A catch stays in the claws until the 100s cabinet closes; leaving before that leaves it Locked.'
     : 'Hold the stick right (or → / D) to sweep — one way only. Stop over the glow if you need to wait. Tap or press Space/Enter while the clock is lit.',
   levels: LEVELS,
   images: {
@@ -463,8 +492,12 @@ export default {
       clawY: RAIL_Y + 28,
       sweepT: 0,
       charged: resume ? !!saved.charged : false,
-      won: !!saved.won || chapterPaid(level),
+      won: chapterPaid(level),
       paid: chapterPaid(level),
+      prizeKept: chapterPaid(level),
+      keepsakeTaken: resume ? !!saved.keepsakeTaken : false,
+      caughtNow: resume ? !!saved.caughtNow : false,
+      caughtAgain: resume ? !!saved.caughtAgain : false,
       hold: 0,
       drops: saved.drops || 0,
       houseLeft: saved.houseLeft,
@@ -501,7 +534,9 @@ export default {
       }
       s.clawX = s.aimX;
       s.clawY = RAIL_Y + 28;
-      if (s.swept) {
+      if (s.keepsakeTaken && !s.prizeKept) {
+        s.note = 'Keepsake in the claws — stay until Digby latches the glass to keep it.';
+      } else if (s.swept) {
         const n = houseSecond(s);
         if (clockLit(s)) s.note = 'NOW — TAP! Second ' + n + ' is lit.';
         else s.note = 'Second ' + n + ' is dark. Wait over the glow.';
@@ -557,18 +592,18 @@ export default {
     if (s.phase === 'result' && s.hold > 0 && !s.result) {
       s.hold -= dt;
       if (s.hold <= 0) {
-        if (s.caughtNow) {
+        if (s.prizeKept || s.caughtNow) {
           done(s, 'Bonus collected',
-            itemName(CABINET_PRIZES[s.level]) + ' is yours. Stay on this chapter or visit the next.',
+            itemName(CABINET_PRIZES[s.level]) + ' is yours. Digby latched the glass. Stay on this chapter or visit the next.',
             {prize: CABINET_PRIZES[s.level], won: true});
-        } else if (s.caughtAgain) {
-          done(s, 'Already unlocked',
-            s.note || 'The claw held the bonus, but this chapter’s bonus is already Collected — no second prize.',
+        } else if (s.caughtAgain || chapterPaid(s.level)) {
+          done(s, 'Already collected',
+            s.note || 'This chapter’s bonus is already Collected — no second prize.',
             {won: true, prize: null});
         } else {
-          done(s, 'Empty claws',
-            s.note || 'The claw came up empty. Stay on this chapter or visit the next.',
-            {won: false, prize: null});
+          done(s, 'The cabinet closed',
+            s.note || 'Time is up. The claw rests. Stay on this chapter or visit the next.',
+            {won: false, prize: false});
         }
       }
     }
@@ -667,11 +702,18 @@ export default {
 
     if (s.phase === 'aim' || s.phase === 'drop' || (s.phase === 'result' && s.capsules)) {
       if (s.phase === 'aim' && s.swept && clockLit(s)) d.glow(s.clawX, s.clawY, 46, GOLD);
-      drawClaw(d, s.clawX, s.clawY, !!s.held);
+      drawClaw(d, s.clawX, s.clawY, !!s.held || (!!s.keepsakeTaken && !s.prizeKept));
       if (s.held) {
         drawCapsule(d, Object.assign({}, s.held, {
           x: s.clawX, y: s.clawY + 52, lift: 0, taken: false,
         }), time);
+      } else if (s.keepsakeTaken && !s.prizeKept) {
+        const cap = (s.capsules || []).find(c => c && c.bonus);
+        if (cap) {
+          drawCapsule(d, Object.assign({}, cap, {
+            x: PRIZE_SPOT.x, y: PRIZE_SPOT.y, lift: 0, taken: false,
+          }), time);
+        }
       }
     }
 

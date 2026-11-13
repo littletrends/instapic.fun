@@ -80,7 +80,7 @@ function writeBook(s) {
   } catch { /* quota */ }
 }
 
-const SNAPSHOT_FIELDS=['houseLeft','cabinetOn','layoutVersion','rewardAt','ballPennies','ballTokens','t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver'];
+const SNAPSHOT_FIELDS=['houseLeft','cabinetOn','layoutVersion','rewardAt','ballPennies','ballTokens','t','mode','activeBall','ball','flippers','bumpers','targets','slings','rolls','saucer','lights','combo','trail','fly','stuck','stuckPos','deadAt','rngState','note','chapterPrize','prizeKept','prizePosted','prizeDeliver','prizeCarried'];
 function snapshotOf(s){
  const snap={v:1};
  for(const key of SNAPSHOT_FIELDS)if(s[key]!==undefined)snap[key]=s[key];
@@ -94,7 +94,8 @@ function releaseInput(s){
  if(s.mode==='lane')s.ball={x:LANE.x,y:LANE.y,vx:0,vy:0};
 }
 function prizeStatus(s){
- if(!pickUnique(s))return 'Bonus Collected';
+ if(s.prizeKept||!pickUnique(s))return 'Bonus Collected';
+ if(s.prizeCarried)return 'Bonus in the glass — drain this ball to keep it';
  return 'Bonus: bumper hit on '+WIN_SECONDS[s.level].join(', ')+'s';
 }
 function collide(p, a, b, r, omega = 0, pivot = a, bounce = 1.22) {
@@ -147,6 +148,17 @@ function fly(s, id, x, y, prize) {
   s.fly.push({id, x, y, t: 0, dur: 0.7, prize: !!prize});
 }
 function pay(s, id, x, y) {
+  const bonus = chapterPrize(s);
+  if (id === bonus) {
+    if (s.prizeKept || s.paid.includes(id) || owned(id)) id = pickToken(s);
+    else if (s.prizeCarried) { writeBook(s); return; }
+    else {
+      s.prizeCarried = true;
+      s.note = itemName(id) + ' in the glass — drain this ball to keep it.';
+      writeBook(s);
+      return;
+    }
+  }
   const token = TOKENS.find(t => t.id === id);
   // Collectible duplicates accumulate; they never convert into live currency.
   if (ONCE.includes(id) && (s.paid.includes(id) || s.seen.includes(id))) id = pickToken(s);
@@ -163,11 +175,26 @@ function pay(s, id, x, y) {
     s.specials++;
     s.tokens[id] = (s.tokens[id] || 0) + 1;
     if (alleyPlay) keep(id, 'pinball');
-    if (id === chapterPrize(s)) { takePrize(s, id, {x:x*1.35-204, y}); s.prizeJustWon = true; }
     s.note = itemName(id) + (unique ? ' — a rare from the glass!' : ' into the treasure book.');
   }
-  if(id!==chapterPrize(s))fly(s, id, x, y, special);
+  fly(s, id, x, y, special);
   writeBook(s);
+}
+function commitBonus(s) {
+  const id = chapterPrize(s);
+  if (!s.prizeCarried || s.prizeKept || !id) return false;
+  if (owned(id) || s.paid.includes(id)) {
+    s.prizeCarried = false;
+    return false;
+  }
+  if (alleyPlay) keep(id, 'pinball');
+  if (!s.seen.includes(id)) s.seen.push(id);
+  if (!s.paid.includes(id)) s.paid.push(id);
+  takePrize(s, id);
+  s.prizeKept = true;
+  s.prizeCarried = false;
+  s.note = itemName(id) + ' — Collected.';
+  return true;
 }
 function loosenMark(level) {
   return [6, 8, 10, 12, 14, 16][level] || 10;
@@ -326,6 +353,7 @@ function releasePlunger(s) {
   writeBook(s);
 }
 function drain(s) {
+  const kept = commitBonus(s);
   s.mode = 'dead';
   s.activeBall=false;
   s.cabinetOn=false;s.lights=[false,false,false];s.saucer.hold=0;
@@ -334,9 +362,13 @@ function drain(s) {
   s.charge = 0;
   s.combo = 0;
   s.stuck = 0;
-  s.note = alleyPlay
-    ? ((s.credit || 0) > 0 ? 'Drained. ' + s.credit + ' ball' + (s.credit === 1 ? '' : 's') + ' left on this penny.' : 'Drained. Another penny for three more balls.')
-    : (s.ammo > 0 ? 'Drained. Pull the spring for another practice ball.' : 'Practice balls spent.');
+  if (!kept) {
+    s.note = alleyPlay
+      ? ((s.credit || 0) > 0 ? 'Drained. ' + s.credit + ' ball' + (s.credit === 1 ? '' : 's') + ' left on this penny.' : 'Drained. Another penny for three more balls.')
+      : (s.ammo > 0 ? 'Drained. Pull the spring for another practice ball.' : 'Practice balls spent.');
+  } else {
+    s.note = (s.note || 'Bonus Collected.') + (alleyPlay && (s.credit || 0) > 0 ? ' ' + s.credit + ' ball' + (s.credit === 1 ? '' : 's') + ' still ready.' : '');
+  }
   writeBook(s);
 }
 function inShooter(p) { return p.x > 690; }
@@ -378,10 +410,10 @@ export default {
   actionLabels(s){return {plunge:returningBall(s)?'Pull back · ball returning':s.mode==='live'?'Ball in play':s.mode==='dead'?'Next ball…':s.activeBall?'Relaunch · same ball':(alleyPlay?(s.credit>0?'Plunge · '+s.credit+' ready':'Plunge · 1 penny'):'Plunge')};},
   tables: true,
   intro: alleyPlay
-    ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to release the chapter bonus. The timer and unused balls stay saved.'
+    ? 'Six different tables. One penny buys three balls, each with 100 seconds of play. Hit a bumper during a winning second to carry the chapter bonus; drain that ball to keep it. The timer and unused balls stay saved.'
     : 'Workshop pin tables. Pull the plunger, tap the flippers, chase the lights. Practice balls never enter the alley purse.',
   instructions: alleyPlay
-    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. On a keyboard: hold Space to pull the plunger (Space is the plunger, not a flipper), Z or ← for the left flipper, X or → for the right, and Enter for a quick launch. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to collect the bonus, available from the first ball. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
+    ? 'Hold Plunge to charge, then release to launch. Hold the left and right flippers independently, including two fingers at once. On a keyboard: hold Space to pull the plunger (Space is the plunger, not a flipper), Z or ← for the left flipper, X or → for the right, and Enter for a quick launch. One penny buys three balls; relaunching a ball that rolls back down the shooter lane is included. Each new ball has 100 seconds; the lights go out when time ends. Match a listed whole second with a bumper impact to carry the bonus; it stays Locked until that ball drains. Leaving mid-ball leaves it Locked. Chapters have different winning seconds and layouts. Each bumper awards its pictured collectible on impact; duplicates accumulate in Treasures. The holding pocket returns an Everyday penny, up to two per ball and at least eight seconds apart. You can pull the spring while the ball comes down the shooter lane; hold until it lands, then release. Letting go before it arrives releases the empty spring. Menus pause the timer; a same-ball relaunch keeps the time remaining.'
     : 'Hold Plunge and release. Tap Left and Right flippers. Keyboard: hold Space to plunge, Z/← and X/→ flippers, Enter quick launch. Each chapter is a different cabinet.',
   liveTitle: 'Pinball Alley',
   liveDetail: alleyPlay

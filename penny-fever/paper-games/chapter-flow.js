@@ -9,15 +9,7 @@ export function chapterOutcome(id, state, dismissed = false) {
       detail: [state.fortune, state.note].filter(Boolean).join(' '),
       won: !!state.caught, prize: null, handled: true};
   }
-  // treasureJustWon / prizeJustWon are set only when the prize is won in this visit (not persisted),
-  // so reopening a chapter whose prize is already owned no longer shows a false "unlocked" panel.
-  if (id === 'coin-pusher' && state.treasureJustWon && state.tray?.treasureOwned && !state.busy && state.phase === 'idle') {
-    return {title: 'Treasure unlocked', detail: 'Your tray is saved. Visit the next chapter or keep playing here.',
-      won: true, prize: null, handled: true};
-  }
-  if (id === 'pinball' && state.prizeKept && state.prizeJustWon) {
-    return {title: 'Bonus collected', detail: 'Your ball and unused plays are saved. Visit the next table or keep playing here.',
-      won: true, prize: null, handled: true};
-  }
+  // A bumper hit or tray lip is a carry, not a sitting end. Pip commits on drain;
+  // Copper keeps when the treasure has gone over the lip and play continues.
   return null;
 }
