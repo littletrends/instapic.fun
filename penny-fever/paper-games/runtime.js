@@ -401,6 +401,7 @@ try{
  listen($('#restart'),'click',()=>{closeHelp();retryChapter();});
  listen($('#pause'),'click',closeHelp);
  listen($('#menu-toggle'),'click',openHelp);
+ if(embedded)document.querySelector('.chapter-nav')?.remove();
  const fullScreenButton=document.createElement('button');
  fullScreenButton.type='button';
  fullScreenButton.className='fullscreen-toggle';
