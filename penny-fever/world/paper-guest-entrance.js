@@ -1,7 +1,7 @@
 import {phoneArt} from './phone-art.js';
 import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from './lib/three.module.min.js';
-import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=webp-items-1';
+import { getDoll, onDollChange, artUrl } from './crew-selector.js?v=doll-body-fit-1';
 import {loadWallArt} from './walls/art.js?v=wall-front-1';
 import {buildWall} from './walls/models.js?v=wall-front-1';
 import { decorativePaper } from './paper-panels.js?v=keep-light-1';

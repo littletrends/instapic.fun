@@ -3,7 +3,7 @@ import {phoneArt} from './phone-art.js';
 import {
   SKINS, EYE_COLORS, HAIR_STYLES, HATS, OUTFITS, TOPS, BOTTOMS, DRESSES, FULL_OUTFITS, ADDONS, FOOTWEAR,
   MINE_ID, blankDraft, composeDoll, composeDollCanvas, keepMine, getMine, getDollSets, getDollSet, saveDollSet,
-} from './paper-dolls.js?v=doll-saved-sets-12';
+} from './paper-dolls.js?v=doll-body-fit-1';
 
 export const CREW_IDS = ['bluebell', 'ruby', 'violet', 'oliver', 'sunny', 'rowan'];
 const key = 'pf-selected-crew-v1';

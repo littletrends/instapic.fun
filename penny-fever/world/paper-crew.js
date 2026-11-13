@@ -1,7 +1,7 @@
 import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from './lib/three.module.min.js';
 import { paperRail } from './paper-guest-entrance.js?v=wall-front-1';
-import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=doll-saved-sets-12';
+import { CREW_IDS, crewArt, getDoll, onDollChange } from './crew-selector.js?v=doll-body-fit-1';
 
 export const CREW = CREW_IDS.map((id) => id[0].toUpperCase() + id.slice(1));
 
