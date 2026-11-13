@@ -10,12 +10,12 @@ html,body{overscroll-behavior:none;overflow:hidden;touch-action:manipulation;-we
 #hud-house{color:#f5d48a}
 #hud-mode{color:#f0d59a}
 .is-alley-room .play-header{display:flex;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:6px 8px;gap:6px;touch-action:pan-x;-webkit-overflow-scrolling:touch}.is-alley-room .play-header .chapter-nav{flex-shrink:0}.is-alley-room .play-header>button{flex-shrink:0}.is-alley-room .play-layout{padding-top:.35rem}
-@media(max-width:760px){.is-alley-room .notebook{display:none}.is-alley-room .stage{max-width:none;width:100%;aspect-ratio:3/4}.is-alley-room .play-hud{font-size:.95rem;margin:.25rem auto}.is-alley-room .readout{font-size:1.05rem;margin:.25rem auto}}
+@media(max-width:760px){.is-alley-room .notebook{display:none}.is-alley-room .play-layout{padding-bottom:env(safe-area-inset-bottom)}.is-alley-room .stage{max-width:none;width:min(100vw,calc((100svh - 52px - env(safe-area-inset-bottom)) * .75));height:min(calc(100svh - 52px - env(safe-area-inset-bottom)),133.333vw);aspect-ratio:3/4}.is-alley-room .play-hud{font-size:.95rem;margin:.25rem auto}.is-alley-room .readout{font-size:1.05rem;margin:.25rem auto}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 /* One shared player: chapter controls above the board, help in a closing panel. */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
-body:not(.workshop){height:100dvh;display:flex;flex-direction:column;}
+body:not(.workshop){height:100svh;min-height:100svh;display:flex;flex-direction:column;}
 .play-header{max-width:none;margin:0;align-items:center;justify-content:center;flex-shrink:0;padding:6px 10px;gap:8px;background:#0f1a22;}
 .play-header .eyebrow{display:none;}
 .chapter-nav{display:flex;align-items:center;gap:4px;}
