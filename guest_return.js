@@ -1,12 +1,28 @@
 (function () {
-  function safeReturn(raw) {
-    const s = String(raw || "").trim();
-    if (!s) return "";
-    if (/^[a-z]+:/i.test(s) || s.startsWith("//") || s.includes("\\") || s.includes("..")) return "";
-    if (!(s.startsWith("/") || s.startsWith("penny-fever/") || s.startsWith("./penny-fever") || s.startsWith("my-instapic"))) {
-      return "";
+  const RETURN_PATHS = new Set([
+    "/my-instapic.html",
+    "/penny-fever/",
+    "/penny-fever/index.html"
+  ]);
+
+  function localUrl(raw) {
+    const s = String(raw || "");
+    // Check before URL parsing: browsers discard tabs/newlines in URLs.
+    if (!s || /[\u0000-\u0020\u007f\\]/.test(s)
+        || /^[a-z][a-z0-9+.-]*:/i.test(s) || s.startsWith("//")) return null;
+    try {
+      const url = new URL(s, new URL("/", window.location.href));
+      if (url.origin !== window.location.origin || url.username || url.password) return null;
+      return url;
+    } catch (_) {
+      return null;
     }
-    return s;
+  }
+
+  function safeReturn(raw) {
+    const url = localUrl(raw);
+    if (!url || !RETURN_PATHS.has(url.pathname)) return "";
+    return url.pathname + url.search + url.hash;
   }
 
   function loginNext(fallback) {
@@ -14,19 +30,25 @@
     const ret = safeReturn(params.get("return"));
     if (ret) return ret;
     const ticket = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0, 6);
-    const base = fallback || "my-instapic.html";
-    if (ticket) return base + (base.includes("?") ? "&" : "?") + "ticket_code=" + encodeURIComponent(ticket);
-    return base;
+    const base = safeReturn(fallback) || "/my-instapic.html";
+    const next = new URL(base, window.location.href);
+    if (ticket) next.searchParams.set("ticket_code", ticket);
+    return next.pathname + next.search + next.hash;
   }
 
   function withReturn(path) {
     const params = new URLSearchParams(window.location.search);
-    const next = new URL(path, window.location.href);
-    ["ticket_code", "return"].forEach((key) => {
-      const value = params.get(key);
-      if (value) next.searchParams.set(key, value);
-    });
-    return next.pathname.replace(/^\//, "") + next.search + next.hash;
+    const candidate = localUrl(path);
+    const next = candidate?.pathname === "/verify.html"
+      ? candidate : new URL("/verify.html", window.location.href);
+    // Do not carry unchecked return values into the email-code page.
+    next.searchParams.delete("return");
+    next.searchParams.delete("ticket_code");
+    const ret = safeReturn(params.get("return"));
+    const ticket = String(params.get("ticket_code") || "").replace(/\D+/g, "").slice(0, 6);
+    if (ret) next.searchParams.set("return", ret);
+    if (ticket) next.searchParams.set("ticket_code", ticket);
+    return next.pathname + next.search + next.hash;
   }
 
   window.InstapicVipReturn = { safeReturn, loginNext, withReturn };
