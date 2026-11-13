@@ -1232,6 +1232,14 @@ body {
   margin: 0.9rem auto 0.25rem;
 }
 
+.page-back {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .page-back .btn,
 .session-bottom .btn,
 a.page-back-btn.btn {
@@ -1242,6 +1250,11 @@ a.page-back-btn.btn {
   margin-left: auto;
   margin-right: auto;
   text-decoration: none;
+}
+
+.page-back .btn {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* --------------------------------------------------

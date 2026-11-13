@@ -162,7 +162,26 @@ function loadDrips(email, revision) {
     })
     .catch(() => {});
 }
+function tradeshowLookHref() {
+  return '/penny-fever/index.html?style=paper&rail=paper&tradeshow=1#aura-tradeshow';
+}
+
+function rememberTradeshowLook() {
+  const href = tradeshowLookHref();
+  try {
+    sessionStorage.setItem('pennyFever.tradeshowLook.v1', JSON.stringify({v: 1, href, at: Date.now()}));
+    const key = 'instapic.lastScreens.v1';
+    const parsed = JSON.parse(sessionStorage.getItem(key) || '[]');
+    const stack = Array.isArray(parsed) ? parsed : [];
+    if (stack[stack.length - 1] !== href) {
+      stack.push(href);
+      sessionStorage.setItem(key, JSON.stringify(stack.slice(-12)));
+    }
+  } catch {}
+}
+
 function vipJoin() {
+  rememberTradeshowLook();
   const path = '/penny-fever/index.html?style=paper&rail=paper&v=' + NFT_VER + '#aura-tradeshow';
   return '/save.html?return=' + encodeURIComponent(path);
 }
@@ -536,8 +555,8 @@ function ensureOverlay() {
         <h1 id="auraTradeshowTitle">VIP NFT Tradeshow</h1>
       </div>
       <span class="aura-tradeshow-door" id="auraTradeshowDoor"></span>
+      <button type="button" class="aura-tradeshow-back" id="auraTradeshowAlley">← Alley</button>
       <p class="aura-tradeshow-vip" id="auraTradeshowVip"></p>
-      <a class="aura-tradeshow-vip" href="/my-instapic.html">← VIP area</a>
       <button type="button" class="aura-tradeshow-close" id="auraTradeshowClose" aria-label="Close tradeshow">×</button>
     </div>
     <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
@@ -605,6 +624,7 @@ function ensureOverlay() {
   document.body.append(overlay);
   document.addEventListener('keydown', onOverlayKey, true);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
+  overlay.querySelector('#auraTradeshowAlley').addEventListener('click', () => closeTradeshow());
   overlay.querySelector('#auraTradeshowSearch').addEventListener('input', (e) => {
     query = e.target.value.trim().toLowerCase();
     paint();
@@ -1302,7 +1322,8 @@ function paint() {
     const a = document.createElement('a');
     a.href = vipJoin();
     a.textContent = 'Join VIP';
-    vipEl.replaceChildren(a, document.createTextNode(' to open Aura’s tradeshow.'));
+    a.addEventListener('click', rememberTradeshowLook);
+    vipEl.replaceChildren(a, document.createTextNode(' to buy and keep.'));
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
@@ -1458,10 +1479,7 @@ function onOverlayKey(e) {
 
 export function openTradeshow() {
   if (tradeshowBlocked()) return false;
-  if (!vip()) {
-    location.assign(vipJoin());
-    return false;
-  }
+  rememberTradeshowLook();
   const account = vipAccount();
   if (tradeshowAccount && tradeshowAccount !== account) closeTradeshow({stayInAlley: true});
   ensureOverlay();
