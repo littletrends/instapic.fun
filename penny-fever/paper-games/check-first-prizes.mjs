@@ -78,6 +78,12 @@ function flyComet(engine,s){
  memory.clear();cash=20;awards=[];inventory.items={};
  const miss=engine.create(0);
  engine.update(miss,0.01);
+ miss.houseLeft=63.25;
+ engine.persist(miss);
+ const resumed=engine.create(0);
+ assert.equal(resumed.houseLeft,63.25,'Celeste reload retains the remaining house clock');
+ assert.deepEqual(resumed.angles,miss.angles,'Celeste reload retains the glasses');
+ assert.equal(cash,20,'Celeste restore does not charge');
  miss.houseLeft=99;
  assert.equal(engine.prizeClock(miss).n,1);
  assert.notEqual(engine.prizeClock(miss).n,lookup.skyNumber(1,lookup.SKY[0].speed),'house clock is not the sky-speed cycle');
@@ -242,6 +248,23 @@ assert.equal(!!tillyBack.tokens?.[0]?.taken,true);
 helter.update(tillyBack,1/60,{keys:new Set(),actions:new Set()});
 assert.equal(cash,9,'Tilly restore does not debit a second penny');
 assert.equal(tillyBack.youCell,6,'Tilly restore keeps the spiral cell');
+// Old chapter-two sittings used the original chapter-one board and omitted dump.
+const legacySlides=[{cell:3,used:true,teach:true},{cell:10,used:false},{cell:20,used:false}];
+const legacyCushions=[{cell:4,boost:4,used:true},{cell:11,boost:5},{cell:18,boost:4}];
+const legacyTokens=[{cell:2,id:'star-token',taken:true},{cell:9,id:'moon-penny'},{cell:23,id:'everyday-penny'}];
+tillyBack.slides=legacySlides;
+tillyBack.cushions=legacyCushions;
+tillyBack.tokens=legacyTokens;
+tillyBack.planTreasureCell=17;
+helter.persist(tillyBack);
+const legacyBack=helter.create(1);
+assert.deepEqual(legacyBack.slides.map(x=>x.cell),[3,10,20]);
+assert.deepEqual(legacyBack.slides.map(x=>x.dump),[5,6,5]);
+assert.equal(legacyBack.slides[0].used,true);
+assert.deepEqual(legacyBack.cushions,legacyCushions.map(x=>({...x,used:!!x.used,teach:!!x.teach})));
+assert.deepEqual(legacyBack.tokens,legacyTokens.map(x=>({...x,taken:!!x.taken})));
+assert.equal(legacyBack.planTreasureCell,17);
+assert.equal(cash,9,'legacy sitting restore does not charge');
 console.log('PASS: Tilly spiral sitting restores cell, tokens and boarding without a second charge.');
 const tillySeats=[];
 for(let lv=0;lv<6;lv++){

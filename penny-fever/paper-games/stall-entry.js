@@ -5,7 +5,7 @@ import {alleyPlay, spend} from './wallet.js?v=insights-1';
 export const PENNIES_PER_TICKET = 5;
 const BOOK = 'pennyFever.tentSitting';
 
-/** Sit-down tents: 1 ticket at the door. First try of each chapter is free. Retries are pennies. */
+/** Sit-down tents: curtain stays free so chapter 1 is reachable. Chapters 2–6 spend a penny inside. */
 export const TICKET_TENTS = [
   'fortune', 'love', 'curios', 'lookup', 'whisper',
   'milk-bottles', 'cover-the-spot', 'mutoscope', 'catoptromancy',
@@ -30,7 +30,7 @@ export const UNDER_CONSTRUCTION = [
 ];
 export const UNDER_CONSTRUCTION_LABEL = 'Under construction 🔒';
 
-/** All eight Ride & Seek attractions. Door is free; first attempt of each chapter is unpaid practice. */
+/** Ride & Seek. Ticket at the door; chapter 1 is the free ride; chapters 2–6 cost a penny. */
 export const RIDE_SEEKS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 
 const TICKET_SET = new Set(TICKET_TENTS);
@@ -59,11 +59,11 @@ export function isClosed(id) {
 export function entryFor(id) {
   if (CLOSED_SET.has(id)) return {door: 'closed', inside: 'none', firstChapterFree: false};
   if (id === 'snap') return {door: 'free', inside: 'penny', firstChapterFree: true};
-  if (id === 'curios') return {door: 'ticket', inside: 'penny', firstChapterFree: false};
-  if (RIDE_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
-  if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: false};
-  if (TICKET_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-penny', firstChapterFree: true};
-  return {door: 'penny', inside: 'penny', firstChapterFree: false};
+  if (id === 'curios') return {door: 'free', inside: 'penny', firstChapterFree: true};
+  if (RIDE_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-penny', firstChapterFree: true};
+  if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: true};
+  if (TICKET_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
+  return {door: 'penny', inside: 'penny', firstChapterFree: true};
 }
 
 export function doorKind(id) {
@@ -92,10 +92,10 @@ export function enterLabel(id) {
   const door = doorKind(id);
   if (door === 'closed') return BUILD_SET.has(id) ? UNDER_CONSTRUCTION_LABEL : 'Closed for maintenance';
   if (id === 'coin-pusher') return 'The trays · real pennies';
+  if (RIDE_SET.has(id)) return 'Board · ticket · Chapter 1 free';
   if (door === 'ticket') return 'Sit down · Chapter 1 free';
   if (door === 'free') {
     if (id === 'snap') return 'Instapic booth · Chapter 1 free';
-    if (RIDE_SET.has(id)) return 'Board · Chapter 1 free';
     return PENNY_DOOR_LABEL[id] || 'Enter · Chapter 1 free';
   }
   return 'Enter · Chapter 1 free';
@@ -150,7 +150,7 @@ export function retryNote() {
     : 'Practice pennies are spent.';
 }
 
-/** Inside the paper room: workshop is always free. Chapter 1 is free (Copper spends real pennies itself). Chapter 2–6 costs 1 penny a go. */
+/** Inside the paper room: workshop is always free. Chapter 1 is free (Copper spends real pennies itself). Chapter 2–6 costs 1 penny a go. Rides take a ticket at the door label; the first ride is free, then a penny. */
 export function takeAttempt(stallId, chapter) {
   if (!alleyPlay) return true;
   const spec = entryFor(stallId);

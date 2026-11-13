@@ -33,7 +33,7 @@ import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=keep-finish-1';
+} from '../ride-seek.js?v=ride-coil-1';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
@@ -2298,7 +2298,7 @@ function updateDoorChapter(s, dt) {
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Juno’s Laughing Maze. Eat the chips, grab the chapter bonus in the middle, and keep away from the laughing faces.',
+  intro: 'Juno’s Laughing Maze. Eat the chips, grab the chapter bonus in the middle, and keep away from the laughing faces. Ticket ride: chapter 1 is the free ride; later chapters cost a penny.',
   instructions: 'Steer with the arrows, WASD, a swipe or the MOVE stick at the bottom. Pick up the bonus key in the middle, then eat enough chips to keep it. If a laughing face catches you, you go back to the entrance and an uncollected bonus is Locked again — glowing power tokens let you chase the faces for a moment.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),

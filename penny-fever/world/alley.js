@@ -36,8 +36,8 @@ import {installPapercutRides} from "./amusements/install.js?v=rides-step-1";
 import {installVendorCutouts} from "./vendor-cutouts.js?v=keep-light-1";
 import {installStallCutouts} from "./stall-cutouts.js?v=aura-front-1";
 import {games as paperGames} from "../paper-games/catalogue.js?v=pip-lane-1";
-import {enterLabel} from "../paper-games/stall-entry.js?v=keep-finish-1";
-import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=keep-finish-1";
+import {enterLabel} from "../paper-games/stall-entry.js?v=ride-coil-1";
+import {isParkShut, loadParkDoors, parkSign, parkStatus} from "../paper-games/park-doors.js?v=ride-coil-1";
 import {noteVisit} from "../paper-games/insights.js?v=insights-1";
 noteVisit("");
 

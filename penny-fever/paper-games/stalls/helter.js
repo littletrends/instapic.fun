@@ -1,6 +1,6 @@
 import {kits as chapterKits} from '../prizes.js?v=prize-hud-1';
 /*
- * Spiral Slide (helter) — Ch1 First Spiral live; Ch2–6 titles frozen (same board until Aura reopens).
+ * Spiral Slide (helter) — six chapter boards; prize seat moves each chapter.
  *
  * TAP-TAP-TAP + JUMP model (cushions bounce up; slides soft-dump down):
  *   ONE Archimedean spiral path, BOTTOM → TOP, sampled into cells.
@@ -27,7 +27,7 @@ import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=keep-finish-1';
+} from '../ride-seek.js?v=ride-coil-1';
 
 const RIDE = 'helter';
 const BOOK = 'pennyFever.helter';
@@ -72,7 +72,7 @@ function persist(s) {
   if (!s.boarded) return;
   const snap = {};
   for (const key of HELTER_SNAP) if (s[key] !== undefined) snap[key] = s[key];
-  snap.slides = (s.slides || []).map((S) => ({cell: S.cell, used: !!S.used, boost: S.boost, teach: !!S.teach}));
+  snap.slides = (s.slides || []).map((S) => ({cell: S.cell, used: !!S.used, dump: S.dump, teach: !!S.teach}));
   snap.cushions = (s.cushions || []).map((C) => ({cell: C.cell, used: !!C.used, boost: C.boost, teach: !!C.teach}));
   snap.tokens = (s.tokens || []).map((T) => ({cell: T.cell, id: T.id, taken: !!T.taken}));
   book.sittings[String(s.level)] = cloneJson(snap);
@@ -82,24 +82,15 @@ function reviveSitting(s, saved) {
   if (!saved || !saved.boarded) return false;
   for (const key of HELTER_SNAP) if (saved[key] !== undefined) s[key] = cloneJson(saved[key]);
   s.boarded = true;
+  // Keep an in-progress sitting's authored layout across board revisions.
   if (Array.isArray(saved.slides)) {
-    for (const S of s.slides || []) {
-      const row = saved.slides.find((x) => x.cell === S.cell);
-      if (row) S.used = !!row.used;
-    }
+    s.slides = saved.slides.map(row => ({...row,
+      dump: Number.isFinite(row.dump) ? row.dump :
+        (CHAPTER_BOARDS[0].slides.find(x => x.cell === row.cell)?.dump ?? 5),
+      used: !!row.used}));
   }
-  if (Array.isArray(saved.cushions)) {
-    for (const C of s.cushions || []) {
-      const row = saved.cushions.find((x) => x.cell === C.cell);
-      if (row) C.used = !!row.used;
-    }
-  }
-  if (Array.isArray(saved.tokens)) {
-    for (const T of s.tokens || []) {
-      const row = saved.tokens.find((x) => x.cell === T.cell);
-      if (row) T.taken = !!row.taken;
-    }
-  }
+  if (Array.isArray(saved.cushions)) s.cushions = cloneJson(saved.cushions);
+  if (Array.isArray(saved.tokens)) s.tokens = cloneJson(saved.tokens);
   return true;
 }
 const TREASURES = chapterKits['helter'].prizes;
@@ -127,7 +118,7 @@ const TRACK_W0 = 34; // outer — leave gaps between layers
 const TRACK_W1 = 22; // crest
 const TRACK_SAMPLES = 560;
 const BALL_R = 16;
-const BALL_ROLL_SECS = 14; // gravity-ish crest→door prop roll
+const BALL_ROLL_SECS = 8; // faster crest→door gold ball
 const BALL_WAIT_SECS = 1.4; // pause after ball exits before hopper reload
 const CUSHION_GOAL = 3;
 const RIDE_SECONDS = 52;
@@ -160,15 +151,15 @@ const CUSHION_DEEP = '#c99448';
 const HOPPER_FILL = '#3a2a28';
 const HOPPER_DEEP = '#1e1412';
 
-/** Aura official Tent_21_Skip + bea-player — helter-dress/ (do not re-split). */
+/** Tilly game props + bea-player — visual art only; prize IDs stay in chapter allocations. */
 const DRESS_CACHE = 'game-webp-1';
 const SKIP_FILES = {
-  ball: 'Tent_21_Skip_star-ball.webp',
-  slide: 'Tent_21_Skip_moon-slide.webp',
-  cushion: 'Tent_21_Skip_tufted-cushion.webp',
-  hopper: 'Tent_21_Skip_star-drum.webp',
-  cradle: 'Tent_21_Skip_moon-cradle.webp',
-  gauge: 'Tent_21_Skip_celestial-gauge.webp',
+  ball: '04-gold-jump-ball.png',
+  slide: '02-red-slide-chute.png',
+  cushion: '03-cream-bounce-cushion.png',
+  hopper: '01-curved-spiral-track.png',
+  cradle: '06-bunting-rail.png',
+  gauge: '05-crest-gate.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.webp';
 let skipPropImgs = null;
@@ -190,7 +181,7 @@ function ensureSkipProps() {
   for (const [key, file] of Object.entries(SKIP_FILES)) {
     const img = new Image();
     img.decoding = 'async';
-    img.src = dressUrl('../assets/helter-dress/skip/' + file);
+    img.src = dressUrl('../assets/helter-dress/tilly/' + file);
     skipPropImgs[key] = img;
   }
   if (!beaPlayerImg) {
@@ -215,38 +206,58 @@ function placeDress(d, img, x, y, w, angle, h) {
 
 
 /**
- * Ch1 authored board (also used for frozen Ch2–6 stubs).
- * Slides soft-dump DOWN; cushions bounce UP.
- * Keepsake + tokens sit on coil cells.
+ * One coil, six prize seats. Slides dump DOWN; cushions bounce UP.
+ * Keepsake + tokens sit off slide cells, cushion cells, and cushion landings.
  */
-function ch1Board() {
-  // Slide cells: land/jump onto → dump DOWN by `dump` cells.
-  // Placement nudge (Lorie markup 2026-09-16): all three slides further DOWN coil.
-  const slides = [
-    {cell: 3, dump: 5, teach: true},   // was 5 — further down
-    {cell: 10, dump: 6, teach: false}, // was 13 — further down
-    {cell: 20, dump: 5, teach: false}, // was 23 — further down
-  ];
-  // Cushion cells: land/jump onto → bounce UP by `boost` cells.
-  const cushions = [
-    {cell: 4, boost: 4, teach: true},   // 4 → 8
-    {cell: 11, boost: 5, teach: false}, // 11 → 16
-    {cell: 18, boost: 4, teach: false}, // 18 → 22
-  ];
-  // Collectible tokens ON the track (not exclusive treasures).
-  // Hard seats: off cushion-boost arcs so bounce-pass doesn't auto-claim.
-  const tokens = [
-    {cell: 2, id: 'star-token'},       // early — slide-3 next
-    {cell: 9, id: 'moon-penny'},       // squeeze before slide-10
-    {cell: 23, id: 'everyday-penny'},  // late crest approach past slide-20
-  ];
-  // Chapter keepsake: same visual size as tokens; off bounce arcs (11→16, 18→22).
-  const treasureCell = 17; // tap/jump claim between cush-11 zone and cush-18
-  // Hopper sits near crest, slightly off-track (loads balls at top).
-  const hopper = {u: 0.92, ox: 48, oy: -28};
+const CHAPTER_BOARDS = [
+  { // 1 First Spiral — mid coil
+    slides: [{cell: 3, dump: 5, teach: true}, {cell: 10, dump: 6}, {cell: 20, dump: 5}],
+    cushions: [{cell: 4, boost: 4, teach: true}, {cell: 11, boost: 5}, {cell: 18, boost: 4}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 9, id: 'moon-penny'}, {cell: 23, id: 'everyday-penny'}],
+    treasureCell: 17,
+  },
+  { // 2 Bunting Bend — lower-mid
+    slides: [{cell: 5, dump: 4, teach: true}, {cell: 12, dump: 5}, {cell: 21, dump: 4}],
+    cushions: [{cell: 6, boost: 3, teach: true}, {cell: 14, boost: 4}, {cell: 19, boost: 4}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 10, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 8,
+  },
+  { // 3 Tunnel Turn — high coil
+    slides: [{cell: 4, dump: 5, teach: true}, {cell: 11, dump: 6}, {cell: 18, dump: 5}],
+    cushions: [{cell: 8, boost: 4, teach: true}, {cell: 14, boost: 3}, {cell: 22, boost: 2}],
+    tokens: [{cell: 1, id: 'star-token'}, {cell: 9, id: 'moon-penny'}, {cell: 23, id: 'everyday-penny'}],
+    treasureCell: 21,
+  },
+  { // 4 Three-Way Tower — mid after early dumps
+    slides: [{cell: 6, dump: 4, teach: true}, {cell: 13, dump: 5}, {cell: 22, dump: 6}],
+    cushions: [{cell: 3, boost: 4, teach: true}, {cell: 10, boost: 5}, {cell: 17, boost: 4}],
+    tokens: [{cell: 1, id: 'star-token'}, {cell: 8, id: 'moon-penny'}, {cell: 24, id: 'everyday-penny'}],
+    treasureCell: 16,
+  },
+  { // 5 Runaway Keepsake — near crest
+    slides: [{cell: 4, dump: 6, teach: true}, {cell: 9, dump: 5}, {cell: 16, dump: 5}],
+    cushions: [{cell: 7, boost: 3, teach: true}, {cell: 13, boost: 4}, {cell: 20, boost: 3}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 11, id: 'moon-penny'}, {cell: 22, id: 'everyday-penny'}],
+    treasureCell: 24,
+  },
+  { // 6 Impossible Descent — mid-high, longer dumps
+    slides: [{cell: 5, dump: 6, teach: true}, {cell: 12, dump: 7}, {cell: 19, dump: 6}],
+    cushions: [{cell: 7, boost: 3, teach: true}, {cell: 14, boost: 4}, {cell: 21, boost: 3}],
+    tokens: [{cell: 2, id: 'star-token'}, {cell: 9, id: 'moon-penny'}, {cell: 23, id: 'everyday-penny'}],
+    treasureCell: 15,
+  },
+];
+
+function chapterBoard(level) {
+  const plan = CHAPTER_BOARDS[Math.max(0, Math.min(5, level | 0))] || CHAPTER_BOARDS[0];
   return {
-    slides, cushions, tokens, treasureCell, hopper,
-    cellCount: CELL_COUNT, duration: RIDE_SECONDS,
+    slides: plan.slides.map((S) => ({teach: false, ...S})),
+    cushions: plan.cushions.map((C) => ({teach: false, ...C})),
+    tokens: plan.tokens.map((T) => ({...T})),
+    treasureCell: plan.treasureCell,
+    hopper: {u: 0.92, ox: 48, oy: -28},
+    cellCount: CELL_COUNT,
+    duration: RIDE_SECONDS,
   };
 }
 
@@ -1001,7 +1012,7 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Chapter 1 is free; later chapters cost a penny.',
+  intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Ticket ride: chapter 1 is the free ride; later chapters cost a penny.',
   instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Carry the keepsake to the crest to collect it — a ball dump before the top puts it back.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),
@@ -1012,7 +1023,7 @@ export default {
   selectedChapter() { return Math.max(0, Math.min(5, Number(readBook().currentChapter) || 0)); },
   create(level, rng) {
     const rand = typeof rng === 'function' ? rng : Math.random;
-    const plan = ch1Board(); // Ch2–6 frozen: same First Spiral board until Aura reopens
+    const plan = chapterBoard(level);
     const cells = buildSpiral(plan.cellCount);
     const slides = plan.slides.map((S) => ({...S, used: false}));
     const cushions = plan.cushions.map((C) => ({...C, used: false}));
@@ -1034,7 +1045,7 @@ export default {
       hopper: plan.hopper,
       planTreasureCell: plan.treasureCell,
       duration: plan.duration,
-      frozenChapter: level > 0,
+      frozenChapter: false,
       youCell: 0,
       lastCell: 0,
       _ballCleared: false,
@@ -1077,7 +1088,7 @@ export default {
     if (s.saveClock >= 1) { s.saveClock = 0; persist(s); }
 
     const spawnIds = (s.cells || []).map((_, i) => 'cell-' + i);
-    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-17', 'cell-9'])) {
+    if (ensureBoarded(s, RIDE, s.treasureId, spawnIds.length ? spawnIds : ['cell-0', 'cell-' + (s.planTreasureCell ?? 17), 'cell-9'])) {
       s.previewing = true;
       s.previewT = 0;
       s.launched = false;
@@ -1114,22 +1125,11 @@ export default {
         const bp = spiralPoint(1);
         s.ballX = bp.x; s.ballY = bp.y;
       }
-      s.note = s.frozenChapter
-        ? 'Chapter frozen — First Spiral board (Ch2–6 pending Aura). TAP up.'
-        : 'TAP along the spiral — JUMP onto cushions, over slides';
+      s.note = 'TAP along the spiral — JUMP onto cushions, over slides';
       if (s.eligible) {
         const prefer = s.planTreasureCell != null ? s.planTreasureCell : 17;
-        const preferred = 'cell-' + prefer;
-        if (s.spawnId && String(s.spawnId).startsWith('cell-')) {
-          const idx = Number(String(s.spawnId).replace('cell-', ''));
-          // Keep seal spawn near authored hard-seat keepsake (±2).
-          if (!(idx >= prefer - 2 && idx <= prefer + 2)) s.spawnId = preferred;
-        } else {
-          s.spawnId = preferred;
-        }
-        const idx = Number(String(s.spawnId).replace('cell-', ''));
-        const raw = Number.isFinite(idx) ? idx : prefer;
-        s.planTreasureCell = clamp(raw, prefer - 2, prefer + 2);
+        s.spawnId = 'cell-' + prefer;
+        s.planTreasureCell = prefer;
       }
       logAction(s, 'preview', {secs: PREVIEW_SECS});
       persist(s);
