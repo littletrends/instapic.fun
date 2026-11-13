@@ -402,21 +402,6 @@ try{
  listen($('#pause'),'click',closeHelp);
  listen($('#menu-toggle'),'click',openHelp);
  if(embedded)document.querySelector('.play-header')?.remove();
- const fullScreenButton=document.createElement('button');
- fullScreenButton.type='button';
- fullScreenButton.className='fullscreen-toggle';
- fullScreenButton.textContent='Full screen';
- fullScreenButton.setAttribute('aria-label','Use full screen');
- if($('#menu-toggle'))$('#menu-toggle').before(fullScreenButton);else document.body.append(fullScreenButton);
- listen(fullScreenButton,'click',async()=>{
-  try{
-   if(document.fullscreenElement){await document.exitFullscreen?.();return;}
-   if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();return;}
-  }catch{}
-  fullScreenButton.textContent='Add to Home Screen';
-  fullScreenButton.title='Safari: tap Share, then Add to Home Screen, then open the new icon.';
-  fullScreenButton.setAttribute('aria-label','Safari: add this game to the Home Screen');
- });
  listen($('#menu-close'),'click',closeHelp);
  listen($('#game-help'),'close',()=>release('help'));
  listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
