@@ -183,18 +183,21 @@ function bonusCapsule(s) {
 }
 function clawOver(s, cap) {
   if (!s || !cap) return false;
+  const x = (cap.taken && cap.homeX != null) ? cap.homeX : cap.x;
   const reach = Math.max(GRAB_REACH, (cap.size || 50) * 0.52);
-  return Math.abs((s.clawX || 0) - cap.x) <= reach;
+  return Math.abs((s.clawX || 0) - x) <= reach;
 }
-function capsuleUnder(s) {
-  const caps = (s.capsules || []).filter(c => c && !c.taken);
-  let best = null, bestD = 1e9;
-  for (const cap of caps) {
-    if (!clawOver(s, cap)) continue;
-    const d = Math.abs((s.clawX || 0) - cap.x);
-    if (d < bestD) { best = cap; bestD = d; }
+function glowCapsule(s) {
+  return (s.capsules || []).find(c => c && c.bonus) || null;
+}
+function grabTarget(s) {
+  const glow = glowCapsule(s);
+  if (!s.timed || !glow) return null;
+  if (!glow.taken && clawOver(s, glow)) return glow;
+  if (s.keepsakeTaken && clawOver(s, glow)) {
+    return {ordinary: true, x: glow.homeX ?? glow.x, y: glow.homeY ?? glow.y, size: glow.size || 50};
   }
-  return best;
+  return null;
 }
 function ordinaryForCap(s, cap) {
   const drip = cap?.drip || EVERYDAY_DROP[(s.drops || 0) % EVERYDAY_DROP.length];
@@ -272,13 +275,13 @@ function startDrop(s) {
   s.held = null;
   s.dropBeat = houseSecond(s);
   s.timed = isCabinetWin(s.level, s.dropBeat);
-  const aimed = s.timed ? capsuleUnder(s) : null;
+  const aimed = grabTarget(s);
   s.lined = !!aimed;
   s.target = aimed;
   if (aimed && aimed.bonus && !s.keepsakeTaken && !chapterPaid(s.level)) {
     s.note = 'The second is true — lifting the glow…';
-  } else if (aimed) {
-    s.note = 'The clock is lit — lifting a tray find…';
+  } else if (aimed && aimed.ordinary) {
+    s.note = 'The clock is lit — a tray find over the glow…';
   } else s.note = missNote(s);
   persist(s);
 }
@@ -340,7 +343,7 @@ function dropCapsuleHome(cap) {
 
 function resolveDrop(s) {
   s.drops = (s.drops || 0) + 1;
-  const aimed = s.held;
+  const aimed = s.held || (s.lined && s.target && s.target.ordinary ? s.target : null);
   if (!s.timed || !s.lined || !aimed) {
     if (aimed) dropCapsuleHome(aimed);
     s.held = null;
@@ -350,14 +353,19 @@ function resolveDrop(s) {
     resumeAim(s);
     return;
   }
-  aimed.taken = true;
-  aimed.lift = 0;
   s.held = null;
   if (aimed.bonus && !s.keepsakeTaken && !chapterPaid(s.level) && !s.prizeKept) {
+    aimed.taken = true;
+    aimed.lift = 0;
     aimed.x = PRIZE_SPOT.x;
     aimed.y = PRIZE_SPOT.y;
     awardCatch(s, aimed);
   } else {
+    if (aimed.bonus) {
+      aimed.taken = false;
+      aimed.lift = 0;
+      dropCapsuleHome(aimed);
+    }
     awardOrdinary(s, aimed);
   }
   resumeAim(s);
@@ -596,7 +604,7 @@ export default {
         }
       } else if (s.dropPhase === 'grip') {
         if (s.dropT >= 0.18) {
-          const cap = s.lined && clawOver(s, s.target) ? s.target : null;
+          const cap = s.lined && s.target && !s.target.ordinary && clawOver(s, s.target) ? s.target : null;
           s.held = cap;
           if (cap) {
             cap.taken = false;
@@ -604,7 +612,7 @@ export default {
           }
           s.dropPhase = 'rise';
           s.dropT = 0;
-          s.note = cap ? 'The glow is in the claws…' : missNote(s);
+          s.note = cap ? 'The glow is in the claws…' : (s.target && s.target.ordinary ? 'A tray find over the glow…' : missNote(s));
         }
       } else if (s.dropPhase === 'rise') {
         if (s._riseFromY == null) s._riseFromY = s.clawY;

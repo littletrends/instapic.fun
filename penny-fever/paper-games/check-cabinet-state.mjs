@@ -18,6 +18,7 @@ assert.equal(awards.length,0,'a dark-clock drop cannot collect the chapter bonus
 cash=24;copper.action(s,'drop14');assert.equal(debits.at(-1),6);assert.equal(s.tray.paidCount,7);assert.equal(s.dropChoice,'drop14');assert.equal(s.trayOpen,false);
 for(let i=0;i<2000&&s.busy;i++)copper.update(s,1/60);
 s.phase='idle';s.busy=false;s.clock=winningSeconds(0)[0];copper.drop(s,1);assert(s.tray.treasureOn,'prize second plus a paid penny hangs the tray prize');
+const hung=s.tray.coins.find(c=>c.kind==='treasure');assert(hung);assert.equal(hung.falling,true);assert(hung.y<s.tray.coins.find(c=>c.kind==='penny').y||hung.vy>=100,'bonus drops from the hopper onto the tray');
 copper.update(s,.02);copper.persist(s);const snap=JSON.stringify(s.tray.coins);let resumed=copper.create(0);assert.deepEqual(resumed.tray.coins,JSON.parse(snap));assert.equal(resumed.phase,s.phase);assert.equal(resumed.cycle,s.cycle);assert.equal(resumed.busy,true);assert(resumed.tray.coins.every(c=>Number.isFinite(c.vx)&&Number.isFinite(c.vy)));
 const count=debits.length;copper.drop(resumed,1);assert.equal(debits.length,count,'resume cannot recharge active drop');
 resumed.phase='push';resumed.cycle=.3;resumed.tray.coins=[{id:'paid',kind:'penny',x:450,y:800,vx:0,vy:90,r:13,falling:true},{id:'treasure',kind:'treasure',x:450,y:800,vx:0,vy:90,r:24,falling:true}];
@@ -50,7 +51,8 @@ console.log('PASS: six Iris chapter snapshots, centre-only input, varied signs, 
 let lower=iris.create(0);lower.phase='idle';lower.charged=false;cash=20;
 let charged=debits.length;iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'flash');assert.equal(debits.length,charged,'chapter 1 gaze is free');
 iris.pointer(lower,'down',{x:450,y:428});assert.equal(debits.length,charged,'second control cannot double-charge');
-iris.update(lower,3);iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result');
+while(lower.phase==='flash')iris.update(lower,.5);
+iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result');
 lower.caught=false;charged=debits.length;iris.pointer(lower,'down',{x:450,y:954});assert.equal(lower.phase,'result');assert.equal(debits.length,charged,'removed result button cannot buy a gaze');
 iris.pointer(lower,'down',{x:450,y:1084});assert.equal(lower.phase,'result','result canvas has no retry control');
 iris.action(lower,'gaze');assert.equal(lower.phase,'flash');assert.equal(debits.length,charged,'chapter 1 retry stays free');
@@ -131,18 +133,21 @@ for(let level=0;level<6;level++){
 }
 console.log('PASS: prize-second hang in every chapter, old saves stay dark until a prize second, no duplicated/owned prizes, preserved penny positions.');
 
-const {IRIS_CHAPTERS,isIrisWin,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
+const {IRIS_CHAPTERS,isIrisWin,IRIS_WINS}=await import('./fortune-globe.js?v=prize-drop-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
 assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,paper-crown');
 assert(!IRIS_CHAPTERS.some(c=>c.prize==='looking-glass-locket'));
 inventory.items={};awards=[];mem.clear();cash=20;
-let gaze=iris.create(0);iris.action(gaze,'gaze');iris.update(gaze,3);
+let gaze=iris.create(0);iris.action(gaze,'gaze');
+while(gaze.phase==='flash')iris.update(gaze,.5);
 gaze.clock=IRIS_WINS[0][0];
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
 assert.equal(gaze.note,'Bonus collected.');assert(gaze.won);assert(awards.includes('fortune-slip'));
-gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');gaze.clock=80;iris.update(gaze,3);
+gaze.phase='idle';gaze.charged=false;gaze.won=false;iris.action(gaze,'gaze');
+while(gaze.phase==='flash')iris.update(gaze,.5);
+gaze.clock=80;
 for(let i=0;i<gaze.globe.rings.length;i++){
   const r=gaze.globe.rings[i];r.angle=r.glyphs.indexOf(gaze.globe.flash[i])*Math.PI*2/r.n;iris.pointer(gaze,'down',{x:450,y:428});
 }
@@ -151,7 +156,7 @@ assert.equal(awards.length>=1,true);
 inventory.items={};awards=[];mem.clear();cash=20;
 mem.set('pennyFever.firstPrizeAttempts.v1',JSON.stringify({'fortune:1':9,'fortuneCatch:1':9}));
 gaze=iris.create(1);iris.action(gaze,'gaze');
-iris.update(gaze,3);
+while(gaze.phase==='flash')iris.update(gaze,.5);
 gaze.clock=81;
 assert(!isIrisWin(1,81),'later catches use the ordinary 1–100 gate');
 for(let i=0;i<gaze.globe.rings.length;i++){
@@ -159,7 +164,8 @@ for(let i=0;i<gaze.globe.rings.length;i++){
 }
 assert.match(gaze.note,/bonus stays locked/i);assert(!gaze.won);assert(!awards.includes('moon-lantern'));
 inventory.items={};awards=[];mem.clear();cash=20;credits=[];
-gaze=iris.create(2);iris.action(gaze,'gaze');iris.update(gaze,3);
+gaze=iris.create(2);iris.action(gaze,'gaze');
+while(gaze.phase==='flash')iris.update(gaze,.5);
 for(let i=0;i<gaze.globe.rings.length;i++)iris.pointer(gaze,'down',{x:450,y:428});
 assert.equal(gaze.phase,'result');assert(!gaze.caught);assert.equal(awards.length,0,'a slipped gaze holds no reward');assert.equal(cash,19,'chapter 3 gaze spends a penny');assert.equal(credits.length,0);
 console.log('PASS: Iris chapter 6 is paper-crown; prize-second catch collects the bonus; later greens pay an ordinary; misses do not.');

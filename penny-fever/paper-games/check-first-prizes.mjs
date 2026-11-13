@@ -36,6 +36,7 @@ for(let level=0;level<6;level++){
  memory.clear();cash=20;const s=mabel.create(level);mabel.action(s,'play');assert.equal(cash,level===0?20:19);
  const expectUnique=splash.isMabelWin(level,splash.resultNumber(s.seed));
  assert.equal(!!s.board.unique,!!expectUnique,'Mabel unique follows the prize second');
+ if(s.board.unique)assert(s.board.unique.r>=Math.max(0,s.board.rows-3),'live prize sits near the crate, not the top row');
  s.houseLeft=80;mabel.persist(s);
  const snapshot=JSON.stringify(s.board.cells),moves=s.board.movesLeft;
  const back=mabel.create(level);assert.equal(JSON.stringify(back.board.cells),snapshot);assert.equal(back.board.movesLeft,moves);assert.equal(back.houseLeft,80);assert.equal(cash,level===0?20:19);
@@ -57,9 +58,12 @@ console.log('PASS: telescope prize seconds stay mixed hits and misses on every c
 const iris=(await import('./stalls/fortune.js?v=keep-finish-1')).default;
 const {IRIS_CHAPTERS,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
 assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
+assert(IRIS_CHAPTERS[0].flash>=5,'chapter 1 holds the secret on the glass');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
- const s=iris.create(level);iris.action(s,'gaze');assert(!s.practice);assert.equal(cash,level===0?20:19);iris.update(s,3);
+ const s=iris.create(level);iris.action(s,'gaze');assert(!s.practice);assert.equal(cash,level===0?20:19);
+ while(s.phase==='flash')iris.update(s,.5);
+ iris.update(s,.05);
  s.clock=IRIS_WINS[level][0];
  for(let i=0;i<s.globe.rings.length;i++){
   const r=s.globe.rings[i];r.angle=r.glyphs.indexOf(s.globe.flash[i])*Math.PI*2/r.n;iris.pointer(s,'down',{x:450,y:428});
@@ -153,7 +157,12 @@ curios.action(extra,'drop');
 for(let i=0;i<180&&extra.phase==='drop';i++)curios.update(extra,1/60);
 assert.equal(extra.phase,'aim');
 assert.equal(awards.length,0,'later lit seconds never write the chapter bonus');
-assert.equal(credits,1,'a later lit second pays a penny on chapter 1');
+assert.equal(credits,0,'ordinary capsules on the pile stay put');
+extra.swept=true;extra.clawX=glow2.homeX||glow2.x;extra.houseLeft=97.5;
+curios.action(extra,'drop');
+for(let i=0;i<180&&extra.phase==='drop';i++)curios.update(extra,1/60);
+assert.equal(extra.phase,'aim');
+assert.equal(credits,1,'a later lit second over the glow pays a penny on chapter 1');
 console.log('PASS: Digby awards on the 1–100 house prize second plus glow line-up.');
 const {kits}=await import('./prizes.js?v=nft-art-1');
 assert.equal(kits.helter.prizes.includes('star-token'),false);
@@ -213,6 +222,6 @@ for(const g of [iris,love,curios,celeste,copper,pinball,mabel,helter,juno]){
 assert.equal(iris.houseSeconds,0);assert.equal(copper.houseSeconds,0);
 assert.equal(pinball.houseSeconds,100);assert.equal(curios.houseSeconds,100);
 assert.equal(mabel.houseSeconds,100);assert.equal(helter.houseSeconds,100);
-assert.equal(juno.houseSeconds,100);assert.equal(love.houseSeconds,180);
+assert.equal(juno.houseSeconds,100);assert.equal(love.houseSeconds,100);
 assert.equal(celeste.houseSeconds,100);
 console.log('PASS: open games share ch1-free / ch2-6 penny, six bonuses, Collected copy, and declared house clocks.');

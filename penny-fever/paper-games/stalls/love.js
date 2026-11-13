@@ -119,7 +119,7 @@ function persist(s) {
     countIndex: s.countIndex, addRow: s.addRow, addCol: s.addCol, addBuf: s.addBuf || "",
     playerRows: s.playerRows, pct: s.pct, reading: s.reading,
     mistakes: s.mistakes, hints: s.hints, won: !!s.won,
-    note: s.note, mercury: s.mercury || 0,
+    note: s.note, mercury: s.mercury || 0, houseLeft: s.houseLeft,
   };
   writeBook(book);
 }
@@ -372,10 +372,18 @@ export default {
   tables: true,
   chapterEnds: true,
   retryButton: 'Play again',
-  houseSeconds: 180,
+  houseSeconds: 100,
   persist,
-  // House clock runs only while counting/adding, not while typing names (bug 6).
-  clockRuns: s => s.phase === 'count' || s.phase === 'add',
+  clockRuns: s => s.phase !== 'result',
+  onTimeout(s) {
+    if (s.phase === 'result') return;
+    s.phase = 'result';
+    s.charged = false;
+    s.hold = 0;
+    s.note = 'Time is up. The paper sleeps. Another sitting when you are ready.';
+    done(s, 'The tester slept', s.note, {won: false, prize: null, handled: true});
+    persist(s);
+  },
   // Runtime: H types a letter only while a name box is active; while counting/adding H opens help.
   typing: s => s.phase === 'edit',
   winningSeconds: level => (LOVE_WINS[level] || LOVE_WINS[0]).slice(),
@@ -413,6 +421,7 @@ export default {
       addBuf: finished ? '' : (saved.addBuf || ''),
       pct: finished ? 0 : (saved.pct || 0), reading: finished ? '' : (saved.reading || ''), hold: 0,
       won: !!saved.won, mercury: finished ? 0 : (saved.mercury || 0),
+      houseLeft: finished ? 100 : (saved.houseLeft != null ? saved.houseLeft : 100),
       note: finished
         ? 'Names stay — change one, or sit again.'
         : (saved.note || (ch.aLabel + (ch.bLabel ? ' and ' + ch.bLabel.toLowerCase() : '') + '.')),

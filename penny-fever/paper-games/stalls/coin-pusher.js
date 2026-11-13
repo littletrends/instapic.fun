@@ -287,10 +287,11 @@ function maybeReleaseTreasure(s) {
   s.tray.coins.push({
     id: "treasure",
     kind: "treasure",
-    x: 450, y: BACK + 70,
-    vx: 0, vy: 12, r: TREASURE_R, falling: false,
+    x: Math.max(LEFT + 32, Math.min(RIGHT - 32, s.dropX || 450)),
+    y: BACK - 40,
+    vx: 0, vy: 120, r: TREASURE_R, falling: true,
   });
-  s.note = "The latch opens on second " + clockNumber(s.clock || 0) + ". Push it over the edge.";
+  s.note = "The latch opens on second " + clockNumber(s.clock || 0) + ". The bonus drops onto the tray — push it over the lip.";
   s.flash = 1.2;
   clink(880, 0.35, 0.1);
   return true;

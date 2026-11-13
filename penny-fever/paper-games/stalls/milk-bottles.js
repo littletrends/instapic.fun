@@ -8,8 +8,8 @@ import {secondsNote} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   MABEL_CHAPTERS, makeBoard, makeDeliveryBoard, applySwap, cloneBoard, isDelivered, resultNumber,
-  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, layoutOf, MABEL_WINS,
-} from '../milky-splash.js?v=keep-finish-1';
+  isMabelWin, ordinaryFor, cellFromPoint, cellCenter, refillMoves, locateUnique, repairBoard, spawnUnique, settleBoard, layoutOf, MABEL_WINS,
+} from '../milky-splash.js?v=prize-drop-1';
 
 const BOOK = 'pennyFever.milkySplash';
 const HOUSE_SECONDS=100;
@@ -129,8 +129,13 @@ function beginPlay(s) {
       delete s.result;
       if (!waiting) {
         s.seed = (s.seed || (s.level + 1) * 4099) + 1;
-        s.board = makeDeliveryBoard(s.level, s.seed,{allowUnique:!chapterPaid(s.level)});
+        s.board = makeDeliveryBoard(s.level, s.seed,{allowUnique:false});
         s.resultN = resultNumber(s.seed);
+        if (!chapterPaid(s.level) && isMabelWin(s.level, s.resultN)) {
+          spawnUnique(s.board, null, 'bottom');
+          settleBoard(s.board);
+          if ((s.board.movesLeft || 0) < 8) s.board.movesLeft = 8;
+        }
         s.won = false;s.rewardCommitted=false;
         s.prizeKept = false;
       } else {
@@ -209,12 +214,19 @@ export default {
       selected: saved.selected || null, lock: false,
       note: saved.note || (MABEL_CHAPTERS[level] || MABEL_CHAPTERS[0]).title + '. Tap the board or press Space/Enter when you are ready.',
     };
-    if ((s.phase === 'play' || s.phase === 'rest') && !s.board) s.board = makeDeliveryBoard(level, s.seed,{allowUnique:!chapterPaid(level)});
+    if ((s.phase === 'play' || s.phase === 'rest') && !s.board) {
+      s.board = makeDeliveryBoard(level, s.seed,{allowUnique:false});
+      if (!chapterPaid(level) && isMabelWin(level, s.resultN || resultNumber(s.seed))) {
+        spawnUnique(s.board, null, 'bottom');
+        settleBoard(s.board);
+      }
+    }
     // Honour an in-progress paid/included legacy board without buying another allowance.
     if(alleyPlay&&s.charged&&s.phase==='play'&&!prizeAttempts('milk-bottles',level))recordPrizeAttempt('milk-bottles',level);
     if(s.board&&!s.board.delivered){
       if(alleyPlay&&!chapterPaid(level)&&!locateUnique(s.board)&&isMabelWin(level,s.resultN||resultNumber(s.seed))){
-        spawnUnique(s.board);
+        spawnUnique(s.board, null, 'bottom');
+        settleBoard(s.board);
         // A completed empty legacy tray never offered its prize. Restore one
         // allowance without charging or paying its ordinary reward twice.
         if(s.phase==='result'||s.phase==='rest'||s.board.movesLeft<=0){

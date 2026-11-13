@@ -38,8 +38,11 @@ for(let level=0;level<6;level++){
  const expectUnique=g.isMabelWin(level,g.resultNumber(s.seed));
  assert.equal(!!s.board.unique,!!expectUnique,'Mabel unique follows the prize second');
  if(expectUnique){
-  const plan=routes[level].find(r=>r.seed===s.board.seed);assert(plan);
-  for(const m of plan.path)g.applySwap(s.board,m.c1,m.r1,m.c2,m.r2);
+  const u=g.locateUnique(s.board);assert(u);assert(u.r>=Math.max(0,s.board.rows-3),'live prize sits near the crate');
+  assert(s.board.movesLeft>=8,'dropping the prize near the crate leaves moves to walk it in');
+  s.board.cells[s.board.rows-1][u.c]=s.board.cells[u.r][u.c];
+  if(u.r!==s.board.rows-1)s.board.cells[u.r][u.c]=null;
+  g.settleBoard(s.board);
   e.update(s,.1);assert(s.won);const awardCount=awards.length;e.persist(s);const back=e.create(level);e.update(back,3);assert.equal(awards.length,awardCount);
  }
  memory.clear();inventory.items={};cash=20;

@@ -5,7 +5,7 @@ import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
   IRIS_WINS, clockNumber as irisClock,
-} from "../fortune-globe.js?v=keep-finish-1";
+} from "../fortune-globe.js?v=prize-drop-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -297,7 +297,7 @@ export default {
     s.t += dt;
     s.click = Math.max(0, s.click - dt * 3);
     if (typeof document !== "undefined" && document.hidden) return;
-    if (s.phase === "flash" || s.phase === "spin") {
+    if (s.phase === "spin") {
       s.clock = Math.min(100, (s.clock || 0) + dt);
       if (s.clock >= 100) {
         s.clock = 100;
@@ -434,8 +434,10 @@ export default {
         const x = start + i * gap;
         d.glow(x, CY, 110, "#ffe7a0");
         if (img) d.sprite(img, x, CY, { w: 128, h: 128 });
+        else d.circle(x, CY, 46, "#cbb890", "#fff6c8", 4);
+        d.text(symbolName(id), x, CY + 78, 20, "#fff6c8");
       });
-      d.text(s.globe.hide ? "REMEMBER" : "CATCH THIS", CX, CY + 96, 22, "#fff4c4");
+      d.text(s.globe.hide ? "REMEMBER" : "CATCH THIS", CX, CY + 112, 22, "#fff4c4");
     }
     drawPlayControl(s, d, CY);
     c.restore();

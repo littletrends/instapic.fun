@@ -219,11 +219,15 @@ export function openColumns(board) {
   return cols.length ? cols : [Math.floor(board.cols / 2)];
 }
 
-export function spawnUnique(board, col) {
+export function spawnUnique(board, col, from = 'top') {
   if (!board || locateUnique(board)) return board;
   const cols = openColumns(board);
   const c = cols.includes(col) ? col : cols[0];
-  for (let r = 0; r < board.rows - 1; r++) {
+  const last = Math.max(0, board.rows - 2);
+  const walk = from === 'bottom'
+    ? Array.from({length: last + 1}, (_, i) => last - i)
+    : Array.from({length: last + 1}, (_, i) => i);
+  for (const r of walk) {
     const cell = cellAt(board, c, r);
     if (cell && (cell.kind === 'milk' || cell.kind === 'special')) {
       setCell(board, c, r, {kind: 'unique', flavour: cell.flavour || 'banana'});
@@ -231,8 +235,8 @@ export function spawnUnique(board, col) {
       return board;
     }
   }
-  setCell(board, c, 0, {kind: 'unique', flavour: 'banana'});
-  board.unique = {c, r: 0};
+  setCell(board, c, from === 'bottom' ? last : 0, {kind: 'unique', flavour: 'banana'});
+  board.unique = {c, r: from === 'bottom' ? last : 0};
   return board;
 }
 
@@ -507,11 +511,10 @@ export function countKind(board, kind) {
  * No solver runs on the player's device. Ordinary replays retain random layouts.
  */
 export function makeDeliveryBoard(level, seed, {allowUnique=true}={}) {
- if(!allowUnique)return makeBoard(level,seed,{allowUnique:false});
  const layouts=DELIVERY_LAYOUTS[level]||DELIVERY_LAYOUTS[0];
  const plan=layouts[Math.abs(Math.trunc(Number(seed)||0))%layouts.length];
  const board=makeBoard(level,plan.seed,{allowUnique:false});
- if(isMabelWin(level, resultNumber(seed))) spawnUnique(board,plan.col);
+ if(allowUnique && isMabelWin(level, resultNumber(seed))) spawnUnique(board,plan.col);
  repairBoard(board);
  return board;
 }

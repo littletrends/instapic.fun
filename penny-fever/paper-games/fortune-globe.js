@@ -20,9 +20,9 @@ export const DECOYS = [
 ];
 
 export const IRIS_CHAPTERS = [
-  { id: "clear", title: "The Clear Sign", rings: 1, flash: 2.2, hide: false, opposite: false, decoys: false, prize: "fortune-slip" },
-  { id: "paired", title: "The Paired Sign", rings: 2, flash: 2.0, hide: false, opposite: false, decoys: false, prize: "moon-lantern" },
-  { id: "crossing", title: "The Crossing Sign", rings: 2, flash: 1.8, hide: false, opposite: true, decoys: false, prize: "moon-brooch" },
+  { id: "clear", title: "The Clear Sign", rings: 1, flash: 5.5, hide: false, opposite: false, decoys: false, prize: "fortune-slip" },
+  { id: "paired", title: "The Paired Sign", rings: 2, flash: 3.2, hide: false, opposite: false, decoys: false, prize: "moon-lantern" },
+  { id: "crossing", title: "The Crossing Sign", rings: 2, flash: 2.6, hide: false, opposite: true, decoys: false, prize: "moon-brooch" },
   { id: "fading", title: "The Fading Sign", rings: 2, flash: 0.9, hide: true, opposite: false, decoys: false, prize: "fortune-journal" },
   { id: "false", title: "The False Sign", rings: 2, flash: 1.6, hide: true, opposite: true, decoys: true, prize: "moon-festival-fan" },
   { id: "mystery", title: "The Mystery Sign", rings: 3, flash: 2.4, hide: true, opposite: true, decoys: true, prize: "paper-crown" },
