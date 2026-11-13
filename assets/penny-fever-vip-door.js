@@ -1,11 +1,8 @@
 (() => {
   const little = document.getElementById("pf-little-door");
-  const construction = document.getElementById("pf-under-construction");
-  if (!little || !construction) return;
+  if (!little) return;
 
   little.addEventListener("click", () => {
-    const opening = little.getAttribute("aria-expanded") !== "true";
-    little.setAttribute("aria-expanded", String(opening));
-    construction.hidden = !opening;
+    location.assign('penny-fever/index.html?style=paper&rail=paper&tradeshow=1#aura-tradeshow');
   });
 })();

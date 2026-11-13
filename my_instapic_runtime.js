@@ -206,9 +206,9 @@
             " · " + tickets + (tickets === 1 ? " ticket" : " tickets") +
             " · last saved at the " + (fever.hash || "alley") + ".";
         }
-        if (feverLabel) feverLabel.textContent = "Continue · ticket desk";
+        if (feverLabel) feverLabel.textContent = "Open Aura’s tradeshow";
         if (feverLink) {
-          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&v=vip-spot-2#door";
+          feverLink.href = "penny-fever/index.html?style=paper&rail=paper&tradeshow=1#aura-tradeshow";
         }
       } else if (feverSummary) {
         feverSummary.textContent =

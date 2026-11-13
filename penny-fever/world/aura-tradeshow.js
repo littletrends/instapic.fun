@@ -1,6 +1,7 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
+import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -536,6 +537,7 @@ function ensureOverlay() {
       </div>
       <span class="aura-tradeshow-door" id="auraTradeshowDoor"></span>
       <p class="aura-tradeshow-vip" id="auraTradeshowVip"></p>
+      <a class="aura-tradeshow-vip" href="/my-instapic.html">← VIP area</a>
       <button type="button" class="aura-tradeshow-close" id="auraTradeshowClose" aria-label="Close tradeshow">×</button>
     </div>
     <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
@@ -582,6 +584,7 @@ function ensureOverlay() {
       </div>
       <section class="aura-tradeshow-inspect-copy">
         <p class="aura-tradeshow-inspect-kicker" id="auraTradeshowInspectSource"></p>
+        <p id="auraTradeshowInspectAvailability" aria-live="polite"></p>
         <h2 id="auraTradeshowInspectName"></h2>
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
@@ -804,7 +807,14 @@ function openInspect(id) {
   if (!panel) return;
   panel.hidden = false;
   panel.querySelector('#auraTradeshowInspectName').textContent = item.name || item.id;
-  panel.querySelector('#auraTradeshowInspectSource').textContent = stall ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow');
+  panel.querySelector('#auraTradeshowInspectSource').textContent = isFelix(item)
+    ? 'Felix’s photo booth · vendor portraits'
+    : (stall ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow'));
+  const status = panel.querySelector('#auraTradeshowInspectAvailability');
+  if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
+  else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · NFT minting on hold`;
+  else if (info.money) status.textContent = 'Aura’s till';
+  else status.textContent = `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
   const playButton = panel.querySelector('[data-inspect-play]');
@@ -918,7 +928,7 @@ function playTap(item, stallInfo, stall) {
   if (MONEY.has(item.kind) || stallInfo.money || stall?.id === 'ticket-booth') {
     return {id: 'aura', label: 'Go to Aura’s till'};
   }
-  return {id: stall.id, label: `Play at ${stall.host || 'this stall'}`};
+  return {id: stall.id, label: `${stallInfo.mintable ? 'Play at' : 'Visit'} ${stall.host || 'this stall'}${stallInfo.mintable ? '' : ' · stall closed'}`};
 }
 function setCardView(card, mode) {
   if (!card) return;
@@ -1074,6 +1084,7 @@ function goPlayAtStall(place) {
     return;
   }
   const slug = place || 'fortune';
+  rememberTradeshowReturn(slug);
   const PF = window.PennyFever;
   if (typeof PF?.enterTent === 'function') PF.enterTent(slug);
   else if (typeof world?.enterStall === 'function') world.enterStall(slug);

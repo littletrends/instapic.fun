@@ -1,6 +1,6 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
-import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=book-claims-1";
+import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=aura-return-1-book-claims-1";
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
 const PENDING_KEY = "pf-vip-pending";
 const HELD_PLAYER_KEY = "pf-device-player-on-hold.v1";
@@ -182,7 +182,9 @@ function applySnapshot(blob) {
   mergeFelixPortraitsFromAccount(blob);
   if (signedIn()) rememberPortraitAccount();
   writePhotoCodes(blob.photo_codes || []);
-  const hash = String(blob.hash || "alley").replace(/^#/, "");
+  const enteringTradeshow = new URLSearchParams(location.search).get('tradeshow') === '1'
+    && location.hash === '#aura-tradeshow';
+  const hash = enteringTradeshow ? 'aura-tradeshow' : String(blob.hash || "alley").replace(/^#/, "");
   if (hash && location.hash.replace(/^#/, "") !== hash) {
     location.hash = hash;
   }
