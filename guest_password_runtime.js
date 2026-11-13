@@ -25,8 +25,9 @@
     return data;
   }
 
-  function writeVerifiedGuest(email, guestProfile) {
+  function writeVerifiedGuest(email, guestProfile, session = {}) {
     window.InstapicGuestIdentity.write({
+      ...session,
       email,
       verified: true,
       verification_started: false,
@@ -80,7 +81,11 @@
 
       try {
         const data = await postJson("/api/guest/password-login", { email, password });
-        writeVerifiedGuest(data.email, data.guest_profile);
+        writeVerifiedGuest(data.email, data.guest_profile, {
+          session_token: data.session_token,
+          session_started_at: data.session_started_at,
+          session_expires_at: data.session_expires_at
+        });
 
         window.location.href = window.InstapicVipReturn?.loginNext?.("my-instapic.html")
           || (ticketCode

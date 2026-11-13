@@ -16,6 +16,7 @@
     return !!(
       current &&
       current.verified &&
+      current.session_token &&
       current.email &&
       current.session_expires_at &&
       Date.now() < Number(current.session_expires_at)
@@ -29,14 +30,10 @@
       ...(data || {}),
     };
 
-    if (merged.verified) {
-      const now = Date.now();
-      // A fresh sign-in (code or password) starts a new 12 h window; other writes keep the original start.
-      const fresh = !activeRecord(current)
-        || String(current.email || "").toLowerCase() !== String(merged.email || "").toLowerCase()
-        || (data && data.verified === true && data.verification_started === false && !("session_started_at" in data));
-      if (fresh || !Number(merged.session_started_at)) merged.session_started_at = now;
-      merged.session_expires_at = Math.min(now + SESSION_TTL_MS, Number(merged.session_started_at) + SESSION_CAP_MS);
+    if (String(current.email || "").toLowerCase() !== String(merged.email || "").toLowerCase() && !data?.session_token) {
+      delete merged.session_token;
+      delete merged.session_started_at;
+      delete merged.session_expires_at;
     }
 
     localStorage.setItem(KEY, JSON.stringify(merged));
@@ -47,7 +44,8 @@
     const current = read();
     if (!activeRecord(current)) return false;
     const start = Number(current.session_started_at) || (Number(current.session_expires_at) - SESSION_TTL_MS);
-    const target = Number(untilMs) || (Date.now() + SESSION_TTL_MS);
+    const target = Number(untilMs);
+    if (!Number.isFinite(target) || target <= Date.now()) return false;
     const next = Math.min(target, start + SESSION_CAP_MS);
     if (next > Number(current.session_expires_at)) {
       current.session_started_at = start;
@@ -58,6 +56,10 @@
   }
 
   function clear() {
+    const token = read().session_token;
+    if (token) window.fetch(`${API_BASE}/api/guest/logout`, {
+      method: "POST", headers: { Authorization: `Bearer ${token}` }, keepalive: true
+    }).catch(() => {});
     localStorage.removeItem(KEY);
   }
 
@@ -72,5 +74,22 @@
     clear,
     isVerifiedSessionActive,
     extendSession
+  };
+
+  // Existing game callers share this wrapper. Never forward credentials to
+  // another origin, a redirect, or an unrelated MotherPC API.
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url, location.href);
+    const current = read();
+    if (url.origin === API_BASE && /^\/api\/(guest\/|penny-fever\/)/.test(url.pathname) && activeRecord(current)) {
+      const options = { ...(init || {}) };
+      const headers = new Headers(options.headers || (input instanceof Request ? input.headers : undefined));
+      headers.set("Authorization", `Bearer ${current.session_token}`);
+      options.headers = headers;
+      options.redirect = "error";
+      return originalFetch(input, options);
+    }
+    return originalFetch(input, init);
   };
 })();

@@ -814,12 +814,12 @@ function openInspect(id) {
 
 function snapMint(item) {
   if (!onShelf(item.id)) return null;
-  const ok = item.id === SNAP_BOOK ? snapElig.book : snapElig.portraits.has(item.id);
-  if (!ok || !vip() || eligibilityAccount !== vipAccount()) return null;
-  const xrp = formatXrp(item.id);
-  return {label: xrp ? `Claim and mint · ${xrp}` : 'Claim and mint', disabled: false, ready: true, snap: true};
+  return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
+  if (onShelf(item.id) && !tokenClaim(item.id) && !isFelix(item)) {
+    return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, limited: isLimited(item)};
+  }
   if (onShelf(item.id) && !mintedReady) {
     return {label: 'Supply unavailable · reopen to retry', disabled: true};
   }

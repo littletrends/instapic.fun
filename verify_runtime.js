@@ -50,6 +50,9 @@
 
         window.InstapicGuestIdentity.write({
           email: data.email,
+          session_token: data.session_token,
+          session_started_at: data.session_started_at,
+          session_expires_at: data.session_expires_at,
           verified: true,
           verification_started: false,
           guest_profile: data.guest_profile || {}
