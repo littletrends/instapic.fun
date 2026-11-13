@@ -49,6 +49,7 @@ function vip() {
 const SNAP_BOOK = 'felix-vendor-portrait-book';
 let snapElig = {portraits: new Set(), book: false};
 let dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+let dripReady = false;
 let eligibilityAccount = '';
 let eligibilityRevision = 0;
 const claimReceipts = new Map();
@@ -67,6 +68,7 @@ function clearEligibility(account = '') {
   eligibilityAccount = account;
   snapElig = {portraits: new Set(), book: false};
   dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
+  dripReady = false;
 }
 function claimReceiptKey(account, id) {
   return `pennyFever.tradeshowClaimReceipt.v1:${encodeURIComponent(account)}:${id}`;
@@ -139,12 +141,23 @@ function loadDrips(email, revision) {
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
       if (revision !== eligibilityRevision || email.toLowerCase() !== vipAccount()) return;
+      if (data?.email && String(data.email).toLowerCase() !== email.toLowerCase()) return;
       const purse = data?.purse;
       if (!purse || typeof purse !== 'object') return;
+      dripReady = true;
       DRIPS.forEach((id) => {
         const n = Math.floor(Number(purse[id]) || 0);
         dripPurse[id] = n > 0 ? n : 0;
       });
+      // The server retains paid ownership receipts even if a reply was lost
+      // or the guest moved to another device. Recovery never spends again.
+      for (const receipt of Array.isArray(data.claims) ? data.claims : []) {
+        if (receipt && typeof receipt.id === 'string'
+            && ['penny-collector-book', SNAP_BOOK].includes(receipt.item)
+            && (!receipt.email || String(receipt.email).toLowerCase() === email.toLowerCase())) {
+          rememberClaimReceipt(email.toLowerCase(), receipt.item);
+        }
+      }
     })
     .catch(() => {});
 }
@@ -348,7 +361,8 @@ function claimWithTokens(id) {
         const delivered = deliverClaimReceipts();
         const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
         say(delivered.has(id)
-          ? `Claimed ${name} · ${formatTokenCost(spec.cost)}.`
+          ? (data.charged === false ? `${name} is already claimed · added to Treasures.`
+            : `Claimed ${name} · ${formatTokenCost(spec.cost)}.`)
           : 'Your claim is recorded. Reopen the tradeshow to add it to Treasures.');
       })
       .catch(() => { if (account === vipAccount()) say('Claim did not land.'); })
@@ -838,6 +852,7 @@ function actionFor(item, stallInfo) {
     if (!vip()) return {label: `Join VIP to unlock · ${cost}`, disabled: true, claim: true};
     if (tokenClaimsInFlight.has(claimReceiptKey(vipAccount(), item.id))) return {label: 'Claim in progress.', disabled: true, claim: true};
     if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
+    if (dripCost(claim.cost) && !dripReady) return {label: 'Token bank unavailable · reopen to retry', disabled: true, claim: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
     if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
     return {label: `Claim · ${cost}`, disabled: false, ready: true, claim: true};
