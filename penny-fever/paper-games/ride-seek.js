@@ -3,8 +3,8 @@
  */
 
 import {done} from './draw.js';
-import {alleyPlay, keep} from './wallet.js?v=insights-1';
-import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=keep-finish-1';
+import {alleyPlay, keep, credit} from './wallet.js?v=insights-1';
+import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ride-coil-1';
 import {WIN_COUNTS} from './prize-seconds.js?v=keep-finish-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
@@ -150,8 +150,14 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
     });
   }
 
-  const ordinary = challengeOk && !collected ? (completionFind || 'everyday-penny') : null;
-  if (ordinary && alleyPlay && keepOrdinaryAllowed(ordinary, chapter)) keep(ordinary, stall || rideId, {celebrate: false});
+  let ordinary = challengeOk && !collected ? (completionFind || 'everyday-penny') : null;
+  // Paid repeat rides can occasionally beat the one-penny stake. Chapter 1
+  // stays ordinary-only, as promised; later chapters get a rare five-penny hit.
+  if (ordinary && chapter > 0 && (s.hiddenResult || 0) % 25 === 0) ordinary = 'five-penny-stack';
+  if (ordinary && alleyPlay && keepOrdinaryAllowed(ordinary, chapter)) {
+    if (ordinary === 'five-penny-stack') credit(5);
+    else keep(ordinary, stall || rideId, {celebrate: false});
+  }
 
   if (challengeOk && collected) {
     return {
