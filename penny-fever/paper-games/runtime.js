@@ -416,6 +416,10 @@ try{
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});
  listen(canvas,'contextmenu',e=>e.preventDefault());
  listen(stage,'touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+ // iPhone Safari can promote a two-finger gesture into page zoom even when
+ // the canvas owns the touch surface. Keep the paper room at one scale.
+ listen(document,'gesturestart',e=>e.preventDefault(),{passive:false});
+ listen(document,'touchmove',e=>{if(e.touches?.length>1&&e.cancelable)e.preventDefault();},{passive:false});
  // Sticky-seize fix: lost capture / window blur always release maze stick (knob snaps home).
  listen(canvas,'lostpointercapture',e=>{if(!playing)return;input.down=false;engine?.pointer?.(state,'cancel',input.pointer||point(e)||{x:450,y:1136},input);input.pointer=null;paint();});
  listen(window,'blur',()=>{if(!playing)return;clearInput();paint();});
