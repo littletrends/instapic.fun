@@ -2,7 +2,7 @@ import {kits as chapterKits} from '../prizes.js?v=nft-art-1';
 import {clamp} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, credit, keep, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
+import {takeAttempt, retryNote, isChapterOne, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-ticket-1';
 import {clockNumber} from '../prize-seconds.js?v=keep-finish-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 

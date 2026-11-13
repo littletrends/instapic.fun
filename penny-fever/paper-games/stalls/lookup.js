@@ -4,7 +4,7 @@ import {winningSeconds, elapsedSecond} from '../prize-seconds.js?v=keep-finish-1
 import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=nft-art-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-ticket-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {
   CHAPTERS, createGame, start, beginTurn, previewTurn, endTurn, nudge, undo, hint, refresh, pointOnRay, mirrorEnds, STEP, norm,

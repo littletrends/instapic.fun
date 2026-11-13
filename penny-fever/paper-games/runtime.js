@@ -5,9 +5,9 @@ import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=prize-hud-1';
 import {bindPrize,takePrize,stepPrize,paintPrize,PRIZE_FLY_TO} from './chapter-kit.js?v=align-1';
-import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=ride-coil-1';
+import {isParkShut, loadParkDoors, parkDoorsLive, parkSign} from './park-doors.js?v=ride-ticket-1';
 import {noteVisit} from './insights.js?v=insights-1';
-import {entryFor, isChapterOne} from './stall-entry.js?v=ride-coil-1';
+import {entryFor, isChapterOne} from './stall-entry.js?v=ride-ticket-1';
 import {secondsNote} from './prize-seconds.js?v=keep-finish-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
@@ -38,6 +38,7 @@ function retryLabel(){
  if(entry?.id==='pinball')return 'Play again · 1 penny = 3 balls';
  const spec=entryFor(entry.id);
  if(spec.inside==='none')return 'Play again';
+ if(spec.door==='ticket')return 'Play again · 1 ticket';
  return 'Play again · 1 penny';
 }
 function costLine(){
@@ -47,7 +48,7 @@ function costLine(){
  const spec=entryFor(entry.id),u=GO_UNIT[entry.id]||'go';
  if(spec.inside==='none')return '';
  if(entry.id==='pinball')return 'Each penny loads 3 balls of 100 seconds. Hit a bumper on the prize second for the one bonus.';
- if(u==='ride')return 'Ticket ride. Chapter 1 is the free ride. Chapters 2–6 cost 1 penny a go. The bonus only sits on a prize roll.';
+ if(u==='ride')return 'Ticket ride. Chapter 1 is the free ride. Chapters 2–6 cost 1 ticket. The bonus only sits on a prize roll.';
  return 'Each '+u+' costs 1 penny. Play until the prize second hits. That chapter’s bonus drops once. Everyday pennies still return to the purse.';
 }
 function treasureLine(){
@@ -372,7 +373,7 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=celeste-clock-1')).default;
+ engine=(await import(entry.module+'?allocation=treasure-design-1&v=ride-ticket-1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;

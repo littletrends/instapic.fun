@@ -4,7 +4,7 @@
 
 import {done} from './draw.js';
 import {alleyPlay, keep, credit} from './wallet.js?v=insights-1';
-import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ride-coil-1';
+import {takeAttempt, isChapterOne, keepOrdinaryAllowed} from './stall-entry.js?v=ride-ticket-1';
 import {WIN_COUNTS} from './prize-seconds.js?v=keep-finish-1';
 
 export const RIDE_SEEK_IDS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
@@ -107,7 +107,10 @@ export function recordFind(s, id, stall) {
   s.collected.push({id, kind: 'ordinary', t: s.t});
   const chapter = s.level ?? s.chapter;
   if (!keepOrdinaryAllowed(id, chapter)) return true;
-  if (!s.practice && alleyPlay) keep(id, stall, {celebrate: false});
+  if (s.practice || !alleyPlay) return true;
+  if (id === 'everyday-penny') { credit(1); return true; }
+  if (id === 'five-penny-stack') { credit(5); return true; }
+  keep(id, stall, {celebrate: false});
   return true;
 }
 
@@ -133,7 +136,7 @@ export function settleArrival(s, {rideId, chapter, treasureId, stall, challengeO
       title: challengeOk ? 'Practice complete' : 'Practice ended',
       detail: challengeOk
         ? 'The chapter opens. Practice granted no keepsakes; paid rides can hold the treasure.'
-        : 'Practice used. The next new attempt costs one Penny.',
+        : 'Practice used. Later chapters cost a ticket.',
     };
   }
 
@@ -225,7 +228,7 @@ export function ensureBoarded(s, rideId, treasureId, spawnIds) {
   const boarding = boardRide(rideId, s.level);
   if (!boarding.ok) {
     s.broke = true;
-    done(s, 'Need a penny', 'Cash a ticket at Aura’s booth for five pennies, then board again.', {won: false, prize: false, settle: true});
+    done(s, 'Need a ticket', 'Buy a ticket at Aura’s booth, then board again.', {won: false, prize: false, settle: true});
     return false;
   }
   s.practice = boarding.practice;

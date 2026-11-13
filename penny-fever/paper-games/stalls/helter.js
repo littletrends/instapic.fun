@@ -27,7 +27,7 @@ import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   prefersReducedMotion,
-} from '../ride-seek.js?v=ride-coil-1';
+} from '../ride-seek.js?v=ride-ticket-1';
 
 const RIDE = 'helter';
 const BOOK = 'pennyFever.helter';
@@ -213,7 +213,7 @@ const CHAPTER_BOARDS = [
   { // 1 First Spiral — mid coil
     slides: [{cell: 3, dump: 5, teach: true}, {cell: 10, dump: 6}, {cell: 20, dump: 5}],
     cushions: [{cell: 4, boost: 4, teach: true}, {cell: 11, boost: 5}, {cell: 18, boost: 4}],
-    tokens: [{cell: 2, id: 'star-token'}, {cell: 9, id: 'moon-penny'}, {cell: 23, id: 'everyday-penny'}],
+    tokens: [{cell: 23, id: 'everyday-penny'}],
     treasureCell: 17,
   },
   { // 2 Bunting Bend — lower-mid
@@ -501,12 +501,9 @@ function tryCollectToken(s, idx) {
   tok.taken = true;
   s.tokensTaken = (s.tokensTaken || 0) + 1;
   logAction(s, 'token', {cell: idx, id: tok.id});
-  if (s.eligible) {
-    recordFind(s, tok.id, RIDE);
-    s.note = 'Token! ' + tok.id.replace(/-/g, ' ');
-  } else {
-    s.note = 'Practice token glimpse — paid rides keep finds.';
-  }
+  s.note = s.practice
+    ? 'Practice token glimpse — finish a paid ride to keep finds.'
+    : 'In hand — reach the crest to keep it. A ball dump puts it back.';
   s.statusCopy = 'Token';
   const c = cellAt(s, idx);
   pushSparks(s, c.x, c.y, false);
@@ -530,13 +527,27 @@ function tryCollectTreasure(s, idx) {
   pushFx(s, {kind: 'label', x: c.x, y: c.y - 50, text: 'CARRY!', life: 1.2, soft: false});
 }
 
+function restoreTokens(s) {
+  if (s.result || s.broke || s.prizeKept) return 0;
+  let n = 0;
+  for (const tok of s.tokens || []) {
+    if (!tok.taken) continue;
+    tok.taken = false;
+    n += 1;
+  }
+  if (n) s.tokensTaken = 0;
+  return n;
+}
+
 function dropKeepsake(s) {
-  if (!s.keepsakeTaken && !s.treasure?.taken) return false;
   if (s.result || s.broke || s.prizeKept) return false;
+  const tokens = restoreTokens(s);
+  const had = !!(s.keepsakeTaken || s.treasure?.taken);
+  if (!had && !tokens) return false;
   s.keepsakeTaken = false;
   s.treasureCollected = null;
   if (s.treasure) s.treasure.taken = false;
-  return true;
+  return had || tokens > 0;
 }
 
 /** Claim keepsake + tokens on every cell traversed from→to inclusive. */
@@ -830,7 +841,12 @@ function maybeFinish(s, why) {
     s.note = ok
       ? 'Crest with the keepsake — chapter bonus Collected.'
       : 'Need the keepsake and the crest. Ride returns.';
-    if (ok) recordTreasure(s, s.treasureId);
+    if (ok) {
+      recordTreasure(s, s.treasureId);
+      for (const tok of s.tokens || []) {
+        if (tok.taken) recordFind(s, tok.id, RIDE);
+      }
+    }
     const c = cellAt(s, s.youCell | 0);
     pushSparks(s, c.x, c.y, !ok);
     finishRide(s, {
@@ -1012,7 +1028,7 @@ function loadBallFromHopper(s) {
 
 export default {
   title: 'Spiral Slide',
-  intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Ticket ride: chapter 1 is the free ride; later chapters cost a penny.',
+  intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Ticket ride: chapter 1 is the free ride; later chapters cost a ticket.',
   instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Carry the keepsake to the crest to collect it — a ball dump before the top puts it back.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(['everyday-penny', 'star-token', 'moon-penny']),

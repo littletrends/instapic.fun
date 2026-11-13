@@ -1,5 +1,5 @@
 import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=keep-finish-1';
-import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
+import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-ticket-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,

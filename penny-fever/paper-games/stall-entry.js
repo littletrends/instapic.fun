@@ -1,6 +1,6 @@
 /** Per-stall door and retry charges. Flip a row later without rewriting the game. */
 
-import {alleyPlay, spend} from './wallet.js?v=insights-1';
+import {alleyPlay, spend, spendTicket} from './wallet.js?v=insights-1';
 
 export const PENNIES_PER_TICKET = 5;
 const BOOK = 'pennyFever.tentSitting';
@@ -30,7 +30,7 @@ export const UNDER_CONSTRUCTION = [
 ];
 export const UNDER_CONSTRUCTION_LABEL = 'Under construction 🔒';
 
-/** Ride & Seek. Ticket at the door; chapter 1 is the free ride; chapters 2–6 cost a penny. */
+/** Ride & Seek. Ticket at the door; chapter 1 is the free ride; chapters 2–6 cost one ticket. */
 export const RIDE_SEEKS = ['carousel', 'organ', 'helter', 'ferris', 'swings', 'funhouse', 'balloons', 'mural'];
 
 const TICKET_SET = new Set(TICKET_TENTS);
@@ -60,7 +60,7 @@ export function entryFor(id) {
   if (CLOSED_SET.has(id)) return {door: 'closed', inside: 'none', firstChapterFree: false};
   if (id === 'snap') return {door: 'free', inside: 'penny', firstChapterFree: true};
   if (id === 'curios') return {door: 'free', inside: 'penny', firstChapterFree: true};
-  if (RIDE_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-penny', firstChapterFree: true};
+  if (RIDE_SET.has(id)) return {door: 'ticket', inside: 'first-free-then-ticket', firstChapterFree: true};
   if (PENNY_SET.has(id)) return {door: 'free', inside: 'penny', firstChapterFree: true};
   if (TICKET_SET.has(id)) return {door: 'free', inside: 'first-free-then-penny', firstChapterFree: true};
   return {door: 'penny', inside: 'penny', firstChapterFree: true};
@@ -150,11 +150,12 @@ export function retryNote() {
     : 'Practice pennies are spent.';
 }
 
-/** Inside the paper room: workshop is always free. Chapter 1 is free (Copper spends real pennies itself). Chapter 2–6 costs 1 penny a go. Rides take a ticket at the door label; the first ride is free, then a penny. */
+/** Inside the paper room: workshop is always free. Chapter 1 is free (Copper spends real pennies itself). Sit-downs 2–6 cost 1 penny. Rides 2–6 spend 1 ticket. */
 export function takeAttempt(stallId, chapter) {
   if (!alleyPlay) return true;
   const spec = entryFor(stallId);
   if (spec.inside === 'none') return true;
   if (isChapterOne(chapter)) return true;
+  if (RIDE_SET.has(stallId)) return spendTicket(stallId);
   return spend(1);
 }

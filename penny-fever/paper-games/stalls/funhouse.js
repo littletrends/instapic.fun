@@ -6,8 +6,8 @@
  *   chapter (clearGoal, faceSpeed, playerSpeed, powerSec, faceCount, house timer).
  *   maze-chase–inspired carnival comedy — NOT a licensed-maze clone names/art.
  *
- * PROPS = Tent_26_Bea (curtain×2 mid-edge portals as the doors, starKey) + bea-player YOU.
- *   No moon (piece-03) / spotlight (piece-04) / standee (piece-02). BONUS = TREASURES Ch1–6 cream-border off-path.
+ * PROPS = Backup 06-Juno play icons (curtain, star-key, masks, power token, wall) + bea-player YOU.
+ *   Play icons stay on court. BONUS = TREASURES Ch1–6 from chapter-allocations (never the play PNGs).
  *   Path chips = geometric dots only. Laugh-faces = WebP cutouts (soft bomb on touch).
  *   Power / “invisible” tokens → chase-face masks flash (glow/pulse) for a beat; soft-bomb stays.
  * SCENERY: #backdrop = assets/funhouse.webp (cream court). Maze drawn inside oval only.
@@ -33,7 +33,7 @@ import {alleyPlay} from '../wallet.js?v=insights-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
   sealAttempt, prefersReducedMotion,
-} from '../ride-seek.js?v=ride-coil-1';
+} from '../ride-seek.js?v=ride-ticket-1';
 import {
   RIDE, TREASURES, ORDINARY, LEVEL_NAMES, CHOICE_SECONDS, PHASE_SECONDS, SPAWN_IDS,
   STAGE, chapterGraph, roomOf,
@@ -118,14 +118,17 @@ const GULP_DUR = 0.42;
 const MAZE_HOUSE = 100;
 const FACE_RESPAWN = 3.8;
 
-/** Tent_26_Bea kit — no moon/spotlight/standee. Curtain×2 portals + starKey mid-court. bea-player = YOU. */
+/** Juno play kit — court art only. Chapter bonuses stay in TREASURES / allocations. */
 const BEA_PROP_FILES = {
-  curtain: 'Tent_26_Bea_piece-01.webp',
-  starKey: 'Tent_26_Bea_piece-05.webp',
-  doorway: 'Tent_26_Bea_piece-06.webp',
+  curtain: '01-curtain-portal.png',
+  starKey: '02-star-key.png',
+  coral: '03-coral-laughing-mask.png',
+  teal: '04-teal-laughing-mask.png',
+  power: '05-mask-power-token.png',
+  doorway: '06-maze-wall-corner.png',
 };
 const BEA_PLAYER_FILE = 'bea-player.webp';
-const BEA_CACHE_VER = 'game-webp-1';
+const BEA_CACHE_VER = 'juno-play-1';
 /** Chase faces — WebP cutouts from assets/funhouse-faces/ (soft bomb on touch unchanged). */
 const FACE_ART_FILES = [
   'face-1-cream.webp',
@@ -163,7 +166,7 @@ function ensureBeaProps() {
   for (const [key, file] of Object.entries(BEA_PROP_FILES)) {
     const img = new Image();
     img.decoding = 'async';
-    img.src = dressUrl('../assets/funhouse-bea/' + file);
+    img.src = dressUrl('../assets/funhouse-juno/' + file);
     beaPropImgs[key] = img;
   }
   if (!beaPlayerImg) {
@@ -194,7 +197,10 @@ function ensureFaceArt() {
 }
 
 function faceImgFor(f) {
+  ensureBeaProps();
   ensureFaceArt();
+  const playMask = ((f && f.faceArt != null) ? f.faceArt : 0) % 2 === 0 ? beaPropImgs.coral : beaPropImgs.teal;
+  if (dressReady(playMask)) return playMask;
   const idx = ((f && f.faceArt != null) ? f.faceArt : 0) % faceArtImgs.length;
   const primary = faceArtImgs[idx];
   if (dressReady(primary)) return primary;
@@ -1339,17 +1345,20 @@ function drawMazeCourt(s, d) {
     }
   }
 
-  // Mid-court key is this chapter's bonus — gone from the court while Juno is carrying it.
+  // Mid-court play key — carry only. keep() still uses TREASURES / allocations.
   if (maze.keyCell && s.treasure && !s.treasure.taken && !s.starKeyTaken) {
     const kc = cellCenter(maze, maze.keyCell.c, maze.keyCell.r);
     d.glow(kc.x, kc.y, 18, GOLD);
-    try {
-      d.item(spriteKey(s.treasure.id), kc.x, kc.y, {
-        w: 44, alpha: 0.78, shadow: true,
-        fallback: () => d.star(kc.x, kc.y, 14, GOLD),
-      });
-    } catch {
-      d.star(kc.x, kc.y, 14, GOLD);
+    const keyImg = ensureBeaProps().starKey;
+    if (!placeDress(d, keyImg, kc.x, kc.y, 44)) {
+      try {
+        d.item(spriteKey(s.treasure.id), kc.x, kc.y, {
+          w: 44, alpha: 0.78, shadow: true,
+          fallback: () => d.star(kc.x, kc.y, 14, GOLD),
+        });
+      } catch {
+        d.star(kc.x, kc.y, 14, GOLD);
+      }
     }
   }
 
@@ -1373,8 +1382,11 @@ function drawMazeCourt(s, d) {
     if (pel.kind === 'power') {
       const pulse = 0.55 + 0.45 * Math.sin(t * 5 + pel.c);
       d.glow(ctr.x, ctr.y, 18 + pulse * 8, '#f4d590');
-      d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
-      d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
+      const powerImg = ensureBeaProps().power;
+      if (!placeDress(d, powerImg, ctr.x, ctr.y, 22)) {
+        d.circle(ctr.x, ctr.y, 9, GOLD, BURGUNDY, 2);
+        d.text('!', ctr.x, ctr.y + 4, 12, BURGUNDY);
+      }
     } else {
       d.circle(ctr.x, ctr.y, 4.5, GOLD, WOOD, 1.2);
       d.circle(ctr.x, ctr.y, 2.2, CREAM);
@@ -1639,13 +1651,16 @@ function drawPlayer(d, s) {
   }
   if (stun) d.text('!', x + 22, y - 36, 18, INK);
   if (s.starKeyTaken && s.treasure && !s.treasure.taken && !s.prizeKept) {
-    try {
-      d.item(spriteKey(s.treasure.id), x + 18, y - 28, {
-        w: 28, alpha: 0.95, shadow: true,
-        fallback: () => d.star(x + 18, y - 28, 10, GOLD),
-      });
-    } catch {
-      d.star(x + 18, y - 28, 10, GOLD);
+    const keyImg = ensureBeaProps().starKey;
+    if (!placeDress(d, keyImg, x + 18, y - 28, 28)) {
+      try {
+        d.item(spriteKey(s.treasure.id), x + 18, y - 28, {
+          w: 28, alpha: 0.95, shadow: true,
+          fallback: () => d.star(x + 18, y - 28, 10, GOLD),
+        });
+      } catch {
+        d.star(x + 18, y - 28, 10, GOLD);
+      }
     }
   }
 }
@@ -2298,7 +2313,7 @@ function updateDoorChapter(s, dt) {
 
 export default {
   title: 'Laughing Doorway',
-  intro: 'Juno’s Laughing Maze. Eat the chips, grab the chapter bonus in the middle, and keep away from the laughing faces. Ticket ride: chapter 1 is the free ride; later chapters cost a penny.',
+  intro: 'Juno’s Laughing Maze. Eat the chips, grab the star key in the middle, and keep away from the laughing faces. Ticket ride: chapter 1 is the free ride; later chapters cost a ticket.',
   instructions: 'Steer with the arrows, WASD, a swipe or the MOVE stick at the bottom. Pick up the bonus key in the middle, then eat enough chips to keep it. If a laughing face catches you, you go back to the entrance and an uncollected bonus is Locked again — glowing power tokens let you chase the faces for a moment.',
   levels: LEVEL_NAMES,
   sprites: TREASURES.concat(ORDINARY),

@@ -336,16 +336,16 @@ export const kits = {
     prizes: ['paper-negative', 'surprise-parcel', 'cabinet-key', 'shutter-click', 'repair-toolbox', 'pocket-wheel'],
   },
   helter: {
-    sprites: ['spiral-tower', 'lucky-match', 'mercury-bead', 'film-frame', 'moon-penny', 'ride-ticket', 'everyday-penny', 'prize-bag'],
-    prizes: ['spiral-tower', 'lucky-match', 'mercury-bead', 'film-frame', 'moon-penny', 'ride-ticket'],
+    sprites: ['ride-explorer-pennant', 'sleepy-dragon', 'lucky-match', 'film-frame', 'mercury-bead', 'spiral-tower', 'everyday-penny', 'star-token', 'moon-penny'],
+    prizes: ['ride-explorer-pennant', 'sleepy-dragon', 'lucky-match', 'film-frame', 'mercury-bead', 'spiral-tower'],
   },
   swings: {
     sprites: ['ticket-stub', 'flight-bell', 'heart-gear', 'clockwork-butterfly', 'friendship-pins', 'swing-spinner'],
     prizes: ['ticket-stub', 'flight-bell', 'heart-gear', 'clockwork-butterfly', 'friendship-pins', 'swing-spinner'],
   },
   funhouse: {
-    sprites: ['laughing-doorway', 'heart-biscuit', 'star-token', 'moon-penny', 'ride-ticket', 'stage-door-pass', 'velvet-mask', 'everyday-penny'],
-    prizes: ['laughing-doorway', 'heart-biscuit', 'star-token', 'moon-penny', 'ride-ticket', 'stage-door-pass'],
+    sprites: ['vendor-ledger', 'photo-accordion', 'fold-out-bedroom', 'secret-door-key', 'midway-map', 'laughing-doorway', 'everyday-penny', 'star-token', 'moon-penny'],
+    prizes: ['vendor-ledger', 'photo-accordion', 'fold-out-bedroom', 'secret-door-key', 'midway-map', 'laughing-doorway'],
   },
   organ: {
     sprites: ['perforated-paper-roll', 'till-drawer', 'coin-slot', 'travel-stage', 'singing-bird', 'organ-music-box'],

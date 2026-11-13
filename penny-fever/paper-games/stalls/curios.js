@@ -2,7 +2,7 @@ import {clamp, done} from '../draw.js';
 import {spriteKey, itemName} from '../prizes.js?v=prize-hud-1';
 import {matteImage} from '../sprites.js?v=load-fix-1';
 import {alleyPlay, pocket, tickets, keep, owned, credit} from '../wallet.js?v=insights-1';
-import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-coil-1';
+import {takeAttempt, retryNote, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-ticket-1';
 import {bindPrize, takePrize} from '../chapter-kit.js?v=align-1';
 import {CABINET_PRIZES, isCabinetWin} from '../cabinet-puzzles.js?v=keep-finish-1';
 import {elapsedSecond, winningSeconds} from '../prize-seconds.js?v=keep-finish-1';
