@@ -4,11 +4,11 @@ let cash=40,debits=0,credits=0,reject=false,awards=[];const inventory={items:{}}
 globalThis.CustomEvent=class{constructor(type,init){this.type=type;this.detail=init?.detail;}};
 globalThis.window={location:{search:'?stall=milk-bottles&room=alley'},matchMedia:()=>({matches:false}),parent:{PennyFever:{getState:()=>({demoCoins:cash,paperInventory:inventory}),spendPennies:n=>{if(reject||cash<n)return false;cash-=n;debits++;return true;},addDemoCoins:n=>{credits+=n;cash+=n;return cash;},saveState(){}},PennyFeverInventoryModel:{recordPaperPrize:(s,p)=>{if(inventory.items[p.item])return [];inventory.items[p.item]={qty:1};awards.push(p.item);return [p.item];}},dispatchEvent(){},postMessage(){}}};
 const e=(await import('./stalls/milk-bottles.js')).default,g=await import('./milky-splash.js');
-let s=e.create(0);assert(!e.clockRuns(s));e.action(s,'play');assert.equal(debits,0,'first chapter allowance included');assert(e.clockRuns(s));assert.equal(s.houseLeft,160);
+let s=e.create(0);assert(!e.clockRuns(s));e.action(s,'play');assert.equal(debits,0,'first chapter allowance included');assert(e.clockRuns(s));assert.equal(s.houseLeft,100);
 if(!g.locateUnique(s.board))g.spawnUnique(s.board);
 s.houseLeft=54;s.board.movesLeft=7;e.persist(s);let back=e.create(0);assert.deepEqual(JSON.parse(JSON.stringify(back.board)),JSON.parse(JSON.stringify(s.board)));assert.equal(back.houseLeft,54);assert(back.charged);
 e.onTimeout(back);assert.equal(back.phase,'rest');e.pointer(back,'down',{x:450,y:400});assert.equal(debits,0,'tapping a finished board must not buy moves');assert(!back.charged);const board=JSON.stringify(back.board.cells),rng=back.board.rng.s,n=back.resultN;
-e.action(back,'play');assert.equal(debits,0,'chapter 1 stays free on continuation');assert.equal(JSON.stringify(back.board.cells),board);assert.equal(back.board.rng.s,rng);assert.equal(back.resultN,n);assert.equal(back.board.movesLeft,24);assert.equal(back.houseLeft,160);
+e.action(back,'play');assert.equal(debits,0,'chapter 1 stays free on continuation');assert.equal(JSON.stringify(back.board.cells),board);assert.equal(back.board.rng.s,rng);assert.equal(back.resultN,n);assert.equal(back.board.movesLeft,24);assert.equal(back.houseLeft,100);
 e.action(back,'play');assert.equal(debits,0,'repeated Play cannot charge an active round');
 back.board.movesLeft=0;e.update(back,1);assert.equal(back.phase,'rest');e.action(back,'play');assert.equal(back.phase,'play');assert.equal(debits,0);assert.equal(JSON.stringify(back.board.cells),board);
 // An existing visible prize is honoured even if its old result number is not eligible.

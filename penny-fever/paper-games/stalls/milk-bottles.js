@@ -12,7 +12,7 @@ import {
 } from '../milky-splash.js?v=keep-finish-1';
 
 const BOOK = 'pennyFever.milkySplash';
-const HOUSE_SECONDS=160;
+const HOUSE_SECONDS=100;
 
 function emptyBook() {
   return {v: 1, paid: {}, sittings: {}};
@@ -248,7 +248,7 @@ export default {
     if (s.won && s.hold > 0 && !s.result) {
       s.hold -= dt;
       if (s.hold <= 0) {
-        done(s, 'The crate takes the unique',
+        done(s, 'The crate takes the bonus',
           itemName(MABEL_CHAPTERS[s.level].prize) + ' — sealed bottle delivered.',
           {prize: MABEL_CHAPTERS[s.level].prize, won: true, settle:true});
         persist(s);

@@ -503,12 +503,9 @@ export default {
       p.vy += G * hunger * h;
       p.vx *= Math.exp(-0.016 * h);
       p.x += p.vx * h; p.y += p.vy * h;
-      if (inShooter(p) && p.y < 380 && p.vy < 0) p.vx = Math.min(p.vx, -360 - Math.abs(p.vy) * 0.18);
-      // Falling back down the lane dumps into the field instead of the plunger.
-      if (inShooter(p) && p.y < 470 && p.vy >= 0) {
-        p.vx = Math.min(p.vx, -300);
-        if (p.x > 668) p.x -= Math.min(18, p.x - 658);
-      }
+      // A ball climbing the shooter gets a small left kick so it can leave the
+      // lane. Falling shots stay in the lane and can seat on the plunger.
+      if (inShooter(p) && p.y < 280 && p.vy < 0) p.vx = Math.min(p.vx, -280);
       for (const r of s.rails) collide(p, r.a, r.b, R, 0, r.a, 1.2);
       if (!(inShooter(p) && p.vy < -24)) collide(p, GATE.a, GATE.b, R, 0, GATE.a, 1.18);
       for (const f of s.flippers) {

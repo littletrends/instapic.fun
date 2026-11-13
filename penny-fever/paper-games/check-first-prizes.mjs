@@ -194,3 +194,25 @@ assert.equal(cash,9,'Juno restore does not debit a second penny');
 assert.equal(mazeBack.player.c,4,'Juno restore keeps maze position');
 assert.equal(mazeBack.pelletsTaken,5);
 console.log('PASS: Juno maze sitting restores player, chips and key without a second charge.');
+const love=(await import('./stalls/love.js?v=keep-finish-1')).default;
+const copper=(await import('./stalls/coin-pusher.js?v=keep-finish-1')).default;
+const celeste=(await import('./stalls/lookup.js?v=keep-finish-1')).default;
+const openIds=['fortune','love','curios','lookup','coin-pusher','pinball','milk-bottles','helter','funhouse','snap'];
+for(const id of openIds){
+ assert.equal(policy.firstPrizeEligible(id,0),false,id+' never auto-wins on first try');
+ memory.clear();cash=20;
+ assert(entry.takeAttempt(id,0));assert.equal(cash,20,id+' chapter 1 door is free');
+ assert(entry.takeAttempt(id,1));assert.equal(cash,19,id+' chapter 2 spends a penny');
+ if(id!=='snap')assert.equal((kits[id]?.prizes||[]).length,6,id+' has six chapter bonuses');
+}
+for(const g of [iris,love,curios,celeste,copper,pinball,mabel,helter,juno]){
+ const text=[g.intro,g.instructions].join(' ');
+ assert(!/\bUnlocked\b/.test(text),g.title+' copy uses Collected, not Unlocked');
+ assert(!/\bKept\b/.test(text),g.title+' copy uses Collected, not Kept');
+}
+assert.equal(iris.houseSeconds,0);assert.equal(copper.houseSeconds,0);
+assert.equal(pinball.houseSeconds,100);assert.equal(curios.houseSeconds,100);
+assert.equal(mabel.houseSeconds,100);assert.equal(helter.houseSeconds,100);
+assert.equal(juno.houseSeconds,100);assert.equal(love.houseSeconds,180);
+assert.equal(celeste.houseSeconds,100);
+console.log('PASS: open games share ch1-free / ch2-6 penny, six bonuses, Collected copy, and declared house clocks.');

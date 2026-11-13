@@ -435,6 +435,7 @@ export default {
   tables: true,
   chapterEnds: true,
   retryButton: 'Play again',
+  houseSeconds: 100,
   winningSeconds: level => (SKY[level] || SKY[0]).wins.slice(),
   prizeClock(s) {
     if (!s || s.phase === 'ready' || s.result) return null;

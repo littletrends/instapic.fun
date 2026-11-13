@@ -372,6 +372,7 @@ export default {
   tables: true,
   chapterEnds: true,
   retryButton: 'Play again',
+  houseSeconds: 180,
   persist,
   // House clock runs only while counting/adding, not while typing names (bug 6).
   clockRuns: s => s.phase === 'count' || s.phase === 'add',

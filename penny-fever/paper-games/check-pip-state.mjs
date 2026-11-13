@@ -89,3 +89,20 @@ s.ball={x:726,y:600,vx:0,vy:150};e.action(s,'plunge',true);tick(s,10,['plunge'])
 e.pointer(s,'down',{x:776,y:1000,pointerId:23});e.pointer(s,'move',{x:776,y:1070,pointerId:23});assert(s.charge>.5);e.pointer(s,'cancel',{x:776,y:1070,pointerId:23});assert(!s.charging);assert.deepEqual(s.ball,falling);
 s.ball={x:440,y:600,vx:0,vy:150};assert(!e.actionEnabled(s).plunge);s.ball={x:726,y:600,vx:0,vy:-150};assert(!e.actionEnabled(s).plunge);
 console.log('PASS: returning-ball precharge, held landing, same-ball relaunch, timer/credit preservation, early release, canvas cancel and mid-return reload.');
+
+// Falling back down the shooter seats on the plunger — a real table does that.
+s=fresh();launch(s);s.houseLeft=70;s.ball={x:726,y:430,vx:12,vy:180};
+for(let i=0;i<180&&s.mode==='live';i++){
+ assert(s.ball.x>690,'falling shot stays in the shooter, not dumped into play');
+ tick(s);
+}
+assert.equal(s.mode,'lane');assert(s.activeBall);assert.equal(s.ball.x,726);
+// A full pull should usually leave the lane. The old right bumper kicked almost every shot back in.
+let returns=0;
+for(let n=0;n<8;n++){
+ s=fresh();launch(s);
+ for(let i=0;i<150&&s.mode==='live';i++)tick(s);
+ if(s.mode==='lane'||(s.mode==='live'&&s.ball.x>690&&s.ball.vy>=0&&s.ball.y>410))returns++;
+}
+assert(returns<=3,'ch1 bumper sits off the plunger mouth so most pulls enter play');
+console.log('PASS: shooter drain seats the same ball; ch1 launches are not bounced back every pull.');
