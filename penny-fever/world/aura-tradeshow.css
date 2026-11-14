@@ -48,6 +48,13 @@
   border:1px solid #c4a064;background:#fff8e9;color:#3d2c1f;
 }
 .aura-tradeshow-tools button[aria-pressed="true"]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
+.aura-tradeshow-limited-tab{
+  background:#7a2f4a;color:#fff4d8;border-color:#e8b86a;
+  box-shadow:0 0 0 1px #e8b86a88;
+}
+.aura-tradeshow-limited-tab[aria-pressed="true"]{
+  background:#9a3d5c;color:#fff8ea;border-color:#f0d08a;
+}
 .aura-tradeshow-main{flex:1;display:flex;min-height:0}
 .aura-tradeshow-tree{
   width:14.2rem;flex:0 0 14.2rem;overflow:auto;padding:.45rem .4rem .7rem;

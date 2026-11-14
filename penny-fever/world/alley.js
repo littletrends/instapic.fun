@@ -11,7 +11,7 @@ import { installIndividualVendors } from "./paper-vendors.js?v=wall-front-1";
 import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=last-screen-1";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=last-screen-1";
-import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=folder-fold-1";
+import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=tree-order-1";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {

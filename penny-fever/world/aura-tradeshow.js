@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'folder-fold-1';
+const NFT_VER = 'tree-order-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -43,7 +43,7 @@ let query = '';
 let haveFilter = '';
 let inspectTurn = null;
 let inspectToken = 0;
-const openNodes = new Set(['book:penny-collector-book', 'closed']);
+const openNodes = new Set(['book:penny-collector-book']);
 
 function vip() {
   return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.();
@@ -639,9 +639,9 @@ function ensureOverlay() {
       <div class="aura-tradeshow-quick" role="group" aria-label="Quick links">
         <button type="button" data-folder="open">Open</button>
         <button type="button" data-folder="closed">Closed</button>
-        <button type="button" data-folder="limited">Limited</button>
         <button type="button" data-folder="convert">Convert</button>
         <button type="button" data-folder="felix">Felix</button>
+        <button type="button" class="aura-tradeshow-limited-tab" data-folder="limited">Limited</button>
       </div>
     </div>
     <div class="aura-tradeshow-main">
@@ -753,7 +753,8 @@ function ensureOverlay() {
       if (folder === 'limited') {
         for (const id of LIMITED) openNodes.delete('book:' + id);
       }
-      if (folder.startsWith('book:') || folder === 'open' || folder === 'closed' || folder === 'felix' || folder === 'limited' || folder === 'convert') openNodes.add(folder);
+      if (folder.startsWith('book:') || folder === 'open' || folder === 'closed' || folder === 'everyday' || folder === 'felix' || folder === 'limited' || folder === 'convert') openNodes.add(folder);
+      if (folder === 'everyday') openNodes.add('book:penny-collector-book');
       if (folder === 'open' || folder === 'closed' || folder.startsWith('stall:')) openNodes.add('book:penny-collector-book');
       if (folder.startsWith('stall:')) {
         const kind = stallFolderKind(folder);
@@ -1377,6 +1378,12 @@ function goPlayAtStall(place) {
 function isFelix(item) {
   return item.collection === 'penny-fever-vendors';
 }
+function isEveryday(item) {
+  return !!(item && (item.id === 'everyday-penny' || item.id === 'five-penny-stack' || DRIPS.has(item.id)));
+}
+function playBinders(books) {
+  return (books || []).filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id) && b.id !== SNAP_BOOK);
+}
 function isLimited(item) {
   return item.collection === 'aura-limited' || LIMITED.has(item.id);
 }
@@ -1416,7 +1423,7 @@ function folderUp() {
     if (item.book && item.book !== 'penny-collector-book') return {id: 'book:' + item.book, label: bookTitle(item.book)};
     return {id: 'book:penny-collector-book', label: 'Collector book'};
   }
-  if (folder.startsWith('book:') && folder !== 'book:penny-collector-book') {
+  if (folder === 'everyday' || (folder.startsWith('book:') && folder !== 'book:penny-collector-book' && !LIMITED.has(folder.slice(5)))) {
     return {id: 'book:penny-collector-book', label: 'Collector book'};
   }
   return null;
@@ -1464,11 +1471,11 @@ function itemMatches(item, stall, info) {
   if (folder === 'felix') return isFelix(item);
   if (folder === 'limited') return isLimited(item);
   if (folder === 'convert') return !!tokenClaim(item.id);
+  if (folder === 'everyday') return isEveryday(item);
   if (folder === 'book:penny-collector-book') {
     if (item.id === 'penny-collector-book') return true;
-    if (isClosedPlayStall(stall) && (stall.prizes || []).includes(item.id) && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item)) return true;
-    const books = window.PennyFeverInventoryModel?.books || [];
-    return books.some((b) => b.id === item.id && !LIMITED.has(b.id));
+    if (isEveryday(item)) return true;
+    return playBinders(window.PennyFeverInventoryModel?.books || []).some((b) => b.id === item.id);
   }
   if (folder.startsWith('stall:')) return stall.id === folder.slice(6) && !isLimited(item);
   if (folder.startsWith('book:')) return item.book === folder.slice(5) || item.id === folder.slice(5);
@@ -1513,13 +1520,24 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   root.append(treeRow('book:penny-collector-book', 'Penny collector book', {root: true}));
   if (openNodes.has('book:penny-collector-book')) {
     const bookWrap = treeKids();
-    bookWrap.append(treeRow('closed', 'Closed stalls'));
-    if (openNodes.has('closed')) {
-      const stallWrap = treeKids();
-      for (const stall of closedPlayStalls()) {
-        stallWrap.append(treeRow('stall:' + stall.id, stall.host, {leaf: true}));
+    bookWrap.append(treeRow('everyday', 'Everyday items'));
+    if (openNodes.has('everyday')) {
+      const itemWrap = treeKids();
+      for (const item of (itemsByBook.get('penny-collector-book') || []).filter(isEveryday)) {
+        itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
       }
-      bookWrap.append(stallWrap);
+      bookWrap.append(itemWrap);
+    }
+    for (const book of playBinders(books)) {
+      const bid = 'book:' + book.id;
+      bookWrap.append(treeRow(bid, book.title));
+      if (openNodes.has(bid)) {
+        const itemWrap = treeKids();
+        for (const item of (itemsByBook.get(book.id) || []).filter((it) => it.id !== book.id && !isEveryday(it))) {
+          itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
+        }
+        bookWrap.append(itemWrap);
+      }
     }
     bookWrap.append(treeRow('open', 'Open stalls'));
     if (openNodes.has('open')) {
@@ -1529,21 +1547,13 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
       }
       bookWrap.append(stallWrap);
     }
-    const nested = books.filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id));
-    for (const book of nested) {
-      const bid = 'book:' + book.id;
-      bookWrap.append(treeRow(bid, book.title));
-      if (openNodes.has(bid)) {
-        const itemWrap = treeKids();
-        for (const item of (itemsByBook.get(book.id) || [])) {
-          itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
-        }
-        bookWrap.append(itemWrap);
+    bookWrap.append(treeRow('closed', 'Closed stalls'));
+    if (openNodes.has('closed')) {
+      const stallWrap = treeKids();
+      for (const stall of closedPlayStalls()) {
+        stallWrap.append(treeRow('stall:' + stall.id, stall.host, {leaf: true}));
       }
-    }
-    const loose = itemsByBook.get('penny-collector-book') || [];
-    for (const item of loose) {
-      bookWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
+      bookWrap.append(stallWrap);
     }
     root.append(bookWrap);
   }
@@ -1650,8 +1660,10 @@ function paint() {
       ? 'Open tents · six chapter bonuses each. Felix portraits are under Felix.'
     : folder === 'closed' || stallFolderKind(folder) === 'closed'
       ? 'Closed tents · six chapter bonuses each. Look now. Play when the stall opens.'
+    : folder === 'everyday'
+      ? 'Everyday pennies, 5-packs, stars, moons, roses and crowns. Convert uses these tanks.'
     : folder === 'book:penny-collector-book'
-      ? 'This is the book. Claim it with tokens. The night suitcase is Kit’s chapter 6 at The Impossible Suitcase.'
+      ? 'The collector book, everyday items, then journals, albums and cases. Expand a book in the tree to see its pieces.'
     : folderIsLimited()
       ? limitedShelfNote()
       : 'Tap a figure to hold and spin it. Collected is in your book; Locked still waits on the shelf.';
@@ -1744,14 +1756,15 @@ function paint() {
         items: Object.keys(stock.token_claims || {}).map((id) => modelItem(id)).filter((item) => item.id),
         stall: stallById('ticket-booth'),
       }]
+      : folder === 'everyday'
+      ? [{
+        title: 'Everyday items',
+        line: 'Pennies, 5-packs and drip tokens',
+        items: items.filter(isEveryday),
+        stall: stallById('ticket-booth'),
+      }]
       : folder === 'book:penny-collector-book'
       ? [
-        ...closedPlayStalls().map((stall) => ({
-          title: `${stall.host} · ${stall.title}`,
-          line: 'Chapter 1–6 · stall closed',
-          items: chapterItems(stall),
-          stall,
-        })),
         {
           title: 'Penny collector book',
           line: 'The keepsake for the whole midway · claim with tokens',
@@ -1759,9 +1772,15 @@ function paint() {
           stall: stallById('ticket-booth'),
         },
         {
-          title: 'Folders inside',
-          line: 'Open a folder to see its pieces',
-          items: books.filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id)).map((b) => modelItem(b.id)).filter((item) => item.id),
+          title: 'Everyday items',
+          line: 'Pennies, 5-packs and drip tokens',
+          items: items.filter(isEveryday),
+          stall: stallById('ticket-booth'),
+        },
+        {
+          title: 'Books, journals, cases and albums',
+          line: 'Expand a book in the tree to open its pages',
+          items: playBinders(books).map((b) => modelItem(b.id)).filter((item) => item.id),
           stall: stallById('ticket-booth'),
         },
       ]
