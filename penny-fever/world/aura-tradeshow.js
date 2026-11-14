@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'nft-host-15';
+const NFT_VER = 'booth-plate-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -40,6 +40,9 @@ let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let folder = 'book:penny-collector-book';
 let query = '';
+let haveFilter = '';
+let inspectTurn = null;
+let inspectToken = 0;
 const openNodes = new Set(['book:penny-collector-book']);
 
 function vip() {
@@ -496,6 +499,19 @@ function faceSrc(item, view) {
   const ver = (asset.match(/\?[^#]*$/) || [''])[0];
   return asset.replace(/front\.webp(\?.*)?$/, `${view}.webp${ver}`);
 }
+function poseCard(card, index) {
+  if (!card) return;
+  const views = VIEWS.filter((view) => card.dataset[view] === '1');
+  if (!views.length) return;
+  const next = ((index % views.length) + views.length) % views.length;
+  const face = views[next];
+  card.dataset.face = String(next);
+  const img = card.querySelector('.aura-tradeshow-stage img');
+  if (img && card.dataset.mode !== 'nft') img.src = faceSrc({asset: card.dataset.asset}, face);
+  card.querySelectorAll('[data-face]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.face === face));
+  });
+}
 function formatStock(id) {
   if (!onShelf(id)) return 'Not on the shelf yet';
   if (!mintedReady) return 'Supply unavailable · reopen to retry';
@@ -561,12 +577,16 @@ function ensureOverlay() {
     </div>
     <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
     <div class="aura-tradeshow-tools">
-      <input type="search" id="auraTradeshowSearch" placeholder="Find a keepsake or vendor" aria-label="Search the collection">
-      <button type="button" data-folder="all">All</button>
-      <button type="button" data-folder="open">Open stalls</button>
-      <button type="button" data-folder="book:penny-collector-book" aria-pressed="true">Penny collector book</button>
-      <button type="button" data-folder="limited">Aura Limited</button>
-      <button type="button" data-folder="felix">Felix’s Photo Booth</button>
+      <input type="search" id="auraTradeshowSearch" placeholder="Find a…" aria-label="Search the collection">
+      <div class="aura-tradeshow-have" role="group" aria-label="Collected or locked">
+        <button type="button" data-have="collected">Collected</button>
+        <button type="button" data-have="locked">Locked</button>
+      </div>
+      <div class="aura-tradeshow-quick" role="group" aria-label="Quick links">
+        <button type="button" data-folder="open">Open</button>
+        <button type="button" data-folder="limited">Limited</button>
+        <button type="button" data-folder="felix">Felix</button>
+      </div>
     </div>
     <div class="aura-tradeshow-main">
       <nav class="aura-tradeshow-tree" id="auraTradeshowTree" aria-label="Penny Fever Collection"></nav>
@@ -593,12 +613,15 @@ function ensureOverlay() {
   inspect.innerHTML = `
     <div class="aura-tradeshow-inspect-card">
       <button type="button" class="aura-tradeshow-inspect-close" data-inspect-close aria-label="Close item details">×</button>
-      <div class="aura-tradeshow-inspect-stage" id="auraTradeshowInspectStage">
+      <div class="aura-tradeshow-inspect-stage" id="auraTradeshowInspectStage" tabindex="0" role="group" aria-label="Hold and spin this keepsake">
         <img id="auraTradeshowInspectImg" alt="" draggable="false">
       </div>
+      <p class="aura-tradeshow-inspect-how" id="auraTradeshowInspectHow">Hold and spin, or tap a side. Arrow keys spin; Home is the front.</p>
       <div class="aura-tradeshow-inspect-turn">
-        <button type="button" data-inspect-spin="-1" aria-label="Previous view">←</button>
-        <span id="auraTradeshowInspectFace" aria-live="polite">front</span>
+        <button type="button" data-inspect-face="front">Front</button>
+        <button type="button" data-inspect-face="left">Left</button>
+        <button type="button" data-inspect-face="back">Back</button>
+        <button type="button" data-inspect-face="right">Right</button>
         <button type="button" data-inspect-spin="1" aria-label="Rotate">Rotate</button>
       </div>
       <section class="aura-tradeshow-inspect-copy">
@@ -645,6 +668,14 @@ function ensureOverlay() {
       paint();
       return;
     }
+    const haveBtn = e.target.closest('[data-have]');
+    if (haveBtn) {
+      e.preventDefault();
+      const next = haveBtn.dataset.have;
+      haveFilter = haveFilter === next ? '' : next;
+      paint();
+      return;
+    }
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
@@ -673,6 +704,12 @@ function ensureOverlay() {
     if (inspectView) {
       e.preventDefault();
       setInspectMode(inspectView.dataset.inspectView);
+      return;
+    }
+    const inspectFaceBtn = e.target.closest('[data-inspect-face]');
+    if (inspectFaceBtn) {
+      e.preventDefault();
+      setInspectFace(inspectFaceBtn.dataset.inspectFace);
       return;
     }
     const inspectSpin = e.target.closest('[data-inspect-spin]');
@@ -741,21 +778,23 @@ function ensureOverlay() {
       openXrpTill(buy.dataset.buy);
       return;
     }
+    const faceBtn = e.target.closest('[data-face]');
     const spin = e.target.closest('[data-spin]');
-    if (!spin) return;
-    const card = spin.closest('.aura-tradeshow-card');
+    if (!faceBtn && !spin) return;
+    const card = (faceBtn || spin).closest('.aura-tradeshow-card');
     if (!card || card.dataset.mode === 'nft') return;
-    const img = card?.querySelector('img');
-    if (!img) return;
     const views = VIEWS.filter((view) => card.dataset[view] === '1');
-    if (views.length < 2) return;
-    const dir = Number(spin.dataset.spin || 1);
-    const i = (Number(card.dataset.face) + dir) % views.length;
-    const next = (i + views.length) % views.length;
-    card.dataset.face = String(next);
-    img.src = faceSrc({asset: card.dataset.asset}, views[next]);
-    const label = card.querySelector('[data-face-label]');
-    if (label) label.textContent = views[next];
+    if (!views.length) return;
+    let next = Number(card.dataset.face) || 0;
+    if (faceBtn) {
+      const named = views.indexOf(faceBtn.dataset.face);
+      if (named < 0) return;
+      next = named;
+    } else {
+      if (views.length < 2) return;
+      next = (next + Number(spin.dataset.spin || 1) + views.length) % views.length;
+    }
+    poseCard(card, next);
   });
   return overlay;
 }
@@ -764,12 +803,97 @@ function inspectViews(item) {
   return VIEWS.filter((view) => item?.turnaround || view === 'front');
 }
 
+function destroyInspectTurn() {
+  if (inspectTurn) {
+    try { inspectTurn.destroy(); } catch {}
+    inspectTurn = null;
+  }
+}
+
+function paintInspectFaces(face) {
+  overlay?.querySelectorAll('[data-inspect-face]').forEach((button) => {
+    const name = button.dataset.inspectFace;
+    const on = inspectViews(inspectItem).includes(name);
+    button.hidden = !on;
+    button.disabled = inspectMode === 'nft' || !on;
+    button.setAttribute('aria-pressed', String(on && name === face));
+  });
+  overlay?.querySelectorAll('[data-inspect-spin]').forEach((button) => {
+    button.disabled = inspectMode === 'nft' || inspectViews(inspectItem).length < 2;
+  });
+  const how = overlay?.querySelector('#auraTradeshowInspectHow');
+  if (how) how.hidden = inspectMode === 'nft';
+}
+
 function closeInspect() {
   const panel = overlay?.querySelector('#auraTradeshowInspect');
   if (!panel) return;
+  inspectToken += 1;
+  destroyInspectTurn();
   panel.hidden = true;
   inspectItem = null;
   overlay?.querySelector('.aura-tradeshow-card [data-inspect]')?.focus?.();
+}
+
+function setInspectFace(name) {
+  if (!inspectItem || inspectMode === 'nft') return;
+  const views = inspectViews(inspectItem);
+  const i = views.indexOf(name);
+  if (i < 0) return;
+  inspectFace = i;
+  if (inspectTurn) {
+    const n = inspectTurn.art?.faces?.length || views.length || 4;
+    inspectTurn.angle = (i / n) * Math.PI * 2;
+    inspectTurn.vel = 0;
+    inspectTurn.draw();
+  }
+  paintInspectFaces(name);
+}
+
+function stepInspect(dir) {
+  if (!inspectItem || inspectMode === 'nft') return;
+  const views = inspectViews(inspectItem);
+  if (views.length < 2) return;
+  if (inspectTurn) {
+    inspectTurn.step(dir);
+    return;
+  }
+  inspectFace = (inspectFace + dir + views.length) % views.length;
+  setInspectMode('website');
+}
+
+async function mountInspectTurntable(item, token) {
+  const stage = overlay?.querySelector('#auraTradeshowInspectStage');
+  if (!stage) return;
+  destroyInspectTurn();
+  stage.replaceChildren();
+  const preview = document.createElement('img');
+  preview.id = 'auraTradeshowInspectImg';
+  preview.alt = item.name || '';
+  preview.draggable = false;
+  preview.src = faceSrc(item, inspectViews(item)[inspectFace] || 'front');
+  stage.append(preview);
+  try {
+    const [{loadArt}, {Turntable}] = await Promise.all([
+      import('./items/art.js?v=treasure-lite-1'),
+      import('./items/turntable.js?v=rotate-3'),
+    ]);
+    if (token !== inspectToken || inspectMode !== 'website' || inspectItem !== item) return;
+    const art = await loadArt(item);
+    if (token !== inspectToken || inspectMode !== 'website' || inspectItem !== item) return;
+    stage.replaceChildren();
+    inspectTurn = new Turntable(stage);
+    inspectTurn.onView = (name) => {
+      const views = inspectViews(item);
+      const i = views.indexOf(name);
+      if (i >= 0) inspectFace = i;
+      paintInspectFaces(name);
+    };
+    inspectTurn.show(item, art, walletCount(item.id) <= 0);
+    if (inspectFace) setInspectFace(inspectViews(item)[inspectFace] || 'front');
+  } catch {
+    if (token !== inspectToken) return;
+  }
 }
 
 function setInspectMode(mode) {
@@ -777,20 +901,7 @@ function setInspectMode(mode) {
   const inspectInfo = stallDoor(stallForPrize(inspectItem));
   const nftAvailable = nftViewAvailable(inspectItem, inspectInfo);
   inspectMode = mode === 'nft' && nftAvailable ? 'nft' : 'website';
-  const img = overlay?.querySelector('#auraTradeshowInspectImg');
-  const label = overlay?.querySelector('#auraTradeshowInspectFace');
-  if (inspectMode === 'nft') {
-    const ownedPlate = nftPlates.has(inspectItem.id);
-    const preview = nftViewSrc(inspectItem.id);
-    if (img) { img.src = preview || faceSrc(inspectItem, 'front'); img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`; }
-    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan to sign';
-  } else {
-    const views = inspectViews(inspectItem);
-    inspectFace = Math.max(0, Math.min(inspectFace, views.length - 1));
-    const face = views[inspectFace] || 'front';
-    if (img) { img.src = faceSrc(inspectItem, face); img.alt = inspectItem.name || ''; }
-    if (label) label.textContent = face;
-  }
+  const stage = overlay?.querySelector('#auraTradeshowInspectStage');
   const nftNote = overlay?.querySelector('#auraTradeshowInspectNftNote');
   if (nftNote) {
     nftNote.hidden = inspectMode !== 'nft';
@@ -802,15 +913,24 @@ function setInspectMode(mode) {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
     button.setAttribute('aria-pressed', String(button.dataset.inspectView === inspectMode));
   });
-  overlay?.querySelectorAll('[data-inspect-spin]').forEach((button) => { button.disabled = inspectMode === 'nft'; });
-}
-
-function stepInspect(dir) {
-  if (!inspectItem || inspectMode === 'nft') return;
-  const views = inspectViews(inspectItem);
-  if (views.length < 2) return;
-  inspectFace = (inspectFace + dir + views.length) % views.length;
-  setInspectMode('website');
+  if (inspectMode === 'nft') {
+    inspectToken += 1;
+    destroyInspectTurn();
+    if (stage) {
+      stage.replaceChildren();
+      const img = document.createElement('img');
+      img.id = 'auraTradeshowInspectImg';
+      img.draggable = false;
+      const ownedPlate = nftPlates.has(inspectItem.id);
+      img.src = nftViewSrc(inspectItem.id) || faceSrc(inspectItem, 'front');
+      img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`;
+      stage.append(img);
+    }
+    paintInspectFaces(nftPlates.has(inspectItem.id) ? 'nft' : 'front');
+    return;
+  }
+  paintInspectFaces(inspectViews(inspectItem)[inspectFace] || 'front');
+  mountInspectTurntable(inspectItem, ++inspectToken);
 }
 
 function openInspect(id) {
@@ -829,7 +949,9 @@ function openInspect(id) {
   panel.querySelector('#auraTradeshowInspectName').textContent = item.name || item.id;
   panel.querySelector('#auraTradeshowInspectSource').textContent = isFelix(item)
     ? 'Felix’s photo booth · vendor portraits'
-    : (stall ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow'));
+    : (isLimited(item)
+      ? 'Aura Limited · optional XRP shelf'
+      : (stall && stall.id !== 'ticket-booth' ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow')));
   const status = panel.querySelector('#auraTradeshowInspectAvailability');
   if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
   else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · NFT minting on hold`;
@@ -853,7 +975,7 @@ function openInspect(id) {
   const nftButton = panel.querySelector('[data-inspect-view="nft"]');
   nftButton.hidden = !nftViewAvailable(item, info);
   setInspectMode('website');
-  panel.querySelector('[data-inspect-close]')?.focus();
+  panel.querySelector('#auraTradeshowInspectStage')?.focus();
 }
 
 function snapMint(item) {
@@ -971,12 +1093,8 @@ function setCardView(card, mode) {
     if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan to sign';
     return;
   }
-  const face = VIEWS[Number(card.dataset.face) || 0] || 'front';
-  if (img) {
-    img.src = faceSrc({asset: card.dataset.asset}, face);
-    img.alt = card.dataset.name || '';
-  }
-  if (label) label.textContent = face;
+  if (img) img.alt = card.dataset.name || '';
+  poseCard(card, Number(card.dataset.face) || 0);
 }
 function stopTillPoll() {
   // Closing or replacing the till also invalidates replies already in flight.
@@ -1157,6 +1275,8 @@ function albumTitle(model, id) {
 }
 function itemMatches(item, stall, info) {
   if (query && !`${item.name} ${stall.host} ${stall.title} ${item.album || ''} ${item.book || ''} ${item.collection || ''}`.toLowerCase().includes(query)) return false;
+  if (haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
+  if (haveFilter === 'locked' && walletCount(item.id) > 0) return false;
   if (folder === 'all') return true;
   if (folder === 'open') return info.mintable && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
   if (folder === 'felix') return isFelix(item);
@@ -1265,7 +1385,7 @@ function appendCards(grid, items) {
     const stall = stallForPrize(item);
     const info = stallDoor(stall);
     const card = document.createElement('article');
-    card.className = 'aura-tradeshow-card';
+    card.className = 'aura-tradeshow-card' + (walletCount(item.id) > 0 ? '' : ' is-locked');
     card.dataset.asset = item.asset;
     card.dataset.item = item.id;
     card.dataset.name = item.name || item.id;
@@ -1287,9 +1407,8 @@ function appendCards(grid, items) {
     card.innerHTML = `
       <div class="aura-tradeshow-stage" data-inspect="${item.id}" role="button" tabindex="0" aria-label="Inspect ${item.name || item.id}" title="Open details"><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
       ${canSpin ? `<div class="aura-tradeshow-turn">
-        <button type="button" data-spin="-1" aria-label="Previous view">←</button>
-        <span data-face-label>front</span>
-        <button type="button" data-spin="1" aria-label="Rotate">Rotate</button>
+        ${VIEWS.map((view) => `<button type="button" data-face="${view}"${view === 'front' ? ' aria-pressed="true"' : ''}>${view[0].toUpperCase()}${view.slice(1)}</button>`).join('')}
+        <button type="button" data-spin="1">Rotate</button>
       </div>` : ''}
       <div class="aura-tradeshow-views">
         <button type="button" data-view="website" aria-pressed="true">Website</button>
@@ -1329,7 +1448,10 @@ function paint() {
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
     : folderIsLimited()
       ? limitedShelfNote()
-      : 'Expand the Penny collector book for books and albums, then their items. Star, moon, rose and crown bank from VIP play — guest finds stay paper and do not unlock books.';
+      : 'Tap a figure to hold and spin it. Collected is in your book; Locked still waits on the shelf.';
+  overlay.querySelectorAll('[data-have]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.have === haveFilter));
+  });
   overlay.querySelectorAll('.aura-tradeshow-tools [data-folder]').forEach((b) => {
     const id = b.dataset.folder;
     const on = folder === id
@@ -1503,6 +1625,7 @@ export function openTradeshow() {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  closeInspect();
   stopTillPoll();
   if (vipCheckTimer) clearInterval(vipCheckTimer);
   vipCheckTimer = 0;
