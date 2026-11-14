@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'price-shelf-1';
+const NFT_VER = 'mint-open-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -1099,7 +1099,7 @@ function setInspectMode(mode) {
     nftNote.hidden = inspectMode !== 'nft';
     if (inspectMode === 'nft') nftNote.textContent = guestOwns(inspectItem.id)
       ? 'NFT artwork supplied by MotherPC after purchase.'
-      : `Scan in Xaman · ${purchaseLabel(inspectItem) || formatXrp(inspectItem.id) || 'posted price'} to ${auraTillAddress()}. Do not send until minting is open.`;
+      : `Scan in Xaman · ${purchaseLabel(inspectItem) || formatXrp(inspectItem.id) || 'posted price'} to ${auraTillAddress()}.`;
   }
   overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
@@ -1152,11 +1152,11 @@ function openInspect(id, startMode = 'website') {
         : (stall && stall.id !== 'ticket-booth' ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow'))));
   const status = panel.querySelector('#auraTradeshowInspectAvailability');
   if (tokenClaim(item.id)) status.textContent = 'Convert here with tokens. The dollar till is not used.';
-  else if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
-  else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · NFT minting on hold`;
+  else if (isLimited(item)) status.textContent = 'Aura Limited · posted XRP price';
+  else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · unlock at Felix`;
   else if (info.money) status.textContent = 'Aura’s till';
   else status.textContent = act.reward && !act.disabled ? 'Collected reward · ready to mint'
-    : `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
+    : `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? (act.disabled ? act.label : 'Buy with XRP') : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
   const sample = overlay.querySelector('#auraTradeshowInspectSample');
@@ -1186,7 +1186,7 @@ function openInspect(id, startMode = 'website') {
 
 function snapMint(item) {
   if (!onShelf(item.id)) return null;
-  return {label: 'NFT minting unavailable · outside this test', disabled: true, snap: true};
+  return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
@@ -1198,10 +1198,6 @@ function actionFor(item, stallInfo) {
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
     return {label: redemption === 'ready' ? (purchasePrice ? `Buy with XRP · ${purchasePrice} XRP` : 'Mint collected reward · no purchase price') : 'Continue item checkout',
       disabled: false, ready: true, reward: true, purchase: !!purchasePrice};
-  }
-  if (onShelf(item.id) && !claim && !isFelix(item)) {
-    const xrp = formatXrp(item.id);
-    return {label: xrp ? `${xrp} · NFT minting unavailable · outside this test` : 'NFT minting unavailable · outside this test', disabled: true, limited: isLimited(item)};
   }
   if (onShelf(item.id) && !claim && !mintedReady) {
     return {label: 'Supply unavailable · reopen to retry', disabled: true};
