@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'sitting-price-1';
+const NFT_VER = 'qr-show-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -1061,17 +1061,20 @@ function setInspectMode(mode) {
     destroyInspectTurn();
     if (stage) {
       stage.replaceChildren();
+      const ownedPlate = nftPlates.has(inspectItem.id);
+      stage.classList.toggle('is-nft-qr', !ownedPlate);
       const img = document.createElement('img');
       img.id = 'auraTradeshowInspectImg';
       img.draggable = false;
-      const ownedPlate = nftPlates.has(inspectItem.id);
-      img.src = nftViewSrc(inspectItem.id) || faceSrc(inspectItem, 'front');
+      const qr = nftViewSrc(inspectItem.id);
+      img.src = qr || buyQrSrc(inspectItem.id);
       img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`;
       stage.append(img);
     }
     paintInspectFaces(nftPlates.has(inspectItem.id) ? 'nft' : 'front');
     return;
   }
+  overlay?.querySelector('#auraTradeshowInspectStage')?.classList.remove('is-nft-qr');
   paintInspectFaces(inspectViews(inspectItem)[inspectFace] || 'front');
   mountInspectTurntable(inspectItem, ++inspectToken);
 }

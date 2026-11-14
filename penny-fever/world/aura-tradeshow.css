@@ -243,6 +243,13 @@
 .aura-tradeshow-inspect-stage img,
 .aura-tradeshow-inspect-stage canvas{width:100%;height:100%;max-height:none;object-fit:contain;padding:0}
 .aura-tradeshow-inspect-stage canvas{padding:0;max-height:none}
+.aura-tradeshow-inspect-stage.is-nft-qr{
+  padding:6%;background:#fff8ea;cursor:default
+}
+.aura-tradeshow-inspect-stage.is-nft-qr img{
+  width:min(100%,22rem);height:auto;aspect-ratio:1;max-height:none;
+  object-fit:contain;image-rendering:pixelated;background:#fff;border-radius:8px
+}
 .aura-tradeshow-inspect-how{margin:.15rem 0 0;grid-column:1;text-align:center;font-size:.72rem;color:#6a5340}
 .aura-tradeshow-inspect-turn{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.35rem;grid-column:1;
@@ -280,7 +287,8 @@
     padding:.75rem;padding-right:max(3.1rem, calc(.55rem + 2.3rem + env(safe-area-inset-right)));
     padding-bottom:max(.75rem, env(safe-area-inset-bottom));gap:.45rem;overflow-x:hidden
   }
-  .aura-tradeshow-inspect-stage{min-height:0;width:min(100%,28rem);max-width:100%;height:auto}
+  .aura-tradeshow-inspect-stage{min-height:12rem;width:min(100%,28rem);max-width:100%;height:auto}
+  .aura-tradeshow-inspect-stage.is-nft-qr{min-height:0}
   .aura-tradeshow-inspect-turn,.aura-tradeshow-inspect-how{grid-column:1}
   .aura-tradeshow-inspect-copy{align-self:stretch;min-width:0}
   .aura-tradeshow-inspect-close{right:max(.55rem, env(safe-area-inset-right))}
