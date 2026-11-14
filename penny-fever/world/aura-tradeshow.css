@@ -221,13 +221,16 @@
 .aura-tradeshow-inspect[hidden]{display:none}
 .aura-tradeshow-inspect{
   position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
-  padding:1rem;background:rgba(42,28,22,.62)
+  padding:1rem;padding-left:max(1rem, env(safe-area-inset-left));
+  padding-right:max(1rem, env(safe-area-inset-right));
+  background:rgba(42,28,22,.62);box-sizing:border-box
 }
 .aura-tradeshow-inspect-card{
-  position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(15rem,.75fr);
-  width:min(62rem,100%);max-height:min(88vh,46rem);overflow:auto;
+  position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);
+  width:min(62rem,100%);max-width:100%;max-height:min(88vh,46rem);overflow:auto;
   background:#fffaf0;border:1px solid #c4a064;border-radius:14px;
-  box-shadow:0 18px 60px #0008;padding:1rem;gap:1rem
+  box-shadow:0 18px 60px #0008;padding:1rem 3.1rem 1rem 1rem;gap:1rem;
+  box-sizing:border-box
 }
 .aura-tradeshow-inspect-stage{
   min-height:22rem;aspect-ratio:1;width:min(100%,36rem);justify-self:center;
@@ -267,11 +270,20 @@
 .aura-tradeshow-inspect-back{margin-top:.35rem;background:#fff8e9;color:#5a2438;border-radius:8px}
 .aura-tradeshow-inspect-close{position:absolute;top:.55rem;right:.55rem;z-index:2;min-width:2.3rem;height:2.3rem;border:0;border-radius:8px;background:#7a3040;color:#fff0d0;font:700 20px/1 Georgia,serif;cursor:pointer}
 @media (max-width:720px){
-  .aura-tradeshow-inspect{padding:0}
-  .aura-tradeshow-inspect-card{grid-template-columns:1fr;width:100%;height:100%;max-height:none;border-radius:0;padding:.75rem;gap:.45rem}
-  .aura-tradeshow-inspect-stage{min-height:0;width:min(100%,28rem);height:auto}
+  .aura-tradeshow-inspect{
+    padding:0;
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+  }
+  .aura-tradeshow-inspect-card{
+    grid-template-columns:1fr;width:100%;height:100%;max-height:none;border-radius:0;
+    padding:.75rem;padding-right:max(3.1rem, calc(.55rem + 2.3rem + env(safe-area-inset-right)));
+    padding-bottom:max(.75rem, env(safe-area-inset-bottom));gap:.45rem;overflow-x:hidden
+  }
+  .aura-tradeshow-inspect-stage{min-height:0;width:min(100%,28rem);max-width:100%;height:auto}
   .aura-tradeshow-inspect-turn,.aura-tradeshow-inspect-how{grid-column:1}
-  .aura-tradeshow-inspect-copy{align-self:stretch}
+  .aura-tradeshow-inspect-copy{align-self:stretch;min-width:0}
+  .aura-tradeshow-inspect-close{right:max(.55rem, env(safe-area-inset-right))}
 }
 body.aura-tradeshow-open .pf-stall-card,
 body.aura-tradeshow-open .aura-counter-service{display:none}

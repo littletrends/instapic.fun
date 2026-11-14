@@ -1,6 +1,6 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
-import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=sample-note-1";
+import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=sitting-price-1";
 import {createVerifiedBanking, VERIFIED_BANKING_RELEASE} from '../charging/verified-banking.mjs';
 import {bankLoan} from './ticket-till.js?v=bank-refresh-1';
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
