@@ -681,7 +681,11 @@ function ensureOverlay() {
     </div>
     <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
     <div class="aura-tradeshow-tools">
-      <input type="search" id="auraTradeshowSearch" placeholder="Find a…" aria-label="Search the collection">
+      <div class="aura-tradeshow-search">
+        <input type="checkbox" id="auraTradeshowSearchToggle" class="aura-tradeshow-search-toggle">
+        <label for="auraTradeshowSearchToggle" class="aura-tradeshow-search-btn" aria-label="Find a…">Find</label>
+        <input type="search" id="auraTradeshowSearch" placeholder="Find a…" aria-label="Search the collection">
+      </div>
       <div class="aura-tradeshow-have" role="group" aria-label="Collected or locked">
         <button type="button" data-have="collected">Collected</button>
         <button type="button" data-have="locked">Locked</button>
@@ -764,6 +768,9 @@ function ensureOverlay() {
   overlay.querySelector('#auraTradeshowSearch').addEventListener('input', (e) => {
     query = e.target.value.trim().toLowerCase();
     paint();
+  });
+  overlay.querySelector('#auraTradeshowSearchToggle')?.addEventListener('change', (e) => {
+    if (e.target.checked) overlay.querySelector('#auraTradeshowSearch')?.focus();
   });
   overlay.addEventListener('keydown', (e) => {
     const stage = e.target.closest('[data-inspect]');
