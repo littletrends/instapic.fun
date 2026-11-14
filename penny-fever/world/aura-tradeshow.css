@@ -162,6 +162,9 @@
 .aura-tradeshow-card.is-nft .aura-tradeshow-turn{display:none}
 .aura-tradeshow-card h3{margin:0;font-size:.74rem;line-height:1.2;color:#3d2c1f}
 .aura-tradeshow-card .stock{margin:0;font-size:.62rem;color:#6a5340}
+.aura-tradeshow-card .sample,.aura-tradeshow-inspect-sample{
+  margin:0;font-size:.6rem;line-height:1.3;color:#7a3040;font-style:italic;
+}
 .aura-tradeshow-card .claim{
   margin:0;font-size:.62rem;line-height:1.25;color:#7a3040;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;

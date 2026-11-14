@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'walk-fix-1';
+const NFT_VER = 'sample-note-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -686,6 +686,7 @@ function ensureOverlay() {
         <h2 id="auraTradeshowInspectName"></h2>
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
+        <p class="aura-tradeshow-inspect-sample" id="auraTradeshowInspectSample">Offline sample · the original is the NFT token.</p>
         <p id="auraTradeshowInspectNftNote" hidden>NFT artwork is not previewed here until it has been bought. This view is the Xaman purchase QR.</p>
         <div class="aura-tradeshow-views aura-tradeshow-inspect-views">
           <button type="button" data-inspect-view="website" aria-pressed="true">Website</button>
@@ -1104,6 +1105,12 @@ function openInspect(id) {
   else status.textContent = `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
+  const sample = overlay.querySelector('#auraTradeshowInspectSample');
+  const sampleText = nftSampleNote(item);
+  if (sample) {
+    sample.hidden = !sampleText;
+    sample.textContent = sampleText;
+  }
   const playButton = panel.querySelector('[data-inspect-play]');
   playButton.hidden = !play;
   if (play) { playButton.textContent = play.label; playButton.dataset.goStall = play.id; }
@@ -1381,6 +1388,10 @@ function isFelix(item) {
 function isEveryday(item) {
   return !!(item && (item.id === 'everyday-penny' || item.id === 'five-penny-stack' || DRIPS.has(item.id)));
 }
+function nftSampleNote(item) {
+  if (!item?.id || isEveryday(item) || MONEY.has(item.kind)) return '';
+  return 'Offline sample · the original is the NFT token.';
+}
 function playBinders(books) {
   return (books || []).filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id) && b.id !== SNAP_BOOK);
 }
@@ -1607,6 +1618,7 @@ function appendCards(grid, items) {
     const act = actionFor(item, info);
     const play = playTap(item, info, stall);
     const canSpin = !!item.turnaround;
+    const sample = nftSampleNote(item);
     const shopBtn = (felix && !act.snap) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
@@ -1622,6 +1634,7 @@ function appendCards(grid, items) {
       </div>
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
+      ${sample ? `<p class="sample">${sample}</p>` : ''}
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>
