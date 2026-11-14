@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'booth-open-1';
+const NFT_VER = 'booth-convert-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -279,6 +279,29 @@ function formatTokenCost(cost) {
     return `${need} ${name}`;
   }).join(' + ');
 }
+function tankLabel(id) {
+  return ({
+    'star-token': 'Stars',
+    'moon-penny': 'Moons',
+    'rose-penny': 'Roses',
+    'crown-token': 'Crowns',
+    'everyday-penny': 'Pennies',
+  })[id] || id;
+}
+function tokenHaveForTank(id) {
+  if (DRIPS.has(id)) return dripPurse[id] || 0;
+  return tokenHave(id);
+}
+function tankMarkup(item) {
+  const claim = tokenClaim(item.id);
+  if (!claim?.cost) return '';
+  const bits = Object.entries(claim.cost).map(([id, n]) => {
+    const need = Math.max(0, Math.floor(Number(n) || 0));
+    const have = tokenHaveForTank(id);
+    return `<span class="aura-tradeshow-tank${have >= need ? ' is-ready' : ''}"><b>${have}</b>/${need} ${tankLabel(id)}</span>`;
+  });
+  return `<p class="aura-tradeshow-tanks">${bits.join('')}</p>`;
+}
 function tokenAfford(cost) {
   return Object.entries(cost || {}).every(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
@@ -523,6 +546,12 @@ function poseCard(card, index) {
 }
 function formatStock(id) {
   if (!onShelf(id)) return 'Not on the shelf yet';
+  if (tokenClaim(id)) {
+    const n = remainingFor(id);
+    const left = n.toLocaleString('en-AU') + ' remaining';
+    if (n <= 0) return left + ' · trade later';
+    return left + ' · convert with tokens';
+  }
   if (!mintedReady) return 'Supply unavailable · reopen to retry';
   const n = remainingFor(id);
   const left = n.toLocaleString('en-AU') + ' remaining';
@@ -594,6 +623,7 @@ function ensureOverlay() {
       <div class="aura-tradeshow-quick" role="group" aria-label="Quick links">
         <button type="button" data-folder="open">Open</button>
         <button type="button" data-folder="limited">Limited</button>
+        <button type="button" data-folder="convert">Convert</button>
         <button type="button" data-folder="felix">Felix</button>
       </div>
     </div>
@@ -685,10 +715,19 @@ function ensureOverlay() {
       paint();
       return;
     }
+    const openBook = e.target.closest('[data-open-book]');
+    if (openBook) {
+      e.preventDefault();
+      folder = 'book:' + openBook.dataset.openBook;
+      openNodes.add('book:penny-collector-book');
+      openNodes.add(folder);
+      paint();
+      return;
+    }
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
-      if (folder.startsWith('book:') || folder === 'open' || folder === 'felix' || folder === 'limited') openNodes.add(folder);
+      if (folder.startsWith('book:') || folder === 'open' || folder === 'felix' || folder === 'limited' || folder === 'convert') openNodes.add(folder);
       if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) openNodes.add('limited');
       if (folder.startsWith('item:')) {
         const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5));
@@ -1054,10 +1093,11 @@ function snapMint(item) {
   return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
-  if (onShelf(item.id) && !tokenClaim(item.id) && !isFelix(item)) {
+  const claim = tokenClaim(item.id);
+  if (onShelf(item.id) && !claim && !isFelix(item)) {
     return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, limited: isLimited(item)};
   }
-  if (onShelf(item.id) && !mintedReady) {
+  if (onShelf(item.id) && !claim && !mintedReady) {
     return {label: 'Supply unavailable · reopen to retry', disabled: true};
   }
   if (isFelix(item)) {
@@ -1066,7 +1106,6 @@ function actionFor(item, stallInfo) {
   if (!onShelf(item.id)) {
     return {label: 'Not on the shelf yet', disabled: true};
   }
-  const claim = tokenClaim(item.id);
   if (claim && item.id === SNAP_BOOK && walletAtCap(item.id) && snapMint(item)) {
     return snapMint(item);
   }
@@ -1354,7 +1393,12 @@ function itemMatches(item, stall, info) {
   }
   if (folder === 'felix') return isFelix(item);
   if (folder === 'limited') return isLimited(item);
-  if (folder === 'book:penny-collector-book') return !isFelix(item) && !isLimited(item);
+  if (folder === 'convert') return !!tokenClaim(item.id);
+  if (folder === 'book:penny-collector-book') {
+    if (item.id === 'penny-collector-book' || item.id === 'night-suitcase') return true;
+    const books = window.PennyFeverInventoryModel?.books || [];
+    return books.some((b) => b.id === item.id && !LIMITED.has(b.id));
+  }
   if (folder.startsWith('stall:')) return stall.id === folder.slice(6) && !isLimited(item);
   if (folder.startsWith('book:')) return item.book === folder.slice(5) || item.id === folder.slice(5);
   if (folder.startsWith('item:')) return item.id === folder.slice(5);
@@ -1467,6 +1511,7 @@ function appendCards(grid, items) {
     const felix = isFelix(item);
     const claim = tokenClaim(item.id);
     const limited = isLimited(item);
+    const nestedBook = (window.PennyFeverInventoryModel?.books || []).some((b) => b.id === item.id);
     const showQr = nftViewAvailable(item, info);
     const chipClass = felix ? 'is-felix' : (limited ? 'is-limited' : (claim ? 'is-claim' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'))));
     const chipText = felix ? 'Photo booth' : (limited ? 'Limited' : (claim ? 'Token claim' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'))));
@@ -1489,8 +1534,10 @@ function appendCards(grid, items) {
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
+      ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
+      ${nestedBook && item.id !== 'penny-collector-book' ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">Open folder</button>` : ''}
       ${shopBtn}`;
     const pic = card.querySelector('img');
     if (pic) pic.alt = item.name || '';
@@ -1518,8 +1565,12 @@ function paint() {
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
+    : folder === 'convert'
+      ? 'Fill the tanks with stars, moons, roses, crowns, or pennies. Aura converts a full tank into the book or keepsake.'
     : folder === 'open' || folder.startsWith('stall:')
       ? 'Open tents · six chapter bonuses each. Felix portraits are under Felix.'
+    : folder === 'book:penny-collector-book'
+      ? 'This is the book. Claim it with tokens. The night suitcase is packed when Aura punches your ticket.'
     : folderIsLimited()
       ? limitedShelfNote()
       : 'Tap a figure to hold and spin it. Collected is in your book; Locked still waits on the shelf.';
@@ -1532,7 +1583,8 @@ function paint() {
       || (id === 'open' && folder.startsWith('stall:'))
       || (id === 'felix' && folderIsFelix())
       || (id === 'limited' && folderIsLimited())
-      || (id === 'book:penny-collector-book' && (folder.startsWith('book:') || folder.startsWith('item:')) && !folderIsLimited() && !folderIsFelix());
+      || (id === 'convert' && folder === 'convert')
+      || (id === 'book:penny-collector-book' && (folder.startsWith('book:') || folder.startsWith('item:')) && !folderIsLimited() && !folderIsFelix() && folder !== 'convert');
     b.setAttribute('aria-pressed', String(on));
   });
 
@@ -1593,7 +1645,35 @@ function paint() {
         stall,
       };
     })
-    : (folderIsFelix()
+    : (folder === 'convert'
+      ? [{
+        title: 'Aura converts tokens',
+        line: 'Fill the tanks. A full tank becomes the book or keepsake',
+        items: Object.keys(stock.token_claims || {}).map((id) => modelItem(id)).filter((item) => item.id),
+        stall: stallById('ticket-booth'),
+      }]
+      : folder === 'book:penny-collector-book'
+      ? [
+        {
+          title: 'Penny collector book',
+          line: 'The keepsake for the whole midway · claim with tokens',
+          items: [modelItem('penny-collector-book')].filter((item) => item.id),
+          stall: stallById('ticket-booth'),
+        },
+        {
+          title: 'Night suitcase',
+          line: 'Aura packs this little case when she punches your ticket',
+          items: [modelItem('night-suitcase')].filter((item) => item.id),
+          stall: stallById('ticket-booth'),
+        },
+        {
+          title: 'Folders inside',
+          line: 'Open a folder to see its pieces',
+          items: books.filter((b) => b.id !== 'penny-collector-book' && !LIMITED.has(b.id)).map((b) => modelItem(b.id)).filter((item) => item.id),
+          stall: stallById('ticket-booth'),
+        },
+      ]
+      : folderIsFelix()
       ? [{title: 'Felix’s Instapic Photo Booth', line: 'Unlock with a photo session', items: felixItems, stall: stallById('snap')}]
       : folderIsLimited()
         ? limitedBookSections(books, itemsByBook, limitedItems)

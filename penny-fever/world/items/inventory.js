@@ -414,7 +414,7 @@ function openBook(id) {
     const notice = $('collectionLockNotice');
     if (notice) {
       notice.textContent = (book?.title || 'This folder') + (['penny-collector-book','felix-vendor-portrait-book'].includes(id)
-        ? ' is locked. Aura’s booth is coming soon. Your treasures can still be viewed in Found and Games.'
+        ? ' is locked. Claim it at Aura’s tradeshow with tokens. Your treasures can still be viewed in Found and Games.'
         : ' is locked. Find this folder to open its collection. Your treasures can still be viewed in Found and Games.');
       notice.hidden = false;
     }
