@@ -4,6 +4,13 @@ import {notePlay} from './insights.js?v=insights-1';
 const inPage = typeof window !== 'undefined';
 const params = inPage ? new URLSearchParams(window.location.search) : new URLSearchParams();
 export const alleyPlay = inPage && window.parent !== window && params.get('room') === 'alley';
+export const VERIFIED_WALLET_VERSION = 1;
+
+function verified() {
+  // Set only during a verified engine call. It never replaces the parent
+  // purse, workshop wallet or disabled private pilot behaviour.
+  return alleyPlay && !pilotSession(params.get('stall')) ? window.PennyFeverVerifiedWallet || null : null;
+}
 
 function fever() {
   if (!alleyPlay) return null;
@@ -12,11 +19,13 @@ function fever() {
 
 export function owned(id) {
   if (!id) return false;
+  if (verified()) return verified().owned(id);
   try { return !!fever()?.getState?.()?.paperInventory?.items?.[id]; } catch { return false; }
 }
 
 export function keptQty(id) {
   if (!id) return 0;
+  if (verified()) return verified().keptQty(id);
   try {
     const row = fever()?.getState?.()?.paperInventory?.items?.[id];
     if (!row) return 0;
@@ -27,12 +36,14 @@ export function keptQty(id) {
 
 export function pocket() {
   if (!alleyPlay) return null;
+  if (verified()) return verified().pocket();
   if (pilotSession(params.get('stall'))) return window.PennyFeverPilotWallet?.pennies ?? 0;
   const n = Number(fever()?.getState?.()?.demoCoins);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
 }
 
 export function spend(amount = 1) {
+  if (verified()) return verified().spend(amount);
   const stall = params.get('stall') || '';
   const count = Math.max(1, Math.floor(Number(amount) || 1));
   if (!alleyPlay) {
@@ -49,6 +60,7 @@ export function spend(amount = 1) {
 
 export function tickets() {
   if (!alleyPlay) return null;
+  if (verified()) return verified().tickets();
   try {
     const api = fever();
     const n = Number(api?.tickets?.() ?? api?.getState?.()?.playTickets);
@@ -58,6 +70,7 @@ export function tickets() {
 
 export function spendTicket(kind) {
   if (!alleyPlay) return true;
+  if (verified()) return verified().spendTicket(kind);
   if (pilotSession(params.get('stall'))) return false;
   const api = fever();
   if (!api?.spendTicket) return false;
@@ -65,6 +78,7 @@ export function spendTicket(kind) {
 }
 
 export function credit(amount) {
+  if (verified()) return verified().credit(amount);
   const stall = params.get('stall') || '';
   const count = Math.max(1, Math.floor(Number(amount) || 1));
   if (!alleyPlay) {
@@ -81,6 +95,7 @@ export function credit(amount) {
 
 export function packs() {
   if (!alleyPlay) return 0;
+  if (verified()) return verified().packs();
   try {
     const n = Number(fever()?.pennyPacks?.() ?? fever()?.getState?.()?.pennyPacks);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
@@ -89,6 +104,7 @@ export function packs() {
 
 export function packFive() {
   if (!alleyPlay) return false;
+  if (verified()) return verified().packFive();
   if (pilotSession(params.get('stall'))) return false;
   const api = fever();
   if (!api?.packFivePennies) return false;
@@ -97,6 +113,7 @@ export function packFive() {
 
 export function unpackFive() {
   if (!alleyPlay) return false;
+  if (verified()) return verified().unpackFive();
   if (pilotSession(params.get('stall'))) return false;
   const api = fever();
   if (!api?.unpackFivePennies) return false;
@@ -104,6 +121,7 @@ export function unpackFive() {
 }
 
 export function keep(id, stall = 'coin-pusher', opts = {}) {
+  if (verified()) return verified().keep(id, stall, opts);
   if (alleyPlay && pilotSession(params.get('stall'))) return false;
   notePlay(stall || params.get('stall') || '', 'prize', 1);
   if (!alleyPlay || !id) return false;
@@ -147,6 +165,7 @@ function tableFromStore(store, chapter) {
 }
 
 export function loadMachine(chapter = 0) {
+  if (verified()) return verified().loadMachine(chapter);
   if (alleyPlay && pilotSession(params.get('stall'))) return null;
   const a = tableFromStore(fever()?.getState?.()?.cashDrop, chapter);
   const b = tableFromStore(readLocal(), chapter);
@@ -155,6 +174,7 @@ export function loadMachine(chapter = 0) {
 }
 
 export function saveMachine(blob, chapter = 0) {
+  if (verified()) return verified().saveMachine(blob, chapter);
   if (alleyPlay && pilotSession(params.get('stall'))) return;
   if (!blob) return;
   const key = String(chapter);

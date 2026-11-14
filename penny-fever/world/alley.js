@@ -1551,8 +1551,11 @@ function bindHud() {
       if (!loan.enabled) {
         tillMessage = "Bank loan is off.";
       } else {
-        if (window.PennyFever?.addDemoCoins) window.PennyFever.addDemoCoins(loan.pennies);
-        tillMessage = `Bank loan · +${loan.pennies} pennies.`;
+        const accepted = window.PennyFeverVerified?.required
+          ? window.PennyFeverVerifiedPurse?.bankLoan?.()
+          : window.PennyFever?.addDemoCoins?.(loan.pennies);
+        tillMessage = accepted ? `Bank loan · +${loan.pennies} pennies.`
+          : 'The purse needs to reconnect before another loan.';
       }
       tillMessageUntil = performance.now() + 4000;
       paintAuraWallet(el("pfStallCard"));
@@ -3029,6 +3032,8 @@ function updateFx(t) {
       const dx = player.position.x - coin.position.x;
       const dz = player.position.z - coin.position.z;
       if (dx * dx + dz * dz < 0.58) {
+        const verified = window.PennyFeverVerified?.required;
+        if (verified && !window.PennyFeverVerifiedPurse?.collectCoin?.(coin.userData.index)) return;
         coin.userData.collected = true;
         coin.visible = false;
         const book = looseCoins.userData.coinBook || {expiresAt: 0, collected: []};
@@ -3037,7 +3042,7 @@ function updateFx(t) {
         looseCoins.userData.coinBook = book;
         try { localStorage.setItem(looseCoins.userData.coinBookKey, JSON.stringify(book)); } catch {}
         const PF = window.PennyFever;
-        if (PF && typeof PF.addDemoCoins === "function") PF.addDemoCoins(1);
+        if (!verified && PF && typeof PF.addDemoCoins === "function") PF.addDemoCoins(1);
         if (navigator.vibrate) navigator.vibrate(24);
       }
     });

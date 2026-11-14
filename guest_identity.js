@@ -85,7 +85,9 @@
     if (url.origin === API_BASE && /^\/api\/(guest\/|penny-fever\/)/.test(url.pathname) && activeRecord(current)) {
       const options = { ...(init || {}) };
       const headers = new Headers(options.headers || (input instanceof Request ? input.headers : undefined));
-      headers.set("Authorization", `Bearer ${current.session_token}`);
+      // Verified guest rounds and held-player recovery can supply their own
+      // capability. Never replace an explicitly bound caller with this VIP.
+      if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${current.session_token}`);
       options.headers = headers;
       options.redirect = "error";
       return originalFetch(input, options);

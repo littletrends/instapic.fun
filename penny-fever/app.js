@@ -666,6 +666,7 @@
   }
 
   function spendDemoCoin(kind) {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.spendPennies(1);
     if (state.showmanPass && state.passDay === darwinDay()) {
       return true;
     }
@@ -680,6 +681,7 @@
   }
 
   function spendPennies(amount, {allowPass = true} = {}) {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.spendPennies(amount);
     const need = Math.max(0, Math.floor(Number(amount) || 0));
     if (!need) return true;
     if (allowPass && state.showmanPass && state.passDay === darwinDay()) return true;
@@ -691,6 +693,7 @@
   }
 
   function addDemoCoins(amount) {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.rollbackPendingSpend(amount);
     const added = Math.max(0, Math.floor(Number(amount) || 0));
     if (!added) return 0;
     state.demoCoins = Math.max(0, Number(state.demoCoins) || 0) + added;
@@ -704,14 +707,17 @@
   const PENNY_STACK = 5;
 
   function pennies() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.pennies();
     return Math.max(0, Math.floor(Number(state.demoCoins) || 0));
   }
 
   function pennyPacks() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.packs();
     return Math.max(0, Math.floor(Number(state.pennyPacks) || 0));
   }
 
   function packFivePennies() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.packFive();
     if (pennies() < PENNY_STACK) return false;
     if (!spendPennies(PENNY_STACK, {allowPass: false})) return false;
     state.pennyPacks = pennyPacks() + 1;
@@ -721,6 +727,7 @@
   }
 
   function unpackFivePennies() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.unpackFive();
     if (pennyPacks() < 1) return false;
     state.pennyPacks = pennyPacks() - 1;
     addDemoCoins(PENNY_STACK);
@@ -728,6 +735,7 @@
   }
 
   function tickets() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.tickets();
     return Math.max(0, Math.floor(Number(state.playTickets) || 0));
   }
 
@@ -741,6 +749,7 @@
   }
 
   function addTickets(amount) {
+    if (window.PennyFeverVerifiedPurse) return 0;
     const added = Math.max(0, Math.floor(Number(amount) || 0));
     if (!added) return 0;
     state.playTickets = tickets() + added;
@@ -750,6 +759,7 @@
   }
 
   function spendTicket(kind) {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.spendTicket(kind);
     if (state.showmanPass && state.passDay === darwinDay()) return true;
     if (tickets() < 1) return false;
     state.playTickets = tickets() - 1;
@@ -768,6 +778,7 @@
   }
 
   function cashTicketForPennies() {
+    if (window.PennyFeverVerifiedPurse) return window.PennyFeverVerifiedPurse.cashTicket();
     if (tickets() < 1) return 0;
     state.playTickets = tickets() - 1;
     const added = addDemoCoins(PENNY_STACK);
@@ -775,6 +786,11 @@
   }
 
   function tradePenniesForTicket() {
+    if (window.PennyFeverVerifiedPurse) {
+      const changed = window.PennyFeverVerifiedPurse.tradeTicket();
+      if (changed) stampKeepsake('ticket-roll', 'aura-till');
+      return changed;
+    }
     if (pennies() < PENNY_STACK) return false;
     state.demoCoins = pennies() - PENNY_STACK;
     state.playTickets = tickets() + 1;
@@ -3941,8 +3957,10 @@
     addTickets,
     restorePocket(snap) {
       const bag = snap || {};
-      if (bag.pennies != null) state.demoCoins = Math.max(0, Math.floor(Number(bag.pennies) || 0));
-      if (bag.tickets != null) state.playTickets = Math.max(0, Math.floor(Number(bag.tickets) || 0));
+      if (!window.PennyFeverVerifiedPurse) {
+        if (bag.pennies != null) state.demoCoins = Math.max(0, Math.floor(Number(bag.pennies) || 0));
+        if (bag.tickets != null) state.playTickets = Math.max(0, Math.floor(Number(bag.tickets) || 0));
+      }
       if (bag.admitPassed != null) state.admitPassed = !!bag.admitPassed;
       if (bag.admitTicket != null) state.admitTicket = !!bag.admitTicket;
       try { saveState(state); } catch (err) {
@@ -3950,6 +3968,24 @@
       }
       refreshNightBoard();
       return { pennies: pennies(), tickets: tickets() };
+    },
+    applyVerifiedPurse(wallet) {
+      for (const field of ['pennies', 'tickets', 'packs']) {
+        if (!Number.isSafeInteger(wallet?.[field]) || wallet[field] < 0) throw Error('verified_wallet_invalid');
+      }
+      state.demoCoins = wallet.pennies; state.playTickets = wallet.tickets; state.pennyPacks = wallet.packs;
+      state.paperInventory = state.paperInventory || {version: 1, items: {}};
+      state.paperInventory.items = state.paperInventory.items || {};
+      for (const [id, item] of Object.entries(wallet.inventory || {})) {
+        const model = window.PennyFeverInventoryModel;
+        const definition = model?.definitions?.find(entry => entry.id === id);
+        if (definition?.kind === 'curio') {
+          if (!state.curios?.[definition.key]) model.recordPaperPrize(state, {item: id, stall: item.source || 'verified-play', at: item.at});
+          continue;
+        }
+        state.paperInventory.items[id] = {...(state.paperInventory.items[id] || {}), ...item};
+      }
+      saveState(state); refreshNightBoard();
     },
     resetVisit() {
       if (!window.confirm("Clear this visit? Pennies, tickets and treasures go back to empty.")) return false;

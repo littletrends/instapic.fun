@@ -364,6 +364,7 @@ function paintPacks() {
 }
 
 function choosePack(id, refresh = true) {
+  if (paying) return;
   const next = config.packs.find(p => p.id === id) || null;
   const changed = next?.id !== selected?.id;
   selected = next;
@@ -396,16 +397,25 @@ async function chargeToken(tokenResult, label) {
     throw new Error(msg || label + ' was not accepted.');
   }
   if (selected.kind === 'photo') return chargePhotoPack(tokenResult);
+  const payload = {
+    package_id: selected.id,
+    amount_cents: selected.amount_cents,
+    source_id: tokenResult.token,
+    verification_token: tokenResult.verificationToken || null,
+    idempotency_key: crypto.randomUUID?.() || String(Date.now()),
+  };
+  if (window.PennyFeverVerified?.required) {
+    const data = await window.PennyFeverVerified.purchase(payload);
+    apiRef?.stampKeepsake?.('ticket-roll', 'aura-till');
+    try { localStorage.setItem('pf-last-till-payment', data.payment_id); } catch {}
+    setStatus(`Paid. ${packLine(selected)} in your pocket.`);
+    closeTill();
+    return;
+  }
   const res = await fetch(`${API_BASE}/api/penny-fever/pay-pack`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      package_id: selected.id,
-      amount_cents: selected.amount_cents,
-      source_id: tokenResult.token,
-      verification_token: tokenResult.verificationToken || null,
-      idempotency_key: crypto.randomUUID?.() || String(Date.now()),
-    }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.ok === false) {
@@ -466,6 +476,10 @@ async function payWithCard() {
   $('pfTillPay').disabled = true;
   try {
     if (isPreview()) {
+      if (window.PennyFeverVerified?.required) {
+        setStatus('Preview till — verified purses require a completed Square purchase.');
+        return;
+      }
       if (selected.kind === 'photo') {
         setStatus('Preview till — photo sessions need a real Square approval on instapic.fun.');
         return;

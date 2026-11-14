@@ -2,6 +2,22 @@ import {FLAVOURS, flavourOf, layoutOf} from './milky-splash.js?v=treasure-design
 import {spriteKey} from './prizes.js?v=nft-art-1';
 
 const effects=new WeakMap();
+// Verified rounds cross a JSON boundary between input batches. Preserve the
+// existing swap timing and cell paths without serializing object identities.
+export function captureSplash(state){
+ const fx=effects.get(state);
+ if(!fx||!state.board||state.t-fx.at>=fx.duration)return null;
+ return {...fx,before:fx.before.map(row=>row.map(cell=>cell?{...cell}:null)),
+  paths:state.board.cells.map(row=>row.map(cell=>fx.paths.get(cell)||null))};
+}
+export function restoreSplash(state,saved){
+ if(!saved||!state.board)return;
+ const {paths,...fx}=saved, restored=new Map();
+ state.board.cells.forEach((row,r)=>row.forEach((cell,c)=>{
+  if(cell&&paths[r]?.[c])restored.set(cell,paths[r][c]);
+ }));
+ effects.set(state,{...fx,paths:restored});
+}
 export function isSliding(state){const fx=effects.get(state);return !!fx&&state.t-fx.at<fx.duration;}
 export function splashSwap(state,a,b,before,accepted){
  if(state.reduced)return;

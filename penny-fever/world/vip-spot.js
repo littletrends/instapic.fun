@@ -1,6 +1,8 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
 import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=kit-case-1";
+import {createVerifiedBanking, VERIFIED_BANKING_RELEASE} from '../charging/verified-banking.mjs';
+import {bankLoan} from './ticket-till.js?v=bank-refresh-1';
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
 const PENDING_KEY = "pf-vip-pending";
 const HELD_PLAYER_KEY = "pf-device-player-on-hold.v1";
@@ -12,6 +14,48 @@ let saveQueue = Promise.resolve();
 let sessionLapsed = false; // VIP sign-in ran out (server said so or the 1 h client clock passed)
 let lapseBannerHidden = false;
 const FELIX_ACCOUNT_KEY = "pf-felix-portrait-owner.v1";
+
+function verifiedBanking() {
+  if (!VERIFIED_BANKING_RELEASE) return null;
+  if (window.PennyFeverVerified) return window.PennyFeverVerified;
+  if (!window.PennyFever?.applyVerifiedPurse) throw Error('The penny purse is still loading.');
+  const service = createVerifiedBanking({api: window.PennyFever, identity: guestApi(), loan: bankLoan, onError: () => {
+    const hint = document.getElementById('pfVipDoorHint');
+    if (hint) hint.textContent = 'Your verified purse is waiting to reconnect. Your saved balance is preserved; reload or sign in again to continue.';
+  }});
+  const state = () => window.PennyFever.getState();
+  window.PennyFeverVerifiedPurse = {
+    pennies: () => Number(state().demoCoins) || 0, tickets: () => Number(state().playTickets) || 0,
+    packs: () => Number(state().pennyPacks) || 0,
+    spendPennies: () => false, spendTicket: () => false, packFive: () => false, unpackFive: () => false,
+    tradeTicket: () => false, cashTicket: () => 0, rollbackPendingSpend: () => 0,
+    collectCoin: () => false, bankLoan: () => false,
+  };
+  window.PennyFeverVerified = service;
+  window.dispatchEvent(new Event('pennyfever:bankingavailable'));
+  return service;
+}
+
+async function connectVerifiedBanking(choice) {
+  const service = verifiedBanking();
+  if (!service) return;
+  if (signedIn()) {
+    await service.useVip(choice || 'vip');
+    await service.bank();
+    if (syncReady) await pushSave(snapshot());
+  } else {
+    const current = guestApi()?.read?.();
+    if (current?.verified && current.email) {service.fail(Error('verification_required'));return;}
+    const priorOwner = portraitAccountOwner();
+    if (priorOwner) {
+      localStorage.setItem('pf-vip-before-signout:' + priorOwner, JSON.stringify({snapshot:snapshot(),at:Date.now()}));
+      localStorage.removeItem(FELIX_ACCOUNT_KEY);
+      newPlayerId();
+    }
+    await service.useGuest();
+    try {sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot()));} catch {}
+  }
+}
 
 function guestApi() {
   return window.InstapicGuestIdentity;
@@ -178,6 +222,7 @@ function applySnapshot(blob) {
     admitTicket: blob.admitTicket,
   });
   if (mergeProgress(PF?.getState?.(), blob)) PF?.saveState?.();
+  if (window.PennyFeverVerifiedPurse?.wallet) PF?.applyVerifiedPurse?.(window.PennyFeverVerifiedPurse.wallet());
   if (typeof blob.selected_doll === "string") chooseCrew(blob.selected_doll);
   mergeFelixPortraitsFromAccount(blob);
   if (signedIn()) rememberPortraitAccount();
@@ -291,8 +336,10 @@ function paintChip() {
     }
   }
   if (progressConflict && hint) {
-    hint.replaceChildren(document.createTextNode("VIP save paused because this account changed on another device. Your treasures are kept. Choose which penny balance to keep: "));
-    for (const [label,local] of [["Keep this device's balance",true],["Use VIP balance",false]]) {
+    hint.replaceChildren(document.createTextNode(VERIFIED_BANKING_RELEASE
+      ? 'Your VIP save changed on another device. Your verified purse is preserved. Load the latest VIP save to continue: '
+      : "VIP save paused because this account changed on another device. Your treasures are kept. Choose which penny balance to keep: "));
+    for (const [label,local] of (VERIFIED_BANKING_RELEASE ? [['Use latest VIP save',false]] : [["Keep this device's balance",true],["Use VIP balance",false]])) {
       const button=document.createElement('button'); button.type='button'; button.textContent=label;
       button.addEventListener('click',()=>resolveProgressConflict(local).catch(err=>{hint.textContent='Could not resolve the save yet. Your progress is still on this device.';console.warn('[pf-vip] resolve',err);}));
       hint.append(' ',button);
@@ -341,9 +388,11 @@ function paintConflictDialog() {
     dialog = document.createElement("dialog"); dialog.id = "pfProgressConflictDialog"; dialog.setAttribute("aria-labelledby", "pfProgressConflictTitle");
     dialog.style.cssText = "max-width:min(92vw,460px);padding:22px;border:2px solid #d9aa66;border-radius:14px;background:#291d35;color:#fff3df;font:16px/1.45 system-ui;";
     const title = document.createElement("h2"); title.id = "pfProgressConflictTitle"; title.textContent = "Choose which balance to keep";
-    const description = document.createElement("p"); description.textContent = "VIP save paused because this account changed on another device. Your treasures are kept. Choose which penny balance to keep:";
+    const description = document.createElement("p"); description.textContent = VERIFIED_BANKING_RELEASE
+      ? 'Your VIP save changed on another device. Your verified purse is preserved. Load the latest VIP save to continue.'
+      : "VIP save paused because this account changed on another device. Your treasures are kept. Choose which penny balance to keep:";
     dialog.append(title, description);
-    for (const [label, local] of [["Keep this device's balance", true], ["Use VIP balance", false]]) {
+    for (const [label, local] of (VERIFIED_BANKING_RELEASE ? [['Use latest VIP save',false]] : [["Keep this device's balance", true], ["Use VIP balance", false]])) {
       const button = document.createElement("button"); button.type = "button"; button.textContent = label;
       button.style.cssText = "display:block;width:100%;margin:10px 0;padding:10px;border-radius:8px;cursor:pointer;font-weight:700;";
       button.addEventListener("click", () => resolveProgressConflict(local)
@@ -400,7 +449,8 @@ async function resolveCollectionChoice(choice) {
     if(!heldAlready) localStorage.removeItem(HELD_PLAYER_KEY);
     paintChip();throw err;
   }
-  collectionChoice=null; rememberPortraitAccount();paintChip();
+  collectionChoice=null; rememberPortraitAccount();
+  await connectVerifiedBanking('vip');paintChip();
 }
 
 async function resolveProgressConflict(useLocalBalance) {
@@ -422,6 +472,7 @@ async function resolveProgressConflict(useLocalBalance) {
   catch (err) { applySnapshot(local); syncReady=false; progressConflict=true; paintChip(); throw err; }
   try { localStorage.removeItem('pf-vip-conflict:'+email); } catch {}
   progressConflict=false;
+  await connectVerifiedBanking('vip');
   paintChip();
 }
 
@@ -441,6 +492,7 @@ async function syncOnArrival() {
       }
     } catch(err) { console.warn('[pf-vip] held player remains saved for recovery',err);paintChip();return; }
     try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {}
+    await connectVerifiedBanking();
     paintChip();
     return;
   }
@@ -450,10 +502,11 @@ async function syncOnArrival() {
   let profile = null;
   try { profile = await fetchProfile(); } catch (err) {
     console.warn("[pf-vip] profile unavailable; keeping browser progress", err);
+    verifiedBanking()?.fail(err);
     paintChip();
     return;
   }
-  if (!profile) { paintChip(); return; }
+  if (!profile) { verifiedBanking()?.fail(Error('VIP profile unavailable')); paintChip(); return; }
   const email = guestEmail().toLowerCase();
   try { if (localStorage.getItem('pf-vip-conflict:'+email)) {progressConflict=true;paintChip();return;} } catch {}
   const owner = portraitAccountOwner();
@@ -489,6 +542,7 @@ async function syncOnArrival() {
     syncReady = true;
     try { if (await pushSave(snapshot())) localStorage.removeItem(lapsedKey); }
     catch (err) { console.warn("[pf-vip] resync after sign-in", err); }
+    await connectVerifiedBanking('vip');
     paintChip();
     return;
   }
@@ -524,6 +578,7 @@ async function syncOnArrival() {
       console.warn("[pf-vip] first save", err);
     }
   }
+  await connectVerifiedBanking(!existingCloud && verifiedBanking()?.hasGuest ? 'guest' : 'vip');
   paintChip();
 }
 
@@ -543,10 +598,11 @@ function applyPendingWarp() {
 
 let mounted = false;
 export function mountVipSpot() {
+  verifiedBanking();
   paintChip();
   if (mounted) return;
   mounted = true;
-  syncOnArrival();
+  syncOnArrival().catch(err => {verifiedBanking()?.fail(err);console.warn('[pf-vip] purse connection',err);});
   const door = document.getElementById("pfVipDoor");
   door?.addEventListener("click", () => {
     try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {}
@@ -571,6 +627,10 @@ export function mountVipSpot() {
     if (!ids.length) return;
     rememberPortraitAccount();
     pushSave().catch(err => console.warn("[pf-vip] Felix collection save", err));
+    if (window.PennyFeverVerified?.required) {
+      window.PennyFeverVerified.bank().catch(() => {});
+      return;
+    }
     const drips = new Set(["star-token", "moon-penny", "rose-penny", "crown-token"]);
     const email = guestEmail();
     ids.filter((id) => drips.has(id)).forEach((item) => {

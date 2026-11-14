@@ -167,7 +167,12 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
    note.textContent='Bank loan is off.';
    return;
   }
-  if(apiRef?.addDemoCoins) apiRef.addDemoCoins(loan.pennies);
+  if(window.PennyFeverVerified?.required) {
+   if(!window.PennyFeverVerifiedPurse?.bankLoan?.()) {
+    note.textContent='The verified purse needs to reconnect before another loan.';
+    return;
+   }
+  } else if(apiRef?.addDemoCoins) apiRef.addDemoCoins(loan.pennies);
   note.textContent=`Bank loan · +${loan.pennies} pennies.`;
   paintAuraWallet();
  };
