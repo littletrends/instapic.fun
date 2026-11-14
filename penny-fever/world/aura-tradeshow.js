@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'xaman-qr-1';
+const NFT_VER = 'xaman-piece-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -27,6 +27,7 @@ const LIMITED = new Set([
 let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', token_claims: {}};
 let minted = {};
 let mintedReady = false;
+let rewardMint = {account: '', enabled: false, items: {}};
 let nftPlates = new Set();
 let overlay = null;
 let inspectItem = null;
@@ -70,6 +71,7 @@ function vipAccount() {
 }
 function clearEligibility(account = '') {
   eligibilityAccount = account;
+  rewardMint = {account, enabled: false, items: {}};
   snapElig = {portraits: new Set(), book: false};
   dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
   dripReady = false;
@@ -137,7 +139,17 @@ function loadSnap() {
       if (revision === eligibilityRevision && account === vipAccount()) setSnapElig(data);
     }),
     loadDrips(email, revision),
+    loadRewardMint(account, revision),
   ]).then(deliverClaimReceipts);
+}
+function loadRewardMint(account, revision) {
+  return fetch(`${NFT_HOST}/api/penny-fever/verified/redeem/eligibility`, {
+    method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email: account}),
+  }).then(res => res.ok ? res.json() : null).then(data => {
+    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return;
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}};
+  }).catch(() => {});
 }
 function loadDrips(email, revision) {
   if (!email) return Promise.resolve();
@@ -587,7 +599,19 @@ function tillLink(id) {
   const origin = (location.origin && location.origin.startsWith('http')) ? location.origin : 'https://instapic.fun';
   return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
 }
+function auraTillAddress() {
+  const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || '').trim();
+  return addr.startsWith('r') ? addr : '';
+}
+function xamanScanText(id) {
+  const to = auraTillAddress();
+  if (!to) return '';
+  const xrp = String(xrpPriceFor(id) || '').trim();
+  if (xrp && Number(xrp) > 0) return `https://xumm.app/detect/xrp:${to}:${xrp}`;
+  return `https://xumm.app/detect/xrp:${to}`;
+}
 function checkoutUrl(id) {
+  if (shopAction(id).reward) return `${NFT_HOST}/api/penny-fever/verified/redeem`;
   const qs = new URLSearchParams({
     item: id,
     guest: guestRef(),
@@ -597,14 +621,16 @@ function checkoutUrl(id) {
   return `${NFT_HOST}/api/penny-fever/xaman-checkout?${qs}`;
 }
 function buyQrSrc(id) {
+  const text = xamanScanText(id);
+  if (!text) return '';
   try {
-    return qrDataUrl(tillLink(id), 5, 8);
+    return qrDataUrl(text, 5, 8);
   } catch {
     return '';
   }
 }
 function nftViewSrc(id) {
-  return nftPlates.has(id) ? nftPlateSrc(id) : '';
+  return nftPlates.has(id) ? nftPlateSrc(id) : buyQrSrc(id);
 }
 function nftViewAvailable(item, stallInfo) {
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
@@ -687,7 +713,7 @@ function ensureOverlay() {
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
         <p class="aura-tradeshow-inspect-sample" id="auraTradeshowInspectSample">Offline sample · the original is the NFT token.</p>
-        <p id="auraTradeshowInspectNftNote" hidden>NFT artwork is not previewed here until it has been bought. Use Buy with XRP for the Xaman sign QR. That is not a link back into this booth.</p>
+        <p id="auraTradeshowInspectNftNote" hidden>Scan in Xaman. This QR opens Aura’s till address. Minting is still on hold.</p>
         <div class="aura-tradeshow-views aura-tradeshow-inspect-views">
           <button type="button" data-inspect-view="website" aria-pressed="true">Website</button>
           <button type="button" data-inspect-view="nft">NFT</button>
@@ -1050,7 +1076,7 @@ function setInspectMode(mode) {
     nftNote.hidden = inspectMode !== 'nft';
     if (inspectMode === 'nft') nftNote.textContent = nftPlates.has(inspectItem.id)
       ? 'NFT artwork supplied by MotherPC after purchase.'
-      : 'Xaman sign is the Buy with XRP button. This tab is not a page link.';
+      : `Scan in Xaman · ${formatXrp(inspectItem.id) || 'XRP'} to ${auraTillAddress() || 'Aura'}. Minting is still on hold.`;
   }
   overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
@@ -1063,23 +1089,12 @@ function setInspectMode(mode) {
       stage.replaceChildren();
       const ownedPlate = nftPlates.has(inspectItem.id);
       stage.classList.toggle('is-nft-qr', !ownedPlate);
-      if (ownedPlate) {
-        const img = document.createElement('img');
-        img.id = 'auraTradeshowInspectImg';
-        img.draggable = false;
-        img.src = nftViewSrc(inspectItem.id);
-        img.alt = `${inspectItem.name || inspectItem.id} · NFT artwork`;
-        stage.append(img);
-      } else {
-        const act = actionFor(inspectItem, inspectInfo);
-        const wait = document.createElement('p');
-        wait.className = 'aura-tradeshow-inspect-qr-wait';
-        wait.textContent = act.ready
-          ? 'Buy with XRP opens the Xaman sign on this phone. The NFT tab is the plate after you own it.'
-          : (act.label || 'Xaman sign is not open yet.');
-        stage.append(wait);
-        if (act.ready) openXrpTill(inspectItem.id);
-      }
+      const img = document.createElement('img');
+      img.id = 'auraTradeshowInspectImg';
+      img.draggable = false;
+      img.src = nftViewSrc(inspectItem.id) || buyQrSrc(inspectItem.id);
+      img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman till'}`;
+      stage.append(img);
     }
     paintInspectFaces(nftPlates.has(inspectItem.id) ? 'nft' : 'front');
     return;
@@ -1149,6 +1164,14 @@ function snapMint(item) {
 }
 function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
+  const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
+  if (redemption && !claim && !isLimited(item) && !isFelix(item) && stallInfo.mintable && !MONEY.has(item.kind)) {
+    if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
+    if (redemption === 'accepted') return {label: 'Reward NFT received', disabled: true, reward: true};
+    if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
+    return {label: redemption === 'ready' ? 'Mint collected reward · no purchase price' : 'Continue reward mint',
+      disabled: false, ready: true, reward: true};
+  }
   if (onShelf(item.id) && !claim && !isFelix(item)) {
     return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, limited: isLimited(item)};
   }
@@ -1285,7 +1308,7 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
-function watchXamanPayload(till, uuid, revision, account) {
+function watchXamanPayload(till, uuid, revision, account, reward = false) {
   if (revision !== tillRevision || account !== vipAccount()) return;
   stopTillPoll();
   const pollRevision = tillRevision;
@@ -1298,7 +1321,11 @@ function watchXamanPayload(till, uuid, revision, account) {
       stopTillPoll();
       return;
     }
-    fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, {cache: 'no-store'})
+    fetch(reward ? `${NFT_HOST}/api/penny-fever/verified/redeem/status`
+      : `${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, reward ? {
+        method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: account, payload: uuid}),
+      } : {cache: 'no-store'})
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
         if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
@@ -1312,6 +1339,7 @@ function watchXamanPayload(till, uuid, revision, account) {
           stopTillPoll();
           copy.textContent = mint.message || 'The card is in your wallet.';
           loadMinted();
+          if (reward) loadRewardMint(account, eligibilityRevision).then(paint);
           return;
         }
         if (data?.status === 'signed') {
@@ -1356,14 +1384,17 @@ function openXrpTill(id) {
   if (hold) hold.dataset.item = id;
   till.hidden = false;
   till.querySelector('[data-xrp-close]')?.focus();
-  fetch(checkoutUrl(id), {cache: 'no-store'})
+  fetch(checkoutUrl(id), act.reward ? {
+    method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email: account, item: id}),
+  } : {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : Promise.reject()))
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
       if (data?.deep_link) {
         showTillQr(img, name, data.deep_link);
         copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
-        if (data.payload) watchXamanPayload(till, data.payload, revision, account);
+        if (data.payload) watchXamanPayload(till, data.payload, revision, account, !!act.reward);
         return;
       }
       copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
