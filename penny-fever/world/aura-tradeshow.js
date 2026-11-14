@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'mint-open-1';
+const NFT_VER = 'mint-win-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -267,6 +267,9 @@ function purchaseLabel(item) {
   }
   if (isFelix(item)) return 'Not for sale here';
   if (MONEY.has(item.kind)) return 'Dollar till';
+  const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
+  const purchasePrice = rewardMint.prices?.[item.id];
+  if (redemption && !purchasePrice) return 'Collected · network fee only';
   return formatXrp(item.id) || 'Price pending';
 }
 function capLine(id) {
@@ -699,6 +702,7 @@ function ensureOverlay() {
         <p id="auraXrpTillStock"></p>
         <p id="auraXrpTillPrice"></p>
         <p id="auraXrpTillCopy">MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.</p>
+        <a class="aura-xrp-till-open" id="auraXrpTillOpen" hidden rel="noopener" target="_blank">Open in Xaman</a>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
       </div>
     </div>`;
@@ -1192,11 +1196,13 @@ function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
-  if (redemption && !claim && !isFelix(item) && (stallInfo.mintable || (isLimited(item) && purchasePrice)) && !MONEY.has(item.kind)) {
+  if (redemption && !claim && !isFelix(item) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
     if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
     if (redemption === 'accepted') return {label: 'Reward NFT received', disabled: true, reward: true};
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
-    return {label: redemption === 'ready' ? (purchasePrice ? `Buy with XRP · ${purchasePrice} XRP` : 'Mint collected reward · no purchase price') : 'Continue item checkout',
+    return {label: redemption === 'ready'
+      ? (purchasePrice ? `Buy with XRP · ${purchasePrice} XRP` : 'Mint collected reward · network fee only')
+      : 'Continue item checkout',
       disabled: false, ready: true, reward: true, purchase: !!purchasePrice};
   }
   if (onShelf(item.id) && !claim && !mintedReady) {
@@ -1333,6 +1339,27 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
+function showTillPayload(till, img, name, data, account, id) {
+  const link = String(data?.deep_link || '').trim();
+  const qr = String(data?.qr || '').trim();
+  const open = till.querySelector('#auraXrpTillOpen');
+  if (link) checkoutLinks.set(account + ':' + id, link);
+  if (open) {
+    if (link) {
+      open.hidden = false;
+      open.href = link;
+    } else {
+      open.hidden = true;
+      open.removeAttribute('href');
+    }
+  }
+  if (img && /^https:\/\/xumm\.app\//i.test(qr)) {
+    img.src = qr;
+    img.alt = `${name} · Xaman sign`;
+    return;
+  }
+  if (link) showTillQr(img, name, link);
+}
 function watchXamanPayload(till, uuid, revision, account, reward = false) {
   if (revision !== tillRevision || account !== vipAccount()) return;
   stopTillPoll();
@@ -1356,8 +1383,11 @@ function watchXamanPayload(till, uuid, revision, account, reward = false) {
         if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
         const mint = data?.mint;
         if (mint?.accept_deep_link && mint.status !== 'accepted') {
-          showTillQr(img, name, mint.accept_deep_link);
-          copy.textContent = mint.message || 'Signed. Scan again in Xaman to receive the card.';
+          showTillPayload(till, img, name, {
+            deep_link: mint.accept_deep_link,
+            qr: mint.accept_qr,
+          }, account, uuid);
+          copy.textContent = mint.message || 'Signed. Open Xaman again to receive the card.';
           return;
         }
         if (mint?.status === 'accepted') {
@@ -1404,8 +1434,15 @@ function openXrpTill(id) {
   }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
-  till.querySelector('#auraXrpTillPrice').textContent = `${purchaseLabel(item) || act.label}. Scan in Xaman. We never hold guest keys.`;
+  till.querySelector('#auraXrpTillPrice').textContent = act.reward && !act.purchase
+    ? `${act.label}. Open Xaman on this phone, or scan the QR from another device. Network fee only. We never hold guest keys.`
+    : `${purchaseLabel(item) || act.label}. Open Xaman on this phone, or scan the QR from another device. We never hold guest keys.`;
   if (copy) copy.textContent = 'Opening a Xaman sign request…';
+  const open = till.querySelector('#auraXrpTillOpen');
+  if (open) {
+    open.hidden = true;
+    open.removeAttribute('href');
+  }
   if (hold) hold.dataset.item = id;
   till.hidden = false;
   till.querySelector('[data-xrp-close]')?.focus();
@@ -1414,16 +1451,17 @@ function openXrpTill(id) {
     body: JSON.stringify({email: account, item: id, purchase: !!act.purchase}),
   } : {cache: 'no-store'})
     .then(async res => {
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw Error(data?.message || data?.error || 'Checkout unavailable');
       return data;
     })
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
-      if (data?.deep_link) {
-        checkoutLinks.set(account + ':' + id, data.deep_link);
-        showTillQr(img, name, data.deep_link);
-        copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
+      if (data?.deep_link || data?.qr) {
+        showTillPayload(till, img, name, data, account, id);
+        copy.textContent = data.message || (act.reward && !act.purchase
+          ? 'Tap Open in Xaman. This collected piece has no tradeshow price.'
+          : 'Tap Open in Xaman on this phone, or scan the QR. We never hold guest keys.');
         if (data.payload) watchXamanPayload(till, data.payload, revision, account, !!act.reward);
         return;
       }
