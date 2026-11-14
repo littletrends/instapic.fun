@@ -1,11 +1,11 @@
 import * as THREE from './lib/three.module.min.js';
-import {paperRail} from './paper-guest-entrance.js?v=wall-front-1';
+import {paperRail} from './paper-guest-entrance.js?v=walk-fix-1';
 import {PAPERCUT_VIEWS} from './amusements/catalogue.js?v=names-1';
 import {AURA_BOOTH_FRAMES} from './papercut-frames.js';
 import {loadFramedPng,buildPapercut,setPapercutFace,showPapercutView} from './amusements/cutouts.js?v=names-1';
 import {stallViewIndex} from './stall-cutouts.js?v=aura-front-1';
 import {mountTill, openTill, closeTill, tillPinned, bankLoan, paintBankLoan} from './ticket-till.js?v=bank-refresh-1';
-import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=tree-order-1';
+import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=walk-fix-1';
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};

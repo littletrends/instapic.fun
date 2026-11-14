@@ -53,7 +53,7 @@ export function updateCrewGuest(player,camera,dt){
  if(getDoll().crew==='rowan'&&(view===1||view===3))view=4-view;
  g.views.forEach((v,i)=>v.visible=i===view);
  g.stand.rotation.y=bearing-player.rotation.y;
- const swing=travel>.0001?Math.sin(Math.floor(g.phase*10)/10)*.13:0;
+ const swing=travel>.0001?Math.sin(g.phase)*.16:0;
  for(const v of g.views){v.userData.legs[0].rotation.z=swing;v.userData.legs[1].rotation.z=-swing;}
  g.stand.position.y=travel>.0001?Math.abs(Math.sin(g.phase))*.025:0;
 }

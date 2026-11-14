@@ -4,14 +4,14 @@ import {loadTextureWithRetry} from './texture-retry.js';
 import * as THREE from "./lib/three.module.min.js";
 import { mountRestyle, poseRestyle } from "./restyle.js?v=keep-light-1";
 import { installPaperProprietor, updatePaperProprietor } from "./paper-proprietor.js?v=keep-light-1";
-import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=wall-front-1";
+import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_IN, FOYER_OUT } from "./paper-guest-entrance.js?v=walk-fix-1";
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
-import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=wall-front-1";
+import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=walk-fix-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=wall-front-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=last-screen-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=walk-fix-1";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
-import { mountVipSpot } from "./vip-spot.js?v=last-screen-1";
-import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=tree-order-1";
+import { mountVipSpot } from "./vip-spot.js?v=walk-fix-1";
+import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=walk-fix-1";
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
@@ -2416,7 +2416,7 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
-  if (alleyMapOpen || stallCardOpen) return false;
+  if (alleyMapOpen) return false;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -2428,6 +2428,8 @@ function updatePlayer(dt) {
   moveIntent.ix = ix;
   moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
+  if (stallCardOpen && mag > 0.12) closeStallCard();
+  if (stallCardOpen) return false;
   let moving = false;
   if (mag > 0.08) {
     if (mag > 1) {
@@ -2667,11 +2669,11 @@ function pickFocus(px, pz) {
     }, Math.abs(pz - spot.z));
   }
   if (stallCardOpen && focus) return { passing, passingZ };
-  const walkingStraight = Math.abs(moveIntent.iy) > 0.2 && Math.abs(moveIntent.ix) < 0.38;
+  const moving = Math.hypot(moveIntent.ix, moveIntent.iy) > 0.12;
   const atAura = paperRail && aura && Math.hypot(px - aura.position.x, pz - aura.position.z) < 2.7;
   const atTill = ticketPassed() && atAura && px < -0.28;
   const atDoor = !ticketPassed() && atAura;
-  if (walkingStraight && !atTill && !atDoor) {
+  if (moving && !atTill && !atDoor) {
     focus = null;
     return { passing, passingZ };
   }
