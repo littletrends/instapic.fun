@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'folder-back-1';
+const NFT_VER = 'folder-fold-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -735,15 +735,24 @@ function ensureOverlay() {
     const openBook = e.target.closest('[data-open-book]');
     if (openBook) {
       e.preventDefault();
-      folder = 'book:' + openBook.dataset.openBook;
-      openNodes.add('book:penny-collector-book');
-      openNodes.add(folder);
+      const id = openBook.dataset.openBook;
+      folder = 'book:' + id;
+      if (LIMITED.has(id)) {
+        openNodes.add('limited');
+        openNodes.add(folder);
+      } else {
+        openNodes.add('book:penny-collector-book');
+        openNodes.add(folder);
+      }
       paint();
       return;
     }
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
+      if (folder === 'limited') {
+        for (const id of LIMITED) openNodes.delete('book:' + id);
+      }
       if (folder.startsWith('book:') || folder === 'open' || folder === 'closed' || folder === 'felix' || folder === 'limited' || folder === 'convert') openNodes.add(folder);
       if (folder === 'open' || folder === 'closed' || folder.startsWith('stall:')) openNodes.add('book:penny-collector-book');
       if (folder.startsWith('stall:')) {
@@ -1425,11 +1434,16 @@ function limitedBookSections(books, itemsByBook, limitedItems) {
     const grouped = itemsByBook.get(b.id) || [];
     const cover = limitedItems.find((it) => it.id === b.id) || grouped.find((it) => it.id === b.id);
     const pieces = grouped.filter((it) => it.id !== b.id);
+    const foldId = 'book:' + b.id;
+    const folded = !openNodes.has(foldId);
     return {
       title: b.title,
       line: b.kicker || 'Aura Limited · optional binder',
-      items: [cover, ...pieces].filter(Boolean),
+      items: [cover, ...(folded ? [] : pieces)].filter(Boolean),
       stall: stallById('ticket-booth'),
+      fold: foldId,
+      folded,
+      inside: pieces.length,
     };
   });
 }
@@ -1768,14 +1782,21 @@ function paint() {
         ] : []));
   for (const section of sections) {
     const shown = section.items.filter((item) => itemMatches(item, stallForPrize(item) || section.stall, stallDoor(stallForPrize(item) || section.stall)));
-    if (!shown.length) continue;
+    if (!shown.length && !section.fold) continue;
     const wrap = document.createElement('section');
-    wrap.className = 'aura-tradeshow-stall';
-    wrap.innerHTML = `<h2>${section.title}</h2><p>${section.line} · ${shown.length} piece${shown.length === 1 ? '' : 's'}</p>`;
-    const grid = document.createElement('div');
-    grid.className = 'aura-tradeshow-grid';
-    appendCards(grid, shown);
-    wrap.append(grid);
+    wrap.className = 'aura-tradeshow-stall' + (section.folded ? ' is-folded' : '');
+    const count = section.fold
+      ? (section.folded ? `${section.inside} inside` : `${shown.length} piece${shown.length === 1 ? '' : 's'}`)
+      : `${shown.length} piece${shown.length === 1 ? '' : 's'}`;
+    wrap.innerHTML = section.fold
+      ? `<h2><button type="button" class="aura-tradeshow-fold" data-toggle="${section.fold}" aria-expanded="${section.folded ? 'false' : 'true'}">${section.folded ? '+' : '−'}</button> ${section.title}</h2><p>${section.line} · ${count}</p>`
+      : `<h2>${section.title}</h2><p>${section.line} · ${count}</p>`;
+    if (shown.length) {
+      const grid = document.createElement('div');
+      grid.className = 'aura-tradeshow-grid';
+      appendCards(grid, shown);
+      wrap.append(grid);
+    }
     body.append(wrap);
   }
 }

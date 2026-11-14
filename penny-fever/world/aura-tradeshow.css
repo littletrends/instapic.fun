@@ -77,6 +77,12 @@
   background:#fff8e9;border:1px solid #c4a064;border-radius:999px;
   padding:.35rem .75rem;cursor:pointer;
 }
+.aura-tradeshow-stall h2{display:flex;align-items:center;gap:.35rem;margin:.15rem 0 .1rem}
+.aura-tradeshow-fold{
+  flex:0 0 1.35rem;width:1.35rem;height:1.35rem;padding:0;border-radius:4px;cursor:pointer;
+  border:1px solid #c4a064;background:#fff8e9;color:#5a2438;
+  font:700 .9rem/1 Georgia,serif;
+}
 @media (max-width:720px){
   .aura-tradeshow-main{flex-direction:column}
   .aura-tradeshow-tree{width:auto;flex:0 0 auto;max-height:28vh;border-right:0;border-bottom:1px solid #e2c48a}
@@ -93,6 +99,7 @@
     font-size:.72rem;
     padding:.45rem .4rem;
   }
+  .aura-tradeshow-fold,
   .aura-tradeshow-tree-toggle{
     min-width:44px;min-height:44px;flex-basis:44px;width:44px;height:44px;
   }
