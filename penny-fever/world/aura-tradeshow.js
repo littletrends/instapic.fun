@@ -1,5 +1,5 @@
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
-import {stallById, stalls} from './items/midway.js?v=treasure-design-1';
+import {stallById, stalls} from './items/midway.js?v=kit-case-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 
@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'booth-convert-1';
+const NFT_VER = 'kit-case-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -1395,7 +1395,7 @@ function itemMatches(item, stall, info) {
   if (folder === 'limited') return isLimited(item);
   if (folder === 'convert') return !!tokenClaim(item.id);
   if (folder === 'book:penny-collector-book') {
-    if (item.id === 'penny-collector-book' || item.id === 'night-suitcase') return true;
+    if (item.id === 'penny-collector-book') return true;
     const books = window.PennyFeverInventoryModel?.books || [];
     return books.some((b) => b.id === item.id && !LIMITED.has(b.id));
   }
@@ -1570,7 +1570,7 @@ function paint() {
     : folder === 'open' || folder.startsWith('stall:')
       ? 'Open tents · six chapter bonuses each. Felix portraits are under Felix.'
     : folder === 'book:penny-collector-book'
-      ? 'This is the book. Claim it with tokens. The night suitcase is packed when Aura punches your ticket.'
+      ? 'This is the book. Claim it with tokens. The night suitcase is Kit’s chapter 6 at The Impossible Suitcase.'
     : folderIsLimited()
       ? limitedShelfNote()
       : 'Tap a figure to hold and spin it. Collected is in your book; Locked still waits on the shelf.';
@@ -1658,12 +1658,6 @@ function paint() {
           title: 'Penny collector book',
           line: 'The keepsake for the whole midway · claim with tokens',
           items: [modelItem('penny-collector-book')].filter((item) => item.id),
-          stall: stallById('ticket-booth'),
-        },
-        {
-          title: 'Night suitcase',
-          line: 'Aura packs this little case when she punches your ticket',
-          items: [modelItem('night-suitcase')].filter((item) => item.id),
           stall: stallById('ticket-booth'),
         },
         {

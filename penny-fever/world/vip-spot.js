@@ -1,6 +1,6 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
-import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=booth-convert-1";
+import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=kit-case-1";
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
 const PENDING_KEY = "pf-vip-pending";
 const HELD_PLAYER_KEY = "pf-device-player-on-hold.v1";
@@ -361,7 +361,7 @@ function paintConflictDialog() {
 }
 
 function meaningfulProgress(progress) {
-  const items=Object.keys(progress.treasures || {}).filter(id=>id!=='night-suitcase' && id!=='penny-collector-book');
+  const items=Object.keys(progress.treasures || {}).filter(id=>id!=='penny-collector-book');
   return !!(items.length || Object.keys(progress.curios || {}).length || progress.doll_mine || progress.doll_sets?.length || progress.penny_packs || progress.pennies!==3 || progress.tickets!==3);
 }
 function clearPlayerProgress() {

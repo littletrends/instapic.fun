@@ -4,7 +4,7 @@ let midwayApi = null;
 let midwayWait = null;
 let artApi = null;
 function needMidway() {
-  if (!midwayWait) midwayWait = import('./midway.js?v=game-webp-1').then(m => { midwayApi = m; return m; });
+  if (!midwayWait) midwayWait = import('./midway.js?v=kit-case-1').then(m => { midwayApi = m; return m; });
   return midwayWait;
 }
 function needArt() {
@@ -997,9 +997,7 @@ function describe(item) {
   }[item.id];
   text('treasureDetail', dollPage
     ? 'Open the album. Dress the girl with this set in Edit character.'
-    : item.id === 'night-suitcase'
-      ? 'A little home for the things you bring back from the midway.'
-      : item.id === 'penny-collector-book'
+    : item.id === 'penny-collector-book'
         ? 'A home for the whole midway. The tree already lists every stall; this book is the keepsake for filling it.'
         : stall && !item.owned
           ? 'Find this at ' + stall.host + '’s stall on the alley.'

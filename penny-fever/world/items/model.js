@@ -18,7 +18,7 @@
     ['sweet-heat','Sweet heat','Machine Guts','curio','sweet_heat','Love Tester · Rosalie','Reach depth three or take home a Love Tester souvenir.',.15,'machine-curios'],
     ['coin-slot','Coin slot','Machine Guts','curio','coin_slot','Backstage · Bea','Complete a backstage stage, or try the demo Showman pass.',.085,'machine-curios'],
     ['marquee-bulb','Marquee bulb','Machine Guts','curio','marquee_bulb','Boardwalk Lights · Lumi','Light the marquee, or find an olive-lamp fortune.',.14,'machine-curios'],
-    ['night-suitcase','Night suitcase','Collection rewards','reward',null,'Aura’s welcome','Yours after handing Aura your admission ticket.',.24,'garden-prizes'],
+    ['night-suitcase','Night suitcase','Workshop prizes','prize',null,'The Impossible Suitcase · Kit','Chapter 6 of The Impossible Suitcase.',.24,'garden-prizes'],
     ['moonlight-wardrobe','Moonlight wardrobe','Collection rewards','reward',null,'Alley collection','Collect all six Alley Ephemera to receive this costume keepsake book.',.12,'paper-doll-books'],
     ['coin-sleeve','Coin sleeve','Workshop prizes','prize',null,'Copper Falls · Copper','Catch pennies at Copper Falls.',.08,'gift-wrapping'],
     ['copper-cascade','Copper cascade','Workshop prizes','prize',null,'Copper Falls · Copper','Finish the moon mint at Copper Falls.',.12,'game-prizes'],
@@ -503,7 +503,11 @@
       if (state.paperInventory.items[id]) return;
       state.paperInventory.items[id]={at:now,source};changed=true;
     };
-    if (state.admitPassed) give('night-suitcase','admission');
+    const welcomeCase = state.paperInventory.items['night-suitcase'];
+    if (welcomeCase && welcomeCase.source === 'admission') {
+      delete state.paperInventory.items['night-suitcase'];
+      changed = true;
+    }
     if (definitions.filter(d=>d.category==='Alley Ephemera').every(d=>!!state.curios?.[d.key])) give('moonlight-wardrobe','alley-complete');
     return changed;
   }
