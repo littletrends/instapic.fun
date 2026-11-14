@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'booth-plate-1';
+const NFT_VER = 'booth-open-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -494,6 +494,15 @@ function stallDoor(stall) {
   const status = parkStatus(stall.id);
   return {id: stall.id, status, mintable: status === 'open', money: false};
 }
+function isOpenPlayStall(stall) {
+  return !!(stall && !stall.extra && stall.id !== 'snap' && stall.id !== 'ticket-booth' && stallDoor(stall).mintable);
+}
+function openPlayStalls() {
+  return stalls.filter(isOpenPlayStall);
+}
+function chapterItems(stall) {
+  return (stall?.prizes || []).map((id) => modelItem(id)).filter((item) => item.id);
+}
 function faceSrc(item, view) {
   const asset = String(item.asset || '');
   const ver = (asset.match(/\?[^#]*$/) || [''])[0];
@@ -809,6 +818,68 @@ function destroyInspectTurn() {
     inspectTurn = null;
   }
 }
+function plateArt(art) {
+  if (!art?.faces?.length) return art;
+  const faces = art.faces.map((src) => {
+    const w = src.width || 1;
+    const h = src.height || 1;
+    const punched = document.createElement('canvas');
+    punched.width = w;
+    punched.height = h;
+    const ctx = punched.getContext('2d', {willReadFrequently: true});
+    ctx.drawImage(src, 0, 0);
+    const pixels = ctx.getImageData(0, 0, w, h);
+    let left = w, top = h, right = -1, bottom = -1;
+    const data = pixels.data;
+    const edge = (i) => {
+      const p = i * 4;
+      const lo = Math.min(data[p], data[p + 1], data[p + 2]);
+      const hi = Math.max(data[p], data[p + 1], data[p + 2]);
+      return data[p + 3] <= 8 || (lo >= 225 && hi - lo <= 14);
+    };
+    const seen = new Uint8Array(w * h);
+    const queue = new Int32Array(w * h);
+    let head = 0, tail = 0;
+    const visit = (i) => {
+      if (i < 0 || i >= w * h || seen[i] || !edge(i)) return;
+      seen[i] = 1;
+      queue[tail++] = i;
+    };
+    for (let x = 0; x < w; x++) { visit(x); visit((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { visit(y * w); visit(y * w + w - 1); }
+    while (head < tail) {
+      const i = queue[head++];
+      data[i * 4 + 3] = 0;
+      const x = i % w;
+      if (x > 0) visit(i - 1);
+      if (x < w - 1) visit(i + 1);
+      visit(i - w);
+      visit(i + w);
+    }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 96) {
+          left = Math.min(left, x);
+          top = Math.min(top, y);
+          right = Math.max(right, x);
+          bottom = Math.max(bottom, y);
+        }
+      }
+    }
+    ctx.putImageData(pixels, 0, 0);
+    if (right < left) return punched;
+    const pad = Math.round(Math.max(right - left, bottom - top) * 0.06);
+    const bw = right - left + 1;
+    const bh = bottom - top + 1;
+    const size = Math.max(bw, bh) + pad * 2;
+    const out = document.createElement('canvas');
+    out.width = size;
+    out.height = size;
+    out.getContext('2d').drawImage(punched, left, top, bw, bh, (size - bw) / 2, (size - bh) / 2, bw, bh);
+    return out;
+  });
+  return {...art, faces};
+}
 
 function paintInspectFaces(face) {
   overlay?.querySelectorAll('[data-inspect-face]').forEach((button) => {
@@ -879,7 +950,7 @@ async function mountInspectTurntable(item, token) {
       import('./items/turntable.js?v=rotate-3'),
     ]);
     if (token !== inspectToken || inspectMode !== 'website' || inspectItem !== item) return;
-    const art = await loadArt(item);
+    const art = plateArt(await loadArt(item));
     if (token !== inspectToken || inspectMode !== 'website' || inspectItem !== item) return;
     stage.replaceChildren();
     inspectTurn = new Turntable(stage);
@@ -889,7 +960,7 @@ async function mountInspectTurntable(item, token) {
       if (i >= 0) inspectFace = i;
       paintInspectFaces(name);
     };
-    inspectTurn.show(item, art, walletCount(item.id) <= 0);
+    inspectTurn.show(item, art, false);
     if (inspectFace) setInspectFace(inspectViews(item)[inspectFace] || 'front');
   } catch {
     if (token !== inspectToken) return;
@@ -1278,7 +1349,9 @@ function itemMatches(item, stall, info) {
   if (haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
   if (haveFilter === 'locked' && walletCount(item.id) > 0) return false;
   if (folder === 'all') return true;
-  if (folder === 'open') return info.mintable && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
+  if (folder === 'open') {
+    return isOpenPlayStall(stall) && (stall.prizes || []).includes(item.id) && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
+  }
   if (folder === 'felix') return isFelix(item);
   if (folder === 'limited') return isLimited(item);
   if (folder === 'book:penny-collector-book') return !isFelix(item) && !isLimited(item);
@@ -1362,9 +1435,8 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   root.append(treeRow('open', 'Open stalls'));
   if (openNodes.has('open')) {
     const stallWrap = treeKids();
-    for (const row of stallRows) {
-      if (!stallDoor(row.stall).mintable) continue;
-      stallWrap.append(treeRow('stall:' + row.stall.id, row.stall.host, {leaf: true}));
+    for (const stall of openPlayStalls()) {
+      stallWrap.append(treeRow('stall:' + stall.id, stall.host, {leaf: true}));
     }
     root.append(stallWrap);
   }
@@ -1405,7 +1477,7 @@ function appendCards(grid, items) {
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
-      <div class="aura-tradeshow-stage" data-inspect="${item.id}" role="button" tabindex="0" aria-label="Inspect ${item.name || item.id}" title="Open details"><img alt="" draggable="false" src="${faceSrc(item, 'front')}"></div>
+      <div class="aura-tradeshow-stage" data-inspect="${item.id}" role="button" tabindex="0" aria-label="Inspect ${item.name || item.id}" title="Open details"><img alt="" draggable="false" loading="lazy" decoding="async" src="${faceSrc(item, 'front')}"></div>
       ${canSpin ? `<div class="aura-tradeshow-turn">
         ${VIEWS.map((view) => `<button type="button" data-face="${view}"${view === 'front' ? ' aria-pressed="true"' : ''}>${view[0].toUpperCase()}${view.slice(1)}</button>`).join('')}
         <button type="button" data-spin="1">Rotate</button>
@@ -1446,6 +1518,8 @@ function paint() {
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
+    : folder === 'open' || folder.startsWith('stall:')
+      ? 'Open tents · six chapter bonuses each. Felix portraits are under Felix.'
     : folderIsLimited()
       ? limitedShelfNote()
       : 'Tap a figure to hold and spin it. Collected is in your book; Locked still waits on the shelf.';
@@ -1510,13 +1584,13 @@ function paint() {
   body.replaceChildren();
   const byStall = folder === 'open' || folder.startsWith('stall:');
   const sections = byStall
-    ? stallRows.map((row) => {
-      const info = stallDoor(row.stall);
+    ? (folder === 'open' ? openPlayStalls() : stallRows.map((row) => row.stall).filter((stall) => folder === 'stall:' + stall.id)).map((stall) => {
+      const info = stallDoor(stall);
       return {
-        title: `${row.stall.host} · ${row.stall.title}`,
-        line: info.money ? 'Dollar till' : (info.mintable ? 'Open' : 'Coming'),
-        items: row.items,
-        stall: row.stall,
+        title: `${stall.host} · ${stall.title}`,
+        line: folder === 'open' ? 'Chapter 1–6' : (info.money ? 'Dollar till' : (info.mintable ? 'Open' : 'Coming')),
+        items: folder === 'open' ? chapterItems(stall) : (stallGroups.get(stall.id)?.items || []),
+        stall,
       };
     })
     : (folderIsFelix()

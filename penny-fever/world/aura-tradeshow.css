@@ -101,7 +101,7 @@
   background:#fffaf0;border:1px solid #c9ae7b;border-radius:12px;
   box-shadow:0 3px 0 #e4d0a8;color:#3d2c1f;
 }
-.aura-tradeshow-card.is-locked .aura-tradeshow-stage img{filter:grayscale(1) brightness(.62) contrast(1.08);opacity:.82}
+.aura-tradeshow-card.is-locked .aura-tradeshow-stage img{filter:grayscale(.35) brightness(.95);opacity:.92}
 .aura-tradeshow-stage{
   position:relative;aspect-ratio:1;height:auto;
   background:#1a120f url("../assets/restyle/ui/plate-mat.webp") center/contain no-repeat;
