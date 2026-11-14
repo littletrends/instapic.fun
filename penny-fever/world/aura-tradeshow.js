@@ -2,7 +2,7 @@ import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=ma
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
-import {tillStateFromStatus} from './aura-till-state.js?v=tradeshow-owned-2';
+import {tillStateFromStatus} from './aura-till-state.js?v=tradeshow-owned-3';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -1610,7 +1610,12 @@ function openXrpTill(id) {
       }
     })
     .catch(error => {
-      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) copy.textContent = `Checkout did not open: ${error?.message || 'connection unavailable'}. No NFT purchase was completed here.`;
+      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) {
+        const raw = error?.message || 'connection unavailable';
+        copy.textContent = /already has its free/.test(raw)
+          ? raw
+          : `Checkout did not open: ${raw}. No NFT purchase was completed here.`;
+      }
     });
 }
 function queueXrpPlace(id) {
