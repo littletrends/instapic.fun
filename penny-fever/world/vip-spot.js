@@ -1,4 +1,4 @@
-import {chooseCrew} from "./crew-selector.js?v=doll-body-fit-1";
+import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
 import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=last-screen-1";
 const API_BASE = "https://motherpc.taild1a44c.ts.net";

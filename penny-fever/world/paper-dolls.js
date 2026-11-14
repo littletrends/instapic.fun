@@ -7,7 +7,7 @@ const renderedSheets = new Map();
 const pendingSheets = new Map();
 
 export const BODIES = [
-  { id: 'girl', label: 'Doll' },
+  { id: 'girl', label: 'Girl' },
 ];
 export const SKINS = [
   { id: 'cardboard', label: 'Natural', rgb: null },
@@ -28,8 +28,13 @@ export const EYE_COLORS = [
   { id: 'amber', label: 'Amber', rgb: [176, 112, 36] },
   { id: 'violet', label: 'Violet', rgb: [96, 72, 150] },
 ];
+// TODO accessory-fit: redo these existing masters later; no image generation now.
+// Solid hats intersect hair in side/back views; waves exposes scalp at the sides.
+const PAUSED_HAIR = new Set(['waves']);
+const PAUSED_HATS = new Set(['straw', 'sailor', 'rain', 'cowboy', 'witchhat', 'chefhat', 'piratehat', 'beret', 'postiecap']);
 function availableSpec(spec) {
-  return {...spec, body: 'girl'};
+  return {...spec, hair: PAUSED_HAIR.has(spec.hair) ? 'none' : spec.hair,
+    hat: PAUSED_HATS.has(spec.hat) ? 'none' : spec.hat};
 }
 
 export const HAIR_STYLES = [
@@ -41,8 +46,7 @@ export const HAIR_STYLES = [
   { id: 'bun', label: 'Bun', fit: 'sheet' },
   { id: 'braid', label: 'Braid', fit: 'sheet' },
   { id: 'pixie', label: 'Pixie', fit: 'sheet' },
-  { id: 'short', label: 'Short', fit: 'head', folder: 'hair', headScale: 1.35 },
-];
+].filter(item => !PAUSED_HAIR.has(item.id));
 export const HATS = [
   { id: 'none', label: 'None' },
   { id: 'straw', label: 'Straw hat' },
@@ -50,13 +54,13 @@ export const HATS = [
   { id: 'rain', label: 'Rain hat' },
   { id: 'crown', label: 'Crown' },
   { id: 'cowboy', label: 'Cowboy hat' },
-  { id: 'witchhat', label: 'Witch hat', scale: 0.55, y: -115, x: [8, 0, -4, 0] },
+  { id: 'witchhat', label: 'Witch hat' },
   { id: 'flower', label: 'Flower crown' },
   { id: 'chefhat', label: 'Chef hat' },
   { id: 'piratehat', label: 'Pirate hat' },
   { id: 'beret', label: 'Beret' },
   { id: 'postiecap', label: 'Postie cap' },
-];
+].filter(item => !PAUSED_HATS.has(item.id));
 export const OUTFITS = [
   { id: 'none', label: 'Undershirt', book: null },
   { id: 'garden', label: 'Rose pinafore' },
@@ -95,20 +99,13 @@ export const OUTFITS = [
   { id: 'scientist', label: 'Lab coat' },
   { id: 'bee', label: 'Honeybee' },
   { id: 'pirate', label: 'Pirate pinafore' },
-  { id: 'girl-fairy', label: 'Leaf fairy' },
-  { id: 'girl-goth', label: 'Midnight' },
-  { id: 'girl-hippy', label: 'Sunburst' },
-  { id: 'boy-fairy', label: 'Forest sprite' },
-  { id: 'boy-goth', label: 'Night jacket' },
-  { id: 'boy-hippy', label: 'Tie-dye day' },
 ];
 // Separate clothing slots reuse the registered masters; no generated artwork.
 export const TOPS = [{id:'none',label:'Undershirt'}, {id:'seaside',label:'Sailor top'}];
 export const BOTTOMS = [{id:'none',label:'Base shorts'}, {id:'seaside',label:'Navy shorts'}, {id:'picnic',label:'Gingham skirt'}];
 export const ADDONS = [{id:'none',label:'No add-on'}, {id:'library',label:'Library cardigan'}];
 export const FOOTWEAR = [{id:'none',label:'Bare feet'}, ...OUTFITS.filter(x=>x.id!=='none').map(x=>({...x,label:x.label+' shoes'}))];
-const FULL_SET_IDS = new Set(['winter','rain','bedtime','circus','detective','mechanic','kimono','chef','soccer','conductor','postie','scientist','artist','girl-fairy','girl-goth','girl-hippy','boy-fairy','boy-goth','boy-hippy']);
-const FULL_SHEET_IDS = new Set(['girl-fairy','girl-goth','girl-hippy','boy-fairy','boy-goth','boy-hippy']);
+const FULL_SET_IDS = new Set(['winter','rain','bedtime','circus','detective','mechanic','kimono','chef','soccer','conductor','postie','scientist','artist']);
 export const DRESSES = [{id:'none',label:'Use top + bottom'}, ...OUTFITS.filter(x=>!['none','seaside','library'].includes(x.id) && !FULL_SET_IDS.has(x.id))];
 export const FULL_OUTFITS = OUTFITS.filter(x=>FULL_SET_IDS.has(x.id));
 
@@ -163,7 +160,9 @@ export const COLLECTIONS = [
   { id: 'scientist', label: 'Lab coat', page: `${P}/outfits/scientist.png`, pieces: [hair('pixie','Pixie'), clothes('scientist','Lab coat')] },
   { id: 'bee', label: 'Honeybee', page: `${P}/outfits/bee.png`, pieces: [hair('pigtails','Pigtails'), clothes('bee','Honeybee')] },
   { id: 'pirate', label: 'Pirate', page: `${P}/outfits/pirate.png`, pieces: [hair('waves','Waves'), hat('piratehat','Pirate hat'), clothes('pirate','Pirate pinafore')] },
-];
+].map(collection => ({...collection, pieces: collection.pieces.filter(piece =>
+  !(piece.slot === 'hair' && PAUSED_HAIR.has(piece.id)) &&
+  !(piece.slot === 'hat' && PAUSED_HATS.has(piece.id)))}));
 export const NOSES = [
   { id: 'none', label: 'None' },
   { id: 'button', label: 'Button' },
@@ -217,25 +216,14 @@ function load(url) {
   return job;
 }
 
-function loadPiece(folder, id) {
-  const key = `${folder}/${id}`;
-  if (images.has(key)) return images.get(key);
-  const job = load(src(folder, `${id}.webp`)).catch(() => load(src(folder, `${id}.png`)));
-  images.set(key, job);
-  return job;
-}
-
-function hairFolder(id) {
-  return HAIR_STYLES.find(h => h.id === id)?.folder || 'hair-clean';
-}
-
 export function preloadDollArt() {
-  return Promise.all([
-    loadPiece('bodies', 'girl'),
-    ...OUTFITS.filter(o => o.id !== 'none').map(o => loadPiece('outfits', o.id)),
-    ...HAIR_STYLES.filter(h => h.id !== 'none').map(h => loadPiece(hairFolder(h.id), h.id)),
-    ...HATS.filter(h => h.id !== 'none').map(h => loadPiece('hats-clean', h.id)),
-  ].map(p => p.catch(() => null)));
+  const urls = [
+    src('bodies', 'girl.png'),
+    ...OUTFITS.filter(o => o.id !== 'none').map(o => src('outfits', `${o.id}.png`)),
+    ...HAIR_STYLES.filter(h => h.id !== 'none').map(h => src('hair-clean', `${h.id}.png`)),
+    ...HATS.filter(h => h.id !== 'none').map(h => src('hats-clean', `${h.id}.png`)),
+  ];
+  return Promise.all(urls.map(u => load(u).catch(() => null)));
 }
 
 // These masks always read the original artwork, never previously tinted pixels.
@@ -437,7 +425,7 @@ function drawMouth(ctx, head, side, style) {
   }
 }
 
-function drawLayerOnHead(ctx, bodyImg, layerImg, widthMul = 1.05, yFrac = -0.12) {
+function drawLayerOnHead(ctx, bodyImg, layerImg) {
   const body = document.createElement('canvas');
   body.width = W; body.height = H;
   const bctx = body.getContext('2d');
@@ -453,42 +441,12 @@ function drawLayerOnHead(ctx, bodyImg, layerImg, widthMul = 1.05, yFrac = -0.12)
     const head = opaqueBox(bp, x0 + 24, 0, x1 - 24, Math.floor(H * 0.48));
     const hair = opaqueBox(lp, x0, 0, x1, H);
     if (!head || !hair) continue;
-    const destW = head.w * widthMul;
+    const destW = head.w * 1.05;
     const destH = hair.h * (destW / hair.w);
     const dx = head.x + head.w / 2 - destW / 2;
-    const dy = head.y + head.h * yFrac;
+    const dy = head.y - head.h * 0.12;
     ctx.drawImage(layer, hair.x, hair.y, hair.w, hair.h, dx, dy, destW, destH);
   }
-}
-
-function drawPoseStrip(ctx, img, fit = {}) {
-  const scale = fit.scale || 1;
-  const y = fit.y || 0;
-  const xOff = fit.x || [0, 0, 0, 0];
-  const sw = img.naturalWidth / 4;
-  const sh = img.naturalHeight;
-  const dw = CELL * scale;
-  const dh = H * scale;
-  for (let side = 0; side < 4; side++) {
-    const dx = side * CELL + (CELL - dw) / 2 + (xOff[side] || 0);
-    const dy = y + (H - dh) / 2;
-    ctx.drawImage(img, side * sw, 0, sw, sh, dx, dy, dw, dh);
-  }
-}
-
-function fittedLayer(img, fit) {
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  drawPoseStrip(canvas.getContext('2d'), img, fit);
-  return canvas;
-}
-
-function punchUnder(base, cover) {
-  const ctx = base.getContext('2d');
-  ctx.save();
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.drawImage(cover, 0, 0);
-  ctx.restore();
 }
 
 function drawFace(ctx, bodyImg, spec) {
@@ -572,14 +530,12 @@ function drawCardigan(ctx, img) {
 }
 
 async function renderDollSheet(spec) {
-  const hairStyle = HAIR_STYLES.find(h => h.id === spec.hair);
-  const hatStyle = HATS.find(h => h.id === spec.hat);
   const [bodyImg, wearImg, hairImg, hatImg, topImg, bottomImg, addonImg, shoeImg] = await Promise.all([
-    loadPiece('bodies', 'girl'),
-    spec.outfit && spec.outfit !== 'none' ? loadPiece('outfits', spec.outfit) : null,
-    spec.hair && spec.hair !== 'none' ? loadPiece(hairFolder(spec.hair), spec.hair) : null,
-    spec.hat && spec.hat !== 'none' ? loadPiece('hats-clean', spec.hat) : null,
-    ...['top','bottom','addon','footwear'].map(slot => spec[slot] && spec[slot] !== 'none' ? loadPiece('outfits', spec[slot]) : null),
+    load(src('bodies', 'girl.png')),
+    spec.outfit && spec.outfit !== 'none' ? load(src('outfits', `${spec.outfit}.png`)) : null,
+    spec.hair && spec.hair !== 'none' ? load(src('hair-clean', `${spec.hair}.png`)) : null,
+    spec.hat && spec.hat !== 'none' ? load(src('hats-clean', `${spec.hat}.png`)) : null,
+    ...['top','bottom','addon','footwear'].map(slot => spec[slot] && spec[slot] !== 'none' ? load(src('outfits', `${spec[slot]}.png`)) : null),
   ]);
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -594,7 +550,7 @@ async function renderDollSheet(spec) {
   const skinRgb = hexRgb(spec.skinHex) || SKINS.find(s => s.id === spec.skin)?.rgb;
   const eyeRgb = hexRgb(spec.eyesHex) || (spec.eyes === 'blue' ? null : EYE_COLORS.find(e => e.id === spec.eyes)?.rgb);
   if (wearImg) {
-    if (FULL_SHEET_IDS.has(spec.outfit) || spec.footwear === undefined) ctx.drawImage(wearImg, 0, 0, W, H);
+    if (spec.footwear === undefined) ctx.drawImage(wearImg, 0, 0, W, H);
     else drawClothingBand(ctx, wearImg, 174, 385);
   }
   // Draw bottoms first; tops overlap their waist seams. Full outfits retain
@@ -606,22 +562,21 @@ async function renderDollSheet(spec) {
   if (addonImg) drawCardigan(ctx, addonImg);
   if (shoeImg) drawClothingBand(ctx, shoeImg, 385, 512);
   colourDoll(ctx, skinRgb, eyeRgb);
-  const hatFit = (hatStyle?.scale || hatStyle?.y) ? { scale: hatStyle.scale || 1, y: hatStyle.y || 0, x: hatStyle.x } : {};
-  const hatLayer = hatImg ? fittedLayer(hatImg, hatFit) : null;
   if (hairImg) {
-    if (hairStyle?.fit === 'head') {
-      const hairCanvas = document.createElement('canvas');
-      hairCanvas.width = W; hairCanvas.height = H;
-      drawLayerOnHead(hairCanvas.getContext('2d'), bodyImg, hairImg, hairStyle.headScale || 1.35, -0.2);
-      if (hatLayer) punchUnder(hairCanvas, hatLayer);
-      ctx.drawImage(hairCanvas, 0, 0);
-    } else {
-      const hairLayer = fittedLayer(hairImg);
-      if (hatLayer) punchUnder(hairLayer, hatLayer);
-      ctx.drawImage(hairLayer, 0, 0);
-    }
+    const style = HAIR_STYLES.find(h => h.id === spec.hair);
+    if (style?.fit === 'sheet') ctx.drawImage(hairImg, 0, 0, W, H);
+    else drawLayerOnHead(ctx, bodyImg, hairImg);
   }
-  if (hatLayer) ctx.drawImage(hatLayer, 0, 0);
+  if (hatImg) {
+    if (spec.hat === 'witchhat') {
+      // The tall hat's repair master includes extra framing around each pose.
+      // Register it to the existing head without moving the doll or outfit.
+      for (let side=0; side<4; side++) {
+        ctx.drawImage(hatImg, side*hatImg.width/4, 0, hatImg.width/4, hatImg.height,
+          side*CELL + 57.6 + [8,0,-4,0][side], -45, CELL*.7, H*.7);
+      }
+    } else ctx.drawImage(hatImg, 0, 0, W, H);
+  }
   return canvas;
 }
 
