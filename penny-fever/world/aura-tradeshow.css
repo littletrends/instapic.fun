@@ -40,7 +40,7 @@
   flex:0 1 11.5rem;width:11.5rem;max-width:100%;min-width:7.5rem;padding:.32rem .5rem;border-radius:999px;
   border:1px solid #ac8b59;background:#fffdf6;color:#3d2c1f;font-size:.85rem;
 }
-.aura-tradeshow-have,.aura-tradeshow-quick{display:flex;gap:.22rem;align-items:center}
+.aura-tradeshow-have,.aura-tradeshow-quick{display:flex;flex-wrap:wrap;gap:.22rem;align-items:center}
 .aura-tradeshow-have{padding-right:.45rem;margin-right:.1rem;border-right:1px solid #e2c48a}
 .aura-tradeshow-tools button{
   font:700 .68rem/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;
