@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'qr-show-1';
+const NFT_VER = 'xaman-qr-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -604,7 +604,7 @@ function buyQrSrc(id) {
   }
 }
 function nftViewSrc(id) {
-  return nftPlates.has(id) ? nftPlateSrc(id) : buyQrSrc(id);
+  return nftPlates.has(id) ? nftPlateSrc(id) : '';
 }
 function nftViewAvailable(item, stallInfo) {
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
@@ -687,7 +687,7 @@ function ensureOverlay() {
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
         <p class="aura-tradeshow-inspect-sample" id="auraTradeshowInspectSample">Offline sample · the original is the NFT token.</p>
-        <p id="auraTradeshowInspectNftNote" hidden>NFT artwork is not previewed here until it has been bought. This view is the Xaman purchase QR.</p>
+        <p id="auraTradeshowInspectNftNote" hidden>NFT artwork is not previewed here until it has been bought. Use Buy with XRP for the Xaman sign QR. That is not a link back into this booth.</p>
         <div class="aura-tradeshow-views aura-tradeshow-inspect-views">
           <button type="button" data-inspect-view="website" aria-pressed="true">Website</button>
           <button type="button" data-inspect-view="nft">NFT</button>
@@ -1050,7 +1050,7 @@ function setInspectMode(mode) {
     nftNote.hidden = inspectMode !== 'nft';
     if (inspectMode === 'nft') nftNote.textContent = nftPlates.has(inspectItem.id)
       ? 'NFT artwork supplied by MotherPC after purchase.'
-      : 'NFT artwork is not previewed here until it has been bought. This view is the Xaman purchase QR.';
+      : 'Xaman sign is the Buy with XRP button. This tab is not a page link.';
   }
   overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
@@ -1063,13 +1063,23 @@ function setInspectMode(mode) {
       stage.replaceChildren();
       const ownedPlate = nftPlates.has(inspectItem.id);
       stage.classList.toggle('is-nft-qr', !ownedPlate);
-      const img = document.createElement('img');
-      img.id = 'auraTradeshowInspectImg';
-      img.draggable = false;
-      const qr = nftViewSrc(inspectItem.id);
-      img.src = qr || buyQrSrc(inspectItem.id);
-      img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`;
-      stage.append(img);
+      if (ownedPlate) {
+        const img = document.createElement('img');
+        img.id = 'auraTradeshowInspectImg';
+        img.draggable = false;
+        img.src = nftViewSrc(inspectItem.id);
+        img.alt = `${inspectItem.name || inspectItem.id} · NFT artwork`;
+        stage.append(img);
+      } else {
+        const act = actionFor(inspectItem, inspectInfo);
+        const wait = document.createElement('p');
+        wait.className = 'aura-tradeshow-inspect-qr-wait';
+        wait.textContent = act.ready
+          ? 'Buy with XRP opens the Xaman sign on this phone. The NFT tab is the plate after you own it.'
+          : (act.label || 'Xaman sign is not open yet.');
+        stage.append(wait);
+        if (act.ready) openXrpTill(inspectItem.id);
+      }
     }
     paintInspectFaces(nftPlates.has(inspectItem.id) ? 'nft' : 'front');
     return;
@@ -1335,7 +1345,10 @@ function openXrpTill(id) {
   const img = till.querySelector('#auraXrpTillImg');
   const hold = till.querySelector('[data-xrp-hold]');
   const copy = till.querySelector('#auraXrpTillCopy');
-  showTillQr(img, name, tillLink(id));
+  if (img) {
+    img.removeAttribute('src');
+    img.alt = `${name} · waiting for Xaman`;
+  }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
   till.querySelector('#auraXrpTillPrice').textContent = `${act.label}. Scan in Xaman. We never hold guest keys.`;

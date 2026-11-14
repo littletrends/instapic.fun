@@ -250,6 +250,10 @@
   width:min(100%,22rem);height:auto;aspect-ratio:1;max-height:none;
   object-fit:contain;image-rendering:pixelated;background:#fff;border-radius:8px
 }
+.aura-tradeshow-inspect-qr-wait{
+  margin:0;padding:1rem;max-width:22rem;text-align:center;
+  color:#fff6ec;font:700 .95rem/1.35 Georgia,serif
+}
 .aura-tradeshow-inspect-how{margin:.15rem 0 0;grid-column:1;text-align:center;font-size:.72rem;color:#6a5340}
 .aura-tradeshow-inspect-turn{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.35rem;grid-column:1;
