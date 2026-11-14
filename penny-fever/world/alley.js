@@ -2416,7 +2416,7 @@ function tryMove(dx, dz) {
 }
 
 function updatePlayer(dt) {
-  if (alleyMapOpen) return false;
+  if (alleyMapOpen || stallCardOpen) return false;
   let ix = joy.x;
   let iy = -joy.y;
   if (keys.w || keys.arrowup) iy += 1;
@@ -2428,8 +2428,6 @@ function updatePlayer(dt) {
   moveIntent.ix = ix;
   moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
-  if (stallCardOpen && mag > 0.12) closeStallCard();
-  if (stallCardOpen) return false;
   let moving = false;
   if (mag > 0.08) {
     if (mag > 1) {
