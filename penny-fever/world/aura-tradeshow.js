@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'closed-stalls-1';
+const NFT_VER = 'convert-till-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -1079,13 +1079,16 @@ function openInspect(id) {
   if (!panel) return;
   panel.hidden = false;
   panel.querySelector('#auraTradeshowInspectName').textContent = item.name || item.id;
-  panel.querySelector('#auraTradeshowInspectSource').textContent = isFelix(item)
-    ? 'Felix’s photo booth · vendor portraits'
-    : (isLimited(item)
-      ? 'Aura Limited · optional XRP shelf'
-      : (stall && stall.id !== 'ticket-booth' ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow')));
+  panel.querySelector('#auraTradeshowInspectSource').textContent = tokenClaim(item.id)
+    ? 'Convert · token counter'
+    : (isFelix(item)
+      ? 'Felix’s photo booth · vendor portraits'
+      : (isLimited(item)
+        ? 'Aura Limited · optional XRP shelf'
+        : (stall && stall.id !== 'ticket-booth' ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow'))));
   const status = panel.querySelector('#auraTradeshowInspectAvailability');
-  if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
+  if (tokenClaim(item.id)) status.textContent = 'Convert here with tokens. The dollar till is not used.';
+  else if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
   else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · NFT minting on hold`;
   else if (info.money) status.textContent = 'Aura’s till';
   else status.textContent = `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
@@ -1185,7 +1188,7 @@ function claimLine(item, stallInfo) {
   }
   const act = actionFor(item, stallInfo);
   const claim = tokenClaim(item.id);
-  if (claim) return `Token claim · ${act.label}`;
+  if (claim) return `Convert here · ${act.label}`;
   if (isLimited(item)) return `Limited edition · ${act.label}`;
   if (MONEY.has(item.kind) || stallInfo.money) return 'Claim at Aura’s dollar till';
   const stall = stallForPrize(item);
@@ -1196,6 +1199,7 @@ function claimLine(item, stallInfo) {
 }
 function playTap(item, stallInfo, stall) {
   if (isLimited(item)) return null;
+  if (tokenClaim(item.id)) return null;
   if (isFelix(item)) {
     return {id: 'snap', label: 'Go to Felix’s booth'};
   }
