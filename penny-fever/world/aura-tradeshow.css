@@ -127,8 +127,42 @@
   .aura-tradeshow-tree-drawer:checked ~ .aura-tradeshow-tree{
     display:block;overflow:auto;
   }
-  .aura-tradeshow-tools input{flex:1 1 8rem;width:auto}
-  .aura-tradeshow-tools button,
+  .aura-tradeshow-bar{
+    flex-wrap:nowrap;gap:.25rem .35rem;padding:.22rem .45rem;
+  }
+  .aura-tradeshow-kicker{display:none}
+  .aura-tradeshow-bar h1{
+    font-size:clamp(.78rem,3.8vw,.95rem);line-height:1.15;white-space:nowrap;
+    min-width:0;overflow:hidden;text-overflow:ellipsis;
+  }
+  .aura-tradeshow-door{padding:.14rem .35rem;font-size:.55rem;flex:0 0 auto;white-space:nowrap}
+  .aura-tradeshow-back{
+    font-size:.68rem;min-height:36px;padding:0 .2rem;white-space:nowrap;flex:0 0 auto;
+  }
+  .aura-tradeshow-vip{font-size:0;white-space:nowrap;flex:0 0 auto;margin:0}
+  .aura-tradeshow-vip a{
+    font-size:.68rem;line-height:1;min-height:36px;
+    display:inline-flex;align-items:center;
+  }
+  .aura-tradeshow-close{min-width:36px;width:36px;height:36px;font-size:18px;flex:0 0 auto}
+  .aura-tradeshow-note{display:none}
+  .aura-tradeshow-tools{
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+    gap:.2rem;padding:.2rem .45rem;
+  }
+  .aura-tradeshow-have,
+  .aura-tradeshow-quick{flex-wrap:nowrap;flex:0 0 auto}
+  .aura-tradeshow-have{padding-right:.3rem;margin-right:0}
+  .aura-tradeshow-tools input{
+    flex:0 0 6.6rem;width:6.6rem;min-width:6.6rem;
+    height:36px;min-height:36px;box-sizing:border-box;
+    font-size:.78rem;padding:.2rem .45rem;
+  }
+  .aura-tradeshow-tools button{
+    min-height:36px;height:36px;font-size:.62rem;letter-spacing:.04em;
+    padding:.2rem .45rem;flex:0 0 auto;white-space:nowrap;
+  }
   .aura-tradeshow-up,
   .aura-tradeshow-play,
   .aura-tradeshow-buy,
