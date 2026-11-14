@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'convert-till-1';
+const NFT_VER = 'folder-back-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -1385,6 +1385,33 @@ function folderIsFelix() {
   if (folder.startsWith('item:') && isFelix(modelItem(folder.slice(5)))) return true;
   return false;
 }
+function bookTitle(id) {
+  return (window.PennyFeverInventoryModel?.books || []).find((b) => b.id === id)?.title || 'folder';
+}
+function folderUp() {
+  if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) {
+    return {id: 'limited', label: 'Limited'};
+  }
+  if (folder.startsWith('stall:')) {
+    const kind = stallFolderKind(folder);
+    return {id: kind || 'open', label: kind === 'closed' ? 'Closed' : 'Open'};
+  }
+  if (folder.startsWith('item:')) {
+    const item = modelItem(folder.slice(5));
+    if (isLimited(item)) {
+      const bid = LIMITED.has(item.id) ? item.id : item.book;
+      if (bid && LIMITED.has(bid)) return {id: 'book:' + bid, label: bookTitle(bid)};
+      return {id: 'limited', label: 'Limited'};
+    }
+    if (isFelix(item)) return {id: 'felix', label: 'Felix'};
+    if (item.book && item.book !== 'penny-collector-book') return {id: 'book:' + item.book, label: bookTitle(item.book)};
+    return {id: 'book:penny-collector-book', label: 'Collector book'};
+  }
+  if (folder.startsWith('book:') && folder !== 'book:penny-collector-book') {
+    return {id: 'book:penny-collector-book', label: 'Collector book'};
+  }
+  return null;
+}
 function limitedBookSections(books, itemsByBook, limitedItems) {
   let list = books.filter((b) => LIMITED.has(b.id));
   if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) {
@@ -1675,6 +1702,15 @@ function paint() {
 
   const body = overlay.querySelector('#auraTradeshowBody');
   body.replaceChildren();
+  const up = folderUp();
+  if (up) {
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'aura-tradeshow-up';
+    back.dataset.folder = up.id;
+    back.textContent = '← ' + up.label;
+    body.append(back);
+  }
   const byStall = folder === 'open' || folder === 'closed' || folder.startsWith('stall:');
   const sections = byStall
     ? (folder === 'open' ? openPlayStalls() : folder === 'closed' ? closedPlayStalls() : stallRows.map((row) => row.stall).filter((stall) => folder === 'stall:' + stall.id)).map((stall) => {

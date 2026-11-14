@@ -71,11 +71,18 @@
 .aura-tradeshow-tree-btn.is-leaf{font-weight:600;font-size:.68rem;color:#6a5340}
 .aura-tradeshow-tree-btn.is-on{background:#6b2f3c;color:#fff8ea}
 .aura-tradeshow-body{flex:1;overflow:auto;padding:.55rem .7rem 1rem;background:#f4e6c8}
+.aura-tradeshow-up{
+  display:inline-flex;align-items:center;margin:0 0 .55rem;
+  font:700 .82rem/1.2 Georgia,serif;color:#5a2438;
+  background:#fff8e9;border:1px solid #c4a064;border-radius:999px;
+  padding:.35rem .75rem;cursor:pointer;
+}
 @media (max-width:720px){
   .aura-tradeshow-main{flex-direction:column}
   .aura-tradeshow-tree{width:auto;flex:0 0 auto;max-height:28vh;border-right:0;border-bottom:1px solid #e2c48a}
   .aura-tradeshow-tools input{flex:1 1 8rem;width:auto}
   .aura-tradeshow-tools button,
+  .aura-tradeshow-up,
   .aura-tradeshow-play,
   .aura-tradeshow-buy,
   .aura-tradeshow-views button,
