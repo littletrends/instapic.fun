@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'xaman-piece-1';
+const NFT_VER = 'qr-guest-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -600,8 +600,12 @@ function tillLink(id) {
   return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
 }
 function auraTillAddress() {
-  const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || '').trim();
-  return addr.startsWith('r') ? addr : '';
+  const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL').trim();
+  return addr.startsWith('r') ? addr : 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL';
+}
+function guestOwns(id) {
+  // Paper stamps are website copies. Show the mint plate only after a ledger accept.
+  return rewardMint.account === vipAccount() && rewardMint.items?.[id] === 'accepted';
 }
 function xamanScanText(id) {
   const to = auraTillAddress();
@@ -630,7 +634,8 @@ function buyQrSrc(id) {
   }
 }
 function nftViewSrc(id) {
-  return nftPlates.has(id) ? nftPlateSrc(id) : buyQrSrc(id);
+  if (guestOwns(id) && nftPlates.has(id)) return nftPlateSrc(id);
+  return buyQrSrc(id);
 }
 function nftViewAvailable(item, stallInfo) {
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
@@ -739,7 +744,8 @@ function ensureOverlay() {
     const stage = e.target.closest('[data-inspect]');
     if (!stage || (e.key !== 'Enter' && e.key !== ' ')) return;
     e.preventDefault();
-    openInspect(stage.dataset.inspect);
+    const card = stage.closest('.aura-tradeshow-card');
+    openInspect(stage.dataset.inspect, card?.dataset.mode);
   });
   overlay.addEventListener('click', (e) => {
     const tog = e.target.closest('[data-toggle]');
@@ -847,7 +853,8 @@ function ensureOverlay() {
     const inspectStage = e.target.closest('[data-inspect]');
     if (inspectStage) {
       e.preventDefault();
-      openInspect(inspectStage.dataset.inspect);
+      const card = inspectStage.closest('.aura-tradeshow-card');
+      openInspect(inspectStage.dataset.inspect, card?.dataset.mode);
       return;
     }
     const go = e.target.closest('[data-go-stall]');
@@ -1074,9 +1081,9 @@ function setInspectMode(mode) {
   const nftNote = overlay?.querySelector('#auraTradeshowInspectNftNote');
   if (nftNote) {
     nftNote.hidden = inspectMode !== 'nft';
-    if (inspectMode === 'nft') nftNote.textContent = nftPlates.has(inspectItem.id)
+    if (inspectMode === 'nft') nftNote.textContent = guestOwns(inspectItem.id)
       ? 'NFT artwork supplied by MotherPC after purchase.'
-      : `Scan in Xaman · ${formatXrp(inspectItem.id) || 'XRP'} to ${auraTillAddress() || 'Aura'}. Minting is still on hold.`;
+      : `Scan in Xaman · ${formatXrp(inspectItem.id) || 'XRP'} to ${auraTillAddress()}. Do not send until minting is open.`;
   }
   overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
@@ -1087,7 +1094,7 @@ function setInspectMode(mode) {
     destroyInspectTurn();
     if (stage) {
       stage.replaceChildren();
-      const ownedPlate = nftPlates.has(inspectItem.id);
+      const ownedPlate = guestOwns(inspectItem.id);
       stage.classList.toggle('is-nft-qr', !ownedPlate);
       const img = document.createElement('img');
       img.id = 'auraTradeshowInspectImg';
@@ -1096,7 +1103,7 @@ function setInspectMode(mode) {
       img.alt = `${inspectItem.name || inspectItem.id} · ${ownedPlate ? 'NFT artwork' : 'Xaman till'}`;
       stage.append(img);
     }
-    paintInspectFaces(nftPlates.has(inspectItem.id) ? 'nft' : 'front');
+    paintInspectFaces(guestOwns(inspectItem.id) ? 'nft' : 'front');
     return;
   }
   overlay?.querySelector('#auraTradeshowInspectStage')?.classList.remove('is-nft-qr');
@@ -1104,7 +1111,7 @@ function setInspectMode(mode) {
   mountInspectTurntable(inspectItem, ++inspectToken);
 }
 
-function openInspect(id) {
+function openInspect(id, startMode = 'website') {
   const item = modelItem(id);
   if (!item?.id) return;
   inspectItem = item;
@@ -1155,7 +1162,7 @@ function openInspect(id) {
   claimButton.dataset.claim = item.id;
   const nftButton = panel.querySelector('[data-inspect-view="nft"]');
   nftButton.hidden = !nftViewAvailable(item, info);
-  setInspectMode('website');
+  setInspectMode(startMode === 'nft' ? 'nft' : 'website');
   panel.querySelector('#auraTradeshowInspectStage')?.focus();
 }
 
@@ -1275,12 +1282,12 @@ function setCardView(card, mode) {
   const label = card.querySelector('[data-face-label]');
   if (next === 'nft') {
     const name = card.dataset.name || id;
-    const ownedPlate = nftPlates.has(id);
+    const ownedPlate = guestOwns(id);
     if (img) {
-      img.src = nftViewSrc(id) || faceSrc({asset: card.dataset.asset}, 'front');
-      img.alt = `${name} · ${ownedPlate ? 'NFT artwork' : 'Xaman checkout'}`;
+      img.src = nftViewSrc(id) || buyQrSrc(id);
+      img.alt = `${name} · ${ownedPlate ? 'NFT artwork' : 'Xaman till'}`;
     }
-    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan to sign';
+    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan in Xaman';
     return;
   }
   if (img) img.alt = card.dataset.name || '';

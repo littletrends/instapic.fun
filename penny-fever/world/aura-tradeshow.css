@@ -158,7 +158,12 @@
 }
 .aura-tradeshow-views button[aria-pressed="true"]{background:#6b2f3c;color:#fff3d6;border-color:#c4a064}
 .aura-tradeshow-views button:disabled{opacity:.45;cursor:default}
-.aura-tradeshow-card.is-nft .aura-tradeshow-stage img{image-rendering:pixelated;filter:none}
+.aura-tradeshow-card.is-nft .aura-tradeshow-stage{
+  padding:8%;background:#fff8ea
+}
+.aura-tradeshow-card.is-nft .aura-tradeshow-stage img{
+  image-rendering:pixelated;filter:none;background:#fff;border-radius:6px
+}
 .aura-tradeshow-card.is-nft .aura-tradeshow-turn{display:none}
 .aura-tradeshow-card h3{margin:0;font-size:.74rem;line-height:1.2;color:#3d2c1f}
 .aura-tradeshow-card .stock{margin:0;font-size:.62rem;color:#6a5340}
