@@ -1130,7 +1130,8 @@ function openInspect(id) {
   else if (isLimited(item)) status.textContent = 'Aura Limited · NFT minting on hold';
   else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · NFT minting on hold`;
   else if (info.money) status.textContent = 'Aura’s till';
-  else status.textContent = `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
+  else status.textContent = act.reward && !act.disabled ? 'Collected reward · ready to mint'
+    : `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? 'NFT minting on hold' : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
   const sample = overlay.querySelector('#auraTradeshowInspectSample');
@@ -1160,7 +1161,7 @@ function openInspect(id) {
 
 function snapMint(item) {
   if (!onShelf(item.id)) return null;
-  return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, snap: true};
+  return {label: 'NFT minting unavailable · outside this test', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
@@ -1173,7 +1174,7 @@ function actionFor(item, stallInfo) {
       disabled: false, ready: true, reward: true};
   }
   if (onShelf(item.id) && !claim && !isFelix(item)) {
-    return {label: 'NFT minting unavailable · verified banking in progress', disabled: true, limited: isLimited(item)};
+    return {label: 'NFT minting unavailable · outside this test', disabled: true, limited: isLimited(item)};
   }
   if (onShelf(item.id) && !claim && !mintedReady) {
     return {label: 'Supply unavailable · reopen to retry', disabled: true};
