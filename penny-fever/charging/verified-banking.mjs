@@ -4,7 +4,7 @@ import {createVerifiedPurse} from './verified-purse.mjs';
 const BASE = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified';
 const GUEST_KEY = 'pennyFever.verified.guest.v1';
 const ADOPTION_KEY = 'pennyFever.verified.adoption.v1';
-export const VERIFIED_BANKING_RELEASE = false;
+export const VERIFIED_BANKING_RELEASE = true;
 
 export function createVerifiedBanking({api, identity, storage = globalThis.localStorage,
   transport = globalThis.fetch, locks = globalThis.navigator?.locks, scope = globalThis,
