@@ -656,6 +656,10 @@ function nftViewAvailable(item, stallInfo) {
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
 }
 
+function closeTreeDrawer() {
+  const drawer = overlay?.querySelector('#auraTradeshowTreeDrawer');
+  if (drawer) drawer.checked = false;
+}
 function ensureOverlay() {
   if (overlay) return overlay;
   overlay = document.createElement('div');
@@ -691,7 +695,11 @@ function ensureOverlay() {
       </div>
     </div>
     <div class="aura-tradeshow-main">
-      <nav class="aura-tradeshow-tree" id="auraTradeshowTree" aria-label="Penny Fever Collection"></nav>
+      <div class="aura-tradeshow-tree-shell">
+        <input type="checkbox" id="auraTradeshowTreeDrawer" class="aura-tradeshow-tree-drawer">
+        <label for="auraTradeshowTreeDrawer" class="aura-tradeshow-tree-drawer-btn">Browse collection</label>
+        <nav class="aura-tradeshow-tree" id="auraTradeshowTree" aria-label="Penny Fever Collection"></nav>
+      </div>
       <div class="aura-tradeshow-body" id="auraTradeshowBody"></div>
     </div>
     <div class="aura-xrp-till" id="auraXrpTill" hidden>
@@ -794,6 +802,7 @@ function ensureOverlay() {
         openNodes.add('book:penny-collector-book');
         openNodes.add(folder);
       }
+      closeTreeDrawer();
       paint();
       return;
     }
@@ -821,6 +830,7 @@ function ensureOverlay() {
         }
         if (item && isFelix(item)) openNodes.add('felix');
       }
+      closeTreeDrawer();
       paint();
       return;
     }

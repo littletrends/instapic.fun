@@ -56,8 +56,14 @@
   background:#9a3d5c;color:#fff8ea;border-color:#f0d08a;
 }
 .aura-tradeshow-main{flex:1;display:flex;min-height:0}
+.aura-tradeshow-tree-shell{
+  display:flex;flex-direction:column;min-height:0;
+  width:14.2rem;flex:0 0 14.2rem;
+}
+.aura-tradeshow-tree-drawer,
+.aura-tradeshow-tree-drawer-btn{display:none}
 .aura-tradeshow-tree{
-  width:14.2rem;flex:0 0 14.2rem;overflow:auto;padding:.45rem .4rem .7rem;
+  flex:1 1 auto;min-height:0;width:auto;overflow:auto;padding:.45rem .4rem .7rem;
   background:#fff6e4;border-right:1px solid #e2c48a;
 }
 .aura-tradeshow-tree-root{display:flex;flex-direction:column;gap:.04rem}
@@ -92,7 +98,35 @@
 }
 @media (max-width:720px){
   .aura-tradeshow-main{flex-direction:column}
-  .aura-tradeshow-tree{width:auto;flex:0 0 auto;max-height:28vh;border-right:0;border-bottom:1px solid #e2c48a}
+  .aura-tradeshow-tree-shell{
+    width:auto;flex:0 0 auto;
+    background:#fff6e4;border-bottom:1px solid #e2c48a;
+  }
+  .aura-tradeshow-tree-drawer{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+  .aura-tradeshow-tree-drawer-btn{
+    display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+    min-height:44px;padding:.45rem .7rem;cursor:pointer;
+    font:700 .82rem/1.2 Georgia,serif;color:#5a2438;
+    background:#fff8e9;border:0;border-bottom:1px solid #e2c48a;
+  }
+  .aura-tradeshow-tree-drawer-btn::after{
+    content:"";width:.55rem;height:.55rem;flex:0 0 auto;
+    border-right:2px solid #5a2438;border-bottom:2px solid #5a2438;
+    transform:rotate(45deg);margin-top:-.25rem;
+  }
+  .aura-tradeshow-tree-drawer:checked + .aura-tradeshow-tree-drawer-btn::after{
+    transform:rotate(-135deg);margin-top:.15rem;
+  }
+  .aura-tradeshow-tree{
+    display:none;width:auto;flex:0 0 auto;max-height:40vh;
+    border-right:0;border-bottom:0;
+  }
+  .aura-tradeshow-tree-drawer:checked ~ .aura-tradeshow-tree{
+    display:block;overflow:auto;
+  }
   .aura-tradeshow-tools input{flex:1 1 8rem;width:auto}
   .aura-tradeshow-tools button,
   .aura-tradeshow-up,
