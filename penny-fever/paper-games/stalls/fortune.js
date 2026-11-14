@@ -5,7 +5,7 @@ import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
   IRIS_WINS, clockNumber as irisClock,
-} from "../fortune-globe.js?v=prize-drop-1";
+} from "../fortune-globe.js?v=nft-board-1";
 
 const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
 const TAU = Math.PI * 2;
@@ -256,7 +256,7 @@ export default {
     "moon-brooch": "./assets/fortune/prizes/moon-brooch.webp",
     "fortune-journal": "./assets/fortune/prizes/fortune-journal.webp",
     "moon-festival-fan": "./assets/fortune/prizes/moon-festival-fan.webp",
-    "paper-crown": "./assets/fortune/prizes/paper-crown.webp",
+    "crystal-cradle": "../assets/restyle/game-sprites/parlour-prizes/crystal-cradle/front.webp",
   },
   actions: [],
   persist,

@@ -2,10 +2,10 @@
   "version": 1,
   "games": {
     "ball-toss": [
-      "new-year-star-cracker",
-      "crown-turtle",
+      "prize-claim",
+      "midway-scarf",
       "doll-display-stand",
-      "dapper-fox",
+      "juggling-bird",
       "patchwork-bear",
       "button-elephant"
     ],
@@ -13,20 +13,20 @@
       "prize-bag",
       "ticket-satchel",
       "accessory-envelope",
-      "juggling-bird",
-      "rose-lockbox",
+      "singing-bird",
+      "ribbon-gift-box",
       "balloon-bouquet"
     ],
     "bent-rings": [
       "ring-toss-ribbon",
       "lucky-ring-trio",
-      "spooky-pumpkin-friend",
+      "splash-ring",
       "twig-ring",
       "wishing-acorn",
       "orchard-circlet"
     ],
     "carousel": [
-      "alley-panel-kit",
+      "ride-explorer-pennant",
       "original-crew-book",
       "midway-uniforms",
       "mini-shoe-box",
@@ -34,20 +34,20 @@
       "music-carousel"
     ],
     "catoptromancy": [
-      "looking-glass-locket",
       "mirror-shard",
+      "looking-glass-locket",
       "folding-mirror",
-      "showman-ribbon",
-      "crown-hatbox",
+      "winter-snow-globe",
+      "winter-lantern-book",
       "glass-garden-key"
     ],
     "coin-pusher": [
       "coin-sleeve",
-      "penny-purse",
-      "coin-album",
-      "mint-press",
+      "copper-cascade",
       "penny-tree",
-      "copper-cascade"
+      "coin-album",
+      "treasure-tin",
+      "mint-press"
     ],
     "cover-the-spot": [
       "perfect-circle",
@@ -55,23 +55,23 @@
       "spring-seed-packet",
       "pressed-flower-book",
       "garden-party-book",
-      "gyro-ghost"
+      "charm-display-case"
     ],
     "curios": [
       "clockwork-key",
       "display-dome",
-      "sleepy-compass",
+      "clockwork-butterfly",
       "tin-style-robot",
       "paper-crown",
       "curio-cabinet-album"
     ],
     "duck-pond": [
       "brave-try-ribbon",
+      "spooky-pumpkin-friend",
       "pond-lily-dish",
       "crowned-duck",
-      "splash-ring",
-      "summer-sun-pin",
-      "prize-claim"
+      "sleepy-dragon",
+      "crown-turtle"
     ],
     "dunk-tank": [
       "dunk-plate",
@@ -82,81 +82,81 @@
       "wet-bell"
     ],
     "fairy-floss": [
-      "pocket-cloud",
-      "cloud-jar",
       "fairy-floss",
       "swirl-lolly",
       "toffee-apple",
-      "birthday-crown-box"
+      "birthday-crown-box",
+      "pocket-cloud",
+      "memory-camera"
     ],
     "ferris": [
-      "paper-negative",
-      "surprise-parcel",
       "cabinet-key",
+      "photo-accordion",
+      "paper-negative",
+      "ride-stamp-book",
       "shutter-click",
-      "repair-toolbox",
       "pocket-wheel"
     ],
     "fortune": [
       "fortune-slip",
       "moon-lantern",
-      "moon-rabbit",
+      "moon-brooch",
       "fortune-journal",
       "moon-festival-fan",
       "crystal-cradle"
     ],
     "funhouse": [
-      "vendor-ledger",
-      "photo-accordion",
+      "heart-biscuit",
+      "sealed-secret",
       "fold-out-bedroom",
       "secret-door-key",
       "midway-map",
       "laughing-doorway"
     ],
     "helter": [
-      "ride-explorer-pennant",
-      "sleepy-dragon",
       "lucky-match",
-      "film-frame",
       "mercury-bead",
+      "film-frame",
+      "film-reel",
+      "summer-sun-pin",
       "spiral-tower"
     ],
     "high-striker": [
-      "bell-of-bravery",
-      "bell-bracelet",
       "mighty-mallet",
+      "bell-bracelet",
       "foundry-spark",
+      "bell-of-bravery",
       "perfect-play-medal",
       "midway-master-crown"
     ],
     "lookup": [
-      "midnight-invitation",
-      "star-spectacles",
-      "moon-brooch",
-      "moonlight-wardrobe",
       "star-fragment",
+      "star-spectacles",
+      "sleepy-compass",
+      "gyro-ghost",
+      "moon-rabbit",
       "pocket-observatory"
     ],
     "love": [
-      "sweet-heat",
-      "heart-ribbon-rosette",
-      "rose-heart-basket",
-      "kindness-heart",
       "rose-hair-bow",
-      "rose-press"
+      "rose-heart-basket",
+      "heart-ribbon-rosette",
+      "friendship-pins",
+      "rose-press",
+      "rose-lockbox"
     ],
     "marquee": [
       "marquee-stub",
-      "lantern-lighter",
-      "autumn-leaf-lantern",
-      "first-visit-badge",
       "marquee-bulb",
+      "lantern-lighter",
+      "first-visit-badge",
+      "new-year-star-cracker",
       "pocket-marquee"
     ],
     "milk-bottles": [
       "dairy-calf",
-      "lost-and-found-tag",
-      "treasure-tin",
+      "crown-hatbox",
+      "lucky-dish",
       "alley-collector-cup",
       "cocoa-cup",
       "cream-churn"
@@ -164,42 +164,42 @@
     "mural": [
       "tab-repair-kit",
       "paper-offcuts",
-      "ride-stamp-book",
+      "alley-panel-kit",
       "blank-designer-book",
-      "heart-biscuit",
+      "vendor-ledger",
       "painted-bay"
     ],
     "mutoscope": [
       "flicker-book",
       "pocket-peepshow",
-      "lucky-dish",
+      "dapper-fox",
       "memory-scrapbook",
-      "ribbon-gift-box",
+      "moonlight-wardrobe",
       "pocket-theatre"
     ],
     "organ": [
-      "perforated-paper-roll",
-      "till-drawer",
       "coin-slot",
+      "till-drawer",
+      "perforated-paper-roll",
       "travel-stage",
-      "singing-bird",
+      "repair-toolbox",
       "organ-music-box"
     ],
     "pack": [
-      "midway-scarf",
-      "winter-lantern-book",
-      "winter-snow-globe",
-      "wardrobe-trunk",
       "pressed-heart",
+      "penny-purse",
+      "curtained-stage",
+      "wardrobe-trunk",
+      "midnight-invitation",
       "night-suitcase"
     ],
     "pass": [
-      "stage-door-pass",
       "cue-card",
-      "velvet-mask",
       "cue-script",
-      "curtained-stage",
-      "backstage-costume-book"
+      "showman-ribbon",
+      "velvet-mask",
+      "backstage-costume-book",
+      "stage-door-pass"
     ],
     "penny-pitch": [
       "wish-ribbon",
@@ -210,60 +210,60 @@
       "well-claim"
     ],
     "pinball": [
-      "flipper-badge",
       "lightning-pin",
       "thunder-marble",
+      "flipper-badge",
       "glass-kicker",
       "cabinet-spark",
       "bullseye-clock"
     ],
     "plinko": [
-      "film-reel",
       "mill-marble",
       "gate-token",
       "ticket-punch",
       "stamp-and-inkpad",
+      "heart-gear",
       "marble-tin"
     ],
     "popcorn": [
       "butter-kernel",
       "popcorn-carton",
-      "memory-camera",
+      "sweet-heat",
       "kettle-corn-bag",
       "lemon-fizz",
       "tiny-kettle"
     ],
     "skee-ball": [
-      "safari-frame",
       "lane-wax",
       "moonbow-stub",
       "score-card",
       "silver-cup-chip",
+      "safari-frame",
       "pegboard-star"
     ],
     "swings": [
       "ticket-stub",
-      "flight-bell",
-      "heart-gear",
-      "clockwork-butterfly",
-      "friendship-pins",
-      "swing-spinner"
+      "kindness-heart",
+      "cloud-jar",
+      "autumn-leaf-lantern",
+      "swing-spinner",
+      "flight-bell"
     ],
     "water-gun": [
       "return-postcard",
+      "message-bottle",
       "harbour-washer",
-      "stamp-passport",
       "picnic-parcel",
       "seaside-day-book",
       "little-sailboat"
     ],
     "whisper": [
-      "secret-keeper",
+      "lost-and-found-tag",
       "whisper-charm",
-      "message-bottle",
-      "sealed-secret",
       "charm-pouch",
-      "charm-display-case"
+      "surprise-parcel",
+      "stamp-passport",
+      "secret-keeper"
     ]
   }
 }

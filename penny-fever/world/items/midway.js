@@ -1,5 +1,5 @@
 import {games} from '../../paper-games/catalogue.js?v=ritual-2';
-import {kits} from '../../paper-games/prizes.js?v=prize-hud-1';
+import {kits} from '../../paper-games/prizes.js?v=nft-board-1';
 
 const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
 const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.webp`;

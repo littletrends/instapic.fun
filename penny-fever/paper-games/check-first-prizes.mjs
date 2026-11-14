@@ -116,7 +116,7 @@ function flyComet(engine,s){
 console.log('PASS: Celeste one house clock; every glass on the scoring comet; skipped glass spends the penny.');
 const iris=(await import('./stalls/fortune.js?v=keep-finish-1')).default;
 const {IRIS_CHAPTERS,IRIS_WINS}=await import('./fortune-globe.js?v=keep-finish-1');
-assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
+assert.equal(IRIS_CHAPTERS[5].prize,'crystal-cradle');
 assert(IRIS_CHAPTERS[0].flash>=5,'chapter 1 holds the secret on the glass');
 for(let level=0;level<6;level++){
  memory.clear();inventory.items={};cash=20;awards=[];
@@ -229,8 +229,8 @@ console.log('PASS: Digby awards on the 1–100 house prize second plus glow line
 const {kits}=await import('./prizes.js?v=nft-art-1');
 assert.equal(kits.helter.prizes.includes('star-token'),false);
 assert.equal(kits.helter.prizes.length,6);
-assert.deepEqual(kits.helter.prizes,['ride-explorer-pennant','sleepy-dragon','lucky-match','film-frame','mercury-bead','spiral-tower']);
-assert.deepEqual(kits.funhouse.prizes,['vendor-ledger','photo-accordion','fold-out-bedroom','secret-door-key','midway-map','laughing-doorway']);
+assert.deepEqual(kits.helter.prizes,['lucky-match','mercury-bead','film-frame','film-reel','summer-sun-pin','spiral-tower']);
+assert.deepEqual(kits.funhouse.prizes,['heart-biscuit','sealed-secret','fold-out-bedroom','secret-door-key','midway-map','laughing-doorway']);
 console.log('PASS: Helter and Juno chapter bonuses match allocations, not play icons.');
 if(typeof globalThis.Image==='undefined')globalThis.Image=class{constructor(){this.naturalWidth=1;this.naturalHeight=1;}};
 const helter=(await import('./stalls/helter.js?v=ride-ticket-1')).default;

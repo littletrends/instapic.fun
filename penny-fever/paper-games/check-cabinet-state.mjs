@@ -134,8 +134,8 @@ for(let level=0;level<6;level++){
 console.log('PASS: prize-second hang in every chapter, old saves stay dark until a prize second, no duplicated/owned prizes, preserved penny positions.');
 
 const {IRIS_CHAPTERS,isIrisWin,IRIS_WINS}=await import('./fortune-globe.js?v=prize-drop-1');
-assert.equal(IRIS_CHAPTERS[5].prize,'paper-crown');
-assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,paper-crown');
+assert.equal(IRIS_CHAPTERS[5].prize,'crystal-cradle');
+assert.equal(IRIS_CHAPTERS.map(c=>c.prize).join(','),'fortune-slip,moon-lantern,moon-brooch,fortune-journal,moon-festival-fan,crystal-cradle');
 assert(!IRIS_CHAPTERS.some(c=>c.prize==='looking-glass-locket'));
 inventory.items={};awards=[];mem.clear();cash=20;
 let gaze=iris.create(0);iris.action(gaze,'gaze');
@@ -168,7 +168,7 @@ gaze=iris.create(2);iris.action(gaze,'gaze');
 while(gaze.phase==='flash')iris.update(gaze,.5);
 for(let i=0;i<gaze.globe.rings.length;i++)iris.pointer(gaze,'down',{x:450,y:428});
 assert.equal(gaze.phase,'result');assert(!gaze.caught);assert.equal(awards.length,0,'a slipped gaze holds no reward');assert.equal(cash,19,'chapter 3 gaze spends a penny');assert.equal(credits.length,0);
-console.log('PASS: Iris chapter 6 is paper-crown; prize-second catch collects the bonus; later greens pay an ordinary; misses do not.');
+console.log('PASS: Iris chapter 6 is crystal-cradle; prize-second catch collects the bonus; later greens pay an ordinary; misses do not.');
 
 mem.set(key,JSON.stringify({v:6,practiceUsed:true,trays:{}}));cash=40;packed=0;debits=[];credits=[];
 let bank=copper.create(0);bank.practice=false;bank.phase='idle';bank.busy=false;

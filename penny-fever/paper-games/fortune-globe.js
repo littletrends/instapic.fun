@@ -1,4 +1,4 @@
-import {kits as chapterKits} from './prizes.js?v=nft-art-1';
+import {kits as chapterKits} from './prizes.js?v=nft-board-1';
 import {firstPrizeEligible} from './first-prize.js?v=keep-finish-1';
 /** Isolated Catch the Fortune: rings, symbols, fortunes, hidden 1–100. */
 
@@ -25,7 +25,7 @@ export const IRIS_CHAPTERS = [
   { id: "crossing", title: "The Crossing Sign", rings: 2, flash: 2.6, hide: false, opposite: true, decoys: false, prize: "moon-brooch" },
   { id: "fading", title: "The Fading Sign", rings: 2, flash: 0.9, hide: true, opposite: false, decoys: false, prize: "fortune-journal" },
   { id: "false", title: "The False Sign", rings: 2, flash: 1.6, hide: true, opposite: true, decoys: true, prize: "moon-festival-fan" },
-  { id: "mystery", title: "The Mystery Sign", rings: 3, flash: 2.4, hide: true, opposite: true, decoys: true, prize: "paper-crown" },
+  { id: "mystery", title: "The Mystery Sign", rings: 3, flash: 2.4, hide: true, opposite: true, decoys: true, prize: "crystal-cradle" },
 ];
 IRIS_CHAPTERS.forEach((chapter, i) => { chapter.prize = chapterKits['fortune'].prizes[i] || chapter.prize; });
 
@@ -35,7 +35,7 @@ export const PRIZE_NAMES = {
   "moon-brooch": "Moon brooch",
   "fortune-journal": "Fortune journal",
   "moon-festival-fan": "Moon festival fan",
-  "paper-crown": "Paper crown",
+  "crystal-cradle": "Crystal cradle",
 };
 
 function span(a, b, step = 1) {

@@ -47,6 +47,6 @@ export const games = rows.map(([id,host,title,blurb,direct,flag]) => ({
     : id==='coin-pusher' ? './assets/coin-pusher.webp?v=iris-globe-1'
     : id==='milk-bottles' ? './assets/milk-bottles.webp?v=milk-props-1'
     : `./assets/${id}.webp?v=game-webp-1`,
-  module: `./stalls/${id}.js`,
+  module: `./stalls/${id}.js?v=nft-board-1`,
 }));
 export const byId = Object.fromEntries(games.map(g=>[g.id,g]));
