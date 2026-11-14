@@ -1774,6 +1774,11 @@ function bindJoy() {
   pad.addEventListener("pointermove", move);
   pad.addEventListener("pointerup", end);
   pad.addEventListener("pointercancel", end);
+  pad.addEventListener("lostpointercapture", end);
+  window.addEventListener("pointerup", () => { if (joy.active) end(); });
+  window.addEventListener("pointercancel", () => { if (joy.active) end(); });
+  window.addEventListener("blur", end);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) end(); });
 }
 
 function lookCardKind(best) {
@@ -1963,7 +1968,7 @@ function openBoothCard(best) {
   if (best.kind === "aura") paintAuraDoorActions(nearest);
 }
 
-function closeStallCard() {
+function closeStallCard(opts = {}) {
   focusedFigures().forEach((fig) => {
     delete fig.userData.pinView;
     if (fig.userData.papercutStand) delete fig.userData.papercutStand.userData.pinView;
@@ -1979,8 +1984,12 @@ function closeStallCard() {
   if (card) card.hidden = true;
   const till = el("pfStallCardTill");
   if (till) till.hidden = true;
-  const joy = el("pfJoy");
-  if (joy) joy.hidden = false;
+  const joyEl = el("pfJoy");
+  if (joyEl) joyEl.hidden = false;
+  if (opts.fromWalk) {
+    ticketDeskReturn = null;
+    return;
+  }
   if (ticketDeskReturn) {
     const destination = ticketDeskReturn;
     ticketDeskReturn = null;
@@ -2068,8 +2077,6 @@ function syncStallCard(best) {
   }
   stallCardOpen = true;
   card.hidden = false;
-  const joy = el("pfJoy");
-  if (joy) joy.hidden = true;
 }
 
 function talkToFocus() {
@@ -2428,7 +2435,7 @@ function updatePlayer(dt) {
   moveIntent.ix = ix;
   moveIntent.iy = iy;
   const mag = Math.hypot(ix, iy);
-  if (stallCardOpen && mag > 0.12) closeStallCard();
+  if (stallCardOpen && mag > 0.12) closeStallCard({ fromWalk: true });
   if (stallCardOpen) return false;
   let moving = false;
   if (mag > 0.08) {
