@@ -727,6 +727,7 @@ function ensureOverlay() {
         <button type="button" class="aura-xrp-till-again" data-xrp-buy-another hidden></button>
         <button type="button" class="aura-xrp-till-done" data-xrp-done hidden>Close</button>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
+        <button type="button" class="aura-xrp-till-cancel" data-xrp-cancel hidden>Cancel purchase</button>
       </div>
     </div>`;
   const inspect = document.createElement('div');
@@ -932,6 +933,12 @@ function ensureOverlay() {
     if (hold && hold.dataset.item) {
       e.preventDefault();
       queueXrpPlace(hold.dataset.item);
+      return;
+    }
+    const cancel = e.target.closest('[data-xrp-cancel]');
+    if (cancel) {
+      e.preventDefault();
+      cancelXrpPurchase();
       return;
     }
     const claimBtn = e.target.closest('[data-claim]');
@@ -1405,6 +1412,11 @@ function resetTillDom(till) {
   if (done) done.hidden = true;
   const hold = till.querySelector('[data-xrp-hold]');
   if (hold) hold.hidden = false;
+  const cancel = till.querySelector('[data-xrp-cancel]');
+  if (cancel) {
+    cancel.hidden = true;
+    cancel.disabled = false;
+  }
   const copy = till.querySelector('#auraXrpTillCopy');
   if (copy) copy.textContent = 'MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.';
   const img = till.querySelector('#auraXrpTillImg');
@@ -1473,6 +1485,11 @@ function applyTillState(till, data, ctx) {
   }
   if (done) done.hidden = !state.showClose;
   if (hold) hold.hidden = state.phase !== 'open';
+  const cancel = till.querySelector('[data-xrp-cancel]');
+  if (cancel) {
+    cancel.hidden = state.phase !== 'open' || !pendingCheckouts.get(id)?.uuid;
+    if (state.phase !== 'open') cancel.disabled = false;
+  }
   if (state.phase === 'accepted') {
     const item = modelItem(id);
     if (img) {
@@ -1553,7 +1570,49 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
   tillPoll = setInterval(tick, 2500);
   tick();
 }
+function cancelXrpPurchase() {
+  const till = overlay?.querySelector('#auraXrpTill');
+  if (!till || till.hidden) return;
+  const id = till.dataset.item || '';
+  const pending = pendingCheckouts.get(id);
+  const uuid = pending?.uuid;
+  const copy = till.querySelector('#auraXrpTillCopy');
+  const btn = till.querySelector('[data-xrp-cancel]');
+  const revision = tillRevision;
+  const account = vipAccount();
+  const reward = !!pending?.reward;
+  if (!uuid) {
+    pendingCheckouts.delete(id);
+    closeXrpTill();
+    loadMinted().then(() => paint());
+    return;
+  }
+  if (btn) btn.disabled = true;
+  if (copy) copy.textContent = 'Cancelling this request…';
+  fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/cancel/${encodeURIComponent(uuid)}`, {
+    method: 'POST', cache: 'no-store',
+  }).then(async (res) => {
+    const data = await res.json().catch(() => ({}));
+    if (revision !== tillRevision || account !== vipAccount() || till.hidden) return;
+    if (!res.ok || data?.ok === false) {
+      if (btn) btn.disabled = false;
+      if (copy) copy.textContent = data?.message || 'This purchase could not be cancelled.';
+      return;
+    }
+    pendingCheckouts.delete(id);
+    closeXrpTill();
+    const refresh = [loadMinted()];
+    if (reward) refresh.push(loadRewardMint(account, eligibilityRevision));
+    Promise.all(refresh).then(() => paint());
+  }).catch(() => {
+    if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) {
+      if (btn) btn.disabled = false;
+      copy.textContent = 'Cancel could not reach MotherPC. Try again in a moment.';
+    }
+  });
+}
 function openXrpTill(id) {
+
   const act = shopAction(id);
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
