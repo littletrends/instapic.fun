@@ -320,6 +320,18 @@
   border:1px solid #c9a24a;background:linear-gradient(180deg,#7a5728,#4a3518);
   color:#fff6ec;font:700 .85rem/1.2 Georgia,serif;
 }
+.aura-xrp-till-again{
+  display:block;width:100%;box-sizing:border-box;margin-top:.15rem;padding:.55rem .4rem;
+  border-radius:8px;cursor:pointer;border:1px solid #3d6a4a;
+  background:linear-gradient(180deg,#3f7a52,#245338);
+  color:#f4fff4;font:700 .9rem/1.2 Georgia,serif;
+}
+.aura-xrp-till-again[hidden],.aura-xrp-till-done[hidden],.aura-xrp-till-ready[hidden]{display:none}
+.aura-xrp-till-done{
+  display:block;width:100%;box-sizing:border-box;margin-top:.15rem;padding:.5rem .4rem;
+  border-radius:8px;cursor:pointer;border:1px solid #8a6a48;background:#fff6e8;
+  color:#5a2438;font:700 .85rem/1.2 Georgia,serif;
+}
 .aura-tradeshow-inspect[hidden]{display:none}
 .aura-tradeshow-inspect{
   position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;

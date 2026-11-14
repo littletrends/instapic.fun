@@ -2,6 +2,7 @@ import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=ma
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
+import {tillStateFromStatus} from './aura-till-state.js?v=tradeshow-owned-2';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -38,6 +39,8 @@ let resumeWorld = false;
 let lastFocus = null;
 let tillPoll = 0;
 let tillRevision = 0;
+let tillTick = null;
+const pendingCheckouts = new Map();
 let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let folder = 'book:penny-collector-book';
@@ -721,6 +724,8 @@ function ensureOverlay() {
         <p id="auraXrpTillPrice"></p>
         <p id="auraXrpTillCopy">MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.</p>
         <a class="aura-xrp-till-open" id="auraXrpTillOpen" hidden rel="noopener" target="_blank">Open in Xaman</a>
+        <button type="button" class="aura-xrp-till-again" data-xrp-buy-another hidden></button>
+        <button type="button" class="aura-xrp-till-done" data-xrp-done hidden>Close</button>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
       </div>
     </div>`;
@@ -909,9 +914,18 @@ function ensureOverlay() {
       setCardView(viewBtn.closest('.aura-tradeshow-card'), viewBtn.dataset.view);
       return;
     }
-    if (e.target.id === 'auraXrpTill' || e.target.closest('[data-xrp-close]')) {
+    if (e.target.id === 'auraXrpTill' || e.target.closest('[data-xrp-close]') || e.target.closest('[data-xrp-done]')) {
       e.preventDefault();
       closeXrpTill();
+      return;
+    }
+    const again = e.target.closest('[data-xrp-buy-another]');
+    if (again && again.dataset.item) {
+      e.preventDefault();
+      const nextId = again.dataset.item;
+      pendingCheckouts.delete(nextId);
+      closeXrpTill();
+      openXrpTill(nextId);
       return;
     }
     const hold = e.target.closest('[data-xrp-hold]');
@@ -1219,6 +1233,16 @@ function snapMint(item) {
   return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
+  if (pendingCheckouts.has(item.id)) {
+    const pending = pendingCheckouts.get(item.id) || {};
+    return {
+      label: 'Continue checkout',
+      disabled: false,
+      ready: true,
+      reward: !!pending.reward,
+      purchase: !pending.reward || !!rewardMint.prices?.[item.id],
+    };
+  }
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
@@ -1341,18 +1365,61 @@ function setCardView(card, mode) {
   if (img) img.alt = card.dataset.name || '';
   poseCard(card, Number(card.dataset.face) || 0);
 }
-function stopTillPoll() {
-  // Closing or replacing the till also invalidates replies already in flight.
-  tillRevision += 1;
+function stopTillTimer() {
+  tillTick = null;
   if (tillPoll) {
     clearInterval(tillPoll);
     tillPoll = 0;
   }
 }
+function stopTillPoll() {
+  // Closing or replacing the till also invalidates replies already in flight.
+  tillRevision += 1;
+  stopTillTimer();
+}
+function bindTillWake() {
+  if (bindTillWake.bound) return;
+  bindTillWake.bound = true;
+  const wake = () => {
+    if (document.visibilityState === 'hidden') return;
+    if (typeof tillTick === 'function') tillTick();
+  };
+  document.addEventListener('visibilitychange', wake);
+  window.addEventListener('focus', wake);
+  window.addEventListener('pageshow', wake);
+}
+function resetTillDom(till) {
+  if (!till) return;
+  const open = till.querySelector('#auraXrpTillOpen');
+  if (open) {
+    open.hidden = true;
+    open.removeAttribute('href');
+  }
+  const again = till.querySelector('[data-xrp-buy-another]');
+  if (again) {
+    again.hidden = true;
+    again.textContent = '';
+    again.removeAttribute('data-item');
+  }
+  const done = till.querySelector('[data-xrp-done]');
+  if (done) done.hidden = true;
+  const hold = till.querySelector('[data-xrp-hold]');
+  if (hold) hold.hidden = false;
+  const copy = till.querySelector('#auraXrpTillCopy');
+  if (copy) copy.textContent = 'MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.';
+  const img = till.querySelector('#auraXrpTillImg');
+  if (img) {
+    img.removeAttribute('src');
+    img.alt = '';
+  }
+}
 function closeXrpTill() {
   stopTillPoll();
   const till = overlay?.querySelector('#auraXrpTill');
-  if (till) till.hidden = true;
+  if (till) {
+    resetTillDom(till);
+    till.hidden = true;
+  }
   overlay?.querySelector('#auraTradeshowClose')?.focus();
 }
 function showTillQr(img, name, text) {
@@ -1364,34 +1431,103 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
-function showTillPayload(till, img, name, data, account, id) {
-  const link = String(data?.deep_link || '').trim();
-  const qr = String(data?.qr || '').trim();
+function canBuyAnother(id) {
+  const act = shopAction(id);
+  return !!(act.ready && !act.disabled && !act.claim && !act.reward);
+}
+function applyTillState(till, data, ctx) {
+  const {img, name, account, id, revision, reward} = ctx;
+  if (data?.mint?.status === 'accepted') {
+    pendingCheckouts.delete(id);
+    const owned = Math.max(nftOwnedCount(id), 1);
+    if (rewardMint.account === account) {
+      rewardMint.owned = rewardMint.owned && typeof rewardMint.owned === 'object' ? rewardMint.owned : {};
+      rewardMint.owned[id] = owned;
+    }
+  }
+  const state = tillStateFromStatus(data, {
+    owned: Math.max(nftOwnedCount(id), data?.mint?.status === 'accepted' ? 1 : 0),
+    price: xrpPriceFor(id) || formatXrp(id),
+    canBuyAnother: data?.mint?.status === 'accepted' && canBuyAnother(id),
+  });
+  const copy = till.querySelector('#auraXrpTillCopy');
   const open = till.querySelector('#auraXrpTillOpen');
-  if (link) checkoutLinks.set(account + ':' + id, link);
+  const again = till.querySelector('[data-xrp-buy-another]');
+  const done = till.querySelector('[data-xrp-done]');
+  const hold = till.querySelector('[data-xrp-hold]');
+  if (copy) copy.textContent = state.message;
   if (open) {
-    if (link) {
+    if (state.showOpen && state.deepLink) {
       open.hidden = false;
-      open.href = link;
+      open.href = state.deepLink;
+      checkoutLinks.set(account + ':' + id, state.deepLink);
     } else {
       open.hidden = true;
       open.removeAttribute('href');
     }
   }
-  if (img && /^https:\/\/xumm\.app\//i.test(qr)) {
-    img.src = qr;
-    img.alt = `${name} · Xaman sign`;
-    return;
+  if (again) {
+    again.hidden = !state.showBuyAnother;
+    again.textContent = state.buyAnotherLabel || '';
+    if (id) again.dataset.item = id;
   }
-  if (link) showTillQr(img, name, link);
+  if (done) done.hidden = !state.showClose;
+  if (hold) hold.hidden = state.phase !== 'open';
+  if (state.phase === 'accepted') {
+    const item = modelItem(id);
+    if (img) {
+      const art = (nftPlates.has(id) && nftPlateSrc(id))
+        || (item?.asset && faceSrc(item, 'front'))
+        || item?.asset
+        || '';
+      if (art) img.src = art;
+      img.alt = `${name} · minted`;
+    }
+    const stockLine = till.querySelector('#auraXrpTillStock');
+    if (stockLine) stockLine.textContent = formatStock(id);
+    stopTillTimer();
+    loadMinted();
+    if (reward) {
+      loadRewardMint(account, eligibilityRevision).then(() => {
+        if (revision === tillRevision && !till.hidden) {
+          applyTillState(till, data, {...ctx, reward: false});
+        }
+        paint();
+      });
+    } else {
+      paint();
+    }
+    return state;
+  }
+  if (state.showOpen && img) {
+    const qr = state.qr || '';
+    if (/^https:\/\/xumm\.app\//i.test(qr)) {
+      img.src = qr;
+      img.alt = `${name} · Xaman sign`;
+    } else if (state.deepLink) {
+      showTillQr(img, name, state.deepLink);
+    }
+  }
+  if (state.allowRetry) pendingCheckouts.delete(id);
+  if (['cancelled', 'expired'].includes(state.phase)) stopTillTimer();
+  return state;
 }
-function watchXamanPayload(till, uuid, revision, account, reward = false) {
+function showTillPayload(till, img, name, data, account, id) {
+  applyTillState(till, {
+    status: 'open',
+    deep_link: data?.deep_link,
+    qr: data?.qr,
+    message: data?.message,
+    mint: data?.mint,
+  }, {img, name, account, id, revision: tillRevision, reward: false});
+}
+function watchXamanPayload(till, uuid, revision, account, reward, id) {
   if (revision !== tillRevision || account !== vipAccount()) return;
   stopTillPoll();
   const pollRevision = tillRevision;
-  const copy = till.querySelector('#auraXrpTillCopy');
   const img = till.querySelector('#auraXrpTillImg');
   const name = till.querySelector('#auraXrpTillName')?.textContent || 'card';
+  const itemId = id || till.dataset.item || '';
   const tick = () => {
     if (pollRevision !== tillRevision) return;
     if (till.hidden || account !== vipAccount()) {
@@ -1405,34 +1541,15 @@ function watchXamanPayload(till, uuid, revision, account, reward = false) {
       } : {cache: 'no-store'})
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
-        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
-        const mint = data?.mint;
-        if (mint?.accept_deep_link && mint.status !== 'accepted') {
-          showTillPayload(till, img, name, {
-            deep_link: mint.accept_deep_link,
-            qr: mint.accept_qr,
-          }, account, uuid);
-          copy.textContent = mint.message || 'Signed. Open Xaman again to receive the card.';
-          return;
-        }
-        if (mint?.status === 'accepted') {
-          stopTillPoll();
-          copy.textContent = mint.message || 'The card is in your wallet.';
-          loadMinted();
-          if (reward) loadRewardMint(account, eligibilityRevision).then(paint);
-          return;
-        }
-        if (data?.status === 'signed') {
-          copy.textContent = (mint && mint.message) || data.message || 'Signed. Minting your card…';
-          return;
-        }
-        if (data?.status && data.status !== 'open') {
-          stopTillPoll();
-          copy.textContent = data.message || 'This sign request closed.';
-        }
+        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden) return;
+        applyTillState(till, data, {
+          img, name, account, id: itemId, revision: pollRevision, reward,
+        });
       })
       .catch(() => {});
   };
+  bindTillWake();
+  tillTick = tick;
   tillPoll = setInterval(tick, 2500);
   tick();
 }
@@ -1446,6 +1563,7 @@ function openXrpTill(id) {
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till) return;
   stopTillPoll();
+  resetTillDom(till);
   const revision = tillRevision;
   const account = vipAccount();
   const item = modelItem(id);
@@ -1457,18 +1575,17 @@ function openXrpTill(id) {
     img.removeAttribute('src');
     img.alt = `${name} · waiting for Xaman`;
   }
+  till.dataset.item = id;
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
   till.querySelector('#auraXrpTillPrice').textContent = act.reward && !act.purchase
     ? `${act.label}. Open Xaman on this phone, or scan the QR from another device. Network fee only. We never hold guest keys.`
     : `${purchaseLabel(item) || act.label}. Open Xaman on this phone, or scan the QR from another device. We never hold guest keys.`;
   if (copy) copy.textContent = 'Opening a Xaman sign request…';
-  const open = till.querySelector('#auraXrpTillOpen');
-  if (open) {
-    open.hidden = true;
-    open.removeAttribute('href');
+  if (hold) {
+    hold.dataset.item = id;
+    hold.hidden = true;
   }
-  if (hold) hold.dataset.item = id;
   till.hidden = false;
   till.querySelector('[data-xrp-close]')?.focus();
   fetch(checkoutUrl(id), act.reward ? {
@@ -1482,15 +1599,15 @@ function openXrpTill(id) {
     })
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
-      if (data?.deep_link || data?.qr) {
-        showTillPayload(till, img, name, data, account, id);
-        copy.textContent = data.message || (act.reward && !act.purchase
-          ? 'Tap Open in Xaman. This collected piece has no tradeshow price.'
-          : 'Tap Open in Xaman on this phone, or scan the QR. We never hold guest keys.');
-        if (data.payload) watchXamanPayload(till, data.payload, revision, account, !!act.reward);
-        return;
+      if (data?.payload) {
+        pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward});
       }
-      copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
+      const state = applyTillState(till, data, {
+        img, name, account, id, revision, reward: !!act.reward,
+      });
+      if (data?.payload && state?.phase !== 'accepted' && state?.phase !== 'cancelled' && state?.phase !== 'expired') {
+        watchXamanPayload(till, data.payload, revision, account, !!act.reward, id);
+      }
     })
     .catch(error => {
       if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) copy.textContent = `Checkout did not open: ${error?.message || 'connection unavailable'}. No NFT purchase was completed here.`;
