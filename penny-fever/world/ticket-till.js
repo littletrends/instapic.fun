@@ -57,7 +57,50 @@ export function paintBankLoan() {
     if (!btn) continue;
     btn.disabled = !loan.enabled;
     btn.textContent = label;
+    paintCollectionLoan(btn, loan);
   }
+}
+
+let collectionBusy = false;
+function paintCollectionLoan(loanButton, loan) {
+  const identity = window.InstapicGuestIdentity;
+  const permitted = !!identity?.isVerifiedSessionActive?.()
+    && window.PennyFeverVerifiedPurse?.wallet?.().test_collection_allowed === true;
+  let button = document.getElementById(loanButton.id + 'Collection');
+  if (!button && permitted) {
+    button = document.createElement('button');
+    button.type = 'button';
+    button.id = loanButton.id + 'Collection';
+    button.textContent = '+ Collection';
+    loanButton.insertAdjacentElement('afterend', button);
+    button.addEventListener('click', async () => {
+      if (collectionBusy || !window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) return;
+      const service = window.PennyFeverVerified, owner = service?.owner;
+      const note = document.getElementById(loanButton.id === 'pfTillLoan' ? 'pfStallCardLine' : 'auraCounterMessage');
+      collectionBusy = true;
+      paintBankLoan();
+      try {
+        const result = await service.testCollection();
+        if (service.owner === owner && note) note.textContent = result.added
+          ? `Penny collection added · ${result.added} missing items. Existing items and purse kept.`
+          : 'Your Penny collection is complete. Existing items and purse kept.';
+      } catch (error) {
+        if (service?.owner === owner && note) note.textContent = error?.message === 'bank_loan_disabled'
+          ? 'Bank loan is off.' : 'Collection not added yet. Sign in to your test VIP and retry when the bank is ready.';
+      } finally {
+        collectionBusy = false;
+        paintBankLoan();
+      }
+    });
+  }
+  if (button) {
+    button.hidden = !permitted;
+    button.disabled = collectionBusy || !loan.enabled || !window.PennyFeverVerified?.active;
+  }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener?.('pennyfever:statechange', paintBankLoan);
+  window.addEventListener?.('storage', paintBankLoan);
 }
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;

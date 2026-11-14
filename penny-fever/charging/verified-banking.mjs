@@ -202,6 +202,19 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       return result.selectedChapter || 0;
     },
     registerRound(callback) {rounds.add(callback); return () => rounds.delete(callback);},
+    async testCollection() {
+      await flush();
+      const epoch = generation, selected = account;
+      if (!selected?.email || !vip()) throw Error('verification_required');
+      if (!purse.wallet().test_collection_allowed) throw Error('test_collection_not_allowed');
+      if (!loan().enabled) throw Error('bank_loan_disabled');
+      const client = clientFor(selected, epoch);
+      await client.recover();
+      const result = await client.command({operation: 'wallet', action: 'test_collection'});
+      if (epoch !== generation || vip()?.email !== selected.email) throw Error('verified_identity_changed');
+      purse.accept(result);
+      return result.collection_grant;
+    },
     async purchase(payload) {
       await flush();
       const epoch = generation;
