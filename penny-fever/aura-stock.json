@@ -224,9 +224,9 @@
       }
     }
   },
-  "aura_xrp_address": "rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL",
+  "aura_xrp_address": "raX62YZbpbmCjRNiajozue1RR51avq3Jdq",
   "xrpl": {
-    "issuer": "rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL",
+    "issuer": "raX62YZbpbmCjRNiajozue1RR51avq3Jdq",
     "transfer_fee": 1590,
     "taxons": {
       "play": 1,

@@ -619,8 +619,8 @@ function tillLink(id) {
   return `${origin}/penny-fever/index.html?style=paper&rail=paper&v=${NFT_VER}&buy=${encodeURIComponent(id)}#aura-tradeshow`;
 }
 function auraTillAddress() {
-  const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL').trim();
-  return addr.startsWith('r') ? addr : 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL';
+  const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || 'raX62YZbpbmCjRNiajozue1RR51avq3Jdq').trim();
+  return addr.startsWith('r') ? addr : 'raX62YZbpbmCjRNiajozue1RR51avq3Jdq';
 }
 function nftOwnedCount(id) {
   if (rewardMint.account !== vipAccount()) return 0;
