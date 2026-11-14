@@ -46,6 +46,17 @@ export function createVerifiedDriver({engine, game, chapter, seed, startedAt = 0
       state.board = cloneBoard(state.board);
       restoreSplash(state,snapshot.milkSplash);
     }
+    if (game === 'curios' && snapshot && Array.isArray(state.capsules)) {
+      // JSON duplicates shared objects. Keep the claw's target/carry attached
+      // to the existing capsule, rather than moving an unrelated copied object.
+      for (const field of ['target', 'held']) {
+        const reference = state[field];
+        if (!reference || reference.ordinary || !Number.isInteger(reference.id)) continue;
+        const capsule = state.capsules.find(item => item.id === reference.id);
+        if (!capsule) throw Error('invalid_capsule_reference');
+        state[field] = capsule;
+      }
+    }
     plant();
   });
   const keySet = values => {
