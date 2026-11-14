@@ -10,7 +10,7 @@ const MONEY = new Set(['currency', 'scrip', 'ticket', 'pass']);
 const DRIPS = new Set(['star-token', 'rose-penny', 'moon-penny', 'crown-token']);
 const FILE = new URL('../aura-stock.json?t=' + Date.now(), import.meta.url);
 const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
-const NFT_VER = 'qr-guest-1';
+const NFT_VER = 'price-shelf-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
   'star-token': ['star token', 'star tokens'],
@@ -27,7 +27,8 @@ const LIMITED = new Set([
 let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', token_claims: {}};
 let minted = {};
 let mintedReady = false;
-let rewardMint = {account: '', enabled: false, items: {}};
+let rewardMint = {account: '', enabled: false, items: {}, prices: {}};
+const checkoutLinks = new Map();
 let nftPlates = new Set();
 let overlay = null;
 let inspectItem = null;
@@ -71,7 +72,7 @@ function vipAccount() {
 }
 function clearEligibility(account = '') {
   eligibilityAccount = account;
-  rewardMint = {account, enabled: false, items: {}};
+  rewardMint = {account, enabled: false, items: {}, prices: {}};
   snapElig = {portraits: new Set(), book: false};
   dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
   dripReady = false;
@@ -148,7 +149,7 @@ function loadRewardMint(account, revision) {
     body: JSON.stringify({email: account}),
   }).then(res => res.ok ? res.json() : null).then(data => {
     if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return;
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}};
   }).catch(() => {});
 }
 function loadDrips(email, revision) {
@@ -257,6 +258,16 @@ function xrpPriceFor(id) {
 function formatXrp(id) {
   const p = xrpPriceFor(id);
   return p ? `${p} XRP` : '';
+}
+function purchaseLabel(item) {
+  if (!item?.id) return '';
+  if (tokenClaim(item.id)) {
+    const cost = formatTokenCost(tokenClaim(item.id).cost);
+    return cost ? `Convert · ${cost}` : 'Convert with tokens';
+  }
+  if (isFelix(item)) return 'Not for sale here';
+  if (MONEY.has(item.kind)) return 'Dollar till';
+  return formatXrp(item.id) || 'Price pending';
 }
 function capLine(id) {
   const cap = walletBuyCap(id);
@@ -573,19 +584,21 @@ function poseCard(card, index) {
   });
 }
 function formatStock(id) {
-  if (!onShelf(id)) return 'Not on the shelf yet';
+  const item = modelItem(id);
+  const price = purchaseLabel(item);
+  if (!onShelf(id)) return price ? `Not on the shelf yet · ${price}` : 'Not on the shelf yet';
   if (tokenClaim(id)) {
     const n = remainingFor(id);
     const left = n.toLocaleString('en-AU') + ' remaining';
     if (n <= 0) return left + ' · trade later';
-    return left + ' · convert with tokens';
+    return price ? `${left} · ${price}` : left + ' · convert with tokens';
   }
-  if (!mintedReady) return 'Supply unavailable · reopen to retry';
+  if (!mintedReady) return price ? `Supply unavailable · ${price}` : 'Supply unavailable · reopen to retry';
   const n = remainingFor(id);
   const left = n.toLocaleString('en-AU') + ' remaining';
-  if (n <= 0) return left + ' · trade later';
-  if (shopHolding(id)) return left + ' · last copies held for play';
-  return left;
+  if (n <= 0) return price ? `${left} · trade later · ${price}` : left + ' · trade later';
+  if (shopHolding(id)) return price ? `${left} · last copies held for play · ${price}` : left + ' · last copies held for play';
+  return price ? `${left} · ${price}` : left;
 }
 function guestRef() {
   try {
@@ -609,10 +622,9 @@ function guestOwns(id) {
 }
 function xamanScanText(id) {
   const to = auraTillAddress();
-  if (!to) return '';
   const xrp = String(xrpPriceFor(id) || '').trim();
-  if (xrp && Number(xrp) > 0) return `https://xumm.app/detect/xrp:${to}:${xrp}`;
-  return `https://xumm.app/detect/xrp:${to}`;
+  if (!to || !xrp || !(Number(xrp) > 0) || tokenClaim(id)) return '';
+  return `https://xumm.app/detect/xrp:${to}:${xrp}`;
 }
 function checkoutUrl(id) {
   if (shopAction(id).reward) return `${NFT_HOST}/api/penny-fever/verified/redeem`;
@@ -625,7 +637,7 @@ function checkoutUrl(id) {
   return `${NFT_HOST}/api/penny-fever/xaman-checkout?${qs}`;
 }
 function buyQrSrc(id) {
-  const text = xamanScanText(id);
+  const text = checkoutLinks.get(vipAccount() + ':' + id) || xamanScanText(id);
   if (!text) return '';
   try {
     return qrDataUrl(text, 5, 8);
@@ -715,6 +727,7 @@ function ensureOverlay() {
         <p class="aura-tradeshow-inspect-kicker" id="auraTradeshowInspectSource"></p>
         <p id="auraTradeshowInspectAvailability" aria-live="polite"></p>
         <h2 id="auraTradeshowInspectName"></h2>
+        <p class="aura-tradeshow-inspect-price" id="auraTradeshowInspectPrice"></p>
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
         <p class="aura-tradeshow-inspect-sample" id="auraTradeshowInspectSample">Offline sample · the original is the NFT token.</p>
@@ -1077,13 +1090,16 @@ function setInspectMode(mode) {
   const inspectInfo = stallDoor(stallForPrize(inspectItem));
   const nftAvailable = nftViewAvailable(inspectItem, inspectInfo);
   inspectMode = mode === 'nft' && nftAvailable ? 'nft' : 'website';
+  if (inspectMode === 'nft' && !guestOwns(inspectItem.id) && shopAction(inspectItem.id).ready) {
+    const id = inspectItem.id; closeInspect(); openXrpTill(id); return;
+  }
   const stage = overlay?.querySelector('#auraTradeshowInspectStage');
   const nftNote = overlay?.querySelector('#auraTradeshowInspectNftNote');
   if (nftNote) {
     nftNote.hidden = inspectMode !== 'nft';
     if (inspectMode === 'nft') nftNote.textContent = guestOwns(inspectItem.id)
       ? 'NFT artwork supplied by MotherPC after purchase.'
-      : `Scan in Xaman · ${formatXrp(inspectItem.id) || 'XRP'} to ${auraTillAddress()}. Do not send until minting is open.`;
+      : `Scan in Xaman · ${purchaseLabel(inspectItem) || formatXrp(inspectItem.id) || 'posted price'} to ${auraTillAddress()}. Do not send until minting is open.`;
   }
   overlay?.querySelectorAll('[data-inspect-view]').forEach((button) => {
     button.disabled = button.dataset.inspectView === 'nft' && !nftAvailable;
@@ -1125,6 +1141,8 @@ function openInspect(id, startMode = 'website') {
   if (!panel) return;
   panel.hidden = false;
   panel.querySelector('#auraTradeshowInspectName').textContent = item.name || item.id;
+  const inspectPrice = panel.querySelector('#auraTradeshowInspectPrice');
+  if (inspectPrice) inspectPrice.textContent = purchaseLabel(item);
   panel.querySelector('#auraTradeshowInspectSource').textContent = tokenClaim(item.id)
     ? 'Convert · token counter'
     : (isFelix(item)
@@ -1173,15 +1191,17 @@ function snapMint(item) {
 function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
-  if (redemption && !claim && !isLimited(item) && !isFelix(item) && stallInfo.mintable && !MONEY.has(item.kind)) {
+  const purchasePrice = rewardMint.prices?.[item.id];
+  if (redemption && !claim && !isFelix(item) && (stallInfo.mintable || (isLimited(item) && purchasePrice)) && !MONEY.has(item.kind)) {
     if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
     if (redemption === 'accepted') return {label: 'Reward NFT received', disabled: true, reward: true};
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
-    return {label: redemption === 'ready' ? 'Mint collected reward · no purchase price' : 'Continue reward mint',
-      disabled: false, ready: true, reward: true};
+    return {label: redemption === 'ready' ? (purchasePrice ? `Buy with XRP · ${purchasePrice} XRP` : 'Mint collected reward · no purchase price') : 'Continue item checkout',
+      disabled: false, ready: true, reward: true, purchase: !!purchasePrice};
   }
   if (onShelf(item.id) && !claim && !isFelix(item)) {
-    return {label: 'NFT minting unavailable · outside this test', disabled: true, limited: isLimited(item)};
+    const xrp = formatXrp(item.id);
+    return {label: xrp ? `${xrp} · NFT minting unavailable · outside this test` : 'NFT minting unavailable · outside this test', disabled: true, limited: isLimited(item)};
   }
   if (onShelf(item.id) && !claim && !mintedReady) {
     return {label: 'Supply unavailable · reopen to retry', disabled: true};
@@ -1274,6 +1294,7 @@ function setCardView(card, mode) {
   const next = mode === 'nft' ? 'nft' : 'website';
   const img = card.querySelector('img');
   const id = card.dataset.item;
+  if (next === 'nft' && !guestOwns(id) && shopAction(id).ready) { openXrpTill(id); return; }
   card.dataset.mode = next;
   card.classList.toggle('is-nft', next === 'nft');
   card.querySelectorAll('[data-view]').forEach((btn) => {
@@ -1387,19 +1408,24 @@ function openXrpTill(id) {
   }
   till.querySelector('#auraXrpTillName').textContent = name;
   till.querySelector('#auraXrpTillStock').textContent = formatStock(id);
-  till.querySelector('#auraXrpTillPrice').textContent = `${act.label}. Scan in Xaman. We never hold guest keys.`;
+  till.querySelector('#auraXrpTillPrice').textContent = `${purchaseLabel(item) || act.label}. Scan in Xaman. We never hold guest keys.`;
   if (copy) copy.textContent = 'Opening a Xaman sign request…';
   if (hold) hold.dataset.item = id;
   till.hidden = false;
   till.querySelector('[data-xrp-close]')?.focus();
   fetch(checkoutUrl(id), act.reward ? {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({email: account, item: id}),
+    body: JSON.stringify({email: account, item: id, purchase: !!act.purchase}),
   } : {cache: 'no-store'})
-    .then((res) => (res.ok ? res.json() : Promise.reject()))
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw Error(data?.message || data?.error || 'Checkout unavailable');
+      return data;
+    })
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
       if (data?.deep_link) {
+        checkoutLinks.set(account + ':' + id, data.deep_link);
         showTillQr(img, name, data.deep_link);
         copy.textContent = data.message || 'Sign this Xaman request on your phone. We never hold guest keys.';
         if (data.payload) watchXamanPayload(till, data.payload, revision, account, !!act.reward);
@@ -1407,8 +1433,8 @@ function openXrpTill(id) {
       }
       copy.textContent = data?.message || 'Xaman checkout is next. Nothing leaves a wallet yet.';
     })
-    .catch(() => {
-      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) copy.textContent = 'The till could not reach Xaman. Try again in a moment.';
+    .catch(error => {
+      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) copy.textContent = `Checkout did not open: ${error?.message || 'connection unavailable'}. No NFT purchase was completed here.`;
     });
 }
 function queueXrpPlace(id) {
@@ -1690,6 +1716,7 @@ function appendCards(grid, items) {
       <span class="chip ${chipClass}">${chipText}</span>
       <h3>${item.name}</h3>
       ${sample ? `<p class="sample">${sample}</p>` : ''}
+      <p class="price">${purchaseLabel(item)}</p>
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>

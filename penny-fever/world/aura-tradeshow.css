@@ -166,6 +166,9 @@
 }
 .aura-tradeshow-card.is-nft .aura-tradeshow-turn{display:none}
 .aura-tradeshow-card h3{margin:0;font-size:.74rem;line-height:1.2;color:#3d2c1f}
+.aura-tradeshow-card .price,.aura-tradeshow-inspect-price{
+  margin:0;font:800 .72rem/1.2 Georgia,serif;color:#5a2438
+}
 .aura-tradeshow-card .stock{margin:0;font-size:.62rem;color:#6a5340}
 .aura-tradeshow-card .sample,.aura-tradeshow-inspect-sample{
   margin:0;font-size:.6rem;line-height:1.3;color:#7a3040;font-style:italic;
