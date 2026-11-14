@@ -272,6 +272,8 @@
 .aura-tradeshow-card .chip.is-claim{background:#3d4a5c}
 .aura-tradeshow-card .chip.is-limited{background:#6b3a2a}
 .aura-tradeshow-card .chip.is-money{background:#6b4e24}
+.aura-tradeshow-card .chip.is-minted{background:#2c5a45}
+.aura-tradeshow-card .owned{margin:0;font-size:.62rem;color:#2c5a45;font-weight:700}
 .aura-tradeshow-play{
   margin-top:auto;padding:.28rem .32rem;border-radius:6px;border:1px solid #c4a064;
   background:#435637;color:#fff6ec;font:700 .65rem/1.15 Georgia,serif;cursor:pointer;

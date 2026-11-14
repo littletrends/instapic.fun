@@ -27,7 +27,7 @@ const LIMITED = new Set([
 let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, aura_xrp_address: '', token_claims: {}};
 let minted = {};
 let mintedReady = false;
-let rewardMint = {account: '', enabled: false, items: {}, prices: {}};
+let rewardMint = {account: '', enabled: false, items: {}, prices: {}, owned: {}};
 const checkoutLinks = new Map();
 let nftPlates = new Set();
 let overlay = null;
@@ -72,7 +72,7 @@ function vipAccount() {
 }
 function clearEligibility(account = '') {
   eligibilityAccount = account;
-  rewardMint = {account, enabled: false, items: {}, prices: {}};
+  rewardMint = {account, enabled: false, items: {}, prices: {}, owned: {}};
   snapElig = {portraits: new Set(), book: false};
   dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
   dripReady = false;
@@ -149,7 +149,7 @@ function loadRewardMint(account, revision) {
     body: JSON.stringify({email: account}),
   }).then(res => res.ok ? res.json() : null).then(data => {
     if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return;
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}};
   }).catch(() => {});
 }
 function loadDrips(email, revision) {
@@ -269,8 +269,8 @@ function purchaseLabel(item) {
   if (MONEY.has(item.kind)) return 'Dollar till';
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
-  if (redemption && !purchasePrice) return 'Collected · network fee only';
-  return formatXrp(item.id) || 'Price pending';
+  if (redemption && redemption !== 'accepted' && !purchasePrice) return 'Collected · network fee only';
+  return formatXrp(item.id) || (purchasePrice ? `${purchasePrice} XRP` : 'Price pending');
 }
 function capLine(id) {
   const cap = walletBuyCap(id);
@@ -619,9 +619,15 @@ function auraTillAddress() {
   const addr = String(stock?.aura_xrp_address || stock?.xrpl?.issuer || 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL').trim();
   return addr.startsWith('r') ? addr : 'rPSUyQBP4CZa6fYmn2jkPggiYpueW8p5hL';
 }
+function nftOwnedCount(id) {
+  if (rewardMint.account !== vipAccount()) return 0;
+  const n = Math.floor(Number(rewardMint.owned?.[id]) || 0);
+  if (n > 0) return n;
+  return rewardMint.items?.[id] === 'accepted' ? 1 : 0;
+}
 function guestOwns(id) {
-  // Paper stamps are website copies. Show the mint plate only after a ledger accept.
-  return rewardMint.account === vipAccount() && rewardMint.items?.[id] === 'accepted';
+  // Paper stamps are website copies. Show the mint plate after a ledger accept.
+  return nftOwnedCount(id) > 0;
 }
 function xamanScanText(id) {
   const to = auraTillAddress();
@@ -1179,7 +1185,10 @@ function openInspect(id, startMode = 'website') {
   else status.textContent = act.reward && !act.disabled ? 'Collected reward · ready to mint'
     : `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? (act.disabled ? act.label : 'Buy with XRP') : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
-  panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item) ? 'Supply is earned through Felix’s photo booth.' : formatStock(item.id);
+  const inspectOwned = nftOwnedCount(item.id);
+  panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item)
+    ? 'Supply is earned through Felix’s photo booth.'
+    : (inspectOwned ? `You own ${inspectOwned.toLocaleString('en-AU')} · ${formatStock(item.id)}` : formatStock(item.id));
   const sample = overlay.querySelector('#auraTradeshowInspectSample');
   const sampleText = nftSampleNote(item);
   if (sample) {
@@ -1213,9 +1222,8 @@ function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
-  if (redemption && !claim && !isFelix(item) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
+  if (redemption && redemption !== 'accepted' && !claim && !isFelix(item) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
     if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
-    if (redemption === 'accepted') return {label: 'Reward NFT received', disabled: true, reward: true};
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
     return {label: redemption === 'ready'
       ? (purchasePrice ? `Buy with XRP · ${purchasePrice} XRP` : 'Mint collected reward · network fee only')
@@ -1751,6 +1759,7 @@ function appendCards(grid, items) {
     const play = playTap(item, info, stall);
     const canSpin = !!item.turnaround;
     const sample = nftSampleNote(item);
+    const owned = nftOwnedCount(item.id);
     const shopBtn = (felix && !act.snap) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
@@ -1765,9 +1774,11 @@ function appendCards(grid, items) {
         <button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>
       </div>
       <span class="chip ${chipClass}">${chipText}</span>
+      ${owned ? '<span class="chip is-minted">Minted</span>' : ''}
       <h3>${item.name}</h3>
       ${sample ? `<p class="sample">${sample}</p>` : ''}
       <p class="price">${purchaseLabel(item)}</p>
+      ${owned ? `<p class="owned">You own ${owned.toLocaleString('en-AU')}</p>` : ''}
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>
