@@ -41,6 +41,8 @@ let tillPoll = 0;
 let tillRevision = 0;
 let tillTick = null;
 const pendingCheckouts = new Map();
+let collectionQueue = null;
+let collectionQueueRevision = 0;
 let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let folder = 'book:penny-collector-book';
@@ -151,9 +153,137 @@ function loadRewardMint(account, revision) {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({email: account}),
   }).then(res => res.ok ? res.json() : null).then(data => {
-    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return;
+    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return false;
     rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}};
-  }).catch(() => {});
+    return true;
+  }).catch(() => false);
+}
+
+function collectedMintIds() {
+  if (!vip() || !mintedReady || !rewardMint.enabled || rewardMint.account !== vipAccount()) return [];
+  const pending = id => rewardMint.items[id] !== 'ready';
+  return Object.keys(rewardMint.items).filter(id => {
+    const item = modelItem(id);
+    const act = shopAction(id);
+    return item.id && !isFelix(item) && !tokenClaim(id) && !MONEY.has(item.kind)
+      && !isEveryday(item) && !rewardMint.prices[id] && !nftOwnedCount(id)
+      && act.ready && act.reward && !act.purchase && !act.disabled && !act.claim;
+  }).sort((a, b) => Number(pending(b)) - Number(pending(a))
+    || String(modelItem(a).name || a).localeCompare(String(modelItem(b).name || b)));
+}
+
+function paintCollectionQueue() {
+  if (!overlay) return;
+  const queue = collectionQueue?.account === vipAccount() ? collectionQueue : null;
+  const button = overlay.querySelector('[data-collection-mint]');
+  const available = !!queue || collectedMintIds().length > 0;
+  const toolbar = overlay.querySelector('#auraCollectionMintToolbar');
+  if (toolbar) toolbar.hidden = !available;
+  if (button) {
+    button.hidden = !available;
+    button.disabled = !!queue?.active;
+    button.textContent = queue?.active ? 'Collection minting in progress'
+      : queue && queue.done < queue.ids.length ? 'Resume collection minting' : 'Mint my collection';
+  }
+  const progress = overlay.querySelector('#auraCollectionMintProgress');
+  if (progress) {
+    progress.hidden = !queue;
+    progress.textContent = queue ? queue.done === queue.ids.length
+      ? `Collection complete · ${queue.done} received`
+      : `${queue.done} of ${queue.ids.length} received${queue.active ? '' : ' · paused'}` : '';
+  }
+  const till = overlay.querySelector('#auraXrpTill');
+  const current = !!(queue?.active && queue.current && queue.current === till?.dataset.item);
+  const note = overlay.querySelector('#auraCollectionMintStep');
+  if (note) {
+    note.hidden = !current;
+    note.textContent = current ? `Collection · ${queue.done + 1} of ${queue.ids.length}. Sign and receive this item in Xaman; the next opens after receipt is confirmed.` : '';
+  }
+  const pause = overlay.querySelector('[data-collection-pause]');
+  if (pause) pause.hidden = !current;
+  if (queue?.active) {
+    const again = overlay.querySelector('[data-xrp-buy-another]');
+    if (again) again.hidden = true;
+  }
+}
+
+function pauseCollectionQueue() {
+  collectionQueueRevision += 1;
+  if (collectionQueue) {
+    collectionQueue.active = false;
+    collectionQueue.busy = false;
+  }
+  paintCollectionQueue();
+}
+
+async function advanceCollectionQueue() {
+  const queue = collectionQueue;
+  if (!queue?.active || queue.busy) return;
+  const account = queue.account;
+  const revision = collectionQueueRevision;
+  queue.busy = true;
+  const fresh = await loadRewardMint(account, eligibilityRevision);
+  if (collectionQueue !== queue || revision !== collectionQueueRevision || !queue.active) return;
+  queue.busy = false;
+  if (!fresh || account !== vipAccount() || !vip() || overlay?.hidden || tradeshowBlocked() || !rewardMint.enabled) {
+    pauseCollectionQueue();
+    return;
+  }
+  while (queue.done < queue.ids.length && nftOwnedCount(queue.ids[queue.done])) queue.done += 1;
+  if (queue.done === queue.ids.length) {
+    queue.active = false;
+    queue.current = '';
+    closeXrpTill({pauseQueue: false});
+    paint();
+    const progress = overlay.querySelector('#auraCollectionMintProgress');
+    if (progress) progress.textContent = `Collection complete · ${queue.done} received`;
+    return;
+  }
+  const id = queue.ids[queue.done];
+  if (!collectedMintIds().includes(id)) {
+    pauseCollectionQueue();
+    const progress = overlay.querySelector('#auraCollectionMintProgress');
+    if (progress) progress.textContent = `${modelItem(id).name || id} needs checking before continuing. No next request was opened.`;
+    return;
+  }
+  queue.current = id;
+  closeInspect();
+  openXrpTill(id);
+  paintCollectionQueue();
+}
+
+async function startCollectionQueue() {
+  if (collectionQueue?.active || !vip() || tradeshowBlocked()) return;
+  const account = vipAccount();
+  const revision = ++collectionQueueRevision;
+  const button = overlay?.querySelector('[data-collection-mint]');
+  if (button) button.disabled = true;
+  const fresh = await loadRewardMint(account, eligibilityRevision);
+  if (revision !== collectionQueueRevision || account !== vipAccount() || overlay?.hidden) return;
+  if (!fresh) {
+    if (button) button.disabled = false;
+    const note = overlay?.querySelector('#auraTradeshowNote');
+    if (note) note.textContent = 'Could not refresh the collected mint list. No new request was opened. Try again.';
+    return;
+  }
+  if (!collectionQueue || collectionQueue.account !== account || collectionQueue.done >= collectionQueue.ids.length) {
+    collectionQueue = {account, ids: collectedMintIds(), done: 0, current: '', active: false, busy: false};
+  }
+  collectionQueue.active = true;
+  paintCollectionQueue();
+  await advanceCollectionQueue();
+}
+
+function collectionMintReceived(id, account) {
+  const queue = collectionQueue;
+  if (!queue?.active || queue.account !== account || account !== vipAccount() || queue.current !== id) return;
+  queue.done += 1;
+  queue.current = '';
+  paintCollectionQueue();
+  const revision = collectionQueueRevision;
+  setTimeout(() => {
+    if (collectionQueue === queue && queue.active && revision === collectionQueueRevision) advanceCollectionQueue();
+  }, 1200);
 }
 function loadDrips(email, revision) {
   if (!email) return Promise.resolve();
@@ -707,6 +837,10 @@ function ensureOverlay() {
         <button type="button" class="aura-tradeshow-limited-tab" data-folder="limited">Limited</button>
       </div>
     </div>
+    <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
+      <button type="button" data-collection-mint hidden>Mint my collection</button>
+      <span id="auraCollectionMintProgress" role="status" hidden></span>
+    </div>
     <div class="aura-tradeshow-main">
       <div class="aura-tradeshow-tree-shell">
         <input type="checkbox" id="auraTradeshowTreeDrawer" class="aura-tradeshow-tree-drawer">
@@ -723,11 +857,13 @@ function ensureOverlay() {
         <p id="auraXrpTillStock"></p>
         <p id="auraXrpTillPrice"></p>
         <p id="auraXrpTillCopy">MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.</p>
+        <p id="auraCollectionMintStep" role="status" hidden></p>
         <a class="aura-xrp-till-open" id="auraXrpTillOpen" hidden rel="noopener" target="_blank">Open in Xaman</a>
         <button type="button" class="aura-xrp-till-again" data-xrp-buy-another hidden></button>
         <button type="button" class="aura-xrp-till-done" data-xrp-done hidden>Close</button>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
         <button type="button" class="aura-xrp-till-cancel" data-xrp-cancel hidden>Cancel purchase</button>
+        <button type="button" class="aura-xrp-till-done" data-collection-pause hidden>Pause collection</button>
       </div>
     </div>`;
   const inspect = document.createElement('div');
@@ -792,6 +928,17 @@ function ensureOverlay() {
     openInspect(stage.dataset.inspect, card?.dataset.mode);
   });
   overlay.addEventListener('click', (e) => {
+    if (e.target.closest('[data-collection-mint]')) {
+      e.preventDefault();
+      startCollectionQueue();
+      return;
+    }
+    if (e.target.closest('[data-collection-pause]')) {
+      e.preventDefault();
+      pauseCollectionQueue();
+      closeXrpTill();
+      return;
+    }
     const tog = e.target.closest('[data-toggle]');
     if (tog) {
       e.preventDefault();
@@ -1425,7 +1572,8 @@ function resetTillDom(till) {
     img.alt = '';
   }
 }
-function closeXrpTill() {
+function closeXrpTill({pauseQueue = true} = {}) {
+  if (pauseQueue) pauseCollectionQueue();
   stopTillPoll();
   const till = overlay?.querySelector('#auraXrpTill');
   if (till) {
@@ -1491,6 +1639,7 @@ function applyTillState(till, data, ctx) {
     if (state.phase !== 'open') cancel.disabled = false;
   }
   if (state.phase === 'accepted') {
+    collectionMintReceived(id, account);
     const item = modelItem(id);
     if (img) {
       const art = (nftPlates.has(id) && nftPlateSrc(id))
@@ -1527,6 +1676,9 @@ function applyTillState(till, data, ctx) {
   }
   if (state.allowRetry) pendingCheckouts.delete(id);
   if (['cancelled', 'expired'].includes(state.phase)) stopTillTimer();
+  if (['cancelled', 'expired'].includes(state.phase)
+      || ['review_required', 'blocked', 'failed', 'sold_out', 'needs_minter', 'needs_regular_key', 'needs_minter_funding'].includes(data?.mint?.status)) pauseCollectionQueue();
+  paintCollectionQueue();
   return state;
 }
 function showTillPayload(till, img, name, data, account, id) {
@@ -1556,14 +1708,24 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email: account, payload: uuid}),
       } : {cache: 'no-store'})
-      .then((res) => (res.ok ? res.json() : {}))
+      .then((res) => {
+        if (!res.ok) throw Error('Could not confirm this mint. Resume the collection when connected and signed in.');
+        return res.json();
+      })
       .then((data) => {
         if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden) return;
         applyTillState(till, data, {
           img, name, account, id: itemId, revision: pollRevision, reward,
         });
       })
-      .catch(() => {});
+      .catch(error => {
+        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden) return;
+        if (collectionQueue?.active && collectionQueue.current === itemId) {
+          pauseCollectionQueue();
+          const copy = till.querySelector('#auraXrpTillCopy');
+          if (copy) copy.textContent = error?.message || 'Collection paused. Resume when connected.';
+        }
+      });
   };
   bindTillWake();
   tillTick = tick;
@@ -1571,6 +1733,7 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
   tick();
 }
 function cancelXrpPurchase() {
+  pauseCollectionQueue();
   const till = overlay?.querySelector('#auraXrpTill');
   if (!till || till.hidden) return;
   const id = till.dataset.item || '';
@@ -1612,7 +1775,7 @@ function cancelXrpPurchase() {
   });
 }
 function openXrpTill(id) {
-
+  if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
   const act = shopAction(id);
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
@@ -1670,6 +1833,7 @@ function openXrpTill(id) {
     })
     .catch(error => {
       if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) {
+        pauseCollectionQueue();
         const raw = error?.message || 'connection unavailable';
         copy.textContent = /already has its free/.test(raw)
           ? raw
@@ -1974,6 +2138,7 @@ function appendCards(grid, items) {
 
 function paint() {
   if (!overlay || overlay.hidden) return;
+  paintCollectionQueue();
   const status = tradeshowStatus();
   const door = overlay.querySelector('#auraTradeshowDoor');
   door.textContent = parkLabel(SHOW_ID);
@@ -2235,6 +2400,7 @@ export function openTradeshow() {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  pauseCollectionQueue();
   closeInspect();
   stopTillPoll();
   if (vipCheckTimer) clearInterval(vipCheckTimer);
