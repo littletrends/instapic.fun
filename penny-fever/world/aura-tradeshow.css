@@ -419,6 +419,6 @@
 }
 body.aura-tradeshow-open .pf-stall-card,
 body.aura-tradeshow-open .aura-counter-service{display:none}
-.aura-tradeshow-queue{flex:0 0 auto;gap:.45rem}
+.aura-tradeshow-queue{flex:0 0 auto;gap:.45rem;flex-wrap:wrap;overflow:visible}
 .aura-tradeshow-queue[hidden]{display:none}
 .aura-tradeshow-queue [role="status"]{font-size:.75rem;white-space:normal}

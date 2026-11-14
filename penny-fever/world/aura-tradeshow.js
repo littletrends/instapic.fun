@@ -2,7 +2,7 @@ import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=ma
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
-import {tillStateFromStatus} from './aura-till-state.js?v=tradeshow-owned-3';
+import {tillStateFromStatus} from './aura-till-state.js?v=collection-phone-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -154,7 +154,7 @@ function loadRewardMint(account, revision) {
     body: JSON.stringify({email: account}),
   }).then(res => res.ok ? res.json() : null).then(data => {
     if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return false;
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, pending: Array.isArray(data.pending) ? data.pending : []};
     return true;
   }).catch(() => false);
 }
@@ -172,35 +172,49 @@ function collectedMintIds() {
     || String(modelItem(a).name || a).localeCompare(String(modelItem(b).name || b)));
 }
 
+function collectionOwnsTill(id, account) {
+  return !!(collectionQueue?.active && collectionQueue.account === account
+    && collectionQueue.current === id && account === vipAccount() && !overlay?.hidden);
+}
+
 function paintCollectionQueue() {
   if (!overlay) return;
   const queue = collectionQueue?.account === vipAccount() ? collectionQueue : null;
-  const button = overlay.querySelector('[data-collection-mint]');
   const available = !!queue || collectedMintIds().length > 0;
   const toolbar = overlay.querySelector('#auraCollectionMintToolbar');
   if (toolbar) toolbar.hidden = !available;
+  const button = overlay.querySelector('[data-collection-mint]');
   if (button) {
     button.hidden = !available;
-    button.disabled = !!queue?.active;
-    button.textContent = queue?.active ? 'Collection minting in progress'
-      : queue && queue.done < queue.ids.length ? 'Resume collection minting' : 'Mint my collection';
+    button.disabled = !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length);
+    button.textContent = queue?.active
+      ? (queue.phase === 'prepare' ? 'Preparing batch…' : 'Receiving batch…')
+      : queue?.phase === 'receive' ? `Receive batch (${queue.ready.length - queue.receiveIndex})`
+      : queue?.phase === 'prepare' ? 'Resume preparing batch' : 'Prepare up to 25 NFTs';
+  }
+  const receive = overlay.querySelector('[data-collection-receive]');
+  if (receive) {
+    receive.hidden = !queue || queue.active || queue.phase !== 'prepare' || !queue.ready.length;
+    receive.textContent = `Receive prepared (${queue?.ready.length || 0})`;
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
     progress.hidden = !queue;
-    progress.textContent = queue ? queue.done === queue.ids.length
-      ? `Collection complete · ${queue.done} received`
-      : `${queue.done} of ${queue.ids.length} received${queue.active ? '' : ' · paused'}` : '';
+    progress.textContent = !queue ? '' : queue.phase === 'prepare'
+      ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
+      : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
+      : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
   }
+  overlay.querySelectorAll('[data-collection-pause]').forEach(button => { button.hidden = !queue?.active; });
   const till = overlay.querySelector('#auraXrpTill');
-  const current = !!(queue?.active && queue.current && queue.current === till?.dataset.item);
+  const current = !!(queue?.active && queue.current === till?.dataset.item);
   const note = overlay.querySelector('#auraCollectionMintStep');
   if (note) {
     note.hidden = !current;
-    note.textContent = current ? `Collection · ${queue.done + 1} of ${queue.ids.length}. Sign and receive this item in Xaman; the next opens after receipt is confirmed.` : '';
+    note.textContent = !current ? '' : queue.phase === 'prepare'
+      ? 'Sign into your wallet once, then return to this Tradeshow tab. Up to 25 NFTs will prepare quietly before you receive them.'
+      : `Batch ready · receive ${queue.receiveIndex + 1} of ${queue.ready.length} in Xaman. Return here to check or continue receiving.`;
   }
-  const pause = overlay.querySelector('[data-collection-pause]');
-  if (pause) pause.hidden = !current;
   if (queue?.active) {
     const again = overlay.querySelector('[data-xrp-buy-another]');
     if (again) again.hidden = true;
@@ -216,39 +230,59 @@ function pauseCollectionQueue() {
   paintCollectionQueue();
 }
 
+function continueCollectionSoon(queue) {
+  const revision = collectionQueueRevision;
+  setTimeout(() => {
+    if (collectionQueue === queue && queue.active && revision === collectionQueueRevision) advanceCollectionQueue();
+  }, 200);
+}
+
 async function advanceCollectionQueue() {
   const queue = collectionQueue;
   if (!queue?.active || queue.busy) return;
   const account = queue.account;
   const revision = collectionQueueRevision;
-  queue.busy = true;
-  const fresh = await loadRewardMint(account, eligibilityRevision);
+  // Each order rechecks proof, stock and the run on the server. Refresh the
+  // catalogue on start/resume, not once per item (which rescans the wallet).
   if (collectionQueue !== queue || revision !== collectionQueueRevision || !queue.active) return;
-  queue.busy = false;
-  if (!fresh || account !== vipAccount() || !vip() || overlay?.hidden || tradeshowBlocked() || !rewardMint.enabled) {
+  if (account !== vipAccount() || !vip() || overlay?.hidden || tradeshowBlocked() || !rewardMint.enabled) {
     pauseCollectionQueue();
     return;
   }
+  if (queue.phase === 'receive') {
+    if (queue.receiveIndex >= queue.ready.length) {
+      queue.phase = 'complete';
+      queue.active = false;
+      queue.current = '';
+      closeXrpTill({pauseQueue: false});
+      paint();
+      return;
+    }
+    const id = queue.ready[queue.receiveIndex];
+    queue.current = id;
+    openXrpTill(id, {receiveOnly: true, background: nftOwnedCount(id) > 0});
+    paintCollectionQueue();
+    return;
+  }
   while (queue.done < queue.ids.length && nftOwnedCount(queue.ids[queue.done])) queue.done += 1;
-  if (queue.done === queue.ids.length) {
+  if (queue.done >= queue.ids.length) {
+    queue.phase = queue.ready.length ? 'receive' : 'complete';
     queue.active = false;
     queue.current = '';
     closeXrpTill({pauseQueue: false});
     paint();
-    const progress = overlay.querySelector('#auraCollectionMintProgress');
-    if (progress) progress.textContent = `Collection complete · ${queue.done} received`;
     return;
   }
   const id = queue.ids[queue.done];
   if (!collectedMintIds().includes(id)) {
     pauseCollectionQueue();
     const progress = overlay.querySelector('#auraCollectionMintProgress');
-    if (progress) progress.textContent = `${modelItem(id).name || id} needs checking before continuing. No next request was opened.`;
+    if (progress) progress.textContent = `${modelItem(id).name || id} needs checking. No next request was opened.`;
     return;
   }
   queue.current = id;
   closeInspect();
-  openXrpTill(id);
+  openXrpTill(id, {background: true});
   paintCollectionQueue();
 }
 
@@ -266,24 +300,52 @@ async function startCollectionQueue() {
     if (note) note.textContent = 'Could not refresh the collected mint list. No new request was opened. Try again.';
     return;
   }
-  if (!collectionQueue || collectionQueue.account !== account || collectionQueue.done >= collectionQueue.ids.length) {
-    collectionQueue = {account, ids: collectedMintIds(), done: 0, current: '', active: false, busy: false};
+  if (!collectionQueue || collectionQueue.account !== account || collectionQueue.phase === 'complete') {
+    const pending = (rewardMint.pending || []).filter(id => modelItem(id).id);
+    const checkingReceived = pending.some(id => nftOwnedCount(id) > 0);
+    const ids = checkingReceived ? pending.slice(0, 25) : collectedMintIds().slice(0, 25);
+    collectionQueue = {account, ids, done: checkingReceived ? ids.length : 0,
+      ready: checkingReceived ? [...ids] : [], receiveIndex: 0,
+      phase: checkingReceived ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
   }
   collectionQueue.active = true;
   paintCollectionQueue();
   await advanceCollectionQueue();
 }
 
-function collectionMintReceived(id, account) {
+function beginReceivingCollection() {
+  if (!collectionQueue?.ready.length || collectionQueue.account !== vipAccount()) return;
+  pauseCollectionQueue();
+  stopTillPoll();
+  collectionQueue.phase = 'receive';
+  collectionQueue.current = '';
+  startCollectionQueue();
+}
+
+function collectionMintPrepared(id, account, alreadyReceived = false) {
   const queue = collectionQueue;
-  if (!queue?.active || queue.account !== account || account !== vipAccount() || queue.current !== id) return;
+  if (!collectionOwnsTill(id, account) || queue.phase !== 'prepare') return;
+  if (!alreadyReceived && !queue.ready.includes(id)) queue.ready.push(id);
   queue.done += 1;
   queue.current = '';
+  stopTillPoll();
+  const till = overlay?.querySelector('#auraXrpTill');
+  if (till) till.hidden = true;
   paintCollectionQueue();
-  const revision = collectionQueueRevision;
-  setTimeout(() => {
-    if (collectionQueue === queue && queue.active && revision === collectionQueueRevision) advanceCollectionQueue();
-  }, 1200);
+  continueCollectionSoon(queue);
+}
+
+function collectionMintReceived(id, account) {
+  const queue = collectionQueue;
+  if (!collectionOwnsTill(id, account)) return;
+  if (queue.phase === 'prepare') {
+    collectionMintPrepared(id, account, true);
+    return;
+  }
+  queue.receiveIndex += 1;
+  queue.current = '';
+  paintCollectionQueue();
+  continueCollectionSoon(queue);
 }
 function loadDrips(email, revision) {
   if (!email) return Promise.resolve();
@@ -838,7 +900,9 @@ function ensureOverlay() {
       </div>
     </div>
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
-      <button type="button" data-collection-mint hidden>Mint my collection</button>
+      <button type="button" data-collection-mint hidden>Prepare up to 25 NFTs</button>
+      <button type="button" data-collection-receive hidden>Receive prepared</button>
+      <button type="button" data-collection-pause hidden>Pause batch</button>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
     </div>
     <div class="aura-tradeshow-main">
@@ -859,6 +923,7 @@ function ensureOverlay() {
         <p id="auraXrpTillCopy">MotherPC will open a Xaman sign request for this piece. You sign. We never hold guest keys.</p>
         <p id="auraCollectionMintStep" role="status" hidden></p>
         <a class="aura-xrp-till-open" id="auraXrpTillOpen" hidden rel="noopener" target="_blank">Open in Xaman</a>
+        <button type="button" class="aura-xrp-till-done" data-xrp-check hidden>Check mint status</button>
         <button type="button" class="aura-xrp-till-again" data-xrp-buy-another hidden></button>
         <button type="button" class="aura-xrp-till-done" data-xrp-done hidden>Close</button>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
@@ -928,6 +993,11 @@ function ensureOverlay() {
     openInspect(stage.dataset.inspect, card?.dataset.mode);
   });
   overlay.addEventListener('click', (e) => {
+    if (e.target.closest('[data-collection-receive]')) {
+      e.preventDefault();
+      beginReceivingCollection();
+      return;
+    }
     if (e.target.closest('[data-collection-mint]')) {
       e.preventDefault();
       startCollectionQueue();
@@ -937,6 +1007,11 @@ function ensureOverlay() {
       e.preventDefault();
       pauseCollectionQueue();
       closeXrpTill();
+      return;
+    }
+    if (e.target.closest('[data-xrp-check]')) {
+      e.preventDefault();
+      if (typeof tillTick === 'function') tillTick();
       return;
     }
     const tog = e.target.closest('[data-toggle]');
@@ -1544,6 +1619,8 @@ function bindTillWake() {
 }
 function resetTillDom(till) {
   if (!till) return;
+  const check = till.querySelector('[data-xrp-check]');
+  if (check) { check.hidden = true; check.disabled = false; }
   const open = till.querySelector('#auraXrpTillOpen');
   if (open) {
     open.hidden = true;
@@ -1597,6 +1674,12 @@ function canBuyAnother(id) {
 }
 function applyTillState(till, data, ctx) {
   const {img, name, account, id, revision, reward} = ctx;
+  if (collectionQueue?.active && collectionQueue.account === account && collectionQueue.current === id
+      && typeof data?.collection_run === 'string') collectionQueue.run = data.collection_run;
+  if (data?.mint?.status === 'offer' && collectionOwnsTill(id, account) && collectionQueue.phase === 'prepare') {
+    collectionMintPrepared(id, account);
+    return {phase: 'prepared'};
+  }
   if (data?.mint?.status === 'accepted') {
     pendingCheckouts.delete(id);
     const owned = Math.max(nftOwnedCount(id), 1);
@@ -1620,6 +1703,8 @@ function applyTillState(till, data, ctx) {
     if (state.showOpen && state.deepLink) {
       open.hidden = false;
       open.href = state.deepLink;
+      open.textContent = state.phase === 'accept' ? 'Receive NFT in Xaman'
+        : (!reward || Number(data?.amount) > 0 ? 'Approve purchase in Xaman' : 'Sign wallet in Xaman');
       checkoutLinks.set(account + ':' + id, state.deepLink);
     } else {
       open.hidden = true;
@@ -1632,6 +1717,8 @@ function applyTillState(till, data, ctx) {
     if (id) again.dataset.item = id;
   }
   if (done) done.hidden = !state.showClose;
+  const check = till.querySelector('[data-xrp-check]');
+  if (check) check.hidden = state.phase === 'accepted' || !pendingCheckouts.get(id)?.uuid;
   if (hold) hold.hidden = state.phase !== 'open';
   const cancel = till.querySelector('[data-xrp-cancel]');
   if (cancel) {
@@ -1665,6 +1752,7 @@ function applyTillState(till, data, ctx) {
     }
     return state;
   }
+  if (state.showOpen && collectionOwnsTill(id, account) && collectionQueue.phase === 'prepare') till.hidden = false;
   if (state.showOpen && img) {
     const qr = state.qr || '';
     if (/^https:\/\/xumm\.app\//i.test(qr)) {
@@ -1697,38 +1785,58 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
   const img = till.querySelector('#auraXrpTillImg');
   const name = till.querySelector('#auraXrpTillName')?.textContent || 'card';
   const itemId = id || till.dataset.item || '';
-  const tick = () => {
+  let inFlight = false;
+  let refreshRequested = false;
+  const tick = (wake = false) => {
     if (pollRevision !== tillRevision) return;
-    if (till.hidden || account !== vipAccount()) {
+    if ((till.hidden && !collectionOwnsTill(itemId, account)) || account !== vipAccount()) {
       stopTillPoll();
       return;
     }
+    if (inFlight) {
+      if (wake) refreshRequested = true;
+      return;
+    }
+    inFlight = true;
+    const check = till.querySelector('[data-xrp-check]');
+    if (check) check.disabled = true;
     fetch(reward ? `${NFT_HOST}/api/penny-fever/verified/redeem/status`
       : `${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, reward ? {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email: account, payload: uuid}),
       } : {cache: 'no-store'})
-      .then((res) => {
-        if (!res.ok) throw Error('Could not confirm this mint. Resume the collection when connected and signed in.');
-        return res.json();
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw Object.assign(Error(data?.message || 'Could not confirm this mint. Resume the collection when connected and signed in.'), {code: data?.error});
+        return data;
       })
       .then((data) => {
-        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden) return;
+        if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
         applyTillState(till, data, {
           img, name, account, id: itemId, revision: pollRevision, reward,
         });
       })
       .catch(error => {
-        if (pollRevision !== tillRevision || account !== vipAccount() || till.hidden) return;
+        if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
         if (collectionQueue?.active && collectionQueue.current === itemId) {
+          till.hidden = false;
+          if (['collection_run_expired', 'collection_run_invalid'].includes(error?.code)) {
+            collectionQueue.run = null;
+            stopTillTimer();
+          }
           pauseCollectionQueue();
           const copy = till.querySelector('#auraXrpTillCopy');
           if (copy) copy.textContent = error?.message || 'Collection paused. Resume when connected.';
         }
+      }).finally(() => {
+        inFlight = false;
+        if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
+        if (check) check.disabled = false;
+        if (refreshRequested) { refreshRequested = false; tick(); }
       });
   };
   bindTillWake();
-  tillTick = tick;
+  tillTick = () => tick(true);
   tillPoll = setInterval(tick, 2500);
   tick();
 }
@@ -1756,7 +1864,7 @@ function cancelXrpPurchase() {
     method: 'POST', cache: 'no-store',
   }).then(async (res) => {
     const data = await res.json().catch(() => ({}));
-    if (revision !== tillRevision || account !== vipAccount() || till.hidden) return;
+    if (revision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(id, account))) return;
     if (!res.ok || data?.ok === false) {
       if (btn) btn.disabled = false;
       if (copy) copy.textContent = data?.message || 'This purchase could not be cancelled.';
@@ -1774,9 +1882,9 @@ function cancelXrpPurchase() {
     }
   });
 }
-function openXrpTill(id) {
+function openXrpTill(id, {receiveOnly = false, background = false} = {}) {
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
-  const act = shopAction(id);
+  const act = receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
     if (note) note.textContent = act.label || 'This card is not for XRP yet.';
@@ -1808,31 +1916,44 @@ function openXrpTill(id) {
     hold.dataset.item = id;
     hold.hidden = true;
   }
-  till.hidden = false;
-  till.querySelector('[data-xrp-close]')?.focus();
-  fetch(checkoutUrl(id), act.reward ? {
+  till.hidden = background;
+  if (!background) till.querySelector('[data-xrp-close]')?.focus();
+  fetch(receiveOnly ? `${NFT_HOST}/api/penny-fever/verified/redeem` : checkoutUrl(id), act.reward ? {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({email: account, item: id, purchase: !!act.purchase}),
+    body: JSON.stringify({email: account, item: id, purchase: !!act.purchase,
+      ...(receiveOnly ? {receive: true} : {}),
+      ...(!receiveOnly && collectionQueue?.active && collectionQueue.current === id && !act.purchase
+        ? (collectionQueue.run ? {collection_run: collectionQueue.run} : {collection_start: true}) : {})}),
   } : {cache: 'no-store'})
     .then(async res => {
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw Error(data?.message || data?.error || 'Checkout unavailable');
+      if (!res.ok) throw Object.assign(Error(data?.message || data?.error || 'Checkout unavailable'), {code: data?.error});
       return data;
     })
     .then((data) => {
-      if (revision !== tillRevision || account !== vipAccount() || till.hidden || !copy) return;
+      if (revision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(id, account)) || !copy) return;
       if (data?.payload) {
         pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward});
       }
       const state = applyTillState(till, data, {
         img, name, account, id, revision, reward: !!act.reward,
       });
-      if (data?.payload && state?.phase !== 'accepted' && state?.phase !== 'cancelled' && state?.phase !== 'expired') {
+      if (data?.payload && state?.phase !== 'accepted' && state?.phase !== 'cancelled' && state?.phase !== 'expired' && state?.phase !== 'prepared') {
         watchXamanPayload(till, data.payload, revision, account, !!act.reward, id);
       }
     })
     .catch(error => {
-      if (revision === tillRevision && account === vipAccount() && copy && !till.hidden) {
+      if (revision === tillRevision && account === vipAccount() && copy && (!till.hidden || collectionOwnsTill(id, account))) {
+        if (error?.code === 'collection_batch_full' && collectionQueue?.ready.length) {
+          collectionQueue.phase = 'receive';
+          collectionQueue.active = false;
+          collectionQueue.current = '';
+          closeXrpTill({pauseQueue: false});
+          paint();
+          return;
+        }
+        till.hidden = false;
+        if (['collection_run_expired', 'collection_run_invalid'].includes(error?.code) && collectionQueue) collectionQueue.run = null;
         pauseCollectionQueue();
         const raw = error?.message || 'connection unavailable';
         copy.textContent = /already has its free/.test(raw)

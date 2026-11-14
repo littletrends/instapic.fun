@@ -31,7 +31,7 @@ export function tillStateFromStatus(data, opts = {}) {
       showClose: false,
     };
   }
-  if (status === 'signed' || ['queued', 'minting', 'reconciling', 'needs_minter', 'needs_regular_key'].includes(mintStatus)) {
+  if (status === 'signed' || ['queued', 'minting', 'reconciling', 'needs_minter', 'needs_regular_key', 'needs_minter_funding'].includes(mintStatus)) {
     return {
       phase: 'minting',
       showOpen: false,
