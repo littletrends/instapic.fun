@@ -274,7 +274,7 @@ function continueCollectionSoon(queue) {
 
 async function advanceCollectionQueue() {
   const queue = collectionQueue;
-  if (!queue?.active || queue.busy) return;
+  if (!queue?.active || queue.busy || queue.retryWaiting) return;
   const account = queue.account;
   const revision = collectionQueueRevision;
   // Each order rechecks proof, stock and the run on the server. Refresh the
@@ -344,6 +344,8 @@ async function startCollectionQueue() {
       phase: receivingPending ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
   }
   collectionQueue.active = true;
+  collectionQueue.retryWaiting = false;
+  collectionQueue.readRetries = 0;
   paintCollectionQueue();
   await advanceCollectionQueue();
 }
@@ -364,6 +366,7 @@ function beginReceivingCollection() {
 function collectionMintPrepared(id, account, alreadyReceived = false) {
   const queue = collectionQueue;
   if (!collectionOwnsTill(id, account) || queue.phase !== 'prepare') return;
+  queue.readRetries = 0;
   if (!alreadyReceived && !queue.ready.includes(id)) queue.ready.push(id);
   queue.done += 1;
   queue.current = '';
@@ -377,6 +380,7 @@ function collectionMintPrepared(id, account, alreadyReceived = false) {
 function collectionMintReceived(id, account) {
   const queue = collectionQueue;
   if (!collectionOwnsTill(id, account)) return;
+  queue.readRetries = 0;
   if (queue.phase === 'prepare') {
     collectionMintPrepared(id, account, true);
     return;
@@ -1749,6 +1753,30 @@ function showTillQr(img, name, text) {
     img.alt = `${name} · Xaman`;
   }
 }
+function retryBusyCollectionRead(till, id, account, error) {
+  if (error?.code !== 'ledger_unavailable' || !collectionOwnsTill(id, account)) return false;
+  const queue = collectionQueue;
+  const retries = queue.readRetries || 0;
+  if (retries >= 3) return false;
+  queue.readRetries = retries + 1;
+  queue.retryWaiting = true;
+  const delay = 6000 * (2 ** retries);
+  stopTillPoll();
+  const revision = tillRevision;
+  const queueRevision = collectionQueueRevision;
+  resetTillDom(till);
+  till.hidden = true;
+  paintCollectionQueue();
+  const progress = overlay?.querySelector('#auraCollectionMintProgress');
+  if (progress) progress.textContent = `Ledger busy · retrying this item in ${delay / 1000} seconds (${retries + 1}/3). Keep this page open.`;
+  setTimeout(() => {
+    if (collectionQueue !== queue || !queue.active || account !== vipAccount()
+        || revision !== tillRevision || queueRevision !== collectionQueueRevision) return;
+    queue.retryWaiting = false;
+    advanceCollectionQueue();
+  }, delay);
+  return true;
+}
 function canBuyAnother(id) {
   const act = shopAction(id);
   return !!(act.ready && !act.disabled && !act.claim && !act.reward);
@@ -1909,6 +1937,7 @@ function watchXamanPayload(till, uuid, revision, account, reward, id, ownerMint 
       })
       .catch(error => {
         if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
+        if (retryBusyCollectionRead(till, itemId, account, error)) return;
         if (['ledger_unavailable', 'receipt_confirmation_required', 'receive_offer_mismatch'].includes(error?.code)) {
           const open = till.querySelector('#auraXrpTillOpen');
           if (open) { open.hidden = true; open.removeAttribute('href'); }
@@ -2059,6 +2088,7 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
     })
     .catch(error => {
       if (revision === tillRevision && account === vipAccount() && copy && (!till.hidden || collectionOwnsTill(id, account))) {
+        if (retryBusyCollectionRead(till, id, account, error)) return;
         if (error?.code === 'collection_batch_full' && collectionQueue?.ready.length) {
           collectionQueue.phase = 'receive';
           collectionQueue.active = false;
