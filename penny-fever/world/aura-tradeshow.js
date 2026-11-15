@@ -1883,6 +1883,13 @@ function watchXamanPayload(till, uuid, revision, account, reward, id, ownerMint 
       })
       .catch(error => {
         if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
+        if (['ledger_unavailable', 'receipt_confirmation_required', 'receive_offer_mismatch'].includes(error?.code)) {
+          const open = till.querySelector('#auraXrpTillOpen');
+          if (open) { open.hidden = true; open.removeAttribute('href'); }
+          const qr = till.querySelector('#auraXrpTillQrWrap');
+          if (qr) qr.hidden = true;
+          stopTillTimer();
+        }
         if (ownerMint) {
           stopTillTimer();
           const copy = till.querySelector('#auraXrpTillCopy');
