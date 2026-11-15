@@ -41,6 +41,7 @@ let tillPoll = 0;
 let tillRevision = 0;
 let tillTick = null;
 const pendingCheckouts = new Map();
+const ownerMintOperations = new Map();
 let collectionQueue = null;
 let collectionQueueRevision = 0;
 let tradeshowAccount = '';
@@ -154,7 +155,7 @@ function loadRewardMint(account, revision) {
     body: JSON.stringify({email: account}),
   }).then(res => res.ok ? res.json() : null).then(data => {
     if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return false;
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, pending: Array.isArray(data.pending) ? data.pending : []};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, pending: Array.isArray(data.pending) ? data.pending : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : []};
     return true;
   }).catch(() => false);
 }
@@ -1152,6 +1153,13 @@ function ensureOverlay() {
       openXrpTill(nextId);
       return;
     }
+    const ownerMint = e.target.closest('[data-owner-mint]');
+    if (ownerMint) {
+      e.preventDefault();
+      pauseCollectionQueue();
+      openXrpTill(ownerMint.dataset.ownerMint, {ownerMint: true});
+      return;
+    }
     const hold = e.target.closest('[data-xrp-hold]');
     if (hold && hold.dataset.item) {
       e.preventDefault();
@@ -1675,6 +1683,7 @@ function canBuyAnother(id) {
 }
 function applyTillState(till, data, ctx) {
   const {img, name, account, id, revision, reward} = ctx;
+  const ownerMint = !!pendingCheckouts.get(id)?.ownerMint;
   if (collectionQueue?.active && collectionQueue.account === account && collectionQueue.current === id
       && typeof data?.collection_run === 'string') collectionQueue.run = data.collection_run;
   if (data?.mint?.status === 'offer' && collectionOwnsTill(id, account) && collectionQueue.phase === 'prepare') {
@@ -1682,6 +1691,7 @@ function applyTillState(till, data, ctx) {
     return {phase: 'prepared'};
   }
   if (data?.mint?.status === 'accepted') {
+    if (ownerMint) ownerMintOperations.delete(account + ':' + id);
     pendingCheckouts.delete(id);
     const owned = Math.max(nftOwnedCount(id), 1);
     if (rewardMint.account === account) {
@@ -1763,7 +1773,10 @@ function applyTillState(till, data, ctx) {
       showTillQr(img, name, state.deepLink);
     }
   }
-  if (state.allowRetry) pendingCheckouts.delete(id);
+  if (state.allowRetry) {
+    if (ownerMint) ownerMintOperations.delete(account + ':' + id);
+    pendingCheckouts.delete(id);
+  }
   if (['cancelled', 'expired'].includes(state.phase)) stopTillTimer();
   if (['cancelled', 'expired'].includes(state.phase)
       || ['review_required', 'blocked', 'failed', 'sold_out', 'needs_minter', 'needs_regular_key', 'needs_minter_funding'].includes(data?.mint?.status)) pauseCollectionQueue();
@@ -1779,7 +1792,7 @@ function showTillPayload(till, img, name, data, account, id) {
     mint: data?.mint,
   }, {img, name, account, id, revision: tillRevision, reward: false});
 }
-function watchXamanPayload(till, uuid, revision, account, reward, id) {
+function watchXamanPayload(till, uuid, revision, account, reward, id, ownerMint = false) {
   if (revision !== tillRevision || account !== vipAccount()) return;
   stopTillPoll();
   const pollRevision = tillRevision;
@@ -1801,7 +1814,7 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
     inFlight = true;
     const check = till.querySelector('[data-xrp-check]');
     if (check) check.disabled = true;
-    fetch(reward ? `${NFT_HOST}/api/penny-fever/verified/redeem/status`
+    fetch(reward ? `${NFT_HOST}/api/penny-fever/verified/${ownerMint ? 'owner-mint' : 'redeem'}/status`
       : `${NFT_HOST}/api/penny-fever/xaman-checkout/status/${uuid}`, reward ? {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email: account, payload: uuid}),
@@ -1819,6 +1832,12 @@ function watchXamanPayload(till, uuid, revision, account, reward, id) {
       })
       .catch(error => {
         if (pollRevision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(itemId, account))) return;
+        if (ownerMint) {
+          stopTillTimer();
+          const copy = till.querySelector('#auraXrpTillCopy');
+          if (copy) copy.textContent = error?.message || 'Owner mint could not be verified. No next copy was requested.';
+          return;
+        }
         if (collectionQueue?.active && collectionQueue.current === itemId) {
           till.hidden = false;
           if (['collection_run_expired', 'collection_run_invalid'].includes(error?.code)) {
@@ -1883,9 +1902,12 @@ function cancelXrpPurchase() {
     }
   });
 }
-function openXrpTill(id, {receiveOnly = false, background = false} = {}) {
+function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false} = {}) {
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
-  const act = receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
+  ownerMint = ownerMint || !!pendingCheckouts.get(id)?.ownerMint;
+  if (ownerMint && (!vip() || !rewardMint.enabled || rewardMint.account !== vipAccount() || !rewardMint.ownerItems?.includes(id))) return;
+  const act = ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
+    : receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
     if (note) note.textContent = act.label || 'This card is not for XRP yet.';
@@ -1919,9 +1941,11 @@ function openXrpTill(id, {receiveOnly = false, background = false} = {}) {
   }
   till.hidden = background;
   if (!background) till.querySelector('[data-xrp-close]')?.focus();
-  fetch(receiveOnly ? `${NFT_HOST}/api/penny-fever/verified/redeem` : checkoutUrl(id), act.reward ? {
+  const operationKey = account + ':' + id;
+  if (ownerMint && !ownerMintOperations.has(operationKey)) ownerMintOperations.set(operationKey, crypto.randomUUID());
+  fetch(ownerMint ? `${NFT_HOST}/api/penny-fever/verified/owner-mint` : receiveOnly ? `${NFT_HOST}/api/penny-fever/verified/redeem` : checkoutUrl(id), act.reward ? {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({email: account, item: id, purchase: !!act.purchase,
+    body: JSON.stringify(ownerMint ? {email: account, item: id, operation: ownerMintOperations.get(operationKey)} : {email: account, item: id, purchase: !!act.purchase,
       ...(receiveOnly ? {receive: true} : {}),
       ...(!receiveOnly && collectionQueue?.active && collectionQueue.current === id && !act.purchase
         ? (collectionQueue.run ? {collection_run: collectionQueue.run} : {collection_start: true}) : {})}),
@@ -1934,13 +1958,13 @@ function openXrpTill(id, {receiveOnly = false, background = false} = {}) {
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(id, account)) || !copy) return;
       if (data?.payload) {
-        pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward});
+        pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward, ownerMint});
       }
       const state = applyTillState(till, data, {
         img, name, account, id, revision, reward: !!act.reward,
       });
       if (data?.payload && state?.phase !== 'accepted' && state?.phase !== 'cancelled' && state?.phase !== 'expired' && state?.phase !== 'prepared') {
-        watchXamanPayload(till, data.payload, revision, account, !!act.reward, id);
+        watchXamanPayload(till, data.payload, revision, account, !!act.reward, id, ownerMint);
       }
     })
     .catch(error => {
@@ -2253,7 +2277,9 @@ function appendCards(grid, items) {
       <p class="claim">${claimLine(item, info)}</p>
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
       ${nestedBook && item.id !== 'penny-collector-book' ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">Open folder</button>` : ''}
-      ${shopBtn}`;
+      ${shopBtn}
+      ${owned && rewardMint.enabled && rewardMint.account === vipAccount() && rewardMint.ownerItems?.includes(item.id)
+        ? `<button type="button" class="aura-tradeshow-buy" data-owner-mint="${item.id}">Owner mint another · to RaX</button>` : ''}`;
     const pic = card.querySelector('img');
     if (pic) pic.alt = item.name || '';
     grid.append(card);
