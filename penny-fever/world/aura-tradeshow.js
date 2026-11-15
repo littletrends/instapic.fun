@@ -719,10 +719,12 @@ function nftPlateSrc(id) {
   return `${NFT_HOST}/api/penny-fever/nft-plate/${encodeURIComponent(id)}.webp?v=${NFT_VER}`;
 }
 function loadPlates() {
-  return fetch(`${NFT_HOST}/api/penny-fever/nft-plates?v=${NFT_VER}`, {cache: 'no-store'})
+  const account = vipAccount();
+  if (!account) { nftPlates = new Set(); return Promise.resolve(); }
+  return fetch(`${NFT_HOST}/api/penny-fever/verified/nft-plates?email=${encodeURIComponent(account)}&v=${NFT_VER}`, {cache: 'no-store'})
     .then((res) => (res.ok ? res.json() : []))
     .then((list) => {
-      nftPlates = new Set(Array.isArray(list) ? list : []);
+      if (account === vipAccount()) nftPlates = new Set(Array.isArray(list) ? list : []);
     })
     .catch(() => {});
 }
