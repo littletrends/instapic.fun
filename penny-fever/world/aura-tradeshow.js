@@ -2,7 +2,7 @@ import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=ma
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
-import {tillStateFromStatus} from './aura-till-state.js?v=collection-phone-1';
+import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -1800,6 +1800,7 @@ function applyTillState(till, data, ctx) {
     }
   }
   const state = tillStateFromStatus(data, {
+    openDeepLink: till.querySelector('#auraXrpTillOpen')?.getAttribute('href'),
     owned: Math.max(nftOwnedCount(id), data?.mint?.status === 'accepted' ? 1 : 0),
     price: xrpPriceFor(id) || formatXrp(id),
     canBuyAnother: data?.mint?.status === 'accepted' && canBuyAnother(id),
@@ -1862,7 +1863,7 @@ function applyTillState(till, data, ctx) {
         paint();
       });
     } else {
-      paint();
+      loadRewardMint(account, eligibilityRevision).then(() => paint());
     }
     return state;
   }

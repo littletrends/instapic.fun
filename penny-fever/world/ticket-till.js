@@ -44,9 +44,20 @@ let walletBusy = false;
 let pinned = false;
 let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
 
+const BANK_SECTION_DEFAULTS = {pennies: true, penny_collection: true, aura_limited: false, felix_collection: false, penny_collector_book: false};
+const COLLECTION_BUTTONS = [
+  {section: 'penny_collection', suffix: 'Collection', label: '+ Penny Fever Collection', name: 'Penny Fever Collection'},
+  {section: 'aura_limited', suffix: 'AuraLimited', label: '+ Aura’s Limited Edition', name: 'Aura’s Limited Edition'},
+  {section: 'felix_collection', suffix: 'FelixCollection', label: '+ Felix’s instapic Photo Booth', name: 'Felix’s instapic Photo Booth collection'},
+  {section: 'penny_collector_book', suffix: 'CollectorBook', label: '+ Penny Collector Book only', name: 'Penny Collector Book'},
+];
+function bankSections() {
+  const raw = config.bank_sections && typeof config.bank_sections === 'object' ? config.bank_sections : {};
+  return Object.fromEntries(Object.entries(BANK_SECTION_DEFAULTS).map(([key, fallback]) => [key, (raw[key] ?? fallback) === true]));
+}
 export function bankLoan() {
   const pennies = Math.max(1, Math.floor(Number(config.bank_loan_pennies) || 100));
-  return {enabled: !!config.bank_loan, pennies};
+  return {enabled: !!config.bank_loan && bankSections().pennies, pennies};
 }
 
 export function paintBankLoan() {
@@ -55,6 +66,7 @@ export function paintBankLoan() {
   for (const id of ['auraCounterLoan', 'pfTillLoan']) {
     const btn = document.getElementById(id);
     if (!btn) continue;
+    btn.hidden = !bankSections().pennies;
     btn.disabled = !loan.enabled;
     btn.textContent = label;
     paintCollectionLoan(btn, loan);
@@ -66,36 +78,43 @@ function paintCollectionLoan(loanButton, loan) {
   const identity = window.InstapicGuestIdentity;
   const permitted = !!identity?.isVerifiedSessionActive?.()
     && window.PennyFeverVerifiedPurse?.wallet?.().test_collection_allowed === true;
-  let button = document.getElementById(loanButton.id + 'Collection');
-  if (!button && permitted) {
-    button = document.createElement('button');
-    button.type = 'button';
-    button.id = loanButton.id + 'Collection';
-    button.textContent = '+ Collection';
-    loanButton.insertAdjacentElement('afterend', button);
-    button.addEventListener('click', async () => {
-      if (collectionBusy || !window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) return;
-      const service = window.PennyFeverVerified, owner = service?.owner;
-      const note = document.getElementById(loanButton.id === 'pfTillLoan' ? 'pfStallCardLine' : 'auraCounterMessage');
-      collectionBusy = true;
-      paintBankLoan();
-      try {
-        const result = await service.testCollection();
-        if (service.owner === owner && note) note.textContent = result.added
-          ? `Penny collection added · ${result.added} missing items. Existing items and purse kept.`
-          : 'Your Penny collection is complete. Existing items and purse kept.';
-      } catch (error) {
-        if (service?.owner === owner && note) note.textContent = error?.message === 'bank_loan_disabled'
-          ? 'Bank loan is off.' : 'Collection not added yet. Sign in to your test VIP and retry when the bank is ready.';
-      } finally {
-        collectionBusy = false;
+  let previous = loanButton;
+  for (const entry of COLLECTION_BUTTONS) {
+    let button = document.getElementById(loanButton.id + entry.suffix);
+    if (!button && permitted) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.id = loanButton.id + entry.suffix;
+      button.className = loanButton.className;
+      button.dataset.bankSection = entry.section;
+      button.textContent = entry.label;
+      previous.insertAdjacentElement('afterend', button);
+      button.addEventListener('click', async () => {
+        if (collectionBusy || !window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) return;
+        const service = window.PennyFeverVerified, owner = service?.owner;
+        const note = document.getElementById(loanButton.id === 'pfTillLoan' ? 'pfStallCardLine' : 'auraCounterMessage');
+        collectionBusy = true;
         paintBankLoan();
-      }
-    });
-  }
-  if (button) {
-    button.hidden = !permitted;
-    button.disabled = collectionBusy || !loan.enabled || !window.PennyFeverVerified?.active;
+        try {
+          const result = await service.testCollection(entry.section);
+          if (service.owner === owner && note) note.textContent = result.added
+            ? `${entry.name} added · ${result.added} missing items. Existing items and purse kept.`
+            : `${entry.name} is already in your VIP. Existing items and purse kept.`;
+        } catch (error) {
+          if (service?.owner === owner && note) note.textContent = error?.message === 'bank_loan_disabled'
+            ? 'Bank loan is off.' : error?.message === 'bank_section_disabled'
+              ? 'This bank section is off.' : 'Collection not added yet. Sign in to your test VIP and retry when the bank is ready.';
+        } finally {
+          collectionBusy = false;
+          paintBankLoan();
+        }
+      });
+    }
+    if (button) {
+      button.hidden = !permitted || !bankSections()[entry.section];
+      button.disabled = collectionBusy || !config.bank_loan || !bankSections()[entry.section] || !window.PennyFeverVerified?.active;
+      previous = button;
+    }
   }
 }
 if (typeof window !== 'undefined') {
@@ -585,6 +604,7 @@ async function refreshConfig() {
       currency: data.currency || 'AUD',
       bank_loan: !!data.bank_loan,
       bank_loan_pennies: Math.max(1, Math.floor(Number(data.bank_loan_pennies) || 100)),
+      bank_sections: data.bank_sections,
     };
   } catch {
     config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};

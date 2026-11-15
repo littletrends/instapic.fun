@@ -65,7 +65,9 @@ export function tillStateFromStatus(data, opts = {}) {
       allowRetry: true,
     };
   }
-  const deepLink = String(data?.deep_link || '').trim();
+  // Paid status replies omit the original link while still waiting to sign.
+  // Reuse only this open till's link, never after signing or a terminal state.
+  const deepLink = String(data?.deep_link || (status === 'open' && (!mintStatus || mintStatus === 'waiting_sign') ? opts.openDeepLink : '') || '').trim();
   const qr = String(data?.qr || '').trim();
   return {
     phase: 'open',
