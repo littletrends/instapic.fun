@@ -894,7 +894,7 @@ function ensureOverlay() {
       <div class="aura-tradeshow-quick" role="group" aria-label="Quick links">
         <button type="button" data-folder="open">Open</button>
         <button type="button" data-folder="closed">Closed</button>
-        <button type="button" data-folder="convert">Convert</button>
+        <button type="button" data-folder="minted">Minted</button>
         <button type="button" data-folder="felix">Felix</button>
         <button type="button" class="aura-tradeshow-limited-tab" data-folder="limited">Limited</button>
       </div>
@@ -1050,6 +1050,7 @@ function ensureOverlay() {
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
+      if (folder === 'minted') haveFilter = '';
       if (folder === 'limited') {
         for (const id of LIMITED) openNodes.delete('book:' + id);
       }
@@ -2076,6 +2077,7 @@ function albumTitle(model, id) {
 }
 function itemMatches(item, stall, info) {
   if (query && !`${item.name} ${stall.host} ${stall.title} ${item.album || ''} ${item.book || ''} ${item.collection || ''}`.toLowerCase().includes(query)) return false;
+  if (folder === 'minted') return nftOwnedCount(item.id) > 0;
   if (haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
   if (haveFilter === 'locked' && walletCount(item.id) > 0) return false;
   if (folder === 'all') return true;
@@ -2198,6 +2200,7 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
     }
     root.append(felixWrap);
   }
+  root.append(treeRow('minted', 'Minted', {leaf: true}));
   nav.append(root);
 }
 function appendCards(grid, items) {
@@ -2278,6 +2281,8 @@ function paint() {
   }
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
+    : folder === 'minted'
+      ? 'Your received NFTs. Items still waiting for wallet acceptance appear after receipt is confirmed.'
     : folder === 'convert'
       ? 'Convert is Aura’s token counter. Spend stars, moons, roses, crowns, or pennies from play. A full tank becomes the collector book, Felix photo book, or Aura keepsake. Limited stays XRP.'
     : folder === 'open' || stallFolderKind(folder) === 'open'
@@ -2301,7 +2306,7 @@ function paint() {
       || (id === 'closed' && stallFolderKind(folder) === 'closed')
       || (id === 'felix' && folderIsFelix())
       || (id === 'limited' && folderIsLimited())
-      || (id === 'convert' && folder === 'convert')
+      || (id === 'minted' && folder === 'minted')
       || (id === 'book:penny-collector-book' && (folder.startsWith('book:') || folder.startsWith('item:')) && !folderIsLimited() && !folderIsFelix() && folder !== 'convert');
     b.setAttribute('aria-pressed', String(on));
   });
@@ -2373,7 +2378,14 @@ function paint() {
         stall,
       };
     })
-    : (folder === 'convert'
+    : (folder === 'minted'
+      ? [{
+        title: 'Minted',
+        line: 'NFTs received into your wallet',
+        items: items.filter((item) => nftOwnedCount(item.id) > 0),
+        stall: stallById('ticket-booth'),
+      }]
+      : folder === 'convert'
       ? [{
         title: 'Aura converts tokens',
         line: 'Stars, moons, roses, crowns, or pennies · not XRP',
@@ -2441,6 +2453,11 @@ function paint() {
       wrap.append(grid);
     }
     body.append(wrap);
+  }
+  if (folder === 'minted' && !body.children.length) {
+    const empty = document.createElement('p');
+    empty.textContent = query ? 'No received NFTs match your search.' : 'No received NFTs to show yet. Return here after receiving them in Xaman.';
+    body.append(empty);
   }
 }
 
