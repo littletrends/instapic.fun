@@ -29,6 +29,7 @@ let stock = {groups: {}, sku: {}, ceilings: {}, hold_floor: 111, hold_pct: 0, au
 let minted = {};
 let mintedReady = false;
 let rewardMint = {account: '', enabled: false, items: {}, prices: {}, owned: {}};
+let collectionLoad = {account: '', loading: false, failed: false};
 const checkoutLinks = new Map();
 let nftPlates = new Set();
 let overlay = null;
@@ -150,14 +151,27 @@ function loadSnap() {
   ]).then(deliverClaimReceipts);
 }
 function loadRewardMint(account, revision) {
+  const loading = {account, loading: true, failed: false};
+  collectionLoad = loading;
+  paintCollectionQueue();
   return fetch(`${NFT_HOST}/api/penny-fever/verified/redeem/eligibility`, {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({email: account}),
-  }).then(res => res.ok ? res.json() : null).then(data => {
-    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) return false;
+  }).then(async res => {
+    const data = await res.json().catch(() => null);
+    return res.ok || data?.error === 'test_mint_not_allowed' ? data : null;
+  }).then(data => {
+    if (data?.error === 'test_mint_not_allowed') return false;
+    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) {
+      loading.failed = true;
+      return false;
+    }
     rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, pending: Array.isArray(data.pending) ? data.pending : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : []};
     return true;
-  }).catch(() => false);
+  }).catch(() => { loading.failed = true; return false; }).finally(() => {
+    loading.loading = false;
+    if (collectionLoad === loading) paintCollectionQueue();
+  });
 }
 
 function collectedMintIds() {
@@ -181,17 +195,26 @@ function collectionOwnsTill(id, account) {
 function paintCollectionQueue() {
   if (!overlay) return;
   const queue = collectionQueue?.account === vipAccount() ? collectionQueue : null;
-  const available = !!queue || collectedMintIds().length > 0;
+  const loading = vip() && collectionLoad.account === vipAccount() && collectionLoad.loading;
+  const failed = vip() && collectionLoad.account === vipAccount() && collectionLoad.failed;
+  const till = overlay.querySelector('#auraXrpTill');
+  const opening = till?.dataset.loading === 'true' && (!till.hidden || collectionOwnsTill(till.dataset.item, vipAccount()));
+  const available = loading || failed || opening || !!queue || collectedMintIds().length > 0;
   const toolbar = overlay.querySelector('#auraCollectionMintToolbar');
-  if (toolbar) toolbar.hidden = !available;
+  if (toolbar) {
+    toolbar.hidden = !available;
+    toolbar.setAttribute('aria-busy', String(loading || opening));
+  }
+  const bar = overlay.querySelector('#auraCollectionLoadingBar');
+  if (bar) bar.hidden = !(loading || opening);
   const button = overlay.querySelector('[data-collection-mint]');
   if (button) {
     button.hidden = !available;
-    button.disabled = !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length);
-    button.textContent = queue?.active
+    button.disabled = loading || opening || !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length);
+    button.textContent = loading ? 'Loading your VIP collection…' : opening ? 'Preparing Xaman…' : queue?.active
       ? (queue.phase === 'prepare' ? 'Preparing batch…' : 'Receiving batch…')
       : queue?.phase === 'receive' ? `Receive batch (${queue.ready.length - queue.receiveIndex})`
-      : queue?.phase === 'prepare' ? 'Resume preparing batch' : 'Prepare up to 25 NFTs';
+      : queue?.phase === 'prepare' ? 'Resume minting collection' : failed ? 'Retry loading VIP collection' : 'Mint my collection · up to 25';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
@@ -200,14 +223,16 @@ function paintCollectionQueue() {
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
-    progress.hidden = !queue;
-    progress.textContent = !queue ? '' : queue.phase === 'prepare'
+    progress.hidden = !available;
+    progress.textContent = loading ? 'Checking your collected rewards and wallet. Please wait…'
+      : opening ? 'Preparing your Xaman request. Please wait…'
+      : failed ? 'Collection could not load. Retry when connected and signed in.'
+      : !queue ? 'Mint collected rewards in batches of up to 25, then receive them in Xaman.' : queue.phase === 'prepare'
       ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
       : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
       : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
   }
   overlay.querySelectorAll('[data-collection-pause]').forEach(button => { button.hidden = !queue?.active; });
-  const till = overlay.querySelector('#auraXrpTill');
   const current = !!(queue?.active && queue.current === till?.dataset.item);
   const note = overlay.querySelector('#auraCollectionMintStep');
   if (note) {
@@ -903,7 +928,8 @@ function ensureOverlay() {
       </div>
     </div>
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
-      <button type="button" data-collection-mint hidden>Prepare up to 25 NFTs</button>
+      <button type="button" data-collection-mint hidden>Mint my collection · up to 25</button>
+      <progress id="auraCollectionLoadingBar" aria-label="Loading VIP collection or Xaman request" hidden></progress>
       <button type="button" data-collection-receive hidden>Receive prepared</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
@@ -1630,6 +1656,7 @@ function bindTillWake() {
 }
 function resetTillDom(till) {
   if (!till) return;
+  delete till.dataset.loading;
   const check = till.querySelector('[data-xrp-check]');
   if (check) { check.hidden = true; check.disabled = false; }
   const open = till.querySelector('#auraXrpTillOpen');
@@ -1668,6 +1695,7 @@ function closeXrpTill({pauseQueue = true} = {}) {
     resetTillDom(till);
     till.hidden = true;
   }
+  paintCollectionQueue();
   overlay?.querySelector('#auraTradeshowClose')?.focus();
 }
 function showTillQr(img, name, text) {
@@ -1892,6 +1920,7 @@ function cancelXrpPurchase() {
       if (copy) copy.textContent = data?.message || 'This purchase could not be cancelled.';
       return;
     }
+    if (pending?.ownerMint) ownerMintOperations.delete(account + ':' + id);
     pendingCheckouts.delete(id);
     closeXrpTill();
     const refresh = [loadMinted()];
@@ -1942,6 +1971,8 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
     hold.hidden = true;
   }
   till.hidden = background;
+  till.dataset.loading = 'true';
+  paintCollectionQueue();
   if (!background) till.querySelector('[data-xrp-close]')?.focus();
   const operationKey = account + ':' + id;
   if (ownerMint && !ownerMintOperations.has(operationKey)) ownerMintOperations.set(operationKey, crypto.randomUUID());
@@ -1959,6 +1990,7 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
     })
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(id, account)) || !copy) return;
+      delete till.dataset.loading;
       if (data?.payload) {
         pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward, ownerMint});
       }
@@ -1986,6 +2018,11 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
         copy.textContent = /already has its free/.test(raw)
           ? raw
           : `Checkout did not open: ${raw}. No NFT purchase was completed here.`;
+      }
+    }).finally(() => {
+      if (revision === tillRevision) {
+        delete till.dataset.loading;
+        paintCollectionQueue();
       }
     });
 }
