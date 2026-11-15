@@ -235,6 +235,13 @@ function paintCollectionQueue() {
       : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
   }
   overlay.querySelectorAll('[data-collection-pause]').forEach(button => { button.hidden = !queue?.active; });
+  const warning = overlay.querySelector('#auraCollectionKeepOpen');
+  if (warning) {
+    warning.hidden = !queue?.active;
+    warning.textContent = queue?.phase === 'prepare'
+      ? 'Minting in progress. Keep this Tradeshow page open—do not close or refresh it. Return here after signing in Xaman.'
+      : 'Receiving in progress. Keep this Tradeshow page open and return here after each Xaman approval.';
+  }
   const current = !!(queue?.active && queue.current === till?.dataset.item);
   const note = overlay.querySelector('#auraCollectionMintStep');
   if (note) {
@@ -939,6 +946,7 @@ function ensureOverlay() {
       <button type="button" data-collection-receive hidden>Receive prepared</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
+      <p id="auraCollectionKeepOpen" class="aura-collection-warning" role="status" hidden></p>
     </div>
     <div class="aura-tradeshow-main">
       <div class="aura-tradeshow-tree-shell">
@@ -1000,6 +1008,8 @@ function ensureOverlay() {
         <p class="aura-tradeshow-inspect-price" id="auraTradeshowInspectPrice"></p>
         <p id="auraTradeshowInspectNote"></p>
         <p id="auraTradeshowInspectStock"></p>
+        <button type="button" class="owned aura-owned-editions" id="auraInspectOwned" data-owned-editions="" aria-expanded="false" hidden></button>
+        <div class="aura-owned-edition-list" hidden></div>
         <p class="aura-tradeshow-inspect-sample" id="auraTradeshowInspectSample">Offline sample · the original is the NFT token.</p>
         <p id="auraTradeshowInspectNftNote" hidden>Scan in Xaman. This QR opens Aura’s till address. Minting is still on hold.</p>
         <div class="aura-tradeshow-views aura-tradeshow-inspect-views">
@@ -1121,6 +1131,12 @@ function ensureOverlay() {
     if (inspectClose || e.target === overlay.querySelector('#auraTradeshowInspect')) {
       e.preventDefault();
       closeInspect();
+      return;
+    }
+    const ownedEditions = e.target.closest('[data-owned-editions]');
+    if (ownedEditions) {
+      e.preventDefault();
+      showOwnedEditions(ownedEditions);
       return;
     }
     const inspectView = e.target.closest('[data-inspect-view]');
@@ -1480,7 +1496,17 @@ function openInspect(id, startMode = 'website') {
   const inspectOwned = nftOwnedCount(item.id);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item)
     ? 'Supply is earned through Felix’s photo booth.'
-    : (inspectOwned ? `You own ${inspectOwned.toLocaleString('en-AU')} · ${formatStock(item.id)}` : formatStock(item.id));
+    : formatStock(item.id);
+  const ownedButton = panel.querySelector('#auraInspectOwned');
+  if (ownedButton) {
+    ownedButton.hidden = !inspectOwned;
+    ownedButton.disabled = false;
+    ownedButton.dataset.ownedEditions = item.id;
+    ownedButton.setAttribute('aria-expanded', 'false');
+    ownedButton.textContent = `You own ${inspectOwned.toLocaleString('en-AU')} · view editions`;
+  }
+  const ownedList = panel.querySelector('.aura-owned-edition-list');
+  if (ownedList) { ownedList.hidden = true; ownedList.replaceChildren(); }
   const sample = overlay.querySelector('#auraTradeshowInspectSample');
   const sampleText = nftSampleNote(item);
   if (sample) {
@@ -2296,6 +2322,53 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   root.append(treeRow('minted', 'Minted', {leaf: true}));
   nav.append(root);
 }
+async function showOwnedEditions(button) {
+  const id = button.dataset.ownedEditions;
+  const account = vipAccount();
+  const list = button.parentElement?.querySelector('.aura-owned-edition-list');
+  if (!list || !id || !vip()) return;
+  if (button.getAttribute('aria-expanded') === 'true') {
+    list.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+    button.textContent = button.textContent.replace('· hide editions', '· view editions');
+    return;
+  }
+  button.setAttribute('aria-expanded', 'true');
+  button.disabled = true;
+  list.hidden = false;
+  list.textContent = 'Checking edition numbers in your wallet…';
+  try {
+    const response = await fetch(`${NFT_HOST}/api/penny-fever/verified/redeem/owned-editions`, {
+      method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: account, item: id}),
+    });
+    const data = await response.json();
+    if (!response.ok || data?.ok !== true) throw Error(data?.message || 'Could not check your wallet editions. Try again shortly.');
+    if (account !== vipAccount() || !button.isConnected || button.dataset.ownedEditions !== id) return;
+    if (!Number.isSafeInteger(data.owned_count) || data.owned_count < 0 || !Array.isArray(data.editions)) throw Error('Edition details are unavailable.');
+    button.textContent = `You own ${data.owned_count.toLocaleString('en-AU')} · hide editions`;
+    list.replaceChildren();
+    if (!data.owned_count) { list.textContent = 'No copies currently found in this wallet.'; return; }
+    const entries = document.createElement('ul');
+    for (const edition of data.editions) {
+      const li = document.createElement('li');
+      li.textContent = edition.serial === null ? 'Original issue · unnumbered'
+        : `Edition #${Number(edition.serial).toLocaleString('en-AU')}`;
+      entries.append(li);
+    }
+    list.append(entries);
+    if (data.truncated) {
+      const note = document.createElement('p');
+      note.textContent = `Showing the first ${data.editions.length} of ${data.owned_count.toLocaleString('en-AU')} copies.`;
+      list.append(note);
+    }
+  } catch (error) {
+    if (account === vipAccount() && button.isConnected && button.dataset.ownedEditions === id) list.textContent = error?.message || 'Edition details could not load.';
+  } finally {
+    if (account === vipAccount() && button.isConnected && button.dataset.ownedEditions === id) button.disabled = false;
+  }
+}
+
 function appendCards(grid, items) {
   for (const item of items) {
     // Books mix vendors. Resolve each card from its own chapter/portrait ID,
@@ -2340,7 +2413,7 @@ function appendCards(grid, items) {
       <h3>${item.name}</h3>
       ${sample ? `<p class="sample">${sample}</p>` : ''}
       <p class="price">${purchaseLabel(item)}</p>
-      ${owned ? `<p class="owned">You own ${owned.toLocaleString('en-AU')}</p>` : ''}
+      ${owned ? `<button type="button" class="owned aura-owned-editions" data-owned-editions="${item.id}" aria-expanded="false">You own ${owned.toLocaleString('en-AU')} · view editions</button><div class="aura-owned-edition-list" data-owned-list="${item.id}" hidden></div>` : ''}
       ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
       ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>
