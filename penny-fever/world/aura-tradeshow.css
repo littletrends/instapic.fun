@@ -293,11 +293,15 @@
   background:rgba(42,28,22,.55);padding:1rem;
 }
 .aura-xrp-till-card{
-  position:relative;width:min(22rem,100%);padding:1.1rem 1rem .9rem;
+  position:relative;width:min(22rem,100%);padding:3rem 1rem .9rem;
   background:#fffaf0;border:1px solid #c4a064;border-radius:12px;
   display:flex;flex-direction:column;gap:.35rem;align-items:center;text-align:center;
   box-shadow:0 18px 50px #0006;
+  max-height:calc(100dvh - 3rem);overflow-y:auto;box-sizing:border-box;
 }
+.aura-xrp-till-media{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;max-width:100%}
+.aura-xrp-till-qr{width:9.5rem}
+.aura-xrp-till-qr[hidden]{display:none}
 .aura-xrp-till-card img{
   width:9.5rem;height:9.5rem;object-fit:contain;background:#fff8ea;border-radius:8px;
   image-rendering:auto;

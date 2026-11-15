@@ -197,9 +197,10 @@ function paintCollectionQueue() {
   const queue = collectionQueue?.account === vipAccount() ? collectionQueue : null;
   const loading = vip() && collectionLoad.account === vipAccount() && collectionLoad.loading;
   const failed = vip() && collectionLoad.account === vipAccount() && collectionLoad.failed;
+  const pendingReceive = rewardMint.account === vipAccount() ? (rewardMint.pending || []).length : 0;
   const till = overlay.querySelector('#auraXrpTill');
   const opening = till?.dataset.loading === 'true' && (!till.hidden || collectionOwnsTill(till.dataset.item, vipAccount()));
-  const available = loading || failed || opening || !!queue || collectedMintIds().length > 0;
+  const available = loading || failed || opening || pendingReceive > 0 || !!queue || collectedMintIds().length > 0;
   const toolbar = overlay.querySelector('#auraCollectionMintToolbar');
   if (toolbar) {
     toolbar.hidden = !available;
@@ -210,16 +211,17 @@ function paintCollectionQueue() {
   const button = overlay.querySelector('[data-collection-mint]');
   if (button) {
     button.hidden = !available;
-    button.disabled = loading || opening || !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length);
+    button.disabled = loading || opening || !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length && !pendingReceive);
     button.textContent = loading ? 'Loading your VIP collection…' : opening ? 'Preparing Xaman…' : queue?.active
       ? (queue.phase === 'prepare' ? 'Preparing batch…' : 'Receiving batch…')
       : queue?.phase === 'receive' ? `Receive batch (${queue.ready.length - queue.receiveIndex})`
-      : queue?.phase === 'prepare' ? 'Resume minting collection' : failed ? 'Retry loading VIP collection' : 'Mint my collection · up to 25';
+      : queue?.phase === 'prepare' ? 'Resume minting collection' : failed ? 'Retry loading VIP collection'
+      : pendingReceive ? `Receive pending NFTs (${pendingReceive})` : 'Mint my collection · up to 25';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
-    receive.hidden = !queue || queue.active || queue.phase !== 'prepare' || !queue.ready.length;
-    receive.textContent = `Receive prepared (${queue?.ready.length || 0})`;
+    receive.hidden = loading || opening || !!queue?.active || (!(queue?.ready.length && queue.phase !== 'complete') && !pendingReceive);
+    receive.textContent = 'Scan again / receive NFTs';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
@@ -227,7 +229,7 @@ function paintCollectionQueue() {
     progress.textContent = loading ? 'Checking your collected rewards and wallet. Please wait…'
       : opening ? 'Preparing your Xaman request. Please wait…'
       : failed ? 'Collection could not load. Retry when connected and signed in.'
-      : !queue ? 'Mint collected rewards in batches of up to 25, then receive them in Xaman.' : queue.phase === 'prepare'
+      : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : 'Mint collected rewards in batches of up to 25, then receive them in Xaman.') : queue.phase === 'prepare'
       ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
       : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
       : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
@@ -328,11 +330,11 @@ async function startCollectionQueue() {
   }
   if (!collectionQueue || collectionQueue.account !== account || collectionQueue.phase === 'complete') {
     const pending = (rewardMint.pending || []).filter(id => modelItem(id).id);
-    const checkingReceived = pending.some(id => nftOwnedCount(id) > 0);
-    const ids = checkingReceived ? pending.slice(0, 25) : collectedMintIds().slice(0, 25);
-    collectionQueue = {account, ids, done: checkingReceived ? ids.length : 0,
-      ready: checkingReceived ? [...ids] : [], receiveIndex: 0,
-      phase: checkingReceived ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
+    const receivingPending = pending.length > 0;
+    const ids = receivingPending ? pending.slice(0, 25) : collectedMintIds().slice(0, 25);
+    collectionQueue = {account, ids, done: receivingPending ? ids.length : 0,
+      ready: receivingPending ? [...ids] : [], receiveIndex: 0,
+      phase: receivingPending ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
   }
   collectionQueue.active = true;
   paintCollectionQueue();
@@ -340,7 +342,11 @@ async function startCollectionQueue() {
 }
 
 function beginReceivingCollection() {
-  if (!collectionQueue?.ready.length || collectionQueue.account !== vipAccount()) return;
+  if (!collectionQueue?.ready.length || collectionQueue.phase === 'complete') {
+    if (rewardMint.account === vipAccount() && rewardMint.pending?.length) startCollectionQueue();
+    return;
+  }
+  if (collectionQueue.account !== vipAccount()) return;
   pauseCollectionQueue();
   stopTillPoll();
   collectionQueue.phase = 'receive';
@@ -945,7 +951,13 @@ function ensureOverlay() {
     <div class="aura-xrp-till" id="auraXrpTill" hidden>
       <div class="aura-xrp-till-card" role="dialog" aria-modal="true" aria-labelledby="auraXrpTillName">
         <button type="button" class="aura-xrp-till-close" data-xrp-close aria-label="Close XRP till">×</button>
-        <img id="auraXrpTillImg" alt="" width="220" height="220">
+        <div class="aura-xrp-till-media">
+          <img id="auraXrpTillImg" alt="" width="220" height="220">
+          <div class="aura-xrp-till-qr" id="auraXrpTillQrWrap" hidden>
+            <img id="auraXrpTillQr" alt="Xaman signing QR" width="220" height="220">
+            <p>Scan with Xaman</p>
+          </div>
+        </div>
         <h2 id="auraXrpTillName"></h2>
         <p id="auraXrpTillStock"></p>
         <p id="auraXrpTillPrice"></p>
@@ -1657,6 +1669,10 @@ function bindTillWake() {
 function resetTillDom(till) {
   if (!till) return;
   delete till.dataset.loading;
+  const qr = till.querySelector('#auraXrpTillQr');
+  if (qr) qr.removeAttribute('src');
+  const qrWrap = till.querySelector('#auraXrpTillQrWrap');
+  if (qrWrap) qrWrap.hidden = true;
   const check = till.querySelector('[data-xrp-check]');
   if (check) { check.hidden = true; check.disabled = false; }
   const open = till.querySelector('#auraXrpTillOpen');
@@ -1734,6 +1750,9 @@ function applyTillState(till, data, ctx) {
     price: xrpPriceFor(id) || formatXrp(id),
     canBuyAnother: data?.mint?.status === 'accepted' && canBuyAnother(id),
   });
+  const qrWrap = till.querySelector('#auraXrpTillQrWrap');
+  const qrImage = till.querySelector('#auraXrpTillQr');
+  if (qrWrap) qrWrap.hidden = !state.showOpen;
   const copy = till.querySelector('#auraXrpTillCopy');
   const open = till.querySelector('#auraXrpTillOpen');
   const again = till.querySelector('[data-xrp-buy-another]');
@@ -1794,13 +1813,15 @@ function applyTillState(till, data, ctx) {
     return state;
   }
   if (state.showOpen && collectionOwnsTill(id, account) && collectionQueue.phase === 'prepare') till.hidden = false;
-  if (state.showOpen && img) {
+  if (state.showOpen && qrImage) {
     const qr = state.qr || '';
-    if (/^https:\/\/xumm\.app\//i.test(qr)) {
-      img.src = qr;
-      img.alt = `${name} · Xaman sign`;
-    } else if (state.deepLink) {
-      showTillQr(img, name, state.deepLink);
+    if (state.deepLink) {
+      // Draw the signing QR locally: remote xumm.app QR images are blocked
+      // by the page's image policy, while data images are already allowed.
+      showTillQr(qrImage, name, state.deepLink);
+    } else if (/^https:\/\/xumm\.app\//i.test(qr)) {
+      qrImage.src = qr;
+      qrImage.alt = `${name} · Xaman sign`;
     }
   }
   if (state.allowRetry) {
@@ -1935,7 +1956,7 @@ function cancelXrpPurchase() {
 }
 function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false} = {}) {
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
-  ownerMint = ownerMint || !!pendingCheckouts.get(id)?.ownerMint;
+  ownerMint = !receiveOnly && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint);
   if (ownerMint && (!vip() || !rewardMint.enabled || rewardMint.account !== vipAccount() || !rewardMint.ownerItems?.includes(id))) return;
   const act = ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
     : receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
@@ -1956,8 +1977,10 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
   const hold = till.querySelector('[data-xrp-hold]');
   const copy = till.querySelector('#auraXrpTillCopy');
   if (img) {
-    img.removeAttribute('src');
-    img.alt = `${name} · waiting for Xaman`;
+    const art = (nftPlates.has(id) && nftPlateSrc(id)) || (item?.asset && faceSrc(item, 'front')) || item?.asset || '';
+    if (art) img.src = art;
+    else img.removeAttribute('src');
+    img.alt = `${name} · NFT artwork`;
   }
   till.dataset.item = id;
   till.querySelector('#auraXrpTillName').textContent = name;
