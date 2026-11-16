@@ -1071,7 +1071,7 @@ function ensureOverlay() {
       closeXrpTill();
       const button = overlay.querySelector('#auraTradeshowSession');
       button.textContent = 'Signing out…';
-      import('./vip-spot.js?v=mint-win-1').then(module => module.signOutVip()).catch(() => {
+      import('./vip-spot.js?v=silent-logout-2').then(module => module.signOutVip({stayInGame:true})).catch(() => {
         button.textContent = 'Log out';
         const note = overlay.querySelector('#auraTradeshowNote');
         if (note) note.textContent = 'Could not preserve progress before signing out. Please try again.';

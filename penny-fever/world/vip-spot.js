@@ -402,7 +402,7 @@ function paintChip() {
         }
         event.preventDefault();
         session.textContent = 'Signing out…';
-        signOutVip().catch(() => {
+        signOutVip({stayInGame: true}).catch(() => {
           paintChip();
           session.title = 'Could not preserve progress before signing out. Please try again.';
         });
