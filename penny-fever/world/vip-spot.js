@@ -168,7 +168,7 @@ function vipJoinUrl() {
 }
 
 let signingOut = null;
-export function signOutVip() {
+export function signOutVip({stayInGame = false} = {}) {
   if (signingOut) return signingOut;
   const email = guestEmail().toLowerCase();
   const token = guestApi()?.read?.()?.session_token;
@@ -197,7 +197,9 @@ export function signOutVip() {
       unchanged();
       if (email) localStorage.setItem('pf-vip-before-signout:' + email, JSON.stringify({snapshot: snapshot(), at: Date.now()}));
       guestApi()?.clear?.();
-      location.assign('/save.html?logged_out=1&return=' + encodeURIComponent(returnPath));
+      location.assign(stayInGame
+        ? returnPath
+        : '/save.html?logged_out=1&return=' + encodeURIComponent(returnPath));
     } catch (error) {
       if (resume) world.resume();
       throw error;
@@ -335,7 +337,7 @@ function paintCollectionDialog() {
   dialog.append(title,description);
   const choices=[
     ['Continue with the VIP player','vip','The player on this device is put on hold, then returns when you sign out and come back to Penny Fever.'],
-    ['Create another VIP for this device player','new','Keep this player and their collection in a separate VIP account.'],
+    ['Keep this guest player','new','Sign out of this VIP account and keep playing with the player and purse on this device.'],
   ];
   for(const [label,choice,detail] of choices) {
     const button=document.createElement('button');button.type='button';button.textContent=label;button.style.cssText='display:block;width:100%;margin:10px 0 2px;padding:10px;border-radius:8px;cursor:pointer;font-weight:700;';
@@ -365,14 +367,6 @@ function paintChip() {
     hint.textContent = inVip
       ? "Signed in. Pennies and this alley spot stay on your VIP profile, so any phone can pick them up."
       : "This phone already remembers your pennies if you come back here. VIP locks that player to your guest profile.";
-  }
-  if (collectionChoice && hint) {
-    hint.replaceChildren(document.createTextNode("This device has a different player. You can put them on hold while using the VIP, or create a separate VIP: "));
-    for (const [label,choice] of [["Continue with the VIP player",'vip'],["Create another VIP for this device player",'new']]) {
-      const button=document.createElement('button'); button.type='button'; button.textContent=label;
-      button.addEventListener('click',()=>resolveCollectionChoice(choice).catch(err=>{console.warn('[pf-vip] collection choice',err);hint.append(' Could not finish; your progress remains on this device.');}));
-      hint.append(' ',button);
-    }
   }
   if (progressConflict && hint) {
     hint.replaceChildren(document.createTextNode(VERIFIED_BANKING_RELEASE
