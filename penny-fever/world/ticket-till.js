@@ -44,96 +44,16 @@ let walletBusy = false;
 let pinned = false;
 let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
 
-const BANK_SECTION_DEFAULTS = {pennies: true, penny_collection: true, aura_limited: false, felix_collection: false, penny_collector_book: false};
-const COLLECTION_BUTTONS = [
-  {section: 'penny_collection', suffix: 'Collection', label: '+ Penny Fever Collection', name: 'Penny Fever Collection'},
-  {section: 'aura_limited', suffix: 'AuraLimited', label: '+ Aura’s Limited Edition', name: 'Aura’s Limited Edition'},
-  {section: 'felix_collection', suffix: 'FelixCollection', label: '+ Felix’s instapic Photo Booth', name: 'Felix’s instapic Photo Booth collection'},
-  {section: 'penny_collector_book', suffix: 'CollectorBook', label: '+ Penny Collector Book only', name: 'Penny Collector Book'},
-];
-function bankOwner() {
-  const identity = window.InstapicGuestIdentity;
-  return !!identity?.isVerifiedSessionActive?.()
-    && String(identity.read?.()?.email || '').trim().toLowerCase() === 'loriestevens@my.com';
-}
-const watchedBankPanels = new WeakSet();
-function watchBankPanel(button) {
-  const panel = button.closest('#pfStallCard, .aura-counter-service');
-  if (!panel || watchedBankPanels.has(panel)) return;
-  watchedBankPanels.add(panel);
-  new MutationObserver(() => { if (!panel.hidden) refreshConfig(); })
-    .observe(panel, {attributes: true, attributeFilter: ['hidden']});
-}
-function bankSections() {
-  const raw = config.bank_sections && typeof config.bank_sections === 'object' ? config.bank_sections : {};
-  return Object.fromEntries(Object.entries(BANK_SECTION_DEFAULTS).map(([key, fallback]) => [key, (raw[key] ?? fallback) === true]));
-}
-export function bankLoan() {
-  const pennies = Math.max(1, Math.floor(Number(config.bank_loan_pennies) || 100));
-  return {enabled: bankOwner() && !!config.bank_loan && bankSections().pennies, pennies};
-}
-
+// Test-bank grants are controlled only by the MotherPC admin.
+// Keep these exports for existing counter callers; public controls stay hidden.
+export function bankLoan() { return {enabled: false, pennies: 100}; }
 export function paintBankLoan() {
-  const loan = bankLoan();
-  const label = loan.enabled ? `Bank loan · +${loan.pennies}` : 'Bank loan · Off';
   for (const id of ['auraCounterLoan', 'pfTillLoan']) {
-    const btn = document.getElementById(id);
-    if (!btn) continue;
-    watchBankPanel(btn);
-    btn.hidden = !bankOwner() || !bankSections().pennies;
-    btn.disabled = !loan.enabled;
-    btn.textContent = label;
-    paintCollectionLoan(btn, loan);
+    const button = document.getElementById(id);
+    if (button) { button.hidden = true; button.disabled = true; button.style.display = 'none'; }
+    for (const suffix of ['Collection', 'AuraLimited', 'FelixCollection', 'CollectorBook'])
+      document.getElementById(id + suffix)?.remove();
   }
-}
-
-let collectionBusy = false;
-function paintCollectionLoan(loanButton, loan) {
-  const permitted = bankOwner();
-  let previous = loanButton;
-  for (const entry of COLLECTION_BUTTONS) {
-    let button = document.getElementById(loanButton.id + entry.suffix);
-    if (!button && permitted) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.id = loanButton.id + entry.suffix;
-      button.className = loanButton.className;
-      button.dataset.bankSection = entry.section;
-      button.textContent = entry.label;
-      previous.insertAdjacentElement('afterend', button);
-      button.addEventListener('click', async () => {
-        if (collectionBusy || !bankOwner()) return;
-        const service = window.PennyFeverVerified, owner = service?.owner;
-        const note = document.getElementById(loanButton.id === 'pfTillLoan' ? 'pfStallCardLine' : 'auraCounterMessage');
-        collectionBusy = true;
-        paintBankLoan();
-        try {
-          const result = await service.testCollection(entry.section);
-          if (service.owner === owner && note) note.textContent = result.added
-            ? `${entry.name} added · ${result.added} missing items. Existing items and purse kept.`
-            : `${entry.name} is already in your VIP. Existing items and purse kept.`;
-        } catch (error) {
-          if (service?.owner === owner && note) note.textContent = error?.message === 'bank_loan_disabled'
-            ? 'Bank loan is off.' : error?.message === 'bank_section_disabled'
-              ? 'This bank section is off.' : 'Collection not added yet. Sign in to your test VIP and retry when the bank is ready.';
-        } finally {
-          collectionBusy = false;
-          paintBankLoan();
-        }
-      });
-    }
-    if (button) {
-      button.hidden = !permitted || !bankSections()[entry.section];
-      button.disabled = collectionBusy || !config.bank_loan || !bankSections()[entry.section] || !window.PennyFeverVerified?.active;
-      previous = button;
-    }
-  }
-}
-if (typeof window !== 'undefined') {
-  window.addEventListener?.('pennyfever:statechange', paintBankLoan);
-  window.addEventListener?.('storage', paintBankLoan);
-  window.addEventListener?.('focus', refreshConfig);
-  window.addEventListener?.('pageshow', refreshConfig);
 }
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;

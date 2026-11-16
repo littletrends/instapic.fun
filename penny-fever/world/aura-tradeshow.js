@@ -499,6 +499,7 @@ function formatXrp(id) {
 }
 function purchaseLabel(item) {
   if (!item?.id) return '';
+  if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return 'Owner copy · no purchase payment';
   if (tokenClaim(item.id)) {
     const cost = formatTokenCost(tokenClaim(item.id).cost);
     return cost ? `Convert · ${cost}` : 'Convert with tokens';
@@ -899,6 +900,7 @@ function nftViewSrc(id) {
   return buyQrSrc(id);
 }
 function nftViewAvailable(item, stallInfo) {
+  if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return true;
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
 }
 
@@ -1551,6 +1553,9 @@ function actionFor(item, stallInfo) {
       purchase: !pending.reward || !!rewardMint.prices?.[item.id],
     };
   }
+  if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) {
+    return {label: 'Mint owner copy · no purchase payment', ready: true, reward: true, ownerMint: true};
+  }
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
@@ -1623,6 +1628,7 @@ function shopAction(id) {
   return actionFor(item, stallDoor(stall));
 }
 function claimLine(item, stallInfo) {
+  if (shopAction(item.id).ownerMint) return 'Owner copy · mint to RaX only. Network fees apply.';
   if (isFelix(item)) {
     return 'Unlock a session at Felix’s Instapic Photo Booth, run the sitting, then the portrait NFT is yours. Not for sale here.';
   }
@@ -2019,7 +2025,7 @@ function cancelXrpPurchase() {
 }
 function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false} = {}) {
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
-  ownerMint = !receiveOnly && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint);
+  ownerMint = !receiveOnly && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint);
   if (ownerMint && (!vip() || !rewardMint.enabled || rewardMint.account !== vipAccount() || !rewardMint.ownerItems?.includes(id))) return;
   const act = ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
     : receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
