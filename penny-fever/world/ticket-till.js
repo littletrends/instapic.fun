@@ -49,7 +49,7 @@ let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, sq
 const watchedBankPanels = new WeakSet();
 function bankVip() { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); }
 export function bankLoan() {
-  return {enabled: bankVip() && config.bank_loan === true && config.bank_sections?.pennies !== false,
+  return {enabled: bankVip() && config.bank_loan === true,
     pennies: config.bank_loan_pennies};
 }
 export function paintBankLoan() {
