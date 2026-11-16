@@ -938,6 +938,7 @@ function ensureOverlay() {
       <span class="aura-tradeshow-door" id="auraTradeshowDoor"></span>
       <button type="button" class="aura-tradeshow-back" id="auraTradeshowAlley">← Alley</button>
       <p class="aura-tradeshow-vip" id="auraTradeshowVip"></p>
+      <a class="aura-tradeshow-back" id="auraTradeshowSession" href="/save.html">Log in</a>
       <button type="button" class="aura-tradeshow-close" id="auraTradeshowClose" aria-label="Close tradeshow">×</button>
     </div>
     <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
@@ -1064,6 +1065,19 @@ function ensureOverlay() {
     openInspect(stage.dataset.inspect, card?.dataset.mode);
   });
   overlay.addEventListener('click', (e) => {
+    if (e.target.closest('#auraTradeshowSession') && window.InstapicGuestIdentity?.read?.()?.session_token) {
+      e.preventDefault();
+      pauseCollectionQueue();
+      closeXrpTill();
+      const button = overlay.querySelector('#auraTradeshowSession');
+      button.textContent = 'Signing out…';
+      import('./vip-spot.js?v=mint-win-1').then(module => module.signOutVip()).catch(() => {
+        button.textContent = 'Log out';
+        const note = overlay.querySelector('#auraTradeshowNote');
+        if (note) note.textContent = 'Could not preserve progress before signing out. Please try again.';
+      });
+      return;
+    }
     if (e.target.closest('[data-collection-receive]')) {
       e.preventDefault();
       checkCollectionReceipts();
@@ -2499,7 +2513,7 @@ function paint() {
   door.className = 'aura-tradeshow-door is-' + status;
   const vipEl = overlay.querySelector('#auraTradeshowVip');
   if (vip()) {
-    const email = String(window.InstapicGuestIdentity?.read?.()?.email || '').split('@')[0];
+    const email = String(window.InstapicGuestIdentity?.read?.()?.email || '');
     vipEl.replaceChildren();
     vipEl.textContent = 'VIP · ' + (email || 'signed in');
   } else {
@@ -2509,6 +2523,10 @@ function paint() {
     a.addEventListener('click', rememberTradeshowLook);
     vipEl.replaceChildren(a, document.createTextNode(' to buy and keep.'));
   }
+  const session = overlay.querySelector('#auraTradeshowSession');
+  session.href = vipJoin();
+  session.textContent = window.InstapicGuestIdentity?.read?.()?.session_token ? 'Log out' : 'Log in';
+  session.setAttribute('aria-label', window.InstapicGuestIdentity?.read?.()?.session_token ? `Log out ${vipEmail()}` : 'Log in to VIP');
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
     : folder === 'minted'

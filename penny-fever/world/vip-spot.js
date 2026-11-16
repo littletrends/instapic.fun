@@ -1,6 +1,6 @@
 import {chooseCrew} from "./crew-selector.js?v=doll-saved-sets-12";
 import {captureProgress, mergeProgress, newPlayerId} from "./vip-progress.js?v=vip-progress-1";
-import {openTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=tradeshow-cancel-1";
+import {openTradeshow, closeTradeshow, tradeshowBlocked} from "./aura-tradeshow.js?v=tradeshow-cancel-1";
 import {createVerifiedBanking, VERIFIED_BANKING_RELEASE} from '../charging/verified-banking.mjs';
 import {bankLoan} from './ticket-till.js?v=bank-refresh-1';
 const API_BASE = "https://motherpc.taild1a44c.ts.net";
@@ -165,6 +165,45 @@ function feverReturnPath() {
 
 function vipJoinUrl() {
   return "/save.html?return=" + encodeURIComponent(feverReturnPath());
+}
+
+let signingOut = null;
+export function signOutVip() {
+  if (signingOut) return signingOut;
+  const email = guestEmail().toLowerCase();
+  const token = guestApi()?.read?.()?.session_token;
+  const returnPath = feverReturnPath();
+  const unchanged = () => {
+    if (email !== guestEmail().toLowerCase() || token !== guestApi()?.read?.()?.session_token)
+      throw Error('VIP account changed. Try again.');
+  };
+  signingOut = (async () => {
+    closeTradeshow({stayInAlley: true});
+    const world = window.PennyFeverWorld;
+    const resume = !!(world?.started && !world.paused);
+    if (resume) world.pause();
+    const settle = async task => {
+      let timer;
+      try { await Promise.race([task, new Promise(resolve => {timer = setTimeout(resolve, 4000);})]); }
+      catch { /* Durable commands remain available to this VIP on reconnect. */ }
+      finally { clearTimeout(timer); }
+    };
+    try {
+      // Keep existing player/held-player records and all receipt outboxes.
+      if (email) localStorage.setItem('pf-vip-before-signout:' + email, JSON.stringify({snapshot: snapshot(), at: Date.now()}));
+      if (window.PennyFeverVerified?.active) await settle(window.PennyFeverVerified.flush());
+      unchanged();
+      if (syncReady && signedIn()) await settle(pushSave(snapshot()));
+      unchanged();
+      if (email) localStorage.setItem('pf-vip-before-signout:' + email, JSON.stringify({snapshot: snapshot(), at: Date.now()}));
+      guestApi()?.clear?.();
+      location.assign('/save.html?logged_out=1&return=' + encodeURIComponent(returnPath));
+    } catch (error) {
+      if (resume) world.resume();
+      throw error;
+    }
+  })().finally(() => {signingOut = null;});
+  return signingOut;
 }
 
 function readPhotoCodes() {
@@ -358,6 +397,28 @@ function paintChip() {
     hud.title = choosing
       ? "Tap to choose which player and balance to keep."
       : (inVip ? "Signed in as " + (email || "VIP") + ". " : "Playing as guest on this device. ") + "Tap for Aura’s VIP NFT Tradeshow.";
+    let session = document.getElementById('pfVipSessionAction');
+    if (!session) {
+      session = document.createElement('a'); session.id = 'pfVipSessionAction';
+      hud.insertAdjacentElement('afterend', session);
+      session.addEventListener('click', event => {
+        if (!guestApi()?.read?.()?.session_token) {
+          try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {}
+          return;
+        }
+        event.preventDefault();
+        session.textContent = 'Signing out…';
+        signOutVip().catch(() => {
+          paintChip();
+          session.title = 'Could not preserve progress before signing out. Please try again.';
+        });
+      });
+    }
+    session.href = vipJoinUrl();
+    session.textContent = guestApi()?.read?.()?.session_token ? 'Log out' : 'Log in';
+    session.setAttribute('aria-label', guestApi()?.read?.()?.session_token ? `Log out ${email}` : 'Log in to VIP');
+    session.parentElement.style.flexWrap = 'wrap';
+    session.parentElement.style.maxWidth = '100%';
   }
 }
 
@@ -366,7 +427,11 @@ function shortEmail(email) {
   if (!text) return "VIP";
   const phone = typeof matchMedia === "function" && matchMedia("(max-width: 600px)").matches;
   const max = phone ? 14 : 26;
-  return text.length > max ? text.slice(0, max - 1) + "…" : text;
+  if (text.length <= max) return text;
+  const at = text.lastIndexOf('@');
+  if (at < 1) return text.slice(0, max - 1) + '…';
+  const domain = text.slice(at);
+  return text.slice(0, Math.max(1, max - domain.length - 1)) + '…' + domain;
 }
 
 /** Chip tap while a choice is pending: reopen the matching choice instead of the tradeshow. */
