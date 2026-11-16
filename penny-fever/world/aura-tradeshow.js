@@ -83,6 +83,8 @@ function clearEligibility(account = '') {
   snapElig = {portraits: new Set(), book: false};
   dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
   dripReady = false;
+  const recovery = overlay?.querySelector('#auraCollectionRecovery');
+  if (recovery) { recovery.replaceChildren(); recovery.hidden = true; }
 }
 function claimReceiptKey(account, id) {
   return `pennyFever.tradeshowClaimReceipt.v1:${encodeURIComponent(account)}:${id}`;
@@ -166,7 +168,7 @@ function loadRewardMint(account, revision) {
       loading.failed = true;
       return false;
     }
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, pending: Array.isArray(data.pending) ? data.pending : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : []};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : []};
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
     loading.loading = false;
@@ -182,6 +184,7 @@ function collectedMintIds() {
     const act = shopAction(id);
     return item.id && !isFelix(item) && !tokenClaim(id) && !MONEY.has(item.kind)
       && !isEveryday(item) && !rewardMint.prices[id] && !nftOwnedCount(id)
+      && !rewardMint.recovery?.some(order => order.item === id && order.kind === 'owner')
       && act.ready && act.reward && !act.purchase && !act.disabled && !act.claim;
   }).sort((a, b) => Number(pending(b)) - Number(pending(a))
     || String(modelItem(a).name || a).localeCompare(String(modelItem(b).name || b)));
@@ -200,7 +203,8 @@ function paintCollectionQueue() {
   const pendingReceive = rewardMint.account === vipAccount() ? (rewardMint.pending || []).length : 0;
   const till = overlay.querySelector('#auraXrpTill');
   const opening = till?.dataset.loading === 'true' && (!till.hidden || collectionOwnsTill(till.dataset.item, vipAccount()));
-  const available = loading || failed || opening || pendingReceive > 0 || !!queue || collectedMintIds().length > 0;
+  const eligible = collectedMintIds().length;
+  const available = vip();
   const toolbar = overlay.querySelector('#auraCollectionMintToolbar');
   if (toolbar) {
     toolbar.hidden = !available;
@@ -211,17 +215,18 @@ function paintCollectionQueue() {
   const button = overlay.querySelector('[data-collection-mint]');
   if (button) {
     button.hidden = !available;
-    button.disabled = loading || opening || !!queue?.active || (queue?.phase === 'complete' && !collectedMintIds().length && !pendingReceive);
+    button.disabled = loading || opening || !!queue?.active || (!failed && !eligible && !pendingReceive && (!queue || queue.phase === 'complete'));
     button.textContent = loading ? 'Loading your VIP collection…' : opening ? 'Preparing Xaman…' : queue?.active
       ? (queue.phase === 'prepare' ? 'Preparing batch…' : 'Receiving batch…')
       : queue?.phase === 'receive' ? `Receive batch (${queue.ready.length - queue.receiveIndex})`
       : queue?.phase === 'prepare' ? 'Resume minting collection' : failed ? 'Retry loading VIP collection'
-      : pendingReceive ? `Receive pending NFTs (${pendingReceive})` : 'Mint my collection · up to 25';
+      : pendingReceive ? `Receive pending NFTs (${pendingReceive})` : eligible ? 'Mint my collection · up to 25' : 'No collected rewards waiting to mint';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
-    receive.hidden = loading || opening || !!queue?.active || (!(queue?.ready.length && queue.phase !== 'complete') && !pendingReceive);
-    receive.textContent = 'Scan again / receive NFTs';
+    receive.hidden = !available;
+    receive.disabled = loading || opening || !!queue?.active;
+    receive.textContent = 'Check wallet / recover NFTs';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
@@ -229,7 +234,7 @@ function paintCollectionQueue() {
     progress.textContent = loading ? 'Checking your collected rewards and wallet. Please wait…'
       : opening ? 'Preparing your Xaman request. Please wait…'
       : failed ? 'Collection could not load. Retry when connected and signed in.'
-      : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : 'Mint collected rewards in batches of up to 25, then receive them in Xaman.') : queue.phase === 'prepare'
+      : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : eligible ? 'Mint collected rewards in batches of up to 25, then receive them in Xaman.' : rewardMint.ownerItems?.length ? 'No eligible collected rewards are waiting. Owner copies can still be minted from each item.' : 'No eligible collected rewards are waiting. Check your wallet or continue collecting.') : queue.phase === 'prepare'
       ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
       : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
       : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
@@ -253,6 +258,40 @@ function paintCollectionQueue() {
   if (queue?.active) {
     const again = overlay.querySelector('[data-xrp-buy-another]');
     if (again) again.hidden = true;
+  }
+}
+
+async function checkCollectionReceipts() {
+  if (!vip() || collectionQueue?.active) return;
+  const account = vipAccount();
+  const fresh = await loadRewardMint(account, eligibilityRevision);
+  if (!fresh || account !== vipAccount() || overlay?.hidden) return;
+  paint();
+  const panel = overlay.querySelector('#auraCollectionRecovery');
+  panel.replaceChildren();
+  panel.hidden = false;
+  const summary = document.createElement('p');
+  const recovery = rewardMint.recovery || [];
+  summary.textContent = `Wallet check: ${Object.values(rewardMint.owned).reduce((n, count) => n + Number(count || 0), 0)} NFTs held in wallets linked by your mint receipts; ${collectedMintIds().length} collected rewards eligible; ${recovery.length} unfinished orders. Unfinished orders need confirmation below. No new mint or purchase was started.`;
+  if (rewardMint.walletCheckFailed) summary.textContent = 'Wallet verification is incomplete because the ledger could not be reached. The counts are incomplete; retry before relying on them. Existing orders are listed below. No new mint or purchase was started.';
+  panel.append(summary);
+  const close = document.createElement('button');
+  close.type = 'button'; close.textContent = 'Hide recovery list';
+  close.addEventListener('click', () => { panel.hidden = true; });
+  panel.append(close);
+  recovery.forEach(receipt => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.recoverOrder = receipt.payload;
+    button.textContent = `Check / continue ${modelItem(receipt.item).name || receipt.item} · ${String(receipt.status || 'pending').replaceAll('_', ' ')}`;
+    button.addEventListener('click', () => openXrpTill(receipt.item, {recovery: receipt}));
+    panel.append(button);
+  });
+  if ((collectionQueue?.ready.length && collectionQueue.phase !== 'complete') || rewardMint.pending?.length) {
+    const receive = document.createElement('button');
+    receive.type = 'button'; receive.textContent = 'Receive prepared batch';
+    receive.addEventListener('click', beginReceivingCollection);
+    panel.append(receive);
   }
 }
 
@@ -953,6 +992,7 @@ function ensureOverlay() {
       <button type="button" data-collection-pause hidden>Pause batch</button>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
       <p id="auraCollectionKeepOpen" class="aura-collection-warning" role="status" hidden></p>
+      <div id="auraCollectionRecovery" class="aura-owned-edition-list" hidden></div>
     </div>
     <div class="aura-tradeshow-main">
       <div class="aura-tradeshow-tree-shell">
@@ -1052,7 +1092,7 @@ function ensureOverlay() {
   overlay.addEventListener('click', (e) => {
     if (e.target.closest('[data-collection-receive]')) {
       e.preventDefault();
-      beginReceivingCollection();
+      checkCollectionReceipts();
       return;
     }
     if (e.target.closest('[data-collection-mint]')) {
@@ -1554,7 +1594,7 @@ function actionFor(item, stallInfo) {
     };
   }
   if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) {
-    return {label: 'Mint owner copy · no purchase payment', ready: true, reward: true, ownerMint: true};
+    return {label: 'Mint now · owner copy · no XRP price', ready: true, reward: true, ownerMint: true};
   }
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
@@ -2023,12 +2063,14 @@ function cancelXrpPurchase() {
     }
   });
 }
-function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false} = {}) {
+function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false, recovery = null} = {}) {
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
-  ownerMint = !receiveOnly && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint);
+  const batchReward = collectionOwnsTill(id, vipAccount());
+  ownerMint = recovery ? recovery.kind === 'owner' : !receiveOnly && !batchReward && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint);
   if (ownerMint && (!vip() || !rewardMint.enabled || rewardMint.account !== vipAccount() || !rewardMint.ownerItems?.includes(id))) return;
-  const act = ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
-    : receiveOnly ? {ready: true, reward: true, purchase: false, label: 'Receive prepared NFT'} : shopAction(id);
+  const act = recovery ? {ready: true, reward: recovery.kind !== 'paid', label: 'Check existing NFT order'}
+    : ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
+    : receiveOnly || batchReward ? {ready: true, reward: true, purchase: false, label: 'Mint or receive collected reward'} : shopAction(id);
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
     if (note) note.textContent = act.label || 'This card is not for XRP yet.';
@@ -2067,10 +2109,12 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
   paintCollectionQueue();
   if (!background) till.querySelector('[data-xrp-close]')?.focus();
   const operationKey = account + ':' + id;
-  if (ownerMint && !ownerMintOperations.has(operationKey)) ownerMintOperations.set(operationKey, crypto.randomUUID());
-  fetch(ownerMint ? `${NFT_HOST}/api/penny-fever/verified/owner-mint` : receiveOnly ? `${NFT_HOST}/api/penny-fever/verified/redeem` : checkoutUrl(id), act.reward ? {
+  if (ownerMint && !recovery && !ownerMintOperations.has(operationKey)) ownerMintOperations.set(operationKey, crypto.randomUUID());
+  const requestUrl = recovery ? (act.reward ? `${NFT_HOST}/api/penny-fever/verified/${ownerMint ? 'owner-mint' : 'redeem'}/status` : `${NFT_HOST}/api/penny-fever/xaman-checkout/status/${encodeURIComponent(recovery.payload)}`)
+    : ownerMint ? `${NFT_HOST}/api/penny-fever/verified/owner-mint` : receiveOnly || batchReward ? `${NFT_HOST}/api/penny-fever/verified/redeem` : checkoutUrl(id);
+  fetch(requestUrl, act.reward ? {
     method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(ownerMint ? {email: account, item: id, operation: ownerMintOperations.get(operationKey)} : {email: account, item: id, purchase: !!act.purchase,
+    body: JSON.stringify(recovery ? {email: account, payload: recovery.payload} : ownerMint ? {email: account, item: id, operation: ownerMintOperations.get(operationKey)} : {email: account, item: id, purchase: !!act.purchase,
       ...(receiveOnly ? {receive: true} : {}),
       ...(!receiveOnly && collectionQueue?.active && collectionQueue.current === id && !act.purchase
         ? (collectionQueue.run ? {collection_run: collectionQueue.run} : {collection_start: true}) : {})}),
@@ -2083,6 +2127,10 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
     .then((data) => {
       if (revision !== tillRevision || account !== vipAccount() || (till.hidden && !collectionOwnsTill(id, account)) || !copy) return;
       delete till.dataset.loading;
+      if (recovery && ['open', 'payload'].includes(data.status) && data.mint?.status === 'waiting_sign') {
+        data.deep_link ||= recovery.deep_link;
+        data.qr ||= recovery.qr;
+      }
       if (data?.payload) {
         pendingCheckouts.set(id, {uuid: data.payload, reward: !!act.reward, ownerMint});
       }

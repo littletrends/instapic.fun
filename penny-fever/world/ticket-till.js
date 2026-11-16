@@ -44,16 +44,35 @@ let walletBusy = false;
 let pinned = false;
 let config = {packs: [...FALLBACK_PACKS, ...PHOTO_PACKS], ...FALLBACK_SQUARE, square_ready: false, currency: 'AUD', bank_loan: false, bank_loan_pennies: 100};
 
-// Test-bank grants are controlled only by the MotherPC admin.
-// Keep these exports for existing counter callers; public controls stay hidden.
-export function bankLoan() { return {enabled: false, pennies: 100}; }
+// The manual admin switch opens only the +100 test loan here.
+// Collection grants stay in the local MotherPC admin.
+const watchedBankPanels = new WeakSet();
+function bankVip() { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); }
+export function bankLoan() {
+  return {enabled: bankVip() && config.bank_loan === true && config.bank_sections?.pennies !== false,
+    pennies: config.bank_loan_pennies};
+}
 export function paintBankLoan() {
+  const loan = bankLoan();
   for (const id of ['auraCounterLoan', 'pfTillLoan']) {
     const button = document.getElementById(id);
-    if (button) { button.hidden = true; button.disabled = true; button.style.display = 'none'; }
-    for (const suffix of ['Collection', 'AuraLimited', 'FelixCollection', 'CollectorBook'])
-      document.getElementById(id + suffix)?.remove();
+    if (!button) continue;
+    button.hidden = !loan.enabled;
+    button.disabled = !loan.enabled;
+    button.textContent = `Bank loan · +${loan.pennies} pennies`;
+    const panel = button.closest('#pfStallCard, .aura-counter-service');
+    if (panel && !watchedBankPanels.has(panel)) {
+      watchedBankPanels.add(panel);
+      new MutationObserver(() => { if (!panel.hidden) refreshConfig(); })
+        .observe(panel, {attributes: true, attributeFilter: ['hidden']});
+    }
   }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener?.('pennyfever:statechange', paintBankLoan);
+  window.addEventListener?.('storage', paintBankLoan);
+  window.addEventListener?.('focus', refreshConfig);
+  window.addEventListener?.('pageshow', refreshConfig);
 }
 
 const money = cents => `$${(Number(cents || 0) / 100).toFixed(2)}`;
