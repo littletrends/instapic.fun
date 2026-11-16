@@ -1062,6 +1062,33 @@ try { lastSaveReminderAt = Number(localStorage.getItem('pf-save-reminder-at')) |
 function vipSignedIn() {
   try { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); } catch { return false; }
 }
+function openAuraVipJoinDialog() {
+  let dialog = document.getElementById('pfAuraVipJoinDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'pfAuraVipJoinDialog';
+    dialog.setAttribute('aria-labelledby', 'pfAuraVipJoinTitle');
+    dialog.style.cssText = 'max-width:min(92vw,430px);padding:22px;border:2px solid #d9aa66;border-radius:14px;background:#291d35;color:#fff3df;font:16px/1.45 system-ui;box-shadow:0 16px 50px rgba(0,0,0,.45);';
+    dialog.innerHTML = `
+      <h2 id="pfAuraVipJoinTitle" style="margin:0 0 10px">Join Aura’s VIP Tradeshow</h2>
+      <p style="margin:0 0 18px">Join VIP to trade and mint Aura’s NFT keepsakes through the XRP Ledger with Xaman.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <button type="button" data-pf-vip-return>Return to alley</button>
+        <button type="button" data-pf-vip-join>Join VIP</button>
+      </div>`;
+    dialog.querySelector('[data-pf-vip-return]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-pf-vip-join]')?.addEventListener('click', () => {
+      const path = '/penny-fever/index.html?style=paper&rail=paper&v=mint-win-1#aura-tradeshow';
+      location.assign('/save.html?return=' + encodeURIComponent(path));
+    });
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    document.body.append(dialog);
+  }
+  if (!dialog.open) dialog.showModal();
+  dialog.querySelector('[data-pf-vip-join]')?.focus();
+}
 /** Guests only: a friendly VIP nudge mixed into the rotating vendor chat (about 1 chat in 4). Never for signed-in VIPs. */
 const GUEST_VIP_TIPS = [
   'Playing as a guest, love? Sign in as VIP and your pennies and treasures follow you to any phone.',
@@ -1526,6 +1553,10 @@ function bindHud() {
       tillMessage = tradeshowSign();
       tillMessageUntil = performance.now() + 5000;
       if (el("pfStallCardLine")) el("pfStallCardLine").textContent = tillMessage;
+      return;
+    }
+    if (!vipSignedIn()) {
+      openAuraVipJoinDialog();
       return;
     }
     closeStallCard();
