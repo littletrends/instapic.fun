@@ -2762,6 +2762,10 @@ function onOverlayKey(e) {
 
 export function openTradeshow({tokenCounter = false} = {}) {
   if (tradeshowBlocked()) return false;
+  if (!vip()) {
+    if ((location.hash || '').replace(/^#/, '') === HASH) location.hash = 'alley';
+    return false;
+  }
   if (tokenCounter) { folder = 'convert'; query = ''; haveFilter = ''; }
   rememberTradeshowLook();
   const account = vipAccount();

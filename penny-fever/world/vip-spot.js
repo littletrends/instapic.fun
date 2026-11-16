@@ -197,9 +197,10 @@ export function signOutVip({stayInGame = false} = {}) {
       unchanged();
       if (email) localStorage.setItem('pf-vip-before-signout:' + email, JSON.stringify({snapshot: snapshot(), at: Date.now()}));
       guestApi()?.clear?.();
-      location.assign(stayInGame
-        ? returnPath
+      const destination = stayInGame
+        ? (returnPath.includes('#aura-tradeshow') ? returnPath.replace(/#aura-tradeshow$/, '#alley') : returnPath)
         : '/save.html?logged_out=1&return=' + encodeURIComponent(returnPath));
+      location.assign(destination);
     } catch (error) {
       if (resume) world.resume();
       throw error;
