@@ -57,6 +57,25 @@ export function paintBankLoan() {
   for (const id of ['auraCounterLoan', 'pfTillLoan']) {
     const button = document.getElementById(id);
     if (!button) continue;
+    const tradeId = id + 'Keepsakes';
+    let trade = document.getElementById(tradeId);
+    if (!trade) {
+      trade = document.createElement('button');
+      trade.type = 'button'; trade.id = tradeId; trade.className = button.className;
+      trade.addEventListener('click', async () => {
+        if (!bankVip()) return;
+        const note = document.getElementById(id === 'pfTillLoan' ? 'pfStallCardLine' : 'auraCounterMessage');
+        try {
+          const {openTradeshow, tradeshowSign} = await import('./aura-tradeshow.js?v=tradeshow-cancel-1');
+          if (!openTradeshow({tokenCounter: true}) && note) note.textContent = tradeshowSign();
+        } catch {
+          if (note) note.textContent = 'The token counter could not open. Reconnect and try again.';
+        }
+      });
+      button.insertAdjacentElement('beforebegin', trade);
+    }
+    trade.disabled = !bankVip();
+    trade.textContent = bankVip() ? 'Trade tokens for keepsakes' : 'Join VIP to trade keepsakes';
     button.hidden = !loan.enabled;
     button.disabled = !loan.enabled;
     button.textContent = `Bank loan · +${loan.pennies} pennies`;

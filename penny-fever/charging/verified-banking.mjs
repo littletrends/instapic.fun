@@ -210,6 +210,15 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       purse.accept(result.wallet);
       return result;
     },
+    async claimKeepsake(item) {
+      await flush();
+      if (!account?.email) throw Error('verification_required');
+      const epoch = generation;
+      const result = await clientFor(account, epoch).command({operation: 'wallet', action: 'claim_keepsake', item});
+      if (epoch !== generation) throw Error('verified_identity_changed');
+      purse.accept(result);
+      return result;
+    },
     get owner() {return account?.id || null;},
     get hasGuest() {
       const saved = JSON.parse(storage.getItem(GUEST_KEY) || 'null');

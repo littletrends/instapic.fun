@@ -538,7 +538,7 @@ function formatXrp(id) {
 }
 function purchaseLabel(item) {
   if (!item?.id) return '';
-  if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return 'Owner copy · no purchase payment';
+  if (folder !== 'convert' && rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return 'Owner copy · no purchase payment';
   if (tokenClaim(item.id)) {
     const cost = formatTokenCost(tokenClaim(item.id).cost);
     return cost ? `Convert · ${cost}` : 'Convert with tokens';
@@ -612,33 +612,6 @@ function tokenAfford(cost) {
     if (DRIPS.has(id)) return eligibilityAccount === vipAccount() && !!eligibilityAccount && (dripPurse[id] || 0) >= need;
     return tokenHave(id) >= need;
   });
-}
-function spendTokenCost(cost) {
-  const PF = window.PennyFever;
-  const state = PF?.getState?.();
-  if (!state) return false;
-  const rows = Object.entries(cost || {}).map(([id, n]) => [id, Math.max(0, Math.floor(Number(n) || 0))]).filter(([, n]) => n > 0);
-  for (const [id, need] of rows) {
-    if (tokenHave(id) < need) return false;
-  }
-  if (!state.paperInventory || typeof state.paperInventory !== 'object') state.paperInventory = {version: 1, items: {}};
-  if (!state.paperInventory.items || typeof state.paperInventory.items !== 'object') state.paperInventory.items = {};
-  const items = state.paperInventory.items;
-  let penniesNeed = 0;
-  for (const [id, need] of rows) {
-    if (id === 'everyday-penny') penniesNeed += need;
-  }
-  if (penniesNeed && !PF.spendPennies?.(penniesNeed, {allowPass: false})) return false;
-  for (const [id, need] of rows) {
-    if (id === 'everyday-penny') continue;
-    const row = items[id];
-    const have = Number.isFinite(Number(row?.qty)) ? Math.max(0, Number(row.qty)) : (row ? 1 : 0);
-    const left = have - need;
-    if (left <= 0) delete items[id];
-    else row.qty = left;
-  }
-  PF.saveState?.();
-  return true;
 }
 function dripCost(cost) {
   const keys = Object.keys(cost || {});
@@ -731,19 +704,19 @@ function claimWithTokens(id) {
     say(`Need ${formatTokenCost(spec.cost)}.`);
     return;
   }
-  const PF = window.PennyFever;
-  if (!PF?.stampKeepsake?.(id, 'token-claim')) {
-    say(walletAtCap(id) ? 'Already in your wallet.' : 'Claim did not land.');
-    paint();
-    return;
-  }
-  if (!spendTokenCost(spec.cost)) {
-    say('Keepsake stamped · tokens did not spend. Tell Aura.');
-    paint();
-    return;
-  }
-  const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
-  say(`Claimed ${name} · ${formatTokenCost(spec.cost)}.`);
+  const account = vipAccount(), receiptKey = claimReceiptKey(account, id);
+  if (tokenClaimsInFlight.has(receiptKey)) return;
+  tokenClaimsInFlight.add(receiptKey);
+  Promise.resolve().then(() => window.PennyFeverVerified.claimKeepsake(id)).then(result => {
+    if (account !== vipAccount()) return;
+    if (result.inventory?.[id]?.qty > 0) window.PennyFever?.stampKeepsake?.(id, 'token-claim');
+    say(result.claim?.charged === false ? 'Already collected. No pennies spent again.' : `Collected ${modelItem(id).name || id} · ${formatTokenCost(spec.cost)}.`);
+  }).catch(error => {
+    if (account === vipAccount()) say(error?.message === 'insufficient_funds' ? `Need ${formatTokenCost(spec.cost)}.` : 'Trade could not be confirmed. Reconnect and try again; your receipt will recover.');
+  }).finally(() => {
+    tokenClaimsInFlight.delete(receiptKey);
+    if (account === vipAccount()) { const message = note?.textContent; paint(); if (message) say(message); }
+  });
   paint();
 }
 function walletBuyCap(id) {
@@ -939,6 +912,7 @@ function nftViewSrc(id) {
   return buyQrSrc(id);
 }
 function nftViewAvailable(item, stallInfo) {
+  if (folder === 'convert' && tokenClaim(item.id)) return false;
   if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return true;
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
 }
@@ -1219,6 +1193,7 @@ function ensureOverlay() {
     const inspectClaim = e.target.closest('[data-inspect-claim]');
     if (inspectClaim && !inspectClaim.disabled) {
       e.preventDefault();
+      closeInspect();
       claimWithTokens(inspectClaim.dataset.claim);
       return;
     }
@@ -1593,7 +1568,7 @@ function actionFor(item, stallInfo) {
       purchase: !pending.reward || !!rewardMint.prices?.[item.id],
     };
   }
-  if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) {
+  if (folder !== 'convert' && rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) {
     return {label: 'Mint now · owner copy · no XRP price', ready: true, reward: true, ownerMint: true};
   }
   const claim = tokenClaim(item.id);
@@ -1625,6 +1600,7 @@ function actionFor(item, stallInfo) {
     if (tokenClaimsInFlight.has(claimReceiptKey(vipAccount(), item.id))) return {label: 'Claim in progress.', disabled: true, claim: true};
     if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
     if (dripCost(claim.cost) && !dripReady) return {label: 'Token bank unavailable · reopen to retry', disabled: true, claim: true};
+    if (!dripCost(claim.cost) && !window.PennyFeverVerified?.active) return {label: 'Purse connecting · reopen to retry', disabled: true, claim: true};
     if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
     if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
     return {label: `Claim · ${cost}`, disabled: false, ready: true, claim: true};
@@ -2404,6 +2380,7 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
     }
     root.append(felixWrap);
   }
+  root.append(treeRow('convert', 'Aura’s token counter', {leaf: true}));
   root.append(treeRow('minted', 'Minted', {leaf: true}));
   nav.append(root);
 }
@@ -2480,7 +2457,7 @@ function appendCards(grid, items) {
     const canSpin = !!item.turnaround;
     const sample = nftSampleNote(item);
     const owned = nftOwnedCount(item.id);
-    const shopBtn = (felix && !act.snap) ? '' : (act.claim
+    const shopBtn = (felix && !act.snap && !act.claim && !act.ownerMint) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
@@ -2765,8 +2742,9 @@ function onOverlayKey(e) {
   }
 }
 
-export function openTradeshow() {
+export function openTradeshow({tokenCounter = false} = {}) {
   if (tradeshowBlocked()) return false;
+  if (tokenCounter) { folder = 'convert'; query = ''; haveFilter = ''; }
   rememberTradeshowLook();
   const account = vipAccount();
   if (tradeshowAccount && tradeshowAccount !== account) closeTradeshow({stayInAlley: true});
