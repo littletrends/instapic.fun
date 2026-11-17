@@ -3,6 +3,7 @@ import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
+import {mountNftBatches} from './aura-nft-batches.js?v=native-eight-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -47,6 +48,7 @@ let collectionQueue = null;
 let collectionQueueRevision = 0;
 let tradeshowAccount = '';
 let vipCheckTimer = 0;
+let nftBatchUI = null;
 let folder = 'book:penny-collector-book';
 let query = '';
 let haveFilter = '';
@@ -168,7 +170,7 @@ function loadRewardMint(account, revision) {
       loading.failed = true;
       return false;
     }
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : []};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
     loading.loading = false;
@@ -324,6 +326,13 @@ async function advanceCollectionQueue() {
     return;
   }
   if (queue.phase === 'receive') {
+    if (nftBatchUI && rewardMint.batchLimit === 8) {
+      queue.active = false;
+      queue.current = '';
+      paintCollectionQueue();
+      nftBatchUI.receive();
+      return;
+    }
     if (queue.receiveIndex >= queue.ready.length) {
       queue.phase = 'complete';
       queue.active = false;
@@ -1040,6 +1049,7 @@ function ensureOverlay() {
         <div class="aura-tradeshow-inspect-actions">
           <button type="button" data-inspect-play hidden></button>
           <button type="button" data-inspect-buy hidden></button>
+          <button type="button" data-nft-batch-buy hidden>Buy multiple · up to 8</button>
           <button type="button" data-inspect-claim hidden></button>
         </div>
         <button type="button" class="aura-tradeshow-inspect-back" data-inspect-close>← Back to tradeshow</button>
@@ -1047,6 +1057,25 @@ function ensureOverlay() {
     </div>`;
   overlay.append(inspect);
   document.body.append(overlay);
+  nftBatchUI = mountNftBatches(overlay, {
+    account: vipAccount, canBuy: canBatchBuy, name: id => modelItem(id).name || id,
+    enabled: () => rewardMint.account === vipAccount() && rewardMint.batchLimit === 8 && !tradeshowBlocked(),
+    maxQuantity: id => Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)),
+    pause: () => { pauseCollectionQueue(); closeXrpTill(); closeInspect(); },
+    refresh: () => {
+      const account = vipAccount();
+      if (!account) return;
+      Promise.all([loadMinted(), loadRewardMint(account, eligibilityRevision)]).then(() => {
+        if (account !== vipAccount()) return;
+        if (collectionQueue?.account === account && collectionQueue.phase === 'receive') {
+          const pending = new Set(rewardMint.pending || []);
+          collectionQueue.receiveIndex = collectionQueue.ready.filter(id => !pending.has(id)).length;
+          if (collectionQueue.receiveIndex >= collectionQueue.ready.length) collectionQueue.phase = 'complete';
+        }
+        paint();
+      });
+    },
+  });
   document.addEventListener('keydown', onOverlayKey, true);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
   overlay.querySelector('#auraTradeshowAlley').addEventListener('click', () => closeTradeshow());
@@ -1065,6 +1094,12 @@ function ensureOverlay() {
     openInspect(stage.dataset.inspect, card?.dataset.mode);
   });
   overlay.addEventListener('click', (e) => {
+    const batchBuy = e.target.closest('[data-nft-batch-buy]');
+    if (batchBuy && !batchBuy.disabled && canBatchBuy(batchBuy.dataset.nftBatchBuy)) {
+      e.preventDefault();
+      nftBatchUI.buy(batchBuy.dataset.nftBatchBuy);
+      return;
+    }
     if (e.target.closest('#auraTradeshowSession') && window.InstapicGuestIdentity?.read?.()?.session_token) {
       e.preventDefault();
       pauseCollectionQueue();
@@ -1557,6 +1592,9 @@ function openInspect(id, startMode = 'website') {
   buyButton.disabled = !!act.disabled;
   buyButton.textContent = act.label;
   buyButton.dataset.buy = item.id;
+  const batchBuy = panel.querySelector('[data-nft-batch-buy]');
+  batchBuy.hidden = !canBatchBuy(item.id);
+  batchBuy.dataset.nftBatchBuy = item.id;
   claimButton.hidden = !act.claim;
   claimButton.disabled = !!act.disabled;
   claimButton.textContent = act.label;
@@ -1816,6 +1854,12 @@ function retryBusyCollectionRead(till, id, account, error) {
 function canBuyAnother(id) {
   const act = shopAction(id);
   return !!(act.ready && !act.disabled && !act.claim && !act.reward);
+}
+function canBatchBuy(id) {
+  const act = shopAction(id);
+  return vip() && rewardMint.batchLimit === 8 && !tradeshowBlocked() && !!act.ready && !act.disabled && !act.claim && !act.reward
+    && !act.ownerMint && !isFelix(modelItem(id)) && !MONEY.has(modelItem(id).kind)
+    && remainingFor(id) >= 2 && walletBuyCap(id) - nftOwnedCount(id) >= 2;
 }
 function applyTillState(till, data, ctx) {
   const {img, name, account, id, revision, reward} = ctx;
@@ -2496,6 +2540,7 @@ function appendCards(grid, items) {
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
       ${nestedBook && item.id !== 'penny-collector-book' ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">Open folder</button>` : ''}
       ${shopBtn}
+      ${canBatchBuy(item.id) ? `<button type="button" class="aura-tradeshow-buy" data-nft-batch-buy="${item.id}">Buy multiple · up to 8</button>` : ''}
       ${owned && rewardMint.enabled && rewardMint.account === vipAccount() && rewardMint.ownerItems?.includes(item.id)
         ? `<button type="button" class="aura-tradeshow-buy" data-owner-mint="${item.id}">Owner mint another · to RaX</button>` : ''}`;
     const pic = card.querySelector('img');
@@ -2506,6 +2551,7 @@ function appendCards(grid, items) {
 
 function paint() {
   if (!overlay || overlay.hidden) return;
+  nftBatchUI?.paint();
   paintCollectionQueue();
   const status = tradeshowStatus();
   const door = overlay.querySelector('#auraTradeshowDoor');
@@ -2732,6 +2778,7 @@ function inspectOpen() {
 }
 function onOverlayKey(e) {
   if (!overlay || overlay.hidden) return;
+  if (nftBatchUI?.isOpen()) return;
   if (e.key === 'Escape') {
     e.preventDefault();
     e.stopPropagation();
@@ -2791,6 +2838,7 @@ export function openTradeshow({tokenCounter = false} = {}) {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  nftBatchUI?.close();
   pauseCollectionQueue();
   closeInspect();
   stopTillPoll();
