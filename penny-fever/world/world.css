@@ -568,6 +568,7 @@ body.paper-original-rail.is-in-world .pf-world-stage {
 }
 
 .pf-world-compass {
+  display: none;
   flex: 1 1 7rem;
   min-width: 0;
   color: #f0d09a;
