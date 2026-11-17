@@ -1166,6 +1166,10 @@ function attachHud() {
   stage.insertAdjacentHTML("beforeend", `
     <div class="pf-world-hud" id="pfWorldHud">
       <div class="pf-world-top">
+        <nav class="pf-world-navigation" aria-label="Alley navigation">
+          <button type="button" id="pfAlleyMapOpen">Map</button>
+          <a id="pfWorldHome" href="../index.html">Home</a>
+        </nav>
         <div class="pf-world-compass" id="pfWorldCompass">
           <span id="pfWorldZone">PIER</span>
           <strong id="pfWorldNearest">Heart palace</strong>
@@ -1178,10 +1182,8 @@ function attachHud() {
           <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">
-          <button type="button" id="pfAlleyMapOpen">Map</button>
-          <a id="pfVipHud" href="#aura-tradeshow">Aura’s VIP</a>
           <button type="button" id="pfWorldLeave">Back to ticket booth</button>
-          <a id="pfWorldHome" href="../index.html">Home</a>
+          <a id="pfVipHud" href="#aura-tradeshow">Aura’s VIP</a>
         </div>
       </div>
       <div class="pf-world-speech" id="pfWorldSpeech" hidden>

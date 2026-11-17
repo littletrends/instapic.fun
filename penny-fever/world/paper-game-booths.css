@@ -155,3 +155,15 @@ body .cabinet-interior.paper-game-cabinet {
  .paper-game-bar .paper-game-treasure span{font-size:16px;}
  .paper-game-bar .paper-game-wallet.is-on-bar{margin-left:auto;}
 }
+
+/* Account controls stay in the alley; keep the game board's top edge compact. */
+.paper-game-bar .paper-game-session{display:none}
+@media(max-width:720px){
+ .paper-game-bar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:4px;padding:4px 6px;padding-top:max(4px,env(safe-area-inset-top));-webkit-overflow-scrolling:touch;scrollbar-width:thin;touch-action:pan-x;}
+ .paper-game-bar > *{flex:0 0 auto;}
+ .paper-game-bar button,.paper-game-bar a,.paper-chapter-name{min-height:32px;padding:5px 7px;font-size:12px;}
+ .paper-game-bar .paper-chapter-nav{order:0;flex:0 0 auto;justify-content:flex-start;gap:3px;}
+ .paper-game-bar .paper-chapter-tab{min-width:30px;padding:5px;font-size:12px;}
+ .paper-game-bar .chapter-prize{width:34px;height:34px;}
+ .paper-game-bar .paper-game-wallet.is-on-bar{margin-left:0;font-size:11px;}
+}
