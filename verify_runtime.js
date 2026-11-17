@@ -18,6 +18,7 @@
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      const setPassword = event.submitter?.hasAttribute("data-set-password");
 
       const codeInput = document.getElementById("verify_code");
       const code = String(codeInput?.value || "").trim();
@@ -58,6 +59,13 @@
           guest_profile: data.guest_profile || {}
         });
 
+        if (setPassword) {
+          const settings = new URL("my-instapic.html", window.location.href);
+          if (ticketCode) settings.searchParams.set("ticket_code", ticketCode);
+          settings.hash = "account-settings";
+          window.location.href = settings.pathname + settings.search + settings.hash;
+          return;
+        }
         window.location.href = window.InstapicVipReturn?.loginNext?.("my-instapic.html")
           || (ticketCode
             ? `my-instapic.html?ticket_code=${encodeURIComponent(ticketCode)}`
