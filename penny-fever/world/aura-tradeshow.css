@@ -85,6 +85,9 @@
 .aura-tradeshow-tree-btn.is-root{font-size:.88rem;color:#5a2438}
 .aura-tradeshow-tree-btn.is-leaf{font-weight:600;font-size:.68rem;color:#6a5340}
 .aura-tradeshow-tree-btn.is-on{background:#6b2f3c;color:#fff8ea}
+.aura-tradeshow-tree-btn.is-book{display:flex;align-items:center;gap:.3rem;min-width:0}
+.aura-tradeshow-tree-btn.is-book img{width:24px;height:30px;flex:0 0 24px;object-fit:contain}
+.aura-tradeshow-tree-btn.is-book span{min-width:0;overflow-wrap:anywhere}
 .aura-tradeshow-body{flex:1;overflow:auto;padding:.55rem .7rem 1rem;background:#f4e6c8}
 .aura-tradeshow-up{
   display:inline-flex;align-items:center;margin:0 0 .55rem;

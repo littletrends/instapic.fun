@@ -932,6 +932,15 @@ function closeTreeDrawer() {
   const drawer = overlay?.querySelector('#auraTradeshowTreeDrawer');
   if (drawer) drawer.checked = false;
 }
+function revealBook(id) {
+  for (const book of window.PennyFeverInventoryModel?.books || []) {
+    if (book.id !== id && book.id !== 'penny-collector-book') openNodes.delete('book:' + book.id);
+  }
+  openNodes.add('book:' + id);
+  if (LIMITED.has(id)) openNodes.add('limited');
+  else if (id === SNAP_BOOK) openNodes.add('felix');
+  else openNodes.add('book:penny-collector-book');
+}
 function ensureOverlay() {
   if (overlay) return overlay;
   overlay = document.createElement('div');
@@ -1127,6 +1136,13 @@ function ensureOverlay() {
       startCollectionQueue();
       return;
     }
+    if (e.target.closest('[data-clear-tradeshow-filters]')) {
+      query = ''; haveFilter = '';
+      overlay.querySelector('#auraTradeshowSearch').value = '';
+      paint();
+      overlay.querySelector('#auraTradeshowBody').scrollTop = 0;
+      return;
+    }
     if (e.target.closest('[data-collection-pause]')) {
       e.preventDefault();
       pauseCollectionQueue();
@@ -1160,20 +1176,16 @@ function ensureOverlay() {
       e.preventDefault();
       const id = openBook.dataset.openBook;
       folder = 'book:' + id;
-      if (LIMITED.has(id)) {
-        openNodes.add('limited');
-        openNodes.add(folder);
-      } else {
-        openNodes.add('book:penny-collector-book');
-        openNodes.add(folder);
-      }
+      revealBook(id);
       closeTreeDrawer();
       paint();
+      overlay.querySelector('#auraTradeshowBody').scrollTop = 0;
       return;
     }
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
+      if (folder.startsWith('book:')) revealBook(folder.slice(5));
       if (folder === 'minted') haveFilter = '';
       if (folder === 'limited') {
         for (const id of LIMITED) openNodes.delete('book:' + id);
@@ -1186,10 +1198,13 @@ function ensureOverlay() {
         if (kind) openNodes.add(kind);
       }
       if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) openNodes.add('limited');
+      if (folder === 'book:' + SNAP_BOOK) openNodes.add('felix');
       if (folder.startsWith('item:')) {
         const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5));
         if (item && isLimited(item)) {
           openNodes.add('limited');
+        } else if (item?.id === SNAP_BOOK || isFelix(item || {})) {
+          openNodes.add('felix');
         } else if (item?.book) {
           openNodes.add('book:penny-collector-book');
           openNodes.add('book:' + item.book);
@@ -1198,6 +1213,7 @@ function ensureOverlay() {
       }
       closeTreeDrawer();
       paint();
+      overlay.querySelector('#auraTradeshowBody').scrollTop = 0;
       return;
     }
     const inspectClose = e.target.closest('[data-inspect-close]');
@@ -2257,14 +2273,15 @@ function folderIsLimited() {
   return false;
 }
 function folderIsFelix() {
-  if (folder === 'felix') return true;
-  if (folder.startsWith('item:') && isFelix(modelItem(folder.slice(5)))) return true;
+  if (folder === 'felix' || folder === 'book:' + SNAP_BOOK) return true;
+  if (folder.startsWith('item:') && (folder.slice(5) === SNAP_BOOK || isFelix(modelItem(folder.slice(5))))) return true;
   return false;
 }
 function bookTitle(id) {
   return (window.PennyFeverInventoryModel?.books || []).find((b) => b.id === id)?.title || 'folder';
 }
 function folderUp() {
+  if (folder === 'book:' + SNAP_BOOK) return {id: 'felix', label: 'Felix'};
   if (folder.startsWith('book:') && LIMITED.has(folder.slice(5))) {
     return {id: 'limited', label: 'Limited'};
   }
@@ -2279,7 +2296,7 @@ function folderUp() {
       if (bid && LIMITED.has(bid)) return {id: 'book:' + bid, label: bookTitle(bid)};
       return {id: 'limited', label: 'Limited'};
     }
-    if (isFelix(item)) return {id: 'felix', label: 'Felix'};
+    if (isFelix(item) || item.id === SNAP_BOOK) return {id: 'felix', label: 'Felix'};
     if (item.book && item.book !== 'penny-collector-book') return {id: 'book:' + item.book, label: bookTitle(item.book)};
     return {id: 'book:penny-collector-book', label: 'Collector book'};
   }
@@ -2329,7 +2346,7 @@ function itemMatches(item, stall, info) {
   if (folder === 'closed') {
     return isClosedPlayStall(stall) && (stall.prizes || []).includes(item.id) && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
   }
-  if (folder === 'felix') return isFelix(item);
+  if (folder === 'felix') return isFelix(item) || item.id === SNAP_BOOK;
   if (folder === 'limited') return isLimited(item);
   if (folder === 'convert') return !!tokenClaim(item.id);
   if (folder === 'everyday') return isEveryday(item);
@@ -2343,7 +2360,7 @@ function itemMatches(item, stall, info) {
   if (folder.startsWith('item:')) return item.id === folder.slice(5);
   return true;
 }
-function treeRow(id, label, {leaf = false, root = false} = {}) {
+function treeRow(id, label, {leaf = false, root = false, book = null} = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'aura-tradeshow-tree-row';
   if (leaf) {
@@ -2365,7 +2382,15 @@ function treeRow(id, label, {leaf = false, root = false} = {}) {
   btn.type = 'button';
   btn.className = 'aura-tradeshow-tree-btn' + (root ? ' is-root' : '') + (leaf ? ' is-leaf' : '') + (folder === id ? ' is-on' : '');
   btn.dataset.folder = id;
-  btn.textContent = label;
+  if (book?.cover) {
+    btn.classList.add('is-book');
+    const cover = document.createElement('img');
+    cover.src = book.cover; cover.alt = ''; cover.loading = 'lazy';
+    const title = document.createElement('span');
+    title.textContent = label;
+    btn.append(cover, title);
+    btn.title = 'View ' + label + ' and its collection';
+  } else btn.textContent = label;
   wrap.append(btn);
   return wrap;
 }
@@ -2378,9 +2403,22 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   nav.replaceChildren();
   const root = document.createElement('div');
   root.className = 'aura-tradeshow-tree-root';
-  root.append(treeRow('book:penny-collector-book', 'Penny collector book', {root: true}));
+  root.append(treeRow('book:penny-collector-book', 'Penny collector book', {root: true, book: books.find(b => b.id === 'penny-collector-book')}));
   if (openNodes.has('book:penny-collector-book')) {
     const bookWrap = treeKids();
+    bookWrap.append(treeRow('item:penny-collector-book', 'View collector book', {leaf: true}));
+    for (const book of playBinders(books)) {
+      const bid = 'book:' + book.id;
+      bookWrap.append(treeRow(bid, book.title, {book}));
+      if (openNodes.has(bid)) {
+        const itemWrap = treeKids();
+        itemWrap.append(treeRow('item:' + book.id, 'View book', {leaf: true}));
+        for (const item of (itemsByBook.get(book.id) || []).filter((it) => it.id !== book.id && !isEveryday(it))) {
+          itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
+        }
+        bookWrap.append(itemWrap);
+      }
+    }
     bookWrap.append(treeRow('everyday', 'Everyday items'));
     if (openNodes.has('everyday')) {
       const itemWrap = treeKids();
@@ -2388,17 +2426,6 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
         itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
       }
       bookWrap.append(itemWrap);
-    }
-    for (const book of playBinders(books)) {
-      const bid = 'book:' + book.id;
-      bookWrap.append(treeRow(bid, book.title));
-      if (openNodes.has(bid)) {
-        const itemWrap = treeKids();
-        for (const item of (itemsByBook.get(book.id) || []).filter((it) => it.id !== book.id && !isEveryday(it))) {
-          itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
-        }
-        bookWrap.append(itemWrap);
-      }
     }
     bookWrap.append(treeRow('open', 'Open stalls'));
     if (openNodes.has('open')) {
@@ -2423,9 +2450,10 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
     const limWrap = treeKids();
     for (const item of limitedItems) {
       const bid = 'book:' + item.id;
-      limWrap.append(treeRow(bid, item.name));
+      limWrap.append(treeRow(bid, item.name, {book: books.find(b => b.id === item.id)}));
       if (openNodes.has(bid)) {
         const itemWrap = treeKids();
+        itemWrap.append(treeRow('item:' + item.id, 'View book', {leaf: true}));
         for (const piece of (itemsByBook.get(item.id) || []).filter((it) => it.id !== item.id)) {
           itemWrap.append(treeRow('item:' + piece.id, piece.name, {leaf: true}));
         }
@@ -2437,6 +2465,7 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
   root.append(treeRow('felix', 'Felix’s Photo Booth'));
   if (openNodes.has('felix')) {
     const felixWrap = treeKids();
+    felixWrap.append(treeRow('item:' + SNAP_BOOK, 'Felix’s portrait book', {leaf: true, book: books.find(b => b.id === SNAP_BOOK)}));
     for (const item of felixItems) {
       felixWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
     }
@@ -2542,7 +2571,7 @@ function appendCards(grid, items) {
       ${tankMarkup(item)}
       <p class="claim">${claimLine(item, info)}</p>
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
-      ${nestedBook && item.id !== 'penny-collector-book' ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">Open folder</button>` : ''}
+      ${nestedBook && item.id !== 'penny-collector-book' && folder !== 'book:' + item.id ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">View collection</button>` : ''}
       ${shopBtn}
       ${canBatchBuy(item.id) ? `<button type="button" class="aura-tradeshow-buy" data-nft-batch-buy="${item.id}">Buy multiple · up to 8</button>` : ''}
       ${owned && rewardMint.enabled && rewardMint.account === vipAccount() && rewardMint.ownerItems?.includes(item.id)
@@ -2612,7 +2641,6 @@ function paint() {
   const model = window.PennyFeverInventoryModel;
   const items = model?.definitions || [];
   const books = model?.books || [];
-  const bookIds = new Set(books.map((b) => b.id));
   const stallGroups = new Map();
   const itemsByBook = new Map();
   const felixItems = [];
@@ -2637,7 +2665,6 @@ function paint() {
       felixItems.push(item);
       continue;
     }
-    if (bookIds.has(item.id) && !tokenClaim(item.id)) continue;
     const book = item.book || 'penny-collector-book';
     if (!itemsByBook.has(book)) itemsByBook.set(book, []);
     itemsByBook.get(book).push(item);
@@ -2706,20 +2733,20 @@ function paint() {
           stall: stallById('ticket-booth'),
         },
         {
+          title: 'Books, journals, cases and albums',
+          line: 'Choose a book here or in the tree to view its collection',
+          items: playBinders(books).map((b) => modelItem(b.id)).filter((item) => item.id),
+          stall: stallById('ticket-booth'),
+        },
+        {
           title: 'Everyday items',
           line: 'Pennies, 5-packs and drip tokens',
           items: items.filter(isEveryday),
           stall: stallById('ticket-booth'),
         },
-        {
-          title: 'Books, journals, cases and albums',
-          line: 'Expand a book in the tree to open its pages',
-          items: playBinders(books).map((b) => modelItem(b.id)).filter((item) => item.id),
-          stall: stallById('ticket-booth'),
-        },
       ]
       : folderIsFelix()
-      ? [{title: 'Felix’s Instapic Photo Booth', line: 'Unlock with a photo session', items: felixItems, stall: stallById('snap')}]
+      ? [{title: 'Felix’s Instapic Photo Booth', line: 'Portrait book and photo-session collection', items: [modelItem(SNAP_BOOK), ...felixItems].filter(item => item.id), stall: stallById('snap')}]
       : folderIsLimited()
         ? limitedBookSections(books, itemsByBook, limitedItems)
       : books
@@ -2727,7 +2754,7 @@ function paint() {
         .map((b) => ({
           title: b.title,
           line: b.kicker || 'Book',
-          items: itemsByBook.get(b.id) || [],
+          items: [modelItem(b.id), ...(itemsByBook.get(b.id) || []).filter(item => item.id !== b.id)].filter(item => item.id),
           stall: stallForPrize((itemsByBook.get(b.id) || [])[0]) || stallById('ticket-booth'),
         })).concat(folder === 'all' ? [
           ...limitedBookSections(books, itemsByBook, limitedItems),
@@ -2752,10 +2779,18 @@ function paint() {
     }
     body.append(wrap);
   }
-  if (folder === 'minted' && !body.children.length) {
+  if (!body.querySelector('.aura-tradeshow-card')) {
     const empty = document.createElement('p');
-    empty.textContent = query ? 'No received NFTs match your search.' : 'No received NFTs to show yet. Return here after receiving them in Xaman.';
+    empty.textContent = query || haveFilter ? 'No items match these filters in this collection.'
+      : folder === 'minted' ? 'No received NFTs to show yet. Return here after receiving them in Xaman.'
+      : 'No items to show in this collection yet.';
     body.append(empty);
+    if (query || haveFilter) {
+      const clear = document.createElement('button');
+      clear.type = 'button'; clear.className = 'aura-tradeshow-up';
+      clear.dataset.clearTradeshowFilters = ''; clear.textContent = 'Clear filters';
+      body.append(clear);
+    }
   }
 }
 
