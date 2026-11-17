@@ -1177,9 +1177,9 @@ function attachHud() {
         <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
           <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
           <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
+          <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
           <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
           <button type="button" id="pfPocketChat" aria-expanded="false" aria-controls="pfWorldSpeech"><span>💬</span>Aura’s Tips</button>
-          <button type="button" id="pfPocketChest"><span>🗝</span>Treasures</button>
         </nav>
         <div class="pf-world-tools">
           <button type="button" id="pfWorldLeave">Back to ticket booth</button>
