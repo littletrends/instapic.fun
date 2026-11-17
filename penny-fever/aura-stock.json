@@ -20,11 +20,11 @@
     ],
     "wallet_buy_cap": {
       "11111111": null,
-      "2222222": 22222,
-      "333333": 3333,
-      "44444": 444,
-      "5555": 55,
-      "666": 6
+      "2222222": null,
+      "333333": null,
+      "44444": null,
+      "5555": null,
+      "666": null
     },
     "one_per_wallet": false,
     "hold_floor": 111,
@@ -35,7 +35,7 @@
       "books": {
         "remaining": 555,
         "xrp": "5",
-        "wallet": 1,
+        "wallet": null,
         "ids": [
           "aura-treasures-collector-book",
           "alley-backgrounds-collector-book",
@@ -46,7 +46,7 @@
       "charms": {
         "remaining": 222,
         "xrp": "2",
-        "wallet": 1,
+        "wallet": null,
         "ids": [
           "aura-booth-snow-globe",
           "aura-star-compass",
@@ -65,7 +65,7 @@
       "alley": {
         "remaining": 555,
         "xrp": "0.55555",
-        "wallet": 1,
+        "wallet": null,
         "prefix": "le-alley-",
         "ids": [
           "le-alley-alley-wall-bay",
@@ -111,7 +111,7 @@
       "carnival": {
         "remaining": 555,
         "xrp": "0.55555",
-        "wallet": 1,
+        "wallet": null,
         "prefix": "le-carnival-",
         "ids": [
           "le-carnival-aura-ticket-booth",
@@ -270,7 +270,7 @@
     "ch2": {
       "ceiling": 2222222,
       "xrp": "0.0022",
-      "wallet": 22222,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -279,14 +279,14 @@
           "xrp": "0.0022",
           "taxon": null,
           "background": null,
-          "wallet": 22222
+          "wallet": null
         }
       }
     },
     "ch3": {
       "ceiling": 333333,
       "xrp": "0.00333",
-      "wallet": 3333,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -295,14 +295,14 @@
           "xrp": "0.00333",
           "taxon": null,
           "background": null,
-          "wallet": 3333
+          "wallet": null
         }
       }
     },
     "ch4": {
       "ceiling": 44444,
       "xrp": "0.04444",
-      "wallet": 444,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -311,14 +311,14 @@
           "xrp": "0.04444",
           "taxon": null,
           "background": null,
-          "wallet": 444
+          "wallet": null
         }
       }
     },
     "ch5": {
       "ceiling": 5555,
       "xrp": "0.55555",
-      "wallet": 55,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -327,14 +327,14 @@
           "xrp": "0.55555",
           "taxon": null,
           "background": null,
-          "wallet": 55
+          "wallet": null
         }
       }
     },
     "ch6": {
       "ceiling": 666,
       "xrp": "6.66666",
-      "wallet": 6,
+      "wallet": null,
       "hold": true,
       "current_edition": 1,
       "editions": {
@@ -343,14 +343,14 @@
           "xrp": "6.66666",
           "taxon": null,
           "background": null,
-          "wallet": 6
+          "wallet": null
         }
       }
     },
     "le-books": {
       "ceiling": 555,
       "xrp": "5",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -359,14 +359,14 @@
           "xrp": "5",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "le-charms": {
       "ceiling": 222,
       "xrp": "2",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -375,14 +375,14 @@
           "xrp": "2",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "le-alley": {
       "ceiling": 555,
       "xrp": "0.55555",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -391,14 +391,14 @@
           "xrp": "0.55555",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "le-carnival": {
       "ceiling": 555,
       "xrp": "0.55555",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -407,14 +407,14 @@
           "xrp": "0.55555",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "token-keepsake": {
       "ceiling": 555,
       "xrp": "",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -423,14 +423,14 @@
           "xrp": "",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "token-felix-book": {
       "ceiling": 5555,
       "xrp": "0.0001",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -439,14 +439,14 @@
           "xrp": "0.0001",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "token-penny-book": {
       "ceiling": 55555,
       "xrp": "",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "current_edition": 1,
       "editions": {
@@ -455,14 +455,14 @@
           "xrp": "",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "portraits": {
       "ceiling": 5555,
       "xrp": "0.0001",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "felix": true,
       "current_edition": 1,
@@ -472,14 +472,14 @@
           "xrp": "0.0001",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     },
     "felix-portrait": {
       "ceiling": 55555,
       "xrp": "0.0001",
-      "wallet": 1,
+      "wallet": null,
       "hold": false,
       "felix": true,
       "current_edition": 1,
@@ -489,7 +489,7 @@
           "xrp": "0.0001",
           "taxon": null,
           "background": null,
-          "wallet": 1
+          "wallet": null
         }
       }
     }
