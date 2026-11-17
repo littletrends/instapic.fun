@@ -199,7 +199,7 @@ export function signOutVip({stayInGame = false} = {}) {
       guestApi()?.clear?.();
       const destination = stayInGame
         ? (returnPath.includes('#aura-tradeshow') ? returnPath.replace(/#aura-tradeshow$/, '#alley') : returnPath)
-        : '/save.html?logged_out=1&return=' + encodeURIComponent(returnPath));
+        : '/save.html?logged_out=1&return=' + encodeURIComponent(returnPath);
       location.assign(destination);
     } catch (error) {
       if (resume) world.resume();
