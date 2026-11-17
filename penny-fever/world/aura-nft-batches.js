@@ -7,7 +7,7 @@ const FINISHED = new Set(['complete', 'cancelled', 'expired']);
 // reward proofs and transaction hashes are never supplied as authority.
 export function mountNftBatches(overlay, context) {
   let owner = '', operation = '', timer = 0, revision = 0, busy = false;
-  let choice = null, inFlight = false;
+  let choice = null, inFlight = false, cancelling = false;
   const bar = document.createElement('div');
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
@@ -47,7 +47,9 @@ export function mountNftBatches(overlay, context) {
   const check = document.createElement('button'); check.type = 'button'; check.textContent = 'Check / continue';
   check.dataset.nftBatchCheck = '';
   const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel unsigned request'; cancel.hidden = true;
+  cancel.dataset.nftBatchCancel = '';
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Back to Tradeshow';
+  close.dataset.nftBatchClose = '';
   const next = document.createElement('button'); next.type = 'button'; next.textContent = 'Receive next group · up to 8'; next.hidden = true;
   next.dataset.nftBatchNext = '';
   card.append(title, message, warning, loading, label, start, qr, link, check, cancel, next, close);
@@ -65,6 +67,7 @@ export function mountNftBatches(overlay, context) {
   }
   function show() {
     stop(); context.pause(); owner = context.account();
+    cancelling = false;
     panel.hidden = false; label.hidden = start.hidden = true;
     next.hidden = cancel.hidden = true; check.hidden = false;
     loading.hidden = true; unlink(); close.focus();
@@ -98,7 +101,7 @@ export function mountNftBatches(overlay, context) {
     else if (!data.needs_review) timer = setTimeout(tick, 3000);
   }
   async function tick() {
-    if (inFlight || !operation || panel.hidden || overlay.hidden || owner !== context.account()) return;
+    if (cancelling || inFlight || !operation || panel.hidden || overlay.hidden || owner !== context.account()) return;
     clearTimeout(timer); timer = 0;
     const r = revision, account = owner;
     inFlight = true; check.disabled = true;
@@ -168,19 +171,30 @@ export function mountNftBatches(overlay, context) {
     label.hidden = start.hidden = false; check.hidden = true;
     message.textContent = 'Choose 2–8 copies. The server checks price, available supply and your wallet limit before opening payment. You sign the total in Xaman.';
   }
-  close.addEventListener('click', () => { stop(); busy = false; panel.hidden = true; unlink(); context.refresh(); });
+  function closePanel() {
+    stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); context.refresh();
+  }
+  close.addEventListener('click', closePanel);
   start.addEventListener('click', () => { if (choice) create({kind: 'purchase', item: choice, quantity: Number(quantity.value)}); });
   check.addEventListener('click', tick);
   next.addEventListener('click', receiveGroup);
   receive.addEventListener('click', receiveGroup);
   resume.addEventListener('click', resumeGroup);
   cancel.addEventListener('click', async () => {
-    if (inFlight || !operation) return;
-    cancel.disabled = true;
+    if (cancelling || !operation) return;
+    // A click invalidates any older poll immediately. The server serializes
+    // cancellation with reconciliation and refuses to undo a paid transaction.
+    stop(); cancelling = true;
+    cancel.disabled = check.disabled = true;
+    unlink(); message.textContent = 'Cancelling this signing request… You can return to the Tradeshow while it is checked.';
     const r = revision, account = owner;
-    try { const data = await post('/cancel', {operation}, account); if (valid(r, account)) render(data); }
-    catch (error) { if (valid(r, account)) message.textContent = error.message; }
-    finally { if (valid(r, account)) cancel.disabled = false; }
+    try {
+      const data = await post('/cancel', {operation}, account);
+      if (!valid(r, account)) return;
+      if (['cancelled', 'expired'].includes(data.state)) closePanel();
+      else render(data);
+    } catch (error) { if (valid(r, account)) { message.textContent = error.message; loading.hidden = true; } }
+    finally { if (valid(r, account)) { cancelling = false; cancel.disabled = check.disabled = false; } }
   });
   panel.addEventListener('keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close.click(); }
@@ -195,7 +209,7 @@ export function mountNftBatches(overlay, context) {
   return {
     buy, receive: receiveGroup,
     isOpen: () => !panel.hidden,
-    close: () => { stop(); busy = false; panel.hidden = true; unlink(); },
+    close: () => { stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); },
     paint() {
       bar.hidden = !context.account() || !context.enabled();
       if (!panel.hidden && owner !== context.account()) { stop(); busy = false; panel.hidden = true; unlink(); }

@@ -3,7 +3,7 @@ import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
-import {mountNftBatches} from './aura-nft-batches.js?v=native-eight-1';
+import {mountNftBatches} from './aura-nft-batches.js?v=native-cancel-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
