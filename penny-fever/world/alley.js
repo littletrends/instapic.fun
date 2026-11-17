@@ -1166,14 +1166,8 @@ function attachHud() {
   stage.insertAdjacentHTML("beforeend", `
     <div class="pf-world-hud" id="pfWorldHud">
       <div class="pf-world-top">
-        <nav class="pf-world-navigation" aria-label="Alley navigation">
+        <div class="pf-world-navigation" role="group" aria-label="Alley navigation">
           <button type="button" id="pfAlleyMapOpen">Map</button>
-          <a id="pfWorldHome" href="../index.html">Home</a>
-        </nav>
-        <div class="pf-world-compass" id="pfWorldCompass">
-          <span id="pfWorldZone">PIER</span>
-          <strong id="pfWorldNearest">Heart palace</strong>
-        </div>
         <nav class="pf-world-pocket" aria-label="Your Penny Fever pocket">
           <button type="button" id="pfPocketScrip"><span>🎟</span><b id="pfPocketScripCount">0</b> Tickets</button>
           <button type="button" id="pfPocketTicket"><span>🪙</span><b id="pfPocketCoinCount">0</b> Pennies</button>
@@ -1181,6 +1175,12 @@ function attachHud() {
           <button type="button" id="pfPocketDoll"><span>🎀</span>Doll</button>
           <button type="button" id="pfPocketChat" aria-expanded="false" aria-controls="pfWorldSpeech"><span>💬</span>Aura’s Tips</button>
         </nav>
+          <a id="pfWorldHome" href="../index.html">Home</a>
+        </div>
+        <div class="pf-world-compass" id="pfWorldCompass">
+          <span id="pfWorldZone">PIER</span>
+          <strong id="pfWorldNearest">Heart palace</strong>
+        </div>
         <div class="pf-world-tools">
           <button type="button" id="pfWorldLeave">Back to ticket booth</button>
           <a id="pfVipHud" href="#aura-tradeshow">Aura’s VIP</a>
