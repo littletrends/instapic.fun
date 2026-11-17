@@ -3,7 +3,7 @@ import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
-import {mountNftBatches} from './aura-nft-batches.js?v=native-cancel-1';
+import {mountNftBatches} from './aura-nft-batches.js?v=compact-actions-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -217,18 +217,15 @@ function paintCollectionQueue() {
   const button = overlay.querySelector('[data-collection-mint]');
   if (button) {
     button.hidden = !available;
-    button.disabled = loading || opening || !!queue?.active || (!failed && !eligible && !pendingReceive && (!queue || queue.phase === 'complete'));
-    button.textContent = loading ? 'Loading your VIP collection…' : opening ? 'Preparing Xaman…' : queue?.active
-      ? (queue.phase === 'prepare' ? 'Preparing batch…' : 'Receiving batch…')
-      : queue?.phase === 'receive' ? `Receive batch (${queue.ready.length - queue.receiveIndex})`
-      : queue?.phase === 'prepare' ? 'Resume minting collection' : failed ? 'Retry loading VIP collection'
-      : pendingReceive ? `Receive pending NFTs (${pendingReceive})` : eligible ? 'Mint my collection · up to 25' : 'No collected rewards waiting to mint';
+    button.disabled = loading || opening || !!queue?.active;
+    button.textContent = queue?.active ? (queue.phase === 'prepare' ? 'Minting…' : 'Receiving…') : 'Mint Rewards';
+    button.title = 'Prepare up to 25 collected rewards, then receive them in Xaman';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
     receive.hidden = !available;
     receive.disabled = loading || opening || !!queue?.active;
-    receive.textContent = 'Check wallet / recover NFTs';
+    receive.textContent = 'Recover Wallet';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
@@ -236,7 +233,7 @@ function paintCollectionQueue() {
     progress.textContent = loading ? 'Checking your collected rewards and wallet. Please wait…'
       : opening ? 'Preparing your Xaman request. Please wait…'
       : failed ? 'Collection could not load. Retry when connected and signed in.'
-      : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : eligible ? 'Mint collected rewards in batches of up to 25, then receive them in Xaman.' : rewardMint.ownerItems?.length ? 'No eligible collected rewards are waiting. Owner copies can still be minted from each item.' : 'No eligible collected rewards are waiting. Check your wallet or continue collecting.') : queue.phase === 'prepare'
+      : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : eligible ? 'Mint up to 25 collected rewards, then receive them in Xaman.' : 'No collected rewards to mint.') : queue.phase === 'prepare'
       ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
       : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
       : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
@@ -387,6 +384,11 @@ async function startCollectionQueue() {
     const pending = (rewardMint.pending || []).filter(id => modelItem(id).id);
     const receivingPending = pending.length > 0;
     const ids = receivingPending ? pending.slice(0, 25) : collectedMintIds().slice(0, 25);
+    if (!ids.length) {
+      paintCollectionQueue();
+      overlay.querySelector('#auraCollectionMintProgress').textContent = 'No collected rewards to mint.';
+      return;
+    }
     collectionQueue = {account, ids, done: receivingPending ? ids.length : 0,
       ready: receivingPending ? [...ids] : [], receiveIndex: 0,
       phase: receivingPending ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
@@ -970,10 +972,12 @@ function ensureOverlay() {
       </div>
     </div>
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
-      <button type="button" data-collection-mint hidden>Mint my collection · up to 25</button>
+      <div class="aura-collection-actions">
+      <button type="button" data-collection-mint hidden>Mint Rewards</button>
       <progress id="auraCollectionLoadingBar" aria-label="Loading VIP collection or Xaman request" hidden></progress>
       <button type="button" data-collection-receive hidden>Receive prepared</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
+      </div>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
       <p id="auraCollectionKeepOpen" class="aura-collection-warning" role="status" hidden></p>
       <div id="auraCollectionRecovery" class="aura-owned-edition-list" hidden></div>

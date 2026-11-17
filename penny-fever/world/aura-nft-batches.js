@@ -12,13 +12,14 @@ export function mountNftBatches(overlay, context) {
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
   const receive = document.createElement('button');
-  receive.type = 'button'; receive.textContent = 'Receive prepared NFTs · up to 8 together';
+  receive.type = 'button'; receive.textContent = 'Receive NFTs';
+  receive.title = 'Receive up to 8 prepared NFTs together';
   receive.dataset.nftBatchReceive = '';
   const resume = document.createElement('button');
-  resume.type = 'button'; resume.textContent = 'Resume grouped checkout';
+  resume.type = 'button'; resume.textContent = 'Resume Checkout';
   resume.dataset.nftBatchResume = '';
   bar.append(receive, resume);
-  overlay.querySelector('#auraCollectionMintToolbar').append(bar);
+  overlay.querySelector('.aura-collection-actions').append(bar);
 
   const panel = document.createElement('div');
   panel.className = 'aura-xrp-till'; panel.hidden = true;
@@ -135,7 +136,7 @@ export function mountNftBatches(overlay, context) {
   async function receiveGroup() {
     if (!context.account() || busy) return;
     show(); operation = ''; choice = null;
-    title.textContent = 'Receive prepared NFTs together';
+    title.textContent = 'Receive NFTs · up to 8 together';
     message.textContent = 'Checking existing NFT offers for your VIP account…';
     const r = revision, account = owner;
     try {
