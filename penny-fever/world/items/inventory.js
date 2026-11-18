@@ -175,6 +175,7 @@ function mount() {
             <p class="pocket-blurb" id="pocketAlbumBlurb">Open a stall to see its chapters. The book remembers. The games stay on the boardwalk.</p>
             <div class="pocket-progress" aria-hidden="true"><i id="pocketAlbumBar"></i></div>
             <p class="pocket-count" id="pocketAlbumCount"></p>
+            <button type="button" class="treasure-where" id="stallWhere" hidden></button>
           </div>
           <p id="treasureEmpty" hidden>Nothing here matches that search.</p>
           <div class="album-slots" id="treasureItems"></div>
@@ -184,6 +185,7 @@ function mount() {
         <div class="pocket-stage" id="treasureStage" tabindex="0" role="group"></div>
         <aside class="pocket-card">
           <p class="pocket-eyebrow" id="treasureSource"></p>
+          <button type="button" class="treasure-where" id="treasureWhere" hidden></button>
           <h2 id="treasureName"></h2>
           <p id="treasureStatus"></p>
           <p class="pocket-how" id="treasureHow">Press and turn. Arrow keys spin; Home shows the front.</p>
@@ -270,6 +272,9 @@ function mount() {
     e.preventDefault(); searchBox.value = ''; render(); showSearch(false); searchToggle.focus();
   });
   dialog.querySelector('[data-mint-tradeshow]').addEventListener('click', () => goMint());
+  for (const id of ['treasureWhere', 'stallWhere']) {
+    $(id)?.addEventListener('click', e => { const b = e.currentTarget; if (!b.disabled && b.dataset.whereStall) goPlay(b.dataset.whereStall); });
+  }
   dialog.querySelector('.pocket-tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
     tab = b.dataset.tab;
@@ -599,6 +604,23 @@ function goPlay(stallId) {
   }, {once: true});
   dialog.close();
 }
+// "Chapter N of <stall>" for a keepsake a game stall awards; shut stalls stay plain text.
+function whereToWin(item) {
+  const stall = item && stallForItem(item.id);
+  if (!stall || stall.extra) return null;
+  const chapter = stall.prizes.indexOf(item.id) + 1;
+  const text = chapter ? 'Chapter ' + chapter + ' of ' + stall.title : stall.host + '’s ' + stall.title;
+  return {stall, chapter, text, shut: isParkShut(stall.id)};
+}
+function paintWhere(button, where, label) {
+  if (!button) return;
+  button.hidden = studio || !where;
+  if (!where) return;
+  button.dataset.whereStall = where.stall.id;
+  button.disabled = where.shut;
+  button.textContent = (label || where.text) + (where.shut ? ' · stall closed' : ' ›');
+  button.setAttribute('aria-label', where.shut ? (label || where.text) + ', stall closed tonight' : 'Go to ' + (label || where.text) + ' on the alley');
+}
 function cardActions(item) {
   if (studio || !item || item.currencyCode || MONEY_KINDS.has(item.kind)) return null;
   const stall = stallForItem(item.id);
@@ -814,6 +836,7 @@ function paintIdle() {
   text('pocketAlbumBlurb', 'Open a stall to see its chapters. The book remembers what you won. Playing still happens on the boardwalk.');
   $('pocketAlbumBar').style.width = '0';
   text('pocketAlbumCount', 'Pick a game in the list');
+  if ($('stallWhere')) $('stallWhere').hidden = true;
   const cover = $('stallCover');
   cover.decoding = 'async';
   cover.loading = 'lazy';
@@ -910,6 +933,7 @@ function paintStall(all, id) {
   text('pocketAlbumKicker', stall.extra ? 'Booth' : stall.host);
   text('pocketAlbumTitle', stall.title);
   text('pocketAlbumBlurb', stall.blurb);
+  paintWhere($('stallWhere'), stall.extra ? null : {stall, chapter: 0, text: stall.host + '’s ' + stall.title, shut: isParkShut(stall.id)}, 'Go to ' + stall.host + '’s ' + stall.title);
   $('pocketAlbumBar').style.width = (total ? Math.round(have / total * 100) : 0) + '%';
   text('pocketAlbumCount', total
     ? have + ' of ' + total + (stall.extra ? ' found' : ' chapters') + (have === total && total ? ' · complete' : '')
@@ -1088,6 +1112,8 @@ function describe(item) {
     ? (chapter ? stall.host + ' · ' + stall.title + ' · chapter ' + chapter : stall.host + ' · ' + stall.title)
     : item.source);
   text('treasureStatus', item.owned ? item.status : 'Not found yet. Win it on the alley — the book will keep the place.');
+  const where = item.currencyCode || MONEY_KINDS.has(item.kind) ? null : whereToWin(item);
+  paintWhere($('treasureWhere'), where);
   const packs = Number(globalThis.PennyFever?.pennyPacks?.() ?? state().pennyPacks) || 0;
   const pennies = Number(globalThis.PennyFever?.pennies?.() ?? state().demoCoins) || 0;
   text('treasureHint', item.id === 'everyday-penny'
@@ -1098,7 +1124,7 @@ function describe(item) {
         ? (packs
           ? packs + (packs === 1 ? ' five-penny pack' : ' five-penny packs') + ' parked out of the droppable purse.'
           : 'The purse is yours. Pack five pennies to keep a bundle out of a full dump.')
-        : item.hint);
+        : (where && /^Chapter \d+ of .+\.?$/.test(String(item.hint || '')) ? '' : item.hint));
   paintConvert(item);
   const everyday = ['everyday-penny','five-penny-stack','ticket-roll','admission-ticket'].includes(item.id);
   const token = ['star-token','moon-penny','rose-penny','crown-token'].includes(item.id);
@@ -1117,7 +1143,7 @@ function describe(item) {
     ? 'Open the album. Dress the girl with this set in Edit character.'
     : item.id === 'penny-collector-book'
         ? 'A home for the whole midway. The tree already lists every stall; this book is the keepsake for filling it.'
-        : stall && !item.owned
+        : stall && !item.owned && !where
           ? 'Find this at ' + stall.host + '’s stall on the alley.'
           : '');
 }
