@@ -199,28 +199,38 @@
     "token_claims": {
       "aura-keepsake": {
         "cost": {
-          "everyday-penny": 55
+          "rose-penny": 30000,
+          "crown-token": 1000
         },
         "wallet": 1,
-        "label": "Aura keepsake"
+        "label": "Aura keepsake",
+        "currency_revision": 2,
+        "spend_source": "verified-token-purse",
+        "enabled": false
       },
       "felix-vendor-portrait-book": {
         "cost": {
-          "star-token": 5,
-          "moon-penny": 1
+          "star-token": 15000000,
+          "moon-penny": 300000
         },
         "wallet": 1,
-        "label": "Felix’s photo book"
+        "label": "Felix’s photo book",
+        "currency_revision": 2,
+        "spend_source": "verified-token-purse",
+        "enabled": false
       },
       "penny-collector-book": {
         "cost": {
-          "star-token": 5,
-          "moon-penny": 3,
-          "rose-penny": 1,
-          "crown-token": 1
+          "star-token": 5000000,
+          "moon-penny": 500000,
+          "rose-penny": 15000,
+          "crown-token": 2000
         },
         "wallet": 1,
-        "label": "Penny collector book"
+        "label": "Penny collector book",
+        "currency_revision": 2,
+        "spend_source": "verified-token-purse",
+        "enabled": false
       }
     }
   },
@@ -1215,28 +1225,73 @@
   "token_claims": {
     "aura-keepsake": {
       "cost": {
-        "everyday-penny": 55
+        "rose-penny": 30000,
+        "crown-token": 1000
       },
       "wallet": 1,
-      "label": "Aura keepsake"
+      "label": "Aura keepsake",
+      "currency_revision": 2,
+      "spend_source": "verified-token-purse",
+      "enabled": false
     },
     "felix-vendor-portrait-book": {
       "cost": {
-        "star-token": 5,
-        "moon-penny": 1
+        "star-token": 15000000,
+        "moon-penny": 300000
       },
       "wallet": 1,
-      "label": "Felix’s photo book"
+      "label": "Felix’s photo book",
+      "currency_revision": 2,
+      "spend_source": "verified-token-purse",
+      "enabled": false
     },
     "penny-collector-book": {
       "cost": {
-        "star-token": 5,
-        "moon-penny": 3,
-        "rose-penny": 1,
-        "crown-token": 1
+        "star-token": 5000000,
+        "moon-penny": 500000,
+        "rose-penny": 15000,
+        "crown-token": 2000
       },
       "wallet": 1,
-      "label": "Penny collector book"
+      "label": "Penny collector book",
+      "currency_revision": 2,
+      "spend_source": "verified-token-purse",
+      "enabled": false
+    }
+  },
+  "currency_revision": 2,
+  "ledger_tokens": {
+    "issuer": "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug",
+    "treasury": "rStMgpbErmkyKyoQKTqpRqmZwV8w5fRjK",
+    "tokens": {
+      "star-token": {
+        "name": "Stars",
+        "currency": "PENNYS",
+        "bundle_units": 1000000,
+        "bundle_xrp": 2,
+        "full_game_allowance": 20000000
+      },
+      "moon-penny": {
+        "name": "Moons",
+        "currency": "PENNYM",
+        "bundle_units": 100000,
+        "bundle_xrp": 5,
+        "full_game_allowance": 800000
+      },
+      "rose-penny": {
+        "name": "Roses",
+        "currency": "PENNYR",
+        "bundle_units": 10000,
+        "bundle_xrp": 10,
+        "full_game_allowance": 45000
+      },
+      "crown-token": {
+        "name": "Crowns",
+        "currency": "PENNYC",
+        "bundle_units": 1000,
+        "bundle_xrp": 25,
+        "full_game_allowance": 3000
+      }
     }
   }
 }

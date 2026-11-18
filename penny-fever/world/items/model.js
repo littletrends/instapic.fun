@@ -2,9 +2,9 @@
 (() => {
   'use strict';
   const rows = [
-    ['everyday-penny','Everyday penny','Essentials','currency',null,'Aura’s ticket booth','Loose pennies in your pocket. Pack five into a 5-pack to keep them out of Copper’s machine. Open a pack here when you want them back.',.07,'pennies'],
-    ['ticket-roll','Ticket roll','Essentials','scrip',null,'Aura’s ticket booth','Booth tickets torn from Aura’s brass roll. One ticket enters a stall. Cash one at Copper Falls or Pip’s tables for five pennies.',.08,'tickets'],
-    ['admission-ticket','Admission ticket','Essentials','ticket',null,'Aura’s ticket booth','Take a ticket from Aura. Its punched heart remembers your entry.',.025,'tickets'],
+    ['everyday-penny','Everyday pennies','Essentials','currency',null,'Aura’s entrance booth','Game pennies. Buy or exchange at Aura’s entrance booth; pack five into a 5-pack or open a pack in your purse.',.07,'pennies'],
+    ['ticket-roll','Tickets','Essentials','scrip',null,'Aura’s entrance booth','Game tickets from Aura’s entrance booth. One ticket enters a stall; exchange five pennies for one ticket.',.08,'tickets'],
+    ['admission-ticket','Admission ticket','Essentials','ticket',null,'Aura’s entrance booth','Your entry ticket from Aura at the entrance. This is separate from bought play tickets and ledger tokens.',.025,'tickets'],
     ['showman-pass','Showman pass','Essentials','pass',null,'Backstage · Bea','The demo Showman pass lasts until midnight in Darwin.',.06,'tickets'],
     ['ticket-stub','Ticket stub','Alley Ephemera','curio','ticket_stub','Skyward Swings · Hugo','Chapter 1 of Skyward Swings.',.035,'alley-curios'],
     ['pressed-heart','Pressed heart','Alley Ephemera','curio','pressed_heart','The Impossible Suitcase · Kit','Chapter 1 of The Impossible Suitcase.',.08,'alley-curios'],
@@ -26,7 +26,7 @@
     ['charm-pouch','Charm pouch','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 3 of Whisper Run.',.08,'gift-wrapping'],
     ['secret-keeper','Secret keeper','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 6 of Whisper Run.',.12,'parlour-prizes'],
     ['penny-purse','Penny purse','Workshop prizes','prize',null,'The Impossible Suitcase · Kit','Chapter 2 of The Impossible Suitcase.',.1,'pennies'],
-    ['penny-collector-book','Penny collector book','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Claim with 5 star tokens, 3 moon pennies, 1 rose penny and 1 crown token.',.12,'collector-books'],
+    ['penny-collector-book','Penny collector book','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Requires 5,000,000 Stars, 500,000 Moons, 15,000 Roses and 2,000 Crowns at Aura’s token counter.',.12,'collector-books'],
     ['aura-treasures-collector-book','Aura treasures collector book','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Special addition · 5 XRP. You can collect the charms without this book.',.12,'aura-limited'],
     ['alley-backgrounds-collector-book','Alley backgrounds collector book','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Special addition · 5 XRP. You can collect the alley plates without this book.',.12,'aura-limited'],
     ['aura-and-carnival-collector-book','Aura and carnival collector book','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Special addition · 5 XRP. You can collect the carnival figures without this book.',.12,'aura-limited'],
@@ -42,7 +42,7 @@
     ['crowned-duck','Crowned duck','Workshop prizes','prize',null,'Duckling Parade · Dottie','Chapter 4 of Duckling Parade.',.12,'garden-prizes'],
     ['coin-album','Coin album','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 4 of Copper Falls.',.1,'pennies'],
     ['treasure-tin','Treasure tin','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 5 of Copper Falls.',.1,'gift-wrapping'],
-    ['five-penny-stack','Five-penny stack','Essentials','currency',null,'Aura’s till · Copper Falls','Five pennies packed away. They stay out of a full-purse drop. Pack or open them here, at Copper Falls, or in the alley menu.',.1,'pennies'],
+    ['five-penny-stack','5-pack · five pennies','Essentials','currency',null,'Aura’s entrance booth','Five everyday pennies packed together. Pack or open them in your purse; visit Aura’s entrance booth for pennies and tickets.',.1,'pennies'],
     ['mint-press','Mint press','Workshop prizes','prize',null,'Copper Falls · Copper','Chapter 6 of Copper Falls.',.1,'game-prizes'],
     ['surprise-parcel','Surprise parcel','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 4 of Whisper Run.',.1,'gift-wrapping'],
     ['stamp-passport','Stamp passport','Workshop prizes','prize',null,'Whisper Run · Willa','Chapter 5 of Whisper Run.',.1,'tickets'],
@@ -59,9 +59,9 @@
     ['spooky-pumpkin-friend','Spooky pumpkin friend','Workshop prizes','prize',null,'Duckling Parade · Dottie','Chapter 2 of Duckling Parade.',.1,'seasonal-treasures'],
     ['crown-turtle','Crown turtle','Workshop prizes','prize',null,'Duckling Parade · Dottie','Chapter 6 of Duckling Parade.',.1,'toy-shelf'],
     ['fortune-slip','Fortune slip','Workshop prizes','prize',null,'Catch the Fortune · Iris','Chapter 1 of Catch the Fortune.',.1,'alley-curios'],
-    ['moon-penny','Moon penny','Workshop prizes','prize',null,'Copper Falls · Copper','A moon-pressed penny from the cash-drop trays.',.1,'pennies'],
-    ['rose-penny','Rose penny','Workshop prizes','prize',null,'Copper Falls · Copper','A rose-pressed penny from the cash-drop trays.',.1,'pennies'],
-    ['crown-token','Crown token','Workshop prizes','prize',null,'Copper Falls · Copper','A scalloped crown token from the cash-drop trays.',.1,'pennies'],
+    ['moon-penny','Moons · PENNYM','Workshop prizes','prize',null,'Aura’s ledger token counter','Buy PENNYM through Wallet / Tokens. 100,000 Moons costs up to 5 XRP, plus network fees. These are fungible ledger tokens.',.1,'pennies'],
+    ['rose-penny','Roses · PENNYR','Workshop prizes','prize',null,'Aura’s ledger token counter','Buy PENNYR through Wallet / Tokens. 10,000 Roses costs up to 10 XRP, plus network fees. These are fungible ledger tokens.',.1,'pennies'],
+    ['crown-token','Crowns · PENNYC','Workshop prizes','prize',null,'Aura’s ledger token counter','Buy PENNYC through Wallet / Tokens. 1,000 Crowns costs up to 25 XRP, plus network fees. These are fungible ledger tokens.',.1,'pennies'],
     ['moon-brooch','Moon brooch','Workshop prizes','prize',null,'Catch the Fortune · Iris','Chapter 3 of Catch the Fortune.',.1,'wearables'],
     ['fortune-journal','Fortune journal','Workshop prizes','prize',null,'Catch the Fortune · Iris','Chapter 4 of Catch the Fortune.',.1,'collector-books'],
     ['moon-festival-fan','Moon-festival fan','Workshop prizes','prize',null,'Catch the Fortune · Iris','Chapter 5 of Catch the Fortune.',.1,'seasonal-treasures'],
@@ -78,7 +78,7 @@
     ['first-visit-badge','First-visit badge','Workshop prizes','prize',null,'Marquee Glowball · Lumi','Chapter 4 of Marquee Glowball.',.1,'awards'],
     ['pocket-theatre','Pocket theatre','Workshop prizes','prize',null,'Flicker Reel · Milo','Chapter 6 of Flicker Reel.',.1,'toy-shelf'],
     ['lightning-pin','Lightning pin','Workshop prizes','prize',null,'Pinball Alley · Pip','Chapter 1 of Pinball Alley.',.1,'game-prizes'],
-    ['star-token','Star token','Workshop prizes','prize',null,'Paper worlds','Won in a paper-world chapter.',.1,'pennies'],
+    ['star-token','Stars · PENNYS','Workshop prizes','prize',null,'Aura’s ledger token counter','Buy PENNYS through Wallet / Tokens. 1,000,000 Stars costs up to 2 XRP, plus network fees. These are fungible ledger tokens.',.1,'pennies'],
     ['pegboard-star','Pegboard star','Workshop prizes','prize',null,'Moonbow Skee-Ball · Skip','Chapter 6 of Moonbow Skee-Ball.',.1,'wonder-prizes'],
     ['summer-sun-pin','Summer sun pin','Workshop prizes','prize',null,'Spiral Slide · Tilly','Chapter 5 of Spiral Slide.',.1,'seasonal-treasures'],
     ['bullseye-clock','Bullseye clock','Workshop prizes','prize',null,'Pinball Alley · Pip','Chapter 6 of Pinball Alley.',.1,'garden-prizes'],
@@ -126,7 +126,7 @@
     ['pocket-marquee','Pocket marquee','Workshop prizes','prize',null,'Marquee Glowball · Lumi','Chapter 6 of Marquee Glowball.',.1,'garden-prizes'],
     ['lantern-lighter','Lantern lighter','Workshop prizes','prize',null,'Marquee Glowball · Lumi','Chapter 3 of Marquee Glowball.',.1,'working-midway'],
     ['midway-map','Sideshow alley map','Workshop prizes','prize',null,'Laughing Doorway · Juno','Chapter 5 of Laughing Doorway.',.1,'tickets'],
-    ['aura-keepsake','Aura keepsake','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Claim with 55 everyday pennies.',.1,'awards'],
+    ['aura-keepsake','Aura keepsake','Workshop prizes','prize',null,'Aura’s VIP tradeshow','Requires 30,000 Roses and 1,000 Crowns at Aura’s token counter.',.1,'awards'],
     ['velvet-mask','Velvet mask','Workshop prizes','prize',null,'Opening Night · Bea','Chapter 4 of Opening Night.',.1,'garden-prizes'],
     ['secret-door-key','Secret door key','Workshop prizes','prize',null,'Laughing Doorway · Juno','Chapter 4 of Laughing Doorway.',.1,'future-curios'],
     ['pocket-observatory','Pocket observatory','Workshop prizes','prize',null,'A Little Starlight · Celeste','Chapter 6 of A Little Starlight.',.1,'parlour-prizes'],
@@ -189,7 +189,7 @@
     ['cue-card','Cue card','Workshop prizes','prize',null,'Opening Night · Bea','Chapter 1 of Opening Night.',.1,'tickets'],
     ['stage-door-pass','Stage-door pass','Workshop prizes','prize',null,'Opening Night · Bea','Chapter 6 of Opening Night.',.1,'tickets'],
     ['midway-uniforms','Midway uniforms','Costume books','prize',null,'Carousel Waltz · Florence','Chapter 3 of Carousel Waltz.',.1,'paper-doll-books'],
-    ['felix-vendor-portrait-book','Instapic Photo Booth — Penny Fever Vendors','Photo Booth Collection','prize',null,'Aura’s VIP tradeshow','Claim with 5 star tokens and 1 moon penny. Portraits still unlock at Felix’s photo booth.',.1,'collector-books'],
+    ['felix-vendor-portrait-book','Instapic Photo Booth — Penny Fever Vendors','Photo Booth Collection','prize',null,'Aura’s VIP tradeshow','Requires 15,000,000 Stars and 300,000 Moons at Aura’s token counter. Portraits unlock at Felix’s photo booth.',.1,'collector-books'],
     ['backstage-costume-book','Backstage costume book','Costume books','prize',null,'Opening Night · Bea','Chapter 5 of Opening Night.',.1,'paper-doll-books'],
     ['blank-designer-book','Blank designer book','Costume books','prize',null,'Painted Bay · Arlo','Chapter 4 of Painted Bay.',.1,'paper-doll-books'],
     ['wardrobe-trunk','Wardrobe trunk','Costume extras','prize',null,'The Impossible Suitcase · Kit','Chapter 4 of The Impossible Suitcase.',.1,'doll-accessories'],
@@ -440,8 +440,7 @@
     'game-prizes':'pocket-theatre',
   };
   function bookOf(id, album, collection) {
-    if (id === 'everyday-penny' || id === 'five-penny-stack') return 'penny-collector-book';
-    if (id === 'ticket-roll') return 'memory-scrapbook';
+    if (['everyday-penny','five-penny-stack','ticket-roll','admission-ticket'].includes(id)) return 'penny-collector-book';
     if (collection === 'aura-limited') {
       if (bookIds.has(id)) return id;
       if (id.startsWith('le-alley-')) return 'alley-backgrounds-collector-book';
@@ -459,6 +458,7 @@
     const book = bookOf(id, album, collection);
     return Object.freeze({
       id,name,category,kind,key,source,hint,depth,collection,album,book,
+      currencyCode: ({'star-token':'PENNYS','moon-penny':'PENNYM','rose-penny':'PENNYR','crown-token':'PENNYC'})[id] || null,
       alpha: true,
       asset: id === 'felix-vendor-portrait-book'
         ? 'assets/restyle/game-sprites/collector-books/felix-vendor-portrait-book/front.webp?v=nft-art-1'
@@ -533,6 +533,7 @@
             : (src==='coin-pusher'||src==='cash-drop'?'Won at Copper Falls':src==='felix-photo-booth'?'Collected in Felix’s photo booth':'Won in a paper world'))
           : status;
       }
+      if (d.currencyCode) { owned=true; quantity=0; status='View the connected Xaman balance in Wallet / Tokens.'; }
       return {...d,owned,quantity,status,at,punched:d.kind==='ticket'&&!!state.admitPassed};
     });
   }

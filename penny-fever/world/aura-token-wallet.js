@@ -1,4 +1,4 @@
-import {paintEconomy, paintRecipeProgress} from './token-economy.js?v=token-economy-2';
+import {paintEconomy, paintLedgerRequirements} from './token-economy.js?v=everyday-currencies-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -64,55 +64,8 @@ function attach(overlay) {
   let requestedItem = '';
   let overviewData = null, overviewOwner = null, overviewController = null, overviewAttempted = false;
   const sameOwner = other => !!other && other.email === identity()?.email && other.token === identity()?.token;
-  const tokenCodes = {'star-token':'PENNYS','moon-penny':'PENNYM','rose-penny':'PENNYR','crown-token':'PENNYC'};
-  const specials = new Set(['penny-collector-book','felix-vendor-portrait-book','aura-keepsake']);
   function addShortcuts() {
-    for (const card of overlay.querySelectorAll('.aura-tradeshow-card[data-item]')) {
-      const item = card.dataset.item;
-      if ((!tokenCodes[item] && !specials.has(item)) || card.querySelector('[data-economy-shortcut]')) continue;
-      const button = document.createElement('button'); button.type = 'button';
-      button.className = 'aura-tradeshow-play'; button.dataset.economyShortcut = item;
-      button.textContent = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
-      card.append(button);
-    }
-    for (const card of overlay.querySelectorAll('.aura-tradeshow-card[data-item]')) {
-      const item = card.dataset.item;
-      if (!specials.has(item)) continue;
-      let progress = card.querySelector('[data-new-token-progress]');
-      if (!progress) {
-        progress = document.createElement('section'); progress.dataset.newTokenProgress = '';
-        progress.className = 'aura-token-recipe-progress';
-        card.querySelector('.aura-tradeshow-tanks')?.before(progress);
-        if (!progress.isConnected) card.append(progress);
-      }
-      paintRecipeProgress(progress, sameOwner(overviewOwner) ? overviewData : null, item);
-      const old = card.querySelector('.aura-tradeshow-tanks');
-      if (old && !card.querySelector('[data-legacy-token-label]')) {
-        const label = document.createElement('small'); label.dataset.legacyTokenLabel = '';
-        label.textContent = 'Current game claim · original units'; old.before(label);
-      }
-    }
-    const inspect = overlay.querySelector('#auraTradeshowInspect');
-    const item = inspect?.querySelector('[data-inspect-buy]')?.dataset.buy;
-    if (inspect) {
-      let button = inspect.querySelector('[data-economy-shortcut]');
-      if (!button) {
-        button = document.createElement('button'); button.type = 'button';
-        button.className = 'aura-tradeshow-play'; button.dataset.economyShortcut = '';
-        inspect.querySelector('[data-inspect-play]')?.insertAdjacentElement('afterend', button);
-      }
-      button.hidden = !tokenCodes[item] && !specials.has(item);
-      button.dataset.economyShortcut = item || '';
-      const label = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
-      if (button.textContent !== label) button.textContent = label;
-      let progress = inspect.querySelector('[data-new-token-progress]');
-      if (!progress) {
-        progress = document.createElement('section'); progress.dataset.newTokenProgress = '';
-        progress.className = 'aura-token-recipe-progress'; button.before(progress);
-      }
-      progress.hidden = !specials.has(item);
-      if (!progress.hidden) paintRecipeProgress(progress, sameOwner(overviewOwner) ? overviewData : null, item);
-    }
+    paintLedgerRequirements(overlay, sameOwner(overviewOwner) ? overviewData : null);
   }
   async function refreshOverview() {
     const account = identity();
@@ -138,6 +91,7 @@ function attach(overlay) {
   });
   new MutationObserver(addShortcuts).observe(overlay, {childList: true, subtree: true});
   addShortcuts();
+  new MutationObserver(addShortcuts).observe(overlay, {childList: true, subtree: true});
   panel.addEventListener('click', event => {
     if (!event.target.closest('[data-token-entrance]')) return;
     const entrance = document.getElementById('pfWorldLeave');

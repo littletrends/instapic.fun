@@ -596,7 +596,7 @@ function paintFound(all) {
     const name = document.createElement('strong');
     name.textContent = item.name;
     const mark = document.createElement('em');
-    mark.textContent = item.quantity > 1 ? '×' + item.quantity : 'Found';
+    mark.textContent = item.currencyCode ? 'View Xaman balance' : item.quantity > 1 ? '×' + item.quantity : 'Found';
     if (item.turnaround) {
       const bar = document.createElement('div');
       bar.className = 'found-turn';
@@ -941,7 +941,7 @@ function paintSlots(shown, opts = {}) {
     const name = document.createElement('strong');
     name.textContent = item.name;
     const mark = document.createElement('em');
-    mark.textContent = item.owned
+    mark.textContent = item.currencyCode ? 'View Xaman balance' : item.owned
       ? (item.id === 'five-penny-stack' ? item.quantity + (item.quantity === 1 ? ' pack' : ' packs')
         : item.kind === 'currency' ? item.quantity + (item.quantity === 1 ? ' penny' : ' pennies')
         : item.kind === 'scrip' ? item.quantity + (item.quantity === 1 ? ' ticket' : ' tickets')
@@ -1012,7 +1012,7 @@ function describe(item) {
   const purchase = $('treasurePurchase');
   purchase.hidden = studio || !(everyday || token || special);
   purchase.textContent = everyday ? 'Go to Aura’s entrance booth'
-    : token ? 'Buy ledger tokens · Xaman' : 'View new token requirements';
+    : token ? 'Buy ledger tokens · Xaman' : 'View token requirements';
   const dollPage = {
     'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
     'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',

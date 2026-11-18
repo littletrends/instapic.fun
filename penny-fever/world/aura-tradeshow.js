@@ -1,3 +1,4 @@
+import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=everyday-currencies-1';
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
@@ -15,10 +16,10 @@ const NFT_HOST = 'https://motherpc.taild1a44c.ts.net';
 const NFT_VER = 'mint-win-1';
 const TOKEN_NAMES = {
   'everyday-penny': ['everyday penny', 'everyday pennies'],
-  'star-token': ['star token', 'star tokens'],
-  'moon-penny': ['moon penny', 'moon pennies'],
-  'rose-penny': ['rose penny', 'rose pennies'],
-  'crown-token': ['crown token', 'crown tokens'],
+  'star-token': ['Star', 'Stars'],
+  'moon-penny': ['Moon', 'Moons'],
+  'rose-penny': ['Rose', 'Roses'],
+  'crown-token': ['Crown', 'Crowns'],
 };
 const LIMITED = new Set([
   'aura-treasures-collector-book',
@@ -63,12 +64,9 @@ function vip() {
 // saved session on the USB) and whether the photo booth book was claimed.
 const SNAP_BOOK = 'felix-vendor-portrait-book';
 let snapElig = {portraits: new Set(), book: false};
-let dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
-let dripReady = false;
 let eligibilityAccount = '';
 let eligibilityRevision = 0;
 const claimReceipts = new Map();
-const tokenClaimsInFlight = new Set();
 function vipEmail() {
   try {
     return vip() ? String(window.InstapicGuestIdentity?.read?.()?.email || '').trim() : '';
@@ -83,8 +81,6 @@ function clearEligibility(account = '') {
   eligibilityAccount = account;
   rewardMint = {account, enabled: false, items: {}, prices: {}, owned: {}};
   snapElig = {portraits: new Set(), book: false};
-  dripPurse = { 'star-token': 0, 'moon-penny': 0, 'rose-penny': 0, 'crown-token': 0 };
-  dripReady = false;
   const recovery = overlay?.querySelector('#auraCollectionRecovery');
   if (recovery) { recovery.replaceChildren(); recovery.hidden = true; }
 }
@@ -447,13 +443,6 @@ function loadDrips(email, revision) {
     .then((data) => {
       if (revision !== eligibilityRevision || email.toLowerCase() !== vipAccount()) return;
       if (data?.email && String(data.email).toLowerCase() !== email.toLowerCase()) return;
-      const purse = data?.purse;
-      if (!purse || typeof purse !== 'object') return;
-      dripReady = true;
-      DRIPS.forEach((id) => {
-        const n = Math.floor(Number(purse[id]) || 0);
-        dripPurse[id] = n > 0 ? n : 0;
-      });
       // The server retains paid ownership receipts even if a reply was lost
       // or the guest moved to another device. Recovery never spends again.
       for (const receipt of Array.isArray(data.claims) ? data.claims : []) {
@@ -549,6 +538,8 @@ function formatXrp(id) {
 }
 function purchaseLabel(item) {
   if (!item?.id) return '';
+  if (TOKEN_TERMS[item.id]) { const token = TOKEN_TERMS[item.id]; return `${token.units.toLocaleString('en-AU')} ${token.code} · ${token.xrp} XRP`; }
+  if (isEveryday(item)) return item.id === 'admission-ticket' ? 'Entry ticket · Aura’s entrance booth' : 'Game purse · Aura’s entrance booth';
   if (folder !== 'convert' && rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return 'Owner copy · no purchase payment';
   if (tokenClaim(item.id)) {
     const cost = formatTokenCost(tokenClaim(item.id).cost);
@@ -582,16 +573,12 @@ function tokenClaim(id) {
   const spec = stock.token_claims?.[id];
   return spec && typeof spec === 'object' ? spec : null;
 }
-function tokenHave(id) {
-  if (id === 'everyday-penny') return Math.max(0, Math.floor(Number(window.PennyFever?.pennies?.()) || 0));
-  return walletCount(id);
-}
 function formatTokenCost(cost) {
   return Object.entries(cost || {}).map(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
     const names = TOKEN_NAMES[id];
     const name = Array.isArray(names) ? names[need === 1 ? 0 : 1] : (names || id);
-    return `${need} ${name}`;
+    return `${need.toLocaleString('en-AU')} ${name}`;
   }).join(' + ');
 }
 function tankLabel(id) {
@@ -603,132 +590,23 @@ function tankLabel(id) {
     'everyday-penny': 'Pennies',
   })[id] || id;
 }
-function tokenHaveForTank(id) {
-  if (DRIPS.has(id)) return dripPurse[id] || 0;
-  return tokenHave(id);
-}
 function tankMarkup(item) {
   const claim = tokenClaim(item.id);
   if (!claim?.cost) return '';
   const bits = Object.entries(claim.cost).map(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
-    const have = tokenHaveForTank(id);
-    return `<span class="aura-tradeshow-tank${have >= need ? ' is-ready' : ''}"><b>${have}</b>/${need} ${tankLabel(id)}</span>`;
+    return `<span class="aura-tradeshow-tank"><b data-ledger-have="${id}">—</b> / ${need.toLocaleString('en-AU')} ${tankLabel(id)}</span>`;
   });
-  return `<p class="aura-tradeshow-tanks">${bits.join('')}</p>`;
-}
-function tokenAfford(cost) {
-  return Object.entries(cost || {}).every(([id, n]) => {
-    const need = Math.max(0, Math.floor(Number(n) || 0));
-    if (DRIPS.has(id)) return eligibilityAccount === vipAccount() && !!eligibilityAccount && (dripPurse[id] || 0) >= need;
-    return tokenHave(id) >= need;
-  });
+  return `<section class="aura-token-recipe-progress" data-current-recipe="${item.id}"><strong>Token requirements</strong><p class="aura-tradeshow-tanks">${bits.join('')}</p><small>Xaman held / required · token trading opens when the purse connection is ready.</small></section>`;
 }
 function dripCost(cost) {
   const keys = Object.keys(cost || {});
   return keys.length > 0 && keys.every((id) => DRIPS.has(id));
 }
 function claimWithTokens(id) {
-  const spec = tokenClaim(id);
+  if (!tokenClaim(id)) return;
   const note = overlay?.querySelector('#auraTradeshowNote');
-  const say = (text) => { if (note) note.textContent = text; };
-  if (!spec) return;
-  if (!vip()) {
-    say('Join VIP to unlock this book with tokens.');
-    return;
-  }
-  const action = shopAction(id);
-  if (action.disabled) {
-    say(action.label);
-    return;
-  }
-  if (walletAtCap(id)) {
-    say('Already in your wallet.');
-    return;
-  }
-  if (remainingFor(id) <= 0) {
-    say('Aura’s pile is gone · trade later.');
-    return;
-  }
-  if (dripCost(spec.cost)) {
-    const account = vipAccount();
-    const receiptKey = claimReceiptKey(account, id);
-    if (tokenClaimsInFlight.has(receiptKey)) {
-      say('Claim in progress.');
-      return;
-    }
-    if (!tokenAfford(spec.cost)) {
-      say(`Need ${formatTokenCost(spec.cost)} banked from VIP play.`);
-      return;
-    }
-    const email = vipEmail();
-    const revision = eligibilityRevision;
-    tokenClaimsInFlight.add(receiptKey);
-    fetch(`${NFT_HOST}/api/penny-fever/drips/claim`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, item: id}),
-    }).then((res) => res.json().then((data) => ({ok: res.ok, data})))
-      .then(({ok, data}) => {
-        if (ok && data?.ok && (String(data.email || email).toLowerCase() !== account || (data.item && data.item !== id))) {
-          if (account === vipAccount()) say('The claim reply did not match this account and item. Nothing was added here.');
-          return;
-        }
-        if (ok && data?.ok && String(data.email || email).toLowerCase() === account) {
-          // Keep an already committed receipt for its owner even if they leave.
-          rememberClaimReceipt(account, id);
-        }
-        if (account !== vipAccount()) return;
-        if (!ok || !data?.ok) {
-          say(data?.error === 'need_tokens'
-            ? `Need ${formatTokenCost(spec.cost)} banked from VIP play.`
-            : 'Claim did not land. Play as VIP to bank tokens.');
-          if (revision === eligibilityRevision && data?.purse) {
-            DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
-          }
-          return;
-        }
-        if (revision === eligibilityRevision && data.purse) {
-          DRIPS.forEach((key) => { dripPurse[key] = Math.max(0, Math.floor(Number(data.purse[key]) || 0)); });
-        }
-        if (revision === eligibilityRevision) setSnapElig(data);
-        const delivered = deliverClaimReceipts();
-        const name = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === id)?.name || id;
-        say(delivered.has(id)
-          ? (data.charged === false ? `${name} is already claimed · added to Treasures.`
-            : `Claimed ${name} · ${formatTokenCost(spec.cost)}.`)
-          : 'Your claim is recorded. Reopen the tradeshow to add it to Treasures.');
-      })
-      .catch(() => { if (account === vipAccount()) say('Claim did not land.'); })
-      .finally(() => {
-        tokenClaimsInFlight.delete(receiptKey);
-        if (account === vipAccount()) {
-          const message = note?.textContent;
-          paint();
-          if (message) say(message);
-        }
-      });
-    paint();
-    return;
-  }
-  if (!tokenAfford(spec.cost)) {
-    say(`Need ${formatTokenCost(spec.cost)}.`);
-    return;
-  }
-  const account = vipAccount(), receiptKey = claimReceiptKey(account, id);
-  if (tokenClaimsInFlight.has(receiptKey)) return;
-  tokenClaimsInFlight.add(receiptKey);
-  Promise.resolve().then(() => window.PennyFeverVerified.claimKeepsake(id)).then(result => {
-    if (account !== vipAccount()) return;
-    if (result.inventory?.[id]?.qty > 0) window.PennyFever?.stampKeepsake?.(id, 'token-claim');
-    say(result.claim?.charged === false ? 'Already collected. No pennies spent again.' : `Collected ${modelItem(id).name || id} · ${formatTokenCost(spec.cost)}.`);
-  }).catch(error => {
-    if (account === vipAccount()) say(error?.message === 'insufficient_funds' ? `Need ${formatTokenCost(spec.cost)}.` : 'Trade could not be confirmed. Reconnect and try again; your receipt will recover.');
-  }).finally(() => {
-    tokenClaimsInFlight.delete(receiptKey);
-    if (account === vipAccount()) { const message = note?.textContent; paint(); if (message) say(message); }
-  });
-  paint();
+  if (note) note.textContent = 'Token trading opens when the purse connection is ready. No tokens or pennies were spent.';
 }
 function walletBuyCap(id) {
   const claim = tokenClaim(id);
@@ -853,6 +731,7 @@ function poseCard(card, index) {
 function formatStock(id) {
   const item = modelItem(id);
   const price = purchaseLabel(item);
+  if (isEveryday(item)) return TOKEN_TERMS[id] ? 'Ledger balance and sale stock · Wallet / Tokens' : 'Pennies, tickets and 5-packs · Aura’s entrance booth';
   if (!onShelf(id)) return price ? `Not on the shelf yet · ${price}` : 'Not on the shelf yet';
   if (tokenClaim(id)) {
     const n = remainingFor(id);
@@ -923,6 +802,7 @@ function nftViewSrc(id) {
   return buyQrSrc(id);
 }
 function nftViewAvailable(item, stallInfo) {
+  if (isEveryday(item)) return false;
   if (folder === 'convert' && tokenClaim(item.id)) return false;
   if (rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.ownerItems?.includes(item.id)) return true;
   return isLimited(item) || (!isFelix(item) && !tokenClaim(item.id) && !MONEY.has(item.kind) && !stallInfo.money);
@@ -1201,7 +1081,9 @@ function ensureOverlay() {
       if (folder === 'book:' + SNAP_BOOK) openNodes.add('felix');
       if (folder.startsWith('item:')) {
         const item = (window.PennyFeverInventoryModel?.definitions || []).find((it) => it.id === folder.slice(5));
-        if (item && isLimited(item)) {
+        if (isEveryday(item)) {
+          openNodes.add('book:penny-collector-book'); openNodes.add('everyday');
+        } else if (item && isLimited(item)) {
           openNodes.add('limited');
         } else if (item?.id === SNAP_BOOK || isFelix(item || {})) {
           openNodes.add('felix');
@@ -1569,20 +1451,24 @@ function openInspect(id, startMode = 'website') {
   const inspectPrice = panel.querySelector('#auraTradeshowInspectPrice');
   if (inspectPrice) inspectPrice.textContent = purchaseLabel(item);
   panel.querySelector('#auraTradeshowInspectSource').textContent = tokenClaim(item.id)
-    ? 'Convert · token counter'
+    ? 'Aura’s token counter'
     : (isFelix(item)
       ? 'Felix’s photo booth · vendor portraits'
       : (isLimited(item)
         ? 'Aura Limited · optional XRP shelf'
         : (stall && stall.id !== 'ticket-booth' ? `${stall.host} · ${stall.title}` : (item.source || 'Aura’s tradeshow'))));
   const status = panel.querySelector('#auraTradeshowInspectAvailability');
-  if (tokenClaim(item.id)) status.textContent = 'Convert here with tokens. The dollar till is not used.';
+  if (tokenClaim(item.id)) status.textContent = 'The token requirements are shown below. Trading opens when the purse connection is ready.';
+  else if (isEveryday(item)) status.textContent = TOKEN_TERMS[item.id] ? 'Fungible XRPL tokens · connected Xaman wallet' : 'Aura’s entrance booth · game purse';
   else if (isLimited(item)) status.textContent = 'Aura Limited · posted XRP price';
   else if (isFelix(item)) status.textContent = `${stallDoor(stallById('snap')).mintable ? 'Photo booth open' : 'Photo booth closed'} · unlock at Felix`;
   else if (info.money) status.textContent = 'Aura’s till';
   else status.textContent = act.reward && !act.disabled ? 'Collected reward · ready to mint'
     : `${info.mintable ? 'Stall open' : 'Stall closed'} · ${onShelf(item.id) ? (act.disabled ? act.label : 'Buy with XRP') : 'Not on the NFT shelf yet'}`;
   panel.querySelector('#auraTradeshowInspectNote').textContent = claimLine(item, info);
+  let requirements = panel.querySelector('[data-inspect-requirements]');
+  if (!requirements) { requirements = document.createElement('div'); requirements.dataset.inspectRequirements = ''; panel.querySelector('.aura-tradeshow-inspect-actions').before(requirements); }
+  requirements.innerHTML = tankMarkup(item);
   const inspectOwned = nftOwnedCount(item.id);
   panel.querySelector('#auraTradeshowInspectStock').textContent = isFelix(item)
     ? 'Supply is earned through Felix’s photo booth.'
@@ -1630,6 +1516,7 @@ function snapMint(item) {
   return {label: 'Not for sale · unlock at Felix’s photo booth', disabled: true, snap: true};
 }
 function actionFor(item, stallInfo) {
+  if (isEveryday(item)) return {label: TOKEN_TERMS[item.id] ? `Buy ${TOKEN_TERMS[item.id].code} · Xaman` : 'Go to Aura’s entrance booth', ready: true, currency: true};
   if (pendingCheckouts.has(item.id)) {
     const pending = pendingCheckouts.get(item.id) || {};
     return {
@@ -1663,20 +1550,7 @@ function actionFor(item, stallInfo) {
   if (!onShelf(item.id)) {
     return {label: 'Not on the shelf yet', disabled: true};
   }
-  if (claim && item.id === SNAP_BOOK && walletAtCap(item.id) && snapMint(item)) {
-    return snapMint(item);
-  }
-  if (claim) {
-    const cost = formatTokenCost(claim.cost);
-    if (!vip()) return {label: `Join VIP to unlock · ${cost}`, disabled: true, claim: true};
-    if (tokenClaimsInFlight.has(claimReceiptKey(vipAccount(), item.id))) return {label: 'Claim in progress.', disabled: true, claim: true};
-    if (walletAtCap(item.id)) return {label: `Already in your wallet · ${capLine(item.id)}`, disabled: true, claim: true};
-    if (dripCost(claim.cost) && !dripReady) return {label: 'Token bank unavailable · reopen to retry', disabled: true, claim: true};
-    if (!dripCost(claim.cost) && !window.PennyFeverVerified?.active) return {label: 'Purse connecting · reopen to retry', disabled: true, claim: true};
-    if (remainingFor(item.id) <= 0) return {label: 'Aura’s pile is gone · trade later', disabled: true, claim: true};
-    if (!tokenAfford(claim.cost)) return {label: `Need ${cost}`, disabled: true, claim: true};
-    return {label: `Claim · ${cost}`, disabled: false, ready: true, claim: true};
-  }
+  if (claim) return {label: 'Token purse connection in progress', disabled: true, claim: true};
   if (isLimited(item)) {
     const xrp = formatXrp(item.id);
     const buy = xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)';
@@ -1687,9 +1561,6 @@ function actionFor(item, stallInfo) {
   }
   if (MONEY.has(item.kind) || stallInfo.money) {
     return {label: 'Sold at the dollar till', disabled: true};
-  }
-  if (DRIPS.has(item.id)) {
-    return {label: 'Won in the games · cap later', disabled: true};
   }
   if (!stallInfo.mintable) {
     return {label: 'Coming when this stall opens', disabled: true};
@@ -1716,6 +1587,8 @@ function shopAction(id) {
   return actionFor(item, stallDoor(stall));
 }
 function claimLine(item, stallInfo) {
+  if (TOKEN_TERMS[item.id]) return `${TOKEN_TERMS[item.id].name} · fungible XRPL tokens. Buy through the connected Xaman wallet.`;
+  if (isEveryday(item)) return item.id === 'five-penny-stack' ? 'Five everyday pennies per pack. Pack or open in your purse; Aura’s entrance booth supplies pennies and tickets.' : 'Visit Aura’s entrance booth for this game-purse item.';
   if (shopAction(item.id).ownerMint) return 'Owner copy · mint to RaX only. Network fees apply.';
   if (isFelix(item)) {
     return 'Unlock a session at Felix’s Instapic Photo Booth, run the sitting, then the portrait NFT is yours. Not for sale here.';
@@ -1732,6 +1605,7 @@ function claimLine(item, stallInfo) {
   return `Play for it at ${host} · ${title} · ${act.label}`;
 }
 function playTap(item, stallInfo, stall) {
+  if (isEveryday(item)) return null;
   if (isLimited(item)) return null;
   if (tokenClaim(item.id)) return null;
   if (isFelix(item)) {
@@ -1878,7 +1752,7 @@ function canBuyAnother(id) {
 function canBatchBuy(id) {
   const act = shopAction(id);
   return vip() && rewardMint.batchLimit === 8 && !tradeshowBlocked() && !!act.ready && !act.disabled && !act.claim && !act.reward
-    && !act.ownerMint && !isFelix(modelItem(id)) && !MONEY.has(modelItem(id).kind)
+    && !act.ownerMint && !isEveryday(modelItem(id)) && !isFelix(modelItem(id)) && !MONEY.has(modelItem(id).kind)
     && remainingFor(id) >= 2 && walletBuyCap(id) - nftOwnedCount(id) >= 2;
 }
 function applyTillState(till, data, ctx) {
@@ -2118,6 +1992,12 @@ function cancelXrpPurchase() {
   });
 }
 function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = false, recovery = null} = {}) {
+  if (isEveryday(modelItem(id))) {
+    closeInspect();
+    if (TOKEN_TERMS[id]) window.dispatchEvent(new CustomEvent('pennyfever:token-shop', {detail: {item: id}}));
+    else { closeTradeshow({stayInAlley: true}); const entrance = document.getElementById('pfWorldLeave'); if (entrance) entrance.click(); else window.PennyFeverWorld?.walkTo?.('aura'); }
+    return;
+  }
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
   const batchReward = collectionOwnsTill(id, vipAccount());
   ownerMint = recovery ? recovery.kind === 'owner' : !receiveOnly && !batchReward && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint);
@@ -2251,7 +2131,7 @@ function isFelix(item) {
   return item.collection === 'penny-fever-vendors';
 }
 function isEveryday(item) {
-  return !!(item && (item.id === 'everyday-penny' || item.id === 'five-penny-stack' || DRIPS.has(item.id)));
+  return !!item && EVERYDAY_IDS.includes(item.id);
 }
 function nftSampleNote(item) {
   if (!item?.id || isEveryday(item) || MONEY.has(item.kind)) return '';
@@ -2296,6 +2176,7 @@ function folderUp() {
       if (bid && LIMITED.has(bid)) return {id: 'book:' + bid, label: bookTitle(bid)};
       return {id: 'limited', label: 'Limited'};
     }
+    if (isEveryday(item)) return {id: 'everyday', label: 'Everyday items'};
     if (isFelix(item) || item.id === SNAP_BOOK) return {id: 'felix', label: 'Felix'};
     if (item.book && item.book !== 'penny-collector-book') return {id: 'book:' + item.book, label: bookTitle(item.book)};
     return {id: 'book:penny-collector-book', label: 'Collector book'};
@@ -2337,8 +2218,8 @@ function albumTitle(model, id) {
 function itemMatches(item, stall, info) {
   if (query && !`${item.name} ${stall.host} ${stall.title} ${item.album || ''} ${item.book || ''} ${item.collection || ''}`.toLowerCase().includes(query)) return false;
   if (folder === 'minted') return nftOwnedCount(item.id) > 0;
-  if (haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
-  if (haveFilter === 'locked' && walletCount(item.id) > 0) return false;
+  if (!isEveryday(item) && haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
+  if (!isEveryday(item) && haveFilter === 'locked' && walletCount(item.id) > 0) return false;
   if (folder === 'all') return true;
   if (folder === 'open') {
     return isOpenPlayStall(stall) && (stall.prizes || []).includes(item.id) && !MONEY.has(item.kind) && !isLimited(item) && !isFelix(item);
@@ -2422,7 +2303,7 @@ function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems)
     bookWrap.append(treeRow('everyday', 'Everyday items'));
     if (openNodes.has('everyday')) {
       const itemWrap = treeKids();
-      for (const item of (itemsByBook.get('penny-collector-book') || []).filter(isEveryday)) {
+      for (const item of EVERYDAY_IDS.map(modelItem).filter(item => item.id)) {
         itemWrap.append(treeRow('item:' + item.id, item.name, {leaf: true}));
       }
       bookWrap.append(itemWrap);
@@ -2529,7 +2410,7 @@ function appendCards(grid, items) {
     const stall = stallForPrize(item);
     const info = stallDoor(stall);
     const card = document.createElement('article');
-    card.className = 'aura-tradeshow-card' + (walletCount(item.id) > 0 ? '' : ' is-locked');
+    card.className = 'aura-tradeshow-card' + (isEveryday(item) || walletCount(item.id) > 0 ? '' : ' is-locked');
     card.dataset.asset = item.asset;
     card.dataset.item = item.id;
     card.dataset.name = item.name || item.id;
@@ -2542,7 +2423,7 @@ function appendCards(grid, items) {
     const nestedBook = (window.PennyFeverInventoryModel?.books || []).some((b) => b.id === item.id);
     const showQr = nftViewAvailable(item, info);
     const chipClass = felix ? 'is-felix' : (limited ? 'is-limited' : (claim ? 'is-claim' : (MONEY.has(item.kind) || info.money ? 'is-money' : (info.mintable ? 'is-open' : 'is-coming'))));
-    const chipText = felix ? 'Photo booth' : (limited ? 'Limited' : (claim ? 'Token claim' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'))));
+    const chipText = TOKEN_TERMS[item.id] ? 'XRPL token' : isEveryday(item) ? 'Game purse' : felix ? 'Photo booth' : (limited ? 'Limited' : (claim ? 'Token claim' : (MONEY.has(item.kind) || info.money ? 'Dollars' : (info.mintable ? 'Open' : 'Coming'))));
     const act = actionFor(item, info);
     const play = playTap(item, info, stall);
     const canSpin = !!item.turnaround;
@@ -2559,7 +2440,7 @@ function appendCards(grid, items) {
       </div>` : ''}
       <div class="aura-tradeshow-views">
         <button type="button" data-view="website" aria-pressed="true">Website</button>
-        <button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>
+        ${isEveryday(item) ? '' : `<button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>`}
       </div>
       <span class="chip ${chipClass}">${chipText}</span>
       ${owned ? '<span class="chip is-minted">Minted</span>' : ''}
@@ -2611,13 +2492,13 @@ function paint() {
     : folder === 'minted'
       ? 'Your received NFTs. Items still waiting for wallet acceptance appear after receipt is confirmed.'
     : folder === 'convert'
-      ? 'Convert is Aura’s token counter. Spend stars, moons, roses, crowns, or pennies from play. A full tank becomes the collector book, Felix photo book, or Aura keepsake. Limited stays XRP.'
+      ? 'Aura’s token counter lists the current Star, Moon, Rose and Crown requirements. Token trading opens when the purse connection is ready. Everyday pennies remain game currency.'
     : folder === 'open' || stallFolderKind(folder) === 'open'
       ? 'Open tents · six chapter bonuses each. Felix portraits are under Felix.'
     : folder === 'closed' || stallFolderKind(folder) === 'closed'
       ? 'Closed tents · six chapter bonuses each. Look now. Play when the stall opens.'
     : folder === 'everyday'
-      ? 'Everyday pennies, 5-packs, stars, moons, roses and crowns. Convert uses these tanks.'
+      ? 'Pennies, tickets and 5-packs go to Aura’s entrance booth. PENNYS, PENNYM, PENNYR and PENNYC go to the ledger token shop.'
     : folder === 'book:penny-collector-book'
       ? 'The collector book, everyday items, then journals, albums and cases. Expand a book in the tree to see its pieces.'
     : folderIsLimited()
@@ -2712,15 +2593,15 @@ function paint() {
       }]
       : folder === 'convert'
       ? [{
-        title: 'Aura converts tokens',
-        line: 'Stars, moons, roses, crowns, or pennies · not XRP',
+        title: 'Aura’s token counter',
+        line: 'PENNYS · PENNYM · PENNYR · PENNYC',
         items: Object.keys(stock.token_claims || {}).map((id) => modelItem(id)).filter((item) => item.id),
         stall: stallById('ticket-booth'),
       }]
       : folder === 'everyday'
       ? [{
         title: 'Everyday items',
-        line: 'Pennies, 5-packs and drip tokens',
+        line: 'Game pennies, tickets and 5-packs · ledger Stars, Moons, Roses and Crowns',
         items: items.filter(isEveryday),
         stall: stallById('ticket-booth'),
       }]
@@ -2740,7 +2621,7 @@ function paint() {
         },
         {
           title: 'Everyday items',
-          line: 'Pennies, 5-packs and drip tokens',
+          line: 'Game pennies, tickets and 5-packs · ledger Stars, Moons, Roses and Crowns',
           items: items.filter(isEveryday),
           stall: stallById('ticket-booth'),
         },
