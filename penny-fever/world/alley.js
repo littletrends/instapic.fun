@@ -1066,14 +1066,14 @@ function vipSignedIn() {
   try { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); } catch { return false; }
 }
 /** Ticket booth door into Aura's VIP NFT Tradeshow: closed park sign, VIP join prompt, or the Tradeshow. */
-function enterTradeshowDoor() {
+function enterTradeshowDoor(options = {}) {
   if (tradeshowBlocked()) return {ok: false, message: tradeshowSign()};
   if (!vipSignedIn()) {
     openAuraVipJoinDialog();
     return {ok: false, joining: true};
   }
   closeStallCard();
-  return {ok: openTradeshow() !== false};
+  return {ok: openTradeshow({item: String(options?.item || '')}) !== false};
 }
 function openAuraVipJoinDialog() {
   let dialog = document.getElementById('pfAuraVipJoinDialog');

@@ -341,3 +341,10 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 #collectionPages .is-book.is-cover-first #bookPane .book-cover-btn img{height:auto;aspect-ratio:1;width:100%;object-fit:contain}
 #collectionPages .is-book.is-cover-first #bookPane .pocket-progress{width:100%}
 #collectionPages .is-book.is-cover-first .pocket-blurb{display:block}
+/* Card actions: Play (where to win it) and Send to mint (found + on the NFT shelf). */
+.treasure-book .album-card{display:flex;flex-direction:column;gap:4px;min-width:0}
+.treasure-book .card-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;width:100%;margin-top:auto}
+.treasure-book .card-actions button{flex:1 1 auto;min-height:30px;padding:3px 8px;border-radius:999px;font:700 10px/1.1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.treasure-book .card-actions button:disabled{opacity:.55;cursor:default}
+.treasure-book .card-actions .card-mint{background:#304537;color:#fff0cd;border-color:#b49450}
+.treasure-book .card-actions .card-mint:hover{background:#3d5a46}

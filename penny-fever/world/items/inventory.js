@@ -269,16 +269,7 @@ function mount() {
     if (e.key !== 'Escape' || !searchBox.value) return;
     e.preventDefault(); searchBox.value = ''; render(); showSearch(false); searchToggle.focus();
   });
-  dialog.querySelector('[data-mint-tradeshow]').addEventListener('click', () => {
-    const world = globalThis.PennyFeverWorld;
-    const notice = $('collectionLockNotice');
-    const say = message => { if (notice) { notice.textContent = message; notice.hidden = false; } };
-    if (!world?.openTradeshowDoor) { say('Mint at Aura’s VIP NFT Tradeshow: walk the alley to Aura’s ticket booth.'); return; }
-    const blocked = world.tradeshowDoorBlocked?.();
-    if (blocked) { say(blocked); return; }
-    dialog.close();
-    world.openTradeshowDoor();
-  });
+  dialog.querySelector('[data-mint-tradeshow]').addEventListener('click', () => goMint());
   dialog.querySelector('.pocket-tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
     tab = b.dataset.tab;
@@ -293,6 +284,7 @@ function mount() {
     render();
   });
   $('treasureItems').addEventListener('click', e => {
+    if (cardAction(e)) return;
     const b = e.target.closest('[data-item]'); if (b) select(b.dataset.item);
   });
   $('shelfGrid').addEventListener('click', e => {
@@ -304,6 +296,7 @@ function mount() {
   });
   bindDragTurn($('foundGrid'), (card, dir) => turnFoundCard(card, dir), '.found-card');
   $('foundGrid').addEventListener('click', e => {
+    if (cardAction(e)) return;
     const card = e.target.closest('[data-item]');
     if (card?.dataset.skipClick === '1') {
       delete card.dataset.skipClick;
@@ -581,6 +574,67 @@ function render() {
   kickPics();
 }
 
+// Card actions: where to win a keepsake, and (once found) send it to Aura's VIP NFT Tradeshow to mint.
+const MONEY_KINDS = new Set(['currency', 'scrip', 'ticket', 'pass']);
+function sayNotice(message) {
+  const notice = $('collectionLockNotice');
+  if (notice) { notice.textContent = message; notice.hidden = false; }
+}
+function goMint(item = '') {
+  const world = globalThis.PennyFeverWorld;
+  if (!world?.openTradeshowDoor) { sayNotice('Mint at Aura’s VIP NFT Tradeshow: walk the alley to Aura’s ticket booth.'); return; }
+  const blocked = world.tradeshowDoorBlocked?.();
+  if (blocked) { sayNotice(blocked); return; }
+  dialog.close();
+  world.openTradeshowDoor({item});
+}
+function goPlay(stallId) {
+  const stall = stallById(stallId);
+  if (!stall) return;
+  dialog.addEventListener('close', () => {
+    const world = globalThis.PennyFeverWorld;
+    // Past Aura's door: stand at the stall. Not yet admitted: the alley opens at Aura's door as usual.
+    if (globalThis.PennyFever?.ticketPassed?.() && world?.stepOut) world.stepOut(stall.id);
+    if (location.hash.replace(/^#/, '') !== 'alley') location.hash = 'alley';
+  }, {once: true});
+  dialog.close();
+}
+function cardActions(item) {
+  if (studio || !item || item.currencyCode || MONEY_KINDS.has(item.kind)) return null;
+  const stall = stallForItem(item.id);
+  const play = stall && !stall.extra ? stall : null;
+  const mint = item.owned && !!globalThis.AuraTradeshow?.onShelf?.(item.id);
+  if (!play && !mint) return null;
+  const row = document.createElement('div');
+  row.className = 'card-actions';
+  if (play) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.cardPlay = play.id;
+    const shut = isParkShut(play.id);
+    b.disabled = shut;
+    b.textContent = shut ? 'Stall closed' : 'Play';
+    b.setAttribute('aria-label', (shut ? play.host + '’s stall is closed tonight' : 'Play for ' + item.name + ' at ' + play.host + '’s ' + play.title));
+    row.append(b);
+  }
+  if (mint) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.cardMint = item.id; b.className = 'card-mint';
+    b.textContent = 'Send to mint';
+    b.setAttribute('aria-label', 'Send ' + item.name + ' to mint at Aura’s VIP NFT Tradeshow');
+    row.append(b);
+  }
+  return row;
+}
+function cardAction(event) {
+  const play = event.target.closest('[data-card-play]');
+  const mint = event.target.closest('[data-card-mint]');
+  if (!play && !mint) return false;
+  event.preventDefault(); event.stopPropagation();
+  if (play && !play.disabled) goPlay(play.dataset.cardPlay);
+  if (mint) goMint(mint.dataset.cardMint);
+  return true;
+}
+
 const TURN_VIEWS = ['front', 'left', 'back', 'right'];
 function itemFace(item, view) {
   const name = TURN_VIEWS[((view % TURN_VIEWS.length) + TURN_VIEWS.length) % TURN_VIEWS.length];
@@ -646,6 +700,8 @@ function paintFound(all) {
     } else {
       card.append(stage, name, mark);
     }
+    const actions = cardActions(item);
+    if (actions) card.append(actions);
     root.append(card);
   }
   text('foundIntro', shown.length
@@ -982,7 +1038,12 @@ function paintSlots(shown, opts = {}) {
         : 'Found')
       : 'To collect';
     button.append(well, name, mark);
-    root.append(button);
+    const actions = asAlbum ? cardActions(item) : null;
+    if (!actions) { root.append(button); return; }
+    const wrap = document.createElement('div');
+    wrap.className = 'album-card';
+    wrap.append(button, actions);
+    root.append(wrap);
   }
 }
 

@@ -2753,7 +2753,7 @@ function onOverlayKey(e) {
   }
 }
 
-export function openTradeshow({tokenCounter = false} = {}) {
+export function openTradeshow({tokenCounter = false, item = ''} = {}) {
   if (tradeshowBlocked()) return false;
   if (!vip()) {
     if ((location.hash || '').replace(/^#/, '') === HASH) location.hash = 'alley';
@@ -2776,6 +2776,8 @@ export function openTradeshow({tokenCounter = false} = {}) {
     checkVipSession();
     deliverClaimReceipts();
     paint();
+    // Treasures "Send to mint" opens straight onto that keepsake's shelf card.
+    if (item && onShelf(item) && !overlay.hidden) openInspect(item);
   });
   paint();
   overlay.querySelector('#auraTradeshowClose').focus();
@@ -2819,7 +2821,7 @@ loadPlates();
 window.addEventListener('storage', (event) => {
   if (event.key === null || event.key === 'instapic_guest_identity') checkVipSession();
 });
-window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus};
+window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus, onShelf: id => onShelf(String(id || ''))};
 
 try {
   const q = new URLSearchParams(location.search);
