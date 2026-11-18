@@ -1,4 +1,4 @@
-import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=everyday-currencies-1';
+import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=purse-layout-1';
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
@@ -593,11 +593,11 @@ function tankLabel(id) {
 function tankMarkup(item) {
   const claim = tokenClaim(item.id);
   if (!claim?.cost) return '';
-  const bits = Object.entries(claim.cost).map(([id, n]) => {
+  const rows = Object.entries(claim.cost).map(([id, n]) => {
     const need = Math.max(0, Math.floor(Number(n) || 0));
-    return `<span class="aura-tradeshow-tank"><b data-ledger-have="${id}">—</b> / ${need.toLocaleString('en-AU')} ${tankLabel(id)}</span>`;
+    return `<div class="aura-token-requirement"><strong>${tankLabel(id)}</strong><dl><div><dt>Required</dt><dd>${need.toLocaleString('en-AU')}</dd></div><div><dt>In Xaman</dt><dd data-ledger-have="${id}">—</dd></div><div><dt>Missing</dt><dd data-ledger-missing="${id}" data-required="${need}">—</dd></div></dl></div>`;
   });
-  return `<section class="aura-token-recipe-progress" data-current-recipe="${item.id}"><strong>Token requirements</strong><p class="aura-tradeshow-tanks">${bits.join('')}</p><small>Xaman held / required · token trading opens when the purse connection is ready.</small></section>`;
+  return `<section class="aura-token-recipe-progress" data-current-recipe="${item.id}"><strong>Tokens needed</strong>${rows.join('')}</section>`;
 }
 function dripCost(cost) {
   const keys = Object.keys(cost || {});
@@ -1550,7 +1550,7 @@ function actionFor(item, stallInfo) {
   if (!onShelf(item.id)) {
     return {label: 'Not on the shelf yet', disabled: true};
   }
-  if (claim) return {label: 'Token purse connection in progress', disabled: true, claim: true};
+  if (claim) return {label: 'Trading not open yet', disabled: true, claim: true};
   if (isLimited(item)) {
     const xrp = formatXrp(item.id);
     const buy = xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)';
@@ -2404,6 +2404,7 @@ async function showOwnedEditions(button) {
 }
 
 function appendCards(grid, items) {
+  if (items.some(item => tokenClaim(item.id))) grid.classList.add('has-token-rewards');
   for (const item of items) {
     // Books mix vendors. Resolve each card from its own chapter/portrait ID,
     // just as filters and checkout do, rather than inheriting the book's host.
@@ -2445,12 +2446,12 @@ function appendCards(grid, items) {
       <span class="chip ${chipClass}">${chipText}</span>
       ${owned ? '<span class="chip is-minted">Minted</span>' : ''}
       <h3>${item.name}</h3>
-      ${sample ? `<p class="sample">${sample}</p>` : ''}
-      <p class="price">${purchaseLabel(item)}</p>
+      ${sample && !claim ? `<p class="sample">${sample}</p>` : ''}
+      ${claim ? '' : `<p class="price">${purchaseLabel(item)}</p>`}
       ${owned ? `<button type="button" class="owned aura-owned-editions" data-owned-editions="${item.id}" aria-expanded="false">You own ${owned.toLocaleString('en-AU')} · view editions</button><div class="aura-owned-edition-list" data-owned-list="${item.id}" hidden></div>` : ''}
-      ${felix ? '' : `<p class="stock">${formatStock(item.id)}</p>`}
+      ${felix ? '' : `<p class="stock">${claim ? remainingFor(item.id).toLocaleString('en-AU') + ' editions remaining' : formatStock(item.id)}</p>`}
       ${tankMarkup(item)}
-      <p class="claim">${claimLine(item, info)}</p>
+      ${claim ? (act.ownerMint ? '<p class="aura-token-trade-note">Token trades are not open yet.</p>' : '') : `<p class="claim">${claimLine(item, info)}</p>`}
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
       ${nestedBook && item.id !== 'penny-collector-book' && folder !== 'book:' + item.id ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">View collection</button>` : ''}
       ${shopBtn}

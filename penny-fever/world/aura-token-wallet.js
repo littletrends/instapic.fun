@@ -1,4 +1,4 @@
-import {paintEconomy, paintLedgerRequirements} from './token-economy.js?v=everyday-currencies-1';
+import {paintEconomy, paintLedgerRequirements, paintTradeshowPurse} from './token-economy.js?v=purse-layout-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -34,7 +34,12 @@ function attach(overlay) {
   overlay.dataset.tokenWalletMounted = 'true';
   const entry = document.createElement('button');
   entry.type = 'button'; entry.textContent = 'Wallet / Tokens'; entry.dataset.tokenWalletOpen = '';
-  overlay.querySelector('.aura-tradeshow-quick')?.append(entry);
+  const purseBar = document.createElement('div'); purseBar.className = 'aura-tradeshow-purse-bar';
+  purseBar.setAttribute('role', 'region'); purseBar.setAttribute('aria-label', 'Your purse and wallet');
+  const purseSummary = document.createElement('div'); purseSummary.className = 'aura-tradeshow-purse-summary';
+  purseBar.append(entry, purseSummary);
+  const filters = overlay.querySelector('.aura-tradeshow-tools');
+  if (filters) filters.after(purseBar); else overlay.prepend(purseBar);
   const panel = document.createElement('div');
   panel.className = 'aura-xrp-till aura-token-panel'; panel.hidden = true;
   panel.dataset.tokenWalletPanel = '';
@@ -48,7 +53,8 @@ function attach(overlay) {
     <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button></div>
     <div class="aura-token-pending" data-token-pending></div>
     <div class="aura-token-economy" data-token-economy></div>
-    <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select full pack · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
+    <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select starter bundles · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
+    <p class="aura-token-wallet-note">The four starter bundles cost 42 XRP. The three special reward recipes together require 200 XRP worth of tokens at Aura’s rates. Buying tokens does not claim a reward.</p>
     <div class="aura-token-grid" data-token-grid></div>
     <p class="aura-token-wallet-note">These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
     <button type="button" data-token-close>← Back to Tradeshow</button>
@@ -65,7 +71,9 @@ function attach(overlay) {
   let overviewData = null, overviewOwner = null, overviewController = null, overviewAttempted = false;
   const sameOwner = other => !!other && other.email === identity()?.email && other.token === identity()?.token;
   function addShortcuts() {
-    paintLedgerRequirements(overlay, sameOwner(overviewOwner) ? overviewData : null);
+    const data = sameOwner(overviewOwner) ? overviewData : null;
+    paintLedgerRequirements(overlay, data);
+    paintTradeshowPurse(purseSummary, data, !!identity());
   }
   async function refreshOverview() {
     const account = identity();
@@ -91,7 +99,7 @@ function attach(overlay) {
   });
   new MutationObserver(addShortcuts).observe(overlay, {childList: true, subtree: true});
   addShortcuts();
-  new MutationObserver(addShortcuts).observe(overlay, {childList: true, subtree: true});
+  window.addEventListener('pennyfever:statechange', addShortcuts);
   panel.addEventListener('click', event => {
     if (!event.target.closest('[data-token-entrance]')) return;
     const entrance = document.getElementById('pfWorldLeave');
@@ -236,7 +244,7 @@ function attach(overlay) {
         const quantity = document.createElement('input'); quantity.type = 'text'; quantity.inputMode = 'numeric'; quantity.pattern = '[0-9]*';
         quantity.value = choice.quantity; quantity.maxLength = 15; quantity.dataset.tokenQuantity = token.item;
         quantity.setAttribute('aria-label', `${token.name} token quantity`); quantityLabel.append(quantity);
-        const full = document.createElement('button'); full.type = 'button'; full.textContent = 'Full bundle'; full.dataset.tokenFull = token.item;
+        const full = document.createElement('button'); full.type = 'button'; full.textContent = 'Standard bundle'; full.dataset.tokenFull = token.item;
         const cost = document.createElement('p'); cost.className = 'aura-token-cost';
         const update = () => {
           choice.quantity = quantity.value.trim(); choice.checked = include.checked;

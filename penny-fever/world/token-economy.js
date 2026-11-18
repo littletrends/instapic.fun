@@ -50,11 +50,29 @@ export const TOKEN_TERMS = Object.freeze({
 });
 export const EVERYDAY_IDS = Object.freeze(['everyday-penny', 'five-penny-stack', 'ticket-roll', 'admission-ticket', ...Object.keys(TOKEN_TERMS)]);
 export function paintLedgerRequirements(root, data) {
-  for (const node of root.querySelectorAll('[data-ledger-have]')) {
-    const token = (data?.tokens || []).find(row => row.item === node.dataset.ledgerHave);
-    const value = data?.wallet && token && Number.isFinite(Number(token.balance)) ? count(token.balance) : '—';
+  for (const node of root.querySelectorAll('[data-ledger-have],[data-ledger-missing]')) {
+    const item = node.dataset.ledgerHave || node.dataset.ledgerMissing;
+    const token = (data?.tokens || []).find(row => row.item === item);
+    const have = data?.wallet && token && Number.isFinite(Number(token.balance)) ? Number(token.balance) : null;
+    const amount = have === null ? null : node.hasAttribute('data-ledger-missing') ? Math.max(0, Number(node.dataset.required) - have) : have;
+    const value = amount === null ? '—' : count(amount);
     if (node.textContent !== value) node.textContent = value;
   }
+}
+export function paintTradeshowPurse(root, data, signedIn) {
+  const api = window.PennyFever;
+  const values = [['Pennies', api?.pennies?.()], ['Tickets', api?.tickets?.()], ['5-packs', api?.pennyPacks?.()]];
+  const game = signedIn ? 'Game purse · ' + values.map(([name, value]) => `${name}: ${Number.isSafeInteger(value) && value >= 0 ? count(value) : '—'}`).join(' · ') : 'Sign into VIP to view your purse';
+  const ledger = signedIn && data?.wallet ? 'Xaman · ' + Object.keys(TOKEN_TERMS).map(item => {
+    const token = (data.tokens || []).find(row => row.item === item);
+    return `${TOKEN_TERMS[item].name}: ${token ? count(token.balance) : '—'}`;
+  }).join(' · ') : 'Connect Xaman to view ledger tokens';
+  const signature = JSON.stringify([game, ledger]);
+  if (root._purseSignature === signature) return;
+  root._purseSignature = signature; root.replaceChildren();
+  const gameLine = element('span', game); gameLine.dataset.tradeshowGamePurse = '';
+  const ledgerLine = element('span', ledger); ledgerLine.dataset.tradeshowLedgerPurse = '';
+  root.append(gameLine, ledgerLine);
 }
 
 // Keep already-cached wallet modules loadable during the website cache rollover.
