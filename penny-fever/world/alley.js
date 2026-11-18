@@ -1025,6 +1025,7 @@ const api = {
   enterStall: enterStallById,
   step,
   stepOut,
+  playIdFor,
   // Same VIP gate as the ticket booth's "VIP NFT Tradeshow" button (used by the Treasures book Mint button).
   tradeshowDoorBlocked: () => (tradeshowBlocked() ? tradeshowSign() : ""),
   openTradeshowDoor: enterTradeshowDoor,
@@ -1071,11 +1072,28 @@ function vipSignedIn() {
 function enterTradeshowDoor(options = {}) {
   if (tradeshowBlocked()) return {ok: false, message: tradeshowSign()};
   if (!vipSignedIn()) {
+    // Treasures "Send to mint": after VIP sign-in, the Tradeshow opens on this keepsake (aura-tradeshow.js).
+    try {
+      const item = String(options?.item || '');
+      if (item) localStorage.setItem('pf-pending-mint-item', JSON.stringify({item, at: Date.now()}));
+      else localStorage.removeItem('pf-pending-mint-item');
+    } catch { /* private mode */ }
     openAuraVipJoinDialog();
     return {ok: false, joining: true};
   }
   closeStallCard();
   return {ok: openTradeshow({item: String(options?.item || '')}) !== false};
+}
+// Treasures "Send to mint" that needed VIP sign-in first: hand the keepsake back once signed in (20 min).
+function takePendingMint() {
+  if (!vipSignedIn()) return '';
+  try {
+    const raw = localStorage.getItem('pf-pending-mint-item');
+    if (!raw) return '';
+    localStorage.removeItem('pf-pending-mint-item');
+    const pending = JSON.parse(raw);
+    return pending?.item && Date.now() - Number(pending.at) < 20 * 60 * 1000 ? String(pending.item) : '';
+  } catch { return ''; }
 }
 function openAuraVipJoinDialog() {
   let dialog = document.getElementById('pfAuraVipJoinDialog');
@@ -1091,9 +1109,12 @@ function openAuraVipJoinDialog() {
         <button type="button" data-pf-vip-return>Return to alley</button>
         <button type="button" data-pf-vip-join>Join VIP</button>
       </div>`;
-    dialog.querySelector('[data-pf-vip-return]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-pf-vip-return]')?.addEventListener('click', () => {
+      try { localStorage.removeItem('pf-pending-mint-item'); } catch { /* private mode */ }
+      dialog.close();
+    });
     dialog.querySelector('[data-pf-vip-join]')?.addEventListener('click', () => {
-      const path = '/penny-fever/index.html?style=paper&rail=paper&v=mint-win-1#aura-tradeshow';
+      const path = '/penny-fever/index.html?style=paper&rail=paper&tradeshow=1&v=finish-1#aura-tradeshow';
       location.assign('/save.html?return=' + encodeURIComponent(path));
     });
     dialog.addEventListener('click', (event) => {
@@ -3209,7 +3230,7 @@ function startNow() {
     requestAnimationFrame(() => openBoothCard(auraDoorCard()));
   }
   if ((location.hash || "").replace(/^#/, "") === "aura-tradeshow" && !tradeshowBlocked()) {
-    requestAnimationFrame(() => openTradeshow());
+    requestAnimationFrame(() => openTradeshow({item: takePendingMint()}));
   }
   window.dispatchEvent(new Event("pf-world-ready"));
   return true;

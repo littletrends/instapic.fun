@@ -273,7 +273,7 @@ function mount() {
   });
   dialog.querySelector('[data-mint-tradeshow]').addEventListener('click', () => goMint());
   for (const id of ['treasureWhere', 'stallWhere']) {
-    $(id)?.addEventListener('click', e => { const b = e.currentTarget; if (!b.disabled && b.dataset.whereStall) goPlay(b.dataset.whereStall); });
+    $(id)?.addEventListener('click', e => { const b = e.currentTarget; if (!b.disabled && b.dataset.whereStall) goPlay(b.dataset.whereStall, Number(b.dataset.whereChapter) || 0); });
   }
   dialog.querySelector('.pocket-tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
@@ -585,6 +585,23 @@ function sayNotice(message) {
   const notice = $('collectionLockNotice');
   if (notice) { notice.textContent = message; notice.hidden = false; }
 }
+// Send to mint needs the Tradeshow shelf list (aura-stock.json, loaded by aura-tradeshow.js). If the book opens
+// before it lands, check once a second for a few seconds and repaint when the shelf answer changes.
+let shelfTimer = 0;
+function shelfSig() {
+  const show = globalThis.AuraTradeshow;
+  return show?.onShelf ? entries().filter(i => i.owned && show.onShelf(i.id)).map(i => i.id).join('|') : '';
+}
+function watchShelf() {
+  clearInterval(shelfTimer);
+  if (studio) return;
+  let seen = shelfSig(), ticks = 0;
+  shelfTimer = setInterval(() => {
+    if (!dialog.open || ++ticks > 12) { clearInterval(shelfTimer); return; }
+    const now = shelfSig();
+    if (now !== seen) { seen = now; render(); }
+  }, 1000);
+}
 function goMint(item = '') {
   const world = globalThis.PennyFeverWorld;
   if (!world?.openTradeshowDoor) { sayNotice('Mint at Aura’s VIP NFT Tradeshow: walk the alley to Aura’s ticket booth.'); return; }
@@ -593,9 +610,15 @@ function goMint(item = '') {
   dialog.close();
   world.openTradeshowDoor({item});
 }
-function goPlay(stallId) {
+function goPlay(stallId, chapter = 0) {
   const stall = stallById(stallId);
   if (!stall) return;
+  // The stall's game opens on this chapter once the player walks in through the normal door (paper-game-booths.js).
+  try {
+    const cabinet = globalThis.PennyFeverWorld?.playIdFor?.(stall.id) || stall.id;
+    if (chapter > 0) sessionStorage.setItem('pf-pending-chapter', JSON.stringify({cabinet, level: chapter - 1, at: Date.now()}));
+    else sessionStorage.removeItem('pf-pending-chapter');
+  } catch { /* private mode */ }
   dialog.addEventListener('close', () => {
     const world = globalThis.PennyFeverWorld;
     // Past Aura's door: stand at the stall. Not yet admitted: the alley opens at Aura's door as usual.
@@ -617,6 +640,7 @@ function paintWhere(button, where, label) {
   button.hidden = studio || !where;
   if (!where) return;
   button.dataset.whereStall = where.stall.id;
+  button.dataset.whereChapter = String(where.chapter || 0);
   button.disabled = where.shut;
   button.textContent = (label || where.text) + (where.shut ? ' · stall closed' : ' ›');
   button.setAttribute('aria-label', where.shut ? (label || where.text) + ', stall closed tonight' : 'Go to ' + (label || where.text) + ' on the alley');
@@ -631,7 +655,7 @@ function cardActions(item) {
   row.className = 'card-actions';
   if (play) {
     const b = document.createElement('button');
-    b.type = 'button'; b.dataset.cardPlay = play.id;
+    b.type = 'button'; b.dataset.cardPlay = play.id; b.dataset.cardChapter = String(play.prizes.indexOf(item.id) + 1);
     const shut = isParkShut(play.id);
     b.disabled = shut;
     b.textContent = shut ? 'Stall closed' : 'Play';
@@ -652,7 +676,7 @@ function cardAction(event) {
   const mint = event.target.closest('[data-card-mint]');
   if (!play && !mint) return false;
   event.preventDefault(); event.stopPropagation();
-  if (play && !play.disabled) goPlay(play.dataset.cardPlay);
+  if (play && !play.disabled) goPlay(play.dataset.cardPlay, Number(play.dataset.cardChapter) || 0);
   if (mint) goMint(mint.dataset.cardMint);
   return true;
 }
@@ -1287,6 +1311,7 @@ function open(id) {
       dialog.setAttribute('open', '');
       dialog.classList.add('is-open');
     }
+    watchShelf();
     $('treasureSave').hidden = globalThis.PennyFeverSavePersisted !== false;
     text('treasureSave', 'Your browser could not save this change. Keep this tab open to retain this visit.');
     needMidway();
