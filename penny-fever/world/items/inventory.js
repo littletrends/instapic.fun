@@ -58,6 +58,7 @@ const iconCache = new Map();
 let dialog, viewer, current = null, focus = null, bookId = null, tab = 'collection', filter = 'all', paintingTree = false;
 const expanded = new Set();
 const collectionExpanded = new Set();
+let bookCoverFirst = false; // a book picked in the Collection menu shows its cover before its pages
 const closedTreeGroups = new Set();
 let selectionToken = 0, listToken = 0, opener, resumeWorld = false, openedHash = '', observer;
 const $ = id => document.getElementById(id);
@@ -228,14 +229,14 @@ function mount() {
     if(summary){
       e.preventDefault();const id=summary.dataset.collectionBook;
       if(collectionExpanded.has(id)){collectionExpanded.delete(id);if(bookId===id || model.books.find(b=>b.id===id)?.master)bookId=null;hideInspect();render();}
-      else openBook(id);
+      else openBook(id, {cover: true});
       $('collectionBookTree').querySelector(`[data-collection-book="${id}"]`)?.focus();
       return;
     }
     const button=e.target.closest('button[data-collection-item]');
     if(button){
       const id=button.dataset.collectionItem;
-      if(model.books.some(b=>b.id===id))openBook(id);else select(id);
+      if(model.books.some(b=>b.id===id))openBook(id, {cover: true});else select(id);
     }
   });
 
@@ -245,7 +246,10 @@ function mount() {
   $('pennyPackBtn')?.addEventListener('click', () => convertPennies(false));
   $('pennyUnpackBtn')?.addEventListener('click', () => convertPennies(true));
   $('shelfBack').addEventListener('click', goBack);
-  $('bookCoverBtn').addEventListener('click', () => { if (bookId) select(bookId); });
+  $('bookCoverBtn').addEventListener('click', () => {
+    if (!bookId) return;
+    if (bookCoverFirst) { bookCoverFirst = false; render(); } else select(bookId);
+  });
   $('stallCoverBtn').addEventListener('click', inspectFocusCover);
   dialog.addEventListener('close', close);
   $('treasureSearch').addEventListener('input', render);
@@ -421,7 +425,7 @@ function bookLooksOpen(all, id) {
   return bookStats(all, id).ownedCover;
 }
 
-function openBook(id) {
+function openBook(id, {cover = false} = {}) {
   const book = model.books.find(item => item.id === id);
   if (!book || !bookLooksOpen(entries(), id)) {
     tab = 'collection';
@@ -440,6 +444,7 @@ function openBook(id) {
   if ($('collectionLockNotice')) $('collectionLockNotice').hidden = true;
   tab = 'collection';
   bookId = id;
+  bookCoverFirst = cover;
   collectionExpanded.add(id);
   const master=model.books.find(b=>b.master);if(master)collectionExpanded.add(master.id);
   if($('collectionDropdown'))$('collectionDropdown').open=true;
@@ -509,7 +514,7 @@ function render() {
 
   dialog.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
   dialog.querySelectorAll('[data-look-collection]').forEach(b=>{b.hidden=tab!=='games';});
-  const onFound = filter === 'found';
+  const onFound = filter === 'found' && !(tab === 'collection' && bookId);
   const onShelf = !onFound && tab === 'collection' && !bookId;
   const onBook = !onFound && tab === 'collection' && !!bookId;
   const onGames = !onFound && tab === 'games';
@@ -531,6 +536,7 @@ function render() {
   dialog.querySelector('.pocket-body')?.classList.toggle('is-tree-spread', onGames);
   dialog.querySelector('.pocket-body')?.classList.toggle('has-stall', onGames && !!focus);
   dialog.querySelector('.pocket-body')?.classList.toggle('is-book', onBook);
+  dialog.querySelector('.pocket-body')?.classList.toggle('is-cover-first', onBook && bookCoverFirst);
   $('treasureItems').classList.toggle('is-chapters', onGames);
   $('treasureItems').classList.toggle('is-album', onBook);
 
@@ -710,7 +716,8 @@ function paintBook(all) {
   cover.src = book.cover;
   cover.alt = book.title;
   $('bookCoverBtn').classList.remove('is-missing');
-  $('bookCoverBtn').setAttribute('aria-label', 'Inspect ' + book.title);
+  $('bookCoverBtn').setAttribute('aria-label', (bookCoverFirst ? 'Open ' : 'Inspect ') + book.title);
+  if (bookCoverFirst) text('bookCount', $('bookCount').textContent + ' · Tap the book to open it');
   const shown = bookItems(all, bookId).filter(item => {
     if (!book.master || item.id === item.book || item.book === book.id) return true;
     return !model.books.some(b => b.id === item.book) || bookLooksOpen(all, item.book);

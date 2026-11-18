@@ -159,20 +159,20 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .pocket-inspect-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
 .found-view{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:linear-gradient(180deg,#f4e6c8,#efe0c0)}
-.found-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px 14px;align-content:start}
-.found-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 10px 12px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;text-align:center;box-shadow:0 3px 0 #e4d0a8}
-.found-runway{display:grid;place-items:end center;width:100%;aspect-ratio:3/4;margin:0;padding:8px 8px 0;border:3px double #a17c43;border-radius:12px;background:linear-gradient(#cbb892 0 16%,#ead6b1 16% 100%);cursor:pointer;min-height:0}
+.found-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.found-card{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:6px 6px 8px;background:#fffaf0;border:1px solid #c9ae7b;border-radius:14px;color:#3d2c1f;text-align:center;box-shadow:0 3px 0 #e4d0a8}
+.found-runway{display:grid;place-items:center;width:100%;aspect-ratio:1;margin:0;padding:6px;overflow:hidden;border:3px double #a17c43;border-radius:12px;background:linear-gradient(#cbb892 0 16%,#ead6b1 16% 100%);cursor:pointer;min-height:0}
 .found-runway:hover{border-color:#7a3040}
-.found-doll{max-width:78%;max-height:92%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 8px 10px #0004)}
+.found-doll{display:block;width:84%;height:84%;object-fit:contain;object-position:center;filter:drop-shadow(0 8px 10px #0004)}
 .found-runway{touch-action:pan-y;cursor:ew-resize;user-select:none}
 .pocket-inspect-turn{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
 .pocket-inspect-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:6px 12px;cursor:pointer;font:14px Georgia,serif;white-space:nowrap}
 .pocket-inspect-turn span{min-width:4.5rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 12px system-ui,sans-serif;color:#7a3040}
-.found-turn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px}
-.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:4px 10px;min-height:32px;font:13px Georgia,serif;cursor:pointer;white-space:nowrap}
-.found-view-label{min-width:4.2rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 11px system-ui,sans-serif;color:#7a3040}
-.found-card strong{font-size:15px;font-weight:400}
-.found-card em{font:700 11px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#38583b;font-style:normal}
+.found-turn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:30px}
+.found-turn button{border:1px solid #987345;background:#fffaf0;color:#382816;padding:3px 8px;min-height:30px;font:12px Georgia,serif;cursor:pointer;white-space:nowrap}
+.found-view-label{min-width:2.8rem;text-align:center;letter-spacing:.08em;text-transform:uppercase;font:600 11px system-ui,sans-serif;color:#7a3040}
+.found-card strong{font-size:13px;font-weight:400;line-height:1.25;overflow-wrap:anywhere}
+.found-card em{font:700 10px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#38583b;font-style:normal}
 
 .treasure-notice{position:fixed;right:18px;bottom:80px;z-index:9500;max-width:min(380px,90vw);padding:12px 18px;border:1px solid #c4a064;border-radius:12px;background:#304537;color:#fff0cd;box-shadow:0 4px 20px #0005;font:15px/1.4 Georgia,serif;pointer-events:none}
 .treasure-notice[hidden]{display:none}
@@ -268,7 +268,9 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
  #collectionSidebar{padding:5px 3px}
  #collectionSidebar summary,#collectionSidebar button{font-size:12px}
  #collectionSidebar details details{margin-left:3px;padding-left:2px}
- #collectionPages .shelf-grid,#collectionPages .album-slots{grid-template-columns:1fr}
+ #collectionPages .shelf-grid,#collectionPages .album-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #collectionPages .album-slots.is-chapters{grid-template-columns:1fr}
+ #collectionPages .found-view{padding:4px 6px 12px}
  #collectionPages .shelf-view{padding:8px}
  #collectionPages .is-book #bookPane{display:block;padding:4px}
  .pocket-header{flex-wrap:wrap}
@@ -316,3 +318,20 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .treasure-book .collection-lock-notice[hidden]{display:none}
 .treasure-book .shelf-book.is-missing:hover{transform:none}
 #collectionSidebar summary[aria-disabled="true"]{color:#86735e;font-style:italic}
+
+/* Two or three compact cards per row on phones; the art sits in the middle of a square frame. */
+@media(max-width:720px){
+ .found-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .found-turn{gap:4px}
+ .found-view-label{min-width:0;font-size:10px}
+}
+@media(min-width:721px) and (max-width:1100px){
+ .found-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+}
+/* A book picked in the Collection menu opens on its cover; tapping the cover shows its pages. */
+#collectionPages .is-book.is-cover-first #treasureItems,#collectionPages .is-book.is-cover-first #treasureEmpty{display:none}
+#collectionPages .is-book.is-cover-first #bookPane{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+#collectionPages .is-book.is-cover-first #bookPane .book-cover-btn{width:min(240px,100%);max-width:none;padding:8px}
+#collectionPages .is-book.is-cover-first #bookPane .book-cover-btn img{height:auto;aspect-ratio:1;width:100%;object-fit:contain}
+#collectionPages .is-book.is-cover-first #bookPane .pocket-progress{width:100%}
+#collectionPages .is-book.is-cover-first .pocket-blurb{display:block}
