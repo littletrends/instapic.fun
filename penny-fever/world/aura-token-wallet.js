@@ -1,4 +1,4 @@
-import {paintEconomy, paintLedgerRequirements, paintTradeshowPurse} from './token-economy.js?v=purse-layout-1';
+import {paintEconomy, paintLedgerRequirements, paintTradeshowPurse} from './token-economy.js?v=clear-tradeshow-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -34,12 +34,11 @@ function attach(overlay) {
   overlay.dataset.tokenWalletMounted = 'true';
   const entry = document.createElement('button');
   entry.type = 'button'; entry.textContent = 'Wallet / Tokens'; entry.dataset.tokenWalletOpen = '';
-  const purseBar = document.createElement('div'); purseBar.className = 'aura-tradeshow-purse-bar';
-  purseBar.setAttribute('role', 'region'); purseBar.setAttribute('aria-label', 'Your purse and wallet');
   const purseSummary = document.createElement('div'); purseSummary.className = 'aura-tradeshow-purse-summary';
-  purseBar.append(entry, purseSummary);
-  const filters = overlay.querySelector('.aura-tradeshow-tools');
-  if (filters) filters.after(purseBar); else overlay.prepend(purseBar);
+  purseSummary.setAttribute('role', 'region'); purseSummary.setAttribute('aria-label', 'Your game purse');
+  overlay.querySelector('.aura-tradeshow-bar')?.append(purseSummary);
+  const actions = overlay.querySelector('.aura-collection-actions');
+  if (actions) actions.prepend(entry); else overlay.querySelector('.aura-tradeshow-tools')?.prepend(entry);
   const panel = document.createElement('div');
   panel.className = 'aura-xrp-till aura-token-panel'; panel.hidden = true;
   panel.dataset.tokenWalletPanel = '';

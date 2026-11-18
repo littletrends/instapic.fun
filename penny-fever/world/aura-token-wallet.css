@@ -37,13 +37,9 @@
 .aura-token-recipe-progress p{margin:.25rem 0}
 .aura-token-recipe-progress small{display:block;line-height:1.4}
 
-.aura-tradeshow-purse-bar{display:flex;align-items:center;flex:0 0 auto;gap:.6rem;min-width:0;padding:.3rem .8rem;background:#f7ecd6;border-bottom:1px solid #c4a064;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
-.aura-tradeshow-purse-bar>[data-token-wallet-open]{flex:0 0 auto;min-height:36px;padding:.35rem .6rem;border:1px solid #c4a064;border-radius:8px;background:#fff8e9;color:#5a2438;font:700 .72rem/1.2 Georgia,serif;cursor:pointer}
-.aura-tradeshow-purse-summary{display:flex;align-items:center;gap:1rem;font-size:.75rem}
+.aura-tradeshow-purse-summary{flex:1 1 auto;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;font-size:.75rem;color:#e2c48a}
 .aura-tradeshow-purse-summary [data-tradeshow-game-purse]{font-weight:bold}
-.aura-tradeshow-purse-summary [data-tradeshow-ledger-purse]{color:#6a5340}
-.aura-tradeshow-grid.has-token-rewards{grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr))}
-.has-token-rewards .aura-tradeshow-card{min-width:0;max-width:20rem}
+.aura-tradeshow-bar [data-tradeshow-ledger-purse]{display:none}
 .aura-token-requirement{margin-top:.45rem;padding-top:.35rem;border-top:1px solid #e2c48a}
 .aura-token-requirement>strong{font-size:.82rem}
 .aura-token-requirement dl{margin:.25rem 0;font-size:.78rem}
@@ -52,4 +48,4 @@
 .aura-token-requirement dd{margin:0;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:bold}
 .aura-token-requirement [data-ledger-missing]{color:#7a3040}
 .aura-token-trade-note{font-size:.72rem!important;line-height:1.35;color:#7a3040!important}
-@media(max-width:720px){.aura-tradeshow-purse-bar{padding:.2rem .45rem}.aura-tradeshow-purse-summary{font-size:.68rem}.aura-token-requirement dl{font-size:.7rem}}
+@media(max-width:720px){.aura-tradeshow-purse-summary{font-size:.62rem}.aura-token-requirement dl{font-size:.7rem}}

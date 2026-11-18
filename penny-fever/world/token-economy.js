@@ -62,7 +62,7 @@ export function paintLedgerRequirements(root, data) {
 export function paintTradeshowPurse(root, data, signedIn) {
   const api = window.PennyFever;
   const values = [['Pennies', api?.pennies?.()], ['Tickets', api?.tickets?.()], ['5-packs', api?.pennyPacks?.()]];
-  const game = signedIn ? 'Game purse · ' + values.map(([name, value]) => `${name}: ${Number.isSafeInteger(value) && value >= 0 ? count(value) : '—'}`).join(' · ') : 'Sign into VIP to view your purse';
+  const game = signedIn ? values.map(([name, value]) => `${name}: ${Number.isSafeInteger(value) && value >= 0 ? count(value) : '—'}`).join(' · ') : 'Sign into VIP to view your purse';
   const ledger = signedIn && data?.wallet ? 'Xaman · ' + Object.keys(TOKEN_TERMS).map(item => {
     const token = (data.tokens || []).find(row => row.item === item);
     return `${TOKEN_TERMS[item].name}: ${token ? count(token.balance) : '—'}`;

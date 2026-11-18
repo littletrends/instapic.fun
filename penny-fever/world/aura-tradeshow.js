@@ -1,10 +1,10 @@
-import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=purse-layout-1';
+import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=clear-tradeshow-1';
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
-import {mountNftBatches} from './aura-nft-batches.js?v=compact-actions-1';
+import {mountNftBatches} from './aura-nft-batches.js?v=clear-tradeshow-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -50,6 +50,7 @@ let collectionQueueRevision = 0;
 let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let nftBatchUI = null;
+let collectionFeedback = false;
 let folder = 'book:penny-collector-book';
 let query = '';
 let haveFilter = '';
@@ -78,6 +79,7 @@ function vipAccount() {
   return vipEmail().toLowerCase();
 }
 function clearEligibility(account = '') {
+  if (account !== eligibilityAccount) collectionFeedback = false;
   eligibilityAccount = account;
   rewardMint = {account, enabled: false, items: {}, prices: {}, owned: {}};
   snapElig = {portraits: new Set(), book: false};
@@ -219,13 +221,13 @@ function paintCollectionQueue() {
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
-    receive.hidden = !available;
+    receive.hidden = !available || !(pendingReceive || rewardMint.recovery?.length || rewardMint.walletCheckFailed || failed);
     receive.disabled = loading || opening || !!queue?.active;
     receive.textContent = 'Recover Wallet';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
-    progress.hidden = !available;
+    progress.hidden = !available || !(collectionFeedback || loading || opening || queue || failed || pendingReceive);
     progress.textContent = loading ? 'Checking your collected rewards and wallet. Please wait…'
       : opening ? 'Preparing your Xaman request. Please wait…'
       : failed ? 'Collection could not load. Retry when connected and signed in.'
@@ -258,6 +260,7 @@ function paintCollectionQueue() {
 
 async function checkCollectionReceipts() {
   if (!vip() || collectionQueue?.active) return;
+  collectionFeedback = true;
   const account = vipAccount();
   const fresh = await loadRewardMint(account, eligibilityRevision);
   if (!fresh || account !== vipAccount() || overlay?.hidden) return;
@@ -364,6 +367,7 @@ async function advanceCollectionQueue() {
 
 async function startCollectionQueue() {
   if (collectionQueue?.active || !vip() || tradeshowBlocked()) return;
+  collectionFeedback = true;
   const account = vipAccount();
   const revision = ++collectionQueueRevision;
   const button = overlay?.querySelector('[data-collection-mint]');
@@ -837,17 +841,18 @@ function ensureOverlay() {
       </div>
       <span class="aura-tradeshow-door" id="auraTradeshowDoor"></span>
       <button type="button" class="aura-tradeshow-back" id="auraTradeshowAlley">← Alley</button>
-      <p class="aura-tradeshow-vip" id="auraTradeshowVip"></p>
-      <a class="aura-tradeshow-back" id="auraTradeshowSession" href="/save.html">Log in</a>
-      <button type="button" class="aura-tradeshow-close" id="auraTradeshowClose" aria-label="Close tradeshow">×</button>
     </div>
-    <p class="aura-tradeshow-note" id="auraTradeshowNote"></p>
-    <div class="aura-tradeshow-tools">
+    <div class="aura-tradeshow-account aura-tradeshow-tools">
       <div class="aura-tradeshow-search">
         <input type="checkbox" id="auraTradeshowSearchToggle" class="aura-tradeshow-search-toggle">
         <label for="auraTradeshowSearchToggle" class="aura-tradeshow-search-btn" aria-label="Find a…">Find</label>
         <input type="search" id="auraTradeshowSearch" placeholder="Find a…" aria-label="Search the collection">
       </div>
+      <p class="aura-tradeshow-vip" id="auraTradeshowVip"></p>
+      <a class="aura-tradeshow-back" id="auraTradeshowSession" href="/save.html">Log in</a>
+      <button type="button" class="aura-tradeshow-close" id="auraTradeshowClose" aria-label="Close tradeshow">×</button>
+    </div>
+    <div class="aura-tradeshow-tools aura-tradeshow-filters">
       <div class="aura-tradeshow-have" role="group" aria-label="Collected or locked">
         <button type="button" data-have="collected">Collected</button>
         <button type="button" data-have="locked">Locked</button>
@@ -877,7 +882,7 @@ function ensureOverlay() {
         <label for="auraTradeshowTreeDrawer" class="aura-tradeshow-tree-drawer-btn">Browse collection</label>
         <nav class="aura-tradeshow-tree" id="auraTradeshowTree" aria-label="Penny Fever Collection"></nav>
       </div>
-      <div class="aura-tradeshow-body" id="auraTradeshowBody"></div>
+      <div class="aura-tradeshow-content"><p class="aura-tradeshow-note" id="auraTradeshowNote" role="status"></p><div class="aura-tradeshow-body" id="auraTradeshowBody"></div></div>
     </div>
     <div class="aura-xrp-till" id="auraXrpTill" hidden>
       <div class="aura-xrp-till-card" role="dialog" aria-modal="true" aria-labelledby="auraXrpTillName">
@@ -954,6 +959,7 @@ function ensureOverlay() {
     account: vipAccount, canBuy: canBatchBuy, name: id => modelItem(id).name || id,
     enabled: () => rewardMint.account === vipAccount() && rewardMint.batchLimit === 8 && !tradeshowBlocked(),
     maxQuantity: id => Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)),
+    hasPrepared: () => rewardMint.account === vipAccount() && !!rewardMint.pending?.length,
     pause: () => { pauseCollectionQueue(); closeXrpTill(); closeInspect(); },
     refresh: () => {
       const account = vipAccount();
@@ -1065,8 +1071,11 @@ function ensureOverlay() {
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
+      if (fold.closest('.aura-tradeshow-section-links')) {
+        query = ''; haveFilter = ''; overlay.querySelector('#auraTradeshowSearch').value = '';
+      }
       if (folder.startsWith('book:')) revealBook(folder.slice(5));
-      if (folder === 'minted') haveFilter = '';
+      if (folder === 'minted' || folder === 'mine') haveFilter = '';
       if (folder === 'limited') {
         for (const id of LIMITED) openNodes.delete('book:' + id);
       }
@@ -2218,6 +2227,7 @@ function albumTitle(model, id) {
 function itemMatches(item, stall, info) {
   if (query && !`${item.name} ${stall.host} ${stall.title} ${item.album || ''} ${item.book || ''} ${item.collection || ''}`.toLowerCase().includes(query)) return false;
   if (folder === 'minted') return nftOwnedCount(item.id) > 0;
+  if (folder === 'mine') return !isEveryday(item) && (walletCount(item.id) > 0 || nftOwnedCount(item.id) > 0 || rewardMint.pending?.includes(item.id));
   if (!isEveryday(item) && haveFilter === 'collected' && walletCount(item.id) <= 0) return false;
   if (!isEveryday(item) && haveFilter === 'locked' && walletCount(item.id) > 0) return false;
   if (folder === 'all') return true;
@@ -2282,6 +2292,15 @@ function treeKids() {
 }
 function paintTree(nav, stallRows, books, itemsByBook, felixItems, limitedItems) {
   nav.replaceChildren();
+  const sections = document.createElement('div');
+  sections.className = 'aura-tradeshow-section-links';
+  sections.setAttribute('aria-label', 'Choose what to see');
+  for (const [id, title] of [['book:penny-collector-book', 'Browse collections'], ['mine', 'My collection']]) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.dataset.folder = id; button.textContent = title;
+    button.setAttribute('aria-pressed', String(folder === id)); sections.append(button);
+  }
+  nav.append(sections);
   const root = document.createElement('div');
   root.className = 'aura-tradeshow-tree-root';
   root.append(treeRow('book:penny-collector-book', 'Penny collector book', {root: true, book: books.find(b => b.id === 'penny-collector-book')}));
@@ -2404,7 +2423,6 @@ async function showOwnedEditions(button) {
 }
 
 function appendCards(grid, items) {
-  if (items.some(item => tokenClaim(item.id))) grid.classList.add('has-token-rewards');
   for (const item of items) {
     // Books mix vendors. Resolve each card from its own chapter/portrait ID,
     // just as filters and checkout do, rather than inheriting the book's host.
@@ -2435,6 +2453,15 @@ function appendCards(grid, items) {
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
       <div class="aura-tradeshow-stage" data-inspect="${item.id}" role="button" tabindex="0" aria-label="Inspect ${item.name || item.id}" title="Open details"><img alt="" draggable="false" loading="lazy" decoding="async" src="${faceSrc(item, 'front')}"></div>
+      <span class="chip ${chipClass}">${chipText}</span>
+      ${owned ? '<span class="chip is-minted">Minted</span>' : ''}
+      <h3>${item.name}</h3>
+      ${claim ? `<button type="button" class="aura-tradeshow-up aura-requirements-link" data-inspect="${item.id}">View token requirements</button>` : `<p class="price">${purchaseLabel(item)}</p>`}
+      ${owned ? `<button type="button" class="owned aura-owned-editions" data-owned-editions="${item.id}" aria-expanded="false">You own ${owned.toLocaleString('en-AU')} · view editions</button><div class="aura-owned-edition-list" data-owned-list="${item.id}" hidden></div>` : ''}
+      ${felix ? '' : `<p class="stock">${claim ? remainingFor(item.id).toLocaleString('en-AU') + ' editions remaining' : formatStock(item.id).replace(' · ' + purchaseLabel(item), '')}</p>`}
+      ${nestedBook && item.id !== 'penny-collector-book' && folder !== 'book:' + item.id ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">View collection</button>` : ''}
+      ${shopBtn}
+      <details class="aura-tradeshow-card-details"><summary>More options</summary>
       ${canSpin ? `<div class="aura-tradeshow-turn">
         ${VIEWS.map((view) => `<button type="button" data-face="${view}"${view === 'front' ? ' aria-pressed="true"' : ''}>${view[0].toUpperCase()}${view.slice(1)}</button>`).join('')}
         <button type="button" data-spin="1">Rotate</button>
@@ -2443,21 +2470,12 @@ function appendCards(grid, items) {
         <button type="button" data-view="website" aria-pressed="true">Website</button>
         ${isEveryday(item) ? '' : `<button type="button" data-view="nft" ${showQr ? '' : 'disabled'} aria-pressed="false">${showQr ? 'NFT' : 'NFT soon'}</button>`}
       </div>
-      <span class="chip ${chipClass}">${chipText}</span>
-      ${owned ? '<span class="chip is-minted">Minted</span>' : ''}
-      <h3>${item.name}</h3>
       ${sample && !claim ? `<p class="sample">${sample}</p>` : ''}
-      ${claim ? '' : `<p class="price">${purchaseLabel(item)}</p>`}
-      ${owned ? `<button type="button" class="owned aura-owned-editions" data-owned-editions="${item.id}" aria-expanded="false">You own ${owned.toLocaleString('en-AU')} · view editions</button><div class="aura-owned-edition-list" data-owned-list="${item.id}" hidden></div>` : ''}
-      ${felix ? '' : `<p class="stock">${claim ? remainingFor(item.id).toLocaleString('en-AU') + ' editions remaining' : formatStock(item.id)}</p>`}
-      ${tankMarkup(item)}
       ${claim ? (act.ownerMint ? '<p class="aura-token-trade-note">Token trades are not open yet.</p>' : '') : `<p class="claim">${claimLine(item, info)}</p>`}
       ${play ? `<button type="button" class="aura-tradeshow-play" data-go-stall="${play.id}">${play.label}</button>` : ''}
-      ${nestedBook && item.id !== 'penny-collector-book' && folder !== 'book:' + item.id ? `<button type="button" class="aura-tradeshow-play" data-open-book="${item.id}">View collection</button>` : ''}
-      ${shopBtn}
       ${canBatchBuy(item.id) ? `<button type="button" class="aura-tradeshow-buy" data-nft-batch-buy="${item.id}">Buy multiple · up to 8</button>` : ''}
       ${owned && rewardMint.enabled && rewardMint.account === vipAccount() && rewardMint.ownerItems?.includes(item.id)
-        ? `<button type="button" class="aura-tradeshow-buy" data-owner-mint="${item.id}">Owner mint another · to RaX</button>` : ''}`;
+        ? `<button type="button" class="aura-tradeshow-buy" data-owner-mint="${item.id}">Owner mint another · to RaX</button>` : ''}</details>`;
     const pic = card.querySelector('img');
     if (pic) pic.alt = item.name || '';
     grid.append(card);
@@ -2477,6 +2495,7 @@ function paint() {
     const email = String(window.InstapicGuestIdentity?.read?.()?.email || '');
     vipEl.replaceChildren();
     vipEl.textContent = 'VIP · ' + (email || 'signed in');
+    vipEl.title = email;
   } else {
     const a = document.createElement('a');
     a.href = vipJoin();
@@ -2492,6 +2511,8 @@ function paint() {
     ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
     : folder === 'minted'
       ? 'Your received NFTs. Items still waiting for wallet acceptance appear after receipt is confirmed.'
+    : folder === 'mine'
+      ? 'Your collected rewards and received NFTs. Tap a piece for its details; use Mint Rewards for collected pieces.'
     : folder === 'convert'
       ? 'Aura’s token counter lists the current Star, Moon, Rose and Crown requirements. Token trading opens when the purse connection is ready. Everyday pennies remain game currency.'
     : folder === 'open' || stallFolderKind(folder) === 'open'
@@ -2585,7 +2606,10 @@ function paint() {
         stall,
       };
     })
-    : (folder === 'minted'
+    : (folder === 'mine'
+      ? [{title: 'My collection', line: 'Collected rewards, received NFTs and pieces waiting to receive',
+          items: items.filter(item => !isEveryday(item)), stall: stallById('ticket-booth')}]
+      : folder === 'minted'
       ? [{
         title: 'Minted',
         line: 'NFTs received into your wallet',
@@ -2664,6 +2688,7 @@ function paint() {
   if (!body.querySelector('.aura-tradeshow-card')) {
     const empty = document.createElement('p');
     empty.textContent = query || haveFilter ? 'No items match these filters in this collection.'
+      : folder === 'mine' ? 'Your collection will appear here as you collect rewards or receive NFTs.'
       : folder === 'minted' ? 'No received NFTs to show yet. Return here after receiving them in Xaman.'
       : 'No items to show in this collection yet.';
     body.append(empty);

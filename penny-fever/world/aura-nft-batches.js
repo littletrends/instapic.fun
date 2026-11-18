@@ -8,6 +8,9 @@ const FINISHED = new Set(['complete', 'cancelled', 'expired']);
 export function mountNftBatches(overlay, context) {
   let owner = '', operation = '', timer = 0, revision = 0, busy = false;
   let choice = null, inFlight = false, cancelling = false;
+  let pendingOwner = '', pendingKnown = false, pendingFailed = false;
+  let pendingOffers = 0, pendingBatches = 0, pendingRead = null, pendingRevision = 0;
+  let activeState = '';
   const bar = document.createElement('div');
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
@@ -66,6 +69,30 @@ export function mountNftBatches(overlay, context) {
     if (!response.ok || result?.ok !== true) throw Object.assign(Error(result?.message || 'Grouped checkout could not connect.'), {code: result?.error});
     return result;
   }
+  function paintAvailability() {
+    const enabled = !!context.account() && context.enabled();
+    receive.hidden = !enabled || !(pendingOffers || context.hasPrepared?.());
+    resume.hidden = !enabled || !(pendingBatches || pendingFailed || (operation && activeState && !FINISHED.has(activeState)));
+    bar.hidden = !enabled || (receive.hidden && resume.hidden);
+  }
+  function rememberPending(data) {
+    pendingKnown = true; pendingFailed = false;
+    pendingOffers = Array.isArray(data.offers) ? data.offers.length : 0;
+    pendingBatches = Array.isArray(data.batches) ? data.batches.length : 0;
+    paintAvailability();
+  }
+  function refreshPending() {
+    if (pendingKnown || pendingRead || !context.account() || !context.enabled() || overlay.hidden) return;
+    const account = context.account(), version = pendingRevision;
+    const reading = post('/pending', {}, account).then(data => {
+      if (version === pendingRevision && account === context.account() && !overlay.hidden) rememberPending(data);
+    }).catch(() => {
+      if (version === pendingRevision && account === context.account() && !overlay.hidden) {
+        pendingKnown = true; pendingFailed = true; paintAvailability();
+      }
+    }).finally(() => { if (pendingRead === reading) pendingRead = null; });
+    pendingRead = reading;
+  }
   function show() {
     stop(); context.pause(); owner = context.account();
     cancelling = false;
@@ -76,6 +103,7 @@ export function mountNftBatches(overlay, context) {
   }
   function render(data) {
     operation = data.operation;
+    activeState = data.state;
     title.textContent = data.kind === 'purchase' ? `${data.quantity} NFT copies · grouped checkout` : `Receive ${data.quantity} prepared NFTs`;
     const labels = {
       signin: 'Choose and sign into your paying wallet in Xaman. This sign-in does not charge XRP.',
@@ -98,7 +126,7 @@ export function mountNftBatches(overlay, context) {
     loading.hidden = FINISHED.has(data.state) || data.needs_review;
     check.hidden = data.state === 'complete';
     next.hidden = !FINISHED.has(data.state);
-    if (FINISHED.has(data.state)) { stop(); context.refresh(); }
+    if (FINISHED.has(data.state)) { stop(); pendingKnown = false; context.refresh(); }
     else if (!data.needs_review) timer = setTimeout(tick, 3000);
   }
   async function tick() {
@@ -142,6 +170,7 @@ export function mountNftBatches(overlay, context) {
     try {
       const data = await post('/pending', {}, account);
       if (!valid(r, account)) return;
+      rememberPending(data);
       if (data.batches?.length) { operation = data.batches[0].operation; tick(); return; }
       const first = data.offers?.[0];
       if (!first) { message.textContent = 'No prepared NFTs are waiting to be received. Prepare your collected rewards first, or check your wallet.'; return; }
@@ -158,6 +187,7 @@ export function mountNftBatches(overlay, context) {
     try {
       const data = await post('/pending', {}, account);
       if (!valid(r, account)) return;
+      rememberPending(data);
       if (!data.batches?.length) { message.textContent = 'No grouped checkout is waiting. Use Receive prepared NFTs to check existing offers.'; return; }
       operation = data.batches[0].operation; tick();
     } catch (error) { if (valid(r, account)) message.textContent = error.message; }
@@ -173,7 +203,7 @@ export function mountNftBatches(overlay, context) {
     message.textContent = 'Choose 2–8 copies. The server checks price, available supply and your wallet limit before opening payment. You sign the total in Xaman.';
   }
   function closePanel() {
-    stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); context.refresh();
+    stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); pendingKnown = false; context.refresh();
   }
   close.addEventListener('click', closePanel);
   start.addEventListener('click', () => { if (choice) create({kind: 'purchase', item: choice, quantity: Number(quantity.value)}); });
@@ -210,9 +240,18 @@ export function mountNftBatches(overlay, context) {
   return {
     buy, receive: receiveGroup,
     isOpen: () => !panel.hidden,
-    close: () => { stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); },
+    close: () => {
+      stop(); busy = false; cancelling = false; panel.hidden = true; unlink();
+      pendingRevision++; pendingRead = null; pendingKnown = pendingFailed = false;
+      pendingOwner = ''; pendingOffers = pendingBatches = 0; operation = activeState = '';
+    },
     paint() {
-      bar.hidden = !context.account() || !context.enabled();
+      if (pendingOwner !== context.account()) {
+        pendingOwner = context.account(); pendingRevision++; pendingRead = null;
+        pendingKnown = pendingFailed = false; pendingOffers = pendingBatches = 0; operation = activeState = '';
+      }
+      paintAvailability();
+      refreshPending();
       if (!panel.hidden && owner !== context.account()) { stop(); busy = false; panel.hidden = true; unlink(); }
       // Never start a transaction just because the catalogue was repainted.
     },
