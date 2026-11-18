@@ -1,4 +1,4 @@
-import {paintEconomy} from './token-economy.js?v=token-economy-1';
+import {paintEconomy, paintRecipeProgress} from './token-economy.js?v=token-economy-2';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -62,6 +62,8 @@ function attach(overlay) {
   const choices = new Map();
   let catalogue = [];
   let requestedItem = '';
+  let overviewData = null, overviewOwner = null, overviewController = null, overviewAttempted = false;
+  const sameOwner = other => !!other && other.email === identity()?.email && other.token === identity()?.token;
   const tokenCodes = {'star-token':'PENNYS','moon-penny':'PENNYM','rose-penny':'PENNYR','crown-token':'PENNYC'};
   const specials = new Set(['penny-collector-book','felix-vendor-portrait-book','aura-keepsake']);
   function addShortcuts() {
@@ -72,6 +74,23 @@ function attach(overlay) {
       button.className = 'aura-tradeshow-play'; button.dataset.economyShortcut = item;
       button.textContent = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
       card.append(button);
+    }
+    for (const card of overlay.querySelectorAll('.aura-tradeshow-card[data-item]')) {
+      const item = card.dataset.item;
+      if (!specials.has(item)) continue;
+      let progress = card.querySelector('[data-new-token-progress]');
+      if (!progress) {
+        progress = document.createElement('section'); progress.dataset.newTokenProgress = '';
+        progress.className = 'aura-token-recipe-progress';
+        card.querySelector('.aura-tradeshow-tanks')?.before(progress);
+        if (!progress.isConnected) card.append(progress);
+      }
+      paintRecipeProgress(progress, sameOwner(overviewOwner) ? overviewData : null, item);
+      const old = card.querySelector('.aura-tradeshow-tanks');
+      if (old && !card.querySelector('[data-legacy-token-label]')) {
+        const label = document.createElement('small'); label.dataset.legacyTokenLabel = '';
+        label.textContent = 'Current game claim · original units'; old.before(label);
+      }
     }
     const inspect = overlay.querySelector('#auraTradeshowInspect');
     const item = inspect?.querySelector('[data-inspect-buy]')?.dataset.buy;
@@ -86,7 +105,31 @@ function attach(overlay) {
       button.dataset.economyShortcut = item || '';
       const label = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
       if (button.textContent !== label) button.textContent = label;
+      let progress = inspect.querySelector('[data-new-token-progress]');
+      if (!progress) {
+        progress = document.createElement('section'); progress.dataset.newTokenProgress = '';
+        progress.className = 'aura-token-recipe-progress'; button.before(progress);
+      }
+      progress.hidden = !specials.has(item);
+      if (!progress.hidden) paintRecipeProgress(progress, sameOwner(overviewOwner) ? overviewData : null, item);
     }
+  }
+  async function refreshOverview() {
+    const account = identity();
+    if (overlay.hidden || !account || (sameOwner(overviewOwner) && overviewAttempted)) return;
+    overviewController?.abort(); overviewOwner = account; overviewData = null; overviewAttempted = true;
+    const requestController = overviewController = new AbortController();
+    addShortcuts();
+    try {
+      const response = await fetch(API + '/catalogue', {method: 'POST', cache: 'no-store', redirect: 'error',
+        signal: requestController.signal, headers: {'Content-Type': 'application/json', Authorization: `Bearer ${account.token}`},
+        body: JSON.stringify({email: account.email})});
+      const data = await response.json();
+      if (response.ok && data?.ok === true && !overlay.hidden && sameOwner(account) && requestController === overviewController) {
+        overviewData = data; addShortcuts();
+      }
+    } catch { /* Existing claims remain usable if the ledger cannot be reached. */ }
+    if (!overviewData && !overlay.hidden && sameOwner(account) && requestController === overviewController) { overviewData = {unavailable: true}; addShortcuts(); }
   }
   overlay.addEventListener('click', event => {
     const button = event.target.closest('[data-economy-shortcut]');
@@ -210,6 +253,8 @@ function attach(overlay) {
       find('.aura-token-basket').hidden = !data.wallet;
       catalogue = data.tokens || [];
       paintEconomy(find('[data-token-economy]'), data);
+      overviewController?.abort(); overviewController = null;
+      overviewData = data; overviewOwner = {...owner}; overviewAttempted = true; addShortcuts();
       operation = (data.pending || []).find(row => row.id === operation)?.id || data.pending?.[0]?.id || '';
       grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
       for (const pending of data.pending || []) {
@@ -309,11 +354,22 @@ function attach(overlay) {
     const index = controls.indexOf(document.activeElement);
     controls[(index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length]?.focus();
   }, true);
-  new MutationObserver(() => { if (overlay.hidden && !panel.hidden) close(); }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
-  function wake() { if (!panel.hidden && !valid(revision)) close(); else if (!panel.hidden && operation && document.visibilityState !== 'hidden') check(); }
+  new MutationObserver(() => {
+    if (overlay.hidden) {
+      if (!panel.hidden) close();
+      overviewController?.abort(); overviewData = null; overviewOwner = null; overviewAttempted = false; addShortcuts();
+    } else refreshOverview();
+  }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
+  refreshOverview();
+  function wake() {
+    if (overviewOwner && !sameOwner(overviewOwner)) { overviewController?.abort(); overviewData = null; overviewOwner = null; overviewAttempted = false; addShortcuts(); }
+    if (!panel.hidden && !valid(revision)) close(); else if (!panel.hidden && operation && document.visibilityState !== 'hidden') check(); }
   window.addEventListener('focus', wake); window.addEventListener('storage', wake);
   document.addEventListener('visibilitychange', wake);
-  setInterval(() => { if (!panel.hidden && !valid(revision)) close(); }, 1000);
+  setInterval(() => {
+    if (overviewOwner && !sameOwner(overviewOwner)) { overviewController?.abort(); overviewData = null; overviewOwner = null; overviewAttempted = false; addShortcuts(); }
+    if (!panel.hidden && !valid(revision)) close();
+  }, 1000);
 }
 
 function discover() {

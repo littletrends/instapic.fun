@@ -32,3 +32,7 @@
 .aura-token-economy th,.aura-token-economy td{padding:.35rem .15rem;text-align:right;overflow-wrap:anywhere;vertical-align:top}
 .aura-token-economy th:first-child{text-align:left}
 .aura-token-game-purse{padding:.5rem;border:1px solid #d4bd91;border-radius:8px;background:#f7ecd6}
+
+.aura-token-recipe-progress{padding:.5rem;margin:.4rem 0;border:1px solid #c4a064;border-radius:8px;background:#fff8e9;color:#5a2438;font-size:.78rem;overflow-wrap:anywhere}
+.aura-token-recipe-progress p{margin:.25rem 0}
+.aura-token-recipe-progress small{display:block;line-height:1.4}

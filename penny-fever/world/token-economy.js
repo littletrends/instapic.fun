@@ -45,3 +45,21 @@ export function paintEconomy(root, data) {
     table.append(body); box.append(table); root.append(box);
   }
 }
+
+export function paintRecipeProgress(root, data, item) {
+  const recipe = data?.economy?.recipes?.find(row => row.item === item);
+  const signature = JSON.stringify([item, recipe, data?.wallet, (data?.tokens || []).map(row => [row.item,row.balance])]);
+  if (root._tokenProgressSignature === signature) return;
+  root._tokenProgressSignature = signature;
+  root.replaceChildren();
+  root.append(element('strong', 'New token recipe · preview'));
+  if (!recipe) {
+    root.append(element('p', data?.unavailable ? 'New requirements unavailable · open Wallet / Tokens to retry.' : 'Checking the new requirements…')); return;
+  }
+  for (const [token, required] of Object.entries(recipe.cost)) {
+    const balance = (data.tokens || []).find(row => row.item === token)?.balance;
+    const have = data.wallet && balance !== undefined && Number.isFinite(Number(balance)) ? count(balance) : '—';
+    root.append(element('p', `${have} / ${count(required)} ${NAMES[token] || token}`));
+  }
+  root.append(element('small', 'Xaman held / required. New token trading is not open yet.'));
+}
