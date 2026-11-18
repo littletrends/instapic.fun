@@ -1,0 +1,90 @@
+[[ACCOUNTS]]
+address = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+desc = "Penny Fever by Little Trends token issuer"
+network = "main"
+
+[[ACCOUNTS]]
+address = "rStMgpbErmkyKyoQKTqpRqmZwV8w5fRjK"
+desc = "Aura Token Treasury for Penny Fever"
+network = "main"
+
+[[ISSUERS]]
+address = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+name = "Penny Fever by Little Trends"
+desc = "The issuer of Penny Fever Stars, Moons, Roses and Crowns on the XRP Ledger."
+
+[[CURRENCIES]]
+code = "50454E4E59530000000000000000000000000000"
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+network = "main"
+display_decimals = 0
+
+[[CURRENCIES]]
+code = "50454E4E594D0000000000000000000000000000"
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+network = "main"
+display_decimals = 0
+
+[[CURRENCIES]]
+code = "50454E4E59520000000000000000000000000000"
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+network = "main"
+display_decimals = 0
+
+[[CURRENCIES]]
+code = "50454E4E59430000000000000000000000000000"
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+network = "main"
+display_decimals = 0
+
+[[TOKENS]]
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+currency = "50454E4E59530000000000000000000000000000"
+name = "Penny Fever Stars"
+desc = "PENNYS, the fungible Stars token from Penny Fever by Little Trends."
+icon = "https://instapic.fun/penny-fever/assets/restyle/game-sprites/pennies/star-token/front.webp"
+asset_class = "gaming"
+
+[[TOKENS.URLS]]
+url = "https://instapic.fun/save.html"
+type = "website"
+title = "Penny Fever VIP"
+
+[[TOKENS]]
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+currency = "50454E4E594D0000000000000000000000000000"
+name = "Penny Fever Moons"
+desc = "PENNYM, the fungible Moons token from Penny Fever by Little Trends."
+icon = "https://instapic.fun/penny-fever/assets/restyle/game-sprites/pennies/moon-penny/front.webp"
+asset_class = "gaming"
+
+[[TOKENS.URLS]]
+url = "https://instapic.fun/save.html"
+type = "website"
+title = "Penny Fever VIP"
+
+[[TOKENS]]
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+currency = "50454E4E59520000000000000000000000000000"
+name = "Penny Fever Roses"
+desc = "PENNYR, the fungible Roses token from Penny Fever by Little Trends."
+icon = "https://instapic.fun/penny-fever/assets/restyle/game-sprites/pennies/rose-penny/front.webp"
+asset_class = "gaming"
+
+[[TOKENS.URLS]]
+url = "https://instapic.fun/save.html"
+type = "website"
+title = "Penny Fever VIP"
+
+[[TOKENS]]
+issuer = "rNAUK9EmpAFhTLHXJ9uwfCQzeptAhwR2Ug"
+currency = "50454E4E59430000000000000000000000000000"
+name = "Penny Fever Crowns"
+desc = "PENNYC, the fungible Crowns token from Penny Fever by Little Trends."
+icon = "https://instapic.fun/penny-fever/assets/restyle/game-sprites/pennies/crown-token/front.webp"
+asset_class = "gaming"
+
+[[TOKENS.URLS]]
+url = "https://instapic.fun/save.html"
+type = "website"
+title = "Penny Fever VIP"
