@@ -9,6 +9,13 @@
 .aura-token-item h3{margin:0;font-size:.95rem;color:#5a2438}
 .aura-token-item img{width:6rem;height:6rem;object-fit:contain;background:transparent}
 .aura-token-item select,.aura-token-item button{width:100%;box-sizing:border-box}
+.aura-token-item label{width:100%;font-size:.78rem}
+.aura-token-item input[type="text"]{width:100%;box-sizing:border-box;min-height:44px;border:1px solid #c4a064;border-radius:6px;padding:.35rem;background:#fffaf0;color:#5a2438;font:inherit}
+.aura-token-item .aura-token-select{display:flex;gap:.4rem;align-items:center;text-align:left}
+.aura-token-select input{width:22px;height:22px;flex:0 0 auto}
+.aura-token-basket{display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center;padding:.5rem;border:1px solid #c4a064;border-radius:8px;background:#f7ecd6}
+.aura-token-basket p{width:100%}
+.aura-token-basket [data-token-selected]:not(:disabled){background:#315d3c;color:#fff8e9}
 .aura-token-item [data-token-buy]:not(:disabled){background:#315d3c;color:#fff8e9}
 .aura-token-wallet-card [data-token-signing]{text-align:center}
 .aura-token-wallet-card [data-token-signing] img{display:block;margin:.5rem auto}

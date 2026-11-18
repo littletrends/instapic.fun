@@ -17,6 +17,8 @@ const MESSAGES = {
   insufficient_xrp_after_reserve: 'The wallet needs enough XRP for the purchase, network fee and wallet reserve.',
   finish_token_request_before_disconnect: 'Finish or check the pending request before disconnecting.',
   wallet_signin_session_changed: 'That wallet sign-in belongs to an earlier VIP login. Wait for it to expire, then connect again.',
+  invalid_token_quantity: 'Enter a whole-token quantity greater than zero.',
+  token_batch_needs_review: 'The grouped trade needs checking. No replacement purchase has been started.',
 };
 
 function identity() {
@@ -44,6 +46,7 @@ function attach(overlay) {
     <progress data-token-loading aria-label="Checking wallet or preparing Xaman" hidden></progress>
     <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button></div>
     <div class="aura-token-pending" data-token-pending></div>
+    <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select full pack · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
     <div class="aura-token-grid" data-token-grid></div>
     <p class="aura-token-wallet-note">These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
     <button type="button" data-token-close>← Back to Tradeshow</button>
@@ -54,6 +57,33 @@ function attach(overlay) {
   const grid = find('[data-token-grid]'), signing = find('[data-token-signing]');
   let owner = null, revision = 0, busy = false, operation = '', timer = 0, controller = null;
   let checking = false;
+  const choices = new Map();
+  let catalogue = [];
+  function xrp(drops) {
+    const amount = BigInt(drops);
+    const fraction = String(amount % 1000000n).padStart(6, '0').replace(/0+$/, '');
+    return String(amount / 1000000n) + (fraction ? '.' + fraction : '');
+  }
+  function selectedItems() {
+    return catalogue.filter(token => choices.get(token.item)?.checked).map(token => {
+      const text = choices.get(token.item).quantity;
+      if (!/^[0-9]{1,15}$/.test(text)) throw Error('Enter a whole-token quantity greater than zero.');
+      const units = Number(text);
+      if (!Number.isSafeInteger(units) || units < 1 || units > token.quantity_limit) throw Error('Enter a valid whole-token quantity.');
+      if (units > token.available_units) throw Error(`${token.name}: that quantity is not available right now.`);
+      return {item: token.item, units};
+    });
+  }
+  function paintBasket() {
+    const buy = find('[data-token-selected]'), total = find('[data-token-total]');
+    try {
+      const items = selectedItems();
+      const drops = items.reduce((sum, row) => sum + BigInt(row.units) * BigInt(catalogue.find(token => token.item === row.item).drops_per_unit), 0n);
+      buy.disabled = busy || !!operation || !items.length;
+      buy.textContent = items.length ? `Buy selected (${items.length})` : 'Buy selected';
+      total.textContent = items.length ? `Maximum ${xrp(drops)} XRP + network fee. One grouped approval; receiving lines are included if needed.` : 'Tick the tokens you want to buy together.';
+    } catch (error) { buy.disabled = true; total.textContent = error.message; }
+  }
   const valid = version => version === revision && !panel.hidden && !overlay.hidden
     && owner?.email === identity()?.email && owner?.token === identity()?.token;
   function unlink() {
@@ -89,10 +119,12 @@ function attach(overlay) {
     if (FINISHED.has(data.state)) {
       clearTimeout(timer); unlink(); operation = '';
       message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
-        ? data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
+        ? data.kind === 'basket' ? 'Received ' + (data.received || []).map(row => `${Number(row.units).toLocaleString('en-AU')} ${catalogue.find(token => token.item === row.item)?.name || row.item}`).join(', ') + '.'
+        : data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
         : data.state === 'not_filled' ? 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.'
         : data.state === 'preflight_failed' ? 'This request did not reach Xaman. Check your wallet or stock before trying again.'
         : 'The signing request was declined or expired. Check your wallet before retrying.';
+      if (data.state === 'complete' && ['buy', 'basket'].includes(data.kind)) choices.clear();
       refresh(false); return;
     }
     timer = setTimeout(check, 4000);
@@ -109,18 +141,18 @@ function attach(overlay) {
       if (['token_receipt_pending', 'token_status_busy', 'token_request_rate_limited'].includes(error.code)) timer = setTimeout(check, 5000);
     } finally { if (valid(version)) { checking = false; loading.hidden = true; } }
   }
-  async function start(kind, item = '', bundles = 1) {
+  async function start(kind, item = '', bundles = 1, items = null) {
     if (busy || !valid(revision)) return;
     busy = true; const version = revision; loading.hidden = false; unlink();
     operation = crypto.randomUUID();
     message.textContent = 'Preparing your Xaman request. Please wait…';
-    panel.querySelectorAll('[data-token-buy],[data-token-trust],[data-token-connect]').forEach(button => { button.disabled = true; });
+    panel.querySelectorAll('[data-token-buy],[data-token-trust],[data-token-connect],[data-token-selected],[data-token-pack]').forEach(button => { button.disabled = true; });
     try {
-      const data = await post('/create', {operation, kind, ...(item ? {item, bundles} : {})}, version);
+      const data = await post('/create', {operation, kind, ...(items ? {items} : item ? {item, bundles} : {})}, version);
       if (valid(version)) showRequest(data);
     } catch (error) {
-      if (valid(version)) { fail(error); await refresh(false); }
-    } finally { if (valid(version)) busy = false; }
+      if (valid(version)) { busy = false; fail(error); await refresh(false); }
+    } finally { if (valid(version)) { busy = false; paintBasket(); } }
   }
   async function refresh(announce = true) {
     const version = revision;
@@ -133,6 +165,9 @@ function attach(overlay) {
       find('[data-token-connect]').hidden = !!data.wallet;
       find('[data-token-connect]').disabled = false;
       find('[data-token-disconnect]').hidden = !data.wallet;
+      find('.aura-token-basket').hidden = !data.wallet;
+      catalogue = data.tokens || [];
+      operation = (data.pending || []).find(row => row.id === operation)?.id || data.pending?.[0]?.id || '';
       grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
       for (const pending of data.pending || []) {
         const resume = document.createElement('button'); resume.type = 'button';
@@ -140,7 +175,7 @@ function attach(overlay) {
         resume.addEventListener('click', () => { operation = pending.id; showRequest(pending); check(); });
         find('[data-token-pending]').append(resume);
       }
-      for (const token of data.tokens || []) {
+      for (const token of catalogue) {
         const card = document.createElement('article'); card.className = 'aura-token-item';
         const image = document.createElement('img');
         if (['star-token','moon-penny','rose-penny','crown-token'].includes(token.item)) image.src = `./assets/restyle/game-sprites/pennies/${token.item}/front.webp`;
@@ -148,20 +183,37 @@ function attach(overlay) {
         const name = document.createElement('h3'); name.textContent = `${token.name} · ${token.code}`;
         const balance = document.createElement('p'); balance.textContent = `In wallet: ${Number(token.balance).toLocaleString('en-AU')}`;
         const price = document.createElement('p'); price.textContent = `${Number(token.bundle_units).toLocaleString('en-AU')} for up to ${token.bundle_xrp} XRP`;
-        const quantity = document.createElement('select'); quantity.setAttribute('aria-label', `${token.name} bundles`);
-        const max = Math.min(8, Math.max(0, Number(token.available_bundles) || 0));
-        for (let n = 1; n <= Math.max(1,max); n++) {
-          const option = document.createElement('option'); option.value = String(n);
-          option.textContent = `${n} bundle${n === 1 ? '' : 's'} · up to ${n * token.bundle_xrp} XRP`; quantity.append(option);
-        }
+        const stock = document.createElement('p'); stock.textContent = `Available: ${Number(token.available_units).toLocaleString('en-AU')}`;
+        const choice = choices.get(token.item) || {checked: false, quantity: String(token.bundle_units)};
+        choices.set(token.item, choice);
+        const label = document.createElement('label'); label.className = 'aura-token-select';
+        const include = document.createElement('input'); include.type = 'checkbox'; include.dataset.tokenInclude = token.item;
+        include.checked = choice.checked; include.disabled = !data.sales_enabled || !token.available_units || !!data.pending?.length;
+        label.append(include, document.createTextNode(' Include in basket'));
+        const quantityLabel = document.createElement('label'); quantityLabel.textContent = 'Tokens ';
+        const quantity = document.createElement('input'); quantity.type = 'text'; quantity.inputMode = 'numeric'; quantity.pattern = '[0-9]*';
+        quantity.value = choice.quantity; quantity.maxLength = 15; quantity.dataset.tokenQuantity = token.item;
+        quantity.setAttribute('aria-label', `${token.name} token quantity`); quantityLabel.append(quantity);
+        const full = document.createElement('button'); full.type = 'button'; full.textContent = 'Full bundle'; full.dataset.tokenFull = token.item;
+        const cost = document.createElement('p'); cost.className = 'aura-token-cost';
+        const update = () => {
+          choice.quantity = quantity.value.trim(); choice.checked = include.checked;
+          const validQuantity = /^[0-9]{1,15}$/.test(choice.quantity) && Number(choice.quantity) > 0 && Number(choice.quantity) <= token.quantity_limit;
+          const available = validQuantity && Number(choice.quantity) <= token.available_units;
+          cost.textContent = validQuantity ? `Maximum ${xrp(BigInt(choice.quantity) * BigInt(token.drops_per_unit))} XRP` : 'Enter a whole-token quantity.';
+          buy.disabled = busy || !!operation || !!data.pending?.length || !data.sales_enabled || !available;
+          paintBasket();
+        };
         const buy = document.createElement('button'); buy.type = 'button';
-        buy.textContent = !token.trustline ? 'Enable receiving' : !data.sales_enabled ? 'Sales not open' : !max ? 'Stock unavailable' : 'Buy with XRP';
-        buy.dataset[token.trustline ? 'tokenBuy' : 'tokenTrust'] = token.item;
-        buy.disabled = !!data.pending?.length || (token.trustline && (!data.sales_enabled || !max));
-        quantity.hidden = !token.trustline || !data.sales_enabled || !max;
-        buy.addEventListener('click', () => start(token.trustline ? 'buy' : 'trust', token.item, Number(quantity.value)));
-        card.append(image, name, balance, price, quantity, buy); grid.append(card);
+        buy.textContent = !data.sales_enabled ? 'Sales not open' : !token.available_units ? 'Stock unavailable' : 'Buy with XRP';
+        buy.dataset.tokenBuy = token.item;
+        quantity.addEventListener('input', update); include.addEventListener('change', update);
+        full.addEventListener('click', () => { quantity.value = String(token.bundle_units); update(); });
+        buy.addEventListener('click', () => start('basket', '', 1, [{item: token.item, units: Number(choice.quantity)}]));
+        card.append(image, name, balance, price, stock, quantityLabel, full, cost, label, buy); grid.append(card); update();
       }
+      find('[data-token-pack]').disabled = busy || !!data.pending?.length || !data.sales_enabled || catalogue.length !== 4 || catalogue.some(token => token.available_units < token.bundle_units);
+      paintBasket();
       if (announce) message.textContent = data.wallet ? 'Wallet balances checked. Choose a token bundle below.' : 'Connect your wallet to see your tokens.';
     } catch (error) { if (valid(version)) fail(error); }
     finally { if (valid(version)) loading.hidden = true; }
@@ -169,13 +221,22 @@ function attach(overlay) {
   entry.addEventListener('click', () => {
     clearTimeout(timer); controller?.abort(); revision++;
     owner = identity(); if (!owner) return;
+    choices.clear(); catalogue = [];
     controller = new AbortController(); panel.hidden = false; operation = ''; busy = checking = false; unlink();
     grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
     find('[data-token-address]').textContent = '';
+    find('.aura-token-basket').hidden = true; find('[data-token-pack]').disabled = true; paintBasket();
     find('[data-token-close]').focus(); refresh();
   });
   panel.querySelectorAll('[data-token-close]').forEach(button => button.addEventListener('click', close));
   find('[data-token-connect]').addEventListener('click', () => start('connect'));
+  find('[data-token-selected]').addEventListener('click', () => {
+    try { start('basket', '', 1, selectedItems()); } catch (error) { fail(error); }
+  });
+  find('[data-token-pack]').addEventListener('click', () => {
+    catalogue.forEach(token => choices.set(token.item, {checked: true, quantity: String(token.bundle_units)}));
+    refresh(false);
+  });
   find('[data-token-refresh]').addEventListener('click', () => operation ? check() : refresh());
   find('[data-token-check]').addEventListener('click', check);
   find('[data-token-disconnect]').addEventListener('click', async () => {
@@ -189,7 +250,7 @@ function attach(overlay) {
     if (panel.hidden || !['Escape','Tab'].includes(event.key)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (event.key === 'Escape') { close(); return; }
-    const controls = [...panel.querySelectorAll('button:not(:disabled),a[href],select')].filter(el => !el.closest('[hidden]'));
+    const controls = [...panel.querySelectorAll('button:not(:disabled),a[href],select,input:not(:disabled)')].filter(el => !el.closest('[hidden]'));
     const index = controls.indexOf(document.activeElement);
     controls[(index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length]?.focus();
   }, true);
