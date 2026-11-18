@@ -8,10 +8,12 @@ import { paperRail, makePaperEntrance, installCrewGuest, updateCrewGuest, FOYER_
 import { phoneLane } from "./phone-lane.js?v=keep-light-1";
 import { installPaperCrew, updatePaperCrew } from "./paper-crew.js?v=walk-fix-1";
 import { installIndividualVendors } from "./paper-vendors.js?v=wall-front-1";
-import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=mint-win-1";
+import {COUNTER, LOOP_START, makeVisibleTicketBooth, updateTicketBooth, extendPaperAlley, makePaperWalls, installTicketService, updateTicketService, paintAuraWallet} from "./paper-midway.js?v=tune-1";
 import {openTill, bankLoan, paintBankLoan} from "./ticket-till.js?v=bank-refresh-1";
 import { mountVipSpot } from "./vip-spot.js?v=silent-logout-2";
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from "./aura-tradeshow.js?v=tradeshow-cancel-1";
+// A verified purse refuses spends while paused (VIP sign-in lapsed or reconnecting), even with enough pennies.
+const pursePaused = need => !!window.PennyFeverVerified?.required && (Number(window.PennyFever?.pennies?.()) || 0) >= need;
 
 /* Deep-link from Felix: ?till=photo&pkg=FELIX_P1_STRIP or ?till=scrip&pkg=PF_ROLL&return=... */
 (function pfTillBootFromQuery() {
@@ -1576,7 +1578,7 @@ function bindHud() {
   });
   if (tillTrade) tillTrade.addEventListener("click", () => {
     const ok = window.PennyFever?.tradePenniesForTicket?.();
-    tillMessage = ok ? "One booth ticket from five pennies." : "Need five pennies for a ticket.";
+    tillMessage = ok ? "One booth ticket from five pennies." : pursePaused(5) ? "Your purse is paused — sign in again to trade." : "Need five pennies for a ticket.";
     tillMessageUntil = performance.now() + 4000;
     paintAuraWallet(el("pfStallCard"));
     if (ok && ticketDeskReturn) closeStallCard();
@@ -2547,7 +2549,7 @@ function handleGatePrompt() {
   const kind = laps === 0 ? "ticket" : "penny";
   if (!PF || typeof PF.admitAlleyLap !== "function" || !PF.admitAlleyLap(kind)) {
     if (kind === "penny") {
-      tillMessage = "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
+      tillMessage = pursePaused(1) ? "Your purse is paused — sign in again to pay for the walk." : "A penny for the next walk. Cash a booth ticket at Copper Falls for a five-penny stack.";
       tillMessageUntil = performance.now() + 7000;
     }
     auraDoorTaps = AURA_DOOR_TAPS_NEEDED - 1;

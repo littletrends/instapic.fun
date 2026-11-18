@@ -6,6 +6,8 @@ import {loadFramedPng,buildPapercut,setPapercutFace,showPapercutView} from './am
 import {stallViewIndex} from './stall-cutouts.js?v=aura-front-1';
 import {mountTill, openTill, closeTill, tillPinned, bankLoan, paintBankLoan} from './ticket-till.js?v=bank-refresh-1';
 import {openTradeshow, tradeshowBlocked, tradeshowSign} from './aura-tradeshow.js?v=tradeshow-cancel-1';
+// A verified purse refuses spends while paused (VIP sign-in lapsed or reconnecting), even with enough pennies.
+const pursePaused = need => !!window.PennyFeverVerified?.required && (Number(window.PennyFever?.pennies?.()) || 0) >= need;
 // Ticket service just inside the alley, clear of the foyer passage.
 export const COUNTER={x:-2.2,z:6.0};
 export const LOOP_START={x:0,z:3.5};
@@ -154,7 +156,7 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
    paintAuraWallet();
    return;
   }
-  note.textContent='Need five pennies for a ticket.';
+  note.textContent=pursePaused(5)?'Your purse is paused — sign in again to trade.':'Need five pennies for a ticket.';
   paintAuraWallet();
  };
  paintBankLoan();
@@ -210,7 +212,7 @@ export function installTicketService(player,aura,api){if(!paperRail)return;playe
     return;
   }
   auraDoorTaps=AURA_DOOR_TAPS_NEEDED-1;
-  note.textContent='Need a penny for the next walk. Trade five pennies for a ticket here, or buy a pack.';
+  note.textContent=pursePaused(1)?'Your purse is paused — sign in again to pay for the walk.':'Need a penny for the next walk. Trade five pennies for a ticket here, or buy a pack.';
  };
  window.addEventListener('pennyfever:statechange',()=>paintAuraWallet());
 }
