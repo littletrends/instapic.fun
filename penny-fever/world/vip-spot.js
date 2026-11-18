@@ -19,9 +19,10 @@ function verifiedBanking() {
   if (!VERIFIED_BANKING_RELEASE) return null;
   if (window.PennyFeverVerified) return window.PennyFeverVerified;
   if (!window.PennyFever?.applyVerifiedPurse) throw Error('The penny purse is still loading.');
-  const service = createVerifiedBanking({api: window.PennyFever, identity: guestApi(), loan: bankLoan, onError: () => {
+  const service = createVerifiedBanking({api: window.PennyFever, identity: guestApi(), loan: bankLoan, onError: error => {
     const hint = document.getElementById('pfVipDoorHint');
     if (hint) hint.textContent = 'Your verified purse is waiting to reconnect. Your saved balance is preserved; reload or sign in again to continue.';
+    pursePaused(error);
   }});
   const state = () => window.PennyFever.getState();
   window.PennyFeverVerifiedPurse = {
@@ -73,6 +74,15 @@ function markLapsed(email) {
   paintChip();
 }
 
+// The verified purse refuses every spend, trade and pickup once the VIP
+// sign-in it was opened with has ended or changed. Say so instead of failing quietly.
+function pursePaused(error) {
+  const code = String(error?.message || error || "");
+  if (code !== "verification_required" && code !== "verified_identity_changed") return;
+  if (!guestEmail() || (sessionLapsed && document.getElementById("pfVipLapse"))) return;
+  markLapsed(guestEmail());
+}
+
 function paintLapseBanner() {
   const id = guestApi()?.read?.() || {};
   const show = !lapseBannerHidden && !!(id.verified && id.email) && !signedIn();
@@ -82,7 +92,7 @@ function paintLapseBanner() {
   bar = document.createElement("div"); bar.id = "pfVipLapse"; bar.setAttribute("role", "status");
   bar.style.cssText = "position:fixed;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);z-index:9999;width:max-content;max-width:min(94vw,520px);padding:10px 12px;border:2px solid #d9aa66;border-radius:12px;background:#291d35;color:#fff3df;font:14px/1.4 system-ui;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center;";
   const msg = document.createElement("span");
-  msg.textContent = "Your VIP sign-in timed out, so VIP saving is paused. Your pennies and treasures are kept on this phone.";
+  msg.textContent = "Your VIP sign-in timed out, so your purse is paused. Sign in again to spend, trade or pick up pennies. Your balance is kept.";
   const go = document.createElement("a"); go.href = vipJoinUrl(); go.textContent = "Sign in again";
   go.style.cssText = "flex:none;padding:7px 10px;border-radius:8px;background:#ffb4d2;color:#291d35;font-weight:700;text-decoration:none;";
   go.addEventListener("click", () => { try { sessionStorage.setItem(PENDING_KEY, JSON.stringify(snapshot())); } catch {} });
