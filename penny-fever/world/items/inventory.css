@@ -34,6 +34,12 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
 .pocket-filters{display:flex;gap:4px}
 .pocket-filters button{min-height:36px;padding:6px 12px;border-radius:999px;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .pocket-filters button[aria-pressed=true]{background:#6b2f3c;color:#fff3d6;border-color:#e2c48a}
+.pocket-filters{overflow-x:auto;flex-wrap:nowrap;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pocket-filters::-webkit-scrollbar{display:none}
+.pocket-filters button{flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}
+.treasure-book .pocket-mint{background:#304537;color:#fff0cd;border-color:#b49450}
+.treasure-book .pocket-mint:hover{background:#3d5a46}
+.treasure-book .pocket-search-toggle{display:inline-grid;place-items:center;width:40px;min-width:40px;height:36px;min-height:36px;padding:0;border-radius:999px;background:#fff8e9;color:#3d2c1f}
 .shelf-back{background:#3a2a22;color:#fff0cd;border-color:#c4a064;font:700 13px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
 
 .shelf-view{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:
@@ -190,7 +196,7 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
   .pocket-header h1{font-size:22px}
   .pocket-header p{font-size:13px}
   .pocket-menu{padding:0 12px 10px;align-items:stretch}
-  .pocket-tabs{width:100%}
+  .pocket-tabs{width:auto;flex:1 1 0;min-width:0}
   .pocket-tabs button{flex:1}
   .pocket-body.is-tree-spread:not(.has-stall) .is-right{display:none}
   .pocket-body.is-tree-spread.has-stall .treasure-tree{display:none}
@@ -206,7 +212,7 @@ body[data-restyle=paper] .treasure-book button{border-radius:8px;box-shadow:none
   #bookPane .pocket-count{grid-area:count;margin:0;font-size:11px}
   #bookPane .pocket-blurb{display:none}
   .pocket-filters{width:100%}
-  .pocket-filters button{flex:1}
+  .pocket-filters button{flex:1 0 auto}
   .shelf-intro{font-size:14px;margin:0 4px 10px}
   .stall-list{gap:8px}
   .treasure-book .stall-row{grid-template-columns:64px minmax(0,1fr);grid-template-areas:"cover copy" "cover pips";padding:8px 10px}

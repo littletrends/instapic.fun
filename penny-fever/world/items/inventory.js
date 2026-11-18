@@ -136,11 +136,13 @@ function mount() {
           <button type="button" data-tab="collection" aria-selected="true">Collection</button>
           <button type="button" data-tab="games" aria-selected="false">Games</button>
         </div>
-        <input type="search" id="treasureSearch" placeholder="Find a book or keepsake" aria-label="Search treasures">
+        <button type="button" class="pocket-search-toggle" id="treasureSearchToggle" aria-label="Search treasures" aria-controls="treasureSearch" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+        <input type="search" id="treasureSearch" placeholder="Find a book or keepsake" aria-label="Search treasures" hidden>
         <div class="pocket-filters" role="group" aria-label="Filter prizes">
           <button type="button" data-filter="all" aria-pressed="true">All</button>
           <button type="button" data-filter="found" aria-pressed="false">Found</button>
           <button type="button" data-filter="missing" aria-pressed="false">Waiting</button>
+          <button type="button" class="pocket-mint" data-mint-tradeshow aria-label="Mint at Aura’s VIP NFT Tradeshow">Mint</button>
         </div>
       </div>
       <div class="shelf-view" id="treasureShelf">
@@ -253,6 +255,30 @@ function mount() {
   $('stallCoverBtn').addEventListener('click', inspectFocusCover);
   dialog.addEventListener('close', close);
   $('treasureSearch').addEventListener('input', render);
+  const searchBox = $('treasureSearch'), searchToggle = $('treasureSearchToggle');
+  const showSearch = on => { searchBox.hidden = !on; searchToggle.setAttribute('aria-expanded', String(on)); };
+  // Keep focus in an open search so tapping the icon again closes it rather than reopening it.
+  searchToggle.addEventListener('pointerdown', e => { if (!searchBox.hidden) e.preventDefault(); });
+  searchToggle.addEventListener('click', () => {
+    if (searchBox.hidden) { showSearch(true); searchBox.focus(); }
+    else if (!searchBox.value) { showSearch(false); searchToggle.focus(); }
+    else searchBox.focus();
+  });
+  searchBox.addEventListener('blur', () => { if (!searchBox.value) showSearch(false); });
+  searchBox.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !searchBox.value) return;
+    e.preventDefault(); searchBox.value = ''; render(); showSearch(false); searchToggle.focus();
+  });
+  dialog.querySelector('[data-mint-tradeshow]').addEventListener('click', () => {
+    const world = globalThis.PennyFeverWorld;
+    const notice = $('collectionLockNotice');
+    const say = message => { if (notice) { notice.textContent = message; notice.hidden = false; } };
+    if (!world?.openTradeshowDoor) { say('Mint at Aura’s VIP NFT Tradeshow: walk the alley to Aura’s ticket booth.'); return; }
+    const blocked = world.tradeshowDoorBlocked?.();
+    if (blocked) { say(blocked); return; }
+    dialog.close();
+    world.openTradeshowDoor();
+  });
   dialog.querySelector('.pocket-tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
     tab = b.dataset.tab;

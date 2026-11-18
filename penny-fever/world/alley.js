@@ -1023,6 +1023,9 @@ const api = {
   enterStall: enterStallById,
   step,
   stepOut,
+  // Same VIP gate as the ticket booth's "VIP NFT Tradeshow" button (used by the Treasures book Mint button).
+  tradeshowDoorBlocked: () => (tradeshowBlocked() ? tradeshowSign() : ""),
+  openTradeshowDoor: enterTradeshowDoor,
 };
 
 window.PennyFeverWorld = api;
@@ -1061,6 +1064,16 @@ let lastSaveReminderAt = 0;
 try { lastSaveReminderAt = Number(localStorage.getItem('pf-save-reminder-at')) || 0; } catch {}
 function vipSignedIn() {
   try { return !!window.InstapicGuestIdentity?.isVerifiedSessionActive?.(); } catch { return false; }
+}
+/** Ticket booth door into Aura's VIP NFT Tradeshow: closed park sign, VIP join prompt, or the Tradeshow. */
+function enterTradeshowDoor() {
+  if (tradeshowBlocked()) return {ok: false, message: tradeshowSign()};
+  if (!vipSignedIn()) {
+    openAuraVipJoinDialog();
+    return {ok: false, joining: true};
+  }
+  closeStallCard();
+  return {ok: openTradeshow() !== false};
 }
 function openAuraVipJoinDialog() {
   let dialog = document.getElementById('pfAuraVipJoinDialog');
@@ -1551,18 +1564,12 @@ function bindHud() {
     openTill({pin: true});
   });
   if (tillTradeshow) tillTradeshow.addEventListener("click", () => {
-    if (tradeshowBlocked()) {
-      tillMessage = tradeshowSign();
+    const door = enterTradeshowDoor();
+    if (door.message) {
+      tillMessage = door.message;
       tillMessageUntil = performance.now() + 5000;
       if (el("pfStallCardLine")) el("pfStallCardLine").textContent = tillMessage;
-      return;
     }
-    if (!vipSignedIn()) {
-      openAuraVipJoinDialog();
-      return;
-    }
-    closeStallCard();
-    openTradeshow();
   });
   window.addEventListener("pf-till-closed", () => {
     if (ticketDeskReturn) closeStallCard();
