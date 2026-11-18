@@ -1,3 +1,4 @@
+import {paintEconomy} from './token-economy.js?v=token-economy-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -46,6 +47,7 @@ function attach(overlay) {
     <progress data-token-loading aria-label="Checking wallet or preparing Xaman" hidden></progress>
     <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button></div>
     <div class="aura-token-pending" data-token-pending></div>
+    <div class="aura-token-economy" data-token-economy></div>
     <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select full pack · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
     <div class="aura-token-grid" data-token-grid></div>
     <p class="aura-token-wallet-note">These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
@@ -59,6 +61,46 @@ function attach(overlay) {
   let checking = false;
   const choices = new Map();
   let catalogue = [];
+  let requestedItem = '';
+  const tokenCodes = {'star-token':'PENNYS','moon-penny':'PENNYM','rose-penny':'PENNYR','crown-token':'PENNYC'};
+  const specials = new Set(['penny-collector-book','felix-vendor-portrait-book','aura-keepsake']);
+  function addShortcuts() {
+    for (const card of overlay.querySelectorAll('.aura-tradeshow-card[data-item]')) {
+      const item = card.dataset.item;
+      if ((!tokenCodes[item] && !specials.has(item)) || card.querySelector('[data-economy-shortcut]')) continue;
+      const button = document.createElement('button'); button.type = 'button';
+      button.className = 'aura-tradeshow-play'; button.dataset.economyShortcut = item;
+      button.textContent = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
+      card.append(button);
+    }
+    const inspect = overlay.querySelector('#auraTradeshowInspect');
+    const item = inspect?.querySelector('[data-inspect-buy]')?.dataset.buy;
+    if (inspect) {
+      let button = inspect.querySelector('[data-economy-shortcut]');
+      if (!button) {
+        button = document.createElement('button'); button.type = 'button';
+        button.className = 'aura-tradeshow-play'; button.dataset.economyShortcut = '';
+        inspect.querySelector('[data-inspect-play]')?.insertAdjacentElement('afterend', button);
+      }
+      button.hidden = !tokenCodes[item] && !specials.has(item);
+      button.dataset.economyShortcut = item || '';
+      const label = tokenCodes[item] ? `Buy ${tokenCodes[item]} · Xaman` : 'New token requirements';
+      if (button.textContent !== label) button.textContent = label;
+    }
+  }
+  overlay.addEventListener('click', event => {
+    const button = event.target.closest('[data-economy-shortcut]');
+    if (!button) return;
+    event.preventDefault(); requestedItem = button.dataset.economyShortcut; entry.click();
+  });
+  new MutationObserver(addShortcuts).observe(overlay, {childList: true, subtree: true});
+  addShortcuts();
+  panel.addEventListener('click', event => {
+    if (!event.target.closest('[data-token-entrance]')) return;
+    const entrance = document.getElementById('pfWorldLeave');
+    if (!entrance) { message.textContent = 'Return to the alley to visit Aura’s entrance booth.'; return; }
+    close(); window.AuraTradeshow?.close?.({stayInAlley: true}); entrance.click();
+  });
   function xrp(drops) {
     const amount = BigInt(drops);
     const fraction = String(amount % 1000000n).padStart(6, '0').replace(/0+$/, '');
@@ -92,7 +134,7 @@ function attach(overlay) {
   }
   function close() {
     clearTimeout(timer); controller?.abort(); revision++; busy = checking = false;
-    panel.hidden = true; operation = ''; owner = null; unlink(); entry.focus();
+    panel.hidden = true; operation = ''; owner = null; requestedItem = ''; unlink(); entry.focus();
   }
   function fail(error) { message.textContent = error.message; loading.hidden = true; }
   async function post(path, body, version) {
@@ -167,6 +209,7 @@ function attach(overlay) {
       find('[data-token-disconnect]').hidden = !data.wallet;
       find('.aura-token-basket').hidden = !data.wallet;
       catalogue = data.tokens || [];
+      paintEconomy(find('[data-token-economy]'), data);
       operation = (data.pending || []).find(row => row.id === operation)?.id || data.pending?.[0]?.id || '';
       grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
       for (const pending of data.pending || []) {
@@ -176,7 +219,7 @@ function attach(overlay) {
         find('[data-token-pending]').append(resume);
       }
       for (const token of catalogue) {
-        const card = document.createElement('article'); card.className = 'aura-token-item';
+        const card = document.createElement('article'); card.className = 'aura-token-item'; card.dataset.tokenItem = token.item;
         const image = document.createElement('img');
         if (['star-token','moon-penny','rose-penny','crown-token'].includes(token.item)) image.src = `./assets/restyle/game-sprites/pennies/${token.item}/front.webp`;
         image.alt = token.name; image.width = image.height = 96;
@@ -214,6 +257,15 @@ function attach(overlay) {
       }
       find('[data-token-pack]').disabled = busy || !!data.pending?.length || !data.sales_enabled || catalogue.length !== 4 || catalogue.some(token => token.available_units < token.bundle_units);
       paintBasket();
+      if (requestedItem) {
+        const target = [...panel.querySelectorAll('[data-token-item],[data-token-recipe]')].find(node => (node.dataset.tokenItem || node.dataset.tokenRecipe) === requestedItem);
+        if (target) {
+          if (target.tagName === 'DETAILS') target.open = true;
+          target.scrollIntoView({block: 'nearest'});
+          target.querySelector('input,summary')?.focus({preventScroll: true});
+          requestedItem = '';
+        }
+      }
       if (announce) message.textContent = data.wallet ? 'Wallet balances checked. Choose a token bundle below.' : 'Connect your wallet to see your tokens.';
     } catch (error) { if (valid(version)) fail(error); }
     finally { if (valid(version)) loading.hidden = true; }
@@ -223,10 +275,13 @@ function attach(overlay) {
     owner = identity(); if (!owner) return;
     choices.clear(); catalogue = [];
     controller = new AbortController(); panel.hidden = false; operation = ''; busy = checking = false; unlink();
-    grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
+    grid.replaceChildren(); find('[data-token-pending]').replaceChildren(); find('[data-token-economy]').replaceChildren();
     find('[data-token-address]').textContent = '';
     find('.aura-token-basket').hidden = true; find('[data-token-pack]').disabled = true; paintBasket();
     find('[data-token-close]').focus(); refresh();
+  });
+  window.addEventListener('pennyfever:token-shop-ready', event => {
+    requestedItem = String(event.detail?.item || ''); entry.click();
   });
   panel.querySelectorAll('[data-token-close]').forEach(button => button.addEventListener('click', close));
   find('[data-token-connect]').addEventListener('click', () => start('connect'));
@@ -268,3 +323,16 @@ function discover() {
 const observer = new MutationObserver(discover);
 observer.observe(document.body, {childList: true});
 discover();
+
+window.addEventListener('pennyfever:token-shop', async event => {
+  if (!identity()) return;
+  const item = String(event.detail?.item || '');
+  try {
+    const show = window.AuraTradeshow || await import('./aura-tradeshow.js?v=tradeshow-cancel-1').then(module => ({open: module.openTradeshow}));
+    if (!show.open()) return;
+    discover();
+    window.dispatchEvent(new CustomEvent('pennyfever:token-shop-ready', {detail: {item}}));
+  } catch {
+    window.PennyFeverInventory?.open?.(item);
+  }
+});

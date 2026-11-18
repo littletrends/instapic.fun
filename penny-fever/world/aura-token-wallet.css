@@ -22,3 +22,13 @@
 .aura-token-wallet-card .aura-token-wallet-note{font-size:.72rem;line-height:1.4}
 .aura-token-wallet-card [hidden]{display:none!important}
 @media(max-width:480px){.aura-token-panel{padding:.4rem}.aura-token-wallet-card{padding:3rem .55rem .65rem;max-height:calc(100dvh - 1rem)}.aura-token-grid{gap:.4rem}.aura-token-item{padding:.4rem}.aura-token-item h3{font-size:.82rem}.aura-token-item p{font-size:.72rem}.aura-token-item select,.aura-token-item button{font-size:.72rem;padding:.35rem .2rem}}
+
+.aura-token-economy{font-size:.8rem;text-align:left}
+.aura-token-economy h3{margin:.6rem 0 .3rem}
+.aura-token-economy details{padding:.5rem 0;border-bottom:1px solid #d4bd91}
+.aura-token-economy summary{cursor:pointer;font-weight:bold;min-height:32px}
+.aura-token-economy table{width:100%;border-collapse:collapse;font-size:.72rem;table-layout:fixed}
+.aura-token-economy caption{text-align:left;padding:.4rem 0}
+.aura-token-economy th,.aura-token-economy td{padding:.35rem .15rem;text-align:right;overflow-wrap:anywhere;vertical-align:top}
+.aura-token-economy th:first-child{text-align:left}
+.aura-token-game-purse{padding:.5rem;border:1px solid #d4bd91;border-radius:8px;background:#f7ecd6}

@@ -201,6 +201,7 @@ function mount() {
             <button type="button" id="pocketBack">← Back to the page</button>
             <button type="button" id="treasureOpen" aria-expanded="false" hidden>Open</button>
             <button type="button" id="treasurePunch" hidden>Show punched ticket</button>
+            <button type="button" id="treasurePurchase" hidden></button>
             <button type="button" id="treasureRetry" hidden>Try loading again</button>
           </div>
         </aside>
@@ -317,6 +318,22 @@ function mount() {
     if (studio && current?.id === 'admission-ticket') select(current.id, !current.punched);
   });
   $('treasureRetry').addEventListener('click', () => { if (current) select(current.id); });
+  $('treasurePurchase').addEventListener('click', () => {
+    const id = current?.id;
+    if (['everyday-penny','five-penny-stack','ticket-roll','admission-ticket'].includes(id)) {
+      const entrance = $('pfWorldLeave');
+      if (!entrance) { text('treasureDetail', 'Return to the alley to visit Aura’s entrance booth.'); return; }
+      dialog.addEventListener('close', () => entrance.click(), {once: true});
+      dialog.close(); return;
+    }
+    if (!window.InstapicGuestIdentity?.isVerifiedSessionActive?.()) {
+      text('treasureDetail', 'Sign into VIP to connect Xaman and view ledger tokens at the Tradeshow.'); return;
+    }
+    dialog.addEventListener('close', () => {
+      window.dispatchEvent(new CustomEvent('pennyfever:token-shop', {detail: {item: id}}));
+    }, {once: true});
+    dialog.close();
+  });
 
   window.addEventListener('pennyfever:statechange', e => {
     if (!dialog.open) return;
@@ -989,6 +1006,13 @@ function describe(item) {
           : 'The purse is yours. Pack five pennies to keep a bundle out of a full dump.')
         : item.hint);
   paintConvert(item);
+  const everyday = ['everyday-penny','five-penny-stack','ticket-roll','admission-ticket'].includes(item.id);
+  const token = ['star-token','moon-penny','rose-penny','crown-token'].includes(item.id);
+  const special = ['penny-collector-book','felix-vendor-portrait-book','aura-keepsake'].includes(item.id);
+  const purchase = $('treasurePurchase');
+  purchase.hidden = studio || !(everyday || token || special);
+  purchase.textContent = everyday ? 'Go to Aura’s entrance booth'
+    : token ? 'Buy ledger tokens · Xaman' : 'View new token requirements';
   const dollPage = {
     'garden-party-book': 'assets/restyle/paper-dolls/pages/garden.jpg',
     'seaside-day-book': 'assets/restyle/paper-dolls/pages/seaside.jpg',
