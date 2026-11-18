@@ -1878,7 +1878,8 @@ function applyTillState(till, data, ctx) {
   }
   if (state.allowRetry) {
     if (ownerMint) ownerMintOperations.delete(account + ':' + id);
-    pendingCheckouts.delete(id);
+    const hadPending = pendingCheckouts.delete(id);
+    if (hadPending) loadRewardMint(account, eligibilityRevision).then(() => paint());
   }
   if (['cancelled', 'expired'].includes(state.phase)) stopTillTimer();
   if (['cancelled', 'expired'].includes(state.phase)
