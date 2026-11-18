@@ -1,0 +1,209 @@
+import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
+
+const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
+const FINISHED = new Set(['complete', 'verified', 'rejected', 'expired', 'not_filled', 'preflight_failed']);
+const MESSAGES = {
+  token_checkout_not_open: 'Wallet connection is not open yet. Please try again later.',
+  token_sales_not_open: 'Token purchases are not open yet.',
+  token_bundle_unavailable: 'That bundle is not available from Aura’s stock right now.',
+  vip_signin_required: 'Please sign into VIP again.',
+  resume_existing_token_request: 'Finish or check your existing token request first.',
+  token_request_needs_review: 'This request needs checking. No replacement payment has been started.',
+  token_receipt_pending: 'Waiting for the ledger to confirm. Keep this request and check again.',
+  token_status_busy: 'Your request is already being checked. Please wait a moment.',
+  token_request_rate_limited: 'Please wait a moment before checking again.',
+  different_paying_wallet: 'Use the wallet connected to this VIP account.',
+  mainnet_wallet_required: 'Choose XRPL Mainnet in Xaman.',
+  insufficient_xrp_after_reserve: 'The wallet needs enough XRP for the purchase, network fee and wallet reserve.',
+  finish_token_request_before_disconnect: 'Finish or check the pending request before disconnecting.',
+  wallet_signin_session_changed: 'That wallet sign-in belongs to an earlier VIP login. Wait for it to expire, then connect again.',
+};
+
+function identity() {
+  const provider = window.InstapicGuestIdentity;
+  if (!provider?.isVerifiedSessionActive?.()) return null;
+  const record = provider.read();
+  return {email: String(record.email || '').trim().toLowerCase(), token: String(record.session_token || '')};
+}
+
+function attach(overlay) {
+  if (overlay.dataset.tokenWalletMounted) return;
+  overlay.dataset.tokenWalletMounted = 'true';
+  const entry = document.createElement('button');
+  entry.type = 'button'; entry.textContent = 'Wallet / Tokens'; entry.dataset.tokenWalletOpen = '';
+  overlay.querySelector('.aura-tradeshow-quick')?.append(entry);
+  const panel = document.createElement('div');
+  panel.className = 'aura-xrp-till aura-token-panel'; panel.hidden = true;
+  panel.dataset.tokenWalletPanel = '';
+  panel.innerHTML = `<section class="aura-xrp-till-card aura-token-wallet-card" role="dialog" aria-modal="true" aria-labelledby="auraTokenWalletTitle">
+    <button type="button" class="aura-xrp-till-close" data-token-close aria-label="Back to Tradeshow">×</button>
+    <h2 id="auraTokenWalletTitle">Wallet &amp; tokens</h2>
+    <p data-token-address></p>
+    <div class="aura-token-actions"><button type="button" data-token-connect>Connect Xaman</button><button type="button" data-token-refresh>Check wallet</button><button type="button" data-token-disconnect hidden>Disconnect</button></div>
+    <p data-token-message role="status" aria-live="polite"></p>
+    <progress data-token-loading aria-label="Checking wallet or preparing Xaman" hidden></progress>
+    <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button></div>
+    <div class="aura-token-pending" data-token-pending></div>
+    <div class="aura-token-grid" data-token-grid></div>
+    <p class="aura-token-wallet-note">These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
+    <button type="button" data-token-close>← Back to Tradeshow</button>
+  </section>`;
+  overlay.append(panel);
+  const find = selector => panel.querySelector(selector);
+  const message = find('[data-token-message]'), loading = find('[data-token-loading]');
+  const grid = find('[data-token-grid]'), signing = find('[data-token-signing]');
+  let owner = null, revision = 0, busy = false, operation = '', timer = 0, controller = null;
+  let checking = false;
+  const valid = version => version === revision && !panel.hidden && !overlay.hidden
+    && owner?.email === identity()?.email && owner?.token === identity()?.token;
+  function unlink() {
+    signing.hidden = true;
+    find('[data-token-link]').removeAttribute('href'); find('[data-token-qr]').removeAttribute('src');
+  }
+  function close() {
+    clearTimeout(timer); controller?.abort(); revision++; busy = checking = false;
+    panel.hidden = true; operation = ''; owner = null; unlink(); entry.focus();
+  }
+  function fail(error) { message.textContent = error.message; loading.hidden = true; }
+  async function post(path, body, version) {
+    if (!valid(version)) throw Error('Please open your current VIP wallet again.');
+    const response = await fetch(API + path, {method: 'POST', cache: 'no-store', redirect: 'error',
+      signal: controller.signal, headers: {'Content-Type': 'application/json', Authorization: `Bearer ${owner.token}`},
+      body: JSON.stringify({email: owner.email, ...body})});
+    const data = await response.json();
+    if (!response.ok || data?.ok !== true) throw Object.assign(Error(MESSAGES[data?.error] || 'Could not check this token request. Please try Check / continue.'), {code: data?.error});
+    return data;
+  }
+  function showRequest(data) {
+    operation = data.id;
+    unlink();
+    if (typeof data.deep_link === 'string' && /^https:\/\/(?:xumm|xaman)\.app\/sign\/[0-9a-f-]{36}$/.test(data.deep_link)) {
+      find('[data-token-link]').href = data.deep_link;
+      find('[data-token-qr]').src = qrDataUrl(data.deep_link, 5, 8);
+      signing.hidden = false;
+    }
+    loading.hidden = true;
+    message.textContent = data.kind === 'connect' ? 'Choose your wallet on XRPL Mainnet and approve SignIn. This costs no XRP.'
+      : data.kind === 'trust' ? 'Approve the receiving line in Xaman. A network fee applies and XRP is held as wallet reserve; no tokens are purchased.'
+      : 'Review the token quantity and maximum XRP price in Xaman. Tokens and payment exchange together. Return here after approval.';
+    if (FINISHED.has(data.state)) {
+      clearTimeout(timer); unlink(); operation = '';
+      message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
+        ? data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
+        : data.state === 'not_filled' ? 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.'
+        : data.state === 'preflight_failed' ? 'This request did not reach Xaman. Check your wallet or stock before trying again.'
+        : 'The signing request was declined or expired. Check your wallet before retrying.';
+      refresh(false); return;
+    }
+    timer = setTimeout(check, 4000);
+  }
+  async function check() {
+    if (!operation || checking || !valid(revision)) return;
+    clearTimeout(timer); const version = revision; checking = true; loading.hidden = false;
+    try {
+      const data = await post('/status', {operation}, version);
+      if (valid(version)) showRequest(data);
+    } catch (error) {
+      if (!valid(version)) return;
+      fail(error);
+      if (['token_receipt_pending', 'token_status_busy', 'token_request_rate_limited'].includes(error.code)) timer = setTimeout(check, 5000);
+    } finally { if (valid(version)) { checking = false; loading.hidden = true; } }
+  }
+  async function start(kind, item = '', bundles = 1) {
+    if (busy || !valid(revision)) return;
+    busy = true; const version = revision; loading.hidden = false; unlink();
+    operation = crypto.randomUUID();
+    message.textContent = 'Preparing your Xaman request. Please wait…';
+    panel.querySelectorAll('[data-token-buy],[data-token-trust],[data-token-connect]').forEach(button => { button.disabled = true; });
+    try {
+      const data = await post('/create', {operation, kind, ...(item ? {item, bundles} : {})}, version);
+      if (valid(version)) showRequest(data);
+    } catch (error) {
+      if (valid(version)) { fail(error); await refresh(false); }
+    } finally { if (valid(version)) busy = false; }
+  }
+  async function refresh(announce = true) {
+    const version = revision;
+    if (!valid(version)) return;
+    if (announce) { loading.hidden = false; message.textContent = 'Checking your connected wallet and token stock…'; }
+    try {
+      const data = await post('/catalogue', {}, version);
+      if (!valid(version)) return;
+      find('[data-token-address]').textContent = data.wallet || 'Connect the Xaman wallet you want to use for tokens.';
+      find('[data-token-connect]').hidden = !!data.wallet;
+      find('[data-token-connect]').disabled = false;
+      find('[data-token-disconnect]').hidden = !data.wallet;
+      grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
+      for (const pending of data.pending || []) {
+        const resume = document.createElement('button'); resume.type = 'button';
+        resume.textContent = 'Resume ' + (pending.kind === 'connect' ? 'wallet sign-in' : pending.kind === 'trust' ? 'receiving line' : 'token purchase');
+        resume.addEventListener('click', () => { operation = pending.id; showRequest(pending); check(); });
+        find('[data-token-pending]').append(resume);
+      }
+      for (const token of data.tokens || []) {
+        const card = document.createElement('article'); card.className = 'aura-token-item';
+        const image = document.createElement('img');
+        if (['star-token','moon-penny','rose-penny','crown-token'].includes(token.item)) image.src = `./assets/restyle/game-sprites/pennies/${token.item}/front.webp`;
+        image.alt = token.name; image.width = image.height = 96;
+        const name = document.createElement('h3'); name.textContent = `${token.name} · ${token.code}`;
+        const balance = document.createElement('p'); balance.textContent = `In wallet: ${Number(token.balance).toLocaleString('en-AU')}`;
+        const price = document.createElement('p'); price.textContent = `${Number(token.bundle_units).toLocaleString('en-AU')} for up to ${token.bundle_xrp} XRP`;
+        const quantity = document.createElement('select'); quantity.setAttribute('aria-label', `${token.name} bundles`);
+        const max = Math.min(8, Math.max(0, Number(token.available_bundles) || 0));
+        for (let n = 1; n <= Math.max(1,max); n++) {
+          const option = document.createElement('option'); option.value = String(n);
+          option.textContent = `${n} bundle${n === 1 ? '' : 's'} · up to ${n * token.bundle_xrp} XRP`; quantity.append(option);
+        }
+        const buy = document.createElement('button'); buy.type = 'button';
+        buy.textContent = !token.trustline ? 'Enable receiving' : !data.sales_enabled ? 'Sales not open' : !max ? 'Stock unavailable' : 'Buy with XRP';
+        buy.dataset[token.trustline ? 'tokenBuy' : 'tokenTrust'] = token.item;
+        buy.disabled = !!data.pending?.length || (token.trustline && (!data.sales_enabled || !max));
+        quantity.hidden = !token.trustline || !data.sales_enabled || !max;
+        buy.addEventListener('click', () => start(token.trustline ? 'buy' : 'trust', token.item, Number(quantity.value)));
+        card.append(image, name, balance, price, quantity, buy); grid.append(card);
+      }
+      if (announce) message.textContent = data.wallet ? 'Wallet balances checked. Choose a token bundle below.' : 'Connect your wallet to see your tokens.';
+    } catch (error) { if (valid(version)) fail(error); }
+    finally { if (valid(version)) loading.hidden = true; }
+  }
+  entry.addEventListener('click', () => {
+    clearTimeout(timer); controller?.abort(); revision++;
+    owner = identity(); if (!owner) return;
+    controller = new AbortController(); panel.hidden = false; operation = ''; busy = checking = false; unlink();
+    grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
+    find('[data-token-address]').textContent = '';
+    find('[data-token-close]').focus(); refresh();
+  });
+  panel.querySelectorAll('[data-token-close]').forEach(button => button.addEventListener('click', close));
+  find('[data-token-connect]').addEventListener('click', () => start('connect'));
+  find('[data-token-refresh]').addEventListener('click', () => operation ? check() : refresh());
+  find('[data-token-check]').addEventListener('click', check);
+  find('[data-token-disconnect]').addEventListener('click', async () => {
+    const version = revision;
+    try { await post('/disconnect', {}, version); if (valid(version)) refresh(); }
+    catch (error) { if (valid(version)) fail(error); }
+  });
+  // Window capture precedes the existing NFT dialog's document capture. Handle
+  // only this panel's navigation keys and leave all existing handlers intact.
+  window.addEventListener('keydown', event => {
+    if (panel.hidden || !['Escape','Tab'].includes(event.key)) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (event.key === 'Escape') { close(); return; }
+    const controls = [...panel.querySelectorAll('button:not(:disabled),a[href],select')].filter(el => !el.closest('[hidden]'));
+    const index = controls.indexOf(document.activeElement);
+    controls[(index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length]?.focus();
+  }, true);
+  new MutationObserver(() => { if (overlay.hidden && !panel.hidden) close(); }).observe(overlay, {attributes: true, attributeFilter: ['hidden']});
+  function wake() { if (!panel.hidden && !valid(revision)) close(); else if (!panel.hidden && operation && document.visibilityState !== 'hidden') check(); }
+  window.addEventListener('focus', wake); window.addEventListener('storage', wake);
+  document.addEventListener('visibilitychange', wake);
+  setInterval(() => { if (!panel.hidden && !valid(revision)) close(); }, 1000);
+}
+
+function discover() {
+  const overlay = document.querySelector('.aura-tradeshow');
+  if (overlay) { attach(overlay); observer.disconnect(); }
+}
+const observer = new MutationObserver(discover);
+observer.observe(document.body, {childList: true});
+discover();

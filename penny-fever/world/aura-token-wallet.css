@@ -1,0 +1,17 @@
+.aura-token-panel{z-index:6}
+.aura-token-wallet-card{width:min(48rem,100%);align-items:stretch}
+.aura-token-wallet-card [data-token-address]{overflow-wrap:anywhere;font-family:system-ui,sans-serif}
+.aura-token-actions,.aura-token-pending{display:flex;flex-wrap:wrap;justify-content:center;gap:.35rem}
+.aura-token-wallet-card button,.aura-token-wallet-card select{min-height:44px;padding:.45rem .65rem;border:1px solid #c4a064;border-radius:8px;background:#fff8e9;color:#5a2438;font:700 .8rem/1.3 Georgia,serif;cursor:pointer}
+.aura-token-wallet-card button:disabled{opacity:.6;cursor:default}
+.aura-token-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:.5rem 0}
+.aura-token-item{min-width:0;display:flex;flex-direction:column;align-items:center;gap:.35rem;padding:.65rem;border:1px solid #d4bd91;border-radius:10px;background:#f7ecd6}
+.aura-token-item h3{margin:0;font-size:.95rem;color:#5a2438}
+.aura-token-item img{width:6rem;height:6rem;object-fit:contain;background:transparent}
+.aura-token-item select,.aura-token-item button{width:100%;box-sizing:border-box}
+.aura-token-item [data-token-buy]:not(:disabled){background:#315d3c;color:#fff8e9}
+.aura-token-wallet-card [data-token-signing]{text-align:center}
+.aura-token-wallet-card [data-token-signing] img{display:block;margin:.5rem auto}
+.aura-token-wallet-card .aura-token-wallet-note{font-size:.72rem;line-height:1.4}
+.aura-token-wallet-card [hidden]{display:none!important}
+@media(max-width:480px){.aura-token-panel{padding:.4rem}.aura-token-wallet-card{padding:3rem .55rem .65rem;max-height:calc(100dvh - 1rem)}.aura-token-grid{gap:.4rem}.aura-token-item{padding:.4rem}.aura-token-item h3{font-size:.82rem}.aura-token-item p{font-size:.72rem}.aura-token-item select,.aura-token-item button{font-size:.72rem;padding:.35rem .2rem}}
