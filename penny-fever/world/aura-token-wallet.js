@@ -134,7 +134,9 @@ function attach(overlay) {
     && owner?.email === identity()?.email && owner?.token === identity()?.token;
   function unlink() {
     signing.hidden = true;
-    find('[data-token-link]').removeAttribute('href'); find('[data-token-qr]').removeAttribute('src');
+    const link = find('[data-token-link]'), qr = find('[data-token-qr]');
+    link.removeAttribute('href'); qr.removeAttribute('src');
+    link.hidden = qr.hidden = true;
   }
   function close() {
     clearTimeout(timer); controller?.abort(); revision++; busy = checking = false;
@@ -151,17 +153,22 @@ function attach(overlay) {
     return data;
   }
   function showRequest(data) {
+    clearTimeout(timer);
     operation = data.id;
     unlink();
+    signing.hidden = false; // Check / continue remains usable while the original request is recovered.
     if (typeof data.deep_link === 'string' && /^https:\/\/(?:xumm|xaman)\.app\/sign\/[0-9a-f-]{36}$/.test(data.deep_link)) {
       find('[data-token-link]').href = data.deep_link;
       find('[data-token-qr]').src = qrDataUrl(data.deep_link, 5, 8);
-      signing.hidden = false;
+      find('[data-token-link]').hidden = find('[data-token-qr]').hidden = false;
     }
     loading.hidden = true;
     message.textContent = data.kind === 'connect' ? 'Choose your wallet on XRPL Mainnet and approve SignIn. This costs no XRP.'
       : data.kind === 'trust' ? 'Approve the receiving line in Xaman. A network fee applies and XRP is held as wallet reserve; no tokens are purchased.'
       : 'Review the token quantity and maximum XRP price in Xaman. Tokens and payment exchange together. Return here after approval.';
+    if (['preparing', 'creating_payload', 'recovering'].includes(data.state)) {
+      message.textContent = 'Checking your original Xaman request. No replacement purchase will be started. Please wait or press Check / continue.';
+    }
     if (FINISHED.has(data.state)) {
       clearTimeout(timer); unlink(); operation = '';
       message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
@@ -184,7 +191,7 @@ function attach(overlay) {
     } catch (error) {
       if (!valid(version)) return;
       fail(error);
-      if (['token_receipt_pending', 'token_status_busy', 'token_request_rate_limited'].includes(error.code)) timer = setTimeout(check, 5000);
+      if (['token_receipt_pending', 'token_status_busy', 'token_request_rate_limited', 'xaman_unavailable', 'token_checkout_unavailable', 'token_ledger_unavailable', 'fresh_mainnet_required'].includes(error.code)) timer = setTimeout(check, 5000);
     } finally { if (valid(version)) { checking = false; loading.hidden = true; } }
   }
   async function start(kind, item = '', bundles = 1, items = null) {

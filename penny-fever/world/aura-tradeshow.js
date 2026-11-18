@@ -51,6 +51,7 @@ let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let nftBatchUI = null;
 let collectionFeedback = false;
+let recoveryListOpen = false;
 let folder = 'book:penny-collector-book';
 let query = '';
 let haveFilter = '';
@@ -83,6 +84,7 @@ function clearEligibility(account = '') {
   eligibilityAccount = account;
   rewardMint = {account, enabled: false, items: {}, prices: {}, owned: {}};
   snapElig = {portraits: new Set(), book: false};
+  recoveryListOpen = false;
   const recovery = overlay?.querySelector('#auraCollectionRecovery');
   if (recovery) { recovery.replaceChildren(); recovery.hidden = true; }
 }
@@ -164,11 +166,12 @@ function loadRewardMint(account, revision) {
     return res.ok || data?.error === 'test_mint_not_allowed' ? data : null;
   }).then(data => {
     if (data?.error === 'test_mint_not_allowed') return false;
-    if (revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) {
+    if (collectionLoad !== loading || revision !== eligibilityRevision || account !== vipAccount() || data?.ok !== true) {
       loading.failed = true;
       return false;
     }
     rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
+    paintRecoveryList();
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
     loading.loading = false;
@@ -265,17 +268,28 @@ async function checkCollectionReceipts() {
   const fresh = await loadRewardMint(account, eligibilityRevision);
   if (!fresh || account !== vipAccount() || overlay?.hidden) return;
   paint();
-  const panel = overlay.querySelector('#auraCollectionRecovery');
+  recoveryListOpen = true;
+  paintRecoveryList();
+}
+
+function paintRecoveryList() {
+  const panel = overlay?.querySelector('#auraCollectionRecovery');
+  if (!panel || !recoveryListOpen || rewardMint.account !== vipAccount()) return;
+  const recovery = rewardMint.recovery || [];
+  const receiving = rewardMint.pending?.length;
   panel.replaceChildren();
+  if (!recovery.length && !receiving && !rewardMint.walletCheckFailed) {
+    panel.hidden = true;
+    return;
+  }
   panel.hidden = false;
   const summary = document.createElement('p');
-  const recovery = rewardMint.recovery || [];
   summary.textContent = `Wallet check: ${Object.values(rewardMint.owned).reduce((n, count) => n + Number(count || 0), 0)} NFTs held in wallets linked by your mint receipts; ${collectedMintIds().length} collected rewards eligible; ${recovery.length} unfinished orders. Unfinished orders need confirmation below. No new mint or purchase was started.`;
   if (rewardMint.walletCheckFailed) summary.textContent = 'Wallet verification is incomplete because the ledger could not be reached. The counts are incomplete; retry before relying on them. Existing orders are listed below. No new mint or purchase was started.';
   panel.append(summary);
   const close = document.createElement('button');
   close.type = 'button'; close.textContent = 'Hide recovery list';
-  close.addEventListener('click', () => { panel.hidden = true; });
+  close.addEventListener('click', () => { recoveryListOpen = false; panel.hidden = true; });
   panel.append(close);
   recovery.forEach(receipt => {
     const button = document.createElement('button');
@@ -285,7 +299,7 @@ async function checkCollectionReceipts() {
     button.addEventListener('click', () => openXrpTill(receipt.item, {recovery: receipt}));
     panel.append(button);
   });
-  if ((collectionQueue?.ready.length && collectionQueue.phase !== 'complete') || rewardMint.pending?.length) {
+  if (receiving) {
     const receive = document.createElement('button');
     receive.type = 'button'; receive.textContent = 'Receive prepared batch';
     receive.addEventListener('click', beginReceivingCollection);
