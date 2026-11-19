@@ -206,7 +206,7 @@
         "label": "Aura keepsake",
         "currency_revision": 2,
         "spend_source": "verified-token-purse",
-        "enabled": false
+        "enabled": true
       },
       "felix-vendor-portrait-book": {
         "cost": {
@@ -217,7 +217,7 @@
         "label": "Felix’s photo book",
         "currency_revision": 2,
         "spend_source": "verified-token-purse",
-        "enabled": false
+        "enabled": true
       },
       "penny-collector-book": {
         "cost": {
@@ -230,7 +230,7 @@
         "label": "Penny collector book",
         "currency_revision": 2,
         "spend_source": "verified-token-purse",
-        "enabled": false
+        "enabled": true
       }
     }
   },
@@ -1232,7 +1232,7 @@
       "label": "Aura keepsake",
       "currency_revision": 2,
       "spend_source": "verified-token-purse",
-      "enabled": false
+      "enabled": true
     },
     "felix-vendor-portrait-book": {
       "cost": {
@@ -1243,7 +1243,7 @@
       "label": "Felix’s photo book",
       "currency_revision": 2,
       "spend_source": "verified-token-purse",
-      "enabled": false
+      "enabled": true
     },
     "penny-collector-book": {
       "cost": {
@@ -1256,7 +1256,7 @@
       "label": "Penny collector book",
       "currency_revision": 2,
       "spend_source": "verified-token-purse",
-      "enabled": false
+      "enabled": true
     }
   },
   "currency_revision": 2,

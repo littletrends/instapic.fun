@@ -1,4 +1,4 @@
-import {paintEconomy, paintLedgerRequirements, paintTradeshowPurse} from './token-economy.js?v=clear-tradeshow-1';
+import {paintEconomy, paintLedgerRequirements, paintTradeshowPurse} from './token-economy.js?v=bank-purse-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 
 const API = 'https://motherpc.taild1a44c.ts.net/api/penny-fever/verified/tokens';
@@ -20,6 +20,14 @@ const MESSAGES = {
   wallet_signin_session_changed: 'That wallet sign-in belongs to an earlier VIP login. Wait for it to expire, then connect again.',
   invalid_token_quantity: 'Enter a whole-token quantity greater than zero.',
   token_batch_needs_review: 'The grouped trade needs checking. No replacement purchase has been started.',
+  token_backing_needs_review: 'Token custody needs checking. Your signed request is saved; no duplicate deposit has been started.',
+  insufficient_verified_tokens: 'Your VIP token purse does not yet contain the required tokens.',
+  token_redemption_not_open: 'Token trading is not open yet. Nothing was spent.',
+  insufficient_wallet_tokens: 'Your connected Xaman wallet does not contain that many tokens.',
+  token_treasury_line_full: 'Aura cannot receive that token quantity right now. No deposit request was created.',
+  token_transfer_fee_not_supported: 'This token’s transfer settings need checking before deposits can open.',
+  wallet_already_has_reward: 'That wallet already has this reward or has used its reward mint. No tokens were spent.',
+  token_reward_supply_unavailable: 'No unreserved copy of this reward is available. No tokens were spent.',
 };
 
 function identity() {
@@ -55,7 +63,7 @@ function attach(overlay) {
     <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select starter bundles · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
     <p class="aura-token-wallet-note">The four starter bundles cost 42 XRP. The three special reward recipes together require 200 XRP worth of tokens at Aura’s rates. Buying tokens does not claim a reward.</p>
     <div class="aura-token-grid" data-token-grid></div>
-    <p class="aura-token-wallet-note">These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
+    <p class="aura-token-wallet-note" data-token-transfer-note>These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.</p>
     <button type="button" data-token-close>← Back to Tradeshow</button>
   </section>`;
   overlay.append(panel);
@@ -71,6 +79,13 @@ function attach(overlay) {
   const sameOwner = other => !!other && other.email === identity()?.email && other.token === identity()?.token;
   function addShortcuts() {
     const data = sameOwner(overviewOwner) ? overviewData : null;
+    const ready = data?.token_purse?.deposits_enabled === true && !data.token_purse.claims_check_failed;
+    const bankSignature = `${ready}:${identity()?.email || ''}`;
+    if (overlay.dataset.tokenBankSignature !== bankSignature) {
+      overlay.dataset.tokenBankSignature = bankSignature;
+      overlay.dataset.tokenBankOwner = ready ? identity().email : '';
+      window.dispatchEvent(new Event('pennyfever:tokenbankready'));
+    }
     paintLedgerRequirements(overlay, data);
     paintTradeshowPurse(purseSummary, data, !!identity());
   }
@@ -164,6 +179,7 @@ function attach(overlay) {
     }
     loading.hidden = true;
     message.textContent = data.kind === 'connect' ? 'Choose your wallet on XRPL Mainnet and approve SignIn. This costs no XRP.'
+      : data.kind === 'deposit' ? 'Review this token transfer to your VIP token purse in Xaman. Withdrawals are closed. Network fee only. Return here after approval; the purse updates after ledger verification.'
       : data.kind === 'trust' ? 'Approve the receiving line in Xaman. A network fee applies and XRP is held as wallet reserve; no tokens are purchased.'
       : 'Review the token quantity and maximum XRP price in Xaman. Tokens and payment exchange together. Return here after approval.';
     if (['preparing', 'creating_payload', 'recovering'].includes(data.state)) {
@@ -172,9 +188,10 @@ function attach(overlay) {
     if (FINISHED.has(data.state)) {
       clearTimeout(timer); unlink(); operation = '';
       message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
-        ? data.kind === 'basket' ? 'Received ' + (data.received || []).map(row => `${Number(row.units).toLocaleString('en-AU')} ${catalogue.find(token => token.item === row.item)?.name || row.item}`).join(', ') + '.'
+        ? data.kind === 'deposit' ? `${Number(data.banked_units).toLocaleString('en-AU')} tokens added to your VIP token purse.`
+        : data.kind === 'basket' ? 'Received ' + (data.received || []).map(row => `${Number(row.units).toLocaleString('en-AU')} ${catalogue.find(token => token.item === row.item)?.name || row.item}`).join(', ') + '.'
         : data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
-        : data.state === 'not_filled' ? 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.'
+        : data.state === 'not_filled' ? (data.kind === 'deposit' ? 'The deposit did not complete. No tokens were added to your VIP purse; the ledger network fee may still apply.' : 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.')
         : data.state === 'preflight_failed' ? 'This request did not reach Xaman. Check your wallet or stock before trying again.'
         : 'The signing request was declined or expired. Check your wallet before retrying.';
       if (data.state === 'complete' && ['buy', 'basket'].includes(data.kind)) choices.clear();
@@ -194,14 +211,14 @@ function attach(overlay) {
       if (['token_receipt_pending', 'token_status_busy', 'token_request_rate_limited', 'xaman_unavailable', 'token_checkout_unavailable', 'token_ledger_unavailable', 'fresh_mainnet_required'].includes(error.code)) timer = setTimeout(check, 5000);
     } finally { if (valid(version)) { checking = false; loading.hidden = true; } }
   }
-  async function start(kind, item = '', bundles = 1, items = null) {
+  async function start(kind, item = '', bundles = 1, items = null, units = null) {
     if (busy || !valid(revision)) return;
     busy = true; const version = revision; loading.hidden = false; unlink();
     operation = crypto.randomUUID();
     message.textContent = 'Preparing your Xaman request. Please wait…';
-    panel.querySelectorAll('[data-token-buy],[data-token-trust],[data-token-connect],[data-token-selected],[data-token-pack]').forEach(button => { button.disabled = true; });
+    panel.querySelectorAll('[data-token-buy],[data-token-deposit],[data-token-claim],[data-token-trust],[data-token-connect],[data-token-selected],[data-token-pack]').forEach(button => { button.disabled = true; });
     try {
-      const data = await post('/create', {operation, kind, ...(items ? {items} : item ? {item, bundles} : {})}, version);
+      const data = await post('/create', {operation, kind, ...(items ? {items} : units !== null ? {item, units} : item ? {item, bundles} : {})}, version);
       if (valid(version)) showRequest(data);
     } catch (error) {
       if (valid(version)) { busy = false; fail(error); await refresh(false); }
@@ -221,13 +238,16 @@ function attach(overlay) {
       find('.aura-token-basket').hidden = !data.wallet;
       catalogue = data.tokens || [];
       paintEconomy(find('[data-token-economy]'), data);
+      find('[data-token-transfer-note]').textContent = data.token_purse
+        ? 'Deposits transfer the selected token quantity into your VIP token purse for rewards. Withdrawals are closed: deposited tokens cannot currently be sent back to Xaman. A deposit costs the XRPL network fee; the XRP purchase price does not apply.'
+        : 'These are tokens held in your XRPL wallet. Game purse transfers are not open yet. Purchases exchange XRP for tokens on the XRPL, up to the displayed price; network fees and wallet reserves are separate.';
       overviewController?.abort(); overviewController = null;
       overviewData = data; overviewOwner = {...owner}; overviewAttempted = true; addShortcuts();
       operation = (data.pending || []).find(row => row.id === operation)?.id || data.pending?.[0]?.id || '';
       grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
       for (const pending of data.pending || []) {
         const resume = document.createElement('button'); resume.type = 'button';
-        resume.textContent = 'Resume ' + (pending.kind === 'connect' ? 'wallet sign-in' : pending.kind === 'trust' ? 'receiving line' : 'token purchase');
+        resume.textContent = 'Resume ' + (pending.kind === 'connect' ? 'wallet sign-in' : pending.kind === 'trust' ? 'receiving line' : pending.kind === 'deposit' ? 'token deposit' : 'token purchase');
         resume.addEventListener('click', () => { operation = pending.id; showRequest(pending); check(); });
         find('[data-token-pending]').append(resume);
       }
@@ -258,15 +278,20 @@ function attach(overlay) {
           const available = validQuantity && Number(choice.quantity) <= token.available_units;
           cost.textContent = validQuantity ? `Maximum ${xrp(BigInt(choice.quantity) * BigInt(token.drops_per_unit))} XRP` : 'Enter a whole-token quantity.';
           buy.disabled = busy || !!operation || !!data.pending?.length || !data.sales_enabled || !available;
+          deposit.disabled = busy || !!operation || !!data.pending?.length || data.token_purse?.deposits_enabled !== true
+            || !validQuantity || Number(choice.quantity) > Number(token.balance);
           paintBasket();
         };
         const buy = document.createElement('button'); buy.type = 'button';
         buy.textContent = !data.sales_enabled ? 'Sales not open' : !token.available_units ? 'Stock unavailable' : 'Buy with XRP';
         buy.dataset.tokenBuy = token.item;
+        const deposit = document.createElement('button'); deposit.type = 'button'; deposit.textContent = 'Deposit to VIP purse';
+        deposit.dataset.tokenDeposit = token.item; deposit.hidden = !data.token_purse;
+        deposit.addEventListener('click', () => start('deposit', token.item, 1, null, Number(choice.quantity)));
         quantity.addEventListener('input', update); include.addEventListener('change', update);
         full.addEventListener('click', () => { quantity.value = String(token.bundle_units); update(); });
         buy.addEventListener('click', () => start('basket', '', 1, [{item: token.item, units: Number(choice.quantity)}]));
-        card.append(image, name, balance, price, stock, quantityLabel, full, cost, label, buy); grid.append(card); update();
+        card.append(image, name, balance, price, stock, quantityLabel, full, cost, label, buy, deposit); grid.append(card); update();
       }
       find('[data-token-pack]').disabled = busy || !!data.pending?.length || !data.sales_enabled || catalogue.length !== 4 || catalogue.some(token => token.available_units < token.bundle_units);
       paintBasket();
@@ -311,6 +336,21 @@ function attach(overlay) {
     const version = revision;
     try { await post('/disconnect', {}, version); if (valid(version)) refresh(); }
     catch (error) { if (valid(version)) fail(error); }
+  });
+  panel.addEventListener('click', async event => {
+    const button = event.target.closest('[data-token-claim]');
+    if (!button || button.disabled || busy || operation || !valid(revision)) return;
+    busy = true; button.disabled = true; const version = revision;
+    message.textContent = 'Checking your existing claim and token purse…';
+    try {
+      const result = await post('/claim', {operation: crypto.randomUUID(), item: button.dataset.tokenClaim}, version);
+      if (!valid(version)) return;
+      message.textContent = result.charged ? 'Reward collected for your connected wallet. Your token purse has been updated; open the reward in the Tradeshow to mint it.' : 'Already collected. No tokens were spent again.';
+      window.dispatchEvent(new CustomEvent('pennyfever:tokenclaim', {detail: {receipt: result.receipt}}));
+      busy = false;
+      await refresh(false);
+    } catch (error) { if (valid(version)) { busy = false; fail(error); await refresh(false); } }
+    finally { if (valid(version)) { busy = false; paintBasket(); } }
   });
   // Window capture precedes the existing NFT dialog's document capture. Handle
   // only this panel's navigation keys and leave all existing handlers intact.

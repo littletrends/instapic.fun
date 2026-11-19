@@ -1,4 +1,4 @@
-import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=clear-tradeshow-1';
+import {TOKEN_TERMS, EVERYDAY_IDS} from './token-economy.js?v=bank-purse-1';
 import {parkLabel, parkSign, parkStatus} from '../paper-games/park-doors.js?v=map-doors-3';
 import {stallById, stalls} from './items/midway.js?v=nft-board-1';
 import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
@@ -170,7 +170,7 @@ function loadRewardMint(account, revision) {
       loading.failed = true;
       return false;
     }
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
+    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
     paintRecoveryList();
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
@@ -465,7 +465,7 @@ function loadDrips(email, revision) {
       // or the guest moved to another device. Recovery never spends again.
       for (const receipt of Array.isArray(data.claims) ? data.claims : []) {
         if (receipt && typeof receipt.id === 'string'
-            && ['penny-collector-book', SNAP_BOOK].includes(receipt.item)
+            && ['penny-collector-book', SNAP_BOOK, 'aura-keepsake'].includes(receipt.item)
             && (!receipt.email || String(receipt.email).toLowerCase() === email.toLowerCase())) {
           rememberClaimReceipt(email.toLowerCase(), receipt.item);
         }
@@ -623,8 +623,12 @@ function dripCost(cost) {
 }
 function claimWithTokens(id) {
   if (!tokenClaim(id)) return;
-  const note = overlay?.querySelector('#auraTradeshowNote');
-  if (note) note.textContent = 'Token trading opens when the purse connection is ready. No tokens or pennies were spent.';
+  if (overlay?.dataset.tokenBankOwner !== vipAccount()) {
+    const note=overlay?.querySelector('#auraTradeshowNote');
+    if (note) note.textContent='Token trading opens when the purse connection is ready. No tokens or pennies were spent.';
+    return;
+  }
+  window.dispatchEvent(new CustomEvent('pennyfever:token-shop', {detail: {item: id}}));
 }
 function walletBuyCap(id) {
   const claim = tokenClaim(id);
@@ -1556,7 +1560,8 @@ function actionFor(item, stallInfo) {
   const claim = tokenClaim(item.id);
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
-  if (redemption && redemption !== 'accepted' && !claim && !isFelix(item) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
+  const tradedReward = rewardMint.tokenClaims?.includes(item.id);
+  if (redemption && redemption !== 'accepted' && (!claim || tradedReward) && (!isFelix(item) || tradedReward) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
     if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
     return {label: redemption === 'ready'
@@ -1573,7 +1578,7 @@ function actionFor(item, stallInfo) {
   if (!onShelf(item.id)) {
     return {label: 'Not on the shelf yet', disabled: true};
   }
-  if (claim) return {label: 'Trading not open yet', disabled: true, claim: true};
+  if (claim) return {label: overlay?.dataset.tokenBankOwner === vipAccount() && vip() ? 'Trade tokens · Wallet / Tokens' : 'Trading not open yet', disabled: !vip() || overlay?.dataset.tokenBankOwner !== vipAccount(), claim: true};
   if (isLimited(item)) {
     const xrp = formatXrp(item.id);
     const buy = xrp ? `Buy with XRP · ${xrp}` : 'Buy with XRP (get ready)';
@@ -2835,6 +2840,20 @@ loadMinted();
 loadPlates();
 window.addEventListener('storage', (event) => {
   if (event.key === null || event.key === 'instapic_guest_identity') checkVipSession();
+});
+window.addEventListener('pennyfever:tokenclaim', event => {
+  const receipt = event.detail?.receipt;
+  const account = vipAccount();
+  if (!account || receipt?.email !== account || !tokenClaim(receipt.item) || typeof receipt.id !== 'string') return;
+  rememberClaimReceipt(account, receipt.item);
+  const revision = eligibilityRevision;
+  loadRewardMint(account, revision).then(() => {
+    if (revision !== eligibilityRevision || account !== vipAccount()) return;
+    deliverClaimReceipts(); paint();
+  });
+});
+window.addEventListener('pennyfever:tokenbankready', () => {
+  if (overlay && !overlay.hidden) paint();
 });
 window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus, onShelf: id => onShelf(String(id || ''))};
 
