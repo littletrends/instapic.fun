@@ -57,7 +57,7 @@ function attach(overlay) {
     <div class="aura-token-actions"><button type="button" data-token-connect>Connect Xaman</button><button type="button" data-token-refresh>Check wallet</button><button type="button" data-token-disconnect hidden>Disconnect</button></div>
     <p data-token-message role="status" aria-live="polite"></p>
     <progress data-token-loading aria-label="Checking wallet or preparing Xaman" hidden></progress>
-    <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button></div>
+    <div data-token-signing hidden><img data-token-qr alt="Scan with Xaman" width="220" height="220"><a class="aura-xrp-till-open" data-token-link target="_blank" rel="noopener noreferrer">Open in Xaman</a><button type="button" data-token-check>Check / continue</button><button type="button" data-token-cancel hidden>Cancel deposit</button></div>
     <div class="aura-token-pending" data-token-pending></div>
     <div class="aura-token-economy" data-token-economy></div>
     <div class="aura-token-basket" role="group" aria-label="Buy selected tokens"><button type="button" data-token-pack disabled>Select starter bundles · 42 XRP</button><button type="button" data-token-selected disabled>Buy selected</button><p data-token-total>Tick the tokens you want to buy together.</p></div>
@@ -149,6 +149,7 @@ function attach(overlay) {
     && owner?.email === identity()?.email && owner?.token === identity()?.token;
   function unlink() {
     signing.hidden = true;
+    find('[data-token-cancel]').hidden = true;
     const link = find('[data-token-link]'), qr = find('[data-token-qr]');
     link.removeAttribute('href'); qr.removeAttribute('src');
     link.hidden = qr.hidden = true;
@@ -172,6 +173,7 @@ function attach(overlay) {
     operation = data.id;
     unlink();
     signing.hidden = false; // Check / continue remains usable while the original request is recovered.
+    find('[data-token-cancel]').hidden = data.kind !== 'deposit' || !!data.hash || FINISHED.has(data.state);
     if (typeof data.deep_link === 'string' && /^https:\/\/(?:xumm|xaman)\.app\/sign\/[0-9a-f-]{36}$/.test(data.deep_link)) {
       find('[data-token-link]').href = data.deep_link;
       find('[data-token-qr]').src = qrDataUrl(data.deep_link, 5, 8);
@@ -185,6 +187,9 @@ function attach(overlay) {
     if (['preparing', 'creating_payload', 'recovering'].includes(data.state)) {
       message.textContent = 'Checking your original Xaman request. No replacement purchase will be started. Please wait or press Check / continue.';
     }
+    if (data.cancel_refused && !FINISHED.has(data.state)) {
+      message.textContent = 'Xaman could not cancel this opened request. Reject it in Xaman, then press Check / continue. If it was already signed, we will verify the transfer instead.';
+    }
     if (FINISHED.has(data.state)) {
       clearTimeout(timer); unlink(); operation = '';
       message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
@@ -192,6 +197,7 @@ function attach(overlay) {
         : data.kind === 'basket' ? 'Received ' + (data.received || []).map(row => `${Number(row.units).toLocaleString('en-AU')} ${catalogue.find(token => token.item === row.item)?.name || row.item}`).join(', ') + '.'
         : data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
         : data.state === 'not_filled' ? (data.kind === 'deposit' ? 'The deposit did not complete. No tokens were added to your VIP purse; the ledger network fee may still apply.' : 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.')
+        : data.result === 'deposit_cancelled_before_signing' ? 'Token deposit cancelled before signing. No tokens were transferred.'
         : data.state === 'preflight_failed' ? 'This request did not reach Xaman. Check your wallet or stock before trying again.'
         : 'The signing request was declined or expired. Check your wallet before retrying.';
       if (data.state === 'complete' && ['buy', 'basket'].includes(data.kind)) choices.clear();
@@ -224,6 +230,25 @@ function attach(overlay) {
       if (valid(version)) { busy = false; fail(error); await refresh(false); }
     } finally { if (valid(version)) { busy = false; paintBasket(); } }
   }
+  async function cancelDeposit(id) {
+    if (!id || busy || checking || !valid(revision)) return;
+    clearTimeout(timer); busy = checking = true; const version = revision;
+    operation = id; loading.hidden = false;
+    message.textContent = 'Checking the original deposit before cancelling…';
+    panel.querySelectorAll('[data-token-cancel]').forEach(button => { button.disabled = true; });
+    try {
+      const data = await post('/cancel', {operation: id}, version);
+      if (valid(version)) showRequest(data);
+    } catch (error) {
+      if (valid(version)) { fail(error); timer = setTimeout(check, 5000); }
+    } finally {
+      if (valid(version)) {
+        busy = checking = false; loading.hidden = true;
+        panel.querySelectorAll('[data-token-cancel]').forEach(button => { button.disabled = false; });
+        paintBasket();
+      }
+    }
+  }
   async function refresh(announce = true) {
     const version = revision;
     if (!valid(version)) return;
@@ -244,12 +269,18 @@ function attach(overlay) {
       overviewController?.abort(); overviewController = null;
       overviewData = data; overviewOwner = {...owner}; overviewAttempted = true; addShortcuts();
       operation = (data.pending || []).find(row => row.id === operation)?.id || data.pending?.[0]?.id || '';
+      if (!operation) unlink();
       grid.replaceChildren(); find('[data-token-pending]').replaceChildren();
       for (const pending of data.pending || []) {
         const resume = document.createElement('button'); resume.type = 'button';
         resume.textContent = 'Resume ' + (pending.kind === 'connect' ? 'wallet sign-in' : pending.kind === 'trust' ? 'receiving line' : pending.kind === 'deposit' ? 'token deposit' : 'token purchase');
         resume.addEventListener('click', () => { operation = pending.id; showRequest(pending); check(); });
         find('[data-token-pending]').append(resume);
+        if (pending.kind === 'deposit' && !pending.hash) {
+          const cancel = document.createElement('button'); cancel.type = 'button';
+          cancel.textContent = 'Cancel deposit'; cancel.dataset.tokenCancel = pending.id;
+          find('[data-token-pending]').append(cancel);
+        }
       }
       for (const token of catalogue) {
         const card = document.createElement('article'); card.className = 'aura-token-item'; card.dataset.tokenItem = token.item;
@@ -332,6 +363,10 @@ function attach(overlay) {
   });
   find('[data-token-refresh]').addEventListener('click', () => operation ? check() : refresh());
   find('[data-token-check]').addEventListener('click', check);
+  panel.addEventListener('click', event => {
+    const button = event.target.closest('[data-token-cancel]');
+    if (button && !button.disabled) cancelDeposit(button.dataset.tokenCancel || operation);
+  });
   find('[data-token-disconnect]').addEventListener('click', async () => {
     const version = revision;
     try { await post('/disconnect', {}, version); if (valid(version)) refresh(); }
