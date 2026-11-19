@@ -3239,3 +3239,19 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-coming-soon
 }
 .felix-standalone-back[hidden] { display: none; }
 .felix-standalone-back:disabled { opacity: .5; cursor: default; }
+
+@media (max-width:720px) and (pointer:coarse) and (orientation:portrait) {
+  /* In the direct view, the fixed Back control is the native swipe area. */
+  html:has(.felix-standalone-back:not([hidden])) { overflow-y:auto; }
+  body:has(.felix-standalone-back:not([hidden])) { overflow:visible; }
+  body:has(.felix-standalone-back:not([hidden]))::after {
+    content:"";
+    position:absolute;
+    inset:0 auto auto 0;
+    width:1px;
+    height:calc(100lvh + 128px);
+    pointer-events:none;
+  }
+  body:has(.felix-standalone-back:not([hidden])) #booth-frame { position:fixed; inset:0; height:100dvh; }
+  .felix-standalone-back { touch-action:pan-y; }
+}
