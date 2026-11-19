@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="pay_packages_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
-  <link rel="stylesheet" href="felix-booth.css?v=carnival-46">
-  <link rel="stylesheet" href="felix-live-setup.css?v=photo-effects-1">
+  <link rel="stylesheet" href="felix-booth.css?v=strip-reveal-1">
+  <link rel="stylesheet" href="felix-live-setup.css?v=strip-reveal-1">
 </head>
 <body>
   <div id="turn-phone">
@@ -355,41 +355,28 @@
 
         <section class="screen" data-screen="REVIEW">
           <div class="screen-content review-screen">
-            <h1 class="title-main">Review Your Photos</h1>
+            <h1 class="title-main">Review Your Photo Strip</h1>
             <p class="subtitle">Tap a photo to select it. Retake or keep.</p>
             <div class="review-layout">
-              <div class="review-strip-wrap strip-on-paper">
-                <img id="reviewStripPreview" class="strip-composite-preview" alt="Your photo strip">
-                <div class="thumbs-title">Your photos — tap to select</div>
-                <div class="pose-thumb-row">
-                <div class="template-slot slot-1" data-slot-index="0">
-                  <img id="slotImage0" alt="Photo 1">
-                </div>
-                <div class="template-slot slot-2" data-slot-index="1">
-                  <img id="slotImage1" alt="Photo 2">
-                </div>
-                <div class="template-slot slot-3" data-slot-index="2">
-                  <img id="slotImage2" alt="Photo 3">
-                </div>
-                <div class="template-slot slot-4" data-slot-index="3">
-                  <img id="slotImage3" alt="Photo 4">
-                </div>
-                </div>
-                <!-- kept for JS refs / warm cache; not shown as overlay -->
-                <img id="templateBackground" class="template-bg" src="" alt="" hidden>
+              <div class="felix-reveal-strip" role="group" aria-label="Photos on your strip" hidden>
+                <img id="reviewStripPreview" alt="Your photo strip">
+                <button class="felix-reveal-photo" type="button" data-slot-index="0" aria-label="Select photo 1" aria-pressed="true"></button>
+                <button class="felix-reveal-photo" type="button" data-slot-index="1" aria-label="Select photo 2" aria-pressed="false"></button>
+                <button class="felix-reveal-photo" type="button" data-slot-index="2" aria-label="Select photo 3" aria-pressed="false"></button>
+                <button class="felix-reveal-photo" type="button" data-slot-index="3" aria-label="Select photo 4" aria-pressed="false"></button>
               </div>
               <div class="selected-photo-panel">
-                <h2>Selected Photo</h2>
                 <div class="photo-preview-wrapper">
                   <img id="selectedPhotoPreview" class="photo-preview" alt="Selected photo">
                 </div>
-                <p class="subtitle">
+                <p class="subtitle felix-selected-label" aria-live="polite">
                   Photo <span id="poseNumberLabel">1</span> of
                   <span id="poseTotalLabel">4</span>
                 </p>
+                <p id="felixRetakesLeft" class="felix-retakes-left"></p>
                 <div class="button-row">
-                  <button class="btn btn-secondary btn-big" data-action="retake-photo">RETAKE</button>
-                  <button class="btn btn-primary btn-big" data-action="keep-photo">KEEP</button>
+                  <button class="btn btn-secondary btn-big" type="button" data-action="retake-photo">RETAKE</button>
+                  <button class="btn btn-primary btn-big" type="button" data-action="keep-photo">KEEP</button>
                 </div>
               </div>
             </div>
@@ -462,18 +449,21 @@
               </div>
             </div>
 
+            <section class="felix-bonus-card" aria-labelledby="felixBonusTitle" hidden>
+              <div>
+                <h2 id="felixBonusTitle">Bonus video</h2>
+                <p class="felix-bonus-status" id="bonusStatus" aria-live="polite"></p>
+              </div>
+              <a class="btn btn-primary is-disabled" id="goBonusBtn" href="#" target="_blank" rel="noopener" aria-disabled="true" hidden>Open video &amp; collage</a>
+              <button class="btn btn-secondary" data-action="retry-bonus" id="retryBonusBtn" type="button" hidden>Retry bonus save</button>
+            </section>
             <div class="button-row felix-portal-row">
               <a class="btn btn-primary portal-button" id="felixVipJoin" href="/my-instapic.html#saved-pf-codes" target="_blank" rel="noopener">OPEN VIP GUEST AREA</a>
-              <a class="btn btn-primary btn-big portal-button is-disabled" id="goBonusBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">MAKING YOUR BONUS…</a>
               <button class="btn btn-primary portal-button felix-continue-orb" data-action="digital-done" type="button">CONTINUE</button>
             </div>
-            <div class="button-row felix-bonus-row">
-              <button class="btn btn-secondary" data-action="retry-bonus" id="retryBonusBtn" type="button" hidden>TRY AGAIN</button>
-            </div>
 
 
 
-            <p class="subtitle small felix-bonus-status" id="bonusStatus" aria-live="polite"></p>
           </div>
         </section>
 
@@ -515,8 +505,8 @@
   </div>
   <script src="../../../guest_identity.js?v=bound-session-1"></script>
   <script src="pf-bonus-compose.js?v=collage-centre-1"></script>
-  <script src="felix-live-setup.js?v=photo-effects-1"></script>
-  <script src="felix-booth.js?v=photo-effects-1"></script>
+  <script src="felix-live-setup.js?v=strip-reveal-1"></script>
+  <script src="felix-booth.js?v=strip-reveal-1"></script>
   <script src="attract-spin.js?v=attract-spin-3"></script>
   <script src="felix-booth-text.js?v=carnival-36"></script>
 </body>

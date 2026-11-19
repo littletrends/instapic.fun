@@ -3038,3 +3038,187 @@ section.screen.active[data-screen="BACKGROUNDS"] .bg-soon-badge {
 section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-coming-soon {
   opacity: 0.92; filter: saturate(0.92);
 }
+
+/* Felix strip review. The buttons follow the same slots used to bake the strip. */
+#booth-stage [data-screen="REVIEW"].active .review-screen {
+  padding: 340px 56px 70px !important;
+}
+#booth-stage [data-screen="REVIEW"].active .review-screen > .title-main {
+  font-size: 56px !important;
+  text-shadow: 0 3px 7px #182820, 0 0 22px #14201c !important;
+}
+#booth-stage [data-screen="REVIEW"].active .review-screen > .subtitle {
+  font-size: 36px !important;
+}
+#booth-stage [data-screen="REVIEW"].active .review-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 383px) minmax(0, 425px);
+  gap: 66px !important;
+  margin: 34px 0 0 !important;
+}
+.felix-reveal-strip {
+  position: relative;
+  height: 1060px;
+  aspect-ratio: var(--felix-strip-ratio, 416 / 1232);
+  justify-self: center;
+  border-radius: 18px;
+  outline: 5px solid #fff0d1;
+  box-shadow: 0 18px 64px #101d18a8;
+  overflow: hidden;
+  isolation: isolate;
+}
+.felix-reveal-strip[hidden] { display: none; }
+#booth-stage [data-screen="REVIEW"].active .felix-reveal-strip {
+  animation: felix-strip-reveal 420ms ease-out both;
+}
+@keyframes felix-strip-reveal {
+  from { opacity: 0; transform: translateY(24px) rotate(-2deg); }
+  to { opacity: 1; transform: none; }
+}
+#booth-stage .felix-reveal-strip #reviewStripPreview {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.felix-reveal-photo {
+  position: absolute;
+  z-index: 1;
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.felix-reveal-photo[aria-pressed="true"],
+.felix-reveal-photo:focus-visible {
+  box-shadow: inset 0 0 0 5px #fff9e4, inset 0 0 0 10px #6a4b29;
+}
+.felix-reveal-photo:focus-visible {
+  outline: 4px solid #fff9e4;
+  outline-offset: 4px;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel {
+  gap: 17px !important;
+  padding: 27px;
+  border: 3px solid #e0c187;
+  border-radius: 24px;
+  background: #243a32ed;
+  box-shadow: 0 12px 32px #101d1870;
+}
+#booth-stage [data-screen="REVIEW"].active .photo-preview-wrapper {
+  width: 310px !important;
+  height: 387px !important;
+  max-width: 100% !important;
+  max-height: none !important;
+}
+#booth-stage [data-screen="REVIEW"].active .felix-selected-label {
+  font: 700 36px/1.2 system-ui, sans-serif !important;
+}
+.felix-retakes-left {
+  margin: 0;
+  color: #fff0d1;
+  text-align: center;
+  font: 28px/1.2 system-ui, sans-serif;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel .button-row {
+  flex-direction: column !important;
+  width: 100%;
+  gap: 16px !important;
+  margin: 10px 0 0 !important;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel .btn {
+  width: 100% !important;
+  height: 120px !important;
+  min-width: 0 !important;
+  min-height: 120px !important;
+  border: 3px solid #e6c584 !important;
+  border-radius: 14px !important;
+  padding: 12px !important;
+  color: #27392e !important;
+  background: #fff0d1 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-size: 36px !important;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel [data-action="keep-photo"] {
+  background: #ffdc8e !important;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel .btn:disabled {
+  opacity: .45 !important;
+  cursor: default;
+}
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel .btn::before,
+#booth-stage [data-screen="REVIEW"].active .selected-photo-panel .btn::after {
+  display: none !important;
+}
+
+/* The bonus lives beside the keepsakes flow, with its save status and retry in one place. */
+#booth-stage [data-screen="DIGITAL"].active .digital-screen {
+  padding-top: 250px !important;
+}
+#booth-stage [data-screen="DIGITAL"].active .felix-portal-row {
+  margin-top: 35px !important;
+}
+.felix-bonus-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 850px;
+  margin: 18px auto 0;
+  padding: 26px 32px;
+  border: 3px solid #c9a66e;
+  border-radius: 24px;
+  background: #fff2d8;
+  color: #293b31;
+  box-shadow: 0 10px 36px #101d186b;
+  text-align: left;
+}
+.felix-bonus-card[hidden],
+#booth-stage .felix-bonus-card :is(#goBonusBtn, #retryBonusBtn)[hidden] {
+  display: none !important;
+}
+.felix-bonus-card h2 {
+  margin: 0 0 8px;
+  color: inherit;
+  text-shadow: none;
+  font: 700 46px/1.1 Georgia, serif;
+}
+#booth-stage .felix-bonus-card #bonusStatus {
+  position: static !important;
+  color: #354538 !important;
+  text-align: left !important;
+  text-shadow: none !important;
+  font: 30px/1.25 system-ui, sans-serif !important;
+}
+#booth-stage .felix-bonus-card :is(#goBonusBtn, #retryBonusBtn) {
+  width: 290px !important;
+  height: auto !important;
+  min-width: 290px !important;
+  min-height: 101px !important;
+  padding: 12px 16px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border: 3px solid #294435 !important;
+  border-radius: 14px !important;
+  background: #365646 !important;
+  color: #fff7e6 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font: 700 31px/1.12 system-ui, sans-serif !important;
+  white-space: normal !important;
+  text-align: center !important;
+  letter-spacing: normal !important;
+}
+#booth-stage .felix-bonus-card #goBonusBtn::before,
+#booth-stage .felix-bonus-card #goBonusBtn::after {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #booth-stage [data-screen="REVIEW"].active .felix-reveal-strip { animation: none; }
+}
