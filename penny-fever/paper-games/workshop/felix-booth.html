@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="prepaid_pattern_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="event_portal_patch.css?v=cam-portrait-1">
   <link rel="stylesheet" href="felix-booth.css?v=booth-back-1">
-  <link rel="stylesheet" href="felix-live-setup.css?v=effect-picker-2">
+  <link rel="stylesheet" href="felix-live-setup.css?v=felix-camera-tools-1">
 </head>
 <body>
   <button type="button" id="felixStandaloneBack" class="felix-standalone-back" hidden>← Back</button>
@@ -307,8 +307,8 @@
             <button id="liveStartBtn" class="btn btn-primary btn-big portal-button live-start-btn hidden" data-action="start-live-session" type="button">START<br>SESSION</button>
             <div id="cameraEnablePanel" class="no-camera-panel camera-enable-panel hidden">
               <div class="no-camera-card">
-                <h1 class="title-main">Turn on camera</h1>
-                <p class="subtitle" id="cameraEnableHint">Phones need a tap before the camera opens. Bots and testers can use the paper player.</p>
+                <h1 class="title-main">Choose your photo source</h1>
+                <p class="subtitle" id="cameraEnableHint">Use the live camera, choose a saved photo, or try Paper Player.</p>
                 <div class="button-row">
                   <button class="btn btn-primary btn-big" data-action="enable-camera" type="button" id="enableCameraBtn">
                     TURN ON CAMERA
@@ -321,8 +321,8 @@
                 </div>
                 <div class="button-row">
                   <label class="btn btn-secondary btn-big no-camera-file-label">
-                    USE PHOTO FROM PHONE
-                    <input type="file" accept="image/*" capture="user" hidden id="enableCameraFile">
+                    CHOOSE SAVED PHOTO
+                    <input type="file" accept="image/*" hidden id="enableCameraFile">
                   </label>
                 </div>
               </div>
@@ -330,7 +330,7 @@
             <div id="noCameraPanel" class="no-camera-panel hidden">
               <div class="no-camera-card">
                 <h1 class="title-main" id="noCameraTitle">Camera unavailable</h1>
-                <p class="subtitle" id="noCameraSubtitle">Pick a photo from your phone, or use the paper player so the booth still finishes.</p>
+                <p class="subtitle" id="noCameraSubtitle">Choose a saved photo, use Paper Player, or try the camera again.</p>
                 <p class="subtitle small no-camera-error hidden" id="noCameraError"></p>
                 <div class="button-row">
                   <button class="btn btn-primary btn-big" data-action="retry-camera" type="button">
@@ -339,8 +339,8 @@
                 </div>
                 <div class="button-row">
                   <label class="btn btn-primary btn-big no-camera-file-label">
-                    UPLOAD / TAKE PHOTO
-                    <input id="noCameraFile" type="file" accept="image/*" capture="user" hidden>
+                    CHOOSE SAVED PHOTO
+                    <input id="noCameraFile" type="file" accept="image/*" hidden>
                   </label>
                 </div>
                 <div class="button-row">
@@ -506,8 +506,8 @@
   </div>
   <script src="../../../guest_identity.js?v=bound-session-1"></script>
   <script src="pf-bonus-compose.js?v=collage-centre-1"></script>
-  <script src="felix-live-setup.js?v=effect-picker-2"></script>
-  <script src="felix-booth.js?v=felix-wake-1"></script>
+  <script src="felix-live-setup.js?v=felix-camera-tools-1"></script>
+  <script src="felix-booth.js?v=felix-camera-tools-1"></script>
   <script src="attract-spin.js?v=attract-spin-3"></script>
   <script src="felix-booth-text.js?v=carnival-36"></script>
 </body>
