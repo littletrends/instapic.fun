@@ -20,19 +20,18 @@
 .felix-crew-poster { width:118px; height:118px; flex:none; object-fit:contain; border-radius:10px; background:#f4eee5; }
 .felix-crew-photo { color:#50604b; font:700 25px/1.2 system-ui,sans-serif; }
 .felix-live-setup.is-shooting .felix-crew-prompt { margin:3px 0 0; font-size:37px; }
-.felix-filter-choice { width:44%; padding:15px 18px; }
-#felix-effects-label { margin:0 0 13px; font:700 34px/1.1 Georgia,serif; }
+.felix-filter-choice { width:44%; padding:0 14px 10px; }
+.felix-filter-choice summary { padding:12px 4px; min-height:98px; font:700 34px/1.15 Georgia,serif; cursor:pointer; }
+.felix-current-effect { display:block; padding-left:35px; color:#526348; font:700 28px/1.2 system-ui,sans-serif; }
+.felix-effect-panel { max-height:384px; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; padding:3px 7px 6px 3px; scrollbar-color:#94744a #f4ead6; }
+.felix-filter-choice:not([open]) > .felix-effect-panel { display:none; }
 .felix-effect-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.felix-effect-choices button { min-height:120px; padding:8px 10px; border:3px solid #b89b67; border-radius:12px; color:#2c3c2f; background:#fffaf0; font:700 34px/1.09 Georgia,serif; cursor:pointer; }
+.felix-effect-choices button { min-height:120px; padding:8px 8px; border:3px solid #b89b67; border-radius:12px; color:#2c3c2f; background:linear-gradient(var(--felix-effect-swatch,transparent),var(--felix-effect-swatch,transparent)),#fffaf0; font:700 33px/1.09 Georgia,serif; cursor:pointer; }
 .felix-effect-choices [data-effect="monochrome"] { background:#eceae4; }
 .felix-effect-choices [data-effect="flash"] { background:#ffe0c3; }
 .felix-effect-choices [data-effect="magic"] { background:#f6e1b0; }
 .felix-effect-choices button[aria-pressed="true"] { color:#fffaf0; background:#385443; border-color:#385443; box-shadow:inset 0 0 0 3px #e8c78c; }
-.felix-effect-choices button:focus-visible, .felix-more-effects summary:focus-visible { outline:4px solid #713d21; outline-offset:3px; }
-.felix-more-effects summary { margin-top:9px; padding:8px 0; font:700 29px/1.12 system-ui,sans-serif; cursor:pointer; }
-.felix-more-effects[open] summary { margin-bottom:10px; border-bottom:2px solid #d9c299; }
-.felix-filter-choice label { display:block; font-size:31px; font-weight:bold; margin-bottom:7px; }
-.felix-filter-choice select { display:block; width:100%; min-height:52px; border:2px solid #aa8c5d; border-radius:9px; background:#fffaf0; color:#263b30; font:29px system-ui,sans-serif; }
+.felix-effect-choices button:focus-visible, .felix-filter-choice summary:focus-visible { outline:4px solid #713d21; outline-offset:-4px; }
 
 @media (prefers-reduced-motion:reduce) {
   .felix-live-setup.is-shooting :is(.felix-crew-help,.felix-crew-body) { transition:none; }
@@ -41,11 +40,13 @@
 .felix-effect-overlay { position:absolute; inset:0; width:100%; height:100%; z-index:4; pointer-events:none; transform:scaleX(-1); }
 .felix-effect-overlay[hidden] { display:none !important; }
 
-.felix-smoothing-label { display:flex !important; align-items:center; gap:8px; margin-top:12px; font:700 24px/1.2 system-ui,sans-serif !important; text-align:left; }
-.felix-smoothing-label input { width:38px; height:38px; margin:0; flex:none; }
-.felix-smoothing-status, .felix-scene-status { margin:6px 0 0; font:20px/1.2 system-ui,sans-serif; text-align:left; }
+.felix-camera-effects { border-top:2px solid #d9c299; margin-top:14px; padding-top:6px; }
+.felix-camera-effects label { display:flex; align-items:center; gap:10px; min-height:88px; font:700 27px/1.2 system-ui,sans-serif; text-align:left; }
+.felix-camera-effects input { width:42px; height:42px; margin:0; flex:none; accent-color:#395543; }
+.felix-smoothing-status, .felix-scene-status { margin:0 0 8px; font:25px/1.2 system-ui,sans-serif; text-align:left; }
+.felix-smoothing-status:empty, .felix-scene-status:empty { display:none; }
 .felix-natural-preview { position:absolute; top:50%; left:50%; width:1920px; height:auto; transform:translate(-50%,-50%) rotate(-90deg); transform-origin:center; z-index:3; pointer-events:none; }
-.felix-natural-preview.cam-portrait { width:100%; height:100%; transform:translate(-50%,-50%); }
+.felix-natural-preview.cam-portrait { width:100%; height:100%; object-fit:cover; transform:translate(-50%,-50%); }
 .felix-natural-preview[hidden] { display:none !important; }
 
 #booth-stage #video-layer #liveCues .lookup-label {

@@ -167,3 +167,6 @@ body .cabinet-interior.paper-game-cabinet {
  .paper-game-bar .chapter-prize{width:34px;height:34px;}
  .paper-game-bar .paper-game-wallet.is-on-bar{margin-left:0;font-size:11px;}
 }
+@media(max-width:420px){
+ .paper-game-bar--felix .paper-game-wallet.is-on-bar{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+}

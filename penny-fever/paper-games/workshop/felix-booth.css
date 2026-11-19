@@ -3222,3 +3222,20 @@ section.screen.active[data-screen="BACKGROUNDS"] .background-card.is-coming-soon
 @media (prefers-reduced-motion: reduce) {
   #booth-stage [data-screen="REVIEW"].active .felix-reveal-strip { animation: none; }
 }
+
+.felix-standalone-back {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 81;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #bea475;
+  border-radius: 8px;
+  background: #253b32;
+  color: #fff3db;
+  font: 700 15px/1.2 Georgia, serif;
+  cursor: pointer;
+}
+.felix-standalone-back[hidden] { display: none; }
+.felix-standalone-back:disabled { opacity: .5; cursor: default; }
