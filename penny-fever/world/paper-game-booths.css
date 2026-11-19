@@ -172,10 +172,10 @@ body .cabinet-interior.paper-game-cabinet {
 }
 
 @media (max-width:720px) and (pointer:coarse) {
-  /* Let a vertical swipe on Felix's header scroll the document behind the fixed booth. */
-  html:has(#cabinet-snap.paper-game-cabinet:not([hidden])) { overflow-y:auto; }
-  html:has(#cabinet-snap.paper-game-cabinet:not([hidden])) body { overflow:visible; }
-  html:has(#cabinet-snap.paper-game-cabinet:not([hidden])) body::after {
+  /* Vertical header gestures scroll the document behind the fixed game cabinet. */
+  html:has(.cabinet-interior.paper-game-cabinet:not([hidden])) { overflow-y:auto; }
+  html:has(.cabinet-interior.paper-game-cabinet:not([hidden])) body.is-in-world { overflow:visible; }
+  html:has(.cabinet-interior.paper-game-cabinet:not([hidden])) body::after {
     content:"";
     position:absolute;
     inset:0 auto auto 0;
@@ -183,12 +183,13 @@ body .cabinet-interior.paper-game-cabinet {
     height:calc(100lvh + 128px);
     pointer-events:none;
   }
-  body #cabinet-snap.paper-game-cabinet { overflow:clip!important; }
-  .paper-game-bar--felix { overflow:visible; touch-action:pan-y; }
-  .paper-game-bar--felix .paper-game-wallet.is-on-bar {
+  body .cabinet-interior.paper-game-cabinet { overflow:clip!important; }
+  .paper-game-bar { overflow:visible; touch-action:pan-y; }
+  .paper-game-bar .paper-game-wallet.is-on-bar {
     flex:1 1 auto;
     min-width:0;
     overflow:hidden;
     text-overflow:ellipsis;
+    pointer-events:none;
   }
 }

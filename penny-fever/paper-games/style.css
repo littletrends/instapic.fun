@@ -70,3 +70,33 @@ button:disabled{cursor:default;}
 
 /* pf-polish-1: engines may return multi-line readouts (Milky Splash). */
 #readout{white-space:pre-line;}
+
+@media (max-width:760px) and (pointer:coarse) {
+  /* A direct workshop game supplies its own document scroll for the header. */
+  html:has(> body:not(.is-alley-room) > .play-header) { overflow-y:auto; }
+  html:has(> body:not(.is-alley-room) > .play-header)::after {
+    content:"";
+    position:absolute;
+    inset:0 auto auto 0;
+    width:1px;
+    height:calc(100lvh + 128px);
+    pointer-events:none;
+  }
+  body:not(.is-alley-room):has(> .play-header) {
+    position:fixed;
+    inset:0;
+    height:100dvh;
+    min-height:100dvh;
+    overflow:visible;
+  }
+  body:not(.is-alley-room) > .play-header { overflow:visible; touch-action:pan-x pan-y; }
+  body:not(.is-alley-room) > .play-header .chapter-nav {
+    flex:1 1 auto;
+    min-width:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:thin;
+    touch-action:pan-x;
+  }
+  body:not(.is-alley-room) > .play-header .chapter-nav > * { flex-shrink:0; }
+}
