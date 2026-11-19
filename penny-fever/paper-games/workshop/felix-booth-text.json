@@ -123,7 +123,7 @@
       "label": "Subtitle",
       "selector": "[data-screen=\"PAYMENT\"] .subtitle",
       "html": false,
-      "text": "Tap a pack to spend pennies for photo sessions.\nShort on pennies? Aura\u2019s booth tops you up.",
+      "text": "Tap a pack to spend pennies for photo sessions.\nShort on pennies? The pack opens at Aura\u2019s checkout.",
       "font": "Subotype Steady.otf",
       "size": 0,
       "x": 0,

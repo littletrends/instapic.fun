@@ -1,4 +1,5 @@
 const API_BASE = 'https://motherpc.taild1a44c.ts.net';
+const FELIX_BOOTH_PATH = '/penny-fever/paper-games/workshop/felix-booth.html';
 const FALLBACK_PACKS = [
   {id:'PF_STRIP', name:'Ticket strip', blurb:'Five booth tickets from Aura’s roll. Cash a ticket for five pennies at any stall bar.', amount_cents:500, tickets:5, pennies:0},
   {id:'PF_ROLL', name:'Penny pack', blurb:'Ten pennies for another lap and the machines.', amount_cents:500, tickets:0, pennies:10},
@@ -131,39 +132,40 @@ export function tillPinned() {
 }
 
 function updateFelixReturnChrome(show, code) {
-  if (!till) return;
-  let row = $('pfTillFelixReturn');
-  if (!row) {
-    row = document.createElement('div');
-    row.id = 'pfTillFelixReturn';
-    row.hidden = true;
-    row.innerHTML =
-      '<button type="button" class="pf-till-go pf-till-back-felix" id="pfTillBackFelix">' +
-      'Back to Felix</button>';
-    const pay = till.querySelector('.pf-till-pay');
-    if (pay) pay.appendChild(row);
-    else till.appendChild(row);
-    $('pfTillBackFelix')?.addEventListener('click', () => {
-      const ret = (() => {
-        try { return sessionStorage.getItem('pf-till-return-url') || ''; } catch { return ''; }
-      })();
-      try { sessionStorage.removeItem('pf-till-from-felix'); } catch {}
-      closeTill();
-      if (ret && !/felix-booth\.html/i.test(location.pathname)) {
-        location.href = ret;
-        return;
-      }
-      window.dispatchEvent(new CustomEvent('pf-felix-start-paid', {
-        detail: { code: code || '', source: 'till-return' },
-      }));
-    });
-  }
-  const fromFelix = till.dataset.fromFelix === '1' || (() => {
-    try { return sessionStorage.getItem('pf-till-from-felix') === '1'; } catch { return false; }
-  })();
-  row.hidden = !(show && fromFelix);
+  const row = $('pfTillFelixReturn');
+  if (!row) return;
+  row.hidden = !show || till.dataset.fromFelix !== '1';
   const btn = $('pfTillBackFelix');
   if (btn && code) btn.dataset.code = code;
+}
+
+function backToFelix() {
+  if (paying) return;
+  const code = $('pfTillBackFelix')?.dataset.code || '';
+  let target = new URL(FELIX_BOOTH_PATH + '?fromAura=1', location.origin);
+  try {
+    const requested = new URL(sessionStorage.getItem('pf-till-return-url') || '', location.href);
+    if (requested.origin === location.origin && requested.pathname === FELIX_BOOTH_PATH) target = requested;
+  } catch {}
+  closeTill();
+  if (location.pathname !== FELIX_BOOTH_PATH) {
+    location.assign(target.href);
+  } else if (code) {
+    window.dispatchEvent(new CustomEvent('pf-felix-start-paid', {
+      detail: {code, source: 'till-return'},
+    }));
+  }
+}
+
+function dismissTill() {
+  if (till?.dataset.fromFelix === '1') backToFelix();
+  else closeTill();
+}
+
+function setPaying(value) {
+  paying = value;
+  const back = $('pfTillBackFelix');
+  if (back) back.disabled = value;
 }
 
 export function closeTill() {
@@ -176,9 +178,11 @@ export function closeTill() {
   updateFelixReturnChrome(false);
   if (till) delete till.dataset.fromFelix;
   window.dispatchEvent(new Event('pf-till-closed'));
-  // Cancel from Felix overlay: stay on Felix payment (no navigation).
   if (fromFelix) {
-    try { sessionStorage.removeItem('pf-till-from-felix'); } catch {}
+    try {
+      sessionStorage.removeItem('pf-till-from-felix');
+      sessionStorage.removeItem('pf-till-return-url');
+    } catch {}
   }
 }
 
@@ -506,7 +510,7 @@ async function chargePhotoPack(tokenResult) {
 
 async function payWithCard() {
   if (paying || !selected) return;
-  paying = true;
+  setPaying(true);
   $('pfTillPay').disabled = true;
   try {
     if (isPreview()) {
@@ -529,14 +533,14 @@ async function payWithCard() {
   } catch (err) {
     setStatus(err?.message || 'The till could not take that payment.');
   } finally {
-    paying = false;
+    setPaying(false);
     if (tillOpen()) $('pfTillPay').disabled = !selected || (!isPreview() && !card);
   }
 }
 
 async function payWithApple() {
   if (paying || !selected) return;
-  paying = true;
+  setPaying(true);
   try {
     setStatus('Apple Pay… on a laptop this may open a phone QR.');
     const method = await ensureApplePay();
@@ -546,20 +550,20 @@ async function payWithApple() {
     applePay = null;
     setStatus(err?.message || 'Apple Pay did not finish.');
   } finally {
-    paying = false;
+    setPaying(false);
   }
 }
 
 async function payWithGoogle() {
   if (paying || !selected || !googlePay) return;
-  paying = true;
+  setPaying(true);
   try {
     setStatus('Google Pay…');
     await chargeToken(await googlePay.tokenize(), 'Google Pay');
   } catch (err) {
     setStatus(err?.message || 'Google Pay did not finish.');
   } finally {
-    paying = false;
+    setPaying(false);
   }
 }
 
@@ -612,6 +616,9 @@ export function mountTill(api) {
   till.setAttribute('aria-modal', 'true');
   till.setAttribute('aria-labelledby', 'pfTillTitle');
   till.innerHTML = `
+    <div class="pf-till-felix-nav" id="pfTillFelixReturn" hidden>
+      <button type="button" class="pf-till-back-felix" id="pfTillBackFelix">← Back to Felix</button>
+    </div>
     <button type="button" class="pf-till-close" id="pfTillClose" aria-label="Close the till">×</button>
     <p class="pf-till-kicker">Square till</p>
     <h2 id="pfTillTitle">Buy a pack</h2>
@@ -632,8 +639,9 @@ export function mountTill(api) {
       <p id="pfTillStatus" role="status"></p>
     </div>`;
   document.body.append(backdrop, till);
-  backdrop.addEventListener('click', closeTill);
-  $('pfTillClose').addEventListener('click', closeTill);
+  backdrop.addEventListener('click', dismissTill);
+  $('pfTillClose').addEventListener('click', dismissTill);
+  $('pfTillBackFelix').addEventListener('click', backToFelix);
   till.addEventListener('click', e => {
     const pack = e.target.closest('[data-pack]');
     if (pack) choosePack(pack.dataset.pack, true);
@@ -649,7 +657,7 @@ export function mountTill(api) {
     payWithGoogle();
   }, true);
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && tillOpen()) closeTill();
+    if (e.key === 'Escape' && tillOpen()) dismissTill();
   });
   paintPacks();
   refreshConfig();
@@ -669,8 +677,13 @@ export async function openTill(opts = {}) {
   }
   if (opts.fromFelix) {
     try { sessionStorage.setItem('pf-till-from-felix', '1'); } catch {}
-    if (till) till.dataset.fromFelix = '1';
+    till.dataset.fromFelix = '1';
+  } else {
+    delete till.dataset.fromFelix;
   }
+  const back = $('pfTillBackFelix');
+  if (back) delete back.dataset.code;
+  updateFelixReturnChrome(true);
   showTill();
   try {
     await ensureSquare();
@@ -684,5 +697,4 @@ export async function openTill(opts = {}) {
       pay?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
     });
   }
-  updateFelixReturnChrome(false);
 }

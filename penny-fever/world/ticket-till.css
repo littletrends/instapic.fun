@@ -68,9 +68,15 @@ body.has-aura-till{overflow:hidden}
 .aura-till .pf-till-pack--photo{border-style:dashed}
 .aura-till .pf-till-pack--photo strong::before{content:"📸 "}
 
-#pfTillFelixReturn{margin-top:8px}
+.pf-till-felix-nav{
+  position:sticky;top:0;z-index:2;
+  margin:-12px -8px 12px;padding:8px;
+  border-bottom:1px solid #b79462;background:#e7d4ad;
+}
+.pf-till-felix-nav[hidden],.aura-till[data-from-felix="1"] .pf-till-close{display:none}
 .pf-till-back-felix{
-  width:100%;min-height:52px;border:2px solid #486143;background:#486143;color:#f4ffe8;
+  min-height:44px;padding:0 14px;border:2px solid #486143;background:#486143;color:#f4ffe8;
   font:700 15px/1.3 Georgia,serif;cursor:pointer;border-radius:8px;
 }
-.pf-till-back-felix:active{transform:translateY(1px)}
+.pf-till-back-felix:disabled{opacity:.55;cursor:default}
+.pf-till-back-felix:enabled:active{transform:translateY(1px)}
