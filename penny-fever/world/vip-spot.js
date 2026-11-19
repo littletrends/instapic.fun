@@ -79,6 +79,9 @@ function markLapsed(email) {
 function pursePaused(error) {
   const code = String(error?.message || error || "");
   if (code !== "verification_required" && code !== "verified_identity_changed") return;
+  // A superseded purse binding (account switch, player choice) is not a lapsed sign-in.
+  // Marking it lapsed made signedIn() false for the whole page, so the player chooser went dead.
+  if (code === "verified_identity_changed" || guestApi()?.isVerifiedSessionActive?.()) { paintChip(); return; }
   if (!guestEmail() || (sessionLapsed && document.getElementById("pfVipLapse"))) return;
   markLapsed(guestEmail());
 }
@@ -491,7 +494,8 @@ function clearPlayerProgress() {
 }
 async function resolveCollectionChoice(choice) {
   const selected=collectionChoice;
-  if(!selected || !signedIn() || guestEmail().toLowerCase()!==selected.email) return;
+  if(!selected) { paintChip(); return; }
+  if(!signedIn() || guestEmail().toLowerCase()!==selected.email) throw new Error('Sign in again to choose your player');
   if(choice==='new') {
     sessionStorage.setItem(PENDING_KEY,JSON.stringify(snapshot()));
     guestApi()?.clear?.();
@@ -519,8 +523,10 @@ async function resolveCollectionChoice(choice) {
     if(!heldAlready) localStorage.removeItem(HELD_PLAYER_KEY);
     paintChip();throw err;
   }
-  collectionChoice=null; rememberPortraitAccount();
-  await connectVerifiedBanking('vip');paintChip();
+  collectionChoice=null; rememberPortraitAccount(); paintChip(); // closes the chooser: the choice is saved
+  try { await connectVerifiedBanking('vip'); }
+  catch(err) { verifiedBanking()?.fail(err); console.warn('[pf-vip] purse after player choice',err); }
+  paintChip();
 }
 
 async function resolveProgressConflict(useLocalBalance) {
@@ -583,7 +589,20 @@ async function syncOnArrival() {
   const currentLocal = snapshot();
   const existingCloud = profile.penny_fever;
   const differentOwner = !!(owner && email && owner !== email);
-  const differentPlayer = !!(existingCloud?.player_id && currentLocal.player_id !== existingCloud.player_id && owner !== email);
+  // Signing out keeps this VIP's progress on the phone under a fresh player id; the same VIP coming
+  // back is the same player. Only when this VIP was the LAST one to sign out here (never another account).
+  let lastOut = null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('pf-vip-before-signout:')) continue;
+      const rec = JSON.parse(localStorage.getItem(key) || 'null');
+      if (rec && Number(rec.at) > Number(lastOut?.at || 0)) lastOut = {...rec, email: key.slice(22)};
+    }
+  } catch {}
+  const returningVip = !owner && !localStorage.getItem(HELD_PLAYER_KEY) && !!existingCloud?.player_id
+    && lastOut?.email === email && lastOut.snapshot?.player_id === existingCloud.player_id;
+  const differentPlayer = !returningVip && !!(existingCloud?.player_id && currentLocal.player_id !== existingCloud.player_id && owner !== email);
   if (existingCloud && meaningfulProgress(currentLocal) && (differentOwner || differentPlayer || (!owner && !existingCloud.player_id))) {
     collectionChoice={email};
     paintChip();
