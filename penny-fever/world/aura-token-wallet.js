@@ -195,7 +195,8 @@ function attach(overlay) {
     if (FINISHED.has(data.state)) {
       clearTimeout(timer); unlink(); operation = '';
       message.textContent = data.state === 'verified' ? 'Wallet connected.' : data.state === 'complete'
-        ? data.kind === 'deposit' ? `${Number(data.banked_units).toLocaleString('en-AU')} tokens added to your VIP token purse.`
+        ? data.penny_exchange ? `Token payment for ${Number(data.penny_credit).toLocaleString('en-AU')} pennies verified. Open Convert tokens for Pennies at Aura’s entrance booth to finish or check the credit.`
+        : data.kind === 'deposit' ? `${Number(data.banked_units).toLocaleString('en-AU')} tokens added to your VIP token purse.`
         : data.kind === 'basket' ? 'Received ' + (data.received || []).map(row => `${Number(row.units).toLocaleString('en-AU')} ${catalogue.find(token => token.item === row.item)?.name || row.item}`).join(', ') + '.'
         : data.kind === 'buy' ? `${Number(data.received_units).toLocaleString('en-AU')} tokens received in your wallet.` : 'Receiving line ready.'
         : data.state === 'not_filled' ? (data.kind === 'deposit' ? 'The deposit did not complete. No tokens were added to your VIP purse; the ledger network fee may still apply.' : 'The trade was not filled. No token purchase completed; the ledger network fee may still apply.')
