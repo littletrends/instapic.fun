@@ -27,6 +27,8 @@ const MESSAGES = {
   token_treasury_line_full: 'Aura cannot receive that token quantity right now. No deposit request was created.',
   token_transfer_fee_not_supported: 'This token’s transfer settings need checking before deposits can open.',
   wallet_already_has_reward: 'That wallet already has this reward or has used its reward mint. No tokens were spent.',
+  wallet_belongs_to_another_vip: 'That wallet is already assigned to another VIP. Connect the reward wallet assigned to this VIP.',
+  vip_reward_wallet_already_bound: 'This VIP already has an assigned reward wallet. Reconnect that same wallet; disconnecting does not reset its reward allowance.',
   token_reward_supply_unavailable: 'No unreserved copy of this reward is available. No tokens were spent.',
 };
 
@@ -180,7 +182,7 @@ function attach(overlay) {
       find('[data-token-link]').hidden = find('[data-token-qr]').hidden = false;
     }
     loading.hidden = true;
-    message.textContent = data.kind === 'connect' ? 'Choose your wallet on XRPL Mainnet and approve SignIn. This costs no XRP.'
+    message.textContent = data.kind === 'connect' ? 'Choose your wallet on XRPL Mainnet and approve SignIn. This assigns the wallet to this VIP reward set. One wallet per VIP; reconnecting does not reset rewards. Sign-in costs no XRP.'
       : data.kind === 'deposit' ? 'Review this token transfer to your VIP token purse in Xaman. Withdrawals are closed. Network fee only. Return here after approval; the purse updates after ledger verification.'
       : data.kind === 'trust' ? 'Approve the receiving line in Xaman. A network fee applies and XRP is held as wallet reserve; no tokens are purchased.'
       : 'Review the token quantity and maximum XRP price in Xaman. Tokens and payment exchange together. Return here after approval.';
@@ -256,7 +258,9 @@ function attach(overlay) {
     try {
       const data = await post('/catalogue', {}, version);
       if (!valid(version)) return;
-      find('[data-token-address]').textContent = data.wallet || 'Connect the Xaman wallet you want to use for tokens.';
+      find('[data-token-address]').textContent = data.wallet || (data.bound_wallet
+        ? `Reconnect your assigned Xaman wallet: ${data.bound_wallet}`
+        : 'Connect the Xaman wallet you want to use for tokens. One wallet is assigned to each VIP.');
       find('[data-token-connect]').hidden = !!data.wallet;
       find('[data-token-connect]').disabled = false;
       find('[data-token-disconnect]').hidden = !data.wallet;
