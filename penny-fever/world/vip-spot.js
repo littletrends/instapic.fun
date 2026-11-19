@@ -356,7 +356,14 @@ function paintCollectionDialog() {
   for(const [label,choice,detail] of choices) {
     const button=document.createElement('button');button.type='button';button.textContent=label;button.style.cssText='display:block;width:100%;margin:10px 0 2px;padding:10px;border-radius:8px;cursor:pointer;font-weight:700;';
     const note=document.createElement('p');note.textContent=detail;note.style.cssText='margin:0 2px 12px;font-size:13px;line-height:1.35;color:#f0dcc2;';
-    button.addEventListener('click',()=>resolveCollectionChoice(choice).catch(err=>{description.textContent='Could not finish. Your progress remains on this device; please try again.';console.warn('[pf-vip] collection choice',err);}));dialog.append(button,note);
+    button.addEventListener('click',async()=>{
+      const controls=[...dialog.querySelectorAll('button')];
+      controls.forEach(control=>{control.disabled=true;});
+      description.textContent='Connecting your selected player and verified purse…';
+      try {await resolveCollectionChoice(choice);}
+      catch(err){description.textContent='Your VIP purse did not finish connecting. Your saved player and guest purse are preserved. Please try again.';console.warn('[pf-vip] collection choice',err);}
+      finally {controls.forEach(control=>{control.disabled=false;});}
+    });dialog.append(button,note);
   }
   dialog.addEventListener('cancel',event=>event.preventDefault());
   document.body.append(dialog);dialog.showModal();
@@ -504,6 +511,7 @@ async function resolveCollectionChoice(choice) {
   }
   if(choice !== 'vip') return;
   const profile=await fetchProfile(), cloud=profile?.penny_fever;
+  if(!signedIn() || guestEmail().toLowerCase()!==selected.email || collectionChoice!==selected) throw new Error('VIP player choice changed');
   if(!cloud) throw new Error('VIP save unavailable');
   progressRevision=Number.isSafeInteger(cloud.progress_revision)?cloud.progress_revision:0;
   const local=snapshot();
@@ -523,9 +531,12 @@ async function resolveCollectionChoice(choice) {
     if(!heldAlready) localStorage.removeItem(HELD_PLAYER_KEY);
     paintChip();throw err;
   }
-  collectionChoice=null; rememberPortraitAccount(); paintChip(); // closes the chooser: the choice is saved
+  // Keep the chooser until the selected player's server purse is connected.
+  // A failed binding must not silently finish with the previous guest purse.
   try { await connectVerifiedBanking('vip'); }
-  catch(err) { verifiedBanking()?.fail(err); console.warn('[pf-vip] purse after player choice',err); }
+  catch(err) { syncReady=false; throw err; }
+  if(!signedIn() || guestEmail().toLowerCase()!==selected.email || collectionChoice!==selected) throw new Error('VIP player choice changed');
+  collectionChoice=null; rememberPortraitAccount();
   paintChip();
 }
 
