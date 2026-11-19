@@ -3,7 +3,7 @@ import * as THREE from '../lib/three.module.min.js';
 import {WALL_ART} from './catalogue.js?v=wall-step-1';
 import {phoneLane} from '../phone-lane.js?v=keep-light-1';
 
-// Pre-cut transparent wall faces: elevation() below, baked offline (agent-notes/tools/cut-wall-views.py).
+// Pre-cut transparent wall faces: elevation() below, baked offline.
 // One folder: <id>-front|left|right.webp (384px max, desktop) and <id>-<view>-phone.webp (256px max).
 // Missing files fall back to cutting the old four-view sheet in the browser.
 const CUTOUT_ROOT='assets/restyle/walls/cutouts/';

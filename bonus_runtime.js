@@ -484,7 +484,6 @@
     let data;
     try {
       data = await core.getBonus(code);
-      console.log("[bonus] getBonus data", data);
       // Surface lock/event flags for host tools (bonus_patch.js)
       window.__instapicBonusMeta = {
         ticket_code: data.ticket_code || code,
@@ -512,7 +511,6 @@
     if (Array.isArray(data.files)) rawFiles.push(...data.files);
 
     const uniqueFiles = [...new Set(rawFiles)].filter(Boolean);
-    console.log("[bonus] uniqueFiles", uniqueFiles);
 
     const stripPath = preferMatch(
       uniqueFiles,
