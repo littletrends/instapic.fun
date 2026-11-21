@@ -25,6 +25,7 @@ import {clamp} from '../draw.js';
 import {spriteKey} from '../prizes.js?v=prize-hud-1';
 import {alleyPlay,isVerifiedPlay,owned,keep,tickets} from '../wallet.js?v=insights-1';
 import {takePrize} from '../chapter-kit.js?v=align-1';
+import {attachChapterExampleView} from './chapter-example.js?v=example-1';
 import {advanceDescent, controlDescent, descentCourse, makeDescent, matLift} from './helter-descent.js?v=descent-1';
 import {
   makeRideState, ensureBoarded, finishRide, recordFind, recordTreasure, logAction,
@@ -1291,6 +1292,64 @@ function drawBall(d, x, y, r, roll = 0) {
   d.circle(x - r * 0.18, y - r * 0.22, r * 0.14, '#fffaf0cc');
 }
 
+/** Fresh climb board for one chapter (shared by create() and the Watch sample). */
+function makeClimbState(level, rand) {
+  const plan = chapterBoard(level);
+  const cells = buildSpiral(plan.cellCount);
+  const slides = plan.slides.map((S) => ({...S, used: false}));
+  const cushions = plan.cushions.map((C) => ({...C, used: false}));
+  const tokens = plan.tokens.map((T) => ({...T, taken: false}));
+  const start = cells[0];
+  const crest = spiralPoint(1);
+  return makeRideState(level, rand, {
+    hits: 0,
+    cushionsBounced: 0,
+    slidesSurvived: 0,
+    tokensTaken: 0,
+    keepsakeTaken: false,
+    goal: CUSHION_GOAL,
+    treasureId: TREASURES[level] || TREASURES[0],
+    cells,
+    slides,
+    cushions,
+    tokens,
+    hopper: plan.hopper,
+    planTreasureCell: plan.treasureCell,
+    duration: plan.duration,
+    frozenChapter: false,
+    youCell: 0,
+    lastCell: 0,
+    _ballCleared: false,
+    youX: start.x,
+    youY: start.y,
+    moving: false,
+    moveT: 0,
+    moveDur: STEP_EASE,
+    moveFrom: 0,
+    moveTo: 0,
+    previewing: false,
+    previewT: 0,
+    launched: false,
+    tappedOnce: false,
+    jumpedOnce: false,
+    fx: [],
+    matPulse: 0,
+    finishPulse: 0,
+    slideFlash: 0,
+    cushionFlash: 0,
+    statusCopy: '',
+    challengeOkFlash: false,
+    pendingLand: false,
+    // Gold ball prop: u=1 crest → u=0 stairs-base exit (rolls down).
+    ballU: 1,
+    ballX: crest.x,
+    ballY: crest.y,
+    ballRolling: true,
+    ballActive: true,
+    ballWait: 0,
+  });
+}
+
 function loadBallFromHopper(s) {
   s.ballU = 1;
   s.ballActive = true;
@@ -1304,7 +1363,7 @@ function loadBallFromHopper(s) {
   pushSparks(s, bp.x, bp.y, false);
 }
 
-export default {
+const engine = {
   title: 'Spiral Slide',
   intro: 'Tilly’s spiral slide. Pick up the chapter keepsake on the coil, then reach the crest to keep it. A ball dump before the crest puts it back Locked. Ticket ride: chapter 1 is the free ride; later chapters cost a ticket.',
   instructions: 'Step on with → or a tap on the track ahead (court taps only step forward); step back with ← or the ← pad; JUMP (Space, ↑, Enter or J) leaps over the next cell. Cream cushions bounce you up; landing on a red slide drops you lower, but the ride goes on. Carry the keepsake to the crest to collect it — a ball dump before the top puts it back.',
@@ -1340,60 +1399,7 @@ export default {
     const production = productionPlay();
     if (!Number.isInteger(level) || level < 0 || level > 5) throw Error('Choose a chapter from 1 to 6.');
     const rand = production ? () => Math.random() : typeof rng === 'function' ? rng : Math.random;
-    const plan = chapterBoard(level);
-    const cells = buildSpiral(plan.cellCount);
-    const slides = plan.slides.map((S) => ({...S, used: false}));
-    const cushions = plan.cushions.map((C) => ({...C, used: false}));
-    const tokens = plan.tokens.map((T) => ({...T, taken: false}));
-    const start = cells[0];
-    const crest = spiralPoint(1);
-    const s = makeRideState(level, rand, {
-      hits: 0,
-      cushionsBounced: 0,
-      slidesSurvived: 0,
-      tokensTaken: 0,
-      keepsakeTaken: false,
-      goal: CUSHION_GOAL,
-      treasureId: TREASURES[level] || TREASURES[0],
-      cells,
-      slides,
-      cushions,
-      tokens,
-      hopper: plan.hopper,
-      planTreasureCell: plan.treasureCell,
-      duration: plan.duration,
-      frozenChapter: false,
-      youCell: 0,
-      lastCell: 0,
-      _ballCleared: false,
-      youX: start.x,
-      youY: start.y,
-      moving: false,
-      moveT: 0,
-      moveDur: STEP_EASE,
-      moveFrom: 0,
-      moveTo: 0,
-      previewing: false,
-      previewT: 0,
-      launched: false,
-      tappedOnce: false,
-      jumpedOnce: false,
-      fx: [],
-      matPulse: 0,
-      finishPulse: 0,
-      slideFlash: 0,
-      cushionFlash: 0,
-      statusCopy: '',
-      challengeOkFlash: false,
-      pendingLand: false,
-      // Gold ball prop: u=1 crest → u=0 stairs-base exit (rolls down).
-      ballU: 1,
-      ballX: crest.x,
-      ballY: crest.y,
-      ballRolling: true,
-      ballActive: true,
-      ballWait: 0,
-    });
+    const s = makeClimbState(level, rand);
     if (production) {
       s.practice = false;
       s.prizeKept = owned(TREASURES[level]);
@@ -1715,3 +1721,45 @@ export default {
   },
   readout: (s) => s.note || '',
 };
+
+// Watch sample: a disposable chapter-1 climb with scripted taps. It only moves
+// along the coil: no ride boarding, tickets, saves, finds or finish (so no
+// rewards or purse change), and the gold ball is parked. See chapter-example.js.
+function makeSampleClimb() {
+  const s = makeClimbState(0, Math.random);
+  Object.assign(s, {practice: true, boarded: true, launched: true, previewing: false, ballActive: false, ballRolling: false, ballWait: 0, statusCopy: 'Climbing'});
+  spawnTreasure(s);
+  s.note = 'TAP along the spiral — JUMP onto cushions, over slides';
+  return s;
+}
+function stepSampleClimb(s, dt) {
+  tickFx(s, dt);
+  s.t += dt;
+  if (!s.moving) return;
+  s.moveT += dt;
+  const u = clamp(s.moveT / Math.max(0.001, s.moveDur || STEP_EASE), 0, 1);
+  const e = easeInOut(u);
+  s.youX = s._moveAx + (s._moveBx - s._moveAx) * e;
+  s.youY = s._moveAy + (s._moveBy - s._moveAy) * e - Math.sin(Math.PI * e) * (s._moveArc || 0);
+  if (u < 1) return;
+  s.moving = false;
+  s.youCell = s.moveTo | 0;
+  const c = cellAt(s, s.youCell);
+  s.youX = c.x;
+  s.youY = c.y;
+  resolveLanding(s);
+  if (!s.moving) s.note = coachNote(s);
+}
+const sampleCell = (ahead) => (s) => cellAt(s, Math.min((s.cells || []).length - 1, (s.youCell | 0) + ahead));
+const sampleSettled = (s) => !s.moving;
+attachChapterExampleView(engine, {
+  model: {makeState: makeSampleClimb, step: stepSampleClimb},
+  draw: (s, d) => engine.draw(s, d),
+  steps: () => [
+    {caption: 'Tap the track just ahead (or press →) to step up the spiral, one cell at a time.', point: sampleCell(1), run: (s) => doTapNow(s), done: sampleSettled, after: 0.3},
+    {caption: 'Step again. The red chute ahead is a SLIDE: land on it and you drop back down.', point: sampleCell(1), run: (s) => doTapNow(s), done: sampleSettled, after: 0.5},
+    {caption: 'JUMP (Space or the JUMP pad) leaps over the slide onto a cream CUSHION, which bounces you up the coil.', point: sampleCell(2), run: (s) => doJumpNow(s), done: sampleSettled, after: 0.8},
+  ],
+  finishCaption: 'Your turn: pick up the keepsake on the coil, dodge the gold ball, and reach the crest to keep it.',
+});
+export default engine;

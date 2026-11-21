@@ -3,6 +3,7 @@ import {kits,spriteKey,itemName} from '../prizes.js?v=nft-art-1';
 import {paintChapterReward} from './study-kit.js?v=studies-six-1';
 import {alleyPlay,isVerifiedPlay,owned,keep} from '../wallet.js?v=insights-1';
 import {bindPrize,takePrize} from '../chapter-kit.js?v=align-1';
+import {attachChapterExampleView} from './chapter-example.js?v=example-1';
 import {R,FLIP,LANE,CUP,SHOOTER_GATE,GATE,SLINGS,POSTS,SPINNER,LEVELS,rules,railsFor,scoopFor,flowersFor,gateOpen,rampPoint,makeState,continueGo,canPull,cancel,pull,launch,nudge,tip,step,snapshot,restore} from './pinball-thunder-model.js?v=worlds-play-on-1';
 const PRIZES=kits.pinball.prizes,VIEWS=['front','right','back','left'];
 const CABINET={x:85,y:90,scale:.81};
@@ -111,7 +112,7 @@ function draw(s,d,...args){
  const c=d.c,{x,y,scale}=CABINET,w=900*scale,h=1200*scale;
  c.save();c.shadowColor='#19132666';c.shadowBlur=16;c.shadowOffsetY=9;c.fillStyle='#b99056';c.beginPath();c.roundRect(x-3,y-3,w+6,h+6,18);c.fill();c.shadowColor='transparent';c.beginPath();c.roundRect(x,y,w,h,16);c.clip();c.translate(x,y);c.scale(scale,scale);drawTable(s,d,...args);c.restore();
 }
-export default {
+const engine={
  title:'Pip’s Pinball Worlds',chapterEnds:true,houseSeconds:0,levels:LEVELS.map(x=>x.name),prizes:PRIZES,sprites:PRIZES,images,
  intro:'Six handmade pinball worlds. Pull the spring, wake the bumpers, ride the raised ramp and make the finish pocket.',
  instructions:'Drag the right spring down, then release; or hold/release Space. Enter gives a medium launch. Z/left arrow and X/right arrow work independent flippers; touch the two sides with two fingers too. Time a fresh stroke as the ball arrives. N or the centre apron gives a gentle nudge, with a two-second cooldown. A one-way gate keeps a launched ball out of the starting chute. CATCH cups hold the ball briefly, then kick it across the table. Shoot through the SPIN flag to set it whirling for bonus points. The lit outlane arrows provide one automatic kickback save per ball. Triangular slingshots punch the ball back across the table. Each chapter shows the hits needed on EACH bumper and its ramp target. Shoot UP into the raised ramp mouth; the ball rides above the playfield and exits at the top. Chapter1 needs one hit on each bumper, Chapter2 adds a ramp ride, Chapters3–4 require two hits on each and more ramps. The last two chapters have a moving pocket gate: finish while it is open. Chapter6 needs three hits per bumper and three ramps. Complete the targets, then physically land in the top pocket. Collecting the reward does not end the game: after its animation the same ball kicks back out and you can play all three balls, or leave whenever you like with the reward saved. The round ends only when all three balls drain. Three balls per go; Play again after a loss retains your chapter targets and pending pennies. A completed chapter replays as a fresh table. A ball returning to the shooter can relaunch without spending another ball. No countdown. Pennies are temporary local test drips, banked when the finish pocket is made; any remaining test pennies can be earned and banked while you play on, within the same run allowance. They are not real purse funds. Each chapter has one NFT preview, once only. Help pauses and every chapter saves separately.',
@@ -144,3 +145,15 @@ export default {
   if(changed)checkpoint(s);
  },draw,readout:s=>s.note,
 };
+
+// Watch sample: a disposable chapter-1 table with a scripted spring and flippers.
+// It never touches the guest's round, purse, pennies or rewards (see chapter-example.js).
+const onCabinet=(x,y)=>({x:CABINET.x+x*CABINET.scale,y:CABINET.y+y*CABINET.scale});
+const sampleFlip=s=>{const b=s.ball,low=s.mode==='live'&&b.y>850&&b.y<1010&&b.vy>-60;s.left=low&&b.x<450;s.right=low&&b.x>=450;};
+attachChapterExampleView(engine,{model:{makeState:level=>makeState(level),step:(s,dt)=>step(s,dt)},draw,captionY:1062,steps:()=>[
+ {caption:'Drag the spring down, then let go. A longer pull launches the ball harder.',path:[onCabinet(780,960),onCabinet(780,1030)],gesture:.9,
+  start:s=>{s.touches.sample='plunge';pull(s);},move:(s,p,u)=>{s.dragPlunge=true;s.charge=Math.max(.03,.8*u);s.ball.y=LANE.y+s.charge*LANE.pull;},run:s=>{delete s.touches.sample;launch(s);},done:s=>s.mode!=='lane',after:.2},
+ {caption:'Flip as the ball reaches a flipper: left side Z, right side X. Light every flower bumper.',point:s=>s.ball.x<450?onCabinet(330,1000):onCabinet(570,1000),gesture:7,
+  move:s=>sampleFlip(s),run:s=>{s.left=false;s.right=false;},done:()=>true,after:.2},
+],finishCaption:'Your turn: three balls. Light every flower, then shoot the top pocket for the chapter reward.'});
+export default engine;
