@@ -1,5 +1,3 @@
-/* Alley games use the parent paper-game-bar for chapters; hide the iframe header so it does not flash. */
-html.is-alley-embed .play-header,.is-alley-room .play-header{display:none!important;}
 /* Deliberately self-contained rules. No operational-site CSS or scripts. */
 html,body,.stage,canvas,img{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;touch-action:none}
 html,body{overscroll-behavior:none;overflow:hidden;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -11,7 +9,7 @@ html,body{overscroll-behavior:none;overflow:hidden;touch-action:manipulation;-we
 .play-hud span{background:#122335cc;border:1px solid #9a845e88;border-radius:999px;padding:.4rem .75rem}
 #hud-house{color:#f5d48a}
 #hud-mode{color:#f0d59a}
-.is-alley-room .play-header{display:none;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:6px 8px;gap:6px;touch-action:pan-x;-webkit-overflow-scrolling:touch}.is-alley-room .play-header .chapter-nav{flex-shrink:0}.is-alley-room .play-header>button{flex-shrink:0}.is-alley-room .play-layout{padding-top:.35rem}
+.is-alley-room .play-header{display:flex;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:6px 8px;gap:6px;touch-action:pan-x;-webkit-overflow-scrolling:touch}.is-alley-room .play-header .chapter-nav{flex-shrink:0}.is-alley-room .play-header>button{flex-shrink:0}.is-alley-room .play-layout{padding-top:.35rem}
 @media(max-width:760px){.is-alley-room .notebook{display:none}.is-alley-room .play-layout{padding-bottom:env(safe-area-inset-bottom)}.is-alley-room .stage{max-width:none;width:min(100vw,calc((100svh - 52px - env(safe-area-inset-bottom)) * .75));height:min(calc(100svh - 52px - env(safe-area-inset-bottom)),133.333vw);aspect-ratio:3/4}.is-alley-room .play-hud{font-size:.95rem;margin:.25rem auto}.is-alley-room .readout{font-size:1.05rem;margin:.25rem auto}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
