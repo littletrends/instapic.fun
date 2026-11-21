@@ -1413,6 +1413,21 @@ function closeAlleyMap() {
   if (open) open.setAttribute("aria-pressed", "false");
 }
 
+// The pocket bar stays on top of the open map, so start the map's own header
+// (title + Close) just below wherever the bar ends at this screen size.
+function padAlleyMapForTopBar() {
+  const map = el("pfAlleyMap");
+  const bar = document.querySelector(".pf-world-top");
+  if (!map) return;
+  map.style.paddingTop = "";
+  if (!bar || map.hidden) return;
+  const barBox = bar.getBoundingClientRect();
+  const mapBox = map.getBoundingClientRect();
+  const overlap = Math.ceil(barBox.bottom - mapBox.top);
+  if (barBox.height > 0 && overlap > 0) map.style.paddingTop = `${overlap + 6}px`;
+}
+window.addEventListener("resize", () => { if (alleyMapOpen) padAlleyMapForTopBar(); });
+
 function openAlleyMap() {
   fillAlleyMap();
   paintAlleyMapDoors();
@@ -1426,6 +1441,7 @@ function openAlleyMap() {
   if (open) open.setAttribute("aria-pressed", "true");
   syncAlleyMapYou();
   paintPocketHud();
+  padAlleyMapForTopBar();
 }
 
 const RIDE_GAMES = {
@@ -2099,6 +2115,8 @@ function syncStallCard(best) {
           if (lineEl) lineEl.textContent = parkSign(best.id, best.host);
         } else {
           enter.textContent = stallEnterLabel(best.id);
+          // Open stalls: show the game's one-line catalogue description.
+          if (lineEl) lineEl.textContent = paperById[best.id]?.blurb || "";
         }
       } else if (best.kind === "ride") {
         const playId = playIdFor(best.id);
@@ -2108,6 +2126,7 @@ function syncStallCard(best) {
         enter.disabled = !cabinet;
         enter.textContent = shut ? "Step in" : stallEnterLabel(playId);
         if (shut && lineEl) lineEl.textContent = parkSign(playId, best.host);
+        else if (lineEl) lineEl.textContent = paperById[playId]?.blurb || "";
       } else if (best.kind === "aura") {
         paintAuraDoorActions(best);
       } else {
@@ -2977,7 +2996,16 @@ function updateHudAnchor() {
       speech.classList.remove("is-anchored");
       speech.style.left = "";
       speech.style.top = "";
+      // Sit the host's bubble above the card's title block (Front/Rotate,
+      // host, name, Enter/Chat) instead of over it.
+      const cardTop = el("pfStallCardViews") || el("pfStallCardHost");
+      const holder = speech.offsetParent;
+      if (cardTop && holder && cardTop.offsetParent) {
+        const lift = holder.getBoundingClientRect().bottom - cardTop.getBoundingClientRect().top + 8;
+        speech.style.bottom = lift > 0 ? `${Math.round(lift)}px` : "";
+      } else speech.style.bottom = "";
     } else {
+      speech.style.bottom = "";
       speech.classList.add("is-anchored");
       speech.style.left = `${clamp(head.x, 170, w - 170)}px`;
       speech.style.top = `${clamp(head.y - 10, 64, h - 240)}px`;
