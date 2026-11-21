@@ -17,6 +17,10 @@ let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,las
 let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
 let signInRequired=false;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
+// Set while play waits for the previous second of moves to reach the save
+// server. Waiting freezes the board (no game time passes) instead of pausing.
+let verifiedSyncWaitAt=0;
+const VERIFIED_SYNC_GRACE_MS=10000;
 let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
 let attemptRequested=false;
 let switchingVerifiedChapter=false;
@@ -38,7 +42,7 @@ const TENT_KEYS={
 };
 const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how to play · Esc pause, then back to the alley';
 function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition);}
-function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys)return engine.reviewCopy.keys+' · H help · Esc pause';const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
+function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys){const k=String(engine.reviewCopy.keys).replace(/[\s.·]+$/,'');return k+(/\bH help\b/.test(k)?'':' · H help')+(/\bEsc pause\b/.test(k)?'':' · Esc pause');}const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
  if(usesPaperRules()&&embedded)return isChapterOne(level)?'Play again · free':'Play again · 1 '+(entryFor(entry.id).door==='ticket'?'ticket':'penny');
  if(!embedded)return 'Play again';
@@ -65,7 +69,7 @@ function treasureLine(){
  if(!entry||entry.id==='snap')return '';
  const prize=chapterKeep();if(!prize)return '';
  const name=itemName(prize);
- if(usesPaperRules())return name+' · '+(prizeUnlocked(prize)?'Collected':'Locked until chapter completion');
+ if(usesPaperRules())return name+' · '+(prizeUnlocked(prize)?'Collected.':'Locked until chapter completion.');
  if(prizeUnlocked(prize)){
   return 'Chapter treasure: '+name+' — Collected. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
  }
@@ -219,8 +223,18 @@ async function flushVerified({background=false}={}){
  }catch(e){if(current===verified)pauseForBanking(e);throw e;}
 }
 function verifiedEvent(event){
- try{verified.enqueue(event);state=verified.state;completion=verified.completion;if(verified.pending>=90)flushVerified({background:true}).catch(()=>{});return true;}
- catch(e){pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
+ try{verified.enqueue(event);state=verified.state;completion=verified.completion;verifiedSyncWaitAt=0;if(verified.pending>=30)flushVerified({background:true}).catch(()=>{});return true;}
+ catch(e){
+  // verified_sync_required only means the unsaved-play buffer is full while a
+  // save is still travelling (slow connection). That is back-pressure, not a
+  // failure: hold the board still until the save lands, then carry on. Only
+  // pause with "Retry saving" if the save genuinely stalls or fails.
+  if(e.message==='verified_sync_required'&&(event.type==='tick'||(event.type==='pointer'&&event.phase==='move'))){
+   const now=performance.now();if(!verifiedSyncWaitAt)verifiedSyncWaitAt=now;
+   flushVerified({background:true}).catch(()=>{});
+   if(now-verifiedSyncWaitAt<VERIFIED_SYNC_GRACE_MS)return false;
+  }
+  verifiedSyncWaitAt=0;pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
 }
 function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
 function canWatchExample(){return !!verified&&!attemptRequested&&level===0&&!sourceRecovery&&(!engine?.releaseEdition||state?.gameEdition===engine.releaseEdition)&&typeof engine?.createExampleView==='function';}
@@ -324,7 +338,9 @@ function finishChapter(result){
  const stayLabel=retryLabel();
  veil(won?'Chapter complete':'Round finished',result.title,result.detail,stayLabel,result.prize||null);
  $('#result-retry').hidden=true;
- $('#result-next').hidden=!canAdvance;
+ // A lost or timed-out round stays on this chapter: offer Play again only.
+ // The chapter tabs still let players choose another chapter themselves.
+ $('#result-next').hidden=!(won&&canAdvance);
  $('#result-next').textContent='Next chapter';
  tellRoom('ended',{id:entry.id,level});
 }
@@ -456,7 +472,11 @@ function tick(now){
  try{
   if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
   if(verified){
-   if(dt>0&&!verifiedEvent({type:'tick',dt,keys:[...input.keys],actions:[...input.actions]}))return;
+   if(dt>0&&!verifiedEvent({type:'tick',dt,keys:[...input.keys],actions:[...input.actions]})){
+    // Waiting on a save: skip this frame without advancing game time.
+    if(verifiedSyncWaitAt&&playing&&!holds.size)raf=requestAnimationFrame(tick);
+    return;
+   }
    if(now-paintAt>1000/30){paintAt=now;paint();}
    if(now-reportAt>350){reportAt=now;$('#readout').textContent=readout()||'';}
    if(verified.finished){finishChapter(verified.completion);return;}
