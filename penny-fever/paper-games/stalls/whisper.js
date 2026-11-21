@@ -4,6 +4,7 @@ import {kits,spriteKey,itemName} from '../prizes.js?v=nft-art-1';
 import {paintChapterReward} from './study-kit.js?v=studies-six-1';
 import {alleyPlay,isVerifiedPlay,owned,keep} from '../wallet.js?v=insights-1';
 import {bindPrize,takePrize} from '../chapter-kit.js?v=align-1';
+import {attachChapterExampleView} from './chapter-example.js?v=example-1';
 import {FIELD,LEVELS,FOLD_SECONDS,FLIGHT_SECONDS,rules,goal,mailboxPosition,mailboxOpen,deliveryReady,makeState,selected,selectionRule,beginLoop,extendLoop,releaseLoop,step,snapshot,restore} from './whisper-model.js?v=weave-six-2';
 const PRIZES=kits.whisper.prizes,ROOT=new URL('../assets/whisper/',import.meta.url);
 const names=['01-star-paper-plane.png','02-moon-paper-plane.png','03-star-letterbox.png','04-moon-letterbox.png','05-letter-weather-vane.png','06-delivery-platform.png'];
@@ -213,5 +214,15 @@ const releaseEngine = {
  },
  draw,readout:s=>s.note,
 };
+
+// Watch sample: a disposable chapter-1 sky with a scripted pen. It never touches
+// the guest's round, purse or rewards (see chapter-example.js).
+const sampleLoop=(cx,cy,rx,ry)=>Array.from({length:25},(_,i)=>{const a=-Math.PI/2+i*Math.PI*2/24;return {x:Math.round(cx+Math.cos(a)*rx),y:Math.round(cy+Math.sin(a)*ry)};});
+const sampleCircle=(kind,cx,cy,rx,ry,caption)=>({caption,path:sampleLoop(cx,cy,rx,ry),gesture:1.8,
+ start:s=>beginLoop(s,sampleLoop(cx,cy,rx,ry)[0]),move:(s,p)=>extendLoop(s,p),run:s=>releaseLoop(s),done:s=>s.delivered[kind]>=rules(s).perKind,after:.5});
+attachChapterExampleView(releaseEngine,{model:{makeState,step},draw,steps:()=>[
+ sampleCircle(0,320,570,112,172,'Draw one loop around the matching STAR seals only, then let go. They fold into a plane and fly to the star post.'),
+ sampleCircle(1,585,605,117,202,'Now loop the MOON seals. Never mix stars and moons in one loop: the letters just slip free.'),
+],finishCaption:'Your turn: loop one kind of seal at a time. Later chapters ask for pairs or threes.'});
 
 export default withReleasedEngine(releaseEngine,{game:"whisper",module:"whisper.js"});

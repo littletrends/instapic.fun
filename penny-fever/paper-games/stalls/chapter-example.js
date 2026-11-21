@@ -15,14 +15,14 @@ function pointer(c,info){
 }
 function paintExample(player,spec,samplePrize,d,...args){
  const info=player.info();spec.draw(player.state,d,...args);
- paper(d.c,450,42,310,48,'#243b3df2','#d1b47a',10);text(d.c,'SAMPLE',450,42,25,'#fff0cd');
+ paper(d.c,450,42,400,48,'#243b3df2','#d1b47a',10);text(d.c,'SAMPLE · TEST ONLY',450,42,24,'#fff0cd');
  const rewardAge=Number.isFinite(player.state.demoRewardAge)?player.state.demoRewardAge:Number.isFinite(player.state.demoFinishLeft)&&['demo-finish','demo-done'].includes(player.state.phase)?4.2-player.state.demoFinishLeft:null;
  if(samplePrize&&rewardAge!==null){
   paper(d.c,450,568,640,520,'#fff0e7','#b28a4d',18);
   text(d.c,'SAMPLE REWARD',450,365,27,'#684b3b');
   paintRewardTurn(d,samplePrize,rewardAge,{y:555,size:340,prefix:'example'});
   text(d.c,itemName(samplePrize),450,745,26,'#684b3b');
-  text(d.c,'Example only',450,790,21,'#806955');
+  text(d.c,'Test only · nothing collected',450,790,21,'#806955');
  }
  const captionY=spec.captionY??229;
  if(rewardAge===null&&!info.finished){paper(d.c,450,captionY,760,72,'#263c40eb','#d1b47a70',12);lines(d.c,shortCue(info.caption),450,captionY);}
