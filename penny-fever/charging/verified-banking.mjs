@@ -101,7 +101,7 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
     const keys = Array.from({length: storage.length}, (_, index) => storage.key(index)).filter(key => key?.startsWith(prefix));
     for (const key of keys) {
       let record = JSON.parse(storage.getItem(key));
-      if (record?.owner !== selected.id || !Array.isArray(record.events) || record.events.length > 120) throw Error('verified_round_recovery_required');
+      if (record?.owner !== selected.id || !Array.isArray(record.events) || record.events.length > 240) throw Error('verified_round_recovery_required');
       const suffix=key.slice(prefix.length),split=suffix.lastIndexOf(':');
       const savedGame=suffix.slice(0,split),savedChapter=Number(suffix.slice(split+1));
       const savedStatus=await client.state(savedGame,savedChapter);

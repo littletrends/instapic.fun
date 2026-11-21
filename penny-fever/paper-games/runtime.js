@@ -192,17 +192,17 @@ function showPrize(id){
 }
 function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();const sample=$('#watch-sample');if(sample)sample.hidden=!canWatchExample();veilShownAt=performance.now();$('#veil').hidden=false;}
 function clearInput(){if(exampleView){exampleView.pointer('cancel',input.pointer||{x:450,y:1050});input.keys.clear();input.actions.clear();input.down=false;input.pointer=null;return;}if(!verified&&state)engine?.releaseInput?.(state);input.keys.clear();input.actions.clear();input.down=false;if(verified){try{verified.enqueue({type:'release'});}catch{needsVerifiedRelease=true;}}else if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
-function persist(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}if(verified&&!holds.has('banking'))flushVerified().catch(()=>{});}
+function persist(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}if(verified&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});}
 function pauseForBanking(e){
  if(disposed)return;
  if(!holds.has('banking'))hold('banking');
  veil('Paused','Your round is saved here.','Reconnect or sign in again to finish saving. No new play is charged while this round is paused.','Retry saving');
  $('#begin').disabled=false;
 }
-async function flushVerified(){
+async function flushVerified({background=false}={}){
  const current=verified;if(!current)return;
  try{
-  const result=await current.flush();
+  const result=await current.flush({background});
   if(current!==verified||disposed)return result;
   if(needsVerifiedRelease){current.enqueue({type:'release'});needsVerifiedRelease=false;}
   state=current.state;completion=current.completion;
@@ -214,12 +214,12 @@ async function flushVerified(){
    paint();
    if(attempted){ended=false;if(!switchingVerifiedChapter){if(holds.size)resumeAfterHold=true;else start();}}
   }
-  if(holds.has('banking'))release('banking');
+  if(!background&&holds.has('banking'))release('banking');
   return result;
  }catch(e){if(current===verified)pauseForBanking(e);throw e;}
 }
 function verifiedEvent(event){
- try{verified.enqueue(event);state=verified.state;completion=verified.completion;if(verified.pending>=90)flushVerified().catch(()=>{});return true;}
+ try{verified.enqueue(event);state=verified.state;completion=verified.completion;if(verified.pending>=90)flushVerified({background:true}).catch(()=>{});return true;}
  catch(e){pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
 }
 function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
@@ -565,7 +565,7 @@ try{
  listen($('#result-retry'),'click',retryChapter);
  listen($('#result-next'),'click',goNextChapter);
  const saveTimer=setInterval(()=>{if(playing)persist();},1000);
- const verifiedTimer=setInterval(()=>{if(verified?.pending&&!holds.has('banking'))flushVerified().catch(()=>{});},500);
+ const verifiedTimer=setInterval(()=>{if(verified?.pending&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});},500);
  listen(window,'pagehide',()=>clearInterval(saveTimer));
  listen(window,'pagehide',()=>clearInterval(verifiedTimer));
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});

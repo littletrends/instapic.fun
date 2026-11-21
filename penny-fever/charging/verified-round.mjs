@@ -14,7 +14,7 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
   if (record.v !== 1 || record.owner !== owner || record.play !== view.id || record.source !== view.source || !Array.isArray(record.events)) {
     throw Error('verified_round_recovery_required');
   }
-  let current = view, shadow, environment, driver, sending = null, failed = null;
+  let current = view, shadow, environment, driver, sending = null, failed = null, committedEvents = 0;
   const save = () => storage.setItem(key, JSON.stringify(record));
   function rebuild() {
     const originalReplay = current.source === ORIGINAL_TOKEN_SOURCE && !current.snapshot?.edition;
@@ -27,11 +27,11 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
       seed: '00000000', startedAt: current.startedAt, snapshot: structuredClone(current.snapshot), legacyReplay: originalReplay}));
     for (const event of record.events) environment.run(() => driver.execute(event));
   }
-  async function deliver() {
+  async function deliver(limit = 120) {
     if (!record.batch) {
       if (!record.events.length) return;
       let count = 0, seconds = 0;
-      for (const event of record.events.slice(0, 120)) {
+      for (const event of record.events.slice(0, Math.min(120, limit))) {
         if (event.type === 'tick' && seconds + event.dt > 1.0 + 1e-9) break;
         count++; seconds += event.type === 'tick' ? event.dt : 0;
       }
@@ -45,10 +45,12 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
     }
     // If this write fails after the server committed, the saved batch key
     // recovers that exact response next time rather than charging again.
-    const committed = {...record, events: record.events.slice(record.batch.count), revision: response.revision};
+    const count = record.batch.count;
+    const committed = {...record, events: record.events.slice(count), revision: response.revision};
     delete committed.batch;
     storage.setItem(key, JSON.stringify(committed));
     record = committed;
+    committedEvents += count;
     current = response;
     onCommit(response);
   }
@@ -58,12 +60,21 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
   if (latest.play) current = latest.play;
   if (record.revision !== current.revision) throw Error('stale_play');
   save(); rebuild();
-  async function flush() {
+  async function flush({background = false} = {}) {
     assertActive();
-    if (sending) return sending;
+    // Each call commits the inputs already saved when it was made. Chasing
+    // inputs arriving during a request turns a regular save into a continuous
+    // stream of tiny requests. Background timers share the active save;
+    // explicit callers also wait for their own already-durable input tail.
+    const through = committedEvents + record.events.length;
+    if (background && sending) return sending;
+    while (sending) {
+      await sending;
+      if (committedEvents >= through) return current;
+    }
     const task = (async () => {
       try {
-        while (record.events.length || record.batch) await deliver();
+        while (committedEvents < through) await deliver(through - committedEvents);
         rebuild(); failed = null;
         return current;
       } catch (error) {failed = error; throw error;}
@@ -76,7 +87,9 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
     enqueue(event) {
       assertActive();
       if (failed) throw failed;
-      if (record.events.length >= 120) throw Error('verified_sync_required');
+      // Retain an in-flight batch plus one following batch locally. Each
+      // request still carries at most 120 events and one second of play.
+      if (record.events.length >= 240) throw Error('verified_sync_required');
       if (event.type === 'tick' && record.events.reduce((seconds, entry) => seconds + (entry.type === 'tick' ? entry.dt : 0), 0) + event.dt > 1.5 + 1e-9) {
         throw Error('verified_sync_required');
       }
