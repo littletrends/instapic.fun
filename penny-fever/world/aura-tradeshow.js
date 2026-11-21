@@ -79,6 +79,27 @@ function vipEmail() {
 function vipAccount() {
   return vipEmail().toLowerCase();
 }
+function notifyMintStatus() {
+  window.dispatchEvent(new CustomEvent('pennyfever:mintstatuschange'));
+}
+function collectionStatus(id) {
+  if (!vip() || rewardMint.account !== vipAccount() || !rewardMint.checked) return null;
+  const phase = rewardMint.items?.[id];
+  return {minted: nftOwnedCount(id) > 0,
+    ready: rewardMint.enabled && phase === 'ready' && !rewardMint.prices?.[id],
+    pending: !!phase && phase !== 'ready' && phase !== 'accepted',
+    earned: rewardMint.earnedItems?.includes(id) === true};
+}
+function refreshMintStatus() {
+  const account = vipAccount();
+  if (!account) return Promise.resolve(false);
+  if (account !== eligibilityAccount) {
+    eligibilityRevision += 1;
+    clearEligibility(account);
+  }
+  if (collectionLoad?.loading && collectionLoad.account === account) return Promise.resolve(false);
+  return loadRewardMint(account, eligibilityRevision);
+}
 function clearEligibility(account = '') {
   if (account !== eligibilityAccount) collectionFeedback = false;
   eligibilityAccount = account;
@@ -87,6 +108,7 @@ function clearEligibility(account = '') {
   recoveryListOpen = false;
   const recovery = overlay?.querySelector('#auraCollectionRecovery');
   if (recovery) { recovery.replaceChildren(); recovery.hidden = true; }
+  notifyMintStatus();
 }
 function claimReceiptKey(account, id) {
   return `pennyFever.tradeshowClaimReceipt.v1:${encodeURIComponent(account)}:${id}`;
@@ -170,7 +192,8 @@ function loadRewardMint(account, revision) {
       loading.failed = true;
       return false;
     }
-    rewardMint = {account, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
+    rewardMint = {account, checked: true, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, earnedItems: Array.isArray(data.earned_game_items) ? data.earned_game_items : [], walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
+    notifyMintStatus();
     paintRecoveryList();
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
@@ -1799,6 +1822,7 @@ function applyTillState(till, data, ctx) {
     if (rewardMint.account === account) {
       rewardMint.owned = rewardMint.owned && typeof rewardMint.owned === 'object' ? rewardMint.owned : {};
       rewardMint.owned[id] = owned;
+      notifyMintStatus();
     }
   }
   const state = tillStateFromStatus(data, {
@@ -2855,7 +2879,7 @@ window.addEventListener('pennyfever:tokenclaim', event => {
 window.addEventListener('pennyfever:tokenbankready', () => {
   if (overlay && !overlay.hidden) paint();
 });
-window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus, onShelf: id => onShelf(String(id || ''))};
+window.AuraTradeshow = {open: openTradeshow, close: closeTradeshow, status: tradeshowStatus, onShelf: id => onShelf(String(id || '')), collectionStatus: id => collectionStatus(String(id || '')), refreshMintStatus};
 
 try {
   const q = new URLSearchParams(location.search);

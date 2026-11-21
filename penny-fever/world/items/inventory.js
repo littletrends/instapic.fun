@@ -375,6 +375,7 @@ function mount() {
     }
   });
   window.addEventListener('hashchange', () => { if (dialog.open) dialog.close(); updateLaunch(); });
+  window.addEventListener('pennyfever:mintstatuschange', () => { if (dialog.open) render(); });
 
   const notice = document.createElement('p');
   notice.className = 'treasure-notice'; notice.setAttribute('role', 'status'); notice.hidden = true;
@@ -590,19 +591,28 @@ function sayNotice(message) {
 let shelfTimer = 0;
 function shelfSig() {
   const show = globalThis.AuraTradeshow;
-  return show?.onShelf ? entries().filter(i => i.owned && show.onShelf(i.id)).map(i => i.id).join('|') : '';
+  return show?.onShelf ? entries().filter(i => i.owned && show.onShelf(i.id)).map(i => i.id + ':' + JSON.stringify(show.collectionStatus?.(i.id))).join('|') : '';
 }
 function watchShelf() {
   clearInterval(shelfTimer);
   if (studio) return;
-  let seen = shelfSig(), ticks = 0;
+  let seen = shelfSig(), ticks = 0, refreshed = false;
+  const refresh = () => {
+    const show = globalThis.AuraTradeshow;
+    if (refreshed || typeof show?.refreshMintStatus !== 'function') return;
+    refreshed = true;
+    Promise.resolve(show.refreshMintStatus()).catch(() => {});
+  };
+  refresh();
   shelfTimer = setInterval(() => {
     if (!dialog.open || ++ticks > 12) { clearInterval(shelfTimer); return; }
+    refresh();
     const now = shelfSig();
     if (now !== seen) { seen = now; render(); }
   }, 1000);
 }
 function goMint(item = '') {
+  if (item && globalThis.AuraTradeshow?.collectionStatus?.(item)?.minted) { render(); return; }
   const world = globalThis.PennyFeverWorld;
   if (!world?.openTradeshowDoor) { sayNotice('Mint at Aura’s VIP NFT Tradeshow: walk the alley to Aura’s ticket booth.'); return; }
   const blocked = world.tradeshowDoorBlocked?.();
@@ -663,10 +673,12 @@ function cardActions(item) {
     row.append(b);
   }
   if (mint) {
+    const status = globalThis.AuraTradeshow?.collectionStatus?.(item.id);
     const b = document.createElement('button');
     b.type = 'button'; b.dataset.cardMint = item.id; b.className = 'card-mint';
-    b.textContent = 'Send to mint';
-    b.setAttribute('aria-label', 'Send ' + item.name + ' to mint at Aura’s VIP NFT Tradeshow');
+    b.textContent = status?.minted ? 'Minted' : status?.pending ? 'Finish minting' : status?.ready ? 'Send to mint' : status ? 'Not ready to mint' : 'Check mint status';
+    b.disabled = !!status && (status.minted || (!status.ready && !status.pending));
+    b.setAttribute('aria-label', status?.minted ? item.name + ' · Minted' : b.textContent + ' · ' + item.name + ' at Aura’s VIP NFT Tradeshow');
     row.append(b);
   }
   return row;
@@ -677,7 +689,7 @@ function cardAction(event) {
   if (!play && !mint) return false;
   event.preventDefault(); event.stopPropagation();
   if (play && !play.disabled) goPlay(play.dataset.cardPlay, Number(play.dataset.cardChapter) || 0);
-  if (mint) goMint(mint.dataset.cardMint);
+  if (mint && !mint.disabled) goMint(mint.dataset.cardMint);
   return true;
 }
 
