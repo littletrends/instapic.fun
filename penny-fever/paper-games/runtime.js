@@ -652,7 +652,6 @@ try{
  listen($('#restart'),'click',()=>{closeHelp();retryChapter();});
   listen($('#watch-sample'),'click',watchExample);
   listen($('#watch-sample-help'),'click',watchExample);
- if(embedded)document.querySelector('.play-header')?.remove();
  listen($('#begin'),'click',async()=>{if(sourceRecovery){$('#begin').disabled=true;try{await banking.startCurrentVersion(entry.id,level,sourceRecovery);sourceRecovery=null;unregisterVerified?.();verified=null;holds.delete('banking');await mountVerified();}catch(e){error(e);}return;}if(holds.has('banking')){flushVerified().catch(()=>{});return;}if(!ended){start();return;}retryChapter();});
  // Tapping the dimmed backdrop (not the card) continues a not-yet-ended room. Never buys a retry.
  listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||sourceRecovery||$('#begin').disabled)return;start();});
