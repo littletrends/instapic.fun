@@ -20,6 +20,8 @@ let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedReleas
 // Set while play waits for the previous second of moves to reach the save
 // server. Waiting freezes the board (no game time passes) instead of pausing.
 let verifiedSyncWaitAt=0;
+// First round opening, requested while the game code is still downloading.
+let earlyStart=null;
 const VERIFIED_SYNC_GRACE_MS=10000;
 let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
 let attemptRequested=false;
@@ -41,6 +43,16 @@ const TENT_KEYS={
  funhouse:'Maze: arrows or WASD steer (or swipe / the MOVE stick) · walk into a curtain doorway to pop out the other side',
 };
 const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how to play · Esc pause, then back to the alley';
+// In the alley, "test only" disclaimers left in some games' How to play text
+// are out of date (the purse and rewards are real there); the only test/sample
+// play is the "Watch sample" demo. Drop those sentences for alley players only.
+// The game files are unchanged (they are checked by the save server).
+const TEST_ONLY_SENTENCE=/^(test only\b|this local test\b|every chapter is a free local test\b|no (real|actual) purse or nft\b|pennies and rewards are previews\b)/i;
+function playerInstructions(text){
+ const raw=String(text||'');
+ if(!embedded)return raw;
+ return raw.split(/(?<=[.!?])\s+/).filter(sentence=>!TEST_ONLY_SENTENCE.test(sentence.trim())).join(' ').replace(/ in this test chapter\b/gi,'');
+}
 function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition);}
 function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys){const k=String(engine.reviewCopy.keys).replace(/[\s.·]+$/,'');return k+(/\bH help\b/.test(k)?'':' · H help')+(/\bEsc pause\b/.test(k)?'':' · Esc pause');}const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
@@ -266,7 +278,8 @@ async function mountVerified(){
  if(Wallet.VERIFIED_WALLET_VERSION!==1)throw Error('Please reload this page to update the verified purse.');
  const sequence=++verifiedMount;
  $('#begin').disabled=true;$('#pause').disabled=true;
- const args=await banking.startRound(entry.id,level,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
+ const early=earlyStart;earlyStart=null;
+ const args=early&&early.level===level?await early.pending:await banking.startRound(entry.id,level,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
  const {openVerifiedRound}=await import('../charging/verified-round.mjs?v=verified-banking-1');
  const round=await openVerifiedRound({engine,...args});
  if(disposed||sequence!==verifiedMount)return;
@@ -529,6 +542,15 @@ listen($('#begin'),'click',event=>{
 });
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
+ // Faster opening: start the independent downloads and the purse's chapter
+ // lookup together instead of one after another. Same calls, same order of
+ // use; nothing here changes what is saved or verified.
+ const enginePending=import(entry.module+(entry.module.includes('?')?'&':'?')+'allocation=treasure-design-1&v=paper33-v1');
+ enginePending.catch(()=>{});
+ const roundModulePending=verifiedWanted?import('../charging/verified-round.mjs?v=verified-banking-1'):null;
+ roundModulePending?.catch(()=>{});
+ const chapterPending=verifiedWanted?(async()=>{await waitForBanking();await waitForVerifiedPurse();return banking.selectedChapter(entry.id);})():null;
+ chapterPending?.catch(()=>{});
  await loadParkDoors();
  if(embedded && parkDoorsLive() && isParkShut(entry.id)){
   document.title=entry.title+' · Penny Fever';
@@ -544,16 +566,37 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+(entry.module.includes('?')?'&':'?')+'allocation=treasure-design-1&v=paper33-v1')).default;
+ // Show the stall's backdrop straight away rather than after the purse connects.
+ const img=$('#backdrop');
+ img.hidden=false;
+ img.src=entry.asset;
+ img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ // Ask the purse to open this chapter's round (the same startRound call
+ // mountVerified makes) while the game code downloads.
+ if(verifiedWanted){
+  const pending=chapterPending.then(chosen=>{
+   if(!banking?.required||Wallet.VERIFIED_WALLET_VERSION!==1)return null;
+   earlyStart={level:chosen,pending:banking.startRound(entry.id,chosen,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches})};
+   earlyStart.pending.catch(()=>{});
+   return null;
+  });
+  pending.catch(()=>{});
+ }
+ engine=(await enginePending).default;
+ // Warm the art caches while the purse finishes its chapter lookup.
+ {
+  const kit=kits[entry.id]||{sprites:[],prizes:[]};
+  const prizes=(kit.prizes&&kit.prizes.length)?kit.prizes:(engine.prizes||[]);
+  for(const id of new Set([...(engine.sprites||kit.sprites||[]),...prizes])){const key=id&&spriteKey(id);if(key)loadSprite(key).catch(()=>{});}
+  for(const src of Object.values(engine.images||{})){const i=new Image();i.decoding='async';i.src=new URL(src,import.meta.url).href;}
+ }
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  if(verifiedWanted){
-  await waitForBanking();
-  await waitForVerifiedPurse();
+  level=await chapterPending;
   navigationKey+=':'+banking.owner;
-  level=await banking.selectedChapter(entry.id);
  }else{try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;
- document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
+ document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;const howTo=playerInstructions(engine.instructions);$('#instructions').textContent=howTo;canvas.setAttribute('aria-label',engine.title+'. '+howTo);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
   const note=$('#mode-note')||document.querySelector('.note');
@@ -563,7 +606,7 @@ try{
      ?'No practice ride here — every ride, including the free first one, can keep the bonus. The details: the same maze layout is used in every chapter; later chapters are tougher. Chips are the small dots; you need the shown number to clear. The bonus key sits mid-court — once you hold it, a catch puts it back (Locked) until you finish the chips. The two curtain doorways on the side edges are linked both ways. Glowing power tokens make the faces flash and let you chase them for a few seconds. When the house clock runs out the ride simply ends; nothing is lost.'
      :'Straight into eligible maze — no practice chapter. Mouse, touch and keyboard are listed above. Leaving or hiding this page pauses the room.';
    }else if(embedded){
-    note.textContent=entry.id==='coin-pusher'?'Three trays. Every drop is a real purse penny, including chapter 1. The bonus only hangs on a prize second, then push it over the lip. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. Chapter 1 is free; later plunges cost a penny. Tap the flippers. The bonus only drops on a winning bumper second. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. Chapter 1 is free; later trays cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Ticket ride. Chapter 1 is the free ride; chapters 2–6 cost a penny. The bonus only sits on a prize roll.':'Chapter 1 is free to play until the prize second. Later chapters cost a penny a go. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
+    note.textContent=entry.id==='coin-pusher'?'Six trays. Every drop is a real purse penny, including chapter 1. The bonus only hangs on a prize second, then push it over the lip. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. Chapter 1 is free; later plunges cost a penny. Tap the flippers. The bonus only drops on a winning bumper second. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. Chapter 1 is free; later trays cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Ticket ride. Chapter 1 is the free ride; chapters 2–6 cost a penny. The bonus only sits on a prize roll.':'Chapter 1 is free to play until the prize second. Later chapters cost a penny a go. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
    }
   }
  }
@@ -649,10 +692,6 @@ try{
   if(d.type==='chapter')goChapter(d.level).catch(error);
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
- const img=$('#backdrop');
- img.hidden=false;
- img.src=entry.asset;
- img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
  if(!disposed){if(verifiedWanted)await mountVerified();else reset();for(const id of ['pause','restart'])$('#'+id).disabled=false;publishChapter();tellRoom('ready',{title:engine.title});}
  function loadImg(src){
   return new Promise(resolve=>{
