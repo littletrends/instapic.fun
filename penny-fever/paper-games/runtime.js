@@ -23,6 +23,35 @@ let verifiedSyncWaitAt=0;
 // First round opening, requested while the game code is still downloading.
 let earlyStart=null;
 const VERIFIED_SYNC_GRACE_MS=10000;
+// ---- Save batching (verified rounds) ------------------------------------
+// Moves are still sent to Mother during play (it replays them to verify wins
+// and purse changes), just in fewer, larger sends plus at natural breaks
+// (start/retry, round end, pause, help, tab hidden, leaving).
+// TARGET is how much play to gather per send. The effective size is capped by
+// the round's local limits, so this is safe before and after Mother's limits
+// change: today verified-round.mjs holds at most 1.5 s / 240 moves, which
+// gives the same ~0.5 s cadence as before. Once verified-round.mjs exposes
+// larger limits (round.limits = {bufferSeconds, bufferEvents}), sends grow to
+// TARGET automatically. To force the old cadence, set TARGET to 0.5.
+const SAVE_EVERY_SECONDS_TARGET=4;
+const SAVE_RTT_MARGIN_SECONDS=1;
+const ROUND_LIMITS_TODAY={bufferSeconds:1.5,bufferEvents:240};
+let unsentPlaySeconds=0,saveInFlight=false;
+function roundLimits(){
+ const l=verified?.limits,secs=Number(l?.bufferSeconds),events=Number(l?.bufferEvents);
+ return {bufferSeconds:secs>0?secs:ROUND_LIMITS_TODAY.bufferSeconds,bufferEvents:events>0?events:ROUND_LIMITS_TODAY.bufferEvents};
+}
+function saveAfterSeconds(){return Math.max(.5,Math.min(SAVE_EVERY_SECONDS_TARGET,roundLimits().bufferSeconds-SAVE_RTT_MARGIN_SECONDS));}
+function saveAfterEvents(){return Math.max(30,roundLimits().bufferEvents-120);}
+function saveNow(){
+ if(!verified||!verified.pending||saveInFlight||holds.has('banking'))return;
+ unsentPlaySeconds=0;saveInFlight=true;
+ flushVerified({background:true}).catch(()=>{}).finally(()=>{saveInFlight=false;if(!playing)saveNow();else maybeSave();});
+}
+function maybeSave(){
+ if(!verified?.pending||saveInFlight)return;
+ if(unsentPlaySeconds>=saveAfterSeconds()||verified.pending>=saveAfterEvents())saveNow();
+}
 let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
 let attemptRequested=false;
 let switchingVerifiedChapter=false;
@@ -208,7 +237,9 @@ function showPrize(id){
 }
 function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();const sample=$('#watch-sample');if(sample)sample.hidden=!canWatchExample();veilShownAt=performance.now();$('#veil').hidden=false;}
 function clearInput(){if(exampleView){exampleView.pointer('cancel',input.pointer||{x:450,y:1050});input.keys.clear();input.actions.clear();input.down=false;input.pointer=null;return;}if(!verified&&state)engine?.releaseInput?.(state);input.keys.clear();input.actions.clear();input.down=false;if(verified){try{verified.enqueue({type:'release'});}catch{needsVerifiedRelease=true;}}else if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
-function persist(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}if(verified&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});}
+function persistLocal(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}}
+// Natural break (pause, help, round end, chapter change, leaving): keep it locally and send what is unsent.
+function persist(){persistLocal();if(verified&&!holds.has('banking'))saveNow();}
 function pauseForBanking(e){
  if(disposed)return;
  if(!holds.has('banking'))hold('banking');
@@ -235,7 +266,7 @@ async function flushVerified({background=false}={}){
  }catch(e){if(current===verified)pauseForBanking(e);throw e;}
 }
 function verifiedEvent(event){
- try{verified.enqueue(event);state=verified.state;completion=verified.completion;verifiedSyncWaitAt=0;if(verified.pending>=30)flushVerified({background:true}).catch(()=>{});return true;}
+ try{verified.enqueue(event);state=verified.state;completion=verified.completion;verifiedSyncWaitAt=0;if(event.type==='tick')unsentPlaySeconds+=Number(event.dt)||0;if(event.type==='start'||event.type==='retry')saveNow();else maybeSave();return true;}
  catch(e){
   // verified_sync_required only means the unsaved-play buffer is full while a
   // save is still travelling (slow connection). That is back-pressure, not a
@@ -243,7 +274,7 @@ function verifiedEvent(event){
   // pause with "Retry saving" if the save genuinely stalls or fails.
   if(e.message==='verified_sync_required'&&(event.type==='tick'||(event.type==='pointer'&&event.phase==='move'))){
    const now=performance.now();if(!verifiedSyncWaitAt)verifiedSyncWaitAt=now;
-   flushVerified({background:true}).catch(()=>{});
+   saveNow();
    if(now-verifiedSyncWaitAt<VERIFIED_SYNC_GRACE_MS)return false;
   }
   verifiedSyncWaitAt=0;pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
@@ -627,8 +658,8 @@ try{
  listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||sourceRecovery||$('#begin').disabled)return;start();});
  listen($('#result-retry'),'click',retryChapter);
  listen($('#result-next'),'click',goNextChapter);
- const saveTimer=setInterval(()=>{if(playing)persist();},1000);
- const verifiedTimer=setInterval(()=>{if(verified?.pending&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});},500);
+ const saveTimer=setInterval(()=>{if(playing)persistLocal();},1000);
+ const verifiedTimer=setInterval(()=>{if(!verified?.pending||holds.has('banking'))return;if(playing)maybeSave();else saveNow();},500);
  listen(window,'pagehide',()=>clearInterval(saveTimer));
  listen(window,'pagehide',()=>clearInterval(verifiedTimer));
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});
