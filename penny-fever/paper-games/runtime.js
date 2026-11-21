@@ -15,6 +15,7 @@ const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:ab
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
+let signInRequired=false;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
 let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
 let attemptRequested=false;
@@ -165,6 +166,12 @@ if(embedded)document.body.classList.add('is-alley-room');
 function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{passive:false,...opts,signal:abort.signal});}
 function error(e){
  playing=false;cancelAnimationFrame(raf);
+ if(e.message==='verification_required'){
+  signInRequired=true;
+  $('#error').textContent='Sign in again to reconnect your saved purse and chapter progress.';
+  veil('Purse paused','Sign in again','Your saved purse, rewards and chapter progress are preserved.','Sign in again');
+  $('#begin').disabled=false;$('#pause').disabled=true;tellRoom('error');return;
+ }
  if(e.sourceRecovery){sourceRecovery=e.sourceRecovery;veil('Chapter update','Your earlier round is preserved.','This chapter has a newer game version. You can keep the earlier round saved and start the current version. Your collected rewards and purse are retained.','Start current chapter');$('#begin').disabled=!sourceRecovery.canStartCurrentVersion;$('#pause').disabled=true;tellRoom('error');return;}
  $('#error').textContent='This room could not open: '+e.message;
  const detail=e.message==='engine_source_changed'
@@ -295,6 +302,7 @@ async function goChapter(target){
  persist();
 }
 function retryChapter(){
+ if(signInRequired)return;
  cancelExample();
  if(verified){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'retry'})){attemptRequested=false;return;}if(state?.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play again');persist();return;}completion=null;ended=false;paint();start();persist();return;}
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
@@ -437,7 +445,7 @@ function paint(){if(!draw||!state)return;if(exampleView){draw.clear();exampleVie
 function goNextChapter(){goChapter(level+1).catch(error);}
 function markChapters(){}
 function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
-function start(){if(disposed||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
+function start(){if(disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
  if(r && Object.prototype.hasOwnProperty.call(r,'prize')) return r.prize || null;
@@ -491,6 +499,14 @@ listen($('#game-help'),'close',()=>release('help'));
 listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
 listen($('#veil-help'),'click',openHelp);
 listen($('#veil-back'),'click',goBack);
+listen($('#begin'),'click',event=>{
+ if(!signInRequired)return;
+ event.preventDefault();event.stopImmediatePropagation();
+ const destination=embedded?window.parent:window;
+ const target=new URL('/save.html',location.origin);
+ target.searchParams.set('return',destination.location.pathname+destination.location.search+destination.location.hash);
+ destination.location.assign(target.href);
+});
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
  await loadParkDoors();

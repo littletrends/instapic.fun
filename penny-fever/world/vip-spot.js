@@ -565,6 +565,13 @@ async function resolveProgressConflict(useLocalBalance) {
 
 async function syncOnArrival() {
   if (!signedIn()) {
+    const retainedVip=guestApi()?.read?.();
+    if(retainedVip?.verified&&retainedVip.email){
+      try {sessionStorage.setItem(PENDING_KEY,JSON.stringify(snapshot()));} catch {}
+      await connectVerifiedBanking();
+      paintChip();
+      return;
+    }
     try {
       const heldRaw=localStorage.getItem(HELD_PLAYER_KEY);
       if(heldRaw) {
