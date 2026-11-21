@@ -1,0 +1,59 @@
+import {base,copy,remember,undo,snapshot,validate,ease} from './study-state.js?v=studies-six-1';
+export {undo,snapshot};
+export const LIMIT=6;
+export const HOLES=[{x:285,y:460},{x:450,y:460},{x:615,y:460},{x:285,y:665},{x:450,y:665},{x:615,y:665},{x:285,y:850},{x:615,y:850}];
+export const BRACES=[
+ {name:'Rose brace',ends:[0,1],colour:'#b96772',trim:'#f4c397'},
+ {name:'Gold brace',ends:[1,2],colour:'#c39a57',trim:'#ffe0a0'},
+ {name:'Blue brace',ends:[3,4],colour:'#698a9f',trim:'#cbdfdc'},
+ {name:'Sage brace',ends:[4,5],colour:'#849b71',trim:'#e0dda8'},
+];
+export const LENGTH=165,HALF_WIDTH=43,END=50,HOLE_RADIUS=22;
+const H9=[...HOLES,{x:450,y:850}],H10=[...H9,{x:215,y:360}],H11=[...H10,{x:685,y:360}];
+function beams(groups){return groups.map((ends,i)=>({...BRACES[i%4],name:['Rose','Gold','Blue','Sage','Copper','Plum'][i]+' brace',ends}));}
+export const LEVELS=[
+ {name:'Six pins before the bell',detail:'Two spare holes. Four two-pin braces. Six transfers.',holes:HOLES,braces:BRACES,pins:[0,1,2,3,4,5],limit:6},
+ {name:'Three on the ribbon',detail:'Three spare holes. The long top ribbon has THREE pins.',holes:H9,braces:beams([[0,1,2],[3,4],[4,5],[2,5]]),pins:[0,1,2,3,4,5],limit:7},
+ {name:'The crossed trestles',detail:'Three spares. Overlapping trestles hide a middle pin.',holes:H9,braces:beams([[0,4],[4,3],[3,5],[5,2],[2,1]]),pins:[0,1,2,3,4,5],limit:6},
+ {name:'The latched spare',detail:'Only ONE spare is open. A hanging brace caps the other.',holes:H9,braces:beams([[0,1],[1,2],[3,4],[4,5],[6,8]]),pins:[0,1,2,3,4,5,6],limit:7,hinges:{4:6}},
+ {name:'Shared counterweights',detail:'Three spares; two long three-pin ribbons share side braces.',holes:H10,braces:beams([[0,1,2],[3,4,5],[2,5],[5,6]]),pins:[0,1,2,3,4,5,6],limit:7},
+ {name:'The midnight bell',detail:'Eight pins. Two long ribbons. A lower bridge hides the third spare.',holes:H11,braces:beams([[0,1,2],[3,4,5],[2,5],[3,6],[5,7],[6,7]]),pins:[0,1,2,3,4,5,6,7],limit:8},
+];
+const SAMPLE={name:'One brace before the bell',detail:'Two pins, one brace, two open parking holes. Clear it, then Strike the bell.',holes:[HOLES[0],HOLES[1],HOLES[6],HOLES[7]],braces:[BRACES[0]],pins:[0,1],limit:2};
+export const rules=s=>s?.demo===true?SAMPLE:LEVELS[typeof s==='number'?s:s?.level||0];
+export const holes=s=>rules(s).holes;
+export const braces=s=>rules(s).braces;
+export const limit=s=>rules(s).limit;
+export const holeName=(s,i)=>i<9?String(i+1):String.fromCharCode(65+i-9);
+export function geometry(s,id){const r=rules(s),ends=r.braces[id].ends,a=r.holes[ends[0]],b=r.holes[ends.at(-1)],x=(a.x+b.x)/2,y=(a.y+b.y)/2,angle=Math.atan2(b.y-a.y,b.x-a.x),length=Math.hypot(b.x-a.x,b.y-a.y),c=Math.cos(angle),q=Math.sin(angle);return {x,y,angle,length,offsets:ends.map(i=>(r.holes[i].x-x)*c+(r.holes[i].y-y)*q)};}
+function hingePose(s,id,pivot){const g=geometry(s,id),r=rules(s),i=r.braces[id].ends.indexOf(pivot),offset=g.offsets[i],h=r.holes[pivot],angle=offset<=0?Math.PI/2:-Math.PI/2;return {x:h.x-Math.cos(angle)*offset,y:h.y-Math.sin(angle)*offset,angle,alpha:1};}
+
+const initialPanel=(id,level=0)=>{if(level===0){const [a,b]=BRACES[id].ends.map(i=>HOLES[i]);return {id,mode:'fixed',pivot:-1,x:(a.x+b.x)/2,y:a.y,angle:0,alpha:1};}const g=geometry(level,id),pivot=rules(level).hinges?.[id];return {id,mode:pivot===undefined?'fixed':'hinged',pivot:pivot??-1,x:g.x,y:g.y,angle:g.angle,alpha:1,...(pivot===undefined?{}:hingePose(level,id,pivot))};};
+export function makeState(level=0){if(!LEVELS[level])throw Error('Choose a Bellworks chapter from one to six.');const r=rules(level);return {...base('bellworks',level===0?'Tap a brass pin, then an empty hole. Clear four paper braces in SIX moves; Undo lets you rethink.':r.detail+' '+r.limit+' pin transfers; Undo rewinds a decision.',level),pins:r.pins.map((hole,id)=>({id,hole})),panels:r.braces.map((_,i)=>initialPanel(i,level)),selected:-1,motion:null,bellHit:false,ringT:0};}
+export function makeSampleState(){const s=makeState(0);s.demo=true;s.pins=SAMPLE.pins.map((hole,id)=>({id,hole}));s.panels=[initialPanel(0,0)];s.note=SAMPLE.detail;return s;}
+export const pinAt=(s,hole)=>s.pins.find(p=>p.hole===hole)?.id??-1;
+export const cleared=s=>s.panels.filter(p=>p.mode==='gone').length;
+export const ready=s=>s.phase==='play'&&!s.result&&cleared(s)===braces(s).length;
+export function drilled(p,s=0){const c=Math.cos(p.angle),q=Math.sin(p.angle);return geometry(s,p.id).offsets.map(k=>({x:p.x+c*k,y:p.y+q*k}));}
+export function covers(p,point,s=0){if(p.mode==='gone'||p.alpha<.02)return false;const dx=point.x-p.x,dy=point.y-p.y,c=Math.cos(p.angle),q=Math.sin(p.angle),x=dx*c+dy*q,y=-dx*q+dy*c;if(Math.abs(x)>geometry(s,p.id).length/2+END||Math.abs(y)>HALF_WIDTH)return false;return !drilled(p,s).some(h=>Math.hypot(h.x-point.x,h.y-point.y)<HOLE_RADIUS);}
+export const exposed=(s,hole)=>!!holes(s)[hole]&&!s.panels.some(p=>covers(p,holes(s)[hole],s));
+export const collared=(s,hole)=>braces(s).some((b,i)=>b.ends.includes(hole)&&s.panels[i].mode!=='gone');
+export const parkingOpen=(s,hole)=>pinAt(s,hole)<0&&exposed(s,hole)&&!collared(s,hole);
+export const targets=s=>holes(s).flatMap((_,i)=>parkingOpen(s,i)?[i]:[]);
+export function choose(s,hole){if(s.phase!=='play'||s.result||!holes(s)[hole])return false;if(!exposed(s,hole)){s.note='That hole is behind a paper brace. Move its support or Undo the last swing.';return false;}if(pinAt(s,hole)<0){if(collared(s,hole)){s.note='That spring collar is closed until its braces fall. Use a bright open hole, or Undo.';return false;}return move(s,hole);}s.selected=hole;s.note='Pin at '+holeName(s,hole)+' selected. Tap a bright EMPTY hole; the paper will settle before the next move.';return true;}
+export function move(s,hole){if(s.phase!=='play'||s.result||s.selected<0||!holes(s)[hole]||!parkingOpen(s,hole))return false;const id=pinAt(s,s.selected);if(id<0||!exposed(s,s.selected))return false;if(s.moves>=limit(s)){s.note=(s.level===0?'Six':String(limit(s)))+' pin moves used. Undo a move to rethink the support order; nothing has been awarded.';return false;}remember(s);const from=s.selected;s.pins[id].hole=hole;s.moves++;s.selected=-1;s.phase='moving';s.motion={kind:'pin',id,from,to:hole,t:0,duration:.42};s.note='The pin lifts out. Watch which brace loses a support.';return true;}
+function settleSupports(s){const plans=[];for(const p of s.panels){if(p.mode==='gone')continue;const anchors=braces(s)[p.id].ends,held=p.mode==='fixed'?anchors.filter(h=>pinAt(s,h)>=0):(pinAt(s,p.pivot)>=0?[p.pivot]:[]);if((p.mode==='fixed'&&held.length>=2)||(p.mode==='hinged'&&held.length===1))continue;const from={x:p.x,y:p.y,angle:p.angle,alpha:p.alpha};if(!held.length){plans.push({id:p.id,kind:'drop',from,to:{x:p.x+(p.id%2?-55:55),y:p.y+480,angle:p.angle+(p.id%2?-.65:.65),alpha:0},mode:'gone',pivot:-1});p.mode='falling';}else{const pivot=held[0],h=holes(s)[pivot],angle=anchors[0]===pivot?Math.PI/2:-Math.PI/2,to=s.level===0?{x:h.x,y:h.y+LENGTH/2,angle,alpha:1}:hingePose(s,p.id,pivot);plans.push({id:p.id,kind:'swing',from,to,mode:'hinged',pivot});p.mode='hinged';p.pivot=pivot;}}
+ if(plans.length){s.motion={kind:'panels',plans,t:0,duration:plans.some(p=>p.kind==='drop')?1.25:1.05};s.note=plans.some(p=>p.kind==='drop')?'A last support is free. The paper brace falls away.':'One pin remains: the brace swings down and can cover another hole.';return;}s.motion=null;s.phase='play';s.note=s.level===0?'The pin moved, but no brace came free. Only six moves: Undo if that parking place was a mistake.':!targets(s).length?'No open parking holes. Undo a move: release one brace before spreading the pins.':'The pin moved. '+(limit(s)-s.moves)+' transfers left; check the remaining supports.';
+}
+export function strike(s){if(!ready(s)){if(s.phase==='play')s.note=s.level===0?'The four braces still block the weight. Free their last supports before striking.':'The braces still block the weight. Free their last supports before striking.';return false;}remember(s);s.selected=-1;s.phase='moving';s.motion={kind:'strike',t:0,duration:2.4};s.bellHit=false;s.ringT=0;s.note='Magnus swings the mallet. The freed weight must reach the bell.';return true;}
+export function strikePose(s){const t=s.motion?.kind==='strike'?s.motion.t:0,launch=Math.max(0,Math.min(1,(t-.65)/.85)),fall=Math.max(0,Math.min(1,(t-1.5)/.65));return {t,puckY:t<1.5?895-(895-386)*(1-(1-launch)**2):386+(895-386)*fall*fall,malletX:620-120*ease(Math.min(1,t/.65)),malletY:955-Math.sin(Math.min(1,t/.65)*Math.PI)*62,malletAngle:t<.65?.5-Math.min(1,t/.65)*.8:-.3+Math.min(1,(t-.65)/.7)*.8};}
+export function step(s,dt){if(s.result||s.phase==='celebrate'||!Number.isFinite(dt)||dt<=0)return;s.t+=dt;if(s.bellHit)s.ringT+=dt;const m=s.motion;if(!m)return;m.t=Math.min(m.duration,m.t+dt);
+ if(m.kind==='pin'){if(m.t===m.duration)settleSupports(s);return;}
+ if(m.kind==='panels'){const u=ease(m.t/m.duration);for(const plan of m.plans){const p=s.panels[plan.id],v=plan.kind==='drop'?(m.t/m.duration)**2:u;p.x=plan.from.x+(plan.to.x-plan.from.x)*u;p.y=plan.from.y+(plan.to.y-plan.from.y)*v;p.angle=plan.from.angle+(plan.to.angle-plan.from.angle)*u;p.alpha=plan.from.alpha+(plan.to.alpha-plan.from.alpha)*u;}if(m.t===m.duration){for(const plan of m.plans)Object.assign(s.panels[plan.id],plan.to,{mode:plan.mode,pivot:plan.pivot});s.motion=null;s.phase='play';s.note=cleared(s)===braces(s).length?'The rail is clear! Strike the bell to finish your chapter.':!targets(s).length?'No open parking holes. Undo a move: release one brace before spreading the pins.':s.moves===limit(s)?(s.level===0?'Six':String(limit(s)))+' moves used. Braces remain: Undo and try a different support order.':(limit(s)-s.moves)+' pin moves left. Fallen braces open new sockets for parking.';}return;}
+ if(m.kind==='strike'){if(m.t>=1.5&&!s.bellHit){s.bellHit=true;s.ringT=0;s.note='The weight rings the bell!';}if(m.t===m.duration){if(!s.bellHit)throw Error('The bell was not struck.');s.motion=null;s.phase='celebrate';s.pendingPennies=3+s.level;s.note=s.level===0?'Six pins, a clear rail and one perfect strike. Magnus salutes your planning!':'A clear rail and one perfect strike. Magnus salutes your planning!';}}
+}
+export function restore(blob,level=blob?.level){const bad=validate(blob,'bellworks');if(blob.demo===true||blob.v!==2||!LEVELS[level]||blob.level!==level)bad();const s=snapshot(blob),r=rules(s),int=(n,a,b)=>Number.isInteger(n)&&n>=a&&n<=b;if(!Array.isArray(s.pins)||s.pins.length!==r.pins.length||s.pins.some((p,i)=>p.id!==i||!int(p.hole,0,r.holes.length-1))||new Set(s.pins.map(p=>p.hole )).size!==r.pins.length||!Array.isArray(s.panels)||s.panels.length!==r.braces.length||!int(s.selected,-1,r.holes.length-1)||s.moves>r.limit||typeof s.bellHit!=='boolean'||!Number.isFinite(s.ringT)||s.ringT<0)bad();
+ for(let i=0;i<r.braces.length;i++){const p=s.panels[i];if(p.id!==i||!['fixed','hinged','falling','gone'].includes(p.mode)||!int(p.pivot,-1,r.holes.length-1)||![p.x,p.y,p.angle,p.alpha].every(Number.isFinite)||p.alpha<0||p.alpha>1)bad();}
+ if((s.phase==='moving')!==!!s.motion)bad();if(s.motion){const m=s.motion;if(!['pin','panels','strike'].includes(m.kind)||!Number.isFinite(m.t)||m.t<0||!Number.isFinite(m.duration)||m.duration<=0||m.t>m.duration)bad();if(m.kind==='pin'&&(!int(m.id,0,r.pins.length-1)||!int(m.from,0,r.holes.length-1)||!int(m.to,0,r.holes.length-1)||s.pins[m.id].hole!==m.to))bad();if(m.kind==='panels'&&(!Array.isArray(m.plans)||!m.plans.length||m.plans.some(p=>!int(p.id,0,r.braces.length-1)||!['drop','swing'].includes(p.kind)||!['gone','hinged'].includes(p.mode)||![p.from?.x,p.from?.y,p.from?.angle,p.from?.alpha,p.to?.x,p.to?.y,p.to?.angle,p.to?.alpha].every(Number.isFinite))))bad();if(m.kind==='strike'&&cleared(s)!==r.braces.length)bad();}if(['celebrate','result'].includes(s.phase)&&(!s.bellHit||cleared(s)!==r.braces.length))bad();
+ s.history=s.history.map(h=>{const p=restore({...h,history:[]},level);delete p.history;return p;});return copy(s);
+}

@@ -22,12 +22,7 @@ export const PENNY_TENTS = [
 export const CLOSED_TENTS = [];
 
 /** Under construction (Lorie 05/11/2026). Delete ids here to reopen. */
-export const UNDER_CONSTRUCTION = [
-  'whisper', 'ball-toss', 'water-gun', 'cover-the-spot', 'mutoscope', 'high-striker',
-  'catoptromancy', 'bent-rings', 'plinko', 'fairy-floss', 'popcorn', 'duck-pond',
-  'skee-ball', 'penny-pitch', 'dunk-tank', 'marquee', 'pack', 'pass',
-  'carousel', 'balloons', 'swings', 'organ', 'mural', 'ferris',
-];
+export const UNDER_CONSTRUCTION = [];
 export const UNDER_CONSTRUCTION_LABEL = 'Under construction 🔒';
 
 /** Ride & Seek. Ticket at the door; chapter 1 is the free ride; chapters 2–6 cost one ticket. */

@@ -1,13 +1,17 @@
 import {prizeAttempts, recordPrizeAttempt} from '../first-prize.js?v=keep-finish-1';
 import {takeAttempt, keepOrdinaryAllowed} from '../stall-entry.js?v=ride-ticket-1';
 import {alleyPlay, pocket, spend, keep, credit, owned} from '../wallet.js?v=insights-1';
+import {withChapterExample,attachChapterExampleView} from './chapter-example.js?v=example-1';
 import {
   IRIS_CHAPTERS, PRIZE_NAMES, makeGlobe, stepGlobe, brakeRing, nextLiveRing, allStopped, allMatch,
   fortuneFor, resultNumber, isIrisWin, symbolName, slotAt, ordinaryFor,
   IRIS_WINS, clockNumber as irisClock,
 } from "../fortune-globe.js?v=nft-board-1";
 
-const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2";
+const previewParams=typeof location==='undefined'?new URLSearchParams():new URLSearchParams(location.search);
+const localPreview=typeof location!=='undefined'&&['127.0.0.1','localhost'].includes(location.hostname);
+const reviewPlayer=localPreview&&/^[a-zA-Z0-9_-]{1,48}$/.test(previewParams.get('reviewPlayer')||'')?previewParams.get('reviewPlayer'):'';
+const BOOK = alleyPlay ? "pennyFever.irisTent1.v2" : "pf.test.iris.v2"+(reviewPlayer?':'+reviewPlayer:'');
 const TAU = Math.PI * 2;
 const ART = { cx: 405, cy: 341, r: 325, w: 802, h: 1000 };
 const CX = 450;
@@ -15,6 +19,12 @@ const CY = 428;
 const LOWER_CY = 1084;
 const R = 248;
 const START_PENNIES = 12;
+
+function makeChapterGlobe(level,seed){
+  const globe=makeGlobe(level,seed);
+  if(level===0){globe.rings[0].speed=.95;globe.flashSecs=2.2;globe.edition='brisk-one-v1';}
+  return globe;
+}
 
 function emptyBook() {
   return { v: 2, practiceUsed: false, pennies: START_PENNIES, paid: {}, sittings: {} };
@@ -97,7 +107,7 @@ function beginGaze(s) {
       s.charged = true;
       s.seed = (s.seed || (Date.now() & 0xfffffff)) + 1 + s.level * 17;
     }
-    s.globe = makeGlobe(s.level, s.seed);
+    s.globe = makeChapterGlobe(s.level, s.seed);
     s.phase = "flash";
     s.flashLeft = s.globe.flashSecs;
     s.clock = 0;
@@ -221,7 +231,7 @@ function drawPlayControl(s, d, y) {
   c.restore();
 }
 
-export default {
+const engine = {
   title: "Catch the Fortune",
   canvasControls: true,
   houseSeconds: 0,
@@ -291,7 +301,7 @@ export default {
       note: String(saved.note || "").replace(/Unlocked/g, "Collected").replace(/unlocked/g, "collected") || (resume ? "Stop the rings." : "Gaze when you are ready."),
     };
     if ((s.phase === "flash" || s.phase === "spin") && !s.globe) s.globe = makeGlobe(level, s.seed);
-    s.preview = makeGlobe(level, s.seed);
+    s.preview = s.globe&&!s.globe.edition?makeGlobe(level,s.seed):makeChapterGlobe(level, s.seed);
     return s;
   },
   update(s, dt) {
@@ -486,3 +496,54 @@ export default {
     return purse + (s.note ? " · " + s.note : "");
   },
 };
+
+if(localPreview&&reviewPlayer&&!alleyPlay)engine.navigationKey=BOOK+'.selection';
+const SAMPLE_SEED=30;
+const SAMPLE_STOP_DELAY=4.083394625880424;
+export const irisExampleModel={
+  makeState(){
+    return {level:0,t:0,phase:'idle',seed:SAMPLE_SEED,demo:true,globe:null,preview:makeGlobe(0,SAMPLE_SEED),
+      flashLeft:0,clock:0,charged:false,practice:false,fortune:'',resultN:0,ordinary:null,caught:false,won:false,
+      hold:0,click:0,reduced:false,note:'Watch the original slow first chapter.',demoFinishLeft:0,demoCaught:false};
+  },
+  step(s,dt){
+    if(!s.demo||!Number.isFinite(dt)||dt<=0)return;
+    s.t+=dt;s.click=Math.max(0,s.click-dt*3);
+    if(s.phase==='flash'){s.flashLeft-=dt;if(s.flashLeft<=0){s.phase='spin';s.note='Stop the remembered sign in the top glow.';}}
+    if(s.phase==='spin'){s.clock+=dt;stepGlobe(s.globe,dt,false);}
+    else if(s.phase==='demo-finish'){s.demoFinishLeft=Math.max(0,s.demoFinishLeft-dt);if(!s.demoFinishLeft)s.phase='demo-done';}
+  },
+};
+function startIrisExample(s){
+  if(!s.demo||s.phase!=='idle')return;
+  s.globe=makeGlobe(0,SAMPLE_SEED);s.phase='flash';s.flashLeft=s.globe.flashSecs;s.clock=0;
+  s.note='Remember '+s.globe.flash.map(symbolName).join(' · ')+'.';
+}
+function stopIrisExample(s){
+  if(!s.demo||s.phase!=='spin')return;
+  brakeRing(s.globe,nextLiveRing(s.globe));s.click=1;s.demoCaught=allMatch(s.globe);s.phase='demo-finish';s.demoFinishLeft=4.2;
+  s.note=s.demoCaught?'Sample catch complete.':'The sample sign was missed.';
+}
+export function irisExampleSteps(){return [
+  {caption:s=>'Tap GAZE. Remember '+symbolName((s.globe||s.preview).flash[0])+'. This is the original slow first chapter.',point:{x:CX,y:CY},run:startIrisExample,done:s=>s.phase==='spin',after:0},
+  {caption:s=>s.phase==='demo-finish'||s.phase==='demo-done'?'Sign caught in the top glow. Example reward only; your purse and real collection have not changed.':'Watch the remembered sign travel to the top glow. Tap STOP as it arrives.',point:{x:CX,y:CY},approach:SAMPLE_STOP_DELAY-.25,gesture:.25,run:stopIrisExample,done:s=>s.phase==='demo-done',after:0},
+];}
+const originalDraw=engine.draw.bind(engine);
+function drawIrisExample(s,d){
+  const prize=IRIS_CHAPTERS[0].prize,render=Object.create(d);render.art={...d.art,[prize]:null};
+  originalDraw({...s,practice:false,won:false,phase:s.phase.startsWith('demo-')?'result':s.phase},render);
+  const c=d.c,image=d.art[prize],complete=s.demoCaught&&(s.phase==='demo-finish'||s.phase==='demo-done');
+  if(complete){
+    c.save();c.fillStyle='#26162ef5';c.strokeStyle='#d6b66e';c.lineWidth=3;c.beginPath();c.roundRect(150,325,600,420,22);c.fill();c.stroke();c.restore();
+    d.text('COLLECTED · EXAMPLE ONLY',450,375,25,'#fff0c8');
+    if(image)d.sprite(image,450,535,{w:220,h:220,angle:(4.2-s.demoFinishLeft)*Math.PI/2,shadow:false});
+    d.text(PRIZE_NAMES[prize]||'Chapter reward',450,690,25,'#fff0c8');
+  }else if(image){d.glow(742,568,70,'#e8c878');d.sprite(image,742,568,{w:118,h:118});d.text('Locked · example',742,646,16,'#fff0c8');}
+}
+const irisExampleSpec={
+  bookKey:BOOK,hasSavedFirst:()=>!!readBook().sittings[0],canStart:s=>['idle','flash','spin'].includes(s.phase),
+  model:irisExampleModel,draw:drawIrisExample,steps:irisExampleSteps,captionY:800,
+  finishCaption:'Slow sample finished. Chapter 1 has a shorter flash and a quicker ring. Its normal prize clock returns when you play.',
+};
+attachChapterExampleView(engine,irisExampleSpec);
+export default localPreview&&!alleyPlay?withChapterExample(engine,irisExampleSpec):engine;

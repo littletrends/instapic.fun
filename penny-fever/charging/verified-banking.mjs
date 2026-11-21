@@ -16,6 +16,12 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
   const rounds = new Set();
   const adoption = () => JSON.parse(storage.getItem(ADOPTION_KEY) || 'null');
   const moving = selected => !selected.email && adoption()?.guest_id === selected.id;
+  function retainReplacedRound(selected,key,record,status){
+    const replacement=status.replacement;
+    if(!record||!replacement||replacement.previousPlay!==record.play||replacement.play!==status.play?.id)return false;
+    storage.setItem('pennyFever.verified.retainedRound.v1:'+encodeURIComponent(selected.id)+':'+record.play,JSON.stringify(record));
+    storage.removeItem(key);return true;
+  }
   function vip() {
     const value = identity?.read?.();
     return identity?.isVerifiedSessionActive?.() && value?.email && value?.session_token
@@ -71,7 +77,10 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
   }
   async function flush() {
     await (work || first);
-    for (const callback of rounds) await callback();
+    for (const callback of rounds) {
+      try { await callback(); }
+      catch (error) { if (!['engine_source_changed','engine_source_unavailable'].includes(error.message)) throw error; }
+    }
     return purse.flush();
   }
   async function bank() {
@@ -93,6 +102,17 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
     for (const key of keys) {
       let record = JSON.parse(storage.getItem(key));
       if (record?.owner !== selected.id || !Array.isArray(record.events) || record.events.length > 120) throw Error('verified_round_recovery_required');
+      const suffix=key.slice(prefix.length),split=suffix.lastIndexOf(':');
+      const savedGame=suffix.slice(0,split),savedChapter=Number(suffix.slice(split+1));
+      const savedStatus=await client.state(savedGame,savedChapter);
+      if(retainReplacedRound(selected,key,record,savedStatus))continue;
+      if(savedStatus.sourceRecovery?.required){
+        storage.setItem(key,JSON.stringify({...record,sourceRecovery:savedStatus.sourceRecovery}));
+        continue;
+      }
+      // An explicitly replaced round remains retained locally; never replay
+      // its queued inputs against the new chapter's rules.
+      if(savedStatus.play&&savedStatus.play.id!==record.play)throw Error('verified_round_recovery_required');
       while (record.batch || record.events.length) {
         if (!record.batch) {
           let count = 0, seconds = 0;
@@ -178,6 +198,14 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       const epoch = generation, selected = account;
       const client = clientFor(selected, epoch);
       await client.recover();
+      const status = await client.state(game, chapter);
+      const recordKey='pennyFever.verified.round.v1:'+encodeURIComponent(selected.id)+':'+game+':'+chapter;
+      const savedRound=storage.getItem(recordKey);
+      if(savedRound)retainReplacedRound(selected,recordKey,JSON.parse(savedRound),status);
+      if(status.sourceRecovery?.required){
+        const error=Error(status.sourceRecovery.reason||'engine_source_changed');
+        error.sourceRecovery=status.sourceRecovery;throw error;
+      }
       const view = await client.command({operation: 'begin', game, chapter, preferences});
       if (epoch !== generation) throw Error('verified_identity_changed');
       purse.accept(view.wallet);
@@ -195,6 +223,21 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
           clientFor(selected, epoch).bank().catch(onError);
         }
       }};
+    },
+    async startCurrentVersion(game,chapter,recovery){
+      await flush();const epoch=generation,selected=account,client=clientFor(selected,epoch);
+      await client.recover();const status=await client.state(game,chapter);
+      const current=status.sourceRecovery;
+      if(!current?.required||!current.canStartCurrentVersion||current.play!==recovery.play||current.revision!==recovery.revision)throw Error('verified_round_recovery_required');
+      const result=await client.command({operation:'start_current_version',play:current.play,revision:current.revision});
+      if(epoch!==generation)throw Error('verified_identity_changed');
+      const key='pennyFever.verified.round.v1:'+encodeURIComponent(selected.id)+':'+game+':'+chapter;
+      const previous=storage.getItem(key);
+      if(previous){
+        storage.setItem('pennyFever.verified.retainedRound.v1:'+encodeURIComponent(selected.id)+':'+current.play,previous);
+        storage.removeItem(key);
+      }
+      purse.accept(result.wallet);return result;
     },
     async selectedChapter(game) {
       await (work || first);

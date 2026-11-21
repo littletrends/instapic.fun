@@ -618,73 +618,111 @@ export default {
   draw(s, d) {
     const c = d.c;
     const ch = CHAPTERS[s.level];
-    // tray bed
+    const panel = (x,y,w,h,fill,stroke='#bd945a',radius=14) => {
+      c.save();c.shadowColor='#1c130e66';c.shadowBlur=9;c.shadowOffsetY=5;
+      c.beginPath();c.roundRect(x,y,w,h,radius);c.fillStyle=fill;c.fill();
+      c.shadowColor='transparent';c.strokeStyle=stroke;c.lineWidth=2;c.stroke();
+      c.beginPath();c.roundRect(x+5,y+5,w-10,h-10,Math.max(3,radius-4));
+      c.strokeStyle=stroke+'65';c.lineWidth=1;c.stroke();c.restore();
+    };
+    const ink = (value,x,y,size=20,colour='#f7e7be',maxWidth=780) => {
+      c.save();c.font='600 '+Math.max(size,12*900/(d.cssWidth||450),12*1200/(d.cssHeight||600))+'px Georgia,serif';
+      c.textAlign='center';c.textBaseline='middle';c.fillStyle=colour;c.fillText(String(value),x,y,maxWidth);c.restore();
+    };
+    const seam = (x1,y1,x2,y2,colour,width=2) => {
+      c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.strokeStyle=colour;c.lineWidth=width;c.stroke();
+    };
+    const litDrop = !s.practice && !s.tray.treasureOn && !s.tray.treasureOwned &&
+      isWinSecond(s.level, clockNumber(s.clock || 0));
+    // Frame the machine a little closer around its real collection edge.
+    // Keep the controls outside this transform so their hit areas stay aligned.
+    c.save();
+    c.translate(450, FRONT);
+    c.scale(1.16, 1.16);
+    c.translate(-450, -FRONT);
     const cab = d.art.cabinet;
     if (cab) c.drawImage(cab, CAB.x, CAB.y, CAB.w, CAB.h);
-    const pusherY = BACK - 8 + (s.phase === "push" ? Math.sin(s.cycle * Math.PI) * Math.min(40, ch.push || 40) : 0);
-    c.fillStyle = "rgba(212, 176, 106, 0.45)";
-    c.fillRect(LEFT + 6, pusherY - 8, RIGHT - LEFT - 12, 12);
-
+    c.save();c.beginPath();c.roundRect(LEFT+4,BACK-12,RIGHT-LEFT-8,FRONT-BACK+17,7);c.clip();
+    const glass=c.createLinearGradient(LEFT,BACK,RIGHT,FRONT);
+    glass.addColorStop(0,'#112b2360');glass.addColorStop(.5,'#152a2180');glass.addColorStop(1,'#101d17a0');
+    c.fillStyle=glass;c.fillRect(LEFT,BACK-12,RIGHT-LEFT,FRONT-BACK+18);
+    seam(LEFT+24,BACK-12,LEFT+76,FRONT,'#fff2cf0c',24);
+    seam(RIGHT-72,BACK-12,RIGHT-28,FRONT,'#fff6da12',13);c.restore();
+    for(const x of [LEFT+18,RIGHT-18]){
+      seam(x,BACK-7,x,FRONT,'#583f2c',5);seam(x-1,BACK-7,x-1,FRONT,'#e6c58d',2);
+      d.circle(x,BACK-5,3,'#e9c88e','#7f603f',1);d.circle(x,FRONT-4,3,'#e9c88e','#7f603f',1);
+    }
+    const dropAmp=Math.max(1,s.handful||1);
+    const pushAmp=Math.min(96,(ch.push||36)*(0.7+Math.min(2.1,Math.sqrt(dropAmp)/7)));
+    const pusherY=BACK-8+(s.phase==='push'?Math.sin(s.cycle*Math.PI)*pushAmp:0);
+    c.save();c.shadowColor='#1e171466';c.shadowBlur=5;c.shadowOffsetY=4;
+    const brass=c.createLinearGradient(0,pusherY-12,0,pusherY+3);
+    brass.addColorStop(0,'#f2d6a0');brass.addColorStop(.3,'#bc945c');brass.addColorStop(.65,'#e6c38a');brass.addColorStop(1,'#755232');
+    c.fillStyle=brass;c.fillRect(LEFT+6,pusherY-10,RIGHT-LEFT-12,13);
+    c.shadowColor='transparent';seam(LEFT+6,pusherY-9,RIGHT-6,pusherY-9,'#fff0c1',1.5);
+    for(const x of [LEFT+15,RIGHT-15]){d.circle(x,pusherY-3,3,'#8a653f','#f5daa1',1);}
+    c.restore();
     if (ch.divider) {
-      c.fillStyle = "#8a6a38";
-      c.fillRect(446, BACK, 8, FRONT - BACK - 42);
+      c.fillStyle='#6e5132';c.fillRect(446,BACK,8,FRONT-BACK-42);
+      c.fillStyle='#d9b67d';c.fillRect(446,BACK,3,FRONT-BACK-42);
     }
     for (const p of (s.pegs || pegsFor(ch))) {
-      d.circle(p.x, p.y, p.r, "#c4a060", "#7a5828", 2);
+      d.ellipse(p.x+2,p.y+3,p.r,p.r*.65,'#261b1540');
+      const rivet=c.createRadialGradient(p.x-p.r*.3,p.y-p.r*.4,1,p.x,p.y,p.r);
+      rivet.addColorStop(0,'#fff0ba');rivet.addColorStop(.5,'#c59a59');rivet.addColorStop(1,'#7f5c34');
+      d.circle(p.x,p.y,p.r,rivet,'#f1d29a',1);seam(p.x-3,p.y,p.x+3,p.y,'#765633',1.5);
     }
-    if(ch.upper){c.fillStyle='#9e713f';c.fillRect(LEFT+95,BACK+70,RIGHT-LEFT-190,8);}
-    if(ch.dead){c.fillStyle='rgba(65,35,20,.28)';c.fillRect(RIGHT-65,BACK+80,45,FRONT-BACK-100);}
-    // drop guide
-    c.strokeStyle = "rgba(255, 220, 140, 0.35)";
-    c.setLineDash([6, 8]);
-    c.beginPath(); c.moveTo(s.dropX, BACK - 28); c.lineTo(s.dropX, FRONT); c.stroke();
-    c.setLineDash([]);
-    d.circle(s.dropX, BACK - 22, 8, "#e8c878", "#7a5828", 2);
-
+    if(ch.upper){c.save();c.shadowColor='#291d154d';c.shadowOffsetY=4;c.shadowBlur=3;c.fillStyle='#a17b4e';c.fillRect(LEFT+95,BACK+70,RIGHT-LEFT-190,8);c.shadowColor='transparent';seam(LEFT+95,BACK+70,RIGHT-95,BACK+70,'#efd29b',2);c.restore();}
+    if(ch.dead){c.fillStyle='#2e211d45';c.fillRect(RIGHT-65,BACK+80,45,FRONT-BACK-100);c.save();c.beginPath();c.rect(RIGHT-65,BACK+80,45,FRONT-BACK-100);c.clip();for(let y=BACK+80;y<FRONT;y+=11)seam(RIGHT-65,y,RIGHT-20,y+12,'#b69d6e22',1);c.restore();}
+    // The existing sweeping hopper is clearer against the cabinet glass.
+    c.save();c.strokeStyle=s.busy?'#eed5a050':'#ffe8b1b5';c.lineWidth=2.5;c.setLineDash([4,7]);
+    c.beginPath();c.moveTo(s.dropX,BACK-28);c.lineTo(s.dropX,FRONT);c.stroke();c.setLineDash([]);
+    d.glow(s.dropX,BACK-22,15,litDrop?'#fff2a3':'#f4cd86');d.circle(s.dropX,BACK-22,8,litDrop?'#fff1ad':'#ead09a','#785733',2);
+    d.circle(s.dropX-2,BACK-25,2,'#fff0c3');c.restore();
     const pieces=[...s.tray.coins.filter(c=>c.kind!=="treasure"),...s.tray.coins.filter(c=>c.kind==="treasure")];
     for (const coin of pieces) {
       const img = coin.kind === "treasure" ? d.art[ch.prize] : (coin.kind === "star" ? d.art.star : d.art.penny);
+      d.ellipse(coin.x+2,coin.y+coin.r*.55,coin.r*.9,coin.r*.4,'#10161097');
       if((coin.count||1)>1){
         for(let layer=1;layer<=Math.min(4,coin.count-1);layer++)
-          d.circle(coin.x,coin.y-layer*3,coin.r,"#b87333","#7a4a18",1);
+          d.circle(coin.x,coin.y-layer*3,coin.r,'#ba824b','#f0c98c',1);
       }
-      if(coin.kind==='treasure')d.circle(coin.x,coin.y,coin.r+5,null,"#fff0a8",3);
-      if (img) d.sprite(img, coin.x, coin.y, { w: coin.r * 2.15, h: coin.r * 2.15 });
+      if(coin.kind==='treasure'){d.glow(coin.x,coin.y,coin.r+12,'#f4d395');d.circle(coin.x,coin.y,coin.r+5,null,'#fff0b4',3);}
+      if (img) d.sprite(img, coin.x, coin.y, { w: coin.r * 2.15, h: coin.r * 2.15, shadow:false });
       else d.circle(coin.x, coin.y, coin.r, coin.kind === "treasure" ? "#e8c878" : "#b87333", "#7a4a18", 2);
     }
-
-    d.text(pennyCount(s.tray.coins)+" pennies in machine",450,798,17,"#fff0c8");
-
-    // locked treasure in the crown shelf
+    // The chapter treasure stays on its original crown shelf until released.
     if (!s.tray.treasureOn && !s.tray.treasureOwned) {
       const timg = d.art[ch.prize];
-      c.globalAlpha = 0.55;
+      d.glow(450,268,42,'#e9bd72');c.save();c.globalAlpha=.82;
       if (timg) d.sprite(timg, 450, 268, { w: 70, h: 70 });
-      c.globalAlpha = 1;
-      d.text("Locked", 450, 312, 14, "#ead6a4");
+      c.restore();panel(398,294,104,31,'#35271eea','#b68b54',8);ink('Locked',450,310,16,'#f4dfb4',94);
     } else if (s.tray.treasureOwned) {
-      d.text("Collected", 450, 268, 16, "#c8e878");
+      panel(378,246,144,42,'#314f3bea','#c0a065',11);ink('Collected',450,268,19,'#e0eebd',132);
     }
     if (s.flash > 0) {
       c.fillStyle = `rgba(255, 220, 120, ${s.flash * 0.25})`;
       c.fillRect(LEFT, BACK, RIGHT - LEFT, 80);
     }
 
-    c.fillStyle = "rgba(20, 10, 8, 0.55)";
-    c.fillRect(LEFT, FRONT, RIGHT - LEFT, 18);
-    d.text("Collection lip", 450, FRONT + 32, 14, "#e8c878");
+    const lip=c.createLinearGradient(0,FRONT,0,FRONT+18);lip.addColorStop(0,'#1f1714e8');lip.addColorStop(1,'#72563280');
+    c.fillStyle=lip;c.fillRect(LEFT,FRONT,RIGHT-LEFT,18);
+    seam(LEFT,FRONT,RIGHT,FRONT,'#f9dd98',3);seam(LEFT+6,FRONT+16,RIGHT-6,FRONT+16,'#ab8251',1);
+    panel(316,FRONT+19,268,36,'#26221af2','#c7a266',9);
+    ink('Collection lip',450,FRONT+37,20,'#fff0cc',246);
+    c.restore();
 
     if (s.trayOpen && !s.warn) {
       c.fillStyle = "rgba(10, 6, 8, 0.55)";
       c.fillRect(0, 150, 900, 730);
       c.beginPath();
       if (c.roundRect) c.roundRect(18, 668, 864, 330, 22); else c.rect(18, 668, 864, 330);
-      c.fillStyle = "rgba(36, 22, 18, 0.96)";
+      c.fillStyle = "rgba(244, 225, 194, 0.98)";
       c.fill();
-      c.strokeStyle = "#e8c878";
+      c.strokeStyle = "#b9935e";
       c.lineWidth = 3;
       c.stroke();
-      d.text("Pack or pick a drop", 450, 656, 22, "#fff1d1");
+      panel(192,632,516,46,'#493127f5','#d0aa70',12);ink('Pack or pick a drop',450,655,25,'#ffedc7',490);
     }
 
     if (s.warn) {
@@ -692,28 +730,39 @@ export default {
       c.fillRect(0, 150, 900, 730);
       c.beginPath();
       if (c.roundRect) c.roundRect(70, 210, 760, 430, 22); else c.rect(70, 210, 760, 430);
-      c.fillStyle = "rgba(36, 22, 18, 0.96)";
+      c.fillStyle = "rgba(245, 226, 196, 0.98)";
       c.fill();
-      c.strokeStyle = "#e8c878";
+      c.strokeStyle = "#b58d57";
       c.lineWidth = 3;
       c.stroke();
-      d.text("Pack a few first?", 450, 270, 32, "#fff1d1");
-      d.wrap("That's " + s.warn.n + " loose pennies. The tray is greedier than it looks — packed 5-packs stay in your pocket.", 450, 330, 22, "#f0d18f", 680, 10);
-      d.wrap("Dump anyway if you mean it. Copper will not send a second warning.", 450, 470, 18, "#ead6a4", 640, 8);
-    } else {
-      d.wrap(s.note, 450, 822, 18, "#fff0c8", 700, 8);
-      d.text(prizeStatus(s),450,872,16,"#c8e878");
+      ink('Pack a few first?',450,270,32,'#734d40',680);
+      d.wrap("That's " + s.warn.n + " loose pennies. The tray is greedier than it looks — packed 5-packs stay in your pocket.",450,350,22,'#6d5141',680,10);
+      d.wrap('Dump anyway if you mean it. Copper will not send a second warning.',450,490,18,'#705746',640,8);
+    } else if(!s.trayOpen) {
+      panel(40,772,820,114,'#252d23f5','#b99860',14);
+      ink(pennyCount(s.tray.coins)+' pennies in machine',450,791,18,'#d9c194',780);
+      c.save();const size=Math.max(18,12*900/(d.cssWidth||450),12*1200/(d.cssHeight||600));c.font='600 '+size+'px Georgia,serif';
+      const rows=[''];for(const word of String(s.note||'').split(/\s+/)){const i=rows.length-1,next=rows[i]+(rows[i]?' ':'')+word;if(c.measureText(next).width>775&&rows[i])rows.push(word);else rows[i]=next;}
+      const visible=rows.slice(0,2);if(rows.length>2)visible[1]=visible[1].replace(/\s+\S*$/,'')+'…';
+      const receiptInk=s.note?.startsWith('Receipt')?'#ffe1a0':'#fff0ce';
+      visible.forEach((line,i)=>ink(line,450,visible.length===1?831:818+i*25,18,receiptInk,780));c.restore();
+      seam(76,856,824,856,'#c9a66e67',1);
+      ink(prizeStatus(s),450,872,16,litDrop?'#ffe2a0':'#cde1b4',780);
     }
 
     uiButtons(s).forEach(b => {
+      const primary = !s.trayOpen && (b.id === 'drop-repeat' || b.id === 'drop1');
       c.beginPath();
       if (c.roundRect) c.roundRect(b.x, b.y, b.w, b.h, 14); else c.rect(b.x, b.y, b.w, b.h);
-      c.fillStyle = b.on ? "#5a3a28" : "#2a2226";
+      const fill=c.createLinearGradient(0,b.y,0,b.y+b.h);
+      fill.addColorStop(0,b.on?(primary?'#395a45':'#fff0d3'):'#344039');
+      fill.addColorStop(1,b.on?(primary?'#223e30':'#dfbf8a'):'#26312d');
+      c.save();c.shadowColor='#18130e55';c.shadowBlur=7;c.shadowOffsetY=4;c.fillStyle=fill;
       c.fill();
-      c.strokeStyle = b.on ? "#f0d18f" : "#6a5a50";
-      c.lineWidth = b.on ? 3 : 1.5;
+      c.shadowColor='transparent';c.strokeStyle=b.on?(primary&&litDrop?'#ffe09b':'#bd9157'):'#79816a';c.lineWidth=b.on?2.5:1.5;
       c.stroke();
-      d.text(b.label, b.x + b.w / 2, b.y + b.h / 2 + 7, 18, b.on ? "#fff6d8" : "#8a7a70");
+      c.beginPath();c.roundRect(b.x+5,b.y+5,b.w-10,b.h-10,10);c.strokeStyle=b.on?'#fff5dca0':'#a1a58a40';c.lineWidth=1;c.stroke();
+      ink(b.label,b.x+b.w/2,b.y+b.h/2,Math.min(28,b.h*.34),b.on?(primary?'#fff1d3':'#6b493b'):'#a9af94',b.w-24);c.restore();
     });
   },
   readout(s) {

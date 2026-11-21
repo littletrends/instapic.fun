@@ -2,7 +2,7 @@ import {chapterOutcome} from './chapter-flow.js?v=pf-polish-1';
 import {owned} from './wallet.js?v=insights-1';
 import * as Wallet from './wallet.js?v=insights-1';
 import {VERIFIED_BANKING_RELEASE} from '../charging/verified-banking.mjs';
-import {byId} from './catalogue.js?v=nft-board-1';
+import {byId} from './catalogue.js?v=popcorn-transparent-1';
 import {Draw,seeded,clamp} from './draw.js?v=sep17-4';
 import {loadSprite,frontUrl} from './sprites.js?v=load-fix-1';
 import {kits,spriteKey,itemName} from './prizes.js?v=nft-board-1';
@@ -14,8 +14,10 @@ import {secondsNote} from './prize-seconds.js?v=keep-finish-1';
 const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:abort.signal};
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
-let completion=null, adapterDismissed=false, navigationKey;
+let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
+let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
+let attemptRequested=false;
 let switchingVerifiedChapter=false;
 const holds=new Set();let resumeAfterHold=false;
 const id=new URLSearchParams(location.search).get('stall'),entry=byId[id];
@@ -34,8 +36,10 @@ const TENT_KEYS={
  funhouse:'Maze: arrows or WASD steer (or swipe / the MOVE stick) · walk into a curtain doorway to pop out the other side',
 };
 const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how to play · Esc pause, then back to the alley';
-function keyHints(){const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
+function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition);}
+function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys)return engine.reviewCopy.keys+' · H help · Esc pause';const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
+ if(usesPaperRules()&&embedded)return isChapterOne(level)?'Play again · free':'Play again · 1 '+(entryFor(entry.id).door==='ticket'?'ticket':'penny');
  if(!embedded)return 'Play again';
  if(entry?.id==='coin-pusher')return 'Play again · real pennies';
  if(isChapterOne(level))return 'Play again · free until the prize second';
@@ -46,6 +50,7 @@ function retryLabel(){
  return 'Play again · 1 penny';
 }
 function costLine(){
+ if(usesPaperRules())return !embedded?'Free preview.':isChapterOne(level)?'Chapter 1 is free.':'One '+(entryFor(entry.id).door==='ticket'?'ticket':'penny')+' per attempt.';
  if(!embedded)return 'Workshop play is free and keeps nothing.';
  if(entry?.id==='coin-pusher')return 'Every push spends a real penny from the purse, including Chapter 1. The alley starts you with a few pennies — Copper is where they work.';
  if(isChapterOne(level))return 'Chapter 1 is free for guest and VIP. Play until the prize second hits. That chapter’s bonus drops once. Everyday pennies still return to the purse.';
@@ -59,12 +64,14 @@ function treasureLine(){
  if(!entry||entry.id==='snap')return '';
  const prize=chapterKeep();if(!prize)return '';
  const name=itemName(prize);
+ if(usesPaperRules())return name+' · '+(prizeUnlocked(prize)?'Collected':'Locked until chapter completion');
  if(prizeUnlocked(prize)){
   return 'Chapter treasure: '+name+' — Collected. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
  }
  return 'Chapter treasure: '+name+' — Locked until the prize second hits. One bonus per game chapter.';
 }
 function secondsLine(){
+ if(usesPaperRules())return '';
  if(typeof engine?.secondsNote==='function')return engine.secondsNote(level,state)||'';
  if(typeof engine?.winningSeconds==='function')return secondsNote(level,engine.winningSeconds(level));
  return '';
@@ -98,6 +105,14 @@ async function waitForBanking(){
   const timer=setTimeout(()=>{window.parent.removeEventListener('pennyfever:bankingavailable',ready);reject(Error('The verified purse could not connect. Return to the alley and try again.'));},30000);
   window.parent.addEventListener('pennyfever:bankingavailable',ready);ready();
  });
+}
+async function waitForVerifiedPurse(){
+ let timer;
+ try{
+  await Promise.race([banking.ready,new Promise((resolve,reject)=>{
+   timer=setTimeout(()=>reject(Error('verified_purse_connection_timeout')),30000);
+  })]);
+ }finally{clearTimeout(timer);}
 }
 // House clock fallback. houseSpec() prefers the engine's own houseSeconds, so these rows only
 // apply to engines without one (love, lookup and closed tents). Overridden by the engine:
@@ -148,7 +163,17 @@ function houseSpec(){
 function tellRoom(type,fields={}){if(embedded)window.parent.postMessage({channel:'pf-paper-world',type,...fields},location.origin);}
 if(embedded)document.body.classList.add('is-alley-room');
 function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{passive:false,...opts,signal:abort.signal});}
-function error(e){playing=false;cancelAnimationFrame(raf);$('#error').textContent='This workshop room could not open: '+e.message;$('#veil-title').textContent='The room needs attention';$('#veil-detail').textContent='Please try another paper world. Your Instapic sessions are not involved.';$('#begin').disabled=true;$('#pause').disabled=true;$('#veil').hidden=false;tellRoom('error');}
+function error(e){
+ playing=false;cancelAnimationFrame(raf);
+ if(e.sourceRecovery){sourceRecovery=e.sourceRecovery;veil('Chapter update','Your earlier round is preserved.','This chapter has a newer game version. You can keep the earlier round saved and start the current version. Your collected rewards and purse are retained.','Start current chapter');$('#begin').disabled=!sourceRecovery.canStartCurrentVersion;$('#pause').disabled=true;tellRoom('error');return;}
+ $('#error').textContent='This room could not open: '+e.message;
+ const detail=e.message==='engine_source_changed'
+  ?'This saved round needs a compatibility check before play can continue. Return to the alley. Your progress has not been reset.'
+  :'This chapter could not finish loading. Return to the alley and try again. Your purse and saved progress have not been reset.';
+ veil('Game paused','Unable to open this chapter',detail,'Unavailable');
+ $('#veil-keys').textContent='';$('#begin').disabled=true;$('#pause').disabled=true;
+ tellRoom('error');
+}
 function showPrize(id){
  const img=$('#veil-prize'),cap=$('#veil-prize-name');
  if(!img)return;
@@ -158,8 +183,8 @@ function showPrize(id){
  img.src=art?art.toDataURL():frontUrl(key);
  if(cap){cap.hidden=false;cap.textContent='Collected: '+itemName(id);}
 }
-function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();veilShownAt=performance.now();$('#veil').hidden=false;}
-function clearInput(){input.keys.clear();input.actions.clear();input.down=false;if(verified){try{verified.enqueue({type:'release'});}catch{needsVerifiedRelease=true;}}else if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
+function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();const sample=$('#watch-sample');if(sample)sample.hidden=!canWatchExample();veilShownAt=performance.now();$('#veil').hidden=false;}
+function clearInput(){if(exampleView){exampleView.pointer('cancel',input.pointer||{x:450,y:1050});input.keys.clear();input.actions.clear();input.down=false;input.pointer=null;return;}if(!verified&&state)engine?.releaseInput?.(state);input.keys.clear();input.actions.clear();input.down=false;if(verified){try{verified.enqueue({type:'release'});}catch{needsVerifiedRelease=true;}}else if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
 function persist(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}if(verified&&!holds.has('banking'))flushVerified().catch(()=>{});}
 function pauseForBanking(e){
  if(disposed)return;
@@ -174,16 +199,48 @@ async function flushVerified(){
   if(current!==verified||disposed)return result;
   if(needsVerifiedRelease){current.enqueue({type:'release'});needsVerifiedRelease=false;}
   state=current.state;completion=current.completion;
+  const attempted=attemptRequested;attemptRequested=false;
+  if(attempted&&state.entryPaymentRequired){
+   ended=current.finished;stop();paint();veil('Purse','This attempt needs funds.',costLine(),ended?'Play again':'Play');
+  }else if(current.finished&&!ended)finishChapter(current.completion);
+  else{
+   paint();
+   if(attempted){ended=false;if(!switchingVerifiedChapter){if(holds.size)resumeAfterHold=true;else start();}}
+  }
   if(holds.has('banking'))release('banking');
-  paint();return result;
+  return result;
  }catch(e){if(current===verified)pauseForBanking(e);throw e;}
 }
 function verifiedEvent(event){
  try{verified.enqueue(event);state=verified.state;completion=verified.completion;if(verified.pending>=90)flushVerified().catch(()=>{});return true;}
  catch(e){pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
 }
-function readout(){return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
+function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
+function canWatchExample(){return !!verified&&!attemptRequested&&level===0&&!sourceRecovery&&(!engine?.releaseEdition||state?.gameEdition===engine.releaseEdition)&&typeof engine?.createExampleView==='function';}
+function cancelExample(){cancelAnimationFrame(exampleRaf);exampleRaf=0;exampleLast=0;exampleView=null;}
+function finishExample(){cancelExample();paint();$('#readout').textContent=readout()||'';if(ended)finishChapter(completion);else if(!holds.size)start();}
+function exampleFrame(now){
+ if(!exampleView||disposed)return;
+ const dt=exampleLast?Math.min(.05,(now-exampleLast)/1000):0;exampleLast=now;
+ if(!holds.size&&!document.hidden){
+  if(dt>0&&(!engine.artReady||engine.artReady(level)))exampleView.update(dt);
+  paint();$('#readout').textContent=readout()||'';
+ }
+ exampleRaf=requestAnimationFrame(exampleFrame);
+}
+async function watchExample(){
+ if(!canWatchExample()||exampleLoading)return;
+ exampleLoading=true;const round=verified,chapter=level;
+ try{
+  resumeAfterHold=false;if($('#game-help').open)closeHelp();stop();persist();await flushVerified();
+  if(disposed||verified!==round||level!==chapter)return;
+  cancelExample();exampleView=engine.createExampleView({chapter,onDismiss:finishExample});
+  if(!exampleView)return;
+  $('#veil').hidden=true;$('#prize-clock').hidden=true;paint();canvas.focus({preventScroll:true});exampleRaf=requestAnimationFrame(exampleFrame);
+ }catch(e){pauseForBanking(e);}finally{exampleLoading=false;}
+}
 async function mountVerified(){
+ sourceRecovery=null;
  if(!banking?.required)throw Error('The verified purse is still loading. Return to the alley and try again.');
  if(Wallet.VERIFIED_WALLET_VERSION!==1)throw Error('Please reload this page to update the verified purse.');
  const sequence=++verifiedMount;
@@ -201,7 +258,7 @@ async function mountVerified(){
 }
 function hold(reason){if(holds.has(reason))return;if(!holds.size)resumeAfterHold=playing;holds.add(reason);persist();stop();}
 function release(reason){if(!holds.has(reason))return;holds.delete(reason);if(!holds.size&&resumeAfterHold){resumeAfterHold=false;if(!ended)start();}}
-function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
+function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();const sample=$('#watch-sample-help');if(sample)sample.hidden=!canWatchExample()||!!exampleView;hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
 function closeHelp(){$('#game-help').close();release('help');}
 function publishChapter(){
  const count=engine?.levels?.length||0;
@@ -221,12 +278,13 @@ function publishChapter(){
 async function goChapter(target){
  if(switchingVerifiedChapter)return;
  if(!Number.isInteger(target)||target<0||target>=engine.levels.length||target===level)return;
+ cancelExample();
  if($('#game-help').open){resumeAfterHold=false;closeHelp();}
  persist();
  if(verified){
   switchingVerifiedChapter=true;publishChapter();
   try{stop();await flushVerified();unregisterVerified?.();unregisterVerified=null;verified=null;
-   level=target;await mountVerified();start();persist();return;
+   level=target;await mountVerified();if(!verified.needsStart)start();persist();return;
   }finally{switchingVerifiedChapter=false;publishChapter();}
  }
  level=target;
@@ -237,7 +295,8 @@ async function goChapter(target){
  persist();
 }
 function retryChapter(){
- if(verified){if(!verifiedEvent({type:'retry'}))return;completion=null;ended=false;paint();start();persist();return;}
+ cancelExample();
+ if(verified){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'retry'})){attemptRequested=false;return;}if(state?.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play again');persist();return;}completion=null;ended=false;paint();start();persist();return;}
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
  if(entry.id==='fortune'){engine.action(state,'gaze');start();}
  else if(engine.retryAttempt){
@@ -374,11 +433,11 @@ function paintPrizeClock(){
  }
  el.hidden=true;el.classList.remove('is-lit','is-dark');el.textContent='';
 }
-function paint(){if(!draw||!state)return;const render=()=>{draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();};if(verified)verified.render(render);else render();}
+function paint(){if(!draw||!state)return;if(exampleView){draw.clear();exampleView.draw(draw);return;}const render=()=>{draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();};if(verified)verified.render(render);else render();}
 function goNextChapter(){goChapter(level+1).catch(error);}
 function markChapters(){}
 function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
-function start(){if(disposed||!engine||!state||playing||ended||holds.size)return;ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
+function start(){if(disposed||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
  if(r && Object.prototype.hasOwnProperty.call(r,'prize')) return r.prize || null;
@@ -421,9 +480,17 @@ function tick(now){
   raf=requestAnimationFrame(tick);
  }catch(e){error(e);}
 }
-function point(e){const b=canvas.getBoundingClientRect();return{x:clamp((e.clientX-b.left)/b.width*900,0,900),y:clamp((e.clientY-b.top)/b.height*1200,0,1200)};}
-function move(e,type){if(e.cancelable)e.preventDefault();if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;try{canvas.setPointerCapture(e.pointerId);}catch(_){}}if(type==='up'||type==='cancel')input.down=false;if(verified)verifiedEvent({type:'pointer',phase:type,point:p});else engine.pointer?.(state,type,p,input);paint();}
-function dispose(){if(disposed)return;if(verified){stop();persist();}else persist();disposed=true;stop();verifiedMount++;unregisterVerified?.();observer?.disconnect();abort.abort();if(verified)verified.render(()=>engine?.dispose?.(state));else engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
+function point(e){const b=canvas.getBoundingClientRect();return{pointerId:e.pointerId,pointerType:e.pointerType,button:e.button,x:Number.isFinite(e.clientX)?clamp((e.clientX-b.left)/b.width*900,0,900):(input.pointer?.x??450),y:Number.isFinite(e.clientY)?clamp((e.clientY-b.top)/b.height*1200,0,1200):(input.pointer?.y??1050)};}
+function move(e,type){if(e.cancelable)e.preventDefault();if(exampleView){if(!holds.size){if(type==='down')try{canvas.setPointerCapture(e.pointerId);}catch{}exampleView.pointer(type,point(e));paint();}return;}if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;try{canvas.setPointerCapture(e.pointerId);}catch(_){}}if(type==='up'||type==='cancel')input.down=false;if(verified)verifiedEvent({type:'pointer',phase:type,point:p});else engine.pointer?.(state,type,p,input);paint();}
+function dispose(){if(disposed)return;cancelExample();if(verified){stop();persist();}else persist();disposed=true;stop();verifiedMount++;unregisterVerified?.();observer?.disconnect();abort.abort();if(verified)verified.render(()=>engine?.dispose?.(state));else engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
+// Navigation and Help stay usable while the room connects or reports an error.
+listen($('#pause'),'click',closeHelp);
+listen($('#menu-toggle'),'click',openHelp);
+listen($('#menu-close'),'click',closeHelp);
+listen($('#game-help'),'close',()=>release('help'));
+listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
+listen($('#veil-help'),'click',openHelp);
+listen($('#veil-back'),'click',goBack);
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
  await loadParkDoors();
@@ -441,11 +508,11 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+'?allocation=treasure-design-1&v=verified-banking-1')).default;
+ engine=(await import(entry.module+(entry.module.includes('?')?'&':'?')+'allocation=treasure-design-1&v=paper33-v1')).default;
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  if(verifiedWanted){
   await waitForBanking();
-  await banking.ready;
+  await waitForVerifiedPurse();
   navigationKey+=':'+banking.owner;
   level=await banking.selectedChapter(entry.id);
  }else{try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}}
@@ -473,19 +540,14 @@ try{
   listen(btn,'click',()=>goChapter(Number(btn.dataset.chapter)).catch(error));
  });
  listen($('#restart'),'click',()=>{closeHelp();retryChapter();});
- listen($('#pause'),'click',closeHelp);
- listen($('#menu-toggle'),'click',openHelp);
+  listen($('#watch-sample'),'click',watchExample);
+  listen($('#watch-sample-help'),'click',watchExample);
  if(embedded)document.querySelector('.play-header')?.remove();
- listen($('#menu-close'),'click',closeHelp);
- listen($('#game-help'),'close',()=>release('help'));
- listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
- listen($('#begin'),'click',()=>{if(holds.has('banking')){flushVerified().catch(()=>{});return;}if(!ended){start();return;}retryChapter();});
+ listen($('#begin'),'click',async()=>{if(sourceRecovery){$('#begin').disabled=true;try{await banking.startCurrentVersion(entry.id,level,sourceRecovery);sourceRecovery=null;unregisterVerified?.();verified=null;holds.delete('banking');await mountVerified();}catch(e){error(e);}return;}if(holds.has('banking')){flushVerified().catch(()=>{});return;}if(!ended){start();return;}retryChapter();});
  // Tapping the dimmed backdrop (not the card) continues a not-yet-ended room. Never buys a retry.
- listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||$('#begin').disabled)return;start();});
+ listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||sourceRecovery||$('#begin').disabled)return;start();});
  listen($('#result-retry'),'click',retryChapter);
  listen($('#result-next'),'click',goNextChapter);
- listen($('#veil-help'),'click',openHelp);
- listen($('#veil-back'),'click',goBack);
  const saveTimer=setInterval(()=>{if(playing)persist();},1000);
  const verifiedTimer=setInterval(()=>{if(verified?.pending&&!holds.has('banking'))flushVerified().catch(()=>{});},500);
  listen(window,'pagehide',()=>clearInterval(saveTimer));
@@ -498,7 +560,7 @@ try{
  listen(document,'gesturestart',e=>e.preventDefault(),{passive:false});
  listen(document,'touchmove',e=>{if(e.touches?.length>1&&e.cancelable)e.preventDefault();},{passive:false});
  // Sticky-seize fix: lost capture / window blur always release maze stick (knob snaps home).
- listen(canvas,'lostpointercapture',e=>{if(!playing)return;if(verified)clearInput();else{input.down=false;engine?.pointer?.(state,'cancel',input.pointer||point(e)||{x:450,y:1136},input);input.pointer=null;}paint();});
+ listen(canvas,'lostpointercapture',e=>{if(!playing)return;if(verified)clearInput();else{input.down=false;engine?.pointer?.(state,'cancel',point(e),input);input.pointer=null;}paint();});
  listen(window,'blur',()=>{if(!playing)return;clearInput();paint();});
  listen(window,'keydown',e=>{
   if(e.repeat||disposed||!engine||!state)return;
@@ -507,6 +569,12 @@ try{
   const k=e.key;
   // Shared keys (every tent): H or ? how to play · Space/Enter play · R play again · Esc back.
   if($('#game-help').open){if(k==='h'||k==='H'||k==='?'){e.preventDefault();closeHelp();}return;}
+  if(exampleView){
+   e.preventDefault();
+   if(k==='Escape'){cancelExample();paint();if(ended)finishChapter(completion);else restVeil();return;}
+   if(k==='h'||k==='H'||k==='?'){openHelp();return;}
+   exampleView.key(k,true);paint();return;
+  }
   const typing=playing&&!!engine.typing?.(state);
   if(k==='?'||((k==='h'||k==='H')&&!typing)){e.preventDefault();openHelp();return;}
   if(!playing){
@@ -530,7 +598,7 @@ try{
   paint();
  });
  // Release both letter cases so a Shift/Caps change mid-hold never leaves a key stuck down (pinball Z/X).
- listen(window,'keyup',e=>{input.keys.delete(e.key);if(e.key.length===1){input.keys.delete(e.key.toLowerCase());input.keys.delete(e.key.toUpperCase());}if(playing){if(verified)verifiedEvent({type:'key',key:e.key,down:false});else engine.key?.(state,e.key,false,input);}});
+ listen(window,'keyup',e=>{if(exampleView){exampleView.key(e.key,false);return;}input.keys.delete(e.key);if(e.key.length===1){input.keys.delete(e.key.toLowerCase());input.keys.delete(e.key.toUpperCase());}if(playing){if(verified)verifiedEvent({type:'key',key:e.key,down:false});else engine.key?.(state,e.key,false,input);}});
  const actBox=$('#actions');if(actBox){actBox.hidden=true;actBox.replaceChildren();}
  const hud=$('#hud');if(hud)hud.hidden=true;
  listen(document,'visibilitychange',()=>document.hidden?hold('visibility'):release('visibility'));

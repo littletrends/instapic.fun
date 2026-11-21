@@ -1,9 +1,13 @@
 import {games} from '../../paper-games/catalogue.js?v=ritual-2';
 import {kits} from '../../paper-games/prizes.js?v=nft-board-1';
 
-const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/stalls/${id}/front.webp`;
-const VENDOR_ART = host => `assets/restyle/scene-turnarounds-2026-09-09/vendors/${host.toLowerCase()}/front.webp`;
-const FALLBACK_ART = id => `paper-games/assets/${id}.webp`;
+const RIDE_ART = {
+  carousel: 'horse-carousel', balloons: 'balloon-tree', ferris: 'ferris-wheel',
+  helter: 'helter-skelter', swings: 'chair-swings', funhouse: 'funhouse',
+  organ: 'fairground-organ', mural: 'alley-wall-bay',
+};
+const STALL_ART = id => `assets/restyle/scene-turnarounds-2026-09-09/${RIDE_ART[id] ? 'amusements' : 'stalls'}/${RIDE_ART[id] || id}/front.webp`;
+const VENDOR_ART = (host, id) => `assets/restyle/scene-turnarounds-2026-09-09/${RIDE_ART[id] ? 'attendants' : 'vendors'}/${host.toLowerCase()}/front.webp`;
 
 export const extras = [
   {
@@ -50,8 +54,8 @@ export const stalls = [
     workshop: !!g.workshop,
     extra: false,
     prizes: [...(kits[g.id]?.prizes || [])],
-    cover: g.id === 'carousel' || g.id === 'balloons' ? FALLBACK_ART(g.id) : STALL_ART(g.id),
-    vendor: VENDOR_ART(g.host),
+    cover: STALL_ART(g.id),
+    vendor: VENDOR_ART(g.host, g.id),
   })),
 ];
 

@@ -1,14 +1,16 @@
 // A private-to-the-round prediction purse. Only the server commits its output;
 // no method here sends a reported award or balance to the banking API.
 const CURRENCIES = new Set(['star-token', 'moon-penny', 'rose-penny', 'crown-token', 'five-penny-stack']);
+const GAME_TOKENS = new Set(['star-token', 'moon-penny', 'rose-penny', 'crown-token']);
 const amount = n => {
   if (!Number.isSafeInteger(n) || n < 0 || n > 100000) throw Error('invalid_engine_amount');
   return n;
 };
-export function createVerifiedWallet({purse, inventory, storage}) {
+export function createVerifiedWallet({purse, inventory, storage, allowGameplayTokens = false}) {
   const effects = {spent: 0, tickets: 0, credited: 0, keeps: []};
   const api = {
     alleyPlay: true,
+    isVerifiedPlay: () => true,
     pocket: () => purse.pennies, tickets: () => purse.tickets, packs: () => purse.packs,
     spend(n = 1) {amount(n); if (purse.pennies < n) return false; purse.pennies -= n; effects.spent += n; return true;},
     spendTicket() {if (purse.tickets < 1) return false; purse.tickets--; effects.tickets++; return true;},
@@ -19,6 +21,7 @@ export function createVerifiedWallet({purse, inventory, storage}) {
     keptQty: id => Number(inventory[id]?.qty) || (inventory[id] ? 1 : 0),
     keep(id, stall = 'coin-pusher') {
       if (typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id)) throw Error('invalid_engine_award');
+      if (GAME_TOKENS.has(id) && !allowGameplayTokens) return false;
       if (inventory[id] && !CURRENCIES.has(id)) return false;
       if (id === 'five-penny-stack' && !inventory['penny-purse']) return false;
       const qty = inventory[id] ? Number(inventory[id].qty) || 1 : 0;

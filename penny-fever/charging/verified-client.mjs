@@ -66,6 +66,23 @@ export function createVerifiedClient({identity, transport = globalThis.fetch,
     storage.removeItem(storageKey(initial));
     return record.purchase ? result : result.result;
   }
+  function retainUnavailable(record, initial, error) {
+    if (record?.command?.operation !== 'events' || !['engine_source_changed','engine_source_unavailable'].includes(error.message)) return false;
+    // A server-rejected old code version must not lock the whole purse. Keep
+    // the exact outbox and round inputs before freeing this transport slot.
+    const retainedKey = 'pennyFever.verified.retainedOutbox.v1:' + encodeURIComponent(initial.id) + ':' + record.key;
+    storage.setItem(retainedKey, JSON.stringify(record));
+    const prefix = 'pennyFever.verified.round.v1:' + encodeURIComponent(initial.id) + ':';
+    const keys = Array.from({length: storage.length}, (_, i) => storage.key(i)).filter(k => k?.startsWith(prefix));
+    for (const key of keys) {
+      const round = JSON.parse(storage.getItem(key));
+      if (round?.owner === initial.id && round.play === record.command.play) {
+        storage.setItem(key, JSON.stringify({...round, sourceRecovery: {required:true, reason:error.message}}));
+      }
+    }
+    storage.removeItem(storageKey(initial));
+    return true;
+  }
   return {
     command(command, {key} = {}) {
       return exclusive(async initial => {
@@ -83,7 +100,9 @@ export function createVerifiedClient({identity, transport = globalThis.fetch,
     },
     recover() {return exclusive(async initial => {
       const pending = read(initial);
-      return pending ? send(pending, initial) : null;
+      if (!pending) return null;
+      try { return await send(pending, initial); }
+      catch (error) { if (retainUnavailable(pending, initial, error)) return {sourceRecoveryRequired:true}; throw error; }
     });},
     purchase(payload) {
       return exclusive(async initial => {

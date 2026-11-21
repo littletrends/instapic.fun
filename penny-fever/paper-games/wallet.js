@@ -12,6 +12,8 @@ function verified() {
   return alleyPlay && !pilotSession(params.get('stall')) ? window.PennyFeverVerifiedWallet || null : null;
 }
 
+export function isVerifiedPlay() { return !!verified(); }
+
 function fever() {
   if (!alleyPlay) return null;
   try { return window.parent.PennyFever || null; } catch { return null; }

@@ -2,6 +2,8 @@ import {createVerifiedDriver} from '../paper-games/verified-driver.js?v=verified
 import {createVerifiedWallet} from '../paper-games/verified-wallet.js?v=verified-banking-1';
 import {createVerifiedContext} from './verified-context.mjs';
 
+const ORIGINAL_TOKEN_SOURCE = '9d76c47b62fa7a3fe9786a34b83418284035f97e0c6783b1603d7c9d85764ee4';
+
 // Predict inputs immediately. Persist the inputs before prediction and commit
 // batches to the existing verifier; predicted rewards never reach the bank.
 export async function openVerifiedRound({engine, view, client, owner, scope = globalThis,
@@ -15,12 +17,14 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
   let current = view, shadow, environment, driver, sending = null, failed = null;
   const save = () => storage.setItem(key, JSON.stringify(record));
   function rebuild() {
+    const originalReplay = current.source === ORIGINAL_TOKEN_SOURCE && !current.snapshot?.edition;
     shadow = createVerifiedWallet({purse: structuredClone(current.wallet), inventory: structuredClone(current.wallet.inventory || {}),
-      storage: new Map(Object.entries(current.storage || {}))});
+      storage: new Map(Object.entries(current.storage || {})),
+      allowGameplayTokens: originalReplay});
     environment = createVerifiedContext({wallet: shadow.api, storage: shadow.storage,
       reducedMotion: current.preferences?.reducedMotion === true, scope});
     driver = environment.run(() => createVerifiedDriver({engine, game: current.game, chapter: current.chapter,
-      seed: '00000000', startedAt: current.startedAt, snapshot: structuredClone(current.snapshot)}));
+      seed: '00000000', startedAt: current.startedAt, snapshot: structuredClone(current.snapshot), legacyReplay: originalReplay}));
     for (const event of record.events) environment.run(() => driver.execute(event));
   }
   async function deliver() {
@@ -85,6 +89,7 @@ export async function openVerifiedRound({engine, view, client, owner, scope = gl
     render: fn => environment.run(fn),
     persist: () => {environment.run(() => driver.persist()); save();},
     get state() {return driver.state;}, get input() {return driver.input;},
+    get needsStart() {return driver.needsStart === true;},
     get completion() {return driver.completion;}, get finished() {return driver.finished;},
     get wallet() {return shadow.purse;}, get pending() {return record.events.length;},
     get error() {return failed;},
