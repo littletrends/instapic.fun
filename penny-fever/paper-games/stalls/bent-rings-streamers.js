@@ -11,7 +11,7 @@ function ribbon(d,id,cells,level,alpha=1){if(!cells.length)return;const c=d.c,po
 function poses(s,r){const m=s.motion;if(!m||m.id!==r.id)return r.cells;const u=ease(Math.min(1,m.t/m.duration));if(m.kind==='slide')return m.from.map((p,i)=>({x:p.x+(m.to[i].x-p.x)*u,y:p.y+(m.to[i].y-p.y)*u}));return m.from.map((p,i)=>{const at=Math.max(0,i-u*(m.from.length+.4)),a=Math.floor(at),b=Math.min(m.from.length-1,a+1),f=at-a;return {x:m.from[a].x+(m.from[b].x-m.from[a].x)*f,y:m.from[a].y+(m.from[b].y-m.from[a].y)*f};});}
 function draw(s,d){loadArt();const c=d.c,rules=model.rules(s),count=s.ribbons.length,at=p=>model.world(p,s),focus=s.ribbons[s.focus],exit=model.exits(s)[s.focus],side=exit.x<0?'left':exit.x>=rules.size?'right':exit.y<0?'top':'bottom';
  header(c,'RINGO’S STREAMER KNOTS',(s.level+1)+' · '+rules.name);
- paper(c,450,229,570,48,'#1c493eef','#bd9b59');text(c,s.threaded.length+' / '+count+' threaded · '+s.moves+' pulls'+(model.stepsLeft(s)===null?'':' · '+model.stepsLeft(s)+' / '+rules.maxSteps+' peg steps'),450,229,24,'#ffedc9');
+ ;text(c,s.threaded.length+' / '+count+' threaded · '+s.moves+' pulls'+(model.stepsLeft(s)===null?'':' · '+model.stepsLeft(s)+' / '+rules.maxSteps+' peg steps'),450,229,24,'#ffedc9');
  paper(c,450,594,658,664,'#234b3cf4','#c3a265',42);paper(c,450,594,614,622,'#f2e4c4f5','#a88d56',31);
  c.save();c.strokeStyle='#b8a4795c';c.lineWidth=1.5;c.setLineDash([3,8]);for(let i=0;i<rules.size;i++){d.line(at({x:i,y:0}),at({x:i,y:rules.size-1}),'#ad9b754f',1.5);d.line(at({x:0,y:i}),at({x:rules.size-1,y:i}),'#ad9b754f',1.5);}c.restore();
  for(let y=0;y<rules.size;y++)for(let x=0;x<rules.size;x++){const p=at({x,y});d.circle(p.x,p.y,5,'#c6ab75','#f9edc8',1);d.circle(p.x-1,p.y-1,1.5,'#fff4d1');}

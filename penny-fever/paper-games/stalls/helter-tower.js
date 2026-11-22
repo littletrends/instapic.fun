@@ -554,21 +554,7 @@ function drawTowerBrackets(d) {
   }
 }
 
-function drawTowerSign(d, s) {
-  const c = d.c;
-  c.save();
-  c.beginPath();
-  c.roundRect(18, 55, 300, 84, 12);
-  c.fillStyle = '#10272bef';
-  c.fill();
-  c.strokeStyle = '#d6ad6b';
-  c.lineWidth = 2;
-  c.stroke();
-  c.restore();
-  d.text('Tilly’s Helter Skelter', 168, 82, 27, '#ffe4ad');
-  const label = s.descent ? '2 · Slide to the exit' : LEVEL_NAMES[s.level] || LEVEL_NAMES[0];
-  d.text(label, 168, 113, 21, '#f5ddba');
-}
+function drawTowerSign(d, s) {}
 
 function drawDescentCourse(d, s) {
   const run = s.descent;
@@ -591,16 +577,6 @@ function drawDescentCourse(d, s) {
     c.restore();
     if (next) d.text(kind === 'jump' ? 'JUMP' : 'BRAKE', p.x, p.y - 30, 22, colour);
   }
-  const c = d.c;
-  c.save();
-  c.beginPath();
-  c.roundRect(612, 55, 262, 84, 12);
-  c.fillStyle = '#10272bef';
-  c.fill();
-  c.strokeStyle = '#d6ad6b';
-  c.lineWidth = 2;
-  c.stroke();
-  c.restore();
   const time = Math.ceil(run?.remaining ?? Math.max(0, s.duration - s.t));
   const status = run ? run.gateIndex + '/' + gates.length + ' gates' : 'Climb';
   d.text(time + 's · ' + status, 743, 82, 24, '#ffe4ad');

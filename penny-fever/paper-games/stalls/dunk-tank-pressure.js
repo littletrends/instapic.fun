@@ -24,7 +24,7 @@ function gauge(c,s){const r=model.rules(s),x=684,y=835,w=160,h=174;paper(c,x,y,w
 }
 function gate(c,s){const r=model.rules(s),x=238,y=864,rad=48;paper(c,x,y,244,160,'#143b3df2','#c9a15e',17);text(c,'PULSE ARRIVAL',x,y-60,21,'#ffe7b6');c.beginPath();c.arc(x,y,rad,Math.PI,Math.PI*2);c.strokeStyle='#486560';c.lineWidth=15;c.stroke();c.beginPath();c.arc(x,y,rad,Math.PI+r.gate[0]*Math.PI,Math.PI+r.gate[1]*Math.PI);c.strokeStyle='#a2ca8a';c.stroke();const angle=Math.PI+model.gatePhase(s,model.PULSE)*Math.PI;line(c,[[x,y],[x+Math.cos(angle)*rad,y+Math.sin(angle)*rad]],'#f6dba8',3);c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fillStyle='#ebc77f';c.fill();text(c,'Release in GREEN',x,y+40,20,'#f4e1bb');}
 function draw(s,d){loadArt();const c=d.c,r=model.rules(s);header(c,'DUNCAN’S PRESSURE DROP',(s.level+1)+' · '+r.name,true);
- paper(c,450,232,670,44,'#f8e8cfaa','#b38b5460',10);text(c,'TURNS '+s.turnsLeft+' / '+r.turns+' · '+(s.inlet?'INLET OPEN':s.motion?.kind==='water'?'PRESSURE HELD':'INLET CLOSED'),450,232,22,'#37665d');
+ ;text(c,'TURNS '+s.turnsLeft+' / '+r.turns+' · '+(s.inlet?'INLET OPEN':s.motion?.kind==='water'?'PRESSURE HELD':'INLET CLOSED'),450,232,22,'#37665d');
  const p0=model.tilePoint(s,0),pn=model.tilePoint(s,r.tiles.length-1),bw=pn.x-p0.x+p0.pitch+34,bh=pn.y-p0.y+p0.pitch+34;
  paper(c,(p0.x+pn.x)/2,(p0.y+pn.y)/2,bw,bh,'#183d3cf4','#b79555',23);
  r.tiles.forEach((t,i)=>{const p=model.tilePoint(s,i);c.beginPath();c.arc(p.x,p.y,p.pitch*.43,0,Math.PI*2);c.fillStyle=t?'#234844':'#153431';c.fill();c.strokeStyle='#3e6254';c.lineWidth=1;c.stroke();if(t)fitting(c,s,i);else{line(c,[[p.x-5,p.y-5],[p.x+5,p.y+5]],'#456453',2);line(c,[[p.x-5,p.y+5],[p.x+5,p.y-5]],'#456453',2);}});

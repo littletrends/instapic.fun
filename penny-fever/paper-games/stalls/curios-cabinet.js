@@ -24,7 +24,7 @@ function draw(state, drawing) {
     if (state.heist.phase === 'celebrate') {
       paper(context, 450, 600, 605, 107, '#17382ef7', '#e2c582');
       text(context, 'CABINET UNLOCKED', 450, 585, 36, '#fff0cd');
-      text(context, 'Next: use the claw to win the prize.', 450, 626, 25, '#f0dfb7');
+      ;
     }
     return;
   }

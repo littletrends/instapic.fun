@@ -90,7 +90,7 @@ function closeLid(s,d){
 function draw(s,d){
  loadArt();const c=d.c,B=model.board(s),q=model.rules(s),count=model.requiredCount(s),active=model.requiredItems(s);
  header(c,'KIT’S IMPOSSIBLE SUITCASE',s.demo?'Three parcels. One little travelling case.':(s.level+1)+' · '+q.name);
- paper(c,450,211,490,38,'#fff0d9ae','#b7955c66',9);text(c,model.packed(s)+' / '+count+' packed · '+(B.cols*B.rows-q.blocks.length-model.occupied(s).size)+' squares left',450,211,23,'#634936');caseFrame(s,d);
+ ;text(c,model.packed(s)+' / '+count+' packed · '+(B.cols*B.rows-q.blocks.length-model.occupied(s).size)+' squares left',450,211,23,'#634936');caseFrame(s,d);
  const moving=s.motion&&['pack','lift'].includes(s.motion.kind)?s.motion.id:-1;
  for(const p of s.pieces)if(p.place&&p.id!==moving){const b=model.bounds(p.id,p.rotation);luggage(d,p.id,p.rotation,B.x+(p.place.x+b.w/2)*B.cell,B.y+(p.place.y+b.h/2)*B.cell,B.cell,{flat:true});}
  if(s.selected>=0&&s.phase==='play'){

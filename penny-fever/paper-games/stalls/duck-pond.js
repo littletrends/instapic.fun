@@ -90,8 +90,8 @@ function draw(s,d){
   loadArt();const c=d.c,cfg=LEVELS[s.level];
   const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   const t=reduced?0:s.t;
-  panel(c,450,128,640,115);label(c,'DOTTIE’S RIPPLE RUMBLE',450,103,31);label(c,`${s.level+1} · ${cfg.name}`,450,148,23,'#d7e9c7');
-  panel(c,450,227,480,58,'#123e38d9');
+  ;;;
+  ;
   label(c,s.phase==='celebrate'?'What a splash!':`${s.hits} / ${s.flowers.length} flowers awake`,450,227,27);
   c.save();c.beginPath();c.roundRect(166,275,568,668,70);c.clip();
   if(!reduced)for(let i=0;i<9;i++){
@@ -157,17 +157,16 @@ function draw(s,d){
     }
   }else if(!s.started){
     const r=30+(Math.sin(t*2)+1)*10;d.circle(450,610,r,null,'#fff5c7c9',3);d.circle(450,610,9,'#fff4c3');
-    panel(c,450,695,440,65,'#123e38d9');label(c,'Press the water. Release a ripple.',450,695,25);
+    ;;
   }
   c.restore();
   if(s.chain>1&&s.t<s.chainUntil){panel(c,450,945,410,57,'#7b5136e8');label(c,`${s.chain} FLOWER CHAIN`,450,945,27,'#ffecb6');}
-  panel(c,450,1030,650,90);
+  ;
   label(c,`${s.shots} ${s.shots===1?'splash':'splashes'}  ·  best chain ${s.bestChain}`,450,1010,27);
-  label(c,`${TOKEN_IDS.filter(id=>s.entitlement.claimed[id]).length} token drips collected · NFT ${s.entitlement.rewardCollected?'Collected':'Locked'}`,450,1049,23,'#d5ebcc');
-  panel(c,450,1135,680,96,'#123e38ed');
+  ;
+  ;
   const recent=s.finds.at(-1);
-  textLines(c,recent&&s.t-recent.at<2.5?`${recent.quantity.toLocaleString('en')} ${itemName(recent.id)} collected`:cfg.hint,
-    packets(s.entitlement).length?'Bump token drips with a duck. Each is collected once.':'Token drips collected. Enjoy another ripple.',1117);
+  ;
   nftReveal(s,d,reduced);
   if(s.saveError){panel(c,450,600,680,160,'#6c3431f5');textLines(c,'Preview save unavailable. Play is paused.','Keep this window open while saving retries.',580);}
 }

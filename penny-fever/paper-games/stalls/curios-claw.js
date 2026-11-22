@@ -8,7 +8,7 @@ function capsule(s,d,c){if(c.mode==='collected')return;prop(d,c.art,c.x,c.y,c.r*
 function draw(s,d){drawClaw(s,d);}
 export {loadArt as loadClawArt};
 export function drawClaw(s,d,{title='DIGBY’S CLAW DROP',detail,aimHint='ALIGN · GRIP · LIFT · CARRY',controls}={}){loadArt();const c=d.c,r=model.rules(s),p=model.point(s);header(c,title,detail??((s.level+1)+' · '+r.name),true);
- paper(c,450,222,690,57,'#163e3cf2','#d0ae6e',12);text(c,s.left+' / '+r.turns+' turns · '+(s.grip?'grip '+Math.round(s.grip.quality*100)+'% · tension '+s.tension.toFixed(1):'NO LOAD · CENTRE THE SHADOW'),450,222,23,'#ffedc2');
+ ;text(c,s.left+' / '+r.turns+' turns'+(s.grip?' · grip '+Math.round(s.grip.quality*100)+'%':''),450,222,23,'#ffedc2');
  const w=230;r.required.forEach((id,i)=>{const x=450+(i-(r.required.length-1)/2)*w,done=s.delivered.includes(id);paper(c,x,278,w-12,42,done?'#6d9176':'#f2dfb5','#b49155',9);text(c,'CAPSULE '+String.fromCharCode(65+i)+(done?' ✓':''),x,278,21,done?'#fff0cd':'#655036');});
  // Layered brass cabinet; its floor/chute/shelves follow the physical planes.
  paper(c,450,641,714,664,'#21413f','#d2b174',27);paper(c,450,637,682,638,'#b18d56','#f2d69a',21);const glass=c.createLinearGradient(110,330,790,820);glass.addColorStop(0,'#173c3ce8');glass.addColorStop(.45,'#34514ad2');glass.addColorStop(1,'#142f31e8');c.fillStyle=glass;c.fillRect(112,326,676,495);c.strokeStyle='#d8bd84';c.lineWidth=2;c.strokeRect(120,334,660,479);
@@ -24,7 +24,7 @@ export function drawClaw(s,d,{title='DIGBY’S CLAW DROP',detail,aimHint='ALIGN 
  const h=140,cx=rope.x+Math.sin(s.theta)*h/2,cy=rope.y+Math.cos(s.theta)*h/2,t=s.jaws;prop(d,0,cx,cy,133,{h,angle:-s.theta,alpha:1-t});prop(d,1,cx,cy,133,{h,angle:-s.theta,alpha:t});
  if(s.grip){const held=s.objects[s.grip.id];capsule(s,d,held);for(const sign of [-1,1]){d.line({x:p.x+sign*39,y:p.y-36},{x:held.x+sign*(held.r+2),y:held.y+8},'#b89a62',5);d.line({x:held.x+sign*(held.r+2),y:held.y+8},{x:held.x+sign*(held.r-7),y:held.y+15},'#ead09a',4);}}
  for(const id of s.delivered){const obj=s.objects[id];prop(d,obj.art,obj.x,obj.y,obj.r*2,{h:obj.r*2});}prop(d,5,model.CHUTE.x,945,140,{h:74});
- paper(c,535,896,400,81,'#183c3bec','#c9a86b',12);text(c,s.grip?'LOAD '+(s.objects[s.grip.id].mass>2?'HEAVY':'LIGHT')+' · '+(s.slow?'SLOW CARRY':'FAST CARRY'):'SHADOW = GRIP CENTRE',535,878,21,'#ffeac0');const fit=s.grip?s.grip.quality:0;d.line({x:385,y:906},{x:685,y:906},'#0b2628',13);if(s.grip)d.line({x:385,y:906},{x:385+fit*300,y:906},fit<.3?'#d38371':'#d5b773',9);text(c,s.grip?'HIGH TENSION LOOSENS THE GRIP':aimHint,535,925,17,'#e3cca1');
+ ;text(c,s.grip?'LOAD '+(s.objects[s.grip.id].mass>2?'HEAVY':'LIGHT')+' · '+(s.slow?'SLOW':'FAST'):'',535,878,21,'#ffeac0');const fit=s.grip?s.grip.quality:0;d.line({x:385,y:906},{x:685,y:906},'#0b2628',13);if(s.grip)d.line({x:385,y:906},{x:385+fit*300,y:906},fit<.3?'#d38371':'#d5b773',9);;
  paper(c,450,987,690,44,'#173b39f2','#c7a66b',10);d.line({x:170,y:987},{x:730,y:987},'#c4a676',4);d.circle(s.gantry.target,987,7,'#a9bd9c','#e5d39c',1);d.circle(s.gantry.x,987,11,'#efda9f','#876b40',2);
  if(controls){controls();return;}
  const labels={aim:'LOWER',lower:'LOWERING…',low:'CLOSE',closing:'CLOSING…',gripped:s.grip?'LIFT LOAD':'LIFT EMPTY',lift:'LIFTING…',carry:s.grip?'OPEN / DROP':'OPEN EMPTY',opening:'OPENING…'};button(c,'↶ UNDO',155,1044,128);button(c,s.slow?'SLOW ON':'SLOW OFF',330,1044,160);paper(c,585,1044,318,56,'#f0dfb7','#ae8a53',12);text(c,labels[s.stage],585,1044,24,'#5e4b37');footer(c,{note:s.attempts===0?r.detail:s.note},true);

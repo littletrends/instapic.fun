@@ -32,7 +32,7 @@ function draw(s,d){
  if(model.isLegacy(s)){drawLegacy(s,d);return;}
  loadTable();const c=d.c,r=model.rules(s),a=model.ARENA;
  header(c,'PENELOPE’S PENNY PARLOUR',(s.level+1)+' · '+r.name);
- paper(c,450,222,670,56,'#fff0dcf0','#b79159');text(c,s.remaining+' coins · '+s.banked+' / '+r.banks+' banked captures',450,222,24,'#684934');
+ ;text(c,s.remaining+' coins · '+s.banked+' / '+r.banks+' banked captures',450,222,24,'#684934');
  const targets=r.order?r.order.map((id,i)=>({id,done:i<s.orderAt,next:i===s.orderAt})):r.pockets.map((_,i)=>({id:i,done:s.counts[i]>=r.need[i],next:false})),w=Math.min(154,660/targets.length);
  targets.forEach((p,i)=>{const x=450+(i-(targets.length-1)/2)*w;paper(c,x,282,w-8,43,p.done?'#708b68':p.next?'#f2d49f':'#fff0d8','#c09e66',8);text(c,r.pockets[p.id].id.toUpperCase()+(p.done?' ✓':!r.order?' '+s.counts[p.id]+'/'+r.need[p.id]:''),x,282,17,p.done?'#fff1d0':'#674735');});
  // A physical playing table floats inside the existing carnival scene.

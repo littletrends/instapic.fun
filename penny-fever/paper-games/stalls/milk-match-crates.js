@@ -48,6 +48,7 @@ function reward(s,d,reduced){
  if(a){d.sprite(a,x,y,{w,shadow:false,alpha:1-mix});if(b&&mix)d.sprite(b,x,y,{w,shadow:false,alpha:mix});}else d.item(spriteKey(r.id),x,y,{w,shadow:false});
 }
 function rewardBadge(s,d){
+ if(typeof document!=='undefined'&&document.querySelector('#chapter-prize:not([hidden])'))return;
  const prize=s.chapterPrize;
  if(s.demo||!prize||s.rewardReveal?.id===prize.id&&s.rewardReveal.t<=3.6)return;
  const c=d.c,x=829,image=d.art?.[`nft:${prize.id}:front`],kept=!!s.prizeKept;
@@ -89,8 +90,8 @@ function drawBoard(s,d){
 }
 function draw(s,d){
  loadArt();const sky=s.demo?{...rules(s),name:'One easy crate · demonstration',goal:1,requests:[0,0,0,0]}:rules(s),c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
- panel(c,450,118,640,66,'#f7eed8bd');label(c,'MABEL’S MILK MATCH',450,104,27);label(c,`${s.level+1} · ${sky.name}`,450,136,22,'#596044');
- panel(c,450,188,630,29,'#f7eed8bd');label(c,`${sky.goal} crates · ${sky.seconds}s${sky.requests.some(n=>n)?' · '+sky.requests[0]+' of every flavour':''}`,450,188,20,'#596044');
+ ;;;
+ ;label(c,`${sky.goal} crates · ${sky.seconds}s${sky.requests.some(n=>n)?' · '+sky.requests[0]+' of every flavour':''}`,450,188,20,'#596044');
  drawBoard(s,d);
  for(let i=0;i<4;i++){
   const base=CRATES[i],f=FLAVOURS[i],crate=s.crates[i],x=base.x+crateOffset(crate);
@@ -107,9 +108,9 @@ function draw(s,d){
   panel(c,base.x,981,162,28);label(c,sky.requests[i]?`${crate.completed}/${sky.requests[i]} sent`:`${crate.completed} sent`,base.x,981,19,sky.requests[i]&&crate.completed>=sky.requests[i]?'#637e48':'#626e4f');
  }
  for(const p of s.sparks){const u=p.age/.7;for(let i=0;i<7;i++){const a=i*Math.PI*2/7;d.star(p.x+Math.cos(a)*u*30,p.y+Math.sin(a)*u*30,3*(1-u),'#ddbb61');}}
- panel(c,450,1060,710,64,'#f7eed8bd');label(c,`${s.sent}/${sky.goal} full crates · ${s.moves} ${s.moves===1?'match':'matches'}`,450,1046,25);
+ ;label(c,`${s.sent}/${sky.goal} full crates · ${s.moves} ${s.moves===1?'match':'matches'}`,450,1046,25);
  const status=s.demo&&s.demoRewardAge!==undefined?'One full crate delivered · demonstration complete':s.phase==='drain'?'Bell rung — finishing your matched bottles…':s.phase==='celebrate'?'Lovely! Your crate target is complete.':s.lastBatch>=6?`${s.lastBatch} bottles in that cascade!`:'Swap neighbours · How to play has the guide';
- label(c,status,450,1076,21,'#596044');
+ ;
  rewardBadge(s,d);
  reward(s,d,reduced);if(s.saveError){panel(c,450,600,710,150,'#f5e8d5fa','#c3826c');label(c,'Preview saving paused. Keep this window open.',450,600,24);}
 }

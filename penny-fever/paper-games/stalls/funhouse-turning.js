@@ -50,9 +50,9 @@ function reveal(s,d,reduced){const r=s.rewardReveal;if(!r||r.t>3.6)return;const 
 }
 function draw(s,d){loadArt();const c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(board)c.drawImage(board,0,0,900,1200);else{c.fillStyle='#223c36';c.fillRect(0,0,900,1200);}
- label(c,'THE TURNING FUNHOUSE',450,s.demo?105:124,33);label(c,`${s.level+1} · ${rules(s).name}`,450,161,23);
- plate(c,450,248,652,48,'#f3e2bfeF');const count=s.bells.filter(b=>b.taken).length;label(c,`${count}/${s.bells.length} BELLS   ·   ${s.hasKey?'KEY FOUND':'FIND THE KEY'}   ·   ${s.moves} MOVES`,450,248,22);
- const masks=s.masks.length===1?'Mask':'Masks',rhythm=s.grace?'A quiet entrance · take your first steps':s.maskStun?`Ding! ${masks} distracted for ${s.maskStun} more turns`:s.maskBeat===s.maskEvery-1?`${masks} ${s.masks.length===1?'moves':'move'} after your next action`:`${s.maskEvery-s.maskBeat} actions until ${masks.toLowerCase()} ${s.masks.length===1?'moves':'move'}`;label(c,rhythm,450,287,20,'#f6e4bc');
+ ;;
+ ;const count=s.bells.filter(b=>b.taken).length;label(c,`${count}/${s.bells.length} BELLS   ·   ${s.hasKey?'KEY FOUND':'FIND THE KEY'}   ·   ${s.moves} MOVES`,450,248,22);
+ const masks=s.masks.length===1?'Mask':'Masks',rhythm=s.grace?'A quiet entrance · take your first steps':s.maskStun?`Ding! ${masks} distracted for ${s.maskStun} more turns`:s.maskBeat===s.maskEvery-1?`${masks} ${s.masks.length===1?'moves':'move'} after your next action`:`${s.maskEvery-s.maskBeat} actions until ${masks.toLowerCase()} ${s.masks.length===1?'moves':'move'}`;label(c,s.maskStun?'Masks resting':`Masks in ${s.maskEvery-s.maskBeat}`,450,287,20,'#f6e4bc');
  for(let r=0;r<9;r++)drawRoom(s,d,r,reduced);
  // A faint connection glow shows which neighbouring room doorways actually meet.
  for(let r=0;r<9;r++){const at=roomCentre(r);for(const n of exits(s,r)){if(n!==1&&n!==2)continue;const nr=n===1?r+1:r+3;if(nr>=9||n===1&&r%3===2||!exits(s,nr).includes((n+2)%4))continue;const p={x:at.x+(n===1?115:0),y:at.y+(n===2?115:0)};d.line({x:p.x-(n===1?6:18),y:p.y-(n===2?6:18)},{x:p.x+(n===1?6:18),y:p.y+(n===2?6:18)},'#83b9a4b0',5);}}
@@ -73,7 +73,7 @@ function draw(s,d){loadArt();const c=d.c,reduced=typeof matchMedia==='function'&
  const p=actorPos(s,s.player),bob=reduced?0:s.phase==='walk'?Math.sin(clamp(s.phaseT/(s.animation?.duration||1))*Math.PI)*6:Math.sin(s.t*2)*1.2;
  if(s.grace)d.glow(p.x,p.y,40,'#b8dbca');d.ellipse(p.x+2,p.y+21,23,12,'#27182240');prop(d,0,p.x,p.y-10-bob,68*p.scale,{alpha:s.phase==='caught'?.4:1});if(s.hasKey)prop(d,4,p.x+24,p.y-24,20);
  if(s.phase==='caught'){plate(c,450,650,610,115);label(c,'BOO! BELLS STAY RUNG',450,630,27);label(c,'Find the key again · or press Undo',450,675,23);}
- button(c,252,1113,150,'↶ UNDO',s.history.length>0&&!s.completionRecorded);button(c,450,1113,150,'WAIT',s.phase==='idle');button(c,648,1113,150,`TURN ${s.selected+1}`,s.phase==='idle');label(c,'Tap a path to walk · ↻ turns a room',450,1018,22,'#f4e2bd');
+ button(c,252,1113,150,'↶ UNDO',s.history.length>0&&!s.completionRecorded);button(c,450,1113,150,'WAIT',s.phase==='idle');button(c,648,1113,150,`TURN ${s.selected+1}`,s.phase==='idle');;
  if(artError){plate(c,450,1035,630,45);label(c,'Artwork could not load. Please reload.',450,1035,22);}
  reveal(s,d,reduced);if(s.saveError){plate(c,450,640,680,130);label(c,'Preview saving paused. Keep this window open.',450,640,24);}
 }

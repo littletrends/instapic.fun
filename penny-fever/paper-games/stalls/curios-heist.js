@@ -96,7 +96,7 @@ function drawLights(s,d){
 function draw(s,d){
  loadArt();const c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches,b=s.beetle,covered=coverAt(b,s),lit=visible(s),keyCount=s.keys.filter(Boolean).length;
  const sky=rules(s),covers=coversFor(s),keys=keysFor(s),pads=padsFor(s),VAULT=vaultFor(s),ready=requirementsMet(s),open=vaultOpen(s);
- panel(c,450,118,640,66,'#17382ec9');label(c,'DIGBY’S POCKET HEIST',450,104,26);label(c,`${s.level+1} · ${sky.name}`,450,136,21,'#e5d4a7');
+ ;;;
  panel(c,450,610,615,785,'#152f27d9','#9f8855');
  // Small brass inlays give the floor a tabletop scale without hiding the beams.
  for(let x=215;x<710;x+=70)for(let y=300;y<960;y+=70)d.circle(x,y,1.5,'#9fa58135');
@@ -116,7 +116,7 @@ function draw(s,d){
  label(c,ready?(open?'ENTER':'WAIT'):VAULT.period?(open?'OPEN':'CLOSED'):'VAULT',VAULT.x,VAULT.y+72,20);
  for(let i=0;i<keys.length;i++)if(!s.keys[i]){
   const p=keys[i];d.glow(p.x,p.y,39,'#ead08c');sprite(d,3,p.x,p.y,54,{angle:reduced?0:Math.sin(s.t*1.1+i)*.08});
-  panel(c,p.x+38,p.y+24,36,31,'#1c372feb');label(c,String(i+1),p.x+38,p.y+24,19,'#ffe8b3');
+  ;label(c,String(i+1),p.x+38,p.y+24,19,'#ffe8b3');
  }
  for(let i=0;i<pads.length;i++){
   const p=pads[i];sprite(d,5,p.x,p.y,88,{angle:s.pads[i]?0:Math.PI*2*s.padWind[i],alpha:s.pads[i]?1:.75});
@@ -124,7 +124,7 @@ function draw(s,d){
   if(s.padWind[i]>0)d.arc(p.x,p.y,48,-Math.PI/2,-Math.PI/2+Math.PI*2*s.padWind[i],'#e8d997',5);
   if(s.padFlash?.id===i)d.glow(p.x,p.y,65,'#d5efaf');
   const captionX=p.x-(i===0?30:0);
-  panel(c,captionX,p.y+61,118,32,'#17382ef2');label(c,s.pads[i]?'Wound':`Wind ${i+1}`,captionX,p.y+61,19);
+  ;label(c,s.pads[i]?'Wound':`Wind ${i+1}`,captionX,p.y+61,19);
  }
  if(s.target&&s.phase==='play'){
   c.save();c.setLineDash([3,9]);d.line(b,s.target,'#d6e7d16b',2);c.restore();d.circle(s.target.x,s.target.y,14,null,'#e9e8bb',2);
@@ -137,7 +137,7 @@ function draw(s,d){
  if(covered<0)paintBeetle();
  for(let i=0;i<covers.length;i++){
   const p=covers[i];sprite(d,4,p.x,p.y-58,132,{alpha:(covered===i)? .48:.94});
-  panel(c,p.x,p.y+73,156,34,'#17382ef2',i===s.safe?'#e9cd8f':'#8faf9c');label(c,i===s.safe?'Safe dome':'Cover',p.x,p.y+73,19);
+  ;;
  }
  // A cutaway view keeps the tiny player readable while sheltering inside glass.
  if(covered>=0){d.glow(b.x,b.y-25,49,'#bfdea4');paintBeetle();}
@@ -149,12 +149,12 @@ function draw(s,d){
  const winding=pads.findIndex((p,i)=>!s.pads[i]&&Math.hypot(b.x-p.x,b.y-p.y)<28&&!s.target);
  const status=s.phase==='recover'?'Spotted — returning safely':s.phase==='celebrate'?'The vault is open!':lit&&s.grace<=0?'IN THE LIGHT — MOVE!':winding>=0?`Winding plate ${winding+1} · ${Math.round(s.padWind[winding]*100)}%`:covered>=0?'Hidden under glass':'Watch the sweep. Stay in shadow.';
  const plateCount=pads.length?` · ${s.pads.filter(Boolean).length}/${pads.length} plates`:'';
- panel(c,450,1048,690,111,'#17382ef2');label(c,`${keyCount}/${keys.length} keys${plateCount} · ${s.spotted} returns`,450,1019,26);
- label(c,status,450,1055,24,s.exposure>0?'#ffcf9e':'#e4edcf');
+ ;label(c,`${keyCount}/${keys.length} keys${plateCount} · ${s.spotted} returns`,450,1019,26);
+ ;
  panel(c,450,1086,570,10,'#0e221df0','#8a9a74');
  if(s.exposure>0){c.fillStyle='#e5a47a';c.fillRect(170,1083,560*s.exposure,6);}
  const tip=pads.some((_,i)=>!s.pads[i])?'Stop on each winding plate.':VAULT.period?'Enter while the vault is open.':'Find keys, then enter the vault.';
- panel(c,360,1150,480,52,'#17382ec9');label(c,'Tap or drag to steer',360,1150,23);
+ ;;
  panel(c,700,1150,150,52,'#3d4936f5');label(c,'STOP',700,1150,25);
  nftReveal(s,d,reduced);
  if(s.saveError){panel(c,450,600,690,150,'#623c38f2');label(c,'Preview saving paused. Keep this window open.',450,600,24);}

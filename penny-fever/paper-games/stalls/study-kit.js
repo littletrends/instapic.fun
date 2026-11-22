@@ -37,28 +37,9 @@ export function shortCue(value){
  const words=sentence.split(/\s+/);return words.length>13?words.slice(0,13).join(' ').replace(/[,:;]$/,'')+'…':sentence;
 }
 // Presentation only; ownership and completion stay with the chapter engine.
-export function compactHeader(c,title,detail,dark=false){
- paper(c,450,118,640,66,dark?'#182f39a6':'#fff0d9b3','#b997625c',10);
- text(c,title,450,104,26,dark?'#fff1cf':'#593e35');
- text(c,detail,450,136,21,dark?'#f4e2bd':'#624a3e');
-}
+export function compactHeader(c,title,detail,dark=false){}
 
-export function compactFooter(c,s,dark=false){
- const width=628,size=Math.max(22,12*900/(c.canvas.clientWidth||450));
- c.save();c.font=`600 ${size}px Georgia,serif`;
- const lines=[];let line='';
- for(const word of shortCue(s.note).split(/\s+/)){
-  const next=line?line+' '+word:word;
-  if(line&&c.measureText(next).width>width){lines.push(line);line=word;}else line=next;
- }
- if(line)lines.push(line);
- const shown=lines.slice(0,2);
- if(lines.length>2){let last=shown[1];while(last&&c.measureText(last+'…').width>width)last=last.slice(0,-1);shown[1]=last.trimEnd()+'…';}
- c.restore();
- if(!shown.length)return;
- paper(c,450,1118,680,66,dark?'#173b399e':'#fff0d9ad','#b997625c',10);
- shown.forEach((value,i)=>text(c,value,450,1118+(i-(shown.length-1)/2)*27,22,dark?'#fff0cf':'#5c4339'));
-}
+export function compactFooter(c,s,dark=false){}
 
 export function paintRewardTurn(d,prize,age,{x=450,y=565,size=240,prefix='study'}={}){
  const views=['front','right','back','left'],turn=Math.max(0,Math.min(1,(age-.2)/3.2))*4;

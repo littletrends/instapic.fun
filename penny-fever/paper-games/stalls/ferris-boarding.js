@@ -5,7 +5,7 @@ import {withChapterExample} from './chapter-example.js?v=example-1';
 import {itemName} from '../prizes.js?v=nft-art-1';
 function guest(d,g,x,y,w=28){const n=model.size(g);for(let i=0;i<n;i++)prop(d,2,x+(i-(n-1)/2)*w*.55,y,n===1?w:w*.7);tag(d.c,PALETTE[g.colour],x,y+17,g.ticket>=0?13:9);if(g.ticket>=0)text(d.c,model.ticketName(g.ticket,g.chapter||0),x,y+17,17,'#fff5dd');}
 function draw(s,d){const c=d.c,rules=model.rules(s);header(c,'JASPER’S LAST BOARDING',(s.level+1)+' · '+rules.name);
- paper(c,450,229,600,40,'#fff1dfaa','#b997625c',9);text(c,`${model.COLOURS[s.cabins[s.cabin].colour]} cabin · ${model.occupied(s.cabins[s.cabin])}/${s.cabins[s.cabin].capacity} seats · ${s.turns}/${rules.turns} turns`,450,229,24);
+ ;text(c,`${model.COLOURS[s.cabins[s.cabin].colour]} cabin · ${model.occupied(s.cabins[s.cabin])}/${s.cabins[s.cabin].capacity} seats · ${s.turns}/${rules.turns} turns`,450,229,24);
  const center={x:450,y:460},radius=197;
  d.poly([[365,735],[450,465],[535,735]],'#8d6b4d','#d7b970',8);d.poly([[394,735],[450,510],[506,735]],'#f5e0b5','#ba995f',2);
  c.save();c.shadowColor='#4e3a3650';c.shadowBlur=13;d.circle(450,460,radius,null,'#a28450',13);d.circle(450,460,radius-9,null,'#f6d69a',3);c.restore();

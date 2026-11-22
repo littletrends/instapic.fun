@@ -565,7 +565,7 @@ function tick(now){
   raf=requestAnimationFrame(tick);
  }catch(e){error(e);}
 }
-function point(e){const b=canvas.getBoundingClientRect();return{pointerId:e.pointerId,pointerType:e.pointerType,button:e.button,x:Number.isFinite(e.clientX)?clamp((e.clientX-b.left)/b.width*900,0,900):(input.pointer?.x??450),y:Number.isFinite(e.clientY)?clamp((e.clientY-b.top)/b.height*1200,0,1200):(input.pointer?.y??1050)};}
+function point(e){const b=canvas.getBoundingClientRect();return{pointerId:Number.isInteger(e.pointerId)&&e.pointerId>=-2147483648&&e.pointerId<0?e.pointerId+4294967296:e.pointerId,pointerType:e.pointerType,button:e.button,x:Number.isFinite(e.clientX)?clamp((e.clientX-b.left)/b.width*900,0,900):(input.pointer?.x??450),y:Number.isFinite(e.clientY)?clamp((e.clientY-b.top)/b.height*1200,0,1200):(input.pointer?.y??1050)};}
 function move(e,type){if(e.cancelable)e.preventDefault();if(exampleView){if(!holds.size){if(type==='down')try{canvas.setPointerCapture(e.pointerId);}catch{}exampleView.pointer(type,point(e));paint();}return;}if(!playing)return;const p=point(e);input.pointer=p;if(type==='down'){input.down=true;try{canvas.setPointerCapture(e.pointerId);}catch(_){}}if(type==='up'||type==='cancel')input.down=false;if(verified)verifiedEvent({type:'pointer',phase:type,point:p});else engine.pointer?.(state,type,p,input);paint();}
 function dispose(){if(disposed)return;cancelExample();if(verified){stop();persist();}else persist();disposed=true;stop();verifiedMount++;unregisterVerified?.();observer?.disconnect();abort.abort();if(verified)verified.render(()=>engine?.dispose?.(state));else engine?.dispose?.(state);draw?.dispose();$('#backdrop').removeAttribute('src');}
 // Navigation and Help stay usable while the room connects or reports an error.

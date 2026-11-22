@@ -95,8 +95,8 @@ function drawLetter(d,p,t,scale=1,alpha=1){
 function draw(s,d){
  loadArt();const c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches,t=reduced?0:s.t;
  const sky=rules(s),bundleWord=sky.bundle===1?'Any bundle':sky.bundle===2?'Matching pairs':'Matching threes';
- panel(c,450,118,640,66,'#38294ca6','#dab97860');label(c,'WILLA’S WHISPER WEAVE',450,104,26);label(c,`${s.level+1} · ${sky.name}`,450,136,21,'#f0dfb8');
- panel(c,450,191,380,38,'#38294ca8');label(c,bundleWord,450,191,23,'#fff0cc');
+ ;;;
+ ;label(c,bundleWord,450,191,23,'#4b315f');
  sprite(d,4,450,300,96,{angle:Math.sin(t*.6)*.045});
  for(const i of [0,1]){
   const b=mailboxPosition(s,i),open=mailboxOpen(s,i),ready=deliveryReady(s,i);
@@ -156,8 +156,8 @@ function draw(s,d){
   panel(c,450,946,690,62,s.feedbackKind==='tangle'?'#79445be8':'#5a4761eb');label(c,message,450,946,24);
  }
  sprite(d,5,450,1045,180);
- panel(c,450,1060,620,68,'#38294ca6');label(c,`${s.delivered[0]+s.delivered[1]} / ${goal(s)} secrets sent`,450,1045,27);label(c,`Best bundle ${s.bestBundle} · ${s.tangles} tangles · ${s.returns} returns`,450,1080,21,'#efdcba');
- panel(c,450,1150,660,48,'#38294ca8');label(c,sky.windows?'Hold for “Release now”, then let go.':'Loop matching seals, then let go.',450,1150,23);
+ ;label(c,`${s.delivered[0]+s.delivered[1]} / ${goal(s)} secrets sent`,450,1045,27,'#4b315f');;
+ ;;
  paintChapterReward(s,d,{dark:true});nftReveal(s,d,reduced);
  if(s.saveError){panel(c,450,600,680,150,'#6b394fe8');label(c,'Preview save unavailable. Keep this window open.',450,600,24);}
 }

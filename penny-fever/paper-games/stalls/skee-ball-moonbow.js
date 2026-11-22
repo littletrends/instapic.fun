@@ -15,7 +15,7 @@ function ball(d,x,y,r,spin=0,alpha=1){const c=d.c;c.save();c.globalAlpha=alpha;d
 function draw(s,d){const c=d.c,r=model.rules(s);
  if(cabinet.complete&&cabinet.naturalWidth)c.drawImage(cabinet,28,78,844,1010);
  header(c,'SKIP’S MOONBOW SKEE-BALL',(s.level+1)+' · '+r.name,true);
- paper(c,450,222,684,42,'#18394aaa','#b997625c',9);text(c,s.remaining+' / '+r.balls+' balls · '+s.score+' points · '+(r.banks?'rail scores '+s.bankedShots+' / '+r.banks:'aim '+model.aimValue(s)+'°'),450,222,24,'#fff0c9');
+ ;text(c,s.remaining+' / '+r.balls+' balls · '+s.score+' points · '+(r.banks?'rail scores '+s.bankedShots+' / '+r.banks:'aim '+model.aimValue(s)+'°'),450,222,24,'#fff0c9');
  const goals=r.order?r.order.map((id,i)=>({id,n:i<s.orderAt?1:0,target:1,next:i===s.orderAt})):r.cups.map((p,id)=>({id,n:s.counts[id],target:r.need[id]}));
  const w=Math.min(152,660/goals.length);goals.forEach((g,i)=>{const p=r.cups[g.id],x=450+(i-(goals.length-1)/2)*w;paper(c,x,278,w-8,42,g.next?'#f5dfb4':g.n>=g.target?'#5c806b':'#eee4cc','#b79c67',8);text(c,p.id.toUpperCase()+' '+(r.order?(g.n?'✓':''):Math.min(g.n,g.target)+'/'+g.target),x,278,19,g.n>=g.target?'#fff0cf':'#55413b');});
  // Every brass rail and circular pocket follows the actual collision geometry.

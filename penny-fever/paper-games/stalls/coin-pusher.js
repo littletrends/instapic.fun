@@ -739,15 +739,7 @@ export default {
       d.wrap("That's " + s.warn.n + " loose pennies. The tray is greedier than it looks — packed 5-packs stay in your pocket.",450,350,22,'#6d5141',680,10);
       d.wrap('Dump anyway if you mean it. Copper will not send a second warning.',450,490,18,'#705746',640,8);
     } else if(!s.trayOpen) {
-      panel(40,772,820,114,'#252d23f5','#b99860',14);
-      ink(pennyCount(s.tray.coins)+' pennies in machine',450,791,18,'#d9c194',780);
-      c.save();const size=Math.max(18,12*900/(d.cssWidth||450),12*1200/(d.cssHeight||600));c.font='600 '+size+'px Georgia,serif';
-      const rows=[''];for(const word of String(s.note||'').split(/\s+/)){const i=rows.length-1,next=rows[i]+(rows[i]?' ':'')+word;if(c.measureText(next).width>775&&rows[i])rows.push(word);else rows[i]=next;}
-      const visible=rows.slice(0,2);if(rows.length>2)visible[1]=visible[1].replace(/\s+\S*$/,'')+'…';
-      const receiptInk=s.note?.startsWith('Receipt')?'#ffe1a0':'#fff0ce';
-      visible.forEach((line,i)=>ink(line,450,visible.length===1?831:818+i*25,18,receiptInk,780));c.restore();
-      seam(76,856,824,856,'#c9a66e67',1);
-      ink(prizeStatus(s),450,872,16,litDrop?'#ffe2a0':'#cde1b4',780);
+      ink(pennyCount(s.tray.coins)+' pennies in machine',450,791,18,'#fff0ce',780);
     }
 
     uiButtons(s).forEach(b => {

@@ -97,7 +97,7 @@ function gateSafety(d,s,g,i){
 function draw(s,d){
  loadArt();const sky=rules(s),ROSETTES=rosettesFor(s),GATES=gatesFor(s),BASKET=basketFor(s),wind=crosswind(s);
  const c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches,h=s.heart,f=s.fan,air=airflow(s),on=blowing(s),count=s.rosettes.filter(Boolean).length;
- panel(c,450,118,640,66,'#713e509e','#dab97860');label(c,'ROSALIE’S HEART ON THE BREEZE',450,104,26);label(c,`${s.level+1} · ${sky.name}`,450,136,21,'#f2dfb6');
+ ;;;
  const mist=c.createLinearGradient(0,220,0,1000);mist.addColorStop(0,'#fff7e81c');mist.addColorStop(1,'#fff7e805');
  if(!reduced)for(let i=0;i<14;i++){const x=220+(i*83%460),y=260+((i*127+s.t*7)%700);d.star(x,y,2.5,'#fff0cf88');}
  d.ellipse(START.x,START.y+18,53,15,'#955a6855','#efc5a0',2);
@@ -113,7 +113,7 @@ function draw(s,d){
  }
  if(sky.wind&&!reduced){for(let i=0;i<6;i++){const y=365+i*82,x=260+((i*77+s.t*wind*.65)%350+350)%350;d.line({x,y},{x:x+wind*1.4,y},'#fff1dd77',2);}}
  sprite(d,1,BASKET.x,BASKET.y,155);
- panel(c,300,236,190,35,'#713e50ee');label(c,'ROSE BASKET',300,236,21,'#ffeac7');d.line({x:400,y:236},{x:420,y:236},'#f3ddb0',2);
+ ;;d.line({x:400,y:236},{x:420,y:236},'#f3ddb0',2);
  const next=s.rosettes.indexOf(false);
  for(let i=0;i<ROSETTES.length;i++){
   const p=ROSETTES[i],active=i===next;
@@ -153,8 +153,8 @@ function draw(s,d){
  }
  const clearing=GATES.findIndex((g,i)=>!gateCleared(g,h)&&Math.abs(h.x-g.x)<g.gap/2&&h.y<g.y+90&&h.y>g.y-70);
  const status=s.phase==='failed'?'Gate closed — attempt resetting':s.phase==='landing'?'Dropping into the rose basket…':s.phase==='return'?'A soft return to your ribbon':s.phase==='celebrate'?'A little heart, safely home':clearing>=0?`Gate ${clearing+1} · lift above its SAFE line.`:s.resting?(s.checkpoint<0?'Place the fan behind the heart.':'Resting on a ribbon. Plan your next gust.'):on?'A gentle gust carries the heart.':'Fan resting · heart drifting.';
- panel(c,450,1059,660,68,'#713e509e');label(c,`${count}/${ROSETTES.length} ribbons · ${s.passed.filter(Boolean).length}/${GATES.length} gates · ${s.failures} gate resets`,450,1042,22);label(c,status,450,1074,21,'#f7e4c8');
- panel(c,360,1154,485,48,'#713e509e');label(c,count===ROSETTES.length?'Release above the basket.':sky.wind?`Crosswind ${wind>1?'→':wind< -1?'←':'turning'}`:'Hold behind the heart to blow.',360,1154,22,'#f7e4c8');
+ ;label(c,`${count}/${ROSETTES.length} ribbons · ${s.passed.filter(Boolean).length}/${GATES.length} gates · ${s.failures} gate resets`,450,1042,22);;
+ ;;
  panel(c,700,1154,155,48,'#885165ad');label(c,'FAN OFF',700,1154,23);
  paintChapterReward(s,d,{dark:true});nftReveal(s,d,reduced);
  if(s.saveError){panel(c,450,600,690,150,'#713e50f5');label(c,'Preview saving paused. Keep this window open.',450,600,24);}

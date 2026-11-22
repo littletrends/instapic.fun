@@ -6,7 +6,7 @@ function loadArt(){if(loading||typeof Image==='undefined')return;loading=true;co
 const prop=(d,i,x,y,w,opts={})=>{if(sprites[i])d.sprite(sprites[i],x,y,{w,shadow:false,...opts});};
 function waterPoint(jet,u){return {x:jet.from.x+(jet.to.x-jet.from.x)*u,y:jet.from.y+(jet.to.y-jet.from.y)*u-Math.sin(u*Math.PI)*Math.min(80,Math.hypot(jet.to.x-jet.from.x,jet.to.y-jet.from.y)*.13)};}
 function draw(s,d){loadArt();const c=d.c,rules=model.rules(s),boat=s.boat,aim=s.gesture?.aim||s.aim;header(c,'MARINA’S WATER-GUN FLEET',(s.level+1)+' · '+rules.name);
- paper(c,450,228,650,40,'#154c4caa','#b997625c',9);text(c,s.water+' water · '+Math.ceil(s.left)+'s · '+boat.bumps+' / 3 bumps',450,228,24,'#fff1d0');
+ ;text(c,s.water+' water · '+Math.ceil(s.left)+'s · '+boat.bumps+' / 3 bumps',450,228,24,'#fff1d0');
  // The canal is drawn directly on the harbour water, with paper mooring ropes.
  for(const x of [model.CANAL.left,model.CANAL.right]){d.line({x,y:350},{x,y:895},'#725e46',6);d.line({x:x-1,y:350},{x:x-1,y:895},'#e7cf9a',2);for(let y=365;y<900;y+=88){d.circle(x,y,8,'#b08c50','#f2da9d',2);d.circle(x-2,y-2,2,'#fff0c1');}}
  prop(d,4,rules.dockX,model.DOCK_Y-20,430,{h:130});paper(c,rules.dockX,279,100,31,'#f2dfba','#b99258',8);text(c,'DOCK',rules.dockX,279,21,'#655341');

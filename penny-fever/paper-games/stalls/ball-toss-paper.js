@@ -95,13 +95,9 @@ function plate(s,d,p){
   for(let i=0;i<2;i++){const x=p.x-8+i*16,y=p.y+p.r+18;d.circle(x,y,4.5,i<p.hp?'#c79544':'#79664c','#f6dc9f',1);if(i<p.hp)d.circle(x-1,y-1,1.2,'#fff1cc');}
  }
 }
-function statusPanel(c,note){
- paper(c,450,1118,680,66,'#fff1e1c4','#bc965d',10);
- c.save();c.font='600 '+Math.max(22,12*900/(c.canvas.clientWidth||450))+'px Georgia,serif';
- const lines=[];let line='';for(const word of String(note||'').split(/\s+/)){const next=line?(line+' '+word):word;if(line&&c.measureText(next).width>628){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);
- const shown=lines.slice(0,2);if(lines.length>2){let last=shown[1];while(last&&c.measureText(last+'…').width>628)last=last.slice(0,-1);shown[1]=last.trimEnd()+'…';}c.restore();shown.forEach((value,i)=>text(c,value,450,1118+(i-(shown.length-1)/2)*27,22,'#543b35'));
-}
+function statusPanel(c,note){}
 function rewardBadge(s,d){
+ if(typeof document!=='undefined'&&document.querySelector('#chapter-prize:not([hidden])'))return;
  const prize=s.chapterPrize;
  if(!prize)return;
  const image=d.art['study:'+prize.id+':front'],collected=!!s.prizeKept;
@@ -118,8 +114,8 @@ function rewardBadge(s,d){
 function draw(s,d){
  loadArt();const c=d.c,r=model.rules(s);
  crest(d);
- paper(c,450,128,650,66,'#5b2d3599','#d1ad73',10);text(c,'BESS’S PAPER PLATE PARADE',450,114,25,'#fff0ce');text(c,(s.level+1)+' · '+r.name,450,145,21,'#fff0ce');
- paper(c,450,204,640,44,'#fff1dec4','#b48d59',9);text(c,s.remaining+' / '+r.balls+' balls · '+model.collected(s)+' / '+s.plates.length+' plates gathered',450,204,23,'#543b35');
+ ;;;
+ ;text(c,s.remaining+' / '+r.balls+' balls · '+model.collected(s)+' / '+s.plates.length+' plates gathered',450,204,23,'#543b35');
  frame(s,d);
  trough(d,450,931,620,116);
  for(const p of s.plates)plate(s,d,p);
@@ -128,10 +124,10 @@ function draw(s,d){
  trough(d,450,931,620,116,true);
  c.save();c.strokeStyle='#62313b';c.lineWidth=12;c.beginPath();c.ellipse(450,921,300,11,0,0,Math.PI);c.stroke();c.strokeStyle='#e0bd81';c.lineWidth=3;c.stroke();c.strokeStyle='#f8e0ad';c.lineWidth=1;c.setLineDash([4,6]);c.beginPath();c.ellipse(450,923,297,10,0,0,Math.PI);c.stroke();c.restore();
  if(s.phase==='play')prop(d,3,model.ORIGIN.x,model.ORIGIN.y,36,{h:36});
- paper(c,450,983,620,42,'#f7e8ccf2','#bc955e',8);text(c,'CLOTH BALLS',258,983,20,'#6a4734');for(let i=0;i<r.balls;i++)prop(d,3,365+i*Math.min(45,240/Math.max(1,r.balls-1)),983,25,{h:25,alpha:i<s.remaining?1:.18});text(c,(model.aimValue(s)>0?'+':'')+model.aimValue(s)+'°',688,983,22,'#6a4734');
+ ;text(c,'CLOTH BALLS',258,983,20,'#6a4734');for(let i=0;i<r.balls;i++)prop(d,3,365+i*Math.min(45,240/Math.max(1,r.balls-1)),983,25,{h:25,alpha:i<s.remaining?1:.18});text(c,(model.aimValue(s)>0?'+':'')+model.aimValue(s)+'°',688,983,22,'#6a4734');
  paper(c,150,1031,110,48,'#f4e5c9','#ac8651',8);text(c,'↶ UNDO',150,1031,22,'#6b4738');
  paper(c,550,1031,340,48,s.phase==='play'?'#73404a':'#927b67','#d4b174',8);text(c,s.phase==='play'?'TOSS CLOTH BALL':'LET THE PLATES FALL',550,1031,22,'#fff0ce');
- statusPanel(c,s.throws===0&&s.phase==='play'?'Aim, then toss. Open How to play for the full guide.':s.note);
+ ;
  rewardBadge(s,d);
 }
 function upgradeBessBook(book){

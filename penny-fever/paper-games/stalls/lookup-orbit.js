@@ -63,6 +63,7 @@ function nftReveal(s,d,reduced){
  else d.item(spriteKey(reveal.id),x,y,{w,shadow:false});
 }
 function rewardBadge(s,d){
+ if(typeof document!=='undefined'&&document.querySelector('#chapter-prize:not([hidden])'))return;
  const prize=s.chapterPrize;
  if(s.demo||!prize||s.rewardReveal?.id===prize.id&&s.rewardReveal.t<=3.6)return;
  const c=d.c,x=829,image=d.art?.[`nft:${prize.id}:front`],kept=!!s.prizeKept;
@@ -87,7 +88,7 @@ function comet(d,x,y,size=17,alpha=1){
 function draw(s,d){
  loadArt();const c=d.c,reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches,t=reduced?0:s.t;
  const sky=rules(s),last=totalHops(s),pos=i=>nodePosition(i,s.t,s),hint=s.phase==='orbit'?aim(s):null;
- panel(c,450,112,640,66,'#182544aa');label(c,'CELESTE’S ORBIT HOP',450,98,27);label(c,`${s.level+1} · ${sky.name}`,450,130,22,'#e9d7ac');
+ ;;;
  const source=pos(s.node);
  if(!reduced)for(let i=0;i<12;i++){const x=205+(i*139%500),y=260+(i*173%660);d.star(x,y,2+(Math.sin(t*1.6+i)+1),'#efe2b778');}
  // Lit catches remain linked as a little constellation.
@@ -133,13 +134,13 @@ function draw(s,d){
   const p=pos(s.node),u=1-s.catchFlash/1.3,a=i*Math.PI*2/10;
   comet(d,p.x+Math.cos(a)*u*85,p.y+Math.sin(a)*u*85,5*(1-u),1-u);
  }
- panel(c,450,975,630,44,'#182544aa');
+ ;
  label(c,`${s.node} / ${last} lights connected · ${s.shots} ${s.shots===1?'flight':'flights'}`,450,975,24);
  const ready=s.phase==='orbit'&&s.held&&hint?.ready;
- panel(c,450,1065,620,72,ready?'#405b42cc':'#182544aa',ready?'#dfffad':'#dab978');
+ if(ready)d.glow(450,1052,86,'#dfffad');
  const button=s.phase==='flight'?'FOLLOW THE STAR':s.phase==='return'?'BACK TO YOUR LAST LIGHT':s.phase==='celebrate'?'CONSTELLATION COMPLETE':ready?'RELEASE NOW':s.held?'RELEASE TO HOP':'HOLD TO ORBIT';
  label(c,button,450,1052,29,ready?'#f2ffd5':'#fff2d4');
- label(c,s.phase==='return'?'Your caught lights stay lit.':sky.reverse?`Orbit ${orbitDirection(s)>0?'clockwise':'anticlockwise'} · watch your arrow.`:'Hold sky or Space · How to play for the guide',450,1085,21,'#dfdfc2');
+ ;
  rewardBadge(s,d);
  nftReveal(s,d,reduced);
  if(s.saveError){panel(c,450,600,680,160,'#673d47f2');label(c,'Preview saving paused. Keep this window open.',450,600,24);}

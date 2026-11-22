@@ -23,7 +23,7 @@ function stage(c,s){const r=model.rules(s),left=90,top=r.vertical?0:315,w=720,h=
  courier(c,a);c.restore();
  if(!r.vertical){c.fillStyle='#302a2c96';c.fillRect(left,top+h-38,w,38);text(c,'MOVE + JUMP · gold seals above · green lamps let you pass',450,top+h-18,21,'#f9e4b6');}c.restore();
 }
-function draw(s,d){const c=d.c,r=model.rules(s);header(c,'BEA’S OPENING NIGHT',(s.level+1)+' · '+r.name,true);paper(c,450,r.vertical?190:229,670,r.vertical?38:73,'#f8e9cfb3','#bd935b70',10);if(!r.vertical)text(c,'Deliver '+r.platforms.filter(p=>p.seal).length+' seals · '+(r.vertical?'climb to the top curtain':'reach the lit stage door'),450,213,24);text(c,'DELIVERED '+s.seals.filter(Boolean).length+' / '+r.platforms.filter(p=>p.seal).length+'   ·   MISSTEPS '+s.deaths,450,r.vertical?190:245,22,'#536a58');stage(c,s);
+function draw(s,d){const c=d.c,r=model.rules(s);header(c,'BEA’S OPENING NIGHT',(s.level+1)+' · '+r.name,true);;if(!r.vertical);text(c,'DELIVERED '+s.seals.filter(Boolean).length+' / '+r.platforms.filter(p=>p.seal).length+'   ·   MISSTEPS '+s.deaths,450,r.vertical?190:245,22,'#536a58');stage(c,s);
  const progress=r.vertical?clamp((940-s.actor.y)/680,0,1):clamp(s.actor.x/r.width,0,1);if(!r.vertical){c.save();c.strokeStyle='#a4774f';c.lineWidth=5;c.beginPath();c.moveTo(135,900);c.lineTo(765,900);c.stroke();c.strokeStyle='#edc985';c.beginPath();c.moveTo(135,900);c.lineTo(135+630*progress,900);c.stroke();
  for(let i=0;i<r.platforms.length;i++)if(r.platforms[i].checkpoint){const x=135+r.platforms[i].x/r.width*630;c.fillStyle=s.checkpoint.platform===i?'#bce3a8':'#c6b18a';c.beginPath();c.arc(x,900,4,0,Math.PI*2);c.fill();}c.restore();
  text(c,'Pennants save your place · '+Math.round(progress*100)+'% to the stage door',450,936,22,'#fff0c9');
