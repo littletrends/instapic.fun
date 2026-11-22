@@ -2,6 +2,16 @@
 const DB_NAME = 'pennyFever.verified.exit.v1';
 const MAX_EVENTS = 120000, MAX_BYTES = 4 * 1024 * 1024, MAX_SECONDS = 1200;
 let database;
+export async function acquireExitWriter(owner) {
+  if(!navigator.locks?.request)throw Error('verified_cross_tab_lock_required');
+  let release,ready,fail;
+  const held=new Promise(resolve=>{release=resolve;}),acquired=new Promise((resolve,reject)=>{ready=resolve;fail=reject;});
+  const task=navigator.locks.request('pennyFever.verified.exitWriter.v1:'+encodeURIComponent(owner),{ifAvailable:true},async lock=>{
+    if(!lock){fail(Error('checkpoint_pending'));return;}
+    ready(()=>{release();return task;});await held;
+  }).catch(fail);
+  return acquired;
+}
 const request = task => new Promise((resolve,reject) => {
   task.onsuccess = () => resolve(task.result); task.onerror = () => reject(task.error || Error('journal_storage_failed'));
 });
@@ -20,6 +30,7 @@ async function db() {
   });
   try { return await database; } catch (e) {database = null; throw e;}
 }
+export async function ensureExitStorage() {await db();}
 async function transaction(stores,mode,fn) {
   const d = await db();
   return new Promise((resolve,reject) => {
@@ -79,11 +90,25 @@ export async function createExitJournal(owner,view) {
       if(meta.state==='recording')meta=await journalMeta({...meta,state:'pending',reason,count:events.length});
       if(meta.count!==events.length)throw Error('journal_frozen');return meta;
     },
-    async committed(result){await persist();meta=await journalMeta({...meta,state:'committed',result});},
+    async committed(result){
+      await persist();
+      const {id,owner,play,source,revision,checkpoint}=meta;
+      meta=await journalMeta({id,owner,play,source,revision,checkpoint,state:'committed',result:{id:result.id,source:result.source,revision:result.revision}});
+      // Consume acknowledged inputs only after their exact receipt is durable.
+      // Mother retains the complete verified checkpoint and uploaded log.
+      try{await transaction(['events'],'readwrite',tx=>{
+        const store=tx.objectStore('events'),cursor=store.index('journal').openKeyCursor(IDBKeyRange.only(id));
+        cursor.onsuccess=()=>{const row=cursor.result;if(row){store.delete(row.primaryKey);row.continue();}};
+      });}catch{}
+    },
     get error(){return failure;},get durable(){return saved===events.length;}
   };
 }
 export async function sendExitJournal(meta,events,client,{hidden=false}={}) {
+  const receipt=result=>{
+    if(result?.id!==meta.play || result.source!==meta.source || result.revision!==meta.revision+1)throw Error('verified_reply_mismatch');
+    return result;
+  };
   const hash=async text=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))),b=>b.toString(16).padStart(2,'0')).join('');
   const parts=[];let batch=[],size=2;
   for(const event of events){
@@ -93,9 +118,10 @@ export async function sendExitJournal(meta,events,client,{hidden=false}={}) {
   }
   if(batch.length || !parts.length)parts.push('['+batch.join(',')+']');
   const context={checkpoint:meta.checkpoint.id,client:meta.checkpoint.client};
+  if(meta.reason==='entry'){const state=await client.checkpoint({...context,action:'entry',events},{keepalive:hidden});if(state.state!=='committed')throw Error('exit_save_pending');return receipt(state.result);}
   // An acknowledged result also recovers a lost final browser write.
   let state=await client.checkpoint({...context,action:'status'},{keepalive:hidden});
-  if(state.state==='committed')return state.result;
+  if(state.state==='committed')return receipt(state.result);
   const digests=await Promise.all(parts.map(hash));
   if(state.state==='recording'){
     for(let i=0;i<parts.length;i++)await client.checkpoint({...context,action:'chunk',part:i,digest:digests[i],data:parts[i]},{keepalive:hidden});
@@ -109,14 +135,34 @@ export async function sendExitJournal(meta,events,client,{hidden=false}={}) {
     await new Promise(resolve=>setTimeout(resolve,500));
     state=await client.checkpoint({...context,action:'status'});
   }
-  return state.result;
+  return receipt(state.result);
 }
-export async function recoverExitJournals(owner,client) {
-  for(const original of await journalList(owner)){
+export async function recoverExitJournals(owner,client,{clientId}={}) {
+  const release=await acquireExitWriter(owner);
+  try{
+  if(clientId){
+    const active=await client.checkpoint({action:'recover',client:clientId});
+    if(active.state==='other_device')throw Error('checkpoint_pending');
+    if(active.view){
+      // Recover the begin-ack gap, including any orphaned durable event rows.
+      // The baseline is Mother's, never a replacement state supplied by us.
+      await createExitJournal(owner,active.view);
+    }
+  }
+  for(let count=0;;count++){
+    const [original]=(await journalList(owner)).sort((a,b)=>a.revision-b.revision);
+    if(!original)break;
+    if(count>=64)throw Error('journal_recovery_required');
     const events=await journalEvents(original.id);
     const meta=original.state==='recording'?await journalMeta({...original,state:'pending',reason:'exit',count:events.length}):original;
     if(meta.count!==events.length)throw Error('journal_sequence_gap');
     const result=await sendExitJournal(meta,events,client);
-    await journalMeta({...meta,state:'committed',result});
+    const journal=await createExitJournal(owner,meta.view);
+    await journal.committed(result);
+    if(result.checkpoint){
+      const next=await createExitJournal(owner,result),frozen=await next.freeze('exit');
+      await next.committed(await sendExitJournal(frozen,next.events,client));
+    }
   }
+  }finally{await release();}
 }

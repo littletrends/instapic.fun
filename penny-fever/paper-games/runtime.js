@@ -15,7 +15,7 @@ const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:ab
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
-let signInRequired=false;
+let signInRequired=false,saveRecoveryRequired=false;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
 // Set while play waits for the previous second of moves to reach the save
 // server. Waiting freezes the board (no game time passes) instead of pausing.
@@ -211,6 +211,7 @@ if(embedded)document.body.classList.add('is-alley-room');
 function listen(el,event,fn,opts={}){el.addEventListener(event,fn,{passive:false,...opts,signal:abort.signal});}
 function error(e){
  playing=false;cancelAnimationFrame(raf);
+ if(e.message==='checkpoint_pending'){saveRecoveryRequired=true;veil('Saved game','Another game is open or finishing its save.','Finish saving on the other tab or device, then try again.','Try again');$('#begin').disabled=false;tellRoom('error');return;}
  if(e.message==='verification_required'){
   signInRequired=true;
   $('#error').textContent='Sign in again to reconnect your saved purse and chapter progress.';
@@ -363,6 +364,7 @@ async function goChapter(target){
 function retryChapter(){
  if(signInRequired)return;
  cancelExample();
+ if(verified?.checkpointMode){prepareCheckpointEntry('retry');return;}
  if(verified){const retry=()=>{if(attemptRequested)return;attemptRequested=true;state=verified.state;if(!verifiedEvent({type:'retry'})){attemptRequested=false;return;}if(state?.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play again');persist();return;}completion=null;ended=false;paint();start();persist();};if(verified.checkpointMode)verified.resume().then(retry).catch(error);else retry();return;}
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
  if(entry.id==='fortune'){engine.action(state,'gaze');start();}
@@ -392,7 +394,7 @@ function finishChapter(result){
 
 function stop(){playing=false;cancelAnimationFrame(raf);raf=0;last=0;clearInput();}
 function restVeil(){veil('Paused','The room is resting.','Nothing moves until you return. Space/Enter or Continue to play on · Esc back to the alley.','Continue');$('#pause').textContent='Continue';}
-function pause(){if(!playing)return;persist();stop();restVeil();}
+function pause(){if(!playing)return;if(verified?.checkpointMode){stop();persist();}else{persist();stop();}restVeil();}
 // Esc in the help panel: close help and leave the room paused (Esc again goes back to the alley).
 function escHelp(){const wasPlaying=resumeAfterHold;resumeAfterHold=false;closeHelp();if(wasPlaying&&!ended&&state&&!disposed)restVeil();}
 function chapterKeep(){return engine?.prizes?.[level]||engine?.prizes?.[engine.prizes.length-1]||null;}
@@ -510,7 +512,11 @@ let preparingCheckpoint=null;
 function start(){
  if(!verified?.checkpointMode)return startImmediate();
  if(preparingCheckpoint||disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;
- preparingCheckpoint=verified.resume().then(()=>{state=verified.state;completion=verified.completion;startImmediate();}).catch(error).finally(()=>{preparingCheckpoint=null;});
+ prepareCheckpointEntry('start');
+}
+function prepareCheckpointEntry(type){
+ if(preparingCheckpoint)return;
+ preparingCheckpoint=(async()=>{await verified.resume();if(type==='retry'||verified.needsStart){attemptRequested=true;await verified.prepareEntry(type);}state=verified.state;completion=verified.completion;attemptRequested=false;if(state.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play');return;}if(type==='retry'){completion=null;ended=false;paint();}startImmediate();})().catch(error).finally(()=>{preparingCheckpoint=null;});
 }
 function startImmediate(){if(disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
@@ -571,6 +577,7 @@ listen($('#game-help'),'cancel',e=>{e.preventDefault();escHelp();});
 listen($('#veil-help'),'click',openHelp);
 listen($('#veil-back'),'click',goBack);
 listen($('#begin'),'click',event=>{
+ if(saveRecoveryRequired){event.preventDefault();event.stopImmediatePropagation();(embedded?window.parent:window).location.reload();return;}
  if(!signInRequired)return;
  event.preventDefault();event.stopImmediatePropagation();
  const destination=embedded?window.parent:window;

@@ -81,9 +81,9 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       try { await callback(); }
       catch (error) { if (!['engine_source_changed','engine_source_unavailable'].includes(error.message)) throw error; }
     }
-    if (scope.indexedDB && account) {
+    if (scope.indexedDB && account && storage.getItem('pennyFever.verified.exitClient.v1:'+encodeURIComponent(account.id))) {
       const {recoverExitJournals} = await import('./exit-journal.mjs');
-      await recoverExitJournals(account.id, clientFor(account, generation));
+      await recoverExitJournals(account.id, clientFor(account, generation), {clientId:storage.getItem('pennyFever.verified.exitClient.v1:'+encodeURIComponent(account.id))});
     }
     return purse.flush();
   }
@@ -97,9 +97,9 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
   async function recoverAccount(selected) {
     const client = clientFor(selected);
     await client.recover();
-    if (scope.indexedDB) {
+    if (scope.indexedDB && storage.getItem('pennyFever.verified.exitClient.v1:'+encodeURIComponent(selected.id))) {
       const {recoverExitJournals} = await import('./exit-journal.mjs');
-      await recoverExitJournals(selected.id, client);
+      await recoverExitJournals(selected.id, client, {clientId:storage.getItem('pennyFever.verified.exitClient.v1:'+encodeURIComponent(selected.id))});
     }
     const state = await client.state();
     const heldPurse = createVerifiedPurse({owner: selected.id, wallet: state.wallet, client,
@@ -215,11 +215,18 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
         error.sourceRecovery=status.sourceRecovery;throw error;
       }
       let checkpointClient = null;
-      if (status.checkpoint_protocol === 1) {
-        if (!scope.indexedDB) throw Error('journal_storage_unavailable');
+      if (status.checkpoint_protocol === 1 && scope.indexedDB) {
         const deviceKey = 'pennyFever.verified.exitClient.v1:' + encodeURIComponent(selected.id);
-        checkpointClient = storage.getItem(deviceKey);
-        if (!checkpointClient) {checkpointClient = uuid(); storage.setItem(deviceKey, checkpointClient);}
+        try {
+          const {ensureExitStorage} = await import('./exit-journal.mjs');
+          await ensureExitStorage();
+          checkpointClient = storage.getItem(deviceKey);
+          if (!checkpointClient) {checkpointClient = uuid(); storage.setItem(deviceKey, checkpointClient);}
+        } catch (error) {
+          // With no earlier exit journal, unsupported storage keeps the old
+          // verified path. Existing unfinished journals must stay recoverable.
+          if (storage.getItem(deviceKey)) throw error;
+        }
       }
       const view = await client.command({operation: 'begin', game, chapter, preferences,
         ...(checkpointClient ? {checkpoint_client: checkpointClient} : {})});
