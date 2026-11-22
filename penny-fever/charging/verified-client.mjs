@@ -19,12 +19,13 @@ export function createVerifiedClient({identity, transport = globalThis.fetch,
     }
   };
   const storageKey = value => 'pennyFever.verified.outbox.v1:' + encodeURIComponent(value.id);
-  async function request(path, payload, initial) {
+  async function request(path, payload, initial, {keepalive = false} = {}) {
     unchanged(initial);
     const response = await transport(base + path, {
       method: 'POST', cache: 'no-store', redirect: 'error',
       headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + initial.token},
       body: JSON.stringify({...payload, ...(initial.email ? {email: initial.email} : {})}),
+      ...(keepalive ? {keepalive: true} : {}),
     });
     const result = await response.json();
     unchanged(initial);
@@ -84,6 +85,9 @@ export function createVerifiedClient({identity, transport = globalThis.fetch,
     return true;
   }
   return {
+    checkpoint(payload, options) {
+      return exclusive(initial => request('/checkpoint', payload, initial, options));
+    },
     command(command, {key} = {}) {
       return exclusive(async initial => {
         if (key != null && (typeof key !== 'string' || !key.length || key.length > 128)) throw Error('idempotency_key_required');

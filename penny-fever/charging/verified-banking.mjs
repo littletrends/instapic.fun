@@ -81,6 +81,10 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       try { await callback(); }
       catch (error) { if (!['engine_source_changed','engine_source_unavailable'].includes(error.message)) throw error; }
     }
+    if (scope.indexedDB && account) {
+      const {recoverExitJournals} = await import('./exit-journal.mjs');
+      await recoverExitJournals(account.id, clientFor(account, generation));
+    }
     return purse.flush();
   }
   async function bank() {
@@ -93,6 +97,10 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
   async function recoverAccount(selected) {
     const client = clientFor(selected);
     await client.recover();
+    if (scope.indexedDB) {
+      const {recoverExitJournals} = await import('./exit-journal.mjs');
+      await recoverExitJournals(selected.id, client);
+    }
     const state = await client.state();
     const heldPurse = createVerifiedPurse({owner: selected.id, wallet: state.wallet, client,
       storage, uuid, loan, apply() {}});
@@ -106,7 +114,7 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       const savedGame=suffix.slice(0,split),savedChapter=Number(suffix.slice(split+1));
       const savedStatus=await client.state(savedGame,savedChapter);
       if(retainReplacedRound(selected,key,record,savedStatus))continue;
-      if(savedStatus.sourceRecovery?.required){
+      if(savedStatus.sourceRecovery?.required&&!savedStatus.sourceRecovery.canReplayPending){
         storage.setItem(key,JSON.stringify({...record,sourceRecovery:savedStatus.sourceRecovery}));
         continue;
       }
@@ -206,7 +214,15 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
         const error=Error(status.sourceRecovery.reason||'engine_source_changed');
         error.sourceRecovery=status.sourceRecovery;throw error;
       }
-      const view = await client.command({operation: 'begin', game, chapter, preferences});
+      let checkpointClient = null;
+      if (status.checkpoint_protocol === 1) {
+        if (!scope.indexedDB) throw Error('journal_storage_unavailable');
+        const deviceKey = 'pennyFever.verified.exitClient.v1:' + encodeURIComponent(selected.id);
+        checkpointClient = storage.getItem(deviceKey);
+        if (!checkpointClient) {checkpointClient = uuid(); storage.setItem(deviceKey, checkpointClient);}
+      }
+      const view = await client.command({operation: 'begin', game, chapter, preferences,
+        ...(checkpointClient ? {checkpoint_client: checkpointClient} : {})});
       if (epoch !== generation) throw Error('verified_identity_changed');
       purse.accept(view.wallet);
       return {view, client, owner: selected.id, assertActive: () => {
@@ -220,7 +236,7 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
           lastBank = Date.now();
           // Banking is independent of rendering; its receipts recover later
           // if USB storage or the connection is temporarily unavailable.
-          clientFor(selected, epoch).bank().catch(onError);
+          return clientFor(selected, epoch).bank().catch(onError);
         }
       }};
     },
@@ -244,7 +260,8 @@ export function createVerifiedBanking({api, identity, storage = globalThis.local
       const result = await clientFor(account, generation).state(game);
       return result.selectedChapter || 0;
     },
-    registerRound(callback) {rounds.add(callback); return () => rounds.delete(callback);},
+    registerRound(callback, {isPlaying} = {}) {callback.isPlaying=isPlaying; rounds.add(callback); return () => rounds.delete(callback);},
+    get savesDeferred() {return [...rounds].some(callback => callback.isPlaying?.());},
     async purchase(payload) {
       await flush();
       const epoch = generation;

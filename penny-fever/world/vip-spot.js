@@ -754,7 +754,7 @@ export function mountVipSpot() {
       if (syncReady && guestEmail()) markLapsed(guestEmail());
       return;
     }
-    pushSave().catch(() => {});
+    if (!window.PennyFeverVerified?.savesDeferred) pushSave().catch(() => {});
     applyPendingWarp();
   }, 20000);
   document.addEventListener("visibilitychange", () => {

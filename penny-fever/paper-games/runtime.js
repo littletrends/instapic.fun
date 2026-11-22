@@ -17,6 +17,41 @@ let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,las
 let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
 let signInRequired=false;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
+// Set while play waits for the previous second of moves to reach the save
+// server. Waiting freezes the board (no game time passes) instead of pausing.
+let verifiedSyncWaitAt=0;
+// First round opening, requested while the game code is still downloading.
+let earlyStart=null;
+const VERIFIED_SYNC_GRACE_MS=10000;
+// ---- Save batching (verified rounds) ------------------------------------
+// Moves are still sent to Mother during play (it replays them to verify wins
+// and purse changes), just in fewer, larger sends plus at natural breaks
+// (start/retry, round end, pause, help, tab hidden, leaving).
+// TARGET is how much play to gather per send. The effective size is capped by
+// the round's local limits, so this is safe before and after Mother's limits
+// change: today verified-round.mjs holds at most 1.5 s / 240 moves, which
+// gives the same ~0.5 s cadence as before. Once verified-round.mjs exposes
+// larger limits (round.limits = {bufferSeconds, bufferEvents}), sends grow to
+// TARGET automatically. To force the old cadence, set TARGET to 0.5.
+const SAVE_EVERY_SECONDS_TARGET=4;
+const SAVE_RTT_MARGIN_SECONDS=1;
+const ROUND_LIMITS_TODAY={bufferSeconds:1.5,bufferEvents:240};
+let unsentPlaySeconds=0,saveInFlight=false;
+function roundLimits(){
+ const l=verified?.limits,secs=Number(l?.bufferSeconds),events=Number(l?.bufferEvents);
+ return {bufferSeconds:secs>0?secs:ROUND_LIMITS_TODAY.bufferSeconds,bufferEvents:events>0?events:ROUND_LIMITS_TODAY.bufferEvents};
+}
+function saveAfterSeconds(){return Math.max(.5,Math.min(SAVE_EVERY_SECONDS_TARGET,roundLimits().bufferSeconds-SAVE_RTT_MARGIN_SECONDS));}
+function saveAfterEvents(){return Math.max(30,roundLimits().bufferEvents-120);}
+function saveNow(){
+ if(!verified||verified.checkpointMode||!verified.pending||saveInFlight||holds.has('banking'))return;
+ unsentPlaySeconds=0;saveInFlight=true;
+ flushVerified({background:true}).catch(()=>{}).finally(()=>{saveInFlight=false;if(!playing)saveNow();else maybeSave();});
+}
+function maybeSave(){
+ if(verified?.checkpointMode||!verified?.pending||saveInFlight)return;
+ if(unsentPlaySeconds>=saveAfterSeconds()||verified.pending>=saveAfterEvents())saveNow();
+}
 let exampleView=null,exampleRaf=0,exampleLast=0,exampleLoading=false;
 let attemptRequested=false;
 let switchingVerifiedChapter=false;
@@ -37,8 +72,18 @@ const TENT_KEYS={
  funhouse:'Maze: arrows or WASD steer (or swipe / the MOVE stick) · walk into a curtain doorway to pop out the other side',
 };
 const COMMON_KEYS='Space/Enter play · R play again (result panel) · H or ? how to play · Esc pause, then back to the alley';
+// In the alley, "test only" disclaimers left in some games' How to play text
+// are out of date (the purse and rewards are real there); the only test/sample
+// play is the "Watch sample" demo. Drop those sentences for alley players only.
+// The game files are unchanged (they are checked by the save server).
+const TEST_ONLY_SENTENCE=/^(test only\b|this local test\b|every chapter is a free local test\b|no (real|actual) purse or nft\b|pennies and rewards are previews\b)/i;
+function playerInstructions(text){
+ const raw=String(text||'');
+ if(!embedded)return raw;
+ return raw.split(/(?<=[.!?])\s+/).filter(sentence=>!TEST_ONLY_SENTENCE.test(sentence.trim())).join(' ').replace(/ in this test chapter\b/gi,'');
+}
 function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition);}
-function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys)return engine.reviewCopy.keys+' · H help · Esc pause';const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
+function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys){const k=String(engine.reviewCopy.keys).replace(/[\s.·]+$/,'');return k+(/\bH help\b/.test(k)?'':' · H help')+(/\bEsc pause\b/.test(k)?'':' · Esc pause');}const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
  if(usesPaperRules()&&embedded)return isChapterOne(level)?'Play again · free':'Play again · 1 '+(entryFor(entry.id).door==='ticket'?'ticket':'penny');
  if(!embedded)return 'Play again';
@@ -65,7 +110,7 @@ function treasureLine(){
  if(!entry||entry.id==='snap')return '';
  const prize=chapterKeep();if(!prize)return '';
  const name=itemName(prize);
- if(usesPaperRules())return name+' · '+(prizeUnlocked(prize)?'Collected':'Locked until chapter completion');
+ if(usesPaperRules())return name+' · '+(prizeUnlocked(prize)?'Collected.':'Locked until chapter completion.');
  if(prizeUnlocked(prize)){
   return 'Chapter treasure: '+name+' — Collected. Guest paper and VIP are the same copy; it will not drop twice. Everyday pennies can still return to the purse.';
  }
@@ -192,7 +237,9 @@ function showPrize(id){
 }
 function veil(tag,title,detail,button,prize){$('#result-retry').hidden=true;$('#result-next').hidden=true;const tagEl=$('#veil-tag'),titleEl=$('#veil-title'),detailEl=$('#veil-detail');const tagText=String(tag||'').trim(),titleText=String(title||'').trim(),detailText=String(detail||'').trim();tagEl.textContent=tagText;tagEl.hidden=!tagText;titleEl.textContent=titleText;titleEl.hidden=!titleText;detailEl.textContent=detailText;detailEl.hidden=!detailText;$('#begin').textContent=button;showPrize(prize||null);const vk=$('#veil-keys');if(vk)vk.textContent=keyHints();const sample=$('#watch-sample');if(sample)sample.hidden=!canWatchExample();veilShownAt=performance.now();$('#veil').hidden=false;}
 function clearInput(){if(exampleView){exampleView.pointer('cancel',input.pointer||{x:450,y:1050});input.keys.clear();input.actions.clear();input.down=false;input.pointer=null;return;}if(!verified&&state)engine?.releaseInput?.(state);input.keys.clear();input.actions.clear();input.down=false;if(verified){try{verified.enqueue({type:'release'});}catch{needsVerifiedRelease=true;}}else if(state)engine?.pointer?.(state,'cancel',input.pointer||{x:450,y:1050},input);input.pointer=null;}
-function persist(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}if(verified&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});}
+function persistLocal(){try{if(verified)verified.persist();else engine?.persist?.(state);if(navigationKey)localStorage.setItem(navigationKey,String(level));}catch(e){if(verified)pauseForBanking(e);}}
+// Natural break (pause, help, round end, chapter change, leaving): keep it locally and send what is unsent.
+function persist(){persistLocal();if(!verified||holds.has('banking'))return;if(verified.checkpointMode){if(!playing&&!preparingCheckpoint)flushVerified({background:true}).catch(()=>{});}else saveNow();}
 function pauseForBanking(e){
  if(disposed)return;
  if(!holds.has('banking'))hold('banking');
@@ -219,8 +266,19 @@ async function flushVerified({background=false}={}){
  }catch(e){if(current===verified)pauseForBanking(e);throw e;}
 }
 function verifiedEvent(event){
- try{verified.enqueue(event);state=verified.state;completion=verified.completion;if(verified.pending>=90)flushVerified({background:true}).catch(()=>{});return true;}
- catch(e){pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
+ try{verified.enqueue(event);state=verified.state;completion=verified.completion;verifiedSyncWaitAt=0;if(event.type==='tick')unsentPlaySeconds+=Number(event.dt)||0;if(event.type==='start'||event.type==='retry')saveNow();else maybeSave();return true;}
+ catch(e){
+  // verified_sync_required only means the unsaved-play buffer is full while a
+  // save is still travelling (slow connection). That is back-pressure, not a
+  // failure: hold the board still until the save lands, then carry on. Only
+  // pause with "Retry saving" if the save genuinely stalls or fails.
+  if(e.message==='exit_checkpoint_limit'){pauseForBanking(e);flushVerified().catch(()=>{});return false;}
+  if(e.message==='verified_sync_required'&&(event.type==='tick'||(event.type==='pointer'&&event.phase==='move'))){
+   const now=performance.now();if(!verifiedSyncWaitAt)verifiedSyncWaitAt=now;
+   saveNow();
+   if(now-verifiedSyncWaitAt<VERIFIED_SYNC_GRACE_MS)return false;
+  }
+  verifiedSyncWaitAt=0;pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
 }
 function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
 function canWatchExample(){return !!verified&&!attemptRequested&&level===0&&!sourceRecovery&&(!engine?.releaseEdition||state?.gameEdition===engine.releaseEdition)&&typeof engine?.createExampleView==='function';}
@@ -252,18 +310,19 @@ async function mountVerified(){
  if(Wallet.VERIFIED_WALLET_VERSION!==1)throw Error('Please reload this page to update the verified purse.');
  const sequence=++verifiedMount;
  $('#begin').disabled=true;$('#pause').disabled=true;
- const args=await banking.startRound(entry.id,level,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
+ const early=earlyStart;earlyStart=null;
+ const args=early&&early.level===level?await early.pending:await banking.startRound(entry.id,level,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
  const {openVerifiedRound}=await import('../charging/verified-round.mjs?v=verified-banking-1');
  const round=await openVerifiedRound({engine,...args});
  if(disposed||sequence!==verifiedMount)return;
- verified=round;unregisterVerified=banking.registerRound(()=>flushVerified());
+ verified=round;unregisterVerified=banking.registerRound(()=>{if(round.checkpointMode&&playing)hold('parent');return flushVerified();},{isPlaying:()=>round.checkpointMode&&playing});
  round.enqueue({type:'release'});state=round.state;completion=round.completion;ended=false;time=0;
  paint();$('#readout').textContent=readout()||'';
  if(round.finished)finishChapter(round.completion);
  else veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');
  $('#begin').disabled=false;$('#pause').disabled=false;publishChapter();
 }
-function hold(reason){if(holds.has(reason))return;if(!holds.size)resumeAfterHold=playing;holds.add(reason);persist();stop();}
+function hold(reason){if(holds.has(reason))return;if(!holds.size)resumeAfterHold=playing;holds.add(reason);if(verified?.checkpointMode){stop();persist();}else{persist();stop();}}
 function release(reason){if(!holds.has(reason))return;holds.delete(reason);if(!holds.size&&resumeAfterHold){resumeAfterHold=false;if(!ended)start();}}
 function openHelp(){const hc=$('#help-cost');if(hc&&entry){hc.textContent=[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' ');hc.hidden=!hc.textContent;}const hk=$('#key-hints');if(hk)hk.textContent='Keys: '+keyHints();const rs=$('#restart');if(rs&&engine)rs.textContent=retryLabel();const sample=$('#watch-sample-help');if(sample)sample.hidden=!canWatchExample()||!!exampleView;hold('help');$('#pause').textContent=resumeAfterHold?'Continue playing':'Close help';if(!$('#game-help').open)$('#game-help').showModal();}
 function closeHelp(){$('#game-help').close();release('help');}
@@ -304,7 +363,7 @@ async function goChapter(target){
 function retryChapter(){
  if(signInRequired)return;
  cancelExample();
- if(verified){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'retry'})){attemptRequested=false;return;}if(state?.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play again');persist();return;}completion=null;ended=false;paint();start();persist();return;}
+ if(verified){const retry=()=>{if(attemptRequested)return;attemptRequested=true;state=verified.state;if(!verifiedEvent({type:'retry'})){attemptRequested=false;return;}if(state?.entryPaymentRequired){veil('Purse','This attempt needs funds.',costLine(),'Play again');persist();return;}completion=null;ended=false;paint();start();persist();};if(verified.checkpointMode)verified.resume().then(retry).catch(error);else retry();return;}
  completion=null;ended=false;adapterDismissed=['coin-pusher','pinball'].includes(entry.id);
  if(entry.id==='fortune'){engine.action(state,'gaze');start();}
  else if(engine.retryAttempt){
@@ -318,13 +377,15 @@ function retryChapter(){
  persist();
 }
 function finishChapter(result){
- completion=result;ended=true;persist();stop();paint();
+ completion=result;ended=true;if(verified?.checkpointMode){stop();persist();}else{persist();stop();}paint();
  const won=result.won!==false,canAdvance=level<engine.levels.length-1;
  // One label everywhere: Play again · <what the next go costs>.
  const stayLabel=retryLabel();
  veil(won?'Chapter complete':'Round finished',result.title,result.detail,stayLabel,result.prize||null);
  $('#result-retry').hidden=true;
- $('#result-next').hidden=!canAdvance;
+ // A lost or timed-out round stays on this chapter: offer Play again only.
+ // The chapter tabs still let players choose another chapter themselves.
+ $('#result-next').hidden=!(won&&canAdvance);
  $('#result-next').textContent='Next chapter';
  tellRoom('ended',{id:entry.id,level});
 }
@@ -445,7 +506,13 @@ function paint(){if(!draw||!state)return;if(exampleView){draw.clear();exampleVie
 function goNextChapter(){goChapter(level+1).catch(error);}
 function markChapters(){}
 function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
-function start(){if(disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
+let preparingCheckpoint=null;
+function start(){
+ if(!verified?.checkpointMode)return startImmediate();
+ if(preparingCheckpoint||disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;
+ preparingCheckpoint=verified.resume().then(()=>{state=verified.state;completion=verified.completion;startImmediate();}).catch(error).finally(()=>{preparingCheckpoint=null;});
+}
+function startImmediate(){if(disposed||signInRequired||exampleView||!engine||!state||playing||ended||holds.size)return;if(verified?.needsStart){if(attemptRequested)return;attemptRequested=true;if(!verifiedEvent({type:'start'})){attemptRequested=false;return;}if(verified.needsStart){veil('Purse','This attempt needs funds.',costLine(),'Play');persist();return;}}ended=false;$('#veil').hidden=true;playing=true;last=0;$('#pause').textContent='Pause';canvas.focus({preventScroll:true});raf=requestAnimationFrame(tick);}
 function resultPrize(r, won){
  const list=engine.prizes||kits[entry.id]?.prizes||[];
  if(r && Object.prototype.hasOwnProperty.call(r,'prize')) return r.prize || null;
@@ -456,7 +523,11 @@ function tick(now){
  try{
   if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
   if(verified){
-   if(dt>0&&!verifiedEvent({type:'tick',dt,keys:[...input.keys],actions:[...input.actions]}))return;
+   if(dt>0&&!verifiedEvent({type:'tick',dt,keys:[...input.keys],actions:[...input.actions]})){
+    // Waiting on a save: skip this frame without advancing game time.
+    if(verifiedSyncWaitAt&&playing&&!holds.size)raf=requestAnimationFrame(tick);
+    return;
+   }
    if(now-paintAt>1000/30){paintAt=now;paint();}
    if(now-reportAt>350){reportAt=now;$('#readout').textContent=readout()||'';}
    if(verified.finished){finishChapter(verified.completion);return;}
@@ -509,6 +580,15 @@ listen($('#begin'),'click',event=>{
 });
 try{
  if(!entry?.ready||entry.direct)throw Error('Choose an available new game from the workshop list.');
+ // Faster opening: start the independent downloads and the purse's chapter
+ // lookup together instead of one after another. Same calls, same order of
+ // use; nothing here changes what is saved or verified.
+ const enginePending=import(entry.module+(entry.module.includes('?')?'&':'?')+'allocation=treasure-design-1&v=exit-save-20261122-1');
+ enginePending.catch(()=>{});
+ const roundModulePending=verifiedWanted?import('../charging/verified-round.mjs?v=verified-banking-1'):null;
+ roundModulePending?.catch(()=>{});
+ const chapterPending=verifiedWanted?(async()=>{await waitForBanking();await waitForVerifiedPurse();return banking.selectedChapter(entry.id);})():null;
+ chapterPending?.catch(()=>{});
  await loadParkDoors();
  if(embedded && parkDoorsLive() && isParkShut(entry.id)){
   document.title=entry.title+' · Penny Fever';
@@ -524,16 +604,37 @@ try{
   });
   tellRoom('ready',{title:entry.title,closed:true});
  }else{
- engine=(await import(entry.module+(entry.module.includes('?')?'&':'?')+'allocation=treasure-design-1&v=paper33-v1')).default;
+ // Show the stall's backdrop straight away rather than after the purse connects.
+ const img=$('#backdrop');
+ img.hidden=false;
+ img.src=entry.asset;
+ img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
+ // Ask the purse to open this chapter's round (the same startRound call
+ // mountVerified makes) while the game code downloads.
+ if(verifiedWanted){
+  const pending=chapterPending.then(chosen=>{
+   if(!banking?.required||Wallet.VERIFIED_WALLET_VERSION!==1)return null;
+   earlyStart={level:chosen,pending:banking.startRound(entry.id,chosen,{reducedMotion:!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches})};
+   earlyStart.pending.catch(()=>{});
+   return null;
+  });
+  pending.catch(()=>{});
+ }
+ engine=(await enginePending).default;
+ // Warm the art caches while the purse finishes its chapter lookup.
+ {
+  const kit=kits[entry.id]||{sprites:[],prizes:[]};
+  const prizes=(kit.prizes&&kit.prizes.length)?kit.prizes:(engine.prizes||[]);
+  for(const id of new Set([...(engine.sprites||kit.sprites||[]),...prizes])){const key=id&&spriteKey(id);if(key)loadSprite(key).catch(()=>{});}
+  for(const src of Object.values(engine.images||{})){const i=new Image();i.decoding='async';i.src=new URL(src,import.meta.url).href;}
+ }
  navigationKey=(embedded?'pennyFever':'pf.practice')+'.chapterSelection.v1:'+entry.id;
  if(verifiedWanted){
-  await waitForBanking();
-  await waitForVerifiedPurse();
+  level=await chapterPending;
   navigationKey+=':'+banking.owner;
-  level=await banking.selectedChapter(entry.id);
  }else{try{level=Number(localStorage.getItem(navigationKey)??engine.selectedChapter?.()??0);}catch{level=engine.selectedChapter?.()||0;}}
  if(!Number.isInteger(level)||level<0||level>=engine.levels.length)level=0;
- document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;$('#instructions').textContent=engine.instructions;canvas.setAttribute('aria-label',engine.title+'. '+engine.instructions);
+ document.title=engine.title+' · Penny Fever';$('#title').textContent=engine.title;$('#host').textContent=entry.host+'’s paper world';$('#intro').textContent=engine.intro;const howTo=playerInstructions(engine.instructions);$('#instructions').textContent=howTo;canvas.setAttribute('aria-label',engine.title+'. '+howTo);
  // Lorie 5f: funhouse mode-note for workshop (#mode-note) AND embedded — not only alley.
  {
   const note=$('#mode-note')||document.querySelector('.note');
@@ -543,7 +644,7 @@ try{
      ?'No practice ride here — every ride, including the free first one, can keep the bonus. The details: the same maze layout is used in every chapter; later chapters are tougher. Chips are the small dots; you need the shown number to clear. The bonus key sits mid-court — once you hold it, a catch puts it back (Locked) until you finish the chips. The two curtain doorways on the side edges are linked both ways. Glowing power tokens make the faces flash and let you chase them for a few seconds. When the house clock runs out the ride simply ends; nothing is lost.'
      :'Straight into eligible maze — no practice chapter. Mouse, touch and keyboard are listed above. Leaving or hiding this page pauses the room.';
    }else if(embedded){
-    note.textContent=entry.id==='coin-pusher'?'Three trays. Every drop is a real purse penny, including chapter 1. The bonus only hangs on a prize second, then push it over the lip. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. Chapter 1 is free; later plunges cost a penny. Tap the flippers. The bonus only drops on a winning bumper second. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. Chapter 1 is free; later trays cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Ticket ride. Chapter 1 is the free ride; chapters 2–6 cost a penny. The bonus only sits on a prize roll.':'Chapter 1 is free to play until the prize second. Later chapters cost a penny a go. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
+    note.textContent=entry.id==='coin-pusher'?'Six trays. Every drop is a real purse penny, including chapter 1. The bonus only hangs on a prize second, then push it over the lip. Cash a booth ticket for a five-penny stack.':entry.id==='pinball'?'Six cabinets. Chapter 1 is free; later plunges cost a penny. Tap the flippers. The bonus only drops on a winning bumper second. Cash a booth ticket for a five-penny stack.':entry.id==='milk-bottles'?'Match-three dairy. Drag or tap two neighbouring bottles to swap them, or use the arrows and Space/Enter. Match beneath the gold PRIZE bottle to drop it into the crate. Chapter 1 is free; later trays cost a penny. Cash a booth ticket for a five-penny stack.':entry.id==='skee-ball'?'A penny a roll. Land the hanging moon for this chapter’s prize. Stars drip from the silver cups. Cash a booth ticket for a five-penny stack.':['carousel','organ','helter','ferris','swings','funhouse','balloons','mural'].includes(entry.id)?'Ticket ride. Chapter 1 is the free ride; chapters 2–6 cost a penny. The bonus only sits on a prize roll.':'Chapter 1 is free to play until the prize second. Later chapters cost a penny a go. Cash a ticket on the bar for a five-penny stack. Workshop practice from All games stays free and writes nothing.';
    }
   }
  }
@@ -558,14 +659,13 @@ try{
  listen($('#restart'),'click',()=>{closeHelp();retryChapter();});
   listen($('#watch-sample'),'click',watchExample);
   listen($('#watch-sample-help'),'click',watchExample);
- if(embedded)document.querySelector('.play-header')?.remove();
  listen($('#begin'),'click',async()=>{if(sourceRecovery){$('#begin').disabled=true;try{await banking.startCurrentVersion(entry.id,level,sourceRecovery);sourceRecovery=null;unregisterVerified?.();verified=null;holds.delete('banking');await mountVerified();}catch(e){error(e);}return;}if(holds.has('banking')){flushVerified().catch(()=>{});return;}if(!ended){start();return;}retryChapter();});
  // Tapping the dimmed backdrop (not the card) continues a not-yet-ended room. Never buys a retry.
  listen($('#veil'),'click',e=>{if(e.target!==$('#veil')||ended||sourceRecovery||$('#begin').disabled)return;start();});
  listen($('#result-retry'),'click',retryChapter);
  listen($('#result-next'),'click',goNextChapter);
- const saveTimer=setInterval(()=>{if(playing)persist();},1000);
- const verifiedTimer=setInterval(()=>{if(verified?.pending&&!holds.has('banking'))flushVerified({background:true}).catch(()=>{});},500);
+ const saveTimer=setInterval(()=>{if(playing)persistLocal();},1000);
+ const verifiedTimer=setInterval(()=>{if(!verified?.pending||holds.has('banking'))return;if(playing)maybeSave();else saveNow();},500);
  listen(window,'pagehide',()=>clearInterval(saveTimer));
  listen(window,'pagehide',()=>clearInterval(verifiedTimer));
  for(const type of ['down','move','up','cancel'])listen(canvas,'pointer'+type,e=>move(e,type),{passive:false});
@@ -629,10 +729,6 @@ try{
   if(d.type==='chapter')goChapter(d.level).catch(error);
  });
  listen(window,'pagehide',dispose);listen(window,'pageshow',e=>{if(e.persisted)location.reload();});
- const img=$('#backdrop');
- img.hidden=false;
- img.src=entry.asset;
- img.decode().catch(()=>{img.removeAttribute('src');img.hidden=true;});
  if(!disposed){if(verifiedWanted)await mountVerified();else reset();for(const id of ['pause','restart'])$('#'+id).disabled=false;publishChapter();tellRoom('ready',{title:engine.title});}
  function loadImg(src){
   return new Promise(resolve=>{

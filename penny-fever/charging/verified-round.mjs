@@ -8,6 +8,10 @@ const ORIGINAL_TOKEN_SOURCE = '9d76c47b62fa7a3fe9786a34b83418284035f97e0c6783b16
 // batches to the existing verifier; predicted rewards never reach the bank.
 export async function openVerifiedRound({engine, view, client, owner, scope = globalThis,
   storage = globalThis.localStorage, uuid = () => globalThis.crypto.randomUUID(), onCommit = () => {}, assertActive = () => {}}) {
+  if (view.checkpoint_protocol === 1 && view.checkpoint) {
+    const {openExitRound} = await import('./verified-exit-round.mjs');
+    return openExitRound({engine, view, client, owner, scope, onCommit, assertActive});
+  }
   const key = 'pennyFever.verified.round.v1:' + encodeURIComponent(owner) + ':' + view.game + ':' + view.chapter;
   const previous = storage.getItem(key);
   let record = previous ? JSON.parse(previous) : {v: 1, owner, play: view.id, revision: view.revision, source: view.source, events: []};
