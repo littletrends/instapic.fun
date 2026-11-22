@@ -5,6 +5,7 @@ import {qrDataUrl} from './qrcode-generator.js?v=nft-host-11';
 import {rememberTradeshowReturn} from './tradeshow-navigation.js?v=aura-return-1';
 import {tillStateFromStatus} from './aura-till-state.js?v=paid-receipts-1';
 import {mountNftBatches} from './aura-nft-batches.js?v=clear-tradeshow-1';
+import {mountPaidNftBasket} from './aura-paid-basket.js?v=paid-basket-1';
 
 export const SHOW_ID = 'aura-tradeshow';
 const HASH = 'aura-tradeshow';
@@ -50,6 +51,7 @@ let collectionQueueRevision = 0;
 let tradeshowAccount = '';
 let vipCheckTimer = 0;
 let nftBatchUI = null;
+let paidNftBasket = null;
 let collectionFeedback = false;
 let recoveryListOpen = false;
 let recoveryScan = null;
@@ -204,6 +206,7 @@ function loadRewardMint(account, revision) {
     notifyMintStatus();
     paintRecoveryList();
     nftBatchUI?.refreshPending();
+    paidNftBasket?.refresh();
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
     loading.loading = false;
@@ -304,6 +307,7 @@ function paintCollectionQueue() {
     if (again) again.hidden = true;
   }
   nftBatchUI?.paint();
+  paidNftBasket?.paint();
 }
 
 async function checkCollectionReceipts() {
@@ -1137,6 +1141,10 @@ function ensureOverlay() {
     enabled: () => rewardMint.account === vipAccount() && rewardMint.batchLimit === 8 && !tradeshowBlocked(),
     toolbarResume: true,
     recover: checkCollectionReceipts,
+    canPaidBuy: id => !!paidBasketInfo(id)?.available,
+    checkoutChanged: data => paidNftBasket?.checkoutStatus(data),
+    checkoutError: error => paidNftBasket?.checkoutError(error),
+    checkoutPaused: operation => paidNftBasket?.paused(operation),
     maxQuantity: id => Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)),
     hasPrepared: () => rewardMint.account === vipAccount() && (!!rewardMint.pending?.length
       || (collectionQueue?.account === vipAccount() && collectionQueue.ready.some(id => !nftOwnedCount(id)))),
@@ -1155,6 +1163,29 @@ function ensureOverlay() {
       });
     },
   });
+  paidNftBasket = mountPaidNftBasket(overlay, {
+    account: vipAccount,
+    info: paidBasketInfo,
+    pause: () => { pauseCollectionQueue(); closeXrpTill(); closeInspect(); },
+    refresh: async () => {
+      const account = vipAccount();
+      await Promise.all([loadStock(), loadMinted(), loadRewardMint(account, eligibilityRevision)]);
+      if (account !== vipAccount()) throw Error('Sign in to your own VIP before checking out.');
+    },
+    purchase: (item, quantity, operation) => nftBatchUI.purchase(item, quantity, operation),
+    resume: operation => nftBatchUI.resumeSaved(operation),
+    receipt: async operation => {
+      const response = await fetch(`${NFT_HOST}/api/penny-fever/verified/nft-batch/receipt`, {
+        method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: vipAccount(), operation}),
+      });
+      const data = await response.json();
+      if (!response.ok || data?.ok !== true) throw Object.assign(Error(data?.message || 'Could not check the saved purchase receipt.'), {code: data?.error});
+      return data;
+    },
+  });
+  paidNftBasket.paint();
+  paidNftBasket.refresh();
   document.addEventListener('keydown', onOverlayKey, true);
   overlay.querySelector('#auraTradeshowClose').addEventListener('click', closeTradeshow);
   overlay.querySelector('#auraTradeshowAlley').addEventListener('click', () => closeTradeshow());
@@ -1940,6 +1971,21 @@ function canBuyAnother(id) {
   const act = shopAction(id);
   return !!(act.ready && !act.disabled && !act.claim && !act.reward);
 }
+function paidBasketInfo(id) {
+  const item = modelItem(id);
+  if (!item.id) return null;
+  const existing = rewardMint.recovery?.some(order => order.item === id && order.kind === 'paid');
+  const allowed = vip() && mintedReady && rewardMint.account === vipAccount() && rewardMint.batchLimit === 8
+    && !tradeshowBlocked() && onShelf(id) && !isEveryday(item) && !isFelix(item) && !tokenClaim(id)
+    && !MONEY.has(item.kind) && canBuyAnother(id) && !shopHolding(id) && !existing;
+  const max = Math.max(0, Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)));
+  return {name: item.name || id, price: xrpPriceFor(id), max,
+    available: !!allowed && max >= 1,
+    reason: existing ? 'An existing paid checkout needs checking. Use Resume Checkout.'
+      : remainingFor(id) <= 0 ? 'Sold out. Skipped at checkout.'
+      : max < 1 ? 'Wallet limit reached.'
+      : !allowed ? 'Not currently available for paid checkout.' : ''};
+}
 function canBatchBuy(id) {
   const act = shopAction(id);
   return vip() && rewardMint.batchLimit === 8 && !tradeshowBlocked() && !!act.ready && !act.disabled && !act.claim && !act.reward
@@ -2633,7 +2679,8 @@ function appendCards(grid, items) {
     const canSpin = !!item.turnaround;
     const sample = nftSampleNote(item);
     const owned = nftOwnedCount(item.id);
-    const shopBtn = (felix && !act.snap && !act.claim && !act.ownerMint && !act.reward) ? '' : (act.claim
+    const basketControls = paidNftBasket?.controls(item.id);
+    const shopBtn = basketControls || (felix && !act.snap && !act.claim && !act.ownerMint && !act.reward) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
@@ -2663,6 +2710,7 @@ function appendCards(grid, items) {
         ? `<button type="button" class="aura-tradeshow-buy" data-owner-mint="${item.id}">Owner mint another · to RaX</button>` : ''}</details>`;
     const pic = card.querySelector('img');
     if (pic) pic.alt = item.name || '';
+    if (basketControls) card.querySelector('.aura-tradeshow-card-details').before(basketControls);
     grid.append(card);
   }
 }
@@ -2908,7 +2956,7 @@ function inspectOpen() {
 }
 function onOverlayKey(e) {
   if (!overlay || overlay.hidden) return;
-  if (nftBatchUI?.isOpen()) return;
+  if (nftBatchUI?.isOpen() || paidNftBasket?.isOpen()) return;
   if (e.key === 'Escape') {
     e.preventDefault();
     e.stopPropagation();
@@ -2970,6 +3018,7 @@ export function openTradeshow({tokenCounter = false, item = ''} = {}) {
 
 export function closeTradeshow(opts = {}) {
   if (!overlay || overlay.hidden) return;
+  paidNftBasket?.close();
   nftBatchUI?.close();
   pauseCollectionQueue();
   closeInspect();

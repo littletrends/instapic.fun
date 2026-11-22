@@ -449,6 +449,18 @@ body.aura-tradeshow-open .aura-counter-service{display:none}
 .aura-owned-edition-list p{margin:.3rem 0}
 .aura-recovery-row{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;padding:.4rem 0;border-top:1px solid #d5bb8d}
 .aura-recovery-row span{flex-basis:100%;line-height:1.35}
+.aura-paid-basket-add{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.4rem 0;font-size:.75rem}
+.aura-paid-basket-add input,.aura-paid-basket-row input{width:3.3rem;padding:.3rem;border:1px solid #ac8b59;border-radius:6px;background:#fffdf6;color:#3d2c1f}
+.aura-paid-basket-add input{width:2.6rem;box-sizing:border-box}
+.aura-paid-basket-add button,.aura-paid-basket-card button{padding:.45rem .65rem;border:1px solid #ac8b59;border-radius:8px;background:#fff8e9;color:#3d2c1f;cursor:pointer}
+.aura-paid-basket-add button{font:inherit;padding:.35rem .45rem}
+.aura-paid-basket-card{width:min(35rem,94vw);text-align:left}
+.aura-paid-basket-card>p{font-size:.82rem;line-height:1.4}
+.aura-paid-basket-row{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;padding:.65rem 0;border-top:1px solid #d5bb8d}
+.aura-paid-basket-row strong,.aura-paid-basket-row small{flex-basis:100%}
+.aura-paid-basket-row span{flex:1;font-size:.8rem}
+.aura-paid-basket-row small{color:#6a5340}
+.aura-paid-basket-card button:disabled{opacity:.55;cursor:default}
 .aura-tradeshow-queue [role="status"]{font-size:.75rem;white-space:normal}
 #auraCollectionMintToolbar{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:.2rem;min-width:0;max-width:100%;box-sizing:border-box}
 .aura-collection-actions{display:flex;align-items:center;flex-wrap:nowrap;gap:.3rem;min-width:0;width:100%;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}

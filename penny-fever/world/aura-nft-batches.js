@@ -105,7 +105,7 @@ export function mountNftBatches(overlay, context) {
   function render(data) {
     operation = data.operation;
     activeState = data.state;
-    title.textContent = data.kind === 'purchase' ? `${data.quantity} NFT copies · grouped checkout` : `Receive ${data.quantity} prepared NFTs`;
+    title.textContent = data.kind === 'purchase' ? `${data.quantity} NFT ${data.quantity === 1 ? 'copy' : 'copies'} · paid checkout` : `Receive ${data.quantity} prepared NFTs`;
     const labels = {
       signin: 'Choose and sign into your paying wallet in Xaman. This sign-in does not charge XRP.',
       pay: `Approve ${data.total_xrp} XRP total in Xaman. Network fee is separate.`,
@@ -129,6 +129,7 @@ export function mountNftBatches(overlay, context) {
     next.hidden = !FINISHED.has(data.state);
     if (FINISHED.has(data.state)) { stop(); pendingKnown = false; context.refresh(); }
     else if (!data.needs_review) timer = setTimeout(tick, 3000);
+    context.checkoutChanged?.(data);
   }
   async function tick() {
     if (cancelling || inFlight || !operation || panel.hidden || overlay.hidden || owner !== context.account()) return;
@@ -141,23 +142,27 @@ export function mountNftBatches(overlay, context) {
     } catch (error) {
       if (!valid(r, account)) return;
       message.textContent = error.message;
+      context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'status'});
       if (error.code === 'batch_receipt_pending') timer = setTimeout(tick, 4000);
       else { loading.hidden = true; unlink(); }
     } finally {
       if (valid(r, account)) { inFlight = false; check.disabled = false; }
     }
   }
-  async function create(data) {
+  async function create(data, savedOperation = '') {
     if (busy) return;
     busy = true; start.disabled = true; loading.hidden = false;
-    operation = crypto.randomUUID();
+    operation = savedOperation || crypto.randomUUID();
     const r = revision, account = owner;
     message.textContent = 'Preparing your grouped Xaman request…';
     try {
       const result = await post('', {operation, ...data}, account);
       if (valid(r, account)) { choice = null; label.hidden = start.hidden = true; render(result); }
     } catch (error) {
-      if (valid(r, account)) { message.textContent = error.message; loading.hidden = true; unlink(); }
+      if (valid(r, account)) {
+        message.textContent = error.message; loading.hidden = true; unlink();
+        context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'create'});
+      }
     } finally {
       if (valid(r, account)) { busy = false; start.disabled = false; }
     }
@@ -210,6 +215,7 @@ export function mountNftBatches(overlay, context) {
     message.textContent = 'Choose 2–8 copies. The server checks price, available supply and your wallet limit before opening payment. You sign the total in Xaman.';
   }
   function closePanel() {
+    context.checkoutPaused?.(operation);
     stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); pendingKnown = false; context.refresh();
   }
   close.addEventListener('click', closePanel);
@@ -246,6 +252,22 @@ export function mountNftBatches(overlay, context) {
   document.addEventListener('visibilitychange', wake); window.addEventListener('focus', wake);
   return {
     buy, receive: receiveGroup, resume: resumeGroup,
+    purchase(item, count, savedOperation) {
+      if (!context.canPaidBuy?.(item) || !Number.isInteger(count) || count < 1 || count > 8
+          || count > context.maxQuantity(item) || !/^[a-f0-9-]{36}$/i.test(savedOperation)) {
+        throw Error('This paid quantity is unavailable. Review your basket.');
+      }
+      show(); choice = null; operation = '';
+      title.textContent = `Paid basket · ${context.name(item)}`;
+      create({kind: 'purchase', item, quantity: count}, savedOperation);
+    },
+    resumeSaved(savedOperation) {
+      if (!context.account() || !/^[a-f0-9-]{36}$/i.test(savedOperation)) return;
+      show(); choice = null; operation = savedOperation;
+      title.textContent = 'Resume saved paid checkout';
+      message.textContent = 'Checking the original saved request…';
+      tick();
+    },
     refreshPending() {
       pendingRevision++; pendingRead = null; pendingKnown = false;
       paintAvailability(); refreshPending();
