@@ -15,7 +15,7 @@ export function mountNftBatches(overlay, context) {
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
   const receive = document.createElement('button');
-  receive.type = 'button'; receive.textContent = 'Receive batch';
+  receive.type = 'button'; receive.textContent = 'Receive Batch';
   receive.title = 'Receive up to 8 prepared NFTs together';
   receive.dataset.nftBatchReceive = '';
   const resume = document.createElement('button');

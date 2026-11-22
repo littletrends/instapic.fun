@@ -52,6 +52,8 @@ let vipCheckTimer = 0;
 let nftBatchUI = null;
 let collectionFeedback = false;
 let recoveryListOpen = false;
+let recoveryScan = null;
+let recoveryScanRevision = 0;
 let folder = 'book:penny-collector-book';
 let query = '';
 let haveFilter = '';
@@ -101,6 +103,8 @@ function refreshMintStatus() {
   return loadRewardMint(account, eligibilityRevision);
 }
 function clearEligibility(account = '') {
+  recoveryScanRevision += 1;
+  recoveryScan = null;
   if (account !== eligibilityAccount) collectionFeedback = false;
   eligibilityAccount = account;
   rewardMint = {account, enabled: false, items: {}, prices: {}, owned: {}};
@@ -256,14 +260,14 @@ function paintCollectionQueue() {
   if (button) {
     button.hidden = !available;
     button.disabled = loading || opening || !!queue?.active;
-    button.textContent = queue?.active ? (queue.phase === 'prepare' ? 'Minting…' : 'Receiving…') : 'Mint Rewards';
+    button.textContent = queue?.active ? (queue.phase === 'prepare' ? 'Minting…' : 'Receiving…') : 'Mint Rewards (up to 25)';
     button.title = 'Prepare up to 25 collected rewards, then receive them in Xaman';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
   if (receive) {
     receive.hidden = !available;
     receive.disabled = loading || opening || !!queue?.active;
-    receive.textContent = 'Resume / cancel mint';
+    receive.textContent = 'Resume Checkout';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
@@ -272,9 +276,10 @@ function paintCollectionQueue() {
       : opening ? 'Preparing your Xaman request. Please wait…'
       : failed ? 'Collection could not load. Retry when connected and signed in.'
       : !queue ? (pendingReceive ? 'Finish receiving your prepared NFTs before starting another batch.' : eligible ? 'Mint up to 25 collected rewards, then receive them in Xaman.' : 'No collected rewards to mint.') : queue.phase === 'prepare'
-      ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused'}`
+      ? `${queue.done} of ${queue.ids.length} prepared${queue.active ? '' : ' · paused. Select Resume Checkout.'}`
       : queue.phase === 'complete' ? `Batch complete · ${queue.ready.length} received`
-      : `${queue.receiveIndex} of ${queue.ready.length} received${queue.active ? '' : ' · ready in Xaman'}`;
+      : queue.active ? `${queue.receiveIndex} of ${queue.ready.length} received`
+      : `Minting finished · ${queue.ready.length - queue.receiveIndex} ready to receive. Select Receive Batch.`;
   }
   overlay.querySelectorAll('[data-collection-pause]').forEach(button => { button.hidden = !queue?.active; });
   const warning = overlay.querySelector('#auraCollectionKeepOpen');
@@ -310,6 +315,74 @@ async function checkCollectionReceipts() {
   paint();
   recoveryListOpen = true;
   paintRecoveryList();
+  await reconcileRecoveryReceipts();
+}
+
+async function reconcileRecoveryReceipts(payload = '') {
+  if (!vip() || recoveryScan?.active || rewardMint.account !== vipAccount()) return;
+  const account = vipAccount(), revision = ++recoveryScanRevision;
+  const receipts = (rewardMint.recovery || []).filter(row => !payload || row.payload === payload);
+  const scan = {account, active: true, checked: 0, total: receipts.length, resolved: 0, failed: 0,
+    results: new Map(recoveryScan?.account === account ? recoveryScan.results : [])};
+  recoveryScan = scan;
+  const current = () => recoveryScan === scan && revision === recoveryScanRevision
+    && account === vipAccount() && vip() && !overlay?.hidden;
+  let next = 0;
+  async function worker() {
+    while (current() && next < receipts.length) {
+      const receipt = receipts[next++];
+      let result;
+      try {
+        const response = await fetch(`${NFT_HOST}/api/penny-fever/verified/redeem/reconcile`, {
+          method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({email: account, payload: receipt.payload}),
+        });
+        result = await response.json();
+        if (!response.ok || result?.ok !== true || result.payload !== receipt.payload
+            || result.item !== receipt.item) throw Error('Receipt could not be verified.');
+      } catch {
+        result = {outcome: 'unverified', message: 'Receipt checking is unavailable. This order is preserved.'};
+      }
+      if (!current()) return;
+      scan.results.set(receipt.payload, result);
+      scan.checked++;
+      if (['received', 'closed'].includes(result.outcome)) scan.resolved++;
+      else if (result.outcome === 'unverified') scan.failed++;
+      paintRecoveryList();
+    }
+  }
+  paintRecoveryList();
+  await Promise.all([worker(), worker()]);
+  if (!current()) return;
+  scan.active = false;
+  await loadRewardMint(account, eligibilityRevision);
+  if (current()) paint();
+}
+
+async function cancelRecoveryRequest(receipt, button) {
+  const account = vipAccount();
+  const checked = recoveryScan?.account === account && recoveryScan.results.get(receipt.payload);
+  if (!vip() || !checked?.can_cancel || recoveryScan?.active) return;
+  button.disabled = true;
+  try {
+    const response = await fetch(`${NFT_HOST}/api/penny-fever/xaman-checkout/cancel/${encodeURIComponent(receipt.payload)}`, {
+      method: 'POST', cache: 'no-store',
+    });
+    const result = await response.json();
+    if (!response.ok || result?.ok !== true) throw Error(result?.message || 'Cancellation could not be confirmed.');
+    if (account !== vipAccount() || overlay?.hidden) return;
+    if (pendingCheckouts.get(receipt.item)?.uuid === receipt.payload) {
+      pendingCheckouts.delete(receipt.item);
+      ownerMintOperations.delete(account + ':' + receipt.item);
+    }
+    await loadRewardMint(account, eligibilityRevision);
+    if (account === vipAccount() && !overlay?.hidden) paint();
+  } catch (error) {
+    if (account === vipAccount() && !overlay?.hidden && recoveryScan?.account === account) {
+      recoveryScan.results.set(receipt.payload, {outcome: 'unverified', message: error.message});
+      paintRecoveryList();
+    }
+  }
 }
 
 function paintRecoveryList() {
@@ -321,9 +394,21 @@ function paintRecoveryList() {
   panel.replaceChildren();
   panel.hidden = false;
   const summary = document.createElement('p');
-  summary.textContent = `Wallet check: ${Object.values(rewardMint.owned).reduce((n, count) => n + Number(count || 0), 0)} NFTs held in wallets linked by your mint receipts; ${collectedMintIds().length} collected rewards eligible; ${recovery.length} unfinished orders. Unfinished orders need confirmation below. No new mint or purchase was started.`;
+  const scan = recoveryScan?.account === vipAccount() ? recoveryScan : null;
+  summary.dataset.recoverySummary = '';
+  summary.setAttribute('role', 'status');
+  summary.textContent = scan?.active ? `Checking receipts · ${scan.checked} of ${scan.total}`
+    : `${recovery.length} unfinished orders${scan ? ` · ${scan.resolved} resolved · ${scan.failed} could not be verified` : ''}.`;
   if (rewardMint.walletCheckFailed) summary.textContent = 'Wallet verification is incomplete because the ledger could not be reached. The counts are incomplete; retry before relying on them. Existing orders are listed below. No new mint or purchase was started.';
   panel.append(summary);
+  const check = document.createElement('button');
+  check.type = 'button'; check.textContent = scan?.active ? 'Stop checking' : 'Check all receipts';
+  check.dataset.recoveryCheckAll = '';
+  check.addEventListener('click', () => {
+    if (recoveryScan?.active) { recoveryScanRevision++; recoveryScan.active = false; paintRecoveryList(); }
+    else reconcileRecoveryReceipts();
+  });
+  panel.append(check);
   const close = document.createElement('button');
   close.type = 'button'; close.textContent = 'Hide recovery list';
   close.addEventListener('click', () => { recoveryListOpen = false; panel.hidden = true; });
@@ -331,22 +416,46 @@ function paintRecoveryList() {
   if (paused || Object.values(rewardMint.items).some(status => status !== 'ready' && status !== 'accepted')) {
     const resume = document.createElement('button');
     resume.type = 'button'; resume.textContent = 'Resume minting rewards';
+    resume.disabled = !!scan?.active;
     resume.dataset.collectionResume = '';
     resume.addEventListener('click', startCollectionQueue);
     panel.append(resume);
   }
   recovery.forEach(receipt => {
+    const checked = scan?.results.get(receipt.payload);
+    const row = document.createElement('div'); row.className = 'aura-recovery-row';
+    row.dataset.recoveryPayload = receipt.payload;
+    const label = document.createElement('span');
+    label.textContent = `${modelItem(receipt.item).name || receipt.item} · ${checked?.message || 'Waiting for receipt check.'}`;
+    row.append(label);
     const button = document.createElement('button');
     button.type = 'button';
-    button.dataset.recoverOrder = receipt.payload;
-    button.textContent = `Check / continue ${modelItem(receipt.item).name || receipt.item} · ${String(receipt.status || 'pending').replaceAll('_', ' ')}`;
-    button.addEventListener('click', () => openXrpTill(receipt.item, {recovery: receipt}));
-    panel.append(button);
+    button.disabled = !!scan?.active;
+    if (checked?.outcome === 'ready_to_receive' && nftBatchUI && rewardMint.batchLimit === 8) {
+      button.dataset.recoverReceive = receipt.payload; button.textContent = 'Receive Batch';
+      button.addEventListener('click', () => nftBatchUI.receive());
+    } else if (checked?.can_continue) {
+      button.dataset.recoverOrder = receipt.payload; button.textContent = 'Continue checkout';
+      button.addEventListener('click', () => openXrpTill(receipt.item, {recovery: receipt}));
+    } else {
+      button.dataset.recoverCheck = receipt.payload; button.textContent = 'Check again';
+      button.addEventListener('click', () => reconcileRecoveryReceipts(receipt.payload));
+    }
+    row.append(button);
+    if (checked?.can_cancel) {
+      const cancel = document.createElement('button'); cancel.type = 'button';
+      cancel.textContent = 'Cancel unsigned request'; cancel.dataset.recoverCancel = receipt.payload;
+      cancel.disabled = !!scan?.active;
+      cancel.addEventListener('click', () => cancelRecoveryRequest(receipt, cancel));
+      row.append(cancel);
+    }
+    panel.append(row);
   });
   if (receiving) {
     const receive = document.createElement('button');
     receive.type = 'button'; receive.textContent = 'Receive prepared batch';
     receive.dataset.collectionReceivePrepared = '';
+    receive.disabled = !!scan?.active;
     receive.addEventListener('click', beginReceivingCollection);
     panel.append(receive);
   }
@@ -935,9 +1044,9 @@ function ensureOverlay() {
     </div>
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
       <div class="aura-collection-actions">
-      <button type="button" data-collection-mint hidden>Mint Rewards</button>
+      <button type="button" data-collection-mint hidden>Mint Rewards (up to 25)</button>
       <progress id="auraCollectionLoadingBar" aria-label="Loading VIP collection or Xaman request" hidden></progress>
-      <button type="button" data-collection-receive hidden>Resume / cancel mint</button>
+      <button type="button" data-collection-receive hidden>Resume Checkout</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
       </div>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
@@ -972,7 +1081,7 @@ function ensureOverlay() {
         <button type="button" class="aura-xrp-till-again" data-xrp-buy-another hidden></button>
         <button type="button" class="aura-xrp-till-done" data-xrp-done hidden>Close</button>
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
-        <button type="button" class="aura-xrp-till-cancel" data-xrp-cancel hidden>Cancel purchase</button>
+        <button type="button" class="aura-xrp-till-cancel" data-xrp-cancel hidden>Cancel unsigned request</button>
         <button type="button" class="aura-xrp-till-done" data-collection-pause hidden>Pause collection</button>
       </div>
     </div>`;

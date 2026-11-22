@@ -447,14 +447,17 @@ body.aura-tradeshow-open .aura-counter-service{display:none}
 .aura-owned-edition-list{font-size:.75rem;color:#2c5a45;max-height:10rem;overflow:auto}
 .aura-owned-edition-list ul{margin:.3rem 0;padding-left:1.2rem}
 .aura-owned-edition-list p{margin:.3rem 0}
+.aura-recovery-row{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;padding:.4rem 0;border-top:1px solid #d5bb8d}
+.aura-recovery-row span{flex-basis:100%;line-height:1.35}
 .aura-tradeshow-queue [role="status"]{font-size:.75rem;white-space:normal}
 #auraCollectionMintToolbar{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:.2rem;min-width:0;max-width:100%;box-sizing:border-box}
-.aura-collection-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;min-width:0;width:100%;box-sizing:border-box}
+.aura-collection-actions{display:flex;align-items:center;flex-wrap:nowrap;gap:.3rem;min-width:0;width:100%;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .aura-collection-actions > .aura-tradeshow-queue:not([hidden]){display:contents}
 #auraCollectionMintProgress{line-height:1.3}
 @media (max-width:720px){
   .aura-collection-actions{
-    flex-wrap:wrap;gap:.3rem;
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:.3rem;
+    -webkit-overflow-scrolling:touch;
   }
   .aura-collection-actions > *{flex:0 0 auto}
   .aura-collection-actions button{font-size:.58rem;letter-spacing:0;padding:.2rem .35rem}
