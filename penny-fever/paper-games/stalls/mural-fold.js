@@ -1,6 +1,7 @@
 import * as model from './mural-fold-model.js?v=fold-six-1';
 import {study,paper,text,button,header,footer} from './study-kit.js?v=studies-six-1';
 import {ease} from './study-state.js?v=studies-six-1';
+import {attachChapterExampleView} from './chapter-example.js?v=example-1';
 const sprites=[];let loading=false;
 function loadArt(){if(loading||typeof Image==='undefined')return;loading=true;const image=new Image();image.onload=()=>{
  for(let i=0;i<6;i++){const w=image.width/3,h=image.height/2,cell=document.createElement('canvas');cell.width=w;cell.height=h;const c=cell.getContext('2d',{willReadFrequently:true});c.drawImage(image,(i%3)*w,Math.floor(i/3)*h,w,h,0,0,w,h);const b=c.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=0,y1=0;
@@ -58,4 +59,12 @@ const engine=study({id:'mural',mode:'fold-trail',title:'Arlo’s Fold Trail',mod
 });
 engine.instructions=instructions;engine.reviewCopy.keys='Tap paths to walk · 1–4 folds · Arrow keys walk · U undo · Help pauses';engine.reviewCopy.cost='Free local six-chapter test. No real purse, tokens or NFT collection.';engine.artReady=()=>sprites.length===6&&sprites.every(Boolean);
 const create=engine.create;engine.create=level=>{loadArt();return create(level);};
+// Watch sample: a disposable chapter-1 painting with scripted taps. It never touches
+// the guest's round, purse or rewards (see chapter-example.js).
+const sampleSettled=s=>s.phase==='play'&&!s.motion;
+attachChapterExampleView(engine,{model,draw,steps:()=>[
+ {caption:'Tap a connected painted path to walk there. The traveller steps off the bottom margin.',point:model.point(17),run:s=>model.walk(s,17),done:sampleSettled,after:.4},
+ {caption:'Now fold the SOUTH margin. Its folded paper paints a new path along the bottom.',point:{x:570,y:1032},run:s=>model.toggle(s,3),done:sampleSettled,after:.4},
+ {caption:'Walk the new path to the Paper bridge seal. One of three seals painted.',point:model.point(20),run:s=>model.walk(s,20),done:sampleSettled,after:.6},
+],finishCaption:'Your turn: fold margins to reach all three painted seals, then walk through the lantern gate.'});
 export default engine;

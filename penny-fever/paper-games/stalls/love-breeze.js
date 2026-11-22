@@ -3,6 +3,7 @@ import {kits,spriteKey,itemName} from '../prizes.js?v=nft-art-1';
 import {paintChapterReward} from './study-kit.js?v=studies-six-1';
 import {alleyPlay,isVerifiedPlay,owned,keep} from '../wallet.js?v=insights-1';
 import {bindPrize,takePrize} from '../chapter-kit.js?v=align-1';
+import {attachChapterExampleView} from './chapter-example.js?v=example-1';
 import {FIELD,FAN_FIELD,START,LEVELS,rules,rosettesFor,gatesFor,basketFor,crosswind,gateOpen,gateSafeY,gateCleared,HEART_WIDTH,blowing,airflow,makeState,moveFan,setFan,cancel,key,step,snapshot,restore} from './love-breeze-model.js?v=breeze-six-1';
 const PRIZES=kits.love.prizes,ROOT=new URL('../assets/rosalie-breeze/',import.meta.url);
 const names=['01-heart-pendant.png','02-rose-heart-basket.png','03-heart-ribbon-rosette.png','04-pink-folding-fan.png','05-open-heart-gates.png','06-closed-heart-gates.png'];
@@ -158,7 +159,7 @@ function draw(s,d){
  paintChapterReward(s,d,{dark:true});nftReveal(s,d,reduced);
  if(s.saveError){panel(c,450,600,690,150,'#713e50f5');label(c,'Preview saving paused. Keep this window open.',450,600,24);}
 }
-export default {
+const engine={
  title:'Rosalie’s Heart on the Breeze',chapterEnds:true,
  intro:'Six rose gardens for one floating heart. Follow the ribbons through Rosalie’s gates and fan the pendant home.',
  instructions:'Hold and move the fan BEHIND the heart to push: underneath lifts, a side pushes sideways. Release to let it slow and drift. Touch every numbered ribbon rosette in order; later gardens have four. Chapter 2 has offset openings; from Chapter 3 gates slide sideways. Follow the opening and wait for a fresh OPEN window. Crosswinds start in Chapter 5, and the final basket moves gently. The heart floats behind the gate leaves. The dashed SAFE line runs along the little hearts in each fence. Once the WHOLE pendant, including its bottom tip, crosses above that fence line through the open gate, it is safe from that gate’s snap: the line turns green and reads CLEAR. Drifting back across the line puts the heart at risk again. If a gate closes on the heart at the fence, it bursts into pink petals and the whole attempt restarts from the bottom with no ribbons or passed gates. A normal fall still returns to the latest ribbon. After every ribbon and gate, lift the heart ABOVE the rose basket, then release so it drops into the opening. The chapter finishes after the visible landing. Arrows/WASD move the fan; hold Space to blow. There is no time limit in this test chapter. Test only: the NFT is a preview, with no real purse or tokens.',
@@ -203,3 +204,19 @@ export default {
  key(s,k,down){if(s.result||s.saveError||s.phase!=='play')return;key(s,k,down);},
  draw,readout:s=>s.note,
 };
+
+// Watch sample: a disposable chapter-1 model driven by a scripted fan. It never
+// touches the guest's round, purse or rewards (see chapter-example.js).
+const sampleFanBehind=(s,target)=>{const h=s.heart,dx=target.x-h.x-.7*h.vx,dy=target.y-h.y-.7*h.vy-40,n=Math.hypot(dx,dy)||1;
+ return {x:Math.max(FAN_FIELD.left,Math.min(FAN_FIELD.right,h.x-dx/n*85)),y:Math.max(FAN_FIELD.top,Math.min(FAN_FIELD.bottom,h.y-dy/n*85))};};
+const sampleAim=(s,i)=>{const g=gatesFor(s)[i-1],r=rosettesFor(s)[i];if(!g||s.passed[i-1])return r;
+ const lined=Math.abs(s.heart.x-g.x)<35&&gateOpen(g,s.t);return lined||s.heart.y<g.y?{x:g.x,y:g.y-90}:{x:g.x,y:g.y+85};};
+const sampleFly=(i,caption,gesture)=>({caption,gesture,point:s=>sampleFanBehind(s,sampleAim(s,i)),start:s=>setFan(s,true),
+ move:(s,p)=>{if(s.rosettes[i]||s.phase!=='play'){setFan(s,false);return;}moveFan(s,p);setFan(s,true);},run:s=>setFan(s,false),done:s=>s.phase==='play'&&s.resting,after:.4});
+attachChapterExampleView(engine,{model:{makeState,step},draw,captionY:1052,steps:()=>[
+ sampleFly(0,'Hold the fan BEHIND the heart. Air from underneath lifts it toward ribbon 1.',4.2),
+ {caption:'Ribbon 1 reached: the heart rests here. Wait for gate 1 to close, then get ready.',point:s=>({x:s.heart.x+70,y:s.heart.y+120}),run:()=>{},
+  done:s=>{const g=gatesFor(s)[0],u=(s.t+g.offset)%g.period;return u>=g.openFor&&u<g.openFor+.15;},after:0},
+ sampleFly(1,'Slide under the middle opening, then blow up through while the gate is OPEN, on to ribbon 2.',5),
+],finishCaption:'Your turn: touch every ribbon in order, pass both gates, then ease the heart into the rose basket.'});
+export default engine;
