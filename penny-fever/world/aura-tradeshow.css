@@ -449,13 +449,12 @@ body.aura-tradeshow-open .aura-counter-service{display:none}
 .aura-owned-edition-list p{margin:.3rem 0}
 .aura-tradeshow-queue [role="status"]{font-size:.75rem;white-space:normal}
 #auraCollectionMintToolbar{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:.2rem;min-width:0;max-width:100%;box-sizing:border-box}
-.aura-collection-actions{display:flex;align-items:center;flex-wrap:nowrap;gap:.2rem;min-width:0;width:100%;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.aura-collection-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;min-width:0;width:100%;box-sizing:border-box}
 .aura-collection-actions > .aura-tradeshow-queue:not([hidden]){display:contents}
 #auraCollectionMintProgress{line-height:1.3}
 @media (max-width:720px){
   .aura-collection-actions{
-    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:.2rem;
-    -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+    flex-wrap:wrap;gap:.3rem;
   }
   .aura-collection-actions > *{flex:0 0 auto}
   .aura-collection-actions button{font-size:.58rem;letter-spacing:0;padding:.2rem .35rem}

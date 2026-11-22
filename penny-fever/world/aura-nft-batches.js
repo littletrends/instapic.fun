@@ -15,7 +15,7 @@ export function mountNftBatches(overlay, context) {
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
   const receive = document.createElement('button');
-  receive.type = 'button'; receive.textContent = 'Receive NFTs';
+  receive.type = 'button'; receive.textContent = 'Receive batch';
   receive.title = 'Receive up to 8 prepared NFTs together';
   receive.dataset.nftBatchReceive = '';
   const resume = document.createElement('button');
@@ -71,8 +71,9 @@ export function mountNftBatches(overlay, context) {
   }
   function paintAvailability() {
     const enabled = !!context.account() && context.enabled();
-    receive.hidden = !enabled || !(pendingOffers || context.hasPrepared?.());
-    resume.hidden = !enabled || !(pendingBatches || pendingFailed || (operation && activeState && !FINISHED.has(activeState)));
+    receive.hidden = !enabled;
+    receive.disabled = !enabled || (pendingKnown && !pendingFailed && !(pendingOffers || context.hasPrepared?.() || pendingBatches));
+    resume.hidden = !!context.toolbarResume || !enabled;
     bar.hidden = !enabled || (receive.hidden && resume.hidden);
   }
   function rememberPending(data) {
@@ -188,7 +189,13 @@ export function mountNftBatches(overlay, context) {
       const data = await post('/pending', {}, account);
       if (!valid(r, account)) return;
       rememberPending(data);
-      if (!data.batches?.length) { message.textContent = 'No grouped checkout is waiting. Use Receive prepared NFTs to check existing offers.'; return; }
+      if (!data.batches?.length) {
+        if (context.recover) {
+          stop(); panel.hidden = true; unlink();
+          await context.recover();
+        } else message.textContent = 'No grouped checkout is waiting. Use Receive batch to check existing offers.';
+        return;
+      }
       operation = data.batches[0].operation; tick();
     } catch (error) { if (valid(r, account)) message.textContent = error.message; }
   }
@@ -238,7 +245,11 @@ export function mountNftBatches(overlay, context) {
   function wake() { if (document.visibilityState !== 'hidden') tick(); }
   document.addEventListener('visibilitychange', wake); window.addEventListener('focus', wake);
   return {
-    buy, receive: receiveGroup,
+    buy, receive: receiveGroup, resume: resumeGroup,
+    refreshPending() {
+      pendingRevision++; pendingRead = null; pendingKnown = false;
+      paintAvailability(); refreshPending();
+    },
     isOpen: () => !panel.hidden,
     close: () => {
       stop(); busy = false; cancelling = false; panel.hidden = true; unlink();

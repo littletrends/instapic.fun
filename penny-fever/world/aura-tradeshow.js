@@ -199,6 +199,7 @@ function loadRewardMint(account, revision) {
     rewardMint = {account, checked: true, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, earnedItems: Array.isArray(data.earned_game_items) ? data.earned_game_items : [], photoItems: Array.isArray(data.photo_reward_items) ? data.photo_reward_items : [], walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
     notifyMintStatus();
     paintRecoveryList();
+    nftBatchUI?.refreshPending();
     return true;
   }).catch(() => { loading.failed = true; return false; }).finally(() => {
     loading.loading = false;
@@ -208,10 +209,12 @@ function loadRewardMint(account, revision) {
 
 function collectedMintIds() {
   if (!vip() || !mintedReady || !rewardMint.enabled || rewardMint.account !== vipAccount()) return [];
+  const ownerCopies = new Set(collectedFelixOwnerIds());
   const pending = id => rewardMint.items[id] !== 'ready';
-  return Object.keys(rewardMint.items).filter(id => {
+  return [...new Set([...Object.keys(rewardMint.items), ...ownerCopies])].filter(id => {
     const item = modelItem(id);
     const act = shopAction(id);
+    if (ownerCopies.has(id)) return !act.disabled && act.ready && !nftOwnedCount(id);
     return item.id && (!isFelix(item) || rewardMint.photoItems?.includes(id)) && !tokenClaim(id) && !MONEY.has(item.kind)
       && !isEveryday(item) && !rewardMint.prices[id] && !nftOwnedCount(id)
       && !rewardMint.recovery?.some(order => order.item === id && order.kind === 'owner')
@@ -225,9 +228,11 @@ function collectionOwnsTill(id, account) {
     && collectionQueue.current === id && account === vipAccount() && !overlay?.hidden);
 }
 
-function canMintFelixOwnerCopies() {
-  return !!(vip() && rewardMint.account === vipAccount() && rewardMint.enabled
-    && rewardMint.ownerItems?.some(id => id === SNAP_BOOK || isFelix(modelItem(id))));
+function collectedFelixOwnerIds() {
+  if (!vip() || rewardMint.account !== vipAccount() || !rewardMint.enabled) return [];
+  return (rewardMint.ownerItems || []).filter(id => (id === SNAP_BOOK || isFelix(modelItem(id)))
+    && walletCount(id) > 0 && !nftOwnedCount(id)
+    && !rewardMint.photoItems?.includes(id) && !rewardMint.tokenClaims?.includes(id));
 }
 
 function paintCollectionQueue() {
@@ -255,15 +260,10 @@ function paintCollectionQueue() {
     button.title = 'Prepare up to 25 collected rewards, then receive them in Xaman';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
-  const ownerFelix = overlay.querySelector('[data-owner-felix]');
-  if (ownerFelix) {
-    ownerFelix.hidden = !canMintFelixOwnerCopies();
-    ownerFelix.disabled = loading || opening || !!queue?.active;
-  }
   if (receive) {
-    receive.hidden = !available || !(pendingReceive || rewardMint.recovery?.length || rewardMint.walletCheckFailed || failed);
+    receive.hidden = !available;
     receive.disabled = loading || opening || !!queue?.active;
-    receive.textContent = 'Recover Wallet';
+    receive.textContent = 'Resume / cancel mint';
   }
   const progress = overlay.querySelector('#auraCollectionMintProgress');
   if (progress) {
@@ -289,13 +289,16 @@ function paintCollectionQueue() {
   if (note) {
     note.hidden = !current;
     note.textContent = !current ? '' : queue.phase === 'prepare'
-      ? 'Sign into your wallet once, then return to this Tradeshow tab. Up to 25 NFTs will prepare quietly before you receive them.'
+      ? queue.ownerIds?.includes(queue.current)
+        ? 'Approve this owner copy in Xaman, then return here. Each owner copy needs a fresh approval.'
+        : 'Sign into your wallet once, then return to this Tradeshow tab. Up to 25 NFTs will prepare quietly before you receive them.'
       : `Batch ready · receive ${queue.receiveIndex + 1} of ${queue.ready.length} in Xaman. Return here to check or continue receiving.`;
   }
   if (queue?.active) {
     const again = overlay.querySelector('[data-xrp-buy-another]');
     if (again) again.hidden = true;
   }
+  nftBatchUI?.paint();
 }
 
 async function checkCollectionReceipts() {
@@ -314,11 +317,8 @@ function paintRecoveryList() {
   if (!panel || !recoveryListOpen || rewardMint.account !== vipAccount()) return;
   const recovery = rewardMint.recovery || [];
   const receiving = rewardMint.pending?.length;
+  const paused = collectionQueue?.account === vipAccount() && collectionQueue.phase !== 'complete';
   panel.replaceChildren();
-  if (!recovery.length && !receiving && !rewardMint.walletCheckFailed) {
-    panel.hidden = true;
-    return;
-  }
   panel.hidden = false;
   const summary = document.createElement('p');
   summary.textContent = `Wallet check: ${Object.values(rewardMint.owned).reduce((n, count) => n + Number(count || 0), 0)} NFTs held in wallets linked by your mint receipts; ${collectedMintIds().length} collected rewards eligible; ${recovery.length} unfinished orders. Unfinished orders need confirmation below. No new mint or purchase was started.`;
@@ -328,6 +328,13 @@ function paintRecoveryList() {
   close.type = 'button'; close.textContent = 'Hide recovery list';
   close.addEventListener('click', () => { recoveryListOpen = false; panel.hidden = true; });
   panel.append(close);
+  if (paused || Object.values(rewardMint.items).some(status => status !== 'ready' && status !== 'accepted')) {
+    const resume = document.createElement('button');
+    resume.type = 'button'; resume.textContent = 'Resume minting rewards';
+    resume.dataset.collectionResume = '';
+    resume.addEventListener('click', startCollectionQueue);
+    panel.append(resume);
+  }
   recovery.forEach(receipt => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -339,6 +346,7 @@ function paintRecoveryList() {
   if (receiving) {
     const receive = document.createElement('button');
     receive.type = 'button'; receive.textContent = 'Receive prepared batch';
+    receive.dataset.collectionReceivePrepared = '';
     receive.addEventListener('click', beginReceivingCollection);
     panel.append(receive);
   }
@@ -390,7 +398,9 @@ async function advanceCollectionQueue() {
     }
     const id = queue.ready[queue.receiveIndex];
     queue.current = id;
-    openXrpTill(id, {receiveOnly: true, background: nftOwnedCount(id) > 0});
+    const ownerReceipt = queue.ownerIds?.includes(id) && pendingCheckouts.get(id);
+    openXrpTill(id, ownerReceipt ? {recovery: {kind: 'owner', payload: ownerReceipt.uuid}}
+      : {receiveOnly: true, background: nftOwnedCount(id) > 0});
     paintCollectionQueue();
     return;
   }
@@ -412,7 +422,9 @@ async function advanceCollectionQueue() {
   }
   queue.current = id;
   closeInspect();
-  openXrpTill(id, {background: true});
+  const recovery = queue.ownerIds?.includes(id)
+    && rewardMint.recovery?.find(order => order.item === id && order.kind === 'owner');
+  openXrpTill(id, {background: !recovery, recovery: recovery || null});
   paintCollectionQueue();
 }
 
@@ -441,6 +453,7 @@ async function startCollectionQueue() {
       return;
     }
     collectionQueue = {account, ids, done: receivingPending ? ids.length : 0,
+      ownerIds: receivingPending ? [] : ids.filter(id => collectedFelixOwnerIds().includes(id)),
       ready: receivingPending ? [...ids] : [], receiveIndex: 0,
       phase: receivingPending ? 'receive' : 'prepare', current: '', active: false, busy: false, run: null};
   }
@@ -923,9 +936,8 @@ function ensureOverlay() {
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
       <div class="aura-collection-actions">
       <button type="button" data-collection-mint hidden>Mint Rewards</button>
-      <button type="button" data-owner-felix data-folder="felix" hidden>Felix owner mints</button>
       <progress id="auraCollectionLoadingBar" aria-label="Loading VIP collection or Xaman request" hidden></progress>
-      <button type="button" data-collection-receive hidden>Receive prepared</button>
+      <button type="button" data-collection-receive hidden>Resume / cancel mint</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
       </div>
       <span id="auraCollectionMintProgress" role="status" hidden></span>
@@ -1014,8 +1026,11 @@ function ensureOverlay() {
   nftBatchUI = mountNftBatches(overlay, {
     account: vipAccount, canBuy: canBatchBuy, name: id => modelItem(id).name || id,
     enabled: () => rewardMint.account === vipAccount() && rewardMint.batchLimit === 8 && !tradeshowBlocked(),
+    toolbarResume: true,
+    recover: checkCollectionReceipts,
     maxQuantity: id => Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)),
-    hasPrepared: () => rewardMint.account === vipAccount() && !!rewardMint.pending?.length,
+    hasPrepared: () => rewardMint.account === vipAccount() && (!!rewardMint.pending?.length
+      || (collectionQueue?.account === vipAccount() && collectionQueue.ready.some(id => !nftOwnedCount(id)))),
     pause: () => { pauseCollectionQueue(); closeXrpTill(); closeInspect(); },
     refresh: () => {
       const account = vipAccount();
@@ -1070,7 +1085,8 @@ function ensureOverlay() {
     }
     if (e.target.closest('[data-collection-receive]')) {
       e.preventDefault();
-      checkCollectionReceipts();
+      if (nftBatchUI && rewardMint.batchLimit === 8) nftBatchUI.resume();
+      else checkCollectionReceipts();
       return;
     }
     if (e.target.closest('[data-collection-mint]')) {
@@ -1127,7 +1143,7 @@ function ensureOverlay() {
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
-      if (fold.closest('.aura-tradeshow-section-links') || fold.hasAttribute('data-owner-felix')) {
+      if (fold.closest('.aura-tradeshow-section-links')) {
         query = ''; haveFilter = ''; overlay.querySelector('#auraTradeshowSearch').value = '';
       }
       if (folder.startsWith('book:')) revealBook(folder.slice(5));
@@ -2068,7 +2084,8 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
   }
   if (collectionQueue?.active && collectionQueue.current !== id) pauseCollectionQueue();
   const batchReward = collectionOwnsTill(id, vipAccount());
-  ownerMint = recovery ? recovery.kind === 'owner' : !receiveOnly && !batchReward && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint);
+  const queuedOwner = batchReward && collectionQueue.ownerIds?.includes(id);
+  ownerMint = recovery ? recovery.kind === 'owner' : !receiveOnly && (queuedOwner || !batchReward && (ownerMint || !!pendingCheckouts.get(id)?.ownerMint || !!shopAction(id).ownerMint));
   if (ownerMint && (!vip() || !rewardMint.enabled || rewardMint.account !== vipAccount() || !rewardMint.ownerItems?.includes(id))) return;
   const act = recovery ? {ready: true, reward: recovery.kind !== 'paid', label: 'Check existing NFT order'}
     : ownerMint ? {ready: true, reward: true, purchase: false, label: 'Owner copy to RaX · no purchase payment'}
@@ -2543,7 +2560,6 @@ function appendCards(grid, items) {
 
 function paint() {
   if (!overlay || overlay.hidden) return;
-  nftBatchUI?.paint();
   paintCollectionQueue();
   const status = tradeshowStatus();
   const door = overlay.querySelector('#auraTradeshowDoor');
@@ -2567,9 +2583,7 @@ function paint() {
   session.textContent = window.InstapicGuestIdentity?.read?.()?.session_token ? 'Log out' : 'Log in';
   session.setAttribute('aria-label', window.InstapicGuestIdentity?.read?.()?.session_token ? `Log out ${vipEmail()}` : 'Log in to VIP');
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
-    ? canMintFelixOwnerCopies()
-      ? 'Choose a portrait or book, then Mint now · owner copy. Each copy needs its own owner-wallet approval in Xaman.'
-      : 'Mint your earned photo rewards here or with Mint Rewards. Locked portraits unlock at Felix’s photo booth.'
+    ? 'Mint your collected photo rewards with Mint Rewards. Locked portraits unlock at Felix’s photo booth.'
     : folder === 'minted'
       ? 'Your received NFTs. Items still waiting for wallet acceptance appear after receipt is confirmed.'
     : folder === 'mine'
