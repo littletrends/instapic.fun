@@ -168,12 +168,16 @@ function loadSnap() {
   const revision = ++eligibilityRevision;
   clearEligibility(account);
   if (!email) return Promise.resolve();
+  collectionLoad = {account, loading: true, failed: false};
+  paintCollectionQueue();
   return Promise.all([
     postSnap('recheck', {email}).then((data) => {
-      if (revision === eligibilityRevision && account === vipAccount()) setSnapElig(data);
+      if (revision === eligibilityRevision && account === vipAccount()) {
+        setSnapElig(data);
+        return loadRewardMint(account, revision);
+      }
     }),
     loadDrips(email, revision),
-    loadRewardMint(account, revision),
   ]).then(deliverClaimReceipts);
 }
 function loadRewardMint(account, revision) {
@@ -192,7 +196,7 @@ function loadRewardMint(account, revision) {
       loading.failed = true;
       return false;
     }
-    rewardMint = {account, checked: true, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, earnedItems: Array.isArray(data.earned_game_items) ? data.earned_game_items : [], walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
+    rewardMint = {account, checked: true, enabled: data.enabled === true, items: data.items || {}, prices: data.prices || {}, owned: data.owned || {}, earnedItems: Array.isArray(data.earned_game_items) ? data.earned_game_items : [], photoItems: Array.isArray(data.photo_reward_items) ? data.photo_reward_items : [], walletCheckFailed: data.wallet_check_failed === true, pending: Array.isArray(data.pending) ? data.pending : [], recovery: Array.isArray(data.recovery) ? data.recovery : [], ownerItems: Array.isArray(data.owner_restock_items) ? data.owner_restock_items : [], tokenClaims: Array.isArray(data.token_claim_items) ? data.token_claim_items : [], batchLimit: data.batch_signing_limit === 8 ? 8 : 0};
     notifyMintStatus();
     paintRecoveryList();
     return true;
@@ -208,7 +212,7 @@ function collectedMintIds() {
   return Object.keys(rewardMint.items).filter(id => {
     const item = modelItem(id);
     const act = shopAction(id);
-    return item.id && !isFelix(item) && !tokenClaim(id) && !MONEY.has(item.kind)
+    return item.id && (!isFelix(item) || rewardMint.photoItems?.includes(id)) && !tokenClaim(id) && !MONEY.has(item.kind)
       && !isEveryday(item) && !rewardMint.prices[id] && !nftOwnedCount(id)
       && !rewardMint.recovery?.some(order => order.item === id && order.kind === 'owner')
       && act.ready && act.reward && !act.purchase && !act.disabled && !act.claim;
@@ -219,6 +223,11 @@ function collectedMintIds() {
 function collectionOwnsTill(id, account) {
   return !!(collectionQueue?.active && collectionQueue.account === account
     && collectionQueue.current === id && account === vipAccount() && !overlay?.hidden);
+}
+
+function canMintFelixOwnerCopies() {
+  return !!(vip() && rewardMint.account === vipAccount() && rewardMint.enabled
+    && rewardMint.ownerItems?.some(id => id === SNAP_BOOK || isFelix(modelItem(id))));
 }
 
 function paintCollectionQueue() {
@@ -246,6 +255,11 @@ function paintCollectionQueue() {
     button.title = 'Prepare up to 25 collected rewards, then receive them in Xaman';
   }
   const receive = overlay.querySelector('[data-collection-receive]');
+  const ownerFelix = overlay.querySelector('[data-owner-felix]');
+  if (ownerFelix) {
+    ownerFelix.hidden = !canMintFelixOwnerCopies();
+    ownerFelix.disabled = loading || opening || !!queue?.active;
+  }
   if (receive) {
     receive.hidden = !available || !(pendingReceive || rewardMint.recovery?.length || rewardMint.walletCheckFailed || failed);
     receive.disabled = loading || opening || !!queue?.active;
@@ -909,6 +923,7 @@ function ensureOverlay() {
     <div class="aura-tradeshow-tools aura-tradeshow-queue" id="auraCollectionMintToolbar" role="group" aria-label="Mint collected rewards" hidden>
       <div class="aura-collection-actions">
       <button type="button" data-collection-mint hidden>Mint Rewards</button>
+      <button type="button" data-owner-felix data-folder="felix" hidden>Felix owner mints</button>
       <progress id="auraCollectionLoadingBar" aria-label="Loading VIP collection or Xaman request" hidden></progress>
       <button type="button" data-collection-receive hidden>Receive prepared</button>
       <button type="button" data-collection-pause hidden>Pause batch</button>
@@ -1112,7 +1127,7 @@ function ensureOverlay() {
     const fold = e.target.closest('[data-folder]');
     if (fold) {
       folder = fold.dataset.folder;
-      if (fold.closest('.aura-tradeshow-section-links')) {
+      if (fold.closest('.aura-tradeshow-section-links') || fold.hasAttribute('data-owner-felix')) {
         query = ''; haveFilter = ''; overlay.querySelector('#auraTradeshowSearch').value = '';
       }
       if (folder.startsWith('book:')) revealBook(folder.slice(5));
@@ -1584,7 +1599,7 @@ function actionFor(item, stallInfo) {
   const redemption = rewardMint.account === vipAccount() && rewardMint.enabled && rewardMint.items[item.id];
   const purchasePrice = rewardMint.prices?.[item.id];
   const tradedReward = rewardMint.tokenClaims?.includes(item.id);
-  if (redemption && redemption !== 'accepted' && (!claim || tradedReward) && (!isFelix(item) || tradedReward) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
+  if (redemption && redemption !== 'accepted' && (!claim || tradedReward) && (!isFelix(item) || tradedReward || rewardMint.photoItems?.includes(item.id)) && !MONEY.has(item.kind) && (!purchasePrice || stallInfo.mintable || isLimited(item))) {
     if (!mintedReady) return {label: 'Supply unavailable · reopen to retry', disabled: true};
     if (remainingFor(item.id) <= 0 && redemption === 'ready') return {label: 'No copies remain', disabled: true};
     return {label: redemption === 'ready'
@@ -2492,7 +2507,7 @@ function appendCards(grid, items) {
     const canSpin = !!item.turnaround;
     const sample = nftSampleNote(item);
     const owned = nftOwnedCount(item.id);
-    const shopBtn = (felix && !act.snap && !act.claim && !act.ownerMint) ? '' : (act.claim
+    const shopBtn = (felix && !act.snap && !act.claim && !act.ownerMint && !act.reward) ? '' : (act.claim
       ? `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-claim="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`
       : `<button type="button" class="aura-tradeshow-buy${act.ready ? ' is-ready' : ''}" data-buy="${item.id}" ${act.disabled ? 'disabled' : ''}>${act.label}</button>`);
     card.innerHTML = `
@@ -2552,7 +2567,9 @@ function paint() {
   session.textContent = window.InstapicGuestIdentity?.read?.()?.session_token ? 'Log out' : 'Log in';
   session.setAttribute('aria-label', window.InstapicGuestIdentity?.read?.()?.session_token ? `Log out ${vipEmail()}` : 'Log in to VIP');
   overlay.querySelector('#auraTradeshowNote').textContent = folderIsFelix()
-    ? 'Portraits unlock at Felix’s photo booth after a paid session. They are not for sale here.'
+    ? canMintFelixOwnerCopies()
+      ? 'Choose a portrait or book, then Mint now · owner copy. Each copy needs its own owner-wallet approval in Xaman.'
+      : 'Mint your earned photo rewards here or with Mint Rewards. Locked portraits unlock at Felix’s photo booth.'
     : folder === 'minted'
       ? 'Your received NFTs. Items still waiting for wallet acceptance appear after receipt is confirmed.'
     : folder === 'mine'
