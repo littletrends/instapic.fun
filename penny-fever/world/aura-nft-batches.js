@@ -11,6 +11,7 @@ export function mountNftBatches(overlay, context) {
   let pendingOwner = '', pendingKnown = false, pendingFailed = false;
   let pendingOffers = 0, pendingBatches = 0, pendingRead = null, pendingRevision = 0;
   let activeState = '';
+  let basketProgress = null;
   const bar = document.createElement('div');
   bar.className = 'aura-tradeshow-tools aura-tradeshow-queue';
   bar.hidden = true;
@@ -32,6 +33,11 @@ export function mountNftBatches(overlay, context) {
   card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true');
   card.setAttribute('aria-labelledby', 'auraNftBatchTitle');
   const title = document.createElement('h2'); title.id = 'auraNftBatchTitle';
+  const guide = document.createElement('p'); guide.dataset.nftBasketProgress = ''; guide.hidden = true;
+  const steps = document.createElement('ol'); steps.className = 'aura-nft-checkout-steps'; steps.hidden = true;
+  for (const [state, text] of [['signin', 'Wallet'], ['pay', 'Payment'], ['prepare', 'Minting'], ['receive', 'Receive']]) {
+    const step = document.createElement('li'); step.dataset.checkoutStep = state; step.textContent = text; steps.append(step);
+  }
   const message = document.createElement('p'); message.setAttribute('role', 'status');
   const warning = document.createElement('p');
   warning.textContent = 'Keep this Tradeshow page open. Return here after each Xaman approval. Each group needs your signature.';
@@ -56,12 +62,20 @@ export function mountNftBatches(overlay, context) {
   close.dataset.nftBatchClose = '';
   const next = document.createElement('button'); next.type = 'button'; next.textContent = 'Receive next group · up to 8'; next.hidden = true;
   next.dataset.nftBatchNext = '';
-  card.append(title, message, warning, loading, label, start, qr, link, check, cancel, next, close);
+  card.append(title, guide, steps, message, warning, loading, label, start, qr, link, check, cancel, next, close);
   panel.append(card); overlay.append(panel);
 
   const valid = (r, account) => r === revision && account === context.account() && !overlay.hidden && !panel.hidden;
   const stop = () => { clearTimeout(timer); timer = 0; revision++; inFlight = false; };
   const unlink = () => { link.hidden = qr.hidden = true; link.removeAttribute('href'); qr.removeAttribute('src'); };
+  function paintGuide() {
+    guide.hidden = !basketProgress;
+    guide.textContent = basketProgress ? `Basket · NFT type ${basketProgress.position} of ${basketProgress.total} · ${basketProgress.name} × ${basketProgress.quantity} · ${basketProgress.received} received` : '';
+    warning.textContent = basketProgress ? 'Approve the current request in Xaman, then return here. Tradeshow checks it and moves on automatically.'
+      : 'Keep this Tradeshow page open. Return here after each Xaman approval. Each group needs your signature.';
+    close.textContent = basketProgress ? 'Pause basket checkout' : 'Back to Tradeshow';
+    check.textContent = basketProgress ? 'Check now' : 'Check / continue';
+  }
   async function post(path, data, account = owner) {
     const response = await fetch(API + path, {method: 'POST', cache: 'no-store',
       headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: account, ...data})});
@@ -105,6 +119,13 @@ export function mountNftBatches(overlay, context) {
   function render(data) {
     operation = data.operation;
     activeState = data.state;
+    steps.hidden = data.kind !== 'purchase';
+    const phase = ['signin', 'pay', 'prepare', 'receive', 'complete'].indexOf(data.state);
+    for (const [index, step] of [...steps.children].entries()) {
+      step.classList.toggle('is-done', phase > index);
+      if (phase === index) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current');
+    }
+    paintGuide();
     title.textContent = data.kind === 'purchase' ? `${data.quantity} NFT ${data.quantity === 1 ? 'copy' : 'copies'} · paid checkout` : `Receive ${data.quantity} prepared NFTs`;
     const labels = {
       signin: 'Use the wallet linked to this VIP email in Xaman. This sign-in does not charge XRP.',
@@ -126,7 +147,7 @@ export function mountNftBatches(overlay, context) {
     cancel.hidden = !['signin', 'pay', 'receive'].includes(data.state);
     loading.hidden = FINISHED.has(data.state) || data.needs_review;
     check.hidden = data.state === 'complete';
-    next.hidden = !FINISHED.has(data.state);
+    next.hidden = !!basketProgress || !FINISHED.has(data.state);
     if (FINISHED.has(data.state)) { stop(); pendingKnown = false; context.refresh(); }
     else if (!data.needs_review) timer = setTimeout(tick, 3000);
     context.checkoutChanged?.(data);
@@ -147,7 +168,10 @@ export function mountNftBatches(overlay, context) {
         activeState = 'signin'; cancel.hidden = false; cancel.textContent = 'Cancel checkout';
       }
       context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'status'});
-      if (error.code === 'batch_receipt_pending') timer = setTimeout(tick, 4000);
+      if (['batch_receipt_pending', 'ledger_unavailable', 'xaman_status'].includes(error.code)) {
+        message.textContent = 'Waiting for confirmation… This checkout will continue automatically.';
+        timer = setTimeout(tick, 4000);
+      }
       else { loading.hidden = true; unlink(); }
     } finally {
       if (valid(r, account)) { inFlight = false; check.disabled = false; }
@@ -173,6 +197,7 @@ export function mountNftBatches(overlay, context) {
   }
   async function receiveGroup() {
     if (!context.account() || busy) return;
+    basketProgress = null; paintGuide(); steps.hidden = true;
     show(); operation = ''; choice = null;
     title.textContent = 'Receive NFTs · up to 8 together';
     message.textContent = 'Checking existing NFT offers for your VIP account…';
@@ -191,6 +216,7 @@ export function mountNftBatches(overlay, context) {
     }
   }
   async function resumeGroup() {
+    basketProgress = null; paintGuide(); steps.hidden = true;
     show(); operation = ''; choice = null; title.textContent = 'Resume grouped checkout';
     message.textContent = 'Checking your saved grouped checkout…';
     const r = revision, account = owner;
@@ -210,6 +236,7 @@ export function mountNftBatches(overlay, context) {
   }
   function buy(item) {
     if (!context.canBuy(item) || busy) return;
+    basketProgress = null; paintGuide(); steps.hidden = true;
     show(); choice = item; operation = '';
     title.textContent = `Buy copies · ${context.name(item)}`;
     const max = context.maxQuantity(item);
@@ -260,6 +287,7 @@ export function mountNftBatches(overlay, context) {
   document.addEventListener('visibilitychange', wake); window.addEventListener('focus', wake);
   return {
     buy, receive: receiveGroup, resume: resumeGroup,
+    basketProgress(value) { basketProgress = value; paintGuide(); },
     purchase(item, count, savedOperation) {
       if (!context.canPaidBuy?.(item) || !Number.isInteger(count) || count < 1 || count > 8
           || count > context.maxQuantity(item) || !/^[a-f0-9-]{36}$/i.test(savedOperation)) {
@@ -290,6 +318,7 @@ export function mountNftBatches(overlay, context) {
     },
     isOpen: () => !panel.hidden,
     close: () => {
+      basketProgress = null; paintGuide(); steps.hidden = true;
       stop(); busy = false; cancelling = false; panel.hidden = true; unlink();
       pendingRevision++; pendingRead = null; pendingKnown = pendingFailed = false;
       pendingOwner = ''; pendingOffers = pendingBatches = 0; operation = activeState = '';

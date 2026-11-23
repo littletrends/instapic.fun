@@ -461,6 +461,11 @@ body.aura-tradeshow-open .aura-counter-service{display:none}
 .aura-paid-basket-row span{flex:1;font-size:.8rem}
 .aura-paid-basket-row small{color:#6a5340}
 .aura-paid-basket-card button:disabled{opacity:.55;cursor:default}
+.aura-nft-checkout-steps{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;padding:0;margin:.3rem 0;list-style:none;font-size:.75rem;color:#756756}
+.aura-nft-checkout-steps[hidden]{display:none}
+.aura-nft-checkout-steps li::before{content:'\203a\00a0';color:#9b805b}
+.aura-nft-checkout-steps li[aria-current=step]{font-weight:bold;color:#5a2438;text-decoration:underline;text-underline-offset:3px}
+.aura-nft-checkout-steps .is-done{color:#48613f}
 .aura-tradeshow-queue [role="status"]{font-size:.75rem;white-space:normal}
 #auraCollectionMintToolbar{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:.2rem;min-width:0;max-width:100%;box-sizing:border-box}
 .aura-collection-actions{display:flex;align-items:center;flex-wrap:nowrap;gap:.3rem;min-width:0;width:100%;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}

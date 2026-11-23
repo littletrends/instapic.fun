@@ -1175,6 +1175,8 @@ function ensureOverlay() {
     purchase: (item, quantity, operation) => nftBatchUI.purchase(item, quantity, operation),
     resume: operation => nftBatchUI.resumeSaved(operation),
     cancel: operation => nftBatchUI.cancelSaved(operation),
+    guide: progress => nftBatchUI.basketProgress(progress),
+    finish: () => nftBatchUI.close(),
     receipt: async operation => {
       const response = await fetch(`${NFT_HOST}/api/penny-fever/verified/nft-batch/receipt`, {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
@@ -1226,8 +1228,12 @@ function ensureOverlay() {
     }
     if (e.target.closest('[data-collection-receive]')) {
       e.preventDefault();
-      if (nftBatchUI && rewardMint.batchLimit === 8) nftBatchUI.resume();
-      else checkCollectionReceipts();
+      const account = vipAccount();
+      Promise.resolve(paidNftBasket?.resumeIfPending()).then(resumed => {
+        if (resumed || account !== vipAccount() || overlay.hidden) return;
+        if (nftBatchUI && rewardMint.batchLimit === 8) nftBatchUI.resume();
+        else checkCollectionReceipts();
+      }).catch(() => { if (account === vipAccount()) paidNftBasket?.open(); });
       return;
     }
     if (e.target.closest('[data-collection-mint]')) {

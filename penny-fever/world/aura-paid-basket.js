@@ -61,6 +61,7 @@ export function mountPaidNftBasket(overlay, context) {
   let account = '', cart = {rows: [], pending: null}, generation = 0, busy = false, active = false;
   let approvedChoices = new Map(), skipped = new Map(), lastQuote = '', message = '';
   let retryAllowed = false;
+  let journey = null;
   const button = document.createElement('button');
   button.type = 'button'; button.dataset.nftPaidBasket = ''; button.textContent = 'Paid basket (0)';
   overlay.querySelector('.aura-collection-actions').append(button);
@@ -120,11 +121,12 @@ export function mountPaidNftBasket(overlay, context) {
       const availability = document.createElement('small'); availability.textContent = row.reason || (row.available ? 'Stock checked again at purchase.' : 'Unavailable');
       entry.append(label, price, quantity, remove, availability); rows.append(entry);
     }
-    if (!lines.length) { const empty = document.createElement('p'); empty.textContent = 'Choose a quantity and add paid NFTs from the shelf.'; rows.append(empty); }
+    if (!lines.length) { const empty = document.createElement('p'); empty.textContent = journey?.finished ? 'Your purchased NFTs are in your linked wallet.' : 'Choose a quantity and add paid NFTs from the shelf.'; rows.append(empty); }
     const sum = lines.filter(row => row.available && !skipped.has(row.item)).reduce((amount, row) => amount + row.drops * BigInt(row.quantity), 0n);
     total.textContent = `Paid total: ${basketXrp(sum)} XRP + network fees`;
     status.textContent = message;
     checkout.textContent = cart.pending ? (retryAllowed ? 'Retry saved checkout' : 'Resume Checkout') : 'Checkout paid NFTs';
+    checkout.title = cart.pending ? 'Resume the saved purchase, then continue the remaining reviewed basket.' : 'Continue through the reviewed basket automatically after each receipt.';
     checkout.disabled = busy || (!cart.pending && !lines.some(row => row.available && !skipped.has(row.item)));
     cancel.hidden = !cart.pending;
     cancel.disabled = busy;
@@ -149,7 +151,7 @@ export function mountPaidNftBasket(overlay, context) {
         else throw Error('The basket is full. Finish or remove an item first.');
         return state;
       })) return;
-      skipped.delete(item); message = adding ? 'Added to paid basket. Stock is not reserved.' : 'Basket updated.'; paint();
+      journey = null; skipped.delete(item); message = adding ? 'Added to paid basket. Stock is not reserved.' : 'Basket updated.'; paint();
     } catch (error) { if (valid(owner, revision)) { panel.hidden = false; message = errorMessage(error); paint(); } }
   }
   async function open() {
@@ -158,7 +160,14 @@ export function mountPaidNftBasket(overlay, context) {
     busy = true; paint(); const revision = generation;
     try { await context.refresh(); if (valid(owner, revision)) await load(); }
     catch (error) { if (valid(owner, revision)) message = errorMessage(error); }
-    finally { if (valid(owner, revision)) { busy = false; if (message === 'Checking prices and availability…') message = cart.pending ? 'Your saved paid checkout is waiting. Resume it before buying anything else.' : ''; paint(); close.focus(); } }
+    finally { if (valid(owner, revision)) { busy = false; if (message === 'Checking prices and availability…') message = cart.pending ? 'Resume the saved purchase, then continue the remaining basket shown here. Completed payments will not be charged again.' : 'Tradeshow will guide you through each NFT type automatically. Approve the requests in Xaman and return here.'; paint(); close.focus(); } }
+  }
+  function showProgress(item) {
+    if (!journey) return;
+    const index = journey.items.findIndex(row => row.item === item);
+    const row = journey.items[index];
+    if (row) context.guide?.({name: row.name, quantity: row.quantity, position: index + 1,
+      total: journey.items.length, received: journey.received});
   }
   async function advance() {
     if (!active || busy || !context.account() || overlay.hidden) return;
@@ -167,16 +176,23 @@ export function mountPaidNftBasket(overlay, context) {
     try {
       await context.refresh(); if (!valid(owner, revision)) return;
       if (!await load()) return;
-      if (cart.pending) { active = false; message = 'Resume your existing paid checkout first.'; return; }
+      if (cart.pending) { active = false; panel.hidden = false; context.finish?.(); message = 'Resume your existing paid checkout first.'; return; }
       const lines = quote();
       for (const row of lines) {
         if (!row.available) skipped.set(row.item, row.reason || 'Unavailable at checkout. Skipped.');
         if (row.available && approvedChoices.get(row.item) !== `${row.drops}:${row.quantity}`) {
-          active = false; panel.hidden = false; message = 'A price or basket selection changed. Review the total before checking out again.'; return;
+          active = false; panel.hidden = false; context.finish?.(); message = 'A price or basket selection changed. Review the total before checking out again.'; return;
         }
       }
       const next = lines.find(row => row.available && !skipped.has(row.item));
-      if (!next) { active = false; panel.hidden = false; message = skipped.size ? 'Available purchases finished. Unavailable items remain in the basket for review.' : 'Paid checkout finished.'; return; }
+      if (!next) {
+        active = false; panel.hidden = false;
+        if (journey) journey.finished = true;
+        context.finish?.();
+        message = `Basket finished · ${journey?.received || 0} NFTs received.`
+          + (skipped.size ? ' Unavailable items remain in the basket for review.' : '');
+        return;
+      }
       const operation = crypto.randomUUID();
       if (!await update(owner, revision, state => {
         if (state.pending) return state;
@@ -186,6 +202,7 @@ export function mountPaidNftBasket(overlay, context) {
       })) return;
       if (cart.pending.operation !== operation) { active = false; panel.hidden = false; message = 'Another paid checkout is waiting. Resume that original request.'; return; }
       panel.hidden = true; retryAllowed = false;
+      showProgress(next.item);
       context.purchase(next.item, next.quantity, operation);
     } catch (error) { if (valid(owner, revision)) { active = false; panel.hidden = false; message = errorMessage(error); } }
     finally { if (valid(owner, revision)) { busy = false; paint(); } }
@@ -194,21 +211,6 @@ export function mountPaidNftBasket(overlay, context) {
     if (busy) return;
     const owner = context.account(), revision = generation;
     if (!owner) return;
-    if (cart.pending) {
-      panel.hidden = true;
-      try {
-        if (retryAllowed) {
-          const info = context.info(cart.pending.item);
-          if (!info?.available || cart.pending.quantity > info.max) {
-            const operation = cart.pending.operation;
-            if (!await update(owner, revision, state => { if (state.pending?.operation === operation) state.pending = null; return state; })) return;
-            panel.hidden = false; retryAllowed = false; message = 'That saved selection is unavailable. Review the basket before paying.'; paint(); return;
-          }
-          context.purchase(cart.pending.item, cart.pending.quantity, cart.pending.operation);
-        } else context.resume(cart.pending.operation);
-      } catch (error) { if (valid(owner, revision)) { panel.hidden = false; message = errorMessage(error); paint(); } }
-      return;
-    }
     busy = true; paint(); const previous = lastQuote;
     try {
       await context.refresh(); if (!valid(owner, revision) || !await load()) return;
@@ -220,9 +222,25 @@ export function mountPaidNftBasket(overlay, context) {
       if (previous !== fingerprint(lines)) { message = 'Availability or prices changed. Review the updated basket and total.'; return; }
       approvedChoices = new Map(lines.filter(row => row.available).map(row => [row.item, `${row.drops}:${row.quantity}`]));
       skipped = new Map(lines.filter(row => !row.available).map(row => [row.item, row.reason || 'Unavailable. Skipped.']));
+      const choices = lines.filter(row => row.available || row.item === cart.pending?.item);
+      if (cart.pending) choices.sort((a, b) => Number(b.item === cart.pending.item) - Number(a.item === cart.pending.item));
+      journey = {items: choices.map(row => ({item: row.item, quantity: row.quantity, name: row.info.name || row.item})), received: 0, operations: new Set(), finished: false};
       active = true; message = '';
-    } catch (error) { message = errorMessage(error); }
-    finally { if (valid(owner, revision)) { busy = false; paint(); if (active) advance(); } }
+      if (cart.pending) {
+        if (retryAllowed) {
+          const info = context.info(cart.pending.item);
+          if (!info?.available || cart.pending.quantity > info.max) {
+            const operation = cart.pending.operation;
+            if (!await update(owner, revision, state => { if (state.pending?.operation === operation) state.pending = null; return state; })) return;
+            active = false; retryAllowed = false; message = 'That saved selection is unavailable. Review the basket before paying.'; return;
+          }
+        }
+        panel.hidden = true; showProgress(cart.pending.item);
+        if (retryAllowed) context.purchase(cart.pending.item, cart.pending.quantity, cart.pending.operation);
+        else context.resume(cart.pending.operation);
+      }
+    } catch (error) { if (valid(owner, revision)) { active = false; panel.hidden = false; message = errorMessage(error); } }
+    finally { if (valid(owner, revision)) { busy = false; paint(); if (active && !cart.pending) advance(); } }
   }
   async function checkoutStatus(data) {
     const owner = context.account(), revision = generation;
@@ -232,12 +250,18 @@ export function mountPaidNftBasket(overlay, context) {
       if (!valid(owner, revision) || current.pending?.operation !== data.operation || current.pending.quantity !== data.quantity) return;
       cart = current;
       if (data.received >= current.pending.quantity) {
+        const completedItem = current.pending.item;
+        let applied = false;
         if (!await update(owner, revision, state => {
           if (state.pending?.operation !== data.operation) return state;
+          applied = true;
           const row = state.rows.find(row => row.item === state.pending.item);
           if (row) row.quantity = Math.max(0, row.quantity - state.pending.quantity);
           state.rows = state.rows.filter(row => row.quantity > 0); state.pending = null; return state;
         })) return;
+        if (!applied) return;
+        skipped.delete(completedItem);
+        if (journey && !journey.operations.has(data.operation)) { journey.operations.add(data.operation); journey.received += data.quantity; }
         message = `${data.quantity} paid NFTs received.`; retryAllowed = false; paint();
         if (active) setTimeout(advance, 0);
       } else if (['cancelled', 'expired'].includes(data.state)) {
@@ -254,6 +278,10 @@ export function mountPaidNftBasket(overlay, context) {
   }
   async function checkoutError(error) {
     if (error.operation !== cart.pending?.operation || account !== context.account()) return;
+    if (['status', 'receipt'].includes(error.phase)
+      && ['batch_receipt_pending', 'ledger_unavailable', 'xaman_status'].includes(error.code)) {
+      message = 'Waiting for confirmation. Tradeshow will continue this basket automatically.'; paint(); return;
+    }
     if (error.phase === 'create' && error.code === 'batch_already_pending') {
       const owner = account, revision = generation;
       active = false;
@@ -290,6 +318,12 @@ export function mountPaidNftBasket(overlay, context) {
   });
   return {
     open, checkoutStatus, checkoutError,
+    async resumeIfPending() {
+      try {
+        if (!await load() || !cart.pending) return false;
+        await open(); return true;
+      } catch { return false; }
+    },
     paused() { active = false; },
     isOpen: () => !panel.hidden,
     close() { panel.hidden = true; active = false; generation++; busy = false; },
@@ -306,7 +340,7 @@ export function mountPaidNftBasket(overlay, context) {
     },
     paint() {
       const owner = context.account();
-      if (owner !== account) { account = owner; generation++; active = false; busy = false; cart = {rows: [], pending: null}; panel.hidden = true; skipped.clear(); approvedChoices.clear(); message = ''; retryAllowed = false; }
+      if (owner !== account) { account = owner; generation++; active = false; busy = false; cart = {rows: [], pending: null}; panel.hidden = true; skipped.clear(); approvedChoices.clear(); message = ''; retryAllowed = false; journey = null; }
       paint();
     },
     refresh() {
