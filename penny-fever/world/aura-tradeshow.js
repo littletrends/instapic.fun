@@ -958,10 +958,8 @@ function guestOwns(id) {
   return nftOwnedCount(id) > 0;
 }
 function xamanScanText(id) {
-  const to = auraTillAddress();
-  const xrp = String(xrpPriceFor(id) || '').trim();
-  if (!to || !xrp || !(Number(xrp) > 0) || tokenClaim(id)) return '';
-  return `https://xumm.app/detect/xrp:${to}:${xrp}`;
+  if (!onShelf(id) || tokenClaim(id)) return '';
+  return tillLink(id);
 }
 function checkoutUrl(id) {
   if (shopAction(id).reward) return `${NFT_HOST}/api/penny-fever/verified/redeem`;
@@ -1864,7 +1862,7 @@ function setCardView(card, mode) {
       img.src = nftViewSrc(id) || buyQrSrc(id);
       img.alt = `${name} · ${ownedPlate ? 'NFT artwork' : 'Xaman till'}`;
     }
-    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'scan in Xaman';
+    if (label) label.textContent = ownedPlate ? 'NFT artwork' : 'checkout QR';
     return;
   }
   if (img) img.alt = card.dataset.name || '';
@@ -1981,10 +1979,12 @@ function canBuyAnother(id) {
 function paidBasketInfo(id) {
   const item = modelItem(id);
   if (!item.id) return null;
+  const action = shopAction(id);
+  const paid = action.ready && !action.disabled && !action.claim && !action.ownerMint && (!action.reward || action.purchase);
   const existing = rewardMint.recovery?.some(order => order.item === id && order.kind === 'paid');
   const allowed = vip() && mintedReady && rewardMint.account === vipAccount() && rewardMint.batchLimit === 8
     && !tradeshowBlocked() && onShelf(id) && !isEveryday(item) && !isFelix(item) && !tokenClaim(id)
-    && !MONEY.has(item.kind) && canBuyAnother(id) && !shopHolding(id) && !existing;
+    && !MONEY.has(item.kind) && paid && !shopHolding(id) && !existing;
   const max = Math.max(0, Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)));
   return {name: item.name || id, price: xrpPriceFor(id), max,
     available: !!allowed && max >= 1,
@@ -2255,6 +2255,19 @@ function openXrpTill(id, {receiveOnly = false, background = false, ownerMint = f
   if (act.disabled || act.claim || !act.ready) {
     const note = overlay?.querySelector('#auraTradeshowNote');
     if (note) note.textContent = act.label || 'This card is not for XRP yet.';
+    return;
+  }
+  if (!recovery && (!act.reward || act.purchase)) {
+    const local = pendingCheckouts.get(id);
+    const saved = local?.uuid ? {kind: local.reward ? 'reward' : 'paid', payload: local.uuid}
+      : rewardMint.recovery?.find(row => row.item === id && (row.kind === 'paid' || act.purchase && row.kind === 'reward'));
+    if (saved) return openXrpTill(id, {recovery: saved});
+    closeInspect();
+    if (paidNftBasket && paidBasketInfo(id)?.available) paidNftBasket.select(id);
+    else {
+      const note = overlay?.querySelector('#auraTradeshowNote');
+      if (note) note.textContent = 'Paid checkout is not ready. Reopen Tradeshow and use Paid basket.';
+    }
     return;
   }
   const till = overlay?.querySelector('#auraXrpTill');

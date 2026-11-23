@@ -318,6 +318,13 @@ export function mountPaidNftBasket(overlay, context) {
   });
   return {
     open, checkoutStatus, checkoutError,
+    async select(item) {
+      const owner = context.account(), revision = generation;
+      await open();
+      if (valid(owner, revision) && !busy && !cart.pending && !cart.rows.some(row => row.item === item)) {
+        await edit(item, 1, true);
+      }
+    },
     async resumeIfPending() {
       try {
         if (!await load() || !cart.pending) return false;
