@@ -50,7 +50,7 @@ export function mountNftBatches(overlay, context) {
   link.target = '_blank'; link.rel = 'noopener'; link.textContent = 'Open in Xaman'; link.hidden = true;
   const check = document.createElement('button'); check.type = 'button'; check.textContent = 'Check / continue';
   check.dataset.nftBatchCheck = '';
-  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel unsigned request'; cancel.hidden = true;
+  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel checkout'; cancel.hidden = true;
   cancel.dataset.nftBatchCancel = '';
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Back to Tradeshow';
   close.dataset.nftBatchClose = '';
@@ -107,7 +107,7 @@ export function mountNftBatches(overlay, context) {
     activeState = data.state;
     title.textContent = data.kind === 'purchase' ? `${data.quantity} NFT ${data.quantity === 1 ? 'copy' : 'copies'} · paid checkout` : `Receive ${data.quantity} prepared NFTs`;
     const labels = {
-      signin: 'Choose and sign into your paying wallet in Xaman. This sign-in does not charge XRP.',
+      signin: 'Use the wallet linked to this VIP email in Xaman. This sign-in does not charge XRP.',
       pay: `Approve ${data.total_xrp} XRP total in Xaman. Network fee is separate.`,
       prepare: `${data.prepared} of ${data.quantity} NFTs prepared. Keep this page open while minting continues.`,
       receive: `Receive ${data.signing_count || data.quantity} NFTs with this Xaman approval. No further purchase price.`,
@@ -142,6 +142,10 @@ export function mountNftBatches(overlay, context) {
     } catch (error) {
       if (!valid(r, account)) return;
       message.textContent = error.message;
+      if (['use_different_paying_wallet', 'vip_reward_wallet_already_bound', 'wallet_belongs_to_another_vip',
+        'price_changed', 'wallet_cap_reached', 'item_not_for_sale'].includes(error.code)) {
+        activeState = 'signin'; cancel.hidden = false; cancel.textContent = 'Cancel checkout';
+      }
       context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'status'});
       if (error.code === 'batch_receipt_pending') timer = setTimeout(tick, 4000);
       else { loading.hidden = true; unlink(); }
@@ -224,7 +228,7 @@ export function mountNftBatches(overlay, context) {
   next.addEventListener('click', receiveGroup);
   receive.addEventListener('click', receiveGroup);
   resume.addEventListener('click', resumeGroup);
-  cancel.addEventListener('click', async () => {
+  async function cancelRequest() {
     if (cancelling || !operation) return;
     // A click invalidates any older poll immediately. The server serializes
     // cancellation with reconciliation and refuses to undo a paid transaction.
@@ -235,11 +239,15 @@ export function mountNftBatches(overlay, context) {
     try {
       const data = await post('/cancel', {operation}, account);
       if (!valid(r, account)) return;
-      if (['cancelled', 'expired'].includes(data.state)) closePanel();
+      if (['cancelled', 'expired'].includes(data.state)) {
+        await context.checkoutChanged?.(data);
+        if (valid(r, account)) closePanel();
+      }
       else render(data);
     } catch (error) { if (valid(r, account)) { message.textContent = error.message; loading.hidden = true; } }
     finally { if (valid(r, account)) { cancelling = false; cancel.disabled = check.disabled = false; } }
-  });
+  }
+  cancel.addEventListener('click', cancelRequest);
   panel.addEventListener('keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close.click(); }
     if (event.key !== 'Tab') return;
@@ -267,6 +275,14 @@ export function mountNftBatches(overlay, context) {
       title.textContent = 'Resume saved paid checkout';
       message.textContent = 'Checking the original saved request…';
       tick();
+    },
+    cancelSaved(savedOperation) {
+      if (!context.account() || !/^[a-f0-9-]{36}$/i.test(savedOperation)) return;
+      show(); choice = null; operation = savedOperation;
+      title.textContent = 'Cancel saved paid checkout';
+      cancel.hidden = false;
+      context.checkoutPaused?.(operation);
+      cancelRequest();
     },
     refreshPending() {
       pendingRevision++; pendingRead = null; pendingKnown = false;

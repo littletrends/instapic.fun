@@ -69,13 +69,14 @@ export function mountPaidNftBasket(overlay, context) {
   const card = document.createElement('section'); card.className = 'aura-xrp-till-card aura-paid-basket-card';
   card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'auraPaidBasketTitle');
   const title = document.createElement('h2'); title.id = 'auraPaidBasketTitle'; title.textContent = 'Paid NFT basket';
-  const note = document.createElement('p'); note.textContent = 'Adding to this basket reserves no stock. You approve each NFT type in Xaman. Earned rewards stay in Mint Rewards.';
+  const note = document.createElement('p'); note.textContent = 'Use this VIP’s linked wallet. Adding to this basket reserves no stock. You approve each NFT type in Xaman. Earned rewards stay in Mint Rewards.';
   const rows = document.createElement('div'); rows.dataset.nftPaidBasketRows = '';
   const total = document.createElement('p'); total.dataset.nftPaidBasketTotal = '';
   const status = document.createElement('p'); status.dataset.nftPaidBasketStatus = ''; status.setAttribute('role', 'status');
   const checkout = document.createElement('button'); checkout.type = 'button'; checkout.dataset.nftPaidBasketCheckout = '';
+  const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel checkout'; cancel.dataset.nftPaidBasketCancel = ''; cancel.hidden = true;
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Back to Tradeshow'; close.dataset.nftPaidBasketClose = '';
-  card.append(title, note, rows, total, status, checkout, close); panel.append(card); overlay.append(panel);
+  card.append(title, note, rows, total, status, checkout, cancel, close); panel.append(card); overlay.append(panel);
   const valid = (owner, revision) => owner === context.account() && owner === account && revision === generation && !overlay.hidden;
   const errorMessage = error => error?.message || 'Paid checkout is paused. Your basket is saved.';
 
@@ -125,6 +126,8 @@ export function mountPaidNftBasket(overlay, context) {
     status.textContent = message;
     checkout.textContent = cart.pending ? (retryAllowed ? 'Retry saved checkout' : 'Resume Checkout') : 'Checkout paid NFTs';
     checkout.disabled = busy || (!cart.pending && !lines.some(row => row.available && !skipped.has(row.item)));
+    cancel.hidden = !cart.pending;
+    cancel.disabled = busy;
     lastQuote = fingerprint(lines);
   }
   async function edit(item, quantity, adding = false) {
@@ -273,6 +276,11 @@ export function mountPaidNftBasket(overlay, context) {
   }
   function closePanel() { panel.hidden = true; active = false; paint(); button.focus(); }
   button.addEventListener('click', open); checkout.addEventListener('click', start); close.addEventListener('click', closePanel);
+  cancel.addEventListener('click', () => {
+    if (busy || panel.hidden || !cart.pending || account !== context.account()) return;
+    active = false; panel.hidden = true;
+    context.cancel(cart.pending.operation);
+  });
   panel.addEventListener('keydown', event => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closePanel(); }
     if (event.key !== 'Tab') return;

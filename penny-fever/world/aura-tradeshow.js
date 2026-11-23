@@ -1174,6 +1174,7 @@ function ensureOverlay() {
     },
     purchase: (item, quantity, operation) => nftBatchUI.purchase(item, quantity, operation),
     resume: operation => nftBatchUI.resumeSaved(operation),
+    cancel: operation => nftBatchUI.cancelSaved(operation),
     receipt: async operation => {
       const response = await fetch(`${NFT_HOST}/api/penny-fever/verified/nft-batch/receipt`, {
         method: 'POST', cache: 'no-store', headers: {'Content-Type': 'application/json'},
