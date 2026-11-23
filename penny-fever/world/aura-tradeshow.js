@@ -285,6 +285,8 @@ function paintCollectionQueue() {
       : `Minting finished · ${queue.ready.length - queue.receiveIndex} ready to receive. Select Receive Batch.`;
   }
   overlay.querySelectorAll('[data-collection-pause]').forEach(button => { button.hidden = !queue?.active; });
+  const resumeHere = overlay.querySelector('[data-xrp-resume]');
+  if (resumeHere) resumeHere.hidden = !queue || queue.active || queue.phase === 'complete';
   const warning = overlay.querySelector('#auraCollectionKeepOpen');
   if (warning) {
     warning.hidden = !queue?.active;
@@ -1085,6 +1087,10 @@ function ensureOverlay() {
         <button type="button" class="aura-xrp-till-ready" data-xrp-hold>Notify me</button>
         <button type="button" class="aura-xrp-till-cancel" data-xrp-cancel hidden>Cancel unsigned request</button>
         <button type="button" class="aura-xrp-till-done" data-collection-pause hidden>Pause collection</button>
+        <div class="aura-checkout-navigation">
+          <button type="button" data-xrp-resume hidden>Resume checkout</button>
+          <button type="button" data-xrp-return>Back to Tradeshow</button>
+        </div>
       </div>
     </div>`;
   const inspect = document.createElement('div');
@@ -1143,6 +1149,7 @@ function ensureOverlay() {
     checkoutChanged: data => paidNftBasket?.checkoutStatus(data),
     checkoutError: error => paidNftBasket?.checkoutError(error),
     checkoutPaused: operation => paidNftBasket?.paused(operation),
+    checkoutContinued: operation => paidNftBasket?.continueSaved(operation),
     maxQuantity: id => Math.min(8, remainingFor(id), walletBuyCap(id) - nftOwnedCount(id)),
     hasPrepared: () => rewardMint.account === vipAccount() && (!!rewardMint.pending?.length
       || (collectionQueue?.account === vipAccount() && collectionQueue.ready.some(id => !nftOwnedCount(id)))),
@@ -1393,7 +1400,13 @@ function ensureOverlay() {
       setCardView(viewBtn.closest('.aura-tradeshow-card'), viewBtn.dataset.view);
       return;
     }
-    if (e.target.id === 'auraXrpTill' || e.target.closest('[data-xrp-close]') || e.target.closest('[data-xrp-done]')) {
+    if (e.target.closest('[data-xrp-resume]')) {
+      e.preventDefault();
+      closeXrpTill({pauseQueue: false});
+      startCollectionQueue();
+      return;
+    }
+    if (e.target.id === 'auraXrpTill' || e.target.closest('[data-xrp-close]') || e.target.closest('[data-xrp-done]') || e.target.closest('[data-xrp-return]')) {
       e.preventDefault();
       closeXrpTill();
       return;

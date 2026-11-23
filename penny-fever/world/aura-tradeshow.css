@@ -311,6 +311,7 @@
 .aura-xrp-till-open[hidden]{display:none}
 .aura-xrp-till-card h2{margin:0;font-size:1rem;color:#5a2438}
 .aura-xrp-till-card p{margin:0;font-size:.78rem;color:#6a5340}
+.aura-checkout-navigation{position:sticky;bottom:0;display:flex;flex-wrap:wrap;justify-content:center;gap:.45rem;align-self:stretch;flex-shrink:0;padding:.55rem .25rem;background:#fffaf0;border-top:1px solid #d5bb8d;z-index:1}
 .aura-xrp-till-close{
   position:absolute;top:.4rem;right:.4rem;min-width:2rem;height:2rem;border:0;border-radius:8px;
   background:#7a3040;color:#fff0d0;font:700 18px/1 Georgia,serif;cursor:pointer;

@@ -57,15 +57,18 @@ export function mountNftBatches(overlay, context) {
   link.target = '_blank'; link.rel = 'noopener'; link.textContent = 'Open in Xaman'; link.hidden = true;
   const check = document.createElement('button'); check.type = 'button'; check.textContent = 'Check / continue';
   check.dataset.nftBatchCheck = '';
-  const showOriginal = document.createElement('button'); showOriginal.type = 'button'; showOriginal.textContent = 'Show original request if you have not signed'; showOriginal.hidden = true;
-  showOriginal.dataset.nftBatchShowOriginal = '';
+  const resumeHere = document.createElement('button'); resumeHere.type = 'button'; resumeHere.textContent = 'Resume checkout'; resumeHere.hidden = true;
+  resumeHere.dataset.nftBatchResumeHere = '';
   const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel checkout'; cancel.hidden = true;
   cancel.dataset.nftBatchCancel = '';
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Back to Tradeshow';
   close.dataset.nftBatchClose = '';
   const next = document.createElement('button'); next.type = 'button'; next.textContent = 'Receive next group · up to 8'; next.hidden = true;
   next.dataset.nftBatchNext = '';
-  card.append(title, guide, steps, message, warning, loading, label, start, qr, link, showOriginal, check, cancel, next, close);
+  const exit = document.createElement('button'); exit.type = 'button'; exit.textContent = '×'; exit.className = 'aura-xrp-till-close';
+  exit.setAttribute('aria-label', 'Back to Tradeshow'); exit.dataset.nftBatchExit = '';
+  const navigation = document.createElement('div'); navigation.className = 'aura-checkout-navigation'; navigation.append(resumeHere, close);
+  card.append(exit, title, guide, steps, message, warning, loading, label, start, qr, link, check, cancel, next, navigation);
   panel.append(card); overlay.append(panel);
 
   const valid = (r, account) => r === revision && account === context.account() && !overlay.hidden && !panel.hidden;
@@ -76,7 +79,6 @@ export function mountNftBatches(overlay, context) {
     approvalWait = lastPrompt;
     paintGuide();
     link.hidden = qr.hidden = true;
-    showOriginal.hidden = true;
     loading.hidden = false;
     message.textContent = 'Checking your Xaman approval… Please wait. Tradeshow will continue automatically.';
   }
@@ -85,15 +87,6 @@ export function mountNftBatches(overlay, context) {
     // controls immediately so the return screen is visibly a confirmation wait.
     waitForApproval();
   });
-  showOriginal.addEventListener('click', () => {
-    if (!approvalWait || owner !== context.account() || panel.hidden) return;
-    const prompt = approvalWait; approvalWait = null;
-    paintGuide();
-    link.href = prompt.href; link.hidden = false;
-    qr.src = qrDataUrl(prompt.href, 5, 8); qr.hidden = false;
-    showOriginal.hidden = true;
-    message.textContent = 'This is the original request. Only sign it if you have not already approved it. Otherwise wait for confirmation.';
-  });
   function paintGuide() {
     guide.hidden = !basketProgress;
     guide.textContent = basketProgress ? `Basket · NFT type ${basketProgress.position} of ${basketProgress.total} · ${basketProgress.name} × ${basketProgress.quantity} · ${basketProgress.received} received` : '';
@@ -101,7 +94,8 @@ export function mountNftBatches(overlay, context) {
       : 'Keep this Tradeshow page open. Return here after each Xaman approval. Each group needs your signature.';
     if (activeState === 'prepare') warning.textContent = 'Your payment is confirmed. Preparing your NFTs… No wallet action is needed right now.';
     else if (approvalWait) warning.textContent = 'Please wait here for confirmation. The next wallet request will appear when it is ready.';
-    close.textContent = basketProgress ? 'Pause basket checkout' : 'Back to Tradeshow';
+    close.textContent = 'Back to Tradeshow';
+    close.title = 'Keeps your saved order so you can resume it.';
     check.textContent = basketProgress ? 'Check now' : 'Check / continue';
   }
   async function post(path, data, account = owner) {
@@ -138,13 +132,13 @@ export function mountNftBatches(overlay, context) {
   }
   function show() {
     stop(); context.pause(); owner = context.account();
-    lastPrompt = approvalWait = null; wentAway = false; showOriginal.hidden = true;
+    lastPrompt = approvalWait = null; wentAway = false; resumeHere.hidden = true;
     activeState = ''; steps.hidden = true; paintGuide();
     cancelling = false;
     panel.hidden = false; label.hidden = start.hidden = true;
     next.hidden = cancel.hidden = true; check.hidden = false;
     loading.hidden = true; unlink(); close.focus();
-    check.disabled = cancel.disabled = false;
+    check.disabled = cancel.disabled = resumeHere.disabled = false;
   }
   function render(data) {
     operation = data.operation;
@@ -166,25 +160,24 @@ export function mountNftBatches(overlay, context) {
       expired: 'This signing request expired. Check your wallet; already prepared NFTs are available to receive again.',
     };
     message.textContent = data.message || labels[data.state] || 'Checking your existing Xaman request…';
-    unlink(); showOriginal.hidden = true;
+    unlink();
     if (typeof data.deep_link === 'string' && /^https:\/\/(?:xumm|xaman)\.app\//.test(data.deep_link)) {
       lastPrompt = {operation: data.operation, href: data.deep_link};
-      const waiting = approvalWait?.operation === data.operation && approvalWait.href === data.deep_link;
-      if (waiting) {
-        showOriginal.hidden = false;
-        message.textContent = 'Waiting for Xaman confirmation… Tradeshow will continue automatically. No need to sign the same request again.';
-      } else {
-        approvalWait = null;
-        link.href = data.deep_link; link.hidden = false;
-        qr.src = qrDataUrl(data.deep_link, 5, 8); qr.hidden = false;
-      }
+      // A fresh status still requiring approval must restore the real action.
+      // Confirmed signatures return prepare/no link, or a receipt-pending error.
+      const returning = approvalWait?.operation === data.operation && approvalWait.href === data.deep_link;
+      approvalWait = null;
+      link.href = data.deep_link; link.hidden = false;
+      qr.src = qrDataUrl(data.deep_link, 5, 8); qr.hidden = false;
+      if (returning) message.textContent = 'Open the original Xaman request if approval is still needed. If you already signed, wait for confirmation.';
       link.textContent = data.state === 'signin' ? 'Sign wallet in Xaman'
         : data.state === 'pay' ? 'Approve grouped purchase in Xaman' : 'Receive group in Xaman';
     }
     else { lastPrompt = approvalWait = null; }
     paintGuide();
     cancel.hidden = !['signin', 'pay', 'receive'].includes(data.state);
-    loading.hidden = FINISHED.has(data.state) || data.needs_review;
+    loading.hidden = FINISHED.has(data.state) || data.needs_review || !link.hidden;
+    resumeHere.hidden = !data.needs_review;
     check.hidden = data.state === 'complete';
     next.hidden = !!basketProgress || !FINISHED.has(data.state);
     if (FINISHED.has(data.state)) { stop(); pendingKnown = false; context.refresh(); }
@@ -208,13 +201,24 @@ export function mountNftBatches(overlay, context) {
       }
       context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'status'});
       if (['batch_receipt_pending', 'ledger_unavailable', 'xaman_status'].includes(error.code)) {
-        waitForApproval(); unlink(); showOriginal.hidden = true;
-        loading.hidden = false;
-        message.textContent = 'Waiting for confirmation… This checkout will continue automatically.';
-        warning.textContent = 'No need to open Xaman again while this approval is being confirmed.';
+        if (error.code === 'xaman_status') {
+          approvalWait = null;
+          if (lastPrompt?.operation === operation) {
+            link.href = lastPrompt.href; link.hidden = false;
+            qr.src = qrDataUrl(lastPrompt.href, 5, 8); qr.hidden = false;
+          }
+          resumeHere.hidden = false; loading.hidden = true;
+          message.textContent = 'Xaman status is temporarily unavailable. Open the original request only if approval is still needed.';
+          warning.textContent = 'Your existing order is kept. Resume here or return to Tradeshow.';
+        } else {
+          waitForApproval(); unlink(); resumeHere.hidden = true;
+          loading.hidden = false;
+          message.textContent = 'Waiting for confirmation… This checkout will continue automatically.';
+          warning.textContent = 'No need to open Xaman again while this approval is being confirmed.';
+        }
         timer = setTimeout(tick, 4000);
       }
-      else { loading.hidden = true; unlink(); showOriginal.hidden = true; }
+      else { loading.hidden = true; unlink(); resumeHere.hidden = false; warning.textContent = 'Your saved order is paused. Resume it here or return to Tradeshow.'; }
     } finally {
       if (valid(r, account)) { inFlight = false; check.disabled = false; }
     }
@@ -231,6 +235,7 @@ export function mountNftBatches(overlay, context) {
     } catch (error) {
       if (valid(r, account)) {
         message.textContent = error.message; loading.hidden = true; unlink();
+        resumeHere.hidden = false;
         context.checkoutError?.({operation, code: error.code, message: error.message, phase: 'create'});
       }
     } finally {
@@ -289,9 +294,21 @@ export function mountNftBatches(overlay, context) {
   }
   function closePanel() {
     context.checkoutPaused?.(operation);
-    stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); showOriginal.hidden = true; lastPrompt = approvalWait = null; pendingKnown = false; context.refresh();
+    stop(); busy = false; cancelling = false; panel.hidden = true; unlink(); resumeHere.hidden = true; lastPrompt = approvalWait = null; pendingKnown = false; context.refresh();
   }
   close.addEventListener('click', closePanel);
+  exit.addEventListener('click', closePanel);
+  resumeHere.addEventListener('click', async () => {
+    if (busy || cancelling || inFlight || !operation || owner !== context.account()) return;
+    const r = revision, account = owner;
+    resumeHere.disabled = true;
+    try {
+      await context.checkoutContinued?.(operation);
+      if (valid(r, account)) { resumeHere.hidden = true; tick(); }
+    } catch (error) {
+      if (valid(r, account)) { message.textContent = error.message || 'Could not resume the saved checkout. Your order is kept.'; resumeHere.hidden = false; }
+    } finally { if (valid(r, account)) resumeHere.disabled = false; }
+  });
   start.addEventListener('click', () => { if (choice) create({kind: 'purchase', item: choice, quantity: Number(quantity.value)}); });
   check.addEventListener('click', () => { waitForApproval(); tick(); });
   next.addEventListener('click', receiveGroup);
@@ -302,7 +319,7 @@ export function mountNftBatches(overlay, context) {
     // A click invalidates any older poll immediately. The server serializes
     // cancellation with reconciliation and refuses to undo a paid transaction.
     stop(); cancelling = true;
-    showOriginal.hidden = true;
+    resumeHere.hidden = true;
     cancel.disabled = check.disabled = true;
     unlink(); message.textContent = 'Cancelling this signing request… You can return to the Tradeshow while it is checked.';
     const r = revision, account = owner;
@@ -367,7 +384,7 @@ export function mountNftBatches(overlay, context) {
     isOpen: () => !panel.hidden,
     close: () => {
       basketProgress = null; paintGuide(); steps.hidden = true;
-      showOriginal.hidden = true; lastPrompt = approvalWait = null; wentAway = false;
+      resumeHere.hidden = true; lastPrompt = approvalWait = null; wentAway = false;
       stop(); busy = false; cancelling = false; panel.hidden = true; unlink();
       pendingRevision++; pendingRead = null; pendingKnown = pendingFailed = false;
       pendingOwner = ''; pendingOffers = pendingBatches = 0; operation = activeState = '';
