@@ -1,14 +1,8 @@
 (function () {
   const MANIFEST = "content/gallery.json";
 
-  // Section order. Socials always first (when present). Empty sections are hidden.
+  // Section order. Socials sit last, small (when present). Empty sections are hidden.
   const SECTION_DEFS = [
-    {
-      id: "social",
-      title: "From Instagram & X",
-      blurb: "Stories and posts from the build and booth life.",
-      types: ["social"],
-    },
     {
       id: "featured",
       title: "Featured",
@@ -45,6 +39,12 @@
       title: "Photos & moments",
       blurb: "Stills from the mirror.",
       types: ["photo"],
+    },
+    {
+      id: "social",
+      title: "From Instagram & X",
+      blurb: "Stories and posts from the build and booth life.",
+      types: ["social"],
     },
   ];
 
@@ -475,7 +475,7 @@
 
   async function load() {
     try {
-      const response = await fetch(`${MANIFEST}?v=20260729-gallery-social-first`, { cache: "no-store" });
+      const response = await fetch(`${MANIFEST}?v=20260729-gallery-social-last`, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const items = Array.isArray(data.items) ? data.items : [];

@@ -2261,3 +2261,15 @@ input[type="email"] {
 .ticket-callout {
   text-align: center;
 }
+
+/* Social section: last on the page, small presence */
+.public-gallery-section.is-social .public-gallery-section-blurb{display:none}
+.public-gallery-section.is-social .public-gallery-section-title{font-size:1rem;opacity:.85}
+.public-gallery-section.is-social .public-gallery-card{flex-basis:130px;max-width:130px}
+.public-gallery-section.is-social .public-gallery-media{min-height:0}
+.public-gallery-section.is-social .public-gallery-media img{max-height:150px !important}
+@media (max-width:720px){
+  .public-gallery-section.is-social .public-gallery-track{flex-direction:row;overflow-x:auto;gap:.6rem}
+  .public-gallery-section.is-social .public-gallery-card{flex:0 0 120px;width:120px;max-width:120px}
+  .public-gallery-section.is-social .public-gallery-media{min-height:0;padding:6px}
+}
