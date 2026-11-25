@@ -44,6 +44,120 @@
     .mirror-option h3{margin:0 0 .35rem;color:#fff;font-size:1rem}.mirror-option p{margin:0;color:var(--muted);font-size:.9rem}
     .events-mini-cta{text-align:center;margin-top:1rem}.events-terms{text-align:center;font-size:.85rem;color:var(--muted);margin-top:.85rem}
     @media(max-width:620px){.events-page .page-intro h1{font-size:2.45rem}.events-pricing-grid{grid-template-columns:repeat(2,1fr)}.events-facts,.mirror-options-grid,.events-estimate-fields{grid-template-columns:1fr}.events-inclusions{columns:1}.mirror-option img{width:min(62vw,210px)}}
+    /* Photo Booth 1 hire carousel */
+    .hire-carousel {
+      --hire-h: 168px;
+      --hire-gap: 0.7rem;
+      margin: 1.1rem 0 1.15rem;
+      position: relative;
+    }
+    .hire-carousel-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0 0 .35rem;
+    }
+    .hire-carousel-pause {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.07);
+      color: var(--muted, #b0b0c0);
+      border-radius: 999px;
+      padding: .28rem .8rem;
+      font: inherit;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      cursor: pointer;
+    }
+    .hire-carousel-pause:hover,
+    .hire-carousel-pause:focus-visible {
+      border-color: #ff79b0;
+      color: #fff;
+      outline: none;
+    }
+    .hire-carousel-viewport {
+      overflow: hidden;
+      padding: 2.6rem 1.5rem;
+      margin: -2.6rem -1.5rem;
+    }
+    .hire-carousel-track {
+      display: flex;
+      width: max-content;
+      animation: hire-carousel-slide 32s linear infinite;
+    }
+    .hire-carousel-group {
+      display: flex;
+      gap: var(--hire-gap);
+      padding-right: var(--hire-gap);
+    }
+    .hire-carousel.is-paused .hire-carousel-track,
+    .hire-carousel:hover .hire-carousel-track,
+    .hire-carousel:focus-within .hire-carousel-track {
+      animation-play-state: paused;
+    }
+    @keyframes hire-carousel-slide {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    .hire-carousel-item {
+      flex: none;
+      margin: 0;
+      height: var(--hire-h);
+      width: auto;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+      background: #0a0a14;
+      box-shadow: 0 4px 14px rgba(0,0,0,.35);
+      transform-origin: center center;
+      transition: transform .28s ease, box-shadow .28s ease;
+      cursor: pointer;
+    }
+    .hire-carousel-item picture {
+      display: block;
+      height: var(--hire-h);
+      width: auto;
+    }
+    .hire-carousel-item img {
+      display: block;
+      height: var(--hire-h);
+      width: auto;
+      max-width: none;
+    }
+    .hire-carousel-item:hover,
+    .hire-carousel-item:focus-visible,
+    .hire-carousel-item.is-active {
+      z-index: 5;
+      transform: scale(1.42);
+      box-shadow: 0 18px 40px rgba(0,0,0,.55);
+      outline: none;
+    }
+    @media (max-width: 620px) {
+      .hire-carousel { --hire-h: 132px; }
+      .hire-carousel-item:hover,
+      .hire-carousel-item:focus-visible,
+      .hire-carousel-item.is-active { transform: scale(1.32); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hire-carousel-track { animation: none; }
+      .hire-carousel-viewport {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.4rem 0 0.7rem;
+        margin: 0;
+      }
+      .hire-carousel-item { scroll-snap-align: start; }
+      .hire-carousel-item:hover,
+      .hire-carousel-item:focus-visible,
+      .hire-carousel-item.is-active {
+        transform: none;
+        box-shadow: 0 0 0 2px #ff79b0, 0 4px 14px rgba(0,0,0,.35);
+      }
+      .hire-carousel-pause { display: none; }
+    }
   </style>
 </head>
 <body class="page" data-page="events">
@@ -129,6 +243,79 @@
     <section class="info-callout events-section">
       <h2>Long-term hire &amp; venue partnerships</h2>
       <p>Need something beyond a standard six-hour event? Day hire, weekly hire and permanent venue placements are available by negotiation.</p>
+      <div class="hire-carousel" data-hire-carousel role="region" aria-label="Photo Booth 1 photos">
+        <div class="hire-carousel-toolbar">
+          <button type="button" class="hire-carousel-pause" aria-pressed="false" aria-label="Pause photo carousel">Pause</button>
+        </div>
+        <div class="hire-carousel-viewport">
+          <div class="hire-carousel-track">
+            <div class="hire-carousel-group">
+              <figure class="hire-carousel-item is-landscape" tabindex="0">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-1.webp">
+                  <img src="assets/img/photo-booth-1/pb1-1.jpg" alt="Exterior of Instapic Photo Booth 1, with black PHOTO BOOTH walls, a curtained doorway, and mirrors beside it." width="800" height="600" loading="eager" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item" tabindex="0">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-2.webp">
+                  <img src="assets/img/photo-booth-1/pb1-2.jpg" alt="Looking into Photo Booth 1, with the white Instapic kiosk under an instapic.fun neon sign." width="800" height="1067" loading="eager" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item" tabindex="0">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-3.webp">
+                  <img src="assets/img/photo-booth-1/pb1-3.jpg" alt="The Photo Booth 1 interior, with a red carpet, white curtains and a black seating bench." width="800" height="1067" loading="eager" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item" tabindex="0">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-4.webp">
+                  <img src="assets/img/photo-booth-1/pb1-4.jpg" alt="The Photo Booth 1 kiosk facing forward, with the instapic.fun neon sign and a touch-to-start screen." width="800" height="1067" loading="eager" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item" tabindex="0">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-5.webp">
+                  <img src="assets/img/photo-booth-1/pb1-5.jpg" alt="A closer view of the Photo Booth 1 kiosk and instapic.fun neon sign." width="800" height="1067" loading="eager" decoding="async">
+                </picture>
+              </figure>
+            </div>
+            <div class="hire-carousel-group" aria-hidden="true">
+              <figure class="hire-carousel-item is-landscape">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-1.webp">
+                  <img src="assets/img/photo-booth-1/pb1-1.jpg" alt="Exterior of Instapic Photo Booth 1, with black PHOTO BOOTH walls, a curtained doorway, and mirrors beside it." width="800" height="600" loading="lazy" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-2.webp">
+                  <img src="assets/img/photo-booth-1/pb1-2.jpg" alt="Looking into Photo Booth 1, with the white Instapic kiosk under an instapic.fun neon sign." width="800" height="1067" loading="lazy" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-3.webp">
+                  <img src="assets/img/photo-booth-1/pb1-3.jpg" alt="The Photo Booth 1 interior, with a red carpet, white curtains and a black seating bench." width="800" height="1067" loading="lazy" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-4.webp">
+                  <img src="assets/img/photo-booth-1/pb1-4.jpg" alt="The Photo Booth 1 kiosk facing forward, with the instapic.fun neon sign and a touch-to-start screen." width="800" height="1067" loading="lazy" decoding="async">
+                </picture>
+              </figure>
+              <figure class="hire-carousel-item">
+                <picture>
+                  <source type="image/webp" srcset="assets/img/photo-booth-1/pb1-5.webp">
+                  <img src="assets/img/photo-booth-1/pb1-5.jpg" alt="A closer view of the Photo Booth 1 kiosk and instapic.fun neon sign." width="800" height="1067" loading="lazy" decoding="async">
+                </picture>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
       <h3>Revenue share</h3>
       <p>Revenue-share partnerships may be available for suitable venues. A typical arrangement gives the venue <strong>30% of net completed photo-session revenue</strong>, while Instapic retains 70%. Payment-processing fees, refunds and chargebacks are deducted before the revenue share is calculated.</p>
       <h3>What Instapic provides</h3>
@@ -194,5 +381,52 @@
   <script src="branding.js"></script>
   <script src="event_pricing_runtime.js?v=20260805-unattended-80km"></script>
 <script src="assets/page-back.js?v=last-screen-1"></script>
-<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script></body>
+<script defer src="site_analytics.js?v=20260805-mpc-exclusion"></script>
+<script>
+(function () {
+  var root = document.querySelector("[data-hire-carousel]");
+  if (!root) return;
+  var pauseBtn = root.querySelector(".hire-carousel-pause");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function setPaused(paused) {
+    root.classList.toggle("is-paused", paused);
+    if (!pauseBtn) return;
+    pauseBtn.setAttribute("aria-pressed", paused ? "true" : "false");
+    pauseBtn.textContent = paused ? "Play" : "Pause";
+    pauseBtn.setAttribute("aria-label", paused ? "Play photo carousel" : "Pause photo carousel");
+  }
+
+  if (reduce.matches) setPaused(true);
+  if (reduce.addEventListener) {
+    reduce.addEventListener("change", function (event) {
+      if (event.matches) setPaused(true);
+    });
+  }
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", function () {
+      setPaused(!root.classList.contains("is-paused"));
+    });
+  }
+
+  root.addEventListener("pointerdown", function (event) {
+    var item = event.target.closest(".hire-carousel-item");
+    root.querySelectorAll(".hire-carousel-item.is-active").forEach(function (el) {
+      el.classList.remove("is-active");
+    });
+    if (item && event.pointerType === "touch") {
+      item.classList.add("is-active");
+      setPaused(true);
+    }
+  });
+  document.addEventListener("pointerdown", function (event) {
+    if (!root.contains(event.target)) {
+      root.querySelectorAll(".hire-carousel-item.is-active").forEach(function (el) {
+        el.classList.remove("is-active");
+      });
+    }
+  });
+})();
+</script>
+</body>
 </html>
