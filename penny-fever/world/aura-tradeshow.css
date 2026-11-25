@@ -63,6 +63,9 @@
   background:#9a3d5c;color:#fff8ea;border-color:#f0d08a;
 }
 .aura-tradeshow-main{flex:1;display:flex;min-height:0}
+.aura-tradeshow-policies{display:flex;flex:0 0 auto;justify-content:center;align-items:center;gap:.6rem;padding:.4rem .75rem;padding-bottom:max(.4rem,env(safe-area-inset-bottom));color:#e2c48a;font:12px/1.4 system-ui,sans-serif;background:#241810;border-top:1px solid #7a5232}
+.aura-tradeshow-policies a{display:inline-flex;align-items:center;min-height:28px;color:#fff0cd;text-underline-offset:3px}
+.aura-tradeshow-policies a:focus-visible{outline:2px solid #e2c48a;outline-offset:3px}
 .aura-tradeshow-content{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:#f4e6c8}
 .aura-tradeshow-content .aura-tradeshow-note{flex:0 0 auto;background:#f4e6c8;color:#6a5340;font-size:.72rem}
 .aura-tradeshow-tree-shell{

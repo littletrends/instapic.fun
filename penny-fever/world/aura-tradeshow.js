@@ -1065,6 +1065,11 @@ function ensureOverlay() {
       </div>
       <div class="aura-tradeshow-content"><p class="aura-tradeshow-note" id="auraTradeshowNote" role="status"></p><div class="aura-tradeshow-body" id="auraTradeshowBody"></div></div>
     </div>
+    <nav class="aura-tradeshow-policies" aria-label="Penny Fever policies">
+      <a href="/penny-fever/terms.html" target="_blank" rel="noopener" aria-label="Penny Fever terms (opens in a new tab)">Penny Fever terms</a>
+      <span aria-hidden="true">·</span>
+      <a href="/penny-fever/privacy.html" target="_blank" rel="noopener" aria-label="Penny Fever privacy (opens in a new tab)">Privacy</a>
+    </nav>
     <div class="aura-xrp-till" id="auraXrpTill" hidden>
       <div class="aura-xrp-till-card" role="dialog" aria-modal="true" aria-labelledby="auraXrpTillName">
         <button type="button" class="aura-xrp-till-close" data-xrp-close aria-label="Close XRP till">×</button>
