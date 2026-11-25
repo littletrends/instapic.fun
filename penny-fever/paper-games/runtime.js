@@ -15,6 +15,7 @@ const $=s=>document.querySelector(s), abort=new AbortController(),sig={signal:ab
 const canvas=$('#world'),stage=$('#stage'),input={keys:new Set(),actions:new Set(),pointer:null,down:false};
 let engine,state,draw,level=0,playing=false,ended=false,disposed=false,raf=0,last=0,paintAt=0,time=0,observer,reportAt=0;
 let completion=null, adapterDismissed=false, navigationKey, sourceRecovery=null;
+let rosalieView=null;
 let signInRequired=false,saveRecoveryRequired=false;
 let verified=null, verifiedMount=0, unregisterVerified=null, needsVerifiedRelease=false;
 // Set while play waits for the previous second of moves to reach the save
@@ -82,7 +83,8 @@ function playerInstructions(text){
  if(!embedded)return raw;
  return raw.split(/(?<=[.!?])\s+/).filter(sentence=>!TEST_ONLY_SENTENCE.test(sentence.trim())).join(' ').replace(/ in this test chapter\b/gi,'');
 }
-function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition);}
+function rosalieHeartState(){return !!rosalieView&&!!state?.heart&&!!state?.fan&&Array.isArray(state.rosettes)&&Array.isArray(state.passed);}
+function usesPaperRules(){return !!engine?.releaseEdition&&(!state||state.gameEdition===engine.releaseEdition||rosalieHeartState());}
 function keyHints(){if(usesPaperRules()&&engine.reviewCopy?.keys){const k=String(engine.reviewCopy.keys).replace(/[\s.·]+$/,'');return k+(/\bH help\b/.test(k)?'':' · H help')+(/\bEsc pause\b/.test(k)?'':' · Esc pause');}const t=TENT_KEYS[entry?.id];return (t?t+' · ':'')+COMMON_KEYS;}
 function retryLabel(){
  if(usesPaperRules()&&embedded)return isChapterOne(level)?'Play again · free':'Play again · 1 '+(entryFor(entry.id).door==='ticket'?'ticket':'penny');
@@ -281,8 +283,12 @@ function verifiedEvent(event){
   }
   verifiedSyncWaitAt=0;pauseForBanking(e);if(e.message==='verified_sync_required')flushVerified().catch(()=>{});return false;}
 }
-function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>engine.readout?.(state)):engine.readout?.(state);}
-function canWatchExample(){return !!verified&&!attemptRequested&&level===0&&!sourceRecovery&&(!engine?.releaseEdition||state?.gameEdition===engine.releaseEdition)&&typeof engine?.createExampleView==='function';}
+function screenEngine(){
+ // A gate reset can omit the presentation tag while retaining the heart game.
+ return rosalieHeartState()?rosalieView:engine;
+}
+function readout(){if(exampleView)return exampleView.info().caption;return verified?verified.render(()=>screenEngine().readout?.(state)):screenEngine().readout?.(state);}
+function canWatchExample(){return !!verified&&!attemptRequested&&level===0&&!sourceRecovery&&(!engine?.releaseEdition||usesPaperRules())&&typeof engine?.createExampleView==='function';}
 function cancelExample(){cancelAnimationFrame(exampleRaf);exampleRaf=0;exampleLast=0;exampleView=null;}
 function finishExample(){cancelExample();paint();$('#readout').textContent=readout()||'';if(ended)finishChapter(completion);else if(!holds.size)start();}
 function exampleFrame(now){
@@ -504,7 +510,7 @@ function paintPrizeClock(){
  }
  el.hidden=true;el.classList.remove('is-lit','is-dark');el.textContent='';
 }
-function paint(){if(!draw||!state)return;if(exampleView){draw.clear();exampleView.draw(draw);return;}const render=()=>{draw.clear();engine.draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();};if(verified)verified.render(render);else render();}
+function paint(){if(!draw||!state)return;if(exampleView){draw.clear();exampleView.draw(draw);return;}const render=()=>{draw.clear();screenEngine().draw(state,draw,time,input);paintPrize(state,draw);paintHud();paintChapterPrize();};if(verified)verified.render(render);else render();}
 function goNextChapter(){goChapter(level+1).catch(error);}
 function markChapters(){}
 function reset(){stop();ended=false;completion=null;adapterDismissed=false;time=0;state=plantChapter(engine.create(level,seeded(1703+level*297)));const house=houseSpec();if(state&&house&&state.houseLeft==null)state.houseLeft=house.seconds;paint();$('#readout').textContent=engine.readout?.(state)||'';markChapters();veil('Chapter '+(level+1)+(engine.levels?.[level]?' · '+engine.levels[level]:''),'',[treasureLine(),costLine(),secondsLine()].filter(Boolean).join(' '),'Play');$('#begin').disabled=false;$('#pause').textContent='Continue';publishChapter();}
@@ -628,6 +634,7 @@ try{
   pending.catch(()=>{});
  }
  engine=(await enginePending).default;
+ if(entry.id==='love')rosalieView=(await import('./stalls/love-breeze.js')).default;
  // Warm the art caches while the purse finishes its chapter lookup.
  {
   const kit=kits[entry.id]||{sprites:[],prizes:[]};
